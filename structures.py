@@ -329,10 +329,26 @@ def to_midi(opus, **kwargs):
             beat = grouping[m]
             beat.flatten()
             div_size = midi.ppqn / len(beat)
+            open_events = []
             for i, subgrouping in enumerate(beat):
+                if not subgrouping.events:
+                    continue
+
+                while open_events:
+                    octave, note, pitch_bend = open_events.pop()
+                    midi.add_event(
+                        NoteOff(
+                            note=note + (octave * 12),
+                            channel=track,
+                            velocity=0
+                        ),
+                        tick=int(current_tick + (i * div_size)),
+                    )
                 for event in subgrouping.events:
                     if not event:
                         continue
+
+                    open_events.append(event)
                     octave, note, pitch_bend = event
                     midi.add_event(
                         NoteOn(
@@ -358,16 +374,18 @@ def to_midi(opus, **kwargs):
                             ),
                             tick=int(current_tick + ((i + 1) * div_size)),
                         )
-
-                    midi.add_event(
-                        NoteOff(
-                            note=note + (octave * 12),
-                            channel=track,
-                            velocity=0
-                        ),
-                        tick=int(current_tick + ((i + 1) * div_size)),
-                    )
             current_tick += midi.ppqn
+
+            while open_events:
+                octave, note, pitch_bend = open_events.pop()
+                midi.add_event(
+                    NoteOff(
+                        note=note + (octave * 12),
+                        channel=track,
+                        velocity=0
+                    ),
+                    tick=int(current_tick),
+                )
     return midi
 
 def repstring_to_grouping(repstring, base=12):
@@ -426,7 +444,7 @@ def repstring_to_grouping(repstring, base=12):
 
 if __name__ == "__main__":
     lh = repstring_to_grouping("""
-        [22,32,[22,32,22],32|22,32,22,32|22,32,[22,32,22],32|22,32,20,30|22,32,22,32|22,32,22,32|22,32,22,32|22,32,20,30]
+        [22,32,[[22,32,22],32,22],32|22,32,22,32|22,32,[22,32,22],32|22,32,20,30|22,32,22,32|22,32,22,32|22,32,22,32|22,32,20,30]
     """)
 
     #rh = repstring_to_midi_note_pitch_list("""

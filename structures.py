@@ -4,7 +4,6 @@
 """
 from __future__ import annotations
 import math, json
-from apres import MIDI, NoteOn, NoteOff, TimeSignature, SetTempo, ProgramChange, PitchWheelChange
 from enum import Enum, auto
 from typing import Optional, List, Tuple, Dict
 
@@ -12,8 +11,6 @@ class BadStateError(Exception):
     """Thrown if an incompatible operation is attempted on a Grouping Object"""
 class SelfAssignError(Exception):
     """Thrown when a Grouping is assigned to itself as a subgrouping"""
-class InvalidRepString(Exception):
-    pass
 
 class GroupingState(Enum):
     """The states that a Grouping can be in"""
@@ -262,6 +259,12 @@ class Grouping:
 
         return self.events
 
+    def clear_events(self):
+        if not self.is_event():
+            raise BadStateError()
+        self.events = set()
+        self.set_state = GroupingState.OPEN
+
     def get_depth(self):
         """Find how many parents/supergroupings this grouping has """
         depth = 0
@@ -277,7 +280,6 @@ class Grouping:
             grouping = self[i]
             output.append(grouping)
         return output
-
 
 def get_prime_factors(n):
     primes = []
@@ -302,159 +304,3 @@ def get_prime_factors(n):
             factors.append(p)
 
     return factors
-
-
-def to_midi(opus, **kwargs):
-    tempo = 120
-    if ('tempo' in kwargs):
-        tempo = kwargs['tempo']
-
-    midi = MIDI("")
-    midi.add_event( SetTempo(bpm=tempo) )
-    if opus.__class__ == list:
-        tracks = opus
-    else:
-        tracks = [opus]
-
-    for track, grouping in enumerate(tracks):
-        midi.add_event(
-            PitchWheelChange(
-                channel=track,
-                value=0
-            ),
-            tick=0,
-        )
-        current_tick = 0
-        for m in range(len(grouping)):
-            beat = grouping[m]
-            beat.flatten()
-            div_size = midi.ppqn / len(beat)
-            open_events = []
-            for i, subgrouping in enumerate(beat):
-                if not subgrouping.events:
-                    continue
-
-                while open_events:
-                    octave, note, pitch_bend = open_events.pop()
-                    midi.add_event(
-                        NoteOff(
-                            note=note + (octave * 12),
-                            channel=track,
-                            velocity=0
-                        ),
-                        tick=int(current_tick + (i * div_size)),
-                    )
-                for event in subgrouping.events:
-                    if not event:
-                        continue
-
-                    open_events.append(event)
-                    octave, note, pitch_bend = event
-                    midi.add_event(
-                        NoteOn(
-                            note=note + (octave * 12),
-                            channel=track,
-                            velocity=64
-                        ),
-                        tick=int(current_tick + (i * div_size)),
-                    )
-
-                    if pitch_bend != 0:
-                        midi.add_event(
-                            PitchWheelChange(
-                                channel=track,
-                                value=pitch_bend
-                            ),
-                            tick=int(current_tick + (i * div_size)),
-                        )
-                        midi.add_event(
-                            PitchWheelChange(
-                                channel=track,
-                                value=0
-                            ),
-                            tick=int(current_tick + ((i + 1) * div_size)),
-                        )
-            current_tick += midi.ppqn
-
-            while open_events:
-                octave, note, pitch_bend = open_events.pop()
-                midi.add_event(
-                    NoteOff(
-                        note=note + (octave * 12),
-                        channel=track,
-                        velocity=0
-                    ),
-                    tick=int(current_tick),
-                )
-    return midi
-
-def repstring_to_grouping(repstring, base=12):
-    # NOTE: Should the pitch bend be solely based on the fraction or should it consider the (1 / base)?
-    CH_OPEN = "["
-    CH_CLOSE = "]"
-    CH_NEXT = ","
-    CH_CLOPEN = "|"
-    # NOTE: CH_CLOPEN is a CH_CLOSE, CH_NEXT, and CH_OPEN in that order
-
-    repstring = repstring.strip()
-    for c in " \n\t":
-        repstring = repstring.replace(c, "")
-
-    output = Grouping()
-    output.set_size(1)
-    grouping_stack: List[Grouping] = [output]
-    register: List[Optional[int], Optional[int], Optional[float]] = [None, None, 0]
-
-    for _i, character in enumerate(repstring):
-        if character in (CH_CLOSE, CH_CLOPEN):
-            # Remove completed grouping from stack
-            done_grouping = grouping_stack.pop()
-
-        if character in (CH_NEXT, CH_CLOPEN):
-            # Back up existing divisions
-            sub_divisions = grouping_stack[-1].divisions
-
-            # Resize Active Grouping
-            grouping_stack[-1].set_size(len(sub_divisions) + 1)
-
-            # Replace Active Grouping's Divisions with backups
-            grouping_stack[-1].divisions = sub_divisions
-
-        if character in (CH_OPEN, CH_CLOPEN):
-            new_grouping = grouping_stack[-1][-1]
-            new_grouping.set_size(1)
-            grouping_stack.append(new_grouping)
-
-        if character not in (CH_NEXT, CH_CLOPEN, CH_OPEN, CH_CLOSE):
-            if register[0] is None:
-                register[0] = int(character, base)
-            elif register[1] is None:
-                register[1] = int(character, base)
-                #TODO: Pitch Bend
-
-                leaf = grouping_stack[-1][-1]
-                if register is not None:
-                    leaf.add_event(tuple(register))
-                register = [None, None, 0]
-
-
-    if len(grouping_stack) > 1:
-        raise InvalidRepString()
-    return output
-
-if __name__ == "__main__":
-    lh = repstring_to_grouping("""
-        [22,32,[[22,32,22],32,22],32|22,32,22,32|22,32,[22,32,22],32|22,32,20,30|22,32,22,32|22,32,22,32|22,32,22,32|22,32,20,30]
-    """)
-
-    #rh = repstring_to_midi_note_pitch_list("""
-    #    42,42,42,42,42,42,42,42|42,42,42,40,40,40,40,40|
-    #    42,42,42,42,42,42,42,42|42,42,42,40,40,40,40,40|
-    #    42,42,42,42,42,42,42,42|42,42,42,40,40,40,40,40|
-    #    42,42,42,42,42,42,42,42|42,42,42,40,40,40,40,40
-    #""")
-
-    #opus = [ Grouping.from_list(lh), Grouping.from_list(rh) ]
-
-    midi = to_midi([lh], tempo=60)
-    midi.save("test.mid")

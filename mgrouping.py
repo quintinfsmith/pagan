@@ -46,6 +46,7 @@ class MGrouping(Grouping):
     CH_NEXT = ","
     # NOTE: CH_CLOPEN is a CH_CLOSE, CH_NEXT, and CH_OPEN in that order
     CH_CLOPEN = "|"
+
     SPECIAL_CHARS = (CH_OPEN, CH_CLOSE, CH_NEXT, CH_CLOPEN)
 
     @staticmethod
@@ -54,7 +55,7 @@ class MGrouping(Grouping):
 
         # Remove all Whitespace
         repstring = repstring.strip()
-        for character in " \n\t":
+        for character in " \n\t_":
             repstring = repstring.replace(character, "")
 
         output = MGrouping()
@@ -62,7 +63,6 @@ class MGrouping(Grouping):
         grouping_stack: List[MGrouping] = [output]
         register: List[Optional[int], Optional[int], Optional[float]] = [None, None, 0]
         opened_indeces: List[int] = []
-        
 
         for i, character in enumerate(repstring):
             if character in (MGrouping.CH_CLOSE, MGrouping.CH_CLOPEN):
@@ -75,7 +75,7 @@ class MGrouping(Grouping):
                 sub_divisions = grouping_stack[-1].divisions
 
                 # Resize Active Grouping
-                grouping_stack[-1].set_size(len(sub_divisions) + 1)
+                grouping_stack[-1].set_size(len(grouping_stack[-1]) + 1)
 
                 # Replace Active Grouping's Divisions with backups
                 grouping_stack[-1].divisions = sub_divisions
@@ -95,14 +95,14 @@ class MGrouping(Grouping):
                     register[0] = int(character, base)
                 elif register[1] is None:
                     register[1] = int(character, base)
-                    #TODO: Pitch Bend
+
+                    odd_note = (register[0] * base) + register[1]
 
                     leaf = grouping_stack[-1][-1]
-                    if register is not None:
-                        try:
-                            leaf.add_event(tuple(register))
-                        except BadStateError as b:
-                            raise MissingCommaError(repstring, i - 1, len(output) - 1, leaf._get_state())
+                    try:
+                        leaf.add_event(get_bend_values(odd_note, base))
+                    except BadStateError as b:
+                        raise MissingCommaError(repstring, i - 1, len(output) - 1) from b
                     register = [None, None, 0]
 
 
@@ -133,6 +133,7 @@ def to_midi(opus, **kwargs):
         tracks = [opus]
 
     for track, grouping in enumerate(tracks):
+        #if track == 1: track = 10
         midi.add_event(
             PitchWheelChange(
                 channel=track,
@@ -151,12 +152,19 @@ def to_midi(opus, **kwargs):
                     continue
 
                 while open_events:
-                    octave, note, pitch_bend = open_events.pop()
+                    note, pitch_bend = open_events.pop()
                     midi.add_event(
                         NoteOff(
-                            note=note + (octave * 12),
+                            note=note,
                             channel=track,
                             velocity=0
+                        ),
+                        tick=int(current_tick + (i * div_size)),
+                    )
+                    midi.add_event(
+                        PitchWheelChange(
+                            channel=track,
+                            value=0
                         ),
                         tick=int(current_tick + (i * div_size)),
                     )
@@ -165,10 +173,10 @@ def to_midi(opus, **kwargs):
                         continue
 
                     open_events.append(event)
-                    octave, note, pitch_bend = event
+                    note, pitch_bend = event
                     midi.add_event(
                         NoteOn(
-                            note=note + (octave * 12),
+                            note=note,
                             channel=track,
                             velocity=64
                         ),
@@ -183,44 +191,65 @@ def to_midi(opus, **kwargs):
                             ),
                             tick=int(current_tick + (i * div_size)),
                         )
-                        midi.add_event(
-                            PitchWheelChange(
-                                channel=track,
-                                value=0
-                            ),
-                            tick=int(current_tick + ((i + 1) * div_size)),
-                        )
             current_tick += midi.ppqn
 
             while open_events:
-                octave, note, pitch_bend = open_events.pop()
+                note, pitch_bend = open_events.pop()
                 midi.add_event(
                     NoteOff(
-                        note=note + (octave * 12),
+                        note=note,
                         channel=track,
                         velocity=0
                     ),
-                    tick=int(current_tick),
+                    tick=int(current_tick)
+                )
+                midi.add_event(
+                    PitchWheelChange(
+                        channel=track,
+                        value=0
+                    ),
+                    tick=int(current_tick)
                 )
     return midi
 
+def get_bend_values(offset, base) -> Tuple[int, float]:
+    """Convert an odd-based note to base-12 note with pitch bend""" 
+    v = (12 * offset) / base
+    note = int(v)
+    bend = v - note
+    #print(f"{offset}/{base} = {(note // 12)}{(note % 12)}/12 + {bend}")
+    return (note, bend)
+
+
 
 if __name__ == "__main__":
-    opus: List[MGrouping] = [
-        MGrouping.from_string("""
-            [22,32,22,32|22,32,22,32|
-            22,32,[22,32,22,32]|22,32,20,30|
-            22,32,22,32|22,32,22,32|
-            22,32,22,32|22,32,20,30]
-        """),
+    import sys
+    base = int(sys.argv[2])
+    content = ""
+    with open(sys.argv[1], 'r') as fp:
+        content = fp.read()
+    chunks = content.split("====")
+    opus: List[MGrouping] = []
+    for chunk in chunks:
+        grouping = MGrouping.from_string(chunk)
+        print(grouping)
+        opus.append(grouping)
+    #opus = [
+    #   # MGrouping.from_string("""
+    #   #     [22,32,22,32|22,32,22,32|
+    #   #     22,32,[22,32,22,32]|22,32,20,30|
+    #   #     22,32,22,32|22,32,22,32|
+    #   #     22,32,22,32|22,32,20,30]
+    #   # """),
 
-        MGrouping.from_string("""
-            [42,42,42,42,42,42,42,42|42,42,42,40,40,40,40,40|
-            42,42,42,42,42,42,42,42|42,42,42,40,40,40,40,40|
-            42,42,42,42,42,42,42,42|42,42,42,40,40,40,40,40|
-            42,42,42,42,42,42,42,42|42,42,42,40,40,40,40,40]
-        """)
-    ]
+    #   # MGrouping.from_string("""
+    #   #     [42,42,42,42,42,42,42,42|42,42,42,40,40,40,40,40|
+    #   #     42,42,42,42,42,42,42,42|42,42,42,40,40,40,40,40|
+    #   #     42,42,42,42,42,42,42,42|42,42,42,40,40,40,40,40|
+    #   #     42,42,42,42,42,42,42,42|42,42,42,40,40,40,40,40]
+    #   # """)
+    #]
 
     midi = to_midi(opus, tempo=60)
-    midi.save("test.mid")
+    midi_name = sys.argv[1][0:sys.argv[1].rfind('.')] + ".mid"
+    midi.save(midi_name)

@@ -1,6 +1,5 @@
 from __future__ import annotations
 from typing import Optional, List, Tuple, Dict
-
 from apres import NoteOn, NoteOff, PitchWheelChange, MIDI, SetTempo
 from structures import Grouping, BadStateError
 
@@ -51,6 +50,7 @@ class MGrouping(Grouping):
 
     # NOTE: CH_CLOPEN is a CH_CLOSE, CH_NEXT, and CH_OPEN in that order
     CH_CLOPEN = "|"
+    REL_CHARS = (CH_ADD, CH_SUBTRACT, CH_UP, CH_DOWN)
 
     SPECIAL_CHARS = (CH_OPEN, CH_CLOSE, CH_NEXT, CH_CLOPEN, CH_ADD, CH_SUBTRACT, CH_UP, CH_DOWN)
 
@@ -96,10 +96,9 @@ class MGrouping(Grouping):
 
                 opened_indeces.append(i)
 
-            if character in (MGrouping.CH_ADD, MGrouping.CH_SUBTRACT, MGrouping.CH_UP, MGrouping.CH_DOWN):
+            if character in MGrouping.REL_CHARS:
                 relative_flag = character
-
-            if character not in MGrouping.SPECIAL_CHARS:
+            elif character not in MGrouping.SPECIAL_CHARS:
                 if relative_flag is not None:
                     odd_note = previous_note
                     if relative_flag == MGrouping.CH_SUBTRACT:
@@ -110,9 +109,6 @@ class MGrouping(Grouping):
                         odd_note += int(character, base) * base
                     elif relative_flag == MGrouping.CH_DOWN:
                         odd_note -= int(character, base) * base
-                    else:
-                        # TODO: Throw Error
-                        pass
 
                     leaf = grouping_stack[-1][-1]
                     try:
@@ -174,7 +170,6 @@ def to_midi(opus, **kwargs):
         if not grouping.is_structural():
             continue
 
-        #if track == 1: track = 10
         current_tick = 0
         for m in range(len(grouping)):
             beat = grouping[m]
@@ -191,7 +186,7 @@ def to_midi(opus, **kwargs):
                         NoteOff(
                             note=note,
                             channel=track,
-                            velocity=0
+                            velocity=64
                         ),
                         tick=int(current_tick + (i * div_size)),
                     )
@@ -210,14 +205,6 @@ def to_midi(opus, **kwargs):
 
                     open_events.append(event)
                     note, pitch_bend = event
-                    midi.add_event(
-                        NoteOn(
-                            note=note,
-                            channel=track,
-                            velocity=64
-                        ),
-                        tick=int(current_tick + (i * div_size)),
-                    )
 
                     if pitch_bend != 0:
                         midi.add_event(
@@ -228,6 +215,15 @@ def to_midi(opus, **kwargs):
                             tick=int(current_tick + (i * div_size)),
                         )
 
+                    midi.add_event(
+                        NoteOn(
+                            note=note,
+                            channel=track,
+                            velocity=64
+                        ),
+                        tick=int(current_tick + (i * div_size)),
+                    )
+
             current_tick += midi.ppqn
 
             while open_events:
@@ -236,7 +232,7 @@ def to_midi(opus, **kwargs):
                     NoteOff(
                         note=note,
                         channel=track,
-                        velocity=0
+                        velocity=64
                     ),
                     tick=int(current_tick)
                 )
@@ -251,13 +247,12 @@ def to_midi(opus, **kwargs):
     return midi
 
 def get_bend_values(offset, base) -> Tuple[int, float]:
-    """Convert an odd-based note to base-12 note with pitch bend""" 
+    """Convert an odd-based note to base-12 note with pitch bend"""
     v = (12 * offset) / base
     note = int(v)
     bend = v - note
     #print(f"{offset}/{base} = {(note // 12)}{(note % 12)}/12 + {bend}")
     return (note, bend)
-
 
 
 if __name__ == "__main__":
@@ -266,30 +261,16 @@ if __name__ == "__main__":
     content = ""
     with open(sys.argv[1], 'r') as fp:
         content = fp.read()
+
     chunks = content.split("====")
+
     opus: List[MGrouping] = []
-    for i in range(16):
+    for _ in range(16):
         opus.append(MGrouping())
 
-    for i, chunk in enumerate(chunks):
+    for x, chunk in enumerate(chunks):
         grouping = MGrouping.from_string(chunk)
-        opus[i] = grouping
-
-    #opus = [
-    #   # MGrouping.from_string("""
-    #   #     [22,32,22,32|22,32,22,32|
-    #   #     22,32,[22,32,22,32]|22,32,20,30|
-    #   #     22,32,22,32|22,32,22,32|
-    #   #     22,32,22,32|22,32,20,30]
-    #   # """),
-
-    #   # MGrouping.from_string("""
-    #   #     [42,42,42,42,42,42,42,42|42,42,42,40,40,40,40,40|
-    #   #     42,42,42,42,42,42,42,42|42,42,42,40,40,40,40,40|
-    #   #     42,42,42,42,42,42,42,42|42,42,42,40,40,40,40,40|
-    #   #     42,42,42,42,42,42,42,42|42,42,42,40,40,40,40,40]
-    #   # """)
-    #]
+        opus[x] = grouping
 
     midi = to_midi(opus, tempo=40)
     midi_name = sys.argv[1][0:sys.argv[1].rfind('.')] + ".mid"

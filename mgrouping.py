@@ -159,8 +159,8 @@ def to_midi(opus, **kwargs):
     if ('tempo' in kwargs):
         tempo = kwargs['tempo']
 
-    midi = MIDI("")
-    midi.add_event( SetTempo(bpm=tempo) )
+    midi = MIDI()
+    midi.add_event( SetTempo.from_bpm(tempo) )
     if opus.__class__ == list:
         tracks = opus
     else:
@@ -257,7 +257,10 @@ def get_bend_values(offset, base) -> Tuple[int, float]:
 
 if __name__ == "__main__":
     import sys
-    base = int(sys.argv[2])
+    if len(sys.argv) > 2:
+        base = int(sys.argv[2])
+    else:
+        base = 12
     content = ""
     with open(sys.argv[1], 'r') as fp:
         content = fp.read()

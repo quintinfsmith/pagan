@@ -257,10 +257,22 @@ def get_bend_values(offset, base) -> Tuple[int, float]:
 
 if __name__ == "__main__":
     import sys
-    if len(sys.argv) > 2:
-        base = int(sys.argv[2])
-    else:
-        base = 12
+    args = []
+    kwargs = {}
+    active_kwarg = None
+    for value in sys.argv:
+        if '--' == value[0:2]:
+            active_kwarg = value[2:]
+        elif active_kwarg is not None:
+            kwargs[active_kwarg] = value
+            active_kwarg = None
+        else:
+            args.append(value)
+
+    base = kwargs.get('base', 12)
+    start = kwargs.get('start', 0)
+    end = kwargs.get('end', None)
+
     content = ""
     with open(sys.argv[1], 'r') as fp:
         content = fp.read()

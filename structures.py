@@ -96,8 +96,8 @@ class Grouping:
 
         output.set_size((stop - start) // step)
         for i, subgrouping in self.divisions.items():
-            if i >= start and i < stop and (i + start) % step == 0:
-                output[i] = subgrouping
+            if start <= i < stop and (i + start) % step == 0:
+                output[i - start] = subgrouping
 
         return output
 

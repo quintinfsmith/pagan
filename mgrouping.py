@@ -176,8 +176,7 @@ def to_midi(opus, **kwargs):
         current_tick = 0
         running_note_off = None
         running_pitchwheel_revert = None
-        for m in range(len(grouping)):
-            beat = grouping[m]
+        for m, beat in enumerate(grouping):
             beat.flatten()
             div_size = midi.ppqn / len(beat)
             open_events = []
@@ -263,8 +262,10 @@ if __name__ == "__main__":
 
     base = kwargs.get('base', 12)
     tempo = int(kwargs.get('tempo', 80))
-    start = kwargs.get('start', 0)
+    start = int(kwargs.get('start', 0))
     end = kwargs.get('end', None)
+    if end is not None:
+        end = int(end)
 
     content = ""
     with open(sys.argv[1], 'r') as fp:
@@ -278,7 +279,21 @@ if __name__ == "__main__":
 
     for x, chunk in enumerate(chunks):
         grouping = MGrouping.from_string(chunk)
+        if end is None:
+            slice_end = len(grouping)
+        else:
+            slice_end = end
+
+        if slice_end - start < len(grouping):
+            new_grouping = Grouping()
+            new_grouping.set_size(slice_end - start)
+            sliced = grouping[start:min(len(grouping), slice_end)]
+            for i, subgrouping in enumerate(sliced):
+                new_grouping[i] = subgrouping
+            grouping = new_grouping
+
         opus[x] = grouping
+
 
     midi = to_midi(opus, tempo=tempo)
     midi_name = sys.argv[1][0:sys.argv[1].rfind('.')] + ".mid"

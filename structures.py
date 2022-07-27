@@ -47,7 +47,7 @@ class Grouping:
     def __len__(self):
         return self.size
 
-    def __getitem__(self, i: int) -> Grouping:
+    def __getitem__(self, index_or_slice) -> Grouping:
         """
             Get a the grouping at the specified index.
             Will create a new grouping if none exists yet
@@ -55,6 +55,14 @@ class Grouping:
         if not self.is_structural():
             raise BadStateError()
 
+        if isinstance(index_or_slice, int):
+            output = self.__getitem_by_index(index_or_slice)
+        else:
+            output = self.__get_slice(index_or_slice)
+
+        return output
+
+    def __getitem_by_index(self, i: int) -> Grouping:
         if i < 0:
             i = self.size + i
 
@@ -66,6 +74,30 @@ class Grouping:
         except KeyError:
             output = Grouping()
             self[i] = output
+
+        return output
+
+    def __get_slice(self, s: slice) -> Grouping:
+        output = Grouping()
+        if s.start is None:
+            start = 0
+        else:
+            start = s.start
+
+        if s.step is None:
+            step = 1
+        else:
+            step = s.step
+
+        if s.stop is None:
+            stop = len(self)
+        else:
+            stop = s.stop
+
+        output.set_size((stop - start) // step)
+        for i, subgrouping in self.divisions.items():
+            if i >= start and i < stop and (i + start) % step == 0:
+                output[i] = subgrouping
 
         return output
 

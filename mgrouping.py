@@ -47,12 +47,13 @@ class MGrouping(Grouping):
     CH_SUBTRACT = "-"
     CH_UP = "^"
     CH_DOWN ="!"
+    CH_HOLD = "~"
 
     # NOTE: CH_CLOPEN is a CH_CLOSE, CH_NEXT, and CH_OPEN in that order
     CH_CLOPEN = "|"
-    REL_CHARS = (CH_ADD, CH_SUBTRACT, CH_UP, CH_DOWN)
+    REL_CHARS = (CH_ADD, CH_SUBTRACT, CH_UP, CH_DOWN, CH_HOLD)
 
-    SPECIAL_CHARS = (CH_OPEN, CH_CLOSE, CH_NEXT, CH_CLOPEN, CH_ADD, CH_SUBTRACT, CH_UP, CH_DOWN)
+    SPECIAL_CHARS = (CH_OPEN, CH_CLOSE, CH_NEXT, CH_CLOPEN, CH_ADD, CH_SUBTRACT, CH_UP, CH_DOWN, CH_HOLD)
 
     @staticmethod
     def from_string(repstring: str, base: int = 12):
@@ -83,6 +84,7 @@ class MGrouping(Grouping):
 
                 # Resize Active Grouping
                 grouping_stack[-1].set_size(len(grouping_stack[-1]) + 1)
+
                 # Replace Active Grouping's Divisions with backups
                 grouping_stack[-1].divisions = sub_divisions
 
@@ -96,49 +98,50 @@ class MGrouping(Grouping):
 
                 opened_indeces.append(i)
 
-            if character in MGrouping.REL_CHARS:
+            if relative_flag is not None:
+                odd_note = previous_note
+                if relative_flag == MGrouping.CH_SUBTRACT:
+                    odd_note -= int(character, base)
+                elif relative_flag == MGrouping.CH_ADD:
+                    odd_note += int(character, base)
+                elif relative_flag == MGrouping.CH_UP:
+                    odd_note += int(character, base) * base
+                elif relative_flag == MGrouping.CH_DOWN:
+                    odd_note -= int(character, base) * base
+                elif relative_flag == MGrouping.CH_HOLD:
+                    pass
+
+                leaf = grouping_stack[-1][-1]
+                try:
+                    note, bend = get_bend_values(odd_note, base)
+                    note -= 3 # Use A as first instead of C
+                    leaf.add_event((note, bend, relative_flag != MGrouping.CH_HOLD))
+                except BadStateError as b:
+                    raise MissingCommaError(repstring, i - 1, len(output) - 1) from b
+
+                previous_note = odd_note
+                relative_flag = None
+
+            elif character in MGrouping.REL_CHARS:
                 relative_flag = character
+
             elif character not in MGrouping.SPECIAL_CHARS:
-                if relative_flag is not None:
-                    odd_note = previous_note
-                    if relative_flag == MGrouping.CH_SUBTRACT:
-                        odd_note -= int(character, base)
-                    elif relative_flag == MGrouping.CH_ADD:
-                        odd_note += int(character, base)
-                    elif relative_flag == MGrouping.CH_UP:
-                        odd_note += int(character, base) * base
-                    elif relative_flag == MGrouping.CH_DOWN:
-                        odd_note -= int(character, base) * base
+                if register[0] is None:
+                    register[0] = int(character, base)
+                elif register[1] is None:
+                    register[1] = int(character, base)
+
+                    odd_note = (register[0] * base) + register[1]
 
                     leaf = grouping_stack[-1][-1]
                     try:
                         note, bend = get_bend_values(odd_note, base)
                         note -= 3 # Use A as first instead of C
-                        leaf.add_event((note, bend))
+                        leaf.add_event((note, bend, True))
                     except BadStateError as b:
                         raise MissingCommaError(repstring, i - 1, len(output) - 1) from b
-
+                    register = [None, None, 0]
                     previous_note = odd_note
-                    relative_flag = None
-
-                else:
-                    if register[0] is None:
-                        register[0] = int(character, base)
-                    elif register[1] is None:
-                        register[1] = int(character, base)
-
-                        odd_note = (register[0] * base) + register[1]
-
-                        leaf = grouping_stack[-1][-1]
-                        try:
-                            note, bend = get_bend_values(odd_note, base)
-                            note -= 3 # Use A as first instead of C
-                            leaf.add_event((note, bend))
-                        except BadStateError as b:
-                            raise MissingCommaError(repstring, i - 1, len(output) - 1) from b
-                        register = [None, None, 0]
-                        previous_note = odd_note
-
 
         if len(grouping_stack) > 1:
             raise UnclosedGroupingError(repstring, opened_indeces.pop())
@@ -171,79 +174,68 @@ def to_midi(opus, **kwargs):
             continue
 
         current_tick = 0
+        running_note_off = None
+        running_pitchwheel_revert = None
         for m in range(len(grouping)):
             beat = grouping[m]
             beat.flatten()
             div_size = midi.ppqn / len(beat)
             open_events = []
             for i, subgrouping in enumerate(beat):
-                if not subgrouping.events:
-                    continue
-
-                while open_events:
-                    note, pitch_bend = open_events.pop()
-                    midi.add_event(
-                        NoteOff(
-                            note=note,
-                            channel=track,
-                            velocity=64
-                        ),
-                        tick=int(current_tick + (i * div_size)),
-                    )
-                    if pitch_bend != 0:
-                        midi.add_event(
-                            PitchWheelChange(
-                                channel=track,
-                                value=0
-                            ),
-                            tick=int(current_tick + (i * div_size)),
-                        )
-
                 for event in subgrouping.events:
                     if not event:
                         continue
 
                     open_events.append(event)
-                    note, pitch_bend = event
+                    note, pitch_bend, new_press = event
+                    if new_press:
+                        if pitch_bend != 0:
+                            midi.add_event(
+                                PitchWheelChange(
+                                    channel=track,
+                                    value=pitch_bend
+                                ),
+                                tick=int(current_tick + (i * div_size)),
+                            )
 
-                    if pitch_bend != 0:
                         midi.add_event(
-                            PitchWheelChange(
+                            NoteOn(
+                                note=note,
                                 channel=track,
-                                value=pitch_bend
+                                velocity=64
                             ),
                             tick=int(current_tick + (i * div_size)),
                         )
+                    else:
+                        if running_note_off is not None:
+                            midi.detach_event(running_note_off.get_uuid())
+                            running_note_off = None
+                        if running_pitchwheel_revert is not None:
+                            midi.detach_event(running_pitchwheel_revert.get_uuid())
+                            running_pitchwheel_revert = None
+
+                    if pitch_bend != 0:
+                        running_pitchweel_revert = PitchWheelChange(
+                            channel=track,
+                            value=0
+                        )
+                        midi.add_event(
+                            running_pitchwheel_revert,
+                            tick=int(current_tick + ((i + 1) * div_size)),
+                        )
+
+                    running_note_off = NoteOff(
+                        note=note,
+                        channel=track
+                    )
 
                     midi.add_event(
-                        NoteOn(
-                            note=note,
-                            channel=track,
-                            velocity=64
-                        ),
-                        tick=int(current_tick + (i * div_size)),
+                        running_note_off,
+                        tick=int(current_tick + ((i + 1) * div_size)),
                     )
 
             current_tick += midi.ppqn
 
-            while open_events:
-                note, pitch_bend = open_events.pop()
-                midi.add_event(
-                    NoteOff(
-                        note=note,
-                        channel=track,
-                        velocity=64
-                    ),
-                    tick=int(current_tick)
-                )
-                if pitch_bend != 0:
-                    midi.add_event(
-                        PitchWheelChange(
-                            channel=track,
-                            value=0
-                        ),
-                        tick=int(current_tick)
-                    )
     return midi
 
 def get_bend_values(offset, base) -> Tuple[int, float]:
@@ -270,6 +262,7 @@ if __name__ == "__main__":
             args.append(value)
 
     base = kwargs.get('base', 12)
+    tempo = int(kwargs.get('tempo', 80))
     start = kwargs.get('start', 0)
     end = kwargs.get('end', None)
 
@@ -287,6 +280,6 @@ if __name__ == "__main__":
         grouping = MGrouping.from_string(chunk)
         opus[x] = grouping
 
-    midi = to_midi(opus, tempo=40)
+    midi = to_midi(opus, tempo=tempo)
     midi_name = sys.argv[1][0:sys.argv[1].rfind('.')] + ".mid"
     midi.save(midi_name)

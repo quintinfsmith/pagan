@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import Optional, List, Tuple, Dict
-from apres import NoteOn, NoteOff, PitchWheelChange, MIDI, SetTempo
+from apres import NoteOn, NoteOff, PitchWheelChange, MIDI, SetTempo, ProgramChange
 from structures import Grouping, BadStateError
 
 ERROR_CHUNK_SIZE = 19
@@ -46,7 +46,7 @@ class MGrouping(Grouping):
     CH_ADD = "+"
     CH_SUBTRACT = "-"
     CH_UP = "^"
-    CH_DOWN ="!"
+    CH_DOWN ="v"
     CH_HOLD = "~"
 
     # NOTE: CH_CLOPEN is a CH_CLOSE, CH_NEXT, and CH_OPEN in that order
@@ -55,10 +55,11 @@ class MGrouping(Grouping):
 
     SPECIAL_CHARS = (CH_OPEN, CH_CLOSE, CH_NEXT, CH_CLOPEN, CH_ADD, CH_SUBTRACT, CH_UP, CH_DOWN, CH_HOLD)
 
+
     @staticmethod
     def from_string(repstring: str, base: int = 12):
         # NOTE: Should the pitch bend be solely based on the fraction or should it consider the (1 / base)?
-
+        print(repstring)
         # Remove all Whitespace
         repstring = repstring.strip()
         for character in " \n\t_":
@@ -108,13 +109,11 @@ class MGrouping(Grouping):
                     odd_note += int(character, base) * base
                 elif relative_flag == MGrouping.CH_DOWN:
                     odd_note -= int(character, base) * base
-                elif relative_flag == MGrouping.CH_HOLD:
-                    pass
 
                 leaf = grouping_stack[-1][-1]
                 try:
                     note, bend = get_bend_values(odd_note, base)
-                    note -= 3 # Use A as first instead of C
+                    note -= 3 # Use A (-3) as first instead of C
                     leaf.add_event((note, bend, relative_flag != MGrouping.CH_HOLD))
                 except BadStateError as b:
                     raise MissingCommaError(repstring, i - 1, len(output) - 1) from b
@@ -214,7 +213,7 @@ def to_midi(opus, **kwargs):
                             running_pitchwheel_revert = None
 
                     if pitch_bend != 0:
-                        running_pitchweel_revert = PitchWheelChange(
+                        running_pitchwheel_revert = PitchWheelChange(
                             channel=track,
                             value=0
                         )
@@ -260,25 +259,29 @@ if __name__ == "__main__":
         else:
             args.append(value)
 
-    base = kwargs.get('base', 12)
+    base = int(kwargs.get('base', 12))
     tempo = int(kwargs.get('tempo', 80))
     start = int(kwargs.get('start', 0))
     end = kwargs.get('end', None)
     if end is not None:
         end = int(end)
 
+
     content = ""
     with open(sys.argv[1], 'r') as fp:
         content = fp.read()
 
-    chunks = content.split("====")
+    chunks = content.split("\n[")
+    for i, chunk in enumerate(chunks):
+        if i > 0:
+            chunks[i] = f"[{chunk}"
 
     opus: List[MGrouping] = []
     for _ in range(16):
         opus.append(MGrouping())
 
     for x, chunk in enumerate(chunks):
-        grouping = MGrouping.from_string(chunk)
+        grouping = MGrouping.from_string(chunk, base)
         if end is None:
             slice_end = len(grouping)
         else:
@@ -296,5 +299,14 @@ if __name__ == "__main__":
 
 
     midi = to_midi(opus, tempo=tempo)
+    for i in range(16):
+        iset = int(kwargs.get(f"i{i}", 0))
+        midi.add_event(
+            ProgramChange(
+                iset,
+                channel=i
+            ),
+            tick=0
+        )
     midi_name = sys.argv[1][0:sys.argv[1].rfind('.')] + ".mid"
     midi.save(midi_name)

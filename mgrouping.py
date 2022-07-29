@@ -162,6 +162,18 @@ def to_midi(opus, **kwargs):
         tempo = kwargs['tempo']
 
     midi = MIDI()
+
+    imap = kwargs.get('imap', None)
+    if imap is not None:
+        for i, program in imap.items():
+            midi.add_event(
+                ProgramChange(
+                    program,
+                    channel=i
+                ),
+                tick=0
+            )
+
     midi.add_event( SetTempo.from_bpm(tempo) )
     if opus.__class__ == list:
         tracks = opus
@@ -297,16 +309,11 @@ if __name__ == "__main__":
 
         opus[x] = grouping
 
-
-    midi = to_midi(opus, tempo=tempo)
+    imap={}
     for i in range(16):
         iset = int(kwargs.get(f"i{i}", 0))
-        midi.add_event(
-            ProgramChange(
-                iset,
-                channel=i
-            ),
-            tick=0
-        )
+        imap[i] = iset
+
+    midi = to_midi(opus, tempo=tempo, imap=imap)
     midi_name = sys.argv[1][0:sys.argv[1].rfind('.')] + ".mid"
     midi.save(midi_name)

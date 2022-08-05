@@ -48,12 +48,13 @@ class MGrouping(Grouping):
     CH_UP = "^"
     CH_DOWN ="v"
     CH_HOLD = "~"
+    CH_REPEAT = "="
 
     # NOTE: CH_CLOPEN is a CH_CLOSE, CH_NEXT, and CH_OPEN in that order
     CH_CLOPEN = "|"
-    REL_CHARS = (CH_ADD, CH_SUBTRACT, CH_UP, CH_DOWN, CH_HOLD)
+    REL_CHARS = (CH_ADD, CH_SUBTRACT, CH_UP, CH_DOWN, CH_HOLD, CH_REPEAT)
 
-    SPECIAL_CHARS = (CH_OPEN, CH_CLOSE, CH_NEXT, CH_CLOPEN, CH_ADD, CH_SUBTRACT, CH_UP, CH_DOWN, CH_HOLD)
+    SPECIAL_CHARS = (CH_OPEN, CH_CLOSE, CH_NEXT, CH_CLOPEN, CH_ADD, CH_SUBTRACT, CH_UP, CH_DOWN, CH_HOLD, CH_REPEAT)
 
 
     @staticmethod
@@ -72,11 +73,12 @@ class MGrouping(Grouping):
         opened_indeces: List[int] = []
         previous_value: Optional[int] = None
         relative_flag: Optional[str] = None
+        latest_grouping: Optional[MGrouping] = None
 
         for i, character in enumerate(repstring):
             if character in (MGrouping.CH_CLOSE, MGrouping.CH_CLOPEN):
                 # Remove completed grouping from stack
-                grouping_stack.pop()
+                latest_grouping = grouping_stack.pop()
                 opened_indeces.pop()
 
             if character in (MGrouping.CH_NEXT, MGrouping.CH_CLOPEN):
@@ -99,7 +101,18 @@ class MGrouping(Grouping):
 
                 opened_indeces.append(i)
 
-            if relative_flag is not None:
+            elif relative_flag == MGrouping.CH_REPEAT:
+                if character == MGrouping.CH_REPEAT:
+                    repeat = -2
+                else:
+                    repeat = int(character, base)
+                print(repeat)
+                to_copy = grouping_stack[-1].parent[repeat]
+
+                grouping_stack[-1][-1] = to_copy.copy()
+
+                relative_flag = None
+            elif relative_flag is not None:
                 odd_note = previous_note
                 if relative_flag == MGrouping.CH_SUBTRACT:
                     odd_note -= int(character, base)
@@ -109,6 +122,7 @@ class MGrouping(Grouping):
                     odd_note += int(character, base) * base
                 elif relative_flag == MGrouping.CH_DOWN:
                     odd_note -= int(character, base) * base
+
 
                 leaf = grouping_stack[-1][-1]
                 try:
@@ -212,7 +226,7 @@ def to_midi(opus, **kwargs):
                             NoteOn(
                                 note=note,
                                 channel=track,
-                                velocity=64
+                                velocity=100
                             ),
                             tick=int(current_tick + (i * div_size)),
                         )

@@ -313,6 +313,20 @@ class Grouping:
             output.append(grouping)
         return output
 
+    def copy(self):
+        new_grouping = self.__class__()
+        new_grouping.size = self.size
+        new_grouping.state = self.state
+
+        for i, grouping in self.divisions.items():
+            new_grouping.divisions[i] = grouping.copy()
+            new_grouping.divisions[i].parent = new_grouping
+
+        for event in self.events:
+            new_grouping.events.add(event)
+
+        return new_grouping
+
 def get_prime_factors(n):
     primes = []
     for i in range(2, n // 2):

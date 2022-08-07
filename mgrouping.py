@@ -197,6 +197,8 @@ def to_midi(opus, **kwargs):
     for track, grouping in enumerate(tracks):
         if not grouping.is_structural():
             continue
+        channel = kwargs.get('channel', track)
+
 
         current_tick = 0
         running_note_off = None
@@ -216,7 +218,7 @@ def to_midi(opus, **kwargs):
                         if pitch_bend != 0:
                             midi.add_event(
                                 PitchWheelChange(
-                                    channel=track,
+                                    channel=channel,
                                     value=pitch_bend
                                 ),
                                 tick=int(current_tick + (i * div_size)),
@@ -225,7 +227,7 @@ def to_midi(opus, **kwargs):
                         midi.add_event(
                             NoteOn(
                                 note=note,
-                                channel=track,
+                                channel=channel,
                                 velocity=100
                             ),
                             tick=int(current_tick + (i * div_size)),
@@ -240,7 +242,7 @@ def to_midi(opus, **kwargs):
 
                     if pitch_bend != 0:
                         running_pitchwheel_revert = PitchWheelChange(
-                            channel=track,
+                            channel=channel,
                             value=0
                         )
                         midi.add_event(
@@ -250,7 +252,7 @@ def to_midi(opus, **kwargs):
 
                     running_note_off = NoteOff(
                         note=note,
-                        channel=track
+                        channel=channel,
                     )
 
                     midi.add_event(
@@ -286,6 +288,7 @@ if __name__ == "__main__":
             args.append(value)
 
     base = int(kwargs.get('base', 12))
+    channel = int(kwargs.get('channel', 0))
     tempo = int(kwargs.get('tempo', 80))
     start = int(kwargs.get('start', 0))
     end = kwargs.get('end', None)
@@ -328,6 +331,6 @@ if __name__ == "__main__":
         iset = int(kwargs.get(f"i{i}", 0))
         imap[i] = iset
 
-    midi = to_midi(opus, tempo=tempo, imap=imap)
+    midi = to_midi(opus, tempo=tempo, imap=imap, channel=channel)
     midi_name = sys.argv[1][0:sys.argv[1].rfind('.')] + ".mid"
     midi.save(midi_name)

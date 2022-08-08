@@ -201,6 +201,8 @@ def to_midi(opus, **kwargs):
     for track, grouping in enumerate(tracks):
         if not grouping.is_structural():
             continue
+        channel = kwargs.get('channel', track)
+
 
         current_tick = 0
         running_note_off = None
@@ -254,7 +256,7 @@ def to_midi(opus, **kwargs):
 
                     running_note_off = NoteOff(
                         note=note,
-                        channel=channel
+                        channel=channel,
                     )
 
                     midi.add_event(

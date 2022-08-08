@@ -121,6 +121,32 @@ class Grouping:
     def _get_state(self) -> GroupingState:
         return self.state
 
+    def merge(self, grouping):
+        if grouping._get_state() != self._get_state():
+            raise BadStateError()
+
+        if self.is_structural():
+            self.__merge_structural(grouping)
+        elif self.is_event():
+            self.__merge_event(grouping)
+
+    def __merge_event(self, grouping):
+        for event in grouping.get_events():
+            self.add_event(event)
+
+    def __merge_structural(self, grouping):
+        self.flatten()
+
+        clone_other = grouping.copy()
+        clone_other.flatten()
+
+        # TODO: Maybe use GCD?
+        new_size = len(self) * len(clone_other)
+        self.resize(new_size)
+        clone_other.resize(new_size)
+        for index, value in clone_other.divisions.items():
+            self.divisions[index].merge(value)
+
     def is_structural(self) -> bool:
         """Check if this grouping has sub groupings"""
         return self._get_state() == GroupingState.STRUCTURE
@@ -150,6 +176,21 @@ class Grouping:
         self.set_state(GroupingState.STRUCTURE)
         self.divisions = {}
         self.size = size
+
+    def resize(self, new_size: int):
+        """Resize even if it has events, won't clobber data, but precision *may* be lost."""
+        if self.is_event():
+            raise BadStateError()
+
+        new_divisions = {}
+        factor = new_size / self.size
+
+        for current_index, value in self.divisions.items():
+            new_index = int(current_index * factor)
+            new_divisions[new_index] = value
+
+        self.divisions = new_divisions
+        self.size = new_size
 
     def set_state(self, new_state: GroupingState):
         """Sets the state of the Grouping so that invalid operations can't be applied to them"""
@@ -295,7 +336,7 @@ class Grouping:
         if not self.is_event():
             raise BadStateError()
         self.events = set()
-        self.set_state = GroupingState.OPEN
+        self.set_state(GroupingState.OPEN)
 
     def get_depth(self):
         """Find how many parents/supergroupings this grouping has """

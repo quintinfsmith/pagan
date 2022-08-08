@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import Optional, List, Tuple, Dict
 from apres import NoteOn, NoteOff, PitchWheelChange, MIDI, SetTempo, ProgramChange
 from structures import Grouping, BadStateError
+import re
 
 ERROR_CHUNK_SIZE = 19
 
@@ -58,8 +59,11 @@ class MGrouping(Grouping):
 
 
     @staticmethod
-    def from_string(repstring: str, base: int = 12):
+    def from_string(repstring: str, **kwargs):
         # NOTE: Should the pitch bend be solely based on the fraction or should it consider the (1 / base)?
+        base = kwargs.get("base", 12)
+        channel = kwargs.get("channel", 0)
+
         print(repstring)
         # Remove all Whitespace
         repstring = repstring.strip()
@@ -128,7 +132,7 @@ class MGrouping(Grouping):
                 try:
                     note, bend = get_bend_values(odd_note, base)
                     note -= 3 # Use A (-3) as first instead of C
-                    leaf.add_event((note, bend, relative_flag != MGrouping.CH_HOLD))
+                    leaf.add_event((note, bend, relative_flag != MGrouping.CH_HOLD, channel))
                 except BadStateError as b:
                     raise MissingCommaError(repstring, i - 1, len(output) - 1) from b
 
@@ -150,7 +154,7 @@ class MGrouping(Grouping):
                     try:
                         note, bend = get_bend_values(odd_note, base)
                         note -= 3 # Use A as first instead of C
-                        leaf.add_event((note, bend, True))
+                        leaf.add_event((note, bend, True, channel))
                     except BadStateError as b:
                         raise MissingCommaError(repstring, i - 1, len(output) - 1) from b
                     register = [None, None, 0]
@@ -211,12 +215,12 @@ def to_midi(opus, **kwargs):
                         continue
 
                     open_events.append(event)
-                    note, pitch_bend, new_press = event
+                    note, pitch_bend, new_press, channel = event
                     if new_press:
                         if pitch_bend != 0:
                             midi.add_event(
                                 PitchWheelChange(
-                                    channel=track,
+                                    channel=channel,
                                     value=pitch_bend
                                 ),
                                 tick=int(current_tick + (i * div_size)),
@@ -225,7 +229,7 @@ def to_midi(opus, **kwargs):
                         midi.add_event(
                             NoteOn(
                                 note=note,
-                                channel=track,
+                                channel=channel,
                                 velocity=100
                             ),
                             tick=int(current_tick + (i * div_size)),
@@ -240,7 +244,7 @@ def to_midi(opus, **kwargs):
 
                     if pitch_bend != 0:
                         running_pitchwheel_revert = PitchWheelChange(
-                            channel=track,
+                            channel=channel,
                             value=0
                         )
                         midi.add_event(
@@ -250,7 +254,7 @@ def to_midi(opus, **kwargs):
 
                     running_note_off = NoteOff(
                         note=note,
-                        channel=track
+                        channel=channel
                     )
 
                     midi.add_event(
@@ -270,31 +274,43 @@ def get_bend_values(offset, base) -> Tuple[int, float]:
     #print(f"{offset}/{base} = {(note // 12)}{(note % 12)}/12 + {bend}")
     return (note, bend)
 
+def build_from_directory(path, **kwargs):
+    base = kwargs.get('base', 12)
+    channel_map = {}
+    suffix_patt = re.compile(".*_(?P<suffix>[0-9A-Z]?)(\..*)?", re.I)
+    filenames = os.listdir(path)
+    filenames_clean = []
+    # create a reference map of channels and rremove non-suffixed files from the list
+    for filename in filenames:
+        channel = None
+        for hit in suffix_patt.finditer(filename):
+            channel = int(hit.group('suffix'), 16)
+        if channel is not None:
+            channel_map[filename] = channel
+            filenames_clean.append(filename)
 
-if __name__ == "__main__":
-    import sys
-    args = []
-    kwargs = {}
-    active_kwarg = None
-    for value in sys.argv:
-        if '--' == value[0:2]:
-            active_kwarg = value[2:]
-        elif active_kwarg is not None:
-            kwargs[active_kwarg] = value
-            active_kwarg = None
-        else:
-            args.append(value)
+    output = []
+    for filename in filenames_clean:
+        content = ""
+        with open(f"{path}/{filename}", 'r') as fp:
+            content = fp.read()
 
-    base = int(kwargs.get('base', 12))
-    tempo = int(kwargs.get('tempo', 80))
-    start = int(kwargs.get('start', 0))
-    end = kwargs.get('end', None)
-    if end is not None:
-        end = int(end)
+        chunks = content.split("\n[")
+        for i, chunk in enumerate(chunks):
+            if i > 0:
+                chunks[i] = f"[{chunk}"
+
+        for x, chunk in enumerate(chunks):
+            grouping = MGrouping.from_string(chunk, base=base, channel=channel_map[filename])
+            output.append(grouping)
+
+    return output
 
 
+def build_from_single_file(path, **kwargs):
+    base = kwargs.get('base', 12)
     content = ""
-    with open(sys.argv[1], 'r') as fp:
+    with open(path, 'r') as fp:
         content = fp.read()
 
     chunks = content.split("\n[")
@@ -303,11 +319,54 @@ if __name__ == "__main__":
             chunks[i] = f"[{chunk}"
 
     opus: List[MGrouping] = []
-    for _ in range(16):
-        opus.append(MGrouping())
 
     for x, chunk in enumerate(chunks):
-        grouping = MGrouping.from_string(chunk, base)
+        grouping = MGrouping.from_string(chunk, base=base, channel=x)
+        opus.append(grouping)
+
+    return opus
+
+def get_sys_args():
+    import sys
+    args = []
+    kwargs = {}
+    active_kwarg = None
+    for value in sys.argv[1:]:
+        if '--' == value[0:2]:
+            active_kwarg = value[2:]
+        elif active_kwarg is not None:
+            kwargs[active_kwarg] = value
+            active_kwarg = None
+        else:
+            args.append(value)
+
+    return (args, kwargs)
+
+if __name__ == "__main__":
+    import os
+    args, kwargs = get_sys_args()
+
+    base = int(kwargs.get('base', 12))
+    tempo = int(kwargs.get('tempo', 80))
+    start = int(kwargs.get('start', 0))
+    end = kwargs.get('end', None)
+    if end is not None:
+        end = int(end)
+
+    path = args[0]
+    if os.path.isfile(path):
+        opus = build_from_single_file(path, base=base)
+        if "." in path:
+            midi_name = path[0:path.rfind('.')] + ".mid"
+        else:
+            midi_name = f"{path}.mid"
+    elif os.path.isdir(path):
+        opus = build_from_directory(path, base=base)
+        midi_name = f"{path}.mid"
+
+
+
+    for i, grouping in enumerate(opus):
         if end is None:
             slice_end = len(grouping)
         else:
@@ -319,9 +378,8 @@ if __name__ == "__main__":
             sliced = grouping[start:min(len(grouping), slice_end)]
             for i, subgrouping in enumerate(sliced):
                 new_grouping[i] = subgrouping
-            grouping = new_grouping
+            opus[i] = new_grouping
 
-        opus[x] = grouping
 
     imap={}
     for i in range(16):
@@ -329,5 +387,5 @@ if __name__ == "__main__":
         imap[i] = iset
 
     midi = to_midi(opus, tempo=tempo, imap=imap)
-    midi_name = sys.argv[1][0:sys.argv[1].rfind('.')] + ".mid"
+
     midi.save(midi_name)

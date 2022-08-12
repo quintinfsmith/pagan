@@ -112,7 +112,6 @@ class MGrouping(Grouping):
                     repeat = int(character, base)
                 print(repeat)
                 to_copy = grouping_stack[-1].parent[repeat]
-
                 grouping_stack[-1][-1] = to_copy.copy()
 
                 relative_flag = None
@@ -178,6 +177,25 @@ def to_midi(opus, **kwargs):
     tempo = 120
     if ('tempo' in kwargs):
         tempo = kwargs['tempo']
+    start = kwargs.get('start', 0)
+    end = kwargs.get('end', None)
+    new_opus = []
+    for i, grouping in enumerate(opus):
+        if end is None:
+            slice_end = len(grouping)
+        else:
+            slice_end = end
+
+        if slice_end - start < len(grouping):
+            new_grouping = Grouping()
+            new_grouping.set_size(slice_end - start)
+            sliced = grouping[start:min(len(grouping), slice_end)]
+            for i, subgrouping in enumerate(sliced):
+                new_grouping[i] = subgrouping
+            grouping = new_grouping
+
+        new_opus.append(grouping)
+    opus = new_opus
 
     midi = MIDI()
 
@@ -284,7 +302,7 @@ def build_from_directory(path, **kwargs):
     suffix_patt = re.compile(".*_(?P<suffix>[0-9A-Z]?)(\..*)?", re.I)
     filenames = os.listdir(path)
     filenames_clean = []
-    # create a reference map of channels and rremove non-suffixed files from the list
+    # create a reference map of channels and remove non-suffixed files from the list
     for filename in filenames:
         if filename[filename.rfind("."):] == ".swp":
             continue
@@ -371,26 +389,6 @@ if __name__ == "__main__":
         opus = build_from_directory(path, base=base)
         midi_name = f"{path}.mid"
 
-
-    new_opus = []
-    for i, grouping in enumerate(opus):
-        if end is None:
-            slice_end = len(grouping)
-        else:
-            slice_end = end
-
-        if slice_end - start < len(grouping):
-            new_grouping = Grouping()
-            new_grouping.set_size(slice_end - start)
-            sliced = grouping[start:min(len(grouping), slice_end)]
-            for i, subgrouping in enumerate(sliced):
-                new_grouping[i] = subgrouping
-            grouping = new_grouping
-
-        new_opus.append(grouping)
-
-    opus = new_opus
-
     imap={}
     for i in range(16):
         iset = int(kwargs.get(f"i{i}", 0))
@@ -401,6 +399,6 @@ if __name__ == "__main__":
         vset = int(kwargs.get(f"v{v}", 100))
         vmap[v] = vset
 
-    midi = to_midi(opus, tempo=tempo, imap=imap, vmap=vmap)
+    midi = to_midi(opus, tempo=tempo, imap=imap, vmap=vmap, start=start, end=end)
     midi.save(midi_name)
 

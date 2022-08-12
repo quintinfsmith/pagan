@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import Optional, List, Tuple, Dict
-from apres import NoteOn, NoteOff, PitchWheelChange, MIDI, SetTempo, ProgramChange
+from apres import NoteOn, NoteOff, PitchWheelChange, MIDI, SetTempo, ProgramChange, TimeSignature
 from structures import Grouping, BadStateError
 import re
 
@@ -64,7 +64,6 @@ class MGrouping(Grouping):
         base = kwargs.get("base", 12)
         channel = kwargs.get("channel", 0)
 
-        print(repstring)
         # Remove all Whitespace
         repstring = repstring.strip()
         for character in " \n\t_":
@@ -110,7 +109,6 @@ class MGrouping(Grouping):
                     repeat = -2
                 else:
                     repeat = int(character, base)
-                print(repeat)
                 to_copy = grouping_stack[-1].parent[repeat]
                 grouping_stack[-1][-1] = to_copy.copy()
 
@@ -164,6 +162,33 @@ class MGrouping(Grouping):
 
         return output
 
+    def to_string(self, base=12, toplevel=True) -> str:
+        if self.is_structural():
+            strreps = []
+            for i in range(len(self)):
+                strreps.append(self[i].to_string(base, False))
+            output = self.CH_NEXT.join(strreps)
+            if not toplevel:
+                output = f"{self.CH_OPEN}{output}{self.CH_CLOSE}"
+
+        elif self.is_event():
+            output = ""
+            for note, _, new_press,_ in self.get_events():
+                if new_press:
+                    bignum = (note + 3) // base
+                    littlenum = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"[(note + 3) % base]
+                    output += f"{bignum}{littlenum}"
+                else:
+                    output = self.CH_HOLD
+        elif self.is_open():
+            output = "__"
+
+        needs_convert = f"{self.CH_CLOSE}{self.CH_NEXT}{self.CH_OPEN}"
+        while needs_convert in output:
+            output = output.replace(needs_convert, self.CH_CLOPEN)
+
+        return output
+
     def set_note(self, note: int) -> None:
         if self.is_event():
             self.clear_events()
@@ -187,7 +212,7 @@ def to_midi(opus, **kwargs):
             slice_end = end
 
         if slice_end - start < len(grouping):
-            new_grouping = Grouping()
+            new_grouping = MGrouping()
             new_grouping.set_size(slice_end - start)
             sliced = grouping[start:min(len(grouping), slice_end)]
             for i, subgrouping in enumerate(sliced):
@@ -222,7 +247,6 @@ def to_midi(opus, **kwargs):
         if not grouping.is_structural():
             continue
         channel = kwargs.get('channel', track)
-
 
         current_tick = 0
         running_note_off = None
@@ -285,8 +309,62 @@ def to_midi(opus, **kwargs):
                     )
 
             current_tick += midi.ppqn
-
     return midi
+
+
+def from_midi(midi) -> List[MGrouping]:
+    current_numerator = 4
+    beat_size = midi.ppqn
+    total_beat_offset = 0
+    last_ts_change = 0
+
+    active_notes = {}
+
+    beat_values = {}
+    for tick, event in midi.get_all_events():
+        beat_index = ((tick - last_ts_change) / beat_size) + total_beat_offset
+        inner_beat_offset = (tick - last_ts_change) % beat_size
+
+        if is_note_on(event):
+            if event.note not in beat_values:
+                beat_values[event.note] = []
+            while len(beat_values[event.note]) <= beat_index:
+                new_grouping = MGrouping()
+                new_grouping.set_size(beat_size)
+                beat_values[event.note].append(new_grouping)
+            grouping = beat_values[event.note][beat_index]
+            grouping[inner_beat_offset].add_event(event.note)
+
+        elif is_note_off(event):
+            #TODO
+            pass
+        elif isinstance(event, TimeSignature):
+            total_beat_offset += (tick - last_ts_change) / beat_size
+            last_ts_change = tick
+
+            current_numerator = event.numerator
+            beat_size = int(midi.ppqn // ((2 ** event.denominator) / 4))
+
+        elif isinstance(event, SetTempo):
+            # TODO?
+            pass
+
+    total_beat_offset += (len(midi) - last_ts_change) / beat_size
+
+    opus = []
+    ordered_keys = list(beat_values.keys())
+    ordered_keys.sort()
+    for k in ordered_keys:
+        note = ordered_keys[k]
+        beats = beat_values[note]
+        new_grouping = MGrouping()
+        new_grouping.set_size(total_beat_offset)
+        for i, beat_grouping in enumerate(beats):
+            beat_grouping.reduce()
+            new_grouping[i] = beat_grouping
+        opus.append(new_grouping)
+
+    return opus
 
 def get_bend_values(offset, base) -> Tuple[int, float]:
     """Convert an odd-based note to base-12 note with pitch bend"""
@@ -401,4 +479,53 @@ if __name__ == "__main__":
 
     midi = to_midi(opus, tempo=tempo, imap=imap, vmap=vmap, start=start, end=end)
     midi.save(midi_name)
+    for grouping in opus:
+        print(grouping.to_string())
 
+def is_note_off(event):
+    ''' checks if event is *effectively* a noteOff event '''
+    # NoteOn with 0 velocity are treated as note off
+
+    return (
+        isinstance(event, NoteOn) and
+        event.channel != 9 and
+        event.velocity == 0
+    ) or (
+        isinstance(event, NoteOff) and
+        event.channel != 9
+    )
+
+def is_note_on(event):
+    ''' checks if event is *effectively* a noteOn event '''
+    return (
+        isinstance(event, NoteOn) and
+        event.channel != 9 and
+        event.velocity > 0
+    )
+
+####
+"""
+    @staticmethod
+    def __beats_to_grouping(beats):
+        ''' Convert the beats into 'Grouping' structure for ease of manipulation. '''
+        grouping = Grouping()
+        measures = []
+        for (_, _, m_index, _, _) in beats:
+            while len(measures) <= m_index:
+                measures.append(m_index)
+
+        grouping.set_size(len(measures))
+        for _, _, m_index, numerator, _ in beats:
+            grouping[m_index].set_size(numerator)
+
+        for events, beat_size, m_index, _, bim in beats:
+            beat = grouping[m_index][bim]
+            for (pos, event, _real, _duration) in events:
+                beat.set_size(beat_size)
+
+            for (pos, event, real, _duration) in events:
+                tick = beat[int(pos)]
+                tick.add_event((event, real))
+
+        return grouping
+"""

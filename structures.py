@@ -72,13 +72,13 @@ class Grouping:
         try:
             output = self.divisions[i]
         except KeyError:
-            output = Grouping()
+            output = self.__class__()
             self[i] = output
 
         return output
 
     def __get_slice(self, s: slice) -> Grouping:
-        output = Grouping()
+        output = self.__class__()
         if s.start is None:
             start = 0
         else:
@@ -168,13 +168,14 @@ class Grouping:
                 break
         return is_flat
 
-    def set_size(self, size: int):
+    def set_size(self, size: int, noclobber: bool = False):
         """Resize a grouping if it doesn't have any events. Will clobber existing subgroupings."""
         if self.is_event():
             raise BadStateError()
 
         self.set_state(GroupingState.STRUCTURE)
-        self.divisions = {}
+        if not noclobber:
+            self.divisions = {}
         self.size = size
 
     def resize(self, new_size: int):
@@ -213,8 +214,7 @@ class Grouping:
         indeces.sort()
 
         # Use a temporary Grouping to build the reduced version
-        place_holder = Grouping()
-        stack = [(1, indeces, self.size, place_holder)]
+        place_holder = self.__class__()
         first_pass = True
         while stack:
             denominator, indeces, previous_size, grouping = stack.pop(0)

@@ -197,8 +197,86 @@ class Grouping:
         """Sets the state of the Grouping so that invalid operations can't be applied to them"""
         self.state = new_state
 
-    # TODO: Should this be recursive?
+     # TODO: Should this be recursive?
     def reduce(self, target_size=0):
+        """
+            Reduce a flat list of event groupings into smaller divisions
+            while keeping the correct ratios.
+            (eg midi events to musical notation)
+        """
+        if not self.is_structural():
+            raise BadStateError()
+
+        # Get the active indeces on the current level
+        indeces = []
+        for i, grouping in self.divisions.items():
+            indeces.append((i, grouping))
+        indeces.sort()
+
+        # Use a temporary Grouping to build the reduced version
+        place_holder = self.copy()
+        stack = [(1, indeces, self.size, place_holder)]
+        first_pass = True
+        while stack:
+            denominator, indeces, previous_size, grouping = stack.pop(0)
+            current_size = previous_size // denominator
+
+            # Create separate lists to represent the new equal groupings
+            split_indeces = []
+            for _ in range(denominator):
+                split_indeces.append([])
+            grouping.set_size(denominator)
+
+            # move the indeces into their new lists
+            for i, subgrouping in indeces:
+                split_index = i // current_size
+                split_indeces[split_index].append((i % current_size, subgrouping.copy()))
+
+            for i in range(denominator):
+                working_indeces = split_indeces[i]
+                if not working_indeces:
+                    continue
+
+                working_grouping = grouping[i]
+
+                # Get the most reduced version of each index
+                minimum_divs = []
+                for index, subgrouping in working_indeces:
+                    most_reduced = int(current_size / math.gcd(current_size, index))
+                    # mod the indeces to match their new relative positions
+                    if most_reduced > 1:
+                        minimum_divs.append(most_reduced)
+
+                minimum_divs = list(set(minimum_divs))
+                minimum_divs.sort()
+                if first_pass and target_size > 0:
+                    stack.append((
+                        target_size,
+                        working_indeces,
+                        current_size,
+                        working_grouping
+                    ))
+                elif minimum_divs:
+                    stack.append((
+                        minimum_divs[0],
+                        working_indeces,
+                        current_size,
+                        working_grouping
+                    ))
+                else: # Leaf
+                    _, event_grouping = working_indeces.pop(0)
+                    for event in event_grouping.events:
+                        working_grouping.add_event(event)
+            first_pass = False
+
+        self.set_size(len(place_holder))
+        for i, grouping in place_holder.divisions.items():
+            self[i] = grouping
+
+        return place_holder
+
+    # TODO: Should this be recursive?
+    def old__reduce(self, target_size=0):
         """
             Reduce a flat list of event groupings into smaller divisions
             while keeping the correct ratios.
@@ -216,6 +294,7 @@ class Grouping:
         # Use a temporary Grouping to build the reduced version
         place_holder = self.__class__()
         first_pass = True
+        stack = [(1, indeces, self.size, place_holder)]
         while stack:
             denominator, indeces, previous_size, grouping = stack.pop(0)
             current_size = previous_size // denominator

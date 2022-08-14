@@ -210,12 +210,13 @@ class MGrouping(Grouping):
 
         elif self.is_event():
             output = ""
-            #for note, _, new_press,_ in self.get_events():
-            for note in self.get_events():
-                bignum = (note + 3) // base
-                littlenum = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"[(note + 3) % base]
-                output += f"{bignum}{littlenum}"
-
+            for note, _, new_press,_ in self.get_events():
+                if new_press:
+                    bignum = (note + 3) // base
+                    littlenum = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"[(note + 3) % base]
+                    output += f"{bignum}{littlenum}"
+                else:
+                    output += f"{self.CH_HOLD}{self.CH_HOLD}"
         else:
             output = "__"
 
@@ -224,6 +225,9 @@ class MGrouping(Grouping):
 #            output = output.replace(needs_convert, self.CH_CLOPEN)
 
         return output
+
+    def __str__(self):
+        return self.to_string()
 
     def set_note(self, note: int) -> None:
         if self.is_event():
@@ -234,12 +238,24 @@ class MGrouping(Grouping):
     def unset_note(self) -> None:
         self.clear_events()
 
-def to_midi(opus, **kwargs):
-    tempo = 120
-    if ('tempo' in kwargs):
-        tempo = kwargs['tempo']
-    start = kwargs.get('start', 0)
+def to_midi(opus, **kwargs) -> MIDI:
+    tempo = int(kwargs.get('tempo', 80))
+    start = int(kwargs.get('start', 0))
     end = kwargs.get('end', None)
+    if end is not None:
+        end = int(end)
+
+    imap={}
+    for i in range(16):
+        iset = int(kwargs.get(f"i{i}", 0))
+        imap[i] = iset
+
+    vmap={}
+    for v in range(16):
+        vset = int(kwargs.get(f"v{v}", 100))
+        vmap[v] = vset
+
+
     new_opus = []
     for i, grouping in enumerate(opus):
         if end is None:
@@ -347,7 +363,6 @@ def to_midi(opus, **kwargs):
             current_tick += midi.ppqn
     return midi
 
-
 def from_midi(midi) -> List[MGrouping]:
     current_numerator = 4
     beat_size = midi.ppqn
@@ -358,6 +373,7 @@ def from_midi(midi) -> List[MGrouping]:
 
     beat_values = {}
     max_tick = 0
+    press_map = {}
     for tick, event in midi.get_all_events():
         max_tick = max(tick, tick)
         beat_index = ((tick - last_ts_change) // beat_size) + total_beat_offset
@@ -366,19 +382,48 @@ def from_midi(midi) -> List[MGrouping]:
         if is_note_on(event):
             if event.note not in beat_values:
                 beat_values[event.note] = []
+
             while len(beat_values[event.note]) <= beat_index:
                 new_grouping = MGrouping()
                 new_grouping.set_size(beat_size)
                 beat_values[event.note].append(new_grouping)
+
             grouping = beat_values[event.note][beat_index]
-            grouping[inner_beat_offset].add_event(event.note)
+            grouping[inner_beat_offset].add_event((event.note, 0, True, event.channel))
+            press_map[event.note] = (beat_index, inner_beat_offset)
 
         elif is_note_off(event):
-            #TODO
-            pass
+            if not press_map.get(event.note, False):
+                continue
+
+            if event.note not in beat_values:
+                beat_values[event.note] = []
+
+            while len(beat_values[event.note]) <= beat_index:
+                new_grouping = MGrouping()
+                new_grouping.set_size(beat_size)
+                beat_values[event.note].append(new_grouping)
+
+            original_index = press_map[event.note]
+            for i in range(original_index[1] + 1, len(beat_values[event.note][original_index[0]])):
+                beat_values[event.note][original_index[0]][i].add_event((event.note, 0, False, event.channel))
+
+            for i in range(original_index[0] + 1, beat_index):
+                grouping = beat_values[event.note][i]
+                for j in range(len(grouping)):
+                    grouping[j].add_event((event.note, 0, False, event.channel))
+
+            if original_index[0] != beat_index:
+                for i in range(inner_beat_offset):
+                    beat_values[event.note][beat_index][i].add_event((event.note, 0, False, event.channel))
+            else:
+                for i in range(original_index[1] + 1, inner_beat_offset):
+                    beat_values[event.note][beat_index][i].add_event((event.note, 0, False, event.channel))
+
+            press_map[event.note] = False
 
         elif isinstance(event, TimeSignature):
-            total_beat_offset += (tick - last_ts_change) / beat_size
+            total_beat_offset += (tick - last_ts_change) // beat_size
             last_ts_change = tick
 
             current_numerator = event.numerator
@@ -389,6 +434,8 @@ def from_midi(midi) -> List[MGrouping]:
             pass
 
     total_beat_offset += (max_tick - last_ts_change) // beat_size
+    # Add an extra beat for the midis where the final note isn't on the end of the final beat
+    total_beat_offset += 1
 
     opus = []
     ordered_keys = list(beat_values.keys())
@@ -412,12 +459,14 @@ def get_bend_values(offset, base) -> Tuple[int, float]:
     #print(f"{offset}/{base} = {(note // 12)}{(note % 12)}/12 + {bend}")
     return (note, bend)
 
-def build_from_directory(path, **kwargs):
-    base = kwargs.get('base', 12)
+def build_from_directory(path, **kwargs) -> MIDI:
+    base = int(kwargs.get('base', 12))
+
     channel_map = {}
     suffix_patt = re.compile(".*_(?P<suffix>[0-9A-Z]?)(\..*)?", re.I)
     filenames = os.listdir(path)
     filenames_clean = []
+
     # create a reference map of channels and remove non-suffixed files from the list
     for filename in filenames:
         if filename[filename.rfind("."):] == ".swp":
@@ -429,7 +478,7 @@ def build_from_directory(path, **kwargs):
             channel_map[filename] = channel
             filenames_clean.append(filename)
 
-    output = []
+    master_groupings = []
     for filename in filenames_clean:
 
         content = ""
@@ -443,12 +492,13 @@ def build_from_directory(path, **kwargs):
 
         for x, chunk in enumerate(chunks):
             grouping = MGrouping.from_string(chunk, base=base, channel=channel_map[filename])
-            output.append(grouping)
+            master_groupings.append(grouping)
 
-    return output
+    return to_midi(master_groupings, **kwargs)
 
-def build_from_single_file(path, **kwargs):
-    base = kwargs.get('base', 12)
+def build_from_single_file(path, **kwargs) -> MIDI:
+    base = int(kwargs.get('base', 12))
+
     content = ""
     with open(path, 'r') as fp:
         content = fp.read()
@@ -458,72 +508,60 @@ def build_from_single_file(path, **kwargs):
         if i > 0:
             chunks[i] = f"[{chunk}"
 
-    opus: List[MGrouping] = []
+    master_groupings: List[MGrouping] = []
 
     for x, chunk in enumerate(chunks):
         grouping = MGrouping.from_string(chunk, base=base, channel=x)
-        opus.append(grouping)
+        master_groupings.append(grouping)
 
-    return opus
+    return to_midi(master_groupings, **kwargs)
 
 def get_sys_args():
     import sys
     args = []
     kwargs = {}
-    active_kwarg = None
-    for value in sys.argv[1:]:
-        if '--' == value[0:2]:
-            active_kwarg = value[2:]
-        elif active_kwarg is not None:
-            kwargs[active_kwarg] = value
-            active_kwarg = None
-        else:
-            args.append(value)
+    if len(sys.argv) > 1:
+        active_kwarg = None
+        for value in sys.argv[1:]:
+            if '--' == value[0:2]:
+                active_kwarg = value[2:]
+            elif active_kwarg is not None:
+                kwargs[active_kwarg] = value
+                active_kwarg = None
+            else:
+                args.append(value)
 
     return (args, kwargs)
+
 
 if __name__ == "__main__":
     import os
     args, kwargs = get_sys_args()
-
-    base = int(kwargs.get('base', 12))
-    tempo = int(kwargs.get('tempo', 80))
-    start = int(kwargs.get('start', 0))
-    end = kwargs.get('end', None)
-    if end is not None:
-        end = int(end)
-
     path = args[0]
-    if os.path.isfile(path):
-        opus = build_from_single_file(path, base=base)
-        if "." in path:
-            midi_name = path[0:path.rfind('.')] + ".mid"
-        else:
+    if path[path.rfind("."):].lower() == ".mid":
+        midi = MIDI.load(path)
+        output_type = kwargs.get("output", "stdout")
+        if output_type != "stdout":
+            if os.path.isdir(output_type):
+                os.system("rm " + output_type.replace(" ", "\\ ") + " -rf")
+            os.mkdir(output_type)
+
+        for i, mgrouping in enumerate(from_midi(midi)):
+            if output_type == "stdout":
+                print(str(mgrouping), "\n")
+            else:
+                with open(f"{output_type}/channel_00", "a") as fp:
+                    fp.write(str(mgrouping) + "\n")
+    else:
+        if os.path.isfile(path):
+            midi = build_from_single_file(path, **kwargs)
+            if "." in path:
+                midi_name = path[0:path.rfind('.')] + ".mid"
+            else:
+                midi_name = f"{path}.mid"
+        elif os.path.isdir(path):
+            midi = build_from_directory(path, **kwargs)
             midi_name = f"{path}.mid"
-    elif os.path.isdir(path):
-        opus = build_from_directory(path, base=base)
-        midi_name = f"{path}.mid"
 
-    imap={}
-    for i in range(16):
-        iset = int(kwargs.get(f"i{i}", 0))
-        imap[i] = iset
-
-    vmap={}
-    for v in range(16):
-        vset = int(kwargs.get(f"v{v}", 100))
-        vmap[v] = vset
-
-    midi = to_midi(opus, tempo=tempo, imap=imap, vmap=vmap, start=start, end=end)
-    midi.save(midi_name)
-
-    opus = from_midi(midi)
-    try:
-        os.system("rm tt -rf")
-        os.system("mkdir tt")
-    except: pass
-
-    for grouping in opus:
-        with open("tt/tt_0", "a") as fp:
-            fp.write(grouping.to_string() + "\n")
+        midi.save(midi_name)
 

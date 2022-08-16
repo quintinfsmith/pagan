@@ -133,7 +133,7 @@ class Grouping:
                 if key not in unstructured_splits:
                     unstructured_splits[key] = []
                 unstructured_splits[key].append((path, event))
-
+        tracks = []
         for key, events in unstructured_splits.items():
             grouping = self.__class__()
             grouping.set_size(1)
@@ -144,6 +144,9 @@ class Grouping:
                         working_grouping.set_size(size)
                     working_grouping = working_grouping[x]
                 working_grouping.add_event(event)
+            tracks.append(grouping)
+
+        return tracks
 
     def get_events_mapped(self):
         output = []
@@ -154,36 +157,58 @@ class Grouping:
                     path.insert(0, (i, glength))
                     output.append((path, event))
         elif self.is_event():
-            return ([], self.events)
+            output.append(([], self.events))
 
         return output
 
 
     def merge(self, grouping):
-        if grouping._get_state() != self._get_state():
-            raise BadStateError()
-
         if self.is_structural():
-            self.__merge_structural(grouping)
-        elif self.is_event():
-            self.__merge_event(grouping)
+            if grouping.is_structural():
+                self.__merge_structural(grouping)
+            else:
+                self.__merge_event_into_structural(grouping)
+        else:
+            if grouping.is_structural():
+                self.__merge_structural_into_event(grouping)
+            else:
+                self.__merge_event(grouping)
+
+    def __merge_structural_into_event(self, s_grouping):
+        clone_grouping = self.copy()
+        self.clear_events()
+
+        self.merge(s_grouping)
+        self.merge(clone_grouping)
+
+
+    def __merge_event_into_structural(self, e_grouping):
+        working_grouping = self
+        while working_grouping.is_structural():
+            working_grouping = working_grouping[0]
+
+        working_grouping.merge(e_grouping)
 
     def __merge_event(self, grouping):
         for event in grouping.get_events():
             self.add_event(event)
 
     def __merge_structural(self, grouping):
-        self.flatten()
-
         clone_other = grouping.copy()
-        clone_other.flatten()
 
-        # TODO: Maybe use GCD?
-        new_size = len(self) * len(clone_other)
+        original_size = len(self)
+        # TODO: Find minimum viable size
+        new_size = original_size * len(clone_other)
         self.resize(new_size)
-        clone_other.resize(new_size)
-        for index, value in clone_other.divisions.items():
-            self.divisions[index].merge(value)
+        for index, subgrouping in clone_other.divisions.items():
+            new_index = index * original_size
+            subgrouping_into = self[new_index]
+            if subgrouping_into.is_open():
+                self[new_index] = subgrouping
+            else:
+                subgrouping_into.merge(subgrouping)
+        #TODO: Fix Reduce
+        self.reduce()
 
     def is_structural(self) -> bool:
         """Check if this grouping has sub groupings"""

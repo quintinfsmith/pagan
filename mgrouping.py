@@ -101,6 +101,10 @@ class MGrouping(Grouping):
         CH_REPEAT
     )
 
+    @staticmethod
+    def _channel_splitter(event):
+        return event[3]
+
     def to_midi(self, **kwargs) -> MIDI:
         tempo = int(kwargs.get('tempo', 80))
         start = int(kwargs.get('start', 0))
@@ -108,7 +112,8 @@ class MGrouping(Grouping):
         if end is not None:
             end = int(end)
 
-        new_opus = []
+        new_opus = MGrouping()
+        new_opus.set_size(1)
         for i, grouping in enumerate(self):
             if end is None:
                 slice_end = len(grouping)
@@ -123,7 +128,8 @@ class MGrouping(Grouping):
                     new_grouping[i] = subgrouping
                 grouping = new_grouping
 
-            new_opus.append(grouping)
+            if not grouping.is_open():
+                new_opus.merge(grouping)
 
         midi = MIDI()
 
@@ -137,9 +143,8 @@ class MGrouping(Grouping):
             )
 
         midi.add_event( SetTempo.from_bpm(tempo) )
-
-        tracks = self.split()
-
+        tracks = new_opus.split(self._channel_splitter)
+        print(tracks)
         for track, grouping in enumerate(tracks):
             if not grouping.is_structural():
                 continue
@@ -206,6 +211,7 @@ class MGrouping(Grouping):
                         )
 
                 current_tick += midi.ppqn
+
         return midi
 
     @staticmethod
@@ -472,4 +478,3 @@ def get_bend_values(offset, base) -> Tuple[int, float]:
     bend = v - note
     #print(f"{offset}/{base} = {(note // 12)}{(note % 12)}/12 + {bend}")
     return (note, bend)
-

@@ -17,7 +17,8 @@ class MissingCommaError(Exception):
         if bound_b < len(repstring):
             chunk = chunk[0:-3] + "..."
         msg = f"\nError in beat {beat}\n"
-        msg += f"Can't place notes in structural subgrouping or vice versa. You likely missed a \"{MGrouping.CH_NEXT}\" Here:\n"
+        msg += "Can't place notes in structural subgrouping or vice versa. "
+        msg += f"You likely missed a \"{MGrouping.CH_NEXT}\" Here:\n"
         msg += ("-" * (fail_index - bound_a)) + "!\n"
         msg += chunk + "\n"
         msg += ("-" * (fail_index - bound_a)) + "^"
@@ -29,7 +30,10 @@ class UnclosedGroupingError(Exception):
         bound_a = max(0, index - ERROR_CHUNK_SIZE)
         bound_b = min(len(repstring), index + ERROR_CHUNK_SIZE)
         chunk = repstring[bound_a:bound_b]
-        msg = f"Unmatched \"{MGrouping.CH_OPEN}\" or \"{MGrouping.CH_CLOPEN}\" at position {index}: \n"
+
+        msg = f"Unmatched \"{MGrouping.CH_OPEN}\" or \"{MGrouping.CH_CLOPEN}\" "
+        msg += f"at position {index}: \n"
+
         if bound_a > 0:
             chunk = "..." + chunk[3:]
         if bound_b < len(repstring):
@@ -60,7 +64,6 @@ def is_note_on(event):
         event.velocity > 0
     )
 
-
 class MGrouping(Grouping):
     CH_OPEN = "["
     CH_CLOSE = "]"
@@ -74,14 +77,141 @@ class MGrouping(Grouping):
 
     # NOTE: CH_CLOPEN is a CH_CLOSE, CH_NEXT, and CH_OPEN in that order
     CH_CLOPEN = "|"
-    REL_CHARS = (CH_ADD, CH_SUBTRACT, CH_UP, CH_DOWN, CH_HOLD, CH_REPEAT)
 
-    SPECIAL_CHARS = (CH_OPEN, CH_CLOSE, CH_NEXT, CH_CLOPEN, CH_ADD, CH_SUBTRACT, CH_UP, CH_DOWN, CH_HOLD, CH_REPEAT)
+    # REL_CHARS are the the characters that flag a relative note
+    REL_CHARS = (
+        CH_ADD,
+        CH_SUBTRACT,
+        CH_UP,
+        CH_DOWN,
+        CH_HOLD,
+        CH_REPEAT
+    )
 
+    SPECIAL_CHARS = (
+        CH_OPEN,
+        CH_CLOSE,
+        CH_NEXT,
+        CH_CLOPEN,
+        CH_ADD,
+        CH_SUBTRACT,
+        CH_UP,
+        CH_DOWN,
+        CH_HOLD,
+        CH_REPEAT
+    )
+
+    def to_midi(self, **kwargs) -> MIDI:
+        tempo = int(kwargs.get('tempo', 80))
+        start = int(kwargs.get('start', 0))
+        end = kwargs.get('end', None)
+        if end is not None:
+            end = int(end)
+
+        new_opus = []
+        for i, grouping in enumerate(self):
+            if end is None:
+                slice_end = len(grouping)
+            else:
+                slice_end = end
+
+            if slice_end - start < len(grouping):
+                new_grouping = MGrouping()
+                new_grouping.set_size(slice_end - start)
+                sliced = grouping[start:min(len(grouping), slice_end)]
+                for i, subgrouping in enumerate(sliced):
+                    new_grouping[i] = subgrouping
+                grouping = new_grouping
+
+            new_opus.append(grouping)
+
+        midi = MIDI()
+
+        for i in range(16):
+            midi.add_event(
+                ProgramChange(
+                    int(kwargs.get(f"i{i}", 0)),
+                    channel=i
+                ),
+                tick=0
+            )
+
+        midi.add_event( SetTempo.from_bpm(tempo) )
+
+        tracks = self.split()
+
+        for track, grouping in enumerate(tracks):
+            if not grouping.is_structural():
+                continue
+            channel = kwargs.get('channel', track)
+
+            current_tick = 0
+            running_note_off = None
+            running_pitchwheel_revert = None
+            for m, beat in enumerate(grouping):
+                beat.flatten()
+                div_size = midi.ppqn / len(beat)
+                open_events = []
+                for i, subgrouping in enumerate(beat):
+                    for event in subgrouping.events:
+                        if not event:
+                            continue
+
+                        open_events.append(event)
+                        note, pitch_bend, new_press, channel = event
+                        if new_press:
+                            if pitch_bend != 0:
+                                midi.add_event(
+                                    PitchWheelChange(
+                                        channel=channel,
+                                        value=pitch_bend
+                                    ),
+                                    tick=int(current_tick + (i * div_size)),
+                                )
+
+                            midi.add_event(
+                                NoteOn(
+                                    note=note,
+                                    channel=channel,
+                                    velocity=int(kwargs.get(f"v{channel}", 100))
+                                ),
+                                tick=int(current_tick + (i * div_size)),
+                            )
+                        else:
+                            if running_note_off is not None:
+                                midi.detach_event(running_note_off.get_uuid())
+                                running_note_off = None
+                            if running_pitchwheel_revert is not None:
+                                midi.detach_event(running_pitchwheel_revert.get_uuid())
+                                running_pitchwheel_revert = None
+
+                        if pitch_bend != 0:
+                            running_pitchwheel_revert = PitchWheelChange(
+                                channel=channel,
+                                value=0
+                            )
+                            midi.add_event(
+                                running_pitchwheel_revert,
+                                tick=int(current_tick + ((i + 1) * div_size)),
+                            )
+
+                        running_note_off = NoteOff(
+                            note=note,
+                            channel=channel,
+                        )
+
+                        midi.add_event(
+                            running_note_off,
+                            tick=int(current_tick + ((i + 1) * div_size)),
+                        )
+
+                current_tick += midi.ppqn
+        return midi
 
     @staticmethod
     def from_string(repstring: str, **kwargs):
-        # NOTE: Should the pitch bend be solely based on the fraction or should it consider the (1 / base)?
+        # NOTE: Should the pitch bend be solely based on the
+        #   fraction or should it consider the (1 / base)?
         base = kwargs.get("base", 12)
         channel = kwargs.get("channel", 0)
 
@@ -130,10 +260,13 @@ class MGrouping(Grouping):
                     repeat = -2
                 else:
                     repeat = int(character, base)
-                to_copy = grouping_stack[-1].parent[repeat]
-                grouping_stack[-1][-1] = to_copy.copy()
+                parent = grouping_stack[-1].get_parent()
+                if parent is not None:
+                    to_copy = parent[repeat]
+                    grouping_stack[-1][-1] = to_copy.copy()
 
                 relative_flag = None
+
             elif relative_flag is not None:
                 odd_note = previous_note
                 if relative_flag == MGrouping.CH_SUBTRACT:
@@ -238,218 +371,99 @@ class MGrouping(Grouping):
     def unset_note(self) -> None:
         self.clear_events()
 
-def to_midi(opus, **kwargs) -> MIDI:
-    tempo = int(kwargs.get('tempo', 80))
-    start = int(kwargs.get('start', 0))
-    end = kwargs.get('end', None)
-    if end is not None:
-        end = int(end)
+    @staticmethod
+    def from_midi(midi) -> MGrouping:
+        beat_size = midi.ppqn
+        total_beat_offset = 0
+        last_ts_change = 0
 
-    imap={}
-    for i in range(16):
-        iset = int(kwargs.get(f"i{i}", 0))
-        imap[i] = iset
+        beat_values = {}
+        max_tick = 0
+        press_map = {}
+        for tick, event in midi.get_all_events():
+            max_tick = max(tick, tick)
+            beat_index = ((tick - last_ts_change) // beat_size) + total_beat_offset
+            inner_beat_offset = (tick - last_ts_change) % beat_size
 
-    vmap={}
-    for v in range(16):
-        vset = int(kwargs.get(f"v{v}", 100))
-        vmap[v] = vset
+            if is_note_on(event):
+                if event.note not in beat_values:
+                    beat_values[event.note] = []
 
+                while len(beat_values[event.note]) <= beat_index:
+                    new_grouping = MGrouping()
+                    new_grouping.set_size(beat_size)
+                    beat_values[event.note].append(new_grouping)
 
-    new_opus = []
-    for i, grouping in enumerate(opus):
-        if end is None:
-            slice_end = len(grouping)
-        else:
-            slice_end = end
+                grouping = beat_values[event.note][beat_index]
+                grouping[inner_beat_offset].add_event((event.note, 0, True, event.channel))
+                press_map[event.note] = (beat_index, inner_beat_offset)
 
-        if slice_end - start < len(grouping):
+            elif is_note_off(event):
+                if not press_map.get(event.note, False):
+                    continue
+
+                if event.note not in beat_values:
+                    beat_values[event.note] = []
+
+                while len(beat_values[event.note]) <= beat_index:
+                    new_grouping = MGrouping()
+                    new_grouping.set_size(beat_size)
+                    beat_values[event.note].append(new_grouping)
+
+                original_index = press_map[event.note]
+
+                # Add filler holds for all the groupings in between press and the release beat
+                for i in range(original_index[0] + 1, beat_index):
+                    grouping = beat_values[event.note][i]
+                    for j in range(len(grouping)):
+                        grouping[j].add_event((event.note, 0, False, event.channel))
+
+                grouping = beat_values[event.note][beat_index]
+                if original_index[0] != beat_index:
+                    # Add holds on the current beat up to the current inner beat_offset
+                    for i in range(inner_beat_offset):
+                        grouping[i].add_event((event.note, 0, False, event.channel))
+                else:
+                    # Add holds for the remainder of the inner grouping
+                    for i in range(original_index[1] + 1, len(beat_values[event.note][original_index[0]])):
+                        grouping = beat_values[event.note][original_index[0]]
+                        grouping[i].add_event((event.note, 0, False, event.channel))
+
+                    # Add holds between the inner offsets
+                    for i in range(original_index[1] + 1, inner_beat_offset):
+                        grouping[i].add_event((event.note, 0, False, event.channel))
+
+                press_map[event.note] = False
+
+            elif isinstance(event, TimeSignature):
+                total_beat_offset += (tick - last_ts_change) // beat_size
+                last_ts_change = tick
+                beat_size = int(midi.ppqn // ((2 ** event.denominator) / 4))
+
+            elif isinstance(event, SetTempo):
+                # TODO?
+                pass
+
+        total_beat_offset += (max_tick - last_ts_change) // beat_size
+        # Add an extra beat for the midis where the final note isn't on the end of the final beat
+        total_beat_offset += 1
+
+        opus = MGrouping()
+        opus.set_size(1)
+
+        ordered_keys = list(beat_values.keys())
+        ordered_keys.sort()
+        for note in ordered_keys:
+            beats = beat_values[note]
             new_grouping = MGrouping()
-            new_grouping.set_size(slice_end - start)
-            sliced = grouping[start:min(len(grouping), slice_end)]
-            for i, subgrouping in enumerate(sliced):
-                new_grouping[i] = subgrouping
-            grouping = new_grouping
+            new_grouping.set_size(total_beat_offset)
+            for i, beat_grouping in enumerate(beats):
+                new_grouping[i] = beat_grouping
+                new_grouping[i].reduce()
+            opus.merge(new_grouping)
 
-        new_opus.append(grouping)
-    opus = new_opus
+        return opus
 
-    midi = MIDI()
-
-    imap = kwargs.get('imap', {})
-    for i, program in imap.items():
-        midi.add_event(
-            ProgramChange(
-                program,
-                channel=i
-            ),
-            tick=0
-        )
-
-    vmap = kwargs.get('vmap', {})
-
-
-    midi.add_event( SetTempo.from_bpm(tempo) )
-    if opus.__class__ == list:
-        tracks = opus
-    else:
-        tracks = [opus]
-
-    for track, grouping in enumerate(tracks):
-        if not grouping.is_structural():
-            continue
-        channel = kwargs.get('channel', track)
-
-        current_tick = 0
-        running_note_off = None
-        running_pitchwheel_revert = None
-        for m, beat in enumerate(grouping):
-            beat.flatten()
-            div_size = midi.ppqn / len(beat)
-            open_events = []
-            for i, subgrouping in enumerate(beat):
-                for event in subgrouping.events:
-                    if not event:
-                        continue
-
-                    open_events.append(event)
-                    note, pitch_bend, new_press, channel = event
-                    if new_press:
-                        if pitch_bend != 0:
-                            midi.add_event(
-                                PitchWheelChange(
-                                    channel=channel,
-                                    value=pitch_bend
-                                ),
-                                tick=int(current_tick + (i * div_size)),
-                            )
-
-                        midi.add_event(
-                            NoteOn(
-                                note=note,
-                                channel=channel,
-                                velocity=vmap.get(channel, 100)
-                            ),
-                            tick=int(current_tick + (i * div_size)),
-                        )
-                    else:
-                        if running_note_off is not None:
-                            midi.detach_event(running_note_off.get_uuid())
-                            running_note_off = None
-                        if running_pitchwheel_revert is not None:
-                            midi.detach_event(running_pitchwheel_revert.get_uuid())
-                            running_pitchwheel_revert = None
-
-                    if pitch_bend != 0:
-                        running_pitchwheel_revert = PitchWheelChange(
-                            channel=channel,
-                            value=0
-                        )
-                        midi.add_event(
-                            running_pitchwheel_revert,
-                            tick=int(current_tick + ((i + 1) * div_size)),
-                        )
-
-                    running_note_off = NoteOff(
-                        note=note,
-                        channel=channel,
-                    )
-
-                    midi.add_event(
-                        running_note_off,
-                        tick=int(current_tick + ((i + 1) * div_size)),
-                    )
-
-            current_tick += midi.ppqn
-    return midi
-
-def from_midi(midi) -> List[MGrouping]:
-    current_numerator = 4
-    beat_size = midi.ppqn
-    total_beat_offset = 0
-    last_ts_change = 0
-
-    active_notes = {}
-
-    beat_values = {}
-    max_tick = 0
-    press_map = {}
-    for tick, event in midi.get_all_events():
-        max_tick = max(tick, tick)
-        beat_index = ((tick - last_ts_change) // beat_size) + total_beat_offset
-        inner_beat_offset = (tick - last_ts_change) % beat_size
-
-        if is_note_on(event):
-            if event.note not in beat_values:
-                beat_values[event.note] = []
-
-            while len(beat_values[event.note]) <= beat_index:
-                new_grouping = MGrouping()
-                new_grouping.set_size(beat_size)
-                beat_values[event.note].append(new_grouping)
-
-            grouping = beat_values[event.note][beat_index]
-            grouping[inner_beat_offset].add_event((event.note, 0, True, event.channel))
-            press_map[event.note] = (beat_index, inner_beat_offset)
-
-        elif is_note_off(event):
-            if not press_map.get(event.note, False):
-                continue
-
-            if event.note not in beat_values:
-                beat_values[event.note] = []
-
-            while len(beat_values[event.note]) <= beat_index:
-                new_grouping = MGrouping()
-                new_grouping.set_size(beat_size)
-                beat_values[event.note].append(new_grouping)
-
-            original_index = press_map[event.note]
-            for i in range(original_index[1] + 1, len(beat_values[event.note][original_index[0]])):
-                beat_values[event.note][original_index[0]][i].add_event((event.note, 0, False, event.channel))
-
-            for i in range(original_index[0] + 1, beat_index):
-                grouping = beat_values[event.note][i]
-                for j in range(len(grouping)):
-                    grouping[j].add_event((event.note, 0, False, event.channel))
-
-            if original_index[0] != beat_index:
-                for i in range(inner_beat_offset):
-                    beat_values[event.note][beat_index][i].add_event((event.note, 0, False, event.channel))
-            else:
-                for i in range(original_index[1] + 1, inner_beat_offset):
-                    beat_values[event.note][beat_index][i].add_event((event.note, 0, False, event.channel))
-
-            press_map[event.note] = False
-
-        elif isinstance(event, TimeSignature):
-            total_beat_offset += (tick - last_ts_change) // beat_size
-            last_ts_change = tick
-
-            current_numerator = event.numerator
-            beat_size = int(midi.ppqn // ((2 ** event.denominator) / 4))
-
-        elif isinstance(event, SetTempo):
-            # TODO?
-            pass
-
-    total_beat_offset += (max_tick - last_ts_change) // beat_size
-    # Add an extra beat for the midis where the final note isn't on the end of the final beat
-    total_beat_offset += 1
-
-    opus = []
-    ordered_keys = list(beat_values.keys())
-    ordered_keys.sort()
-    for note in ordered_keys:
-        beats = beat_values[note]
-        new_grouping = MGrouping()
-        new_grouping.set_size(total_beat_offset)
-        for i, beat_grouping in enumerate(beats):
-            new_grouping[i] = beat_grouping
-            new_grouping[i].reduce()
-        opus.append(new_grouping)
-
-    return opus
 
 def get_bend_values(offset, base) -> Tuple[int, float]:
     """Convert an odd-based note to base-12 note with pitch bend"""
@@ -458,110 +472,4 @@ def get_bend_values(offset, base) -> Tuple[int, float]:
     bend = v - note
     #print(f"{offset}/{base} = {(note // 12)}{(note % 12)}/12 + {bend}")
     return (note, bend)
-
-def build_from_directory(path, **kwargs) -> MIDI:
-    base = int(kwargs.get('base', 12))
-
-    channel_map = {}
-    suffix_patt = re.compile(".*_(?P<suffix>[0-9A-Z]?)(\..*)?", re.I)
-    filenames = os.listdir(path)
-    filenames_clean = []
-
-    # create a reference map of channels and remove non-suffixed files from the list
-    for filename in filenames:
-        if filename[filename.rfind("."):] == ".swp":
-            continue
-        channel = None
-        for hit in suffix_patt.finditer(filename):
-            channel = int(hit.group('suffix'), 16)
-        if channel is not None:
-            channel_map[filename] = channel
-            filenames_clean.append(filename)
-
-    master_groupings = []
-    for filename in filenames_clean:
-
-        content = ""
-        with open(f"{path}/{filename}", 'r') as fp:
-            content = fp.read()
-
-        chunks = content.split("\n[")
-        for i, chunk in enumerate(chunks):
-            if i > 0:
-                chunks[i] = f"[{chunk}"
-
-        for x, chunk in enumerate(chunks):
-            grouping = MGrouping.from_string(chunk, base=base, channel=channel_map[filename])
-            master_groupings.append(grouping)
-
-    return to_midi(master_groupings, **kwargs)
-
-def build_from_single_file(path, **kwargs) -> MIDI:
-    base = int(kwargs.get('base', 12))
-
-    content = ""
-    with open(path, 'r') as fp:
-        content = fp.read()
-
-    chunks = content.split("\n[")
-    for i, chunk in enumerate(chunks):
-        if i > 0:
-            chunks[i] = f"[{chunk}"
-
-    master_groupings: List[MGrouping] = []
-
-    for x, chunk in enumerate(chunks):
-        grouping = MGrouping.from_string(chunk, base=base, channel=x)
-        master_groupings.append(grouping)
-
-    return to_midi(master_groupings, **kwargs)
-
-def get_sys_args():
-    import sys
-    args = []
-    kwargs = {}
-    if len(sys.argv) > 1:
-        active_kwarg = None
-        for value in sys.argv[1:]:
-            if '--' == value[0:2]:
-                active_kwarg = value[2:]
-            elif active_kwarg is not None:
-                kwargs[active_kwarg] = value
-                active_kwarg = None
-            else:
-                args.append(value)
-
-    return (args, kwargs)
-
-
-if __name__ == "__main__":
-    import os
-    args, kwargs = get_sys_args()
-    path = args[0]
-    if path[path.rfind("."):].lower() == ".mid":
-        midi = MIDI.load(path)
-        output_type = kwargs.get("output", "stdout")
-        if output_type != "stdout":
-            if os.path.isdir(output_type):
-                os.system("rm " + output_type.replace(" ", "\\ ") + " -rf")
-            os.mkdir(output_type)
-
-        for i, mgrouping in enumerate(from_midi(midi)):
-            if output_type == "stdout":
-                print(str(mgrouping), "\n")
-            else:
-                with open(f"{output_type}/channel_00", "a") as fp:
-                    fp.write(str(mgrouping) + "\n")
-    else:
-        if os.path.isfile(path):
-            midi = build_from_single_file(path, **kwargs)
-            if "." in path:
-                midi_name = path[0:path.rfind('.')] + ".mid"
-            else:
-                midi_name = f"{path}.mid"
-        elif os.path.isdir(path):
-            midi = build_from_directory(path, **kwargs)
-            midi_name = f"{path}.mid"
-
-        midi.save(midi_name)
 

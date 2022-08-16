@@ -118,8 +118,46 @@ class Grouping:
         grouping.parent = self
         self.divisions[i] = grouping
 
+    def get_parent(self) -> Optional[Grouping]:
+        return self.parent
+
     def _get_state(self) -> GroupingState:
         return self.state
+
+    def split(self, split_func) -> List[Grouping]:
+        mapped_events = self.get_events_mapped()
+        unstructured_splits = {}
+        for path, events in mapped_events:
+            for event in events:
+                key = split_func(event)
+                if key not in unstructured_splits:
+                    unstructured_splits[key] = []
+                unstructured_splits[key].append((path, event))
+
+        for key, events in unstructured_splits.items():
+            grouping = self.__class__()
+            grouping.set_size(1)
+            for (path, event) in events:
+                working_grouping = grouping
+                for (x, size) in path:
+                    if not working_grouping.is_structural():
+                        working_grouping.set_size(size)
+                    working_grouping = working_grouping[x]
+                working_grouping.add_event(event)
+
+    def get_events_mapped(self):
+        output = []
+        if self.is_structural():
+            for i, grouping in self.divisions.items():
+                glength = len(grouping)
+                for (path, event) in grouping.get_events_mapped():
+                    path.insert(0, (i, glength))
+                    output.append((path, event))
+        elif self.is_event():
+            return ([], self.events)
+
+        return output
+
 
     def merge(self, grouping):
         if grouping._get_state() != self._get_state():

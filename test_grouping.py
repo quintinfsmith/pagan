@@ -36,7 +36,7 @@ class GroupingTest(unittest.TestCase):
 
     def test_merge(self):
         pairs = [
-            (Grouping(), [4,3,5, 13]),
+            (Grouping(), [4,3,5, 13, 11, 35]),
             (Grouping(), [7,11, 2])
         ]
         numerator = 0

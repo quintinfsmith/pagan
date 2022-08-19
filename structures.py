@@ -352,11 +352,40 @@ class Grouping:
         self.set_size(len(place_holder))
         for i, grouping in place_holder.divisions.items():
             self[i] = grouping
+    # Attempt at speeding things up drastically slowed things down
+    #def flatten(self):
+    #    mapped_events = self.get_events_mapped()
+    #    sizes = set()
+    #    numerated = []
+    #    for path, event in mapped_events:
+    #        # Find a common denominator
+    #        denominator = 1
+    #        for i, (_x, size) in enumerate(path[::-1]):
+    #            denominator *= int(math.pow(size, i + 1))
+
+    #        numerator = 0
+    #        numerator_factor = 1
+    #        for x, size in path:
+    #            numerator_factor *= size
+    #            numerator += (x * denominator) // numerator_factor
+
+    #        gcd = math.gcd(numerator, denominator)
+    #        numerated.append((numerator, denominator, event))
+    #        sizes.add(denominator)
+
+    #    new_size = math.lcm(*list(sizes))
+    #    self.set_size(new_size)
+
+    #    for numerator, denominator, event in numerated:
+    #        position = numerator * new_size // denominator
+    #        self[position].add_event(event)
+
 
     def flatten(self):
         """Merge all subgroupings into single level, preserving ratios"""
         # TODO: This gets pretty slow when 3+ deep
-        # I think if I just do a traversal instead of recursively flattening, it may speed things up
+        # Tried a different method, added 10 seconds.
+        # May need to do this in rust.
         sizes = []
         subgroup_backup = []
         original_size = self.size

@@ -36,12 +36,15 @@ class GroupingTest(unittest.TestCase):
 
     def test_merge(self):
         pairs = [
-            (Grouping(), [4,3,5]),
-            (Grouping(), [7,11])
+            (Grouping(), [4,3,5, 13]),
+            (Grouping(), [7,11, 2])
         ]
         numerator = 0
         for i, (topgrouping, sizes) in enumerate(pairs):
-            lcm = math.lcm(*sizes)
+            lcm = 1
+            for s in sizes:
+                lcm *= s
+
             stack = [(0, 0, lcm, topgrouping)]
             while stack:
                 depth, xoffset_total, parent_size, grouping = stack.pop()
@@ -74,16 +77,17 @@ class GroupingTest(unittest.TestCase):
 
         ga.flatten()
         for path, event in events:
-            print(path, event, len(ga))
             sizes = []
             offset = 0
             reducer = 1
             for (i, size) in path:
                 reducer *= size
-                offset += (1 / reducer) * i
+                # Keeping the offset large here to keep rounding errors at bay
+                offset += (len(ga) * i / reducer)
 
-            assert offset == event[2] / event[3]
-            assert event in ga[int(offset * len(ga))].get_events()
+            assert offset / len(ga) == event[2] / event[3]
+            assert offset % 1 == 0
+            assert event in ga[int(offset)].get_events()
 
 
     def test_flatten(self):

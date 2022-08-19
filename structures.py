@@ -127,12 +127,12 @@ class Grouping:
     def split(self, split_func) -> List[Grouping]:
         mapped_events = self.get_events_mapped()
         unstructured_splits = {}
-        for path, events in mapped_events:
-            for event in events:
-                key = split_func(event)
-                if key not in unstructured_splits:
-                    unstructured_splits[key] = []
-                unstructured_splits[key].append((path, event))
+        for path, event in mapped_events:
+            key = split_func(event)
+            if key not in unstructured_splits:
+                unstructured_splits[key] = []
+            unstructured_splits[key].append((path, event))
+
         tracks = []
         for key, events in unstructured_splits.items():
             grouping = self.__class__()
@@ -142,7 +142,15 @@ class Grouping:
                 for (x, size) in path:
                     if not working_grouping.is_structural():
                         working_grouping.set_size(size)
+
+                    elif len(working_grouping) != size:
+                        working_grouping.set_size(size)
                     working_grouping = working_grouping[x]
+
+                working_grouping = grouping
+                for (x, size) in path:
+                    working_grouping = working_grouping[x]
+
                 working_grouping.add_event(event)
             tracks.append(grouping)
 
@@ -152,23 +160,28 @@ class Grouping:
         output = []
         if self.is_structural():
             for i, grouping in self.divisions.items():
-                glength = len(grouping)
                 for (path, event) in grouping.get_events_mapped():
-                    path.insert(0, (i, glength))
+                    path.insert(0, (i, len(self)))
                     output.append((path, event))
+
         elif self.is_event():
-            output.append(([], self.events))
+            for e in self.events:
+                output.append(([], e))
+
 
         return output
 
 
     def merge(self, grouping):
+        if grouping.is_open():
+            return
+
         if self.is_structural():
             if grouping.is_structural():
                 self.__merge_structural(grouping)
             else:
                 self.__merge_event_into_structural(grouping)
-        else:
+        elif not grouping.is_open():
             if grouping.is_structural():
                 self.__merge_structural_into_event(grouping)
             else:
@@ -178,37 +191,46 @@ class Grouping:
         clone_grouping = self.copy()
         self.clear_events()
 
-        self.merge(s_grouping)
-        self.merge(clone_grouping)
+        self.set_size(len(s_grouping))
+        self.__merge_structural(s_grouping)
 
+        self.__merge_event_into_structural(clone_grouping)
 
     def __merge_event_into_structural(self, e_grouping):
         working_grouping = self
         while working_grouping.is_structural():
             working_grouping = working_grouping[0]
 
-        working_grouping.merge(e_grouping)
+        for event in e_grouping.get_events():
+            working_grouping.add_event(event)
 
     def __merge_event(self, grouping):
-        for event in grouping.get_events():
-            self.add_event(event)
+        try:
+            for event in grouping.get_events():
+                self.add_event(event)
+        except BadStateError:
+            pass
 
     def __merge_structural(self, grouping):
-        clone_other = grouping.copy()
-
         original_size = len(self)
-        # TODO: Find minimum viable size
-        new_size = original_size * len(clone_other)
+        clone = grouping.copy()
+        clone.flatten()
+        self.flatten()
+
+        new_size = math.lcm(len(self), len(clone))
+        factor = new_size // len(clone)
         self.resize(new_size)
-        for index, subgrouping in clone_other.divisions.items():
-            new_index = index * original_size
+
+        for index, subgrouping in clone.divisions.items():
+            new_index = index * factor
             subgrouping_into = self[new_index]
+
             if subgrouping_into.is_open():
                 self[new_index] = subgrouping
             else:
                 subgrouping_into.merge(subgrouping)
-        #TODO: Fix Reduce
-        self.reduce()
+
+        self.reduce(max(original_size, len(grouping)))
 
     def is_structural(self) -> bool:
         """Check if this grouping has sub groupings"""
@@ -260,8 +282,7 @@ class Grouping:
         """Sets the state of the Grouping so that invalid operations can't be applied to them"""
         self.state = new_state
 
-     # TODO: Should this be recursive?
-    def reduce(self, target_size=0):
+    def reduce(self, target_size=1):
         """
             Reduce a flat list of event groupings into smaller divisions
             while keeping the correct ratios.
@@ -269,6 +290,9 @@ class Grouping:
         """
         if not self.is_structural():
             raise BadStateError()
+
+        if not self.is_flat():
+            self.flatten()
 
         # Get the active indeces on the current level
         indeces = []
@@ -278,7 +302,7 @@ class Grouping:
 
         # Use a temporary Grouping to build the reduced version
         place_holder = self.copy()
-        stack = [(1, indeces, self.size, place_holder)]
+        stack = [(target_size, indeces, self.size, place_holder)]
         first_pass = True
         while stack:
             denominator, indeces, previous_size, grouping = stack.pop(0)
@@ -312,14 +336,7 @@ class Grouping:
 
                 minimum_divs = list(set(minimum_divs))
                 minimum_divs.sort()
-                if first_pass and target_size > 0:
-                    stack.append((
-                        target_size,
-                        working_indeces,
-                        current_size,
-                        working_grouping
-                    ))
-                elif minimum_divs:
+                if minimum_divs:
                     stack.append((
                         minimum_divs[0],
                         working_indeces,
@@ -336,89 +353,8 @@ class Grouping:
         for i, grouping in place_holder.divisions.items():
             self[i] = grouping
 
-        return place_holder
-
-    # TODO: Should this be recursive?
-    def old__reduce(self, target_size=0):
-        """
-            Reduce a flat list of event groupings into smaller divisions
-            while keeping the correct ratios.
-            (eg midi events to musical notation)
-        """
-        if not self.is_structural():
-            raise BadStateError()
-
-        # Get the active indeces on the current level
-        indeces = []
-        for i, grouping in self.divisions.items():
-            indeces.append((i, grouping))
-        indeces.sort()
-
-        # Use a temporary Grouping to build the reduced version
-        place_holder = self.__class__()
-        first_pass = True
-        stack = [(1, indeces, self.size, place_holder)]
-        while stack:
-            denominator, indeces, previous_size, grouping = stack.pop(0)
-            current_size = previous_size // denominator
-
-            # Create separate lists to represent the new equal groupings
-            split_indeces = []
-            for _ in range(denominator):
-                split_indeces.append([])
-            grouping.set_size(denominator)
-
-            # move the indeces into their new lists
-            for i, subgrouping in indeces:
-                split_index = i // current_size
-                split_indeces[split_index].append((i % current_size, subgrouping))
-
-            for i in range(denominator):
-                working_indeces = split_indeces[i]
-                if not working_indeces:
-                    continue
-
-                working_grouping = grouping[i]
-
-                # Get the most reduced version of each index
-                minimum_divs = []
-                for index, subgrouping in working_indeces:
-                    most_reduced = int(current_size / math.gcd(current_size, index))
-                    # mod the indeces to match their new relative positions
-                    if most_reduced > 1:
-                        minimum_divs.append(most_reduced)
-
-                minimum_divs = list(set(minimum_divs))
-                minimum_divs.sort()
-                if first_pass and target_size > 0:
-                    stack.append((
-                        target_size,
-                        working_indeces,
-                        current_size,
-                        working_grouping
-                    ))
-                elif minimum_divs:
-                    stack.append((
-                        minimum_divs[0],
-                        working_indeces,
-                        current_size,
-                        working_grouping
-                    ))
-                else: # Leaf
-                    _, event_grouping = working_indeces.pop(0)
-                    for event in event_grouping.events:
-                        working_grouping.add_event(event)
-            first_pass = False
-
-        self.set_size(len(place_holder[0]))
-        for i, grouping in place_holder[0].divisions.items():
-            self[i] = grouping
-
-        return place_holder
-
     def flatten(self):
         """Merge all subgroupings into single level, preserving ratios"""
-
         sizes = []
         subgroup_backup = []
         original_size = self.size
@@ -509,6 +445,20 @@ class Grouping:
             new_grouping.events.add(event)
 
         return new_grouping
+
+    def crop_redundancies(self):
+        if not self.is_structural():
+            return
+
+        for i, div in self.divisions.items():
+            if not div.is_structural():
+                continue
+
+            div.crop_redundancies()
+
+            if len(div) == 1:
+                self.divisions[i] = div[0]
+
 
 def get_prime_factors(n):
     primes = []

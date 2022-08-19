@@ -112,25 +112,27 @@ class MGrouping(Grouping):
         if end is not None:
             end = int(end)
 
-        new_opus = MGrouping()
-        new_opus.set_size(1)
-        for i, grouping in enumerate(self):
-            if end is None:
-                slice_end = len(grouping)
-            else:
-                slice_end = end
+        #new_opus = MGrouping()
+        #new_opus.set_size(1)
+        #if end is None:
+        #    slice_end = len(grouping)
+        #else:
+        #    slice_end = end
 
-            if slice_end - start < len(grouping):
-                new_grouping = MGrouping()
-                new_grouping.set_size(slice_end - start)
-                sliced = grouping[start:min(len(grouping), slice_end)]
-                for i, subgrouping in enumerate(sliced):
-                    new_grouping[i] = subgrouping
-                grouping = new_grouping
+        #if slice_end - start < len(grouping):
+        #    for i, grouping in enumerate(self):
+        #        new_grouping = MGrouping()
+        #        new_grouping.set_size(slice_end - start)
+        #        sliced = grouping[start:min(len(grouping), slice_end)]
+        #        for i, subgrouping in enumerate(sliced):
+        #            new_grouping[i] = subgrouping
+        #        grouping = new_grouping
 
-            if not grouping.is_open():
-                new_opus.merge(grouping)
+        #    #print(f"{i}/{grouping}")
+        #    if not grouping.is_open():
+        #        new_opus.merge(grouping)
 
+        new_opus = self
         midi = MIDI()
 
         for i in range(16):
@@ -144,19 +146,27 @@ class MGrouping(Grouping):
 
         midi.add_event( SetTempo.from_bpm(tempo) )
         tracks = new_opus.split(self._channel_splitter)
-        print(tracks)
         for track, grouping in enumerate(tracks):
             if not grouping.is_structural():
                 continue
+
             channel = kwargs.get('channel', track)
 
             current_tick = 0
             running_note_off = None
             running_pitchwheel_revert = None
             for m, beat in enumerate(grouping):
-                beat.flatten()
+                if not beat.is_structural():
+                    parent_grouping = MGrouping()
+                    parent_grouping.set_size(1)
+                    parent_grouping[0] = beat
+                    beat = parent_grouping
+
+                if not beat.is_flat():
+                    beat.flatten()
                 div_size = midi.ppqn / len(beat)
                 open_events = []
+
                 for i, subgrouping in enumerate(beat):
                     for event in subgrouping.events:
                         if not event:
@@ -202,12 +212,13 @@ class MGrouping(Grouping):
 
                         running_note_off = NoteOff(
                             note=note,
-                            channel=channel,
+                            channel=channel
                         )
 
                         midi.add_event(
                             running_note_off,
-                            tick=int(current_tick + ((i + 1) * div_size)),
+                            #tick=int(current_tick + ((i + 1) * div_size)),
+                            tick=int(current_tick + 120),
                         )
 
                 current_tick += midi.ppqn
@@ -465,7 +476,7 @@ class MGrouping(Grouping):
             new_grouping.set_size(total_beat_offset)
             for i, beat_grouping in enumerate(beats):
                 new_grouping[i] = beat_grouping
-                new_grouping[i].reduce()
+
             opus.merge(new_grouping)
 
         return opus

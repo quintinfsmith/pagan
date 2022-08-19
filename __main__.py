@@ -28,6 +28,7 @@ def build_from_directory(path, **kwargs) -> MIDI:
     opus = MGrouping()
     opus.set_size(1)
 
+    beat_count = 1
     for filename in filenames_clean:
         content = ""
         with open(f"{path}/{filename}", 'r') as fp:
@@ -40,7 +41,12 @@ def build_from_directory(path, **kwargs) -> MIDI:
 
         for x, chunk in enumerate(chunks):
             grouping = MGrouping.from_string(chunk, base=base, channel=channel_map[filename])
+            beat_count = max(len(grouping), beat_count)
+            grouping.crop_redundancies()
             opus.merge(grouping)
+
+    opus.flatten()
+    opus.reduce(beat_count)
     return opus.to_midi(**kwargs)
 
 def build_from_single_file(path, **kwargs) -> MIDI:

@@ -355,6 +355,8 @@ class Grouping:
 
     def flatten(self):
         """Merge all subgroupings into single level, preserving ratios"""
+        # TODO: This gets pretty slow when 3+ deep
+        # I think if I just do a traversal instead of recursively flattening, it may speed things up
         sizes = []
         subgroup_backup = []
         original_size = self.size

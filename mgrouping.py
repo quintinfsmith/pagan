@@ -298,8 +298,12 @@ class MGrouping(Grouping):
                     note, bend = get_bend_values(odd_note, base)
                     note -= 3 # Use A (-3) as first instead of C
                     leaf.add_event((note, bend, relative_flag != MGrouping.CH_HOLD, channel))
-                except BadStateError as b:
-                    raise MissingCommaError(repstring, i - 1, len(output) - 1) from b
+                except BadStateError as badstateerror:
+                    raise MissingCommaError(
+                        repstring,
+                        i - 1,
+                        len(output) - 1
+                    ) from badstateerror
 
                 previous_note = odd_note
                 relative_flag = None
@@ -320,8 +324,13 @@ class MGrouping(Grouping):
                         note, bend = get_bend_values(odd_note, base)
                         note -= 3 # Use A as first instead of C
                         leaf.add_event((note, bend, True, channel))
-                    except BadStateError as b:
-                        raise MissingCommaError(repstring, i - 1, len(output) - 1) from b
+                    except BadStateError as badstateerror:
+                        raise MissingCommaError(
+                            repstring,
+                            i - 1,
+                            len(output) - 1
+                        ) from badstateerror
+
                     register = [None, None, 0]
                     previous_note = odd_note
 
@@ -336,7 +345,7 @@ class MGrouping(Grouping):
             for i in range(len(self)):
                 strreps.append(self[i].to_string(base, depth+1))
 
-            if (depth == 0):
+            if depth == 0:
                 output = ""
                 for i, chunk in enumerate(strreps):
                     #Special Case
@@ -344,7 +353,7 @@ class MGrouping(Grouping):
                         chunk = f"{self.CH_OPEN}{chunk}{self.CH_CLOSE}"
 
                     output += chunk + self.CH_NEXT
-                    if False and i % 4 == 3:
+                    if i % 4 == 3:
                         output += "\n"
 
                 while output[-1] in f"\n{self.CH_NEXT}":
@@ -367,23 +376,14 @@ class MGrouping(Grouping):
         else:
             output = "__"
 
-#        needs_convert = f"{self.CH_CLOSE}{self.CH_NEXT}{self.CH_OPEN}"
-#        while needs_convert in output:
-#            output = output.replace(needs_convert, self.CH_CLOPEN)
+        needs_convert = f"{self.CH_CLOSE}{self.CH_NEXT}{self.CH_OPEN}"
+        while needs_convert in output:
+            output = output.replace(needs_convert, self.CH_CLOPEN)
 
         return output
 
     def __str__(self):
         return self.to_string()
-
-    def set_note(self, note: int) -> None:
-        if self.is_event():
-            self.clear_events()
-
-        self.add_event(note)
-
-    def unset_note(self) -> None:
-        self.clear_events()
 
     @staticmethod
     def from_midi(midi) -> MGrouping:
@@ -429,8 +429,8 @@ class MGrouping(Grouping):
                 # Add filler holds for all the groupings in between press and the release beat
                 for i in range(original_index[0] + 1, beat_index):
                     grouping = beat_values[event.note][i]
-                    for j in range(len(grouping)):
-                        grouping[j].add_event((event.note, 0, False, event.channel))
+                    for subgrouping in grouping:
+                        subgrouping.add_event((event.note, 0, False, event.channel))
 
                 grouping = beat_values[event.note][beat_index]
                 if original_index[0] != beat_index:

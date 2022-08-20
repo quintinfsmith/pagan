@@ -176,6 +176,9 @@ class Grouping:
         if grouping.is_open():
             return
 
+        if self.is_open():
+            self.set_size(1)
+
         if self.is_structural():
             if grouping.is_structural():
                 self.__merge_structural(grouping)

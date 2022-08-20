@@ -42,11 +42,13 @@ def build_from_directory(path, **kwargs) -> MIDI:
         for x, chunk in enumerate(chunks):
             grouping = MGrouping.from_string(chunk, base=base, channel=channel_map[filename])
             beat_count = max(len(grouping), beat_count)
-            grouping.crop_redundancies()
-            opus.merge(grouping)
+            if grouping:
+                grouping.set_size(beat_count, True)
+                grouping.crop_redundancies()
+                opus.set_size(beat_count, True)
+                for i in range(beat_count):
+                    opus[i].merge(grouping[i])
 
-    opus.flatten()
-    opus.reduce(beat_count)
     return opus.to_midi(**kwargs)
 
 def build_from_single_file(path, **kwargs) -> MIDI:
@@ -66,7 +68,6 @@ def build_from_single_file(path, **kwargs) -> MIDI:
     for x, chunk in enumerate(chunks):
         grouping = MGrouping.from_string(chunk, base=base, channel=x)
         opus.merge(grouping)
-    print(opus)
     return opus.to_midi(**kwargs)
 
 def get_sys_args():

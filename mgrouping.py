@@ -105,6 +105,11 @@ class MGrouping(Grouping):
     def _channel_splitter(event):
         return event[3]
 
+    def split(self, default_func=None):
+        if default_func is None:
+            default_func = self._channel_splitter
+        return super().split(default_func)
+
     def to_midi(self, **kwargs) -> MIDI:
         tempo = int(kwargs.get('tempo', 80))
         start = int(kwargs.get('start', 0))
@@ -145,12 +150,10 @@ class MGrouping(Grouping):
             )
 
         midi.add_event( SetTempo.from_bpm(tempo) )
-        tracks = new_opus.split(self._channel_splitter)
+        tracks = new_opus.split()
         for track, grouping in enumerate(tracks):
             if not grouping.is_structural():
                 continue
-
-            channel = kwargs.get('channel', track)
 
             current_tick = 0
             running_note_off = None
@@ -487,5 +490,4 @@ def get_bend_values(offset, base) -> Tuple[int, float]:
     v = (12 * offset) / base
     note = int(v)
     bend = v - note
-    #print(f"{offset}/{base} = {(note // 12)}{(note % 12)}/12 + {bend}")
     return (note, bend)

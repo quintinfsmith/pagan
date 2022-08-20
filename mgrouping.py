@@ -117,27 +117,21 @@ class MGrouping(Grouping):
         if end is not None:
             end = int(end)
 
-        #new_opus = MGrouping()
-        #new_opus.set_size(1)
-        #if end is None:
-        #    slice_end = len(grouping)
-        #else:
-        #    slice_end = end
+        if end is None:
+            slice_end = len(self)
+        else:
+            slice_end = end
 
-        #if slice_end - start < len(grouping):
-        #    for i, grouping in enumerate(self):
-        #        new_grouping = MGrouping()
-        #        new_grouping.set_size(slice_end - start)
-        #        sliced = grouping[start:min(len(grouping), slice_end)]
-        #        for i, subgrouping in enumerate(sliced):
-        #            new_grouping[i] = subgrouping
-        #        grouping = new_grouping
+        new_opus = MGrouping()
 
-        #    #print(f"{i}/{grouping}")
-        #    if not grouping.is_open():
-        #        new_opus.merge(grouping)
+        if slice_end - start < len(self):
+            new_opus.set_size(slice_end - start)
+            sliced = self[start:min(len(self), slice_end)]
+            for j, subgrouping in enumerate(sliced):
+                new_opus[j].merge(subgrouping)
+        else:
+            new_opus = self
 
-        new_opus = self
         midi = MIDI()
 
         for i in range(16):

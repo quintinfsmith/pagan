@@ -243,6 +243,8 @@ class MGrouping(Grouping):
         relative_flag: Optional[str] = None
         latest_grouping: Optional[MGrouping] = None
 
+        repeat_queue: List[MGrouping] = []
+
         for i, character in enumerate(repstring):
             if character in (MGrouping.CH_CLOSE, MGrouping.CH_CLOPEN):
                 # Remove completed grouping from stack
@@ -271,13 +273,42 @@ class MGrouping(Grouping):
 
             elif relative_flag == MGrouping.CH_REPEAT:
                 if character == MGrouping.CH_REPEAT:
-                    repeat = -2
+                    repeat_length = 1
                 else:
-                    repeat = int(character, base)
+                    repeat_length = int(character, base)
+
                 parent = grouping_stack[-1].get_parent()
                 if parent is not None:
-                    to_copy = parent[repeat]
-                    grouping_stack[-1][-1] = to_copy.copy()
+                    repeat_queue = parent[-1 - repeat_length:-1]
+
+                    pl = len(parent)
+                    for _x in range(repeat_length):
+                        x = pl - 1 - repeat_length + _x
+                        beat = parent[x]
+
+                        ## COPY
+                        grouping_stack[-1].merge(beat.copy())
+
+                        if _x < len(repeat_queue) - 1:
+                        #if character in (MGrouping.CH_CLOSE, MGrouping.CH_CLOPEN):
+                            # Remove completed grouping from stack
+                            latest_grouping = grouping_stack.pop()
+                            opened_indeces.pop()
+
+                        #if character in (MGrouping.CH_NEXT, MGrouping.CH_CLOPEN):
+                            # Resize Active Grouping
+                            grouping_stack[-1].set_size(len(grouping_stack[-1]) + 1, True)
+
+                        #if character in (MGrouping.CH_OPEN, MGrouping.CH_CLOPEN):
+                            new_grouping = grouping_stack[-1][-1]
+                            try:
+                                new_grouping.set_size(1)
+                            except BadStateError as b:
+                                raise MissingCommaError(repstring, i, len(output) - 1)
+                            grouping_stack.append(new_grouping)
+
+                            opened_indeces.append(i)
+
 
                 relative_flag = None
 

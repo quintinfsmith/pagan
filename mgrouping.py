@@ -384,8 +384,8 @@ class MGrouping(Grouping):
                         chunk = f"{self.CH_OPEN}{chunk}{self.CH_CLOSE}"
 
                     output += chunk + self.CH_NEXT
-                    if i % 4 == 3:
-                        output += "\n"
+                    #if i % 4 == 3:
+                    #    output += "\n"
 
                 while output[-1] in f"\n{self.CH_NEXT}":
                     output = output[0:-1]
@@ -422,7 +422,7 @@ class MGrouping(Grouping):
         total_beat_offset = 0
         last_ts_change = 0
 
-        beat_values = {}
+        beat_values = []
         max_tick = 0
         press_map = {}
         for tick, event in midi.get_all_events():
@@ -431,54 +431,49 @@ class MGrouping(Grouping):
             inner_beat_offset = (tick - last_ts_change) % beat_size
 
             if is_note_on(event):
-                if event.note not in beat_values:
-                    beat_values[event.note] = []
-
-                while len(beat_values[event.note]) <= beat_index:
+                while len(beat_values) <= beat_index:
                     new_grouping = MGrouping()
                     new_grouping.set_size(beat_size)
-                    beat_values[event.note].append(new_grouping)
+                    beat_values.append(new_grouping)
 
-                grouping = beat_values[event.note][beat_index]
+                grouping = beat_values[beat_index]
                 grouping[inner_beat_offset].add_event((event.note, 0, True, event.channel))
                 press_map[event.note] = (beat_index, inner_beat_offset)
 
             elif is_note_off(event):
-                if not press_map.get(event.note, False):
-                    continue
+                pass
+                #if not press_map.get(event.note, False):
+                #    continue
 
-                if event.note not in beat_values:
-                    beat_values[event.note] = []
+                #while len(beat_values) <= beat_index:
+                #    new_grouping = MGrouping()
+                #    new_grouping.set_size(beat_size)
+                #    beat_values.append(new_grouping)
 
-                while len(beat_values[event.note]) <= beat_index:
-                    new_grouping = MGrouping()
-                    new_grouping.set_size(beat_size)
-                    beat_values[event.note].append(new_grouping)
+                #original_index = press_map[event.note]
 
-                original_index = press_map[event.note]
+                ## Add filler holds for all the groupings in between press and the release beat
+                #for i in range(original_index[0] + 1, beat_index):
+                #    grouping = beat_values[i]
+                #    for subgrouping in grouping:
+                #        subgrouping.add_event((event.note, 0, False, event.channel))
 
-                # Add filler holds for all the groupings in between press and the release beat
-                for i in range(original_index[0] + 1, beat_index):
-                    grouping = beat_values[event.note][i]
-                    for subgrouping in grouping:
-                        subgrouping.add_event((event.note, 0, False, event.channel))
+                #grouping = beat_values[beat_index]
+                #if original_index[0] != beat_index:
+                #    # Add holds on the current beat up to the current inner beat_offset
+                #    for i in range(inner_beat_offset):
+                #        grouping[i].add_event((event.note, 0, False, event.channel))
+                #else:
+                #    # Add holds for the remainder of the inner grouping
+                #    for i in range(original_index[1] + 1, len(beat_values[original_index[0]])):
+                #        grouping = beat_values[original_index[0]]
+                #        grouping[i].add_event((event.note, 0, False, event.channel))
 
-                grouping = beat_values[event.note][beat_index]
-                if original_index[0] != beat_index:
-                    # Add holds on the current beat up to the current inner beat_offset
-                    for i in range(inner_beat_offset):
-                        grouping[i].add_event((event.note, 0, False, event.channel))
-                else:
-                    # Add holds for the remainder of the inner grouping
-                    for i in range(original_index[1] + 1, len(beat_values[event.note][original_index[0]])):
-                        grouping = beat_values[event.note][original_index[0]]
-                        grouping[i].add_event((event.note, 0, False, event.channel))
+                #    # Add holds between the inner offsets
+                #    for i in range(original_index[1] + 1, inner_beat_offset):
+                #        grouping[i].add_event((event.note, 0, False, event.channel))
 
-                    # Add holds between the inner offsets
-                    for i in range(original_index[1] + 1, inner_beat_offset):
-                        grouping[i].add_event((event.note, 0, False, event.channel))
-
-                press_map[event.note] = False
+                #press_map[event.note] = False
 
             elif isinstance(event, TimeSignature):
                 total_beat_offset += (tick - last_ts_change) // beat_size
@@ -494,18 +489,14 @@ class MGrouping(Grouping):
         total_beat_offset += 1
 
         opus = MGrouping()
-        opus.set_size(1)
+        opus.set_size(total_beat_offset)
 
-        ordered_keys = list(beat_values.keys())
-        ordered_keys.sort()
-        for note in ordered_keys:
-            beats = beat_values[note]
-            new_grouping = MGrouping()
-            new_grouping.set_size(total_beat_offset)
-            for i, beat_grouping in enumerate(beats):
-                new_grouping[i] = beat_grouping
+        for i, beat_grouping in enumerate(beat_values):
+            opus[i] = beat_grouping
 
-            opus.merge(new_grouping)
+        for i, beat in enumerate(opus):
+            beat.flatten()
+            beat.reduce()
 
         return opus
 

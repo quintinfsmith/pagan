@@ -10,7 +10,7 @@ def build_from_directory(path, **kwargs) -> MIDI:
     base = int(kwargs.get('base', 12))
 
     channel_map = {}
-    suffix_patt = re.compile(".*_(?P<suffix>[0-9A-Z]?)(\..*)?", re.I)
+    suffix_patt = re.compile(".*_(?P<suffix>([0-9A-Z]{1,3})?)(\..*)?", re.I)
     filenames = os.listdir(path)
     filenames_clean = []
 
@@ -18,6 +18,7 @@ def build_from_directory(path, **kwargs) -> MIDI:
     for filename in filenames:
         if filename[filename.rfind("."):] == ".swp":
             continue
+
         channel = None
         for hit in suffix_patt.finditer(filename):
             channel = int(hit.group('suffix'), 16)
@@ -86,6 +87,8 @@ def get_sys_args():
                 args.append(value)
 
     return (args, kwargs)
+def split_by_note(event):
+    return event[0]
 
 def main():
     args, kwargs = get_sys_args()
@@ -97,10 +100,31 @@ def main():
             if os.path.isdir(output_type):
                 os.system("rm " + output_type.replace(" ", "\\ ") + " -rf")
             os.mkdir(output_type)
-
         opus = MGrouping.from_midi(midi)
-        tracks = opus.split()
+        tracks = opus.split(split_by_note)
+
+        notes_map = {}
+        notes = []
         for i, mgrouping in enumerate(tracks):
+            was_set = False
+            for beat in mgrouping:
+                try:
+                    for sub in beat:
+                        events = sub.get_events()
+                        if len(events):
+                            notes_map[list(events)[0][0]] = i
+                            notes.append(list(events)[0][0])
+                            was_set = True
+                            break
+                except:
+                    continue
+
+                if was_set:
+                    break
+
+        notes.sort()
+        for i in notes[::-1]:
+            mgrouping = tracks[notes_map[i]]
             if output_type == "stdout":
                 print(str(mgrouping), "\n")
             else:

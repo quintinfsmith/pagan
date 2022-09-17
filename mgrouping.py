@@ -2,7 +2,6 @@ from __future__ import annotations
 from typing import Optional, List, Tuple, Dict
 from apres import NoteOn, NoteOff, PitchWheelChange, MIDI, SetTempo, ProgramChange, TimeSignature
 from structures import Grouping, BadStateError
-import re
 
 ERROR_CHUNK_SIZE = 19
 
@@ -105,10 +104,10 @@ class MGrouping(Grouping):
     def _channel_splitter(event):
         return event[3]
 
-    def split(self, default_func=None):
-        if default_func is None:
-            default_func = self._channel_splitter
-        return super().split(default_func)
+    def split(self, split_func=None):
+        if split_func is None:
+            split_func = self._channel_splitter
+        return super().split(split_func)
 
     def to_midi(self, **kwargs) -> MIDI:
         tempo = int(kwargs.get('tempo', 80))
@@ -145,7 +144,7 @@ class MGrouping(Grouping):
 
         midi.add_event( SetTempo.from_bpm(tempo) )
         tracks = new_opus.split()
-        for track, grouping in enumerate(tracks):
+        for grouping in tracks:
             if not grouping.is_structural():
                 continue
 
@@ -239,16 +238,12 @@ class MGrouping(Grouping):
         grouping_stack: List[MGrouping] = [output]
         register: List[Optional[int], Optional[int], Optional[float]] = [None, None, 0]
         opened_indeces: List[int] = []
-        previous_value: Optional[int] = None
         relative_flag: Optional[str] = None
-        latest_grouping: Optional[MGrouping] = None
-
         repeat_queue: List[MGrouping] = []
 
         for i, character in enumerate(repstring):
             if character in (MGrouping.CH_CLOSE, MGrouping.CH_CLOPEN):
                 # Remove completed grouping from stack
-                latest_grouping = grouping_stack.pop()
                 opened_indeces.pop()
 
             if character in (MGrouping.CH_NEXT, MGrouping.CH_CLOPEN):
@@ -265,8 +260,9 @@ class MGrouping(Grouping):
                 new_grouping = grouping_stack[-1][-1]
                 try:
                     new_grouping.set_size(1)
-                except BadStateError as b:
-                    raise MissingCommaError(repstring, i, len(output) - 1)
+                except BadStateError as exc:
+                    raise MissingCommaError(repstring, i, len(output) - 1) from exc
+
                 grouping_stack.append(new_grouping)
 
                 opened_indeces.append(i)
@@ -281,33 +277,34 @@ class MGrouping(Grouping):
                 if parent is not None:
                     repeat_queue = parent[-1 - repeat_length:-1]
 
-                    pl = len(parent)
-                    for _x in range(repeat_length):
-                        x = pl - 1 - repeat_length + _x
+                    parent_len = len(parent)
+                    for j in range(repeat_length):
+                        x = parent_len - 1 - repeat_length + j
                         beat = parent[x]
 
                         ## COPY
                         grouping_stack[-1].merge(beat.copy())
 
-                        if _x < len(repeat_queue) - 1:
+                        if _x >= len(repeat_queue) - 1:
+                            continue
+
                         #if character in (MGrouping.CH_CLOSE, MGrouping.CH_CLOPEN):
-                            # Remove completed grouping from stack
-                            latest_grouping = grouping_stack.pop()
-                            opened_indeces.pop()
+                        # Remove completed grouping from stack
+                        opened_indeces.pop()
 
                         #if character in (MGrouping.CH_NEXT, MGrouping.CH_CLOPEN):
-                            # Resize Active Grouping
-                            grouping_stack[-1].set_size(len(grouping_stack[-1]) + 1, True)
+                        # Resize Active Grouping
+                        grouping_stack[-1].set_size(len(grouping_stack[-1]) + 1, True)
 
                         #if character in (MGrouping.CH_OPEN, MGrouping.CH_CLOPEN):
-                            new_grouping = grouping_stack[-1][-1]
-                            try:
-                                new_grouping.set_size(1)
-                            except BadStateError as b:
-                                raise MissingCommaError(repstring, i, len(output) - 1)
-                            grouping_stack.append(new_grouping)
+                        new_grouping = grouping_stack[-1][-1]
+                        try:
+                            new_grouping.set_size(1)
+                        except BadStateError as exc:
+                            raise MissingCommaError(repstring, i, len(output) - 1) from exc
+                        grouping_stack.append(new_grouping)
 
-                            opened_indeces.append(i)
+                        opened_indeces.append(i)
 
 
                 relative_flag = None
@@ -373,12 +370,12 @@ class MGrouping(Grouping):
     def to_string(self, base=12, depth=0) -> str:
         if self.is_structural():
             strreps = []
-            for i in range(len(self)):
-                strreps.append(self[i].to_string(base, depth+1))
+            for subgrouping in self:
+                strreps.append(subgrouping.to_string(base, depth+1))
 
             if depth == 0:
                 output = ""
-                for i, chunk in enumerate(strreps):
+                for chunk in strreps:
                     #Special Case
                     if depth == 0 and chunk == "__":
                         chunk = f"{self.CH_OPEN}{chunk}{self.CH_CLOSE}"
@@ -503,7 +500,7 @@ class MGrouping(Grouping):
 
 def get_bend_values(offset, base) -> Tuple[int, float]:
     """Convert an odd-based note to base-12 note with pitch bend"""
-    v = (12 * offset) / base
-    note = int(v)
-    bend = v - note
+    value = (12 * offset) / base
+    note = int(value)
+    bend = value - note
     return (note, bend)

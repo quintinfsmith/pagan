@@ -244,6 +244,7 @@ class MGrouping(Grouping):
         for i, character in enumerate(repstring):
             if character in (MGrouping.CH_CLOSE, MGrouping.CH_CLOPEN):
                 # Remove completed grouping from stack
+                grouping_stack.pop()
                 opened_indeces.pop()
 
             if character in (MGrouping.CH_NEXT, MGrouping.CH_CLOPEN):
@@ -285,11 +286,12 @@ class MGrouping(Grouping):
                         ## COPY
                         grouping_stack[-1].merge(beat.copy())
 
-                        if _x >= len(repeat_queue) - 1:
+                        if j >= len(repeat_queue) - 1:
                             continue
 
                         #if character in (MGrouping.CH_CLOSE, MGrouping.CH_CLOPEN):
                         # Remove completed grouping from stack
+                        grouping_stack.pop()
                         opened_indeces.pop()
 
                         #if character in (MGrouping.CH_NEXT, MGrouping.CH_CLOPEN):
@@ -370,7 +372,8 @@ class MGrouping(Grouping):
     def to_string(self, base=12, depth=0) -> str:
         if self.is_structural():
             strreps = []
-            for subgrouping in self:
+            for i in range(len(self)):
+                subgrouping = self[i]
                 strreps.append(subgrouping.to_string(base, depth+1))
 
             if depth == 0:

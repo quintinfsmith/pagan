@@ -69,6 +69,7 @@ def build_from_single_file(path, **kwargs) -> MIDI:
     for x, chunk in enumerate(chunks):
         grouping = MGrouping.from_string(chunk, base=base, channel=x)
         opus.merge(grouping)
+
     return opus.to_midi(**kwargs)
 
 def get_sys_args():

@@ -126,12 +126,20 @@ class Grouping:
 
     def split(self, split_func) -> List[Grouping]:
         mapped_events = self.get_events_mapped()
-        unstructured_splits = {}
+        merged_map = {}
         for path, event in mapped_events:
-            key = split_func(event)
-            if key not in unstructured_splits:
-                unstructured_splits[key] = []
-            unstructured_splits[key].append((path, event))
+            tpath = tuple(path)
+            if tpath not in merged_map:
+                merged_map[tpath] = []
+            merged_map[tpath].append(event)
+
+        unstructured_splits = {}
+        for path, events in merged_map.items():
+            for event in events:
+                key = split_func(event, events)
+                if key not in unstructured_splits:
+                    unstructured_splits[key] = []
+                unstructured_splits[key].append((path, event))
 
         tracks = []
         for key, events in unstructured_splits.items():

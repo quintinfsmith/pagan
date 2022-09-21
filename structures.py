@@ -24,12 +24,18 @@ class Grouping:
         Tree-like structure that can be flattened and
         unflattened as necessary while keeping relative positions
     """
+    uuid_gen = 0
     def __init__(self):
         self.size: int = 1
         self.divisions = {}
         self.events = set()
         self.state: GroupingState = GroupingState.OPEN
         self.parent: Optional[Grouping] = None
+        self.uuid: int = Grouping.uuid_gen
+        Grouping.uuid_gen += 1
+
+    def get_uuid(self):
+        return self.uuid
 
     def __str__(self):
         output = ''

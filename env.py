@@ -43,49 +43,41 @@ class NoterEnvironment:
         flag_draw = False
         line_position = 0
 
-        bstrings = {}
-        for c in self.opus_manager.channel_order:
-            if not c in bstrings:
-                bstrings[c] = {}
-            for i, line in enumerate(channels[c]):
-                if not i in bstrings[c]:
-                    bstrings[c][i] = {}
-                for b, beat in enumerate(line):
-                    bstring = beat.to_string()
-                    bstrings[c][i][b] = bstring
-                    bw = self.rendered_beat_widths.get(b, 0)
-                    self.rendered_beat_widths[b] = max(bw, len(bstring))
-
+        rect_lines = {}
+        rect_beats = {}
         for c in self.opus_manager.channel_order:
             for i, line in enumerate(channels[c]):
-                if (c, i) in self.rendered_channel_rects:
-                    line_position += 1
-                    continue
-
-                self.rendered_channel_rects.add((c,i))
                 rect_line = self.channel_rects[c][i]
                 rect_line.clear_children()
-                running_len = 0
-                split_positions = [0]
+                rect_lines[(c, i)] = rect_line
                 for b, beat in enumerate(line):
+                    rect_beats[(c, i, b)] = rect_line.new_rect()
+                    self.build_beat_rect(beat, rect_beats[(c, i ,b)])
+                    bw = self.rendered_beat_widths.get(b, 0)
+                    self.rendered_beat_widths[b] = max(bw, rect_beats[(c, i, b)].width)
 
-                    rect_beat = rect_line.new_rect()
-                    self.build_beat_rect(beat, rect_beat)
-                    rect_beat.move(running_len, 0)
-                    running_len += rect_beat.width + 1
-
-                    split_positions.append(running_len - 1)
-
-                rect_line.resize(running_len + 1, 1)
-                rect_line.move(4, line_position)
+        line_length = sum(self.rendered_beat_widths.values()) + self.opus_manager.opus_beat_count - 1
+        for c in self.opus_manager.channel_order:
+            for i, _ in enumerate(channels[c]):
+                rect_line = rect_lines[(c, i)]
                 rect_line.set_fg_color(wrecked.BLUE)
-                for x in split_positions:
-                    rect_line.set_string(x, 0, "|")
-
+                rect_line.resize(line_length, 1)
+                rect_line.move(4, line_position)
                 self.root.set_string(0, line_position, f"{c}:{i} ")
+
+                running_offset = 0
+                for b, beat in enumerate(line):
+                    cwidth = self.rendered_beat_widths.get(b, 0)
+                    rect_beats[(c, i, b)].move(running_offset + ((cwidth - rect_beats[(c, i, b)].width) // 2), 0)
+                    running_offset += cwidth
+                    if running_offset < rect_line.width:
+                        rect_line.set_string(running_offset, 0, '|')
+                    running_offset += 1
 
                 flag_draw = True
                 line_position += 1
+
+                self.rendered_channel_rects.add((c,i))
 
         # Draw cursor
         self.rendered_cursor_position = self.opus_manager.cursor_position

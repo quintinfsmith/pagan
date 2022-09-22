@@ -69,13 +69,6 @@ class NoterEnvironment:
                 split_positions = [0]
                 for b, beat in enumerate(line):
 
-                    #bstring = bstrings[c][i][b]
-                    #new_width = self.rendered_beat_widths[b]
-                    #rect_beat.resize(new_width, 1)
-                    #rect_beat.move(running_len + 1, 0)
-                    #xpos = (new_width - len(bstring)) // 2
-                    #rect_beat.set_string(xpos, 0, bstring)
-
                     rect_beat = rect_line.new_rect()
                     self.build_beat_rect(beat, rect_beat)
                     rect_beat.move(running_len, 0)
@@ -102,19 +95,46 @@ class NoterEnvironment:
             self.root.draw()
 
     def build_beat_rect(self, beat_grouping, rect):
-        stacka = [(beat_grouping, rect, 0)]
-        stackb = [beat_grouping.get_uuid()]
+        stack = [(beat_grouping, rect, 0)]
+        depth_sorted_queue = []
         rect_map = {}
         top_grouping_id = beat_grouping.get_parent().get_uuid()
 
-        while stacka:
-            working_grouping, working_rect, depth = stacka.pop(0)
+        while stack:
+            working_grouping, working_rect, depth = stack.pop(0)
+            depth_sorted_queue.append((depth, working_grouping))
+            rect_map[working_grouping.get_uuid()] = working_rect
             if working_grouping.is_structural():
-
-                rect_map[working_grouping.get_uuid()] = [working_rect, [], None, 0, depth]
                 for subgrouping in working_grouping:
-                    stacka.append((subgrouping, working_rect.new_rect(), depth + 1))
-                    stackb.append(subgrouping.get_uuid())
+                    stack.append((subgrouping, working_rect.new_rect(), depth + 1))
+
+        depth_sorted_queue = sorted(depth_sorted_queue, key=sort_by_first, reverse=True)
+
+        for _, working_grouping in depth_sorted_queue:
+            working_rect= rect_map[working_grouping.get_uuid()]
+            if working_grouping.is_structural():
+                running_width = 0
+                if working_grouping != beat_grouping:
+                    running_width += 1
+                comma_points = []
+                for i, subgrouping in enumerate(working_grouping):
+                    child_rect = rect_map[subgrouping.get_uuid()]
+                    # Account for commas
+                    if i != 0:
+                        comma_points.append(running_width)
+                        running_width += 1
+                    child_rect.move(running_width, 0)
+
+                    running_width += child_rect.width
+                if working_grouping != beat_grouping:
+                    running_width += 1
+
+                working_rect.resize(running_width, 1)
+                if working_grouping != beat_grouping:
+                    working_rect.set_character(0, 0, '[')
+                    working_rect.set_character(running_width - 1, 0, ']')
+                for x in comma_points:
+                    working_rect.set_character(x, 0, ',')
             else:
                 if working_grouping.is_event():
                     events = working_grouping.get_events()
@@ -128,39 +148,9 @@ class NoterEnvironment:
 
                 else:
                     new_string = '__'
-                new_width = len(new_string)
-                rect_map[working_grouping.get_uuid()] = [working_rect, [], new_string, new_width, depth]
 
-                parent_grouping = working_grouping.get_parent()
-                child_grouping = working_grouping
-                for i in range(depth):
-                    child_id = child_grouping.get_uuid()
-                    parent_id = parent_grouping.get_uuid()
-                    # Assume well-ordered. the current width of the parent should be the offset of the child
-                    rect_map[child_id][3] = rect_map[parent_id][1]
-
-                    # Increment parent width with child width
-                    rect_map[parent_id][1] += rect_map[child_id][1]
-
-                    child_grouping = parent_grouping
-                    parent_grouping = child_grouping.get_parent()
-
-
-        for _grouping_id, (wrect, size, string, offset, depth) in rect_map.items():
-            wrect.resize(size, 1)
-            wrect.move(offset, 0)
-            if string is None:
-                if depth % 2:
-                    c = "/"
-                else:
-                    c = "\\"
-                string = c * size
-
-            wrect.set_string(0, 0, string)
-
-
-
-
+                working_rect.resize(len(new_string), 1)
+                working_rect.set_string(0, 0, new_string)
 
 
     def run(self):
@@ -341,3 +331,6 @@ def split_by_note_order(event, other_events):
     e_notes = [e[0] for e in other_events]
     e_notes.sort()
     return e_notes.index(event[0])
+
+def sort_by_first(a):
+    return a[0]

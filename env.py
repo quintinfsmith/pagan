@@ -3,7 +3,7 @@ import os
 import re
 import time
 
-from typing import Optional
+from typing import Optional, Dict
 import wrecked
 from apres import MIDI
 from mgrouping import MGrouping
@@ -22,6 +22,12 @@ class NoterEnvironment:
         self.rendered_channel_rects = set()
         self.rendered_beat_widths = {}
 
+        self.rendered_cursor_position = []
+        self.rect_subbeat_map = {}
+
+        self.flag_beat_changes = []
+        self.flag_line_changes = []
+
     def kill(self):
         wrecked.kill()
 
@@ -37,65 +43,92 @@ class NoterEnvironment:
             for i, grouping in enumerate(channel):
                 grouping_rect = self.root.new_rect()
                 self.channel_rects[c].append(grouping_rect)
+                self.flag_line_changes.append((c,i))
+                for b, _ in enumerate(grouping):
+                    self.flag_beat_changes.append((c, i, b))
+
 
     def tick(self):
         channels = self.opus_manager.channel_groupings
         flag_draw = False
-        line_position = 0
 
         rect_lines = {}
+        _lines_changed = set()
+
         rect_beats = {}
-        for c in self.opus_manager.channel_order:
-            for i, line in enumerate(channels[c]):
-                rect_line = self.channel_rects[c][i]
-                rect_line.clear_children()
-                rect_lines[(c, i)] = rect_line
-                for b, beat in enumerate(line):
-                    rect_beats[(c, i, b)] = rect_line.new_rect()
-                    self.build_beat_rect(beat, rect_beats[(c, i ,b)])
-                    bw = self.rendered_beat_widths.get(b, 0)
-                    self.rendered_beat_widths[b] = max(bw, rect_beats[(c, i, b)].width)
+        for c, i, b in self.flag_beat_changes:
+            _lines_changed.add((c, i))
+            channel = channels[c]
+            line = channel[i]
+            beat = line[b]
+            rect_line = self.channel_rects[c][i]
+
+            #TODO: remove old beat
+            rect_beats[(c, i, b)] = rect_line.new_rect()
+            self.build_beat_rect(beat, rect_beats[(c, i ,b)])
+            bw = self.rendered_beat_widths.get(b, 0)
+            self.rendered_beat_widths[b] = max(bw, rect_beats[(c, i, b)].width)
 
         line_length = sum(self.rendered_beat_widths.values()) + self.opus_manager.opus_beat_count - 1
-        for c in self.opus_manager.channel_order:
-            for i, _ in enumerate(channels[c]):
-                rect_line = rect_lines[(c, i)]
-                rect_line.set_fg_color(wrecked.BLUE)
-                rect_line.resize(line_length, 1)
-                rect_line.move(4, line_position)
-                self.root.set_string(0, line_position, f"{c}:{i} ")
+        for c, i in _lines_changed:
+            line_position = self.opus_manager.get_y(c, i)
+            rect_line = self.channel_rects[c][i]
+            rect_line.set_fg_color(wrecked.BLUE)
+            rect_line.resize(line_length, 1)
+            rect_line.move(4, line_position)
+            self.root.set_string(0, line_position, f"{c}:{i} ")
 
-                running_offset = 0
-                for b, beat in enumerate(line):
-                    cwidth = self.rendered_beat_widths.get(b, 0)
-                    rect_beats[(c, i, b)].move(running_offset + ((cwidth - rect_beats[(c, i, b)].width) // 2), 0)
-                    running_offset += cwidth
-                    if running_offset < rect_line.width:
-                        rect_line.set_string(running_offset, 0, '|')
-                    running_offset += 1
+        while self.flag_beat_changes:
+            c, i, b = self.flag_beat_changes.pop()
+            running_offset = 0
+            for b, beat in enumerate(line):
+                cwidth = self.rendered_beat_widths.get(b, 0)
+                rect_beats[(c, i, b)].move(running_offset + ((cwidth - rect_beats[(c, i, b)].width) // 2), 0)
+                running_offset += cwidth
+                if running_offset < rect_line.width:
+                    rect_line.set_string(running_offset, 0, '|')
+                running_offset += 1
 
-                flag_draw = True
-                line_position += 1
+            flag_draw = True
 
-                self.rendered_channel_rects.add((c,i))
+            self.rendered_channel_rects.add((c,i))
 
         # Draw cursor
-        self.rendered_cursor_position = self.opus_manager.cursor_position
+        if self.rendered_cursor_position != self.opus_manager.cursor_position:
+            if self.rendered_cursor_position:
+                stack = [self.opus_manager.get_grouping(self.rendered_cursor_position)]
+                while stack:
+                    grouping = stack.pop()
+                    self.rect_subbeat_map[grouping.get_uuid()].unset_invert()
+                    if grouping.is_structural():
+                        for child in grouping:
+                            stack.append(child)
 
+            stack = [self.opus_manager.get_grouping(self.opus_manager.cursor_position)]
+            while stack:
+                grouping = stack.pop()
+                self.rect_subbeat_map[grouping.get_uuid()].invert()
+                if grouping.is_structural():
+                    for child in grouping:
+                        stack.append(child)
+
+            self.rendered_cursor_position = self.opus_manager.cursor_position
 
         if flag_draw:
             self.root.draw()
 
-    def build_beat_rect(self, beat_grouping, rect):
+    def get_subbeat_rect(self, position):
+        subgrouping = self.opus_manager.get_grouping(position)
+        return self.rect_subbeat_map[subgrouping.get_uuid()]
+
+    def build_beat_rect(self, beat_grouping, rect) -> Dict[int, wrecked.Rect]:
         stack = [(beat_grouping, rect, 0)]
         depth_sorted_queue = []
-        rect_map = {}
-        top_grouping_id = beat_grouping.get_parent().get_uuid()
 
         while stack:
             working_grouping, working_rect, depth = stack.pop(0)
             depth_sorted_queue.append((depth, working_grouping))
-            rect_map[working_grouping.get_uuid()] = working_rect
+            self.rect_subbeat_map[working_grouping.get_uuid()] = working_rect
             if working_grouping.is_structural():
                 for subgrouping in working_grouping:
                     stack.append((subgrouping, working_rect.new_rect(), depth + 1))
@@ -103,14 +136,15 @@ class NoterEnvironment:
         depth_sorted_queue = sorted(depth_sorted_queue, key=sort_by_first, reverse=True)
 
         for _, working_grouping in depth_sorted_queue:
-            working_rect= rect_map[working_grouping.get_uuid()]
+            working_rect = self.rect_subbeat_map[working_grouping.get_uuid()]
             if working_grouping.is_structural():
                 running_width = 0
                 if working_grouping != beat_grouping:
                     running_width += 1
+
                 comma_points = []
                 for i, subgrouping in enumerate(working_grouping):
-                    child_rect = rect_map[subgrouping.get_uuid()]
+                    child_rect = self.rect_subbeat_map[subgrouping.get_uuid()]
                     # Account for commas
                     if i != 0:
                         comma_points.append(running_width)
@@ -144,7 +178,6 @@ class NoterEnvironment:
                 working_rect.resize(len(new_string), 1)
                 working_rect.set_string(0, 0, new_string)
 
-
     def run(self):
         self.running = True
         while self.running:
@@ -167,6 +200,57 @@ class OpusManager:
 
     def get_active_line(self):
         return self.get_line(self.cursor_position[0])
+
+    def cursor_left(self):
+        new_cursor = self.cursor_position.copy()
+        while new_cursor[1] > 0:
+            old_pos = new_cursor.pop()
+            if old_pos > 0:
+                new_cursor.append(old_pos - 1)
+                break
+            elif len(new_cursor) == 1:
+                new_cursor.append(0)
+                break
+
+        self.cursor_position = new_cursor
+
+
+    def cursor_right(self):
+        new_cursor = self.cursor_position.copy()
+        line = self.opus_manager.get_line(new_cursor[0])
+        while new_cursor[1] < len(line):
+            old_pos = new_cursor.pop()
+            grouping = self.opus_manager.get_grouping(new_cursor)
+            if old_pos < len(grouping) - 1:
+                new_cursor.append(old_pos + 1)
+                break
+            elif len(new_cursor) == 1:
+                new_cursor.append(old_pos)
+                break
+
+        self.cursor_position = new_cursor
+
+    def cursor_up(self):
+        new_cursor = self.cursor_position.copy()
+        new_cursor[0] = max(0, new_cursor[0] - 1)
+        while len(new_cursor) > 2:
+            try:
+                grouping = self.get_grouping(new_cursor)
+                break
+            except IndexError:
+                new_cursor.pop()
+
+    def cursor_down(self):
+        new_cursor = self.cursor_position.copy()
+        if self.get_line(new_cursor[0] + 1) is not None:
+            new_cursor[0] += 1
+
+        while len(new_cursor) > 2:
+            try:
+                grouping = self.get_grouping(new_cursor)
+                break
+            except IndexError:
+                new_cursor.pop()
 
     def cursor_climb(self):
         if len(self.cursor_position) > 2:
@@ -228,6 +312,15 @@ class OpusManager:
             raise InvalidCursor(position)
         self.cursor_position = position
 
+    def get_y(self, c: int, i: int) -> int:
+        y = 0
+        for j in self.channel_order:
+            for g, grouping in enumerate(self.channel_groupings[j]):
+                if i == g and j == c:
+                    return y
+                y += 1
+        return -1
+
     def get_line(self, y) -> Optional[MGrouping]:
         output = None
         for c in self.channel_order:
@@ -246,7 +339,7 @@ class OpusManager:
         base = self.BASE
 
         channel_map = {}
-        suffix_patt = re.compile(".*_(?P<suffix>([0-9A-Z]{1,3})?)(\..*)?", re.I)
+        suffix_patt = re.compile(".*_(?P<suffix>([0-9A-Z]{1,3})?)(\\..*)?", re.I)
         filenames = os.listdir(path)
         filenames_clean = []
 

@@ -76,7 +76,10 @@ class NoterEnvironment:
             rect_line.set_fg_color(wrecked.BLUE)
             rect_line.resize(line_length, 1)
             rect_line.move(4, line_position)
-            self.root.set_string(0, line_position, f"{c}:{i} ")
+            if i == 0:
+                self.root.set_string(0, line_position, f"{c}:{i} ")
+            else:
+                self.root.set_string(0, line_position, f" :{i} ")
 
         while self.flag_beat_changes:
             c, i, b = self.flag_beat_changes.pop()
@@ -217,10 +220,10 @@ class OpusManager:
 
     def cursor_right(self):
         new_cursor = self.cursor_position.copy()
-        line = self.opus_manager.get_line(new_cursor[0])
+        line = self.get_line(new_cursor[0])
         while new_cursor[1] < len(line):
             old_pos = new_cursor.pop()
-            grouping = self.opus_manager.get_grouping(new_cursor)
+            grouping = self.get_grouping(new_cursor)
             if old_pos < len(grouping) - 1:
                 new_cursor.append(old_pos + 1)
                 break

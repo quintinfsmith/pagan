@@ -1,26 +1,62 @@
 from __future__ import annotations
+import math
 import os
 import re
 import time
+import threading
+
 
 from typing import Optional, Dict
 import wrecked
 from apres import MIDI
+
+from structures import BadStateError
 from mgrouping import MGrouping
+from interactor import Interactor
+
 
 class InvalidCursor(Exception):
     '''Raised when attempting to pass a cursor without enough arguments'''
 
 class NoterEnvironment:
-    tick_delay = 60 / 24
+    tick_delay = 1 / 24
+
+    def daemon_input(self):
+        while self.running:
+            self.interactor.get_input()
+        self.interactor.restore_input_settings()
 
     def __init__(self):
+        self.running = False
         self.root = wrecked.init()
         self.channel_rects = [[] for i in range(16)]
         self.opus_manager = OpusManager()
+        self.interactor = Interactor()
+        self.interactor.assign_sequence(
+            'l',
+            self.cursor_right
+        )
+        self.interactor.assign_sequence(
+            'h',
+            self.cursor_left
+        )
+        self.interactor.assign_sequence(
+            'j',
+            self.cursor_down
+        )
+        self.interactor.assign_sequence(
+            'k',
+            self.cursor_up
+        )
+        self.interactor.assign_sequence(
+            'q',
+            self.kill
+        )
+
+        self.view_offset = 0
 
         self.rendered_channel_rects = set()
-        self.rendered_beat_widths = {}
+        self.rendered_beat_widths = []
 
         self.rendered_cursor_position = []
         self.rect_subbeat_map = {}
@@ -29,6 +65,7 @@ class NoterEnvironment:
         self.flag_line_changes = []
 
     def kill(self):
+        self.running = False
         wrecked.kill()
 
     def load(self, path: str) -> None:
@@ -50,13 +87,16 @@ class NoterEnvironment:
 
     def tick(self):
         channels = self.opus_manager.channel_groupings
+        cursor  = self.opus_manager.cursor_position
         flag_draw = False
 
-        rect_lines = {}
         _lines_changed = set()
 
         rect_beats = {}
         for c, i, b in self.flag_beat_changes:
+            if math.fabs(cursor[1] - b) >= 13:
+                continue
+
             _lines_changed.add((c, i))
             channel = channels[c]
             line = channel[i]
@@ -66,10 +106,13 @@ class NoterEnvironment:
             #TODO: remove old beat
             rect_beats[(c, i, b)] = rect_line.new_rect()
             self.build_beat_rect(beat, rect_beats[(c, i ,b)])
-            bw = self.rendered_beat_widths.get(b, 0)
+            while b >= len(self.rendered_beat_widths):
+                self.rendered_beat_widths.append(0)
+
+            bw = self.rendered_beat_widths[b]
             self.rendered_beat_widths[b] = max(bw, rect_beats[(c, i, b)].width)
 
-        line_length = sum(self.rendered_beat_widths.values()) + self.opus_manager.opus_beat_count - 1
+        line_length = sum(self.rendered_beat_widths) + self.opus_manager.opus_beat_count - 1
         for c, i in _lines_changed:
             line_position = self.opus_manager.get_y(c, i)
             rect_line = self.channel_rects[c][i]
@@ -83,14 +126,16 @@ class NoterEnvironment:
 
         while self.flag_beat_changes:
             c, i, b = self.flag_beat_changes.pop()
-            running_offset = 0
-            for b, beat in enumerate(line):
-                cwidth = self.rendered_beat_widths.get(b, 0)
-                rect_beats[(c, i, b)].move(running_offset + ((cwidth - rect_beats[(c, i, b)].width) // 2), 0)
-                running_offset += cwidth
-                if running_offset < rect_line.width:
-                    rect_line.set_string(running_offset, 0, '|')
-                running_offset += 1
+            if math.fabs(cursor[1] - b) >= 13:
+                continue
+
+            cwidth = self.rendered_beat_widths[b]
+            offset = sum(self.rendered_beat_widths[0:b]) + b
+            rect_beats[(c, i, b)].move(offset + ((cwidth - rect_beats[(c, i, b)].width) // 2), 0)
+
+            if offset + cwidth < rect_line.width:
+                rect_line = self.channel_rects[c][i]
+                rect_line.set_string(offset + cwidth, 0, chr(9474))
 
             flag_draw = True
 
@@ -115,7 +160,8 @@ class NoterEnvironment:
                     for child in grouping:
                         stack.append(child)
 
-            self.rendered_cursor_position = self.opus_manager.cursor_position
+            flag_draw = True
+            self.rendered_cursor_position = self.opus_manager.cursor_position.copy()
 
         if flag_draw:
             self.root.draw()
@@ -181,8 +227,19 @@ class NoterEnvironment:
                 working_rect.resize(len(new_string), 1)
                 working_rect.set_string(0, 0, new_string)
 
+    def cursor_left(self):
+        self.opus_manager.cursor_left()
+    def cursor_up(self):
+        self.opus_manager.cursor_up()
+    def cursor_down(self):
+        self.opus_manager.cursor_down()
+    def cursor_right(self):
+        self.opus_manager.cursor_right()
+
     def run(self):
         self.running = True
+        thread = threading.Thread(target=self.daemon_input)
+        thread.start()
         while self.running:
             try:
                 self.tick()
@@ -205,55 +262,58 @@ class OpusManager:
         return self.get_line(self.cursor_position[0])
 
     def cursor_left(self):
-        new_cursor = self.cursor_position.copy()
-        while new_cursor[1] > 0:
-            old_pos = new_cursor.pop()
-            if old_pos > 0:
-                new_cursor.append(old_pos - 1)
+        while True:
+            if self.cursor_position[-1] > 0:
+                self.cursor_position[-1] -= 1
                 break
-            elif len(new_cursor) == 1:
-                new_cursor.append(0)
-                break
+            else:
+                self.cursor_position.pop()
 
-        self.cursor_position = new_cursor
+        while (grouping := self.get_grouping(self.cursor_position)).is_structural():
+            self.cursor_position.append(len(grouping) - 1)
 
 
     def cursor_right(self):
-        new_cursor = self.cursor_position.copy()
-        line = self.get_line(new_cursor[0])
-        while new_cursor[1] < len(line):
-            old_pos = new_cursor.pop()
-            grouping = self.get_grouping(new_cursor)
-            if old_pos < len(grouping) - 1:
-                new_cursor.append(old_pos + 1)
+        while True:
+            parent_grouping = self.get_grouping(self.cursor_position[0:-1])
+            if self.cursor_position[-1] < len(parent_grouping) - 1:
+                self.cursor_position[-1] += 1
                 break
-            elif len(new_cursor) == 1:
-                new_cursor.append(old_pos)
-                break
+            else:
+                self.cursor_position.pop()
 
-        self.cursor_position = new_cursor
+        while self.get_grouping(self.cursor_position).is_structural():
+            self.cursor_position.append(0)
 
     def cursor_up(self):
-        new_cursor = self.cursor_position.copy()
-        new_cursor[0] = max(0, new_cursor[0] - 1)
-        while len(new_cursor) > 2:
+        self.cursor_position[0] = max(0, self.cursor_position[0] - 1)
+        while len(self.cursor_position) > 2:
             try:
-                grouping = self.get_grouping(new_cursor)
+                self.get_grouping(self.cursor_position)
                 break
+            except InvalidCursor:
+                self.cursor_position.pop()
             except IndexError:
-                new_cursor.pop()
+                self.cursor_position.pop()
+
+        while self.get_grouping(self.cursor_position).is_structural():
+            self.cursor_position.append(0)
 
     def cursor_down(self):
-        new_cursor = self.cursor_position.copy()
-        if self.get_line(new_cursor[0] + 1) is not None:
-            new_cursor[0] += 1
+        if self.get_line(self.cursor_position[0] + 1) is not None:
+            self.cursor_position[0] += 1
 
-        while len(new_cursor) > 2:
+        while len(self.cursor_position) > 2:
             try:
-                grouping = self.get_grouping(new_cursor)
+                self.get_grouping(self.cursor_position)
                 break
+            except InvalidCursor:
+                self.cursor_position.pop()
             except IndexError:
-                new_cursor.pop()
+                self.cursor_position.pop()
+
+        while self.get_grouping(self.cursor_position).is_structural():
+            self.cursor_position.append(0)
 
     def cursor_climb(self):
         if len(self.cursor_position) > 2:
@@ -269,8 +329,12 @@ class OpusManager:
 
     def get_grouping(self, position):
         grouping = self.get_line(position[0])
-        for i in position[1:]:
-            grouping = grouping[i]
+        try:
+            for i in position[1:]:
+                grouping = grouping[i]
+        except BadStateError as e:
+            raise InvalidCursor from e
+
         return grouping
 
     def set_beat_event(self, octave, offset, position):

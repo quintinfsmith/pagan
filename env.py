@@ -262,28 +262,45 @@ class OpusManager:
         return self.get_line(self.cursor_position[0])
 
     def cursor_left(self):
+        fully_left = True
         while True:
             if self.cursor_position[-1] > 0:
                 self.cursor_position[-1] -= 1
+                fully_left = False
                 break
-            else:
+            elif len(self.cursor_position) > 2:
                 self.cursor_position.pop()
+            else:
+                break
 
         while (grouping := self.get_grouping(self.cursor_position)).is_structural():
-            self.cursor_position.append(len(grouping) - 1)
+            if not fully_left:
+                self.cursor_position.append(len(grouping) - 1)
+            else:
+                # Move back to fully left position
+                self.cursor_position.append(0)
 
 
     def cursor_right(self):
+        fully_right = True
         while True:
             parent_grouping = self.get_grouping(self.cursor_position[0:-1])
             if self.cursor_position[-1] < len(parent_grouping) - 1:
                 self.cursor_position[-1] += 1
+                fully_right = False
                 break
-            else:
+            elif len(self.cursor_position) > 2:
                 self.cursor_position.pop()
+            else:
+                break
 
-        while self.get_grouping(self.cursor_position).is_structural():
-            self.cursor_position.append(0)
+        while (grouping := self.get_grouping(self.cursor_position)).is_structural():
+            if not fully_right:
+                self.cursor_position.append(0)
+            else:
+                # Move back to fully right position
+                self.cursor_position.append(len(grouping) - 1)
+
 
     def cursor_up(self):
         self.cursor_position[0] = max(0, self.cursor_position[0] - 1)

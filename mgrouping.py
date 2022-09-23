@@ -3,6 +3,7 @@ from typing import Optional, List, Tuple, Dict
 from apres import NoteOn, NoteOff, PitchWheelChange, MIDI, SetTempo, ProgramChange, TimeSignature
 from structures import Grouping, BadStateError
 
+
 ERROR_CHUNK_SIZE = 19
 
 class MissingCommaError(Exception):
@@ -62,6 +63,28 @@ def is_note_on(event):
         event.channel != 9 and
         event.velocity > 0
     )
+
+class MGroupingEvent:
+    def __init__(self, note: int, base: int, **meta):
+        self.note = note
+        self.base = base
+        self.meta = meta
+
+    def __getitem__(self, key: str):
+        return self.meta.get(key, None)
+
+    def get_note(self):
+        return self.note
+
+    def get_base(self):
+        return self.base
+
+    def get_offset(self):
+        return self.note % self.base
+
+    def get_octave(self):
+        return self.note // self.base
+
 
 class MGrouping(Grouping):
     CH_OPEN = "["
@@ -149,7 +172,6 @@ class MGrouping(Grouping):
                 continue
 
             current_tick = 0
-            running_note_off = None
             running_pitchwheel_revert = None
             for m, beat in enumerate(grouping):
                 if not beat.is_structural():
@@ -169,32 +191,38 @@ class MGrouping(Grouping):
                             continue
 
                         open_events.append(event)
-                        note, pitch_bend, new_press, channel = event
-                        if new_press:
-                            if pitch_bend != 0:
-                                midi.add_event(
-                                    PitchWheelChange(
-                                        channel=channel,
-                                        value=pitch_bend
-                                    ),
-                                    tick=int(current_tick + (i * div_size)),
-                                )
 
+                        note = event.get_note()
+                        #pitch_bend = event['pitch_bend']
+                        pitch_bend = 0
+
+                        channel = event['channel']
+                        if pitch_bend != 0:
                             midi.add_event(
-                                NoteOn(
-                                    note=note,
+                                PitchWheelChange(
                                     channel=channel,
-                                    velocity=int(kwargs.get(f"v{channel}", 100))
+                                    value=pitch_bend
                                 ),
                                 tick=int(current_tick + (i * div_size)),
                             )
-                        else:
-                            if running_note_off is not None:
-                                midi.detach_event(running_note_off.get_uuid())
-                                running_note_off = None
-                            if running_pitchwheel_revert is not None:
-                                midi.detach_event(running_pitchwheel_revert.get_uuid())
-                                running_pitchwheel_revert = None
+
+                        midi.add_event(
+                            NoteOn(
+                                note=note,
+                                channel=channel,
+                                velocity=int(kwargs.get(f"v{channel}", 100))
+                            ),
+                            tick=int(current_tick + (i * div_size)),
+                        )
+
+                        midi.add_event(
+                            NoteOff(
+                                note=note,
+                                channel=channel
+                            ),
+                            tick=int(current_tick + ((i + 1) * div_size)),
+                        )
+
 
                         if pitch_bend != 0:
                             running_pitchwheel_revert = PitchWheelChange(
@@ -206,16 +234,6 @@ class MGrouping(Grouping):
                                 tick=int(current_tick + ((i + 1) * div_size)),
                             )
 
-                        running_note_off = NoteOff(
-                            note=note,
-                            channel=channel
-                        )
-
-                        midi.add_event(
-                            running_note_off,
-                            #tick=int(current_tick + ((i + 1) * div_size)),
-                            tick=int(current_tick + 120),
-                        )
 
                 current_tick += midi.ppqn
 
@@ -325,9 +343,16 @@ class MGrouping(Grouping):
 
                 leaf = grouping_stack[-1][-1]
                 try:
-                    note, bend = get_bend_values(odd_note, base)
-                    note -= 3 # Use A (-3) as first instead of C
-                    leaf.add_event((note, bend, relative_flag != MGrouping.CH_HOLD, channel))
+                    # Ignore holds for now
+                    if relative_flag != MGrouping.CH_HOLD:
+                        leaf.add_event(
+                            MGroupingEvent(
+                                odd_note,
+                                base,
+                                channel=channel
+                            )
+                        )
+
                 except BadStateError as badstateerror:
                     raise MissingCommaError(
                         repstring,
@@ -351,9 +376,13 @@ class MGrouping(Grouping):
 
                     leaf = grouping_stack[-1][-1]
                     try:
-                        note, bend = get_bend_values(odd_note, base)
-                        note -= 3 # Use A as first instead of C
-                        leaf.add_event((note, bend, True, channel))
+                        leaf.add_event(
+                            MGroupingEvent(
+                                odd_note,
+                                base,
+                                channel=channel
+                            )
+                        )
                     except BadStateError as badstateerror:
                         raise MissingCommaError(
                             repstring,
@@ -397,13 +426,11 @@ class MGrouping(Grouping):
 
         elif self.is_event():
             output = ""
-            for note, _, new_press,_ in self.get_events():
-                if new_press:
-                    bignum = (note + 3) // base
-                    littlenum = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"[(note + 3) % base]
-                    output += f"{bignum}{littlenum}"
-                else:
-                    output += f"{self.CH_HOLD}{self.CH_HOLD}"
+            for event in self.get_events():
+                note = event.get_note()
+                bignum = (note + 3) // base
+                littlenum = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"[(note + 3) % base]
+                output += f"{bignum}{littlenum}"
         else:
             output = "__"
 
@@ -437,7 +464,13 @@ class MGrouping(Grouping):
                     beat_values.append(new_grouping)
 
                 grouping = beat_values[beat_index]
-                grouping[inner_beat_offset].add_event((event.note, 0, True, event.channel))
+                grouping[inner_beat_offset].add_event(
+                    MGroupingEvent(
+                        event.note,
+                        12,
+                        channel=event.channel
+                    )
+                )
                 press_map[event.note] = (beat_index, inner_beat_offset)
 
             elif is_note_off(event):

@@ -5,8 +5,7 @@ import re
 import time
 import threading
 
-
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 import wrecked
 from apres import MIDI
 
@@ -84,7 +83,6 @@ class NoterEnvironment:
                 for b, _ in enumerate(grouping):
                     self.flag_beat_changes.append((c, i, b))
 
-
     def tick(self):
         channels = self.opus_manager.channel_groupings
         cursor  = self.opus_manager.cursor_position
@@ -94,9 +92,6 @@ class NoterEnvironment:
 
         rect_beats = {}
         for c, i, b in self.flag_beat_changes:
-            if math.fabs(cursor[1] - b) >= 13:
-                continue
-
             _lines_changed.add((c, i))
             channel = channels[c]
             line = channel[i]
@@ -126,8 +121,6 @@ class NoterEnvironment:
 
         while self.flag_beat_changes:
             c, i, b = self.flag_beat_changes.pop()
-            if math.fabs(cursor[1] - b) >= 13:
-                continue
 
             cwidth = self.rendered_beat_widths[b]
             offset = sum(self.rendered_beat_widths[0:b]) + b
@@ -198,9 +191,10 @@ class NoterEnvironment:
                     if i != 0:
                         comma_points.append(running_width)
                         running_width += 1
-                    child_rect.move(running_width, 0)
 
+                    child_rect.move(running_width, 0)
                     running_width += child_rect.width
+
                 if working_grouping != beat_grouping:
                     running_width += 1
 
@@ -208,24 +202,28 @@ class NoterEnvironment:
                 if working_grouping != beat_grouping:
                     working_rect.set_character(0, 0, '[')
                     working_rect.set_character(running_width - 1, 0, ']')
+
                 for x in comma_points:
                     working_rect.set_character(x, 0, ',')
+
             else:
                 if working_grouping.is_event():
                     events = working_grouping.get_events()
                     new_string = ''
-                    for i, (note, _, new_press, _) in enumerate(events):
-                        if new_press:
-                            new_string += "0123456789AB"[note // 12]
-                            new_string += "0123456789AB"[note % 12]
-                        else:
-                            new_string += "~~"
-
+                    for i, event in enumerate(events):
+                        note = event.get_note()
+                        base = event.get_base()
+                        new_string += get_digit(note // base, base)
+                        new_string += get_digit(note % base, base)
                 else:
-                    new_string = '__'
+                    new_string = '--'
 
                 working_rect.resize(len(new_string), 1)
                 working_rect.set_string(0, 0, new_string)
+
+    def split_grouping(self, splits):
+        position = self.opus_manager.cursor_position
+        self.opus_manager.split_grouping(position, splits)
 
     def cursor_left(self):
         self.opus_manager.cursor_left()
@@ -493,6 +491,16 @@ class OpusManager:
                 self.channel_groupings[i].append(split_line)
                 self.opus_beat_count = max(self.opus_beat_count, len(split_line))
 
+    def split_grouping(self, position: List[int], splits: int):
+        grouping = self.get_grouping(position)
+        grouping.set_size(splits, True)
+
+    def set_event_note(self, position: List[int], note: int):
+        grouping = self.get_grouping(position)
+        grouping.clear_events()
+        # TODO:
+        #grouping.add_event(
+
 def split_by_channel(event, other_events):
     return event[3]
 
@@ -503,3 +511,6 @@ def split_by_note_order(event, other_events):
 
 def sort_by_first(a):
     return a[0]
+
+def get_digit(decimal_number, base):
+    return "0123456789ABCDEFGHIJKLMNOPQRSTUVWXZ"[decimal_number % base]

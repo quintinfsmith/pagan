@@ -10,9 +10,8 @@ import wrecked
 from apres import MIDI
 
 from structures import BadStateError
-from mgrouping import MGrouping
+from mgrouping import MGrouping, MGroupingEvent
 from interactor import Interactor
-
 
 class InvalidCursor(Exception):
     '''Raised when attempting to pass a cursor without enough arguments'''
@@ -51,6 +50,14 @@ class NoterEnvironment:
             'q',
             self.kill
         )
+        self.interactor.assign_sequence(
+            'x',
+            self.remove_at_cursor
+        )
+        self.interactor.assign_sequence(
+            'i',
+            self.insert_after_cursor
+        )
 
         self.view_offset = 0
 
@@ -75,6 +82,15 @@ class NoterEnvironment:
         else:
             self.opus_manager.load_file(path)
 
+
+        # TODO: Could be cleaner
+        cursor_position = [0,0]
+        grouping = self.opus_manager.get_grouping(cursor_position)
+        while grouping.is_structural():
+            cursor_position.append(0)
+            grouping = grouping[0]
+        self.opus_manager.cursor_position = cursor_position
+
         for c, channel in enumerate(self.opus_manager.channel_groupings):
             for i, grouping in enumerate(channel):
                 grouping_rect = self.root.new_rect()
@@ -82,6 +98,7 @@ class NoterEnvironment:
                 self.flag_line_changes.append((c,i))
                 for b, _ in enumerate(grouping):
                     self.flag_beat_changes.append((c, i, b))
+
 
     def tick(self):
         channels = self.opus_manager.channel_groupings
@@ -124,6 +141,7 @@ class NoterEnvironment:
 
             cwidth = self.rendered_beat_widths[b]
             offset = sum(self.rendered_beat_widths[0:b]) + b
+            rect_beats[(c, i, b)].resize(cwidth, 1)
             rect_beats[(c, i, b)].move(offset + ((cwidth - rect_beats[(c, i, b)].width) // 2), 0)
 
             if offset + cwidth < rect_line.width:
@@ -131,7 +149,6 @@ class NoterEnvironment:
                 rect_line.set_string(offset + cwidth, 0, chr(9474))
 
             flag_draw = True
-
             self.rendered_channel_rects.add((c,i))
 
         # Draw cursor
@@ -164,6 +181,10 @@ class NoterEnvironment:
         return self.rect_subbeat_map[subgrouping.get_uuid()]
 
     def build_beat_rect(self, beat_grouping, rect) -> Dict[int, wrecked.Rect]:
+        # Single-event or empty beats get a buffer rect for spacing purposes
+        if beat_grouping.is_open() or beat_grouping.is_event():
+            rect = rect.new_rect()
+
         stack = [(beat_grouping, rect, 0)]
         depth_sorted_queue = []
 
@@ -224,6 +245,25 @@ class NoterEnvironment:
     def split_grouping(self, splits):
         position = self.opus_manager.cursor_position
         self.opus_manager.split_grouping(position, splits)
+
+    def insert_after_cursor(self):
+        position = self.opus_manager.cursor_position
+        self.opus_manager.insert_after(position)
+        c, i = self.opus_manager.get_channel_index(position[0])
+        line = self.opus_manager.get_line(position[0])
+        for b, beat in enumerate(line):
+            self.flag_beat_changes.append((c, i, b))
+        self.rendered_cursor_position = None
+
+
+    def remove_at_cursor(self):
+        position = self.opus_manager.cursor_position
+        self.opus_manager.remove(position)
+        c, i = self.opus_manager.get_channel_index(position[0])
+        line = self.opus_manager.get_line(position[0])
+        for b, beat in enumerate(line):
+            self.flag_beat_changes.append((c, i, b))
+        self.rendered_cursor_position = None
 
     def cursor_left(self):
         self.opus_manager.cursor_left()
@@ -394,6 +434,18 @@ class OpusManager:
             raise InvalidCursor(position)
         self.cursor_position = position
 
+    def get_channel(self, y: int) -> int:
+        return self.get_channel_index(y)[0]
+
+    def get_channel_index(self, y: int) -> (int, int):
+        for channel in self.channel_order:
+            for i, _ in enumerate(self.channel_groupings[channel]):
+                if y == 0:
+                    return (channel, i)
+                y -= 1
+
+        raise IndexError
+
     def get_y(self, c: int, i: int) -> int:
         y = 0
         for j in self.channel_order:
@@ -496,10 +548,44 @@ class OpusManager:
         grouping.set_size(splits, True)
 
     def set_event_note(self, position: List[int], note: int):
+        channel = self.get_channel(position[0])
         grouping = self.get_grouping(position)
         grouping.clear_events()
-        # TODO:
-        #grouping.add_event(
+        # TODO: get channel from position instead of mgroupingevent
+        grouping.add_event(MGroupingEvent(
+            note,
+            self.BASE,
+            channel=channel
+        ))
+
+    def insert_after(self, position: List[int]):
+        grouping = self.get_grouping(position)
+        parent = grouping.parent
+        parent.set_size(len(parent) + 1, True)
+        #self.set_event_note(position, 0)
+
+    def remove(self, position: List[int]):
+        index = position[-1]
+        grouping = self.get_grouping(position)
+        parent = grouping.parent
+        new_size = len(parent) - 1
+
+        if new_size > 0:
+            for i, child in enumerate(parent):
+                if i < index or i == len(parent) - 1:
+                    continue
+                parent[i] = parent[i + 1]
+
+        parent.set_size(new_size, True)
+        # replace the parent with the child
+        if new_size < 2:
+            parent_index = position[-2]
+            parent.parent[parent_index] = parent[0]
+            self.cursor_position.pop()
+        elif index > 0:
+            self.cursor_position[-1] -= 1
+
+
 
 def split_by_channel(event, other_events):
     return event[3]

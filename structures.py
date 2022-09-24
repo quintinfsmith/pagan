@@ -275,9 +275,12 @@ class Grouping:
         if self.is_event():
             raise BadStateError()
 
-        self.set_state(GroupingState.STRUCTURE)
-        if not noclobber:
-            self.divisions = {}
+        if size == 0:
+            self.set_state(GroupingState.OPEN)
+        else:
+            self.set_state(GroupingState.STRUCTURE)
+            if not noclobber:
+                self.divisions = {}
         self.size = size
 
     def resize(self, new_size: int):

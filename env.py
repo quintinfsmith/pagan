@@ -107,6 +107,7 @@ class NoterEnvironment:
 
         _lines_changed = set()
 
+
         rect_beats = {}
         for c, i, b in self.flag_beat_changes:
             _lines_changed.add((c, i))
@@ -116,8 +117,9 @@ class NoterEnvironment:
             rect_line = self.channel_rects[c][i]
 
             #TODO: remove old beat
-            rect_beats[(c, i, b)] = rect_line.new_rect()
-            self.build_beat_rect(beat, rect_beats[(c, i ,b)])
+            rect_beat = rect_line.new_rect()
+            rect_beats[(c, i, b)] = rect_beat.new_rect()
+            self.build_beat_rect(beat, rect_beats[(c, i, b)])
             while b >= len(self.rendered_beat_widths):
                 self.rendered_beat_widths.append(0)
 
@@ -141,8 +143,9 @@ class NoterEnvironment:
 
             cwidth = self.rendered_beat_widths[b]
             offset = sum(self.rendered_beat_widths[0:b]) + b
-            rect_beats[(c, i, b)].resize(cwidth, 1)
-            rect_beats[(c, i, b)].move(offset + ((cwidth - rect_beats[(c, i, b)].width) // 2), 0)
+            rect_beats[(c, i, b)].parent.resize(cwidth, 1)
+            rect_beats[(c, i, b)].move((cwidth - rect_beats[(c, i, b)].width) // 2, 0)
+            rect_beats[(c, i, b)].parent.move(offset, 0)
 
             if offset + cwidth < rect_line.width:
                 rect_line = self.channel_rects[c][i]
@@ -182,10 +185,8 @@ class NoterEnvironment:
 
     def build_beat_rect(self, beat_grouping, rect) -> Dict[int, wrecked.Rect]:
         # Single-event or empty beats get a buffer rect for spacing purposes
-        if beat_grouping.is_open() or beat_grouping.is_event():
-            rect = rect.new_rect()
-
         stack = [(beat_grouping, rect, 0)]
+
         depth_sorted_queue = []
 
         while stack:

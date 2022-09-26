@@ -66,8 +66,9 @@ class NoterEnvironment:
 
         self.rendered_cursor_position = []
         self.rect_subbeat_map = {}
+        self.rect_beats = {}
 
-        self.flag_beat_changes = []
+        self.flag_beat_changed = set()
         self.flag_line_changes = []
 
     def kill(self):
@@ -97,19 +98,19 @@ class NoterEnvironment:
                 self.channel_rects[c].append(grouping_rect)
                 self.flag_line_changes.append((c,i))
                 for b, _ in enumerate(grouping):
-                    self.flag_beat_changes.append((c, i, b))
+                    self.flag_beat_changed.add((c, i, b))
 
 
     def tick(self):
         channels = self.opus_manager.channel_groupings
-        cursor  = self.opus_manager.cursor_position
         flag_draw = False
 
         _lines_changed = set()
 
-
-        rect_beats = {}
-        for c, i, b in self.flag_beat_changes:
+        beat_size_diffs = {}
+        beat_resized = set()
+        while self.flag_beat_changed:
+            c, i, b = self.flag_beat_changed.pop()
             _lines_changed.add((c, i))
             channel = channels[c]
             line = channel[i]
@@ -117,14 +118,48 @@ class NoterEnvironment:
             rect_line = self.channel_rects[c][i]
 
             #TODO: remove old beat
-            rect_beat = rect_line.new_rect()
-            rect_beats[(c, i, b)] = rect_beat.new_rect()
-            self.build_beat_rect(beat, rect_beats[(c, i, b)])
+            if (c, i, b) not in self.rect_beats:
+                rect_beat = rect_line.new_rect()
+                self.rect_beats[(c, i, b)] = rect_beat.new_rect()
+            self.build_beat_rect(beat, self.rect_beats[(c, i, b)])
             while b >= len(self.rendered_beat_widths):
                 self.rendered_beat_widths.append(0)
 
-            bw = self.rendered_beat_widths[b]
-            self.rendered_beat_widths[b] = max(bw, rect_beats[(c, i, b)].width)
+            beat_resized.add(b)
+        for b in beat_resized:
+            new_max = 0
+            for c, channel in enumerate(self.channel_rects):
+                for i, rect_line in enumerate(channel):
+                    new_max = max(self.rect_beats[(c, i, b)].width, new_max)
+
+            old_max = self.rendered_beat_widths[b]
+            if new_max != old_max:
+                beat_size_diffs[b] = new_max - old_max
+                self.rendered_beat_widths[b] = new_max
+
+        # merge consecutive beats in beat_size_diffs
+        diffs_b = {}
+        diff_keys = list(beat_size_diffs.keys())
+        diff_keys.sort()
+        skipper = 0
+        for k in diff_keys[::-1]:
+            if skipper:
+                skipper -= 1
+                continue
+            diffs_b[k + 1] = beat_size_diffs[k]
+            j = k - 1
+            while j >= 0:
+                if j not in beat_size_diffs:
+                    break
+
+                # Increase offset of all proceeding beats
+                diffs_b[k + 1] += beat_size_diffs[j]
+
+                j -= 1
+                skipper += 1
+
+        del beat_size_diffs
+
 
         line_length = sum(self.rendered_beat_widths) + self.opus_manager.opus_beat_count - 1
         for c, i in _lines_changed:
@@ -138,21 +173,29 @@ class NoterEnvironment:
             else:
                 self.root.set_string(0, line_position, f" :{i} ")
 
-        while self.flag_beat_changes:
-            c, i, b = self.flag_beat_changes.pop()
+        diff_keys = list(diffs_b.keys())
+        diff_keys.sort()
 
+        for k in diff_keys:
+            offset = diffs_b[k]
+            box_limit = (sum(self.rendered_beat_widths[0:k]), 0, line_length, 1)
+            for channel in self.channel_rects:
+                for rect_line in channel:
+                    rect_line.shift_contents_in_box(offset, 0, box_limit)
+
+
+        for b in beat_resized:
             cwidth = self.rendered_beat_widths[b]
             offset = sum(self.rendered_beat_widths[0:b]) + b
-            rect_beats[(c, i, b)].parent.resize(cwidth, 1)
-            rect_beats[(c, i, b)].move((cwidth - rect_beats[(c, i, b)].width) // 2, 0)
-            rect_beats[(c, i, b)].parent.move(offset, 0)
-
-            if offset + cwidth < rect_line.width:
-                rect_line = self.channel_rects[c][i]
-                rect_line.set_string(offset + cwidth, 0, chr(9474))
+            for c, channel in enumerate(self.channel_rects):
+                for i, rect_line in enumerate(channel):
+                    self.rect_beats[(c, i, b)].parent.resize(cwidth, 1)
+                    self.rect_beats[(c, i, b)].move((cwidth - self.rect_beats[(c, i, b)].width) // 2, 0)
+                    self.rect_beats[(c, i, b)].parent.move(offset, 0)
+                    if offset + cwidth < rect_line.width:
+                       rect_line.set_string(offset + cwidth, 0, chr(9474))
 
             flag_draw = True
-            self.rendered_channel_rects.add((c,i))
 
         # Draw cursor
         if self.rendered_cursor_position != self.opus_manager.cursor_position:
@@ -253,7 +296,7 @@ class NoterEnvironment:
         c, i = self.opus_manager.get_channel_index(position[0])
         line = self.opus_manager.get_line(position[0])
         for b, beat in enumerate(line):
-            self.flag_beat_changes.append((c, i, b))
+            self.flag_beat_changed.add((c, i, b))
         self.rendered_cursor_position = None
 
 
@@ -263,7 +306,7 @@ class NoterEnvironment:
         c, i = self.opus_manager.get_channel_index(position[0])
         line = self.opus_manager.get_line(position[0])
         for b, beat in enumerate(line):
-            self.flag_beat_changes.append((c, i, b))
+            self.flag_beat_changed.add((c, i, b))
         self.rendered_cursor_position = None
 
     def cursor_left(self):

@@ -121,7 +121,6 @@ class NoterEnvironment:
             rect_line = self.channel_rects[c][i]
 
             if (c, i, b) in self.rect_beats:
-                rect_beat = rect_line.new_rect()
                 rect_beat = self.rect_beats[(c, i, b)].parent
                 self.rect_beats[(c, i, b)].remove()
             else:
@@ -184,16 +183,19 @@ class NoterEnvironment:
                     rect_line.shift_contents_in_box(offset, 0, box_limit)
 
         ## Now move the beat Rects that were specifically rebuilt
+        running_offset = 0
         for b in beat_indeces_changed:
             cwidth = self.rendered_beat_widths[b]
-            offset = sum(self.rendered_beat_widths[0:b]) + b
+            offset = running_offset + b
             for c, channel in enumerate(self.channel_rects):
                 for i, rect_line in enumerate(channel):
-                    self.rect_beats[(c, i, b)].parent.resize(cwidth, 1)
-                    self.rect_beats[(c, i, b)].move((cwidth - self.rect_beats[(c, i, b)].width) // 2, 0)
-                    self.rect_beats[(c, i, b)].parent.move(offset, 0)
+                    rect_beat = self.rect_beats[(c, i ,b)]
+                    rect_beat.parent.resize(cwidth, 1)
+                    rect_beat.move((cwidth - rect_beat.width) // 2, 0)
+                    rect_beat.parent.move(offset, 0)
                     if offset + cwidth < rect_line.width:
                         rect_line.set_string(offset + cwidth, 0, chr(9474))
+            running_offset += self.rendered_beat_widths[b]
 
         return output
 
@@ -299,14 +301,14 @@ class NoterEnvironment:
                 working_rect.resize(len(new_string), 1)
                 working_rect.set_string(0, 0, new_string)
 
-        structured_map = {}
-        for path, rect in flat_map.items():
-            working_node = structured_map
-            for p in path:
-                if p not in working_node:
-                    working_node[p] = {}
-                working_node = working_node[p]
-            working_node['rect'] = rect
+        #structured_map = {}
+        #for path, rect in flat_map.items():
+        #    working_node = structured_map
+        #    for p in path:
+        #        if p not in working_node:
+        #            working_node[p] = {}
+        #        working_node = working_node[p]
+        #    working_node['rect'] = rect
 
         return flat_map
 
@@ -322,7 +324,6 @@ class NoterEnvironment:
         for b, beat in enumerate(line):
             self.flag_beat_changed.add((c, i, b))
         self.rendered_cursor_position = None
-
 
     def remove_at_cursor(self):
         position = self.opus_manager.cursor_position
@@ -387,7 +388,6 @@ class OpusManager:
                 # Move back to fully left position
                 self.cursor_position.append(0)
 
-
     def cursor_right(self):
         fully_right = True
         while True:
@@ -407,7 +407,6 @@ class OpusManager:
             else:
                 # Move back to fully right position
                 self.cursor_position.append(len(grouping) - 1)
-
 
     def cursor_up(self):
         self.cursor_position[0] = max(0, self.cursor_position[0] - 1)

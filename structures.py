@@ -249,6 +249,12 @@ class Grouping:
 
         self.reduce(max(original_size, len(grouping)))
 
+    def clear(self):
+        for item in self:
+            del item
+        self.set_size(1)
+        self.set_state(GroupingState.OPEN)
+
     def is_structural(self) -> bool:
         """Check if this grouping has sub groupings"""
         return self._get_state() == GroupingState.STRUCTURE

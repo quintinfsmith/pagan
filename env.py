@@ -27,6 +27,7 @@ class NoterEnvironment:
     def __init__(self):
         self.running = False
         self.root = wrecked.init()
+        self.register = None
         self.channel_rects = [[] for i in range(16)]
         self.opus_manager = OpusManager()
         self.interactor = Interactor()
@@ -59,6 +60,18 @@ class NoterEnvironment:
             self.insert_after_cursor
         )
 
+        for c in "0123456789ab":
+            self.interactor.assign_sequence(
+                c,
+                self.add_digit_to_register,
+                int(c, 12)
+            )
+
+        self.interactor.assign_sequence(
+            "\r",
+            self.set_event_at_cursor
+        )
+
         self.view_offset = 0
 
         self.rendered_channel_rects = set()
@@ -70,6 +83,25 @@ class NoterEnvironment:
 
         self.flag_beat_changed = set()
         self.flag_line_changed = set()
+
+    def add_digit_to_register(self, value):
+        if self.register is None:
+            self.register = 0
+        else:
+            self.register *= self.opus_manager.BASE
+        self.register += value
+
+    def clear_register(self):
+        self.register = None
+
+    def fetch_register(self, fallback=None):
+        if self.register is None:
+            output = fallback
+        else:
+            output = self.register
+            self.register = None
+
+        return output
 
     def kill(self):
         self.running = False
@@ -316,6 +348,19 @@ class NoterEnvironment:
         position = self.opus_manager.cursor_position
         self.opus_manager.split_grouping(position, splits)
 
+    def set_event_at_cursor(self):
+        value = self.fetch_register()
+        if value is None:
+            return
+
+        position = self.opus_manager.cursor_position
+        self.opus_manager.set_beat_event(value, position)
+
+        c, i = self.opus_manager.get_channel_index(position[0])
+        line = self.opus_manager.get_line(position[0])
+        for b, beat in enumerate(line):
+            self.flag_beat_changed.add((c, i, b))
+
     def insert_after_cursor(self):
         position = self.opus_manager.cursor_position
         self.opus_manager.insert_after(position)
@@ -460,9 +505,19 @@ class OpusManager:
 
         return grouping
 
-    def set_beat_event(self, octave, offset, position):
+    def set_beat_event(self, value, position):
+        channel, _index = self.get_channel_index(position[0])
         grouping = self.get_grouping(position)
-        grouping.add_event(((octave * self.BASE) + offset))
+        if grouping.is_structural():
+            grouping.clear()
+        elif grouping.is_event():
+            grouping.clear_events()
+
+        grouping.add_event(MGroupingEvent(
+            value,
+            self.BASE,
+            channel=channel
+        ))
 
     def unset_beat_event(self, position):
         grouping = self.get_grouping(position)

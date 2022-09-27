@@ -5,7 +5,7 @@ import re
 import time
 import threading
 
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, Tuple
 import wrecked
 from apres import MIDI
 
@@ -65,8 +65,8 @@ class NoterEnvironment:
         self.rendered_beat_widths = []
 
         self.rendered_cursor_position = []
-        self.rect_subbeat_map = {}
         self.rect_beats = {}
+        self.subbeat_rect_map = {}
 
         self.flag_beat_changed = set()
         self.flag_line_changed = set()
@@ -128,7 +128,8 @@ class NoterEnvironment:
                 rect_beat = rect_line.new_rect()
 
             self.rect_beats[(c, i, b)] = rect_beat.new_rect()
-            self.build_beat_rect(beat, self.rect_beats[(c, i, b)])
+            subbeat_map = self.build_beat_rect(beat, self.rect_beats[(c, i, b)])
+            self.subbeat_rect_map[(c, i, b)] = subbeat_map
             beat_indeces_changed.add(b)
 
         # Resize the adjacent beats in all the lines to match sizes
@@ -201,21 +202,11 @@ class NoterEnvironment:
         if self.rendered_cursor_position != self.opus_manager.cursor_position:
             output = True
             if self.rendered_cursor_position:
-                stack = [self.opus_manager.get_grouping(self.rendered_cursor_position)]
-                while stack:
-                    grouping = stack.pop()
-                    self.rect_subbeat_map[grouping.get_uuid()].unset_invert()
-                    if grouping.is_structural():
-                        for child in grouping:
-                            stack.append(child)
+                rect = self.get_subbeat_rect(self.rendered_cursor_position)
+                rect.unset_invert()
 
-            stack = [self.opus_manager.get_grouping(self.opus_manager.cursor_position)]
-            while stack:
-                grouping = stack.pop()
-                self.rect_subbeat_map[grouping.get_uuid()].invert()
-                if grouping.is_structural():
-                    for child in grouping:
-                        stack.append(child)
+            rect = self.get_subbeat_rect(self.opus_manager.cursor_position)
+            rect.invert()
 
             self.rendered_cursor_position = self.opus_manager.cursor_position.copy()
 
@@ -240,27 +231,30 @@ class NoterEnvironment:
         return output
 
     def get_subbeat_rect(self, position):
-        subgrouping = self.opus_manager.get_grouping(position)
-        return self.rect_subbeat_map[subgrouping.get_uuid()]
+        c, i = self.opus_manager.get_channel_index(position[0])
+        return self.subbeat_rect_map[(c, i, position[1])][tuple(position[2:])]
 
-    def build_beat_rect(self, beat_grouping, rect) -> Dict[int, wrecked.Rect]:
+    def build_beat_rect(self, beat_grouping, rect) -> Dict[Tuple(int), wrecked.Rect]:
         # Single-event or empty beats get a buffer rect for spacing purposes
-        stack = [(beat_grouping, rect, 0)]
+        stack = [(beat_grouping, rect, 0, [])]
 
         depth_sorted_queue = []
-
+        flat_map = {}
         while stack:
-            working_grouping, working_rect, depth = stack.pop(0)
-            depth_sorted_queue.append((depth, working_grouping))
-            self.rect_subbeat_map[working_grouping.get_uuid()] = working_rect
+            working_grouping, working_rect, depth, cursor_map = stack.pop(0)
+            depth_sorted_queue.append((depth, working_grouping, tuple(cursor_map)))
+            flat_map[tuple(cursor_map)] = working_rect
             if working_grouping.is_structural():
-                for subgrouping in working_grouping:
-                    stack.append((subgrouping, working_rect.new_rect(), depth + 1))
+                for i, subgrouping in enumerate(working_grouping):
+                    next_map = cursor_map.copy()
+                    next_map.append(i)
+                    stack.append((subgrouping, working_rect.new_rect(), depth + 1, next_map))
 
         depth_sorted_queue = sorted(depth_sorted_queue, key=sort_by_first, reverse=True)
 
-        for _, working_grouping in depth_sorted_queue:
-            working_rect = self.rect_subbeat_map[working_grouping.get_uuid()]
+        for _, working_grouping, cursor_path in depth_sorted_queue:
+            working_rect = flat_map[cursor_path]
+
             if working_grouping.is_structural():
                 running_width = 0
                 if working_grouping != beat_grouping:
@@ -268,7 +262,9 @@ class NoterEnvironment:
 
                 comma_points = []
                 for i, subgrouping in enumerate(working_grouping):
-                    child_rect = self.rect_subbeat_map[subgrouping.get_uuid()]
+                    child_path = list(cursor_path)
+                    child_path.append(i)
+                    child_rect = flat_map[tuple(child_path)]
                     # Account for commas
                     if i != 0:
                         comma_points.append(running_width)
@@ -302,6 +298,17 @@ class NoterEnvironment:
 
                 working_rect.resize(len(new_string), 1)
                 working_rect.set_string(0, 0, new_string)
+
+        structured_map = {}
+        for path, rect in flat_map.items():
+            working_node = structured_map
+            for p in path:
+                if p not in working_node:
+                    working_node[p] = {}
+                working_node = working_node[p]
+            working_node['rect'] = rect
+
+        return flat_map
 
     def split_grouping(self, splits):
         position = self.opus_manager.cursor_position
@@ -653,7 +660,6 @@ class OpusManager:
             self.cursor_position[-1] -= 1
 
         return grouping
-
 
 
 def split_by_channel(event, other_events):

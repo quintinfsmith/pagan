@@ -69,7 +69,7 @@ class NoterEnvironment:
         self.rect_beats = {}
 
         self.flag_beat_changed = set()
-        self.flag_line_changes = []
+        self.flag_line_changed = set()
 
     def kill(self):
         self.running = False
@@ -96,37 +96,49 @@ class NoterEnvironment:
             for i, grouping in enumerate(channel):
                 grouping_rect = self.root.new_rect()
                 self.channel_rects[c].append(grouping_rect)
-                self.flag_line_changes.append((c,i))
+                self.flag_line_changed.add((c,i))
                 for b, _ in enumerate(grouping):
                     self.flag_beat_changed.add((c, i, b))
-
-
     def tick(self):
-        channels = self.opus_manager.channel_groupings
         flag_draw = False
+        flag_draw |= self.tick_update_beats()
+        flag_draw |= self.tick_update_lines()
+        flag_draw |= self.tick_update_cursor()
 
-        _lines_changed = set()
+        if flag_draw:
+            self.root.draw()
 
-        beat_size_diffs = {}
-        beat_resized = set()
+    def tick_update_beats(self) -> bool:
+        channels = self.opus_manager.channel_groupings
+        output = bool(self.flag_beat_changed)
+
+        beat_indeces_changed = set()
+        # The structure of the beat changed. rebuild the rects
         while self.flag_beat_changed:
             c, i, b = self.flag_beat_changed.pop()
-            _lines_changed.add((c, i))
-            channel = channels[c]
-            line = channel[i]
+            line = channels[c][i]
             beat = line[b]
             rect_line = self.channel_rects[c][i]
 
-            #TODO: remove old beat
-            if (c, i, b) not in self.rect_beats:
+            if (c, i, b) in self.rect_beats:
                 rect_beat = rect_line.new_rect()
-                self.rect_beats[(c, i, b)] = rect_beat.new_rect()
+                rect_beat = self.rect_beats[(c, i, b)].parent
+                self.rect_beats[(c, i, b)].remove()
+            else:
+                rect_beat = rect_line.new_rect()
+
+            self.rect_beats[(c, i, b)] = rect_beat.new_rect()
             self.build_beat_rect(beat, self.rect_beats[(c, i, b)])
+            beat_indeces_changed.add(b)
+
+        # Resize the adjacent beats in all the lines to match sizes
+        ## First, update the list of widest beat widths (self.rendered_beat_widths)
+        ##  and map the increases/reductions in changed widths (in rect_size_diffs)
+        rect_size_diffs = {}
+        for b in beat_indeces_changed:
             while b >= len(self.rendered_beat_widths):
                 self.rendered_beat_widths.append(0)
 
-            beat_resized.add(b)
-        for b in beat_resized:
             new_max = 0
             for c, channel in enumerate(self.channel_rects):
                 for i, rect_line in enumerate(channel):
@@ -134,57 +146,44 @@ class NoterEnvironment:
 
             old_max = self.rendered_beat_widths[b]
             if new_max != old_max:
-                beat_size_diffs[b] = new_max - old_max
+                rect_size_diffs[b] = new_max - old_max
                 self.rendered_beat_widths[b] = new_max
 
-        # merge consecutive beats in beat_size_diffs
-        diffs_b = {}
-        diff_keys = list(beat_size_diffs.keys())
+        ## Then, merge consecutive beats in rect_size_diffs.
+        ##  Having fewer sections therein means fewer calls to shift_contents_in_box(...)
+        rect_size_diffs_tmp = {}
+        diff_keys = list(rect_size_diffs.keys())
         diff_keys.sort()
-        skipper = 0
+        skip_countdown = 0
         for k in diff_keys[::-1]:
-            if skipper:
-                skipper -= 1
+            # Skip the next number of keys as they've been merged already
+            if skip_countdown:
+                skip_countdown -= 1
                 continue
-            diffs_b[k + 1] = beat_size_diffs[k]
-            j = k - 1
-            while j >= 0:
-                if j not in beat_size_diffs:
-                    break
 
-                # Increase offset of all proceeding beats
-                diffs_b[k + 1] += beat_size_diffs[j]
+            rect_size_diffs_tmp[k + 1] = 0
 
+            j = k
+            while j >= 0 and j in rect_size_diffs:
+                # Increase offset of proceeding beat
+                rect_size_diffs_tmp[k + 1] += rect_size_diffs[j]
+                skip_countdown += 1
                 j -= 1
-                skipper += 1
+        rect_size_diffs = rect_size_diffs_tmp
 
-        del beat_size_diffs
-
-
-        line_length = sum(self.rendered_beat_widths) + self.opus_manager.opus_beat_count - 1
-        for c, i in _lines_changed:
-            line_position = self.opus_manager.get_y(c, i)
-            rect_line = self.channel_rects[c][i]
-            rect_line.set_fg_color(wrecked.BLUE)
-            rect_line.resize(line_length, 1)
-            rect_line.move(4, line_position)
-            if i == 0:
-                self.root.set_string(0, line_position, f"{c}:{i} ")
-            else:
-                self.root.set_string(0, line_position, f" :{i} ")
-
-        diff_keys = list(diffs_b.keys())
+        ## Then, Shift groups of beats that would be moved by beat size changes
+        diff_keys = list(rect_size_diffs.keys())
         diff_keys.sort()
-
+        line_length = sum(self.rendered_beat_widths) + len(self.rendered_beat_widths) - 1
         for k in diff_keys:
-            offset = diffs_b[k]
+            offset = rect_size_diffs[k]
             box_limit = (sum(self.rendered_beat_widths[0:k]), 0, line_length, 1)
             for channel in self.channel_rects:
                 for rect_line in channel:
                     rect_line.shift_contents_in_box(offset, 0, box_limit)
 
-
-        for b in beat_resized:
+        ## Now move the beat Rects that were specifically rebuilt
+        for b in beat_indeces_changed:
             cwidth = self.rendered_beat_widths[b]
             offset = sum(self.rendered_beat_widths[0:b]) + b
             for c, channel in enumerate(self.channel_rects):
@@ -193,12 +192,14 @@ class NoterEnvironment:
                     self.rect_beats[(c, i, b)].move((cwidth - self.rect_beats[(c, i, b)].width) // 2, 0)
                     self.rect_beats[(c, i, b)].parent.move(offset, 0)
                     if offset + cwidth < rect_line.width:
-                       rect_line.set_string(offset + cwidth, 0, chr(9474))
+                        rect_line.set_string(offset + cwidth, 0, chr(9474))
 
-            flag_draw = True
+        return output
 
-        # Draw cursor
+    def tick_update_cursor(self) -> bool:
+        output = False
         if self.rendered_cursor_position != self.opus_manager.cursor_position:
+            output = True
             if self.rendered_cursor_position:
                 stack = [self.opus_manager.get_grouping(self.rendered_cursor_position)]
                 while stack:
@@ -216,11 +217,27 @@ class NoterEnvironment:
                     for child in grouping:
                         stack.append(child)
 
-            flag_draw = True
             self.rendered_cursor_position = self.opus_manager.cursor_position.copy()
 
-        if flag_draw:
-            self.root.draw()
+        return output
+
+
+    def tick_update_lines(self) -> bool:
+        line_length = sum(self.rendered_beat_widths) + self.opus_manager.opus_beat_count - 1
+        output = bool(self.flag_line_changed)
+        while self.flag_line_changed:
+            c, i = self.flag_line_changed.pop()
+            line_position = self.opus_manager.get_y(c, i)
+            rect_line = self.channel_rects[c][i]
+            rect_line.set_fg_color(wrecked.BLUE)
+            rect_line.resize(line_length, 1)
+            rect_line.move(4, line_position)
+            if i == 0:
+                self.root.set_string(0, line_position, f"{c}:{i} ")
+            else:
+                self.root.set_string(0, line_position, f" :{i} ")
+
+        return output
 
     def get_subbeat_rect(self, position):
         subgrouping = self.opus_manager.get_grouping(position)
@@ -302,7 +319,8 @@ class NoterEnvironment:
 
     def remove_at_cursor(self):
         position = self.opus_manager.cursor_position
-        self.opus_manager.remove(position)
+        grouping = self.opus_manager.remove(position)
+
         c, i = self.opus_manager.get_channel_index(position[0])
         line = self.opus_manager.get_line(position[0])
         for b, beat in enumerate(line):
@@ -596,19 +614,24 @@ class OpusManager:
         grouping = self.get_grouping(position)
         grouping.clear_events()
         # TODO: get channel from position instead of mgroupingevent
-        grouping.add_event(MGroupingEvent(
-            note,
-            self.BASE,
-            channel=channel
-        ))
+        grouping.add_event(
+            MGroupingEvent(
+                note,
+                self.BASE,
+                channel=channel
+            )
+        )
 
     def insert_after(self, position: List[int]):
         grouping = self.get_grouping(position)
         parent = grouping.parent
-        parent.set_size(len(parent) + 1, True)
+        if len(parent) <= 1:
+            pass
+        else:
+            parent.set_size(len(parent) + 1, True)
         #self.set_event_note(position, 0)
 
-    def remove(self, position: List[int]):
+    def remove(self, position: List[int]) -> MGrouping:
         index = position[-1]
         grouping = self.get_grouping(position)
         parent = grouping.parent
@@ -628,6 +651,8 @@ class OpusManager:
             self.cursor_position.pop()
         elif index > 0:
             self.cursor_position[-1] -= 1
+
+        return grouping
 
 
 

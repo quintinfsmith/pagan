@@ -357,9 +357,8 @@ class NoterEnvironment:
         self.opus_manager.set_beat_event(value, position)
 
         c, i = self.opus_manager.get_channel_index(position[0])
-        line = self.opus_manager.get_line(position[0])
-        for b, beat in enumerate(line):
-            self.flag_beat_changed.add((c, i, b))
+        self.flag_beat_changed.add((c, i, position[1]))
+        self.rendered_cursor_position = None
 
     def insert_after_cursor(self):
         position = self.opus_manager.cursor_position

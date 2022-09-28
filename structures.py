@@ -119,7 +119,7 @@ class Grouping:
             i = self.size + i
 
         if i >= self.size:
-            raise IndexError()
+            raise IndexError(i, self.size)
 
         grouping.parent = self
         self.divisions[i] = grouping
@@ -287,6 +287,15 @@ class Grouping:
             self.set_state(GroupingState.STRUCTURE)
             if not noclobber:
                 self.divisions = {}
+            else:
+                # TODO: Maybe think about this. might be able to be faster
+                to_delete = set()
+                for k in self.divisions:
+                    if k >= size:
+                        to_delete.add(k)
+                for k in to_delete:
+                    del self.divisions[k]
+
         self.size = size
 
     def resize(self, new_size: int):

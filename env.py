@@ -243,10 +243,9 @@ class NoterEnvironment:
                     rect_line.shift_contents_in_box(offset, 0, box_limit)
 
         ## Now move the beat Rects that were specifically rebuilt
-        running_offset = 0
         for b in beat_indeces_changed:
             cwidth = self.rendered_beat_widths[b]
-            offset = running_offset + b
+            offset = sum(self.rendered_beat_widths[0:b]) + b
             for c, channel in enumerate(self.channel_rects):
                 for i, rect_line in enumerate(channel):
                     rect_beat = self.rect_beats[(c, i ,b)]
@@ -266,8 +265,6 @@ class NoterEnvironment:
 
                     rect_beat_line.set_string(0, 0, chr(9474))
                     rect_beat_line.move(offset + cwidth, 0)
-
-            running_offset += self.rendered_beat_widths[b]
 
         return output
 
@@ -403,20 +400,20 @@ class NoterEnvironment:
     def insert_after_cursor(self):
         position = self.opus_manager.cursor_position
         self.opus_manager.insert_after(position)
+
+        if len(position) == 2:
+            self.opus_manager.cursor_dive(0)
+
         c, i = self.opus_manager.get_channel_index(position[0])
-        line = self.opus_manager.get_line(position[0])
-        for b, beat in enumerate(line):
-            self.flag_beat_changed.add((c, i, b))
+        self.flag_beat_changed.add((c, i, position[1]))
         self.rendered_cursor_position = None
 
     def remove_at_cursor(self):
-        position = self.opus_manager.cursor_position
-        grouping = self.opus_manager.remove(position)
+        self.opus_manager.remove_at_cursor()
 
+        position = self.opus_manager.cursor_position
         c, i = self.opus_manager.get_channel_index(position[0])
-        line = self.opus_manager.get_line(position[0])
-        for b, beat in enumerate(line):
-            self.flag_beat_changed.add((c, i, b))
+        self.flag_beat_changed.add((c, i, position[1]))
         self.rendered_cursor_position = None
 
     def cursor_left(self):
@@ -724,36 +721,58 @@ class OpusManager:
 
     def insert_after(self, position: List[int]):
         grouping = self.get_grouping(position)
-        parent = grouping.parent
-        if len(parent) <= 1:
-            pass
-        else:
-            parent.set_size(len(parent) + 1, True)
-        #self.set_event_note(position, 0)
 
-    def remove(self, position: List[int]) -> MGrouping:
+        if len(position) == 2:
+            if grouping.is_event() or grouping.is_open():
+                parent = self.get_line(position[0])
+                new_beat = MGrouping()
+                parent[position[-1]] = new_beat
+                new_beat.parent = parent
+                new_beat.set_size(2)
+                new_beat[0] = grouping
+                grouping.parent = new_beat
+        else:
+            parent = grouping.parent
+            at_end = position[-1] == len(parent) - 1
+            parent.set_size(len(parent) + 1, True)
+            if not at_end:
+                tmp = parent[-1]
+                i = len(parent) - 1
+                while i > position[-1] + 1:
+                    parent[i] = parent[i - 1]
+                    i -= 1
+                parent[i] = tmp
+            else:
+                pass
+
+    def remove_at_cursor(self):
+        position = self.cursor_position
+        parent_grouping = self.get_grouping(position[0:-1])
+        new_size = len(parent_grouping) - 1
+        self.remove(position)
+
+        if new_size < 2 and len(self.cursor_position) > 2:
+            self.cursor_position.pop()
+        elif position[-1] == new_size:
+            self.cursor_position[-1] -= 1
+
+    def remove(self, position: List[int]):
         index = position[-1]
         grouping = self.get_grouping(position)
         parent = grouping.parent
         new_size = len(parent) - 1
 
-        if new_size > 0:
+        if new_size > 0 and len(position) > 2:
             for i, child in enumerate(parent):
                 if i < index or i == len(parent) - 1:
                     continue
                 parent[i] = parent[i + 1]
+            parent.set_size(new_size, True)
 
-        parent.set_size(new_size, True)
         # replace the parent with the child
-        if new_size < 2:
+        if new_size == 1:
             parent_index = position[-2]
             parent.parent[parent_index] = parent[0]
-            self.cursor_position.pop()
-        elif index > 0:
-            self.cursor_position[-1] -= 1
-
-        return grouping
-
 
 def split_by_channel(event, other_events):
     return event[3]

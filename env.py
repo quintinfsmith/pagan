@@ -27,6 +27,8 @@ class NoterEnvironment:
     def __init__(self):
         self.running = False
         self.root = wrecked.init()
+        self.rect_view_window = self.root.new_rect()
+
         self.register = None
         self.channel_rects = [[] for i in range(16)]
         self.opus_manager = OpusManager()
@@ -79,6 +81,7 @@ class NoterEnvironment:
 
         self.rendered_cursor_position = []
         self.rect_beats = {}
+        self.rect_beat_lines = {}
         self.subbeat_rect_map = {}
 
         self.flag_beat_changed = set()
@@ -126,7 +129,7 @@ class NoterEnvironment:
 
         for c, channel in enumerate(self.opus_manager.channel_groupings):
             for i, grouping in enumerate(channel):
-                grouping_rect = self.root.new_rect()
+                grouping_rect = self.rect_view_window.new_rect()
                 self.channel_rects[c].append(grouping_rect)
                 self.flag_line_changed.add((c,i))
                 for b, _ in enumerate(grouping):
@@ -136,9 +139,34 @@ class NoterEnvironment:
         flag_draw |= self.tick_update_beats()
         flag_draw |= self.tick_update_lines()
         flag_draw |= self.tick_update_cursor()
+        flag_draw |= self.tick_update_view_offset()
 
         if flag_draw:
             self.root.draw()
+
+    def tick_update_view_offset(self) -> bool:
+        did_change_flag = False
+        if self.root.width - 4 != self.rect_view_window.width:
+            self.rect_view_window.resize(self.root.width - 4, self.root.height)
+            self.rect_view_window.move(4, 0)
+            did_change_flag = True
+
+        cursor = self.opus_manager.cursor_position
+        beat_offset = sum(self.rendered_beat_widths[0:cursor[1]]) + cursor[1] - 1
+        line_length = sum(self.rendered_beat_widths) + len(self.rendered_beat_widths) - 1
+        beat_width = self.rendered_beat_widths[cursor[1]]
+
+        new_offset = beat_offset - ((self.rect_view_window.width - beat_width) // 3)
+        new_offset = max(0, new_offset)
+        new_offset = min(line_length - self.rect_view_window.width, new_offset)
+
+        if did_change_flag or new_offset != self.view_offset:
+            shift_diff = self.view_offset - new_offset
+            self.view_offset = new_offset
+            self.rect_view_window.shift_contents(shift_diff, 0)
+            did_change_flag = True
+
+        return did_change_flag
 
     def tick_update_beats(self) -> bool:
         channels = self.opus_manager.channel_groupings
@@ -225,8 +253,20 @@ class NoterEnvironment:
                     rect_beat.parent.resize(cwidth, 1)
                     rect_beat.move((cwidth - rect_beat.width) // 2, 0)
                     rect_beat.parent.move(offset, 0)
-                    if offset + cwidth < rect_line.width:
-                        rect_line.set_string(offset + cwidth, 0, chr(9474))
+                    if b >= len(self.rendered_beat_widths) - 1:
+                        continue
+
+                    if (c,i,b) not in self.rect_beat_lines:
+                        rect_beat_line = rect_line.new_rect()
+                        self.rect_beat_lines[(c, i, b)] = rect_beat_line
+                        rect_beat_line.resize(1, 1)
+                        rect_beat_line.set_fg_color(wrecked.BRIGHTBLACK)
+                    else:
+                        rect_beat_line = self.rect_beat_lines[(c, i, b)]
+
+                    rect_beat_line.set_string(0, 0, chr(9474))
+                    rect_beat_line.move(offset + cwidth, 0)
+
             running_offset += self.rendered_beat_widths[b]
 
         return output
@@ -256,7 +296,7 @@ class NoterEnvironment:
             rect_line = self.channel_rects[c][i]
             rect_line.set_fg_color(wrecked.BLUE)
             rect_line.resize(line_length, 1)
-            rect_line.move(4, line_position)
+            rect_line.move(0, line_position)
             if i == 0:
                 self.root.set_string(0, line_position, f"{c}:{i} ")
             else:

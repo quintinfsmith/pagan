@@ -82,6 +82,8 @@ class NoterEnvironment:
         self.rendered_cursor_position = []
         self.rect_beats = {}
         self.rect_beat_lines = {}
+        self.rect_topbar = self.rect_view_window.new_rect()
+        self.rect_beat_labels = {}
         self.subbeat_rect_map = {}
 
         self.flag_beat_changed = set()
@@ -150,6 +152,7 @@ class NoterEnvironment:
             self.rect_view_window.resize(self.root.width - 4, self.root.height)
             self.rect_view_window.move(4, 0)
             did_change_flag = True
+
 
         cursor = self.opus_manager.cursor_position
         beat_offset = sum(self.rendered_beat_widths[0:cursor[1]]) + cursor[1] - 1
@@ -289,7 +292,7 @@ class NoterEnvironment:
         output = bool(self.flag_line_changed)
         while self.flag_line_changed:
             c, i = self.flag_line_changed.pop()
-            line_position = self.opus_manager.get_y(c, i)
+            line_position = self.opus_manager.get_y(c, i) + 1
             rect_line = self.channel_rects[c][i]
             rect_line.set_fg_color(wrecked.BLUE)
             rect_line.resize(line_length, 1)
@@ -298,6 +301,18 @@ class NoterEnvironment:
                 self.root.set_string(0, line_position, f"{c}:{i} ")
             else:
                 self.root.set_string(0, line_position, f" :{i} ")
+
+        self.rect_topbar.resize(line_length, 1)
+        for b, width in enumerate(self.rendered_beat_widths):
+            if b not in self.rect_beat_labels:
+                rect_label = self.rect_topbar.new_rect()
+                rect_label.set_bg_color(wrecked.BRIGHTBLACK)
+                self.rect_beat_labels[b] = rect_label
+            else:
+                rect_label = self.rect_beat_labels[b]
+            rect_label.resize(width, 1)
+            rect_label.move(sum(self.rendered_beat_widths[0:b]) + b, 0)
+            rect_label.set_string((width - len(str(b))) // 2,0,str(b))
 
         return output
 

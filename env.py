@@ -16,7 +16,7 @@ from interactor import Interactor
 class InvalidCursor(Exception):
     '''Raised when attempting to pass a cursor without enough arguments'''
 
-class NoterEnvironment:
+class EditorEnvironment:
     tick_delay = 1 / 24
 
     def daemon_input(self):
@@ -91,6 +91,7 @@ class NoterEnvironment:
         self.rect_topbar = self.rect_view_shifter.new_rect()
         self.rect_beat_labels = {}
         self.subbeat_rect_map = {}
+        self.rect_channel_dividers = {}
 
         self.flag_beat_changed = set()
         self.flag_line_changed = set()
@@ -159,6 +160,10 @@ class NoterEnvironment:
                 #self.flag_line_changed.add((c,i))
                 for b, _ in enumerate(grouping):
                     self.flag_beat_changed.add((c, i, b))
+
+            if channel:
+                self.rect_channel_dividers[c] = self.rect_view_shifter.new_rect()
+
     def tick(self):
         flag_draw = False
         flag_draw |= self.tick_update_beats()
@@ -233,6 +238,7 @@ class NoterEnvironment:
 
             self.rect_beats[(c, i, b)] = rect_beat.new_rect()
             subbeat_map = self.build_beat_rect(beat, self.rect_beats[(c, i, b)])
+
             self.subbeat_rect_map[(c, i, b)] = subbeat_map
             beat_indeces_changed.add(b)
 
@@ -359,6 +365,14 @@ class NoterEnvironment:
                         self.root.set_string(0, line_position + 1, f"{c}:{i} ")
                     else:
                         self.root.set_string(0, line_position + 1, f" :{i} ")
+
+                if channel:
+                    rect_channel_divider = self.rect_channel_dividers[c]
+                    rect_channel_divider.set_fg_color(wrecked.BRIGHTBLACK)
+                    rect_channel_divider.resize(line_length, 1)
+                    rect_channel_divider.set_string(0, 0, chr(9472) * line_length)
+                    rect_channel_divider.move(rect_channel_divider.x, self.opus_manager.get_y(c, len(channel) - 1) + 2)
+
             self.rect_topbar.resize(line_length, 1)
             self.rendered_line_length = line_length
 
@@ -677,6 +691,8 @@ class OpusManager:
                 if i == g and j == c:
                     return y
                 y += 1
+            if self.channel_groupings[j]:
+                y += 1
         return -1
 
     def get_line(self, y) -> Optional[MGrouping]:
@@ -862,12 +878,12 @@ class OpusManager:
 
 
 def split_by_channel(event, other_events):
-    return event[3]
+    return event['channel']
 
 def split_by_note_order(event, other_events):
-    e_notes = [e[0] for e in other_events]
+    e_notes = [e.note for e in other_events]
     e_notes.sort()
-    return e_notes.index(event[0])
+    return e_notes.index(event.note)
 
 def sort_by_first(a):
     return a[0]

@@ -104,8 +104,10 @@ class NoterEnvironment:
         )
 
         for (c,i,b), rect in self.rect_beats.items():
-            if b >= cursor[1]:
+            if b == cursor[1]:
                 self.flag_beat_changed.add((c, i, b))
+            if b >= cursor[1]:
+                self.flag_beat_changed.add((c, i, b + 1))
 
         self.opus_manager.cursor_position = cursor[0:2]
         self.rendered_cursor_position = None
@@ -172,8 +174,25 @@ class NoterEnvironment:
         if self.root.width - 4 != self.rect_view_window.width:
             self.rect_view_window.resize(self.root.width - 4, self.root.height)
             self.rect_view_window.move(4, 0)
-            self.rect_view_shifter.resize(self.rect_view_window.width, self.rect_view_window.height)
-            self.rect_view_shifter.move(0, 0)
+
+            #Draw view border
+            vh = self.rect_view_window.height
+            vw = self.rect_view_window.width
+            for y in range(vh - 2):
+                self.rect_view_window.set_string(0, y + 1, chr(9474))
+                self.rect_view_window.set_string(vw - 1, y + 1, chr(9474))
+
+            for x in range(vw - 2):
+                self.rect_view_window.set_string(x + 1, 0, chr(9472))
+                self.rect_view_window.set_string(x + 1, vh - 1, chr(9472))
+
+            self.rect_view_window.set_string(0, 0, chr(9581))
+            self.rect_view_window.set_string(0, vh - 1, chr(9584))
+            self.rect_view_window.set_string(vw - 1, 0, chr(9582))
+            self.rect_view_window.set_string(vw - 1, vh - 1, chr(9583))
+
+            self.rect_view_shifter.resize(vw - 2, vh - 2)
+            self.rect_view_shifter.move(1, 1)
             did_change_flag = True
 
 
@@ -337,9 +356,9 @@ class NoterEnvironment:
                     rect_line.resize(line_length, 1)
                     rect_line.move(rect_line.x, line_position)
                     if i == 0:
-                        self.root.set_string(0, line_position, f"{c}:{i} ")
+                        self.root.set_string(0, line_position + 1, f"{c}:{i} ")
                     else:
-                        self.root.set_string(0, line_position, f" :{i} ")
+                        self.root.set_string(0, line_position + 1, f" :{i} ")
             self.rect_topbar.resize(line_length, 1)
             self.rendered_line_length = line_length
 

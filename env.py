@@ -105,11 +105,11 @@ class EditorEnvironment:
         if splits := self.fetch_register(0):
             self.opus_manager.split(cursor, splits)
 
-        self.opus_manager.cursor_position.append(0)
+            self.opus_manager.cursor_position.append(0)
 
-        c, i = self.opus_manager.get_channel_index(cursor[0])
-        self.flag_beat_changed.add((c, i, cursor[1]))
-        self.rendered_cursor_position = None
+            c, i = self.opus_manager.get_channel_index(cursor[0])
+            self.flag_beat_changed.add((c, i, cursor[1]))
+            self.rendered_cursor_position = None
 
     def insert_beat_at_cursor(self):
         cursor = self.opus_manager.cursor_position
@@ -901,8 +901,6 @@ class OpusManager:
             grouping.parent = new_grouping
         else:
             grouping.set_size(splits, True)
-
-
 
 
 def split_by_channel(event, other_events):

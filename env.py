@@ -70,6 +70,14 @@ class EditorEnvironment:
             '/',
             self.split_at_cursor
         )
+        self.interactor.assign_sequence(
+            ';]',
+            self.new_line
+        )
+        self.interactor.assign_sequence(
+            ';[',
+            self.remove_line
+        )
 
         for c in "0123456789ab":
             self.interactor.assign_sequence(
@@ -90,6 +98,7 @@ class EditorEnvironment:
 
         self.rendered_cursor_position = []
         self.rendered_line_length = 0
+        self.rendered_line_count = 0
         self.rect_beats = {}
         self.rect_beat_lines = {}
         self.rect_topbar = self.rect_view_shifter.new_rect()
@@ -100,11 +109,55 @@ class EditorEnvironment:
         self.flag_beat_changed = set()
         self.flag_line_changed = set()
 
+    def new_line(self):
+        cursor = self.opus_manager.cursor_position
+        channel, _i = self.opus_manager.get_channel_index(cursor[0])
+
+        self.opus_manager.new_line(channel)
+
+        grouping_rect = self.rect_view_shifter.new_rect()
+        self.channel_rects[channel].append(grouping_rect)
+        for b in range(self.opus_manager.opus_beat_count):
+            self.flag_beat_changed.add((channel, len(self.channel_rects[channel]) - 1, b))
+
+    def remove_line(self):
+        cursor = self.opus_manager.cursor_position
+        target_c, target_i = self.opus_manager.get_channel_index(cursor[0])
+
+        self.opus_manager.remove_line(target_c, target_i)
+        self.channel_rects[target_c].pop().remove()
+
+        for c, channel in enumerate(self.channel_rects):
+            for i, _line in enumerate(channel):
+                for b in range(self.opus_manager.opus_beat_count):
+                    self.flag_beat_changed.add((c, i, b))
+
+        if cursor[0] == self.get_line_count():
+            cursor[0] -= 1
+
+
+        while True:
+            try:
+                grouping = self.opus_manager.get_grouping(cursor)
+                break
+            except InvalidCursor:
+                cursor.pop()
+            except IndexError:
+                cursor[-1] -= 1
+
+        grouping = self.opus_manager.get_grouping(cursor)
+        while grouping.is_structural():
+            cursor.append(0)
+            grouping = grouping[0]
+
+        self.opus_manager.cursor_position = cursor
+        self.rendered_cursor_position = None
+        self.rendered_line_count = 0
+
     def split_at_cursor(self):
         cursor = self.opus_manager.cursor_position
         if splits := self.fetch_register(0):
             self.opus_manager.split(cursor, splits)
-
             self.opus_manager.cursor_position.append(0)
 
             c, i = self.opus_manager.get_channel_index(cursor[0])
@@ -241,6 +294,9 @@ class EditorEnvironment:
         # The structure of the beat changed. rebuild the rects
         while self.flag_beat_changed:
             c, i, b = self.flag_beat_changed.pop()
+            if i >= len(channels[c]):
+                continue
+
             line = channels[c][i]
             beat = line[b]
             rect_line = self.channel_rects[c][i]
@@ -365,17 +421,24 @@ class EditorEnvironment:
 
         return output
 
+    def get_line_count(self):
+        output = 0
+        for channel in self.channel_rects:
+            for line in channel:
+                output += 1
+        return output
 
     def tick_update_lines(self) -> bool:
         line_length = sum(self.rendered_beat_widths) + self.opus_manager.opus_beat_count - 1
+        line_count = self.get_line_count()
         output = False
-        if line_length != self.rendered_line_length:
+        if line_length != self.rendered_line_length or line_count != self.rendered_line_count:
             for c, channel in enumerate(self.channel_rects):
                 for i, rect_line in enumerate(channel):
                     line_position = self.opus_manager.get_y(c, i) + 1
                     rect_line.set_fg_color(wrecked.BLUE)
                     rect_line.resize(line_length, 1)
-                    rect_line.move(rect_line.x, line_position)
+                    rect_line.move(0 - self.view_offset, line_position)
                     if i == 0:
                         self.root.set_string(0, line_position + 1, f"{c}:{i} ")
                     else:
@@ -386,10 +449,12 @@ class EditorEnvironment:
                     rect_channel_divider.set_fg_color(wrecked.BRIGHTBLACK)
                     rect_channel_divider.resize(line_length, 1)
                     rect_channel_divider.set_string(0, 0, chr(9472) * line_length)
-                    rect_channel_divider.move(rect_channel_divider.x, self.opus_manager.get_y(c, len(channel) - 1) + 2)
+                    rect_channel_divider.move(0 - self.view_offset, self.opus_manager.get_y(c, len(channel) - 1) + 2)
 
             self.rect_topbar.resize(line_length, 1)
             self.rendered_line_length = line_length
+            self.rendered_line_count = line_count
+
 
             output = True
 
@@ -901,6 +966,14 @@ class OpusManager:
             grouping.parent = new_grouping
         else:
             grouping.set_size(splits, True)
+
+    def new_line(self, channel=0):
+        new_grouping = MGrouping()
+        new_grouping.set_size(self.opus_beat_count)
+        self.channel_groupings[channel].append(new_grouping)
+
+    def remove_line(self, channel, index):
+        self.channel_groupings[channel].pop(index)
 
 
 def split_by_channel(event, other_events):

@@ -121,20 +121,25 @@ class EditorEnvironment:
             self.flag_beat_changed.add((channel, len(self.channel_rects[channel]) - 1, b))
 
     def remove_line(self):
+        if self.get_line_count() <= 1:
+            return
+
         cursor = self.opus_manager.cursor_position
         target_c, target_i = self.opus_manager.get_channel_index(cursor[0])
 
         self.opus_manager.remove_line(target_c, target_i)
         self.channel_rects[target_c].pop().remove()
 
-        for c, channel in enumerate(self.channel_rects):
-            for i, _line in enumerate(channel):
-                for b in range(self.opus_manager.opus_beat_count):
-                    self.flag_beat_changed.add((c, i, b))
+        if not self.channel_rects[target_c]:
+            self.rect_channel_dividers[target_c].remove()
+            del self.rect_channel_dividers[target_c]
+
+        for i, _line in enumerate(self.channel_rects[target_c]):
+            for b in range(self.opus_manager.opus_beat_count):
+                self.flag_beat_changed.add((target_c, i, b))
 
         if cursor[0] == self.get_line_count():
             cursor[0] -= 1
-
 
         while True:
             try:

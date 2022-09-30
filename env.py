@@ -66,6 +66,10 @@ class EditorEnvironment:
             ' ',
             self.insert_beat_at_cursor
         )
+        self.interactor.assign_sequence(
+            '/',
+            self.split_at_cursor
+        )
 
         for c in "0123456789ab":
             self.interactor.assign_sequence(
@@ -95,6 +99,17 @@ class EditorEnvironment:
 
         self.flag_beat_changed = set()
         self.flag_line_changed = set()
+
+    def split_at_cursor(self):
+        cursor = self.opus_manager.cursor_position
+        if splits := self.fetch_register(0):
+            self.opus_manager.split(cursor, splits)
+
+        self.opus_manager.cursor_position.append(0)
+
+        c, i = self.opus_manager.get_channel_index(cursor[0])
+        self.flag_beat_changed.add((c, i, cursor[1]))
+        self.rendered_cursor_position = None
 
     def insert_beat_at_cursor(self):
         cursor = self.opus_manager.cursor_position
@@ -873,6 +888,19 @@ class OpusManager:
                     line[i] = line[i - 1]
                     i -= 1
                 line[i] = tmp
+
+    def split(self, position, splits):
+        grouping = self.get_grouping(position)
+        if grouping.is_event():
+            parent = self.get_grouping(position[0:-1])
+            new_grouping = MGrouping()
+            new_grouping.set_size(splits)
+            new_grouping.parent = parent
+            parent[position[-1]] = new_grouping
+            new_grouping[0] = grouping
+            grouping.parent = new_grouping
+        else:
+            grouping.set_size(splits, True)
 
 
 

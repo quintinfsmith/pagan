@@ -4,7 +4,6 @@ from typing import Optional, List, Tuple, Dict
 from apres import NoteOn, NoteOff, PitchWheelChange, MIDI, SetTempo, ProgramChange, TimeSignature
 from structures import Grouping, BadStateError
 
-
 ERROR_CHUNK_SIZE = 19
 
 class MissingCommaError(Exception):

@@ -833,7 +833,6 @@ class OpusManager:
                 if grouping:
                     beat_count = max(len(grouping), beat_count)
                     grouping.set_size(beat_count, True)
-                    grouping.clear_singles()
 
                     self.channel_groupings[channel].append(grouping)
 

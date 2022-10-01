@@ -715,7 +715,7 @@ class OpusManager:
 
         grouping.add_event(MGroupingEvent(
             value,
-            self.BASE,
+            base=self.BASE,
             channel=channel
         ))
 
@@ -880,7 +880,7 @@ class OpusManager:
         grouping.add_event(
             MGroupingEvent(
                 note,
-                self.BASE,
+                base=self.BASE,
                 channel=channel
             )
         )

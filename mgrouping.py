@@ -66,7 +66,8 @@ def is_note_on(event):
     )
 
 class MGroupingEvent:
-    def __init__(self, note: int, base: int, **meta):
+    def __init__(self, note: int, *, base=12, relative=False, **meta):
+        self.relative = relative
         self.note = note
         self.base = base
         self.meta = meta
@@ -125,8 +126,8 @@ class MGrouping(Grouping):
     )
 
     @staticmethod
-    def _channel_splitter(event):
-        return event[3]
+    def _channel_splitter(event, other_events):
+        return event['channel']
 
     def split(self, split_func=None):
         if split_func is None:
@@ -174,6 +175,7 @@ class MGrouping(Grouping):
 
             current_tick = 0
             running_pitchwheel_revert = None
+            prev_note = None
             for m, beat in enumerate(grouping):
                 if not beat.is_structural():
                     parent_grouping = MGrouping()
@@ -193,7 +195,11 @@ class MGrouping(Grouping):
 
                         open_events.append(event)
 
-                        note = event.get_note()
+                        if event.relative:
+                            note = prev_note + event.note
+                        else:
+                            note = event.get_note()
+                        prev_note = note
                         #pitch_bend = event['pitch_bend']
                         pitch_bend = 0
 
@@ -331,7 +337,7 @@ class MGrouping(Grouping):
                 relative_flag = None
 
             elif relative_flag is not None:
-                odd_note = previous_note
+                odd_note = 0
                 if relative_flag == MGrouping.CH_SUBTRACT:
                     odd_note -= int(character, base)
                 elif relative_flag == MGrouping.CH_ADD:
@@ -349,7 +355,8 @@ class MGrouping(Grouping):
                         leaf.add_event(
                             MGroupingEvent(
                                 odd_note,
-                                base,
+                                base=base,
+                                relative=True,
                                 channel=channel
                             )
                         )
@@ -380,7 +387,7 @@ class MGrouping(Grouping):
                         leaf.add_event(
                             MGroupingEvent(
                                 odd_note,
-                                base,
+                                base=base,
                                 channel=channel
                             )
                         )
@@ -468,7 +475,7 @@ class MGrouping(Grouping):
                 grouping[inner_beat_offset].add_event(
                     MGroupingEvent(
                         event.note,
-                        12,
+                        base=12,
                         channel=event.channel
                     )
                 )

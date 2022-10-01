@@ -525,10 +525,24 @@ class EditorEnvironment:
                     events = working_grouping.get_events()
                     new_string = ''
                     for i, event in enumerate(events):
-                        note = event.get_note()
                         base = event.get_base()
-                        new_string += get_digit(note // base, base)
-                        new_string += get_digit(note % base, base)
+                        if event.relative:
+                            if event.note == 0 or event.note % base != 0:
+                                if event.note < 0:
+                                    new_string += f"-"
+                                else:
+                                    new_string += f"+"
+                                new_string += get_digit(int(math.fabs(event.note)), base)
+                            else:
+                                if event.note < 0:
+                                    new_string += f"v"
+                                else:
+                                    new_string += f"^"
+                                new_string += get_digit(int(math.fabs(event.note)) // base, base)
+                        else:
+                            note = event.get_note()
+                            new_string += get_digit(note // base, base)
+                            new_string += get_digit(note % base, base)
                 else:
                     new_string = '--'
 

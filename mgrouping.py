@@ -538,6 +538,9 @@ class MGrouping(Grouping):
         for i, beat in enumerate(opus):
             beat.flatten()
             beat.reduce()
+            beat.clear_singles()
+
+
 
         return opus
 

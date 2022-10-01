@@ -477,6 +477,7 @@ class EditorEnvironment:
         flat_map = {}
         while stack:
             working_grouping, working_rect, depth, cursor_map = stack.pop(0)
+
             depth_sorted_queue.append((depth, working_grouping, tuple(cursor_map)))
             flat_map[tuple(cursor_map)] = working_rect
             if working_grouping.is_structural():
@@ -832,7 +833,7 @@ class OpusManager:
                 if grouping:
                     beat_count = max(len(grouping), beat_count)
                     grouping.set_size(beat_count, True)
-                    grouping.crop_redundancies()
+                    grouping.clear_singles()
 
                     self.channel_groupings[channel].append(grouping)
 

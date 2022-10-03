@@ -114,6 +114,12 @@ class EditorEnvironment:
             self.decrement_event_at_cursor
         )
 
+        # KLUDGE FOR TESTING
+        self.interactor.assign_sequence(
+            'EE',
+            self.opus_manager.export
+        )
+
         for c in "0123456789ab":
             self.interactor.assign_sequence(
                 c,
@@ -772,6 +778,24 @@ class OpusManager:
         self.channel_order = list(range(16))
         self.cursor_position = [0, 0] # Y, X,... deeper divisions
         self.opus_beat_count = 1
+        self.path = None
+
+    def export(self):
+        working_path = self.path
+        if self.path.lower().endswith("mid"):
+            working_path = f"{self.path[0:self.path.rfind('.mid')]}_radix.mid"
+        elif os.path.isfile(working_path):
+            working_path = f"{self.path[0:self.path.rfind('.mid')]}.mid"
+        elif os.path.isdir(working_path):
+            working_path = f"{self.path}.mid"
+
+        opus = MGrouping()
+        opus.set_size(self.opus_beat_count)
+        for groupings in self.channel_groupings:
+            for grouping in groupings:
+                for b, beat in enumerate(grouping):
+                    opus[b].merge(beat)
+        opus.to_midi().save(working_path)
 
     def set_active_beat_size(self, size):
         self.set_beat_size(size, self.cursor_position)
@@ -961,6 +985,7 @@ class OpusManager:
         return output
 
     def load_folder(self, path: str) -> None:
+        self.path = path
         base = self.BASE
 
         channel_map = {}
@@ -1005,6 +1030,7 @@ class OpusManager:
 
 
     def load_file(self, path: str) -> MGrouping:
+        self.path = path
         base = 12
 
         content = ""
@@ -1023,6 +1049,7 @@ class OpusManager:
             self.opus_beat_count = max(self.opus_beat_count, len(grouping))
 
     def import_midi(self, path: str) -> None:
+        self.path = path
         midi = MIDI.load(path)
         opus = MGrouping.from_midi(midi)
         tracks = opus.split(split_by_channel)

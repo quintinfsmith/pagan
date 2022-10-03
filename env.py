@@ -16,17 +16,14 @@ from interactor import Interactor
 class InvalidCursor(Exception):
     '''Raised when attempting to pass a cursor without enough arguments'''
 
-class Register:
-    def __init__(self, base=10, digits=0):
-        self.value = 0
-        self.base = base
-        self.max_digits = digits
+class ReadyEvent:
+    def __init__(self, initial_value, *, relative=False):
+        self.value = initial_value
+        self.relative = relative
+        self.flag_changed = True
 
 class EditorEnvironment:
     tick_delay = 1 / 24
-
-    KEY_REGISTER_12 = 100
-    KEY_REGISTER_10 = 101
 
     def daemon_input(self):
         while self.running:
@@ -40,9 +37,8 @@ class EditorEnvironment:
         self.rect_view_shifter = self.rect_view_window.new_rect()
 
         self.register = None
-        self.register_mode_character = None
-        self.rendered_register = (None, None)
-        self.rect_register = self.rect_view_window.new_rect()
+        #self.rendered_register = None
+        #self.rect_register = self.rect_view_window.new_rect()
 
         self.channel_rects = [[] for i in range(16)]
         self.opus_manager = OpusManager()
@@ -101,6 +97,22 @@ class EditorEnvironment:
             '-',
             self.relative_subtract_entry
         )
+        self.interactor.assign_sequence(
+            'v',
+            self.relative_downshift_entry
+        )
+        self.interactor.assign_sequence(
+            '^',
+            self.relative_upshift_entry
+        )
+        self.interactor.assign_sequence(
+            'K',
+            self.increment_event_at_cursor
+        )
+        self.interactor.assign_sequence(
+            'J',
+            self.decrement_event_at_cursor
+        )
 
         for c in "0123456789ab":
             self.interactor.assign_sequence(
@@ -114,15 +126,10 @@ class EditorEnvironment:
             self.clear_register
         )
 
-        self.interactor.assign_sequence(
-            "\x7f",
-            self.remove_last_digit_from_register
-        )
-
-        self.interactor.assign_sequence(
-            "\r",
-            self.set_event_at_cursor
-        )
+        #self.interactor.assign_sequence(
+        #    "\x7f",
+        #    self.remove_last_digit_from_register
+        #)
 
 
         self.view_offset = 0
@@ -143,18 +150,67 @@ class EditorEnvironment:
         self.flag_beat_changed = set()
         self.flag_line_changed = set()
 
-    def absolute_entry(self):
-        self.interactor.set_context(self.KEY_REGISTER_12)
+    def increment_event_at_cursor(self):
+        position = self.opus_manager.cursor_position
+        grouping = self.opus_manager.get_grouping(position)
+        if not grouping.is_event():
+            return
+
+        for event in grouping.get_events():
+            if event.relative:
+                if (event.note >= event.base \
+                or event.note < 0 - event.base) \
+                and event.note < (event.base * (event.base - 1)):
+                    event.note += event.base
+                elif event.note < event.base:
+                    event.note += 1
+            elif event.note < 127:
+                event.note += 1
+
+        c, i = self.opus_manager.get_channel_index(position[0])
+        self.flag_beat_changed.add((c, i, position[1]))
+        self.rendered_cursor_position = None
+
+    def decrement_event_at_cursor(self):
+        position = self.opus_manager.cursor_position
+        grouping = self.opus_manager.get_grouping(position)
+        if not grouping.is_event():
+            return
+
+        for event in grouping.get_events():
+            if event.relative:
+                if (event.note <= 0 - event.base \
+                or event.note > event.base) \
+                and event.note > 0 - (event.base * (event.base - 1)):
+                    event.note -= event.base
+                elif event.note >= 0 - event.base:
+                    event.note -= 1
+            elif event.note > 0:
+                event.note -= 1
+
+        c, i = self.opus_manager.get_channel_index(position[0])
+        self.flag_beat_changed.add((c, i, position[1]))
+        self.rendered_cursor_position = None
 
     def relative_add_entry(self):
-        self.interactor.set_context(self.KEY_REGISTER_12)
+        self.register = ReadyEvent(1, relative=True)
 
     def relative_subtract_entry(self):
-        self.interactor.set_context(self.KEY_REGISTER_12)
+        self.register = ReadyEvent(-1, relative=True)
+
+    def relative_downshift_entry(self):
+        self.register = ReadyEvent(-1 * self.opus_manager.BASE, relative=True)
+
+    def relative_upshift_entry(self):
+        self.register = ReadyEvent(self.opus_manager.BASE, relative=True)
 
     def remove_last_digit_from_register(self):
-        if self.register is not None:
-            self.register //= self.opus_manager.BASE
+        if self.register is None:
+            pass
+        elif self.register.value == 0 or self.register.relative:
+            self.register = None
+        else:
+            self.register.value //= self.opus_manager.BASE
 
     def new_line(self):
         cursor = self.opus_manager.cursor_position
@@ -208,13 +264,12 @@ class EditorEnvironment:
 
     def split_at_cursor(self):
         cursor = self.opus_manager.cursor_position
-        if splits := self.fetch_register(0):
-            self.opus_manager.split(cursor, splits)
-            self.opus_manager.cursor_position.append(0)
+        self.opus_manager.split(cursor, 2)
+        self.opus_manager.cursor_position.append(0)
 
-            c, i = self.opus_manager.get_channel_index(cursor[0])
-            self.flag_beat_changed.add((c, i, cursor[1]))
-            self.rendered_cursor_position = None
+        c, i = self.opus_manager.get_channel_index(cursor[0])
+        self.flag_beat_changed.add((c, i, cursor[1]))
+        self.rendered_cursor_position = None
 
     def insert_beat_at_cursor(self):
         cursor = self.opus_manager.cursor_position
@@ -235,26 +290,30 @@ class EditorEnvironment:
 
     def add_digit_to_register(self, value):
         if self.register is None:
-            self.register = 0
+            self.register = Register(value, relative=False)
+        elif self.register.relative:
+            self.register.value *= value
+            self.set_event_at_cursor()
+            self.cursor_right()
         else:
-            self.register *= self.opus_manager.BASE
-        self.register += value
+            self.register.value *= self.opus_manager.BASE
+            self.register.value += value
+            if self.register.value >= self.opus_manager.BASE:
+                self.set_event_at_cursor()
+                self.cursor_right()
 
     def clear_register(self):
         self.register = None
 
-    def fetch_register(self, fallback=None):
-        if self.register is None:
-            output = fallback
-        else:
-            output = self.register
-            self.register = None
-
+    def fetch_register(self):
+        output = self.register
+        self.register = None
         return output
 
     def kill(self):
         self.running = False
         wrecked.kill()
+
 
     def load(self, path: str) -> None:
         if os.path.isdir(path):
@@ -263,7 +322,6 @@ class EditorEnvironment:
             self.opus_manager.import_midi(path)
         else:
             self.opus_manager.load_file(path)
-
 
         # TODO: Could be cleaner
         cursor_position = [0,0]
@@ -284,13 +342,14 @@ class EditorEnvironment:
             if channel:
                 self.rect_channel_dividers[c] = self.rect_view_shifter.new_rect()
 
+
     def tick(self):
         flag_draw = False
         flag_draw |= self.tick_update_beats()
         flag_draw |= self.tick_update_lines()
         flag_draw |= self.tick_update_cursor()
         flag_draw |= self.tick_update_view_offset()
-        flag_draw |= self.tick_update_register()
+        #flag_draw |= self.tick_update_register()
 
         if flag_draw:
             self.root.draw()
@@ -474,28 +533,38 @@ class EditorEnvironment:
 
     def tick_update_register(self) -> bool:
         output = False
-        if (self.register, self.register_mode_character) != self.rendered_register:
+        if self.register != self.rendered_register or (self.register is not None and self.register.flag_changed):
             output = True
             if self.register is not None:
                 base = self.opus_manager.BASE
-                n = self.register
-
-                number_string = get_digit(self.register // base, base)
-                number_string += get_digit(self.register % base, base)
-                rstring = f"{self.register_mode_character}{number_string}"
+                n = self.register.value
+                if self.register.relative:
+                    if n >= base:
+                        rstring = f"^{n // base}"
+                    elif n <= 0 - base:
+                        rstring = f"v{n // base}"
+                    elif n < 0:
+                        n = int(math.fabs(n))
+                        rstring = f"-{get_digit(n, base)}"
+                    else:
+                        rstring = f"+{get_digit(n, base)}"
+                else:
+                    number_string = get_digit(self.register.value // base, base)
+                    number_string += get_digit(self.register.value % base, base)
+                    rstring = f"{number_string}"
+                self.register.flag_change = False
             else:
                 rstring = ""
 
-            self.rect_register.resize(max(5, 2 + len(rstring)), 3)
-            self.rect_register.set_string(1, 1, rstring)
+            #self.rect_register.resize(max(5, 2 + len(rstring)), 3)
+            #self.rect_register.set_string(1, 1, rstring)
 
-            self.rect_register.move(
-                self.rect_view_window.width - self.rect_register.width,
-                self.rect_view_shifter.height + self.rect_view_shifter.y
-            )
+            #self.rect_register.move(
+            #    self.rect_view_window.width - self.rect_register.width,
+            #    self.rect_view_shifter.height + self.rect_view_shifter.y
+            #)
 
-
-            self.rendered_register = (self.register, self.register_mode_character)
+            #self.rendered_register = self.register
 
         return output
 
@@ -617,7 +686,7 @@ class EditorEnvironment:
                                     new_string += f"^"
                                 new_string += get_digit(int(math.fabs(event.note)) // base, base)
                         else:
-                            note = event.get_note()
+                            note = event.note
                             new_string += get_digit(note // base, base)
                             new_string += get_digit(note % base, base)
                 else:
@@ -642,12 +711,12 @@ class EditorEnvironment:
         self.opus_manager.split_grouping(position, splits)
 
     def set_event_at_cursor(self):
-        value = self.fetch_register()
-        if value is None:
+        register = self.fetch_register()
+        if register is None:
             return
 
         position = self.opus_manager.cursor_position
-        self.opus_manager.set_beat_event(value, position)
+        self.opus_manager.set_beat_event(register.value, position, relative=register.relative)
 
         c, i = self.opus_manager.get_channel_index(position[0])
         self.flag_beat_changed.add((c, i, position[1]))
@@ -673,12 +742,16 @@ class EditorEnvironment:
         self.rendered_cursor_position = None
 
     def cursor_left(self):
+        self.clear_register()
         self.opus_manager.cursor_left()
     def cursor_up(self):
+        self.clear_register()
         self.opus_manager.cursor_up()
     def cursor_down(self):
+        self.clear_register()
         self.opus_manager.cursor_down()
     def cursor_right(self):
+        self.clear_register()
         self.opus_manager.cursor_right()
 
     def run(self):
@@ -797,7 +870,7 @@ class OpusManager:
 
         return grouping
 
-    def set_beat_event(self, value, position):
+    def set_beat_event(self, value, position, *, relative=False):
         channel, _index = self.get_channel_index(position[0])
         grouping = self.get_grouping(position)
         if grouping.is_structural():
@@ -808,7 +881,8 @@ class OpusManager:
         grouping.add_event(MGroupingEvent(
             value,
             base=self.BASE,
-            channel=channel
+            channel=channel,
+            relative=relative
         ))
 
     def unset_beat_event(self, position):

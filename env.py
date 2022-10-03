@@ -16,8 +16,17 @@ from interactor import Interactor
 class InvalidCursor(Exception):
     '''Raised when attempting to pass a cursor without enough arguments'''
 
+class Register:
+    def __init__(self, base=10, digits=0):
+        self.value = 0
+        self.base = base
+        self.max_digits = digits
+
 class EditorEnvironment:
     tick_delay = 1 / 24
+
+    KEY_REGISTER_12 = 100
+    KEY_REGISTER_10 = 101
 
     def daemon_input(self):
         while self.running:
@@ -31,6 +40,10 @@ class EditorEnvironment:
         self.rect_view_shifter = self.rect_view_window.new_rect()
 
         self.register = None
+        self.register_mode_character = None
+        self.rendered_register = (None, None)
+        self.rect_register = self.rect_view_window.new_rect()
+
         self.channel_rects = [[] for i in range(16)]
         self.opus_manager = OpusManager()
         self.interactor = Interactor()
@@ -79,6 +92,16 @@ class EditorEnvironment:
             self.remove_line
         )
 
+        self.interactor.assign_sequence(
+            '+',
+            self.relative_add_entry
+        )
+
+        self.interactor.assign_sequence(
+            '-',
+            self.relative_subtract_entry
+        )
+
         for c in "0123456789ab":
             self.interactor.assign_sequence(
                 c,
@@ -87,9 +110,20 @@ class EditorEnvironment:
             )
 
         self.interactor.assign_sequence(
+            "\x1B",
+            self.clear_register
+        )
+
+        self.interactor.assign_sequence(
+            "\x7f",
+            self.remove_last_digit_from_register
+        )
+
+        self.interactor.assign_sequence(
             "\r",
             self.set_event_at_cursor
         )
+
 
         self.view_offset = 0
 
@@ -108,6 +142,19 @@ class EditorEnvironment:
 
         self.flag_beat_changed = set()
         self.flag_line_changed = set()
+
+    def absolute_entry(self):
+        self.interactor.set_context(self.KEY_REGISTER_12)
+
+    def relative_add_entry(self):
+        self.interactor.set_context(self.KEY_REGISTER_12)
+
+    def relative_subtract_entry(self):
+        self.interactor.set_context(self.KEY_REGISTER_12)
+
+    def remove_last_digit_from_register(self):
+        if self.register is not None:
+            self.register //= self.opus_manager.BASE
 
     def new_line(self):
         cursor = self.opus_manager.cursor_position
@@ -243,6 +290,7 @@ class EditorEnvironment:
         flag_draw |= self.tick_update_lines()
         flag_draw |= self.tick_update_cursor()
         flag_draw |= self.tick_update_view_offset()
+        flag_draw |= self.tick_update_register()
 
         if flag_draw:
             self.root.draw()
@@ -252,26 +300,24 @@ class EditorEnvironment:
         if self.root.width - 4 != self.rect_view_window.width:
             self.rect_view_window.resize(self.root.width - 4, self.root.height)
             self.rect_view_window.move(4, 0)
+            did_change_flag = True
 
             #Draw view border
-            vh = self.rect_view_window.height
-            vw = self.rect_view_window.width
-            for y in range(vh - 2):
-                self.rect_view_window.set_string(0, y + 1, chr(9474))
-                self.rect_view_window.set_string(vw - 1, y + 1, chr(9474))
+            #vh = self.rect_view_window.height
+            #vw = self.rect_view_window.width
+            #for y in range(vh - 2):
+            #    self.rect_view_window.set_string(0, y + 1, chr(9474))
+            #    self.rect_view_window.set_string(vw - 1, y + 1, chr(9474))
 
-            for x in range(vw - 2):
-                self.rect_view_window.set_string(x + 1, 0, chr(9472))
-                self.rect_view_window.set_string(x + 1, vh - 1, chr(9472))
+            #for x in range(vw - 2):
+            #    self.rect_view_window.set_string(x + 1, 0, chr(9472))
+            #    self.rect_view_window.set_string(x + 1, vh - 1, chr(9472))
 
-            self.rect_view_window.set_string(0, 0, chr(9581))
-            self.rect_view_window.set_string(0, vh - 1, chr(9584))
-            self.rect_view_window.set_string(vw - 1, 0, chr(9582))
-            self.rect_view_window.set_string(vw - 1, vh - 1, chr(9583))
-
-            self.rect_view_shifter.resize(vw - 2, vh - 2)
-            self.rect_view_shifter.move(1, 1)
-            did_change_flag = True
+            #self.rect_view_window.set_string(0, 0, chr(9581))
+            #self.rect_view_window.set_string(0, vh - 1, chr(9584))
+            #self.rect_view_window.set_string(vw - 1, 0, chr(9582))
+            #self.rect_view_window.set_string(vw - 1, vh - 1, chr(9583))
+            #self.rect_view_shifter.resize(vw - 2, vh - 2)
 
 
         cursor = self.opus_manager.cursor_position
@@ -279,14 +325,14 @@ class EditorEnvironment:
         line_length = sum(self.rendered_beat_widths) + len(self.rendered_beat_widths) - 1
         beat_width = self.rendered_beat_widths[cursor[1]]
 
-        new_offset = beat_offset - ((self.rect_view_shifter.width - beat_width) // 3)
+        new_offset = beat_offset - ((self.rect_view_window.width - beat_width) // 3)
         new_offset = max(0, new_offset)
-        new_offset = min(line_length - self.rect_view_shifter.width, new_offset)
+        new_offset = min(line_length - self.rect_view_window.width, new_offset)
 
         if did_change_flag or new_offset != self.view_offset:
             shift_diff = self.view_offset - new_offset
             self.view_offset = new_offset
-            self.rect_view_shifter.shift_contents(shift_diff, 0)
+            self.rect_view_shifter.move(0 - self.view_offset, 0)
             did_change_flag = True
 
         return did_change_flag
@@ -426,10 +472,37 @@ class EditorEnvironment:
 
         return output
 
+    def tick_update_register(self) -> bool:
+        output = False
+        if (self.register, self.register_mode_character) != self.rendered_register:
+            output = True
+            if self.register is not None:
+                base = self.opus_manager.BASE
+                n = self.register
+
+                number_string = get_digit(self.register // base, base)
+                number_string += get_digit(self.register % base, base)
+                rstring = f"{self.register_mode_character}{number_string}"
+            else:
+                rstring = ""
+
+            self.rect_register.resize(max(5, 2 + len(rstring)), 3)
+            self.rect_register.set_string(1, 1, rstring)
+
+            self.rect_register.move(
+                self.rect_view_window.width - self.rect_register.width,
+                self.rect_view_shifter.height + self.rect_view_shifter.y
+            )
+
+
+            self.rendered_register = (self.register, self.register_mode_character)
+
+        return output
+
     def get_line_count(self):
         output = 0
         for channel in self.channel_rects:
-            for line in channel:
+            for _line in channel:
                 output += 1
         return output
 
@@ -438,28 +511,32 @@ class EditorEnvironment:
         line_count = self.get_line_count()
         output = False
         if line_length != self.rendered_line_length or line_count != self.rendered_line_count:
+            new_height = 1
             for c, channel in enumerate(self.channel_rects):
                 for i, rect_line in enumerate(channel):
                     line_position = self.opus_manager.get_y(c, i) + 1
                     rect_line.set_fg_color(wrecked.BLUE)
                     rect_line.resize(line_length, 1)
-                    rect_line.move(0 - self.view_offset, line_position)
+                    rect_line.move(0, line_position)
                     if i == 0:
                         self.root.set_string(0, line_position + 1, f"{c}:{i} ")
                     else:
                         self.root.set_string(0, line_position + 1, f" :{i} ")
+                    new_height += 1
 
                 if channel:
+                    new_height += 1
                     rect_channel_divider = self.rect_channel_dividers[c]
                     rect_channel_divider.set_fg_color(wrecked.BRIGHTBLACK)
                     rect_channel_divider.resize(line_length, 1)
                     rect_channel_divider.set_string(0, 0, chr(9472) * line_length)
-                    rect_channel_divider.move(0 - self.view_offset, self.opus_manager.get_y(c, len(channel) - 1) + 2)
+                    rect_channel_divider.move(0, self.opus_manager.get_y(c, len(channel) - 1) + 2)
 
             self.rect_topbar.resize(line_length, 1)
+            self.rect_view_shifter.resize(line_length, new_height)
+
             self.rendered_line_length = line_length
             self.rendered_line_count = line_count
-
 
             output = True
 

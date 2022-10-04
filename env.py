@@ -10,7 +10,7 @@ import wrecked
 from apres import MIDI
 
 from structures import BadStateError
-from mgrouping import MGrouping, MGroupingEvent
+from mgrouping import MGrouping, MGroupingEvent, get_number_string
 from interactor import Interactor
 
 class InvalidCursor(Exception):
@@ -118,6 +118,10 @@ class EditorEnvironment:
         self.interactor.assign_sequence(
             'EE',
             self.opus_manager.export
+        )
+        self.interactor.assign_sequence(
+            'ES',
+            self.opus_manager.save
         )
 
         for c in "0123456789ab":
@@ -546,18 +550,16 @@ class EditorEnvironment:
                 n = self.register.value
                 if self.register.relative:
                     if n >= base:
-                        rstring = f"^{n // base}"
+                        rstring = f"^{get_number_string(n // base, base)}"
                     elif n <= 0 - base:
-                        rstring = f"v{n // base}"
+                        rstring = f"v{get_number_string(n // base, base)}"
                     elif n < 0:
                         n = int(math.fabs(n))
-                        rstring = f"-{get_digit(n, base)}"
+                        rstring = f"-{get_number_string(n, base)}"
                     else:
-                        rstring = f"+{get_digit(n, base)}"
+                        rstring = f"+{get_number_string(n, base)}"
                 else:
-                    number_string = get_digit(self.register.value // base, base)
-                    number_string += get_digit(self.register.value % base, base)
-                    rstring = f"{number_string}"
+                    rstring = f"{get_number_string(self.register_value, base)}"
                 self.register.flag_change = False
             else:
                 rstring = ""
@@ -684,17 +686,16 @@ class EditorEnvironment:
                                     new_string += f"-"
                                 else:
                                     new_string += f"+"
-                                new_string += get_digit(int(math.fabs(event.note)), base)
+                                new_string += get_number_string(int(math.fabs(event.note)), base)
                             else:
                                 if event.note < 0:
                                     new_string += f"v"
                                 else:
                                     new_string += f"^"
-                                new_string += get_digit(int(math.fabs(event.note)) // base, base)
+                                new_string += get_number_string(int(math.fabs(event.note)) // base, base)
                         else:
                             note = event.note
-                            new_string += get_digit(note // base, base)
-                            new_string += get_digit(note % base, base)
+                            new_string = get_number_string(note, base)
                 else:
                     new_string = '--'
 
@@ -779,6 +780,36 @@ class OpusManager:
         self.cursor_position = [0, 0] # Y, X,... deeper divisions
         self.opus_beat_count = 1
         self.path = None
+
+    def save(self):
+        if self.path.lower().endswith("mid"):
+            working_path = self.path[0:self.path.rfind("/")]
+            working_dir = self.path[self.path.rfind("/") + 1:self.path.rfind(".")]
+        elif os.path.isfile(self.path):
+            working_path = self.path[0:self.path.rfind("/")]
+            working_dir = self.path[self.path.rfind("/") + 1:self.path.rfind(".")]
+        elif os.path.isdir(self.path):
+            tmp_split = self.path.split("/")
+            working_path = "/".join(tmp_split[0:-1])
+            working_dir = tmp_split[-1]
+
+        fullpath = f"{working_path}/{working_dir}"
+        if not os.path.isdir(fullpath):
+            os.mkdir(fullpath)
+
+        for f in os.listdir(fullpath):
+            os.remove(f"{fullpath}/{f}")
+
+        for c, channel_lines in enumerate(self.channel_groupings):
+            if not channel_lines:
+                continue
+
+            strlines = []
+            for line in channel_lines:
+                strlines.append(line.to_string())
+            n = "0123456789ABCDEF"[c]
+            with open(f"{fullpath}/channel_{n}", "w") as fp:
+                fp.write("\n".join(strlines))
 
     def export(self):
         working_path = self.path
@@ -1183,6 +1214,3 @@ def split_by_note_order(event, other_events):
 
 def sort_by_first(a):
     return a[0]
-
-def get_digit(decimal_number, base):
-    return "0123456789ABCDEFGHIJKLMNOPQRSTUVWXZ"[decimal_number % base]

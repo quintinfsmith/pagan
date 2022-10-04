@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import Optional, List, Tuple, Dict
 from apres import NoteOn, NoteOff, PitchWheelChange, MIDI, SetTempo, ProgramChange, TimeSignature
 from structures import Grouping, BadStateError
+import math
 
 ERROR_CHUNK_SIZE = 19
 
@@ -434,10 +435,24 @@ class MGrouping(Grouping):
         elif self.is_event():
             output = ""
             for event in self.get_events():
-                note = event.get_note()
-                bignum = (note + 3) // base
-                littlenum = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"[(note + 3) % base]
-                output += f"{bignum}{littlenum}"
+                if event.relative:
+                    new_string = ""
+                    if event.note == 0 or event.note % base != 0:
+                        if event.note < 0:
+                            new_string += f"-"
+                        else:
+                            new_string += f"+"
+                        new_string += get_number_string(int(math.fabs(event.note)), base)
+                    else:
+                        if event.note < 0:
+                            new_string += f"v"
+                        else:
+                            new_string += f"^"
+                        new_string += get_number_string(int(math.fabs(event.note)) // base, base)
+                    output += new_string
+                else:
+                    note = event.get_note()
+                    output += get_number_string(note, base)
         else:
             output = "__"
 
@@ -543,6 +558,16 @@ class MGrouping(Grouping):
 
         return opus
 
+def get_number_string(number, base):
+    digits = []
+    while number > 0:
+        digits.append("0123456789ABCDEFGHIJKLMNOPQRSTUVWXZ"[number % base])
+        number //= base
+
+    if not digits:
+        digits.append('0')
+
+    return "".join(digits[::-1])
 
 def get_bend_values(offset, base) -> Tuple[int, float]:
     """Convert an odd-based note to base-12 note with pitch bend"""

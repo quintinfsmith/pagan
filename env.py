@@ -5,6 +5,8 @@ import re
 import time
 import threading
 
+from enum import Enum, auto
+
 from typing import Optional, Dict, List, Tuple
 import wrecked
 from apres import MIDI
@@ -22,8 +24,13 @@ class ReadyEvent:
         self.relative = relative
         self.flag_changed = True
 
+class InputContext(Enum):
+    Default = auto()
+    Text = auto()
+
 class EditorEnvironment:
     tick_delay = 1 / 24
+
 
     def daemon_input(self):
         while self.running:
@@ -33,8 +40,6 @@ class EditorEnvironment:
     def __init__(self):
         self.running = False
         self.root = wrecked.init()
-        self.rect_view_window = self.root.new_rect()
-        self.rect_view_shifter = self.rect_view_window.new_rect()
 
         self.register = None
         #self.rendered_register = None
@@ -42,107 +47,15 @@ class EditorEnvironment:
 
         self.channel_rects = [[] for i in range(16)]
         self.opus_manager = OpusManager()
-        self.interactor = Interactor()
-        self.interactor.assign_sequence(
-            'l',
-            self.cursor_right
-        )
-        self.interactor.assign_sequence(
-            'h',
-            self.cursor_left
-        )
-        self.interactor.assign_sequence(
-            'j',
-            self.cursor_down
-        )
-        self.interactor.assign_sequence(
-            'k',
-            self.cursor_up
-        )
-        self.interactor.assign_sequence(
-            'q',
-            self.kill
-        )
-        self.interactor.assign_sequence(
-            'x',
-            self.remove_at_cursor
-        )
-        self.interactor.assign_sequence(
-            'i',
-            self.insert_after_cursor
-        )
-        self.interactor.assign_sequence(
-            ' ',
-            self.insert_beat_at_cursor
-        )
-        self.interactor.assign_sequence(
-            '/',
-            self.split_at_cursor
-        )
-        self.interactor.assign_sequence(
-            ';]',
-            self.new_line
-        )
-        self.interactor.assign_sequence(
-            ';[',
-            self.remove_line
-        )
-
-        self.interactor.assign_sequence(
-            '+',
-            self.relative_add_entry
-        )
-
-        self.interactor.assign_sequence(
-            '-',
-            self.relative_subtract_entry
-        )
-        self.interactor.assign_sequence(
-            'v',
-            self.relative_downshift_entry
-        )
-        self.interactor.assign_sequence(
-            '^',
-            self.relative_upshift_entry
-        )
-        self.interactor.assign_sequence(
-            'K',
-            self.increment_event_at_cursor
-        )
-        self.interactor.assign_sequence(
-            'J',
-            self.decrement_event_at_cursor
-        )
-
-        # KLUDGE FOR TESTING
-        self.interactor.assign_sequence(
-            'EE',
-            self.opus_manager.export
-        )
-        self.interactor.assign_sequence(
-            'ES',
-            self.opus_manager.save
-        )
-
-        for c in "0123456789ab":
-            self.interactor.assign_sequence(
-                c,
-                self.add_digit_to_register,
-                int(c, 12)
-            )
-
-        self.interactor.assign_sequence(
-            "\x1B",
-            self.clear_register
-        )
-
-        #self.interactor.assign_sequence(
-        #    "\x7f",
-        #    self.remove_last_digit_from_register
-        #)
-
 
         self.view_offset = 0
+
+        self.command_map = {
+            'save': self.save,
+            'q': self.kill
+        }
+        self.command_register = None
+        self.rendered_command_register = None
 
         self.rendered_channel_rects = set()
         self.rendered_beat_widths = []
@@ -152,13 +65,202 @@ class EditorEnvironment:
         self.rendered_line_count = 0
         self.rect_beats = {}
         self.rect_beat_lines = {}
-        self.rect_topbar = self.rect_view_shifter.new_rect()
         self.rect_beat_labels = {}
         self.subbeat_rect_map = {}
         self.rect_channel_dividers = {}
 
+        self.rect_view_window = self.root.new_rect()
+        self.rect_view_shifter = self.rect_view_window.new_rect()
+        self.rect_topbar = self.rect_view_shifter.new_rect()
+        self.rect_command_register = self.rect_view_window.new_rect()
+
         self.flag_beat_changed = set()
         self.flag_line_changed = set()
+
+        self.interactor = Interactor()
+        self.interactor.set_context(InputContext.Default)
+        self.interactor.assign_context_sequence(
+            InputContext.Default,
+            'l',
+            self.cursor_right
+        )
+        self.interactor.assign_context_sequence(
+            InputContext.Default,
+            'h',
+            self.cursor_left
+        )
+        self.interactor.assign_context_sequence(
+            InputContext.Default,
+            'j',
+            self.cursor_down
+        )
+        self.interactor.assign_context_sequence(
+            InputContext.Default,
+            'k',
+            self.cursor_up
+        )
+        self.interactor.assign_context_sequence(
+            InputContext.Default,
+            'x',
+            self.remove_at_cursor
+        )
+        self.interactor.assign_context_sequence(
+            InputContext.Default,
+            'i',
+            self.insert_after_cursor
+        )
+        self.interactor.assign_context_sequence(
+            InputContext.Default,
+            ' ',
+            self.insert_beat_at_cursor
+        )
+        self.interactor.assign_context_sequence(
+            InputContext.Default,
+            'X',
+            self.remove_beat_at_cursor
+        )
+        self.interactor.assign_context_sequence(
+            InputContext.Default,
+            '/',
+            self.split_at_cursor
+        )
+        self.interactor.assign_context_sequence(
+            InputContext.Default,
+            ';]',
+            self.new_line
+        )
+        self.interactor.assign_context_sequence(
+            InputContext.Default,
+            ';[',
+            self.remove_line
+        )
+
+        self.interactor.assign_context_sequence(
+            InputContext.Default,
+            '+',
+            self.relative_add_entry
+        )
+
+        self.interactor.assign_context_sequence(
+            InputContext.Default,
+            '-',
+            self.relative_subtract_entry
+        )
+        self.interactor.assign_context_sequence(
+            InputContext.Default,
+            'v',
+            self.relative_downshift_entry
+        )
+        self.interactor.assign_context_sequence(
+            InputContext.Default,
+            '^',
+            self.relative_upshift_entry
+        )
+        self.interactor.assign_context_sequence(
+            InputContext.Default,
+            'K',
+            self.increment_event_at_cursor
+        )
+        self.interactor.assign_context_sequence(
+            InputContext.Default,
+            'J',
+            self.decrement_event_at_cursor
+        )
+
+        # KLUDGE FOR TESTING
+        self.interactor.assign_context_sequence(
+            InputContext.Default,
+            'EE',
+            self.opus_manager.export
+        )
+        self.interactor.assign_context_sequence(
+            InputContext.Default,
+            'ES',
+            self.opus_manager.save
+        )
+
+        for c in "0123456789ab":
+            self.interactor.assign_context_sequence(
+                InputContext.Default,
+                c,
+                self.add_digit_to_register,
+                int(c, 12)
+            )
+
+        self.interactor.assign_context_sequence(
+            InputContext.Default,
+            "\x1B",
+            self.clear_register
+        )
+
+        self.interactor.assign_context_sequence(
+            InputContext.Default,
+            ":",
+            self.command_register_open
+        )
+
+        for c in range(32, 127):
+            self.interactor.assign_context_sequence(
+                InputContext.Text,
+                chr(c),
+                self.command_register_input,
+                chr(c)
+            )
+        self.interactor.assign_context_sequence(
+            InputContext.Text,
+            "\x7F",
+            self.command_register_backspace
+        )
+
+        self.interactor.assign_context_sequence(
+            InputContext.Text,
+            "\x1B",
+            self.command_register_close
+        )
+
+        self.interactor.assign_context_sequence(
+            InputContext.Text,
+            "\r",
+            self.command_register_run
+        )
+
+        #self.interactor.assign_context_sequence(
+        #    "\x7f",
+        #    self.remove_last_digit_from_register
+        #)
+
+    def save(self, *args):
+        self.opus_manager.save()
+
+    def command_register_run(self):
+        if self.command_register is None:
+            return
+        cmd_parts = self.command_register.split(" ")
+        if cmd_parts[0] in self.command_map:
+            self.command_map[cmd_parts[0]](*cmd_parts[1:])
+        self.command_register_close()
+
+    def command_register_open(self):
+        self.command_register = ""
+        self.interactor.set_context(InputContext.Text)
+
+    def command_register_close(self):
+        self.command_register = None
+        self.interactor.set_context(InputContext.Default)
+
+    def command_register_input(self, character):
+        if self.command_register is None:
+            return
+        self.command_register += character
+
+    def command_register_backspace(self):
+        if self.command_register is None:
+            return
+
+        if self.command_register:
+            self.command_register = self.command_register[0:-1]
+        else:
+            self.command_register_close()
 
     def increment_event_at_cursor(self):
         position = self.opus_manager.cursor_position
@@ -281,6 +383,29 @@ class EditorEnvironment:
         self.flag_beat_changed.add((c, i, cursor[1]))
         self.rendered_cursor_position = None
 
+    def remove_beat_at_cursor(self):
+        cursor = self.opus_manager.cursor_position
+        self.opus_manager.remove_beat(cursor[1])
+        self.rendered_beat_widths.pop(cursor[1])
+
+        for (c,i,b) in self.rect_beats:
+            if b >= self.opus_manager.opus_beat_count:
+                pass
+                #del self.rect_beats[(c, i, b)]
+            elif b >= cursor[1]:
+                self.flag_beat_changed.add((c, i, b))
+
+        self.opus_manager.cursor_position = cursor[0:2]
+        while self.opus_manager.cursor_position[1] >= len(self.rendered_beat_widths):
+            self.opus_manager.cursor_position[1] -= 1
+
+        grouping = self.opus_manager.get_grouping(self.opus_manager.cursor_position)
+        while grouping.is_structural():
+            self.opus_manager.cursor_position.append(0)
+            grouping = grouping[0]
+
+        self.rendered_cursor_position = None
+
     def insert_beat_at_cursor(self):
         cursor = self.opus_manager.cursor_position
         self.opus_manager.insert_beat(cursor[1])
@@ -300,7 +425,7 @@ class EditorEnvironment:
 
     def add_digit_to_register(self, value):
         if self.register is None:
-            self.register = Register(value, relative=False)
+            self.register = ReadyEvent(value, relative=False)
         elif self.register.relative:
             self.register.value *= value
             self.set_event_at_cursor()
@@ -320,7 +445,7 @@ class EditorEnvironment:
         self.register = None
         return output
 
-    def kill(self):
+    def kill(self, *args):
         self.running = False
         wrecked.kill()
 
@@ -360,9 +485,53 @@ class EditorEnvironment:
         flag_draw |= self.tick_update_cursor()
         flag_draw |= self.tick_update_view_offset()
         #flag_draw |= self.tick_update_register()
+        flag_draw |= self.tick_update_command_register()
 
         if flag_draw:
             self.root.draw()
+
+    def tick_update_command_register(self) -> bool:
+        output = False
+        if self.rendered_command_register != self.command_register:
+            output = True
+            if self.command_register is not None:
+                if self.rendered_command_register is None:
+                    self.rect_view_window.attach(self.rect_command_register)
+                self.rect_command_register.clear_children()
+                self.rect_command_register.clear_characters()
+                rect_cursor = self.rect_command_register.new_rect()
+                rect_cursor.resize(1, 1)
+                rect_cursor.underline()
+                rect_cursor.move(3 + len(self.command_register), 1)
+
+                self.rect_command_register.resize(self.rect_view_window.width, 3 )
+                self.rect_command_register.move(0, self.rect_view_window.height - 3)
+
+                # Draw view border
+                vh = 3
+                vw = self.rect_view_window.width
+                for y in range(vh - 2):
+                    self.rect_command_register.set_string(0, y + 1, chr(9474))
+                    self.rect_command_register.set_string(vw - 1, y + 1, chr(9474))
+
+                for x in range(vw - 2):
+                    self.rect_command_register.set_string(x + 1, 0, chr(9472))
+                    self.rect_command_register.set_string(x + 1, vh - 1, chr(9472))
+
+                self.rect_command_register.set_string(0, 0, chr(9581))
+                self.rect_command_register.set_string(0, vh - 1, chr(9584))
+                self.rect_command_register.set_string(vw - 1, 0, chr(9582))
+                self.rect_command_register.set_string(vw - 1, vh - 1, chr(9583))
+
+                self.rect_command_register.set_string(1, 1, ": ")
+                self.rect_command_register.set_string(3, 1, self.command_register)
+
+            else:
+                self.rect_command_register.detach()
+
+            self.rendered_command_register = self.command_register
+
+        return output
 
     def tick_update_view_offset(self) -> bool:
         did_change_flag = False
@@ -672,7 +841,7 @@ class EditorEnvironment:
                     working_rect.set_character(running_width - 1, 0, ']')
 
                 for x in comma_points:
-                    working_rect.set_character(x, 0, ',')
+                    working_rect.set_character(x, 0, '/')
 
             else:
                 if working_grouping.is_event():
@@ -697,7 +866,7 @@ class EditorEnvironment:
                             note = event.note
                             new_string = get_number_string(note, base)
                 else:
-                    new_string = '--'
+                    new_string = '  '
 
                 working_rect.resize(len(new_string), 1)
                 working_rect.set_string(0, 0, new_string)
@@ -780,6 +949,20 @@ class OpusManager:
         self.cursor_position = [0, 0] # Y, X,... deeper divisions
         self.opus_beat_count = 1
         self.path = None
+        self.clipboard_grouping = None
+
+    def copy_grouping(self, position):
+        self.clipboard_grouping = self.get_grouping(position)
+
+    def replace_grouping(self, position, grouping):
+        self.get_grouping(position).replace_with(grouping)
+
+    def paste_grouping(self, position):
+        if self.clipboard_grouping is None:
+            return
+
+        self.replace_grouping(position, self.clipboard_grouping)
+        self.clipboard_grouping = None
 
     def save(self):
         if self.path.lower().endswith("mid"):
@@ -810,6 +993,7 @@ class OpusManager:
             n = "0123456789ABCDEF"[c]
             with open(f"{fullpath}/channel_{n}", "w") as fp:
                 fp.write("\n".join(strlines))
+
 
     def export(self):
         working_path = self.path
@@ -1162,6 +1346,19 @@ class OpusManager:
         if new_size == 1:
             parent_index = position[-2]
             parent.parent[parent_index] = parent[0]
+
+    def remove_beat(self, index=None):
+        original_beat_count = self.opus_beat_count
+        if index is None:
+            index = original_beat_count - 1
+
+        for channel in self.channel_groupings:
+            for line in channel:
+                for i, _beat in enumerate(line[index:-1]):
+                    b = i + index
+                    line[b] = line[b + 1]
+
+        self.set_beat_count(original_beat_count - 1)
 
     def insert_beat(self, index=None):
         original_beat_count = self.opus_beat_count

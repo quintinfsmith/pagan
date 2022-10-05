@@ -543,6 +543,14 @@ class Grouping:
             if len(div) == 1:
                 self.divisions[i] = div[0]
 
+    def replace_with(self, new_grouping):
+        new_grouping.parent = self.parent
+        if self.parent is not None:
+            for i, child in enumerate(self.parent):
+                if child != self:
+                    continue
+                self.parent[i] = new_grouping
+                break
 
 def get_prime_factors(n):
     primes = []

@@ -51,7 +51,7 @@ class EditorEnvironment:
         self.view_offset = 0
 
         self.command_map = {
-            'save': self.save,
+            'w': self.save,
             'q': self.kill
         }
         self.command_register = None
@@ -69,10 +69,18 @@ class EditorEnvironment:
         self.subbeat_rect_map = {}
         self.rect_channel_dividers = {}
 
-        self.rect_view_window = self.root.new_rect()
-        self.rect_view_shifter = self.rect_view_window.new_rect()
-        self.rect_topbar = self.rect_view_shifter.new_rect()
-        self.rect_command_register = self.rect_view_window.new_rect()
+        self.rect_view = self.root.new_rect()
+        self.rect_view.resize(self.root.width, self.root.height)
+        self.rect_view.move(0,0)
+        self.rect_command_register = self.rect_view.new_rect()
+        self.rect_command_register.detach()
+
+        self.rect_line_labels_wrapper = self.rect_view.new_rect()
+        self.rect_line_labels = self.rect_line_labels_wrapper.new_rect()
+        self.rect_content_wrapper = self.rect_view.new_rect()
+        self.rect_content = self.rect_content_wrapper.new_rect()
+        self.rect_topbar = self.rect_content.new_rect()
+
 
         self.flag_beat_changed = set()
         self.flag_line_changed = set()
@@ -330,7 +338,7 @@ class EditorEnvironment:
 
         self.opus_manager.new_line(channel)
 
-        grouping_rect = self.rect_view_shifter.new_rect()
+        grouping_rect = self.rect_content.new_rect()
         self.channel_rects[channel].append(grouping_rect)
         for b in range(self.opus_manager.opus_beat_count):
             self.flag_beat_changed.add((channel, len(self.channel_rects[channel]) - 1, b))
@@ -468,14 +476,14 @@ class EditorEnvironment:
 
         for c, channel in enumerate(self.opus_manager.channel_groupings):
             for i, grouping in enumerate(channel):
-                grouping_rect = self.rect_view_shifter.new_rect()
+                grouping_rect = self.rect_content.new_rect()
                 self.channel_rects[c].append(grouping_rect)
                 #self.flag_line_changed.add((c,i))
                 for b, _ in enumerate(grouping):
                     self.flag_beat_changed.add((c, i, b))
 
             if channel:
-                self.rect_channel_dividers[c] = self.rect_view_shifter.new_rect()
+                self.rect_channel_dividers[c] = self.rect_content.new_rect()
 
 
     def tick(self):
@@ -496,20 +504,21 @@ class EditorEnvironment:
             output = True
             if self.command_register is not None:
                 if self.rendered_command_register is None:
-                    self.rect_view_window.attach(self.rect_command_register)
+                    self.rect_view.attach(self.rect_command_register)
                 self.rect_command_register.clear_children()
                 self.rect_command_register.clear_characters()
+
                 rect_cursor = self.rect_command_register.new_rect()
                 rect_cursor.resize(1, 1)
                 rect_cursor.underline()
                 rect_cursor.move(2 + len(self.command_register), 1)
 
-                self.rect_command_register.resize(self.rect_view_window.width, 3 )
-                self.rect_command_register.move(0, self.rect_view_window.height - 3)
+                self.rect_command_register.resize(self.rect_view.width, 3 )
+                self.rect_command_register.move(0, self.rect_view.height - 3)
 
                 # Draw view border
                 vh = 3
-                vw = self.rect_view_window.width
+                vw = self.rect_view.width
                 for y in range(vh - 2):
                     self.rect_command_register.set_string(0, y + 1, chr(9474))
                     self.rect_command_register.set_string(vw - 1, y + 1, chr(9474))
@@ -534,42 +543,30 @@ class EditorEnvironment:
 
     def tick_update_view_offset(self) -> bool:
         did_change_flag = False
-        if self.root.width - 4 != self.rect_view_window.width:
-            self.rect_view_window.resize(self.root.width - 4, self.root.height)
-            self.rect_view_window.move(4, 0)
+        if self.rect_view.width - (self.rect_line_labels_wrapper.width + 2) != self.rect_content_wrapper.width + 2:
+            self.rect_content_wrapper.resize(
+                self.rect_view.width - (self.rect_line_labels_wrapper.width + 2) - 2,
+                self.rect_view.height - 2
+            )
+
+            self.rect_content_wrapper.move((self.rect_line_labels_wrapper.width + 2) + 1, 1)
+            draw_border_around_rect(self.rect_content_wrapper)
+
             did_change_flag = True
-
-            #Draw view border
-            #vh = self.rect_view_window.height
-            #vw = self.rect_view_window.width
-            #for y in range(vh - 2):
-            #    self.rect_view_window.set_string(0, y + 1, chr(9474))
-            #    self.rect_view_window.set_string(vw - 1, y + 1, chr(9474))
-
-            #for x in range(vw - 2):
-            #    self.rect_view_window.set_string(x + 1, 0, chr(9472))
-            #    self.rect_view_window.set_string(x + 1, vh - 1, chr(9472))
-
-            #self.rect_view_window.set_string(0, 0, chr(9581))
-            #self.rect_view_window.set_string(0, vh - 1, chr(9584))
-            #self.rect_view_window.set_string(vw - 1, 0, chr(9582))
-            #self.rect_view_window.set_string(vw - 1, vh - 1, chr(9583))
-            #self.rect_view_shifter.resize(vw - 2, vh - 2)
-
 
         cursor = self.opus_manager.cursor_position
         beat_offset = sum(self.rendered_beat_widths[0:cursor[1]]) + cursor[1] - 1
         line_length = sum(self.rendered_beat_widths) + len(self.rendered_beat_widths) - 1
         beat_width = self.rendered_beat_widths[cursor[1]]
 
-        new_offset = beat_offset - ((self.rect_view_window.width - beat_width) // 3)
+        new_offset = beat_offset - ((self.rect_content_wrapper.width - beat_width) // 3)
         new_offset = max(0, new_offset)
-        new_offset = min(line_length - self.rect_view_window.width, new_offset)
+        new_offset = min(line_length - self.rect_content_wrapper.width, new_offset)
 
         if did_change_flag or new_offset != self.view_offset:
             shift_diff = self.view_offset - new_offset
             self.view_offset = new_offset
-            self.rect_view_shifter.move(0 - self.view_offset, 0)
+            self.rect_content.move(0 - self.view_offset, 0)
             did_change_flag = True
 
         return did_change_flag
@@ -591,7 +588,10 @@ class EditorEnvironment:
 
             if (c, i, b) in self.rect_beats:
                 rect_beat = self.rect_beats[(c, i, b)].parent
-                self.rect_beats[(c, i, b)].remove()
+                try:
+                    self.rect_beats[(c, i, b)].remove()
+                except wrecked.NotFound:
+                    pass
             else:
                 rect_beat = rect_line.new_rect()
 
@@ -737,7 +737,7 @@ class EditorEnvironment:
 
             #self.rect_register.move(
             #    self.rect_view_window.width - self.rect_register.width,
-            #    self.rect_view_shifter.height + self.rect_view_shifter.y
+            #    self.rect_content.height + self.rect_content.y
             #)
 
             #self.rendered_register = self.register
@@ -757,28 +757,48 @@ class EditorEnvironment:
         output = False
         if line_length != self.rendered_line_length or line_count != self.rendered_line_count:
             new_height = 1
+            line_labels = []
             for c, channel in enumerate(self.channel_rects):
                 for i, rect_line in enumerate(channel):
+                    # '+ 1' is reserved space for topbar
                     line_position = self.opus_manager.get_y(c, i) + 1
                     rect_line.set_fg_color(wrecked.BLUE)
                     rect_line.resize(line_length, 1)
                     rect_line.move(0, line_position)
-                    if i == 0:
-                        self.root.set_string(0, line_position + 1, f"{c}:{i} ")
-                    else:
-                        self.root.set_string(0, line_position + 1, f" :{i} ")
-                    new_height += 1
+                    line_labels.append((c,i))
+                    new_height += 1 # Add space for this line
 
                 if channel:
-                    new_height += 1
+                    new_height += 1 # Add space for divider
                     rect_channel_divider = self.rect_channel_dividers[c]
                     rect_channel_divider.set_fg_color(wrecked.BRIGHTBLACK)
                     rect_channel_divider.resize(line_length, 1)
                     rect_channel_divider.set_string(0, 0, chr(9472) * line_length)
                     rect_channel_divider.move(0, self.opus_manager.get_y(c, len(channel) - 1) + 2)
 
-            self.rect_topbar.resize(line_length, 1)
-            self.rect_view_shifter.resize(line_length, new_height)
+            self.rect_line_labels_wrapper.move(1, 2)
+            self.rect_line_labels_wrapper.resize(5, new_height - 2)
+            draw_border_around_rect(self.rect_line_labels_wrapper)
+            self.rect_line_labels.resize(self.rect_line_labels_wrapper.width, new_height)
+            self.rect_line_labels.clear_characters()
+            y_offset = 0
+            prev_c = None
+            for y, (c, i) in enumerate(line_labels):
+                if prev_c != c and y != 0:
+                    y_offset += 1
+
+                if c != prev_c:
+                    strlabel = f"{c:02}:{i:02}"
+                else:
+                    strlabel = f"  :{i:02}"
+
+                self.rect_line_labels.set_string(0, y + y_offset, strlabel)
+
+
+                prev_c = c
+
+            self.rect_content.resize(line_length, new_height)
+            self.rect_topbar.resize(self.rect_content.width, 1)
 
             self.rendered_line_length = line_length
             self.rendered_line_count = line_count
@@ -1409,6 +1429,34 @@ class OpusManager:
     def remove_line(self, channel, index):
         self.channel_groupings[channel].pop(index)
 
+
+def draw_border_around_rect(rect, border=None):
+    if border is None:
+        border = [
+            chr(9581),
+            chr(9582),
+            chr(9583),
+            chr(9584),
+            chr(9472),
+            chr(9474)
+        ]
+    parent_rect = rect.parent
+    width = rect.width
+    height = rect.height
+    x_offset = rect.x
+    y_offset = rect.y
+    for y in range(height):
+        parent_rect.set_string(x_offset - 1, y_offset + y, border[5])
+        parent_rect.set_string(x_offset + width, y_offset + y, border[5])
+
+    for x in range(width):
+        parent_rect.set_string(x_offset + x, y_offset - 1, border[4])
+        parent_rect.set_string(x_offset + x, y_offset + height, border[4])
+
+    parent_rect.set_string(x_offset - 1, y_offset - 1, chr(9581))
+    parent_rect.set_string(x_offset + width, y_offset - 1, chr(9582))
+    parent_rect.set_string(x_offset + width, y_offset + height, chr(9583))
+    parent_rect.set_string(x_offset - 1, y_offset + height, chr(9584))
 
 def split_by_channel(event, other_events):
     return event['channel']

@@ -502,7 +502,7 @@ class EditorEnvironment:
                 rect_cursor = self.rect_command_register.new_rect()
                 rect_cursor.resize(1, 1)
                 rect_cursor.underline()
-                rect_cursor.move(3 + len(self.command_register), 1)
+                rect_cursor.move(2 + len(self.command_register), 1)
 
                 self.rect_command_register.resize(self.rect_view_window.width, 3 )
                 self.rect_command_register.move(0, self.rect_view_window.height - 3)
@@ -523,8 +523,7 @@ class EditorEnvironment:
                 self.rect_command_register.set_string(vw - 1, 0, chr(9582))
                 self.rect_command_register.set_string(vw - 1, vh - 1, chr(9583))
 
-                self.rect_command_register.set_string(1, 1, ": ")
-                self.rect_command_register.set_string(3, 1, self.command_register)
+                self.rect_command_register.set_string(1, 1, f":{self.command_register}")
 
             else:
                 self.rect_command_register.detach()
@@ -844,12 +843,14 @@ class EditorEnvironment:
                     working_rect.set_character(x, 0, '/')
 
             else:
+                is_relative = False
                 if working_grouping.is_event():
                     events = working_grouping.get_events()
                     new_string = ''
                     for i, event in enumerate(events):
                         base = event.get_base()
                         if event.relative:
+                            is_relative = True
                             if event.note == 0 or event.note % base != 0:
                                 if event.note < 0:
                                     new_string += f"-"
@@ -870,6 +871,8 @@ class EditorEnvironment:
 
                 working_rect.resize(len(new_string), 1)
                 working_rect.set_string(0, 0, new_string)
+                if is_relative:
+                    working_rect.set_fg_color(wrecked.BRIGHTYELLOW)
 
         #structured_map = {}
         #for path, rect in flat_map.items():

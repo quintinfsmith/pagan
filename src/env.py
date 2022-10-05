@@ -718,9 +718,9 @@ class EditorEnvironment:
                 n = self.register.value
                 if self.register.relative:
                     if n >= base:
-                        rstring = f"^{get_number_string(n // base, base)}"
+                        rstring = f"{chr(8593)}{get_number_string(n // base, base)}"
                     elif n <= 0 - base:
-                        rstring = f"v{get_number_string(n // base, base)}"
+                        rstring = f"{chr(8595)}{get_number_string(n // base, base)}"
                     elif n < 0:
                         n = int(math.fabs(n))
                         rstring = f"-{get_number_string(n, base)}"
@@ -844,6 +844,7 @@ class EditorEnvironment:
 
             else:
                 is_relative = False
+                is_negative = False
                 if working_grouping.is_event():
                     events = working_grouping.get_events()
                     new_string = ''
@@ -854,14 +855,16 @@ class EditorEnvironment:
                             if event.note == 0 or event.note % base != 0:
                                 if event.note < 0:
                                     new_string += f"-"
+                                    is_negative = True
                                 else:
                                     new_string += f"+"
                                 new_string += get_number_string(int(math.fabs(event.note)), base)
                             else:
                                 if event.note < 0:
-                                    new_string += f"v"
+                                    new_string += chr(8595)
+                                    is_negative = True
                                 else:
-                                    new_string += f"^"
+                                    new_string += chr(8593)
                                 new_string += get_number_string(int(math.fabs(event.note)) // base, base)
                         else:
                             note = event.note
@@ -872,7 +875,10 @@ class EditorEnvironment:
                 working_rect.resize(len(new_string), 1)
                 working_rect.set_string(0, 0, new_string)
                 if is_relative:
-                    working_rect.set_fg_color(wrecked.BRIGHTYELLOW)
+                    if is_negative:
+                        working_rect.set_fg_color(wrecked.BLUE)
+                    else:
+                        working_rect.set_fg_color(wrecked.BRIGHTYELLOW)
 
         #structured_map = {}
         #for path, rect in flat_map.items():

@@ -63,6 +63,12 @@ class EditorEnvironment:
         self.rendered_cursor_position = []
         self.rendered_line_length = 0
         self.rendered_line_count = 0
+
+        # Rect sizes for borders
+        self.rendered_content_size = None
+        self.rendered_command_register_size = None
+        self.rendered_line_labels_size = None
+
         self.rect_beats = {}
         self.rect_beat_lines = {}
         self.rect_beat_labels = {}
@@ -494,9 +500,46 @@ class EditorEnvironment:
         flag_draw |= self.tick_update_view_offset()
         #flag_draw |= self.tick_update_register()
         flag_draw |= self.tick_update_command_register()
+        flag_draw |= self.tick_update_borders()
 
         if flag_draw:
             self.root.draw()
+
+    def tick_update_borders(self):
+        output = False
+        content_size = (
+            self.rect_content_wrapper.width,
+            self.rect_content_wrapper.height
+        )
+        line_labels_size = (
+            self.rect_line_labels_wrapper.width,
+            self.rect_line_labels_wrapper.height
+        )
+        if self.command_register is not None:
+            command_register_size = (
+                self.rect_command_register.width,
+                self.rect_command_register.height
+            )
+        else:
+            command_register_size = None
+
+        if self.rendered_content_size != content_size \
+        or self.rendered_command_register_size != command_register_size \
+        or self.rendered_line_labels_size != line_labels_size:
+            self.rect_view.clear_characters()
+
+            draw_border_around_rect(self.rect_line_labels_wrapper)
+            draw_border_around_rect(self.rect_content_wrapper)
+            if command_register_size is not None:
+                draw_border_around_rect(self.rect_command_register)
+
+
+            self.rendered_content_size = content_size
+            self.rendered_command_register_size = command_register_size
+            self.rendered_line_labels_size = line_labels_size
+            output = True
+
+        return output
 
     def tick_update_command_register(self) -> bool:
         output = False
@@ -508,34 +551,15 @@ class EditorEnvironment:
                 self.rect_command_register.clear_children()
                 self.rect_command_register.clear_characters()
 
-                rect_cursor = self.rect_command_register.new_rect()
-                rect_cursor.resize(1, 1)
-                rect_cursor.underline()
-                rect_cursor.move(2 + len(self.command_register), 1)
+                self.rect_command_register.resize(self.rect_view.width - 2, 1)
+                self.rect_command_register.move(1, self.rect_view.height - 2)
 
-                self.rect_command_register.resize(self.rect_view.width, 3 )
-                self.rect_command_register.move(0, self.rect_view.height - 3)
+                self.rect_command_register.set_string(0, 0, f":{self.command_register}_")
 
-                # Draw view border
-                vh = 3
-                vw = self.rect_view.width
-                for y in range(vh - 2):
-                    self.rect_command_register.set_string(0, y + 1, chr(9474))
-                    self.rect_command_register.set_string(vw - 1, y + 1, chr(9474))
-
-                for x in range(vw - 2):
-                    self.rect_command_register.set_string(x + 1, 0, chr(9472))
-                    self.rect_command_register.set_string(x + 1, vh - 1, chr(9472))
-
-                self.rect_command_register.set_string(0, 0, chr(9581))
-                self.rect_command_register.set_string(0, vh - 1, chr(9584))
-                self.rect_command_register.set_string(vw - 1, 0, chr(9582))
-                self.rect_command_register.set_string(vw - 1, vh - 1, chr(9583))
-
-                self.rect_command_register.set_string(1, 1, f":{self.command_register}")
-
+                self.rect_content_wrapper.resize(self.rect_content_wrapper.width, self.rect_view.height - 5)
             else:
                 self.rect_command_register.detach()
+                self.rect_content_wrapper.resize(self.rect_content_wrapper.width, self.rect_view.height - 2)
 
             self.rendered_command_register = self.command_register
 
@@ -550,7 +574,6 @@ class EditorEnvironment:
             )
 
             self.rect_content_wrapper.move((self.rect_line_labels_wrapper.width + 2) + 1, 1)
-            draw_border_around_rect(self.rect_content_wrapper)
 
             did_change_flag = True
 
@@ -709,41 +732,6 @@ class EditorEnvironment:
 
         return output
 
-    def tick_update_register(self) -> bool:
-        output = False
-        if self.register != self.rendered_register or (self.register is not None and self.register.flag_changed):
-            output = True
-            if self.register is not None:
-                base = self.opus_manager.BASE
-                n = self.register.value
-                if self.register.relative:
-                    if n >= base:
-                        rstring = f"{chr(8593)}{get_number_string(n // base, base)}"
-                    elif n <= 0 - base:
-                        rstring = f"{chr(8595)}{get_number_string(n // base, base)}"
-                    elif n < 0:
-                        n = int(math.fabs(n))
-                        rstring = f"-{get_number_string(n, base)}"
-                    else:
-                        rstring = f"+{get_number_string(n, base)}"
-                else:
-                    rstring = f"{get_number_string(self.register_value, base)}"
-                self.register.flag_change = False
-            else:
-                rstring = ""
-
-            #self.rect_register.resize(max(5, 2 + len(rstring)), 3)
-            #self.rect_register.set_string(1, 1, rstring)
-
-            #self.rect_register.move(
-            #    self.rect_view_window.width - self.rect_register.width,
-            #    self.rect_content.height + self.rect_content.y
-            #)
-
-            #self.rendered_register = self.register
-
-        return output
-
     def get_line_count(self):
         output = 0
         for channel in self.channel_rects:
@@ -778,7 +766,6 @@ class EditorEnvironment:
 
             self.rect_line_labels_wrapper.move(1, 2)
             self.rect_line_labels_wrapper.resize(5, new_height - 2)
-            draw_border_around_rect(self.rect_line_labels_wrapper)
             self.rect_line_labels.resize(self.rect_line_labels_wrapper.width, new_height)
             self.rect_line_labels.clear_characters()
             y_offset = 0

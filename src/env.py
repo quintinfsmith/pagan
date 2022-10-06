@@ -52,7 +52,9 @@ class EditorEnvironment:
 
         self.command_map = {
             'w': self.save,
-            'q': self.kill
+            'q': self.kill,
+            'c+': self.add_channel,
+            'c-': self.remove_channel
         }
         self.command_register = None
         self.rendered_command_register = None
@@ -242,6 +244,33 @@ class EditorEnvironment:
         #    "\x7f",
         #    self.remove_last_digit_from_register
         #)
+
+    def add_channel(self, /, channel, *args):
+        channel = int(channel)
+        self.opus_manager.new_line(channel)
+
+        if not self.channel_rects[channel]:
+            self.rect_channel_dividers[channel] = self.rect_content.new_rect()
+
+        grouping_rect = self.rect_content.new_rect()
+        self.channel_rects[channel].append(grouping_rect)
+
+        for b in range(self.opus_manager.opus_beat_count):
+            self.flag_beat_changed.add((channel, len(self.channel_rects[channel]) - 1, b))
+        self.rendered_cursor_position = None
+
+    def remove_channel(self, /, channel, *args):
+        channel = int(channel)
+        self.opus_manager.remove_channel(channel)
+
+        if self.channel_rects[channel]:
+            while self.channel_rects[channel]:
+                self.channel_rects[channel].pop().remove()
+
+            self.rect_channel_dividers[channel].remove()
+            del self.rect_channel_dividers[channel]
+
+            self.rendered_cursor_position = None
 
     def save(self, *args):
         self.opus_manager.save()
@@ -676,7 +705,6 @@ class EditorEnvironment:
                     rect_line.shift_contents_in_box(offset, 0, box_limit)
             self.rect_topbar.shift_contents_in_box(offset, 0, box_limit)
 
-
         ## Now move the beat Rects that were specifically rebuilt
         for b in beat_indeces_changed:
             cwidth = self.rendered_beat_widths[b]
@@ -877,7 +905,7 @@ class EditorEnvironment:
                             note = event.note
                             new_string = get_number_string(note, base)
                 else:
-                    new_string = '  '
+                    new_string = '..'
 
                 working_rect.resize(len(new_string), 1)
                 working_rect.set_string(0, 0, new_string)
@@ -936,12 +964,15 @@ class EditorEnvironment:
     def cursor_left(self):
         self.clear_register()
         self.opus_manager.cursor_left()
+
     def cursor_up(self):
         self.clear_register()
         self.opus_manager.cursor_up()
+
     def cursor_down(self):
         self.clear_register()
         self.opus_manager.cursor_down()
+
     def cursor_right(self):
         self.clear_register()
         self.opus_manager.cursor_right()
@@ -1074,34 +1105,42 @@ class OpusManager:
                 self.cursor_position.append(len(grouping) - 1)
 
     def cursor_up(self):
-        self.cursor_position[0] = max(0, self.cursor_position[0] - 1)
-        while len(self.cursor_position) > 2:
+        working_position = self.cursor_position.copy()
+
+        working_position[0] = max(0, working_position[0] - 1)
+        while len(working_position) > 2:
             try:
-                self.get_grouping(self.cursor_position)
+                self.get_grouping(working_position)
                 break
             except InvalidCursor:
-                self.cursor_position.pop()
+                working_position.pop()
             except IndexError:
-                self.cursor_position.pop()
+                working_position.pop()
 
-        while self.get_grouping(self.cursor_position).is_structural():
-            self.cursor_position.append(0)
+        while self.get_grouping(working_position).is_structural():
+            working_position.append(0)
+
+        self.cursor_position = working_position
 
     def cursor_down(self):
-        if self.get_line(self.cursor_position[0] + 1) is not None:
-            self.cursor_position[0] += 1
+        working_position = self.cursor_position.copy()
 
-        while len(self.cursor_position) > 2:
+        if self.get_line(working_position[0] + 1) is not None:
+            working_position[0] += 1
+
+        while len(working_position) > 2:
             try:
-                self.get_grouping(self.cursor_position)
+                self.get_grouping(working_position)
                 break
             except InvalidCursor:
-                self.cursor_position.pop()
+                working_position.pop()
             except IndexError:
-                self.cursor_position.pop()
+                working_position.pop()
 
-        while self.get_grouping(self.cursor_position).is_structural():
-            self.cursor_position.append(0)
+        while self.get_grouping(working_position).is_structural():
+            working_position.append(0)
+
+        self.cursor_position = working_position
 
     def cursor_climb(self):
         if len(self.cursor_position) > 2:
@@ -1409,6 +1448,11 @@ class OpusManager:
             grouping.set_size(splits, True)
 
     def new_line(self, channel=0):
+        if not self.channel_groupings[channel]:
+            current_channel, current_index = self.get_channel_index(self.cursor_position[0])
+            if current_channel > channel:
+                self.cursor_position[0] += 1
+
         new_grouping = MGrouping()
         new_grouping.set_size(self.opus_beat_count)
         self.channel_groupings[channel].append(new_grouping)
@@ -1416,6 +1460,17 @@ class OpusManager:
     def remove_line(self, channel, index):
         self.channel_groupings[channel].pop(index)
 
+    def remove_channel(self, channel):
+        if self.channel_groupings[channel]:
+            current_channel, current_index = self.get_channel_index(self.cursor_position[0])
+            if channel < current_channel:
+                self.cursor_position[0] -= len(self.channel_groupings[channel])
+            elif channel == current_channel:
+                self.cursor_position[0] -= current_index + 1
+            self.cursor_position[0] = max(0, self.cursor_position[0])
+
+        while self.channel_groupings[channel]:
+            self.channel_groupings[channel].pop()
 
 def draw_border_around_rect(rect, border=None):
     if border is None:

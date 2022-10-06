@@ -54,7 +54,8 @@ class EditorEnvironment:
             'w': self.save,
             'q': self.kill,
             'c+': self.add_channel,
-            'c-': self.remove_channel
+            'c-': self.remove_channel,
+            'export': self.export
         }
         self.command_register = None
         self.rendered_command_register = None
@@ -183,12 +184,6 @@ class EditorEnvironment:
             self.decrement_event_at_cursor
         )
 
-        # KLUDGE FOR TESTING
-        self.interactor.assign_context_sequence(
-            InputContext.Default,
-            'EE',
-            self.opus_manager.export
-        )
         self.interactor.assign_context_sequence(
             InputContext.Default,
             'ES',
@@ -244,6 +239,10 @@ class EditorEnvironment:
         #    "\x7f",
         #    self.remove_last_digit_from_register
         #)
+
+    def export(self, /, path, *args):
+        kwargs = parse_kwargs(*args)
+        self.opus_manager.export(path=path, **kwargs)
 
     def add_channel(self, /, channel, *args):
         channel = int(channel)
@@ -1042,22 +1041,15 @@ class OpusManager:
                 fp.write("\n".join(strlines))
 
 
-    def export(self):
-        working_path = self.path
-        if self.path.lower().endswith("mid"):
-            working_path = f"{self.path[0:self.path.rfind('.mid')]}_radix.mid"
-        elif os.path.isfile(working_path):
-            working_path = f"{self.path[0:self.path.rfind('.mid')]}.mid"
-        elif os.path.isdir(working_path):
-            working_path = f"{self.path}.mid"
-
+    def export(self, *, path, tempo=120):
         opus = MGrouping()
         opus.set_size(self.opus_beat_count)
         for groupings in self.channel_groupings:
             for grouping in groupings:
                 for b, beat in enumerate(grouping):
                     opus[b].merge(beat)
-        opus.to_midi().save(working_path)
+
+        opus.to_midi(tempo=tempo).save(path)
 
     def set_active_beat_size(self, size):
         self.set_beat_size(size, self.cursor_position)
@@ -1499,6 +1491,19 @@ def draw_border_around_rect(rect, border=None):
     parent_rect.set_string(x_offset + width, y_offset - 1, chr(9582))
     parent_rect.set_string(x_offset + width, y_offset + height, chr(9583))
     parent_rect.set_string(x_offset - 1, y_offset + height, chr(9584))
+
+def parse_kwargs(*args):
+    output = {}
+    skip_flag = False
+    for i, arg in enumerate(args):
+        if skip_flag:
+            skip_flag = False
+            continue
+
+        if arg.startswith('--'):
+            output[arg[2:]] = args[i + 1]
+            skip_flag = True
+    return output
 
 def split_by_channel(event, other_events):
     return event['channel']

@@ -870,7 +870,7 @@ class EditorEnvironment:
                     rect_channel_divider.set_fg_color(wrecked.BRIGHTBLACK)
                     rect_channel_divider.resize(line_length, 1)
                     rect_channel_divider.set_string(0, 0, chr(9472) * line_length)
-                    rect_channel_divider.move(0, self.opus_manager.get_y(c, len(channel) - 1) + 2)
+                    rect_channel_divider.move(0, self.opus_manager.get_y(c, len(channel) - 1) + 1)
 
             self.frame_line_labels.resize(5, min(self.rect_view.height - 3, new_height - 1))
             self.frame_line_labels.move(0, 1)

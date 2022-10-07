@@ -28,6 +28,82 @@ class InputContext(Enum):
     Default = auto()
     Text = auto()
 
+class RectFrame:
+    def __init__(self, parent_rect):
+        self.frame = parent_rect.new_rect()
+        self.wrapper = self.frame.new_rect()
+        self.content = self.wrapper.new_rect()
+        self.rendered_size = None
+        self.parent = parent_rect
+
+    def resize(self, width, height):
+        '''Wrap the resize function for the wrapper'''
+        self.frame.resize(width + 2, height + 2)
+        self.wrapper.move(1, 1)
+        self.wrapper.resize(width, height)
+        self.draw_border_around_rect()
+
+    @property
+    def full_height(self):
+        return self.frame.height
+
+    @property
+    def full_width(self):
+        return self.frame.width
+
+    @property
+    def height(self):
+        return self.wrapper.height
+    @property
+    def width(self):
+        return self.wrapper.width
+
+    @property
+    def size(self):
+        return (self.full_width, self.full_height)
+
+    def detach(self):
+        self.frame.detach()
+
+    def attach(self):
+        self.parent.attach(self.frame)
+
+    def move(self, x, y):
+        self.frame.move(x, y)
+
+    def move_inner(self, x, y):
+        self.content.move(x, y)
+
+    def get_content_rect(self):
+        return self.content
+
+    def draw_border_around_rect(self, border=None):
+        if border is None:
+            border = [
+                chr(9581),
+                chr(9582),
+                chr(9583),
+                chr(9584),
+                chr(9472),
+                chr(9474)
+            ]
+        width = self.wrapper.width
+        height = self.wrapper.height
+        x_offset = self.wrapper.x
+        y_offset = self.wrapper.y
+        for y in range(height):
+            self.frame.set_string(x_offset - 1, y_offset + y, border[5])
+            self.frame.set_string(x_offset + width, y_offset + y, border[5])
+
+        for x in range(width):
+            self.frame.set_string(x_offset + x, y_offset - 1, border[4])
+            self.frame.set_string(x_offset + x, y_offset + height, border[4])
+
+        self.frame.set_string(x_offset - 1, y_offset - 1, chr(9581))
+        self.frame.set_string(x_offset + width, y_offset - 1, chr(9582))
+        self.frame.set_string(x_offset + width, y_offset + height, chr(9583))
+        self.frame.set_string(x_offset - 1, y_offset + height, chr(9584))
+
 class EditorEnvironment:
     tick_delay = 1 / 24
 
@@ -81,14 +157,12 @@ class EditorEnvironment:
         self.rect_view = self.root.new_rect()
         self.rect_view.resize(self.root.width, self.root.height)
         self.rect_view.move(0,0)
-        self.rect_command_register = self.rect_view.new_rect()
-        self.rect_command_register.detach()
+        self.frame_command_register = RectFrame(self.rect_view)
+        self.frame_command_register.detach()
 
-        self.rect_line_labels_wrapper = self.rect_view.new_rect()
-        self.rect_line_labels = self.rect_line_labels_wrapper.new_rect()
-        self.rect_content_wrapper = self.rect_view.new_rect()
-        self.rect_content = self.rect_content_wrapper.new_rect()
-        self.rect_topbar = self.rect_content.new_rect()
+        self.frame_line_labels = RectFrame(self.rect_view)
+        self.frame_content = RectFrame(self.rect_view)
+        self.rect_topbar = self.frame_content.get_content_rect().new_rect()
 
 
         self.flag_beat_changed = set()
@@ -248,10 +322,12 @@ class EditorEnvironment:
         channel = int(channel)
         self.opus_manager.new_line(channel)
 
-        if not self.channel_rects[channel]:
-            self.rect_channel_dividers[channel] = self.rect_content.new_rect()
+        rect_content = self.frame_content.get_content_rect()
 
-        grouping_rect = self.rect_content.new_rect()
+        if not self.channel_rects[channel]:
+            self.rect_channel_dividers[channel] = rect_content.new_rect()
+
+        grouping_rect = rect_content.new_rect()
         self.channel_rects[channel].append(grouping_rect)
 
         for b in range(self.opus_manager.opus_beat_count):
@@ -372,7 +448,9 @@ class EditorEnvironment:
 
         self.opus_manager.new_line(channel)
 
-        grouping_rect = self.rect_content.new_rect()
+        rect_content = self.frame_content.get_content_rect()
+
+        grouping_rect = rect_content.new_rect()
         self.channel_rects[channel].append(grouping_rect)
         for b in range(self.opus_manager.opus_beat_count):
             self.flag_beat_changed.add((channel, len(self.channel_rects[channel]) - 1, b))
@@ -508,16 +586,17 @@ class EditorEnvironment:
             grouping = grouping[0]
         self.opus_manager.cursor_position = cursor_position
 
+        rect_content = self.frame_content.get_content_rect()
         for c, channel in enumerate(self.opus_manager.channel_groupings):
             for i, grouping in enumerate(channel):
-                grouping_rect = self.rect_content.new_rect()
+                grouping_rect = rect_content.new_rect()
                 self.channel_rects[c].append(grouping_rect)
                 #self.flag_line_changed.add((c,i))
                 for b, _ in enumerate(grouping):
                     self.flag_beat_changed.add((c, i, b))
 
             if channel:
-                self.rect_channel_dividers[c] = self.rect_content.new_rect()
+                self.rect_channel_dividers[c] = rect_content.new_rect()
 
 
     def tick(self):
@@ -528,46 +607,10 @@ class EditorEnvironment:
         flag_draw |= self.tick_update_view_offset()
         #flag_draw |= self.tick_update_register()
         flag_draw |= self.tick_update_command_register()
-        flag_draw |= self.tick_update_borders()
 
         if flag_draw:
             self.root.draw()
 
-    def tick_update_borders(self):
-        output = False
-        content_size = (
-            self.rect_content_wrapper.width,
-            self.rect_content_wrapper.height
-        )
-        line_labels_size = (
-            self.rect_line_labels_wrapper.width,
-            self.rect_line_labels_wrapper.height
-        )
-        if self.command_register is not None:
-            command_register_size = (
-                self.rect_command_register.width,
-                self.rect_command_register.height
-            )
-        else:
-            command_register_size = None
-
-        if self.rendered_content_size != content_size \
-        or self.rendered_command_register_size != command_register_size \
-        or self.rendered_line_labels_size != line_labels_size:
-            self.rect_view.clear_characters()
-
-            draw_border_around_rect(self.rect_line_labels_wrapper)
-            draw_border_around_rect(self.rect_content_wrapper)
-            if command_register_size is not None:
-                draw_border_around_rect(self.rect_command_register)
-
-
-            self.rendered_content_size = content_size
-            self.rendered_command_register_size = command_register_size
-            self.rendered_line_labels_size = line_labels_size
-            output = True
-
-        return output
 
     def tick_update_command_register(self) -> bool:
         output = False
@@ -575,19 +618,30 @@ class EditorEnvironment:
             output = True
             if self.command_register is not None:
                 if self.rendered_command_register is None:
-                    self.rect_view.attach(self.rect_command_register)
-                self.rect_command_register.clear_children()
-                self.rect_command_register.clear_characters()
+                    self.frame_command_register.attach()
 
-                self.rect_command_register.resize(self.rect_view.width - 2, 1)
-                self.rect_command_register.move(1, self.rect_view.height - 2)
+                self.frame_command_register.resize(self.rect_view.width - 2, 1)
+                self.frame_command_register.move(
+                    0,
+                    self.rect_view.height - self.frame_command_register.full_height
+                )
 
-                self.rect_command_register.set_string(0, 0, f":{self.command_register}_")
+                rect_content = self.frame_command_register.get_content_rect()
+                rect_content.clear_children()
+                rect_content.clear_characters()
+                rect_content.resize(
+                    max(
+                        2 + len(self.command_register),
+                        self.frame_command_register.full_width - 2
+                    ),
+                    1
+                )
+                rect_content.set_string(0, 0, f":{self.command_register}_")
 
-                self.rect_content_wrapper.resize(self.rect_content_wrapper.width, self.rect_view.height - 5)
+               # self.rect_content_wrapper.resize(self.rect_content_wrapper.width, self.rect_view.height - 5)
             else:
-                self.rect_command_register.detach()
-                self.rect_content_wrapper.resize(self.rect_content_wrapper.width, self.rect_view.height - 2)
+                self.frame_command_register.detach()
+               # self.rect_content_wrapper.resize(self.rect_content_wrapper.width, self.rect_view.height - 2)
 
             self.rendered_command_register = self.command_register
 
@@ -595,13 +649,13 @@ class EditorEnvironment:
 
     def tick_update_view_offset(self) -> bool:
         did_change_flag = False
-        if self.rect_view.width - (self.rect_line_labels_wrapper.width + 2) != self.rect_content_wrapper.width + 2:
-            self.rect_content_wrapper.resize(
-                self.rect_view.width - (self.rect_line_labels_wrapper.width + 2) - 2,
+        if self.rect_view.width - self.frame_line_labels.full_width != self.frame_content.full_width:
+            self.frame_content.resize(
+                self.rect_view.width - (self.frame_line_labels.full_width) - 2,
                 self.rect_view.height - 2
             )
 
-            self.rect_content_wrapper.move((self.rect_line_labels_wrapper.width + 2) + 1, 1)
+            self.frame_content.move(self.frame_line_labels.full_width, 0)
 
             did_change_flag = True
 
@@ -610,14 +664,14 @@ class EditorEnvironment:
         line_length = sum(self.rendered_beat_widths) + len(self.rendered_beat_widths) - 1
         beat_width = self.rendered_beat_widths[cursor[1]]
 
-        new_offset = beat_offset - ((self.rect_content_wrapper.width - beat_width) // 3)
+        new_offset = beat_offset - ((self.frame_content.width - beat_width) // 3)
         new_offset = max(0, new_offset)
-        new_offset = min(line_length - self.rect_content_wrapper.width, new_offset)
+        new_offset = min(line_length - self.frame_content.width, new_offset)
 
         if did_change_flag or new_offset != self.view_offset:
             shift_diff = self.view_offset - new_offset
             self.view_offset = new_offset
-            self.rect_content.move(0 - self.view_offset, 0)
+            self.frame_content.move_inner(0 - self.view_offset, 0)
             did_change_flag = True
 
         return did_change_flag
@@ -791,10 +845,13 @@ class EditorEnvironment:
                     rect_channel_divider.set_string(0, 0, chr(9472) * line_length)
                     rect_channel_divider.move(0, self.opus_manager.get_y(c, len(channel) - 1) + 2)
 
-            self.rect_line_labels_wrapper.move(1, 2)
-            self.rect_line_labels_wrapper.resize(5, new_height - 2)
-            self.rect_line_labels.resize(self.rect_line_labels_wrapper.width, new_height)
-            self.rect_line_labels.clear_characters()
+            self.frame_line_labels.resize(5, new_height)
+            self.frame_line_labels.move(0, 1)
+
+            rect_line_labels = self.frame_line_labels.get_content_rect()
+            rect_line_labels.resize(self.frame_line_labels.width, new_height)
+            rect_line_labels.clear_characters()
+
             y_offset = 0
             prev_c = None
             for y, (c, i) in enumerate(line_labels):
@@ -806,13 +863,14 @@ class EditorEnvironment:
                 else:
                     strlabel = f"  :{i:02}"
 
-                self.rect_line_labels.set_string(0, y + y_offset, strlabel)
+                rect_line_labels.set_string(0, y + y_offset, strlabel)
 
 
                 prev_c = c
 
-            self.rect_content.resize(line_length, new_height)
-            self.rect_topbar.resize(self.rect_content.width, 1)
+            rect_content = self.frame_content.get_content_rect()
+            rect_content.resize(line_length, new_height)
+            self.rect_topbar.resize(rect_content.width, 1)
 
             self.rendered_line_length = line_length
             self.rendered_line_count = line_count
@@ -1464,33 +1522,6 @@ class OpusManager:
         while self.channel_groupings[channel]:
             self.channel_groupings[channel].pop()
 
-def draw_border_around_rect(rect, border=None):
-    if border is None:
-        border = [
-            chr(9581),
-            chr(9582),
-            chr(9583),
-            chr(9584),
-            chr(9472),
-            chr(9474)
-        ]
-    parent_rect = rect.parent
-    width = rect.width
-    height = rect.height
-    x_offset = rect.x
-    y_offset = rect.y
-    for y in range(height):
-        parent_rect.set_string(x_offset - 1, y_offset + y, border[5])
-        parent_rect.set_string(x_offset + width, y_offset + y, border[5])
-
-    for x in range(width):
-        parent_rect.set_string(x_offset + x, y_offset - 1, border[4])
-        parent_rect.set_string(x_offset + x, y_offset + height, border[4])
-
-    parent_rect.set_string(x_offset - 1, y_offset - 1, chr(9581))
-    parent_rect.set_string(x_offset + width, y_offset - 1, chr(9582))
-    parent_rect.set_string(x_offset + width, y_offset + height, chr(9583))
-    parent_rect.set_string(x_offset - 1, y_offset + height, chr(9584))
 
 def parse_kwargs(*args):
     output = {}

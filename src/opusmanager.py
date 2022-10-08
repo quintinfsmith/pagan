@@ -71,8 +71,8 @@ class OpusManager:
         opus.set_size(self.opus_beat_count)
         for groupings in self.channel_groupings:
             for grouping in groupings:
-                for b, beat in enumerate(grouping):
-                    opus[b].merge(beat)
+                for i, beat in enumerate(grouping):
+                    opus[i].merge(beat)
 
         opus.to_midi(tempo=tempo).save(path)
 
@@ -444,11 +444,10 @@ class OpusManager:
 
         for channel in self.channel_groupings:
             for line in channel:
-                for b in range(index, self.opus_beat_count - 1):
-                    line[b] = line[b + 1]
+                for i in range(index, self.opus_beat_count - 1):
+                    line[i] = line[i + 1]
 
         self.set_beat_count(self.opus_beat_count - 1)
-
 
     def insert_beat(self, index=None):
         original_beat_count = self.opus_beat_count
@@ -505,6 +504,25 @@ class OpusManager:
 
         while self.channel_groupings[channel]:
             self.channel_groupings[channel].pop()
+
+
+    def swap_channels(self, channel_a, channel_b):
+        cursor = self.get_channel_index(self.cursor_position[0])
+
+        tmp = self.channel_groupings[channel_b]
+        self.channel_groupings[channel_b] = self.channel_groupings[channel_a]
+        self.channel_groupings[channel_a] = tmp
+
+        self.set_cursor_by_line(*cursor)
+
+    def set_cursor_by_line(self, target_channel, target_line):
+        y = 0
+        for i, channel in enumerate(self.channel_groupings):
+            for j in range(len(channel)):
+                if target_channel == i and target_line == j:
+                    self.cursor_position[0] = y
+                    break
+                y += 1
 
 def split_by_channel(event, other_events):
     return event['channel']

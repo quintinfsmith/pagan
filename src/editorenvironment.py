@@ -140,7 +140,8 @@ class EditorEnvironment:
             'q': self.kill,
             'c+': self.add_channel,
             'c-': self.remove_channel,
-            'export': self.export
+            'export': self.export,
+            'swap': self.cmd_swap_channels
         }
         self.command_register = None
         self.rendered_command_register = None
@@ -271,12 +272,6 @@ class EditorEnvironment:
             self.decrement_event_at_cursor
         )
 
-        self.interactor.assign_context_sequence(
-            InputContext.Default,
-            'ES',
-            self.opus_manager.save
-        )
-
         for c in "0123456789ab":
             self.interactor.assign_context_sequence(
                 InputContext.Default,
@@ -327,6 +322,11 @@ class EditorEnvironment:
         #    self.remove_last_digit_from_register
         #)
 
+    def cmd_swap_channels(self, *args):
+        channel_a = int(args[0])
+        channel_b = int(args[1])
+        self.swap_channels(channel_a, channel_b)
+
     def export(self, /, path, *args):
         kwargs = parse_kwargs(*args)
         self.opus_manager.export(path=path, **kwargs)
@@ -343,8 +343,8 @@ class EditorEnvironment:
         grouping_rect = rect_content.new_rect()
         self.channel_rects[channel].append(grouping_rect)
 
-        for b in range(self.opus_manager.opus_beat_count):
-            self.flag_beat_changed.add((channel, len(self.channel_rects[channel]) - 1, b))
+        for i in range(self.opus_manager.opus_beat_count):
+            self.flag_beat_changed.add((channel, len(self.channel_rects[channel]) - 1, i))
         self.rendered_cursor_position = None
 
     def remove_channel(self, /, channel, *args):
@@ -465,8 +465,8 @@ class EditorEnvironment:
 
         grouping_rect = rect_content.new_rect()
         self.channel_rects[channel].append(grouping_rect)
-        for b in range(self.opus_manager.opus_beat_count):
-            self.flag_beat_changed.add((channel, len(self.channel_rects[channel]) - 1, b))
+        for i in range(self.opus_manager.opus_beat_count):
+            self.flag_beat_changed.add((channel, len(self.channel_rects[channel]) - 1, i))
 
     def remove_line(self):
         if self.get_line_count() <= 1:
@@ -483,8 +483,8 @@ class EditorEnvironment:
             del self.rect_channel_dividers[target_c]
 
         for i, _line in enumerate(self.channel_rects[target_c]):
-            for b in range(self.opus_manager.opus_beat_count):
-                self.flag_beat_changed.add((target_c, i, b))
+            for j in range(self.opus_manager.opus_beat_count):
+                self.flag_beat_changed.add((target_c, i, j))
 
         if cursor[0] == self.get_line_count():
             cursor[0] -= 1
@@ -596,16 +596,16 @@ class EditorEnvironment:
         self.opus_manager.cursor_position = cursor_position
 
         rect_content = self.frame_content.get_content_rect()
-        for c, channel in enumerate(self.opus_manager.channel_groupings):
-            for i, grouping in enumerate(channel):
+        for i, channel in enumerate(self.opus_manager.channel_groupings):
+            for j, grouping in enumerate(channel):
                 grouping_rect = rect_content.new_rect()
-                self.channel_rects[c].append(grouping_rect)
+                self.channel_rects[i].append(grouping_rect)
                 #self.flag_line_changed.add((c,i))
-                for b, _ in enumerate(grouping):
-                    self.flag_beat_changed.add((c, i, b))
+                for k in range(len(grouping)):
+                    self.flag_beat_changed.add((i, j, k))
 
             if channel:
-                self.rect_channel_dividers[c] = rect_content.new_rect()
+                self.rect_channel_dividers[i] = rect_content.new_rect()
 
     def tick(self):
         flag_draw = False
@@ -1064,6 +1064,44 @@ class EditorEnvironment:
     def cursor_right(self):
         self.clear_register()
         self.opus_manager.cursor_right()
+
+    def swap_channels(self, channel_a, channel_b):
+        self.opus_manager.swap_channels(channel_a, channel_b)
+        tmp = self.channel_rects[channel_b]
+        self.channel_rects[channel_b] = self.channel_rects[channel_a]
+        self.channel_rects[channel_a] = tmp
+
+
+        # Swap Rect Beats
+        to_delete = []
+        for k, rect in self.rect_beats.items():
+            if k[0] not in (channel_a, channel_b):
+                continue
+            to_delete.append((k, rect))
+
+        while to_delete:
+            (i,j,k), rect  = to_delete.pop()
+            rect.remove()
+            del self.rect_beats[(i,j,k)]
+            if i == channel_a:
+                i = channel_b
+            else:
+                i = channel_a
+            self.flag_beat_changed.add((i,j,k))
+
+        # Swap Rect Subbeats
+        for k, subbeatmap in self.subbeat_rect_map.items():
+            if not k[0] in (channel_a, channel_b):
+                continue
+            to_delete.append((k, subbeatmap))
+
+        while to_delete:
+            (i, j, k), subbeat_map  = to_delete.pop()
+            del self.subbeat_rect_map[(i,j,k)]
+
+        # TODO: Maybe use a function to force instead of setting this arbitrary variable
+        self.rendered_line_length = None
+
 
     def run(self):
         self.running = True

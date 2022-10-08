@@ -398,6 +398,10 @@ class OpusManager:
             else:
                 pass
 
+    def unset_at_cursor(self):
+        position = self.cursor_position
+        self.unset(position)
+
     def remove_at_cursor(self):
         position = self.cursor_position
         parent_grouping = self.get_grouping(position[0:-1])
@@ -408,6 +412,13 @@ class OpusManager:
             self.cursor_position.pop()
         elif position[-1] == new_size:
             self.cursor_position[-1] -= 1
+
+    def unset(self, position):
+        grouping = self.get_grouping(position)
+        if grouping.is_event():
+            grouping.clear_events()
+        elif grouping.is_structural():
+            grouping.clear()
 
     def remove(self, position: List[int]):
         index = position[-1]
@@ -428,17 +439,16 @@ class OpusManager:
             parent.parent[parent_index] = parent[0]
 
     def remove_beat(self, index=None):
-        original_beat_count = self.opus_beat_count
         if index is None:
-            index = original_beat_count - 1
+            index = self.opus_beat_count - 1
 
         for channel in self.channel_groupings:
             for line in channel:
-                for i, _beat in enumerate(line[index:-1]):
-                    b = i + index
+                for b in range(index, self.opus_beat_count - 1):
                     line[b] = line[b + 1]
 
-        self.set_beat_count(original_beat_count - 1)
+        self.set_beat_count(self.opus_beat_count - 1)
+
 
     def insert_beat(self, index=None):
         original_beat_count = self.opus_beat_count
@@ -448,7 +458,6 @@ class OpusManager:
         self.set_beat_count(original_beat_count + 1)
         if index >= original_beat_count - 1:
             return
-
 
         for channel in self.channel_groupings:
             for line in channel:

@@ -554,8 +554,6 @@ class MGrouping(Grouping):
             beat.reduce()
             beat.clear_singles()
 
-
-
         return opus
 
 def get_number_string(number, base):

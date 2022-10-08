@@ -200,8 +200,13 @@ class EditorEnvironment:
         )
         self.interactor.assign_context_sequence(
             InputContext.Default,
-            'x',
+            "x",
             self.remove_at_cursor
+        )
+        self.interactor.assign_context_sequence(
+            InputContext.Default,
+            '.',
+            self.unset_at_cursor
         )
         self.interactor.assign_context_sequence(
             InputContext.Default,
@@ -516,12 +521,16 @@ class EditorEnvironment:
         self.opus_manager.remove_beat(cursor[1])
         self.rendered_beat_widths.pop(cursor[1])
 
+        to_del = []
         for (c,i,b) in self.rect_beats:
             if b >= self.opus_manager.opus_beat_count:
-                pass
-                #del self.rect_beats[(c, i, b)]
+                to_del.append(self.rect_beats[(c, i, b)])
             elif b >= cursor[1]:
                 self.flag_beat_changed.add((c, i, b))
+
+        # TODO: Is this necessary?
+        for beat in to_del:
+            del beat
 
         self.opus_manager.cursor_position = cursor[0:2]
         while self.opus_manager.cursor_position[1] >= len(self.rendered_beat_widths):
@@ -557,13 +566,11 @@ class EditorEnvironment:
         elif self.register.relative:
             self.register.value *= value
             self.set_event_at_cursor()
-            self.cursor_right()
         else:
             self.register.value *= self.opus_manager.BASE
             self.register.value += value
             if self.register.value >= self.opus_manager.BASE:
                 self.set_event_at_cursor()
-                self.cursor_right()
 
     def clear_register(self):
         self.register = None
@@ -577,8 +584,8 @@ class EditorEnvironment:
         self.running = False
         wrecked.kill()
 
-
     def load(self, path: str) -> None:
+        self.opus_manager.load(path)
 
         # TODO: Could be cleaner
         cursor_position = [0,0]
@@ -599,7 +606,6 @@ class EditorEnvironment:
 
             if channel:
                 self.rect_channel_dividers[c] = rect_content.new_rect()
-
 
     def tick(self):
         flag_draw = False
@@ -1024,6 +1030,13 @@ class EditorEnvironment:
         if len(position) == 2:
             self.opus_manager.cursor_dive(0)
 
+        c, i = self.opus_manager.get_channel_index(position[0])
+        self.flag_beat_changed.add((c, i, position[1]))
+        self.rendered_cursor_position = None
+
+    def unset_at_cursor(self):
+        self.opus_manager.unset_at_cursor()
+        position = self.opus_manager.cursor_position
         c, i = self.opus_manager.get_channel_index(position[0])
         self.flag_beat_changed.add((c, i, position[1]))
         self.rendered_cursor_position = None

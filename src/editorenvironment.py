@@ -114,9 +114,79 @@ class RectFrame:
         self.frame.set_string(width - 1, height - 1, chr(9583))
         self.frame.set_string(0, height - 1, chr(9584))
 
+class CommandLedger:
+    def __init__(self, command_map):
+        self.command_map = command_map
+        self.history = []
+        self.register = None
+        self.active_entry = None
+        self.register_bkp = None
+
+    def go_to_prev(self):
+        if self.active_entry is None:
+            if self.history:
+                self.active_entry = len(self.history) - 1
+                self.register_bkp = self.register
+                self.register = self.history[self.active_entry]
+        elif self.active_entry > 0:
+            self.active_entry -= 1
+            self.register = self.history[self.active_entry]
+
+    def go_to_next(self):
+        if self.active_entry is None:
+            return
+        elif self.active_entry < len(self.history) - 2:
+            self.active_entry += 1
+            self.register = self.history[self.active_entry]
+        elif self.active_entry == len(self.history) - 1:
+            self.active_entry = None
+            self.register = self.register_bkp
+            self.register_bkp = None
+
+    def open(self):
+        self.register = ""
+        self.active_entry = None
+        self.register_bkp = None
+
+    def close(self):
+        self.register = None
+        self.active_entry = None
+        self.register_bkp = None
+
+    def is_open(self):
+        return self.register is not None
+
+    def input(self, character: str):
+        if not self.is_open():
+            return
+        self.register += character
+
+    def backspace(self):
+        if not self.is_open():
+            return
+
+        if self.register:
+            self.register = self.register[0:-1]
+        else:
+            self.close()
+
+
+    def run(self):
+        if not self.is_open():
+            return
+        cmd_parts = self.register.split(" ")
+        if cmd_parts[0] in self.command_map:
+            try:
+                self.command_map[cmd_parts[0]](*cmd_parts[1:])
+                self.history.append(self.register)
+            except Exception as exception:
+                raise Exception from exception
+
+    def get_register(self):
+        return self.register
+
 class EditorEnvironment:
     tick_delay = 1 / 24
-
 
     def daemon_input(self):
         while self.running:
@@ -135,15 +205,15 @@ class EditorEnvironment:
         self.opus_manager = OpusManager()
 
 
-        self.command_map = {
+        self.command_ledger = CommandLedger({
             'w': self.save,
             'q': self.kill,
             'c+': self.add_channel,
             'c-': self.remove_channel,
             'export': self.export,
             'swap': self.cmd_swap_channels
-        }
-        self.command_register = None
+        })
+
         self.rendered_command_register = None
 
         self.rendered_channel_rects = set()
@@ -289,33 +359,46 @@ class EditorEnvironment:
         self.interactor.assign_context_sequence(
             InputContext.Default,
             ":",
-            self.command_register_open
+            self.command_ledger_open
         )
 
         for c in range(32, 127):
             self.interactor.assign_context_sequence(
                 InputContext.Text,
                 chr(c),
-                self.command_register_input,
+                self.command_ledger_input,
                 chr(c)
             )
         self.interactor.assign_context_sequence(
             InputContext.Text,
             "\x7F",
-            self.command_register_backspace
+            self.command_ledger_backspace
         )
 
-        self.interactor.assign_context_sequence(
-            InputContext.Text,
-            "\x1B",
-            self.command_register_close
-        )
+        #self.interactor.assign_context_sequence(
+        #    InputContext.Text,
+        #    "\x1B\x1B",
+        #    self.command_ledger_close
+        #)
 
         self.interactor.assign_context_sequence(
             InputContext.Text,
             "\r",
-            self.command_register_run
+            self.command_ledger_run
         )
+
+        self.interactor.assign_context_sequence(
+            InputContext.Text,
+            "\x1B[A", # Arrow Up
+            self.command_ledger.go_to_prev
+        )
+        self.interactor.assign_context_sequence(
+            InputContext.Text,
+            "\x1B[B", # Arrow Down
+            self.command_ledger.go_to_next
+        )
+
+
 
         #self.interactor.assign_context_sequence(
         #    "\x7f",
@@ -363,35 +446,25 @@ class EditorEnvironment:
     def save(self, *args):
         self.opus_manager.save()
 
-    def command_register_run(self):
-        if self.command_register is None:
-            return
-        cmd_parts = self.command_register.split(" ")
-        if cmd_parts[0] in self.command_map:
-            self.command_map[cmd_parts[0]](*cmd_parts[1:])
-        self.command_register_close()
+    def command_ledger_run(self):
+        self.command_ledger.run()
+        self.command_ledger_close()
 
-    def command_register_open(self):
-        self.command_register = ""
+    def command_ledger_open(self):
+        self.command_ledger.open()
         self.interactor.set_context(InputContext.Text)
 
-    def command_register_close(self):
-        self.command_register = None
+    def command_ledger_close(self):
+        self.command_ledger.close()
         self.interactor.set_context(InputContext.Default)
 
-    def command_register_input(self, character):
-        if self.command_register is None:
-            return
-        self.command_register += character
+    def command_ledger_input(self, character):
+        self.command_ledger.input(character)
 
-    def command_register_backspace(self):
-        if self.command_register is None:
-            return
-
-        if self.command_register:
-            self.command_register = self.command_register[0:-1]
-        else:
-            self.command_register_close()
+    def command_ledger_backspace(self):
+        self.command_ledger.backspace()
+        if not self.command_ledger.is_open():
+            self.interactor.set_context(InputContext.Default)
 
     def increment_event_at_cursor(self):
         position = self.opus_manager.cursor_position
@@ -622,9 +695,10 @@ class EditorEnvironment:
 
     def tick_update_command_register(self) -> bool:
         output = False
-        if self.rendered_command_register != self.command_register:
+        cmd_register = self.command_ledger.get_register()
+        if self.rendered_command_register != cmd_register:
             output = True
-            if self.command_register is not None:
+            if cmd_register is not None:
                 if self.rendered_command_register is None:
                     self.frame_command_register.attach()
 
@@ -639,19 +713,19 @@ class EditorEnvironment:
                 rect_content.clear_characters()
                 rect_content.resize(
                     max(
-                        2 + len(self.command_register),
+                        2 + len(cmd_register),
                         self.frame_command_register.full_width - 2
                     ),
                     1
                 )
-                rect_content.set_string(0, 0, f":{self.command_register}_")
+                rect_content.set_string(0, 0, f":{cmd_register}_")
 
                # self.rect_content_wrapper.resize(self.rect_content_wrapper.width, self.rect_view.height - 5)
             else:
                 self.frame_command_register.detach()
                # self.rect_content_wrapper.resize(self.rect_content_wrapper.width, self.rect_view.height - 2)
 
-            self.rendered_command_register = self.command_register
+            self.rendered_command_register = cmd_register
 
         return output
 

@@ -6,8 +6,8 @@ from typing import Optional, Dict, List, Tuple
 
 from apres import MIDI
 
-from structures import BadStateError
-from mgrouping import MGrouping, MGroupingEvent
+from src.structures import BadStateError
+from src.mgrouping import MGrouping, MGroupingEvent
 
 class InvalidCursor(Exception):
     '''Raised when attempting to pass a cursor without enough arguments'''

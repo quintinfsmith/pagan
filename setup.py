@@ -1,5 +1,5 @@
 import setuptools
-from src import __version__, __author__, __email__, __url__, __license__
+from radixal import __version__, __author__, __email__, __url__, __license__
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -19,7 +19,7 @@ setuptools.setup(
     py_modules=["radixal"],
     entry_points={ "console_scripts": ["radixal = src:main"] },
     url="https://burnsomni.net/software/radixal",
-    packages=setuptools.find_packages(),
+    packages=setuptools.find_packages(include=["src", "src.*"]),
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU General Public License v2 (GPLv2)",

@@ -8,9 +8,9 @@ from typing import Optional, Dict, List, Tuple
 
 import wrecked
 
-from src.mgrouping import get_number_string
-from src.interactor import Interactor
-from src.opusmanager import OpusManager
+from mgrouping import get_number_string
+from interactor import Interactor
+from opusmanager import OpusManager
 
 class InvalidCursor(Exception):
     '''Raised when attempting to pass a cursor without enough arguments'''

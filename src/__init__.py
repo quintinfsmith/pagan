@@ -9,7 +9,7 @@ __url__ = "https://burnsomni.net/git/radixal"
 
 def main():
     import sys
-    from src.editorenvironment import EditorEnvironment
+    from editorenvironment import EditorEnvironment
     aa = EditorEnvironment()
     aa.load(sys.argv[1])
     killed = False

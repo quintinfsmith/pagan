@@ -2,7 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Optional, List, Tuple, Dict
 from apres import NoteOn, NoteOff, PitchWheelChange, MIDI, SetTempo, ProgramChange, TimeSignature
-from src.structures import Grouping, BadStateError
+from structures import Grouping, BadStateError
 import math
 
 ERROR_CHUNK_SIZE = 19

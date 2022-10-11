@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 # coding=utf-8
+import sys
+from .editorenvironment import EditorEnvironment
 
 __version__ = "0.0.1"
 __license__ = "GPL-2.0"
@@ -8,8 +10,6 @@ __email__ = "smith.quintin@protonmail.com"
 __url__ = "https://burnsomni.net/git/radixal"
 
 def main():
-    import sys
-    from editorenvironment import EditorEnvironment
     aa = EditorEnvironment()
     aa.load(sys.argv[1])
     killed = False

@@ -89,10 +89,9 @@ class Interactor(object):
         self._init_attr = termios.tcgetattr(self._init_fileno)  # store original input settings
         try:
             tty.setraw(sys.stdin.fileno()) # remove wait for "return"
-            ch = None
+            bytes_read = []
             in_context = self.active_context
-            keep_going = True
-            while not self.kill_flag and (ch is None or keep_going):
+            while not self.kill_flag:
                 try:
                     ready, _, __ = select.select([sys.stdin], [], [], 0)
                 except TypeError:
@@ -102,34 +101,26 @@ class Interactor(object):
 
                 if sys.stdin in ready:
                     try:
-                        output = os.read(self._init_fileno, 1)
-                        if output:
-                            if ch is None:
-                                ch = chr(output[0])
-                            else:
-                                ch += chr(output[0])
-                        else:
-                            if ch is not None:
-                                break
-                            else:
-                                continue
+                        read_contents = os.read(self._init_fileno, 1)
+                        if read_contents:
+                            bytes_read.append(read_contents[0])
                     except ValueError:
-                        if ch is not None:
-                            break
-                        else:
-                            continue
-                elif ch is not None:
+                        continue
+                elif bytes_read:
                     break
 
                 if self.active_context != in_context:
                     raise ContextChange()
 
-                if ch is None:
-                    time.sleep(.01)
+                time.sleep(.01)
         finally:
             self.restore_input_settings()
 
-        return ch
+        if bytes_read:
+            output = bytes(bytes_read)
+        else:
+            output = None
+        return output
 
     def restore_input_settings(self):
         if self._init_fileno is not None:

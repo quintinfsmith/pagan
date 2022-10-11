@@ -175,10 +175,10 @@ class CommandLedger:
         if not self.is_open():
             return
         cmd_parts = self.register.split(" ")
+        self.history.append(self.register)
         if cmd_parts[0] in self.command_map:
             try:
                 self.command_map[cmd_parts[0]](*cmd_parts[1:])
-                self.history.append(self.register)
             except Exception as exception:
                 raise Exception from exception
 
@@ -251,154 +251,152 @@ class EditorEnvironment:
         self.interactor.set_context(InputContext.Default)
         self.interactor.assign_context_sequence(
             InputContext.Default,
-            'l',
+            b'l',
             self.cursor_right
         )
         self.interactor.assign_context_sequence(
             InputContext.Default,
-            'h',
+            b'h',
             self.cursor_left
         )
         self.interactor.assign_context_sequence(
             InputContext.Default,
-            'j',
+            b'j',
             self.cursor_down
         )
         self.interactor.assign_context_sequence(
             InputContext.Default,
-            'k',
+            b'k',
             self.cursor_up
         )
         self.interactor.assign_context_sequence(
             InputContext.Default,
-            "x",
+            b"x",
             self.remove_at_cursor
         )
         self.interactor.assign_context_sequence(
             InputContext.Default,
-            '.',
+            b'.',
             self.unset_at_cursor
         )
         self.interactor.assign_context_sequence(
             InputContext.Default,
-            'i',
+            b'i',
             self.insert_after_cursor
         )
         self.interactor.assign_context_sequence(
             InputContext.Default,
-            ' ',
+            b' ',
             self.insert_beat_at_cursor
         )
         self.interactor.assign_context_sequence(
             InputContext.Default,
-            'X',
+            b'X',
             self.remove_beat_at_cursor
         )
         self.interactor.assign_context_sequence(
             InputContext.Default,
-            '/',
+            b'/',
             self.split_at_cursor
         )
         self.interactor.assign_context_sequence(
             InputContext.Default,
-            ';]',
+            b';]',
             self.new_line
         )
         self.interactor.assign_context_sequence(
             InputContext.Default,
-            ';[',
+            b';[',
             self.remove_line
         )
 
         self.interactor.assign_context_sequence(
             InputContext.Default,
-            '+',
+            b'+',
             self.relative_add_entry
         )
 
         self.interactor.assign_context_sequence(
             InputContext.Default,
-            '-',
+            b'-',
             self.relative_subtract_entry
         )
         self.interactor.assign_context_sequence(
             InputContext.Default,
-            'v',
+            b'v',
             self.relative_downshift_entry
         )
         self.interactor.assign_context_sequence(
             InputContext.Default,
-            '^',
+            b'^',
             self.relative_upshift_entry
         )
         self.interactor.assign_context_sequence(
             InputContext.Default,
-            'K',
+            b'K',
             self.increment_event_at_cursor
         )
         self.interactor.assign_context_sequence(
             InputContext.Default,
-            'J',
+            b'J',
             self.decrement_event_at_cursor
         )
 
-        for c in "0123456789ab":
+        for c in b"0123456789ab":
             self.interactor.assign_context_sequence(
                 InputContext.Default,
-                c,
+                bytes([c]),
                 self.add_digit_to_register,
-                int(c, 12)
+                int(str(c), 12)
             )
 
         self.interactor.assign_context_sequence(
             InputContext.Default,
-            "\x1B",
+            b"\x1B",
             self.clear_register
         )
 
         self.interactor.assign_context_sequence(
             InputContext.Default,
-            ":",
+            b":",
             self.command_ledger_open
         )
 
         for c in range(32, 127):
             self.interactor.assign_context_sequence(
                 InputContext.Text,
-                chr(c),
+                [c],
                 self.command_ledger_input,
                 chr(c)
             )
         self.interactor.assign_context_sequence(
             InputContext.Text,
-            "\x7F",
+            b"\x7F",
             self.command_ledger_backspace
         )
 
         #self.interactor.assign_context_sequence(
         #    InputContext.Text,
-        #    "\x1B\x1B",
+        #    "\x1B",
         #    self.command_ledger_close
         #)
 
         self.interactor.assign_context_sequence(
             InputContext.Text,
-            "\r",
+            b"\r",
             self.command_ledger_run
         )
 
         self.interactor.assign_context_sequence(
             InputContext.Text,
-            "\x1B[A", # Arrow Up
+            b"\x1B[A", # Arrow Up
             self.command_ledger.go_to_prev
         )
         self.interactor.assign_context_sequence(
             InputContext.Text,
-            "\x1B[B", # Arrow Down
+            b"\x1B[B", # Arrow Down
             self.command_ledger.go_to_next
         )
-
-
 
         #self.interactor.assign_context_sequence(
         #    "\x7f",

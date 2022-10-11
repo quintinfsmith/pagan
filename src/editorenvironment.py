@@ -170,17 +170,18 @@ class CommandLedger:
         else:
             self.close()
 
-
     def run(self):
         if not self.is_open():
             return
+
         cmd_parts = self.register.split(" ")
-        self.history.append(self.register)
         if cmd_parts[0] in self.command_map:
             try:
                 self.command_map[cmd_parts[0]](*cmd_parts[1:])
+                # add to history only after the command is successful
+                self.history.append(self.register)
             except Exception as exception:
-                raise Exception from exception
+                raise exception
 
     def get_register(self):
         return self.register
@@ -203,7 +204,7 @@ class EditorEnvironment:
 
         self.channel_rects = [[] for i in range(16)]
         self.opus_manager = OpusManager()
-
+        self.block_tick = False
 
         self.command_ledger = CommandLedger({
             'w': self.save,
@@ -220,6 +221,7 @@ class EditorEnvironment:
         self.rendered_beat_widths = []
 
         self.rendered_cursor_position = []
+        self.force_cursor_update = False
         self.rendered_line_length = 0
         self.rendered_line_count = 0
 
@@ -375,11 +377,11 @@ class EditorEnvironment:
             self.command_ledger_backspace
         )
 
-        #self.interactor.assign_context_sequence(
-        #    InputContext.Text,
-        #    "\x1B",
-        #    self.command_ledger_close
-        #)
+        self.interactor.assign_context_sequence(
+            InputContext.Text,
+            b"\x1B",
+            self.command_ledger_close
+        )
 
         self.interactor.assign_context_sequence(
             InputContext.Text,
@@ -680,15 +682,16 @@ class EditorEnvironment:
 
     def tick(self):
         flag_draw = False
-        flag_draw |= self.tick_update_beats()
-        flag_draw |= self.tick_update_lines()
-        flag_draw |= self.tick_update_cursor()
-        flag_draw |= self.tick_update_view_offset()
-        #flag_draw |= self.tick_update_register()
-        flag_draw |= self.tick_update_command_register()
+        if not self.block_tick:
+            flag_draw |= self.tick_update_beats()
+            flag_draw |= self.tick_update_lines()
+            flag_draw |= self.tick_update_cursor()
+            flag_draw |= self.tick_update_view_offset()
+            #flag_draw |= self.tick_update_register()
+            flag_draw |= self.tick_update_command_register()
 
-        if flag_draw:
-            self.root.draw()
+            if flag_draw:
+                self.root.draw()
 
 
     def tick_update_command_register(self) -> bool:
@@ -897,7 +900,8 @@ class EditorEnvironment:
 
     def tick_update_cursor(self) -> bool:
         output = False
-        if self.rendered_cursor_position != self.opus_manager.cursor_position:
+        if self.force_cursor_update or self.rendered_cursor_position != self.opus_manager.cursor_position:
+            self.force_cursor_update = False
             output = True
             if self.rendered_cursor_position:
                 rect = self.get_subbeat_rect(self.rendered_cursor_position)
@@ -1138,14 +1142,32 @@ class EditorEnvironment:
         self.opus_manager.cursor_right()
 
     def swap_channels(self, channel_a, channel_b):
+        self.block_tick = True
+        rc_position = self.opus_manager.get_channel_index(self.rendered_cursor_position[0])
+        original_cursor = self.opus_manager.cursor_position.copy()
         self.opus_manager.swap_channels(channel_a, channel_b)
-        tmp = self.channel_rects[channel_b]
-        self.channel_rects[channel_b] = self.channel_rects[channel_a]
-        self.channel_rects[channel_a] = tmp
+        cursor_moved = original_cursor != self.opus_manager.cursor_position
 
+        if cursor_moved:
+            if rc_position[0] == channel_a:
+                rc_position = (channel_b, rc_position[1])
+            elif rc_position[0] == channel_b:
+                rc_position = (channel_a, rc_position[1])
+
+            self.rendered_cursor_position[0] = self.opus_manager.get_y(*rc_position)
+
+        to_delete = []
+        # Swap Rect Subbeats
+        for k, subbeatmap in self.subbeat_rect_map.items():
+            if not k[0] in (channel_a, channel_b):
+                continue
+            to_delete.append((k, subbeatmap))
+
+        while to_delete:
+            (i, j, k), subbeat_map  = to_delete.pop()
+            del self.subbeat_rect_map[(i,j,k)]
 
         # Swap Rect Beats
-        to_delete = []
         for k, rect in self.rect_beats.items():
             if k[0] not in (channel_a, channel_b):
                 continue
@@ -1161,18 +1183,16 @@ class EditorEnvironment:
                 i = channel_a
             self.flag_beat_changed.add((i,j,k))
 
-        # Swap Rect Subbeats
-        for k, subbeatmap in self.subbeat_rect_map.items():
-            if not k[0] in (channel_a, channel_b):
-                continue
-            to_delete.append((k, subbeatmap))
+        # Swap line rects
+        tmp = self.channel_rects[channel_b]
+        self.channel_rects[channel_b] = self.channel_rects[channel_a]
+        self.channel_rects[channel_a] = tmp
 
-        while to_delete:
-            (i, j, k), subbeat_map  = to_delete.pop()
-            del self.subbeat_rect_map[(i,j,k)]
 
         # TODO: Maybe use a function to force instead of setting this arbitrary variable
         self.rendered_line_length = None
+        self.block_tick = False
+        self.force_cursor_update = True
 
 
     def run(self):

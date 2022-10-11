@@ -505,15 +505,33 @@ class OpusManager:
         while self.channel_groupings[channel]:
             self.channel_groupings[channel].pop()
 
-
     def swap_channels(self, channel_a, channel_b):
-        cursor = self.get_channel_index(self.cursor_position[0])
+        o_channel, o_index = self.get_channel_index(self.cursor_position[0])
 
         tmp = self.channel_groupings[channel_b]
         self.channel_groupings[channel_b] = self.channel_groupings[channel_a]
         self.channel_groupings[channel_a] = tmp
 
-        self.set_cursor_by_line(*cursor)
+        # Keep the cursor on the same channel, by moving to a lower index if necessary
+        while o_index >= len(self.channel_groupings[o_channel]) - 1:
+            o_index -= 1
+
+        self.set_cursor_by_line(o_channel, o_index)
+
+        # Correct position
+        while len(self.cursor_position) > 2:
+            try:
+                self.get_grouping(self.cursor_position)
+                break
+            except InvalidCursor:
+                self.cursor_position.pop()
+            except IndexError:
+                self.cursor_position.pop()
+
+        grouping = self.get_grouping(self.cursor_position)
+        while grouping.is_structural():
+            self.cursor_position.append(0)
+            grouping = grouping[0]
 
     def set_cursor_by_line(self, target_channel, target_line):
         y = 0
@@ -523,6 +541,7 @@ class OpusManager:
                     self.cursor_position[0] = y
                     break
                 y += 1
+
 
 def split_by_channel(event, other_events):
     return event['channel']

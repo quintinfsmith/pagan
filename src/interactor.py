@@ -76,8 +76,6 @@ class Interactor(object):
         self.backup = []
         self.checking_cmds = False
 
-        self.ignoring_input = 0
-        self.downtime = 1 / 60
         self.kill_flag = False
 
         self._init_fileno = None

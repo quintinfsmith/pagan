@@ -91,7 +91,8 @@ class Interactor(object):
             tty.setraw(sys.stdin.fileno()) # remove wait for "return"
             ch = None
             in_context = self.active_context
-            while not self.kill_flag and ch is None:
+            keep_going = True
+            while not self.kill_flag and (ch is None or keep_going):
                 try:
                     ready, _, __ = select.select([sys.stdin], [], [], 0)
                 except TypeError:
@@ -103,11 +104,22 @@ class Interactor(object):
                     try:
                         output = os.read(self._init_fileno, 1)
                         if output:
-                            ch = chr(output[0])
+                            if ch is None:
+                                ch = chr(output[0])
+                            else:
+                                ch += chr(output[0])
+                        else:
+                            if ch is not None:
+                                break
+                            else:
+                                continue
+                    except ValueError:
+                        if ch is not None:
+                            break
                         else:
                             continue
-                    except ValueError:
-                        continue
+                elif ch is not None:
+                    break
 
                 if self.active_context != in_context:
                     raise ContextChange()
@@ -130,10 +142,7 @@ class Interactor(object):
         '''Send keypress to be handled'''
         try:
             new_chr = self.read_character()
-            if time.time() - self.ignoring_input < self.downtime:
-                pass
-            else:
-                self.check_cmd(new_chr)
+            self.check_cmd(new_chr)
         except ContextChange as e:
             self.active_node = self.cmd_nodes[self.active_context]
 

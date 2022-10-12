@@ -3,6 +3,7 @@ import math
 import time
 import threading
 
+from inspect import signature
 from enum import Enum, auto
 from typing import Optional, Dict, List, Tuple
 
@@ -24,6 +25,7 @@ class ReadyEvent:
 class InputContext(Enum):
     Default = auto()
     Text = auto()
+    ConfirmOnly = auto()
 
 class RectFrame:
     def __init__(self, parent_rect, border=None):
@@ -121,6 +123,13 @@ class CommandLedger:
         self.register = None
         self.active_entry = None
         self.register_bkp = None
+        self.error_msg = None
+
+    def get_error_msg(self):
+        return self.error_msg
+
+    def clear_error_msg(self):
+        self.error_msg = None
 
     def go_to_prev(self):
         if self.active_entry is None:
@@ -152,6 +161,7 @@ class CommandLedger:
         self.register = None
         self.active_entry = None
         self.register_bkp = None
+        self.error_msg = None
 
     def is_open(self):
         return self.register is not None
@@ -177,11 +187,29 @@ class CommandLedger:
         cmd_parts = self.register.split(" ")
         if cmd_parts[0] in self.command_map:
             try:
-                self.command_map[cmd_parts[0]](*cmd_parts[1:])
-                # add to history only after the command is successful
-                self.history.append(self.register)
+                hook = self.command_map[cmd_parts[0]]
+                params = list(signature(hook).parameters)
+                args, kwargs = parse_kwargs(cmd_parts[1:])
+                req_params = params.copy()
+
+                if hook.__kwdefaults__ is not None:
+                    for k in hook.__kwdefaults__:
+                        if k in req_params:
+                            req_params.remove(k)
+
+                if len(args) < len(req_params):
+                    missing_args = req_params[len(args):]
+                    self.register = None
+                    self.error_msg = f"Missing: {', '.join(missing_args)}"
+                else:
+                    hook(*args, **kwargs)
+                    # add to history only after the command is successful
+                    self.history.append(self.register)
             except Exception as exception:
                 raise exception
+        else:
+            self.error_msg = f"Command not found: '{cmd_parts[0]}'"
+            self.register = None
 
     def get_register(self):
         return self.register
@@ -250,6 +278,11 @@ class EditorEnvironment:
         self.flag_line_changed = set()
 
         self.interactor = Interactor()
+        self.interactor.assign_context_sequence(
+            InputContext.ConfirmOnly,
+            b"\r",
+            self.command_ledger_close
+        )
         self.interactor.set_context(InputContext.Default)
         self.interactor.assign_context_sequence(
             InputContext.Default,
@@ -405,16 +438,19 @@ class EditorEnvironment:
         #    self.remove_last_digit_from_register
         #)
 
-    def cmd_swap_channels(self, *args):
-        channel_a = int(args[0])
-        channel_b = int(args[1])
+    def clear_error_msg(self):
+        self.interactor.set_context(InputContext.Default)
+        self.command_ledger.clear_error_msg()
+
+    def cmd_swap_channels(self, channel_a, channel_b):
+        channel_a = int(channel_a)
+        channel_b = int(channel_b)
         self.swap_channels(channel_a, channel_b)
 
-    def export(self, /, path, *args):
-        kwargs = parse_kwargs(*args)
-        self.opus_manager.export(path=path, **kwargs)
+    def export(self, /, path, *, tempo=120):
+        self.opus_manager.export(path=path, tempo=120)
 
-    def add_channel(self, /, channel, *args):
+    def add_channel(self, /, channel):
         channel = int(channel)
         self.opus_manager.new_line(channel)
 
@@ -430,7 +466,7 @@ class EditorEnvironment:
             self.flag_beat_changed.add((channel, len(self.channel_rects[channel]) - 1, i))
         self.rendered_cursor_position = None
 
-    def remove_channel(self, /, channel, *args):
+    def remove_channel(self, /, channel):
         channel = int(channel)
         self.opus_manager.remove_channel(channel)
 
@@ -448,7 +484,10 @@ class EditorEnvironment:
 
     def command_ledger_run(self):
         self.command_ledger.run()
-        self.command_ledger_close()
+        if self.command_ledger.get_error_msg() is not None:
+            self.interactor.set_context(InputContext.ConfirmOnly)
+        else:
+            self.command_ledger_close()
 
     def command_ledger_open(self):
         self.command_ledger.open()
@@ -653,7 +692,7 @@ class EditorEnvironment:
         self.register = None
         return output
 
-    def kill(self, *args):
+    def kill(self):
         self.running = False
         wrecked.kill()
 
@@ -697,9 +736,17 @@ class EditorEnvironment:
     def tick_update_command_register(self) -> bool:
         output = False
         cmd_register = self.command_ledger.get_register()
-        if self.rendered_command_register != cmd_register:
+        cmd_error = self.command_ledger.get_error_msg()
+        if cmd_error is not None:
+            cmd_msg = cmd_error
+        elif cmd_register is not None:
+            cmd_msg = cmd_register
+        else:
+            cmd_msg = None
+
+        if self.rendered_command_register != cmd_msg:
             output = True
-            if cmd_register is not None:
+            if cmd_msg is not None:
                 if self.rendered_command_register is None:
                     self.frame_command_register.attach()
 
@@ -714,19 +761,25 @@ class EditorEnvironment:
                 rect_content.clear_characters()
                 rect_content.resize(
                     max(
-                        2 + len(cmd_register),
+                        2 + len(cmd_msg),
                         self.frame_command_register.full_width - 2
                     ),
                     1
                 )
-                rect_content.set_string(0, 0, f":{cmd_register}_")
+
+                if cmd_error is not None:
+                    rect_content.set_string(0, 0, f"{cmd_msg}")
+                    rect_content.set_fg_color(wrecked.RED)
+                else:
+                    rect_content.set_string(0, 0, f":{cmd_msg}_")
+                    rect_content.unset_fg_color()
 
                # self.rect_content_wrapper.resize(self.rect_content_wrapper.width, self.rect_view.height - 5)
             else:
                 self.frame_command_register.detach()
                # self.rect_content_wrapper.resize(self.rect_content_wrapper.width, self.rect_view.height - 2)
 
-            self.rendered_command_register = cmd_register
+            self.rendered_command_register = cmd_msg
 
         return output
 
@@ -1207,8 +1260,9 @@ class EditorEnvironment:
                 self.running = False
 
 
-def parse_kwargs(*args):
-    output = {}
+def parse_kwargs(args):
+    o_kwargs = {}
+    o_args = []
     skip_flag = False
     for i, arg in enumerate(args):
         if skip_flag:
@@ -1216,9 +1270,11 @@ def parse_kwargs(*args):
             continue
 
         if arg.startswith('--'):
-            output[arg[2:]] = args[i + 1]
+            o_kwargs[arg[2:]] = args[i + 1]
             skip_flag = True
-    return output
+        else:
+            o_args.append(arg)
+    return (o_args, o_kwargs)
 
 
 def sort_by_first(a):

@@ -131,6 +131,12 @@ class CommandLedger:
     def clear_error_msg(self):
         self.error_msg = None
 
+    def set_error_msg(self, msg):
+        self.error_msg = msg
+        self.register = None
+        self.active_entry = None
+        self.register_bkp = None
+
     def go_to_prev(self):
         if self.active_entry is None:
             if self.history:
@@ -199,8 +205,7 @@ class CommandLedger:
 
                 if len(args) < len(req_params):
                     missing_args = req_params[len(args):]
-                    self.register = None
-                    self.error_msg = f"Missing: {', '.join(missing_args)}"
+                    self.set_error_msg(f"Missing: {', '.join(missing_args)}")
                 else:
                     hook(*args, **kwargs)
                     # add to history only after the command is successful
@@ -208,8 +213,7 @@ class CommandLedger:
             except Exception as exception:
                 raise exception
         else:
-            self.error_msg = f"Command not found: '{cmd_parts[0]}'"
-            self.register = None
+            self.set_error_msg(f"Command not found: '{cmd_parts[0]}'")
 
     def get_register(self):
         return self.register
@@ -382,7 +386,7 @@ class EditorEnvironment:
                 InputContext.Default,
                 bytes([c]),
                 self.add_digit_to_register,
-                int(str(c), 12)
+                int(chr(c), 12)
             )
 
         self.interactor.assign_context_sequence(

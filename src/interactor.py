@@ -174,5 +174,11 @@ class Interactor(object):
             self.cmd_nodes[context_key] = FunctionTreeNode()
         self.cmd_nodes[context_key].set(string_seq, func, *args)
 
+    def assign_context_batch(self, context_key, *sequences):
+        for string_seq, func, *args in sequences:
+            self.assign_context_sequence(context_key, string_seq, func, *args)
+
     def set_context(self, context_key):
         self.active_context = context_key
+    def get_context(self):
+        return self.active_context

@@ -2,12 +2,14 @@ from __future__ import annotations
 import os
 import re
 
+from inspect import signature
 from typing import Optional, Dict, List, Tuple
-
+from enum import Enum, auto
 from apres import MIDI
 
 from .structures import BadStateError
 from .mgrouping import MGrouping, MGroupingEvent
+from .interactor import Interactor
 
 class InvalidCursor(Exception):
     '''Raised when attempting to pass a cursor without enough arguments'''
@@ -21,6 +23,180 @@ class OpusManager:
         self.opus_beat_count = 1
         self.path = None
         self.clipboard_grouping = None
+
+        self.command_ledger = CommandLedger({
+            'w': self.save,
+            'q': self.kill,
+            'c+': self.cmd_add_channel,
+            'c-': self.cmd_remove_channel,
+            'export': self.cmd_export,
+            'swap': self.cmd_swap_channels
+        })
+
+        self.interactor = Interactor()
+        self.interactor.set_context(InputContext.Default)
+        self.interactor.assign_context_sequence(
+            InputContext.ConfirmOnly,
+            b"\r",
+            self.command_ledger.close
+        )
+
+        self.interactor.assign_context_batch(
+            InputContext.Default,
+            (b'l', self.cursor_right),
+            (b'h', self.cursor_left),
+            (b'j', self.cursor_down),
+            (b'k', self.cursor_up),
+            (b"x", self.remove_grouping_at_cursor),
+            (b'.', self.unset_at_cursor),
+            (b'i', self.insert_after_cursor),
+            (b' ', self.insert_beat_at_cursor),
+            (b'X', self.remove_beat_at_cursor),
+            (b'/', self.split_grouping_at_cursor),
+            (b';]', self.new_line),
+            (b';[', self.remove_line),
+            (b'+', self.relative_add_entry),
+            (b'-', self.relative_subtract_entry),
+            (b'v', self.relative_downshift_entry),
+            (b'^', self.relative_upshift_entry),
+            (b'K', self.increment_event_at_cursor),
+            (b'J', self.decrement_event_at_cursor),
+            (b"\x1B", self.clear_register),
+            (b":", self.command_ledger.open)
+        )
+
+        for c in b"0123456789ab":
+            self.interactor.assign_context_sequence(
+                InputContext.Default,
+                bytes([c]),
+                self.add_digit_to_register,
+                int(chr(c), 12)
+            )
+
+        for c in range(32, 127):
+            self.interactor.assign_context_sequence(
+                InputContext.Text,
+                [c],
+                self.command_ledger.input,
+                chr(c)
+            )
+
+        self.interactor.assign_context_batch(
+            InputContext.Text,
+            (b"\x7F", self.command_ledger.backspace),
+            (b"\x1B", self.command_ledger.close),
+            (b"\r", self.command_ledger.run),
+            (b"\x1B[A", self.command_ledger.go_to_prev), # Arrow Up
+            (b"\x1B[B", self.command_ledger.go_to_next)  # Arrow Down
+        )
+
+        #self.interactor.assign_context_sequence(
+        #    "\x7f",
+        #    self.remove_last_digit_from_register
+        #)
+
+    def increment_event_at_cursor(self):
+        position = self.cursor_position
+        grouping = self.get_grouping(position)
+        if not grouping.is_event():
+            return
+
+        for event in grouping.get_events():
+            if event.relative:
+                if (event.note >= event.base \
+                or event.note < 0 - event.base) \
+                and event.note < (event.base * (event.base - 1)):
+                    event.note += event.base
+                elif event.note < event.base:
+                    event.note += 1
+            elif event.note < 127:
+                event.note += 1
+
+    def decrement_event_at_cursor(self):
+        position = self.cursor_position
+        grouping = self.get_grouping(position)
+        if not grouping.is_event():
+            return
+
+        for event in grouping.get_events():
+            if event.relative:
+                if (event.note <= 0 - event.base \
+                or event.note > event.base) \
+                and event.note > 0 - (event.base * (event.base - 1)):
+                    event.note -= event.base
+                elif event.note >= 0 - event.base:
+                    event.note -= 1
+            elif event.note > 0:
+                event.note -= 1
+
+    def update_context(self):
+        command_ledger = self.command_ledger
+        current_context = self.interactor.get_context()
+        if current_context is InputContext.Default:
+            if command_ledger.is_in_err():
+                self.interactor.set_context(InputContext.ConfirmOnly)
+            elif command_ledger.is_open():
+                self.interactor.set_context(InputContext.Text)
+        elif current_context is InputContext.Text:
+            if command_ledger.is_in_err():
+                self.interactor.set_context(InputContext.ConfirmOnly)
+            elif not command_ledger.is_open():
+                self.interactor.set_context(InputContext.Default)
+        elif current_context is InputContext.ConfirmOnly:
+            if command_ledger.is_open():
+                self.interactor.set_context(InputContext.Text)
+            else:
+                self.interactor.set_context(InputContext.Default)
+
+    def relative_add_entry(self):
+        self.register = ReadyEvent(1, relative=True)
+
+    def relative_subtract_entry(self):
+        self.register = ReadyEvent(-1, relative=True)
+
+    def relative_downshift_entry(self):
+        self.register = ReadyEvent(-1 * self.BASE, relative=True)
+
+    def relative_upshift_entry(self):
+        self.register = ReadyEvent(self.BASE, relative=True)
+
+    def add_digit_to_register(self, value):
+        if self.register is None:
+            self.register = ReadyEvent(value, relative=False)
+        elif self.register.relative:
+            self.register.value *= value
+            self.apply_register_at_cursor()
+        else:
+            self.register.value *= self.BASE
+            self.register.value += value
+            if self.register.value >= self.BASE:
+                self.apply_register_at_cursor()
+
+    def apply_register_at_cursor(self):
+        register = self.fetch_register()
+        if register is None:
+            return
+
+        self.set_beat_event(
+            register.value,
+            self.cursor_position,
+            relative=register.relative
+        )
+
+    def clear_register(self):
+        self.register = None
+
+    def fetch_register(self):
+        output = self.register
+        self.register = None
+        return output
+
+    def insert_after_cursor(self):
+        position = self.cursor_position
+        self.insert_after(position)
+
+        if len(position) == 2:
+            self.cursor_dive(0)
 
     def copy_grouping(self, position):
         self.clipboard_grouping = self.get_grouping(position)
@@ -132,7 +308,7 @@ class OpusManager:
             except InvalidCursor:
                 working_position.pop()
             except IndexError:
-                working_position.pop()
+                working_position[-1] -= 1
 
         while self.get_grouping(working_position).is_structural():
             working_position.append(0)
@@ -152,7 +328,7 @@ class OpusManager:
             except InvalidCursor:
                 working_position.pop()
             except IndexError:
-                working_position.pop()
+                working_position[-1] -= 1
 
         while self.get_grouping(working_position).is_structural():
             working_position.append(0)
@@ -237,16 +413,25 @@ class OpusManager:
     def get_channel(self, y: int) -> int:
         return self.get_channel_index(y)[0]
 
-    def get_channel_index(self, y: int) -> (int, int):
+    def get_channel_index(self, y_index: int) -> (int, int):
+        '''
+            Given the y-index of a line (as in from the cursor),
+            get the channel and index thereof
+        '''
+
         for channel in self.channel_order:
             for i, _ in enumerate(self.channel_groupings[channel]):
-                if y == 0:
+                if y_index == 0:
                     return (channel, i)
-                y -= 1
+                y_index -= 1
 
         raise IndexError
 
     def get_y(self, c: int, i: int) -> int:
+        '''
+            Given a channel and index,
+            get the y-index of the specified line displayed
+        '''
         y = 0
         for j in self.channel_order:
             for g, grouping in enumerate(self.channel_groupings[j]):
@@ -257,6 +442,7 @@ class OpusManager:
                 y += 1
         return -1
 
+    # TODO: Use a clearer name
     def get_line(self, y) -> Optional[MGrouping]:
         output = None
         for c in self.channel_order:
@@ -355,9 +541,10 @@ class OpusManager:
                 self.channel_groupings[i].append(split_line)
                 self.opus_beat_count = max(self.opus_beat_count, len(split_line))
 
-    def split_grouping(self, position: List[int], splits: int):
-        grouping = self.get_grouping(position)
-        grouping.set_size(splits, True)
+    def split_grouping_at_cursor(self):
+        cursor = self.cursor_position
+        self.split_grouping(cursor, 2)
+        self.cursor_position.append(0)
 
     def set_event_note(self, position: List[int], note: int):
         channel = self.get_channel(position[0])
@@ -402,16 +589,6 @@ class OpusManager:
         position = self.cursor_position
         self.unset(position)
 
-    def remove_at_cursor(self):
-        position = self.cursor_position
-        parent_grouping = self.get_grouping(position[0:-1])
-        new_size = len(parent_grouping) - 1
-        self.remove(position)
-
-        if new_size < 2 and len(self.cursor_position) > 2:
-            self.cursor_position.pop()
-        elif position[-1] == new_size:
-            self.cursor_position[-1] -= 1
 
     def unset(self, position):
         grouping = self.get_grouping(position)
@@ -438,10 +615,37 @@ class OpusManager:
             parent_index = position[-2]
             parent.parent[parent_index] = parent[0]
 
+    def remove_beat_at_cursor(self):
+        cursor = self.cursor_position
+        self.remove_beat(cursor[1])
+
+        # Adjust cursor
+        self.cursor_position = cursor[0:2]
+        while self.cursor_position[1] >= self.opus_beat_count:
+            self.cursor_position[1] -= 1
+
+        grouping = self.get_grouping(self.cursor_position)
+        while grouping.is_structural():
+            self.cursor_position.append(0)
+            grouping = grouping[0]
+
+    def remove_grouping_at_cursor(self):
+        position = self.cursor_position
+        parent_grouping = self.get_grouping(position[0:-1])
+        new_size = len(parent_grouping) - 1
+        self.remove(position)
+
+        if new_size < 2 and len(self.cursor_position) > 2:
+            self.cursor_position.pop()
+        elif position[-1] == new_size:
+            self.cursor_position[-1] -= 1
+
+    # TODO: Should this be a Grouping Method?
     def remove_beat(self, index=None):
         if index is None:
             index = self.opus_beat_count - 1
 
+        # Move all beats after removed index one left
         for channel in self.channel_groupings:
             for line in channel:
                 for i in range(index, self.opus_beat_count - 1):
@@ -449,6 +653,13 @@ class OpusManager:
 
         self.set_beat_count(self.opus_beat_count - 1)
 
+
+    def insert_beat_at_cursor(self):
+        cursor = self.cursor_position
+        self.insert_beat(cursor[1])
+        self.cursor_position = cursor[0:2]
+
+    # TODO: Should this be a Grouping Method?
     def insert_beat(self, index=None):
         original_beat_count = self.opus_beat_count
         if index is None:
@@ -458,6 +669,7 @@ class OpusManager:
         if index >= original_beat_count - 1:
             return
 
+        # Move all beats after new one right
         for channel in self.channel_groupings:
             for line in channel:
                 tmp = line[-1]
@@ -467,7 +679,7 @@ class OpusManager:
                     i -= 1
                 line[i] = tmp
 
-    def split(self, position, splits):
+    def split_grouping(self, position, splits):
         grouping = self.get_grouping(position)
         if grouping.is_event():
             parent = self.get_grouping(position[0:-1])
@@ -543,6 +755,154 @@ class OpusManager:
                 y += 1
 
 
+class ReadyEvent:
+    def __init__(self, initial_value, *, relative=False):
+        self.value = initial_value
+        self.relative = relative
+        self.flag_changed = True
+
+class InputContext(Enum):
+    Default = auto()
+    Text = auto()
+    ConfirmOnly = auto()
+
+class CommandLedger:
+    def __init__(self, command_map):
+        self.command_map = command_map
+        self.history = []
+        self.register = None
+        self.active_entry = None
+        self.register_bkp = None
+        self.error_msg = None
+
+    def get_error_msg(self):
+        return self.error_msg
+
+    def clear_error_msg(self):
+        self.error_msg = None
+
+    def set_error_msg(self, msg):
+        self.error_msg = msg
+        self.register = None
+        self.active_entry = None
+        self.register_bkp = None
+
+    def go_to_prev(self):
+        if self.active_entry is None:
+            if self.history:
+                self.active_entry = len(self.history) - 1
+                self.register_bkp = self.register
+                self.register = self.history[self.active_entry]
+        elif self.active_entry > 0:
+            self.active_entry -= 1
+            self.register = self.history[self.active_entry]
+
+    def go_to_next(self):
+        if self.active_entry is None:
+            return
+        elif self.active_entry < len(self.history) - 2:
+            self.active_entry += 1
+            self.register = self.history[self.active_entry]
+        elif self.active_entry == len(self.history) - 1:
+            self.active_entry = None
+            self.register = self.register_bkp
+            self.register_bkp = None
+
+    def open(self):
+        self.register = ""
+        self.active_entry = None
+        self.register_bkp = None
+
+    def close(self):
+        self.register = None
+        self.active_entry = None
+        self.register_bkp = None
+        self.error_msg = None
+
+    def is_open(self):
+        return self.register is not None
+
+    def is_in_err(self):
+        return self.error_msg is not None
+
+    def input(self, character: str):
+        if not self.is_open():
+            return
+        self.register += character
+
+    def backspace(self):
+        if not self.is_open():
+            return
+
+        if self.register:
+            self.register = self.register[0:-1]
+        else:
+            self.close()
+
+    def run(self):
+        if not self.is_open():
+            return
+
+        cmd_parts = self.register.split(" ")
+        if cmd_parts[0] in self.command_map:
+            try:
+                hook = self.command_map[cmd_parts[0]]
+                params = list(signature(hook).parameters)
+                args, kwargs = parse_kwargs(cmd_parts[1:])
+
+                # Attempt to cast arguments that look like integers
+                for i, arg in enumerate(args):
+                    try:
+                        args[i] = int(arg)
+                    except ValueError:
+                        pass
+
+                for k, kwarg in kwargs.items():
+                    try:
+                        kwargs[k] = int(kwarg)
+                    except ValueError:
+                        pass
+
+                req_params = params.copy()
+
+                if hook.__kwdefaults__ is not None:
+                    for k in hook.__kwdefaults__:
+                        if k in req_params:
+                            req_params.remove(k)
+
+                if len(args) < len(req_params):
+                    missing_args = req_params[len(args):]
+                    self.set_error_msg(f"Missing: {', '.join(missing_args)}")
+                else:
+                    hook(*args, **kwargs)
+                    # add to history only after the command is successful
+                    self.history.append(self.register)
+
+            except Exception as exception:
+                raise exception
+        else:
+            self.set_error_msg(f"Command not found: '{cmd_parts[0]}'")
+
+    def get_register(self):
+        return self.register
+
+def parse_kwargs(args):
+    o_kwargs = {}
+    o_args = []
+    skip_flag = False
+    for i, arg in enumerate(args):
+        if skip_flag:
+            skip_flag = False
+            continue
+
+        if arg.startswith('--'):
+            o_kwargs[arg[2:]] = args[i + 1]
+            skip_flag = True
+        else:
+            o_args.append(arg)
+    return (o_args, o_kwargs)
+
+
 def split_by_channel(event, other_events):
     return event['channel']
 
@@ -550,4 +910,3 @@ def split_by_note_order(event, other_events):
     e_notes = [e.note for e in other_events]
     e_notes.sort()
     return e_notes.index(event.note)
-

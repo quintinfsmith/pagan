@@ -53,6 +53,7 @@ class OpusManager:
             elif event.note < 127:
                 event.note += 1
 
+
     def decrement_event_at_cursor(self):
         position = self.cursor_position
         grouping = self.get_grouping(position)
@@ -934,6 +935,10 @@ class CachedOpusManager(OpusManager):
         for i, channel in enumerate(self.channel_groupings):
             for j, line in enumerate(channel):
                 self.flag('line', (i, j, 'init'))
+    def set_beat_event(self, value, position, *, relative=False):
+        super().set_beat_event(value, position, relative=relative)
+        channel, index = self.get_channel_index(position[0])
+        self.flag('beat_change', (channel, index, position[1]))
 
     def set_event_note(self, position: List[int], note: int):
         super().set_event_note(position, note)
@@ -982,6 +987,20 @@ class CachedOpusManager(OpusManager):
         super().swap_channels(channel_a, channel_b)
         # Flag changes to cache
         self.flag('channel_swap', (channel_a, channel_b))
+
+    def increment_event_at_cursor(self):
+        super().increment_event_at_cursor()
+        position = self.cursor_position
+        channel, line = self.get_channel_index(position[0])
+        beat = position[1]
+        self.flag('beat_change', (channel, line, beat))
+
+    def decrement_event_at_cursor(self):
+        super().decrement_event_at_cursor()
+        position = self.cursor_position
+        channel, line = self.get_channel_index(position[0])
+        beat = position[1]
+        self.flag('beat_change', (channel, line, beat))
 
     def flag(self, key, value):
         self.updates_cache.flag(key, value)

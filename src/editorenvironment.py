@@ -306,13 +306,16 @@ class EditorEnvironment:
 
     def tick_update_beats(self) -> bool:
         channels = self.opus_manager.channel_groupings
-        output = False
 
         rect_topbar = self.frame_beat_labels.get_content_rect()
 
         beat_indices_changed = set()
         # The structure of the beat changed. rebuild the rects
         flagged_beat_changes = set(self.opus_manager.fetch('beat_change'))
+        if not flagged_beat_changes:
+            return False
+
+        output = True
         while flagged_beat_changes:
             i, j, k = flagged_beat_changes.pop()
 
@@ -387,7 +390,7 @@ class EditorEnvironment:
             for j, channel in enumerate(self.channel_rects):
                 for k, rect_line in enumerate(channel):
                     rect_beat = self.rect_beats[(j, k,i)]
-                    rect_beat.parent.resize(cwidth, 1)
+                    rect_beat.resize(cwidth, 1)
                     #rect_beat.move((cwidth - rect_beat.width) // 2, 0)
                     rect_beat.move(offset, 0)
                     rect_beat_line = self.rect_beat_lines[j][k][i]

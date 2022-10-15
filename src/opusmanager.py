@@ -187,44 +187,52 @@ class OpusManager:
     def get_active_line(self):
         return self.get_line(self.cursor_position[0])
 
+    def set_cursor_position(self, position):
+        self.cursor_position = position
+
     def cursor_left(self):
         fully_left = True
+        position = self.cursor_position.copy()
         while True:
-            if self.cursor_position[-1] > 0:
-                self.cursor_position[-1] -= 1
+            if position[-1] > 0:
+                position[-1] -= 1
                 fully_left = False
                 break
-            elif len(self.cursor_position) > 2:
-                self.cursor_position.pop()
+            elif len(position) > 2:
+                position.pop()
             else:
                 break
 
-        while (grouping := self.get_grouping(self.cursor_position)).is_structural():
+        while (grouping := self.get_grouping(position)).is_structural():
             if not fully_left:
-                self.cursor_position.append(len(grouping) - 1)
+                position.append(len(grouping) - 1)
             else:
                 # Move back to fully left position
-                self.cursor_position.append(0)
+                position.append(0)
+
+        self.set_cursor_position(position)
 
     def cursor_right(self):
         fully_right = True
+        position = self.cursor_position.copy()
         while True:
-            parent_grouping = self.get_grouping(self.cursor_position[0:-1])
-            if self.cursor_position[-1] < len(parent_grouping) - 1:
-                self.cursor_position[-1] += 1
+            parent_grouping = self.get_grouping(position[0:-1])
+            if position[-1] < len(parent_grouping) - 1:
+                position[-1] += 1
                 fully_right = False
                 break
-            elif len(self.cursor_position) > 2:
-                self.cursor_position.pop()
+            elif len(position) > 2:
+                position.pop()
             else:
                 break
 
-        while (grouping := self.get_grouping(self.cursor_position)).is_structural():
+        while (grouping := self.get_grouping(position)).is_structural():
             if not fully_right:
-                self.cursor_position.append(0)
+                position.append(0)
             else:
                 # Move back to fully right position
-                self.cursor_position.append(len(grouping) - 1)
+                position.append(len(grouping) - 1)
+        self.set_cursor_position(position)
 
     def cursor_up(self):
         working_position = self.cursor_position.copy()
@@ -243,7 +251,7 @@ class OpusManager:
         while self.get_grouping(working_position).is_structural():
             working_position.append(0)
 
-        self.cursor_position = working_position
+        self.set_cursor_position(working_position)
 
     def cursor_down(self):
         working_position = self.cursor_position.copy()
@@ -264,19 +272,24 @@ class OpusManager:
         while self.get_grouping(working_position).is_structural():
             working_position.append(0)
 
-        self.cursor_position = working_position
+        self.set_cursor_position(working_position)
 
     def cursor_climb(self):
-        if len(self.cursor_position) > 2:
-            self.cursor_position.pop()
+        position = self.cursor_position.copy()
+        if len(position) > 2:
+            position.pop()
+        self.set_cursor_position(position)
 
     def cursor_dive(self, index):
-        if index >= len(self.get_grouping(self.cursor_position)):
-            tmp = self.cursor_position.copy()
+        position = self.cursor_position.copy()
+        if index >= len(self.get_grouping(position)):
+            tmp = position.copy()
             tmp.append(index)
             raise InvalidCursor(tmp)
 
-        self.cursor_position.append(index)
+        position.append(index)
+
+        self.set_cursor_position(position)
 
     def get_grouping(self, position):
         grouping = self.get_line(position[0])
@@ -935,6 +948,7 @@ class CachedOpusManager(OpusManager):
         for i, channel in enumerate(self.channel_groupings):
             for j, line in enumerate(channel):
                 self.flag('line', (i, j, 'init'))
+
     def set_beat_event(self, value, position, *, relative=False):
         super().set_beat_event(value, position, relative=relative)
         channel, index = self.get_channel_index(position[0])

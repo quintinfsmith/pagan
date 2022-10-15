@@ -316,6 +316,7 @@ class EditorEnvironment:
             return False
 
         output = True
+        cursor_channel, cursor_line = self.opus_manager.get_channel_index(self.opus_manager.cursor_position[0])
         while flagged_beat_changes:
             i, j, k = flagged_beat_changes.pop()
 
@@ -332,6 +333,9 @@ class EditorEnvironment:
             self.subbeat_rect_map[(i,j,k)] = subbeat_map
             beat_indices_changed.add(k)
 
+            # force the cursor to be redrawn
+            if i == cursor_channel and j == cursor_line and k == self.opus_manager.cursor_position[1]:
+                self.rendered_cursor_position = None
 
         # Resize the adjacent beats in all the lines to match sizes
         ## First, update the list of widest beat widths (self.rendered_beat_widths)
@@ -409,10 +413,10 @@ class EditorEnvironment:
 
     def tick_update_cursor(self) -> bool:
         output = False
-        if self.force_cursor_update or self.rendered_cursor_position != self.opus_manager.cursor_position:
-            self.force_cursor_update = False
+        if self.rendered_cursor_position != self.opus_manager.cursor_position:
             output = True
-            if self.rendered_cursor_position:
+
+            if self.rendered_cursor_position is not None:
                 rect = self.get_subbeat_rect(self.rendered_cursor_position)
                 rect.unset_invert()
 

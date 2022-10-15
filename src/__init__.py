@@ -12,16 +12,8 @@ __url__ = "https://burnsomni.net/git/radixal"
 def main():
     aa = EditorEnvironment()
     aa.opus_manager.load(sys.argv[1])
-    killed = False
-    try:
-        aa.run()
-    except Exception as e:
-        aa.kill()
-        killed = True
-        raise e
+    aa.run()
 
-    if not killed:
-        aa.kill()
 
 if __name__ == "__main__":
     main()

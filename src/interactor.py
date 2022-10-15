@@ -81,6 +81,9 @@ class Interactor(object):
         self._init_fileno = None
         self._init_attr = None
 
+    def kill(self):
+        self.kill_flag = True
+
     def read_character(self):
         '''Read character from stdin'''
         self._init_fileno = sys.stdin.fileno() # store original pipe n

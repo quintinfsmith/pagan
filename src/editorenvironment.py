@@ -54,7 +54,6 @@ class EditorEnvironment:
         self.rect_beat_labels = []
         self.subbeat_rect_map = {}
 
-
         self.rect_view = self.root.new_rect()
         self.rect_view.resize(self.root.width, self.root.height)
         self.rect_view.move(0,0)
@@ -187,7 +186,7 @@ class EditorEnvironment:
             0,
             1,
             5,
-            self.rect_view.height - register[3] - 1
+            self.rect_view.height - register[3] - 3
         )
 
         if line_labels != self.rendered_frames.get('line_labels'):
@@ -200,7 +199,7 @@ class EditorEnvironment:
         beat_labels = (
             line_labels[2] + line_labels[0],
             0,
-            self.rect_view.width - self.frame_line_labels.full_width - 2,
+            self.rect_view.width - self.frame_line_labels.full_width,
             1
         )
 
@@ -212,9 +211,9 @@ class EditorEnvironment:
 
         #Draw Content Frame
         content = (
-            line_labels[0] + line_labels[2],
+            line_labels[0] + line_labels[2] + 2,
             beat_labels[1] + beat_labels[3],
-            beat_labels[2],
+            beat_labels[2] - 2,
             self.rect_view.height - 3
         )
 
@@ -444,9 +443,6 @@ class EditorEnvironment:
                     rect_channel_divider.set_string(0, 0, chr(9472) * line_length)
                     rect_channel_divider.move(0, self.opus_manager.get_y(c, len(channel) - 1) + 1)
 
-            self.frame_line_labels.resize(5, min(self.rect_view.height - 3, new_height - 1))
-            self.frame_line_labels.move(0, 1)
-
             rect_line_labels = self.frame_line_labels.get_content_rect()
             rect_line_labels.resize(self.frame_line_labels.width, new_height)
             rect_line_labels.clear_characters()
@@ -580,8 +576,11 @@ class EditorEnvironment:
             try:
                 self.tick()
                 time.sleep(self.tick_delay)
+            except Exception as e:
+                self.kill()
+                raise e
             except KeyboardInterrupt:
-                self.running = False
+                self.kill()
 
 def sort_by_first(a):
     return a[0]

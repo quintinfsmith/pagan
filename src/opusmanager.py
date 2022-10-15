@@ -246,6 +246,7 @@ class OpusManager:
 
     def kill(self):
         self.flag_kill = True
+        self.interactor.kill()
 
 
     def export(self, *, path, tempo=120):

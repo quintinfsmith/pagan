@@ -11,7 +11,7 @@ __url__ = "https://burnsomni.net/git/radixal"
 
 def main():
     aa = EditorEnvironment()
-    aa.opus_manager.load(sys.argv[1])
+    aa.load(sys.argv[1])
     aa.run()
 
 

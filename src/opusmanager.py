@@ -24,7 +24,7 @@ class OpusManager:
         self.path = None
         self.clipboard_grouping = None
         self.flag_kill = False
-
+        self.register = None
 
         self.command_ledger = CommandLedger({
             'w': self.save,
@@ -35,67 +35,6 @@ class OpusManager:
             'swap': self.swap_channels
         })
 
-        self.interactor = Interactor()
-        self.interactor.set_context(InputContext.Default)
-        self.interactor.assign_context_sequence(
-            InputContext.ConfirmOnly,
-            b"\r",
-            self.command_ledger.close
-        )
-
-        self.interactor.assign_context_batch(
-            InputContext.Default,
-            (b'l', self.cursor_right),
-            (b'h', self.cursor_left),
-            (b'j', self.cursor_down),
-            (b'k', self.cursor_up),
-            (b"x", self.remove_grouping_at_cursor),
-            (b'.', self.unset_at_cursor),
-            (b'i', self.insert_after_cursor),
-            (b' ', self.insert_beat_at_cursor),
-            (b'X', self.remove_beat_at_cursor),
-            (b'/', self.split_grouping_at_cursor),
-            (b';]', self.new_line),
-            (b';[', self.remove_line),
-            (b'+', self.relative_add_entry),
-            (b'-', self.relative_subtract_entry),
-            (b'v', self.relative_downshift_entry),
-            (b'^', self.relative_upshift_entry),
-            (b'K', self.increment_event_at_cursor),
-            (b'J', self.decrement_event_at_cursor),
-            (b"\x1B", self.clear_register),
-            (b":", self.command_ledger.open)
-        )
-
-        for c in b"0123456789ab":
-            self.interactor.assign_context_sequence(
-                InputContext.Default,
-                bytes([c]),
-                self.add_digit_to_register,
-                int(chr(c), 12)
-            )
-
-        for c in range(32, 127):
-            self.interactor.assign_context_sequence(
-                InputContext.Text,
-                [c],
-                self.command_ledger.input,
-                chr(c)
-            )
-
-        self.interactor.assign_context_batch(
-            InputContext.Text,
-            (b"\x7F", self.command_ledger.backspace),
-            (b"\x1B", self.command_ledger.close),
-            (b"\r", self.command_ledger.run),
-            (b"\x1B[A", self.command_ledger.go_to_prev), # Arrow Up
-            (b"\x1B[B", self.command_ledger.go_to_next)  # Arrow Down
-        )
-
-        #self.interactor.assign_context_sequence(
-        #    "\x7f",
-        #    self.remove_last_digit_from_register
-        #)
 
     def increment_event_at_cursor(self):
         position = self.cursor_position
@@ -131,24 +70,6 @@ class OpusManager:
             elif event.note > 0:
                 event.note -= 1
 
-    def update_context(self):
-        command_ledger = self.command_ledger
-        current_context = self.interactor.get_context()
-        if current_context is InputContext.Default:
-            if command_ledger.is_in_err():
-                self.interactor.set_context(InputContext.ConfirmOnly)
-            elif command_ledger.is_open():
-                self.interactor.set_context(InputContext.Text)
-        elif current_context is InputContext.Text:
-            if command_ledger.is_in_err():
-                self.interactor.set_context(InputContext.ConfirmOnly)
-            elif not command_ledger.is_open():
-                self.interactor.set_context(InputContext.Default)
-        elif current_context is InputContext.ConfirmOnly:
-            if command_ledger.is_open():
-                self.interactor.set_context(InputContext.Text)
-            else:
-                self.interactor.set_context(InputContext.Default)
 
     def relative_add_entry(self):
         self.register = ReadyEvent(1, relative=True)
@@ -308,14 +229,15 @@ class OpusManager:
         working_position = self.cursor_position.copy()
 
         working_position[0] = max(0, working_position[0] - 1)
-        while len(working_position) > 2:
-            try:
-                self.get_grouping(working_position)
-                break
-            except InvalidCursor:
-                working_position.pop()
-            except IndexError:
-                working_position[-1] -= 1
+        working_position = working_position[0:2]
+        # while len(working_position) > 2:
+        #     try:
+        #         self.get_grouping(working_position)
+        #         break
+        #     except InvalidCursor:
+        #         working_position.pop()
+        #     except IndexError:
+        #         working_position[-1] -= 1
 
         while self.get_grouping(working_position).is_structural():
             working_position.append(0)
@@ -328,14 +250,15 @@ class OpusManager:
         if self.get_line(working_position[0] + 1) is not None:
             working_position[0] += 1
 
-        while len(working_position) > 2:
-            try:
-                self.get_grouping(working_position)
-                break
-            except InvalidCursor:
-                working_position.pop()
-            except IndexError:
-                working_position[-1] -= 1
+        working_position = working_position[0:2]
+        # while len(working_position) > 2:
+        #     try:
+        #         self.get_grouping(working_position)
+        #         break
+        #     except InvalidCursor:
+        #         working_position.pop()
+        #     except IndexError:
+        #         working_position[-1] -= 1
 
         while self.get_grouping(working_position).is_structural():
             working_position.append(0)
@@ -472,7 +395,14 @@ class OpusManager:
         else:
             self.load_file(path)
 
-
+        # Adjust Cursor
+        grouping = self.get_grouping(self.cursor_position)
+        while True:
+            try:
+                grouping = grouping[0]
+                self.cursor_position.append(0)
+            except BadStateError:
+                break
 
     def load_folder(self, path: str) -> None:
         self.path = path
@@ -766,6 +696,17 @@ class OpusManager:
                     break
                 y += 1
 
+    def new_line_at_cursor(self):
+        y = self.cursor_position[0]
+        channel, index = self.get_channel_index(y)
+        self.new_line(channel)
+
+    def remove_line_at_cursor(self):
+        y = self.cursor_position[0]
+        channel, index = self.get_channel_index(y)
+        self.remove_line(channel, index)
+
+
 
 class ReadyEvent:
     def __init__(self, initial_value, *, relative=False):
@@ -889,7 +830,6 @@ class CommandLedger:
                     hook(*args, **kwargs)
                     # add to history only after the command is successful
                     self.history.append(self.register)
-
             except Exception as exception:
                 raise exception
         else:
@@ -900,8 +840,89 @@ class CommandLedger:
 
 class CachedOpusManager(OpusManager):
     def __init__(self):
-        self.updates_cache = UpdatesCache()
         super().__init__()
+        self.updates_cache = UpdatesCache()
+        self.interactor = Interactor()
+        self.interactor.set_context(InputContext.Default)
+        self.interactor.assign_context_sequence(
+            InputContext.ConfirmOnly,
+            b"\r",
+            self.command_ledger_close
+        )
+
+        self.interactor.assign_context_batch(
+            InputContext.Default,
+            (b'l', self.cursor_right),
+            (b'h', self.cursor_left),
+            (b'j', self.cursor_down),
+            (b'k', self.cursor_up),
+            (b"x", self.remove_grouping_at_cursor),
+            (b'.', self.unset_at_cursor),
+            (b'i', self.insert_after_cursor),
+            (b' ', self.insert_beat_at_cursor),
+            (b'X', self.remove_beat_at_cursor),
+            (b'/', self.split_grouping_at_cursor),
+            (b';]', self.new_line_at_cursor),
+            (b';[', self.remove_line_at_cursor),
+            (b'+', self.relative_add_entry),
+            (b'-', self.relative_subtract_entry),
+            (b'v', self.relative_downshift_entry),
+            (b'^', self.relative_upshift_entry),
+            (b'K', self.increment_event_at_cursor),
+            (b'J', self.decrement_event_at_cursor),
+            (b"\x1B", self.clear_register),
+            (b":", self.command_ledger_open)
+        )
+
+        for c in b"0123456789ab":
+            self.interactor.assign_context_sequence(
+                InputContext.Default,
+                bytes([c]),
+                self.add_digit_to_register,
+                int(chr(c), 12)
+            )
+
+        for c in range(32, 127):
+            self.interactor.assign_context_sequence(
+                InputContext.Text,
+                [c],
+                self.command_ledger.input,
+                chr(c)
+            )
+
+        self.interactor.assign_context_batch(
+            InputContext.Text,
+            (b"\x7F", self.command_ledger_backspace),
+            (b"\x1B", self.command_ledger_close),
+            (b"\r", self.command_ledger_run),
+            (b"\x1B[A", self.command_ledger.go_to_prev), # Arrow Up
+            (b"\x1B[B", self.command_ledger.go_to_next)  # Arrow Down
+        )
+
+    def command_ledger_open(self):
+        self.command_ledger.open()
+        self.interactor.set_context(InputContext.Text)
+
+    def command_ledger_close(self):
+        self.command_ledger.close()
+        self.interactor.set_context(InputContext.Default)
+
+    def command_ledger_run(self):
+        self.command_ledger.run()
+        if self.command_ledger.is_in_err():
+            self.interactor.set_context(InputContext.ConfirmOnly)
+        else:
+            self.command_ledger.close()
+
+    def command_ledger_backspace(self):
+        self.command_ledger.backspace()
+        if not self.command_ledger.is_open():
+            self.interactor.set_context(InputContext.Default)
+
+    def daemon_input(self):
+        while not self.flag_kill:
+            self.interactor.get_input()
+        self.interactor.restore_input_settings()
 
     def load(self, path: str) -> None:
         super().load(path)
@@ -912,22 +933,23 @@ class CachedOpusManager(OpusManager):
 
         for i, channel in enumerate(self.channel_groupings):
             for j, line in enumerate(channel):
-                self.flag('line', (i, j, 'new'))
-                for k, _beat in enumerate(line):
-                    self.flag('beat_change', (i,j,k))
+                self.flag('line', (i, j, 'init'))
 
     def set_event_note(self, position: List[int], note: int):
         super().set_event_note(position, note)
+        # Flag changes to cache
         channel, index = self.get_channel_index(position[0])
         self.flag('beat_change', (channel, index, position[1]))
 
     def unset(self, position):
         super().unset(position)
+        # Flag changes to cache
         channel, index = self.get_channel_index(position[0])
         self.flag('beat_change', (channel, index, position[1]))
 
     def remove(self, position: List[int]):
         super().remove(position)
+        # Flag changes to cache
         channel, index = self.get_channel_index(position[0])
         self.flag('beat_change', (channel, index, position[1]))
 
@@ -935,24 +957,30 @@ class CachedOpusManager(OpusManager):
         if index is None:
             index = self.opus_beat_count - 1
         super().remove_beat(index)
+        # Flag changes to cache
         self.flag('beat', (index, 'pop'))
 
     def insert_beat(self, index=None):
         if index is None:
             index = self.opus_beat_count - 1
         super().insert_beat(index)
+        # Flag changes to cache
         self.flag('beat', (index, 'new'))
 
     def new_line(self, channel=0):
         super().new_line(channel)
-        self.flag('line', (channel, len(self.channel_groupings[channel]), 'new'))
+        # Flag changes to cache
+        line_index = len(self.channel_groupings[channel]) - 1
+        self.flag('line', (channel, line_index, 'new'))
 
     def remove_line(self, channel, index):
         super().remove_line(channel, index)
+        # Flag changes to cache
         self.flag('line', (channel, index, 'pop'))
 
     def swap_channels(self, channel_a, channel_b):
         super().swap_channels(channel_a, channel_b)
+        # Flag changes to cache
         self.flag('channel_swap', (channel_a, channel_b))
 
     def flag(self, key, value):

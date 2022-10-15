@@ -18,12 +18,6 @@ class InvalidCursor(Exception):
 class EditorEnvironment:
     tick_delay = 1 / 24
 
-    def daemon_input(self):
-        interactor = self.opus_manager.interactor
-        while self.running:
-            interactor.get_input()
-        interactor.restore_input_settings()
-
     def __init__(self):
         self.running = False
         self.root = wrecked.init()
@@ -64,6 +58,9 @@ class EditorEnvironment:
         self.frame_command_register = RectFrame(self.rect_view)
         self.frame_command_register.detach()
 
+    def load(self, path: str):
+        self.opus_manager.load(path)
+
     def kill(self):
         self.running = False
         wrecked.kill()
@@ -73,8 +70,6 @@ class EditorEnvironment:
         if self.opus_manager.flag_kill:
             self.kill()
             return
-
-        self.tick_update_context()
 
         flag_draw |= self.tick_update_frames()
         self.tick_manage_lines()
@@ -110,8 +105,8 @@ class EditorEnvironment:
                     self.channel_divider_rects[channel].remove()
                     del self.channel_divider_rects[channel]
 
-            elif operation == "new":
-                rect = rect_content.new_rect()
+            elif operation == "new" or operation == 'init':
+                rect_line = rect_content.new_rect()
                 # Add the divider if necessary
                 if not self.channel_rects[channel]:
                     self.channel_divider_rects[channel] = rect_content.new_rect()
@@ -120,9 +115,24 @@ class EditorEnvironment:
                 self.rect_beat_lines[channel].append([])
 
                 if len(self.channel_rects[channel]) == index:
-                    self.channel_rects[channel].append(rect)
+                    self.channel_rects[channel].append(rect_line)
                 else:
-                    self.channel_rects[channel].insert(index, rect)
+                    self.channel_rects[channel].insert(index, rect_line)
+
+                # all these will be created by the beat flag on init instead of here
+                if operation == 'new':
+                    for i in range(self.opus_manager.opus_beat_count):
+                        rect_beat = rect_line.new_rect()
+                        self.rect_beats[(channel, index, i)] = rect_beat
+
+                        rect_beat_line = rect_line.new_rect()
+                        rect_beat_line.resize(1, 1)
+                        rect_beat_line.set_fg_color(wrecked.BRIGHTBLACK)
+                        self.rect_beat_lines[channel][index].append(rect_beat_line)
+
+                for i in range(self.opus_manager.opus_beat_count):
+                    self.opus_manager.flag('beat_change', (channel, index, i))
+
 
     def tick_manage_beats(self):
         beats = self.opus_manager.fetch('beat')
@@ -148,15 +158,13 @@ class EditorEnvironment:
                     for j, rect_line in enumerate(channel):
                         self.rect_beats[(i, j, index)].remove()
                         del self.rect_beats[(i, j, index)]
+                        rect_beat_line = self.rect_beat_lines[i][j].pop()
+                        rect_beat_line.remove()
+
                 self.rect_beat_labels.pop()
                 self.rendered_beat_widths.pop(index)
 
-                rect_beat_line = self.rect_beat_lines[i][j].pop()
-                rect_beat_line.remove()
 
-
-    def tick_update_context(self):
-        self.opus_manager.update_context()
 
     def tick_update_frames(self):
         width = self.rect_view.width
@@ -165,8 +173,9 @@ class EditorEnvironment:
         output = False
 
         # Draw Register Frame
-        if self.opus_manager.command_ledger.is_open():
-            register = (0, height - 3, width, 3)
+        command_ledger = self.opus_manager.command_ledger
+        if command_ledger.is_open() or command_ledger.is_in_err():
+            register = (0, height - 3, width - 2, 1)
 
             if register != self.rendered_frames.get('register'):
                 self.frame_command_register.attach()
@@ -176,9 +185,9 @@ class EditorEnvironment:
                 output = True
         else:
             register = (0, height, 0, 0)
-            if register != self.rendered_frames.get('register'):
+            if self.rendered_frames.get('register') is not None:
                 self.frame_command_register.detach()
-                self.rendered_frames['register'] = register
+                self.rendered_frames['register'] = None
                 output = True
 
         #Draw Line Labels Frame
@@ -197,9 +206,9 @@ class EditorEnvironment:
 
         #Draw Beat Labels Frame
         beat_labels = (
-            line_labels[2] + line_labels[0],
+            line_labels[2] + line_labels[0] + 3,
             0,
-            self.rect_view.width - self.frame_line_labels.full_width,
+            self.rect_view.width - self.frame_line_labels.full_width - 2,
             1
         )
 
@@ -213,7 +222,7 @@ class EditorEnvironment:
         content = (
             line_labels[0] + line_labels[2] + 2,
             beat_labels[1] + beat_labels[3],
-            beat_labels[2] - 2,
+            beat_labels[2],
             self.rect_view.height - 3
         )
 
@@ -225,12 +234,11 @@ class EditorEnvironment:
 
         return output
 
-
     def tick_update_command_register(self) -> bool:
         output = False
         opus_manager = self.opus_manager
         command_ledger = opus_manager.command_ledger
-        if not command_ledger.is_open():
+        if not command_ledger.is_open() and not command_ledger.is_in_err():
             return False
 
         cmd_register = command_ledger.get_register()
@@ -306,13 +314,13 @@ class EditorEnvironment:
         # The structure of the beat changed. rebuild the rects
         flagged_beat_changes = set(self.opus_manager.fetch('beat_change'))
         while flagged_beat_changes:
-            i,j,k = flagged_beat_changes.pop()
+            i, j, k = flagged_beat_changes.pop()
 
             line = channels[i][j]
             beat = line[k]
             rect_line = self.channel_rects[i][j]
 
-            rect_beat = self.rect_beats[(i,j,k)]
+            rect_beat = self.rect_beats[(i, j, k)]
             rect_beat.clear_children()
             rect_beat.clear_characters()
 
@@ -459,8 +467,6 @@ class EditorEnvironment:
                     strlabel = f"  :{i:02}"
 
                 rect_line_labels.set_string(0, y + y_offset, strlabel)
-
-
                 prev_c = c
 
             rect_content = self.frame_content.get_content_rect()
@@ -570,7 +576,7 @@ class EditorEnvironment:
 
     def run(self):
         self.running = True
-        thread = threading.Thread(target=self.daemon_input)
+        thread = threading.Thread(target=self.opus_manager.daemon_input)
         thread.start()
         while self.running:
             try:

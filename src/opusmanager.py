@@ -23,14 +23,16 @@ class OpusManager:
         self.opus_beat_count = 1
         self.path = None
         self.clipboard_grouping = None
+        self.flag_kill = False
+
 
         self.command_ledger = CommandLedger({
             'w': self.save,
             'q': self.kill,
-            'c+': self.cmd_add_channel,
-            'c-': self.cmd_remove_channel,
-            'export': self.cmd_export,
-            'swap': self.cmd_swap_channels
+            'c+': self.add_channel,
+            'c-': self.remove_channel,
+            'export': self.export,
+            'swap': self.swap_channels
         })
 
         self.interactor = Interactor()
@@ -240,6 +242,10 @@ class OpusManager:
             n = "0123456789ABCDEF"[c]
             with open(f"{fullpath}/channel_{n}", "w") as fp:
                 fp.write("\n".join(strlines))
+
+
+    def kill(self):
+        self.flag_kill = True
 
 
     def export(self, *, path, tempo=120):
@@ -465,6 +471,8 @@ class OpusManager:
         else:
             self.load_file(path)
 
+
+
     def load_folder(self, path: str) -> None:
         self.path = path
         base = self.BASE
@@ -559,6 +567,7 @@ class OpusManager:
             )
         )
 
+
     def insert_after(self, position: List[int]):
         grouping = self.get_grouping(position)
 
@@ -596,6 +605,7 @@ class OpusManager:
             grouping.clear_events()
         elif grouping.is_structural():
             grouping.clear()
+
 
     def remove(self, position: List[int]):
         index = position[-1]
@@ -641,10 +651,7 @@ class OpusManager:
             self.cursor_position[-1] -= 1
 
     # TODO: Should this be a Grouping Method?
-    def remove_beat(self, index=None):
-        if index is None:
-            index = self.opus_beat_count - 1
-
+    def remove_beat(self, index):
         # Move all beats after removed index one left
         for channel in self.channel_groupings:
             for line in channel:
@@ -662,8 +669,6 @@ class OpusManager:
     # TODO: Should this be a Grouping Method?
     def insert_beat(self, index=None):
         original_beat_count = self.opus_beat_count
-        if index is None:
-            index = original_beat_count - 1
 
         self.set_beat_count(original_beat_count + 1)
         if index >= original_beat_count - 1:
@@ -705,6 +710,10 @@ class OpusManager:
     def remove_line(self, channel, index):
         self.channel_groupings[channel].pop(index)
 
+
+    def add_channel(self, channel):
+        self.new_line(channel)
+
     def remove_channel(self, channel):
         if self.channel_groupings[channel]:
             current_channel, current_index = self.get_channel_index(self.cursor_position[0])
@@ -715,7 +724,7 @@ class OpusManager:
             self.cursor_position[0] = max(0, self.cursor_position[0])
 
         while self.channel_groupings[channel]:
-            self.channel_groupings[channel].pop()
+            self.remove_line(channel, 0)
 
     def swap_channels(self, channel_a, channel_b):
         o_channel, o_index = self.get_channel_index(self.cursor_position[0])
@@ -744,6 +753,8 @@ class OpusManager:
         while grouping.is_structural():
             self.cursor_position.append(0)
             grouping = grouping[0]
+
+
 
     def set_cursor_by_line(self, target_channel, target_line):
         y = 0
@@ -885,6 +896,89 @@ class CommandLedger:
 
     def get_register(self):
         return self.register
+
+class CachedOpusManager(OpusManager):
+    def __init__(self):
+        self.updates_cache = UpdatesCache()
+        super().__init__()
+
+    def load(self, path: str) -> None:
+        super().load(path)
+
+        # Flag changes to cache
+        for i in range(self.opus_beat_count):
+            self.flag('beat', (i, 'new'))
+
+        for i, channel in enumerate(self.channel_groupings):
+            for j, line in enumerate(channel):
+                self.flag('line', (i, j, 'new'))
+                for k, _beat in enumerate(line):
+                    self.flag('beat_change', (i,j,k))
+
+    def set_event_note(self, position: List[int], note: int):
+        super().set_event_note(position, note)
+        channel, index = self.get_channel_index(position[0])
+        self.flag('beat_change', (channel, index, position[1]))
+
+    def unset(self, position):
+        super().unset(position)
+        channel, index = self.get_channel_index(position[0])
+        self.flag('beat_change', (channel, index, position[1]))
+
+    def remove(self, position: List[int]):
+        super().remove(position)
+        channel, index = self.get_channel_index(position[0])
+        self.flag('beat_change', (channel, index, position[1]))
+
+    def remove_beat(self, index=None):
+        if index is None:
+            index = self.opus_beat_count - 1
+        super().remove_beat(index)
+        self.flag('beat', (index, 'pop'))
+
+    def insert_beat(self, index=None):
+        if index is None:
+            index = self.opus_beat_count - 1
+        super().insert_beat(index)
+        self.flag('beat', (index, 'new'))
+
+    def new_line(self, channel=0):
+        super().new_line(channel)
+        self.flag('line', (channel, len(self.channel_groupings[channel]), 'new'))
+
+    def remove_line(self, channel, index):
+        super().remove_line(channel, index)
+        self.flag('line', (channel, index, 'pop'))
+
+    def swap_channels(self, channel_a, channel_b):
+        super().swap_channels(channel_a, channel_b)
+        self.flag('channel_swap', (channel_a, channel_b))
+
+    def flag(self, key, value):
+        self.updates_cache.flag(key, value)
+
+    def fetch(self, key, noclobber=False):
+        return self.updates_cache.fetch(key, noclobber)
+
+class UpdatesCache:
+    def __init__(self):
+        self.cache = {}
+
+    def flag(self, key, value):
+        if key not in self.cache:
+            self.cache[key] = []
+        self.cache[key].append(value)
+
+    def unflag(self, key, value):
+        if key not in self.cache:
+            return
+        self.cache[key].remove(value)
+
+    def fetch(self, key, noclobber=False):
+        output = self.cache.get(key, [])
+        if not noclobber:
+            self.cache[key] = []
+        return output
 
 def parse_kwargs(args):
     o_kwargs = {}

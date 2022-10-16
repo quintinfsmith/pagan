@@ -72,8 +72,8 @@ class EditorEnvironment:
             return
 
         flag_draw |= self.tick_update_frames()
-        self.tick_manage_lines()
 
+        self.tick_manage_lines()
         self.tick_manage_beats()
 
         flag_draw |= self.tick_update_beats()
@@ -92,20 +92,34 @@ class EditorEnvironment:
         lines = self.opus_manager.fetch('line')
         rect_content = self.frame_content.get_content_rect()
         for channel, index, operation in lines:
+            self.rendered_line_count = None
             if operation == "pop":
+                # Remove the beat cells
+                for i in range(self.opus_manager.opus_beat_count):
+                    rect = self.rect_beats[(channel, index, i)]
+                    if rect.parent is not None:
+                        rect.remove()
+                    del rect
+
+                # Remove beat lines
+                beat_line_list = self.rect_beat_lines[channel].pop()
+                for rect in beat_line_list:
+                    if rect.parent is not None:
+                        rect.remove()
+                    del rect
+
+                # Remove the line Rect
                 line = self.channel_rects[channel].pop(index)
                 line.remove()
                 del line
 
-                for rect in self.rect_beat_lines[channel].pop():
-                    rect.remove()
-
-                # remove the divider if the channel is empty
+                # Remove the divider if the channel is empty
                 if not self.channel_rects[channel]:
                     self.channel_divider_rects[channel].remove()
                     del self.channel_divider_rects[channel]
 
-            elif operation == "new" or operation == 'init':
+
+            elif operation in ("new", 'init'):
                 rect_line = rect_content.new_rect()
                 # Add the divider if necessary
                 if not self.channel_rects[channel]:
@@ -132,7 +146,6 @@ class EditorEnvironment:
 
                 for i in range(self.opus_manager.opus_beat_count):
                     self.opus_manager.flag('beat_change', (channel, index, i))
-
 
     def tick_manage_beats(self):
         beats = self.opus_manager.fetch('beat')
@@ -163,7 +176,6 @@ class EditorEnvironment:
 
                 self.rect_beat_labels.pop()
                 self.rendered_beat_widths.pop(index)
-
 
 
     def tick_update_frames(self):
@@ -441,22 +453,25 @@ class EditorEnvironment:
         if line_length != self.rendered_line_length or line_count != self.rendered_line_count:
             new_height = 0
             line_labels = []
-            for c, channel in enumerate(self.channel_rects):
-                for i, rect_line in enumerate(channel):
-                    line_position = self.opus_manager.get_y(c, i)
+            line_offset = 0
+            for i, channel_index in enumerate(self.opus_manager.channel_order):
+                channel = self.channel_rects[channel_index]
+                for j, rect_line in enumerate(channel):
+                    line_position = self.opus_manager.get_y(channel_index, j) + line_offset
                     rect_line.set_fg_color(wrecked.BLUE)
                     rect_line.resize(line_length, 1)
                     rect_line.move(0, line_position)
-                    line_labels.append((c,i))
+                    line_labels.append((channel_index,j))
                     new_height += 1 # Add space for this line
 
                 if channel:
                     new_height += 1 # Add space for divider
-                    rect_channel_divider = self.channel_divider_rects[c]
+                    rect_channel_divider = self.channel_divider_rects[channel_index]
                     rect_channel_divider.set_fg_color(wrecked.BRIGHTBLACK)
                     rect_channel_divider.resize(line_length, 1)
                     rect_channel_divider.set_string(0, 0, chr(9472) * line_length)
-                    rect_channel_divider.move(0, self.opus_manager.get_y(c, len(channel) - 1) + 1)
+                    rect_channel_divider.move(0, self.opus_manager.get_y(channel_index, len(channel) - 1) + 1 + line_offset)
+                    line_offset += 1
 
             rect_line_labels = self.frame_line_labels.get_content_rect()
             rect_line_labels.resize(self.frame_line_labels.width, new_height)

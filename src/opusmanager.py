@@ -382,8 +382,6 @@ class OpusManager:
                 if i == g and j == c:
                     return y
                 y += 1
-            if self.channel_groupings[j]:
-                y += 1
         return -1
 
     # TODO: Use a clearer name
@@ -654,7 +652,10 @@ class OpusManager:
 
     def remove_line(self, channel, index):
         self.channel_groupings[channel].pop(index)
-
+        cursor_channel, cursor_index = self.get_channel_index(self.cursor_position[0])
+        if channel == cursor_channel and index == cursor_index:
+            self.cursor_position[0] -= 1
+        self.set_cursor_position(self.cursor_position)
 
     def add_channel(self, channel):
         self.new_line(channel)
@@ -684,22 +685,24 @@ class OpusManager:
 
         self.set_cursor_by_line(o_channel, o_index)
 
+        position = self.cursor_position.copy()
+
         # Correct position
-        while len(self.cursor_position) > 2:
+        while len(position) > 2:
             try:
-                self.get_grouping(self.cursor_position)
+                self.get_grouping(position)
                 break
             except InvalidCursor:
-                self.cursor_position.pop()
+                position.pop()
             except IndexError:
-                self.cursor_position.pop()
+                position.pop()
 
-        grouping = self.get_grouping(self.cursor_position)
+        grouping = self.get_grouping(position)
         while grouping.is_structural():
-            self.cursor_position.append(0)
+            position.append(0)
             grouping = grouping[0]
 
-
+        self.set_cursor_position(position)
 
     def set_cursor_by_line(self, target_channel, target_line):
         y = 0
@@ -926,7 +929,7 @@ class CachedOpusManager(OpusManager):
         if self.command_ledger.is_in_err():
             self.interactor.set_context(InputContext.ConfirmOnly)
         else:
-            self.command_ledger.close()
+            self.command_ledger_close()
 
     def command_ledger_backspace(self):
         self.command_ledger.backspace()
@@ -938,6 +941,24 @@ class CachedOpusManager(OpusManager):
             self.interactor.get_input()
         self.interactor.restore_input_settings()
 
+    def swap_channels(self, channel_a, channel_b):
+        super().swap_channels(channel_a, channel_b)
+
+        len_a = len(self.channel_groupings[channel_a])
+        len_b = len(self.channel_groupings[channel_b])
+        for i in range(len_b):
+            self.flag('line', (channel_a, len_b - 1 - i, 'pop'))
+
+        for i in range(len_a):
+            self.flag('line', (channel_b, len_a - 1 - i, 'pop'))
+
+        for i in range(len_a):
+            self.flag('line', (channel_a, i, 'new'))
+
+        for i in range(len_b):
+            self.flag('line', (channel_b, i, 'new'))
+
+
     def load(self, path: str) -> None:
         super().load(path)
 
@@ -946,7 +967,7 @@ class CachedOpusManager(OpusManager):
             self.flag('beat', (i, 'new'))
 
         for i, channel in enumerate(self.channel_groupings):
-            for j, line in enumerate(channel):
+            for j, _line in enumerate(channel):
                 self.flag('line', (i, j, 'init'))
 
     def set_beat_event(self, value, position, *, relative=False):
@@ -997,10 +1018,6 @@ class CachedOpusManager(OpusManager):
         # Flag changes to cache
         self.flag('line', (channel, index, 'pop'))
 
-    def swap_channels(self, channel_a, channel_b):
-        super().swap_channels(channel_a, channel_b)
-        # Flag changes to cache
-        self.flag('channel_swap', (channel_a, channel_b))
 
     def increment_event_at_cursor(self):
         super().increment_event_at_cursor()

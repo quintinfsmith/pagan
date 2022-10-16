@@ -562,7 +562,7 @@ def get_number_string(number, base):
         digits.append("0123456789ABCDEFGHIJKLMNOPQRSTUVWXZ"[number % base])
         number //= base
 
-    if not digits:
+    while len(digits) < 2:
         digits.append('0')
 
     return "".join(digits[::-1])

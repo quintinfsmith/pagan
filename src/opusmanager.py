@@ -556,17 +556,24 @@ class OpusManager:
         parent = grouping.parent
         new_size = len(parent) - 1
 
-        if new_size > 0 and len(position) > 2:
+        # Attempting to remove beat
+        if len(position) == 2:
+            return
+
+        if new_size > 0:
             for i, child in enumerate(parent):
                 if i < index or i == len(parent) - 1:
                     continue
                 parent[i] = parent[i + 1]
             parent.set_size(new_size, True)
 
-        # replace the parent with the child
-        if new_size == 1:
-            parent_index = position[-2]
-            parent.parent[parent_index] = parent[0]
+            # replace the parent with the child
+            if new_size == 1:
+                parent_index = position[-2]
+                parent.parent[parent_index] = parent[0]
+        else:
+            self.remove(position[0:-1])
+
 
     def remove_beat_at_cursor(self):
         cursor = self.cursor_position
@@ -584,14 +591,19 @@ class OpusManager:
 
     def remove_grouping_at_cursor(self):
         position = self.cursor_position
-        parent_grouping = self.get_grouping(position[0:-1])
-        new_size = len(parent_grouping) - 1
         self.remove(position)
 
-        if new_size < 2 and len(self.cursor_position) > 2:
-            self.cursor_position.pop()
-        elif position[-1] == new_size:
-            self.cursor_position[-1] -= 1
+        while True:
+            try:
+                self.get_grouping(position)
+                break
+            except InvalidCursor:
+                position.pop()
+            except IndexError:
+                position[-1] -= 1
+
+        self.set_cursor_position(position)
+
 
     # TODO: Should this be a Grouping Method?
     def remove_beat(self, index):
@@ -608,6 +620,7 @@ class OpusManager:
         cursor = self.cursor_position
         self.insert_beat(cursor[1])
         self.cursor_position = cursor[0:2]
+
 
     # TODO: Should this be a Grouping Method?
     def insert_beat(self, index=None):
@@ -940,6 +953,15 @@ class CachedOpusManager(OpusManager):
         while not self.flag_kill:
             self.interactor.get_input()
         self.interactor.restore_input_settings()
+    def insert_after(self, position: List[int]):
+        super().insert_after(position)
+        channel, line = self.get_channel_index(position[0])
+        self.flag('beat_change', (channel, line, position[1]))
+
+    def split_grouping(self, position, splits):
+        super().split_grouping(position, splits)
+        channel, line = self.get_channel_index(position[0])
+        self.flag('beat_change', (channel, line, position[1]))
 
     def swap_channels(self, channel_a, channel_b):
         super().swap_channels(channel_a, channel_b)
@@ -987,19 +1009,6 @@ class CachedOpusManager(OpusManager):
         channel, index = self.get_channel_index(position[0])
         self.flag('beat_change', (channel, index, position[1]))
 
-    def remove(self, position: List[int]):
-        super().remove(position)
-        # Flag changes to cache
-        channel, index = self.get_channel_index(position[0])
-        self.flag('beat_change', (channel, index, position[1]))
-
-    def remove_beat(self, index=None):
-        if index is None:
-            index = self.opus_beat_count - 1
-        super().remove_beat(index)
-        # Flag changes to cache
-        self.flag('beat', (index, 'pop'))
-
     def insert_beat(self, index=None):
         if index is None:
             index = self.opus_beat_count - 1
@@ -1013,11 +1022,24 @@ class CachedOpusManager(OpusManager):
         line_index = len(self.channel_groupings[channel]) - 1
         self.flag('line', (channel, line_index, 'new'))
 
+    def remove(self, position: List[int]):
+        super().remove(position)
+        # Flag changes to cache
+        if len(position) > 2:
+            channel, index = self.get_channel_index(position[0])
+            self.flag('beat_change', (channel, index, position[1]))
+
+    def remove_beat(self, index=None):
+        if index is None:
+            index = self.opus_beat_count - 1
+        super().remove_beat(index)
+        # Flag changes to cache
+        self.flag('beat', (index, 'pop'))
+
     def remove_line(self, channel, index):
         super().remove_line(channel, index)
         # Flag changes to cache
         self.flag('line', (channel, index, 'pop'))
-
 
     def increment_event_at_cursor(self):
         super().increment_event_at_cursor()

@@ -508,7 +508,8 @@ class EditorEnvironment:
 
     def build_beat_rect(self, beat_grouping, rect) -> Dict[Tuple(int), wrecked.Rect]:
         # Single-event or empty beats get a buffer rect for spacing purposes
-        stack = [(beat_grouping, rect, 0, [])]
+        subrect = rect.new_rect()
+        stack = [(beat_grouping, subrect, 0, [])]
 
         depth_sorted_queue = []
         flat_map = {}
@@ -523,6 +524,7 @@ class EditorEnvironment:
                     next_map.append(i)
                     stack.append((subgrouping, working_rect.new_rect(), depth + 1, next_map))
 
+        # Traverse the subgroupings, depth-first
         depth_sorted_queue = sorted(depth_sorted_queue, key=sort_by_first, reverse=True)
         for _, working_grouping, cursor_path in depth_sorted_queue:
             working_rect = flat_map[cursor_path]
@@ -572,14 +574,14 @@ class EditorEnvironment:
                                     is_negative = True
                                 else:
                                     new_string += f"+"
-                                new_string += get_number_string(int(math.fabs(event.note)), base)
+                                new_string += get_number_string(int(math.fabs(event.note)), base, 1)
                             else:
                                 if event.note < 0:
                                     new_string += chr(8595)
                                     is_negative = True
                                 else:
                                     new_string += chr(8593)
-                                new_string += get_number_string(int(math.fabs(event.note)) // base, base)
+                                new_string += get_number_string(int(math.fabs(event.note)) // base, base, 1)
                         else:
                             note = event.note
                             new_string = get_number_string(note, base)
@@ -594,6 +596,7 @@ class EditorEnvironment:
                     else:
                         working_rect.set_fg_color(wrecked.BRIGHTYELLOW)
 
+        rect.resize(subrect.width, subrect.height)
         return flat_map
 
     def run(self):

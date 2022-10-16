@@ -333,7 +333,6 @@ class MGrouping(Grouping):
 
                         opened_indeces.append(i)
 
-
                 relative_flag = None
 
             elif relative_flag is not None:
@@ -442,13 +441,13 @@ class MGrouping(Grouping):
                             new_string += f"-"
                         else:
                             new_string += f"+"
-                        new_string += get_number_string(int(math.fabs(event.note)), base)
+                        new_string += get_number_string(int(math.fabs(event.note)), base, 1)
                     else:
                         if event.note < 0:
                             new_string += f"v"
                         else:
                             new_string += f"^"
-                        new_string += get_number_string(int(math.fabs(event.note)) // base, base)
+                        new_string += get_number_string(int(math.fabs(event.note)) // base, base, 1)
                     output += new_string
                 else:
                     note = event.get_note()
@@ -556,13 +555,13 @@ class MGrouping(Grouping):
 
         return opus
 
-def get_number_string(number, base):
+def get_number_string(number, base, digit_count=2):
     digits = []
     while number > 0:
         digits.append("0123456789ABCDEFGHIJKLMNOPQRSTUVWXZ"[number % base])
         number //= base
 
-    while len(digits) < 2:
+    while len(digits) < digit_count:
         digits.append('0')
 
     return "".join(digits[::-1])

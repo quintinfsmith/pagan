@@ -150,6 +150,17 @@ class EditorEnvironment:
         beats = self.opus_manager.fetch('beat')
         for index, operation in beats:
             if operation == 'new':
+
+                adj_beat_rects = []
+                for (k_a, k_b, k_c), rect_beat in self.rect_beats.items():
+                    if k_c >= index:
+                        adj_beat_rects.append(((k_a, k_b, k_c + 1), rect_beat))
+
+                for k, rect in adj_beat_rects:
+                    self.rect_beats[k] = rect
+                    self.opus_manager.flag('beat_change', k)
+
+
                 for i, channel in enumerate(self.channel_rects):
                     for j, rect_line in enumerate(channel):
                         rect_beat = rect_line.new_rect()
@@ -158,7 +169,9 @@ class EditorEnvironment:
                         rect_beat_line = rect_line.new_rect()
                         rect_beat_line.resize(1, 1)
                         rect_beat_line.set_fg_color(wrecked.BRIGHTBLACK)
-                        self.rect_beat_lines[i][j].append(rect_beat_line)
+                        self.rect_beat_lines[i][j].insert(index, rect_beat_line)
+
+                        self.opus_manager.flag('beat_change', (i, j, index))
 
                 rect_topbar = self.frame_beat_labels.get_content_rect()
                 rect_label = rect_topbar.new_rect()
@@ -178,7 +191,7 @@ class EditorEnvironment:
                 if self.rendered_cursor_position[1] == index:
                     self.rendered_cursor_position = None
 
-                # Adjust rect_beat map's keys
+                # adjust rect_beat map's keys
                 adj_beat_rects = []
                 for (k_a, k_b, k_c), rect_beat in self.rect_beats.items():
                     if k_c > index:

@@ -26,6 +26,8 @@ class OpusManager:
         self.flag_kill = False
         self.register = None
 
+        self.history_ledger = []
+
         self.command_ledger = CommandLedger({
             'w': self.save,
             'q': self.kill,
@@ -43,15 +45,22 @@ class OpusManager:
             return
 
         for event in grouping.get_events():
+            new_value = event.note
             if event.relative:
                 if (event.note >= event.base \
                 or event.note < 0 - event.base) \
                 and event.note < (event.base * (event.base - 1)):
-                    event.note += event.base
+                    new_value = event.note + event.base
                 elif event.note < event.base:
-                    event.note += 1
+                    new_value = event.note + 1
             elif event.note < 127:
-                event.note += 1
+                new_value = event.note + 1
+
+            self.set_beat_event(
+                new_value,
+                position,
+                relative=event.relative
+            )
 
 
     def decrement_event_at_cursor(self):
@@ -61,15 +70,22 @@ class OpusManager:
             return
 
         for event in grouping.get_events():
+            new_value = event.note
             if event.relative:
                 if (event.note <= 0 - event.base \
                 or event.note > event.base) \
                 and event.note > 0 - (event.base * (event.base - 1)):
-                    event.note -= event.base
+                    new_value = event.note - event.base
                 elif event.note >= 0 - event.base:
-                    event.note -= 1
+                    new_value = event.note - 1
             elif event.note > 0:
-                event.note -= 1
+                new_value = event.note - 1
+
+            self.set_beat_event(
+                new_value,
+                position,
+                relative=event.relative
+            )
 
 
     def relative_add_entry(self):
@@ -165,10 +181,8 @@ class OpusManager:
             with open(f"{fullpath}/channel_{n}", "w") as fp:
                 fp.write("\n".join(strlines))
 
-
     def kill(self):
         self.flag_kill = True
-
 
     def export(self, path, *, tempo=120):
         opus = MGrouping()
@@ -238,14 +252,6 @@ class OpusManager:
 
         working_position[0] = max(0, working_position[0] - 1)
         working_position = working_position[0:2]
-        # while len(working_position) > 2:
-        #     try:
-        #         self.get_grouping(working_position)
-        #         break
-        #     except InvalidCursor:
-        #         working_position.pop()
-        #     except IndexError:
-        #         working_position[-1] -= 1
 
         while self.get_grouping(working_position).is_structural():
             working_position.append(0)
@@ -259,14 +265,6 @@ class OpusManager:
             working_position[0] += 1
 
         working_position = working_position[0:2]
-        # while len(working_position) > 2:
-        #     try:
-        #         self.get_grouping(working_position)
-        #         break
-        #     except InvalidCursor:
-        #         working_position.pop()
-        #     except IndexError:
-        #         working_position[-1] -= 1
 
         while self.get_grouping(working_position).is_structural():
             working_position.append(0)
@@ -617,9 +615,8 @@ class OpusManager:
 
     def insert_beat_at_cursor(self):
         cursor = self.cursor_position
-        self.insert_beat(cursor[1])
+        self.insert_beat(cursor[1] + 1)
         self.cursor_position = cursor[0:2]
-
 
     # TODO: Should this be a Grouping Method?
     def insert_beat(self, index=None):

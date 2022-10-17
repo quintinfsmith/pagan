@@ -885,7 +885,7 @@ class CachedOpusManager(OpusManager):
             (b"x", self.remove_grouping_at_cursor),
             (b'.', self.unset_at_cursor),
             (b'i', self.insert_after_cursor),
-            (b' ', self.insert_beat_at_cursor),
+            (b'I', self.insert_beat_at_cursor),
             (b'X', self.remove_beat_at_cursor),
             (b'/', self.split_grouping_at_cursor),
             (b';]', self.new_line_at_cursor),

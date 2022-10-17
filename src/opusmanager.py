@@ -168,10 +168,9 @@ class OpusManager:
 
     def kill(self):
         self.flag_kill = True
-        self.interactor.kill()
 
 
-    def export(self, *, path, tempo=120):
+    def export(self, path, *, tempo=120):
         opus = MGrouping()
         opus.set_size(self.opus_beat_count)
         for groupings in self.channel_groupings:
@@ -558,6 +557,7 @@ class OpusManager:
 
         # Attempting to remove beat
         if len(position) == 2:
+            self.unset(position)
             return
 
         if new_size > 0:
@@ -1053,6 +1053,10 @@ class CachedOpusManager(OpusManager):
         channel, line = self.get_channel_index(position[0])
         beat = position[1]
         self.flag('beat_change', (channel, line, beat))
+
+    def kill(self):
+        super().kill()
+        self.interactor.kill()
 
     def flag(self, key, value):
         self.updates_cache.flag(key, value)

@@ -441,17 +441,17 @@ class MGrouping(Grouping):
                             new_string += f"-"
                         else:
                             new_string += f"+"
-                        new_string += get_number_string(int(math.fabs(event.note)), base, 1)
+                        new_string += get_number_string(int(math.fabs(event.note)), base, digit_count=1)
                     else:
                         if event.note < 0:
                             new_string += f"v"
                         else:
                             new_string += f"^"
-                        new_string += get_number_string(int(math.fabs(event.note)) // base, base, 1)
+                        new_string += get_number_string(int(math.fabs(event.note)) // base, base, digit_count=1)
                     output += new_string
                 else:
                     note = event.get_note()
-                    output += get_number_string(note, base)
+                    output += get_number_string(note, base, digit_count=2)
         else:
             output = "__"
 

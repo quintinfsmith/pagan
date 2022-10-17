@@ -97,9 +97,8 @@ class EditorEnvironment:
                 # Remove the beat cells
                 for i in range(self.opus_manager.opus_beat_count):
                     rect = self.rect_beats[(channel, index, i)]
-                    if rect.parent is not None:
-                        rect.remove()
-                    del rect
+                    rect.parent().remove()
+                    del rect.parent
 
                 # Remove beat lines
                 beat_line_list = self.rect_beat_lines[channel].pop()
@@ -137,7 +136,7 @@ class EditorEnvironment:
                 if operation == 'new':
                     for i in range(self.opus_manager.opus_beat_count):
                         rect_beat = rect_line.new_rect()
-                        self.rect_beats[(channel, index, i)] = rect_beat
+                        self.rect_beats[(channel, index, i)] = rect_beat.new_rect()
 
                         rect_beat_line = rect_line.new_rect()
                         rect_beat_line.resize(1, 1)
@@ -154,7 +153,7 @@ class EditorEnvironment:
                 for i, channel in enumerate(self.channel_rects):
                     for j, rect_line in enumerate(channel):
                         rect_beat = rect_line.new_rect()
-                        self.rect_beats[(i, j, index)] = rect_beat
+                        self.rect_beats[(i, j, index)] = rect_beat.new_rect()
 
                         rect_beat_line = rect_line.new_rect()
                         rect_beat_line.resize(1, 1)
@@ -171,11 +170,40 @@ class EditorEnvironment:
                     for j, rect_line in enumerate(channel):
                         self.rect_beats[(i, j, index)].remove()
                         del self.rect_beats[(i, j, index)]
+                        del self.subbeat_rect_map[(i, j, index)]
                         rect_beat_line = self.rect_beat_lines[i][j].pop()
                         rect_beat_line.remove()
 
-                self.rect_beat_labels.pop()
+                        #self.opus_manager.flag('beat_change', (i, j, index))
+
                 self.rendered_beat_widths.pop(index)
+
+                # Adjust rect_beat map's keys
+                adj_beat_rects = []
+                for (k_a, k_b, k_c), rect_beat in self.rect_beats.items():
+                    if k_c > index:
+                        adj_beat_rects.append(((k_a, k_b, k_c - 1), rect_beat))
+
+                for k, rect in adj_beat_rects:
+                    self.rect_beats[k] = rect
+
+                    # TODO: Move this somewhere better
+                    rect.move(sum(self.rendered_beat_widths[0:k[2]]) + k[2], rect.y)
+                    #line_rect = self.rect_beat_lines[k[0]][k[1]][k[2]]
+                    #line_rect.move(
+                    #    sum(self.rendered_beat_widths[0:k[2]]) + k[2] + rect.width,
+                    #    line_rect.y
+                    #)
+
+                adj_beat_maps = []
+                for (k_a, k_b, k_c), rects in self.subbeat_rect_map.items():
+                    if k_c > index:
+                        adj_beat_maps.append(((k_a, k_b, k_c - 1), rects))
+
+                for k, rects in adj_beat_maps:
+                    self.subbeat_rect_map[k] = rects
+
+                self.rect_beat_labels.pop()
 
 
     def tick_update_frames(self):
@@ -354,10 +382,11 @@ class EditorEnvironment:
         ##  and map the increases/reductions in changed widths (in rect_size_diffs)
         rect_size_diffs = {}
         for i in beat_indices_changed:
-            new_max = 6 # width will not be less than this
+            new_max = 2 # width will not be less than this
             for j, channel in enumerate(self.channel_rects):
                 for k, _rect_line in enumerate(channel):
-                    new_max = max(self.rect_beats[(j, k, i)].width, new_max)
+                    rect_beat = self.rect_beats[(j,k,i)]
+                    new_max = max(rect_beat.width, new_max)
 
             old_max = self.rendered_beat_widths[i]
             if new_max != old_max:
@@ -406,9 +435,9 @@ class EditorEnvironment:
             for j, channel in enumerate(self.channel_rects):
                 for k, rect_line in enumerate(channel):
                     rect_beat = self.rect_beats[(j, k,i)]
-                    rect_beat.resize(cwidth, 1)
+                    rect_beat.parent.resize(cwidth, 1)
                     #rect_beat.move((cwidth - rect_beat.width) // 2, 0)
-                    rect_beat.move(offset, 0)
+                    rect_beat.parent.move(offset, 0)
                     rect_beat_line = self.rect_beat_lines[j][k][i]
                     rect_beat_line.set_string(0, 0, chr(9474))
                     rect_beat_line.move(offset + cwidth, 0)
@@ -508,8 +537,7 @@ class EditorEnvironment:
 
     def build_beat_rect(self, beat_grouping, rect) -> Dict[Tuple(int), wrecked.Rect]:
         # Single-event or empty beats get a buffer rect for spacing purposes
-        subrect = rect.new_rect()
-        stack = [(beat_grouping, subrect, 0, [])]
+        stack = [(beat_grouping, rect, 0, [])]
 
         depth_sorted_queue = []
         flat_map = {}
@@ -596,7 +624,6 @@ class EditorEnvironment:
                     else:
                         working_rect.set_fg_color(wrecked.BRIGHTYELLOW)
 
-        rect.resize(subrect.width, subrect.height)
         return flat_map
 
     def run(self):

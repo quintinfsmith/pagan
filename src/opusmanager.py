@@ -37,6 +37,16 @@ class OpusManager:
             'swap': self.swap_channels
         })
 
+    def new(self):
+        self.history_ledger = []
+        self.channel_groupings = [[] for i in range(16)]
+        self.channel_order = list(range(16))
+        self.cursor_position = [0, 0] # Y, X,... deeper divisions
+
+        new_line = MGrouping()
+        new_line.set_size(4)
+        self.channel_groupings[0].append(new_line)
+        self.opus_beat_count = 4
 
     def increment_event_at_cursor(self):
         position = self.cursor_position
@@ -151,15 +161,18 @@ class OpusManager:
         self.replace_grouping(position, self.clipboard_grouping)
         self.clipboard_grouping = None
 
-    def save(self):
-        if self.path.lower().endswith("mid"):
-            working_path = self.path[0:self.path.rfind("/")]
-            working_dir = self.path[self.path.rfind("/") + 1:self.path.rfind(".")]
-        elif os.path.isfile(self.path):
-            working_path = self.path[0:self.path.rfind("/")]
-            working_dir = self.path[self.path.rfind("/") + 1:self.path.rfind(".")]
-        elif os.path.isdir(self.path):
-            tmp_split = self.path.split("/")
+    def save(self, path=None):
+        if path is None:
+            path = self.path
+
+        if path.lower().endswith("mid"):
+            working_path = path[0:path.rfind("/")]
+            working_dir = path[path.rfind("/") + 1:path.rfind(".")]
+        elif os.path.isfile(path):
+            working_path = path[0:path.rfind("/")]
+            working_dir = path[path.rfind("/") + 1:path.rfind(".")]
+        elif os.path.isdir(path):
+            tmp_split = path.split("/")
             working_path = "/".join(tmp_split[0:-1])
             working_dir = tmp_split[-1]
 
@@ -651,9 +664,12 @@ class OpusManager:
 
     def new_line(self, channel=0):
         if not self.channel_groupings[channel]:
-            current_channel, current_index = self.get_channel_index(self.cursor_position[0])
-            if current_channel > channel:
-                self.cursor_position[0] += 1
+            try:
+                current_channel, current_index = self.get_channel_index(self.cursor_position[0])
+                if current_channel > channel:
+                    self.cursor_position[0] += 1
+            except IndexError:
+                pass
 
         new_grouping = MGrouping()
         new_grouping.set_size(self.opus_beat_count)
@@ -976,6 +992,16 @@ class CachedOpusManager(OpusManager):
         for i in range(len_b):
             self.flag('line', (channel_b, i, 'new'))
 
+    def new(self):
+        super().new()
+
+        # Flag changes to cache
+        for i in range(self.opus_beat_count):
+            self.flag('beat', (i, 'new'))
+
+        for i, channel in enumerate(self.channel_groupings):
+            for j, _line in enumerate(channel):
+                self.flag('line', (i, j, 'init'))
 
     def load(self, path: str) -> None:
         super().load(path)

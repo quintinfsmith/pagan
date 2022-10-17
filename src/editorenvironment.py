@@ -60,6 +60,8 @@ class EditorEnvironment:
 
     def load(self, path: str):
         self.opus_manager.load(path)
+    def new(self):
+        self.opus_manager.new()
 
     def kill(self):
         self.running = False

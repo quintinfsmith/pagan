@@ -11,7 +11,10 @@ __url__ = "https://burnsomni.net/git/radixal"
 
 def main():
     aa = EditorEnvironment()
-    aa.load(sys.argv[1])
+    if len(sys.argv) > 1:
+        aa.load(sys.argv[1])
+    else:
+        aa.new()
     aa.run()
 
 

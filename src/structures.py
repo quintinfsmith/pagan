@@ -552,6 +552,21 @@ class Grouping:
                 self.parent[i] = new_grouping
                 break
 
+    def pop(self, index=-1):
+        if index == -1:
+            index = self.size - 1
+        output = self.divisions[index]
+        new_divisions = {}
+        for i, d in self.divisions.items():
+            if i < index:
+                new_divisions[i] = d
+            elif i > index:
+                new_divisions[i - 1] = d
+        self.divisions = new_divisions
+        self.size -= 1
+        return output
+
+
 def get_prime_factors(n):
     primes = []
     for i in range(2, n // 2):

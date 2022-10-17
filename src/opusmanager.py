@@ -579,15 +579,17 @@ class OpusManager:
         cursor = self.cursor_position
         self.remove_beat(cursor[1])
 
+        cursor = cursor[0:2]
         # Adjust cursor
-        self.cursor_position = cursor[0:2]
-        while self.cursor_position[1] >= self.opus_beat_count:
-            self.cursor_position[1] -= 1
+        while cursor[1] >= self.opus_beat_count:
+            cursor[1] -= 1
 
-        grouping = self.get_grouping(self.cursor_position)
+        grouping = self.get_grouping(cursor)
         while grouping.is_structural():
-            self.cursor_position.append(0)
+            cursor.append(0)
             grouping = grouping[0]
+
+        self.set_cursor_position(cursor)
 
     def remove_grouping_at_cursor(self):
         position = self.cursor_position
@@ -605,14 +607,11 @@ class OpusManager:
         self.set_cursor_position(position)
 
 
-    # TODO: Should this be a Grouping Method?
     def remove_beat(self, index):
         # Move all beats after removed index one left
         for channel in self.channel_groupings:
             for line in channel:
-                for i in range(index, self.opus_beat_count - 1):
-                    line[i] = line[i + 1]
-
+                line.pop(index)
         self.set_beat_count(self.opus_beat_count - 1)
 
 

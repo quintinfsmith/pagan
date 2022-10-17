@@ -168,15 +168,15 @@ class EditorEnvironment:
             elif operation == 'pop':
                 for i, channel in enumerate(self.channel_rects):
                     for j, rect_line in enumerate(channel):
-                        self.rect_beats[(i, j, index)].remove()
-                        del self.rect_beats[(i, j, index)]
+                        self.rect_beats[(i, j, index)].parent.remove()
+                        del self.rect_beats[(i, j, index)].parent
                         del self.subbeat_rect_map[(i, j, index)]
                         rect_beat_line = self.rect_beat_lines[i][j].pop()
                         rect_beat_line.remove()
 
-                        #self.opus_manager.flag('beat_change', (i, j, index))
-
                 self.rendered_beat_widths.pop(index)
+                if self.rendered_cursor_position[1] == index:
+                    self.rendered_cursor_position = None
 
                 # Adjust rect_beat map's keys
                 adj_beat_rects = []
@@ -186,22 +186,18 @@ class EditorEnvironment:
 
                 for k, rect in adj_beat_rects:
                     self.rect_beats[k] = rect
+                    self.opus_manager.flag('beat_change', k)
 
-                    # TODO: Move this somewhere better
-                    rect.move(sum(self.rendered_beat_widths[0:k[2]]) + k[2], rect.y)
-                    #line_rect = self.rect_beat_lines[k[0]][k[1]][k[2]]
-                    #line_rect.move(
-                    #    sum(self.rendered_beat_widths[0:k[2]]) + k[2] + rect.width,
-                    #    line_rect.y
-                    #)
 
-                adj_beat_maps = []
-                for (k_a, k_b, k_c), rects in self.subbeat_rect_map.items():
-                    if k_c > index:
-                        adj_beat_maps.append(((k_a, k_b, k_c - 1), rects))
-
-                for k, rects in adj_beat_maps:
-                    self.subbeat_rect_map[k] = rects
+                # Remove dangling rect entries
+                # (the rects got shifted, we just don't need the entries in the dicts)
+                k = self.opus_manager.opus_beat_count
+                for i, channel in enumerate(self.channel_rects):
+                    for j, rect_line in enumerate(channel):
+                        if (i,j,k) in self.rect_beats:
+                            del self.rect_beats[(i,j,k)]
+                        if (i,j,k) in self.subbeat_rect_map:
+                            del self.subbeat_rect_map[(i,j,k)]
 
                 self.rect_beat_labels.pop()
 

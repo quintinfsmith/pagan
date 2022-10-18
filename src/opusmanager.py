@@ -843,6 +843,8 @@ class CommandLedger:
                 params = list(signature(hook).parameters)
                 args, kwargs = parse_kwargs(cmd_parts[1:])
 
+                non_kw_params = params.copy()
+
                 # Attempt to cast arguments that look like integers
                 for i, arg in enumerate(args):
                     try:
@@ -851,10 +853,20 @@ class CommandLedger:
                         pass
 
                 for k, kwarg in kwargs.items():
+                    if k not in params:
+                        self.set_error_msg(f"Unknown argument: '{k}'")
+                        return
+                    non_kw_params.remove(k)
+
                     try:
                         kwargs[k] = int(kwarg)
                     except ValueError:
                         pass
+
+
+                if len(args) > len(non_kw_params):
+                    self.set_error_msg(f"Too many arguments")
+                    return
 
                 req_params = params.copy()
 

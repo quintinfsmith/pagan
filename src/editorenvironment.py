@@ -90,12 +90,16 @@ class EditorEnvironment:
         if flag_draw:
             self.root.draw()
 
+
     def tick_manage_lines(self):
         lines = self.opus_manager.fetch('line')
         rect_content = self.frame_content.get_content_rect()
         for channel, index, operation in lines:
             self.rendered_line_count = None
             if operation == "pop":
+                if self.opus_manager.get_y(channel, index) == -1:
+                    self.rendered_cursor_position = None
+
                 # Remove the beat cells
                 for i in range(self.opus_manager.opus_beat_count):
                     rect = self.rect_beats[(channel, index, i)]
@@ -153,7 +157,6 @@ class EditorEnvironment:
         beats = self.opus_manager.fetch('beat')
         for index, operation in beats:
             if operation == 'new':
-
                 adj_beat_rects = []
                 for (k_a, k_b, k_c), rect_beat in self.rect_beats.items():
                     if k_c >= index:
@@ -376,8 +379,6 @@ class EditorEnvironment:
             rect_line = self.channel_rects[i][j]
 
             rect_beat = self.rect_beats[(i, j, k)]
-            rect_beat.clear_children()
-            rect_beat.clear_characters()
 
             subbeat_map = self.build_beat_rect(beat, rect_beat)
 
@@ -548,6 +549,11 @@ class EditorEnvironment:
         return self.subbeat_rect_map[(c, i, position[1])][tuple(position[2:])]
 
     def build_beat_rect(self, beat_grouping, rect) -> Dict[Tuple(int), wrecked.Rect]:
+        rect.clear_children()
+        rect.clear_characters()
+        rect.unset_invert()
+        rect.unset_bg_color()
+        rect.unset_fg_color()
         # Single-event or empty beats get a buffer rect for spacing purposes
         stack = [(beat_grouping, rect, 0, [])]
 

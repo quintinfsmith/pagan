@@ -66,12 +66,11 @@ class OpusManager:
             elif event.note < 127:
                 new_value = event.note + 1
 
-            self.set_beat_event(
+            self.set_event(
                 new_value,
                 position,
                 relative=event.relative
             )
-
 
     def decrement_event_at_cursor(self):
         position = self.cursor_position
@@ -91,7 +90,7 @@ class OpusManager:
             elif event.note > 0:
                 new_value = event.note - 1
 
-            self.set_beat_event(
+            self.set_event(
                 new_value,
                 position,
                 relative=event.relative
@@ -127,7 +126,7 @@ class OpusManager:
         if register is None:
             return
 
-        self.set_beat_event(
+        self.set_event(
             register.value,
             self.cursor_position,
             relative=register.relative
@@ -311,13 +310,16 @@ class OpusManager:
 
         return grouping
 
-    def set_beat_event(self, value, position, *, relative=False):
+    def set_event(self, value, position, *, relative=False):
         channel, _index = self.get_channel_index(position[0])
         grouping = self.get_grouping(position)
+
+
         if grouping.is_structural():
             grouping.clear()
         elif grouping.is_event():
             grouping.clear_events()
+
 
         grouping.add_event(MGroupingEvent(
             value,
@@ -325,10 +327,6 @@ class OpusManager:
             channel=channel,
             relative=relative
         ))
-
-    def unset_beat_event(self, position):
-        grouping = self.get_grouping(position)
-        grouping.clear_events()
 
     def set_beat_size(self, size, position):
         grouping = self.get_grouping(position)
@@ -381,11 +379,14 @@ class OpusManager:
 
         raise IndexError
 
-    def get_y(self, c: int, i: int) -> int:
+    def get_y(self, c: int, i: Optional[int] = None) -> int:
         '''
             Given a channel and index,
             get the y-index of the specified line displayed
         '''
+        if i is None:
+            i = len(self.channel_groupings[c]) - 1
+
         y = 0
         for j in self.channel_order:
             for g, grouping in enumerate(self.channel_groupings[j]):
@@ -506,20 +507,6 @@ class OpusManager:
         cursor = self.cursor_position
         self.split_grouping(cursor, 2)
         self.cursor_position.append(0)
-
-    def set_event_note(self, position: List[int], note: int):
-        channel = self.get_channel(position[0])
-        grouping = self.get_grouping(position)
-        grouping.clear_events()
-        # TODO: get channel from position instead of mgroupingevent
-        grouping.add_event(
-            MGroupingEvent(
-                note,
-                base=self.BASE,
-                channel=channel
-            )
-        )
-
 
     def insert_after(self, position: List[int]):
         grouping = self.get_grouping(position)
@@ -662,7 +649,7 @@ class OpusManager:
         else:
             grouping.set_size(splits, True)
 
-    def new_line(self, channel=0):
+    def new_line(self, channel=0, index=None):
         if not self.channel_groupings[channel]:
             try:
                 current_channel, current_index = self.get_channel_index(self.cursor_position[0])
@@ -673,14 +660,25 @@ class OpusManager:
 
         new_grouping = MGrouping()
         new_grouping.set_size(self.opus_beat_count)
-        self.channel_groupings[channel].append(new_grouping)
+        if index is not None:
+            self.channel_groupings[channel].insert(index, new_grouping)
+        else:
+            self.channel_groupings[channel].append(new_grouping)
 
-    def remove_line(self, channel, index):
-        self.channel_groupings[channel].pop(index)
+    def remove_line(self, channel, index=None):
+        if index is None:
+            index = len(self.channel_groupings[channel]) - 1
+
         cursor_channel, cursor_index = self.get_channel_index(self.cursor_position[0])
         if channel == cursor_channel and index == cursor_index:
             self.cursor_position[0] -= 1
-        self.set_cursor_position(self.cursor_position)
+
+        self.channel_groupings[channel].pop(index)
+        new_position = self.cursor_position[0:2]
+        while (grouping := self.get_grouping(new_position)).is_structural():
+            new_position.append(0)
+
+        self.set_cursor_position(new_position)
 
     def add_channel(self, channel):
         self.new_line(channel)
@@ -880,7 +878,158 @@ class CommandLedger:
     def get_register(self):
         return self.register
 
-class CachedOpusManager(OpusManager):
+
+class HistoriedOpusManager(OpusManager):
+    def __init__(self):
+        super().__init__()
+        self.history_ledger = []
+        self.locked = False
+        self.appending_multiple = False
+
+    def apply_undo(self):
+        if not self.history_ledger:
+            return
+
+        self.locked = True
+        if isinstance(self.history_ledger[-1], list):
+            for func, args, kwargs in self.history_ledger.pop():
+                func(*args,**kwargs)
+        else:
+            func, args, kwargs = self.history_ledger.pop()
+            func(*args,**kwargs)
+        self.locked = False
+
+    def append_undoer(self, func, *args, **kwargs):
+        if self.locked:
+            return
+
+        if self.appending_multiple:
+            self.history_ledger[-1].append((func, args, kwargs))
+        else:
+            self.history_ledger.append([
+                (func, args, kwargs),
+                (self.set_cursor_position, [self.cursor_position.copy()], {})
+            ])
+
+    def open_multi(self):
+        self.history_ledger.append([])
+        self.appending_multiple = True
+
+    def close_multi(self):
+        self.history_ledger[-1].append((self.set_cursor_position, [self.cursor_position.copy()], {}))
+        self.appending_multiple = False
+
+    def setup_repopulate(self, start_position):
+        '''Traverse a grouping and setup the history to recreate it for remove functions'''
+
+        already_in_multi = self.appending_multiple
+        if not already_in_multi:
+            self.open_multi()
+
+        stack = [start_position]
+        while stack:
+            position = stack.pop(0)
+            grouping = self.get_grouping(position)
+            if grouping.is_structural():
+                self.append_undoer(self.split_grouping, position, len(grouping))
+                for k in range(len(grouping)):
+                    next_position = position.copy()
+                    next_position.append(k)
+                    stack.append(next_position)
+            elif grouping.is_event():
+                event = list(grouping.get_events())[0]
+                self.append_undoer(self.set_event, event.note, position, relative=event.relative)
+            else:
+                self.append_undoer(self.unset, position)
+
+        if not already_in_multi:
+            self.close_multi()
+
+    def swap_channels(self, channel_a, channel_b):
+        self.append_undoer(self.swap_channels, channel_a, channel_b)
+        super().swap_channels(channel_a, channel_b)
+
+    def new_line(self, channel=0, index=None):
+        self.append_undoer(self.remove_line, channel, index)
+        super().new_line(channel)
+
+    def remove_line(self, channel, index=None):
+        y = self.get_y(channel, index)
+        self.open_multi()
+        self.append_undoer(self.new_line, channel, index)
+        for i in range(self.opus_beat_count):
+            self.setup_repopulate([y, i])
+        self.close_multi()
+
+        super().remove_line(channel, index)
+
+    def insert_after(self, position):
+        rposition = position.copy()
+        rposition[-1] += 1
+        self.append_undoer(self.remove, rposition)
+
+        super().insert_after(position)
+
+    def remove(self, position):
+        iposition = position.copy()
+        iposition[-1] -= 1
+
+        self.open_multi()
+        self.setup_repopulate(position[0:2])
+        self.close_multi()
+
+        super().remove(position)
+
+    def insert_beat(self, index):
+        self.append_undoer(self.remove_beat, index)
+        super().insert_beat(index)
+
+
+    def remove_beat(self, index):
+        self.open_multi()
+        self.append_undoer(self.insert_beat, index)
+        y = 0
+        for i in self.channel_order:
+            for j in range(len(self.channel_groupings[i])):
+                self.setup_repopulate([y, index])
+                y += 1
+        self.close_multi()
+        super().remove_beat(index)
+
+    def set_event(self, value, position, *, relative=False):
+        grouping = self.get_grouping(position)
+        if not grouping.is_event():
+            self.append_undoer(
+                self.unset,
+                position
+            )
+        else:
+            original_event = list(grouping.get_events())[0]
+            self.append_undoer(
+                self.set_event,
+                original_event.note,
+                position,
+                relative=original_event.relative
+            )
+
+        super().set_event(value, position, relative=relative)
+
+
+    def unset(self, position):
+        grouping = self.get_grouping(position)
+        if grouping.is_event():
+            original_event = list(grouping.get_events())[0]
+            self.append_undoer(
+                self.set_event,
+                original_event.note,
+                position,
+                relative=original_event.relative
+            )
+        super().unset(position)
+
+
+
+class CachedOpusManager(HistoriedOpusManager):
     def __init__(self):
         super().__init__()
         self.updates_cache = UpdatesCache()
@@ -912,6 +1061,7 @@ class CachedOpusManager(OpusManager):
             (b'^', self.relative_upshift_entry),
             (b'K', self.increment_event_at_cursor),
             (b'J', self.decrement_event_at_cursor),
+            (b'u', self.apply_undo),
             (b"\x1B", self.clear_register),
             (b":", self.command_ledger_open)
         )
@@ -965,6 +1115,7 @@ class CachedOpusManager(OpusManager):
         while not self.flag_kill:
             self.interactor.get_input()
         self.interactor.restore_input_settings()
+
     def insert_after(self, position: List[int]):
         super().insert_after(position)
         channel, line = self.get_channel_index(position[0])
@@ -1014,14 +1165,8 @@ class CachedOpusManager(OpusManager):
             for j, _line in enumerate(channel):
                 self.flag('line', (i, j, 'init'))
 
-    def set_beat_event(self, value, position, *, relative=False):
-        super().set_beat_event(value, position, relative=relative)
-        channel, index = self.get_channel_index(position[0])
-        self.flag('beat_change', (channel, index, position[1]))
-
-    def set_event_note(self, position: List[int], note: int):
-        super().set_event_note(position, note)
-        # Flag changes to cache
+    def set_event(self, value, position, *, relative=False):
+        super().set_event(value, position, relative=relative)
         channel, index = self.get_channel_index(position[0])
         self.flag('beat_change', (channel, index, position[1]))
 
@@ -1038,10 +1183,14 @@ class CachedOpusManager(OpusManager):
         # Flag changes to cache
         self.flag('beat', (index, 'new'))
 
-    def new_line(self, channel=0):
-        super().new_line(channel)
+    def new_line(self, channel=0, index=None):
+        super().new_line(channel, index)
         # Flag changes to cache
-        line_index = len(self.channel_groupings[channel]) - 1
+        if index is None:
+            line_index = len(self.channel_groupings[channel]) - 1
+        else:
+            line_index = index
+
         self.flag('line', (channel, line_index, 'new'))
 
     def remove(self, position: List[int]):
@@ -1058,8 +1207,14 @@ class CachedOpusManager(OpusManager):
         # Flag changes to cache
         self.flag('beat', (index, 'pop'))
 
-    def remove_line(self, channel, index):
+    def remove_line(self, channel, index=None):
         super().remove_line(channel, index)
+
+        if index is None:
+            index = len(self.channel_groupings[channel])
+        else:
+            index = index
+
         # Flag changes to cache
         self.flag('line', (channel, index, 'pop'))
 

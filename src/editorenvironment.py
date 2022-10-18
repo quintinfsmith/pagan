@@ -99,7 +99,7 @@ class EditorEnvironment:
                 # Remove the beat cells
                 for i in range(self.opus_manager.opus_beat_count):
                     rect = self.rect_beats[(channel, index, i)]
-                    rect.parent().remove()
+                    rect.parent.remove()
                     del rect.parent
 
                 # Remove beat lines
@@ -122,6 +122,7 @@ class EditorEnvironment:
 
             elif operation in ("new", 'init'):
                 rect_line = rect_content.new_rect()
+                rect_line.set_bg_color(wrecked.BRIGHTBLUE)
                 # Add the divider if necessary
                 if not self.channel_rects[channel]:
                     self.channel_divider_rects[channel] = rect_content.new_rect()
@@ -161,7 +162,6 @@ class EditorEnvironment:
                 for k, rect in adj_beat_rects:
                     self.rect_beats[k] = rect
                     self.opus_manager.flag('beat_change', k)
-
 
                 for i, channel in enumerate(self.channel_rects):
                     for j, rect_line in enumerate(channel):
@@ -335,8 +335,8 @@ class EditorEnvironment:
         beat_width = self.rendered_beat_widths[cursor[1]]
 
         x_offset = beat_offset - ((self.frame_content.width - beat_width) // 2.5)
-        x_offset = max(0, x_offset)
         x_offset = min(line_length - self.frame_content.width, x_offset)
+        x_offset = max(0, x_offset)
 
         c, i = self.opus_manager.get_channel_index(cursor[0])
 
@@ -430,10 +430,11 @@ class EditorEnvironment:
         ## Then, Shift groups of beats that would be moved by beat size changes
         diff_keys = list(rect_size_diffs.keys())
         diff_keys.sort()
-        line_length = sum(self.rendered_beat_widths) + len(self.rendered_beat_widths) - 1
+        line_length = sum(self.rendered_beat_widths) + len(self.rendered_beat_widths)
         for k in diff_keys:
             offset = rect_size_diffs[k]
-            box_limit = (sum(self.rendered_beat_widths[0:max(0, k - 1)]) + k, 0, line_length, 1)
+            # KLUDGE! TODO: modify wrecked shift_contents in box to handle infinites
+            box_limit = (sum(self.rendered_beat_widths[0:max(0, k - 1)]) + k, 0, 9999999, 1)
             for channel in self.channel_rects:
                 for rect_line in channel:
                     rect_line.shift_contents_in_box(offset, 0, box_limit)
@@ -447,7 +448,7 @@ class EditorEnvironment:
                 for k, rect_line in enumerate(channel):
                     rect_beat = self.rect_beats[(j, k,i)]
                     rect_beat.parent.resize(cwidth, 1)
-                    #rect_beat.move((cwidth - rect_beat.width) // 2, 0)
+                    rect_beat.move((cwidth - rect_beat.width) // 2, 0)
                     rect_beat.parent.move(offset, 0)
                     rect_beat_line = self.rect_beat_lines[j][k][i]
                     rect_beat_line.set_string(0, 0, chr(9474))
@@ -487,7 +488,7 @@ class EditorEnvironment:
         return output
 
     def tick_update_lines(self) -> bool:
-        line_length = sum(self.rendered_beat_widths) + self.opus_manager.opus_beat_count - 1
+        line_length = sum(self.rendered_beat_widths) + self.opus_manager.opus_beat_count
         line_count = self.get_line_count()
         output = False
         if line_length != self.rendered_line_length or line_count != self.rendered_line_count:

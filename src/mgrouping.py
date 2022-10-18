@@ -135,6 +135,7 @@ class MGrouping(Grouping):
         return super().split(split_func)
 
     def to_midi(self, **kwargs) -> MIDI:
+        transpose = kwargs.get('transpose', 0)
         tempo = int(kwargs.get('tempo', 80))
         start = int(kwargs.get('start', 0))
         end = kwargs.get('end', None)
@@ -193,17 +194,22 @@ class MGrouping(Grouping):
                         if not event:
                             continue
 
+                        channel = event['channel']
                         open_events.append(event)
 
                         if event.relative:
                             note = prev_note + event.note
                         else:
                             note = event.get_note()
+                            if channel == 9:
+                                note -= 3
+                            else:
+                                note += transpose
+
                         prev_note = note
                         #pitch_bend = event['pitch_bend']
                         pitch_bend = 0
 
-                        channel = event['channel']
                         if pitch_bend != 0:
                             midi.add_event(
                                 PitchWheelChange(

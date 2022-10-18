@@ -196,7 +196,7 @@ class OpusManager:
     def kill(self):
         self.flag_kill = True
 
-    def export(self, path, *, tempo=120):
+    def export(self, path, *, tempo=120, transpose=-3):
         opus = MGrouping()
         opus.set_size(self.opus_beat_count)
         for groupings in self.channel_groupings:
@@ -204,7 +204,7 @@ class OpusManager:
                 for i, beat in enumerate(grouping):
                     opus[i].merge(beat)
 
-        opus.to_midi(tempo=tempo).save(path)
+        opus.to_midi(tempo=tempo, transpose=transpose).save(path)
 
     def set_active_beat_size(self, size):
         self.set_beat_size(size, self.cursor_position)

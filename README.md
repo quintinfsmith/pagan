@@ -1,6 +1,5 @@
 # Radixulous
 A Radix-notation based MIDI editor<br/>
-
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/radixulous?style=flat-square)](https://pypi.org/project/radixulous/)
 [![PyPI](https://img.shields.io/pypi/v/radixulous?style=flat-square)](https://pypi.org/project/radixulous/)
 [![PyPI - License](https://img.shields.io/pypi/l/radixulous?style=flat-square)](https://burnsomni.net/git/radixulous/?branch=master&path=LICENSE)

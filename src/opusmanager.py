@@ -98,16 +98,32 @@ class OpusManager:
 
 
     def relative_add_entry(self):
-        self.register = ReadyEvent(1, relative=True)
+        active_channel, _ = self.get_channel_index(self.cursor_position[0])
+        if active_channel == 9:
+            self.clear_register()
+        else:
+            self.register = ReadyEvent(1, relative=True)
 
     def relative_subtract_entry(self):
-        self.register = ReadyEvent(-1, relative=True)
+        active_channel, _ = self.get_channel_index(self.cursor_position[0])
+        if active_channel == 9:
+            self.clear_register()
+        else:
+            self.register = ReadyEvent(-1, relative=True)
 
     def relative_downshift_entry(self):
-        self.register = ReadyEvent(-1 * self.BASE, relative=True)
+        active_channel, _ = self.get_channel_index(self.cursor_position[0])
+        if active_channel == 9:
+            self.clear_register()
+        else:
+            self.register = ReadyEvent(-1 * self.BASE, relative=True)
 
     def relative_upshift_entry(self):
-        self.register = ReadyEvent(self.BASE, relative=True)
+        active_channel, _ = self.get_channel_index(self.cursor_position[0])
+        if active_channel == 9:
+            self.clear_register()
+        else:
+            self.register = ReadyEvent(self.BASE, relative=True)
 
     def add_digit_to_register(self, value):
         if self.register is None:
@@ -217,6 +233,7 @@ class OpusManager:
 
     def set_cursor_position(self, position):
         self.cursor_position = position
+        self.clear_register()
 
     def cursor_left(self):
         fully_left = True

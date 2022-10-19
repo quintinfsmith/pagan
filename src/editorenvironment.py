@@ -526,7 +526,10 @@ class EditorEnvironment:
                     y_offset += 1
 
                 if c != prev_c:
-                    strlabel = f"{c:02}:{i:02}"
+                    if c != 9:
+                        strlabel = f"{c:02}:{i:02}"
+                    else:
+                        strlabel = f"PS:{i:02}"
                 else:
                     strlabel = f"  :{i:02}"
 

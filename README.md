@@ -2,9 +2,20 @@
 A Radix-notation based MIDI editor<br/>
 
 ## Installation
-There's no pip version yet so you'll need to use the included buildscript
 ```bash
-./buildscript.py --local
+pip install radixulous
+```
+
+To start an empty file:
+
+```bash
+radixulous
+```
+
+To Load an existing project
+
+```bash
+radixulous path/to/project/
 ```
 
 ## Controls

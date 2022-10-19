@@ -34,8 +34,18 @@ class OpusManager:
             'c+': self.add_channel,
             'c-': self.remove_channel,
             'export': self.export,
-            'swap': self.swap_channels
+            'swap': self.swap_channels,
+            'jump': self.jump_to_beat
         })
+
+    def jump_to_beat(self, beat):
+        new_cursor_position = self.cursor_position
+        if beat == -1:
+            beat = self.opus_beat_count - 1
+        else:
+            beat = min(beat, self.opus_beat_count - 1)
+        new_cursor_position[1] = beat
+        self.set_cursor_position(new_cursor_position)
 
     def new(self):
         self.history_ledger = []
@@ -1084,6 +1094,7 @@ class CachedOpusManager(HistoriedOpusManager):
             (b'i', self.insert_after_cursor),
             (b'I', self.insert_beat_at_cursor),
             (b'X', self.remove_beat_at_cursor),
+            (b'G', self.open_command_ledger_and_set, 'jump '),
             (b'/', self.split_grouping_at_cursor),
             (b';]', self.new_line_at_cursor),
             (b';[', self.remove_line_at_cursor),
@@ -1122,6 +1133,10 @@ class CachedOpusManager(HistoriedOpusManager):
             (b"\x1B[A", self.command_ledger.go_to_prev), # Arrow Up
             (b"\x1B[B", self.command_ledger.go_to_next)  # Arrow Down
         )
+
+    def open_command_ledger_and_set(self, new_value):
+        self.command_ledger_open()
+        self.command_ledger.register = new_value
 
     def command_ledger_open(self):
         self.command_ledger.open()

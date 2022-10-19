@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="radixal",
+    name="radixulous",
     version=__version__,
     description="Radix-based midi editor",
     author=__author__,
@@ -16,8 +16,8 @@ setuptools.setup(
     license=__license__,
     keywords=[],
     python_requires="~=3.7",
-    py_modules=["radixal"],
-    entry_points={ "console_scripts": ["radixal = radixal:main"] },
+    py_modules=["radixulous"],
+    entry_points={ "console_scripts": ["radixulous = radixulous:main"] },
     url=__url__,
     packages=setuptools.find_packages(),
     classifiers=[

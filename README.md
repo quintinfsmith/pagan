@@ -1,4 +1,4 @@
-# Radixal
+# Radixulous
 A Radix-notation based MIDI editor<br/>
 
 ## Installation

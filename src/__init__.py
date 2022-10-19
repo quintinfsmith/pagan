@@ -3,7 +3,7 @@
 import sys
 from .editorenvironment import EditorEnvironment
 
-__version__ = "0.0.1"
+__version__ = "0.0.3"
 __license__ = "GPL-2.0"
 __author__ = "Quintin Smith"
 __email__ = "smith.quintin@protonmail.com"

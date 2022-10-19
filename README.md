@@ -1,6 +1,19 @@
 # Radixulous
 A Radix-notation based MIDI editor<br/>
 
+### Notes
+Keep in mind this project is still in early days.
+Some planned features are:
+1) Loading a midi file into the editor
+2) Linked beats/sections
+3) Export
+    1) specified sections
+    2) with dynamics
+    3) to notation editor compatible files (eg, .mscz)
+4) Playback & general audio
+5) Variable Radix (use base N instead of exclusively 12)
+
+
 ## Installation
 ```bash
 pip install radixulous

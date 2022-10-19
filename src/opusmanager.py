@@ -174,6 +174,9 @@ class OpusManager:
             tmp_split = path.split("/")
             working_path = "/".join(tmp_split[0:-1])
             working_dir = tmp_split[-1]
+        else:
+            working_path = path[0:path.rfind("/") + 1]
+            working_dir = path[path.rfind("/") + 1:]
 
         fullpath = f"{working_path}/{working_dir}"
         if not os.path.isdir(fullpath):

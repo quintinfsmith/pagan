@@ -21,6 +21,8 @@ class OpusManager:
         self.channel_order = list(range(16))
         self.cursor_position = [0, 0] # Y, X,... deeper divisions
         self.opus_beat_count = 1
+        self.linked_beat_map = {}
+        self.inv_linked_beat_map = {}
         self.path = None
         self.clipboard_grouping = None
         self.flag_kill = False
@@ -35,7 +37,10 @@ class OpusManager:
             'c-': self.remove_channel,
             'export': self.export,
             'swap': self.swap_channels,
-            'jump': self.jump_to_beat
+            'jump': self.jump_to_beat,
+            'link': self.link_beat_at_cursor,
+            'unlink': self.unlink_beat_at_cursor,
+            'ow': self.overwrite_beat_at_cursor
         })
 
     def jump_to_beat(self, beat):
@@ -46,6 +51,61 @@ class OpusManager:
             beat = min(beat, self.opus_beat_count - 1)
         new_cursor_position[1] = beat
         self.set_cursor_position(new_cursor_position)
+
+    def overwrite_beat_at_cursor(self, channel, index, beat):
+        position = self.cursor_position
+        cursor_c, cursor_i = self.get_channel_index(position[0])
+        self.overwrite_beat((cursor_c, cursor_i, position[1]), (channel, index, beat))
+
+    def link_beat_at_cursor(self, channel, index, beat):
+        position = self.cursor_position
+        cursor_c, cursor_i = self.get_channel_index(position[0])
+        self.link_beats((cursor_c, cursor_i, position[1]), (channel, index, beat))
+
+    def unlink_beat_at_cursor(self):
+        position = self.cursor_position
+        cursor_c, cursor_i = self.get_channel_index(position[0])
+        self.unlink_beat(cursor_c, cursor_i, position[1])
+
+    def unlink_beat(self, channel: int, line: int, beat: int):
+        key = (channel, line, beat)
+        if key not in self.linked_beat_map:
+            return
+
+        target_key = self.linked_beat_map[key]
+        self.inv_linked_beat_map[target_key].remove(key)
+        if not self.inv_linked_beat_map[target_key]:
+            del self.inv_linked_beat_map[target_key]
+
+        del self.linked_beat_map[key]
+
+    def link_beats(self, beat, target):
+        # First, replace existing grouping with a copy of the target
+        self.overwrite_beat(beat, target)
+
+        self.linked_beat_map[beat] = target
+        if target not in self.inv_linked_beat_map:
+            self.inv_linked_beat_map[target] = set()
+        self.inv_linked_beat_map[target].add(beat)
+
+    def overwrite_beat(self, old_beat, new_beat):
+        '''Overwrite a beat with a copy of the grouping of another'''
+        new_grouping = self.channel_groupings[new_beat[0]][new_beat[1]][new_beat[2]].copy()
+        old_grouping = self.channel_groupings[old_beat[0]][old_beat[1]][old_beat[2]]
+        old_grouping.replace_with(new_grouping)
+        self.channel_groupings[old_beat[0]][old_beat[1]][old_beat[2]] = new_grouping
+
+        # Consider Cursor
+        if self.get_y(old_beat[0], old_beat[1]) == self.cursor_position[0]:
+            new_position = self.cursor_position[0:2]
+            while True:
+                try:
+                    self.get_grouping(new_position)
+                    new_position.append(0)
+                except InvalidCursor:
+                    new_position.pop()
+                    break
+            self.set_cursor_position(new_position)
 
     def new(self):
         self.history_ledger = []
@@ -341,15 +401,17 @@ class OpusManager:
         return grouping
 
     def set_event(self, value, position, *, relative=False):
+        for absolute_position in self._build_positions_list(position):
+            self._set_event_ignore_link(value, absolute_position, relative=relative)
+
+    def _set_event_ignore_link(self, value, position, *, relative=False):
         channel, _index = self.get_channel_index(position[0])
         grouping = self.get_grouping(position)
-
 
         if grouping.is_structural():
             grouping.clear()
         elif grouping.is_event():
             grouping.clear_events()
-
 
         grouping.add_event(MGroupingEvent(
             value,
@@ -539,6 +601,10 @@ class OpusManager:
         self.cursor_position.append(0)
 
     def insert_after(self, position: List[int]):
+        for position in self._build_positions_list(position):
+            self._insert_after_ignore_linked(position)
+
+    def _insert_after_ignore_linked(self, position: List[int]):
         grouping = self.get_grouping(position)
 
         if len(position) == 2:
@@ -564,20 +630,54 @@ class OpusManager:
             else:
                 pass
 
+
     def unset_at_cursor(self):
         position = self.cursor_position
         self.unset(position)
 
+    def _build_positions_list(self, position):
+        channel, index = self.get_channel_index(position[0])
+        beat_key = (channel, index, position[1])
+
+        if beat_key in self.inv_linked_beat_map:
+            positions = [position]
+            for i, j, k in self.inv_linked_beat_map[beat_key]:
+                new_position = position.copy()
+                new_position[0] = self.get_y(i, j)
+                new_position[1] = k
+                positions.append(new_position)
+        elif beat_key in self.linked_beat_map:
+            target_key = self.linked_beat_map[beat_key]
+            new_position = position.copy()
+            new_position[0] = self.get_y(target_key[0], target_key[1])
+            new_position[1] = target_key[2]
+            positions = [new_position]
+            for i, j, k in self.inv_linked_beat_map[target_key]:
+                new_position = position.copy()
+                new_position[0] = self.get_y(i, j)
+                new_position[1] = k
+                positions.append(new_position)
+        else:
+            positions = [position]
+
+        return positions
 
     def unset(self, position):
+        for absolute_position in self._build_positions_list(position):
+            self._unset_ignore_link(absolute_position)
+
+    def _unset_ignore_link(self, position):
         grouping = self.get_grouping(position)
         if grouping.is_event():
             grouping.clear_events()
         elif grouping.is_structural():
             grouping.clear()
 
+    def remove(self, initial_position: List[int]):
+        for position in self._build_positions_list(initial_position):
+            self._remove_ignore_link(position)
 
-    def remove(self, position: List[int]):
+    def _remove_ignore_link(self, position: List[int]):
         index = position[-1]
         grouping = self.get_grouping(position)
         parent = grouping.parent
@@ -666,7 +766,11 @@ class OpusManager:
                     i -= 1
                 line[i] = tmp
 
-    def split_grouping(self, position, splits):
+    def split_grouping(self, initial_position, splits):
+        for position in self._build_positions_list(initial_position):
+            self._split_grouping_ignore_linked(position, splits)
+
+    def _split_grouping_ignore_linked(self, position, splits):
         grouping = self.get_grouping(position)
         if grouping.is_event():
             parent = self.get_grouping(position[0:-1])
@@ -987,6 +1091,19 @@ class HistoriedOpusManager(OpusManager):
         if not already_in_multi:
             self.close_multi()
 
+    def overwrite_beat(self, old_beat, new_beat):
+        old_position = [self.get_y(old_beat[0], old_beat[1]), old_beat[2]]
+        old_grouping = self.channel_groupings[old_beat[0]][old_beat[1]][old_beat[2]].copy()
+        self.append_undoer(self.replace_grouping, old_position, old_grouping)
+        super().overwrite_beat(old_beat, new_beat)
+
+    def link_beats(self, beat, target):
+        # Wrap function call in multi so any sub calls are considered together
+        self.open_multi()
+        self.append_undoer(self.unlink_beat, *beat)
+        super().link_beats(beat, target)
+        self.close_multi()
+
     def swap_channels(self, channel_a, channel_b):
         self.append_undoer(self.swap_channels, channel_a, channel_b)
         super().swap_channels(channel_a, channel_b)
@@ -1025,7 +1142,6 @@ class HistoriedOpusManager(OpusManager):
     def insert_beat(self, index):
         self.append_undoer(self.remove_beat, index)
         super().insert_beat(index)
-
 
     def remove_beat(self, index):
         self.open_multi()
@@ -1163,13 +1279,30 @@ class CachedOpusManager(HistoriedOpusManager):
             self.interactor.get_input()
         self.interactor.restore_input_settings()
 
-    def insert_after(self, position: List[int]):
-        super().insert_after(position)
+    def replace_grouping(self, position, grouping):
+        super().replace_grouping(position, grouping)
+        channel, index = self.get_channel_index(position[0])
+        self.flag('beat_change', (channel, index, position[1]))
+
+    def overwrite_beat(self, old_beat, new_beat):
+        super().overwrite_beat(old_beat, new_beat)
+        self.flag('beat_change', old_beat)
+
+    def unlink_beat(self, channel, index, beat):
+        super().unlink_beat(channel, index, beat)
+        self.flag('beat_change', (channel, index, beat))
+
+    def link_beats(self, beat, target):
+        super().link_beats(beat, target)
+        self.flag('beat_change', beat)
+
+    def _insert_after_ignore_linked(self, position: List[int]):
+        super()._insert_after_ignore_linked(position)
         channel, line = self.get_channel_index(position[0])
         self.flag('beat_change', (channel, line, position[1]))
 
-    def split_grouping(self, position, splits):
-        super().split_grouping(position, splits)
+    def _split_grouping_ignore_linked(self, position, splits):
+        super()._split_grouping_ignore_linked(position, splits)
         channel, line = self.get_channel_index(position[0])
         self.flag('beat_change', (channel, line, position[1]))
 
@@ -1212,13 +1345,13 @@ class CachedOpusManager(HistoriedOpusManager):
             for j, _line in enumerate(channel):
                 self.flag('line', (i, j, 'init'))
 
-    def set_event(self, value, position, *, relative=False):
-        super().set_event(value, position, relative=relative)
+    def _set_event_ignore_link(self, value, position, *, relative=False):
+        super()._set_event_ignore_link(value, position, relative=relative)
         channel, index = self.get_channel_index(position[0])
         self.flag('beat_change', (channel, index, position[1]))
 
-    def unset(self, position):
-        super().unset(position)
+    def _unset_ignore_link(self, position):
+        super()._unset_ignore_link(position)
         # Flag changes to cache
         channel, index = self.get_channel_index(position[0])
         self.flag('beat_change', (channel, index, position[1]))
@@ -1240,8 +1373,8 @@ class CachedOpusManager(HistoriedOpusManager):
 
         self.flag('line', (channel, line_index, 'new'))
 
-    def remove(self, position: List[int]):
-        super().remove(position)
+    def _remove_ignore_link(self, position: List[int]):
+        super()._remove_ignore_link(position)
         # Flag changes to cache
         if len(position) > 2:
             channel, index = self.get_channel_index(position[0])

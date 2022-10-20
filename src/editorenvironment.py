@@ -374,15 +374,19 @@ class EditorEnvironment:
         while flagged_beat_changes:
             i, j, k = flagged_beat_changes.pop()
 
-            line = channels[i][j]
-            beat = line[k]
             rect_line = self.channel_rects[i][j]
 
             rect_beat = self.rect_beats[(i, j, k)]
+            beat = channels[i][j][k]
 
             subbeat_map = self.build_beat_rect(beat, rect_beat)
-
             self.subbeat_rect_map[(i,j,k)] = subbeat_map
+
+            if (i,j,k) in self.opus_manager.linked_beat_map:
+                rect_beat.underline()
+                for rect in self.subbeat_rect_map[(i,j,k)].values():
+                    rect.underline()
+
             beat_indices_changed.add(k)
 
             # force the cursor to be redrawn
@@ -557,6 +561,7 @@ class EditorEnvironment:
         rect.unset_invert()
         rect.unset_bg_color()
         rect.unset_fg_color()
+        rect.unset_underline()
         # Single-event or empty beats get a buffer rect for spacing purposes
         stack = [(beat_grouping, rect, 0, [])]
 

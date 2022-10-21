@@ -1,6 +1,7 @@
 from __future__ import annotations
 import os
 import re
+import json
 
 from inspect import signature
 from typing import Optional, Dict, List, Tuple
@@ -282,6 +283,14 @@ class OpusManager:
             with open(f"{fullpath}/channel_{n}", "w") as fp:
                 fp.write("\n".join(strlines))
 
+        json_compat_map = {}
+        for k, target in self.linked_beat_map.items():
+            new_key = f"{k[0]}.{k[1]}.{k[2]}"
+            json_compat_map[new_key] = target
+
+        with open(f"{fullpath}/linkedbeats.json", "w") as fp:
+            fp.write(json.dumps(json_compat_map, indent=4))
+
     def kill(self):
         self.flag_kill = True
 
@@ -562,6 +571,20 @@ class OpusManager:
                     self.channel_groupings[channel].append(grouping)
 
         self.opus_beat_count = beat_count
+
+        if os.path.isfile(f"{path}/linkedbeats.json"):
+            with open(f"{path}/linkedbeats.json", "r") as fp:
+                json_compat_map = json.loads(fp.read())
+                self.linked_beat_map = {}
+                for k, target in json_compat_map.items():
+                    x,y,z = k.split(".")
+                    new_key = (int(x), int(y), int(z))
+                    self.linked_beat_map[new_key] = tuple(target)
+
+        for beat, target in self.linked_beat_map.items():
+            if target not in self.inv_linked_beat_map:
+                self.inv_linked_beat_map[target] = []
+            self.inv_linked_beat_map[target].append(beat)
 
 
     def load_file(self, path: str) -> MGrouping:
@@ -1009,13 +1032,18 @@ class CommandLedger:
                         if k in req_params:
                             req_params.remove(k)
 
-                if len(args) < len(req_params):
+                arg_defaults = []
+                if hook.__defaults__ is not None:
+                    arg_defaults = hook.__defaults__
+
+                if len(args) < len(req_params) - len(arg_defaults):
                     missing_args = req_params[len(args):]
                     self.set_error_msg(f"Missing: {', '.join(missing_args)}")
                 else:
                     hook(*args, **kwargs)
                     # add to history only after the command is successful
                     self.history.append(self.register)
+
             except Exception as exception:
                 raise exception
         else:

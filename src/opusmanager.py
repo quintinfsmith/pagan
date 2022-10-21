@@ -44,6 +44,7 @@ class OpusManager:
             'ow': self.overwrite_beat_at_cursor
         })
 
+
     def jump_to_beat(self, beat):
         new_cursor_position = self.cursor_position
         if beat == -1:
@@ -58,10 +59,13 @@ class OpusManager:
         cursor_c, cursor_i = self.get_channel_index(position[0])
         self.overwrite_beat((cursor_c, cursor_i, position[1]), (channel, index, beat))
 
-    def link_beat_at_cursor(self, channel, index, beat):
+    def link_beat_at_cursor(self, channel, index, beat, count=1):
         position = self.cursor_position
         cursor_c, cursor_i = self.get_channel_index(position[0])
-        self.link_beats((cursor_c, cursor_i, position[1]), (channel, index, beat))
+        if count > 1:
+            self.link_beat_range((cursor_c, cursor_i, position[1]), (channel, index, beat), count)
+        else:
+            self.link_beats((cursor_c, cursor_i, position[1]), (channel, index, beat))
 
     def unlink_beat_at_cursor(self):
         position = self.cursor_position
@@ -81,13 +85,22 @@ class OpusManager:
         del self.linked_beat_map[key]
 
     def link_beats(self, beat, target):
-        # First, replace existing grouping with a copy of the target
+        # Remove any existing link
+        self.unlink_beat(*beat)
+
+        # Replace existing grouping with a copy of the target
         self.overwrite_beat(beat, target)
 
         self.linked_beat_map[beat] = target
         if target not in self.inv_linked_beat_map:
             self.inv_linked_beat_map[target] = set()
         self.inv_linked_beat_map[target].add(beat)
+
+    def link_beat_range(self, start_beat, target_beat, count):
+        for i in range(count):
+            start_beat_tmp = (start_beat[0], start_beat[1], start_beat[2] + i)
+            target_beat_tmp = (target_beat[0], target_beat[1], target_beat[2] + i)
+            self.link_beats(start_beat_tmp, target_beat_tmp)
 
     def overwrite_beat(self, old_beat, new_beat):
         '''Overwrite a beat with a copy of the grouping of another'''
@@ -109,7 +122,6 @@ class OpusManager:
             self.set_cursor_position(new_position)
 
     def new(self):
-        self.history_ledger = []
         self.channel_groupings = [[] for i in range(16)]
         self.channel_order = list(range(16))
         self.cursor_position = [0, 0] # Y, X,... deeper divisions
@@ -760,10 +772,31 @@ class OpusManager:
 
     def remove_beat(self, index):
         # Move all beats after removed index one left
-        for channel in self.channel_groupings:
-            for line in channel:
+        for i, channel in enumerate(self.channel_groupings):
+            for j, line in enumerate(channel):
+                self.unlink_beat(i, j, index)
                 line.pop(index)
         self.set_beat_count(self.opus_beat_count - 1)
+
+        # Re-Adjust existing links
+        adjusted_links = []
+        for (i,j,k), (ti, tj, tk) in self.linked_beat_map.items():
+            new_key = (i, j, k)
+            if k > index:
+                new_key = (i, j, k - 1)
+
+            new_target = (ti, tj, tk)
+            if tk > index:
+                new_target = (ti, tj, tk - 1)
+            adjusted_links.append((new_key, new_target))
+
+        self.linked_beat_map = {}
+        self.inv_linked_beat_map = {}
+        for beat, target in adjusted_links:
+            if target not in self.inv_linked_beat_map:
+                self.inv_linked_beat_map[target] = []
+            self.inv_linked_beat_map[target].append(beat)
+            self.linked_beat_map[beat] = target
 
 
     def insert_beat_at_cursor(self):
@@ -788,6 +821,25 @@ class OpusManager:
                     line[i] = line[i - 1]
                     i -= 1
                 line[i] = tmp
+
+        # Re-Adjust existing links
+        adjusted_links = []
+        for (i,j,k), (ti, tj, tk) in self.linked_beat_map.items():
+            new_key = (i, j, k)
+            if k >= index:
+                new_key = (i, j, k + 1)
+
+            new_target = (ti, tj, tk)
+            if tk >= index:
+                new_target = (ti, tj, tk + 1)
+            adjusted_links.append((new_key, new_target))
+        self.linked_beat_map = {}
+        self.inv_linked_beat_map = {}
+        for beat, target in adjusted_links:
+            if target not in self.inv_linked_beat_map:
+                self.inv_linked_beat_map[target] = []
+            self.inv_linked_beat_map[target].append(beat)
+            self.linked_beat_map[beat] = target
 
     def split_grouping(self, initial_position, splits):
         for position in self._build_positions_list(initial_position):
@@ -1057,27 +1109,27 @@ class HistoriedOpusManager(OpusManager):
     def __init__(self):
         super().__init__()
         self.history_ledger = []
-        self.locked = False
-        self.appending_multiple = False
+        self.history_locked = False
+        self.multi_counter = 0
 
     def apply_undo(self):
         if not self.history_ledger:
             return
 
-        self.locked = True
+        self.history_locked = True
         if isinstance(self.history_ledger[-1], list):
             for func, args, kwargs in self.history_ledger.pop():
                 func(*args,**kwargs)
         else:
             func, args, kwargs = self.history_ledger.pop()
             func(*args,**kwargs)
-        self.locked = False
+        self.history_locked = False
 
     def append_undoer(self, func, *args, **kwargs):
-        if self.locked:
+        if self.history_locked:
             return
 
-        if self.appending_multiple:
+        if self.multi_counter:
             self.history_ledger[-1].append((func, args, kwargs))
         else:
             self.history_ledger.append([
@@ -1086,19 +1138,19 @@ class HistoriedOpusManager(OpusManager):
             ])
 
     def open_multi(self):
-        self.history_ledger.append([])
-        self.appending_multiple = True
+        if not self.multi_counter:
+            self.history_ledger.append([])
+        self.multi_counter += 1
 
     def close_multi(self):
-        self.history_ledger[-1].append((self.set_cursor_position, [self.cursor_position.copy()], {}))
-        self.appending_multiple = False
+        self.multi_counter -= 1
+        if not self.multi_counter:
+            self.history_ledger[-1].append((self.set_cursor_position, [self.cursor_position.copy()], {}))
 
     def setup_repopulate(self, start_position):
         '''Traverse a grouping and setup the history to recreate it for remove functions'''
 
-        already_in_multi = self.appending_multiple
-        if not already_in_multi:
-            self.open_multi()
+        self.open_multi()
 
         stack = [start_position]
         while stack:
@@ -1116,8 +1168,7 @@ class HistoriedOpusManager(OpusManager):
             else:
                 self.append_undoer(self.unset, position)
 
-        if not already_in_multi:
-            self.close_multi()
+        self.close_multi()
 
     def overwrite_beat(self, old_beat, new_beat):
         old_position = [self.get_y(old_beat[0], old_beat[1]), old_beat[2]]
@@ -1323,6 +1374,11 @@ class CachedOpusManager(HistoriedOpusManager):
     def link_beats(self, beat, target):
         super().link_beats(beat, target)
         self.flag('beat_change', beat)
+
+    def link_beat_range(self, start_beat, target_beat, count):
+        self.open_multi()
+        super().link_beat_range(start_beat, target_beat, count)
+        self.close_multi()
 
     def _insert_after_ignore_linked(self, position: List[int]):
         super()._insert_after_ignore_linked(position)

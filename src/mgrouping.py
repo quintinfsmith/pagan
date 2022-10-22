@@ -421,20 +421,12 @@ class MGrouping(Grouping):
             if depth == 0:
                 output = ""
                 for chunk in strreps:
-                    #Special Case
-                    if depth == 0 and chunk == "__":
-                        chunk = f"{self.CH_OPEN}{chunk}{self.CH_CLOSE}"
-
                     output += chunk + self.CH_NEXT
-                    #if i % 4 == 3:
-                    #    output += "\n"
 
                 while output[-1] in f"\n{self.CH_NEXT}":
                     output = output[0:-1]
             else:
                 output = self.CH_NEXT.join(strreps)
-
-            if depth > 0:
                 output = f"{self.CH_OPEN}{output}{self.CH_CLOSE}"
 
         elif self.is_event():
@@ -552,12 +544,12 @@ class MGrouping(Grouping):
         opus.set_size(total_beat_offset)
 
         for i, beat_grouping in enumerate(beat_values):
+            beat_grouping.clear_singles()
             opus[i] = beat_grouping
 
         for i, beat in enumerate(opus):
             beat.flatten()
             beat.reduce()
-            beat.clear_singles()
 
         return opus
 

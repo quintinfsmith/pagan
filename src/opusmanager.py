@@ -14,6 +14,8 @@ from .interactor import Interactor
 
 class InvalidCursor(Exception):
     '''Raised when attempting to pass a cursor without enough arguments'''
+class NoPath(Exception):
+    '''Raise when attempting to use an unset path property'''
 
 class OpusManager:
     BASE = 12
@@ -260,7 +262,9 @@ class OpusManager:
         self.clipboard_grouping = None
 
     def save(self, path=None):
-        if path is None:
+        if path is None and self.path is None:
+            raise NoPath
+        elif path is None:
             path = self.path
 
         if path.lower().endswith("mid"):
@@ -277,7 +281,7 @@ class OpusManager:
             working_path = path[0:path.rfind("/") + 1]
             working_dir = path[path.rfind("/") + 1:]
 
-        fullpath = f"{working_path}/{working_dir}"
+        fullpath = f"{working_path}{working_dir}"
         if not os.path.isdir(fullpath):
             os.mkdir(fullpath)
 
@@ -290,7 +294,9 @@ class OpusManager:
 
             strlines = []
             for line in channel_lines:
+                line.clear_singles()
                 strlines.append(line.to_string())
+
             n = "0123456789ABCDEF"[c]
             with open(f"{fullpath}/channel_{n}", "w") as fp:
                 fp.write("\n".join(strlines))
@@ -306,13 +312,19 @@ class OpusManager:
     def kill(self):
         self.flag_kill = True
 
-    def export(self, path, *, tempo=120, transpose=-3):
+    def export(self, *, path=None, tempo=120, transpose=-3):
         opus = MGrouping()
         opus.set_size(self.opus_beat_count)
         for groupings in self.channel_groupings:
             for grouping in groupings:
                 for i, beat in enumerate(grouping):
                     opus[i].merge(beat)
+
+        if path is None:
+            if self.path is not None:
+                path = self.path + ".mid"
+            else:
+                raise NoPath()
 
         opus.to_midi(tempo=tempo, transpose=transpose).save(path)
 
@@ -577,6 +589,7 @@ class OpusManager:
             for x, chunk in enumerate(chunks):
                 grouping = MGrouping.from_string(chunk, base=base, channel=channel)
                 if grouping:
+                    grouping.clear_singles()
                     beat_count = max(len(grouping), beat_count)
                     grouping.set_size(beat_count, True)
 
@@ -847,16 +860,30 @@ class OpusManager:
 
     def _split_grouping_ignore_linked(self, position, splits):
         grouping = self.get_grouping(position)
+        reduced = False
         if grouping.is_event():
-            parent = self.get_grouping(position[0:-1])
+
             new_grouping = MGrouping()
             new_grouping.set_size(splits)
-            new_grouping.parent = parent
-            parent[position[-1]] = new_grouping
-            new_grouping[0] = grouping
-            grouping.parent = new_grouping
+            grouping.replace_with(new_grouping)
+
+            new_grouping[0].replace_with(grouping)
+
+            # Prevent redundant single-wrapper
+            if len(new_grouping.parent) == 1:
+                new_grouping.parent.replace_with(new_grouping)
+                reduced = True
         else:
             grouping.set_size(splits, True)
+
+            # Prevent redundant single-wrapper
+            if len(grouping.parent) == 1:
+                grouping.parent.replace_with(grouping)
+                reduced = True
+
+        if position == self.cursor_position and reduced:
+            position.pop()
+            self.set_cursor_position(position)
 
     def new_line(self, channel=0, index=None):
         if not self.channel_groupings[channel]:
@@ -1092,9 +1119,12 @@ class CommandLedger:
                     missing_args = req_params[len(args):]
                     self.set_error_msg(f"Missing: {', '.join(missing_args)}")
                 else:
-                    hook(*args, **kwargs)
-                    # add to history only after the command is successful
-                    self.history.append(self.register)
+                    try:
+                        hook(*args, **kwargs)
+                        # add to history only after the command is successful
+                        self.history.append(self.register)
+                    except Exception as e:
+                        self.set_error_msg(f"{repr(e)}")
 
             except Exception as exception:
                 raise exception

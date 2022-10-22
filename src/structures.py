@@ -514,20 +514,18 @@ class Grouping:
 
     #TODO: Think of better name
     def clear_singles(self):
-        stack = [self]
+        stack = [g for g in self]
         while stack:
-            working_grouping = stack.pop()
+            working_grouping = stack.pop(0)
             if working_grouping.is_structural():
                 if len(working_grouping) == 1:
                     subgrouping = working_grouping[0]
-                    if subgrouping.is_structural() and len(subgrouping) != 1:
-                        working_grouping.set_size(len(subgrouping))
-                        for i, child in enumerate(subgrouping):
-                            working_grouping[i] = child
-                            child.parent = working_grouping
-                    del subgrouping
-                for subgrouping in working_grouping:
-                    stack.append(subgrouping)
+                    if subgrouping.is_structural():
+                        working_grouping.replace_with(subgrouping)
+                        stack.append(subgrouping)
+                else:
+                    for child in working_grouping:
+                        stack.append(child)
 
 
     def crop_redundancies(self):

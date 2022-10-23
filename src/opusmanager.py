@@ -12,6 +12,10 @@ from .structures import BadStateError
 from .mgrouping import MGrouping, MGroupingEvent
 from .interactor import Interactor
 
+def dlog(msg):
+    with open("LOG", "a") as fp:
+        fp.write(f"{msg}\n")
+
 class InvalidCursor(Exception):
     '''Raised when attempting to pass a cursor without enough arguments'''
 class NoPath(Exception):
@@ -245,9 +249,6 @@ class OpusManager:
         position = self.cursor_position
         self.insert_after(position)
 
-        if len(position) == 2:
-            self.cursor_dive(0)
-
     def copy_grouping(self, position):
         self.clipboard_grouping = self.get_grouping(position)
 
@@ -337,10 +338,13 @@ class OpusManager:
     def set_cursor_position(self, position):
         self.cursor_position = position
         self.clear_register()
+        dlog(f"{position}")
 
     def cursor_left(self):
         fully_left = True
         position = self.cursor_position.copy()
+
+        # First move the cursor left, climbing if necessary
         while True:
             if position[-1] > 0:
                 position[-1] -= 1
@@ -351,6 +355,7 @@ class OpusManager:
             else:
                 break
 
+        # Then dive down as deep as possible
         while (grouping := self.get_grouping(position)).is_structural():
             if not fully_left:
                 position.append(len(grouping) - 1)
@@ -385,8 +390,11 @@ class OpusManager:
     def cursor_up(self):
         working_position = self.cursor_position.copy()
 
-        working_position[0] = max(0, working_position[0] - 1)
-        working_position = working_position[0:2]
+        working_position = [
+            max(0, working_position[0] - 1),
+            working_position[1],
+            0
+        ]
 
         while self.get_grouping(working_position).is_structural():
             working_position.append(0)
@@ -399,7 +407,7 @@ class OpusManager:
         if self.get_line(working_position[0] + 1) is not None:
             working_position[0] += 1
 
-        working_position = working_position[0:2]
+        working_position = [*working_position[0:2], 0]
 
         while self.get_grouping(working_position).is_structural():
             working_position.append(0)
@@ -408,7 +416,7 @@ class OpusManager:
 
     def cursor_climb(self):
         position = self.cursor_position.copy()
-        if len(position) > 2:
+        if len(position) > 3:
             position.pop()
         self.set_cursor_position(position)
 
@@ -542,6 +550,9 @@ class OpusManager:
             self.import_midi(path)
         else:
             self.load_file(path)
+        for channel in self.channel_groupings:
+            for line in channel:
+                line.clear_singles()
 
         # Adjust Cursor
         grouping = self.get_grouping(self.cursor_position)
@@ -588,6 +599,13 @@ class OpusManager:
 
             for x, chunk in enumerate(chunks):
                 grouping = MGrouping.from_string(chunk, base=base, channel=channel)
+
+                # DEBUG
+                for b,n in enumerate(grouping):
+                    for bb, nn in enumerate(n):
+                        if not nn.is_structural():
+                            dlog(f"{channel},{x},{b},{bb}")
+
                 if grouping:
                     grouping.clear_singles()
                     beat_count = max(len(grouping), beat_count)
@@ -655,29 +673,18 @@ class OpusManager:
     def _insert_after_ignore_linked(self, position: List[int]):
         grouping = self.get_grouping(position)
 
-        if len(position) == 2:
-            if grouping.is_event() or grouping.is_open():
-                parent = self.get_line(position[0])
-                new_beat = MGrouping()
-                parent[position[-1]] = new_beat
-                new_beat.parent = parent
-                new_beat.set_size(2)
-                new_beat[0] = grouping
-                grouping.parent = new_beat
+        parent = grouping.parent
+        at_end = position[-1] == len(parent) - 1
+        parent.set_size(len(parent) + 1, True)
+        if not at_end:
+            tmp = parent[-1]
+            i = len(parent) - 1
+            while i > position[-1] + 1:
+                parent[i] = parent[i - 1]
+                i -= 1
+            parent[i] = tmp
         else:
-            parent = grouping.parent
-            at_end = position[-1] == len(parent) - 1
-            parent.set_size(len(parent) + 1, True)
-            if not at_end:
-                tmp = parent[-1]
-                i = len(parent) - 1
-                while i > position[-1] + 1:
-                    parent[i] = parent[i - 1]
-                    i -= 1
-                parent[i] = tmp
-            else:
-                pass
-
+            pass
 
     def unset_at_cursor(self):
         position = self.cursor_position
@@ -726,15 +733,13 @@ class OpusManager:
             self._remove_ignore_link(position)
 
     def _remove_ignore_link(self, position: List[int]):
+        if len(position) < 3 or (len(position) == 3 and position[2] == 0):
+            return
+
         index = position[-1]
         grouping = self.get_grouping(position)
         parent = grouping.parent
         new_size = len(parent) - 1
-
-        # Attempting to remove beat
-        if len(position) == 2:
-            self.unset(position)
-            return
 
         if new_size > 0:
             for i, child in enumerate(parent):
@@ -744,21 +749,19 @@ class OpusManager:
             parent.set_size(new_size, True)
 
             # replace the parent with the child
-            if new_size == 1:
+            if new_size == 1 and parent != self.get_grouping(position[0:2]):
                 parent_index = position[-2]
                 parent.parent[parent_index] = parent[0]
         else:
-            self.remove(position[0:-1])
+            self._remove_ignore_link(position[0:-1])
 
 
     def remove_beat_at_cursor(self):
         cursor = self.cursor_position
         self.remove_beat(cursor[1])
 
-        cursor = cursor[0:2]
-        # Adjust cursor
-        while cursor[1] >= self.opus_beat_count:
-            cursor[1] -= 1
+        cursor = (*cursor[0:2], 0)
+        cursor[1] = min(cursor[1], self.opus_beat_count - 1)
 
         grouping = self.get_grouping(cursor)
         while grouping.is_structural():
@@ -815,7 +818,7 @@ class OpusManager:
     def insert_beat_at_cursor(self):
         cursor = self.cursor_position
         self.insert_beat(cursor[1] + 1)
-        self.cursor_position = cursor[0:2]
+        self.set_cursor_position((*cursor[0:2], 0))
 
     # TODO: Should this be a Grouping Method?
     def insert_beat(self, index=None):
@@ -862,7 +865,6 @@ class OpusManager:
         grouping = self.get_grouping(position)
         reduced = False
         if grouping.is_event():
-
             new_grouping = MGrouping()
             new_grouping.set_size(splits)
             grouping.replace_with(new_grouping)
@@ -870,14 +872,14 @@ class OpusManager:
             new_grouping[0].replace_with(grouping)
 
             # Prevent redundant single-wrapper
-            if len(new_grouping.parent) == 1:
+            if len(position) > 3 and len(new_grouping.parent) == 1:
                 new_grouping.parent.replace_with(new_grouping)
                 reduced = True
         else:
             grouping.set_size(splits, True)
 
             # Prevent redundant single-wrapper
-            if len(grouping.parent) == 1:
+            if len(position) > 3 and len(grouping.parent) == 1:
                 grouping.parent.replace_with(grouping)
                 reduced = True
 
@@ -910,7 +912,8 @@ class OpusManager:
             self.cursor_position[0] -= 1
 
         self.channel_groupings[channel].pop(index)
-        new_position = self.cursor_position[0:2]
+
+        new_position = (*self.cursor_position[0:2], 0)
         while (grouping := self.get_grouping(new_position)).is_structural():
             new_position.append(0)
 
@@ -947,7 +950,7 @@ class OpusManager:
         position = self.cursor_position.copy()
 
         # Correct position
-        while len(position) > 2:
+        while len(position) > 3:
             try:
                 self.get_grouping(position)
                 break
@@ -1168,17 +1171,26 @@ class HistoriedOpusManager(OpusManager):
             ])
 
     def open_multi(self):
+        if self.history_locked:
+            return
+
         if not self.multi_counter:
             self.history_ledger.append([])
         self.multi_counter += 1
 
     def close_multi(self):
+        if self.history_locked:
+            return
+
         self.multi_counter -= 1
         if not self.multi_counter:
             self.history_ledger[-1].append((self.set_cursor_position, [self.cursor_position.copy()], {}))
 
     def setup_repopulate(self, start_position):
         '''Traverse a grouping and setup the history to recreate it for remove functions'''
+
+        if self.history_locked:
+            return
 
         self.open_multi()
 
@@ -1232,20 +1244,30 @@ class HistoriedOpusManager(OpusManager):
         super().remove_line(channel, index)
 
     def insert_after(self, position):
+        # Else is implicitly handled by 'split_grouping'
         rposition = position.copy()
         rposition[-1] += 1
         self.append_undoer(self.remove, rposition)
-
         super().insert_after(position)
 
-    def remove(self, position):
-        iposition = position.copy()
-        iposition[-1] -= 1
-
+    def split_grouping(self, position: List[int], splits: int):
         self.open_multi()
-        self.setup_repopulate(position[0:2])
-        self.close_multi()
+        grouping = self.get_grouping(position)
 
+        reduced = len(grouping.parent) == 1 and len(position) > 3
+        for _ in range(splits - 1):
+            tmp_pos = position.copy()
+            if reduced:
+                tmp_pos.pop()
+            tmp_pos[-1] = 1
+            self.append_undoer(self.remove, tmp_pos)
+
+        self.close_multi()
+        super().split_grouping(position, splits)
+
+    def remove(self, position):
+        if len(position) > 3 or (len(position) == 3 and position[1] >= 0):
+            self.setup_repopulate(position[0:2])
         super().remove(position)
 
     def insert_beat(self, index):
@@ -1490,9 +1512,8 @@ class CachedOpusManager(HistoriedOpusManager):
     def _remove_ignore_link(self, position: List[int]):
         super()._remove_ignore_link(position)
         # Flag changes to cache
-        if len(position) > 2:
-            channel, index = self.get_channel_index(position[0])
-            self.flag('beat_change', (channel, index, position[1]))
+        channel, index = self.get_channel_index(position[0])
+        self.flag('beat_change', (channel, index, position[1]))
 
     def remove_beat(self, index=None):
         if index is None:
@@ -1525,6 +1546,7 @@ class CachedOpusManager(HistoriedOpusManager):
         channel, line = self.get_channel_index(position[0])
         beat = position[1]
         self.flag('beat_change', (channel, line, beat))
+
 
     def kill(self):
         super().kill()

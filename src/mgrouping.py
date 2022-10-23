@@ -279,14 +279,8 @@ class MGrouping(Grouping):
                 opened_indeces.pop()
 
             if character in (MGrouping.CH_NEXT, MGrouping.CH_CLOPEN):
-                # Back up existing divisions
-                sub_divisions = grouping_stack[-1].divisions
-
                 # Resize Active Grouping
-                grouping_stack[-1].set_size(len(grouping_stack[-1]) + 1)
-
-                # Replace Active Grouping's Divisions with backups
-                grouping_stack[-1].divisions = sub_divisions
+                grouping_stack[-1].set_size(len(grouping_stack[-1]) + 1, noclobber=True)
 
             if character in (MGrouping.CH_OPEN, MGrouping.CH_CLOPEN):
                 new_grouping = grouping_stack[-1][-1]
@@ -296,7 +290,6 @@ class MGrouping(Grouping):
                     raise MissingCommaError(repstring, i, len(output) - 1) from exc
 
                 grouping_stack.append(new_grouping)
-
                 opened_indeces.append(i)
 
             elif relative_flag == MGrouping.CH_REPEAT:
@@ -418,16 +411,8 @@ class MGrouping(Grouping):
                 subgrouping = self[i]
                 strreps.append(subgrouping.to_string(base, depth+1))
 
-            if depth == 0:
-                output = ""
-                for chunk in strreps:
-                    output += chunk + self.CH_NEXT
-
-                while output[-1] in f"\n{self.CH_NEXT}":
-                    output = output[0:-1]
-            else:
-                output = self.CH_NEXT.join(strreps)
-                output = f"{self.CH_OPEN}{output}{self.CH_CLOSE}"
+            output = self.CH_NEXT.join(strreps)
+            output = f"{self.CH_OPEN}{output}{self.CH_CLOSE}"
 
         elif self.is_event():
             output = ""

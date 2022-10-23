@@ -10,7 +10,7 @@ from typing import Optional, Dict, List, Tuple
 import wrecked
 from .wrecked_elements import RectFrame
 from .mgrouping import get_number_string
-from .opusmanager import CachedOpusManager
+from .opusmanager import CachedOpusManager, dlog
 
 class InvalidCursor(Exception):
     '''Raised when attempting to pass a cursor without enough arguments'''
@@ -206,7 +206,6 @@ class EditorEnvironment:
                     self.rect_beats[k] = rect
                     self.opus_manager.flag('beat_change', k)
 
-
                 # Remove dangling rect entries
                 # (the rects got shifted, we just don't need the entries in the dicts)
                 k = self.opus_manager.opus_beat_count
@@ -218,7 +217,6 @@ class EditorEnvironment:
                             del self.subbeat_rect_map[(i,j,k)]
 
                 self.rect_beat_labels.pop()
-
 
     def tick_update_frames(self):
         width = self.rect_view.width
@@ -377,6 +375,7 @@ class EditorEnvironment:
             rect_line = self.channel_rects[i][j]
 
             rect_beat = self.rect_beats[(i, j, k)]
+
             beat = channels[i][j][k]
 
             subbeat_map = self.build_beat_rect(beat, rect_beat)
@@ -409,28 +408,7 @@ class EditorEnvironment:
                 rect_size_diffs[i] = new_max - old_max
                 self.rendered_beat_widths[i] = new_max
 
-        ## Then, merge consecutive beats in rect_size_diffs.
-        ##  Having fewer sections therein means fewer calls to shift_contents_in_box(...)
-        rect_size_diffs_tmp = {}
-        diff_keys = list(rect_size_diffs.keys())
-        diff_keys.sort()
-        skip_countdown = 0
-        for k in diff_keys[::-1]:
-            # Skip the next number of keys as they've been merged already
-            if skip_countdown:
-                skip_countdown -= 1
-                continue
-
-            rect_size_diffs_tmp[k + 1] = 0
-
-            j = k
-            while j >= 0 and j in rect_size_diffs:
-                # Increase offset of proceeding beat
-                rect_size_diffs_tmp[k + 1] += rect_size_diffs[j]
-                skip_countdown += 1
-                j -= 1
-
-        rect_size_diffs = rect_size_diffs_tmp
+        # TODO: Merge consecutive rect_size_diffs
 
         ## Then, Shift groups of beats that would be moved by beat size changes
         diff_keys = list(rect_size_diffs.keys())
@@ -439,7 +417,8 @@ class EditorEnvironment:
         for k in diff_keys:
             offset = rect_size_diffs[k]
             # KLUDGE! TODO: modify wrecked shift_contents in box to handle infinites
-            box_limit = (sum(self.rendered_beat_widths[0:max(0, k - 1)]) + k, 0, 9999999, 1)
+            # Note: "k + 1" because we are shifting the contents AFTER the beat
+            box_limit = (sum(self.rendered_beat_widths[0:max(0, k)]) + k + 1, 0, 9999999, 1)
             for channel in self.channel_rects:
                 for rect_line in channel:
                     rect_line.shift_contents_in_box(offset, 0, box_limit)

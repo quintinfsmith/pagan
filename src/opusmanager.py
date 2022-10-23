@@ -12,6 +12,7 @@ from .structures import BadStateError
 from .mgrouping import MGrouping, MGroupingEvent
 from .interactor import Interactor
 
+# DEBUG
 def dlog(msg):
     with open("LOG", "a") as fp:
         fp.write(f"{msg}\n")
@@ -338,7 +339,6 @@ class OpusManager:
     def set_cursor_position(self, position):
         self.cursor_position = position
         self.clear_register()
-        dlog(f"{position}")
 
     def cursor_left(self):
         fully_left = True
@@ -599,12 +599,6 @@ class OpusManager:
 
             for x, chunk in enumerate(chunks):
                 grouping = MGrouping.from_string(chunk, base=base, channel=channel)
-
-                # DEBUG
-                for b,n in enumerate(grouping):
-                    for bb, nn in enumerate(n):
-                        if not nn.is_structural():
-                            dlog(f"{channel},{x},{b},{bb}")
 
                 if grouping:
                     grouping.clear_singles()

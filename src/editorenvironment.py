@@ -10,7 +10,7 @@ from typing import Optional, Dict, List, Tuple
 import wrecked
 from .wrecked_elements import RectFrame
 from .mgrouping import get_number_string
-from .opusmanager import CachedOpusManager, dlog
+from .opusmanager import CachedOpusManager
 
 class InvalidCursor(Exception):
     '''Raised when attempting to pass a cursor without enough arguments'''

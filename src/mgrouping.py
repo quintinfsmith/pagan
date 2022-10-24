@@ -412,7 +412,8 @@ class MGrouping(Grouping):
                 strreps.append(subgrouping.to_string(base, depth+1))
 
             output = self.CH_NEXT.join(strreps)
-            output = f"{self.CH_OPEN}{output}{self.CH_CLOSE}"
+            if depth > 0:
+                output = f"{self.CH_OPEN}{output}{self.CH_CLOSE}"
 
         elif self.is_event():
             output = ""
@@ -438,9 +439,9 @@ class MGrouping(Grouping):
         else:
             output = "__"
 
-        needs_convert = f"{self.CH_CLOSE}{self.CH_NEXT}{self.CH_OPEN}"
-        while needs_convert in output:
-            output = output.replace(needs_convert, self.CH_CLOPEN)
+        #needs_convert = f"{self.CH_CLOSE}{self.CH_NEXT}{self.CH_OPEN}"
+        #while needs_convert in output:
+        #    output = output.replace(needs_convert, self.CH_CLOPEN)
 
         return output
 

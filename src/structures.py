@@ -185,6 +185,16 @@ class Grouping:
 
         return output
 
+    def insert_grouping(self, index, new_grouping):
+        self.size += 1
+        new_indices = {}
+        for old_index, grouping in self.divisions.items():
+            if index > old_index:
+                new_indices[old_index] = grouping
+            else:
+                new_indices[old_index + 1] = grouping
+        new_indices[index] = new_grouping
+        self.divisions = new_indices
 
     def merge(self, grouping):
         if grouping.is_open():

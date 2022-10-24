@@ -79,6 +79,16 @@ class OpusManager:
         cursor_c, cursor_i = self.get_channel_index(position[0])
         self.unlink_beat(cursor_c, cursor_i, position[1])
 
+    def clear_links_to_beat(self, channel: int, line: int, beat: int):
+        target = (channel, line, beat)
+        if target not in self.inv_linked_beat_map:
+            return
+
+        while self.inv_linked_beat_map[target]:
+            linked_key = self.inv_linked_beat_map[target].pop()
+            del self.linked_beat_map[linked_key]
+        del self.inv_linked_beat_map[target]
+
     def unlink_beat(self, channel: int, line: int, beat: int):
         key = (channel, line, beat)
         if key not in self.linked_beat_map:
@@ -796,6 +806,7 @@ class OpusManager:
         for i, channel in enumerate(self.channel_groupings):
             for j, line in enumerate(channel):
                 self.unlink_beat(i, j, index)
+                self.clear_links_to_beat(i, j, index)
                 line.pop(index)
         self.set_beat_count(self.opus_beat_count - 1)
 
@@ -828,20 +839,14 @@ class OpusManager:
     # TODO: Should this be a Grouping Method?
     def insert_beat(self, index=None):
         original_beat_count = self.opus_beat_count
-
-        self.set_beat_count(original_beat_count + 1)
+        self.opus_beat_count += 1
 
         # Move all beats after new one right
         for channel in self.channel_groupings:
-            for line in channel:
-                i = len(line) - 1
-                while i > index + 1:
-                    line[i] = line[i - 1]
-                    i -= 1
-
-        for channel in self.channel_groupings:
-            for line in channel:
-                line[index].set_size(1)
+            for i, line in enumerate(channel):
+                new_beat = MGrouping()
+                new_beat.set_size(1)
+                line.insert_grouping(index, new_beat)
 
         # Re-Adjust existing links
         adjusted_links = []
@@ -1256,18 +1261,7 @@ class HistoriedOpusManager(OpusManager):
         super().insert_after(position)
 
     def split_grouping(self, position: List[int], splits: int):
-        self.open_multi()
-        grouping = self.get_grouping(position)
-
-        reduced = len(grouping.parent) == 1 and len(position) > 3
-        for _ in range(splits - 1):
-            tmp_pos = position.copy()
-            if reduced:
-                tmp_pos.pop()
-            tmp_pos[-1] = 1
-            self.append_undoer(self.remove, tmp_pos)
-
-        self.close_multi()
+        self.setup_repopulate(position[0:3])
         super().split_grouping(position, splits)
 
     def remove(self, position):

@@ -58,6 +58,15 @@ class EditorEnvironment:
         self.frame_command_register = RectFrame(self.rect_view)
         self.frame_command_register.detach()
 
+    def tick_update_size(self) -> bool:
+        w, h = wrecked.get_terminal_size()
+        output = False
+        if h != self.rect_view.height or w != self.rect_view.width:
+            self.root.resize(w, h)
+            output = True
+
+        return output
+
     def load(self, path: str):
         self.opus_manager.load(path)
     def new(self):
@@ -73,6 +82,7 @@ class EditorEnvironment:
             self.kill()
             return
 
+        flag_draw |= self.tick_update_size()
         flag_draw |= self.tick_update_frames()
 
         self.tick_manage_lines()
@@ -219,17 +229,22 @@ class EditorEnvironment:
                 self.rect_beat_labels.pop()
 
     def tick_update_frames(self):
+        output = False
+
+        force_all = self.rect_view.width != self.root.width or self.rect_view.height != self.root.height
+        if force_all:
+            self.rect_view.resize(self.root.width, self.root.height)
+
         width = self.rect_view.width
         height = self.rect_view.height
 
-        output = False
 
         # Draw Register Frame
         command_ledger = self.opus_manager.command_ledger
         if command_ledger.is_open() or command_ledger.is_in_err():
             register = (0, height - 3, width - 2, 1)
 
-            if register != self.rendered_frames.get('register'):
+            if force_all or register != self.rendered_frames.get('register'):
                 self.frame_command_register.attach()
                 self.frame_command_register.resize(register[2], register[3])
                 self.frame_command_register.move(register[0], register[1])
@@ -250,7 +265,7 @@ class EditorEnvironment:
             self.rect_view.height - register[3] - 3
         )
 
-        if line_labels != self.rendered_frames.get('line_labels'):
+        if force_all or line_labels != self.rendered_frames.get('line_labels'):
             self.frame_line_labels.resize(line_labels[2], line_labels[3])
             self.frame_line_labels.move(line_labels[0], line_labels[1])
             self.rendered_frames['line_labels'] = line_labels
@@ -264,7 +279,7 @@ class EditorEnvironment:
             1
         )
 
-        if beat_labels != self.rendered_frames.get('beat_labels'):
+        if force_all or beat_labels != self.rendered_frames.get('beat_labels'):
             self.frame_beat_labels.resize(beat_labels[2], beat_labels[3])
             self.frame_beat_labels.move(beat_labels[0], beat_labels[1])
             self.rendered_frames['beat_labels'] = beat_labels
@@ -278,7 +293,7 @@ class EditorEnvironment:
             self.rect_view.height - 3
         )
 
-        if content != self.rendered_frames.get('content'):
+        if force_all or content != self.rendered_frames.get('content'):
             self.frame_content.resize(content[2], content[3])
             self.frame_content.move(content[0], content[1])
             self.rendered_frames['content'] = content

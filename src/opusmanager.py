@@ -437,7 +437,7 @@ class OpusManager:
             for i in position[1:]:
                 grouping = grouping[i]
         except BadStateError as e:
-            raise InvalidCursor from e
+            raise InvalidCursor(position)
 
         return grouping
 
@@ -620,8 +620,8 @@ class OpusManager:
 
         for beat, target in self.linked_beat_map.items():
             if target not in self.inv_linked_beat_map:
-                self.inv_linked_beat_map[target] = []
-            self.inv_linked_beat_map[target].append(beat)
+                self.inv_linked_beat_map[target] = set()
+            self.inv_linked_beat_map[target].add(beat)
 
 
     def load_file(self, path: str) -> MGrouping:
@@ -727,12 +727,15 @@ class OpusManager:
             self._remove_ignore_link(position)
 
     def _remove_ignore_link(self, position: List[int]):
-        if len(position) < 3 or (len(position) == 3 and position[2] == 0):
+        grouping = self.get_grouping(position)
+        parent = grouping.parent
+        if len(position) < 3:
+            return
+        elif len(position) == 3 and len(parent) == 1:
+            self.unset(position)
             return
 
         index = position[-1]
-        grouping = self.get_grouping(position)
-        parent = grouping.parent
         new_size = len(parent) - 1
 
         if new_size > 0:
@@ -746,6 +749,14 @@ class OpusManager:
             if new_size == 1 and parent != self.get_grouping(position[0:2]):
                 parent_index = position[-2]
                 parent.parent[parent_index] = parent[0]
+
+
+            if position == self.cursor_position:
+                if new_size == 1 and parent != self.get_grouping(position[0:2]):
+                    position.pop()
+                elif index > 0:
+                    position[-1] -= 1
+                self.set_cursor_position(position)
         else:
             self._remove_ignore_link(position[0:-1])
 
@@ -754,7 +765,7 @@ class OpusManager:
         cursor = self.cursor_position
         self.remove_beat(cursor[1])
 
-        cursor = (*cursor[0:2], 0)
+        cursor = [*cursor[0:2], 0]
         cursor[1] = min(cursor[1], self.opus_beat_count - 1)
 
         grouping = self.get_grouping(cursor)
@@ -804,33 +815,33 @@ class OpusManager:
         self.inv_linked_beat_map = {}
         for beat, target in adjusted_links:
             if target not in self.inv_linked_beat_map:
-                self.inv_linked_beat_map[target] = []
-            self.inv_linked_beat_map[target].append(beat)
+                self.inv_linked_beat_map[target] = set()
+            self.inv_linked_beat_map[target].add(beat)
             self.linked_beat_map[beat] = target
 
 
     def insert_beat_at_cursor(self):
         cursor = self.cursor_position
         self.insert_beat(cursor[1] + 1)
-        self.set_cursor_position((*cursor[0:2], 0))
+        self.set_cursor_position([*cursor[0:2], 0])
 
     # TODO: Should this be a Grouping Method?
     def insert_beat(self, index=None):
         original_beat_count = self.opus_beat_count
 
         self.set_beat_count(original_beat_count + 1)
-        if index >= original_beat_count - 1:
-            return
 
         # Move all beats after new one right
         for channel in self.channel_groupings:
             for line in channel:
-                tmp = line[-1]
                 i = len(line) - 1
-                while i > index:
+                while i > index + 1:
                     line[i] = line[i - 1]
                     i -= 1
-                line[i] = tmp
+
+        for channel in self.channel_groupings:
+            for line in channel:
+                line[index].set_size(1)
 
         # Re-Adjust existing links
         adjusted_links = []
@@ -847,8 +858,8 @@ class OpusManager:
         self.inv_linked_beat_map = {}
         for beat, target in adjusted_links:
             if target not in self.inv_linked_beat_map:
-                self.inv_linked_beat_map[target] = []
-            self.inv_linked_beat_map[target].append(beat)
+                self.inv_linked_beat_map[target] = set()
+            self.inv_linked_beat_map[target].add(beat)
             self.linked_beat_map[beat] = target
 
     def split_grouping(self, initial_position, splits):

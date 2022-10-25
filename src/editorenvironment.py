@@ -64,7 +64,6 @@ class EditorEnvironment:
         if h != self.rect_view.height or w != self.rect_view.width:
             self.root.resize(w, h)
             output = True
-
         return output
 
     def load(self, path: str):

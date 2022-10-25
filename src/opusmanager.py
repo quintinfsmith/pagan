@@ -287,7 +287,7 @@ class OpusManager:
             working_dir = path[path.rfind("/") + 1:path.rfind(".")]
         elif os.path.isdir(path):
             tmp_split = path.split("/")
-            working_path = "/".join(tmp_split[0:-1])
+            working_path = "/".join(tmp_split[0:-1]) + "/"
             working_dir = tmp_split[-1]
         else:
             working_path = path[0:path.rfind("/") + 1]
@@ -484,6 +484,9 @@ class OpusManager:
     def add_line_to_channel(self, channel=0):
         new_grouping = MGrouping()
         new_grouping.set_size(self.opus_beat_count)
+        for i in range(self.opus_beat_count):
+            new_grouping[i].set_size(1)
+
         self.channel_groupings[channel].append(new_grouping)
 
     def change_line_channel(self, old_channel, line_index, new_channel):
@@ -558,6 +561,7 @@ class OpusManager:
             self.load_folder(path)
         elif path[path.rfind("."):].lower() == ".mid":
             self.import_midi(path)
+            self.path = path[0:path.rfind(".mid")] + "_midi"
         else:
             self.load_file(path)
         for channel in self.channel_groupings:
@@ -908,6 +912,8 @@ class OpusManager:
 
         new_grouping = MGrouping()
         new_grouping.set_size(self.opus_beat_count)
+        for i in range(self.opus_beat_count):
+            new_grouping[i].set_size(1)
         if index is not None:
             self.channel_groupings[channel].insert(index, new_grouping)
         else:

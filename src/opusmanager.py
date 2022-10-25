@@ -66,13 +66,34 @@ class OpusManager:
         cursor_c, cursor_i = self.get_channel_index(position[0])
         self.overwrite_beat((cursor_c, cursor_i, position[1]), (channel, index, beat))
 
-    def link_beat_at_cursor(self, channel, index, beat, count=1):
+    def link_beat_at_cursor(self, channel, index, beat):
         position = self.cursor_position
         cursor_c, cursor_i = self.get_channel_index(position[0])
-        if count > 1:
-            self.link_beat_range((cursor_c, cursor_i, position[1]), (channel, index, beat), count)
+
+        if isinstance(channel, range):
+            channels = list(channel)
         else:
-            self.link_beats((cursor_c, cursor_i, position[1]), (channel, index, beat))
+            channels = [channel]
+
+        if isinstance(index, range):
+            indices = list(index)
+        else:
+            indices = [index]
+
+        if isinstance(beat, range):
+            beats = list(beat)
+        else:
+            beats = [beat]
+
+        for i, channel in enumerate(channels):
+            if not self.channel_groupings[channel]:
+                continue
+            for j, index in enumerate(indices):
+                if index >= len(self.channel_groupings[channel]):
+                    continue
+                for k, beat in enumerate(beats):
+                    self.link_beats((cursor_c + i, cursor_i + j, position[1] + k), (channel, index, beat))
+
 
     def unlink_beat_at_cursor(self):
         position = self.cursor_position
@@ -145,6 +166,8 @@ class OpusManager:
 
         new_line = MGrouping()
         new_line.set_size(4)
+        for i in range(4):
+            new_line[i].set_size(1)
         self.channel_groupings[0].append(new_line)
         self.opus_beat_count = 4
 
@@ -558,6 +581,8 @@ class OpusManager:
 
     def load(self, path: str) -> None:
         if os.path.isdir(path):
+            if len(path) > 1 and path[-1] == "/":
+                path = path[0:-1]
             self.load_folder(path)
         elif path[path.rfind("."):].lower() == ".mid":
             self.import_midi(path)
@@ -745,6 +770,7 @@ class OpusManager:
         parent = grouping.parent
         if len(position) < 3:
             return
+
         elif len(position) == 3 and len(parent) == 1:
             self.unset(position)
             return
@@ -886,14 +912,13 @@ class OpusManager:
             new_grouping[0].replace_with(grouping)
 
             # Prevent redundant single-wrapper
-            if len(position) > 3 and len(new_grouping.parent) == 1:
+            if len(position) > 2 and len(new_grouping.parent) == 1:
                 new_grouping.parent.replace_with(new_grouping)
                 reduced = True
         else:
             grouping.set_size(splits, True)
-
             # Prevent redundant single-wrapper
-            if len(position) > 3 and len(grouping.parent) == 1:
+            if len(position) > 2 and len(grouping.parent) == 1:
                 grouping.parent.replace_with(grouping)
                 reduced = True
 
@@ -1092,6 +1117,9 @@ class CommandLedger:
             return
 
         cmd_parts = self.register.split(" ")
+        while "" in cmd_parts:
+            cmd_parts.remove("")
+
         if cmd_parts[0] in self.command_map:
             try:
                 hook = self.command_map[cmd_parts[0]]
@@ -1100,8 +1128,18 @@ class CommandLedger:
 
                 non_kw_params = params.copy()
 
-                # Attempt to cast arguments that look like integers
                 for i, arg in enumerate(args):
+                    # Convert Ranges
+                    if ":" in arg:
+                        part_a = arg[0:arg.find(":")]
+                        part_b = arg[arg.find(":") + 1:]
+                        try:
+                            part_a = int(part_a)
+                            part_b = int(part_b)
+                            args[i] = range(part_a, part_b)
+                        except ValueError:
+                            pass
+                    # Attempt to cast arguments that look like integers
                     try:
                         args[i] = int(arg)
                     except ValueError:
@@ -1267,12 +1305,11 @@ class HistoriedOpusManager(OpusManager):
         super().insert_after(position)
 
     def split_grouping(self, position: List[int], splits: int):
-        self.setup_repopulate(position[0:3])
+        self.setup_repopulate(position[0:2])
         super().split_grouping(position, splits)
 
     def remove(self, position):
-        if len(position) > 3 or (len(position) == 3 and position[1] >= 0):
-            self.setup_repopulate(position[0:2])
+        self.setup_repopulate(position[0:2])
         super().remove(position)
 
     def insert_beat(self, index):

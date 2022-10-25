@@ -80,6 +80,7 @@ class Grouping:
         except KeyError:
             output = self.__class__()
             self[i] = output
+            output.parent = self
 
         return output
 
@@ -195,6 +196,7 @@ class Grouping:
                 new_indices[old_index + 1] = grouping
         new_indices[index] = new_grouping
         self.divisions = new_indices
+        new_grouping.parent = self
 
     def merge(self, grouping):
         if grouping.is_open():
@@ -512,6 +514,7 @@ class Grouping:
         new_grouping = self.__class__()
         new_grouping.size = self.size
         new_grouping.state = self.state
+        #new_grouping.parent = self.parent
 
         for i, grouping in self.divisions.items():
             new_grouping.divisions[i] = grouping.copy()

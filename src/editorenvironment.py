@@ -9,8 +9,8 @@ from typing import Optional, Dict, List, Tuple
 
 import wrecked
 from .wrecked_elements import RectFrame
-from .mgrouping import get_number_string
-from .opusmanager import CachedOpusManager
+from .opusmanager import OpusManager
+from .opusmanager.mgrouping import get_number_string
 
 class InvalidCursor(Exception):
     '''Raised when attempting to pass a cursor without enough arguments'''
@@ -26,7 +26,7 @@ class EditorEnvironment:
         #self.rendered_register = None
         #self.rect_register = self.rect_view_window.new_rect()
 
-        self.opus_manager = CachedOpusManager()
+        self.opus_manager = OpusManager()
         self.channel_rects = [[] for i in range(16)]
         self.channel_divider_rects = {}
 
@@ -68,6 +68,7 @@ class EditorEnvironment:
 
     def load(self, path: str):
         self.opus_manager.load(path)
+
     def new(self):
         self.opus_manager.new()
 
@@ -344,7 +345,7 @@ class EditorEnvironment:
     def tick_update_view_offset(self) -> bool:
         did_change_flag = False
 
-        cursor = self.opus_manager.cursor_position
+        cursor = self.opus_manager.cursor.to_list()
         beat_offset = sum(self.rendered_beat_widths[0:cursor[1]]) + cursor[1] - 1
         line_length = sum(self.rendered_beat_widths) + len(self.rendered_beat_widths) - 1
         beat_width = self.rendered_beat_widths[cursor[1]]
@@ -382,7 +383,7 @@ class EditorEnvironment:
             return False
 
         output = True
-        cursor_channel, cursor_line = self.opus_manager.get_channel_index(self.opus_manager.cursor_position[0])
+        cursor = self.opus_manager.cursor.get_triplet()
         while flagged_beat_changes:
             i, j, k = flagged_beat_changes.pop()
 
@@ -403,7 +404,7 @@ class EditorEnvironment:
             beat_indices_changed.add(k)
 
             # force the cursor to be redrawn
-            if i == cursor_channel and j == cursor_line and k == self.opus_manager.cursor_position[1]:
+            if (i, j, k) == cursor:
                 self.force_cursor_update = True
 
         # Resize the adjacent beats in all the lines to match sizes
@@ -464,7 +465,8 @@ class EditorEnvironment:
 
     def tick_update_cursor(self) -> bool:
         output = False
-        if self.rendered_cursor_position != self.opus_manager.cursor_position or self.force_cursor_update:
+        cursor = self.opus_manager.cursor.to_list()
+        if self.rendered_cursor_position != cursor or self.force_cursor_update:
             output = True
 
             if self.rendered_cursor_position is not None:
@@ -476,10 +478,10 @@ class EditorEnvironment:
                 except IndexError:
                     pass
 
-            rect = self.get_subbeat_rect(self.opus_manager.cursor_position)
+            rect = self.get_subbeat_rect(cursor)
             rect.invert()
 
-            self.rendered_cursor_position = self.opus_manager.cursor_position.copy()
+            self.rendered_cursor_position = cursor
             self.force_cursor_update = False
 
         return output

@@ -16,37 +16,48 @@ class Cursor:
         self.position = list(position)
 
     def move_left(self):
+        channel, line, beat = self.get_triplet()
+        working_grouping = self.opus_manager.channel_groupings[channel][line][beat]
+        for i, j in enumerate(self.position):
+            working_grouping = working_grouping[j]
+
         while self.position:
             if self.position[-1] == 0:
                 self.position.pop()
+                working_grouping = working_grouping.parent
             else:
                 self.position[-1] -= 1
                 break
 
         if not self.position:
-            self.position = [0]
             if self.x > 0:
                 self.x -= 1
+                self.position = [len(working_grouping) - 1]
+            else:
+                self.position = [0]
 
-        self.settle(True)
+        self.settle()
 
     def move_right(self):
-        beat = self.opus_manager.get_grouping([self.y, self.x])
-        working_grouping = beat
+        channel, line, beat = self.get_triplet()
+        working_grouping = self.opus_manager.channel_groupings[channel][line][beat]
         for i, j in enumerate(self.position):
             working_grouping = working_grouping[j]
 
         while self.position:
-            if len(working_grouping.parent) - 1 == self.position[-1]:
+            if len(working_grouping.parent) - 1 > self.position[-1]:
+                self.position[-1] += 1
+                break
+            elif len(working_grouping.parent) - 1 == self.position[-1]:
                 self.position.pop()
                 working_grouping = working_grouping.parent
-            else:
-                self.position[-1] += 1
 
         if not self.position:
-            self.position = [0]
             if self.x < self.opus_manager.opus_beat_count - 1:
                 self.x += 1
+                self.position = [0]
+            else:
+                self.position = [len(working_grouping) - 1]
 
         self.settle()
 
@@ -91,23 +102,27 @@ class Cursor:
         self.x = new_x
 
     def settle(self, right_align=False):
+        ''' Sink the cursor as deep as possible. (until it finds a leaf) '''
         self.x = max(0, min(self.x, self.opus_manager.opus_beat_count - 1))
 
         channel, line, beat =  self.get_triplet()
+        ## First get the beat ...
         working_grouping = self.opus_manager.channel_groupings[channel][line][beat]
 
         if not self.position:
             self.position = [0]
 
+        ## The get the current working_grouping ...
         index = 0
         for j in self.position:
-            if (not working_grouping.is_structural()) or len(working_grouping) <= j:
+            if not working_grouping.is_structural() or len(working_grouping) <= j:
                 break
             working_grouping = working_grouping[j]
             index += 1
 
         self.position = self.position[0:index]
 
+        ## ... Then find the leaf, if not already found
         if not right_align:
             while working_grouping.is_structural():
                 self.position.append(0)

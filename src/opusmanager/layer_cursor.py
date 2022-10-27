@@ -143,8 +143,8 @@ class CursorLayer(FlagLayer):
         self.remove_line(channel, index)
 
     def remove_beat_at_cursor(self):
-        self.remove_beat(self.cursor.y)
-        self.cursor.settle()
+        self.remove_beat(self.cursor.x)
+        self.cursor.move_left()
 
     def split_grouping_at_cursor(self):
         self.split_grouping(self.cursor.to_list(), 2)
@@ -158,7 +158,7 @@ class CursorLayer(FlagLayer):
         self.cursor.settle()
 
     def insert_beat_at_cursor(self):
-        self.insert_beat(self.cursor.to_list())
+        self.insert_beat(self.cursor.x + 1)
         self.cursor.settle()
 
     def get_grouping_at_cursor(self):

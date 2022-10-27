@@ -89,21 +89,40 @@ class CommandLedger:
         else:
             self.close()
 
-    def run(self):
+
+    def run(self, **static_kwargs):
         if not self.is_open():
             return
+
+        
 
         cmd_parts = self.register.split(" ")
         while "" in cmd_parts:
             cmd_parts.remove("")
 
-        if cmd_parts[0] in self.command_map:
+        # Add to history even if it's bad, so the user can see what they did wrong
+        self.history.append(self.register)
+        if not cmd_parts:
+            pass
+        elif cmd_parts[0] in self.command_map:
             try:
                 hook = self.command_map[cmd_parts[0]]
                 params = list(signature(hook).parameters)
-                args, kwargs = parse_kwargs(cmd_parts[1:])
+                try:
+                    args, kwargs = parse_kwargs(cmd_parts[1:])
+                except Exception:
+                    self.set_error_msg(f"Bad String")
+                    return
+
+                # Apply preset static values to keywords
+                for k, static_value in static_kwargs.items():
+                    if k in kwargs:
+                        continue
+                    kwargs[k] = static_value
 
                 non_kw_params = params.copy()
+                if 'kwargs' in non_kw_params:
+                    non_kw_params.remove('kwargs')
 
                 for i, arg in enumerate(args):
                     # Convert Ranges
@@ -123,10 +142,19 @@ class CommandLedger:
                         pass
 
                 for k, kwarg in kwargs.items():
-                    if k not in params:
-                        self.set_error_msg(f"Unknown argument: '{k}'")
-                        return
-                    non_kw_params.remove(k)
+                    if not isinstance(kwarg, str):
+                        continue
+
+                    # Convert Ranges
+                    if ":" in kwarg:
+                        part_a = kwarg[0:kwarg.find(":")]
+                        part_b = kwarg[kwarg.find(":") + 1:]
+                        try:
+                            part_a = int(part_a)
+                            part_b = int(part_b)
+                            kwargs[k] = range(part_a, part_b)
+                        except ValueError:
+                            pass
 
                     try:
                         kwargs[k] = int(kwarg)
@@ -141,6 +169,8 @@ class CommandLedger:
                 req_params = params.copy()
 
                 if hook.__kwdefaults__ is not None:
+                    if 'kwargs' in req_params:
+                        req_params.remove('kwargs')
                     for k in hook.__kwdefaults__:
                         if k in req_params:
                             req_params.remove(k)
@@ -155,8 +185,6 @@ class CommandLedger:
                 else:
                     try:
                         hook(*args, **kwargs)
-                        # add to history only after the command is successful
-                        self.history.append(self.register)
                     except Exception as e:
                         self.set_error_msg(f"{repr(e)}")
 
@@ -181,6 +209,8 @@ class InteractionLayer(CursorLayer):
     def __init__(self):
         super().__init__()
 
+        self.static_kwargs = {}
+
         self.command_ledger = CommandLedger({
             'w': self.save,
             'q': self.kill,
@@ -190,8 +220,9 @@ class InteractionLayer(CursorLayer):
             'swap': self.swap_channels,
             'jump': self.jump_to_beat,
             'link': self.link_beat_at_cursor,
-            'unlink': self.unlink_beat_at_cursor,
-            'ow': self.overwrite_beat_at_cursor
+            'unlink': self.cmd_unlink_beats,
+            'ow': self.overwrite_beat_at_cursor,
+            'set':  self.save_kwarg_value
         })
 
         self.interactor = Interactor()
@@ -253,6 +284,19 @@ class InteractionLayer(CursorLayer):
             (b"\x1B[B", self.command_ledger.go_to_next)  # Arrow Down
         )
 
+    def cmd_unlink_beats(self, beats=None):
+        if beats is None:
+            self.unlink_beat_at_cursor()
+        else:
+            cursor = self.cursor.get_triplet()
+            for i in range(beats):
+                self.unlink_beat(cursor[0], cursor[1], cursor[2] + i)
+
+    def save_kwarg_value(self, cmd, key, value):
+        if not cmd in self.static_kwargs:
+            self.static_kwargs[cmd] = {}
+        self.static_kwargs[cmd][key] = value
+
     def open_command_ledger_and_set(self, new_value):
         self.command_ledger_open()
         self.command_ledger.register = new_value
@@ -266,7 +310,14 @@ class InteractionLayer(CursorLayer):
         self.interactor.set_context(InputContext.Default)
 
     def command_ledger_run(self):
-        self.command_ledger.run()
+        register = self.command_ledger.get_register()
+        if ' ' in register:
+            cmd = register[0:register.find(" ")]
+        else:
+            cmd = register
+
+        self.command_ledger.run(**self.static_kwargs.get(cmd, {}))
+
         if self.command_ledger.is_in_err():
             self.interactor.set_context(InputContext.ConfirmOnly)
         else:
@@ -276,6 +327,31 @@ class InteractionLayer(CursorLayer):
         self.command_ledger.backspace()
         if not self.command_ledger.is_open():
             self.interactor.set_context(InputContext.Default)
+
+    def save(self, path=None):
+        super().save(path)
+
+        fullpath = self.get_working_dir()
+        json_static_kwargs = {}
+        for cmd, kwargs in self.static_kwargs.items():
+            json_static_kwargs[cmd] = {}
+            for key, value in kwargs.items():
+                if isinstance(value, range):
+                    value = f"{value.start}:{value.stop}"
+                json_static_kwargs[cmd][key] = value
+
+        with open(f"{fullpath}/static_kwargs.json", "w") as fp:
+            fp.write(json.dumps(json_static_kwargs, indent=4))
+    def load(self, path):
+        super().load(path)
+        fullpath = self.get_working_dir()
+        filepath = f"{fullpath}/static_kwargs.json"
+        if not os.path.isfile(filepath):
+            return
+
+        json_kwargs = {}
+        with open(filepath, "r") as fp:
+            self.static_kwargs = json.loads(fp.read())
 
 
 class UpdatesCache:

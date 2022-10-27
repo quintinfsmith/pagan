@@ -128,12 +128,8 @@ class OpusManagerBase:
         self.replace_grouping(position, self.clipboard_grouping)
         self.clipboard_grouping = None
 
-    def save(self, path=None):
-        if path is None and self.path is None:
-            raise NoPath
-        elif path is None:
-            path = self.path
-
+    def get_working_dir(self):
+        path = self.path
         if path.lower().endswith("mid"):
             working_path = path[0:path.rfind("/")]
             working_dir = path[path.rfind("/") + 1:path.rfind(".")]
@@ -149,6 +145,19 @@ class OpusManagerBase:
             working_dir = path[path.rfind("/") + 1:]
 
         fullpath = f"{working_path}{working_dir}"
+
+        return fullpath
+
+    def save(self, path=None):
+        if path is None and self.path is None:
+            raise NoPath
+        elif path is None:
+            path = self.path
+
+        self.path = path
+
+        fullpath = self.get_working_dir()
+
         if not os.path.isdir(fullpath):
             os.mkdir(fullpath)
 
@@ -179,7 +188,10 @@ class OpusManagerBase:
     def kill(self):
         self.flag_kill = True
 
-    def export(self, *, path=None, tempo=120, transpose=-3):
+    def export(self, *, path=None, **kwargs):
+        for i in range(16):
+            kwargs[f"i{i}"] = int(kwargs.get(f"i{i}", 0))
+
         opus = MGrouping()
         opus.set_size(self.opus_beat_count)
         for groupings in self.channel_groupings:
@@ -193,7 +205,9 @@ class OpusManagerBase:
             else:
                 raise NoPath()
 
-        opus.to_midi(tempo=tempo, transpose=transpose).save(path)
+        opus.to_midi(
+            **kwargs
+        ).save(path)
 
 
     def get_grouping(self, position):
@@ -331,7 +345,7 @@ class OpusManagerBase:
 
         # create a reference map of channels and remove non-suffixed files from the list
         for filename in filenames:
-            if filename[filename.rfind("."):] == ".swp":
+            if filename[filename.rfind("."):] in (".swp", ".json"):
                 continue
 
             channel = None

@@ -136,7 +136,7 @@ class MGrouping(Grouping):
 
     def to_midi(self, **kwargs) -> MIDI:
         transpose = kwargs.get('transpose', 0)
-        tempo = int(kwargs.get('tempo', 80))
+        tempo = int(kwargs.get('tempo', 120))
         start = int(kwargs.get('start', 0))
         end = kwargs.get('end', None)
         if end is not None:

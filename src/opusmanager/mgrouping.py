@@ -147,15 +147,7 @@ class MGrouping(Grouping):
         else:
             slice_end = end
 
-        new_opus = MGrouping()
-
-        if slice_end - start < len(self):
-            new_opus.set_size(slice_end - start)
-            sliced = self[start:min(len(self), slice_end)]
-            for j, subgrouping in enumerate(sliced):
-                new_opus[j].merge(subgrouping)
-        else:
-            new_opus = self
+        new_opus = self
 
         midi = MIDI()
 
@@ -207,6 +199,11 @@ class MGrouping(Grouping):
                                 note += transpose
 
                         prev_note = note
+                        if not start <= m < slice_end:
+                            # We've got the previous note,
+                            # now we don't want to actually modify the midi
+                            continue
+
                         #pitch_bend = event['pitch_bend']
                         pitch_bend = 0
 
@@ -246,9 +243,8 @@ class MGrouping(Grouping):
                                 running_pitchwheel_revert,
                                 tick=int(current_tick + ((i + 1) * div_size)),
                             )
-
-
-                current_tick += midi.ppqn
+                if start < m <= slice_end:
+                    current_tick += midi.ppqn
 
         return midi
 

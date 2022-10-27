@@ -205,10 +205,7 @@ class OpusManagerBase:
             else:
                 raise NoPath()
 
-        opus.to_midi(
-            **kwargs
-        ).save(path)
-
+        opus.to_midi(**kwargs).save(path)
 
     def get_grouping(self, position):
         grouping = self.get_line(position[0])

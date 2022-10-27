@@ -28,7 +28,7 @@ class Cursor:
             if self.x > 0:
                 self.x -= 1
 
-        self.adjust(True)
+        self.settle(True)
 
     def move_right(self):
         beat = self.opus_manager.get_grouping([self.y, self.x])
@@ -48,20 +48,20 @@ class Cursor:
             if self.x < self.opus_manager.opus_beat_count - 1:
                 self.x += 1
 
-        self.adjust()
+        self.settle()
 
     def move_up(self):
         if self.y > 0:
             self.y -= 1
 
-        self.adjust()
+        self.settle()
 
     def move_down(self):
         line_count = self.opus_manager.line_count
         if self.y < line_count - 1:
             self.y += 1
 
-        self.adjust()
+        self.settle()
 
     def move_climb(self):
         if len(self.position) > 1:
@@ -90,17 +90,18 @@ class Cursor:
             new_x = min(new_x, beat_count - 1)
         self.x = new_x
 
-    def adjust(self, right_align=False):
-        if self.x >= self.opus_manager.opus_beat_count:
-            self.x = self.opus_manager.opus_beat_count - 1
-        if self.x < 0:
-            self.x = 0
+    def settle(self, right_align=False):
+        self.x = max(0, min(self.x, self.opus_manager.opus_beat_count - 1))
 
-        beat = self.opus_manager.channel_groupings[self.y][self.x]
-        working_grouping = beat
+        channel, line, beat =  self.get_triplet()
+        working_grouping = self.opus_manager.channel_groupings[channel][line][beat]
+
+        if not self.position:
+            self.position = [0]
+
         index = 0
         for j in self.position:
-            if len(working_grouping) <= index:
+            if (not working_grouping.is_structural()) or len(working_grouping) <= j:
                 break
             working_grouping = working_grouping[j]
             index += 1
@@ -143,22 +144,22 @@ class CursorLayer(FlagLayer):
 
     def remove_beat_at_cursor(self):
         self.remove_beat(self.cursor.y)
-        self.cursor.adjust()
+        self.cursor.settle()
 
     def split_grouping_at_cursor(self):
         self.split_grouping(self.cursor.to_list(), 2)
-        self.cursor.adjust()
+        self.cursor.settle()
 
     def unset_at_cursor(self):
         self.unset(self.cursor.to_list())
 
     def remove_grouping_at_cursor(self):
         self.remove(self.cursor.to_list())
-        self.cursor.adjust()
+        self.cursor.settle()
 
     def insert_beat_at_cursor(self):
         self.insert_beat(self.cursor.to_list())
-        self.cursor.adjust()
+        self.cursor.settle()
 
     def get_grouping_at_cursor(self):
         return self.get_grouping([
@@ -308,15 +309,15 @@ class CursorLayer(FlagLayer):
 
     def insert_beat(self, index=None):
         super().insert_beat(index)
-        self.cursor.adjust()
+        self.cursor.settle()
 
     def remove_beat(self, index):
         super().remove_beat(index)
-        self.cursor.adjust()
+        self.cursor.settle()
 
     def remove(self, position):
         super().remove(position)
-        self.cursor.adjust()
+        self.cursor.settle()
 
     def swap_channels(self, channel_a, channel_b):
         orig_cursor = self.cursor.get_triplet()
@@ -326,29 +327,29 @@ class CursorLayer(FlagLayer):
         new_y = self.get_y(orig_cursor[0])
         new_y += min(orig_cursor[1], len(self.channel_groupings[orig_cursor[0]]) - 1)
         self.cursor.set_y(new_y)
-        self.cursor.adjust()
+        self.cursor.settle()
 
     def split_grouping(self, position, splits):
         super().split_grouping(position, splits)
-        self.cursor.adjust()
+        self.cursor.settle()
 
     def remove_line(self, channel, index=None):
         super().remove_line(channel, index)
-        self.cursor.adjust()
+        self.cursor.settle()
 
     def remove_channel(self, channel):
         super().remove_channel(channel)
-        self.cursor.adjust()
+        self.cursor.settle()
 
     def overwrite_beat(self, old_beat, new_beat):
         super().overwrite_beat(old_beat, new_beat)
-        self.cursor.adjust()
+        self.cursor.settle()
 
     def new(self):
         super().new()
         self.cursor.set(0,0,0)
-        self.cursor.adjust()
+        self.cursor.settle()
 
     def load(self, path: str) -> None:
         super().load(path)
-        self.cursor.adjust()
+        self.cursor.settle()

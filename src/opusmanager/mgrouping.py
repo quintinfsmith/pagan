@@ -402,6 +402,13 @@ class MGrouping(Grouping):
         if len(grouping_stack) > 1:
             raise UnclosedGroupingError(repstring, opened_indeces.pop())
 
+        for i, beat in enumerate(output):
+            if not beat.is_structural():
+                new_grouping = MGrouping()
+                new_grouping.set_size(1)
+                output[i].replace_with(new_grouping)
+                new_grouping[0].replace_with(beat)
+
         return output
 
     def to_string(self, base=12, depth=0) -> str:

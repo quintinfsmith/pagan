@@ -11,7 +11,7 @@ from .mgrouping import MGrouping, MGroupingEvent
 from .errors import NoPathGiven, InvalidPosition
 
 class OpusManagerBase:
-    ''' Pure form of the OpusManager. Made for functional control over the opus '''
+    """ Pure form of the OpusManager. Made for functional control over the opus """
     RADIX = 12
     def __init__(self):
         self.channel_groupings = [[] for i in range(16)]
@@ -23,12 +23,13 @@ class OpusManagerBase:
         self.clipboard_grouping = None
         self.flag_kill = False
 
-
     @property
-    def line_count(self):
+    def line_count(self) -> int:
+        """Get the number of lines active in this opus."""
         return sum((len(channel) for channel in self.channel_groupings))
 
-    def clear_links_to_beat(self, channel: int, line: int, beat: int):
+    def clear_links_to_beat(self, channel: int, line: int, beat: int) -> None:
+        """Remove all links pointing to the specific beat"""
         target = (channel, line, beat)
         if target not in self.inv_linked_beat_map:
             return
@@ -38,7 +39,11 @@ class OpusManagerBase:
             del self.linked_beat_map[linked_key]
         del self.inv_linked_beat_map[target]
 
-    def unlink_beat(self, channel: int, line: int, beat: int):
+    def unlink_beat(self, channel: int, line: int, beat: int) -> None:
+        """
+            Removes the link from this beat to another.
+            Leaves the beat unchanged.
+        """
         key = (channel, line, beat)
         if key not in self.linked_beat_map:
             return
@@ -50,7 +55,12 @@ class OpusManagerBase:
 
         del self.linked_beat_map[key]
 
-    def link_beats(self, beat, target):
+    def link_beats(self, beat, target) -> None:
+        """
+            Overwrites *beat* with a copy of *target*,
+            then creates a link between the two such that
+            any changes made to one are made to the other.
+        """
         # Remove any existing link
         self.unlink_beat(*beat)
 
@@ -62,8 +72,8 @@ class OpusManagerBase:
             self.inv_linked_beat_map[target] = set()
         self.inv_linked_beat_map[target].add(beat)
 
-    def overwrite_beat(self, old_beat, new_beat):
-        '''Overwrite a beat with a copy of the grouping of another'''
+    def overwrite_beat(self, old_beat, new_beat) -> None:
+        """Overwrite a beat with a copy of the grouping of another"""
         new_grouping = self.channel_groupings[new_beat[0]][new_beat[1]][new_beat[2]].copy()
         old_grouping = self.channel_groupings[old_beat[0]][old_beat[1]][old_beat[2]]
         old_grouping.replace_with(new_grouping)
@@ -237,10 +247,10 @@ class OpusManagerBase:
             self.channel_groupings[channel].insert(new_index, grouping)
 
     def get_channel_index(self, y_index: int) -> (int, int):
-        '''
+        """
             Given the y-index of a line (as in from the cursor),
             get the channel and index thereof
-        '''
+        """
 
         for channel in self.channel_order:
             for i, _ in enumerate(self.channel_groupings[channel]):
@@ -251,10 +261,10 @@ class OpusManagerBase:
         raise IndexError
 
     def get_y(self, c: int, i: Optional[int] = None) -> int:
-        '''
+        """
             Given a channel and index,
             get the y-index of the specified line displayed
-        '''
+        """
         if i is None:
             i = len(self.channel_groupings[c]) - 1
 

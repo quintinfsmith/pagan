@@ -15,7 +15,6 @@ class InputContext(Enum):
     Text = auto()
     ConfirmOnly = auto()
 
-
 class CommandLedger:
     def __init__(self, command_map):
         self.command_map = command_map
@@ -93,8 +92,6 @@ class CommandLedger:
     def run(self, **static_kwargs):
         if not self.is_open():
             return
-
-        
 
         cmd_parts = self.register.split(" ")
         while "" in cmd_parts:
@@ -197,6 +194,7 @@ class CommandLedger:
         return self.register
 
 class InteractionLayer(CursorLayer):
+    '''Adds Interaction and Commands to the OpusManager'''
     def daemon_input(self):
         while not self.flag_kill:
             self.interactor.get_input()
@@ -239,6 +237,10 @@ class InteractionLayer(CursorLayer):
             (b'h', self.cursor.move_left),
             (b'j', self.cursor.move_down),
             (b'k', self.cursor.move_up),
+            (b"\x1B[A", self.cursor.move_up),
+            (b"\x1B[B", self.cursor.move_down),
+            (b"\x1B[C", self.cursor.move_right),
+            (b"\x1B[D", self.cursor.move_left),
             (b"x", self.remove_grouping_at_cursor),
             (b'.', self.unset_at_cursor),
             (b'i', self.insert_after_cursor),

@@ -1,26 +1,44 @@
+"""Cursor Layer of the OpusManager and the classes required to make it work"""
 from __future__ import annotations
-from typing import Optional, Dict, List, Tuple
+from typing import List, Optional, Tuple, Union
 
 from .layer_flag import FlagLayer
 
-class Cursor:
-    def __init__(self, opus_manager):
-        self.opus_manager = opus_manager
-        self.y = 0
-        self.x = 0
-        self.position = [0]
+class ReadyEvent:
+    """Temporary placeholder for note events as they are being created"""
+    def __init__(self, initial_value: int, *, relative: bool = False):
+        self.value: int = initial_value
+        self.relative: bool = relative
+        self.flag_changed: bool = True
 
-    def set(self, y, x, *position):
+class Cursor:
+    """Points to a position in an OpusManager."""
+    def __init__(self, opus_manager: CursorLayer):
+        self.opus_manager: CursorLayer = opus_manager
+        self.y: int = 0
+        self.x: int = 0
+        self.position: List[int] = [0]
+
+    def set(self, y: int, x: int, *position: int) -> None:
+        """Set all the cursor's values at once"""
         self.y = y
         self.x = x
-        self.position = list(position)
 
-    def move_left(self):
+        # Position *Needs* to have at least 1 item
+        if position:
+            self.position = list(position)
+        else:
+            self.position = [0]
+
+    def move_left(self) -> None:
+        """Point the cursor to the previous leaf"""
         channel, line, beat = self.get_triplet()
         working_grouping = self.opus_manager.channel_groupings[channel][line][beat]
-        for i, j in enumerate(self.position):
+        # First, traverse the position to get the currently active grouping
+        for j in self.position:
             working_grouping = working_grouping[j]
 
+        # Then move the cursor up until it can move left
         while self.position:
             if self.position[-1] == 0:
                 self.position.pop()
@@ -30,70 +48,86 @@ class Cursor:
                 break
 
         if not self.position:
+            # Couldn't find any available leaf to the left of the previous active grouping
+            # within the active *beat* so move over a beat if possible
             if self.x > 0:
                 self.x -= 1
                 self.position = [len(working_grouping) - 1]
             else:
                 self.position = [0]
 
+        # Move to the leaf
         self.settle()
 
-    def move_right(self):
+    def move_right(self) -> None:
+        """Point the cursor to the next leaf"""
         channel, line, beat = self.get_triplet()
         working_grouping = self.opus_manager.channel_groupings[channel][line][beat]
-        for i, j in enumerate(self.position):
+        # First, traverse the position to get the currently active grouping
+        for j in self.position:
             working_grouping = working_grouping[j]
 
+        # Then move the cursor up until it can move right
         while self.position:
-            if len(working_grouping.parent) - 1 > self.position[-1]:
-                self.position[-1] += 1
-                break
-            elif len(working_grouping.parent) - 1 == self.position[-1]:
+            if len(working_grouping.parent) - 1 == self.position[-1]:
                 self.position.pop()
                 working_grouping = working_grouping.parent
+            elif len(working_grouping.parent) - 1 > self.position[-1]:
+                self.position[-1] += 1
+                break
 
         if not self.position:
+            # Couldn't find any available leaf to the right of the previous active grouping
+            # within the active *beat* so move over a beat if possible
             if self.x < self.opus_manager.opus_beat_count - 1:
                 self.x += 1
                 self.position = [0]
             else:
                 self.position = [len(working_grouping) - 1]
 
+        # Move to the leaf
         self.settle()
 
-    def move_up(self):
+    def move_up(self) -> None:
+        """Point the cursor to the previous line"""
         if self.y > 0:
             self.y -= 1
 
         self.settle()
 
-    def move_down(self):
+    def move_down(self) -> None:
+        """Point the cursor to the next line"""
         line_count = self.opus_manager.line_count
         if self.y < line_count - 1:
             self.y += 1
 
         self.settle()
 
-    def move_climb(self):
+    def move_climb(self) -> None:
+        """Point to the parent of the currently active Grouping"""
         if len(self.position) > 1:
             self.position.pop()
 
-    def move_dive(self, index):
+    def move_dive(self, index: int) -> None:
+        """Point the cursor to a child of the currently active Grouping"""
         beat = self.opus_manager.get_grouping([self.y, self.x])
         working_grouping = beat
-        for i, j in enumerate(self.position):
+        for j in self.position:
             working_grouping = working_grouping[j]
 
         if working_grouping.is_structural() and index < len(working_grouping):
             self.position.append(index)
 
-    def to_list(self):
+    def to_list(self) -> List[int]:
+        """Convert the cursor to a coordinate"""
         return [self.y, self.x, *self.position]
 
-    def set_y(self, new_y):
+    def set_y(self, new_y: int) -> None:
+        """Set which line the cursor points to"""
         self.y = new_y
 
-    def set_x(self, new_x):
+    def set_x(self, new_x: int) -> None:
+        """Set which beat the cursor points to"""
         beat_count = self.opus_manager.opus_beat_count
         if new_x < 0:
             new_x = beat_count - new_x
@@ -101,8 +135,8 @@ class Cursor:
             new_x = min(new_x, beat_count - 1)
         self.x = new_x
 
-    def settle(self, right_align=False):
-        ''' Sink the cursor as deep as possible. (until it finds a leaf) '''
+    def settle(self, right_align: bool = False) -> None:
+        """ Sink the cursor as deep as possible. (until it finds a leaf) """
         self.x = max(0, min(self.x, self.opus_manager.opus_beat_count - 1))
 
         channel, line, beat =  self.get_triplet()
@@ -133,57 +167,82 @@ class Cursor:
                 working_grouping = working_grouping[-1]
 
     def get_channel_index(self) -> (int, int):
-        '''
+        """
             get the channel and index from y
-        '''
+        """
         return self.opus_manager.get_channel_index(self.y)
 
-    def get_triplet(self):
+    def get_triplet(self) -> Tuple[int, int, int]:
+        """Get the active beat's channel, line and x position rather than x/y"""
         channel, index = self.get_channel_index()
         return (channel, index, self.x)
 
 class CursorLayer(FlagLayer):
+    """Adds Cursor functionality to OpusManager."""
     def __init__(self):
         super().__init__()
         self.cursor = Cursor(self)
+        self.register = None
 
     ## Layer-Specific methods
-
-    def new_line_at_cursor(self):
+    def new_line_at_cursor(self) -> None:
+        """Insert a line at the channel pointed to by the cursor"""
         channel, _, _ = self.cursor.get_triplet()
         self.new_line(channel)
 
-    def remove_line_at_cursor(self):
+    def remove_line_at_cursor(self) -> None:
+        """Remove the line from the channel pointed to by the cursor"""
+        channel, _, _ = self.cursor.get_triplet()
         channel, index, _ = self.cursor.get_triplet()
         self.remove_line(channel, index)
 
-    def remove_beat_at_cursor(self):
+    def remove_beat_at_cursor(self) -> None:
+        """Remove the beat from all channels pointed to by the cursor"""
         self.remove_beat(self.cursor.x)
         self.cursor.move_left()
 
-    def split_grouping_at_cursor(self):
+    def split_grouping_at_cursor(self) -> None:
+        """Divide the grouping pointed to by the cursor into 2"""
         self.split_grouping(self.cursor.to_list(), 2)
         self.cursor.settle()
 
-    def unset_at_cursor(self):
+    def unset_at_cursor(self) -> None:
+        """
+            Remove the event pointed to by the cursor.
+            Leaves the grouping in tact.
+        """
         self.unset(self.cursor.to_list())
 
-    def remove_grouping_at_cursor(self):
+    def remove_grouping_at_cursor(self) -> None:
+        """
+            Remove the grouping pointed to by the cursor from its parent.
+            Reduces the size of the parent.
+        """
         self.remove(self.cursor.to_list())
         self.cursor.settle()
 
-    def insert_beat_at_cursor(self):
+    def insert_beat_at_cursor(self) -> None:
+        """
+            Add empty beats to all channels at the index pointed to by the cursor.
+        """
         self.insert_beat(self.cursor.x + 1)
         self.cursor.settle()
 
-    def get_grouping_at_cursor(self):
+    def get_grouping_at_cursor(self) -> None:
+        """
+            Get the grouping object pointed to by the cursor.
+        """
         return self.get_grouping([
             self.cursor.y,
             self.cursor.x,
             *self.cursor.position
         ])
 
-    def increment_event_at_cursor(self):
+    def increment_event_at_cursor(self) -> None:
+        """
+            If the cursor points to an event grouping.
+            Add 1 to it's value.
+        """
         grouping = self.get_grouping_at_cursor()
         if not grouping.is_event():
             return
@@ -206,7 +265,11 @@ class CursorLayer(FlagLayer):
                 relative=event.relative
             )
 
-    def decrement_event_at_cursor(self):
+    def decrement_event_at_cursor(self) -> None:
+        """
+            If the cursor points to an event grouping.
+            Subtract 1 from it's value.
+        """
         grouping = self.get_grouping_at_cursor()
         if not grouping.is_event():
             return
@@ -229,49 +292,75 @@ class CursorLayer(FlagLayer):
                 relative=event.relative
             )
 
-    def jump_to_beat(self, beat):
+    def jump_to_beat(self, beat: int) -> None:
+        """Move the cursor to a specific beat index."""
         self.cursor.set_x(beat)
 
-    def overwrite_beat_at_cursor(self, channel, index, beat):
-        self.overwrite_beat(self.cursor.get_triplet(), (channel, index, beat))
+    def overwrite_beat_at_cursor(
+            self,
+            channel: Union[int, range],
+            line: Union[int, range],
+            beat: Union[int, range]) -> None:
+        """
+            Replace the beat at the cursor with a copy of
+            the beat referenced by channel/line/beat
+        """
+        self.overwrite_beat(self.cursor.get_triplet(), (channel, line, beat))
 
-    def link_beat_at_cursor(self, channel, index, beat):
+    def link_beat_at_cursor(
+            self,
+            channel: Union[int, range],
+            line: Union[int, range],
+            beat: Union[int, range]) -> None:
+        """
+            Replace the beat at the cursor with a copy of the
+            beat referenced AND force any changes applied to
+            one of them to be applied to the other in the future.
+        """
+
+        # Convert the arguments given into lists of indices
         if isinstance(channel, range):
             channels = list(channel)
         else:
             channels = [channel]
 
-        if isinstance(index, range):
-            indices = list(index)
+        if isinstance(line, range):
+            lines = list(line)
         else:
-            indices = [index]
+            lines = [line]
 
         if isinstance(beat, range):
             beats = list(beat)
         else:
             beats = [beat]
 
-        cursor_c, cursor_i, cursor_b = self.cursor.get_triplet()
-        for i, channel in enumerate(channels):
-            if not self.channel_groupings[channel]:
+        # Traverse the list of indices and link all possible
+        cursor = self.cursor.get_triplet()
+        for i, channel_index in enumerate(channels):
+            if not self.channel_groupings[channel_index]:
                 continue
-            for j, index in enumerate(indices):
-                if index >= len(self.channel_groupings[channel]):
+            for j, line_index in enumerate(lines):
+                if line_index >= len(self.channel_groupings[channel_index]):
                     continue
-                for k, beat in enumerate(beats):
-                    self.link_beats((cursor_c + i, cursor_i + j, cursor_b + k), (channel, index, beat))
+                for k, beat_index in enumerate(beats):
+                    self.link_beats(
+                        (cursor[0] + i, cursor[1] + j, cursor[2] + k),
+                        (channel_index, line_index, beat_index)
+                    )
 
-    def unlink_beat_at_cursor(self):
+    def unlink_beat_at_cursor(self) -> None:
+        """
+            Remove any link *from* the beat pointed to by the cursor.
+            Leaves the beat unchanged.
+        """
         self.unlink_beat(*self.cursor.get_triplet())
 
-    def add_digit_to_register(self, value):
-        super().add_digit_to_register(value)
-        if self.register is None:
-            pass
-        elif self.register.relative or self.register.value >= self.RADIX:
-            self.apply_register_at_cursor()
+    def apply_register_at_cursor(self) -> None:
+        """
+            Convert the temporary event to a real one and
+            set the grouping pointed to by the cursor.
+        """
 
-    def apply_register_at_cursor(self):
         register = self.fetch_register()
         if register is None:
             return
@@ -282,59 +371,87 @@ class CursorLayer(FlagLayer):
             relative=register.relative
         )
 
+    def add_digit_to_register(self, value: int) -> None:
+        """Pass a digit to the register"""
 
-    def insert_after_cursor(self):
+        if self.register is None:
+            self.register = ReadyEvent(value, relative=False)
+        elif self.register.relative:
+            self.register.value *= value
+        else:
+            self.register.value *= self.RADIX
+            self.register.value += value
+
+        # If the register is ready, apply it
+        if self.register is not None \
+        and self.register.relative \
+        or self.register.value >= self.RADIX:
+            self.apply_register_at_cursor()
+
+    def insert_after_cursor(self) -> None:
+        """Use the cursor to create a new empty Grouping."""
         self.insert_after(self.cursor.to_list())
 
-    def set_active_beat_size(self, size):
-        self.set_beat_size(size, self.cursor.to_list())
+    def clear_register(self) -> None:
+        """Cancel event being input."""
+        self.register = None
 
-    def get_active_line(self):
-        return self.get_line(self.cursor.y)
+    def fetch_register(self) -> Optional[ReadyEvent]:
+        """Get the register, unsetting it"""
+        output = self.register
+        self.register = None
+        return output
+
+    def relative_add_entry(self) -> None:
+        """Let the register know the user is inputting a relative event, moving up some keys"""
+        # Block relative notes on percussion channel
+        active_channel, _, _ = self.cursor.get_triplet()
+        if active_channel == 9:
+            self.clear_register()
+        else:
+            self.register = ReadyEvent(1, relative=True)
+
+    def relative_subtract_entry(self) -> None:
+        """Let the register know the user is inputting a relative event, moving down some keys"""
+        # Block relative notes on percussion channel
+        active_channel, _, _ = self.cursor.get_triplet()
+        if active_channel == 9:
+            self.clear_register()
+        else:
+            self.register = ReadyEvent(-1, relative=True)
+
+    def relative_downshift_entry(self) -> None:
+        """Let the register know the user is inputting a relative event, shifting down octaves"""
+        # Block relative notes on percussion channel
+        active_channel, _, _ = self.cursor.get_triplet()
+        if active_channel == 9:
+            self.clear_register()
+        else:
+            self.register = ReadyEvent(-1 * self.RADIX, relative=True)
+
+    def relative_upshift_entry(self) -> None:
+        """Let the register know the user is inputting a relative event, shifting up octaves"""
+        # Block relative notes on percussion channel
+        active_channel, _, _ = self.cursor.get_triplet()
+        if active_channel == 9:
+            self.clear_register()
+        else:
+            self.register = ReadyEvent(self.RADIX, relative=True)
 
     ## OpusManager methods
-    def relative_add_entry(self):
-        super().relative_add_entry()
-        # Block relative notes on percussion channel
-        active_channel, _, _ = self.cursor.get_triplet()
-        if active_channel == 9:
-            self.clear_register()
-
-    def relative_subtract_entry(self):
-        super().relative_subtract_entry()
-        # Block relative notes on percussion channel
-        active_channel, _, _ = self.cursor.get_triplet()
-        if active_channel == 9:
-            self.clear_register()
-
-    def relative_downshift_entry(self):
-        super().relative_downshift_entry()
-        # Block relative notes on percussion channel
-        active_channel, _, _ = self.cursor.get_triplet()
-        if active_channel == 9:
-            self.clear_register()
-
-    def relative_upshift_entry(self):
-        super().relative_upshift_entry()
-        # Block relative notes on percussion channel
-        active_channel, _, _ = self.cursor.get_triplet()
-        if active_channel == 9:
-            self.clear_register()
-
-
-    def insert_beat(self, index=None):
+    def insert_beat(self, index: Optional[int] = None) -> None:
         super().insert_beat(index)
         self.cursor.settle()
 
-    def remove_beat(self, index):
+    def remove_beat(self, index: int) -> None:
         super().remove_beat(index)
         self.cursor.settle()
 
-    def remove(self, position):
+    def remove(self, position: List[int]) -> None:
         super().remove(position)
         self.cursor.settle()
 
-    def swap_channels(self, channel_a, channel_b):
+    def swap_channels(self, channel_a: int, channel_b: int) -> None:
         orig_cursor = self.cursor.get_triplet()
 
         super().swap_channels(channel_a, channel_b)
@@ -344,23 +461,26 @@ class CursorLayer(FlagLayer):
         self.cursor.set_y(new_y)
         self.cursor.settle()
 
-    def split_grouping(self, position, splits):
+    def split_grouping(self, position: List[int], splits: int) -> None:
         super().split_grouping(position, splits)
         self.cursor.settle()
 
-    def remove_line(self, channel, index=None):
+    def remove_line(self, channel: int, index: Optional[int] = None) -> None:
         super().remove_line(channel, index)
         self.cursor.settle()
 
-    def remove_channel(self, channel):
+    def remove_channel(self, channel: int) -> None:
         super().remove_channel(channel)
         self.cursor.settle()
 
-    def overwrite_beat(self, old_beat, new_beat):
+    def overwrite_beat(
+            self,
+            old_beat: Tuple[int, int, int],
+            new_beat: Tuple[int, int, int]) -> None:
         super().overwrite_beat(old_beat, new_beat)
         self.cursor.settle()
 
-    def new(self):
+    def new(self) -> None:
         super().new()
         self.cursor.set(0,0,0)
         self.cursor.settle()

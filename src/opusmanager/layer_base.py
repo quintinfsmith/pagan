@@ -4,19 +4,14 @@ import re
 import json
 
 from typing import Optional, Dict, List, Tuple
-
 from apres import MIDI
 
 from .structures import BadStateError
 from .mgrouping import MGrouping, MGroupingEvent
-
-class ReadyEvent:
-    def __init__(self, initial_value, *, relative=False):
-        self.value = initial_value
-        self.relative = relative
-        self.flag_changed = True
+from .errors import NoPathGiven, InvalidPosition
 
 class OpusManagerBase:
+    ''' Pure form of the OpusManager. Made for functional control over the opus '''
     RADIX = 12
     def __init__(self):
         self.channel_groupings = [[] for i in range(16)]
@@ -27,16 +22,7 @@ class OpusManagerBase:
         self.path = None
         self.clipboard_grouping = None
         self.flag_kill = False
-        self.register = None
 
-    def add_digit_to_register(self, value):
-        if self.register is None:
-            self.register = ReadyEvent(value, relative=False)
-        elif self.register.relative:
-            self.register.value *= value
-        else:
-            self.register.value *= self.RADIX
-            self.register.value += value
 
     @property
     def line_count(self):
@@ -95,25 +81,6 @@ class OpusManagerBase:
         self.channel_groupings[0].append(new_line)
         self.opus_beat_count = 4
 
-    def relative_add_entry(self):
-        self.register = ReadyEvent(1, relative=True)
-
-    def relative_subtract_entry(self):
-        self.register = ReadyEvent(-1, relative=True)
-
-    def relative_downshift_entry(self):
-        self.register = ReadyEvent(-1 * self.RADIX, relative=True)
-
-    def relative_upshift_entry(self):
-        self.register = ReadyEvent(self.RADIX, relative=True)
-
-    def clear_register(self):
-        self.register = None
-
-    def fetch_register(self):
-        output = self.register
-        self.register = None
-        return output
 
     def copy_grouping(self, position):
         self.clipboard_grouping = self.get_grouping(position)
@@ -150,7 +117,7 @@ class OpusManagerBase:
 
     def save(self, path=None):
         if path is None and self.path is None:
-            raise NoPath
+            raise NoPathGiven()
         elif path is None:
             path = self.path
 
@@ -203,7 +170,7 @@ class OpusManagerBase:
             if self.path is not None:
                 path = self.path + ".mid"
             else:
-                raise NoPath()
+                raise NoPathGiven()
 
         opus.to_midi(**kwargs).save(path)
 
@@ -268,9 +235,6 @@ class OpusManagerBase:
             self.channel_groupings[channel].append(grouping)
         else:
             self.channel_groupings[channel].insert(new_index, grouping)
-
-    def get_channel(self, y: int) -> int:
-        return self.get_channel_index(y)[0]
 
     def get_channel_index(self, y_index: int) -> (int, int):
         '''

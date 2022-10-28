@@ -138,7 +138,7 @@ class FlagLayer(HistoryLayer):
         channel, index = self.get_channel_index(position[0])
         self.flag('beat_change', (channel, index, position[1]))
 
-    def remove_beat(self, index=None):
+    def remove_beat(self, index):
         if index is None:
             rindex = self.opus_beat_count - 1
         else:

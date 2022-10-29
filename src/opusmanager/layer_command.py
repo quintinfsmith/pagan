@@ -187,7 +187,7 @@ class CommandLedger:
     def get_register(self):
         return self.register
 
-class InteractionLayer(CursorLayer):
+class CommandLayer(CursorLayer):
     '''Adds Interaction and Commands to the OpusManager'''
 
     def __init__(self):

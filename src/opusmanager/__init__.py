@@ -1,1 +1,1 @@
-from .layer_interaction import InteractionLayer as OpusManager
+from .layer_command import CommandLayer as OpusManager

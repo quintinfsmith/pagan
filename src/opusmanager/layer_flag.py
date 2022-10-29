@@ -80,8 +80,8 @@ class FlagLayer(HistoryLayer):
         for i in range(len_b):
             self.flag('line', (channel_b, i, 'new'))
 
-    def new(self):
-        super().new()
+    def _new(self):
+        super()._new()
 
         for i in range(self.opus_beat_count):
             self.flag('beat', (i, 'new'))
@@ -90,8 +90,8 @@ class FlagLayer(HistoryLayer):
             for j, _line in enumerate(channel):
                 self.flag('line', (i, j, 'init'))
 
-    def load(self, path: str) -> None:
-        super().load(path)
+    def _load(self, path: str) -> None:
+        super()._load(path)
 
         for i in range(self.opus_beat_count):
             self.flag('beat', (i, 'new'))

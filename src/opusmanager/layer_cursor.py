@@ -480,11 +480,11 @@ class CursorLayer(FlagLayer):
         super().overwrite_beat(old_beat, new_beat)
         self.cursor.settle()
 
-    def new(self) -> None:
-        super().new()
+    def _new(self) -> None:
+        super()._new()
         self.cursor.set(0,0,0)
         self.cursor.settle()
 
-    def load(self, path: str) -> None:
-        super().load(path)
+    def _load(self, path: str) -> None:
+        super()._load(path)
         self.cursor.settle()

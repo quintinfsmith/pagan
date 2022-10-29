@@ -2,6 +2,7 @@
 # coding=utf-8
 import sys
 from .editorenvironment import EditorEnvironment
+from .opusmanager import OpusManager
 
 __version__ = "0.0.3"
 __license__ = "GPL-2.0"
@@ -10,11 +11,11 @@ __email__ = "smith.quintin@protonmail.com"
 __url__ = "https://burnsomni.net/git/radixulous"
 
 def main():
-    aa = EditorEnvironment()
     if len(sys.argv) > 1:
-        aa.load(sys.argv[1])
+        opusmanager = OpusManager.load(sys.argv[1])
     else:
-        aa.new()
+        opusmanager = OpusManager.new()
+    aa = EditorEnvironment(opusmanager)
     aa.run()
 
 

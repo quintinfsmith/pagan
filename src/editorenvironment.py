@@ -9,8 +9,8 @@ from typing import Optional, Dict, List, Tuple
 
 import wrecked
 from .wrecked_elements import RectFrame
-from .opusmanager import OpusManager
 from .opusmanager.mgrouping import get_number_string
+from .opusmanager import OpusManager
 
 class InvalidCursor(Exception):
     '''Raised when attempting to pass a cursor without enough arguments'''
@@ -18,7 +18,7 @@ class InvalidCursor(Exception):
 class EditorEnvironment:
     tick_delay = 1 / 24
 
-    def __init__(self):
+    def __init__(self, opus_manager: OpusManager):
         self.running = False
         self.root = wrecked.init()
 
@@ -26,7 +26,7 @@ class EditorEnvironment:
         #self.rendered_register = None
         #self.rect_register = self.rect_view_window.new_rect()
 
-        self.opus_manager = OpusManager()
+        self.opus_manager = opus_manager
         self.channel_rects = [[] for i in range(16)]
         self.channel_divider_rects = {}
 
@@ -65,12 +65,6 @@ class EditorEnvironment:
             self.root.resize(w, h)
             output = True
         return output
-
-    def load(self, path: str):
-        self.opus_manager.load(path)
-
-    def new(self):
-        self.opus_manager.new()
 
     def kill(self):
         self.running = False

@@ -23,6 +23,45 @@ class OpusManagerBase:
         self.clipboard_grouping = None
         self.flag_kill = False
 
+    @classmethod
+    def new(cls):
+        """Build a new OpusManager object"""
+        new_manager = cls()
+        new_manager._new()
+        return new_manager
+
+    def _new(self):
+        """Only called from new() class method"""
+        new_line = MGrouping()
+        new_line.set_size(4)
+        for i in range(4):
+            new_line[i].set_size(1)
+        self.channel_groupings[0].append(new_line)
+        self.opus_beat_count = 4
+
+    @classmethod
+    def load(cls, path: str):
+        """Build a new OpusManager object from a radix-notation file or midi"""
+        new_manager = cls()
+        new_manager._load(path)
+        return new_manager
+
+    def _load(self, path):
+        """Only called from load(..) class method"""
+        if os.path.isdir(path):
+            if len(path) > 1 and path[-1] == "/":
+                path = path[0:-1]
+            self.load_folder(path)
+        elif path[path.rfind("."):].lower() == ".mid":
+            self.import_midi(path)
+            self.path = path[0:path.rfind(".mid")] + "_midi"
+        else:
+            self.load_file(path)
+        for channel in self.channel_groupings:
+            for line in channel:
+                line.clear_singles()
+
+
     @property
     def line_count(self) -> int:
         """Get the number of lines active in this opus."""
@@ -79,17 +118,6 @@ class OpusManagerBase:
         old_grouping.replace_with(new_grouping)
         self.channel_groupings[old_beat[0]][old_beat[1]][old_beat[2]] = new_grouping
 
-
-    def new(self):
-        self.channel_groupings = [[] for i in range(16)]
-        self.channel_order = list(range(16))
-
-        new_line = MGrouping()
-        new_line.set_size(4)
-        for i in range(4):
-            new_line[i].set_size(1)
-        self.channel_groupings[0].append(new_line)
-        self.opus_beat_count = 4
 
 
     def copy_grouping(self, position):
@@ -291,19 +319,6 @@ class OpusManagerBase:
 
         return output
 
-    def load(self, path: str) -> None:
-        if os.path.isdir(path):
-            if len(path) > 1 and path[-1] == "/":
-                path = path[0:-1]
-            self.load_folder(path)
-        elif path[path.rfind("."):].lower() == ".mid":
-            self.import_midi(path)
-            self.path = path[0:path.rfind(".mid")] + "_midi"
-        else:
-            self.load_file(path)
-        for channel in self.channel_groupings:
-            for line in channel:
-                line.clear_singles()
 
     def load_folder(self, path: str) -> None:
         self.path = path

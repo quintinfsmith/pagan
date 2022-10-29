@@ -344,8 +344,9 @@ class InteractionLayer(CursorLayer):
 
         with open(f"{fullpath}/static_kwargs.json", "w") as fp:
             fp.write(json.dumps(json_static_kwargs, indent=4))
-    def load(self, path):
-        super().load(path)
+
+    def _load(self, path):
+        super()._load(path)
         fullpath = self.get_working_dir()
         filepath = f"{fullpath}/static_kwargs.json"
         if not os.path.isfile(filepath):

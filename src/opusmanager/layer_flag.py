@@ -1,69 +1,100 @@
+""" Class definition of requisite component classes of the Flag Layer. """
 from __future__ import annotations
-from typing import Optional, Dict, List, Tuple
+from typing import Optional, Dict, List, Tuple, Any
 
+from .mgrouping import MGrouping
 from .layer_history import HistoryLayer
 
 class UpdatesCache:
+    """
+        Dict of changes with a few ease-of-use functions.
+        Used by FlagLayer to cache the changes to the OpusManager
+        such so a GUI can more quickly and easily update itself.
+    """
     def __init__(self):
-        self.cache = {}
+        self.cache: Dict = {}
 
-    def flag(self, key, value):
+    def flag(self, key: str, value: Any) -> None:
+        """Flag a change, caching the specifics."""
         if key not in self.cache:
             self.cache[key] = []
         self.cache[key].append(value)
 
-    def unflag(self, key, value):
+    def unflag(self, key: str, value: Any) -> None:
+        """Cancel a flagged changed."""
         if key not in self.cache:
             return
         self.cache[key].remove(value)
 
-    def fetch(self, key, noclobber=False):
+    def fetch(self, key: str, noclobber: bool = False) -> List[Any]:
+        """
+            Get the flagged changes as a list.
+            Clears out the list unless *noclobber* is True
+        """
         output = self.cache.get(key, [])
         if not noclobber:
             self.cache[key] = []
         return output
 
 class FlagLayer(HistoryLayer):
+    """
+        Flags changes made to the OpusManager
+        so a GUI can update itself accordingly
+    """
     def __init__(self):
         super().__init__()
         self.updates_cache = UpdatesCache()
 
     ## Layer-Specific Functions
-    def flag(self, key, value):
+    def flag(self, key: str, value: Any) -> None:
+        """Wrapper for UpdatesCache's flag() method"""
         self.updates_cache.flag(key, value)
 
-    def fetch(self, key, noclobber=False):
+    def fetch(self, key: str, noclobber: bool = False) -> List[Any]:
+        """Wrapper for UpdatesCache's fetch() method"""
         return self.updates_cache.fetch(key, noclobber)
 
     ## OpusManagerBase Functions
-    def replace_grouping(self, position, grouping):
+    def replace_grouping(
+            self,
+            position: List[int],
+            grouping: MGrouping) -> None:
         super().replace_grouping(position, grouping)
         channel, index = self.get_channel_index(position[0])
         self.flag('beat_change', (channel, index, position[1]))
 
-    def overwrite_beat(self, old_beat, new_beat):
+    def overwrite_beat(
+            self,
+            old_beat: Tuple[int, int, int],
+            new_beat: Tuple[int, int, int]) -> None:
         super().overwrite_beat(old_beat, new_beat)
         self.flag('beat_change', old_beat)
 
-    def unlink_beat(self, channel, index, beat):
-        super().unlink_beat(channel, index, beat)
-        self.flag('beat_change', (channel, index, beat))
+    def unlink_beat(self, channel: int, line: int, beat: int) -> None:
+        super().unlink_beat(channel, line, beat)
+        self.flag('beat_change', (channel, line, beat))
 
-    def link_beats(self, beat, target):
+    def link_beats(
+            self,
+            beat: Tuple[int, int, int],
+            target: Tuple[int, int, int]) -> None:
         super().link_beats(beat, target)
         self.flag('beat_change', beat)
 
-    def _insert_after_ignore_linked(self, position: List[int]):
+    def _insert_after_ignore_linked(self, position: List[int]) -> None:
         super()._insert_after_ignore_linked(position)
         channel, line = self.get_channel_index(position[0])
         self.flag('beat_change', (channel, line, position[1]))
 
-    def _split_grouping_ignore_linked(self, position, splits):
+    def _split_grouping_ignore_linked(
+            self,
+            position: List[int],
+            splits: int) -> None:
         super()._split_grouping_ignore_linked(position, splits)
         channel, line = self.get_channel_index(position[0])
         self.flag('beat_change', (channel, line, position[1]))
 
-    def swap_channels(self, channel_a, channel_b):
+    def swap_channels(self, channel_a: int, channel_b: int) -> None:
         super().swap_channels(channel_a, channel_b)
 
         len_a = len(self.channel_groupings[channel_a])
@@ -80,7 +111,7 @@ class FlagLayer(HistoryLayer):
         for i in range(len_b):
             self.flag('line', (channel_b, i, 'new'))
 
-    def _new(self):
+    def _new(self) -> None:
         super()._new()
 
         for i in range(self.opus_beat_count):
@@ -100,19 +131,24 @@ class FlagLayer(HistoryLayer):
             for j, _line in enumerate(channel):
                 self.flag('line', (i, j, 'init'))
 
-    def _set_event_ignore_link(self, value, position, *, relative=False):
+    def _set_event_ignore_link(
+            self,
+            value: int,
+            position: List[int],
+            *,
+            relative: bool = False) -> None:
         super()._set_event_ignore_link(value, position, relative=relative)
 
         channel, index = self.get_channel_index(position[0])
         self.flag('beat_change', (channel, index, position[1]))
 
-    def _unset_ignore_link(self, position):
+    def _unset_ignore_link(self, position: List[int]) -> None:
         super()._unset_ignore_link(position)
 
         channel, index = self.get_channel_index(position[0])
         self.flag('beat_change', (channel, index, position[1]))
 
-    def insert_beat(self, index=None):
+    def insert_beat(self, index: Optional[int] = None) -> None:
         if index is None:
             rindex = self.opus_beat_count - 1
         else:
@@ -122,7 +158,9 @@ class FlagLayer(HistoryLayer):
 
         self.flag('beat', (rindex, 'new'))
 
-    def new_line(self, channel=0, index=None):
+    def new_line(self,
+            channel: int = 0,
+            index: Optional[int] = None) -> None:
         super().new_line(channel, index)
 
         if index is None:
@@ -132,13 +170,13 @@ class FlagLayer(HistoryLayer):
 
         self.flag('line', (channel, line_index, 'new'))
 
-    def _remove_ignore_link(self, position: List[int]):
+    def _remove_ignore_link(self, position: List[int]) -> None:
         super()._remove_ignore_link(position)
 
         channel, index = self.get_channel_index(position[0])
         self.flag('beat_change', (channel, index, position[1]))
 
-    def remove_beat(self, index):
+    def remove_beat(self, index: None) -> None:
         if index is None:
             rindex = self.opus_beat_count - 1
         else:
@@ -148,7 +186,10 @@ class FlagLayer(HistoryLayer):
 
         self.flag('beat', (rindex, 'pop'))
 
-    def remove_line(self, channel, index=None):
+    def remove_line(
+            self,
+            channel: int,
+            index: Optional[int] = None) -> None:
         super().remove_line(channel, index)
 
         if index is None:
@@ -156,4 +197,3 @@ class FlagLayer(HistoryLayer):
 
         # Flag changes to cache
         self.flag('line', (channel, index, 'pop'))
-

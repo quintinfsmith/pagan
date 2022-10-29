@@ -649,8 +649,6 @@ class EditorEnvironment:
 
     def run(self):
         self.running = True
-        thread = threading.Thread(target=self.opus_manager.daemon_input)
-        thread.start()
         while self.running:
             try:
                 self.tick()

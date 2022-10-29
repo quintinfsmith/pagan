@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # coding=utf-8
 import sys
-from .editorenvironment import EditorEnvironment
+from .display import EditorEnvironment
+from .control import Controller
 from .opusmanager import OpusManager
 
 __version__ = "0.0.3"
@@ -15,8 +16,14 @@ def main():
         opusmanager = OpusManager.load(sys.argv[1])
     else:
         opusmanager = OpusManager.new()
-    aa = EditorEnvironment(opusmanager)
-    aa.run()
+
+    control = Controller(opusmanager)
+    control.listen()
+
+    display = EditorEnvironment(opusmanager)
+    display.run()
+
+    control.kill()
 
 
 if __name__ == "__main__":

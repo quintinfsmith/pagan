@@ -186,6 +186,22 @@ class CursorLayer(FlagLayer):
         self.register = None
 
     ## Layer-Specific methods
+    def cursor_right(self) -> None:
+        """Wrapper function"""
+        self.cursor.move_right()
+
+    def cursor_left(self) -> None:
+        """Wrapper function"""
+        self.cursor.move_left()
+
+    def cursor_up(self) -> None:
+        """Wrapper function"""
+        self.cursor.move_up()
+
+    def cursor_down(self) -> None:
+        """Wrapper function"""
+        self.cursor.move_down()
+
     def new_line_at_cursor(self) -> None:
         """Insert a line at the channel pointed to by the cursor"""
         channel, _, _ = self.cursor.get_triplet()

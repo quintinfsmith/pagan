@@ -1,6 +1,7 @@
 """Cursor Layer of the OpusManager and the classes required to make it work"""
 from __future__ import annotations
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union, Any
+from collections.abc import Callable
 
 from .layer_flag import FlagLayer
 
@@ -488,3 +489,22 @@ class CursorLayer(FlagLayer):
     def _load(self, path: str) -> None:
         super()._load(path)
         self.cursor.settle()
+
+    ## HistoryLayer Methods
+    def append_undoer(self, func: Callable[Any], *args, **kwargs) -> None:
+        super().append_undoer(func, *args, **kwargs)
+        if not (self.history_locked or self.multi_counter):
+            self.history_ledger[-1].append((
+                self.cursor.set,
+                self.cursor.to_list(),
+                {}
+            ))
+
+    def close_multi(self) -> None:
+        super().close_multi()
+        if not (self.history_locked or self.multi_counter):
+            self.history_ledger[-1].append((
+                self.cursor.set,
+                self.cursor.to_list(),
+                {}
+            ))

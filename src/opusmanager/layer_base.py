@@ -274,7 +274,7 @@ class OpusManagerBase:
         else:
             self.channel_groupings[channel].insert(new_index, grouping)
 
-    def get_channel_index(self, y_index: int) -> (int, int):
+    def get_channel_index(self, y_index: int) -> Tuple[int, int]:
         """
             Given the y-index of a line (as in from the cursor),
             get the channel and index thereof

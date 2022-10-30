@@ -12,9 +12,6 @@ from .wrecked_elements import RectFrame
 from .opusmanager.mgrouping import get_number_string
 from .opusmanager import OpusManager
 
-class InvalidCursor(Exception):
-    '''Raised when attempting to pass a cursor without enough arguments'''
-
 class EditorEnvironment:
     tick_delay = 1 / 24
 
@@ -225,7 +222,9 @@ class EditorEnvironment:
     def tick_update_frames(self):
         output = False
 
-        force_all = self.rect_view.width != self.root.width or self.rect_view.height != self.root.height
+        force_all = self.rect_view.width != self.root.width \
+                    or self.rect_view.height != self.root.height
+
         if force_all:
             self.rect_view.resize(self.root.width, self.root.height)
 

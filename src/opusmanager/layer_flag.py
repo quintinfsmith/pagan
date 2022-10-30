@@ -142,6 +142,16 @@ class FlagLayer(HistoryLayer):
         channel, index = self.get_channel_index(position[0])
         self.flag('beat_change', (channel, index, position[1]))
 
+    def _set_percussion_event_ignore_link(self, position: List[int]) -> None:
+        super()._set_percussion_event_ignore_link(position)
+        channel, index = self.get_channel_index(position[0])
+        self.flag('beat_change', (channel, index, position[1]))
+
+    def set_percussion_instrument(self, line_offset: int, instrument: int) -> None:
+        super().set_percussion_instrument(line_offset, instrument)
+        for i in range(self.opus_beat_count):
+            self.flag('beat_change', (9, line_offset, i))
+
     def _unset_ignore_link(self, position: List[int]) -> None:
         super()._unset_ignore_link(position)
 

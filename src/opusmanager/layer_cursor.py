@@ -202,6 +202,11 @@ class CursorLayer(FlagLayer):
         """Wrapper function"""
         self.cursor.move_down()
 
+    def set_percussion_event_at_cursor(self) -> None:
+        """Turn on percussion at the position pointed to by the cursor"""
+        if self.cursor.get_triplet()[0] == 9:
+            self.set_percussion_event(self.cursor.to_list())
+
     def new_line_at_cursor(self) -> None:
         """Insert a line at the channel pointed to by the cursor"""
         channel, _, _ = self.cursor.get_triplet()
@@ -382,11 +387,15 @@ class CursorLayer(FlagLayer):
         if register is None:
             return
 
-        self.set_event(
-            register.value,
-            self.cursor.to_list(),
-            relative=register.relative
-        )
+        channel, line_offset, _beat_offset = self.cursor.get_triplet()
+        if channel == 9:
+            self.set_percussion_instrument(line_offset, register.value)
+        else:
+            self.set_event(
+                register.value,
+                self.cursor.to_list(),
+                relative=register.relative
+            )
 
     def add_digit_to_register(self, value: int) -> None:
         """Pass a digit to the register"""

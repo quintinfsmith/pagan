@@ -238,6 +238,9 @@ class CommandLayer(CursorLayer):
         self.command_ledger.close()
 
     def command_ledger_run(self):
+        if not self.command_ledger.is_open():
+            return
+
         register = self.command_ledger.get_register()
         if ' ' in register:
             cmd = register[0:register.find(" ")]

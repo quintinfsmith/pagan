@@ -22,6 +22,7 @@ class OpusManagerBase:
         self.path = None
         self.clipboard_grouping = None
         self.flag_kill = False
+        self.percussion_map = {}
 
     @classmethod
     def new(cls):
@@ -57,10 +58,38 @@ class OpusManagerBase:
             self.path = path[0:path.rfind(".mid")] + "_midi"
         else:
             self.load_file(path)
-        for channel in self.channel_groupings:
-            for line in channel:
+        for channel_index, channel in enumerate(self.channel_groupings):
+            for line_offset, line in enumerate(channel):
                 line.clear_singles()
 
+                # Populate the percussion map
+                if channel_index == 9:
+                    stack = [line]
+                    while stack:
+                        grouping = stack.pop(0)
+                        if grouping.is_structural():
+                            for child in grouping:
+                                stack.append(child)
+                        elif grouping.is_event():
+                            event = list(grouping.get_events())[0]
+                            self.percussion_map[line_offset] = event.get_note()
+                            break
+
+
+    def set_percussion_instrument(self, line_offset: int, instrument: int) -> None:
+        self.percussion_map[line_offset] = instrument
+
+        # Traverse the line and set all the events to the new instrument
+        stack = [self.channel_groupings[9][line_offset]]
+        while stack:
+            grouping = stack.pop(0)
+            if grouping.is_structural():
+                for subgrouping in grouping:
+                    stack.append(subgrouping)
+            elif grouping.is_event():
+                event = grouping.get_events().pop()
+                event.note = instrument
+                grouping.add_event(event)
 
     @property
     def line_count(self) -> int:
@@ -222,12 +251,40 @@ class OpusManagerBase:
 
         return grouping
 
+    def set_percussion_event(self, position: List[int]) -> None:
+        for absolute_position in self._build_positions_list(position):
+            self._set_percussion_event_ignore_link(absolute_position)
+
+    def _set_percussion_event_ignore_link(self, position: List[int]) -> None:
+        channel, line_offset = self.get_channel_index(position[0])
+        if channel != 9:
+            raise IndexError("Attempting to set non-percussion channel")
+
+        grouping = self.get_grouping(position)
+        if grouping.is_structural():
+            grouping.clear()
+        elif grouping.is_event():
+            grouping.clear_events()
+
+        grouping.add_event(MGroupingEvent(
+            self.percussion_map.get(line_offset, 35),
+            radix=self.RADIX,
+            channel=9,
+            relative=False
+        ))
+
     def set_event(self, value, position, *, relative=False):
         for absolute_position in self._build_positions_list(position):
             self._set_event_ignore_link(value, absolute_position, relative=relative)
 
     def _set_event_ignore_link(self, value, position, *, relative=False):
         channel, _index = self.get_channel_index(position[0])
+        grouping = self.get_grouping(position)
+
+        # User set_percussion_event() method on channel 9
+        if channel == 9:
+            raise IndexError("Attempting to set percussion channel")
+
         grouping = self.get_grouping(position)
 
         if grouping.is_structural():

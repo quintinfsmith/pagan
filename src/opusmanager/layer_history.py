@@ -91,8 +91,14 @@ class HistoryLayer(OpusManagerBase):
         self.close_multi()
 
     ## OpusManager methods
+    def set_percussion_instrument(self, line_offset: int, instrument: int) -> None:
+        original_instrument = self.percussion_map.get(line_offset, self.DEFAULT_PERCUSSION)
+        super().set_percussion_instrument(line_offset, instrument)
 
-    def overwrite_beat(self, old_beat: Tuple[int, int, int], new_beat: Tuple[int, int, int]):
+        self.append_undoer(self.set_percussion_instrument, line_offset, original_instrument)
+
+
+    def overwrite_beat(self, old_beat: Tuple[int, int, int], new_beat: Tuple[int, int, int]) -> None:
         old_position = [self.get_y(old_beat[0], old_beat[1]), old_beat[2]]
         old_grouping = self.channel_groupings[old_beat[0]][old_beat[1]][old_beat[2]].copy()
         self.append_undoer(self.replace_grouping, old_position, old_grouping)

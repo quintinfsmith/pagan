@@ -13,6 +13,7 @@ from .errors import NoPathGiven, InvalidPosition
 class OpusManagerBase:
     """ Pure form of the OpusManager. Made for functional control over the opus """
     RADIX = 12
+    DEFAULT_PERCUSSION = 0x32
     def __init__(self):
         self.channel_groupings = [[] for i in range(16)]
         self.channel_order = list(range(16))
@@ -267,7 +268,7 @@ class OpusManagerBase:
             grouping.clear_events()
 
         grouping.add_event(MGroupingEvent(
-            self.percussion_map.get(line_offset, 35),
+            self.percussion_map.get(line_offset, self.DEFAULT_PERCUSSION),
             radix=self.RADIX,
             channel=9,
             relative=False

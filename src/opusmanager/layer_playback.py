@@ -3,9 +3,9 @@ import time
 import threading
 from typing import Optional
 from apres import NoteOn, NoteOff
-from .layer_interaction import InteractionLayer
+from .layer_command import CommandLayer
 
-class PlaybackLayer(InteractionLayer):
+class PlaybackLayer(CommandLayer):
     def __init__(self):
         super().__init__()
 

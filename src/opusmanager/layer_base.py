@@ -42,7 +42,7 @@ class OpusManagerBase:
         new_manager._new()
         return new_manager
 
-    def _build_positions_list(self, position:List[int]) -> List[List[int]]:
+    def _build_positions_list(self, position: List[int]) -> List[List[int]]:
         """
             Get a list of all positions of beats that will be affected
             by changes made to the one at the given position (ie, linked)
@@ -110,7 +110,16 @@ class OpusManagerBase:
         self.channel_groupings[0].append(new_line)
         self.opus_beat_count = 4
 
-    def _insert_after_ignore_linked(self, position: List[int]):
+    def insert_after(self, position: List[int]) -> None:
+        """
+            Public-facing wrapper.
+            Applies '_directly' to all beats linked to this one.
+        """
+        for direct_position in self._build_positions_list(position):
+            self._insert_after_directly(direct_position)
+
+    def _insert_after_directly(self, position: List[int]):
+        """Create an empty grouping next to the given one, expanding the parent"""
         grouping = self.get_grouping(position)
 
         parent = grouping.parent
@@ -126,7 +135,16 @@ class OpusManagerBase:
         else:
             pass
 
-    def _remove_ignore_link(self, position: List[int]):
+    def remove(self, initial_position: List[int]):
+        """
+            Public-facing wrapper.
+            Applies '_directly' to all beats linked to this one.
+        """
+        for position in self._build_positions_list(initial_position):
+            self._remove_directly(position)
+
+    def _remove_directly(self, position: List[int]):
+        """Remove the given grouping, shrinking the parent"""
         grouping = self.get_grouping(position)
         parent = grouping.parent
         if len(position) < 3:
@@ -152,9 +170,29 @@ class OpusManagerBase:
                 parent.parent[parent_index] = parent[0]
 
         else:
-            self._remove_ignore_link(position[0:-1])
+            self._remove_directly(position[0:-1])
 
-    def _set_percussion_event_ignore_link(self, position: List[int]) -> None:
+    def _set_beat_count(self, new_count: int) -> None:
+        """Adjust the number of beats in the opus"""
+        self.opus_beat_count = new_count
+        for groupings in self.channel_groupings:
+            for grouping in groupings:
+                grouping.set_size(new_count, True)
+
+
+    def set_percussion_event(self, position: List[int]) -> None:
+        """
+            Public-facing wrapper.
+            Applies '_directly' to all beats linked to this one.
+        """
+        for absolute_position in self._build_positions_list(position):
+            self._set_percussion_event_directly(absolute_position)
+
+    def _set_percussion_event_directly(self, position: List[int]) -> None:
+        """
+            Set the percussion event with a pre-assigned
+            instrument at the given position
+        """
         channel, line_offset = self.get_channel_index(position[0])
         if channel != 9:
             raise IndexError("Attempting to set non-percussion channel")
@@ -172,7 +210,16 @@ class OpusManagerBase:
             relative=False
         ))
 
-    def _set_event_ignore_link(self, value, position, *, relative=False):
+    def set_event(self, value: int, position: List[int], *, relative: bool = False) -> None:
+        """
+            Public-facing wrapper.
+            Applies '_directly' to all beats linked to this one.
+        """
+        for absolute_position in self._build_positions_list(position):
+            self._set_event_directly(value, absolute_position, relative=relative)
+
+    def _set_event_directly(self, value: int, position: List[int], *, relative: bool = False) -> None:
+        """Set event at given grouping."""
         channel, _index = self.get_channel_index(position[0])
         grouping = self.get_grouping(position)
 
@@ -194,7 +241,16 @@ class OpusManagerBase:
             relative=relative
         ))
 
-    def _split_grouping_ignore_linked(self, position, splits):
+    def split_grouping(self, initial_position: List[int], splits: int) -> None:
+        """
+            Public-facing wrapper.
+            Applies '_directly' to all beats linked to this one.
+        """
+        for position in self._build_positions_list(initial_position):
+            self._split_grouping_directly(position, splits)
+
+    def _split_grouping_directly(self, position: List[int], splits: int) -> None:
+        """Divide the grouping at the given position into *splits* divisions"""
         grouping = self.get_grouping(position)
         reduced = False
         if grouping.is_event():
@@ -215,7 +271,20 @@ class OpusManagerBase:
                 grouping.parent.replace_with(grouping)
                 reduced = True
 
-    def _unset_ignore_link(self, position):
+
+    def unset(self, position: List[int]) -> None:
+        """
+            Public-facing wrapper.
+            Applies '_directly' to all beats linked to this one.
+        """
+        for absolute_position in self._build_positions_list(position):
+            self._unset_directly(absolute_position)
+
+    def _unset_directly(self, position: List[int]) -> None:
+        """
+            Remove the event from the given grouping
+            but keep the grouping itself.
+        """
         grouping = self.get_grouping(position)
         if grouping.is_event():
             grouping.clear_events()
@@ -223,18 +292,12 @@ class OpusManagerBase:
             grouping.clear()
 
 
-    def add_channel(self, channel):
+    def add_channel(self, channel: int) -> None:
+        """Insert an active line in the given channel."""
         self.new_line(channel)
 
-    def add_line_to_channel(self, channel=0):
-        new_grouping = MGrouping()
-        new_grouping.set_size(self.opus_beat_count)
-        for i in range(self.opus_beat_count):
-            new_grouping[i].set_size(1)
-
-        self.channel_groupings[channel].append(new_grouping)
-
-    def change_line_channel(self, old_channel, line_index, new_channel):
+    def change_line_channel(self, old_channel: int, line_index: int, new_channel: int) -> None:
+        """Move an active line to a different channel."""
         grouping = self.channel_groupings[old_channel].pop(line_index)
         self.channel_groupings[new_channel].append(grouping)
 
@@ -249,7 +312,8 @@ class OpusManagerBase:
             del self.linked_beat_map[linked_key]
         del self.inv_linked_beat_map[target]
 
-    def export(self, *, path=None, **kwargs):
+    def export(self, *, path: Optional[str] = None, **kwargs) -> None:
+        """Export this opus to a .mid"""
         for i in range(16):
             kwargs[f"i{i}"] = int(kwargs.get(f"i{i}", 0))
 
@@ -268,13 +332,14 @@ class OpusManagerBase:
 
         opus.to_midi(**kwargs).save(path)
 
-    def get_grouping(self, position):
-        grouping = self.get_line(position[0])
+    def get_grouping(self, position: List[int]) -> MGrouping:
+        """Get the Grouping object at the given position."""
+        grouping = self.get_line_grouping(position[0])
         try:
             for i in position[1:]:
                 grouping = grouping[i]
-        except BadStateError as e:
-            raise InvalidPosition(position)
+        except BadStateError as exception:
+            raise InvalidPosition(position) from exception
 
         return grouping
 
@@ -292,15 +357,15 @@ class OpusManagerBase:
 
         raise IndexError
 
-    # TODO: Use a clearer name
-    def get_line(self, y) -> Optional[MGrouping]:
+    def get_line_grouping(self, y_index: int) -> Optional[MGrouping]:
+        """Get the MGrouping object of the entire line given by_index 'y_index'"""
         output = None
-        for c in self.channel_order:
-            for grouping in self.channel_groupings[c]:
-                if y == 0:
+        for i in self.channel_order:
+            for grouping in self.channel_groupings[i]:
+                if y_index == 0:
                     output = grouping
                     break
-                y -= 1
+                y_index -= 1
 
             if output is not None:
                 break
@@ -308,6 +373,7 @@ class OpusManagerBase:
         return output
 
     def get_working_dir(self):
+        """Get the the path that this file would be saved or exported to"""
         path = self.path
         if path.lower().endswith("mid"):
             working_path = path[0:path.rfind("/")]
@@ -327,24 +393,25 @@ class OpusManagerBase:
 
         return fullpath
 
-    def get_y(self, c: int, i: Optional[int] = None) -> int:
+    def get_y(self, channel_index: int, line_offset: Optional[int] = None) -> int:
         """
             Given a channel and index,
             get the y-index of the specified line displayed
         """
-        if i is None:
-            i = len(self.channel_groupings[c]) - 1
+        if line_offset is None:
+            line_offset = len(self.channel_groupings[channel_index]) - 1
 
-        y = 0
-        for j in self.channel_order:
-            for g, grouping in enumerate(self.channel_groupings[j]):
-                if i == g and j == c:
-                    return y
-                y += 1
+        y_index = 0
+        for i in self.channel_order:
+            for j, _grouping in enumerate(self.channel_groupings[i]):
+                if channel_index == i and line_offset == j:
+                    return y_index
+                y_index += 1
         return -1
 
 
     def import_midi(self, path: str) -> None:
+        """Create opus from midi file"""
         self.path = path
         midi = MIDI.load(path)
         opus = MGrouping.from_midi(midi)
@@ -356,13 +423,8 @@ class OpusManagerBase:
                 self.channel_groupings[i].append(split_line)
                 self.opus_beat_count = max(self.opus_beat_count, len(split_line))
 
-    def insert_after(self, position: List[int]):
-        for position in self._build_positions_list(position):
-            self._insert_after_ignore_linked(position)
-
-    # TODO: Should this be a Grouping Method?
-    def insert_beat(self, index=None):
-        original_beat_count = self.opus_beat_count
+    def insert_beat(self, index: Optional[int] = None) -> None:
+        """Insert an empty beat at the given index in every line"""
         self.opus_beat_count += 1
 
         # Move all beats after new one right
@@ -374,14 +436,14 @@ class OpusManagerBase:
 
         # Re-Adjust existing links
         adjusted_links = []
-        for (i,j,k), (ti, tj, tk) in self.linked_beat_map.items():
+        for (i,j,k), target_key in self.linked_beat_map.items():
             new_key = (i, j, k)
             if k >= index:
                 new_key = (i, j, k + 1)
 
-            new_target = (ti, tj, tk)
-            if tk >= index:
-                new_target = (ti, tj, tk + 1)
+            new_target = target_key
+            if target_key[2] >= index:
+                new_target = (target_key[0], target_key[1], target_key[2] + 1)
             adjusted_links.append((new_key, new_target))
         self.linked_beat_map = {}
         self.inv_linked_beat_map = {}
@@ -391,7 +453,7 @@ class OpusManagerBase:
             self.inv_linked_beat_map[target].add(beat)
             self.linked_beat_map[beat] = target
 
-    def link_beats(self, beat, target) -> None:
+    def link_beats(self, beat: Tuple[int, int, int], target: Tuple[int, int, int]) -> None:
         """
             Overwrites *beat* with a copy of *target*,
             then creates a link between the two such that
@@ -409,6 +471,7 @@ class OpusManagerBase:
         self.inv_linked_beat_map[target].add(beat)
 
     def load_folder(self, path: str) -> None:
+        """Load opus from folder of radix notation files"""
         self.path = path
         radix = self.RADIX
 
@@ -434,7 +497,7 @@ class OpusManagerBase:
         for filename in filenames_clean:
             channel = channel_map[filename]
             content = ""
-            with open(f"{path}/{filename}", 'r') as fp:
+            with open(f"{path}/{filename}", 'r', encoding="utf-8") as fp:
                 content = fp.read()
 
             chunks = content.split("\n[")
@@ -442,7 +505,7 @@ class OpusManagerBase:
                 if i > 0:
                     chunks[i] = f"[{chunk}"
 
-            for x, chunk in enumerate(chunks):
+            for chunk in chunks:
                 grouping = MGrouping.from_string(chunk, radix=radix, channel=channel)
 
                 if grouping:
@@ -455,12 +518,11 @@ class OpusManagerBase:
         self.opus_beat_count = beat_count
 
         if os.path.isfile(f"{path}/linkedbeats.json"):
-            with open(f"{path}/linkedbeats.json", "r") as fp:
+            with open(f"{path}/linkedbeats.json", "r", encoding="utf-8") as fp:
                 json_compat_map = json.loads(fp.read())
                 self.linked_beat_map = {}
                 for k, target in json_compat_map.items():
-                    x,y,z = k.split(".")
-                    new_key = (int(x), int(y), int(z))
+                    new_key = tuple(int(i) for i in k.split("."))
                     self.linked_beat_map[new_key] = tuple(target)
 
         for beat, target in self.linked_beat_map.items():
@@ -470,11 +532,12 @@ class OpusManagerBase:
 
 
     def load_file(self, path: str) -> MGrouping:
+        """Load opus from a single radix-notation file"""
         self.path = path
         radix = self.RADIX
 
         content = ""
-        with open(path, 'r') as fp:
+        with open(path, 'r', encoding="utf-8") as fp:
             content = fp.read()
 
         chunks = content.split("\n[")
@@ -483,13 +546,14 @@ class OpusManagerBase:
                 chunks[i] = f"[{chunk}"
 
         self.opus_beat_count = 1
-        for x, chunk in enumerate(chunks):
-            grouping = MGrouping.from_string(chunk, radix=radix, channel=x)
-            self.channel_groupings[x].append(grouping)
+        for channel, chunk in enumerate(chunks):
+            grouping = MGrouping.from_string(chunk, radix=radix, channel=channel)
+            self.channel_groupings[channel].append(grouping)
             self.opus_beat_count = max(self.opus_beat_count, len(grouping))
 
 
-    def move_line(self, channel, old_index, new_index):
+    def move_line(self, channel: int, old_index: int, new_index: int) -> None:
+        """Within a channel, move a line to a different position"""
         if old_index == new_index:
             return
 
@@ -499,7 +563,8 @@ class OpusManagerBase:
         else:
             self.channel_groupings[channel].insert(new_index, grouping)
 
-    def new_line(self, channel=0, index=None):
+    def new_line(self, channel: int = 0, index: Optional[int] = None) -> None:
+        """Create an empty line in the given channel"""
         new_grouping = MGrouping()
         new_grouping.set_size(self.opus_beat_count)
         for i in range(self.opus_beat_count):
@@ -509,36 +574,36 @@ class OpusManagerBase:
         else:
             self.channel_groupings[channel].append(new_grouping)
 
-    def overwrite_beat(self, old_beat, new_beat) -> None:
+    def overwrite_beat(
+            self,
+            old_beat: Tuple[int, int, int],
+            new_beat: Tuple[int, int, int]) -> None:
         """Overwrite a beat with a copy of the grouping of another"""
         new_grouping = self.channel_groupings[new_beat[0]][new_beat[1]][new_beat[2]].copy()
         old_grouping = self.channel_groupings[old_beat[0]][old_beat[1]][old_beat[2]]
         old_grouping.replace_with(new_grouping)
         self.channel_groupings[old_beat[0]][old_beat[1]][old_beat[2]] = new_grouping
 
-    def remove(self, initial_position: List[int]):
-        for position in self._build_positions_list(initial_position):
-            self._remove_ignore_link(position)
-
-    def remove_beat(self, index):
+    def remove_beat(self, index: int) -> None:
+        """Removes the beat at the index of every active line"""
         # Move all beats after removed index one left
         for i, channel in enumerate(self.channel_groupings):
             for j, line in enumerate(channel):
                 self.unlink_beat(i, j, index)
                 self.clear_links_to_beat(i, j, index)
                 line.pop(index)
-        self.set_beat_count(self.opus_beat_count - 1)
+        self._set_beat_count(self.opus_beat_count - 1)
 
         # Re-Adjust existing links
         adjusted_links = []
-        for (i,j,k), (ti, tj, tk) in self.linked_beat_map.items():
+        for (i,j,k), target_key in self.linked_beat_map.items():
             new_key = (i, j, k)
             if k > index:
                 new_key = (i, j, k - 1)
 
-            new_target = (ti, tj, tk)
-            if tk > index:
-                new_target = (ti, tj, tk - 1)
+            new_target = target_key
+            if target_key[2] > index:
+                new_target = (target_key[0], target_key[1], target_key[2] - 1)
             adjusted_links.append((new_key, new_target))
 
         self.linked_beat_map = {}
@@ -549,23 +614,28 @@ class OpusManagerBase:
             self.inv_linked_beat_map[target].add(beat)
             self.linked_beat_map[beat] = target
 
-    def remove_channel(self, channel):
+    def remove_channel(self, channel: int) -> None:
+        """Remove all of the active lines in a channel"""
         while self.channel_groupings[channel]:
             self.remove_line(channel, 0)
 
-    def remove_line(self, channel, index=None):
+    def remove_line(self, channel: int, index: int = None) -> None:
+        """Remove an active line in a given channel"""
         if index is None:
             index = len(self.channel_groupings[channel]) - 1
 
         self.channel_groupings[channel].pop(index)
 
-    def replace_grouping(self, position, grouping):
+    def replace_grouping(self, position: List[int], grouping: MGrouping) -> None:
+        """Swap out a Grouping at the position with the given Grouping"""
         self.get_grouping(position).replace_with(grouping)
 
-    def save(self, path=None):
+    def save(self, path: Optional[str] = None) -> None:
+        """Obvs"""
         if path is None and self.path is None:
             raise NoPathGiven()
-        elif path is None:
+
+        if path is None:
             path = self.path
 
         self.path = path
@@ -575,10 +645,10 @@ class OpusManagerBase:
         if not os.path.isdir(fullpath):
             os.mkdir(fullpath)
 
-        for f in os.listdir(fullpath):
-            os.remove(f"{fullpath}/{f}")
+        for subpath in os.listdir(fullpath):
+            os.remove(f"{fullpath}/{subpath}")
 
-        for c, channel_lines in enumerate(self.channel_groupings):
+        for i, channel_lines in enumerate(self.channel_groupings):
             if not channel_lines:
                 continue
 
@@ -587,8 +657,8 @@ class OpusManagerBase:
                 line.clear_singles()
                 strlines.append(line.to_string())
 
-            n = "0123456789ABCDEF"[c]
-            with open(f"{fullpath}/channel_{n}", "w") as fp:
+            hexrep = hex(i)[2:].upper()
+            with open(f"{fullpath}/channel_{hexrep}", "w", encoding="utf-8") as fp:
                 fp.write("\n".join(strlines))
 
         json_compat_map = {}
@@ -596,28 +666,14 @@ class OpusManagerBase:
             new_key = f"{k[0]}.{k[1]}.{k[2]}"
             json_compat_map[new_key] = target
 
-        with open(f"{fullpath}/linkedbeats.json", "w") as fp:
+        with open(f"{fullpath}/linkedbeats.json", "w", encoding="utf-8") as fp:
             fp.write(json.dumps(json_compat_map, indent=4))
 
-    def set_event(self, value, position, *, relative=False):
-        for absolute_position in self._build_positions_list(position):
-            self._set_event_ignore_link(value, absolute_position, relative=relative)
-
-    def set_beat_count(self, new_count):
-        self.opus_beat_count = new_count
-        for groupings in self.channel_groupings:
-            for grouping in groupings:
-                grouping.set_size(new_count, True)
-
-    def set_beat_size(self, size, position):
-        grouping = self.get_grouping(position)
-        grouping.set_size(size, True)
-
-    def set_percussion_event(self, position: List[int]) -> None:
-        for absolute_position in self._build_positions_list(position):
-            self._set_percussion_event_ignore_link(absolute_position)
-
     def set_percussion_instrument(self, line_offset: int, instrument: int) -> None:
+        """
+            Register an instrument to use on a percussion line.
+            Updates existing events.
+        """
         self.percussion_map[line_offset] = instrument
 
         # Traverse the line and set all the events to the new instrument
@@ -632,11 +688,8 @@ class OpusManagerBase:
                 event.note = instrument
                 grouping.add_event(event)
 
-    def split_grouping(self, initial_position, splits):
-        for position in self._build_positions_list(initial_position):
-            self._split_grouping_ignore_linked(position, splits)
-
-    def swap_channels(self, channel_a, channel_b):
+    def swap_channels(self, channel_a: int, channel_b: int) -> None:
+        """Swap the active lines of two channels."""
         tmp = self.channel_groupings[channel_b]
         self.channel_groupings[channel_b] = self.channel_groupings[channel_a]
         self.channel_groupings[channel_a] = tmp
@@ -656,11 +709,6 @@ class OpusManagerBase:
             del self.inv_linked_beat_map[target_key]
 
         del self.linked_beat_map[key]
-
-    def unset(self, position):
-        for absolute_position in self._build_positions_list(position):
-            self._unset_ignore_link(absolute_position)
-
 
 
 def split_by_channel(event, other_events):

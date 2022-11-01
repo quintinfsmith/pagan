@@ -81,16 +81,16 @@ class FlagLayer(HistoryLayer):
         super().link_beats(beat, target)
         self.flag('beat_change', beat)
 
-    def _insert_after_ignore_linked(self, position: List[int]) -> None:
-        super()._insert_after_ignore_linked(position)
+    def _insert_after_directly(self, position: List[int]) -> None:
+        super()._insert_after_directly(position)
         channel, line = self.get_channel_index(position[0])
         self.flag('beat_change', (channel, line, position[1]))
 
-    def _split_grouping_ignore_linked(
+    def _split_grouping_directly(
             self,
             position: List[int],
             splits: int) -> None:
-        super()._split_grouping_ignore_linked(position, splits)
+        super()._split_grouping_directly(position, splits)
         channel, line = self.get_channel_index(position[0])
         self.flag('beat_change', (channel, line, position[1]))
 
@@ -131,19 +131,19 @@ class FlagLayer(HistoryLayer):
             for j, _line in enumerate(channel):
                 self.flag('line', (i, j, 'init'))
 
-    def _set_event_ignore_link(
+    def _set_event_directly(
             self,
             value: int,
             position: List[int],
             *,
             relative: bool = False) -> None:
-        super()._set_event_ignore_link(value, position, relative=relative)
+        super()._set_event_directly(value, position, relative=relative)
 
         channel, index = self.get_channel_index(position[0])
         self.flag('beat_change', (channel, index, position[1]))
 
-    def _set_percussion_event_ignore_link(self, position: List[int]) -> None:
-        super()._set_percussion_event_ignore_link(position)
+    def _set_percussion_event_directly(self, position: List[int]) -> None:
+        super()._set_percussion_event_directly(position)
         channel, index = self.get_channel_index(position[0])
         self.flag('beat_change', (channel, index, position[1]))
 
@@ -152,8 +152,8 @@ class FlagLayer(HistoryLayer):
         for i in range(self.opus_beat_count):
             self.flag('beat_change', (9, line_offset, i))
 
-    def _unset_ignore_link(self, position: List[int]) -> None:
-        super()._unset_ignore_link(position)
+    def _unset_directly(self, position: List[int]) -> None:
+        super()._unset_directly(position)
 
         channel, index = self.get_channel_index(position[0])
         self.flag('beat_change', (channel, index, position[1]))
@@ -180,8 +180,8 @@ class FlagLayer(HistoryLayer):
 
         self.flag('line', (channel, line_index, 'new'))
 
-    def _remove_ignore_link(self, position: List[int]) -> None:
-        super()._remove_ignore_link(position)
+    def _remove_directly(self, position: List[int]) -> None:
+        super()._remove_directly(position)
 
         channel, index = self.get_channel_index(position[0])
         self.flag('beat_change', (channel, index, position[1]))

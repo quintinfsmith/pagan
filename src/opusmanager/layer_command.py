@@ -194,10 +194,11 @@ class CommandLayer(CursorLayer):
         super().__init__()
 
         self.static_kwargs = {}
+        self.kill_flag = False
 
         self.command_ledger = CommandLedger({
             'w': self.save,
-            'q': self.kill,
+            'q': self.raise_kill_flag,
             'c+': self.add_channel,
             'c-': self.remove_channel,
             'export': self.export,
@@ -208,6 +209,9 @@ class CommandLayer(CursorLayer):
             'ow': self.overwrite_beat_at_cursor,
             'set':  self.save_kwarg_value
         })
+
+    def raise_kill_flag(self):
+        self.kill_flag = True
 
     def cmd_unlink_beats(self, beats=None):
         if beats is None:

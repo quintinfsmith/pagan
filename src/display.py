@@ -69,7 +69,7 @@ class EditorEnvironment:
 
     def tick(self):
         flag_draw = False
-        if self.opus_manager.flag_kill:
+        if self.opus_manager.kill_flag:
             self.kill()
             return
 

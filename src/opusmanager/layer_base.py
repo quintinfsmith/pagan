@@ -187,7 +187,7 @@ class OpusManagerBase:
         if channel != 9:
             raise IndexError("Attempting to set non-percussion channel")
 
-        grouping = self.get_grouping(position)
+        grouping = self.get_grouping(beat_key, position)
         if grouping.is_structural():
             grouping.clear()
         elif grouping.is_event():

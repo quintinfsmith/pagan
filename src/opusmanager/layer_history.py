@@ -92,7 +92,10 @@ class HistoryLayer(OpusManagerBase):
                     stack.append(next_position)
             elif grouping.is_event():
                 event = list(grouping.get_events())[0]
-                self.append_undoer(self.set_event, event.note, beat_key, position, relative=event.relative)
+                if channel != 9:
+                    self.append_undoer(self.set_event, event.note, beat_key, position, relative=event.relative)
+                else:
+                    self.append_undoer(self.set_percussion_event, beat_key, position)
             else:
                 self.append_undoer(self.unset, beat_key, position)
 

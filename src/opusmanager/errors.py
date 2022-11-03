@@ -9,3 +9,6 @@ class InvalidPosition(Exception):
         an OpusManager function that doesn't lead
         to a valid grouping.
     '''
+
+class PositionTooBroad(Exception):
+    """ Raised if a position isn't specific enough """

@@ -3,7 +3,8 @@ from __future__ import annotations
 from typing import List, Optional, Tuple, Union, Any
 from collections.abc import Callable
 
-from .layer_flag import FlagLayer
+from .layer_flag import FlagLayer, BeatKey
+from .mgrouping import MGrouping
 
 class ReadyEvent:
     """Temporary placeholder for note events as they are being created"""
@@ -173,7 +174,7 @@ class Cursor:
         """
         return self.opus_manager.get_channel_index(self.y)
 
-    def get_triplet(self) -> Tuple[int, int, int]:
+    def get_triplet(self) -> BeatKey:
         """Get the active beat's channel, line and x position rather than x/y"""
         channel, index = self.get_channel_index()
         return (channel, index, self.x)
@@ -183,6 +184,7 @@ class CursorLayer(FlagLayer):
     def __init__(self):
         super().__init__()
         self.cursor = Cursor(self)
+        self.channel_order = list(range(16))
         self.register = None
 
     ## Layer-Specific methods
@@ -205,7 +207,7 @@ class CursorLayer(FlagLayer):
     def set_percussion_event_at_cursor(self) -> None:
         """Turn on percussion at the position pointed to by the cursor"""
         if self.cursor.get_triplet()[0] == 9:
-            self.set_percussion_event(self.cursor.to_list())
+            self.set_percussion_event(self.cursor.get_triplet(), self.cursor.position)
 
     def new_line_at_cursor(self) -> None:
         """Insert a line at the channel pointed to by the cursor"""
@@ -225,7 +227,7 @@ class CursorLayer(FlagLayer):
 
     def split_grouping_at_cursor(self) -> None:
         """Divide the grouping pointed to by the cursor into 2"""
-        self.split_grouping(self.cursor.to_list(), 2)
+        self.split_grouping(self.cursor.get_triplet(), self.cursor.position, 2)
         self.cursor.settle()
 
     def unset_at_cursor(self) -> None:
@@ -233,14 +235,14 @@ class CursorLayer(FlagLayer):
             Remove the event pointed to by the cursor.
             Leaves the grouping in tact.
         """
-        self.unset(self.cursor.to_list())
+        self.unset(self.cursor.get_triplet(), self.cursor.position)
 
     def remove_grouping_at_cursor(self) -> None:
         """
             Remove the grouping pointed to by the cursor from its parent.
             Reduces the size of the parent.
         """
-        self.remove(self.cursor.to_list())
+        self.remove(self.cursor.get_triplet(), self.cursor.position)
         self.cursor.settle()
 
     def insert_beat_at_cursor(self) -> None:
@@ -254,11 +256,7 @@ class CursorLayer(FlagLayer):
         """
             Get the grouping object pointed to by the cursor.
         """
-        return self.get_grouping([
-            self.cursor.y,
-            self.cursor.x,
-            *self.cursor.position
-        ])
+        return self.get_grouping(self.cursor.get_triplet(), self.cursor.position)
 
     def increment_event_at_cursor(self) -> None:
         """
@@ -283,7 +281,8 @@ class CursorLayer(FlagLayer):
 
             self.set_event(
                 new_value,
-                self.cursor.to_list(),
+                self.cursor.get_triplet(),
+                self.cursor.position,
                 relative=event.relative
             )
 
@@ -310,7 +309,8 @@ class CursorLayer(FlagLayer):
 
             self.set_event(
                 new_value,
-                self.cursor.to_list(),
+                self.cursor.get_triplet(),
+                self.cursor.position,
                 relative=event.relative
             )
 
@@ -375,7 +375,7 @@ class CursorLayer(FlagLayer):
             Remove any link *from* the beat pointed to by the cursor.
             Leaves the beat unchanged.
         """
-        self.unlink_beat(*self.cursor.get_triplet())
+        self.unlink_beat(self.cursor.get_triplet())
 
     def apply_register_at_cursor(self) -> None:
         """
@@ -393,7 +393,8 @@ class CursorLayer(FlagLayer):
         else:
             self.set_event(
                 register.value,
-                self.cursor.to_list(),
+                self.cursor.get_triplet(),
+                self.cursor.position,
                 relative=register.relative
             )
 
@@ -416,7 +417,7 @@ class CursorLayer(FlagLayer):
 
     def insert_after_cursor(self) -> None:
         """Use the cursor to create a new empty Grouping."""
-        self.insert_after(self.cursor.to_list())
+        self.insert_after(self.cursor.get_triplet(), self.cursor.position)
 
     def clear_register(self) -> None:
         """Cancel event being input."""
@@ -464,6 +465,51 @@ class CursorLayer(FlagLayer):
         else:
             self.register = ReadyEvent(self.RADIX, relative=True)
 
+    def get_channel_index(self, y_index: int) -> Tuple[int, int]:
+        """
+            Given the y-index of a line (as in from the cursor),
+            get the channel and index thereof
+        """
+
+        for channel in self.channel_order:
+            for i, _ in enumerate(self.channel_groupings[channel]):
+                if y_index == 0:
+                    return (channel, i)
+                y_index -= 1
+
+        raise IndexError
+
+    def get_line_grouping(self, y_index: int) -> Optional[MGrouping]:
+        """Get the MGrouping object of the entire line given by_index 'y_index'"""
+        output = None
+        for i in self.channel_order:
+            for grouping in self.channel_groupings[i]:
+                if y_index == 0:
+                    output = grouping
+                    break
+                y_index -= 1
+
+            if output is not None:
+                break
+
+        return output
+
+    def get_y(self, channel_index: int, line_offset: Optional[int] = None) -> int:
+        """
+            Given a channel and index,
+            get the y-index of the specified line displayed
+        """
+        if line_offset is None:
+            line_offset = len(self.channel_groupings[channel_index]) - 1
+
+        y_index = 0
+        for i in self.channel_order:
+            for j, _grouping in enumerate(self.channel_groupings[i]):
+                if channel_index == i and line_offset == j:
+                    return y_index
+                y_index += 1
+        return -1
+
     ## OpusManager methods
     def insert_beat(self, index: Optional[int] = None) -> None:
         super().insert_beat(index)
@@ -473,8 +519,8 @@ class CursorLayer(FlagLayer):
         super().remove_beat(index)
         self.cursor.settle()
 
-    def remove(self, position: List[int]) -> None:
-        super().remove(position)
+    def remove(self, beat_key: BeatKey, position: List[int]) -> None:
+        super().remove(beat_key, position)
         self.cursor.settle()
 
     def swap_channels(self, channel_a: int, channel_b: int) -> None:
@@ -487,8 +533,8 @@ class CursorLayer(FlagLayer):
         self.cursor.set_y(new_y)
         self.cursor.settle()
 
-    def split_grouping(self, position: List[int], splits: int) -> None:
-        super().split_grouping(position, splits)
+    def split_grouping(self, beat_key: BeatKey, position: List[int], splits: int) -> None:
+        super().split_grouping(beat_key, position, splits)
         self.cursor.settle()
 
     def remove_line(self, channel: int, index: Optional[int] = None) -> None:
@@ -501,8 +547,8 @@ class CursorLayer(FlagLayer):
 
     def overwrite_beat(
             self,
-            old_beat: Tuple[int, int, int],
-            new_beat: Tuple[int, int, int]) -> None:
+            old_beat: BeatKey,
+            new_beat: BeatKey) -> None:
         super().overwrite_beat(old_beat, new_beat)
         self.cursor.settle()
 

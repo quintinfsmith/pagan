@@ -1,6 +1,5 @@
 '''Allow subclasses to listen for keyboard input'''
 import termios
-import threading
 import time
 import tty
 import sys

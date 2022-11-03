@@ -7,7 +7,7 @@ from inspect import signature
 from typing import Optional, Dict, List, Tuple
 from enum import Enum, auto
 
-from .layer_cursor import CursorLayer
+from .layer_cursor import CursorLayer, BeatKey
 
 class CommandLedger:
     def __init__(self, command_map):
@@ -219,7 +219,7 @@ class CommandLayer(CursorLayer):
         else:
             cursor = self.cursor.get_triplet()
             for i in range(beats):
-                self.unlink_beat(cursor[0], cursor[1], cursor[2] + i)
+                self.unlink_beat((cursor[0], cursor[1], cursor[2] + i))
 
     def save_kwarg_value(self, cmd, key, value):
         if not cmd in self.static_kwargs:

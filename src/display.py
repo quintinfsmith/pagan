@@ -1,7 +1,6 @@
 from __future__ import annotations
 import math
 import time
-import threading
 
 from inspect import signature
 from enum import Enum, auto

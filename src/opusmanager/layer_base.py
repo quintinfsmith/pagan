@@ -110,6 +110,8 @@ class OpusManagerBase:
 
     def _insert_after_directly(self, beat_key: BeatKey, position: List[int]):
         """Create an empty grouping next to the given one, expanding the parent"""
+        if not position:
+            raise InvalidPosition(position)
         grouping = self.get_grouping(beat_key, position)
 
         parent = grouping.parent
@@ -202,9 +204,9 @@ class OpusManagerBase:
 
     def set_event(
             self,
-            value: int,
             beat_key: BeatKey,
             position: List[int],
+            value: int,
             *,
             relative: bool = False) -> None:
         """
@@ -212,13 +214,13 @@ class OpusManagerBase:
             Applies '_directly' to all beats linked to this one.
         """
         for linked_key in self._get_all_linked(beat_key):
-            self._set_event_directly(value, linked_key, position, relative=relative)
+            self._set_event_directly(linked_key, position, value, relative=relative)
 
     def _set_event_directly(
             self,
-            value: int,
             beat_key: BeatKey,
             position: List[int],
+            value: int,
             *,
             relative: bool = False) -> None:
         """Set event at given grouping."""

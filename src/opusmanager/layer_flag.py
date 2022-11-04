@@ -132,12 +132,12 @@ class FlagLayer(HistoryLayer):
 
     def _set_event_directly(
             self,
-            value: int,
             beat_key: BeatKey,
             position: List[int],
+            value: int,
             *,
             relative: bool = False) -> None:
-        super()._set_event_directly(value, beat_key, position, relative=relative)
+        super()._set_event_directly(beat_key, position, value, relative=relative)
         self.flag('beat_change', beat_key)
 
     def _set_percussion_event_directly(

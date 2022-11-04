@@ -280,9 +280,9 @@ class CursorLayer(FlagLayer):
                 new_value = event.note + 1
 
             self.set_event(
-                new_value,
                 self.cursor.get_triplet(),
                 self.cursor.position,
+                new_value,
                 relative=event.relative
             )
 
@@ -308,9 +308,9 @@ class CursorLayer(FlagLayer):
                 new_value = event.note - 1
 
             self.set_event(
-                new_value,
                 self.cursor.get_triplet(),
                 self.cursor.position,
+                new_value,
                 relative=event.relative
             )
 
@@ -392,9 +392,9 @@ class CursorLayer(FlagLayer):
             self.set_percussion_instrument(line_offset, register.value)
         else:
             self.set_event(
-                register.value,
                 self.cursor.get_triplet(),
                 self.cursor.position,
+                register.value,
                 relative=register.relative
             )
 

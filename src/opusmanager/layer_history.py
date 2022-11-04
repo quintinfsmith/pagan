@@ -93,7 +93,13 @@ class HistoryLayer(OpusManagerBase):
             elif grouping.is_event():
                 event = list(grouping.get_events())[0]
                 if channel != 9:
-                    self.append_undoer(self.set_event, event.note, beat_key, position, relative=event.relative)
+                    self.append_undoer(
+                        self.set_event,
+                        beat_key,
+                        position,
+                        event.note,
+                        relative=event.relative
+                    )
                 else:
                     self.append_undoer(self.set_percussion_event, beat_key, position)
             else:
@@ -139,10 +145,11 @@ class HistoryLayer(OpusManagerBase):
         super().remove_line(channel, line_offset)
 
     def insert_after(self, beat_key: BeatKey, position: List[int]) -> None:
-        # Else is implicitly handled by 'split_grouping'
-        rposition = position.copy()
-        rposition[-1] += 1
-        self.append_undoer(self.remove, beat_key, rposition)
+        if position:
+            # Else is implicitly handled by 'split_grouping'
+            rposition = position.copy()
+            rposition[-1] += 1
+            self.append_undoer(self.remove, beat_key, rposition)
         super().insert_after(beat_key, position)
 
     def split_grouping(self, beat_key: BeatKey, position: List[int], splits: int) -> None:
@@ -174,9 +181,9 @@ class HistoryLayer(OpusManagerBase):
 
     def set_event(
             self,
-            value: int,
             beat_key: BeatKey,
             position: List[int],
+            value: int,
             *,
             relative: bool = False) -> None:
 
@@ -191,13 +198,13 @@ class HistoryLayer(OpusManagerBase):
             original_event = list(grouping.get_events())[0]
             self.append_undoer(
                 self.set_event,
-                original_event.note,
                 beat_key,
                 position,
+                original_event.note,
                 relative=original_event.relative
             )
 
-        super().set_event(value, beat_key, position, relative=relative)
+        super().set_event(beat_key, position, value, relative=relative)
 
 
     def unset(self, beat_key: BeatKey, position: List[int]) -> None:
@@ -206,9 +213,9 @@ class HistoryLayer(OpusManagerBase):
             original_event = list(grouping.get_events())[0]
             self.append_undoer(
                 self.set_event,
-                original_event.note,
                 beat_key,
                 position,
+                original_event.note,
                 relative=original_event.relative
             )
         super().unset(beat_key, position)

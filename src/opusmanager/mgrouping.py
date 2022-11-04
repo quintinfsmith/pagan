@@ -176,9 +176,15 @@ class MGrouping(Grouping):
                     parent_grouping[0] = beat
                     beat = parent_grouping
 
+                #KLUDGE: We want grouping is their most reduced form when flattened
+                # So this is the current solution
                 if not beat.is_flat():
                     beat.flatten()
+                beat.reduce()
+                beat.flatten()
+
                 div_size = midi.ppqn / len(beat)
+
                 open_events = []
 
                 for i, subgrouping in enumerate(beat):

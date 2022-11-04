@@ -132,7 +132,7 @@ class Cursor:
         """Set which beat the cursor points to"""
         beat_count = self.opus_manager.opus_beat_count
         if new_x < 0:
-            new_x = beat_count - new_x
+            new_x = beat_count + max(0 - beat_count, new_x)
         else:
             new_x = min(new_x, beat_count - 1)
         self.x = new_x

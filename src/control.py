@@ -118,7 +118,7 @@ class Controller:
             self.interactor.set_context(InputContext.DEFAULT)
 
     def command_ledger_set(self, new_value: str) -> None:
-        self.command_ledger_set(new_value)
+        self.opus_manager.command_ledger_set(new_value)
 
     def command_ledger_open_and_set(self, new_value: str) -> None:
         self.command_ledger_open()

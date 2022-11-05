@@ -133,7 +133,7 @@ class HistoryLayer(OpusManagerBase):
 
     def new_line(self, channel=0, index=None):
         self.append_undoer(self.remove_line, channel, index)
-        super().new_line(channel)
+        super().new_line(channel, index)
 
     def remove_line(self, channel: int, line_offset: Optional[int] = None) -> None:
         self.open_multi()

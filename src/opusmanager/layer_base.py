@@ -557,6 +557,7 @@ class OpusManagerBase:
         new_grouping.set_size(self.opus_beat_count)
         for i in range(self.opus_beat_count):
             new_grouping[i].set_size(1)
+
         if index is not None:
             self.channel_groupings[channel].insert(index, new_grouping)
         else:

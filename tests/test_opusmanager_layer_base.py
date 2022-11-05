@@ -47,6 +47,21 @@ class OpusManagerTest(unittest.TestCase):
         manager.remove(beat_key, [0])
         assert len(beat_grouping) == 1, "Removed a beat's last child"
 
+        # Check that the siblings get adjusted
+        for i in range(3):
+            manager.insert_after(beat_key, [0])
+        grouping = manager.get_grouping(beat_key, [3])
+        manager.remove(beat_key, [2])
+        assert grouping == manager.get_grouping(beat_key, [2])
+
+        # check that N->1->N gets reduced to N->N
+        manager.split_grouping(beat_key, [2], 2)
+        manager.split_grouping(beat_key, [2,0], 2)
+        manager.split_grouping(beat_key, [2,0,0], 2)
+        grouping = manager.get_grouping(beat_key, [2,0,0])
+        manager.remove(beat_key, [2,1])
+        assert grouping == manager.get_grouping(beat_key, [2,0])
+
         # *Attempt* to remove a beat with remove()
         try:
             manager.remove(beat_key, [])
@@ -95,7 +110,14 @@ class OpusManagerTest(unittest.TestCase):
 
         # Re-set event
         manager.set_event(beat_key, [0], event_value + 4)
-        assert grouping.is_event(), "Failed to re-set event"
+        grouping = manager.get_grouping(beat_key, [0])
+        assert list(grouping.get_events())[0].note == event_value + 4, "Failed to re-set event"
+
+        # Overwrite existing structural node
+        manager.split_grouping(beat_key, [0], 2)
+        manager.set_event(beat_key, [0], event_value - 4)
+        grouping = manager.get_grouping(beat_key, [0])
+        assert grouping.is_event(), "Failed to overwrite existing structure"
 
         # *Attempt* To set event at beat
         try:
@@ -127,8 +149,20 @@ class OpusManagerTest(unittest.TestCase):
         grouping = manager.get_grouping(beat_key, [0])
         assert grouping.is_event(), "Failed to set percussion event"
 
-        # *Attempt* to set non-percussion event
 
+        # Overwrite existing structural node
+        manager.split_grouping(beat_key, [0], 2)
+        manager.set_percussion_event(beat_key, [0])
+        grouping = manager.get_grouping(beat_key, [0])
+        assert grouping.is_event(), "Failed to overwrite existing structure"
+
+        # Overwrite existing event
+        manager.set_percussion_event(beat_key, [0])
+        grouping = manager.get_grouping(beat_key, [0])
+        assert len(grouping.get_events()) == 1, "Failed to overwrite existing event"
+
+
+        # *Attempt* to set non-percussion event
         beat_key = (0,0,0)
         try:
             manager.set_percussion_event(beat_key, [0])
@@ -208,3 +242,52 @@ class OpusManagerTest(unittest.TestCase):
         assert manager.opus_beat_count == initial_length - 1, "Failed to decrease length"
         assert manager.get_grouping((0,0,index - 1), [0]).is_event(), "Failed to move beats over"
 
+    def test_swap_channels(self):
+        index_a = 0
+        index_b = 1
+        # Set up an opus
+        manager = OpusManager.new()
+
+        manager.new_line(0)
+        # Add a channel to be  swapped with 0
+        manager.add_channel(1)
+        manager.new_line(1)
+        channel_a_line_a = manager.channel_groupings[index_a][0]
+        channel_a_line_b = manager.channel_groupings[index_a][1]
+        channel_b_line_a = manager.channel_groupings[index_b][0]
+        channel_b_line_b = manager.channel_groupings[index_b][1]
+
+        manager.swap_channels(index_a, index_b)
+        assert channel_a_line_a == manager.channel_groupings[index_b][0] \
+            and channel_b_line_a == manager.channel_groupings[index_a][0] \
+            and channel_a_line_b == manager.channel_groupings[index_b][1] \
+            and channel_b_line_b == manager.channel_groupings[index_a][1], "Didn't swap lines in channels correctly"
+
+    def test_remove_channel(self):
+        # Set up an opus
+        manager = OpusManager.new()
+
+        manager.new_line(1)
+
+        manager.remove_channel(1)
+        assert not manager.channel_groupings[1], "Failed to removed channel 1"
+
+    def test_remove_line(self):
+        # Set up an opus
+        manager = OpusManager.new()
+        manager.add_channel(1)
+        for i in range(16):
+            manager.new_line(1)
+
+        index = 12
+        line = manager.channel_groupings[1][index]
+
+        manager.remove_line(1, index - 1)
+        # Checking that the line *before* the line to check is removed
+        assert manager.channel_groupings[1][index - 1] == line, "Failed to remove line in channel 1"
+
+    def test_add_line(self):
+        manager = OpusManager.new()
+        line = manager.channel_groupings[0][0]
+        manager.new_line(0, 0)
+        assert line == manager.channel_groupings[0][1], "Failed to insert line at index"

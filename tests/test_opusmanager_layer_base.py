@@ -291,3 +291,54 @@ class OpusManagerTest(unittest.TestCase):
         line = manager.channel_groupings[0][0]
         manager.new_line(0, 0)
         assert line == manager.channel_groupings[0][1], "Failed to insert line at index"
+
+    def test_move_line(self):
+        manager = OpusManager.new()
+        line = manager.channel_groupings[0][0]
+        for i in range(12):
+            manager.new_line(0)
+        manager.move_line(channel=0, old_index=0, new_index=2)
+        assert line == manager.channel_groupings[0][2]
+
+        manager.move_line(channel=0, old_index=2, new_index=-1)
+        assert line == manager.channel_groupings[0][-1], "Failed to move line to Nth-from-last"
+
+
+        manager.move_line(channel=0, old_index=-1, new_index=0)
+        assert line == manager.channel_groupings[0][0], "Failed to move line by Nth-from-last index"
+
+        manager.move_line(0, 0, 0)
+        assert line == manager.channel_groupings[0][0], "Something went wrong when moving a line to the same position"
+
+        # *Attempt* bad indices
+        try:
+            manager.move_line(channel=0, old_index=100, new_index=1)
+            assert False, "Should not be able to move out of bounds"
+        except IndexError:
+            assert True
+        except Exception:
+            assert False, "Should have raised index error"
+
+        # *Attempt* bad indices
+        try:
+            manager.move_line(channel=0, old_index=0, new_index=-100)
+            assert False, "Should not be able to move out of bounds"
+        except IndexError:
+            assert True
+        except Exception:
+            assert False, "Should have raised index error"
+
+    def test_overwrite_beat(self):
+        manager = OpusManager.new()
+        beat_a = (0,0,0)
+        beat_b = (0,0,1)
+
+        # Set up beat_a
+        manager.split_grouping(beat_a, [0], 3)
+        manager.split_grouping(beat_a, [0,1], 2)
+        manager.set_event(beat_a, [0,1,0], 24)
+        manager.set_event(beat_a, [0,0], 25)
+
+        manager.overwrite_beat(beat_b, beat_a)
+
+        assert manager.get_beat_grouping(beat_a).matches(manager.get_beat_grouping(beat_b)), "Failed to overwrite beat"

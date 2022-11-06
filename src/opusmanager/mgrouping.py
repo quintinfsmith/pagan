@@ -72,8 +72,19 @@ class MGroupingEvent:
         self.base = base
         self.meta = meta
 
+    def __hash__(self):
+        return (int(self.relative) * (2 ** 9)) + (self.note * (2 ** 8)) + self.base
+
     def __getitem__(self, key: str):
         return self.meta.get(key, None)
+
+    def __eq__(self, other):
+        if other.__class__ != self.__class__:
+            return False
+
+        return self.relative == other.relative \
+            and self.note == other.note \
+            and self.base == other.base
 
     def get_note(self):
         return self.note
@@ -124,6 +135,26 @@ class MGrouping(Grouping):
         CH_HOLD,
         CH_REPEAT
     )
+
+    def matches(self, other):
+        if self.__class__ != other.__class__:
+            return False
+
+        if self.is_event() and other.is_event():
+            return self.get_events() == other.get_events()
+
+        if self.is_open() and other.is_open():
+            return True
+
+        if self.is_structural and other.is_structural():
+            if len(self) != len(other):
+                return False
+
+            for i, node in self.divisions.items():
+                if not node.matches(other[i]):
+                    return False
+            return True
+        return False
 
     @staticmethod
     def _channel_splitter(event, other_events):

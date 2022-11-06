@@ -540,11 +540,18 @@ class OpusManagerBase:
         if old_index == new_index:
             return
 
+        # Adjust the new_index so it doesn't get confused
+        # when we pop() the old_index
+        if new_index < 0:
+            new_index = len(self.channel_groupings[channel]) + new_index
+        if new_index < 0:
+            raise IndexError(new_index)
+
+        if old_index > len(self.channel_groupings[channel]):
+            raise IndexError(old_index)
+
         grouping = self.channel_groupings[channel].pop(old_index)
-        if new_index == len(grouping) - 1:
-            self.channel_groupings[channel].append(grouping)
-        else:
-            self.channel_groupings[channel].insert(new_index, grouping)
+        self.channel_groupings[channel].insert(new_index, grouping)
 
     def new_line(self, channel: int = 0, index: Optional[int] = None) -> None:
         """Create an empty line in the given channel"""

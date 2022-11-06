@@ -24,11 +24,6 @@ class OpusManagerBase:
         self.path = None
         self.percussion_map = {}
 
-    @property
-    def line_count(self) -> int:
-        """Get the number of lines active in this opus."""
-        return sum((len(channel) for channel in self.channel_groupings))
-
     @classmethod
     def load(cls, path: str):
         """Build a new OpusManager object from a radix-notation file or midi"""

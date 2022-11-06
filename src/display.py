@@ -478,16 +478,10 @@ class EditorEnvironment:
 
         return output
 
-    def get_line_count(self):
-        output = 0
-        for channel in self.channel_rects:
-            for _line in channel:
-                output += 1
-        return output
 
     def tick_update_lines(self) -> bool:
         line_length = sum(self.rendered_beat_widths) + self.opus_manager.opus_beat_count
-        line_count = self.get_line_count()
+        line_count = self.opus_manager.line_count
         output = False
         if line_length != self.rendered_line_length or line_count != self.rendered_line_count:
             new_height = 0

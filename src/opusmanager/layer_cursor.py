@@ -188,6 +188,11 @@ class CursorLayer(FlagLayer):
         self.register = None
 
     ## Layer-Specific methods
+    @property
+    def line_count(self) -> int:
+        """Get the number of lines active in this opus."""
+        return sum((len(channel) for channel in self.channel_groupings))
+
     def cursor_right(self) -> None:
         """Wrapper function"""
         self.cursor.move_right()

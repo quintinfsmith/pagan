@@ -19,8 +19,6 @@ class OpusManagerBase:
     def __init__(self):
         self.channel_groupings = [[] for i in range(16)]
         self.opus_beat_count = 1
-        self.linked_beat_map = {}
-        self.inv_linked_beat_map = {}
         self.path = None
         self.percussion_map = {}
 
@@ -38,24 +36,6 @@ class OpusManagerBase:
         new_manager._new()
         return new_manager
 
-    def _get_all_linked(self, beat_key: BeatKey) -> List[BeatKey]:
-        """
-            Get a list of all positions of beats that will be affected
-            by changes made to the one at the given position (ie, linked)
-        """
-        if beat_key in self.inv_linked_beat_map:
-            positions = [(beat_key)]
-            for linked_key in self.inv_linked_beat_map[beat_key]:
-                positions.append(linked_key)
-        elif beat_key in self.linked_beat_map:
-            target_key = self.linked_beat_map[beat_key]
-            positions = [target_key]
-            for linked_key in self.inv_linked_beat_map[target_key]:
-                positions.append(linked_key)
-        else:
-            positions = [beat_key]
-
-        return positions
 
     def _load(self, path: str) -> None:
         """Only called from load(..) class method"""
@@ -95,15 +75,7 @@ class OpusManagerBase:
         self.channel_groupings[0].append(new_line)
         self.opus_beat_count = 4
 
-    def insert_after(self, beat_key: BeatKey, position: List[int]) -> None:
-        """
-            Public-facing wrapper.
-            Applies '_directly' to all beats linked to this one.
-        """
-        for linked_key in self._get_all_linked(beat_key):
-            self._insert_after_directly(linked_key, position)
-
-    def _insert_after_directly(self, beat_key: BeatKey, position: List[int]):
+    def insert_after(self, beat_key: BeatKey, position: List[int]):
         """Create an empty grouping next to the given one, expanding the parent"""
         if not position:
             raise InvalidPosition(position)
@@ -123,14 +95,6 @@ class OpusManagerBase:
             pass
 
     def remove(self, beat_key: BeatKey, position: List[int]):
-        """
-            Public-facing wrapper.
-            Applies '_directly' to all beats linked to this one.
-        """
-        for linked_key in self._get_all_linked(beat_key):
-            self._remove_directly(linked_key, position)
-
-    def _remove_directly(self, beat_key: BeatKey, position: List[int]):
         """Remove the given grouping, shrinking the parent"""
         grouping = self.get_grouping(beat_key, position)
         parent = grouping.parent
@@ -155,7 +119,7 @@ class OpusManagerBase:
                 parent.parent[parent_index] = parent[0]
 
         else:
-            self._remove_directly(beat_key, position[0:-1])
+            self.remove(beat_key, position[0:-1])
 
     def _set_beat_count(self, new_count: int) -> None:
         """Adjust the number of beats in the opus"""
@@ -166,15 +130,6 @@ class OpusManagerBase:
 
 
     def set_percussion_event(self, beat_key: BeatKey, position: List[int]) -> None:
-        """
-            Public-facing wrapper.
-            Applies '_directly' to all beats linked to this one.
-        """
-
-        for linked_key in self._get_all_linked(beat_key):
-            self._set_percussion_event_directly(linked_key, position)
-
-    def _set_percussion_event_directly(self, beat_key: BeatKey, position: List[int]) -> None:
         """
             Set the percussion event with a pre-assigned
             instrument at the given position
@@ -204,20 +159,6 @@ class OpusManagerBase:
             value: int,
             *,
             relative: bool = False) -> None:
-        """
-            Public-facing wrapper.
-            Applies '_directly' to all beats linked to this one.
-        """
-        for linked_key in self._get_all_linked(beat_key):
-            self._set_event_directly(linked_key, position, value, relative=relative)
-
-    def _set_event_directly(
-            self,
-            beat_key: BeatKey,
-            position: List[int],
-            value: int,
-            *,
-            relative: bool = False) -> None:
         """Set event at given grouping."""
 
         channel, _, _ = beat_key
@@ -241,18 +182,6 @@ class OpusManagerBase:
         ))
 
     def split_grouping(
-            self,
-            beat_key: BeatKey,
-            position: List[int],
-            splits: int) -> None:
-        """
-            Public-facing wrapper.
-            Applies '_directly' to all beats linked to this one.
-        """
-        for linked_key in self._get_all_linked(beat_key):
-            self._split_grouping_directly(linked_key, position, splits)
-
-    def _split_grouping_directly(
             self,
             beat_key: BeatKey,
             position: List[int],
@@ -287,18 +216,6 @@ class OpusManagerBase:
             beat_key: BeatKey,
             position: List[int]) -> None:
         """
-            Public-facing wrapper.
-            Applies '_directly' to all beats linked to this one.
-        """
-
-        for linked_key in self._get_all_linked(beat_key):
-            self._unset_directly(linked_key, position)
-
-    def _unset_directly(
-            self,
-            beat_key: BeatKey,
-            position: List[int]) -> None:
-        """
             Remove the event from the given grouping
             but keep the grouping itself.
         """
@@ -319,16 +236,6 @@ class OpusManagerBase:
         grouping = self.channel_groupings[old_channel].pop(line_index)
         self.channel_groupings[new_channel].append(grouping)
 
-    def clear_links_to_beat(self, channel: int, line: int, beat: int) -> None:
-        """Remove all links pointing to the specific beat"""
-        target = (channel, line, beat)
-        if target not in self.inv_linked_beat_map:
-            return
-
-        while self.inv_linked_beat_map[target]:
-            linked_key = self.inv_linked_beat_map[target].pop()
-            del self.linked_beat_map[linked_key]
-        del self.inv_linked_beat_map[target]
 
     def export(self, *, path: Optional[str] = None, **kwargs) -> None:
         """Export this opus to a .mid"""
@@ -417,41 +324,6 @@ class OpusManagerBase:
                 new_beat.set_size(1)
                 line.insert_grouping(index, new_beat)
 
-        # Re-Adjust existing links
-        adjusted_links = []
-        for (i,j,k), target_key in self.linked_beat_map.items():
-            new_key = (i, j, k)
-            if k >= index:
-                new_key = (i, j, k + 1)
-
-            new_target = target_key
-            if target_key[2] >= index:
-                new_target = (target_key[0], target_key[1], target_key[2] + 1)
-            adjusted_links.append((new_key, new_target))
-        self.linked_beat_map = {}
-        self.inv_linked_beat_map = {}
-        for beat, target in adjusted_links:
-            if target not in self.inv_linked_beat_map:
-                self.inv_linked_beat_map[target] = set()
-            self.inv_linked_beat_map[target].add(beat)
-            self.linked_beat_map[beat] = target
-
-    def link_beats(self, beat: BeatKey, target: BeatKey) -> None:
-        """
-            Overwrites *beat* with a copy of *target*,
-            then creates a link between the two such that
-            any changes made to one are made to the other.
-        """
-        # Remove any existing link
-        self.unlink_beat(beat)
-
-        # Replace existing grouping with a copy of the target
-        self.overwrite_beat(beat, target)
-
-        self.linked_beat_map[beat] = target
-        if target not in self.inv_linked_beat_map:
-            self.inv_linked_beat_map[target] = set()
-        self.inv_linked_beat_map[target].add(beat)
 
     def load_folder(self, path: str) -> None:
         """Load opus from folder of radix notation files"""
@@ -499,19 +371,6 @@ class OpusManagerBase:
                     self.channel_groupings[channel].append(grouping)
 
         self.opus_beat_count = beat_count
-
-        if os.path.isfile(f"{path}/linkedbeats.json"):
-            with open(f"{path}/linkedbeats.json", "r", encoding="utf-8") as fp:
-                json_compat_map = json.loads(fp.read())
-                self.linked_beat_map = {}
-                for k, target in json_compat_map.items():
-                    new_key = tuple(int(i) for i in k.split("."))
-                    self.linked_beat_map[new_key] = tuple(target)
-
-        for beat, target in self.linked_beat_map.items():
-            if target not in self.inv_linked_beat_map:
-                self.inv_linked_beat_map[target] = set()
-            self.inv_linked_beat_map[target].add(beat)
 
 
     def load_file(self, path: str) -> MGrouping:
@@ -580,30 +439,9 @@ class OpusManagerBase:
         # Move all beats after removed index one left
         for i, channel in enumerate(self.channel_groupings):
             for j, line in enumerate(channel):
-                self.unlink_beat((i, j, index))
-                self.clear_links_to_beat(i, j, index)
                 line.pop(index)
         self._set_beat_count(self.opus_beat_count - 1)
 
-        # Re-Adjust existing links
-        adjusted_links = []
-        for (i,j,k), target_key in self.linked_beat_map.items():
-            new_key = (i, j, k)
-            if k > index:
-                new_key = (i, j, k - 1)
-
-            new_target = target_key
-            if target_key[2] > index:
-                new_target = (target_key[0], target_key[1], target_key[2] - 1)
-            adjusted_links.append((new_key, new_target))
-
-        self.linked_beat_map = {}
-        self.inv_linked_beat_map = {}
-        for beat, target in adjusted_links:
-            if target not in self.inv_linked_beat_map:
-                self.inv_linked_beat_map[target] = set()
-            self.inv_linked_beat_map[target].add(beat)
-            self.linked_beat_map[beat] = target
 
     def remove_channel(self, channel: int) -> None:
         """Remove all of the active lines in a channel"""
@@ -661,14 +499,6 @@ class OpusManagerBase:
             with open(f"{fullpath}/channel_{hexrep}", "w", encoding="utf-8") as fp:
                 fp.write("\n".join(strlines))
 
-        json_compat_map = {}
-        for k, target in self.linked_beat_map.items():
-            new_key = f"{k[0]}.{k[1]}.{k[2]}"
-            json_compat_map[new_key] = target
-
-        with open(f"{fullpath}/linkedbeats.json", "w", encoding="utf-8") as fp:
-            fp.write(json.dumps(json_compat_map, indent=4))
-
     def set_percussion_instrument(self, line_offset: int, instrument: int) -> None:
         """
             Register an instrument to use on a percussion line.
@@ -693,24 +523,6 @@ class OpusManagerBase:
         tmp = self.channel_groupings[channel_b]
         self.channel_groupings[channel_b] = self.channel_groupings[channel_a]
         self.channel_groupings[channel_a] = tmp
-
-    def unlink_beat(self, beat_key: BeatKey) -> None:
-        """
-            Removes the link from this beat to another.
-            Leaves the beat unchanged.
-        """
-        if beat_key not in self.linked_beat_map:
-            return
-
-        channel, line, beat = beat_key
-
-        target_key = self.linked_beat_map[beat_key]
-        self.inv_linked_beat_map[target_key].remove(beat_key)
-        if not self.inv_linked_beat_map[target_key]:
-            del self.inv_linked_beat_map[target_key]
-
-        del self.linked_beat_map[beat_key]
-
 
 def split_by_channel(event, other_events):
     return event['channel']

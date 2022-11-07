@@ -81,16 +81,16 @@ class FlagLayer(HistoryLayer):
         super().link_beats(beat, target)
         self.flag('beat_change', beat)
 
-    def _insert_after_directly(self, beat_key: BeatKey, position: List[int]) -> None:
-        super()._insert_after_directly(beat_key, position)
+    def insert_after(self, beat_key: BeatKey, position: List[int]) -> None:
+        super().insert_after(beat_key, position)
         self.flag('beat_change', beat_key)
 
-    def _split_grouping_directly(
+    def split_grouping(
             self,
             beat_key: BeatKey,
             position: List[int],
             splits: int) -> None:
-        super()._split_grouping_directly(beat_key, position, splits)
+        super().split_grouping(beat_key, position, splits)
         self.flag('beat_change', beat_key)
 
     def swap_channels(self, channel_a: int, channel_b: int) -> None:
@@ -130,21 +130,21 @@ class FlagLayer(HistoryLayer):
             for j, _line in enumerate(channel):
                 self.flag('line', (i, j, 'init'))
 
-    def _set_event_directly(
+    def set_event(
             self,
             beat_key: BeatKey,
             position: List[int],
             value: int,
             *,
             relative: bool = False) -> None:
-        super()._set_event_directly(beat_key, position, value, relative=relative)
+        super().set_event(beat_key, position, value, relative=relative)
         self.flag('beat_change', beat_key)
 
-    def _set_percussion_event_directly(
+    def set_percussion_event(
             self,
             beat_key: BeatKey,
             position: List[int]) -> None:
-        super()._set_percussion_event_directly(beat_key, position)
+        super().set_percussion_event(beat_key, position)
         self.flag('beat_change', beat_key)
 
     def set_percussion_instrument(self, line_offset: int, instrument: int) -> None:
@@ -152,8 +152,8 @@ class FlagLayer(HistoryLayer):
         for i in range(self.opus_beat_count):
             self.flag('beat_change', (9, line_offset, i))
 
-    def _unset_directly(self, beat_key: BeatKey, position: List[int]) -> None:
-        super()._unset_directly(beat_key, position)
+    def unset(self, beat_key: BeatKey, position: List[int]) -> None:
+        super().unset(beat_key, position)
         self.flag('beat_change', beat_key)
 
     def insert_beat(self, index: Optional[int] = None) -> None:
@@ -178,8 +178,8 @@ class FlagLayer(HistoryLayer):
 
         self.flag('line', (channel, line_index, 'new'))
 
-    def _remove_directly(self, beat_key: BeatKey, position: List[int]) -> None:
-        super()._remove_directly(beat_key, position)
+    def remove(self, beat_key: BeatKey, position: List[int]) -> None:
+        super().remove(beat_key, position)
         self.flag('beat_change', beat_key)
 
     def remove_beat(self, index: None) -> None:

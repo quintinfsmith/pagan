@@ -172,7 +172,6 @@ class OpusManagerTest(unittest.TestCase):
         except Exception:
             assert False, "Failed to set percussion event outside channel 9 but didn't fail correctly"
 
-
     def test_set_percussion_instrument(self):
         # Setup an opus
         manager = OpusManager.new()
@@ -342,3 +341,4 @@ class OpusManagerTest(unittest.TestCase):
         manager.overwrite_beat(beat_b, beat_a)
 
         assert manager.get_beat_grouping(beat_a).matches(manager.get_beat_grouping(beat_b)), "Failed to overwrite beat"
+

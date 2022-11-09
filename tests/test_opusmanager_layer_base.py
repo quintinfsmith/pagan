@@ -241,6 +241,14 @@ class OpusManagerTest(unittest.TestCase):
         assert manager.opus_beat_count == initial_length - 1, "Failed to decrease length"
         assert manager.get_grouping((0,0,index - 1), [0]).is_event(), "Failed to move beats over"
 
+    def test_change_line_channel(self):
+        manager = OpusManager.new()
+        manager.add_channel(1)
+        line = manager.channel_groupings[1][0]
+        manager.change_line_channel(1, 0, 0)
+
+        assert line == manager.channel_groupings[0][1], "Failed to move line to new channel"
+
     def test_swap_channels(self):
         index_a = 0
         index_b = 1
@@ -284,6 +292,20 @@ class OpusManagerTest(unittest.TestCase):
         manager.remove_line(1, index - 1)
         # Checking that the line *before* the line to check is removed
         assert manager.channel_groupings[1][index - 1] == line, "Failed to remove line in channel 1"
+
+        current_length = len(manager.channel_groupings[1])
+
+        line_checks = []
+        for l in manager.channel_groupings[1]:
+            line_checks.append(l)
+
+        manager.remove_line(1)
+
+        assert len(manager.channel_groupings[1]) == current_length - 1, "Failed to remove line given no index"
+        removed_incorrect_line = False
+        for l, line in enumerate(line_checks[0:-1]):
+            removed_incorrect_line |= line != manager.channel_groupings[1][l]
+        assert not removed_incorrect_line, "Removed wrong line (should've assumed -1)"
 
     def test_add_line(self):
         manager = OpusManager.new()

@@ -75,6 +75,9 @@ class HistoryLayer(OpusManagerBase):
 
         self.open_multi()
         channel, line_offset, beat_index = beat_key
+        if line_offset is None:
+            line_offset = len(self.channel_groupings[channel]) - 1
+
         beat_grouping = self.channel_groupings[channel][line_offset][beat_index]
         stack = [start_position]
         while stack:

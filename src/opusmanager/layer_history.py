@@ -22,12 +22,10 @@ class HistoryLayer(OpusManagerBase):
             return
 
         self.history_locked = True
-        if isinstance(self.history_ledger[-1], list):
-            for func, args, kwargs in self.history_ledger.pop():
-                func(*args,**kwargs)
-        else:
-            func, args, kwargs = self.history_ledger.pop()
+
+        for func, args, kwargs in self.history_ledger.pop():
             func(*args,**kwargs)
+
         self.history_locked = False
 
     def append_undoer(self, func: Callable[Any], *args, **kwargs) -> None:
@@ -117,18 +115,10 @@ class HistoryLayer(OpusManagerBase):
 
         self.append_undoer(self.set_percussion_instrument, line_offset, original_instrument)
 
-
     def overwrite_beat(self, old_beat: BeatKey, new_beat: BeatKey) -> None:
         old_grouping = self.channel_groupings[old_beat[0]][old_beat[1]][old_beat[2]].copy()
         self.append_undoer(self.replace_beat, old_beat, old_grouping)
         super().overwrite_beat(old_beat, new_beat)
-
-    def link_beats(self, beat: BeatKey, target: BeatKey) -> None:
-        # Wrap function call in multi so any sub calls are considered together
-        self.open_multi()
-        self.append_undoer(self.unlink_beat, beat)
-        super().link_beats(beat, target)
-        self.close_multi()
 
     def swap_channels(self, channel_a: int, channel_b: int) -> None:
         self.append_undoer(self.swap_channels, channel_a, channel_b)
@@ -156,11 +146,11 @@ class HistoryLayer(OpusManagerBase):
         super().insert_after(beat_key, position)
 
     def split_grouping(self, beat_key: BeatKey, position: List[int], splits: int) -> None:
-        self.setup_repopulate(beat_key, [])
+        self.setup_repopulate(beat_key, position[0:-1])
         super().split_grouping(beat_key, position, splits)
 
     def remove(self, beat_key: BeatKey, position: List[int]) -> None:
-        self.setup_repopulate(beat_key, position)
+        self.setup_repopulate(beat_key, position[0:-1])
         super().remove(beat_key, position)
 
     def insert_beat(self, index: int) -> None:

@@ -1,6 +1,6 @@
 import apres
 import unittest
-from src.opusmanager import OpusManager
+from src.opusmanager.layer_base import OpusManagerBase as OpusManager
 from src.opusmanager.errors import InvalidPosition
 
 class OpusManagerTest(unittest.TestCase):

@@ -12,7 +12,7 @@ class HistoryLayerTest(unittest.TestCase):
         manager = OpusManager.new()
         manager.add_channel(1)
         manager.add_channel(9)
-        manager.split_grouping((1,0,0), [0], 2)
+        manager.split_grouping((1,0,0), [0], 5)
 
         cursor = manager.cursor
         assert cursor.to_list() == [0,0,0], "Cursor starting at bad position"
@@ -52,7 +52,8 @@ class HistoryLayerTest(unittest.TestCase):
 
         cursor.set(1,1,0)
         manager.cursor_left()
-        assert cursor.to_list() == [1,0,0,1], "cursor moved left, but didn't move to the last position in the beat"
+        assert cursor.to_list() == [1,0,0,4], "cursor moved left, but didn't move to the last position in the beat"
+
 
     def test_set_percussion_event_at_cursor(self):
         manager = OpusManager.new()
@@ -73,6 +74,4 @@ class HistoryLayerTest(unittest.TestCase):
         manager.cursor_down()
         manager.remove_line_at_cursor()
         assert original_lines == len(manager.channel_groupings[0])
-
-
 

@@ -299,6 +299,7 @@ class MGrouping(Grouping):
 
         output = MGrouping()
         output.set_size(1)
+
         grouping_stack: List[MGrouping] = [output]
         register: List[Optional[int], Optional[int], Optional[float]] = [None, None, 0]
         opened_indeces: List[int] = []
@@ -570,7 +571,9 @@ class MGrouping(Grouping):
         opus.set_size(total_beat_offset)
 
         for i, beat_grouping in enumerate(beat_values):
-            beat_grouping.clear_singles()
+            if beat_grouping.is_structural():
+                for subgrouping in beat_grouping:
+                    subgrouping.clear_singles()
             opus[i] = beat_grouping
 
         for i, beat in enumerate(opus):

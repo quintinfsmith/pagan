@@ -34,8 +34,7 @@ class Cursor:
 
     def move_left(self) -> None:
         """Point the cursor to the previous leaf"""
-        channel, line, beat = self.get_triplet()
-        working_grouping = self.opus_manager.channel_groupings[channel][line][beat]
+        working_grouping = self.opus_manager.get_beat_grouping(self.get_triplet())
         # First, traverse the position to get the currently active grouping
         for j in self.position:
             working_grouping = working_grouping[j]
@@ -59,7 +58,7 @@ class Cursor:
                 self.position = [0]
 
         # Move to the leaf
-        self.settle(True)
+        self.settle(right_align=True)
 
     def move_right(self) -> None:
         """Point the cursor to the next leaf"""

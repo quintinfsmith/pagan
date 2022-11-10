@@ -51,7 +51,13 @@ class OpusManagerBase:
 
         for channel_index, channel in enumerate(self.channel_groupings):
             for line_offset, line in enumerate(channel):
-                line.clear_singles()
+                for beat in line:
+                    if not beat.is_structural():
+                        middle = MGrouping()
+                        beat.replace_with(middle)
+                        middle[0].replace_with(beat)
+                    for subbeat in beat:
+                        beat.clear_singles()
 
                 # Populate the percussion map
                 if channel_index == 9:
@@ -187,29 +193,22 @@ class OpusManagerBase:
             position: List[int],
             splits: int) -> None:
         """Divide the grouping at the given position into *splits* divisions"""
+        beat_grouping = self.get_beat_grouping(beat_key)
         if position:
-            grouping = self.get_grouping(beat_key, position)
+            if position == [0] and len(beat_grouping) == 1:
+                grouping = beat_grouping
+            else:
+                grouping = self.get_grouping(beat_key, position)
         else:
-            grouping = self.get_beat_grouping(beat_key)
+            grouping = beat_grouping
 
-        reduced = False
         if grouping.is_event():
             new_grouping = MGrouping()
             new_grouping.set_size(splits)
             grouping.replace_with(new_grouping)
-
             new_grouping[0].replace_with(grouping)
-
-            ## Prevent redundant single-wrapper
-            #if len(position) > 1 and len(new_grouping.parent) == 1:
-            #    new_grouping.parent.replace_with(new_grouping)
         else:
             grouping.set_size(splits, True)
-            # Prevent redundant single-wrapper
-            #if len(position) > 2 and len(grouping.parent) == 1:
-            #    grouping.parent.replace_with(grouping)
-            #    reduced = True
-
 
     def unset(
             self,

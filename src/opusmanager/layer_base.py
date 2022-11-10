@@ -259,6 +259,8 @@ class OpusManagerBase:
 
     def get_beat_grouping(self, beat_key: BeatKey) -> MGrouping:
         channel, line_offset, beat_index = beat_key
+        if line_offset < 0:
+            line_offset = len(self.channel_groupings[channel]) + line_offset
         return self.channel_groupings[channel][line_offset][beat_index]
 
     def get_grouping(

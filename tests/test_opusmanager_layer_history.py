@@ -54,19 +54,19 @@ class HistoryLayerTest(unittest.TestCase):
         # remove event
         manager.add_channel(1)
         manager.split_grouping((1,0,0), [0], 2)
-        manager.set_event((1,0,0), [0,0], 35)
-        manager.remove((1,0,0), [0, 0])
+        manager.set_event((1,0,0), [0], 35)
+        manager.remove((1,0,0), [0])
         manager.apply_undo()
-        grouping = manager.get_grouping((1,0,0), [0,0])
+        grouping = manager.get_grouping((1,0,0), [0])
         assert list(grouping.get_events())[0].note, "Failed to undo remove() on an event"
 
         # Remove Percussion event
         manager.add_channel(9)
         manager.split_grouping((9,0,0), [0], 2)
-        manager.set_percussion_event((9,0,0), [0,0])
-        manager.remove((9,0,0), [0, 0])
+        manager.set_percussion_event((9,0,0), [0])
+        manager.remove((9,0,0), [0])
         manager.apply_undo()
-        grouping = manager.get_grouping((9,0,0), [0, 0])
+        grouping = manager.get_grouping((9,0,0), [0])
         assert list(grouping.get_events())[0].note, "Failed to undo remove() on a percussion event"
 
         # *attempt* to undo a remove on an empty beat

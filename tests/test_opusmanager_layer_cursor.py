@@ -17,7 +17,6 @@ class HistoryLayerTest(unittest.TestCase):
         cursor = manager.cursor
         assert cursor.to_list() == [0,0,0], "Cursor starting at bad position"
 
-
         manager.cursor_right()
         assert cursor.to_list() == [0,1,0], "Cursor didn't move right correctly"
 
@@ -25,10 +24,10 @@ class HistoryLayerTest(unittest.TestCase):
         assert cursor.to_list() == [0,0,0], "Cursor didn't move left correctly"
 
         manager.cursor_down()
-        assert cursor.to_list() == [1,0,0,0], "Cursor didn't move down correctly"
+        assert cursor.to_list() == [1,0,0], "Cursor didn't move down correctly"
 
         manager.cursor_right()
-        assert cursor.to_list() == [1,0,0,1], "Cursor didn't move left within the beat"
+        assert cursor.to_list() == [1,0,1], "Cursor didn't move left within the beat"
 
         manager.cursor_up()
         assert cursor.to_list() == [0,0,0], "Cursor didn't move up correctly"
@@ -52,7 +51,7 @@ class HistoryLayerTest(unittest.TestCase):
 
         cursor.set(1,1,0)
         manager.cursor_left()
-        assert cursor.to_list() == [1,0,0,4], "cursor moved left, but didn't move to the last position in the beat"
+        assert cursor.to_list() == [1,0,4], "cursor moved left, but didn't move to the last position in the beat"
 
 
     def test_set_percussion_event_at_cursor(self):
@@ -75,3 +74,9 @@ class HistoryLayerTest(unittest.TestCase):
         manager.remove_line_at_cursor()
         assert original_lines == len(manager.channel_groupings[0])
 
+    def test_beats_at_cursor(self):
+        manager = OpusManager.new()
+        original_beats = list(manager.channel_groupings[0][0])
+        manager.insert_beat_at_cursor()
+        new_beats = list(manager.channel_groupings[0][0])
+        assert original_beats[0] == new_beats[0] and original_beats[1] == new_beats[2]

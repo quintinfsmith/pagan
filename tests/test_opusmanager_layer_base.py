@@ -356,9 +356,9 @@ class OpusManagerTest(unittest.TestCase):
 
         # Set up beat_a
         manager.split_grouping(beat_a, [0], 3)
-        manager.split_grouping(beat_a, [0,1], 2)
-        manager.set_event(beat_a, [0,1,0], 24)
-        manager.set_event(beat_a, [0,0], 25)
+        manager.split_grouping(beat_a, [1], 2)
+        manager.set_event(beat_a, [1,0], 24)
+        manager.set_event(beat_a, [0], 25)
 
         manager.overwrite_beat(beat_b, beat_a)
 

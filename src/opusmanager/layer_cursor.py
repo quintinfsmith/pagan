@@ -34,6 +34,7 @@ class Cursor:
 
     def move_left(self) -> None:
         """Point the cursor to the previous leaf"""
+
         working_grouping = self.opus_manager.get_beat_grouping(self.get_triplet())
         # First, traverse the position to get the currently active grouping
         for j in self.position:
@@ -48,17 +49,13 @@ class Cursor:
                 self.position[-1] -= 1
                 break
 
-        if not self.position:
-            # Couldn't find any available leaf to the left of the previous active grouping
-            # within the active *beat* so move over a beat if possible
-            if self.x > 0:
-                self.x -= 1
-                self.position = [len(working_grouping) - 1]
-            else:
-                self.position = [0]
+        if self.x and not self.position:
+            self.x -= 1
 
-        # Move to the leaf
-        self.settle(right_align=True)
+            # Move to the leaf
+            self.settle(right_align=True)
+        else:
+            self.settle()
 
     def move_right(self) -> None:
         """Point the cursor to the next leaf"""
@@ -77,17 +74,11 @@ class Cursor:
                 self.position[-1] += 1
                 break
 
-        if not self.position:
-            # Couldn't find any available leaf to the right of the previous active grouping
-            # within the active *beat* so move over a beat if possible
-            if self.x < self.opus_manager.opus_beat_count - 1:
-                self.x += 1
-                self.position = [0]
-            else:
-                self.position = [len(working_grouping) - 1]
-
-        # Move to the leaf
-        self.settle()
+        if self.x < self.opus_manager.opus_beat_count - 1 and not self.position:
+            self.x += 1
+            self.settle()
+        else:
+            self.settle(right_align=True)
 
     def move_up(self) -> None:
         """Point the cursor to the previous line"""
@@ -144,7 +135,10 @@ class Cursor:
         working_grouping = self.opus_manager.channel_groupings[channel][line][beat]
 
         if not self.position:
-            self.position = [0]
+            if right_align:
+                self.position = [len(working_grouping) - 1]
+            else:
+                self.position = [0]
 
         ## The get the current working_grouping ...
         index = 0

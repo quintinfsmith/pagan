@@ -59,7 +59,7 @@ class Cursor:
                 self.position = [0]
 
         # Move to the leaf
-        self.settle()
+        self.settle(True)
 
     def move_right(self) -> None:
         """Point the cursor to the next leaf"""
@@ -140,8 +140,7 @@ class Cursor:
     def settle(self, right_align: bool = False) -> None:
         """ Sink the cursor as deep as possible. (until it finds a leaf) """
         self.x = max(0, min(self.x, self.opus_manager.opus_beat_count - 1))
-
-        channel, line, beat =  self.get_triplet()
+        channel, line, beat = self.get_triplet()
         ## First get the beat ...
         working_grouping = self.opus_manager.channel_groupings[channel][line][beat]
 
@@ -221,8 +220,10 @@ class CursorLayer(LinksLayer):
 
     def remove_line_at_cursor(self) -> None:
         """Remove the line from the channel pointed to by the cursor"""
-        channel, _, _ = self.cursor.get_triplet()
         channel, index, _ = self.cursor.get_triplet()
+        if self.cursor.y == self.line_count - 1:
+            self.cursor.y -= 1
+
         self.remove_line(channel, index)
 
     def remove_beat_at_cursor(self) -> None:

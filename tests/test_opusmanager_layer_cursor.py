@@ -89,7 +89,42 @@ class HistoryLayerTest(unittest.TestCase):
     def test_split_grouping_at_cursor(self):
         manager = OpusManager.new()
         manager.split_grouping_at_cursor()
-        assert len(manager.get_beat_grouping((0,0,0))) == 2
+        assert len(manager.get_beat_grouping((0,0,0))) == 2, "Failed to split beat at cursor"
         manager.split_grouping_at_cursor()
-        assert len(manager.get_grouping((0,0,0), [0])) == 2
+        assert len(manager.get_grouping((0,0,0), [0])) == 2, "Failed to split regular grouping at cursor"
 
+    def test_jump_to_beat(self):
+        manager = OpusManager.new()
+        manager.jump_to_beat(3)
+        assert manager.cursor.get_triplet() == (0,0,3), "Failed to jump to beat"
+
+    def test_dec_increment_event_at_cursor(self):
+        manager = OpusManager.new()
+        manager.set_event((0,0,0),[0], 24)
+        manager.increment_event_at_cursor()
+        grouping = manager.get_grouping_at_cursor()
+        assert list(grouping.get_events())[0].note == 25, "Failed to increment beat at cursor"
+
+        manager.decrement_event_at_cursor()
+        assert list(grouping.get_events())[0].note == 24, "Failed to decrement beat at cursor"
+
+        manager.set_event((0,0,0),[0], 11, relative=True)
+        manager.increment_event_at_cursor()
+        assert list(grouping.get_events())[0].note == 12,"Failed to increment relative event at cursor (under 12)"
+
+        manager.increment_event_at_cursor()
+        assert list(grouping.get_events())[0].note == 24, "Failed to increment relative event at cursor (>= 12)"
+
+        manager.decrement_event_at_cursor()
+        assert list(grouping.get_events())[0].note == 12,"Failed to decrement relative event at cursor (>= 12)"
+
+        manager.decrement_event_at_cursor()
+        assert list(grouping.get_events())[0].note == 11, "Failed to increment relative event at cursor (<= 12)"
+
+        manager.cursor_right()
+        grouping = manager.get_grouping_at_cursor()
+        manager.decrement_event_at_cursor()
+        assert grouping.is_open(), "Should've failed to decrement non-event"
+
+        manager.increment_event_at_cursor()
+        assert grouping.is_open(), "Should've failed to increment non-event"

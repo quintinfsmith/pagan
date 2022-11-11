@@ -79,4 +79,10 @@ class HistoryLayerTest(unittest.TestCase):
         original_beats = list(manager.channel_groupings[0][0])
         manager.insert_beat_at_cursor()
         new_beats = list(manager.channel_groupings[0][0])
-        assert original_beats[0] == new_beats[0] and original_beats[1] == new_beats[2]
+        assert original_beats[0] == new_beats[0] and original_beats[1] == new_beats[2], "insert_beat_at_cursor() inserted at wrong position"
+
+        manager.cursor_right()
+        manager.remove_beat_at_cursor()
+        assert original_beats == list(manager.channel_groupings[0][0]), "remove_beat_at_cursor() removed wrong beat"
+
+

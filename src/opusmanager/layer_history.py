@@ -3,9 +3,9 @@ from __future__ import annotations
 from typing import Optional, Dict, List, Tuple, Any
 from collections.abc import Callable
 
-from .layer_base import OpusManagerBase, BeatKey
+from .layer_links import LinksLayer, BeatKey
 
-class HistoryLayer(OpusManagerBase):
+class HistoryLayer(LinksLayer):
     """Layer of the OpusManager that handles Undo & Redo actions"""
     def __init__(self):
         super().__init__()

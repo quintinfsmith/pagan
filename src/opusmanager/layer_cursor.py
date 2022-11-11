@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import List, Optional, Tuple, Union, Any
 from collections.abc import Callable
 
-from .layer_links import LinksLayer, BeatKey
+from .layer_history import HistoryLayer, BeatKey
 from .mgrouping import MGrouping
 
 class ReadyEvent:
@@ -171,7 +171,7 @@ class Cursor:
         channel, index = self.get_channel_index()
         return (channel, index, self.x)
 
-class CursorLayer(LinksLayer):
+class CursorLayer(HistoryLayer):
     """Adds Cursor functionality to OpusManager."""
     def __init__(self):
         super().__init__()

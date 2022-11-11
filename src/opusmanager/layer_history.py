@@ -130,7 +130,7 @@ class HistoryLayer(LinksLayer):
         self.open_multi()
         self.append_undoer(self.new_line, channel, line_offset)
         for i in range(self.opus_beat_count):
-            self.setup_repopulate([channel, line_offset, i], [])
+            self.setup_repopulate((channel, line_offset, i), [])
         self.close_multi()
 
         super().remove_line(channel, line_offset)

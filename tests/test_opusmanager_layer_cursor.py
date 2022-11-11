@@ -86,3 +86,10 @@ class HistoryLayerTest(unittest.TestCase):
         assert original_beats == list(manager.channel_groupings[0][0]), "remove_beat_at_cursor() removed wrong beat"
 
 
+    def test_split_grouping_at_cursor(self):
+        manager = OpusManager.new()
+        manager.split_grouping_at_cursor()
+        assert len(manager.get_beat_grouping((0,0,0))) == 2
+        manager.split_grouping_at_cursor()
+        assert len(manager.get_grouping((0,0,0), [0])) == 2
+

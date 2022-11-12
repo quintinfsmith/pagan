@@ -1,3 +1,71 @@
+import kotlin.math.*
+
+fun greatest_common_denominator(first: Int, second: Int): Int {
+    var tmp: Int;
+    var a = max(first, second);
+    var b = min(first, second);
+    while ((a % b) > 0) {
+        tmp = a % b
+        a = b
+        b = tmp
+    }
+    return b
+}
+
+fun get_prime_factors(n: Int): List<Int> {
+    var primes: MutableList<Int> = mutableListOf();
+    for (i in 2 .. n / 2) {
+        var is_prime = true;
+        for (p in primes) {
+            if (i % p == 0) {
+                is_prime = false
+                break
+            }
+        }
+        if (is_prime) {
+            primes.add(i)
+        }
+    }
+
+    // No Primes found, n is prime
+    if (primes.size == 0) {
+        primes.add(n)
+    }
+
+    var factors: MutableList<Int> = mutableListOf()
+    for (p in primes) {
+        if (p > n / 2) {
+            break
+        } else if (n % p == 0) {
+            factors.add(p)
+        }
+    }
+
+    return factors
+}
+
+fun lowest_common_multiple(number_list: List<Int>): Int {
+    var prime_factors: Array<List<Int>> = Array(number_list.size, {
+        i -> get_prime_factors(number_list[i])
+    })
+    var common_factor_map: HashMap<Int, Int> = HashMap<Int, Int>()
+    for (factors in prime_factors) {
+        for (factor in factors) {
+            if (! common_factor_map.containsKey(factor)) {
+                common_factor_map.put(factor, 0)
+            }
+            var current = common_factor_map[factor]!!
+            common_factor_map[factor] = max(current, factors.count({e -> e == factor}))
+        }
+    }
+    var output = 0;
+    for (key in common_factor_map.keys) {
+        output += key * common_factor_map[key]!!
+    }
+
+    return output
+}
+
 data class ReducerTuple<T>(
     var denominator: Int,
     var indices: MutableList<Pair<Int, Structure<T>>>,
@@ -203,13 +271,80 @@ class Structure<T> {
     fun is_leaf(): Boolean {
         return this.event != null || this.divisions.keys.size == 0
     }
-}
 
-fun greatest_common_denominator(first: Int, second: Int): Int {
-    
-}
+    fun set_event(event: T) {
+        this.event = event
+    }
 
-fun lowest_common_multiple(number_list: Int): Int {
+    fun unset_event() {
+        this.event = null
+    }
 
+    fun get_event(): T? {
+        return this.event
+    }
+
+    fun clear_singles() {
+        var stack: MutableList<Structure<T>> = mutableListOf()
+        for (k in this.divisions.keys) {
+            stack.add(this.divisions[k]!!)
+        }
+
+        while (stack.size > 0) {
+            var working_node = stack.removeAt(0)
+            if (working_node.is_leaf()) {
+                continue
+            }
+            if (working_node.size == 1) {
+                var subnode = working_node.divisions[0]!!
+                if (! subnode.is_leaf()) {
+                    working_node.replace_with(subnode)
+                    stack.add(subnode)
+                }
+            } else {
+                for (child in working_node.divisions.values) {
+                    stack.add(child)
+                }
+            }
+        }
+    }
+
+    fun replace_with(new_node: Structure<T>) {
+        if (this.parent != null) {
+            var parent = this.parent!!
+            for (i in parent.divisions.keys) {
+                if (parent.divisions[i] != this) {
+                    continue
+                }
+                parent.divisions[i] = new_node
+                break
+            }
+            new_node.parent = parent
+        }
+    }
+
+    fun pop(x: Int?=null): Structure<T> {
+        var index: Int
+
+        if (x == null) {
+            index = this.size - 1
+        } else {
+            index = x
+        }
+
+        var output = this.divisions[index]!!
+        var new_divisions = HashMap<Int, Structure<T>>()
+        for (i in this.divisions.keys) {
+            if (i < index) {
+                new_divisions.put(i, this.divisions[i]!!)
+            } else if (i > index) {
+                new_divisions.put(i - 1, this.divisions[i]!!)
+            }
+        }
+        this.divisions = new_divisions
+        this.size -= 1
+
+        return output
+    }
 }
 

@@ -125,16 +125,14 @@ class Structure<T> {
         while (stack.size > 0) {
             var element = stack.removeAt(0)
             var denominator: Int = element.denominator
-            var indices: MutableList<Pair<Int, Structure<T>>> = element.indices
             var original_size: Int = element.original_size
             var parent_node: Structure<T> = element.parent_node;
 
             var current_size = original_size / denominator;
 
 
-            var split_indices: Array<MutableList<Pair<Int, Structure<T>>>> = Array(denominator, { i -> mutableListOf() })
-            for (index_pair in indices) {
-                var child_node = index_pair.second as Structure;
+            var split_indices: Array<MutableList<Pair<Int, Structure<T>>>> = Array(denominator, { _ -> mutableListOf() })
+            for (index_pair in element.indices) {
                 var child_index = index_pair.first;
                 var split_index = child_index / current_size
                 split_indices[split_index].add(Pair(index_pair.first % current_size, index_pair.second.copy()))
@@ -150,8 +148,7 @@ class Structure<T> {
                 var minimum_divs: MutableList<Int> = mutableListOf()
                 for (index_pair in working_indices) {
                     var index: Int = index_pair.first
-                    var working_subnode: Structure<T> = index_pair.second
-                    var most_reduced: Int = current_size / greatest_common_divisor(current_size, index)
+                    var most_reduced: Int = current_size / greatest_common_denominator(current_size, index)
 
                     if (most_reduced > 1) {
                         minimum_divs.add(most_reduced)
@@ -159,15 +156,15 @@ class Structure<T> {
                 }
 
                 // Remove duplicates in minimum divs
-                var i = 0;
+                var j = 0;
                 var previous_value = 0;
-                while (i < minimum_divs.size) {
+                while (j < minimum_divs.size) {
                     if (minimum_divs[i] == previous_value) {
-                        minimum_divs.removeAt(i);
+                        minimum_divs.removeAt(j);
                     } else {
-                        i += 1
+                        j += 1
                     }
-                    previous_value = minimum_divs[i];
+                    previous_value = minimum_divs[j];
                 }
                 minimum_divs.sort()
 
@@ -225,7 +222,6 @@ class Structure<T> {
 
         var sizes: MutableList<Int> = mutableListOf()
         var subnode_backup: MutableList<Pair<Int, Structure<T>>> = mutableListOf()
-        var original_size = this.size
 
         for (key in this.divisions.keys) {
             var child = this.divisions[key]!!

@@ -7,7 +7,7 @@ from typing import Optional, Dict, List, Tuple, TypeAlias
 from apres import MIDI
 
 from .structures import BadStateError
-from .mgrouping import MGrouping, MGroupingEvent
+from .miditree import MIDITree, MIDITreeEvent
 from .errors import NoPathGiven, InvalidPosition
 
 BeatKey: TypeAlias = Tuple[int, int, int]
@@ -17,7 +17,7 @@ class OpusManagerBase:
     RADIX = 12
     DEFAULT_PERCUSSION = 0x32
     def __init__(self):
-        self.channel_groupings = [[] for i in range(16)]
+        self.channel_trees = [[] for i in range(16)]
         self.opus_beat_count = 1
         self.path = None
         self.percussion_map = {}
@@ -49,11 +49,11 @@ class OpusManagerBase:
         else:
             self.load_file(path)
 
-        for channel_index, channel in enumerate(self.channel_groupings):
+        for channel_index, channel in enumerate(self.channel_trees):
             for line_offset, line in enumerate(channel):
                 for beat in line:
-                    if not beat.is_structural():
-                        middle = MGrouping()
+                    if beat.is_leaf():
+                        middle = MIDITree()
                         beat.replace_with(middle)
                         middle[0].replace_with(beat)
                     for subbeat in beat:
@@ -63,31 +63,31 @@ class OpusManagerBase:
                 if channel_index == 9:
                     stack = [line]
                     while stack:
-                        grouping = stack.pop(0)
-                        if grouping.is_structural():
-                            for child in grouping:
-                                stack.append(child)
-                        elif grouping.is_event():
-                            event = list(grouping.get_events())[0]
+                        tree = stack.pop(0)
+                        if tree.is_event():
+                            event = tree.get_event()
                             self.percussion_map[line_offset] = event.get_note()
                             break
+                        if not tree.is_open():
+                            for child in tree:
+                                stack.append(child)
 
     def _new(self) -> None:
         """Only called from new() class method"""
-        new_line = MGrouping()
+        new_line = MIDITree()
         new_line.set_size(4)
         for i in range(4):
             new_line[i].set_size(1)
-        self.channel_groupings[0].append(new_line)
+        self.channel_trees[0].append(new_line)
         self.opus_beat_count = 4
 
     def insert_after(self, beat_key: BeatKey, position: List[int]):
-        """Create an empty grouping next to the given one, expanding the parent"""
+        """Create an empty tree next to the given one, expanding the parent"""
         if not position:
             raise InvalidPosition(position)
-        grouping = self.get_grouping(beat_key, position)
+        tree = self.get_tree(beat_key, position)
 
-        parent = grouping.parent
+        parent = tree.parent
         at_end = position[-1] == len(parent) - 1
         parent.set_size(len(parent) + 1, True)
         if not at_end:
@@ -101,11 +101,11 @@ class OpusManagerBase:
             pass
 
     def remove(self, beat_key: BeatKey, position: List[int]):
-        """Remove the given grouping, shrinking the parent"""
-        grouping = self.get_grouping(beat_key, position)
-        parent = grouping.parent
+        """Remove the given tree, shrinking the parent"""
+        tree = self.get_tree(beat_key, position)
+        parent = tree.parent
 
-        if position == [0] and len(grouping.parent) == 1:
+        if position == [0] and len(tree.parent) == 1:
             self.unset(beat_key, position)
             return
 
@@ -120,7 +120,7 @@ class OpusManagerBase:
             parent.set_size(new_size, True)
 
             # replace the parent with the child
-            if new_size == 1 and self.get_beat_grouping(beat_key) != parent:
+            if new_size == 1 and self.get_beat_tree(beat_key) != parent:
                 parent_index = position[-2]
                 parent.parent[parent_index] = parent[0]
 
@@ -130,9 +130,9 @@ class OpusManagerBase:
     def _set_beat_count(self, new_count: int) -> None:
         """Adjust the number of beats in the opus"""
         self.opus_beat_count = new_count
-        for groupings in self.channel_groupings:
-            for grouping in groupings:
-                grouping.set_size(new_count, True)
+        for trees in self.channel_trees:
+            for tree in trees:
+                tree.set_size(new_count, True)
 
 
     def set_percussion_event(self, beat_key: BeatKey, position: List[int]) -> None:
@@ -145,13 +145,13 @@ class OpusManagerBase:
         if channel != 9:
             raise IndexError("Attempting to set non-percussion channel")
 
-        grouping = self.get_grouping(beat_key, position)
-        if grouping.is_structural():
-            grouping.clear()
-        elif grouping.is_event():
-            grouping.clear_events()
+        tree = self.get_tree(beat_key, position)
+        if tree.is_event():
+            tree.clear_events()
+        else:
+            tree.clear()
 
-        grouping.add_event(MGroupingEvent(
+        tree.set_event(MIDITreeEvent(
             self.percussion_map.get(line_offset, self.DEFAULT_PERCUSSION),
             radix=self.RADIX,
             channel=9,
@@ -165,7 +165,7 @@ class OpusManagerBase:
             value: int,
             *,
             relative: bool = False) -> None:
-        """Set event at given grouping."""
+        """Set event at given tree."""
 
         channel, _, _ = beat_key
 
@@ -173,57 +173,57 @@ class OpusManagerBase:
         if channel == 9:
             raise IndexError("Attempting to set percussion channel")
 
-        grouping = self.get_grouping(beat_key, position)
+        tree = self.get_tree(beat_key, position)
 
-        if grouping.is_structural():
-            grouping.clear()
-        elif grouping.is_event():
-            grouping.clear_events()
+        if tree.is_event():
+            tree.clear_events()
+        else:
+            tree.clear()
 
-        grouping.add_event(MGroupingEvent(
+        tree.set_event(MIDITreeEvent(
             value,
             radix=self.RADIX,
             channel=channel,
             relative=relative
         ))
 
-    def split_grouping(
+    def split_tree(
             self,
             beat_key: BeatKey,
             position: List[int],
             splits: int) -> None:
-        """Divide the grouping at the given position into *splits* divisions"""
-        beat_grouping = self.get_beat_grouping(beat_key)
+        """Divide the tree at the given position into *splits* divisions"""
+        beat_tree = self.get_beat_tree(beat_key)
         if position:
-            if position == [0] and len(beat_grouping) == 1:
-                grouping = beat_grouping
+            if position == [0] and len(beat_tree) == 1:
+                tree = beat_tree
             else:
-                grouping = self.get_grouping(beat_key, position)
+                tree = self.get_tree(beat_key, position)
         else:
-            grouping = beat_grouping
+            tree = beat_tree
 
-        if grouping.is_event():
-            new_grouping = MGrouping()
-            new_grouping.set_size(splits)
-            grouping.replace_with(new_grouping)
-            new_grouping[0].replace_with(grouping)
+        if tree.is_event():
+            new_tree = MIDITree()
+            new_tree.set_size(splits)
+            tree.replace_with(new_tree)
+            new_tree[0].replace_with(tree)
         else:
-            grouping.set_size(splits, True)
+            tree.set_size(splits, True)
 
     def unset(
             self,
             beat_key: BeatKey,
             position: List[int]) -> None:
         """
-            Remove the event from the given grouping
-            but keep the grouping itself.
+            Remove the event from the given tree
+            but keep the tree itself.
         """
 
-        grouping = self.get_grouping(beat_key, position)
-        if grouping.is_event():
-            grouping.clear_events()
-        elif grouping.is_structural():
-            grouping.clear()
+        tree = self.get_tree(beat_key, position)
+        if tree.is_event():
+            tree.clear_events()
+        else:
+            tree.clear()
 
 
     def add_channel(self, channel: int) -> None:
@@ -232,8 +232,8 @@ class OpusManagerBase:
 
     def change_line_channel(self, old_channel: int, line_index: int, new_channel: int) -> None:
         """Move an active line to a different channel."""
-        grouping = self.channel_groupings[old_channel].pop(line_index)
-        self.channel_groupings[new_channel].append(grouping)
+        tree = self.channel_trees[old_channel].pop(line_index)
+        self.channel_trees[new_channel].append(tree)
 
 
     def export(self, *, path: Optional[str] = None, **kwargs) -> None:
@@ -241,11 +241,11 @@ class OpusManagerBase:
         for i in range(16):
             kwargs[f"i{i}"] = int(kwargs.get(f"i{i}", 0))
 
-        opus = MGrouping()
+        opus = MIDITree()
         opus.set_size(self.opus_beat_count)
-        for groupings in self.channel_groupings:
-            for grouping in groupings:
-                for i, beat in enumerate(grouping):
+        for trees in self.channel_trees:
+            for tree in trees:
+                for i, beat in enumerate(tree):
                     opus[i].merge(beat)
 
         if path is None:
@@ -256,29 +256,29 @@ class OpusManagerBase:
 
         opus.to_midi(**kwargs).save(path)
 
-    def get_beat_grouping(self, beat_key: BeatKey) -> MGrouping:
+    def get_beat_tree(self, beat_key: BeatKey) -> MIDITree:
         channel, line_offset, beat_index = beat_key
         if line_offset < 0:
-            line_offset = len(self.channel_groupings[channel]) + line_offset
-        return self.channel_groupings[channel][line_offset][beat_index]
+            line_offset = len(self.channel_trees[channel]) + line_offset
+        return self.channel_trees[channel][line_offset][beat_index]
 
-    def get_grouping(
+    def get_tree(
             self,
             beat_key: Tuple[int, int,  int],
-            position: List[int]) -> MGrouping:
-        """Get the Grouping object at the given position."""
+            position: List[int]) -> MIDITree:
+        """Get the OpusTree object at the given position."""
         if len(position) < 1:
             raise InvalidPosition(position)
 
-        grouping = self.get_beat_grouping(beat_key)
+        tree = self.get_beat_tree(beat_key)
 
         try:
             for i in position:
-                grouping = grouping[i]
+                tree = tree[i]
         except BadStateError as exception:
             raise InvalidPosition(position) from exception
 
-        return grouping
+        return tree
 
     def get_working_dir(self):
         """Get the the path that this file would be saved or exported to"""
@@ -305,13 +305,13 @@ class OpusManagerBase:
         """Create opus from midi file"""
         self.path = path
         midi = MIDI.load(path)
-        opus = MGrouping.from_midi(midi)
+        opus = MIDITree.from_midi(midi)
         tracks = opus.split(split_by_channel)
 
         self.opus_beat_count = 1
-        for i, mgrouping in enumerate(tracks):
-            for _j, split_line in enumerate(mgrouping.split(split_by_note_order)):
-                self.channel_groupings[i].append(split_line)
+        for i, mtree in enumerate(tracks):
+            for _j, split_line in enumerate(mtree.split(split_by_note_order)):
+                self.channel_trees[i].append(split_line)
                 self.opus_beat_count = max(self.opus_beat_count, len(split_line))
 
     def insert_beat(self, index: Optional[int] = None) -> None:
@@ -319,11 +319,11 @@ class OpusManagerBase:
         self.opus_beat_count += 1
 
         # Move all beats after new one right
-        for channel in self.channel_groupings:
+        for channel in self.channel_trees:
             for i, line in enumerate(channel):
-                new_beat = MGrouping()
+                new_beat = MIDITree()
                 new_beat.set_size(1)
-                line.insert_grouping(index, new_beat)
+                line.insert_tree(index, new_beat)
 
 
     def load_folder(self, path: str) -> None:
@@ -362,19 +362,19 @@ class OpusManagerBase:
                     chunks[i] = f"[{chunk}"
 
             for chunk in chunks:
-                grouping = MGrouping.from_string(chunk, radix=radix, channel=channel)
+                tree = MIDITree.from_string(chunk, radix=radix, channel=channel)
 
-                if grouping:
-                    grouping.clear_singles()
-                    beat_count = max(len(grouping), beat_count)
-                    grouping.set_size(beat_count, True)
+                if tree:
+                    tree.clear_singles()
+                    beat_count = max(len(tree), beat_count)
+                    tree.set_size(beat_count, True)
 
-                    self.channel_groupings[channel].append(grouping)
+                    self.channel_trees[channel].append(tree)
 
         self.opus_beat_count = beat_count
 
 
-    def load_file(self, path: str) -> MGrouping:
+    def load_file(self, path: str) -> MIDITree:
         """Load opus from a single radix-notation file"""
         self.path = path
         radix = self.RADIX
@@ -390,9 +390,9 @@ class OpusManagerBase:
 
         self.opus_beat_count = 1
         for channel, chunk in enumerate(chunks):
-            grouping = MGrouping.from_string(chunk, radix=radix, channel=channel)
-            self.channel_groupings[channel].append(grouping)
-            self.opus_beat_count = max(self.opus_beat_count, len(grouping))
+            tree = MIDITree.from_string(chunk, radix=radix, channel=channel)
+            self.channel_trees[channel].append(tree)
+            self.opus_beat_count = max(self.opus_beat_count, len(tree))
 
 
     def move_line(self, channel: int, old_index: int, new_index: int) -> None:
@@ -403,42 +403,42 @@ class OpusManagerBase:
         # Adjust the new_index so it doesn't get confused
         # when we pop() the old_index
         if new_index < 0:
-            new_index = len(self.channel_groupings[channel]) + new_index
+            new_index = len(self.channel_trees[channel]) + new_index
         if new_index < 0:
             raise IndexError(new_index)
 
-        if old_index > len(self.channel_groupings[channel]):
+        if old_index > len(self.channel_trees[channel]):
             raise IndexError(old_index)
 
-        grouping = self.channel_groupings[channel].pop(old_index)
-        self.channel_groupings[channel].insert(new_index, grouping)
+        tree = self.channel_trees[channel].pop(old_index)
+        self.channel_trees[channel].insert(new_index, tree)
 
     def new_line(self, channel: int = 0, index: Optional[int] = None) -> None:
         """Create an empty line in the given channel"""
-        new_grouping = MGrouping()
-        new_grouping.set_size(self.opus_beat_count)
+        new_tree = MIDITree()
+        new_tree.set_size(self.opus_beat_count)
         for i in range(self.opus_beat_count):
-            new_grouping[i].set_size(1)
+            new_tree[i].set_size(1)
 
         if index is not None:
-            self.channel_groupings[channel].insert(index, new_grouping)
+            self.channel_trees[channel].insert(index, new_tree)
         else:
-            self.channel_groupings[channel].append(new_grouping)
+            self.channel_trees[channel].append(new_tree)
 
     def overwrite_beat(
             self,
             old_beat: BeatKey,
             new_beat: BeatKey) -> None:
-        """Overwrite a beat with a copy of the grouping of another"""
-        new_grouping = self.channel_groupings[new_beat[0]][new_beat[1]][new_beat[2]].copy()
-        old_grouping = self.channel_groupings[old_beat[0]][old_beat[1]][old_beat[2]]
-        old_grouping.replace_with(new_grouping)
-        self.channel_groupings[old_beat[0]][old_beat[1]][old_beat[2]] = new_grouping
+        """Overwrite a beat with a copy of the tree of another"""
+        new_tree = self.channel_trees[new_beat[0]][new_beat[1]][new_beat[2]].copy()
+        old_tree = self.channel_trees[old_beat[0]][old_beat[1]][old_beat[2]]
+        old_tree.replace_with(new_tree)
+        self.channel_trees[old_beat[0]][old_beat[1]][old_beat[2]] = new_tree
 
     def remove_beat(self, index: int) -> None:
         """Removes the beat at the index of every active line"""
         # Move all beats after removed index one left
-        for i, channel in enumerate(self.channel_groupings):
+        for i, channel in enumerate(self.channel_trees):
             for j, line in enumerate(channel):
                 line.pop(index)
         self._set_beat_count(self.opus_beat_count - 1)
@@ -446,28 +446,28 @@ class OpusManagerBase:
 
     def remove_channel(self, channel: int) -> None:
         """Remove all of the active lines in a channel"""
-        while self.channel_groupings[channel]:
+        while self.channel_trees[channel]:
             self.remove_line(channel, 0)
 
     def remove_line(self, channel: int, index: int = None) -> None:
         """Remove an active line in a given channel"""
         if index is None:
-            index = len(self.channel_groupings[channel]) - 1
+            index = len(self.channel_trees[channel]) - 1
 
-        self.channel_groupings[channel].pop(index)
+        self.channel_trees[channel].pop(index)
 
-    def replace_grouping(
+    def replace_tree(
             self,
             beat_key: BeatKey,
             position: List[int],
-            grouping: MGrouping) -> None:
-        """Swap out a Grouping at the position with the given Grouping"""
-        self.get_grouping(beat_key, position).replace_with(grouping)
+            tree: MIDITree) -> None:
+        """Swap out a OpusTree at the position with the given OpusTree"""
+        self.get_tree(beat_key, position).replace_with(tree)
 
-    def replace_beat(self, beat_key: BeatKey, grouping: MGrouping) -> None:
-        """Swap out a Beat's Grouping"""
+    def replace_beat(self, beat_key: BeatKey, tree: MIDITree) -> None:
+        """Swap out a Beat's OpusTree"""
         channel, line_offset, beat_index = beat_key
-        self.channel_groupings[channel][line_offset][beat_index].replace_with(grouping)
+        self.channel_trees[channel][line_offset][beat_index].replace_with(tree)
 
     def save(self, path: Optional[str] = None) -> None:
         """Obvs"""
@@ -487,7 +487,7 @@ class OpusManagerBase:
         for subpath in os.listdir(fullpath):
             os.remove(f"{fullpath}/{subpath}")
 
-        for i, channel_lines in enumerate(self.channel_groupings):
+        for i, channel_lines in enumerate(self.channel_trees):
             if not channel_lines:
                 continue
 
@@ -508,22 +508,22 @@ class OpusManagerBase:
         self.percussion_map[line_offset] = instrument
 
         # Traverse the line and set all the events to the new instrument
-        stack = [self.channel_groupings[9][line_offset]]
+        stack = [self.channel_trees[9][line_offset]]
         while stack:
-            grouping = stack.pop(0)
-            if grouping.is_structural():
-                for subgrouping in grouping:
-                    stack.append(subgrouping)
-            elif grouping.is_event():
-                event = grouping.get_events().pop()
+            tree = stack.pop(0)
+            if tree.is_event():
+                event = tree.get_event()
                 event.note = instrument
-                grouping.add_event(event)
+                tree.set_event(event)
+            elif not tree.is_leaf():
+                for subtree in tree:
+                    stack.append(subtree)
 
     def swap_channels(self, channel_a: int, channel_b: int) -> None:
         """Swap the active lines of two channels."""
-        tmp = self.channel_groupings[channel_b]
-        self.channel_groupings[channel_b] = self.channel_groupings[channel_a]
-        self.channel_groupings[channel_a] = tmp
+        tmp = self.channel_trees[channel_b]
+        self.channel_trees[channel_b] = self.channel_trees[channel_a]
+        self.channel_trees[channel_a] = tmp
 
 def split_by_channel(event, other_events):
     return event['channel']

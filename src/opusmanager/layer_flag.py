@@ -2,7 +2,7 @@
 from __future__ import annotations
 from typing import Optional, Dict, List, Tuple, Any
 
-from .mgrouping import MGrouping
+from .miditree import MIDITree
 from .layer_base import OpusManagerBase, BeatKey
 
 class UpdatesCache:
@@ -55,12 +55,12 @@ class FlagLayer(OpusManagerBase):
         return self.updates_cache.fetch(key, noclobber)
 
     ## OpusManagerBase Functions
-    def replace_grouping(
+    def replace_tree(
             self,
             beat_key: BeatKey,
             position: List[int],
-            grouping: MGrouping) -> None:
-        super().replace_grouping(beat_key, position, grouping)
+            tree: MIDITree) -> None:
+        super().replace_tree(beat_key, position, tree)
         self.flag('beat_change', beat_key)
 
     def overwrite_beat(
@@ -85,19 +85,19 @@ class FlagLayer(OpusManagerBase):
         super().insert_after(beat_key, position)
         self.flag('beat_change', beat_key)
 
-    def split_grouping(
+    def split_tree(
             self,
             beat_key: BeatKey,
             position: List[int],
             splits: int) -> None:
-        super().split_grouping(beat_key, position, splits)
+        super().split_tree(beat_key, position, splits)
         self.flag('beat_change', beat_key)
 
     def swap_channels(self, channel_a: int, channel_b: int) -> None:
         super().swap_channels(channel_a, channel_b)
 
-        len_a = len(self.channel_groupings[channel_a])
-        len_b = len(self.channel_groupings[channel_b])
+        len_a = len(self.channel_trees[channel_a])
+        len_b = len(self.channel_trees[channel_b])
         for i in range(len_b):
             self.flag('line', (channel_a, len_b - 1 - i, 'pop'))
 
@@ -116,7 +116,7 @@ class FlagLayer(OpusManagerBase):
         for i in range(self.opus_beat_count):
             self.flag('beat', (i, 'new'))
 
-        for i, channel in enumerate(self.channel_groupings):
+        for i, channel in enumerate(self.channel_trees):
             for j, _line in enumerate(channel):
                 self.flag('line', (i, j, 'init'))
 
@@ -126,7 +126,7 @@ class FlagLayer(OpusManagerBase):
         for i in range(self.opus_beat_count):
             self.flag('beat', (i, 'new'))
 
-        for i, channel in enumerate(self.channel_groupings):
+        for i, channel in enumerate(self.channel_trees):
             for j, _line in enumerate(channel):
                 self.flag('line', (i, j, 'init'))
 
@@ -172,7 +172,7 @@ class FlagLayer(OpusManagerBase):
         super().new_line(channel, index)
 
         if index is None:
-            line_index = len(self.channel_groupings[channel]) - 1
+            line_index = len(self.channel_trees[channel]) - 1
         else:
             line_index = index
 
@@ -199,7 +199,7 @@ class FlagLayer(OpusManagerBase):
         super().remove_line(channel, index)
 
         if index is None:
-            index = len(self.channel_groupings[channel])
+            index = len(self.channel_trees[channel])
 
         # Flag changes to cache
         self.flag('line', (channel, index, 'pop'))

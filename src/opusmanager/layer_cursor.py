@@ -4,7 +4,6 @@ from typing import List, Optional, Tuple, Union, Any
 from collections.abc import Callable
 
 from .layer_history import HistoryLayer, BeatKey
-from .mgrouping import MGrouping
 
 class ReadyEvent:
     """Temporary placeholder for note events as they are being created"""
@@ -35,16 +34,16 @@ class Cursor:
     def move_left(self) -> None:
         """Point the cursor to the previous leaf"""
 
-        working_grouping = self.opus_manager.get_beat_grouping(self.get_triplet())
-        # First, traverse the position to get the currently active grouping
+        working_tree = self.opus_manager.get_beat_tree(self.get_triplet())
+        # First, traverse the position to get the currently active tree
         for j in self.position:
-            working_grouping = working_grouping[j]
+            working_tree = working_tree[j]
 
         # Then move the cursor up until it can move left
         while self.position:
             if self.position[-1] == 0:
                 self.position.pop()
-                working_grouping = working_grouping.parent
+                working_tree = working_tree.parent
             else:
                 self.position[-1] -= 1
                 break
@@ -60,17 +59,17 @@ class Cursor:
     def move_right(self) -> None:
         """Point the cursor to the next leaf"""
         channel, line, beat = self.get_triplet()
-        working_grouping = self.opus_manager.channel_groupings[channel][line][beat]
-        # First, traverse the position to get the currently active grouping
+        working_tree = self.opus_manager.channel_trees[channel][line][beat]
+        # First, traverse the position to get the currently active tree
         for j in self.position:
-            working_grouping = working_grouping[j]
+            working_tree = working_tree[j]
 
         # Then move the cursor up until it can move right
         while self.position:
-            if len(working_grouping.parent) - 1 == self.position[-1]:
+            if len(working_tree.parent) - 1 == self.position[-1]:
                 self.position.pop()
-                working_grouping = working_grouping.parent
-            elif len(working_grouping.parent) - 1 > self.position[-1]:
+                working_tree = working_tree.parent
+            elif len(working_tree.parent) - 1 > self.position[-1]:
                 self.position[-1] += 1
                 break
 
@@ -102,12 +101,12 @@ class Cursor:
 
     def move_dive(self, index: int) -> None:
         """Point the cursor to a child of the currently active Grouping"""
-        beat = self.opus_manager.get_grouping([self.y, self.x])
-        working_grouping = beat
+        beat = self.opus_manager.get_tree([self.y, self.x])
+        working_tree = beat
         for j in self.position:
-            working_grouping = working_grouping[j]
+            working_tree = working_tree[j]
 
-        if working_grouping.is_structural() and index < len(working_grouping):
+        if not working_tree.is_leaf() and index < len(working_tree):
             self.position.append(index)
 
     def to_list(self) -> List[int]:
@@ -132,33 +131,33 @@ class Cursor:
         self.x = max(0, min(self.x, self.opus_manager.opus_beat_count - 1))
         channel, line, beat = self.get_triplet()
         ## First get the beat ...
-        working_grouping = self.opus_manager.channel_groupings[channel][line][beat]
+        working_tree = self.opus_manager.channel_trees[channel][line][beat]
 
         if not self.position:
             if right_align:
-                self.position = [len(working_grouping) - 1]
+                self.position = [len(working_tree) - 1]
             else:
                 self.position = [0]
 
-        ## The get the current working_grouping ...
+        ## The get the current working_tree ...
         index = 0
         for j in self.position:
-            if not working_grouping.is_structural() or len(working_grouping) <= j:
+            if working_tree.is_leaf() or len(working_tree) <= j:
                 break
-            working_grouping = working_grouping[j]
+            working_tree = working_tree[j]
             index += 1
 
         self.position = self.position[0:index]
 
         ## ... Then find the leaf, if not already found
         if not right_align:
-            while working_grouping.is_structural():
+            while not working_tree.is_leaf():
                 self.position.append(0)
-                working_grouping = working_grouping[0]
+                working_tree = working_tree[0]
         else:
-            while working_grouping.is_structural():
-                self.position.append(len(working_grouping) - 1)
-                working_grouping = working_grouping[-1]
+            while not working_tree.is_leaf():
+                self.position.append(len(working_tree) - 1)
+                working_tree = working_tree[-1]
 
     def get_channel_index(self) -> (int, int):
         """
@@ -183,7 +182,7 @@ class CursorLayer(HistoryLayer):
     @property
     def line_count(self) -> int:
         """Get the number of lines active in this opus."""
-        return sum((len(channel) for channel in self.channel_groupings))
+        return sum((len(channel) for channel in self.channel_trees))
 
     def cursor_right(self) -> None:
         """Wrapper function"""
@@ -224,21 +223,21 @@ class CursorLayer(HistoryLayer):
         self.remove_beat(self.cursor.x)
         self.cursor.move_left()
 
-    def split_grouping_at_cursor(self) -> None:
-        """Divide the grouping pointed to by the cursor into 2"""
-        self.split_grouping(self.cursor.get_triplet(), self.cursor.position, 2)
+    def split_tree_at_cursor(self) -> None:
+        """Divide the tree pointed to by the cursor into 2"""
+        self.split_tree(self.cursor.get_triplet(), self.cursor.position, 2)
         self.cursor.settle()
 
     def unset_at_cursor(self) -> None:
         """
             Remove the event pointed to by the cursor.
-            Leaves the grouping in tact.
+            Leaves the tree in tact.
         """
         self.unset(self.cursor.get_triplet(), self.cursor.position)
 
-    def remove_grouping_at_cursor(self) -> None:
+    def remove_tree_at_cursor(self) -> None:
         """
-            Remove the grouping pointed to by the cursor from its parent.
+            Remove the tree pointed to by the cursor from its parent.
             Reduces the size of the parent.
         """
         self.remove(self.cursor.get_triplet(), self.cursor.position)
@@ -251,67 +250,67 @@ class CursorLayer(HistoryLayer):
         self.insert_beat(self.cursor.x + 1)
         self.cursor.settle()
 
-    def get_grouping_at_cursor(self) -> None:
+    def get_tree_at_cursor(self) -> None:
         """
-            Get the grouping object pointed to by the cursor.
+            Get the tree object pointed to by the cursor.
         """
-        return self.get_grouping(self.cursor.get_triplet(), self.cursor.position)
+        return self.get_tree(self.cursor.get_triplet(), self.cursor.position)
 
     def increment_event_at_cursor(self) -> None:
         """
-            If the cursor points to an event grouping.
+            If the cursor points to an event tree.
             Add 1 to it's value.
         """
-        grouping = self.get_grouping_at_cursor()
-        if not grouping.is_event():
+        tree = self.get_tree_at_cursor()
+        if not tree.is_event():
             return
 
-        for event in grouping.get_events():
-            new_value = event.note
-            if event.relative:
-                if (event.note >= event.base \
-                or event.note < 0 - event.base) \
-                and event.note < (event.base * (event.base - 1)):
-                    new_value = event.note + event.base
-                elif event.note < event.base:
-                    new_value = event.note + 1
-            elif event.note < 127:
+        event = tree.get_event()
+        new_value = event.note
+        if event.relative:
+            if (event.note >= event.base \
+            or event.note < 0 - event.base) \
+            and event.note < (event.base * (event.base - 1)):
+                new_value = event.note + event.base
+            elif event.note < event.base:
                 new_value = event.note + 1
+        elif event.note < 127:
+            new_value = event.note + 1
 
-            self.set_event(
-                self.cursor.get_triplet(),
-                self.cursor.position,
-                new_value,
-                relative=event.relative
-            )
+        self.set_event(
+            self.cursor.get_triplet(),
+            self.cursor.position,
+            new_value,
+            relative=event.relative
+        )
 
     def decrement_event_at_cursor(self) -> None:
         """
-            If the cursor points to an event grouping.
+            If the cursor points to an event tree.
             Subtract 1 from it's value.
         """
-        grouping = self.get_grouping_at_cursor()
-        if not grouping.is_event():
+        tree = self.get_tree_at_cursor()
+        if not tree.is_event():
             return
 
-        for event in grouping.get_events():
-            new_value = event.note
-            if event.relative:
-                if (event.note <= 0 - event.base \
-                or event.note > event.base) \
-                and event.note > 0 - (event.base * (event.base - 1)):
-                    new_value = event.note - event.base
-                elif event.note >= 0 - event.base:
-                    new_value = event.note - 1
-            elif event.note > 0:
+        event = tree.get_event()
+        new_value = event.note
+        if event.relative:
+            if (event.note <= 0 - event.base \
+            or event.note > event.base) \
+            and event.note > 0 - (event.base * (event.base - 1)):
+                new_value = event.note - event.base
+            elif event.note >= 0 - event.base:
                 new_value = event.note - 1
+        elif event.note > 0:
+            new_value = event.note - 1
 
-            self.set_event(
-                self.cursor.get_triplet(),
-                self.cursor.position,
-                new_value,
-                relative=event.relative
-            )
+        self.set_event(
+            self.cursor.get_triplet(),
+            self.cursor.position,
+            new_value,
+            relative=event.relative
+        )
 
     def jump_to_beat(self, beat: int) -> None:
         """Move the cursor to a specific beat index."""
@@ -358,10 +357,10 @@ class CursorLayer(HistoryLayer):
         # Traverse the list of indices and link all possible
         cursor = self.cursor.get_triplet()
         for i, channel_index in enumerate(channels):
-            if not self.channel_groupings[channel_index]:
+            if not self.channel_trees[channel_index]:
                 continue
             for j, line_index in enumerate(lines):
-                if line_index >= len(self.channel_groupings[channel_index]):
+                if line_index >= len(self.channel_trees[channel_index]):
                     continue
                 for k, beat_index in enumerate(beats):
                     self.link_beats(
@@ -379,7 +378,7 @@ class CursorLayer(HistoryLayer):
     def apply_register_at_cursor(self) -> None:
         """
             Convert the temporary event to a real one and
-            set the grouping pointed to by the cursor.
+            set the tree pointed to by the cursor.
         """
 
         register = self.fetch_register()
@@ -471,20 +470,20 @@ class CursorLayer(HistoryLayer):
         """
 
         for channel in self.channel_order:
-            for i, _ in enumerate(self.channel_groupings[channel]):
+            for i, _ in enumerate(self.channel_trees[channel]):
                 if y_index == 0:
                     return (channel, i)
                 y_index -= 1
 
         raise IndexError
 
-    def get_line_grouping(self, y_index: int) -> Optional[MGrouping]:
+    def get_line_tree(self, y_index: int) -> Optional[MGrouping]:
         """Get the MGrouping object of the entire line given by_index 'y_index'"""
         output = None
         for i in self.channel_order:
-            for grouping in self.channel_groupings[i]:
+            for tree in self.channel_trees[i]:
                 if y_index == 0:
-                    output = grouping
+                    output = tree
                     break
                 y_index -= 1
 
@@ -499,11 +498,11 @@ class CursorLayer(HistoryLayer):
             get the y-index of the specified line displayed
         """
         if line_offset is None:
-            line_offset = len(self.channel_groupings[channel_index]) - 1
+            line_offset = len(self.channel_trees[channel_index]) - 1
 
         y_index = 0
         for i in self.channel_order:
-            for j, _grouping in enumerate(self.channel_groupings[i]):
+            for j, _tree in enumerate(self.channel_trees[i]):
                 if channel_index == i and line_offset == j:
                     return y_index
                 y_index += 1
@@ -528,12 +527,12 @@ class CursorLayer(HistoryLayer):
         super().swap_channels(channel_a, channel_b)
 
         new_y = self.get_y(orig_cursor[0])
-        new_y += min(orig_cursor[1], len(self.channel_groupings[orig_cursor[0]]) - 1)
+        new_y += min(orig_cursor[1], len(self.channel_trees[orig_cursor[0]]) - 1)
         self.cursor.set_y(new_y)
         self.cursor.settle()
 
-    def split_grouping(self, beat_key: BeatKey, position: List[int], splits: int) -> None:
-        super().split_grouping(beat_key, position, splits)
+    def split_tree(self, beat_key: BeatKey, position: List[int], splits: int) -> None:
+        super().split_tree(beat_key, position, splits)
         self.cursor.settle()
 
     def remove_line(self, channel: int, index: Optional[int] = None) -> None:

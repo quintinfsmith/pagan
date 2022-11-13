@@ -2,13 +2,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Optional, List, Tuple, Dict
 from apres import NoteOn, NoteOff, PitchWheelChange, MIDI, SetTempo, ProgramChange, TimeSignature
-from .structures import Grouping, BadStateError
+from .structures import OpusTree, BadStateError
 import math
 
 ERROR_CHUNK_SIZE = 19
 
 class MissingCommaError(Exception):
-    """Thrown when MGrouping.from_string() fails"""
+    """Thrown when MIDITree.from_string() fails"""
     def __init__(self, repstring, fail_index, beat):
         bound_a = max(0, fail_index - ERROR_CHUNK_SIZE)
         bound_b = min(len(repstring), fail_index + ERROR_CHUNK_SIZE)
@@ -18,21 +18,21 @@ class MissingCommaError(Exception):
         if bound_b < len(repstring):
             chunk = chunk[0:-3] + "..."
         msg = f"\nError in beat {beat}\n"
-        msg += "Can't place notes in structural subgrouping or vice versa. "
-        msg += f"You likely missed a \"{MGrouping.CH_NEXT}\" Here:\n"
+        msg += "Can't place notes in structural subtree or vice versa. "
+        msg += f"You likely missed a \"{MIDITree.CH_NEXT}\" Here:\n"
         msg += ("-" * (fail_index - bound_a)) + "!\n"
         msg += chunk + "\n"
         msg += ("-" * (fail_index - bound_a)) + "^"
         super().__init__(msg)
 
-class UnclosedGroupingError(Exception):
-    """Thrown when a grouping is opened but not closed"""
+class UnclosedOpusTreeError(Exception):
+    """Thrown when a tree is opened but not closed"""
     def __init__(self, repstring, index):
         bound_a = max(0, index - ERROR_CHUNK_SIZE)
         bound_b = min(len(repstring), index + ERROR_CHUNK_SIZE)
         chunk = repstring[bound_a:bound_b]
 
-        msg = f"Unmatched \"{MGrouping.CH_OPEN}\" or \"{MGrouping.CH_CLOPEN}\" "
+        msg = f"Unmatched \"{MIDITree.CH_OPEN}\" or \"{MIDITree.CH_CLOPEN}\" "
         msg += f"at position {index}: \n"
 
         if bound_a > 0:
@@ -65,7 +65,7 @@ def is_note_on(event):
         event.velocity > 0
     )
 
-class MGroupingEvent:
+class MIDITreeEvent:
     def __init__(self, note: int, *, base=12, relative=False, **meta):
         self.relative = relative
         self.note = note
@@ -99,7 +99,7 @@ class MGroupingEvent:
         return self.note // self.base
 
 
-class MGrouping(Grouping):
+class MIDITree(OpusTree):
     CH_OPEN = "["
     CH_CLOSE = "]"
     CH_NEXT = ","
@@ -141,12 +141,12 @@ class MGrouping(Grouping):
             return False
 
         if self.is_event() and other.is_event():
-            return self.get_events() == other.get_events()
+            return self.get_event() == other.get_event()
 
         if self.is_open() and other.is_open():
             return True
 
-        if self.is_structural and other.is_structural():
+        if not self.is_leaf() and not other.is_leaf():
             if len(self) != len(other):
                 return False
 
@@ -193,21 +193,20 @@ class MGrouping(Grouping):
 
         midi.add_event( SetTempo.from_bpm(tempo) )
         tracks = new_opus.split()
-        for grouping in tracks:
-            if not grouping.is_structural():
+        for tree in tracks:
+            if tree.is_leaf():
                 continue
 
             current_tick = 0
             running_pitchwheel_revert = None
             prev_note = None
-            for m, beat in enumerate(grouping):
-                if not beat.is_structural():
-                    parent_grouping = MGrouping()
-                    parent_grouping.set_size(1)
-                    parent_grouping[0] = beat
-                    beat = parent_grouping
+            for m, beat in enumerate(tree):
+                if beat.is_leaf():
+                    parent_tree = MIDITree()
+                    parent_tree[0] = beat
+                    beat = parent_tree
 
-                #KLUDGE: We want grouping is their most reduced form when flattened
+                #KLUDGE: We want tree is their most reduced form when flattened
                 # So this is the current solution
                 if not beat.is_flat():
                     beat.flatten()
@@ -218,68 +217,69 @@ class MGrouping(Grouping):
 
                 open_events = []
 
-                for i, subgrouping in enumerate(beat):
-                    for event in subgrouping.events:
-                        if not event:
-                            continue
+                for i, leaf in enumerate(beat):
+                    if not leaf.is_event():
+                        continue
 
-                        channel = event['channel']
-                        open_events.append(event)
+                    event = leaf.get_event()
 
-                        if event.relative:
-                            note = prev_note + event.note
+                    channel = event['channel']
+                    open_events.append(event)
+
+                    if event.relative:
+                        note = prev_note + event.note
+                    else:
+                        note = event.get_note()
+                        if channel == 9:
+                            note -= 3
                         else:
-                            note = event.get_note()
-                            if channel == 9:
-                                note -= 3
-                            else:
-                                note += transpose
+                            note += transpose
 
-                        prev_note = note
-                        if not start <= m < slice_end:
-                            # We've got the previous note,
-                            # now we don't want to actually modify the midi
-                            continue
+                    prev_note = note
+                    if not start <= m < slice_end:
+                        # We've got the previous note,
+                        # now we don't want to actually modify the midi
+                        continue
 
-                        #pitch_bend = event['pitch_bend']
-                        pitch_bend = 0
+                    #pitch_bend = event['pitch_bend']
+                    pitch_bend = 0
 
-                        if pitch_bend != 0:
-                            midi.add_event(
-                                PitchWheelChange(
-                                    channel=channel,
-                                    value=pitch_bend
-                                ),
-                                tick=int(current_tick + (i * div_size)),
-                            )
-
+                    if pitch_bend != 0:
                         midi.add_event(
-                            NoteOn(
-                                note=note,
+                            PitchWheelChange(
                                 channel=channel,
-                                velocity=int(kwargs.get(f"v{channel}", 100))
+                                value=pitch_bend
                             ),
                             tick=int(current_tick + (i * div_size)),
                         )
 
+                    midi.add_event(
+                        NoteOn(
+                            note=note,
+                            channel=channel,
+                            velocity=int(kwargs.get(f"v{channel}", 100))
+                        ),
+                        tick=int(current_tick + (i * div_size)),
+                    )
+
+                    midi.add_event(
+                        NoteOff(
+                            note=note,
+                            channel=channel
+                        ),
+                        tick=int(current_tick + ((i + 1) * div_size)),
+                    )
+
+
+                    if pitch_bend != 0:
+                        running_pitchwheel_revert = PitchWheelChange(
+                            channel=channel,
+                            value=0
+                        )
                         midi.add_event(
-                            NoteOff(
-                                note=note,
-                                channel=channel
-                            ),
+                            running_pitchwheel_revert,
                             tick=int(current_tick + ((i + 1) * div_size)),
                         )
-
-
-                        if pitch_bend != 0:
-                            running_pitchwheel_revert = PitchWheelChange(
-                                channel=channel,
-                                value=0
-                            )
-                            midi.add_event(
-                                running_pitchwheel_revert,
-                                tick=int(current_tick + ((i + 1) * div_size)),
-                            )
                 if start < m <= slice_end:
                     current_tick += midi.ppqn
 
@@ -297,42 +297,39 @@ class MGrouping(Grouping):
         for character in " \n\t_":
             repstring = repstring.replace(character, "")
 
-        output = MGrouping()
-        output.set_size(1)
+        output = MIDITree()
 
-        grouping_stack: List[MGrouping] = [output]
+        tree_stack: List[MIDITree] = [output]
         register: List[Optional[int], Optional[int], Optional[float]] = [None, None, 0]
         opened_indeces: List[int] = []
         relative_flag: Optional[str] = None
-        repeat_queue: List[MGrouping] = []
+        repeat_queue: List[MIDITree] = []
 
         for i, character in enumerate(repstring):
-            if character in (MGrouping.CH_CLOSE, MGrouping.CH_CLOPEN):
-                # Remove completed grouping from stack
-                grouping_stack.pop()
+            if character in (MIDITree.CH_CLOSE, MIDITree.CH_CLOPEN):
+                # Remove completed tree from stack
+                tree_stack.pop()
                 opened_indeces.pop()
 
-            if character in (MGrouping.CH_NEXT, MGrouping.CH_CLOPEN):
-                # Resize Active Grouping
-                grouping_stack[-1].set_size(len(grouping_stack[-1]) + 1, noclobber=True)
+            if character in (MIDITree.CH_NEXT, MIDITree.CH_CLOPEN):
+                # Resize Active OpusTree
+                tree_stack[-1].set_size(len(tree_stack[-1]) + 1, noclobber=True)
 
-            if character in (MGrouping.CH_OPEN, MGrouping.CH_CLOPEN):
-                new_grouping = grouping_stack[-1][-1]
-                try:
-                    new_grouping.set_size(1)
-                except BadStateError as exc:
-                    raise MissingCommaError(repstring, i, len(output) - 1) from exc
+            if character in (MIDITree.CH_OPEN, MIDITree.CH_CLOPEN):
+                new_tree = tree_stack[-1][-1]
+                if not new_tree.is_open():
+                    raise MissingCommaError(repstring, i, len(output) - 1)
 
-                grouping_stack.append(new_grouping)
+                tree_stack.append(new_tree)
                 opened_indeces.append(i)
 
-            elif relative_flag == MGrouping.CH_REPEAT:
-                if character == MGrouping.CH_REPEAT:
+            elif relative_flag == MIDITree.CH_REPEAT:
+                if character == MIDITree.CH_REPEAT:
                     repeat_length = 1
                 else:
                     repeat_length = int(character, base)
 
-                parent = grouping_stack[-1].get_parent()
+                parent = tree_stack[-1].get_parent()
                 if parent is not None:
                     repeat_queue = parent[-1 - repeat_length:-1]
 
@@ -342,27 +339,25 @@ class MGrouping(Grouping):
                         beat = parent[x]
 
                         ## COPY
-                        grouping_stack[-1].merge(beat.copy())
+                        tree_stack[-1].merge(beat.copy())
 
                         if j >= len(repeat_queue) - 1:
                             continue
 
-                        #if character in (MGrouping.CH_CLOSE, MGrouping.CH_CLOPEN):
-                        # Remove completed grouping from stack
-                        grouping_stack.pop()
+                        #if character in (MIDITree.CH_CLOSE, MIDITree.CH_CLOPEN):
+                        # Remove completed tree from stack
+                        tree_stack.pop()
                         opened_indeces.pop()
 
-                        #if character in (MGrouping.CH_NEXT, MGrouping.CH_CLOPEN):
-                        # Resize Active Grouping
-                        grouping_stack[-1].set_size(len(grouping_stack[-1]) + 1, True)
+                        #if character in (MIDITree.CH_NEXT, MIDITree.CH_CLOPEN):
+                        # Resize Active OpusTree
+                        tree_stack[-1].set_size(len(tree_stack[-1]) + 1, True)
 
-                        #if character in (MGrouping.CH_OPEN, MGrouping.CH_CLOPEN):
-                        new_grouping = grouping_stack[-1][-1]
-                        try:
-                            new_grouping.set_size(1)
-                        except BadStateError as exc:
-                            raise MissingCommaError(repstring, i, len(output) - 1) from exc
-                        grouping_stack.append(new_grouping)
+                        #if character in (MIDITree.CH_OPEN, MIDITree.CH_CLOPEN):
+                        new_tree = tree_stack[-1][-1]
+                        if not new_tree.is_open():
+                            raise MissingCommaError(repstring, i, len(output) - 1)
+                        tree_stack.append(new_tree)
 
                         opened_indeces.append(i)
 
@@ -370,22 +365,22 @@ class MGrouping(Grouping):
 
             elif relative_flag is not None:
                 odd_note = 0
-                if relative_flag == MGrouping.CH_SUBTRACT:
+                if relative_flag == MIDITree.CH_SUBTRACT:
                     odd_note -= int(character, base)
-                elif relative_flag == MGrouping.CH_ADD:
+                elif relative_flag == MIDITree.CH_ADD:
                     odd_note += int(character, base)
-                elif relative_flag == MGrouping.CH_UP:
+                elif relative_flag == MIDITree.CH_UP:
                     odd_note += int(character, base) * base
-                elif relative_flag == MGrouping.CH_DOWN:
+                elif relative_flag == MIDITree.CH_DOWN:
                     odd_note -= int(character, base) * base
 
 
-                leaf = grouping_stack[-1][-1]
+                leaf = tree_stack[-1][-1]
                 try:
                     # Ignore holds for now
-                    if relative_flag != MGrouping.CH_HOLD:
-                        leaf.add_event(
-                            MGroupingEvent(
+                    if relative_flag != MIDITree.CH_HOLD:
+                        leaf.set_event(
+                            MIDITreeEvent(
                                 odd_note,
                                 base=base,
                                 relative=True,
@@ -403,10 +398,10 @@ class MGrouping(Grouping):
                 previous_note = odd_note
                 relative_flag = None
 
-            elif character in MGrouping.REL_CHARS:
+            elif character in MIDITree.REL_CHARS:
                 relative_flag = character
 
-            elif character not in MGrouping.SPECIAL_CHARS:
+            elif character not in MIDITree.SPECIAL_CHARS:
                 if register[0] is None:
                     register[0] = int(character, base)
                 elif register[1] is None:
@@ -414,10 +409,10 @@ class MGrouping(Grouping):
 
                     odd_note = (register[0] * base) + register[1]
 
-                    leaf = grouping_stack[-1][-1]
+                    leaf = tree_stack[-1][-1]
                     try:
-                        leaf.add_event(
-                            MGroupingEvent(
+                        leaf.set_event(
+                            MIDITreeEvent(
                                 odd_note,
                                 base=base,
                                 channel=channel
@@ -433,52 +428,52 @@ class MGrouping(Grouping):
                     register = [None, None, 0]
                     previous_note = odd_note
 
-        if len(grouping_stack) > 1:
-            raise UnclosedGroupingError(repstring, opened_indeces.pop())
+        if len(tree_stack) > 1:
+            raise UnclosedOpusTreeError(repstring, opened_indeces.pop())
 
         for i, beat in enumerate(output):
-            if not beat.is_structural():
-                new_grouping = MGrouping()
-                new_grouping.set_size(1)
-                output[i].replace_with(new_grouping)
-                new_grouping[0].replace_with(beat)
+            if beat.is_leaf():
+                new_tree = MIDITree()
+                new_tree.set_size(1)
+                output[i].replace_with(new_tree)
+                new_tree[0].replace_with(beat)
 
         return output
 
     def to_string(self, base=12, depth=0) -> str:
-        if self.is_structural():
+        if self.is_open():
+            output = "__"
+        elif self.is_event():
+            output = ""
+            event = self.get_event()
+            if event.relative:
+                new_string = ""
+                if event.note == 0 or event.note % base != 0:
+                    if event.note < 0:
+                        new_string += f"-"
+                    else:
+                        new_string += f"+"
+                    new_string += get_number_string(int(math.fabs(event.note)), base, digit_count=1)
+                else:
+                    if event.note < 0:
+                        new_string += f"v"
+                    else:
+                        new_string += f"^"
+                    new_string += get_number_string(int(math.fabs(event.note)) // base, base, digit_count=1)
+                output += new_string
+            else:
+                note = event.get_note()
+                output += get_number_string(note, base, digit_count=2)
+        else:
             strreps = []
             for i in range(len(self)):
-                subgrouping = self[i]
-                strreps.append(subgrouping.to_string(base, depth+1))
+                subtree = self[i]
+                strreps.append(subtree.to_string(base, depth+1))
 
             output = self.CH_NEXT.join(strreps)
             if depth > 0:
                 output = f"{self.CH_OPEN}{output}{self.CH_CLOSE}"
 
-        elif self.is_event():
-            output = ""
-            for event in self.get_events():
-                if event.relative:
-                    new_string = ""
-                    if event.note == 0 or event.note % base != 0:
-                        if event.note < 0:
-                            new_string += f"-"
-                        else:
-                            new_string += f"+"
-                        new_string += get_number_string(int(math.fabs(event.note)), base, digit_count=1)
-                    else:
-                        if event.note < 0:
-                            new_string += f"v"
-                        else:
-                            new_string += f"^"
-                        new_string += get_number_string(int(math.fabs(event.note)) // base, base, digit_count=1)
-                    output += new_string
-                else:
-                    note = event.get_note()
-                    output += get_number_string(note, base, digit_count=2)
-        else:
-            output = "__"
 
         #needs_convert = f"{self.CH_CLOSE}{self.CH_NEXT}{self.CH_OPEN}"
         #while needs_convert in output:
@@ -490,7 +485,7 @@ class MGrouping(Grouping):
         return self.to_string()
 
     @staticmethod
-    def from_midi(midi) -> MGrouping:
+    def from_midi(midi) -> MIDITree:
         beat_size = midi.ppqn
         total_beat_offset = 0
         last_ts_change = 0
@@ -505,13 +500,13 @@ class MGrouping(Grouping):
 
             if is_note_on(event):
                 while len(beat_values) <= beat_index:
-                    new_grouping = MGrouping()
-                    new_grouping.set_size(beat_size)
-                    beat_values.append(new_grouping)
+                    new_tree = MIDITree()
+                    new_tree.set_size(beat_size)
+                    beat_values.append(new_tree)
 
-                grouping = beat_values[beat_index]
-                grouping[inner_beat_offset].add_event(
-                    MGroupingEvent(
+                tree = beat_values[beat_index]
+                tree[inner_beat_offset].set_event(
+                    MIDITreeEvent(
                         event.note,
                         base=12,
                         channel=event.channel
@@ -525,32 +520,32 @@ class MGrouping(Grouping):
                 #    continue
 
                 #while len(beat_values) <= beat_index:
-                #    new_grouping = MGrouping()
-                #    new_grouping.set_size(beat_size)
-                #    beat_values.append(new_grouping)
+                #    new_tree = MIDITree()
+                #    new_tree.set_size(beat_size)
+                #    beat_values.append(new_tree)
 
                 #original_index = press_map[event.note]
 
-                ## Add filler holds for all the groupings in between press and the release beat
+                ## Add filler holds for all the trees in between press and the release beat
                 #for i in range(original_index[0] + 1, beat_index):
-                #    grouping = beat_values[i]
-                #    for subgrouping in grouping:
-                #        subgrouping.add_event((event.note, 0, False, event.channel))
+                #    tree = beat_values[i]
+                #    for subtree in tree:
+                #        subtree.add_event((event.note, 0, False, event.channel))
 
-                #grouping = beat_values[beat_index]
+                #tree = beat_values[beat_index]
                 #if original_index[0] != beat_index:
                 #    # Add holds on the current beat up to the current inner beat_offset
                 #    for i in range(inner_beat_offset):
-                #        grouping[i].add_event((event.note, 0, False, event.channel))
+                #        tree[i].add_event((event.note, 0, False, event.channel))
                 #else:
-                #    # Add holds for the remainder of the inner grouping
+                #    # Add holds for the remainder of the inner tree
                 #    for i in range(original_index[1] + 1, len(beat_values[original_index[0]])):
-                #        grouping = beat_values[original_index[0]]
-                #        grouping[i].add_event((event.note, 0, False, event.channel))
+                #        tree = beat_values[original_index[0]]
+                #        tree[i].add_event((event.note, 0, False, event.channel))
 
                 #    # Add holds between the inner offsets
                 #    for i in range(original_index[1] + 1, inner_beat_offset):
-                #        grouping[i].add_event((event.note, 0, False, event.channel))
+                #        tree[i].add_event((event.note, 0, False, event.channel))
 
                 #press_map[event.note] = False
 
@@ -567,14 +562,14 @@ class MGrouping(Grouping):
         # Add an extra beat for the midis where the final note isn't on the end of the final beat
         total_beat_offset += 1
 
-        opus = MGrouping()
+        opus = MIDITree()
         opus.set_size(total_beat_offset)
 
-        for i, beat_grouping in enumerate(beat_values):
-            if beat_grouping.is_structural():
-                for subgrouping in beat_grouping:
-                    subgrouping.clear_singles()
-            opus[i] = beat_grouping
+        for i, beat_tree in enumerate(beat_values):
+            if not beat_tree.is_leaf():
+                for subtree in beat_tree:
+                    subtree.clear_singles()
+            opus[i] = beat_tree
 
         for i, beat in enumerate(opus):
             beat.flatten()

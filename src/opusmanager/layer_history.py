@@ -66,7 +66,7 @@ class HistoryLayer(LinksLayer):
             self,
             beat_key: BeatKey,
             start_position: List[int]) -> None:
-        '''Traverse a grouping and setup the history to recreate it for remove functions'''
+        '''Traverse a tree and setup the history to recreate it for remove functions'''
 
         if self.history_locked:
             return
@@ -74,23 +74,23 @@ class HistoryLayer(LinksLayer):
         self.open_multi()
         channel, line_offset, beat_index = beat_key
 
-        beat_grouping = self.channel_groupings[channel][line_offset][beat_index]
+        beat_tree = self.channel_trees[channel][line_offset][beat_index]
         stack = [start_position]
         while stack:
             position = stack.pop(0)
 
-            grouping = beat_grouping
+            tree = beat_tree
             for i in position:
-                grouping = grouping[i]
+                tree = tree[i]
 
-            if grouping.is_structural():
-                self.append_undoer(self.split_grouping, beat_key, position, len(grouping))
-                for k in range(len(grouping)):
+            if not tree.is_leaf():
+                self.append_undoer(self.split_tree, beat_key, position, len(tree))
+                for k in range(len(tree)):
                     next_position = position.copy()
                     next_position.append(k)
                     stack.append(next_position)
-            elif grouping.is_event():
-                event = list(grouping.get_events())[0]
+            elif tree.is_event():
+                event = tree.get_event()
                 if channel != 9:
                     self.append_undoer(
                         self.set_event,
@@ -114,8 +114,8 @@ class HistoryLayer(LinksLayer):
         self.append_undoer(self.set_percussion_instrument, line_offset, original_instrument)
 
     def overwrite_beat(self, old_beat: BeatKey, new_beat: BeatKey) -> None:
-        old_grouping = self.channel_groupings[old_beat[0]][old_beat[1]][old_beat[2]].copy()
-        self.append_undoer(self.replace_beat, old_beat, old_grouping)
+        old_tree = self.channel_trees[old_beat[0]][old_beat[1]][old_beat[2]].copy()
+        self.append_undoer(self.replace_beat, old_beat, old_tree)
         super().overwrite_beat(old_beat, new_beat)
 
     def swap_channels(self, channel_a: int, channel_b: int) -> None:
@@ -137,15 +137,15 @@ class HistoryLayer(LinksLayer):
 
     def insert_after(self, beat_key: BeatKey, position: List[int]) -> None:
         if position:
-            # Else is implicitly handled by 'split_grouping'
+            # Else is implicitly handled by 'split_tree'
             rposition = position.copy()
             rposition[-1] += 1
             self.append_undoer(self.remove, beat_key, rposition)
         super().insert_after(beat_key, position)
 
-    def split_grouping(self, beat_key: BeatKey, position: List[int], splits: int) -> None:
+    def split_tree(self, beat_key: BeatKey, position: List[int], splits: int) -> None:
         self.setup_repopulate(beat_key, position[0:-1])
-        super().split_grouping(beat_key, position, splits)
+        super().split_tree(beat_key, position, splits)
 
     def remove(self, beat_key: BeatKey, position: List[int]) -> None:
         self.setup_repopulate(beat_key, position[0:-1])
@@ -160,7 +160,7 @@ class HistoryLayer(LinksLayer):
         self.append_undoer(self.insert_beat, index)
 
         # TODO: This could be more precise
-        for i, channel in enumerate(self.channel_groupings):
+        for i, channel in enumerate(self.channel_trees):
             for j, line in enumerate(channel):
                 for k, beat in enumerate(line):
                     if k < index:
@@ -178,15 +178,15 @@ class HistoryLayer(LinksLayer):
             *,
             relative: bool = False) -> None:
 
-        grouping = self.get_grouping(beat_key, position)
-        if not grouping.is_event():
+        tree = self.get_tree(beat_key, position)
+        if not tree.is_event():
             self.append_undoer(
                 self.unset,
                 beat_key,
                 position
             )
         else:
-            original_event = list(grouping.get_events())[0]
+            original_event = tree.get_event()
             self.append_undoer(
                 self.set_event,
                 beat_key,
@@ -199,9 +199,9 @@ class HistoryLayer(LinksLayer):
 
 
     def unset(self, beat_key: BeatKey, position: List[int]) -> None:
-        grouping = self.get_grouping(beat_key, position)
-        if grouping.is_event():
-            original_event = list(grouping.get_events())[0]
+        tree = self.get_tree(beat_key, position)
+        if tree.is_event():
+            original_event = tree.get_event()
             self.append_undoer(
                 self.set_event,
                 beat_key,

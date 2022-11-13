@@ -8,7 +8,7 @@ from typing import Optional, Dict, List, Tuple
 
 import wrecked
 from .wrecked_elements import RectFrame
-from .opusmanager.mgrouping import get_number_string
+from .opusmanager.miditree import get_number_string
 from .opusmanager import OpusManager
 
 class EditorEnvironment:
@@ -364,7 +364,7 @@ class EditorEnvironment:
 
 
     def tick_update_beats(self) -> bool:
-        channels = self.opus_manager.channel_groupings
+        channels = self.opus_manager.channel_trees
 
         rect_topbar = self.frame_beat_labels.get_content_rect()
 
@@ -542,7 +542,7 @@ class EditorEnvironment:
         c, i = self.opus_manager.get_channel_index(position[0])
         return self.subbeat_rect_map[(c, i, position[1])][tuple(position[2:])]
 
-    def build_beat_rect(self, beat_grouping, rect) -> Dict[Tuple(int), wrecked.Rect]:
+    def build_beat_rect(self, beat_tree, rect) -> Dict[Tuple(int), wrecked.Rect]:
         rect.clear_children()
         rect.clear_characters()
         rect.unset_invert()
@@ -550,33 +550,33 @@ class EditorEnvironment:
         rect.unset_fg_color()
         rect.unset_underline()
         # Single-event or empty beats get a buffer rect for spacing purposes
-        stack = [(beat_grouping, rect, 0, [])]
+        stack = [(beat_tree, rect, 0, [])]
 
         depth_sorted_queue = []
         flat_map = {}
         while stack:
-            working_grouping, working_rect, depth, cursor_map = stack.pop(0)
+            working_tree, working_rect, depth, cursor_map = stack.pop(0)
 
-            depth_sorted_queue.append((depth, working_grouping, tuple(cursor_map)))
+            depth_sorted_queue.append((depth, working_tree, tuple(cursor_map)))
             flat_map[tuple(cursor_map)] = working_rect
-            if working_grouping.is_structural():
-                for i, subgrouping in enumerate(working_grouping):
+            if not working_tree.is_leaf():
+                for i, subtree in enumerate(working_tree):
                     next_map = cursor_map.copy()
                     next_map.append(i)
-                    stack.append((subgrouping, working_rect.new_rect(), depth + 1, next_map))
+                    stack.append((subtree, working_rect.new_rect(), depth + 1, next_map))
 
-        # Traverse the subgroupings, depth-first
+        # Traverse the subtrees, depth-first
         depth_sorted_queue = sorted(depth_sorted_queue, key=sort_by_first, reverse=True)
-        for _, working_grouping, cursor_path in depth_sorted_queue:
+        for _, working_tree, cursor_path in depth_sorted_queue:
             working_rect = flat_map[cursor_path]
 
-            if working_grouping.is_structural():
+            if not working_tree.is_leaf():
                 running_width = 0
-                if working_grouping != beat_grouping:
+                if working_tree != beat_tree:
                     running_width += 1
 
                 comma_points = []
-                for i, subgrouping in enumerate(working_grouping):
+                for i, subtree in enumerate(working_tree):
                     child_path = list(cursor_path)
                     child_path.append(i)
                     child_rect = flat_map[tuple(child_path)]
@@ -588,11 +588,11 @@ class EditorEnvironment:
                     child_rect.move(running_width, 0)
                     running_width += child_rect.width
 
-                if working_grouping != beat_grouping:
+                if working_tree != beat_tree:
                     running_width += 1
 
                 working_rect.resize(running_width, 1)
-                if working_grouping != beat_grouping:
+                if working_tree != beat_tree:
                     working_rect.set_character(0, 0, '[')
                     working_rect.set_character(running_width - 1, 0, ']')
 
@@ -602,30 +602,29 @@ class EditorEnvironment:
             else:
                 is_relative = False
                 is_negative = False
-                if working_grouping.is_event():
-                    events = working_grouping.get_events()
+                if working_tree.is_event():
+                    event = working_tree.get_event()
                     new_string = ''
-                    for i, event in enumerate(events):
-                        base = event.get_base()
-                        if event.relative:
-                            is_relative = True
-                            if event.note == 0 or event.note % base != 0:
-                                if event.note < 0:
-                                    new_string += f"-"
-                                    is_negative = True
-                                else:
-                                    new_string += f"+"
-                                new_string += get_number_string(int(math.fabs(event.note)), base, 1)
+                    base = event.get_base()
+                    if event.relative:
+                        is_relative = True
+                        if event.note == 0 or event.note % base != 0:
+                            if event.note < 0:
+                                new_string += f"-"
+                                is_negative = True
                             else:
-                                if event.note < 0:
-                                    new_string += chr(8595)
-                                    is_negative = True
-                                else:
-                                    new_string += chr(8593)
-                                new_string += get_number_string(int(math.fabs(event.note)) // base, base, 1)
+                                new_string += f"+"
+                            new_string += get_number_string(int(math.fabs(event.note)), base, 1)
                         else:
-                            note = event.note
-                            new_string = get_number_string(note, base)
+                            if event.note < 0:
+                                new_string += chr(8595)
+                                is_negative = True
+                            else:
+                                new_string += chr(8593)
+                            new_string += get_number_string(int(math.fabs(event.note)) // base, base, 1)
+                    else:
+                        note = event.note
+                        new_string = get_number_string(note, base)
                 else:
                     new_string = '..'
 

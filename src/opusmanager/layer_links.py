@@ -50,7 +50,7 @@ class LinksLayer(FlagLayer):
         # Remove any existing link
         self.unlink_beat(beat)
 
-        # Replace existing grouping with a copy of the target
+        # Replace existing tree with a copy of the target
         self.overwrite_beat(beat, target)
 
         self.linked_beat_map[beat] = target
@@ -100,13 +100,13 @@ class LinksLayer(FlagLayer):
         for linked_key in self._get_all_linked(beat_key):
             super().set_event(linked_key, position, value, relative=relative)
 
-    def split_grouping(
+    def split_tree(
             self,
             beat_key: BeatKey,
             position: List[int],
             splits: int) -> None:
         for linked_key in self._get_all_linked(beat_key):
-            super().split_grouping(linked_key, position, splits)
+            super().split_tree(linked_key, position, splits)
 
     def unset(
             self,
@@ -145,7 +145,7 @@ class LinksLayer(FlagLayer):
                     new_beat = (beat[0], beat[1] - 1, beat[2])
             return new_beat
 
-        new_offset = len(self.channel_groupings[new_channel]) - 1
+        new_offset = len(self.channel_trees[new_channel]) - 1
         self.remap_links(remap_hook, old_channel, line_index, new_channel, new_offset)
 
     def move_line(self, channel: int, old_index: int, new_index: int) -> None:

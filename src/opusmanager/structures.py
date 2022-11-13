@@ -1,25 +1,20 @@
 """
     Specialized generic structures to help with midi note processing.
-    Only Grouping at the moment.
+    Only OpusTree at the moment.
 """
 from __future__ import annotations
 import math, json
 from enum import Enum, auto
-from typing import Optional, List, Tuple, Dict
+from typing import Optional, List, Tuple, Dict, TypeVar
 
 class BadStateError(Exception):
-    """Thrown if an incompatible operation is attempted on a Grouping Object"""
+    """Thrown if an incompatible operation is attempted on a OpusTree Object"""
 class SelfAssignError(Exception):
-    """Thrown when a Grouping is assigned to itself as a subgrouping"""
+    """Thrown when a OpusTree is assigned to itself as a subtree"""
 
-class GroupingState(Enum):
-    """The states that a Grouping can be in"""
-    EVENT = auto()
-    STRUCTURE = auto()
-    OPEN = auto()
+T = TypeVar("T")
 
-
-class Grouping:
+class OpusTree:
     """
         Tree-like structure that can be flattened and
         unflattened as necessary while keeping relative positions
@@ -28,37 +23,36 @@ class Grouping:
     def __init__(self):
         self.size: int = 1
         self.divisions = {}
-        self.events = set()
-        self.state: GroupingState = GroupingState.OPEN
-        self.parent: Optional[Grouping] = None
-        self.uuid: int = Grouping.uuid_gen
-        Grouping.uuid_gen += 1
+        self.event: Optional[T] = None
+        self.parent: Optional[OpusTree] = None
+        self.uuid: int = OpusTree.uuid_gen
+        OpusTree.uuid_gen += 1
 
     def get_uuid(self):
         return self.uuid
 
     def __str__(self):
         output = ''
-        if self.events:
-            output += str(self.events)
+        if self.is_event():
+            output += str(self.event)
         else:
-            for i, grouping in self.divisions.items():
-                grp_str = str(grouping).strip()
-                if grp_str:
+            for i, tree in self.divisions.items():
+                tree_str = str(tree).strip()
+                if tree_str:
                     tab = "\t" * self.get_depth()
-                    output += f"{tab}{i+1}/{len(self)}) \t{grp_str}\n"
+                    output += f"{tab}{i+1}/{len(self)}) \t{tree_str}\n"
 
         return output.strip() + "\n"
 
     def __len__(self):
         return self.size
 
-    def __getitem__(self, index_or_slice) -> Grouping:
+    def __getitem__(self, index_or_slice) -> OpusTree:
         """
-            Get a the grouping at the specified index.
-            Will create a new grouping if none exists yet
+            Get the node at the specified index.
+            Will create a new tree if none exists yet
         """
-        if not self.is_structural():
+        if self.is_event():
             raise BadStateError()
 
         if isinstance(index_or_slice, int):
@@ -68,7 +62,7 @@ class Grouping:
 
         return output
 
-    def __getitem_by_index(self, i: int) -> Grouping:
+    def __getitem_by_index(self, i: int) -> OpusTree:
         if i < 0:
             i = self.size + i
 
@@ -84,7 +78,7 @@ class Grouping:
 
         return output
 
-    def __get_slice(self, s: slice) -> Grouping:
+    def __get_slice(self, s: slice) -> OpusTree:
         output = self.__class__()
         if s.start is None:
             start = 0
@@ -102,18 +96,16 @@ class Grouping:
             stop = s.stop
 
         output.set_size((stop - start) // step)
-        for i, subgrouping in self.divisions.items():
+        for i, node in self.divisions.items():
             if start <= i < stop and (i + start) % step == 0:
-                output[i - start] = subgrouping
+                output[i - start] = node
 
         return output
 
-    def __setitem__(self, i: int, grouping: Grouping):
-        """Assign an existing Grouping to be a subgrouping."""
-        if not self.is_structural():
-            raise BadStateError()
+    def __setitem__(self, i: int, node: OpusTree):
+        """Assign an existing OpusTree to be a node."""
 
-        if grouping == self:
+        if node == self:
             raise SelfAssignError()
 
         if i < 0:
@@ -122,16 +114,25 @@ class Grouping:
         if i >= self.size:
             raise IndexError(i, self.size)
 
-        grouping.parent = self
-        self.divisions[i] = grouping
 
-    def get_parent(self) -> Optional[Grouping]:
+        node.parent = self
+        self.divisions[i] = node
+
+        if self.is_event():
+            event = self.get_event()
+            self.event = None
+            while not node.is_leaf():
+                node = node[0]
+
+            if node.is_event():
+                node.event += event
+            else:
+                node.set_event(event)
+
+    def get_parent(self) -> Optional[OpusTree]:
         return self.parent
 
-    def _get_state(self) -> GroupingState:
-        return self.state
-
-    def split(self, split_func) -> List[Grouping]:
+    def split(self, split_func) -> List[OpusTree]:
         mapped_events = self.get_events_mapped()
         merged_map = {}
         for path, event in mapped_events:
@@ -150,99 +151,89 @@ class Grouping:
 
         tracks = []
         for key, events in unstructured_splits.items():
-            grouping = self.__class__()
-            grouping.set_size(1)
+            node = self.__class__()
             for (path, event) in events:
-                working_grouping = grouping
+                working_node = node
                 for (x, size) in path:
-                    if not working_grouping.is_structural():
-                        working_grouping.set_size(size)
+                    if working_node.is_open():
+                        working_node.set_size(size)
+                    elif len(working_node) != size:
+                        working_node.set_size(size)
+                    working_node = working_node[x]
 
-                    elif len(working_grouping) != size:
-                        working_grouping.set_size(size)
-                    working_grouping = working_grouping[x]
-
-                working_grouping = grouping
+                working_node = node
                 for (x, size) in path:
-                    working_grouping = working_grouping[x]
+                    working_node = working_node[x]
 
-                working_grouping.add_event(event)
-            tracks.append(grouping)
+                working_node.add_event(event)
+            tracks.append(node)
 
         return tracks
 
     def get_events_mapped(self):
         output = []
-        if self.is_structural():
-            for i, grouping in self.divisions.items():
-                for (path, event) in grouping.get_events_mapped():
+        if not self.is_leaf():
+            for i, node in self.divisions.items():
+                for (path, event) in node.get_events_mapped():
                     path.insert(0, (i, len(self)))
                     output.append((path, event))
 
         elif self.is_event():
-            for e in self.events:
-                output.append(([], e))
-
+            output.append(([], self.event))
 
         return output
 
-    def insert_grouping(self, index, new_grouping):
+    def insert(self, index, new_node):
         self.size += 1
         new_indices = {}
-        for old_index, grouping in self.divisions.items():
+        for old_index, node in self.divisions.items():
             if index > old_index:
-                new_indices[old_index] = grouping
+                new_indices[old_index] = node
             else:
-                new_indices[old_index + 1] = grouping
-        new_indices[index] = new_grouping
+                new_indices[old_index + 1] = node
+        new_indices[index] = new_node
         self.divisions = new_indices
-        new_grouping.parent = self
+        new_node.parent = self
 
-    def merge(self, grouping):
-        if grouping.is_open():
+    def merge(self, tree):
+        if tree.is_open():
             return
 
-        if self.is_open():
-            self.set_size(1)
-
-        if self.is_structural():
-            if grouping.is_structural():
-                self.__merge_structural(grouping)
+        if not self.is_event():
+            if not tree.is_leaf():
+                self.__merge_structural(tree)
             else:
-                self.__merge_event_into_structural(grouping)
-        elif not grouping.is_open():
-            if grouping.is_structural():
-                self.__merge_structural_into_event(grouping)
+                self.__merge_event_into_structural(tree)
+        elif not tree.is_open():
+            if not tree.is_leaf():
+                self.__merge_structural_into_event(tree)
             else:
-                self.__merge_event(grouping)
+                self.__merge_event(tree)
 
-    def __merge_structural_into_event(self, s_grouping):
-        clone_grouping = self.copy()
-        self.clear_events()
+    def __merge_structural_into_event(self, s_tree):
+        clone_tree = self.copy()
+        self.unset_event()
 
-        self.set_size(len(s_grouping))
-        self.__merge_structural(s_grouping)
+        self.set_size(len(s_tree))
+        self.__merge_structural(s_tree)
 
-        self.__merge_event_into_structural(clone_grouping)
+        self.__merge_event_into_structural(clone_tree)
 
-    def __merge_event_into_structural(self, e_grouping):
-        working_grouping = self
-        while working_grouping.is_structural():
-            working_grouping = working_grouping[0]
+    def __merge_event_into_structural(self, e_tree):
+        working_tree = self
+        while not working_tree.is_leaf():
+            working_tree = working_tree[0]
 
-        for event in e_grouping.get_events():
-            working_grouping.add_event(event)
+        # TODO: require events have __add__
+        working_tree.event += e_tree.event
 
-    def __merge_event(self, grouping):
-        try:
-            for event in grouping.get_events():
-                self.add_event(event)
-        except BadStateError:
-            pass
+    def __merge_event(self, event_node):
+        # TODO: require events have __add__
+        self.event += event_node.event
 
-    def __merge_structural(self, grouping):
+    def __merge_structural(self, tree):
         original_size = len(self)
-        clone = grouping.copy()
+        clone = tree.copy()
         clone.flatten()
         self.flatten()
 
@@ -250,40 +241,39 @@ class Grouping:
         factor = new_size // len(clone)
         self.resize(new_size)
 
-        for index, subgrouping in clone.divisions.items():
+        for index, subtree in clone.divisions.items():
             new_index = index * factor
-            subgrouping_into = self[new_index]
+            subtree_into = self[new_index]
 
-            if subgrouping_into.is_open():
-                self[new_index] = subgrouping
+            if subtree_into.is_open():
+                self[new_index] = subtree
             else:
-                subgrouping_into.merge(subgrouping)
+                subtree_into.merge(subtree)
 
-        self.reduce(max(original_size, len(grouping)))
+        self.reduce(max(original_size, len(tree)))
 
     def clear(self):
         for item in self:
             del item
         self.set_size(1)
-        self.set_state(GroupingState.OPEN)
 
-    def is_structural(self) -> bool:
-        """Check if this grouping has sub groupings"""
-        return self._get_state() == GroupingState.STRUCTURE
+    def is_open(self) -> bool:
+        """Check that this has no subtrees and is not an event"""
+        return not self.divisions and not self.is_event()
 
     def is_event(self) -> bool:
         """Check if this grouping has any events"""
-        return self._get_state() == GroupingState.EVENT
+        return self.event is not None
 
-    def is_open(self) -> bool:
+    def is_leaf(self) -> bool:
         """Check that this grouping is neither event nor structural"""
-        return self._get_state() == GroupingState.OPEN
+        return self.is_event() or self.is_open()
 
     def is_flat(self) -> bool:
-        """Check if this grouping has no sub-subgroupings and only event/open subgroupings"""
+        """Check if this tree has only leafs"""
         is_flat = True
         for child in self.divisions.values():
-            if child.is_structural():
+            if not child.is_leaf():
                 is_flat = False
                 break
         return is_flat
@@ -293,20 +283,16 @@ class Grouping:
         if self.is_event():
             raise BadStateError()
 
-        if size == 0:
-            self.set_state(GroupingState.OPEN)
+        if not noclobber:
+            self.divisions = {}
         else:
-            self.set_state(GroupingState.STRUCTURE)
-            if not noclobber:
-                self.divisions = {}
-            else:
-                # TODO: Maybe think about this. might be able to be faster
-                to_delete = set()
-                for k in self.divisions:
-                    if k >= size:
-                        to_delete.add(k)
-                for k in to_delete:
-                    del self.divisions[k]
+            # TODO: Maybe think about this. might be able to be faster
+            to_delete = set()
+            for k in self.divisions:
+                if k >= size:
+                    to_delete.add(k)
+            for k in to_delete:
+                del self.divisions[k]
 
         self.size = size
 
@@ -325,57 +311,52 @@ class Grouping:
         self.divisions = new_divisions
         self.size = new_size
 
-    def set_state(self, new_state: GroupingState):
-        """Sets the state of the Grouping so that invalid operations can't be applied to them"""
-        self.state = new_state
-
     def reduce(self, target_size=1):
         """
             Reduce a flat list of event groupings into smaller divisions
             while keeping the correct ratios.
             (eg midi events to musical notation)
         """
-        if not self.is_structural():
-            raise BadStateError()
+        if self.is_leaf():
+            return
 
         if not self.is_flat():
             self.flatten()
 
         # Get the active indeces on the current level
         indeces = []
-        for i, grouping in self.divisions.items():
-            indeces.append((i, grouping))
+        for i, child_node in self.divisions.items():
+            indeces.append((i, child_node))
         indeces.sort()
 
-        # Use a temporary Grouping to build the reduced version
+        # Use a temporary OpusTree to build the reduced version
         place_holder = self.copy()
         stack = [(target_size, indeces, self.size, place_holder)]
-        first_pass = True
         while stack:
-            denominator, indeces, previous_size, grouping = stack.pop(0)
+            denominator, indeces, previous_size, tree = stack.pop(0)
             current_size = previous_size // denominator
 
-            # Create separate lists to represent the new equal groupings
+            # Create separate lists to represent the new equal trees
             split_indeces = []
             for _ in range(denominator):
                 split_indeces.append([])
-            grouping.set_size(denominator)
+            tree.set_size(denominator)
 
             # move the indeces into their new lists
-            for i, subgrouping in indeces:
+            for i, subtree in indeces:
                 split_index = i // current_size
-                split_indeces[split_index].append((i % current_size, subgrouping.copy()))
+                split_indeces[split_index].append((i % current_size, subtree.copy()))
 
             for i in range(denominator):
                 working_indeces = split_indeces[i]
                 if not working_indeces:
                     continue
 
-                working_grouping = grouping[i]
+                working_tree = tree[i]
 
                 # Get the most reduced version of each index
                 minimum_divs = []
-                for index, subgrouping in working_indeces:
+                for index, subtree in working_indeces:
                     most_reduced = int(current_size / math.gcd(current_size, index))
                     # mod the indeces to match their new relative positions
                     if most_reduced > 1:
@@ -388,17 +369,17 @@ class Grouping:
                         minimum_divs[0],
                         working_indeces,
                         current_size,
-                        working_grouping
+                        working_tree
                     ))
                 else: # Leaf
-                    _, event_grouping = working_indeces.pop(0)
-                    for event in event_grouping.events:
-                        working_grouping.add_event(event)
-            first_pass = False
+                    _, event_tree = working_indeces.pop(0)
+                    for event in event_tree.events:
+                        working_tree.add_event(event)
 
         self.set_size(len(place_holder))
-        for i, grouping in place_holder.divisions.items():
-            self[i] = grouping
+        for i, tree in place_holder.divisions.items():
+            self[i] = tree
+
     # Attempt at speeding things up drastically slowed things down
     #def flatten(self):
     #    mapped_events = self.get_events_mapped()
@@ -429,31 +410,28 @@ class Grouping:
 
 
     def flatten(self):
-        """Merge all subgroupings into single level, preserving ratios"""
+        """Merge all subtrees into single level, preserving ratios"""
         # TODO: This gets pretty slow when 3+ deep
         # Tried a different method, added 10 seconds.
         # May need to do this in rust.
         sizes = []
-        subgroup_backup = []
-        original_size = self.size
-        # First, recursively merge sub-subgroupings into subgroupings
+        subtree_backup = []
+        # First, recursively merge sub-subtrees into subtrees
         for i, child in self.divisions.items():
-            if not child.is_structural():
-                pass
-            else:
+            if not child.is_leaf():
                 if not child.is_flat():
                     child.flatten()
                 sizes.append(len(child))
 
-            subgroup_backup.append((i, child))
+            subtree_backup.append((i, child))
 
         new_chunk_size = math.lcm(*sizes)
         new_size = new_chunk_size * len(self)
 
         self.set_size(new_size)
-        for i, child in subgroup_backup:
+        for i, child in subtree_backup:
             offset = i * new_chunk_size
-            if child.is_structural():
+            if not child.is_leaf():
                 for j, grandchild in enumerate(list(child)):
                     if grandchild.is_event():
                         fine_offset = int(j * new_chunk_size / len(child))
@@ -463,44 +441,25 @@ class Grouping:
 
 
 
-    def add_event(self, event):
-        """Add an event to grouping's set of events"""
-        if self.is_structural():
-            raise BadStateError()
+    def set_event(self, event: T) -> None:
+        self.event = event
 
-        self.set_state(GroupingState.EVENT)
-        self.events.add(event)
+    def unset_event(self) -> None:
+        self.event = None
 
-    def remove_event(self, event):
-        """Remove an event from the groupings set of events"""
-        if not self.is_event():
-            raise BadStateError()
-
-        if event not in self.events:
-            raise IndexError(f"{event} not in event list")
-
-        self.events.remove(event)
-
-    def get_events(self):
-        """Get set of grouping's set of events"""
-        if not self.is_event():
-            raise BadStateError()
-
-        return self.events
-
-    def clear_events(self):
-        if not self.is_event():
-            raise BadStateError()
-        self.events = set()
-        self.set_state(GroupingState.OPEN)
+    def get_event(self) -> Optional[T]:
+        if self.is_event():
+            return self.event
+        else:
+            return None
 
     def get_depth(self):
-        """Find how many parents/supergroupings this grouping has """
+        """Find how many parents/supertrees this tree has """
         depth = 0
-        working_grouping = self
-        while working_grouping is not None:
+        working_tree = self
+        while working_tree is not None:
             depth += 1
-            working_grouping = working_grouping.parent
+            working_tree = working_tree.parent
         return depth
 
     def __list__(self):
@@ -511,56 +470,44 @@ class Grouping:
         return output
 
     def copy(self):
-        new_grouping = self.__class__()
-        new_grouping.size = self.size
-        new_grouping.state = self.state
-        #new_grouping.parent = self.parent
+        new_tree = self.__class__()
+        new_tree.size = self.size
+        #new_tree.parent = self.parent
 
-        for i, grouping in self.divisions.items():
-            new_grouping.divisions[i] = grouping.copy()
-            new_grouping.divisions[i].parent = new_grouping
+        for i, tree in self.divisions.items():
+            new_tree.divisions[i] = tree.copy()
+            new_tree.divisions[i].parent = new_tree
 
-        for event in self.events:
-            new_grouping.events.add(event)
+        new_tree.event = self.event
 
-        return new_grouping
+        return new_tree
 
     #TODO: Think of better name
     def clear_singles(self):
-        stack = [g for g in self]
+        """
+            Shortens branches on the tree where an only-child-node has more than 1 child
+            (ie X->1->Y becomes X->Y)
+        """
+        stack = list(self)
         while stack:
-            working_grouping = stack.pop(0)
-            if working_grouping.is_structural():
-                if len(working_grouping) == 1:
-                    subgrouping = working_grouping[0]
-                    if subgrouping.is_structural():
-                        working_grouping.replace_with(subgrouping)
-                        stack.append(subgrouping)
+            working_tree = stack.pop(0)
+            if not working_tree.is_leaf():
+                if len(working_tree) == 1:
+                    subtree = working_tree[0]
+                    if not subtree.is_leaf():
+                        working_tree.replace_with(subtree)
+                        stack.append(subtree)
                 else:
-                    for child in working_grouping:
+                    for child in working_tree:
                         stack.append(child)
 
-
-    def crop_redundancies(self):
-        if not self.is_structural():
-            return
-
-        for i, div in self.divisions.items():
-            if not div.is_structural():
-                continue
-
-            div.crop_redundancies()
-
-            if len(div) == 1:
-                self.divisions[i] = div[0]
-
-    def replace_with(self, new_grouping):
-        new_grouping.parent = self.parent
+    def replace_with(self, new_tree):
+        new_tree.parent = self.parent
         if self.parent is not None:
             for i, child in enumerate(self.parent):
                 if child != self:
                     continue
-                self.parent[i] = new_grouping
+                self.parent[i] = new_tree
                 break
 
     def pop(self, index=-1):

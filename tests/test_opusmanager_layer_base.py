@@ -18,11 +18,11 @@ class OpusManagerTest(unittest.TestCase):
         manager = OpusManager.new()
 
         beat_key = (0,0,0)
-        beat_grouping = manager.get_beat_grouping(beat_key)
-        grouping = manager.get_grouping(beat_key, [0])
-        initial_length = len(beat_grouping)
+        beat_tree = manager.get_beat_tree(beat_key)
+        tree = manager.get_tree(beat_key, [0])
+        initial_length = len(beat_tree)
         manager.insert_after(beat_key, [0])
-        assert len(beat_grouping) == initial_length + 1, "Didn't insert after"
+        assert len(beat_tree) == initial_length + 1, "Didn't insert after"
         try:
             manager.insert_after(beat_key, [])
             assert False, "Shouldn't be able to insert after a beat"
@@ -35,32 +35,32 @@ class OpusManagerTest(unittest.TestCase):
         # Setup an opus
         manager = OpusManager.new()
         beat_key = (0,0,0)
-        beat_grouping = manager.get_beat_grouping(beat_key)
-        # Insert an empty grouping in the first beat
+        beat_tree = manager.get_beat_tree(beat_key)
+        # Insert an empty tree in the first beat
         manager.insert_after(beat_key, [0])
 
-        # Then remove that grouping
+        # Then remove that tree
         manager.remove(beat_key, [1])
-        assert len(beat_grouping) == 1, "Remove Failed"
+        assert len(beat_tree) == 1, "Remove Failed"
 
-        # *Attempt* to remove last grouping in beat
+        # *Attempt* to remove last tree in beat
         manager.remove(beat_key, [0])
-        assert len(beat_grouping) == 1, "Removed a beat's last child"
+        assert len(beat_tree) == 1, "Removed a beat's last child"
 
         # Check that the siblings get adjusted
         for i in range(3):
             manager.insert_after(beat_key, [0])
-        grouping = manager.get_grouping(beat_key, [3])
+        tree = manager.get_tree(beat_key, [3])
         manager.remove(beat_key, [2])
-        assert grouping == manager.get_grouping(beat_key, [2])
+        assert tree == manager.get_tree(beat_key, [2])
 
         # check that N->1->N gets reduced to N->N
-        manager.split_grouping(beat_key, [2], 2)
-        manager.split_grouping(beat_key, [2,0], 2)
-        manager.split_grouping(beat_key, [2,0,0], 2)
-        grouping = manager.get_grouping(beat_key, [2,0,0])
+        manager.split_tree(beat_key, [2], 2)
+        manager.split_tree(beat_key, [2,0], 2)
+        manager.split_tree(beat_key, [2,0,0], 2)
+        tree = manager.get_tree(beat_key, [2,0,0])
         manager.remove(beat_key, [2,1])
-        assert grouping == manager.get_grouping(beat_key, [2,0])
+        assert tree == manager.get_tree(beat_key, [2,0])
 
         # *Attempt* to remove a beat with remove()
         try:
@@ -69,29 +69,29 @@ class OpusManagerTest(unittest.TestCase):
             assert True
         except Exception:
             assert False, "Incorrect exception type raised"
-        assert len(beat_grouping.parent) == manager.opus_beat_count, "Removed a beat with remove()"
+        assert len(beat_tree.parent) == manager.opus_beat_count, "Removed a beat with remove()"
 
-    def test_split_grouping(self):
+    def test_split_tree(self):
         # Setup an opus
         manager = OpusManager.new()
         split_count = 5
         beat_key = (0,0,0)
-        beat_grouping = manager.get_beat_grouping(beat_key)
+        beat_tree = manager.get_beat_tree(beat_key)
 
         # Split a beat
-        manager.split_grouping(beat_key, [], split_count)
-        assert len(beat_grouping) == split_count, "Failed to split the beat"
+        manager.split_tree(beat_key, [], split_count)
+        assert len(beat_tree) == split_count, "Failed to split the beat"
 
         # Split an open leaf
-        manager.split_grouping(beat_key, [split_count - 1], split_count)
-        assert len(beat_grouping[split_count - 1]) == split_count, "Failed to split a grouping"
+        manager.split_tree(beat_key, [split_count - 1], split_count)
+        assert len(beat_tree[split_count - 1]) == split_count, "Failed to split a tree"
 
         # Split an event
         position = [split_count - 1, 0]
         manager.set_event(beat_key, position, 30)
-        manager.split_grouping(beat_key, position, split_count)
-        subgrouping = manager.get_grouping(beat_key, position)
-        assert len(subgrouping) == split_count, "Failed to split event"
+        manager.split_tree(beat_key, position, split_count)
+        subtree = manager.get_tree(beat_key, position)
+        assert len(subtree) == split_count, "Failed to split event"
 
     def test_set_event(self):
         # Setup an opus
@@ -100,24 +100,24 @@ class OpusManagerTest(unittest.TestCase):
         manager.add_channel(9)
         beat_key = (0,0,0)
         event_value = 30
-        beat_grouping = manager.get_beat_grouping(beat_key)
+        beat_tree = manager.get_beat_tree(beat_key)
 
         # Set absolute event
         manager.set_event(beat_key, [0], event_value)
-        grouping = manager.get_grouping(beat_key,[0])
-        assert grouping.is_event(), "Failed to set event"
-        assert list(grouping.get_events())[0].note == event_value, "Didn't set correct value"
+        tree = manager.get_tree(beat_key,[0])
+        assert tree.is_event(), "Failed to set event"
+        assert list(tree.get_events())[0].note == event_value, "Didn't set correct value"
 
         # Re-set event
         manager.set_event(beat_key, [0], event_value + 4)
-        grouping = manager.get_grouping(beat_key, [0])
-        assert list(grouping.get_events())[0].note == event_value + 4, "Failed to re-set event"
+        tree = manager.get_tree(beat_key, [0])
+        assert list(tree.get_events())[0].note == event_value + 4, "Failed to re-set event"
 
         # Overwrite existing structural node
-        manager.split_grouping(beat_key, [0], 2)
+        manager.split_tree(beat_key, [0], 2)
         manager.set_event(beat_key, [0], event_value - 4)
-        grouping = manager.get_grouping(beat_key, [0])
-        assert grouping.is_event(), "Failed to overwrite existing structure"
+        tree = manager.get_tree(beat_key, [0])
+        assert tree.is_event(), "Failed to overwrite existing structure"
 
         # *Attempt* To set event at beat
         try:
@@ -146,20 +146,20 @@ class OpusManagerTest(unittest.TestCase):
         manager.add_channel(9)
         beat_key = (9,0,0)
         manager.set_percussion_event(beat_key, [0])
-        grouping = manager.get_grouping(beat_key, [0])
-        assert grouping.is_event(), "Failed to set percussion event"
+        tree = manager.get_tree(beat_key, [0])
+        assert tree.is_event(), "Failed to set percussion event"
 
 
         # Overwrite existing structural node
-        manager.split_grouping(beat_key, [0], 2)
+        manager.split_tree(beat_key, [0], 2)
         manager.set_percussion_event(beat_key, [0])
-        grouping = manager.get_grouping(beat_key, [0])
-        assert grouping.is_event(), "Failed to overwrite existing structure"
+        tree = manager.get_tree(beat_key, [0])
+        assert tree.is_event(), "Failed to overwrite existing structure"
 
         # Overwrite existing event
         manager.set_percussion_event(beat_key, [0])
-        grouping = manager.get_grouping(beat_key, [0])
-        assert len(grouping.get_events()) == 1, "Failed to overwrite existing event"
+        tree = manager.get_tree(beat_key, [0])
+        assert len(tree.get_events()) == 1, "Failed to overwrite existing event"
 
 
         # *Attempt* to set non-percussion event
@@ -179,10 +179,10 @@ class OpusManagerTest(unittest.TestCase):
         manager.add_channel(9)
         beat_key = (9,0,0)
         manager.set_percussion_event(beat_key, [0])
-        grouping = manager.get_grouping(beat_key, [0])
-        initial_instrument = list(grouping.get_events())[0].note
+        tree = manager.get_tree(beat_key, [0])
+        initial_instrument = list(tree.get_events())[0].note
         manager.set_percussion_instrument(0, initial_instrument + 5)
-        assert list(grouping.get_events())[0].note == initial_instrument + 5, "Failed to change existing event"
+        assert list(tree.get_events())[0].note == initial_instrument + 5, "Failed to change existing event"
         assert manager.percussion_map[0] == initial_instrument + 5, "Failed to remap instrument"
 
     def test_unset(self):
@@ -191,20 +191,20 @@ class OpusManagerTest(unittest.TestCase):
         # Add percussion line
         beat_key = (0,0,0)
         event_value = 30
-        beat_grouping = manager.get_beat_grouping(beat_key)
+        beat_tree = manager.get_beat_tree(beat_key)
 
         manager.set_event(beat_key, [0], event_value)
-        grouping = manager.get_grouping(beat_key,[0])
+        tree = manager.get_tree(beat_key,[0])
         manager.unset(beat_key, [0])
-        assert grouping.is_open(), "Failed to unset event"
+        assert tree.is_open(), "Failed to unset event"
 
         # Make a little tree
         for i in range(4):
-            manager.split_grouping(beat_key, [0] * i, 5)
+            manager.split_tree(beat_key, [0] * i, 5)
 
         # and unset it
         manager.unset(beat_key, [0])
-        assert manager.get_grouping(beat_key, [0]).is_open(), "Failed to unset a structural grouping"
+        assert manager.get_tree(beat_key, [0]).is_open(), "Failed to unset a structural tree"
 
         # *Attempt* to unset beat
         try:
@@ -226,7 +226,7 @@ class OpusManagerTest(unittest.TestCase):
 
         manager.insert_beat(index - 1)
         assert manager.opus_beat_count == initial_length + 1, "Failed to increase length"
-        assert manager.get_grouping((0,0,index + 1), [0]).is_event(), "Failed to move beats over"
+        assert manager.get_tree((0,0,index + 1), [0]).is_event(), "Failed to move beats over"
 
     def test_remove_beat(self):
         # Setup an opus
@@ -239,15 +239,15 @@ class OpusManagerTest(unittest.TestCase):
 
         manager.remove_beat(index - 1)
         assert manager.opus_beat_count == initial_length - 1, "Failed to decrease length"
-        assert manager.get_grouping((0,0,index - 1), [0]).is_event(), "Failed to move beats over"
+        assert manager.get_tree((0,0,index - 1), [0]).is_event(), "Failed to move beats over"
 
     def test_change_line_channel(self):
         manager = OpusManager.new()
         manager.add_channel(1)
-        line = manager.channel_groupings[1][0]
+        line = manager.channel_trees[1][0]
         manager.change_line_channel(1, 0, 0)
 
-        assert line == manager.channel_groupings[0][1], "Failed to move line to new channel"
+        assert line == manager.channel_trees[0][1], "Failed to move line to new channel"
 
     def test_swap_channels(self):
         index_a = 0
@@ -259,16 +259,16 @@ class OpusManagerTest(unittest.TestCase):
         # Add a channel to be  swapped with 0
         manager.add_channel(1)
         manager.new_line(1)
-        channel_a_line_a = manager.channel_groupings[index_a][0]
-        channel_a_line_b = manager.channel_groupings[index_a][1]
-        channel_b_line_a = manager.channel_groupings[index_b][0]
-        channel_b_line_b = manager.channel_groupings[index_b][1]
+        channel_a_line_a = manager.channel_trees[index_a][0]
+        channel_a_line_b = manager.channel_trees[index_a][1]
+        channel_b_line_a = manager.channel_trees[index_b][0]
+        channel_b_line_b = manager.channel_trees[index_b][1]
 
         manager.swap_channels(index_a, index_b)
-        assert channel_a_line_a == manager.channel_groupings[index_b][0] \
-            and channel_b_line_a == manager.channel_groupings[index_a][0] \
-            and channel_a_line_b == manager.channel_groupings[index_b][1] \
-            and channel_b_line_b == manager.channel_groupings[index_a][1], "Didn't swap lines in channels correctly"
+        assert channel_a_line_a == manager.channel_trees[index_b][0] \
+            and channel_b_line_a == manager.channel_trees[index_a][0] \
+            and channel_a_line_b == manager.channel_trees[index_b][1] \
+            and channel_b_line_b == manager.channel_trees[index_a][1], "Didn't swap lines in channels correctly"
 
     def test_remove_channel(self):
         # Set up an opus
@@ -277,7 +277,7 @@ class OpusManagerTest(unittest.TestCase):
         manager.new_line(1)
 
         manager.remove_channel(1)
-        assert not manager.channel_groupings[1], "Failed to removed channel 1"
+        assert not manager.channel_trees[1], "Failed to removed channel 1"
 
     def test_remove_line(self):
         # Set up an opus
@@ -287,49 +287,49 @@ class OpusManagerTest(unittest.TestCase):
             manager.new_line(1)
 
         index = 12
-        line = manager.channel_groupings[1][index]
+        line = manager.channel_trees[1][index]
 
         manager.remove_line(1, index - 1)
         # Checking that the line *before* the line to check is removed
-        assert manager.channel_groupings[1][index - 1] == line, "Failed to remove line in channel 1"
+        assert manager.channel_trees[1][index - 1] == line, "Failed to remove line in channel 1"
 
-        current_length = len(manager.channel_groupings[1])
+        current_length = len(manager.channel_trees[1])
 
         line_checks = []
-        for l in manager.channel_groupings[1]:
+        for l in manager.channel_trees[1]:
             line_checks.append(l)
 
         manager.remove_line(1)
 
-        assert len(manager.channel_groupings[1]) == current_length - 1, "Failed to remove line given no index"
+        assert len(manager.channel_trees[1]) == current_length - 1, "Failed to remove line given no index"
         removed_incorrect_line = False
         for l, line in enumerate(line_checks[0:-1]):
-            removed_incorrect_line |= line != manager.channel_groupings[1][l]
+            removed_incorrect_line |= line != manager.channel_trees[1][l]
         assert not removed_incorrect_line, "Removed wrong line (should've assumed -1)"
 
     def test_add_line(self):
         manager = OpusManager.new()
-        line = manager.channel_groupings[0][0]
+        line = manager.channel_trees[0][0]
         manager.new_line(0, 0)
-        assert line == manager.channel_groupings[0][1], "Failed to insert line at index"
+        assert line == manager.channel_trees[0][1], "Failed to insert line at index"
 
     def test_move_line(self):
         manager = OpusManager.new()
-        line = manager.channel_groupings[0][0]
+        line = manager.channel_trees[0][0]
         for i in range(12):
             manager.new_line(0)
         manager.move_line(channel=0, old_index=0, new_index=2)
-        assert line == manager.channel_groupings[0][2]
+        assert line == manager.channel_trees[0][2]
 
         manager.move_line(channel=0, old_index=2, new_index=-1)
-        assert line == manager.channel_groupings[0][-1], "Failed to move line to Nth-from-last"
+        assert line == manager.channel_trees[0][-1], "Failed to move line to Nth-from-last"
 
 
         manager.move_line(channel=0, old_index=-1, new_index=0)
-        assert line == manager.channel_groupings[0][0], "Failed to move line by Nth-from-last index"
+        assert line == manager.channel_trees[0][0], "Failed to move line by Nth-from-last index"
 
         manager.move_line(0, 0, 0)
-        assert line == manager.channel_groupings[0][0], "Something went wrong when moving a line to the same position"
+        assert line == manager.channel_trees[0][0], "Something went wrong when moving a line to the same position"
 
         # *Attempt* bad indices
         try:
@@ -355,12 +355,12 @@ class OpusManagerTest(unittest.TestCase):
         beat_b = (0,0,1)
 
         # Set up beat_a
-        manager.split_grouping(beat_a, [0], 3)
-        manager.split_grouping(beat_a, [1], 2)
+        manager.split_tree(beat_a, [0], 3)
+        manager.split_tree(beat_a, [1], 2)
         manager.set_event(beat_a, [1,0], 24)
         manager.set_event(beat_a, [0], 25)
 
         manager.overwrite_beat(beat_b, beat_a)
 
-        assert manager.get_beat_grouping(beat_a).matches(manager.get_beat_grouping(beat_b)), "Failed to overwrite beat"
+        assert manager.get_beat_tree(beat_a).matches(manager.get_beat_tree(beat_b)), "Failed to overwrite beat"
 

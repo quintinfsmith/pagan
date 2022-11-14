@@ -37,10 +37,10 @@ class HistoryLayerTest(unittest.TestCase):
 
         manager.apply_undo()
 
-        from_grouping = manager.get_beat_grouping(from_beat)
-        to_grouping = manager.get_beat_grouping(to_beat)
+        from_tree = manager.get_beat_tree(from_beat)
+        to_tree = manager.get_beat_tree(to_beat)
 
-        assert not from_grouping.matches(to_grouping), "Failed to undo overwrite_beat()"
+        assert not from_tree.matches(to_tree), "Failed to undo overwrite_beat()"
 
     def test_remove(self):
         manager = OpusManager.new()
@@ -49,49 +49,49 @@ class HistoryLayerTest(unittest.TestCase):
         manager.insert_after((0,0,0), [0])
         manager.remove((0,0,0), [1])
         manager.apply_undo()
-        assert len(manager.get_beat_grouping((0,0,0))) == 2, "Failed to undo remove()"
+        assert len(manager.get_beat_tree((0,0,0))) == 2, "Failed to undo remove()"
 
         # remove event
         manager.add_channel(1)
-        manager.split_grouping((1,0,0), [0], 2)
+        manager.split_tree((1,0,0), [0], 2)
         manager.set_event((1,0,0), [0], 35)
         manager.remove((1,0,0), [0])
         manager.apply_undo()
-        grouping = manager.get_grouping((1,0,0), [0])
-        assert list(grouping.get_events())[0].note, "Failed to undo remove() on an event"
+        tree = manager.get_tree((1,0,0), [0])
+        assert list(tree.get_events())[0].note, "Failed to undo remove() on an event"
 
         # Remove Percussion event
         manager.add_channel(9)
-        manager.split_grouping((9,0,0), [0], 2)
+        manager.split_tree((9,0,0), [0], 2)
         manager.set_percussion_event((9,0,0), [0])
         manager.remove((9,0,0), [0])
         manager.apply_undo()
-        grouping = manager.get_grouping((9,0,0), [0])
-        assert list(grouping.get_events())[0].note, "Failed to undo remove() on a percussion event"
+        tree = manager.get_tree((9,0,0), [0])
+        assert list(tree.get_events())[0].note, "Failed to undo remove() on a percussion event"
 
         # *attempt* to undo a remove on an empty beat
-        original = manager.get_grouping((0,0,1), [0])
+        original = manager.get_tree((0,0,1), [0])
         manager.remove((0,0,1), [0])
         manager.apply_undo()
 
-        assert original == manager.get_grouping((0,0,1), [0]), "Something changed when it shouldn't have in remove() undo"
+        assert original == manager.get_tree((0,0,1), [0]), "Something changed when it shouldn't have in remove() undo"
 
     def test_swap_channels(self):
         manager = OpusManager.new()
         manager.add_channel(1)
-        line_a = manager.channel_groupings[0][0]
-        line_b = manager.channel_groupings[1][0]
+        line_a = manager.channel_trees[0][0]
+        line_b = manager.channel_trees[1][0]
 
         manager.swap_channels(0, 1)
         manager.apply_undo()
-        assert line_a == manager.channel_groupings[0][0] and line_b == manager.channel_groupings[1][0], "Failed to undo swap_channels()"
+        assert line_a == manager.channel_trees[0][0] and line_b == manager.channel_trees[1][0], "Failed to undo swap_channels()"
 
     def test_new_line(self):
         manager = OpusManager.new()
         manager.new_line(0)
         manager.apply_undo()
 
-        assert len(manager.channel_groupings[0]) == 1, "Failed to undo new_line()"
+        assert len(manager.channel_trees[0]) == 1, "Failed to undo new_line()"
 
     def test_remove_line(self):
         manager = OpusManager.new()
@@ -99,21 +99,21 @@ class HistoryLayerTest(unittest.TestCase):
         manager.remove_line(0, 1)
         manager.apply_undo()
 
-        assert len(manager.channel_groupings[0]) == 2, "Failed to undo remove_line()"
+        assert len(manager.channel_trees[0]) == 2, "Failed to undo remove_line()"
 
     def test_insert_after(self):
         manager = OpusManager.new()
 
         manager.insert_after((0,0,0), [0])
         manager.apply_undo()
-        assert len(manager.get_beat_grouping((0,0,0))) == 1, "Failed to undo insert_after()"
+        assert len(manager.get_beat_tree((0,0,0))) == 1, "Failed to undo insert_after()"
 
-    def test_split_grouping(self):
+    def test_split_tree(self):
         manager = OpusManager.new()
 
-        manager.split_grouping((0,0,0), [0], 5)
+        manager.split_tree((0,0,0), [0], 5)
         manager.apply_undo()
-        assert len(manager.get_grouping((0,0,0), [0])) == 1, "Failed to undo split_grouping()"
+        assert len(manager.get_tree((0,0,0), [0])) == 1, "Failed to undo split_tree()"
 
 
     def test_insert_beat(self):
@@ -128,7 +128,7 @@ class HistoryLayerTest(unittest.TestCase):
         manager = OpusManager.new()
         original_length = manager.opus_beat_count
         beat_checks = []
-        for i, beat in enumerate(manager.channel_groupings[0]):
+        for i, beat in enumerate(manager.channel_trees[0]):
             beat_checks.append(beat)
 
         manager.remove_beat(1)
@@ -141,7 +141,7 @@ class HistoryLayerTest(unittest.TestCase):
             # Don't need to check the beat that was removed
             if i == 1:
                 continue
-            undone_incorrectly |= beat != manager.channel_groupings[0][i]
+            undone_incorrectly |= beat != manager.channel_trees[0][i]
 
         assert not undone_incorrectly, "remove_beat() undone, but not correctly"
 
@@ -150,14 +150,14 @@ class HistoryLayerTest(unittest.TestCase):
         manager.set_event((0,0,0), [0], 35)
         manager.apply_undo()
 
-        grouping = manager.get_grouping((0,0,0), [0])
-        assert grouping.is_open(), "Failed to undo set_event() on open grouping"
+        tree = manager.get_tree((0,0,0), [0])
+        assert tree.is_open(), "Failed to undo set_event() on open tree"
 
         manager.set_event((0,0,0), [0], 35)
         manager.set_event((0,0,0), [0], 36)
         manager.apply_undo()
-        grouping = manager.get_grouping((0,0,0), [0])
-        assert list(grouping.get_events())[0].note == 35, "Failed to undo set_event() on event grouping"
+        tree = manager.get_tree((0,0,0), [0])
+        assert list(tree.get_events())[0].note == 35, "Failed to undo set_event() on event tree"
 
     def test_unset(self):
         manager = OpusManager.new()
@@ -167,7 +167,7 @@ class HistoryLayerTest(unittest.TestCase):
         manager.unset((0,0,0), [0])
         manager.apply_undo()
 
-        grouping = manager.get_grouping((0,0,0), [0])
-        assert list(grouping.get_events())[0].note == 35, "Failed to undo unset()"
+        tree = manager.get_tree((0,0,0), [0])
+        assert list(tree.get_events())[0].note == 35, "Failed to undo unset()"
 
 

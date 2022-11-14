@@ -147,7 +147,7 @@ class OpusManagerBase:
 
         tree = self.get_tree(beat_key, position)
         if tree.is_event():
-            tree.clear_events()
+            tree.unset_event()
         else:
             tree.clear()
 
@@ -175,9 +175,7 @@ class OpusManagerBase:
 
         tree = self.get_tree(beat_key, position)
 
-        if tree.is_event():
-            tree.clear_events()
-        else:
+        if not tree.is_event():
             tree.clear()
 
         tree.set_event(MIDITreeEvent(
@@ -220,9 +218,7 @@ class OpusManagerBase:
         """
 
         tree = self.get_tree(beat_key, position)
-        if tree.is_event():
-            tree.clear_events()
-        else:
+        if not tree.is_event():
             tree.clear()
 
 

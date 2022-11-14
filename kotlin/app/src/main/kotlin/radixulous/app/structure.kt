@@ -1,3 +1,4 @@
+package radixulous.app.structure
 import kotlin.math.*
 
 fun greatest_common_denominator(first: Int, second: Int): Int {
@@ -68,16 +69,16 @@ fun lowest_common_multiple(number_list: List<Int>): Int {
 
 data class ReducerTuple<T>(
     var denominator: Int,
-    var indices: MutableList<Pair<Int, Structure<T>>>,
+    var indices: MutableList<Pair<Int, OpusTree<T>>>,
     var original_size: Int,
-    var parent_node: Structure<T>
+    var parent_node: OpusTree<T>
 )
 
-class Structure<T> {
+public class OpusTree<T> {
     var size: Int = 1
-    var divisions: HashMap<Int, Structure<T>> = HashMap<Int, Structure<T>>()
+    var divisions: HashMap<Int, OpusTree<T>> = HashMap<Int, OpusTree<T>>()
     var event: T? = null
-    var parent: Structure<T>? = null
+    var parent: OpusTree<T>? = null
 
     fun set_size(new_size: Int, noclobber: Boolean = false) {
         if (! noclobber) {
@@ -100,24 +101,24 @@ class Structure<T> {
     fun resize(new_size: Int) {
         var factor: Double = new_size.toDouble() / this.size.toDouble()
 
-        var new_divisions: HashMap<Int, Structure<T>> = HashMap<Int, Structure<T>>()
+        var new_divisions: HashMap<Int, OpusTree<T>> = HashMap<Int, OpusTree<T>>()
         for (current_index in this.divisions.keys) {
             var value = this.divisions.get(current_index)
             var new_index = current_index * factor
-            new_divisions.put(new_index.toInt(), value as Structure<T>)
+            new_divisions.put(new_index.toInt(), value as OpusTree<T>)
         }
         this.divisions = new_divisions
         this.size = new_size
     }
 
     fun reduce(target_size: Int) {
-        var indices: MutableList<Pair<Int, Structure<T>>> = mutableListOf()
+        var indices: MutableList<Pair<Int, OpusTree<T>>> = mutableListOf()
         for (key in this.divisions.keys) {
-            indices.add(Pair(key, this.divisions.get(key) as Structure<T>))
+            indices.add(Pair(key, this.divisions.get(key) as OpusTree<T>))
         }
         indices.sortWith(compareBy { it.first })
 
-        var place_holder: Structure<T> = this.copy()
+        var place_holder: OpusTree<T> = this.copy()
         var stack: MutableList<ReducerTuple<T>> = mutableListOf(
             ReducerTuple(target_size, indices, this.size, place_holder)
         )
@@ -126,12 +127,12 @@ class Structure<T> {
             var element = stack.removeAt(0)
             var denominator: Int = element.denominator
             var original_size: Int = element.original_size
-            var parent_node: Structure<T> = element.parent_node;
+            var parent_node: OpusTree<T> = element.parent_node;
 
             var current_size = original_size / denominator;
 
 
-            var split_indices: Array<MutableList<Pair<Int, Structure<T>>>> = Array(denominator, { _ -> mutableListOf() })
+            var split_indices: Array<MutableList<Pair<Int, OpusTree<T>>>> = Array(denominator, { _ -> mutableListOf() })
             for (index_pair in element.indices) {
                 var child_index = index_pair.first;
                 var split_index = child_index / current_size
@@ -183,16 +184,16 @@ class Structure<T> {
         }
         this.set_size(place_holder.size)
         for (key in place_holder.divisions.keys) {
-            this.divisions.put(key, place_holder.divisions[key] as Structure<T>)
+            this.divisions.put(key, place_holder.divisions[key] as OpusTree<T>)
         }
     }
 
-    fun copy(): Structure<T> {
-        var copied: Structure<T> = Structure<T>()
+    fun copy(): OpusTree<T> {
+        var copied: OpusTree<T> = OpusTree<T>()
         copied.size = this.size
         for (key in this.divisions.keys) {
-            var subdivision: Structure<T> = this.divisions.get(key) as Structure<T>
-            var subcopy: Structure<T> = subdivision.copy()
+            var subdivision: OpusTree<T> = this.divisions.get(key) as OpusTree<T>
+            var subcopy: OpusTree<T> = subdivision.copy()
             subcopy.parent = copied
             copied.divisions.put(key, subcopy)
         }
@@ -202,12 +203,12 @@ class Structure<T> {
         return copied
     }
 
-    fun get(index: Int): Structure<T> {
-        var output: Structure<T>
+    fun get(index: Int): OpusTree<T> {
+        var output: OpusTree<T>
         if (this.divisions.containsKey(index)) {
-            output = this.divisions[index] as Structure<T>
+            output = this.divisions[index] as OpusTree<T>
         } else {
-            output = Structure<T>()
+            output = OpusTree<T>()
             output.parent = this
             this.divisions.put(index, output)
         }
@@ -221,7 +222,7 @@ class Structure<T> {
         }
 
         var sizes: MutableList<Int> = mutableListOf()
-        var subnode_backup: MutableList<Pair<Int, Structure<T>>> = mutableListOf()
+        var subnode_backup: MutableList<Pair<Int, OpusTree<T>>> = mutableListOf()
 
         for (key in this.divisions.keys) {
             var child = this.divisions[key]!!
@@ -238,7 +239,7 @@ class Structure<T> {
         this.set_size(new_size)
         for (pair in subnode_backup) {
             var i: Int = pair.first
-            var child: Structure<T> = pair.second
+            var child: OpusTree<T> = pair.second
             var offset: Int = i * new_chunk_size
             if (! child.is_leaf()) {
                 for (key in child.divisions.keys) {
@@ -281,7 +282,7 @@ class Structure<T> {
     }
 
     fun clear_singles() {
-        var stack: MutableList<Structure<T>> = mutableListOf()
+        var stack: MutableList<OpusTree<T>> = mutableListOf()
         for (k in this.divisions.keys) {
             stack.add(this.divisions[k]!!)
         }
@@ -305,7 +306,7 @@ class Structure<T> {
         }
     }
 
-    fun replace_with(new_node: Structure<T>) {
+    fun replace_with(new_node: OpusTree<T>) {
         if (this.parent != null) {
             var parent = this.parent!!
             for (i in parent.divisions.keys) {
@@ -319,7 +320,7 @@ class Structure<T> {
         }
     }
 
-    fun pop(x: Int?=null): Structure<T> {
+    fun pop(x: Int?=null): OpusTree<T> {
         var index: Int
 
         if (x == null) {
@@ -329,7 +330,7 @@ class Structure<T> {
         }
 
         var output = this.divisions[index]!!
-        var new_divisions = HashMap<Int, Structure<T>>()
+        var new_divisions = HashMap<Int, OpusTree<T>>()
         for (i in this.divisions.keys) {
             if (i < index) {
                 new_divisions.put(i, this.divisions[i]!!)

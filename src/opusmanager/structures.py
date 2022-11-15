@@ -155,9 +155,7 @@ class OpusTree:
             for (path, event) in events:
                 working_node = node
                 for (x, size) in path:
-                    if working_node.is_open():
-                        working_node.set_size(size)
-                    elif len(working_node) != size:
+                    if len(working_node) != size:
                         working_node.set_size(size)
                     working_node = working_node[x]
 
@@ -165,7 +163,8 @@ class OpusTree:
                 for (x, size) in path:
                     working_node = working_node[x]
 
-                working_node.add_event(event)
+                working_node.set_event(event, merge=True)
+
             tracks.append(node)
 
         return tracks
@@ -373,8 +372,8 @@ class OpusTree:
                     ))
                 else: # Leaf
                     _, event_tree = working_indeces.pop(0)
-                    for event in event_tree.events:
-                        working_tree.add_event(event)
+                    if event_tree.is_event():
+                        working_tree.set_event(event_tree.get_event(), merge=True)
 
         self.set_size(len(place_holder))
         for i, tree in place_holder.divisions.items():
@@ -441,8 +440,12 @@ class OpusTree:
 
 
 
-    def set_event(self, event: T) -> None:
-        self.event = event
+    def set_event(self, event: T, merge: bool = False) -> None:
+        if merge and self.event is not None:
+            self.event += event
+        else:
+            self.event = event
+
 
     def unset_event(self) -> None:
         self.event = None

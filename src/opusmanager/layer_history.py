@@ -75,7 +75,18 @@ class HistoryLayer(LinksLayer):
         channel, line_offset, beat_index = beat_key
 
         beat_tree = self.channel_trees[channel][line_offset][beat_index]
-        stack = [start_position]
+
+        stack = []
+        if not start_position:
+            # start_position can be passed as empty, but we still need to
+            # specify which subtrees are being rebuilt
+            for i in range(len(beat_tree)):
+                stack.append([i])
+            self.append_undoer(self.split_tree, beat_key, [], len(beat_tree))
+        else:
+            stack.append(start_position)
+
+
         while stack:
             position = stack.pop(0)
 

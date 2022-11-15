@@ -220,6 +220,8 @@ class OpusManagerBase:
         tree = self.get_tree(beat_key, position)
         if not tree.is_event():
             tree.clear()
+        else:
+            tree.unset_event()
 
 
     def add_channel(self, channel: int) -> None:
@@ -319,7 +321,7 @@ class OpusManagerBase:
             for i, line in enumerate(channel):
                 new_beat = MIDITree()
                 new_beat.set_size(1)
-                line.insert_tree(index, new_beat)
+                line.insert(index, new_beat)
 
 
     def load_folder(self, path: str) -> None:

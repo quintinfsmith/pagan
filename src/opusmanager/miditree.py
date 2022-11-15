@@ -191,7 +191,7 @@ class MIDITree(OpusTree):
                 tick=0
             )
 
-        midi.add_event( SetTempo.from_bpm(tempo) )
+        midi.add_event(SetTempo.from_bpm(tempo))
         tracks = new_opus.split()
         for tree in tracks:
             if tree.is_leaf():

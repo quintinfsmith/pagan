@@ -58,7 +58,7 @@ class HistoryLayerTest(unittest.TestCase):
         manager.remove((1,0,0), [0])
         manager.apply_undo()
         tree = manager.get_tree((1,0,0), [0])
-        assert list(tree.get_events())[0].note, "Failed to undo remove() on an event"
+        assert tree.get_event().note == 35, "Failed to undo remove() on an event"
 
         # Remove Percussion event
         manager.add_channel(9)
@@ -67,7 +67,7 @@ class HistoryLayerTest(unittest.TestCase):
         manager.remove((9,0,0), [0])
         manager.apply_undo()
         tree = manager.get_tree((9,0,0), [0])
-        assert list(tree.get_events())[0].note, "Failed to undo remove() on a percussion event"
+        assert tree.get_event().note == manager.DEFAULT_PERCUSSION, "Failed to undo remove() on a percussion event"
 
         # *attempt* to undo a remove on an empty beat
         original = manager.get_tree((0,0,1), [0])
@@ -157,7 +157,7 @@ class HistoryLayerTest(unittest.TestCase):
         manager.set_event((0,0,0), [0], 36)
         manager.apply_undo()
         tree = manager.get_tree((0,0,0), [0])
-        assert list(tree.get_events())[0].note == 35, "Failed to undo set_event() on event tree"
+        assert tree.get_event().note == 35, "Failed to undo set_event() on event tree"
 
     def test_unset(self):
         manager = OpusManager.new()
@@ -168,6 +168,6 @@ class HistoryLayerTest(unittest.TestCase):
         manager.apply_undo()
 
         tree = manager.get_tree((0,0,0), [0])
-        assert list(tree.get_events())[0].note == 35, "Failed to undo unset()"
+        assert tree.get_event().note == 35, "Failed to undo unset()"
 
 

@@ -131,7 +131,8 @@ class Cursor:
         self.x = max(0, min(self.x, self.opus_manager.opus_beat_count - 1))
         channel, line, beat = self.get_triplet()
         ## First get the beat ...
-        working_tree = self.opus_manager.channel_trees[channel][line][beat]
+        working_beat = self.opus_manager.channel_trees[channel][line][beat]
+        working_tree = working_beat
 
         if not self.position:
             if right_align:
@@ -149,13 +150,14 @@ class Cursor:
 
         self.position = self.position[0:index]
 
+
         ## ... Then find the leaf, if not already found
         if not right_align:
-            while not working_tree.is_leaf():
+            while not working_tree.is_leaf() or working_tree == working_beat:
                 self.position.append(0)
                 working_tree = working_tree[0]
         else:
-            while not working_tree.is_leaf():
+            while not working_tree.is_leaf() or working_tree == working_beat:
                 self.position.append(len(working_tree) - 1)
                 working_tree = working_tree[-1]
 

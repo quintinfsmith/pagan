@@ -12,7 +12,7 @@ class HistoryLayerTest(unittest.TestCase):
         manager = OpusManager.new()
         manager.add_channel(1)
         manager.add_channel(9)
-        manager.split_tree((1,0,0), [0], 5)
+        manager.split_tree((1,0,0), [], 5)
 
         cursor = manager.cursor
         assert cursor.to_list() == [0,0,0], "Cursor starting at bad position"
@@ -103,23 +103,23 @@ class HistoryLayerTest(unittest.TestCase):
         manager.set_event((0,0,0),[0], 24)
         manager.increment_event_at_cursor()
         tree = manager.get_tree_at_cursor()
-        assert list(tree.get_events())[0].note == 25, "Failed to increment beat at cursor"
+        assert tree.get_event().note == 25, "Failed to increment beat at cursor"
 
         manager.decrement_event_at_cursor()
-        assert list(tree.get_events())[0].note == 24, "Failed to decrement beat at cursor"
+        assert tree.get_event().note == 24, "Failed to decrement beat at cursor"
 
         manager.set_event((0,0,0),[0], 11, relative=True)
         manager.increment_event_at_cursor()
-        assert list(tree.get_events())[0].note == 12,"Failed to increment relative event at cursor (under 12)"
+        assert tree.get_event().note == 12,"Failed to increment relative event at cursor (under 12)"
 
         manager.increment_event_at_cursor()
-        assert list(tree.get_events())[0].note == 24, "Failed to increment relative event at cursor (>= 12)"
+        assert tree.get_event().note == 24, "Failed to increment relative event at cursor (>= 12)"
 
         manager.decrement_event_at_cursor()
-        assert list(tree.get_events())[0].note == 12,"Failed to decrement relative event at cursor (>= 12)"
+        assert tree.get_event().note == 12,"Failed to decrement relative event at cursor (>= 12)"
 
         manager.decrement_event_at_cursor()
-        assert list(tree.get_events())[0].note == 11, "Failed to increment relative event at cursor (<= 12)"
+        assert tree.get_event().note == 11, "Failed to increment relative event at cursor (<= 12)"
 
         manager.cursor_right()
         tree = manager.get_tree_at_cursor()

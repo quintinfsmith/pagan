@@ -106,12 +106,12 @@ class OpusManagerTest(unittest.TestCase):
         manager.set_event(beat_key, [0], event_value)
         tree = manager.get_tree(beat_key,[0])
         assert tree.is_event(), "Failed to set event"
-        assert list(tree.get_events())[0].note == event_value, "Didn't set correct value"
+        assert tree.get_event().note == event_value, "Didn't set correct value"
 
         # Re-set event
         manager.set_event(beat_key, [0], event_value + 4)
         tree = manager.get_tree(beat_key, [0])
-        assert list(tree.get_events())[0].note == event_value + 4, "Failed to re-set event"
+        assert tree.get_event().note == event_value + 4, "Failed to re-set event"
 
         # Overwrite existing structural node
         manager.split_tree(beat_key, [0], 2)
@@ -156,11 +156,6 @@ class OpusManagerTest(unittest.TestCase):
         tree = manager.get_tree(beat_key, [0])
         assert tree.is_event(), "Failed to overwrite existing structure"
 
-        # Overwrite existing event
-        manager.set_percussion_event(beat_key, [0])
-        tree = manager.get_tree(beat_key, [0])
-        assert len(tree.get_events()) == 1, "Failed to overwrite existing event"
-
 
         # *Attempt* to set non-percussion event
         beat_key = (0,0,0)
@@ -180,9 +175,9 @@ class OpusManagerTest(unittest.TestCase):
         beat_key = (9,0,0)
         manager.set_percussion_event(beat_key, [0])
         tree = manager.get_tree(beat_key, [0])
-        initial_instrument = list(tree.get_events())[0].note
+        initial_instrument = tree.get_event().note
         manager.set_percussion_instrument(0, initial_instrument + 5)
-        assert list(tree.get_events())[0].note == initial_instrument + 5, "Failed to change existing event"
+        assert tree.get_event().note == initial_instrument + 5, "Failed to change existing event"
         assert manager.percussion_map[0] == initial_instrument + 5, "Failed to remap instrument"
 
     def test_unset(self):

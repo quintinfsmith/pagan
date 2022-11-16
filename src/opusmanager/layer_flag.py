@@ -182,7 +182,7 @@ class FlagLayer(OpusManagerBase):
         super().remove(beat_key, position)
         self.flag('beat_change', beat_key)
 
-    def remove_beat(self, index: None) -> None:
+    def remove_beat(self, index: Optional[int] = None) -> None:
         if index is None:
             rindex = self.opus_beat_count - 1
         else:

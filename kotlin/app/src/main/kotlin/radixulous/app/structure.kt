@@ -80,6 +80,9 @@ public class OpusTree<T> {
     var event: T? = null
     var parent: OpusTree<T>? = null
 
+    fun get_parent(): OpusTree<T>? {
+        return this.parent
+    }
     fun set_size(new_size: Int, noclobber: Boolean = false) {
         if (! noclobber) {
             this.divisions.clear()
@@ -204,6 +207,10 @@ public class OpusTree<T> {
     }
 
     fun get(index: Int): OpusTree<T> {
+        if (index < 0) {
+            index = this.size + index
+        }
+
         var output: OpusTree<T>
         if (this.divisions.containsKey(index)) {
             output = this.divisions[index] as OpusTree<T>
@@ -267,6 +274,17 @@ public class OpusTree<T> {
 
     fun is_leaf(): Boolean {
         return this.event != null || this.divisions.keys.size == 0
+    }
+
+    fun is_event(): Boolean {
+        return this.event != null
+    }
+
+    fun set(index: Int, tree: OpusTree<T>) {
+        if (index < 0) {
+            index = this.size + index
+        }
+        this.divisions.set(index, tree)
     }
 
     fun set_event(event: T) {
@@ -342,6 +360,11 @@ public class OpusTree<T> {
         this.size -= 1
 
         return output
+    }
+
+    public fun empty() {
+        this.divisions = HashMap<Int, OpusTree<T>>()
+        this.size = 1
     }
 }
 

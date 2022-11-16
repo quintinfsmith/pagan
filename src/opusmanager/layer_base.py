@@ -405,7 +405,7 @@ class OpusManagerBase:
         if new_index < 0:
             raise IndexError(new_index)
 
-        if old_index > len(self.channel_trees[channel]):
+        if old_index >= len(self.channel_trees[channel]):
             raise IndexError(old_index)
 
         tree = self.channel_trees[channel].pop(old_index)
@@ -415,8 +415,6 @@ class OpusManagerBase:
         """Create an empty line in the given channel"""
         new_tree = MIDITree()
         new_tree.set_size(self.opus_beat_count)
-        for i in range(self.opus_beat_count):
-            new_tree[i].set_size(1)
 
         if index is not None:
             self.channel_trees[channel].insert(index, new_tree)
@@ -436,8 +434,8 @@ class OpusManagerBase:
     def remove_beat(self, index: int) -> None:
         """Removes the beat at the index of every active line"""
         # Move all beats after removed index one left
-        for i, channel in enumerate(self.channel_trees):
-            for j, line in enumerate(channel):
+        for channel in self.channel_trees:
+            for line in channel:
                 line.pop(index)
         self._set_beat_count(self.opus_beat_count - 1)
 

@@ -70,17 +70,6 @@ class FlagLayer(OpusManagerBase):
         super().overwrite_beat(old_beat, new_beat)
         self.flag('beat_change', old_beat)
 
-    def unlink_beat(self, beat_key: BeatKey) -> None:
-        super().unlink_beat(beat_key)
-        self.flag('beat_change', beat_key)
-
-    def link_beats(
-            self,
-            beat: BeatKey,
-            target: BeatKey) -> None:
-        super().link_beats(beat, target)
-        self.flag('beat_change', beat)
-
     def insert_after(self, beat_key: BeatKey, position: List[int]) -> None:
         super().insert_after(beat_key, position)
         self.flag('beat_change', beat_key)

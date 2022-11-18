@@ -1,23 +1,22 @@
 package radixulous.app.opusmanager
 import radixulous.app.structure.OpusTree
-import radixulous.app.layer_links.LinksLayer
-import radixulous.app.layer_base.BeatKey
-import radixulous.app.layer_base.OpusEvent
+import radixulous.app.opusmanager.LinksLayer
+import radixulous.app.opusmanager.BeatKey
+import radixulous.app.opusmanager.OpusEvent
 
 class HistoryLayer: LinksLayer {
-    constructor() {
-        super()
-        var history_ledger = MutableList<MutableList<String>>()
-        var history_locked = false
-        var multi_counter: Int = 0
-        var int_stack = MutableList<Int>()
-        var beat_stack = MutableList<OpusTree<OpusEvent>>()
-    }
+    constructor() : super()
+
+    var history_ledger: MutableList<MutableList<String>> = mutableListOf()
+    var history_locked = false
+    var multi_counter: Int = 0
+    var int_stack: MutableList<Int> = mutableListOf()
+    var beat_stack: MutableList<OpusTree<OpusEvent>> = mutableListOf()
 
     private fun get_position_from_int_stack(): List<Int> {
         // List<Int> prefaced by length
         var position: MutableList<Int> = mutableListOf()
-        for (_ in 0 .. this.int_stack.removeAt(-1)) {
+        for (_i in 0 .. this.int_stack.removeAt(-1)) {
             position.add(0, this.int_stack.removeAt(-1))
         }
         return position
@@ -57,7 +56,7 @@ class HistoryLayer: LinksLayer {
         }
     }
 
-    private fun get_int_from_int_stack() -> Int {
+    private fun get_int_from_int_stack(): Int {
         return this.int_stack.removeAt(-1)
     }
     private fun add_int_to_int_stack(int: Int) {
@@ -78,7 +77,7 @@ class HistoryLayer: LinksLayer {
                 var beat_key = this.get_beatkey_from_int_stack()
                 this.split_tree(beat_key, position, splits)
             } else if (func_name == "set_event") {
-                var relative = this.get_bool_from_int_stack()
+                var relative = this.get_boolean_from_int_stack()
                 var value = this.get_int_from_int_stack()
                 var position = this.get_position_from_int_stack()
                 var beat_key = this.get_beatkey_from_int_stack()
@@ -91,10 +90,6 @@ class HistoryLayer: LinksLayer {
                 var position = this.get_position_from_int_stack()
                 var beat_key = this.get_beatkey_from_int_stack()
                 this.unset(beat_key, position)
-            } else if (func_name == "set_percussion_instrument") {
-                var instrument = this.get_int_from_int_stack()
-                var line_offset = this.get_int_from_int_stack()
-                this.set_percussion_instrument(line_offset, instrument)
             } else if (func_name == "replace_beat") {
                 var beat = this.beat_stack.removeAt(-1)
                 var beat_key = this.get_beatkey_from_int_stack()
@@ -132,7 +127,7 @@ class HistoryLayer: LinksLayer {
             return false
         }
 
-        if (this.multi_counter) {
+        if (this.multi_counter > 0) {
             this.history_ledger[-1].add(func)
         } else {
             this.history_ledger.add(mutableListOf(func))
@@ -147,16 +142,18 @@ class HistoryLayer: LinksLayer {
         }
 
         if (this.multi_counter == 0) {
-            this.history_ledger.add(MutableList<String>())
+            this.history_ledger.add(mutableListOf())
         }
         this.multi_counter += 1
     }
+
     private fun close_multi() {
         if (this.history_locked) {
             return
         }
         this.multi_counter -= 1
     }
+
     private fun setup_repopulate(beat_key: BeatKey, start_position: List<Int>) {
         if (this.history_locked) {
             return
@@ -199,13 +196,13 @@ class HistoryLayer: LinksLayer {
                 }
                 //////////////////////
                 for (i in 0 .. tree.size) {
-                    var next_position = position.copy()
+                    var next_position = position.toMutableList()
                     next_position.add(i)
                     stack.add(next_position)
                 }
             } else if (tree.is_event()) {
-                var event = tree.get_event()
-                if (channel != 9) {
+                var event = tree.get_event()!!
+                if (beat_key.channel != 9) {
                     //////////////////////
                     if (this.append_undoer_key("set_event")) {
                         this.add_beatkey_to_int_stack(beat_key)
@@ -234,20 +231,11 @@ class HistoryLayer: LinksLayer {
         this.close_multi()
     }
 
-    open override fun set_percussion_instrument(line_offset: Int, instrument: Int) {
-        var original_instrument: Int = this.percussion_map.getOrElse(line_offset, this.DEFAULT_PERCUSSION)
-        super.set_percussion_instrument(line_offset, instrument)
-        //////////////////////
-        if (this.append_undoer_key("set_percussion_instrument")) {
-            this.add_beatkey_to_int_stack(beat_key)
-            this.add_position_to_int_stack(position)
-        }
-        //////////////////////
-    }
     open override fun overwrite_beat(old_beat: BeatKey, new_beat: BeatKey) {
         this.setup_repopulate(old_beat, listOf())
         super.overwrite_beat(old_beat, new_beat)
     }
+
     open override fun swap_channels(channel_a: Int, channel_b: Int) {
         if (this.append_undoer_key("swap_channels")) {
             this.add_int_to_int_stack(channel_a)
@@ -256,31 +244,49 @@ class HistoryLayer: LinksLayer {
 
         super.swap_channels(channel_a, channel_b)
     }
-    open override fun new_line(channel: Int = 0, index: Int? = null) {
-        if (this.append_undoer_key("remove_line") {
+
+    open override fun new_line(channel: Int, index: Int?) {
+        if (this.append_undoer_key("remove_line")) {
+            var abs_index: Int
+            if (index == null) {
+                abs_index = this.channel_trees[channel].size - 1
+            } else {
+                abs_index = index
+            }
+
             this.add_int_to_int_stack(channel)
-            this.add_int_to_int_stack(index)
+            this.add_int_to_int_stack(abs_index)
         }
+
         super.new_line(channel, index)
     }
-    open override fun remove_line(channel: Int, line_offset: Int? = null) {
+
+    open override fun remove_line(channel: Int, line_offset: Int?) {
+        var abs_line_offset: Int
+        if (line_offset == null) {
+            abs_line_offset = this.channel_trees[channel].size - 1
+        } else {
+            abs_line_offset = line_offset
+        }
+
         this.open_multi()
         if (this.append_undoer_key("new_line")) {
             this.add_int_to_int_stack(channel)
-            this.add_int_to_int_stack(line_offset)
-        }
-        for (i in 0 .. this.opus_beat_count) {
-            var beat_key = BeatKey(channel, line_offset, i)
-            this.setup_repopulate(beat_key, listOf())
+            this.add_int_to_int_stack(abs_line_offset)
+            for (i in 0 .. this.opus_beat_count) {
+                var beat_key = BeatKey(channel, abs_line_offset, i)
+                this.setup_repopulate(beat_key, listOf())
+            }
         }
         this.close_multi()
+
         super.remove_line(channel, line_offset)
     }
 
     open override fun insert_after(beat_key: BeatKey, position: List<Int>) {
-        if (position.size) {
+        if (position.size > 0) {
             if (this.append_undoer_key("remove")) {
-                var rposition = position.copy()
+                var rposition = position.toMutableList()
                 // TODO: This line vvv
                 rposition[-1] += 1
 
@@ -290,31 +296,49 @@ class HistoryLayer: LinksLayer {
         }
         super.insert_after(beat_key, position)
     }
+
     open override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
         this.setup_repopulate(beat_key, position.slice(0..-1))
         super.split_tree(beat_key, position, splits)
     }
+
     open override fun remove(beat_key: BeatKey, position: List<Int>) {
         this.setup_repopulate(beat_key, position.slice(0..-1))
         super.remove(beat_key, position)
     }
-    open override fun insert_beat(index: Int) {
+
+    open override fun insert_beat(index: Int?) {
         if (this.append_undoer_key("remove_beat")) {
-            this.add_int_to_int_stack(index)
+            var abs_index: Int
+            if (index == null) {
+                abs_index = this.opus_beat_count - 1
+            } else {
+                abs_index = index
+            }
+            this.add_int_to_int_stack(abs_index)
         }
 
         super.insert_beat(index)
     }
-    open override fun remove_beat(index: Int) {
+
+    open override fun remove_beat(index: Int?) {
+        var abs_index: Int
+        if (index == null) {
+            abs_index = this.opus_beat_count - 1
+        } else {
+            abs_index = index
+        }
+
         this.open_multi()
         if (this.append_undoer_key("insert_beat")) {
-            this.add_int_to_int_stack(index)
+            this.add_int_to_int_stack(abs_index)
         }
+
         for (i in 0 .. this.channel_trees.size) {
             var channel = this.channel_trees[i]
             for (j in 0 .. channel.size) {
                 var line = channel[j]
-                for (k in index .. line.size) {
+                for (k in abs_index .. line.size) {
                     this.setup_repopulate(BeatKey(i,j,k), listOf())
                 }
             }
@@ -323,10 +347,11 @@ class HistoryLayer: LinksLayer {
 
         super.remove_beat(index)
     }
-    open override fun set_event(beat_key: BeatKey, position: List<Int>, value: Int, relative: Boolean = false) {
+
+    open override fun set_event(beat_key: BeatKey, position: List<Int>, value: Int, relative: Boolean) {
         var tree = this.get_tree(beat_key, position)
         if (tree.is_event()) {
-            var original_event = tree.get_event()
+            var original_event = tree.get_event()!!
             if (this.append_undoer_key("set_event")) {
                 this.add_beatkey_to_int_stack(beat_key)
                 this.add_position_to_int_stack(position)
@@ -342,10 +367,11 @@ class HistoryLayer: LinksLayer {
 
         super.set_event(beat_key, position, value, relative)
     }
+
     open override fun set_percussion_event(beat_key: BeatKey, position: List<Int>) {
         var tree = this.get_tree(beat_key, position)
         if (tree.is_event()) {
-            var original_event = tree.get_event()
+            var original_event = tree.get_event()!!
             if (beat_key.channel == 9) {
                 if (this.append_undoer_key("set_event")) {
                     this.add_beatkey_to_int_stack(beat_key)
@@ -368,10 +394,11 @@ class HistoryLayer: LinksLayer {
 
         super.set_percussion_event(beat_key, position)
     }
+
     open override fun unset(beat_key: BeatKey, position: List<Int>) {
         var tree = this.get_tree(beat_key, position)
         if (tree.is_event()) {
-            var original_event = tree.get_event()
+            var original_event = tree.get_event()!!
             if (this.append_undoer_key("set_event")) {
                 this.add_beatkey_to_int_stack(beat_key)
                 this.add_position_to_int_stack(position)

@@ -32,7 +32,6 @@ class LinksLayer(FlagLayer):
 
     def clear_links_to_beat(self, target: BeatKey) -> None:
         """Remove all links pointing to the specific beat"""
-        (channel, line, beat) = target
         if target not in self.inv_linked_beat_map:
             return
 
@@ -65,7 +64,7 @@ class LinksLayer(FlagLayer):
             by changes made to the one at the given position (ie, linked)
         """
         if beat_key in self.inv_linked_beat_map:
-            positions = [(beat_key)]
+            positions = [beat_key]
             for linked_key in self.inv_linked_beat_map[beat_key]:
                 positions.append(linked_key)
         elif beat_key in self.linked_beat_map:
@@ -199,7 +198,7 @@ class LinksLayer(FlagLayer):
 
         self.remap_links(remap_hook, channel)
 
-    def remove_line(self, channel: int, index: int = None) -> None:
+    def remove_line(self, channel: int, index: Optional[int] = None) -> None:
         super().remove_line(channel, index)
 
         def remap_hook(beat, channel, index):

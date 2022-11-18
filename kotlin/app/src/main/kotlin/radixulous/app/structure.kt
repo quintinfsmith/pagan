@@ -197,7 +197,7 @@ public class OpusTree<T> {
         for (key in this.divisions.keys) {
             var subdivision: OpusTree<T> = this.divisions.get(key) as OpusTree<T>
             var subcopy: OpusTree<T> = subdivision.copy()
-            subcopy.parent = copied
+            subcopy.set_parent(copied)
             copied.divisions.put(key, subcopy)
         }
 
@@ -216,7 +216,7 @@ public class OpusTree<T> {
             output = this.divisions[index] as OpusTree<T>
         } else {
             output = OpusTree<T>()
-            output.parent = this
+            output.set_parent(this)
             this.divisions.put(index, output)
         }
 
@@ -334,8 +334,34 @@ public class OpusTree<T> {
                 parent.divisions[i] = new_node
                 break
             }
-            new_node.parent = parent
+            new_node.set_parent(parent)
         }
+    }
+
+    fun insert(index: Int?, new_tree: OpusTree<T>) {
+        var adj_index;
+        if (index == null) {
+            adj_index = this.size
+        } else {
+            adj_index = index
+        }
+
+        this.size += 1
+        var new_indices = HashMap<Int, OpusTree<T>>()
+        for (old_index in this.divisions.keys) {
+            if (old_index < adj_index) {
+                new_indices.put(old_index, this.divisions[old_index])
+            } else {
+                new_indices.put(old_index + 1, this.divisions[old_index])
+            }
+        }
+        new_indices.put(adj_index, new_tree)
+        this.divisions = new_indices
+        new_tree.set_parent(this)
+    }
+
+    protected fun set_parent(new_parent: OpusTree<T>) {
+        this.parent = new_parent
     }
 
     fun pop(x: Int?=null): OpusTree<T> {

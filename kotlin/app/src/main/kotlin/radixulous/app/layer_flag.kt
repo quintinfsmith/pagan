@@ -1,8 +1,8 @@
 package radixulous.app.opusmanager
 import radixulous.app.structure.OpusTree
-import radixulous.app.layer_base.BeatKey
-import radixulous.app.layer_base.OpusEvent
-import radixulous.app.layer_base.OpusManagerBase
+import radixulous.app.opusmanager.BeatKey
+import radixulous.app.opusmanager.OpusEvent
+import radixulous.app.opusmanager.OpusManagerBase
 
 class UpdatesCache {
     var beat_pop: MutableList<Int> = mutableListOf()
@@ -38,37 +38,31 @@ class UpdatesCache {
     }
 }
 
-class FlagLayer: OpusManagerBase {
-    constructor {
-        super()
-        var cache = UpdatesCache()
-    }
+open class FlagLayer: OpusManagerBase {
+    var cache = UpdatesCache()
+    constructor() : super()
 
-    public fun replace_tree(beat_key: BeatKey, position: List<Int>, tree: OpusTree<OpusEvent>) {
+    open override fun replace_tree(beat_key: BeatKey, position: List<Int>, tree: OpusTree<OpusEvent>) {
         super.replace_tree(beat_key, position, tree)
         this.cache.flag_beat_change(beat_key)
     }
 
-    public fun overwrite_beat(old_beat: BeatKey, new_beat: BeatKey) {
+    open override fun overwrite_beat(old_beat: BeatKey, new_beat: BeatKey) {
         super.overwrite_beat(old_beat, new_beat)
         this.cache.flag_beat_change(old_beat)
     }
-    public fun unlink_beat(beat_key, BeatKey) {
-        super.unlink_beat(beat_key)
-        this.cache.flag_beat_change(beat_key)
-    }
 
-    public fun insert_after(beat_key: BeatKey, position: List<Int>) {
+    open override fun insert_after(beat_key: BeatKey, position: List<Int>) {
         super.insert_after(beat_key, position)
         this.cache.flag_beat_change(beat_key)
     }
 
-    public fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
+    open override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
         super.split_tree(beat_key, position, splits)
         this.cache.flag_beat_change(beat_key)
     }
 
-    public fun swap_channels(channel_a: Int, channel_b: Int) {
+    open override fun swap_channels(channel_a: Int, channel_b: Int) {
         super.swap_channels(channel_a, channel_b)
         var len_a = this.channel_trees[channel_a].size
         var len_b = this.channel_trees[channel_b].size
@@ -89,7 +83,7 @@ class FlagLayer: OpusManagerBase {
         }
     }
 
-    fun _new() {
+    open override fun _new() {
         super._new()
         for (i in 0 .. this.opus_beat_count) {
             this.cache.flag_beat_new(i)
@@ -97,11 +91,11 @@ class FlagLayer: OpusManagerBase {
         for (i in 0 .. this.channel_trees.size) {
             var channel = this.channel_trees[i]
             for (j in 0 .. channel.size) {
-                this.flag_line_init(i, j)
+                this.cache.flag_line_init(i, j)
             }
         }
     }
-    fun _load(path: String) {
+    open override fun _load(path: String) {
         super._load(path)
         for (i in 0 .. this.opus_beat_count) {
             this.cache.flag_beat_new(i)
@@ -109,28 +103,28 @@ class FlagLayer: OpusManagerBase {
         for (i in 0 .. this.channel_trees.size) {
             var channel = this.channel_trees[i]
             for (j in 0 .. channel.size) {
-                this.flag_line_init(i, j)
+                this.cache.flag_line_init(i, j)
             }
         }
     }
 
-    open public fun set_event(beat_key: BeatKey, position: List<Int>, value: Int, relative: Boolean = false) {
+    open override fun set_event(beat_key: BeatKey, position: List<Int>, value: Int, relative: Boolean) {
         super.set_event(beat_key, position, value, relative)
-        this.flag_beat_change(beat_key)
+        this.cache.flag_beat_change(beat_key)
     }
 
-    open public fun set_percussion_event(beat_key: BeatKey, position: List<Int>) {
+    open override fun set_percussion_event(beat_key: BeatKey, position: List<Int>) {
         super.set_percussion_event(beat_key, position)
-        this.flag_beat_change(beat_key)
+        this.cache.flag_beat_change(beat_key)
     }
 
-    open public fun unset(beat_key: BeatKey, position: List<Int>) {
+    open override fun unset(beat_key: BeatKey, position: List<Int>) {
         super.unset(beat_key, position)
-        self.flag_beat_change(beat_key)
+        this.cache.flag_beat_change(beat_key)
     }
 
-    open public fun insert_beat(index: Int? = null) {
-        var rindex
+    open override fun insert_beat(index: Int?) {
+        var rindex: Int
         if (index == null) {
             rindex = this.opus_beat_count - 1
         } else {
@@ -139,45 +133,44 @@ class FlagLayer: OpusManagerBase {
 
         super.insert_beat(index)
 
-        this.flag_beat_new(rindex)
+        this.cache.flag_beat_new(rindex)
     }
 
-    open public fun new_line(channel: Int = 0, index: Int? = null) {
+    open override fun new_line(channel: Int, index: Int?) {
         super.new_line(channel, index)
 
-        var line_index
+        var line_index: Int
         if (index == null) {
             line_index = this.channel_trees[channel].size - 1
         } else {
             line_index = index
         }
-        this.flag_line_new(channel, line_index)
+        this.cache.flag_line_new(channel, line_index)
     }
 
-    open public fun remove(beat_key: BeatKey, position: List<Int>) {
+    open override fun remove(beat_key: BeatKey, position: List<Int>) {
         super.remove(beat_key, position)
-        this.flag_beat_change(beat_key)
+        this.cache.flag_beat_change(beat_key)
     }
 
-    open public fun remove_beat(index: Int? = null) {
-        var rindex
+    open override fun remove_beat(index: Int?) {
+        var rindex: Int
         if (index == null) {
             rindex = this.opus_beat_count - 1
         } else {
             rindex = index
         }
         super.remove_beat(index)
-        this.flag_beat_pop(rindex)
+        this.cache.flag_beat_pop(rindex)
     }
 
-    open public fun remove_line(channel: Int, index: Int? = null) {
+    open override fun remove_line(channel: Int, index: Int?) {
         super.remove_line(channel, index)
 
         if (index == null) {
-            this.flag_line_pop(channel, this.channel_trees[channel].size)
+            this.cache.flag_line_pop(channel, this.channel_trees[channel].size)
         } else {
-            this.flag_line_pop(channel, index)
+            this.cache.flag_line_pop(channel, index)
         }
     }
 }
-

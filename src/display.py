@@ -10,17 +10,19 @@ import wrecked
 from .wrecked_elements import RectFrame
 from .opusmanager.miditree import get_number_string
 from .opusmanager import OpusManager
+from .commandinterface import CommandInterface
 
 class EditorEnvironment:
     tick_delay = 1 / 24
 
-    def __init__(self, opus_manager: OpusManager):
+    def __init__(self, opus_manager: OpusManager, command_interface: CommandInterface):
         self.running = False
         self.root = wrecked.init()
 
         self.register = None
         #self.rendered_register = None
         #self.rect_register = self.rect_view_window.new_rect()
+        self.command_interface = command_interface
 
         self.opus_manager = opus_manager
         self.channel_rects = [[] for i in range(16)]
@@ -68,7 +70,7 @@ class EditorEnvironment:
 
     def tick(self):
         flag_draw = False
-        if self.opus_manager.kill_flag:
+        if self.command_interface.kill_flag:
             self.kill()
             return
 
@@ -232,7 +234,7 @@ class EditorEnvironment:
 
 
         # Draw Register Frame
-        command_ledger = self.opus_manager.command_ledger
+        command_ledger = self.command_interface.command_ledger
         if command_ledger.is_open() or command_ledger.is_in_err():
             register = (0, height - 3, width - 2, 1)
 
@@ -295,8 +297,8 @@ class EditorEnvironment:
 
     def tick_update_command_register(self) -> bool:
         output = False
-        opus_manager = self.opus_manager
-        command_ledger = opus_manager.command_ledger
+        command_interface = self.command_interface
+        command_ledger = command_interface.command_ledger
         if not command_ledger.is_open() and not command_ledger.is_in_err():
             return False
 

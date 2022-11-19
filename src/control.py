@@ -30,8 +30,9 @@ class Controller:
         thread = threading.Thread(target=self._listen)
         thread.start()
 
-    def __init__(self, opus_manager):
+    def __init__(self, opus_manager, command_interface):
         self.opus_manager = opus_manager
+        self.command_interface = command_interface
         self.kill_flag = False
         self.interactor = Interactor()
         self.interactor.set_context(InputContext.DEFAULT)
@@ -84,7 +85,7 @@ class Controller:
             self.interactor.assign_context_sequence(
                 InputContext.TEXT,
                 [c],
-                opus_manager.command_ledger_input,
+                command_interface.command_ledger_input,
                 chr(c)
             )
 
@@ -93,32 +94,32 @@ class Controller:
             (b"\x7F", self.command_ledger_backspace),
             (b"\x1B", self.command_ledger_close),
             (b"\r", self.command_ledger_run),
-            (b"\x1B[A", opus_manager.command_ledger_prev), # Arrow Up
-            (b"\x1B[B", opus_manager.command_ledger_next)  # Arrow Down
+            (b"\x1B[A", command_interface.command_ledger_prev), # Arrow Up
+            (b"\x1B[B", command_interface.command_ledger_next)  # Arrow Down
         )
 
     def command_ledger_open(self):
-        self.opus_manager.command_ledger_open()
+        self.command_interface.command_ledger_open()
         self.interactor.set_context(InputContext.TEXT)
 
     def command_ledger_close(self):
-        self.opus_manager.command_ledger_close()
+        self.command_interface.command_ledger_close()
         self.interactor.set_context(InputContext.DEFAULT)
 
     def command_ledger_run(self):
-        self.opus_manager.command_ledger_run()
-        if self.opus_manager.command_ledger.is_in_err():
+        self.command_interface.command_ledger_run()
+        if self.command_interface.command_ledger.is_in_err():
             self.interactor.set_context(InputContext.CONFIRMONLY)
         else:
             self.interactor.set_context(InputContext.DEFAULT)
 
     def command_ledger_backspace(self):
-        self.opus_manager.command_ledger_backspace()
-        if not self.opus_manager.command_ledger.is_open():
+        self.command_interface.command_ledger_backspace()
+        if not self.command_interface.command_ledger.is_open():
             self.interactor.set_context(InputContext.DEFAULT)
 
     def command_ledger_set(self, new_value: str) -> None:
-        self.opus_manager.command_ledger_set(new_value)
+        self.command_interface.command_ledger_set(new_value)
 
     def command_ledger_open_and_set(self, new_value: str) -> None:
         self.command_ledger_open()

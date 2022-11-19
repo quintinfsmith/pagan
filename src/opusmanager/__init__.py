@@ -1,1 +1,2 @@
-from .layer_command import CommandLayer as OpusManager
+from .layer_cursor import CursorLayer as OpusManager
+from .layer_base import BeatKey

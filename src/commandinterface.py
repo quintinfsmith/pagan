@@ -7,7 +7,8 @@ from inspect import signature
 from typing import Optional, Dict, List, Tuple
 from enum import Enum, auto
 
-from .layer_cursor import CursorLayer, BeatKey
+from .opusmanager import BeatKey
+
 
 class CommandLedger:
     def __init__(self, command_map):
@@ -43,7 +44,8 @@ class CommandLedger:
     def go_to_next(self):
         if self.active_entry is None:
             return
-        elif self.active_entry < len(self.history) - 2:
+
+        if self.active_entry < len(self.history) - 2:
             self.active_entry += 1
             self.register = self.history[self.active_entry]
         elif self.active_entry == len(self.history) - 1:
@@ -71,6 +73,7 @@ class CommandLedger:
     def input(self, character: str):
         if not self.is_open():
             return
+
         self.register += character
 
     def backspace(self):
@@ -187,11 +190,11 @@ class CommandLedger:
     def get_register(self):
         return self.register
 
-class CommandLayer(CursorLayer):
+class CommandInterface:
     '''Adds Interaction and Commands to the OpusManager'''
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, opus_manager):
+        self.opus_manager = opus_manager
 
         self.static_kwargs = {}
         self.kill_flag = False
@@ -199,14 +202,14 @@ class CommandLayer(CursorLayer):
         self.command_ledger = CommandLedger({
             'w': self.save,
             'q': self.raise_kill_flag,
-            'c+': self.add_channel,
-            'c-': self.remove_channel,
-            'export': self.export,
-            'swap': self.swap_channels,
-            'jump': self.jump_to_beat,
-            'link': self.link_beat_at_cursor,
+            'c+': self.opus_manager.add_channel,
+            'c-': self.opus_manager.remove_channel,
+            'export': self.opus_manager.export,
+            'swap': self.opus_manager.swap_channels,
+            'jump': self.opus_manager.jump_to_beat,
+            'link': self.opus_manager.link_beat_at_cursor,
             'unlink': self.cmd_unlink_beats,
-            'ow': self.overwrite_beat_at_cursor,
+            'ow': self.opus_manager.overwrite_beat_at_cursor,
             'set':  self.save_kwarg_value
         })
 
@@ -215,11 +218,11 @@ class CommandLayer(CursorLayer):
 
     def cmd_unlink_beats(self, beats=None):
         if beats is None:
-            self.unlink_beat_at_cursor()
+            self.opus_manager.unlink_beat_at_cursor()
         else:
-            cursor = self.cursor.get_triplet()
+            cursor = self.opus_manager.cursor.get_triplet()
             for i in range(beats):
-                self.unlink_beat((cursor[0], cursor[1], cursor[2] + i))
+                self.opus_manager.unlink_beat((cursor[0], cursor[1], cursor[2] + i))
 
     def save_kwarg_value(self, cmd, key, value):
         if not cmd in self.static_kwargs:
@@ -267,9 +270,9 @@ class CommandLayer(CursorLayer):
         self.command_ledger.go_to_prev()
 
     def save(self, path=None):
-        super().save(path)
+        self.opus_manager.save(path)
 
-        fullpath = self.get_working_dir()
+        fullpath = self.opus_manager.get_working_dir()
         json_static_kwargs = {}
         for cmd, kwargs in self.static_kwargs.items():
             json_static_kwargs[cmd] = {}
@@ -281,9 +284,9 @@ class CommandLayer(CursorLayer):
         with open(f"{fullpath}/static_kwargs.json", "w", encoding="utf-8") as fp:
             fp.write(json.dumps(json_static_kwargs, indent=4))
 
-    def _load(self, path):
-        super()._load(path)
-        fullpath = self.get_working_dir()
+    def load(self, path):
+        self.opus_manager.load(path)
+        fullpath = self.opus_manager.get_working_dir()
         filepath = f"{fullpath}/static_kwargs.json"
         if not os.path.isfile(filepath):
             return

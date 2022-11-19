@@ -2,7 +2,7 @@
 from __future__ import annotations
 from typing import List, Optional, Tuple, Union, Any
 from collections.abc import Callable
-
+from .miditree import MIDITree
 from .layer_history import HistoryLayer, BeatKey
 
 class ReadyEvent:
@@ -252,7 +252,7 @@ class CursorLayer(HistoryLayer):
         self.insert_beat(self.cursor.x + 1)
         self.cursor.settle()
 
-    def get_tree_at_cursor(self) -> None:
+    def get_tree_at_cursor(self) -> MIDITree:
         """
             Get the tree object pointed to by the cursor.
         """
@@ -479,7 +479,7 @@ class CursorLayer(HistoryLayer):
 
         raise IndexError
 
-    def get_line_tree(self, y_index: int) -> Optional[MGrouping]:
+    def get_line_tree(self, y_index: int) -> Optional[MIDITree]:
         """Get the MGrouping object of the entire line given by_index 'y_index'"""
         output = None
         for i in self.channel_order:

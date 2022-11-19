@@ -2,7 +2,7 @@
 from __future__ import annotations
 from typing import Optional, Dict, List, Tuple, Any
 
-from .miditree import MIDITree
+from .miditree import MIDITree, MIDITreeEvent
 from .layer_base import OpusManagerBase, BeatKey
 
 class UpdatesCache:
@@ -123,10 +123,8 @@ class FlagLayer(OpusManagerBase):
             self,
             beat_key: BeatKey,
             position: List[int],
-            value: int,
-            *,
-            relative: bool = False) -> None:
-        super().set_event(beat_key, position, value, relative=relative)
+            event: MIDITreeEvent) -> None:
+        super().set_event(beat_key, position, event)
         self.flag('beat_change', beat_key)
 
     def set_percussion_event(

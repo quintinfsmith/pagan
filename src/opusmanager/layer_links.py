@@ -4,6 +4,7 @@ import json
 
 from typing import Optional, Dict, List, Tuple, TypeAlias
 
+from .miditree import MIDITreeEvent
 from .layer_flag import FlagLayer, BeatKey
 
 class LinksLayer(FlagLayer):
@@ -93,11 +94,9 @@ class LinksLayer(FlagLayer):
             self,
             beat_key: BeatKey,
             position: List[int],
-            value: int,
-            *,
-            relative: bool = False) -> None:
+            event: MIDITreeEvent) -> None:
         for linked_key in self._get_all_linked(beat_key):
-            super().set_event(linked_key, position, value, relative=relative)
+            super().set_event(linked_key, position, event)
 
     def split_tree(
             self,

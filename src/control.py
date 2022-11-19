@@ -10,6 +10,7 @@ from typing import Optional, Dict, List, Tuple
 from enum import Enum, auto
 
 from .interactor import Interactor
+from .event_register import EventRegister
 
 class InputContext(Enum):
     DEFAULT = auto()
@@ -33,6 +34,8 @@ class Controller:
     def __init__(self, opus_manager, command_interface):
         self.opus_manager = opus_manager
         self.command_interface = command_interface
+        self.event_register = EventRegister()
+
         self.kill_flag = False
         self.interactor = Interactor()
         self.interactor.set_context(InputContext.DEFAULT)
@@ -62,14 +65,14 @@ class Controller:
             (b' ', opus_manager.set_percussion_event_at_cursor),
             (b';]', opus_manager.new_line_at_cursor),
             (b';[', opus_manager.remove_line_at_cursor),
-            (b'+', opus_manager.relative_add_entry),
-            (b'-', opus_manager.relative_subtract_entry),
-            (b'v', opus_manager.relative_downshift_entry),
-            (b'^', opus_manager.relative_upshift_entry),
             (b'K', opus_manager.increment_event_at_cursor),
             (b'J', opus_manager.decrement_event_at_cursor),
             (b'u', opus_manager.apply_undo),
-            (b"\x1B", opus_manager.clear_register),
+            (b'+', self.event_register.relative_add_entry),
+            (b'-', self.event_register.relative_subtract_entry),
+            (b'v', self.event_register.relative_downshift_entry),
+            (b'^', self.event_register.relative_upshift_entry),
+            (b"\x1B", self.event_register.clear),
             (b":", self.command_ledger_open)
         )
 
@@ -77,7 +80,7 @@ class Controller:
             self.interactor.assign_context_sequence(
                 InputContext.DEFAULT,
                 bytes([c]),
-                opus_manager.add_digit_to_register,
+                self.add_digit_to_register,
                 int(chr(c), 12)
             )
 
@@ -97,6 +100,35 @@ class Controller:
             (b"\x1B[A", command_interface.command_ledger_prev), # Arrow Up
             (b"\x1B[B", command_interface.command_ledger_next)  # Arrow Down
         )
+
+    def add_digit_to_register(self, value: int):
+        self.event_register.add_digit(value)
+        # is_ready() gets checked in the function
+        self.apply_register_at_cursor()
+
+    def apply_register_at_cursor(self) -> None:
+        """
+            Convert the temporary event to a real one and
+            set the tree pointed to by the cursor.
+        """
+
+        event_register = self.event_register
+        opus_manager = self.opus_manager
+
+        if not event_register.is_ready():
+            return
+
+        register = event_register.fetch()
+
+        channel, line_offset, _beat_offset = opus_manager.cursor.get_triplet()
+        if channel == 9:
+            opus_manager.set_percussion_instrument(line_offset, register)
+        else:
+            opus_manager.set_event(
+                opus_manager.cursor.get_triplet(),
+                opus_manager.cursor.position,
+                register
+            )
 
     def command_ledger_open(self):
         self.command_interface.command_ledger_open()

@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Optional, Dict, List, Tuple, Any
 from collections.abc import Callable
 
+from .miditree import MIDITreeEvent
 from .layer_links import LinksLayer, BeatKey
 
 class HistoryLayer(LinksLayer):
@@ -107,8 +108,7 @@ class HistoryLayer(LinksLayer):
                         self.set_event,
                         beat_key,
                         position,
-                        event.note,
-                        relative=event.relative
+                        event
                     )
                 else:
                     self.append_undoer(self.set_percussion_event, beat_key, position)
@@ -185,9 +185,7 @@ class HistoryLayer(LinksLayer):
             self,
             beat_key: BeatKey,
             position: List[int],
-            value: int,
-            *,
-            relative: bool = False) -> None:
+            event: MIDITreeEvent) -> None:
 
         tree = self.get_tree(beat_key, position)
         if not tree.is_event():
@@ -202,11 +200,10 @@ class HistoryLayer(LinksLayer):
                 self.set_event,
                 beat_key,
                 position,
-                original_event.note,
-                relative=original_event.relative
+                original_event
             )
 
-        super().set_event(beat_key, position, value, relative=relative)
+        super().set_event(beat_key, position, event)
 
 
     def unset(self, beat_key: BeatKey, position: List[int]) -> None:

@@ -162,9 +162,7 @@ class OpusManagerBase:
             self,
             beat_key: BeatKey,
             position: List[int],
-            value: int,
-            *,
-            relative: bool = False) -> None:
+            event: MIDITreeEvent) -> None:
         """Set event at given tree."""
 
         channel, _, _ = beat_key
@@ -178,12 +176,7 @@ class OpusManagerBase:
         if not tree.is_event():
             tree.clear()
 
-        tree.set_event(MIDITreeEvent(
-            value,
-            radix=self.RADIX,
-            channel=channel,
-            relative=relative
-        ))
+        tree.set_event(event)
 
     def split_tree(
             self,

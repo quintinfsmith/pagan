@@ -2,7 +2,7 @@
 from __future__ import annotations
 from typing import List, Optional, Tuple, Union, Any
 from collections.abc import Callable
-from .miditree import MIDITree
+from .miditree import MIDITree, MIDITreeEvent
 from .layer_history import HistoryLayer, BeatKey
 
 class ReadyEvent:
@@ -178,7 +178,6 @@ class CursorLayer(HistoryLayer):
         super().__init__()
         self.cursor = Cursor(self)
         self.channel_order = list(range(16))
-        self.register = None
 
     ## Layer-Specific methods
     @property
@@ -279,11 +278,12 @@ class CursorLayer(HistoryLayer):
         elif event.note < 127:
             new_value = event.note + 1
 
+        event.note = new_value
+
         self.set_event(
             self.cursor.get_triplet(),
             self.cursor.position,
-            new_value,
-            relative=event.relative
+            event
         )
 
     def decrement_event_at_cursor(self) -> None:
@@ -307,11 +307,12 @@ class CursorLayer(HistoryLayer):
         elif event.note > 0:
             new_value = event.note - 1
 
+        event.note = new_value
+
         self.set_event(
             self.cursor.get_triplet(),
             self.cursor.position,
-            new_value,
-            relative=event.relative
+            event
         )
 
     def jump_to_beat(self, beat: int) -> None:
@@ -377,93 +378,9 @@ class CursorLayer(HistoryLayer):
         """
         self.unlink_beat(self.cursor.get_triplet())
 
-    def apply_register_at_cursor(self) -> None:
-        """
-            Convert the temporary event to a real one and
-            set the tree pointed to by the cursor.
-        """
-
-        register = self.fetch_register()
-        if register is None:
-            return
-
-        channel, line_offset, _beat_offset = self.cursor.get_triplet()
-        if channel == 9:
-            self.set_percussion_instrument(line_offset, register.value)
-        else:
-            self.set_event(
-                self.cursor.get_triplet(),
-                self.cursor.position,
-                register.value,
-                relative=register.relative
-            )
-
-    def add_digit_to_register(self, value: int) -> None:
-        """Pass a digit to the register"""
-
-        if self.register is None:
-            self.register = ReadyEvent(value, relative=False)
-        elif self.register.relative:
-            self.register.value *= value
-        else:
-            self.register.value *= self.RADIX
-            self.register.value += value
-
-        # If the register is ready, apply it
-        if self.register is not None \
-        and self.register.relative \
-        or self.register.value >= self.RADIX:
-            self.apply_register_at_cursor()
-
     def insert_after_cursor(self) -> None:
         """Use the cursor to create a new empty Grouping."""
         self.insert_after(self.cursor.get_triplet(), self.cursor.position)
-
-    def clear_register(self) -> None:
-        """Cancel event being input."""
-        self.register = None
-
-    def fetch_register(self) -> Optional[ReadyEvent]:
-        """Get the register, unsetting it"""
-        output = self.register
-        self.register = None
-        return output
-
-    def relative_add_entry(self) -> None:
-        """Let the register know the user is inputting a relative event, moving up some keys"""
-        # Block relative notes on percussion channel
-        active_channel, _, _ = self.cursor.get_triplet()
-        if active_channel == 9:
-            self.clear_register()
-        else:
-            self.register = ReadyEvent(1, relative=True)
-
-    def relative_subtract_entry(self) -> None:
-        """Let the register know the user is inputting a relative event, moving down some keys"""
-        # Block relative notes on percussion channel
-        active_channel, _, _ = self.cursor.get_triplet()
-        if active_channel == 9:
-            self.clear_register()
-        else:
-            self.register = ReadyEvent(-1, relative=True)
-
-    def relative_downshift_entry(self) -> None:
-        """Let the register know the user is inputting a relative event, shifting down octaves"""
-        # Block relative notes on percussion channel
-        active_channel, _, _ = self.cursor.get_triplet()
-        if active_channel == 9:
-            self.clear_register()
-        else:
-            self.register = ReadyEvent(-1 * self.RADIX, relative=True)
-
-    def relative_upshift_entry(self) -> None:
-        """Let the register know the user is inputting a relative event, shifting up octaves"""
-        # Block relative notes on percussion channel
-        active_channel, _, _ = self.cursor.get_triplet()
-        if active_channel == 9:
-            self.clear_register()
-        else:
-            self.register = ReadyEvent(self.RADIX, relative=True)
 
     def get_channel_index(self, y_index: int) -> Tuple[int, int]:
         """

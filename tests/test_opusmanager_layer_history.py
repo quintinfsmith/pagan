@@ -1,6 +1,7 @@
 import unittest
 from src.opusmanager.layer_history import HistoryLayer as OpusManager
 from src.opusmanager.errors import InvalidPosition
+from src.opusmanager.miditree import MIDITreeEvent
 
 class HistoryLayerTest(unittest.TestCase):
     def setUp(self):
@@ -32,7 +33,7 @@ class HistoryLayerTest(unittest.TestCase):
         manager = OpusManager.new()
         from_beat = (0, 0, 0)
         to_beat = (0, 0, 1)
-        manager.set_event(from_beat, [0], 35)
+        manager.set_event(from_beat, [0], MIDITreeEvent(35))
         manager.overwrite_beat(from_beat, to_beat)
 
         manager.apply_undo()
@@ -54,7 +55,7 @@ class HistoryLayerTest(unittest.TestCase):
         # remove event
         manager.add_channel(1)
         manager.split_tree((1,0,0), [0], 2)
-        manager.set_event((1,0,0), [0], 35)
+        manager.set_event((1,0,0), [0], MIDITreeEvent(35))
         manager.remove((1,0,0), [0])
         manager.apply_undo()
         tree = manager.get_tree((1,0,0), [0])
@@ -147,14 +148,14 @@ class HistoryLayerTest(unittest.TestCase):
 
     def test_set_event(self):
         manager = OpusManager.new()
-        manager.set_event((0,0,0), [0], 35)
+        manager.set_event((0,0,0), [0], MIDITreeEvent(35))
         manager.apply_undo()
 
         tree = manager.get_tree((0,0,0), [0])
         assert tree.is_open(), "Failed to undo set_event() on open tree"
 
-        manager.set_event((0,0,0), [0], 35)
-        manager.set_event((0,0,0), [0], 36)
+        manager.set_event((0,0,0), [0], MIDITreeEvent(35))
+        manager.set_event((0,0,0), [0], MIDITreeEvent(36))
         manager.apply_undo()
         tree = manager.get_tree((0,0,0), [0])
         assert tree.get_event().note == 35, "Failed to undo set_event() on event tree"
@@ -162,12 +163,10 @@ class HistoryLayerTest(unittest.TestCase):
     def test_unset(self):
         manager = OpusManager.new()
 
-        manager.set_event((0,0,0), [0], 35)
+        manager.set_event((0,0,0), [0], MIDITreeEvent(35))
 
         manager.unset((0,0,0), [0])
         manager.apply_undo()
 
         tree = manager.get_tree((0,0,0), [0])
         assert tree.get_event().note == 35, "Failed to undo unset()"
-
-

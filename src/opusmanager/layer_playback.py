@@ -17,8 +17,8 @@ class PlaybackLayer(CommandLayer):
 
         return output
 
-    def set_event(self, beat_key, position, value, *, relative=False):
-        super().set_event(beat_key, position, value, relative=relative)
+    def set_event(self, beat_key, position, event):
+        super().set_event(beat_key, position, event)
         if relative:
             return
         channel, _, _ = self.cursor.get_triplet()

@@ -1,6 +1,7 @@
 import apres
 import unittest
 from src.opusmanager.layer_base import OpusManagerBase as OpusManager
+from src.opusmanager.miditree import MIDITreeEvent
 from src.opusmanager.errors import InvalidPosition
 
 class OpusManagerTest(unittest.TestCase):
@@ -88,7 +89,7 @@ class OpusManagerTest(unittest.TestCase):
 
         # Split an event
         position = [split_count - 1, 0]
-        manager.set_event(beat_key, position, 30)
+        manager.set_event(beat_key, position, MIDITreeEvent(30))
         manager.split_tree(beat_key, position, split_count)
         subtree = manager.get_tree(beat_key, position)
         assert len(subtree) == split_count, "Failed to split event"
@@ -103,25 +104,25 @@ class OpusManagerTest(unittest.TestCase):
         beat_tree = manager.get_beat_tree(beat_key)
 
         # Set absolute event
-        manager.set_event(beat_key, [0], event_value)
+        manager.set_event(beat_key, [0], MIDITreeEvent(event_value))
         tree = manager.get_tree(beat_key,[0])
         assert tree.is_event(), "Failed to set event"
         assert tree.get_event().note == event_value, "Didn't set correct value"
 
         # Re-set event
-        manager.set_event(beat_key, [0], event_value + 4)
+        manager.set_event(beat_key, [0], MIDITreeEvent(event_value + 4))
         tree = manager.get_tree(beat_key, [0])
         assert tree.get_event().note == event_value + 4, "Failed to re-set event"
 
         # Overwrite existing structural node
         manager.split_tree(beat_key, [0], 2)
-        manager.set_event(beat_key, [0], event_value - 4)
+        manager.set_event(beat_key, [0], MIDITreeEvent(event_value - 4))
         tree = manager.get_tree(beat_key, [0])
         assert tree.is_event(), "Failed to overwrite existing structure"
 
         # *Attempt* To set event at beat
         try:
-            manager.set_event(beat_key, [], event_value)
+            manager.set_event(beat_key, [], MIDITreeEvent(event_value))
             assert False, "Successfully set beat as an event"
         except InvalidPosition:
             assert True
@@ -131,7 +132,7 @@ class OpusManagerTest(unittest.TestCase):
         p_beat_key = (9,0,0)
         # *Attempt* to set event on percussion channel
         try:
-            manager.set_event(p_beat_key, [0], event_value)
+            manager.set_event(p_beat_key, [0], MIDITreeEvent(event_value))
             assert False, "Successfully set a normal event on percussion channel"
         except IndexError:
             assert True
@@ -188,7 +189,7 @@ class OpusManagerTest(unittest.TestCase):
         event_value = 30
         beat_tree = manager.get_beat_tree(beat_key)
 
-        manager.set_event(beat_key, [0], event_value)
+        manager.set_event(beat_key, [0], MIDITreeEvent(event_value))
         tree = manager.get_tree(beat_key,[0])
         manager.unset(beat_key, [0])
         assert tree.is_open(), "Failed to unset event"
@@ -217,7 +218,7 @@ class OpusManagerTest(unittest.TestCase):
         index = 2
 
         # Set an event to check if it has moved
-        manager.set_event((0,0,index), [0], 40)
+        manager.set_event((0,0,index), [0], MIDITreeEvent(40))
 
         manager.insert_beat(index - 1)
         assert manager.opus_beat_count == initial_length + 1, "Failed to increase length"
@@ -230,7 +231,7 @@ class OpusManagerTest(unittest.TestCase):
         index = 2
 
         # Set an event to check if it has moved
-        manager.set_event((0,0,index), [0], 40)
+        manager.set_event((0,0,index), [0], MIDITreeEvent(40))
 
         manager.remove_beat(index - 1)
         assert manager.opus_beat_count == initial_length - 1, "Failed to decrease length"
@@ -352,8 +353,8 @@ class OpusManagerTest(unittest.TestCase):
         # Set up beat_a
         manager.split_tree(beat_a, [0], 3)
         manager.split_tree(beat_a, [1], 2)
-        manager.set_event(beat_a, [1,0], 24)
-        manager.set_event(beat_a, [0], 25)
+        manager.set_event(beat_a, [1,0], MIDITreeEvent(24))
+        manager.set_event(beat_a, [0], MIDITreeEvent(25))
 
         manager.overwrite_beat(beat_b, beat_a)
 

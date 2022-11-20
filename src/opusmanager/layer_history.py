@@ -214,7 +214,6 @@ class HistoryLayer(LinksLayer):
                 self.set_event,
                 beat_key,
                 position,
-                original_event.note,
-                relative=original_event.relative
+                original_event
             )
         super().unset(beat_key, position)

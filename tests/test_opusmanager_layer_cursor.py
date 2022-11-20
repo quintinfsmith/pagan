@@ -1,5 +1,6 @@
 import unittest
 from src.opusmanager.layer_cursor import CursorLayer as OpusManager
+from src.opusmanager.miditree import MIDITreeEvent
 
 class HistoryLayerTest(unittest.TestCase):
     def setUp(self):
@@ -100,7 +101,7 @@ class HistoryLayerTest(unittest.TestCase):
 
     def test_dec_increment_event_at_cursor(self):
         manager = OpusManager.new()
-        manager.set_event((0,0,0),[0], 24)
+        manager.set_event((0,0,0),[0], MIDITreeEvent(24))
         manager.increment_event_at_cursor()
         tree = manager.get_tree_at_cursor()
         assert tree.get_event().note == 25, "Failed to increment beat at cursor"
@@ -108,7 +109,7 @@ class HistoryLayerTest(unittest.TestCase):
         manager.decrement_event_at_cursor()
         assert tree.get_event().note == 24, "Failed to decrement beat at cursor"
 
-        manager.set_event((0,0,0),[0], 11, relative=True)
+        manager.set_event((0,0,0),[0], MIDITreeEvent(11, relative=True))
         manager.increment_event_at_cursor()
         assert tree.get_event().note == 12,"Failed to increment relative event at cursor (under 12)"
 

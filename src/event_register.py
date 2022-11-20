@@ -8,6 +8,7 @@ class EventRegister:
     RADIX = 12
     def __init__(self):
         self.register: Optional[MIDITreeEvent] = None
+        self.channel: int = 0
 
     def add_digit(self, value: int) -> None:
         """Pass a digit to the register"""
@@ -16,6 +17,7 @@ class EventRegister:
             self.register = MIDITreeEvent(
                 value,
                 base=self.RADIX,
+                channel=self.channel,
                 relative=False
             )
         elif self.register.relative:
@@ -57,3 +59,8 @@ class EventRegister:
     def relative_upshift_entry(self) -> None:
         """Let the register know the user is inputting a relative event, shifting up octaves"""
         self.register = MIDITreeEvent(self.RADIX, base=self.RADIX, relative=True)
+
+    def set_channel(self, channel: int) -> None:
+        self.channel = channel
+        if self.register is not None:
+            self.register.channel = channel

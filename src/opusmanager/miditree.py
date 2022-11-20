@@ -70,6 +70,7 @@ class MIDITreeEvent:
         self.relative = relative
         self.note = note
         self.base = base
+        self.channel = 0
         self.meta = meta
 
     def __hash__(self):
@@ -97,6 +98,9 @@ class MIDITreeEvent:
 
     def get_octave(self):
         return self.note // self.base
+
+    def set_channel(self, channel: int):
+        self.channel = channel
 
 
 class MIDITree(OpusTree):

@@ -566,6 +566,8 @@ class EditorEnvironment:
                     next_map = cursor_map.copy()
                     next_map.append(i)
                     stack.append((subtree, working_rect.new_rect(), depth + 1, next_map))
+            elif beat_tree == working_tree:
+                stack.append((working_tree[0], working_rect.new_rect(), depth + 1, [0]))
 
         # Traverse the subtrees, depth-first
         depth_sorted_queue = sorted(depth_sorted_queue, key=sort_by_first, reverse=True)

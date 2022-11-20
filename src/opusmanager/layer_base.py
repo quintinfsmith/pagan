@@ -176,6 +176,7 @@ class OpusManagerBase:
         if not tree.is_event():
             tree.clear()
 
+        event.channel = channel
         tree.set_event(event)
 
     def split_tree(

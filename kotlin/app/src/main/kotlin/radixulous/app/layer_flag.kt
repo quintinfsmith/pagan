@@ -12,7 +12,6 @@ class UpdatesCache {
     var line_pop: MutableList<Pair<Int, Int>> = mutableListOf()
     var line_init: MutableList<Pair<Int, Int>> = mutableListOf()
 
-
     public fun flag_beat_pop(index: Int) {
         this.beat_pop.add(index)
     }

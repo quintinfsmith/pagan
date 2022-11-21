@@ -5,9 +5,9 @@ import json
 from typing import Optional, Dict, List, Tuple, TypeAlias
 
 from .miditree import MIDITreeEvent
-from .layer_flag import FlagLayer, BeatKey
+from .layer_base import OpusManagerBase, BeatKey
 
-class LinksLayer(FlagLayer):
+class LinksLayer(OpusManagerBase):
     """Adds linked beats."""
     def __init__(self):
         super().__init__()

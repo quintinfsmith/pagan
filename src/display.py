@@ -94,7 +94,7 @@ class EditorEnvironment:
 
 
     def tick_manage_lines(self):
-        lines = self.opus_manager.fetch('line')
+        lines = self.opus_manager.fetch_flag('line')
         rect_content = self.frame_content.get_content_rect()
         for channel, index, operation in lines:
             self.rendered_line_count = None
@@ -156,7 +156,7 @@ class EditorEnvironment:
                     self.opus_manager.flag('beat_change', (channel, index, i))
 
     def tick_manage_beats(self):
-        beats = self.opus_manager.fetch('beat')
+        beats = self.opus_manager.fetch_flag('beat')
         for index, operation in beats:
             if operation == 'new':
                 adj_beat_rects = []
@@ -372,9 +372,16 @@ class EditorEnvironment:
 
         beat_indices_changed = set()
         # The structure of the beat changed. rebuild the rects
-        flagged_beat_changes = set(self.opus_manager.fetch('beat_change'))
+        flagged_beat_changes = set(self.opus_manager.fetch_flag('beat_change'))
         if not flagged_beat_changes:
             return False
+
+        # Update any linked beats as well
+        tmp = []
+        for beat_key in flagged_beat_changes:
+            for linked_beat in self.opus_manager._get_all_linked(beat_key):
+                tmp.append(linked_beat)
+        flagged_beat_changes = tmp
 
         output = True
         cursor = self.opus_manager.cursor.get_triplet()

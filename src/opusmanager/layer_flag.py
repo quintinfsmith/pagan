@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Optional, Dict, List, Tuple, Any
 
 from .miditree import MIDITree, MIDITreeEvent
-from .layer_base import OpusManagerBase, BeatKey
+from .layer_links import LinksLayer, BeatKey
 
 class UpdatesCache:
     """
@@ -36,7 +36,7 @@ class UpdatesCache:
             self.cache[key] = []
         return output
 
-class FlagLayer(OpusManagerBase):
+class FlagLayer(LinksLayer):
     """
         Flags changes made to the OpusManager
         so a GUI can update itself accordingly
@@ -50,7 +50,7 @@ class FlagLayer(OpusManagerBase):
         """Wrapper for UpdatesCache's flag() method"""
         self.updates_cache.flag(key, value)
 
-    def fetch(self, key: str, noclobber: bool = False) -> List[Any]:
+    def fetch_flag(self, key: str, noclobber: bool = False) -> List[Any]:
         """Wrapper for UpdatesCache's fetch() method"""
         return self.updates_cache.fetch(key, noclobber)
 
@@ -190,3 +190,8 @@ class FlagLayer(OpusManagerBase):
 
         # Flag changes to cache
         self.flag('line', (channel, index, 'pop'))
+
+    # LinkLayer methods
+    def unlink_beat(self, beat_key: BeatKey) -> None:
+        super().unlink_beat(beat_key)
+        self.flag('beat_change', beat_key)

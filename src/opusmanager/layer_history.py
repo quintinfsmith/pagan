@@ -4,9 +4,9 @@ from typing import Optional, Dict, List, Tuple, Any
 from collections.abc import Callable
 
 from .miditree import MIDITreeEvent
-from .layer_links import LinksLayer, BeatKey
+from .layer_flag import FlagLayer, BeatKey
 
-class HistoryLayer(LinksLayer):
+class HistoryLayer(FlagLayer):
     """Layer of the OpusManager that handles Undo & Redo actions"""
     def __init__(self):
         super().__init__()

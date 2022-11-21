@@ -122,7 +122,7 @@ class Controller:
 
         channel, line_offset, _beat_offset = opus_manager.cursor.get_triplet()
         if channel == 9:
-            opus_manager.set_percussion_instrument(line_offset, register)
+            opus_manager.set_percussion_instrument(line_offset, register.note)
         else:
             opus_manager.set_event(
                 opus_manager.cursor.get_triplet(),

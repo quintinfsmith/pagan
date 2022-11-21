@@ -454,15 +454,15 @@ class MIDITree(OpusTree):
                 new_string = ""
                 if event.note == 0 or event.note % base != 0:
                     if event.note < 0:
-                        new_string += f"-"
+                        new_string += self.CH_SUBTRACT
                     else:
-                        new_string += f"+"
+                        new_string += self.CH_ADD
                     new_string += get_number_string(int(math.fabs(event.note)), base, digit_count=1)
                 else:
                     if event.note < 0:
-                        new_string += f"v"
+                        new_string += self.CH_DOWN
                     else:
-                        new_string += f"^"
+                        new_string += self.CH_UP
                     new_string += get_number_string(int(math.fabs(event.note)) // base, base, digit_count=1)
                 output += new_string
             else:

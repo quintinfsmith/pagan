@@ -95,30 +95,33 @@ class OpusManagerBase:
 
     def remove(self, beat_key: BeatKey, position: List[int]):
         """Remove the given tree, shrinking the parent"""
-        tree = self.get_tree(beat_key, position)
-        parent = tree.parent
-
-        if position == [0] and len(tree.parent) == 1:
-            self.unset(beat_key, position)
+        if not position:
             return
+
+        tree = self.get_tree(beat_key, position)
+
+        # Attempting to remove the beat tree
+        if tree.parent is None:
+            tree.replace_with(MIDITree())
+            return
+
+        parent = tree.parent
 
         index = position[-1]
         new_size = len(parent) - 1
-
         if new_size > 0:
             for i, _child in enumerate(parent):
                 if i < index or i == len(parent) - 1:
                     continue
                 parent[i] = parent[i + 1]
+
             parent.set_size(new_size, True)
 
             # replace the parent with the child
-            if new_size == 1 and self.get_beat_tree(beat_key) != parent:
-                parent_index = position[-2]
-                parent.parent[parent_index] = parent[0]
-
+            if new_size == 1:
+                parent.replace_with(tree)
         else:
-            self.remove(beat_key, position[0:-1])
+            parent.set_size(1)
 
     def _set_beat_count(self, new_count: int) -> None:
         """Adjust the number of beats in the opus"""
@@ -179,13 +182,10 @@ class OpusManagerBase:
         """Divide the tree at the given position into *splits* divisions"""
         tree = self.get_tree(beat_key, position)
 
-        if tree.is_event():
-            new_tree = MIDITree()
-            new_tree.set_size(splits)
-            tree.replace_with(new_tree)
-            new_tree[0].replace_with(tree)
-        else:
-            tree.set_size(splits, True)
+        new_tree = MIDITree()
+        new_tree.set_size(splits, True)
+        tree.replace_with(new_tree)
+        new_tree[0].replace_with(tree)
 
     def unset(
             self,
@@ -197,10 +197,7 @@ class OpusManagerBase:
         """
 
         tree = self.get_tree(beat_key, position)
-        if not tree.is_event():
-            tree.clear()
-        else:
-            tree.unset_event()
+        tree.replace_with(MIDITree())
 
 
     def add_channel(self, channel: int) -> None:
@@ -211,7 +208,6 @@ class OpusManagerBase:
         """Move an active line to a different channel."""
         line = self.channel_lines[old_channel].pop(line_index)
         self.channel_lines[new_channel].append(line)
-
 
     def export(self, *, path: Optional[str] = None, **kwargs) -> None:
         """Export this opus to a .mid"""

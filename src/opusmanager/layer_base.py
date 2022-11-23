@@ -52,8 +52,7 @@ class OpusManagerBase:
         for channel_index, channel in enumerate(self.channel_lines):
             for line_offset, line in enumerate(channel):
                 for beat in line:
-                    for subbeat in beat:
-                        beat.clear_singles()
+                    beat.clear_singles()
 
                 # Populate the percussion map
                 if channel_index == 9:
@@ -95,33 +94,17 @@ class OpusManagerBase:
 
     def remove(self, beat_key: BeatKey, position: List[int]):
         """Remove the given tree, shrinking the parent"""
-        if not position:
-            return
 
         tree = self.get_tree(beat_key, position)
 
         # Attempting to remove the beat tree
         if tree.parent is None:
-            tree.replace_with(MIDITree())
             return
 
-        parent = tree.parent
+        if tree.parent.size == 1:
+            self.remove(beat_key, position[0:-1])
 
-        index = position[-1]
-        new_size = len(parent) - 1
-        if new_size > 0:
-            for i, _child in enumerate(parent):
-                if i < index or i == len(parent) - 1:
-                    continue
-                parent[i] = parent[i + 1]
-
-            parent.set_size(new_size, True)
-
-            # replace the parent with the child
-            if new_size == 1:
-                parent.replace_with(tree)
-        else:
-            parent.set_size(1)
+        tree.detach()
 
     def _set_beat_count(self, new_count: int) -> None:
         """Adjust the number of beats in the opus"""
@@ -350,17 +333,23 @@ class OpusManagerBase:
         content = ""
         with open(path, 'r', encoding="utf-8") as fp:
             content = fp.read()
+        line_patt = re.compile("{(?P<line>.*?)}")
+        for channel, hit in enumerate(line_patt.finditer(content)):
+            line = []
+            chunk = hit.group("line").strip()
+            for beat_str in chunk.split("|"):
+                beat_tree = MIDITree.from_string(beat_str, radix=radix, channel=channel)
+                beat_tree.clear_singles()
+                beat_tree.clear_singles()
+                beat_tree.clear_singles()
+                line.append(beat_tree)
 
-        chunks = content.split("\n[")
-        for i, chunk in enumerate(chunks):
-            if i > 0:
-                chunks[i] = f"[{chunk}"
+            beat_count = max(len(line), beat_count)
+            while len(line) < beat_count:
+                line.append(MIDITree())
 
-        self.opus_beat_count = 1
-        for channel, chunk in enumerate(chunks):
-            tree = MIDITree.from_string(chunk, radix=radix, channel=channel)
-            self.channel_lines[channel].append([beat for beat in tree])
-            self.opus_beat_count = max(self.opus_beat_count, len(tree))
+            self.channel_lines[channel].append(line)
+
 
     def move_line(self, channel: int, old_index: int, new_index: int) -> None:
         """Within a channel, move a line to a different position"""

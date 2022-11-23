@@ -514,9 +514,10 @@ class OpusTree:
                 break
 
     def pop(self, index=-1):
-        if index == -1:
-            index = self.size - 1
-        output = self.divisions[index]
+        if index < 0:
+            index = self.size + index
+
+        output = self[index]
         new_divisions = {}
         for i, d in self.divisions.items():
             if i < index:
@@ -524,8 +525,21 @@ class OpusTree:
             elif i > index:
                 new_divisions[i - 1] = d
         self.divisions = new_divisions
-        self.size -= 1
+        self.size = max(self.size - 1, 1)
         return output
+
+    def detach(self):
+        if self.parent is None:
+            return
+
+        index = None
+        for i, node in self.parent.divisions.items():
+            if node == self:
+                index = i
+                break
+
+        if index is not None:
+            self.parent.pop(index)
 
 
 def get_prime_factors(n):

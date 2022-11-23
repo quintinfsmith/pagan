@@ -584,7 +584,7 @@ class EditorEnvironment:
 
             if not working_tree.is_leaf():
                 running_width = 0
-                if working_tree != beat_tree:
+                if len(working_tree) > 1 and working_tree != beat_tree:
                     running_width += 1
 
                 comma_points = []
@@ -600,11 +600,11 @@ class EditorEnvironment:
                     child_rect.move(running_width, 0)
                     running_width += child_rect.width
 
-                if working_tree != beat_tree:
+                if len(working_tree) > 1 and working_tree != beat_tree:
                     running_width += 1
 
                 working_rect.resize(running_width, 1)
-                if working_tree != beat_tree:
+                if len(working_tree) > 1 and working_tree != beat_tree:
                     working_rect.set_character(0, 0, '[')
                     working_rect.set_character(running_width - 1, 0, ']')
 

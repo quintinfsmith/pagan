@@ -316,27 +316,28 @@ class OpusManagerBase:
                 channel_map[filename] = channel
                 filenames_clean.append(filename)
 
+        line_patt = re.compile("{(?P<line>.*?)}")
         beat_count = 1
         for filename in filenames_clean:
             channel = channel_map[filename]
             content = ""
+
             with open(f"{path}/{filename}", 'r', encoding="utf-8") as fp:
-                content = fp.read()
+                content = fp.read().strip()
 
-            chunks = content.split("\n[")
-            for i, chunk in enumerate(chunks):
-                if i > 0:
-                    chunks[i] = f"[{chunk}"
+            for i, hit in enumerate(line_patt.finditer(content)):
+                line = []
+                chunk = hit.group("line").strip()
+                for beat_str in chunk.split("|"):
+                    beat_tree = MIDITree.from_string(beat_str, radix=radix, channel=channel)
+                    beat_tree.clear_singles()
+                    line.append(beat_tree)
 
-            for chunk in chunks:
-                tree = MIDITree.from_string(chunk, radix=radix, channel=channel)
+                beat_count = max(len(line), beat_count)
+                while len(line) < beat_count:
+                    line.append(MIDITree())
 
-                if tree:
-                    tree.clear_singles()
-                    beat_count = max(len(tree), beat_count)
-                    tree.set_size(beat_count, True)
-
-                    self.channel_lines[channel].append([beat for beat in tree])
+                self.channel_lines[channel].append(line)
 
         self.opus_beat_count = beat_count
 
@@ -457,7 +458,7 @@ class OpusManagerBase:
 
             strlines = []
             for line in channel_lines:
-                str_line = "[" + "|".join([beat.to_string() for beat in line]) + "]"
+                str_line = "{" + "|".join([beat.to_string() for beat in line]) + "}"
                 strlines.append(str_line)
 
             hexrep = hex(i)[2:].upper()

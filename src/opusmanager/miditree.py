@@ -32,7 +32,7 @@ class UnclosedOpusTreeError(Exception):
         bound_b = min(len(repstring), index + ERROR_CHUNK_SIZE)
         chunk = repstring[bound_a:bound_b]
 
-        msg = f"Unmatched \"{MIDITree.CH_OPEN}\" or \"{MIDITree.CH_CLOPEN}\" "
+        msg = f"Unmatched \"{MIDITree.CH_OPEN}\""
         msg += f"at position {index}: \n"
 
         if bound_a > 0:
@@ -114,9 +114,6 @@ class MIDITree(OpusTree):
     CH_HOLD = "~"
     CH_REPEAT = "="
 
-    # NOTE: CH_CLOPEN is a CH_CLOSE, CH_NEXT, and CH_OPEN in that order
-    CH_CLOPEN = "|"
-
     # REL_CHARS are the the characters that flag a relative note
     REL_CHARS = (
         CH_ADD,
@@ -131,7 +128,6 @@ class MIDITree(OpusTree):
         CH_OPEN,
         CH_CLOSE,
         CH_NEXT,
-        CH_CLOPEN,
         CH_ADD,
         CH_SUBTRACT,
         CH_UP,
@@ -310,16 +306,16 @@ class MIDITree(OpusTree):
         repeat_queue: List[MIDITree] = []
 
         for i, character in enumerate(repstring):
-            if character in (MIDITree.CH_CLOSE, MIDITree.CH_CLOPEN):
+            if character == MIDITree.CH_CLOSE:
                 # Remove completed tree from stack
                 tree_stack.pop()
                 opened_indeces.pop()
 
-            if character in (MIDITree.CH_NEXT, MIDITree.CH_CLOPEN):
+            if character == MIDITree.CH_NEXT:
                 # Resize Active OpusTree
                 tree_stack[-1].set_size(len(tree_stack[-1]) + 1, noclobber=True)
 
-            if character in (MIDITree.CH_OPEN, MIDITree.CH_CLOPEN):
+            if character == MIDITree.CH_OPEN:
                 new_tree = tree_stack[-1][-1]
                 if not new_tree.is_open():
                     raise MissingCommaError(repstring, i, len(output) - 1)
@@ -348,16 +344,13 @@ class MIDITree(OpusTree):
                         if j >= len(repeat_queue) - 1:
                             continue
 
-                        #if character in (MIDITree.CH_CLOSE, MIDITree.CH_CLOPEN):
                         # Remove completed tree from stack
                         tree_stack.pop()
                         opened_indeces.pop()
 
-                        #if character in (MIDITree.CH_NEXT, MIDITree.CH_CLOPEN):
                         # Resize Active OpusTree
                         tree_stack[-1].set_size(len(tree_stack[-1]) + 1, True)
 
-                        #if character in (MIDITree.CH_OPEN, MIDITree.CH_CLOPEN):
                         new_tree = tree_stack[-1][-1]
                         if not new_tree.is_open():
                             raise MissingCommaError(repstring, i, len(output) - 1)
@@ -399,7 +392,6 @@ class MIDITree(OpusTree):
                         len(output) - 1
                     ) from badstateerror
 
-                previous_note = odd_note
                 relative_flag = None
 
             elif character in MIDITree.REL_CHARS:
@@ -444,7 +436,7 @@ class MIDITree(OpusTree):
 
         return output
 
-    def to_string(self, base=12, depth=0) -> str:
+    def to_string(self, base=12) -> str:
         if self.is_open():
             output = "__"
         elif self.is_event():
@@ -472,20 +464,12 @@ class MIDITree(OpusTree):
             strreps = []
             for i in range(len(self)):
                 subtree = self[i]
-                strreps.append(subtree.to_string(base, depth+1))
+                str_rep = subtree.to_string(base)
+                if len(subtree) > 1:
+                    str_rep = f"{self.CH_OPEN}{str_rep}{self.CH_CLOSE}"
+                strreps.append(str_rep)
 
-            if depth > 0:
-                output = self.CH_NEXT.join(strreps)
-            else:
-                output = self.CH_CLOPEN.join(strreps)
-
-            if self.size > 1 and depth != 1:
-                output = f"{self.CH_OPEN}{output}{self.CH_CLOSE}"
-
-
-        #needs_convert = f"{self.CH_CLOSE}{self.CH_NEXT}{self.CH_OPEN}"
-        #while needs_convert in output:
-        #    output = output.replace(needs_convert, self.CH_CLOPEN)
+            output = self.CH_NEXT.join(strreps)
 
         return output
 

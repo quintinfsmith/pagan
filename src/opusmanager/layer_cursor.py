@@ -230,7 +230,16 @@ class CursorLayer(LinksLayer):
 
     def split_tree_at_cursor(self) -> None:
         """Divide the tree pointed to by the cursor into 2"""
-        self.split_tree(self.cursor.get_triplet(), self.cursor.position, 2)
+
+        beat_key = self.cursor.get_triplet()
+        position = self.cursor.position
+        beat_tree = self.get_beat_tree(beat_key)
+
+        # Special case for beat if beat is leaf
+        if beat_tree.size == 1:
+            self.insert_after(beat_key, position)
+        else:
+            self.split_tree(beat_key, position, 2)
         self.cursor.settle()
 
     def unset_at_cursor(self) -> None:

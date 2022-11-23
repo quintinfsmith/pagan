@@ -17,7 +17,7 @@ class OpusManagerBase:
     RADIX = 12
     DEFAULT_PERCUSSION = 0x32
     def __init__(self):
-        self.channel_trees = [[] for i in range(16)]
+        self.channel_lines = [[] for i in range(16)]
         self.opus_beat_count = 1
         self.path = None
         self.percussion_map = {}
@@ -49,19 +49,15 @@ class OpusManagerBase:
         else:
             self.load_file(path)
 
-        for channel_index, channel in enumerate(self.channel_trees):
+        for channel_index, channel in enumerate(self.channel_lines):
             for line_offset, line in enumerate(channel):
                 for beat in line:
-                    if beat.is_leaf():
-                        middle = MIDITree()
-                        beat.replace_with(middle)
-                        middle[0].replace_with(beat)
                     for subbeat in beat:
                         beat.clear_singles()
 
                 # Populate the percussion map
                 if channel_index == 9:
-                    stack = [line]
+                    stack = list(line)
                     while stack:
                         tree = stack.pop(0)
                         if tree.is_event():
@@ -74,12 +70,10 @@ class OpusManagerBase:
 
     def _new(self) -> None:
         """Only called from new() class method"""
-        new_line = MIDITree()
-        new_line.set_size(4)
-        for i in range(4):
-            new_line[i].set_size(1)
-        self.channel_trees[0].append(new_line)
-        self.opus_beat_count = 4
+        new_size = 4
+        new_line = [MIDITree() for i in range(new_size)]
+        self.channel_lines[0].append(new_line)
+        self.opus_beat_count = new_size
 
     def insert_after(self, beat_key: BeatKey, position: List[int]):
         """Create an empty tree next to the given one, expanding the parent"""
@@ -129,10 +123,9 @@ class OpusManagerBase:
     def _set_beat_count(self, new_count: int) -> None:
         """Adjust the number of beats in the opus"""
         self.opus_beat_count = new_count
-        for trees in self.channel_trees:
-            for tree in trees:
-                tree.set_size(new_count, True)
-
+        for channel in self.channel_lines:
+            for line in channel:
+                line.append(MIDITree())
 
     def set_percussion_event(self, beat_key: BeatKey, position: List[int]) -> None:
         """
@@ -184,14 +177,7 @@ class OpusManagerBase:
             position: List[int],
             splits: int) -> None:
         """Divide the tree at the given position into *splits* divisions"""
-        beat_tree = self.get_beat_tree(beat_key)
-        if position:
-            if position == [0] and len(beat_tree) == 1:
-                tree = beat_tree
-            else:
-                tree = self.get_tree(beat_key, position)
-        else:
-            tree = beat_tree
+        tree = self.get_tree(beat_key, position)
 
         if tree.is_event():
             new_tree = MIDITree()
@@ -223,8 +209,8 @@ class OpusManagerBase:
 
     def change_line_channel(self, old_channel: int, line_index: int, new_channel: int) -> None:
         """Move an active line to a different channel."""
-        tree = self.channel_trees[old_channel].pop(line_index)
-        self.channel_trees[new_channel].append(tree)
+        line = self.channel_lines[old_channel].pop(line_index)
+        self.channel_lines[new_channel].append(line)
 
 
     def export(self, *, path: Optional[str] = None, **kwargs) -> None:
@@ -234,9 +220,9 @@ class OpusManagerBase:
 
         opus = MIDITree()
         opus.set_size(self.opus_beat_count)
-        for trees in self.channel_trees:
-            for tree in trees:
-                for i, beat in enumerate(tree):
+        for channel in self.channel_lines:
+            for line in channel:
+                for i, beat in enumerate(line):
                     opus[i].merge(beat)
 
         if path is None:
@@ -249,18 +235,13 @@ class OpusManagerBase:
 
     def get_beat_tree(self, beat_key: BeatKey) -> MIDITree:
         channel, line_offset, beat_index = beat_key
-        if line_offset < 0:
-            line_offset = len(self.channel_trees[channel]) + line_offset
-        return self.channel_trees[channel][line_offset][beat_index]
+        return self.channel_lines[channel][line_offset][beat_index]
 
     def get_tree(
             self,
             beat_key: Tuple[int, int,  int],
             position: List[int]) -> MIDITree:
         """Get the OpusTree object at the given position."""
-        if len(position) < 1:
-            raise InvalidPosition(position)
-
         tree = self.get_beat_tree(beat_key)
 
         try:
@@ -302,7 +283,7 @@ class OpusManagerBase:
         self.opus_beat_count = 1
         for i, mtree in enumerate(tracks):
             for _j, split_line in enumerate(mtree.split(split_by_note_order)):
-                self.channel_trees[i].append(split_line)
+                self.channel_lines[i].append([beat for beat in split_line])
                 self.opus_beat_count = max(self.opus_beat_count, len(split_line))
 
     def insert_beat(self, index: Optional[int] = None) -> None:
@@ -310,10 +291,9 @@ class OpusManagerBase:
         self.opus_beat_count += 1
 
         # Move all beats after new one right
-        for channel in self.channel_trees:
+        for channel in self.channel_lines:
             for i, line in enumerate(channel):
                 new_beat = MIDITree()
-                new_beat.set_size(1)
                 line.insert(index, new_beat)
 
 
@@ -360,12 +340,12 @@ class OpusManagerBase:
                     beat_count = max(len(tree), beat_count)
                     tree.set_size(beat_count, True)
 
-                    self.channel_trees[channel].append(tree)
+                    self.channel_lines[channel].append([beat for beat in tree])
 
         self.opus_beat_count = beat_count
 
 
-    def load_file(self, path: str) -> MIDITree:
+    def load_file(self, path: str) -> None:
         """Load opus from a single radix-notation file"""
         self.path = path
         radix = self.RADIX
@@ -382,9 +362,8 @@ class OpusManagerBase:
         self.opus_beat_count = 1
         for channel, chunk in enumerate(chunks):
             tree = MIDITree.from_string(chunk, radix=radix, channel=channel)
-            self.channel_trees[channel].append(tree)
+            self.channel_lines[channel].append([beat for beat in tree])
             self.opus_beat_count = max(self.opus_beat_count, len(tree))
-
 
     def move_line(self, channel: int, old_index: int, new_index: int) -> None:
         """Within a channel, move a line to a different position"""
@@ -394,40 +373,40 @@ class OpusManagerBase:
         # Adjust the new_index so it doesn't get confused
         # when we pop() the old_index
         if new_index < 0:
-            new_index = len(self.channel_trees[channel]) + new_index
+            new_index = len(self.channel_lines[channel]) + new_index
+
         if new_index < 0:
             raise IndexError(new_index)
 
-        if old_index >= len(self.channel_trees[channel]):
+        if old_index >= len(self.channel_lines[channel]):
             raise IndexError(old_index)
 
-        tree = self.channel_trees[channel].pop(old_index)
-        self.channel_trees[channel].insert(new_index, tree)
+        line = self.channel_lines[channel].pop(old_index)
+        self.channel_lines[channel].insert(new_index, line)
 
     def new_line(self, channel: int = 0, index: Optional[int] = None) -> None:
         """Create an empty line in the given channel"""
-        new_tree = MIDITree()
-        new_tree.set_size(self.opus_beat_count)
+        new_list = [MIDITree() for _ in range(self.opus_beat_count)]
 
         if index is not None:
-            self.channel_trees[channel].insert(index, new_tree)
+            self.channel_lines[channel].insert(index, new_list)
         else:
-            self.channel_trees[channel].append(new_tree)
+            self.channel_lines[channel].append(new_list)
 
     def overwrite_beat(
             self,
             old_beat: BeatKey,
             new_beat: BeatKey) -> None:
         """Overwrite a beat with a copy of the tree of another"""
-        new_tree = self.channel_trees[new_beat[0]][new_beat[1]][new_beat[2]].copy()
-        old_tree = self.channel_trees[old_beat[0]][old_beat[1]][old_beat[2]]
+        new_tree = self.channel_lines[new_beat[0]][new_beat[1]][new_beat[2]].copy()
+        old_tree = self.channel_lines[old_beat[0]][old_beat[1]][old_beat[2]]
         old_tree.replace_with(new_tree)
-        self.channel_trees[old_beat[0]][old_beat[1]][old_beat[2]] = new_tree
+        self.channel_lines[old_beat[0]][old_beat[1]][old_beat[2]] = new_tree
 
     def remove_beat(self, index: int) -> None:
         """Removes the beat at the index of every active line"""
         # Move all beats after removed index one left
-        for channel in self.channel_trees:
+        for channel in self.channel_lines:
             for line in channel:
                 line.pop(index)
         self._set_beat_count(self.opus_beat_count - 1)
@@ -435,15 +414,15 @@ class OpusManagerBase:
 
     def remove_channel(self, channel: int) -> None:
         """Remove all of the active lines in a channel"""
-        while self.channel_trees[channel]:
+        while self.channel_lines[channel]:
             self.remove_line(channel, 0)
 
     def remove_line(self, channel: int, index: int = None) -> None:
         """Remove an active line in a given channel"""
         if index is None:
-            index = len(self.channel_trees[channel]) - 1
+            index = len(self.channel_lines[channel]) - 1
 
-        self.channel_trees[channel].pop(index)
+        self.channel_lines[channel].pop(index)
 
     def replace_tree(
             self,
@@ -456,7 +435,7 @@ class OpusManagerBase:
     def replace_beat(self, beat_key: BeatKey, tree: MIDITree) -> None:
         """Swap out a Beat's OpusTree"""
         channel, line_offset, beat_index = beat_key
-        self.channel_trees[channel][line_offset][beat_index].replace_with(tree)
+        self.channel_lines[channel][line_offset][beat_index].replace_with(tree)
 
     def save(self, path: Optional[str] = None) -> None:
         """Obvs"""
@@ -476,14 +455,14 @@ class OpusManagerBase:
         for subpath in os.listdir(fullpath):
             os.remove(f"{fullpath}/{subpath}")
 
-        for i, channel_lines in enumerate(self.channel_trees):
+        for i, channel_lines in enumerate(self.channel_lines):
             if not channel_lines:
                 continue
 
             strlines = []
             for line in channel_lines:
-                line.clear_singles()
-                strlines.append(line.to_string())
+                str_line = "[" + "|".join([beat.to_string() for beat in line]) + "]"
+                strlines.append(str_line)
 
             hexrep = hex(i)[2:].upper()
             with open(f"{fullpath}/channel_{hexrep}", "w", encoding="utf-8") as fp:
@@ -497,7 +476,7 @@ class OpusManagerBase:
         self.percussion_map[line_offset] = instrument
 
         # Traverse the line and set all the events to the new instrument
-        stack = [self.channel_trees[9][line_offset]]
+        stack = list(self.channel_lines[9][line_offset])
         while stack:
             tree = stack.pop(0)
             if tree.is_event():
@@ -510,9 +489,8 @@ class OpusManagerBase:
 
     def swap_channels(self, channel_a: int, channel_b: int) -> None:
         """Swap the active lines of two channels."""
-        tmp = self.channel_trees[channel_b]
-        self.channel_trees[channel_b] = self.channel_trees[channel_a]
-        self.channel_trees[channel_a] = tmp
+        cl = self.channel_lines
+        cl[channel_a], cl[channel_b] = cl[channel_b], cl[channel_a]
 
 def split_by_channel(event, other_events):
     return event['channel']

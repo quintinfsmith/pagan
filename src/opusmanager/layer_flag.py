@@ -85,8 +85,8 @@ class FlagLayer(OpusManagerBase):
     def swap_channels(self, channel_a: int, channel_b: int) -> None:
         super().swap_channels(channel_a, channel_b)
 
-        len_a = len(self.channel_trees[channel_a])
-        len_b = len(self.channel_trees[channel_b])
+        len_a = len(self.channel_lines[channel_a])
+        len_b = len(self.channel_lines[channel_b])
         for i in range(len_b):
             self.flag('line', (channel_a, len_b - 1 - i, 'pop'))
 
@@ -105,7 +105,7 @@ class FlagLayer(OpusManagerBase):
         for i in range(self.opus_beat_count):
             self.flag('beat', (i, 'new'))
 
-        for i, channel in enumerate(self.channel_trees):
+        for i, channel in enumerate(self.channel_lines):
             for j, _line in enumerate(channel):
                 self.flag('line', (i, j, 'init'))
 
@@ -115,7 +115,7 @@ class FlagLayer(OpusManagerBase):
         for i in range(self.opus_beat_count):
             self.flag('beat', (i, 'new'))
 
-        for i, channel in enumerate(self.channel_trees):
+        for i, channel in enumerate(self.channel_lines):
             for j, _line in enumerate(channel):
                 self.flag('line', (i, j, 'init'))
 
@@ -159,7 +159,7 @@ class FlagLayer(OpusManagerBase):
         super().new_line(channel, index)
 
         if index is None:
-            line_index = len(self.channel_trees[channel]) - 1
+            line_index = len(self.channel_lines[channel]) - 1
         else:
             line_index = index
 
@@ -186,7 +186,7 @@ class FlagLayer(OpusManagerBase):
         super().remove_line(channel, index)
 
         if index is None:
-            index = len(self.channel_trees[channel])
+            index = len(self.channel_lines[channel])
 
         # Flag changes to cache
         self.flag('line', (channel, index, 'pop'))

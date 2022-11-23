@@ -143,7 +143,7 @@ class LinksLayer(FlagLayer):
                     new_beat = (beat[0], beat[1] - 1, beat[2])
             return new_beat
 
-        new_offset = len(self.channel_trees[new_channel]) - 1
+        new_offset = len(self.channel_lines[new_channel]) - 1
         self.remap_links(remap_hook, old_channel, line_index, new_channel, new_offset)
 
     def move_line(self, channel: int, old_index: int, new_index: int) -> None:

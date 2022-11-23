@@ -366,7 +366,7 @@ class EditorEnvironment:
 
 
     def tick_update_beats(self) -> bool:
-        channels = self.opus_manager.channel_trees
+        channels = self.opus_manager.channel_lines
 
         rect_topbar = self.frame_beat_labels.get_content_rect()
 

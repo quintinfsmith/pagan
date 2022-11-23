@@ -135,7 +135,7 @@ class Cursor:
         self.x = max(0, min(self.x, self.opus_manager.opus_beat_count - 1))
         channel, line, beat = self.get_triplet()
         ## First get the beat ...
-        working_beat = self.opus_manager.channel_trees[channel][line][beat]
+        working_beat = self.opus_manager.channel_lines[channel][line][beat]
         working_tree = working_beat
 
         if not self.position:
@@ -187,7 +187,7 @@ class CursorLayer(LinksLayer):
     @property
     def line_count(self) -> int:
         """Get the number of lines active in this opus."""
-        return sum((len(channel) for channel in self.channel_trees))
+        return sum((len(channel) for channel in self.channel_lines))
 
     def cursor_right(self) -> None:
         """Wrapper function"""
@@ -364,10 +364,10 @@ class CursorLayer(LinksLayer):
         # Traverse the list of indices and link all possible
         cursor = self.cursor.get_triplet()
         for i, channel_index in enumerate(channels):
-            if not self.channel_trees[channel_index]:
+            if not self.channel_lines[channel_index]:
                 continue
             for j, line_index in enumerate(lines):
-                if line_index >= len(self.channel_trees[channel_index]):
+                if line_index >= len(self.channel_lines[channel_index]):
                     continue
                 for k, beat_index in enumerate(beats):
                     self.link_beats(
@@ -393,27 +393,12 @@ class CursorLayer(LinksLayer):
         """
 
         for channel in self.channel_order:
-            for i, _ in enumerate(self.channel_trees[channel]):
+            for i, _ in enumerate(self.channel_lines[channel]):
                 if y_index == 0:
                     return (channel, i)
                 y_index -= 1
 
         raise IndexError
-
-    def get_line_tree(self, y_index: int) -> Optional[MIDITree]:
-        """Get the MGrouping object of the entire line given by_index 'y_index'"""
-        output = None
-        for i in self.channel_order:
-            for tree in self.channel_trees[i]:
-                if y_index == 0:
-                    output = tree
-                    break
-                y_index -= 1
-
-            if output is not None:
-                break
-
-        return output
 
     def get_y(self, channel_index: int, line_offset: Optional[int] = None) -> int:
         """
@@ -421,11 +406,11 @@ class CursorLayer(LinksLayer):
             get the y-index of the specified line displayed
         """
         if line_offset is None:
-            line_offset = len(self.channel_trees[channel_index]) - 1
+            line_offset = len(self.channel_lines[channel_index]) - 1
 
         y_index = 0
         for i in self.channel_order:
-            for j, _tree in enumerate(self.channel_trees[i]):
+            for j, _line in enumerate(self.channel_lines[i]):
                 if channel_index == i and line_offset == j:
                     return y_index
                 y_index += 1
@@ -450,7 +435,7 @@ class CursorLayer(LinksLayer):
         super().swap_channels(channel_a, channel_b)
 
         new_y = self.get_y(orig_cursor[0])
-        new_y += min(orig_cursor[1], len(self.channel_trees[orig_cursor[0]]) - 1)
+        new_y += min(orig_cursor[1], len(self.channel_lines[orig_cursor[0]]) - 1)
         self.cursor.set_y(new_y)
         self.cursor.settle()
 

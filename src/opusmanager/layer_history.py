@@ -93,7 +93,7 @@ class HistoryLayer(CursorLayer):
         self.open_multi()
         channel, line_offset, beat_index = beat_key
 
-        beat_tree = self.channel_trees[channel][line_offset][beat_index]
+        beat_tree = self.channel_lines[channel][line_offset][beat_index]
 
         stack = []
         if not start_position:
@@ -143,7 +143,7 @@ class HistoryLayer(CursorLayer):
         self.append_undoer(self.set_percussion_instrument, line_offset, original_instrument)
 
     def overwrite_beat(self, old_beat: BeatKey, new_beat: BeatKey) -> None:
-        old_tree = self.channel_trees[old_beat[0]][old_beat[1]][old_beat[2]].copy()
+        old_tree = self.channel_lines[old_beat[0]][old_beat[1]][old_beat[2]].copy()
         self.append_undoer(self.replace_beat, old_beat, old_tree)
         super().overwrite_beat(old_beat, new_beat)
 
@@ -189,7 +189,7 @@ class HistoryLayer(CursorLayer):
         self.append_undoer(self.insert_beat, index)
 
         # TODO: This could be more precise
-        for i, channel in enumerate(self.channel_trees):
+        for i, channel in enumerate(self.channel_lines):
             for j, line in enumerate(channel):
                 for k, beat in enumerate(line):
                     if k < index:

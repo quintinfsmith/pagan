@@ -31,6 +31,10 @@ class LinksLayer(FlagLayer):
 
         del self.linked_beat_map[beat_key]
 
+        # less-kludgey Kludge to force the beat_change flag to set
+        tree = self.get_beat_tree(beat_key)
+        self.replace_tree(beat_key, [], tree.copy())
+
     def clear_links_to_beat(self, target: BeatKey) -> None:
         """Remove all links pointing to the specific beat"""
         if target not in self.inv_linked_beat_map:

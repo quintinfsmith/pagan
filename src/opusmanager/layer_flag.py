@@ -191,7 +191,3 @@ class FlagLayer(OpusManagerBase):
         # Flag changes to cache
         self.flag('line', (channel, index, 'pop'))
 
-    # LinkLayer methods
-    def unlink_beat(self, beat_key: BeatKey) -> None:
-        super().unlink_beat(beat_key)
-        self.flag('beat_change', beat_key)

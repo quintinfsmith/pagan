@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import List, Optional, Tuple, Union, Any
 from collections.abc import Callable
 from .miditree import MIDITree, MIDITreeEvent
-from .layer_history import HistoryLayer, BeatKey
+from .layer_links import LinksLayer, BeatKey
 
 class ReadyEvent:
     """Temporary placeholder for note events as they are being created"""
@@ -48,18 +48,20 @@ class Cursor:
                 self.position[-1] -= 1
                 break
 
-        if self.x and not self.position:
-            self.x -= 1
 
-            # Move to the leaf
-            self.settle(right_align=True)
-        else:
-            self.settle()
+        settle_right = True
+        if not self.position:
+            if self.x:
+                self.x -= 1
+            else:
+                settle_right = False
+
+        # Move to the leaf
+        self.settle(right_align=settle_right)
 
     def move_right(self) -> None:
         """Point the cursor to the next leaf"""
-        channel, line, beat = self.get_triplet()
-        working_tree = self.opus_manager.channel_trees[channel][line][beat]
+        working_tree = self.opus_manager.get_beat_tree(self.get_triplet())
         # First, traverse the position to get the currently active tree
         for j in self.position:
             working_tree = working_tree[j]
@@ -73,11 +75,13 @@ class Cursor:
                 self.position[-1] += 1
                 break
 
-        if self.x < self.opus_manager.opus_beat_count - 1 and not self.position:
-            self.x += 1
-            self.settle()
-        else:
-            self.settle(right_align=True)
+        settle_right = False
+        if not self.position:
+            if self.x < self.opus_manager.opus_beat_count - 1:
+                self.x += 1
+            else:
+                settle_right = True
+        self.settle(right_align=settle_right)
 
     def move_up(self) -> None:
         """Point the cursor to the previous line"""
@@ -172,7 +176,7 @@ class Cursor:
         channel, index = self.get_channel_index()
         return (channel, index, self.x)
 
-class CursorLayer(HistoryLayer):
+class CursorLayer(LinksLayer):
     """Adds Cursor functionality to OpusManager."""
     def __init__(self):
         super().__init__()
@@ -478,21 +482,3 @@ class CursorLayer(HistoryLayer):
         super()._load(path)
         self.cursor.settle()
 
-    ## HistoryLayer Methods
-    def append_undoer(self, func: Callable[Any], *args, **kwargs) -> None:
-        super().append_undoer(func, *args, **kwargs)
-        if not (self.history_locked or self.multi_counter):
-            self.history_ledger[-1].append((
-                self.cursor.set,
-                self.cursor.to_list(),
-                {}
-            ))
-
-    def close_multi(self) -> None:
-        super().close_multi()
-        if not (self.history_locked or self.multi_counter):
-            self.history_ledger[-1].append((
-                self.cursor.set,
-                self.cursor.to_list(),
-                {}
-            ))

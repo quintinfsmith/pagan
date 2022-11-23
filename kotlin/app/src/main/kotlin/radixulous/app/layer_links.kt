@@ -4,8 +4,7 @@ import radixulous.app.opusmanager.BeatKey
 import radixulous.app.opusmanager.OpusEvent
 import radixulous.app.opusmanager.FlagLayer
 
-open class LinksLayer : FlagLayer {
-    constructor() : super()
+open class LinksLayer() : FlagLayer() {
     var linked_beat_map: HashMap<BeatKey, BeatKey> = HashMap<BeatKey, BeatKey>()
     var inv_linked_beat_map: HashMap<BeatKey, MutableList<BeatKey>> = HashMap<BeatKey, MutableList<BeatKey>>()
 
@@ -66,32 +65,32 @@ open class LinksLayer : FlagLayer {
         return output
     }
 
-    open override fun insert_after(beat_key: BeatKey, position: List<Int>) {
+    override fun insert_after(beat_key: BeatKey, position: List<Int>) {
         for (linked_key in this.get_all_linked(beat_key)) {
             super.insert_after(linked_key, position)
         }
     }
-    open override fun remove(beat_key: BeatKey, position: List<Int>) {
+    override fun remove(beat_key: BeatKey, position: List<Int>) {
         for (linked_key in this.get_all_linked(beat_key)) {
             super.remove(linked_key, position)
         }
     }
-    open override fun set_percussion_event(beat_key: BeatKey, position: List<Int>) {
+    override fun set_percussion_event(beat_key: BeatKey, position: List<Int>) {
         for (linked_key in this.get_all_linked(beat_key)) {
             super.set_percussion_event(linked_key, position)
         }
     }
-    open override fun set_event(beat_key: BeatKey, position: List<Int>, value: Int, relative: Boolean) {
+    override fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEvent) {
         for (linked_key in this.get_all_linked(beat_key)) {
-            super.set_event(linked_key, position, value, relative)
+            super.set_event(linked_key, position, event)
         }
     }
-    open override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
+    override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
         for (linked_key in this.get_all_linked(beat_key)) {
             super.split_tree(linked_key, position, splits)
         }
     }
-    open override fun unset(beat_key: BeatKey, position: List<Int>) {
+    override fun unset(beat_key: BeatKey, position: List<Int>) {
         for (linked_key in this.get_all_linked(beat_key)) {
             super.unset(linked_key, position)
         }
@@ -119,7 +118,7 @@ open class LinksLayer : FlagLayer {
         this.linked_beat_map = new_link_map
     }
 
-    open override fun change_line_channel(old_channel: Int, line_offset: Int, new_channel: Int) {
+    override fun change_line_channel(old_channel: Int, line_offset: Int, new_channel: Int) {
         super.change_line_channel(old_channel, line_offset, new_channel)
         var new_offset = this.channel_trees[new_channel].size - 1
         this.remap_links(this::rh_change_line_channel, listOf(old_channel, line_offset, new_channel, new_offset))
@@ -141,7 +140,7 @@ open class LinksLayer : FlagLayer {
         return new_beat
     }
 
-    open override fun move_line(channel: Int, old_index: Int, new_index: Int) {
+    override fun move_line(channel: Int, old_index: Int, new_index: Int) {
         super.move_line(channel, old_index, new_index)
 
         this.remap_links(this::rh_move_line, listOf(channel, old_index, new_index))
@@ -163,7 +162,7 @@ open class LinksLayer : FlagLayer {
         return new_beat
     }
 
-    open override fun insert_beat(index: Int?) {
+    override fun insert_beat(index: Int?) {
         super.insert_beat(index)
 
         var index_remap: Int
@@ -177,22 +176,20 @@ open class LinksLayer : FlagLayer {
 
     private fun rh_insert_beat(beat: BeatKey, args: List<Int>): BeatKey? {
         var index = args[0]
-        var new_beat: BeatKey
-        if (beat.beat >= index) {
-            new_beat = BeatKey(beat.channel, beat.line_offset, beat.beat + 1)
+        var new_beat = if (beat.beat >= index) {
+            BeatKey(beat.channel, beat.line_offset, beat.beat + 1)
         } else {
-            new_beat = beat
+            beat
         }
         return new_beat
     }
 
-    open override fun remove_beat(index: Int?) {
+    override fun remove_beat(index: Int?) {
         super.remove_beat(index)
-        var adj_index: Int
-        if (index == null) {
-            adj_index = -1
+        var adj_index = if (index == null) {
+            -1
         } else {
-            adj_index = index
+            index
         }
         this.remap_links(this::rh_remove_beat, listOf(adj_index))
     }
@@ -210,7 +207,7 @@ open class LinksLayer : FlagLayer {
         return new_beat
     }
 
-    open override fun remove_channel(channel: Int) {
+    override fun remove_channel(channel: Int) {
         super.remove_channel(channel)
         this.remap_links(this::rh_remove_channel, listOf(channel))
     }
@@ -223,7 +220,7 @@ open class LinksLayer : FlagLayer {
         }
     }
 
-    open override fun remove_line(channel: Int, line_offset: Int?) {
+    override fun remove_line(channel: Int, line_offset: Int?) {
         super.remove_line(channel, line_offset)
     }
     private fun rh_remove_line(beat: BeatKey, args: List<Int>): BeatKey? {
@@ -240,7 +237,7 @@ open class LinksLayer : FlagLayer {
         return new_beat
     }
 
-    open override fun swap_channels(channel_a: Int, channel_b: Int) {
+    override fun swap_channels(channel_a: Int, channel_b: Int) {
         super.swap_channels(channel_a, channel_b)
         this.remap_links(this::rh_swap_channels, listOf(channel_a, channel_b))
     }
@@ -255,6 +252,6 @@ open class LinksLayer : FlagLayer {
     }
 
     // TODO
-    open public fun load_folder(path: String) { }
-    open public fun save(path: String? = null) { }
+    override fun load_folder(path: String) { }
+    override fun save(path: String?) { }
 }

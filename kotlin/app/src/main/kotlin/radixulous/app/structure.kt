@@ -15,7 +15,7 @@ fun greatest_common_denominator(first: Int, second: Int): Int {
 
 fun get_prime_factors(n: Int): List<Int> {
     var primes: MutableList<Int> = mutableListOf();
-    for (i in 2 .. n / 2) {
+    for (i in 2 .. (n / 2) - 1) {
         var is_prime = true;
         for (p in primes) {
             if (i % p == 0) {
@@ -53,7 +53,7 @@ fun lowest_common_multiple(number_list: List<Int>): Int {
     for (factors in prime_factors) {
         for (factor in factors) {
             if (! common_factor_map.containsKey(factor)) {
-                common_factor_map.put(factor, 0)
+                common_factor_map[factor] = 0
             }
             var current = common_factor_map[factor]!!
             common_factor_map[factor] = max(current, factors.count({e -> e == factor}))
@@ -83,6 +83,9 @@ public class OpusTree<T> {
     fun get_parent(): OpusTree<T>? {
         return this.parent
     }
+    fun has_parent(): Boolean {
+        return this.parent != null
+    }
     fun set_size(new_size: Int, noclobber: Boolean = false) {
         if (! noclobber) {
             this.divisions.clear()
@@ -106,9 +109,9 @@ public class OpusTree<T> {
 
         var new_divisions: HashMap<Int, OpusTree<T>> = HashMap<Int, OpusTree<T>>()
         for (current_index in this.divisions.keys) {
-            var value = this.divisions.get(current_index)
+            var value = this.divisions[current_index]
             var new_index = current_index * factor
-            new_divisions.put(new_index.toInt(), value as OpusTree<T>)
+            new_divisions[new_index.toInt()] = value as OpusTree<T>
         }
         this.divisions = new_divisions
         this.size = new_size
@@ -117,7 +120,7 @@ public class OpusTree<T> {
     fun reduce(target_size: Int) {
         var indices: MutableList<Pair<Int, OpusTree<T>>> = mutableListOf()
         for (key in this.divisions.keys) {
-            indices.add(Pair(key, this.divisions.get(key) as OpusTree<T>))
+            indices.add(Pair(key, this.divisions[key] as OpusTree<T>))
         }
         indices.sortWith(compareBy { it.first })
 
@@ -134,7 +137,6 @@ public class OpusTree<T> {
 
             var current_size = original_size / denominator;
 
-
             var split_indices: Array<MutableList<Pair<Int, OpusTree<T>>>> = Array(denominator, { _ -> mutableListOf() })
             for (index_pair in element.indices) {
                 var child_index = index_pair.first;
@@ -142,8 +144,8 @@ public class OpusTree<T> {
                 split_indices[split_index].add(Pair(index_pair.first % current_size, index_pair.second.copy()))
             }
 
-            for (i in 0..denominator) {
-                var working_indices = split_indices.get(i)
+            for (i in 0..denominator - 1) {
+                var working_indices = split_indices[i]
                 if (working_indices.size == 0) {
                     continue
                 }
@@ -187,18 +189,18 @@ public class OpusTree<T> {
         }
         this.set_size(place_holder.size)
         for (key in place_holder.divisions.keys) {
-            this.divisions.put(key, place_holder.divisions[key] as OpusTree<T>)
+            this.divisions[key] = place_holder.divisions[key] as OpusTree<T>
         }
     }
 
     fun copy(): OpusTree<T> {
-        var copied: OpusTree<T> = OpusTree<T>()
+        val copied: OpusTree<T> = OpusTree<T>()
         copied.size = this.size
         for (key in this.divisions.keys) {
-            var subdivision: OpusTree<T> = this.divisions.get(key) as OpusTree<T>
-            var subcopy: OpusTree<T> = subdivision.copy()
+            val subdivision: OpusTree<T> = this.divisions[key] as OpusTree<T>
+            val subcopy: OpusTree<T> = subdivision.copy()
             subcopy.set_parent(copied)
-            copied.divisions.put(key, subcopy)
+            copied.divisions[key] = subcopy
         }
 
         copied.event = this.event
@@ -206,9 +208,11 @@ public class OpusTree<T> {
         return copied
     }
 
-    fun get(index: Int): OpusTree<T> {
-        if (index < 0) {
-            index = this.size + index
+    fun get(rel_index: Int): OpusTree<T> {
+        var index = if (rel_index < 0) {
+            this.size + rel_index
+        } else {
+            rel_index
         }
 
         var output: OpusTree<T>
@@ -217,7 +221,7 @@ public class OpusTree<T> {
         } else {
             output = OpusTree<T>()
             output.set_parent(this)
-            this.divisions.put(index, output)
+            this.divisions[index] = output
         }
 
         return output
@@ -253,11 +257,11 @@ public class OpusTree<T> {
                     var grandchild = child.divisions[key]!!
                     if (grandchild.is_leaf()) {
                         var fine_offset: Int = (key * new_chunk_size) / child.size
-                        this.divisions.set(offset + fine_offset, grandchild)
+                        this.divisions[offset + fine_offset] = grandchild
                     }
                 }
             } else {
-                this.divisions.set(offset, child)
+                this.divisions[offset] = child
             }
         }
     }
@@ -280,11 +284,14 @@ public class OpusTree<T> {
         return this.event != null
     }
 
-    fun set(index: Int, tree: OpusTree<T>) {
-        if (index < 0) {
-            index = this.size + index
+    fun set(rel_index: Int, tree: OpusTree<T>) {
+        var index = if (rel_index < 0) {
+            this.size + rel_index
+        } else {
+            rel_index
         }
-        this.divisions.set(index, tree)
+
+        this.divisions[index] = tree
     }
 
     fun set_event(event: T) {
@@ -326,7 +333,7 @@ public class OpusTree<T> {
 
     fun replace_with(new_node: OpusTree<T>) {
         if (this.parent != null) {
-            var parent = this.parent!!
+            val parent = this.parent!!
             for (i in parent.divisions.keys) {
                 if (parent.divisions[i] != this) {
                     continue
@@ -339,23 +346,23 @@ public class OpusTree<T> {
     }
 
     fun insert(index: Int?, new_tree: OpusTree<T>) {
-        var adj_index;
-        if (index == null) {
-            adj_index = this.size
+        var adj_index = if (index == null) {
+            this.size
         } else {
-            adj_index = index
+            index
         }
 
         this.size += 1
         var new_indices = HashMap<Int, OpusTree<T>>()
         for (old_index in this.divisions.keys) {
+            var node = this.divisions[old_index]!!
             if (old_index < adj_index) {
-                new_indices.put(old_index, this.divisions[old_index])
+                new_indices[old_index] = node
             } else {
-                new_indices.put(old_index + 1, this.divisions[old_index])
+                new_indices[old_index + 1] = node
             }
         }
-        new_indices.put(adj_index, new_tree)
+        new_indices[adj_index] = new_tree
         this.divisions = new_indices
         new_tree.set_parent(this)
     }
@@ -365,21 +372,19 @@ public class OpusTree<T> {
     }
 
     fun pop(x: Int?=null): OpusTree<T> {
-        var index: Int
-
-        if (x == null) {
-            index = this.size - 1
+        var index = if (x == null) {
+            this.size - 1
         } else {
-            index = x
+            x
         }
 
         var output = this.divisions[index]!!
-        var new_divisions = HashMap<Int, OpusTree<T>>()
+        val new_divisions = HashMap<Int, OpusTree<T>>()
         for (i in this.divisions.keys) {
             if (i < index) {
-                new_divisions.put(i, this.divisions[i]!!)
+                new_divisions[i] = this.divisions[i]!!
             } else if (i > index) {
-                new_divisions.put(i - 1, this.divisions[i]!!)
+                new_divisions[i - 1] = this.divisions[i]!!
             }
         }
         this.divisions = new_divisions
@@ -393,4 +398,3 @@ public class OpusTree<T> {
         this.size = 1
     }
 }
-

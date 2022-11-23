@@ -4,17 +4,17 @@ from typing import Optional, Dict, List, Tuple, Any
 from collections.abc import Callable
 
 from .miditree import MIDITreeEvent
-from .layer_flag import FlagLayer, BeatKey
+from .layer_cursor import CursorLayer, BeatKey
 
-class HistoryLayer(FlagLayer):
+class HistoryLayer(CursorLayer):
     """Layer of the OpusManager that handles Undo & Redo actions"""
     def __init__(self):
         super().__init__()
         self.history_ledger = []
         self.history_locked = False
 
-        # monitors number of times open_mult() has been called without
-        # close_multi() being called yet
+        # monitors number of times open_multi() has
+        # been called without close_multi() being called yet
         self.multi_counter = 0
 
     def apply_undo(self) -> None:
@@ -40,7 +40,17 @@ class HistoryLayer(FlagLayer):
         if self.multi_counter:
             self.history_ledger[-1].append((func, args, kwargs))
         else:
-            self.history_ledger.append([(func, args, kwargs)])
+            self.history_ledger.append([
+                (func, args, kwargs),
+                # We want the cursor to move to where the undo happened
+                (
+                    self.cursor.set,
+                    self.cursor.to_list(),
+                    {}
+                )
+            ])
+
+
 
     def open_multi(self) -> None:
         """
@@ -62,6 +72,14 @@ class HistoryLayer(FlagLayer):
             return
 
         self.multi_counter -= 1
+
+        # Move cursor to where the undo occured
+        if not self.multi_counter:
+            self.history_ledger[-1].append((
+                self.cursor.set,
+                self.cursor.to_list(),
+                {}
+            ))
 
     def setup_repopulate(
             self,
@@ -217,3 +235,4 @@ class HistoryLayer(FlagLayer):
                 original_event
             )
         super().unset(beat_key, position)
+

@@ -88,9 +88,8 @@ class OpusManagerBase:
         tree = self.get_tree(beat_key, position)
 
         parent = tree.parent
-        at_end = position[-1] == len(parent) - 1
         parent.set_size(len(parent) + 1, True)
-        if not at_end:
+        if position[-1] != len(parent) - 1:
             tmp = parent[-1]
             i = len(parent) - 1
             while i > position[-1] + 1:

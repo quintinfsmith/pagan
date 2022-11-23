@@ -474,8 +474,12 @@ class MIDITree(OpusTree):
                 subtree = self[i]
                 strreps.append(subtree.to_string(base, depth+1))
 
-            output = self.CH_NEXT.join(strreps)
             if depth > 0:
+                output = self.CH_NEXT.join(strreps)
+            else:
+                output = self.CH_CLOPEN.join(strreps)
+
+            if self.size > 1 and depth != 1:
                 output = f"{self.CH_OPEN}{output}{self.CH_CLOSE}"
 
 

@@ -4,40 +4,166 @@ import radixulous.app.opusmanager.BeatKey
 import radixulous.app.opusmanager.OpusEvent
 import radixulous.app.opusmanager.HistoryLayer
 import kotlin.math.min
+import kotlin.math.max
 
-class Cursor {
+class Cursor(var opus_manager: CursorLayer) {
     var y: Int = 0
     var x: Int = 0
     var position: MutableList<Int> = mutableListOf()
-    constructor(var opus_manager: CursorLayer)
+
+    fun get_y(): Int {
+        return this.y
+    }
+    fun set_y(new_y: Int) {
+        this.y = new_y
+    }
+    fun get_x(): Int {
+        return this.x
+    }
+    fun set_x(new_x: Int) {
+        this.x = new_x
+    }
 
     fun set(y: Int, x: Int, position: List<Int>) {
         this.y = y
         this.x = x
-        if (position.size > 0) {
+        if (position.isNotEmpty()) {
             this.position = position.toMutableList()
         } else {
-            this.position = mutableListFrom(0)
+            this.position = mutableListOf(0)
         }
     }
 
     fun get_beatkey(): BeatKey {
+        var channel_index = this.get_channel_index()
+        return BeatKey(
+            channel_index.first,
+            channel_index.second,
+            this.x
+        )
+    }
+    fun get_channel_index(): Pair<Int, Int> {
+        return this.opus_manager.get_channel_index(this.y)
     }
 
     fun move_left() {
         var working_tree = this.opus_manager.get_beat_tree(this.get_beatkey())
+        for (i in this.position) {
+            working_tree = working_tree.get(i)
+        }
+
+        while (this.position.isNotEmpty()) {
+            if (this.position.last() == 0) {
+                if (working_tree.parent != null) {
+                    working_tree = working_tree.parent!!
+                } else {
+                    break
+                }
+                this.position.removeAt(this.position.size - 1)
+            } else {
+                this.position[this.position.size - 1] -= 1
+                break
+            }
+        }
+
+        if (this.x > 0 && this.position.isEmpty()) {
+            this.x -= 1
+            this.settle(true)
+        } else {
+            this.settle()
+        }
     }
-    fun move_right() {}
-    fun move_up() {}
-    fun move_down() {}
+
+    fun move_right() {
+        var working_tree = this.opus_manager.get_beat_tree(this.get_beatkey())
+        for (i in this.position) {
+            working_tree = working_tree.get(i)
+        }
+
+        while (! this.position.isEmpty()) {
+            if (working_tree.parent!!.size - 1 == this.position.last()) {
+                this.position.removeAt(this.position.size - 1)
+                working_tree = working_tree.parent!!
+            } else if (working_tree.parent!!.size - 1 > this.position.last()) {
+                this.position[this.position.size - 1] += 1
+                break
+            }
+        }
+
+        if (this.x < this.opus_manager.opus_beat_count - 1 && this.position.isEmpty()) {
+            this.x += 1
+            this.settle()
+        } else {
+            this.settle(true)
+        }
+    }
+    fun move_up() {
+        if (this.y > 0) {
+            this.y -= 1
+        }
+        this.settle()
+    }
+    fun move_down() {
+        var line_count = this.opus_manager.line_count()
+        if (this.y < line_count - 1) {
+            this.y += 1
+        }
+        this.settle()
+    }
+    fun get_position(): List<Int> {
+        return this.position
+    }
+
+    fun settle(right_align: Boolean = false) {
+        this.x = max(0, min(this.x, this.opus_manager.opus_beat_count - 1))
+
+        // First, get the beat
+        var working_beat = this.opus_manager.get_beat_tree(this.get_beatkey())
+        var working_tree = working_beat
+
+        if (this.position.isEmpty()) {
+            this.position = if (right_align) {
+                mutableListOf(working_tree.size - 1)
+            } else {
+                mutableListOf(0)
+            }
+        }
+
+        // Then get the current_working_tree
+        var index = 0
+        for (j in this.position) {
+            if (working_tree.is_leaf() || working_tree.size <= j) {
+                break
+            }
+            working_tree = working_tree.get(j)
+            index += 1
+        }
+
+        while (this.position.size > index + 1) {
+            this.position.removeAt(this.position.size - 1)
+        }
+
+        // Then find the leaf if not already found
+        if (right_align) {
+            while (! working_tree.is_leaf() || working_tree == working_beat) {
+                this.position.add(working_tree.size - 1)
+                working_tree = working_tree.get(working_tree.size - 1)
+            }
+        } else {
+            while (! working_tree.is_leaf() || working_tree == working_beat) {
+                this.position.add(0)
+                working_tree = working_tree.get(0)
+            }
+        }
+    }
 }
 
-class CursorLayer: HistoryLayer {
+open class CursorLayer() : LinksLayer() {
     var cursor = Cursor(this)
-    var channel_order = Array(16, {i -> i})
+    var channel_order = Array(16, { i -> i })
     fun line_count(): Int {
         var output: Int = 0
-        for (channel in self.channel_trees) {
+        for (channel in this.channel_trees) {
             output += channel.size
         }
         return output
@@ -56,7 +182,7 @@ class CursorLayer: HistoryLayer {
         this.cursor.move_down()
     }
 
-    fun set_percurssion_event_at_cursor {
+    fun set_percurssion_event_at_cursor() {
         var beat_key = this.cursor.get_beatkey()
         if (beat_key.channel != 9) {
             return
@@ -123,18 +249,18 @@ class CursorLayer: HistoryLayer {
         var event = tree.get_event()!!
         var new_value = event.note
         if (event.relative) {
-            if ((event.note >= event.base || event.note < 0 - event.base) && event.note < (event.base * (event.base - 1))) {
-                new_value = event.note + event.base
-            } else if (event.note < event.base) {
+            if ((event.note >= event.radix || event.note < 0 - event.radix) && event.note < (event.radix * (event.radix - 1))) {
+                new_value = event.note + event.radix
+            } else if (event.note < event.radix) {
                 new_value = event.note + 1
             }
         } else if (event.note < 127) {
             new_value = event.note + 1
         }
-
+        var new_event = OpusEvent(new_value, event.radix, event.channel, event.relative)
         var beat_key = this.cursor.get_beatkey()
         var position = this.cursor.get_position()
-        this.set_event(beat_key, position, new_value, event.relative)
+        this.set_event(beat_key, position, new_event)
     }
 
     fun decrement_event_at_cursor() {
@@ -146,9 +272,9 @@ class CursorLayer: HistoryLayer {
         var event = tree.get_event()!!
         var new_value = event.note
         if (event.relative) {
-            if ((event.note > event.base || event.note <= 0 - event.base) && event.note > 0 - (event.base * (event.base - 1))) {
-                new_value = event.note - event.base
-            } else if (event.note >= 0 - event.base) {
+            if ((event.note > event.radix || event.note <= 0 - event.radix) && event.note > 0 - (event.radix * (event.radix - 1))) {
+                new_value = event.note - event.radix
+            } else if (event.note >= 0 - event.radix) {
                 new_value = event.note - 1
             }
         } else if (event.note > 0) {
@@ -157,7 +283,8 @@ class CursorLayer: HistoryLayer {
 
         var beat_key = this.cursor.get_beatkey()
         var position = this.cursor.get_position()
-        this.set_event(beat_key, position, new_value, event.relative)
+        var new_event = OpusEvent(new_value, event.radix, event.channel, event.relative)
+        this.set_event(beat_key, position, new_event)
     }
 
     fun jump_to_beat(beat: Int) {
@@ -182,10 +309,10 @@ class CursorLayer: HistoryLayer {
         this.insert_after(beat_key, position)
     }
 
-    fun get_channel_index(y: Int): Pair(Int, Int) {
+    fun get_channel_index(y: Int): Pair<Int, Int> {
         var counter = 0
         for (channel in this.channel_order) {
-            for (i in 0 .. this.channel_trees[channel].size) {
+            for (i in 0 .. this.channel_trees[channel].size - 1) {
                 if (counter == y) {
                     return Pair(channel, i)
                 }
@@ -195,17 +322,16 @@ class CursorLayer: HistoryLayer {
         throw Exception("IndexError")
     }
 
-    fun get_y(channel: Int, rel_line_offset: Int) {
-        var line_offset
-        if (rel_line_offset < 0) {
-            line_offset = this.channel_trees[channel].size + rel_line_offset
+    fun get_y(channel: Int, rel_line_offset: Int): Int {
+        val line_offset = if (rel_line_offset < 0) {
+            this.channel_trees[channel].size + rel_line_offset
         } else {
-            line_offset = rel_line_offset
+            rel_line_offset
         }
 
-        var y = 0
-        for i in this.channel_order {
-            for (j in 0 .. this.channel_trees[i].size) {
+        var y: Int = 0
+        for (i in this.channel_order) {
+            for (j in 0 .. this.channel_trees[i].size - 1) {
                 if (channel == i && line_offset == j) {
                     return y
                 }
@@ -217,68 +343,59 @@ class CursorLayer: HistoryLayer {
     }
 
     ///////// OpusManagerBase methods
-
-    open override fun insert_beat(index: Int?) {
+    override fun insert_beat(index: Int?) {
         super.insert_beat(index)
         this.cursor.settle()
     }
 
-    open override fun remove_beat(index: Int) {
+    override fun remove_beat(index: Int?) {
         super.remove_beat(index)
         this.cursor.settle()
     }
 
-    open override fun remove(beat_key: BeatKey, position: List<Int>) {
-        super.remove_beat(beat_key, position)
+    override fun remove(beat_key: BeatKey, position: List<Int>) {
+        super.remove(beat_key, position)
         this.cursor.settle()
     }
 
-    open override fun swap_channels(channel_a: Intt, channel_b: Int) {
+    override fun swap_channels(channel_a: Int, channel_b: Int) {
         var original_beatkey = this.cursor.get_beatkey()
         super.swap_channels(channel_a, channel_b)
 
-        var new_y = this.get_y(original_beatkey.channel)
-        ney_y += min(original_beatkey.line_offset, this.channel_trees[original_beatkey.channel].size - 1)
+        var new_y = this.get_y(original_beatkey.channel, 0)
+        new_y += min(original_beatkey.line_offset, this.channel_trees[original_beatkey.channel].size - 1)
 
         this.cursor.set_y(new_y)
         this.cursor.settle()
     }
 
-    open override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
+    override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
         super.split_tree(beat_key, position, splits)
         this.cursor.settle()
     }
 
-    open override fun remove_line(channel: Int, index: Int?) {
+    override fun remove_line(channel: Int, index: Int?) {
         super.remove_line(channel, index)
         this.cursor.settle()
     }
-    open override fun remove_channel(channel: Int) {
+    override fun remove_channel(channel: Int) {
         super.remove_channel(channel)
         this.cursor.settle()
     }
-    open override fun overwrite_beat(old_beat: BeatKey, new_beat: BeatKey) {
+    override fun overwrite_beat(old_beat: BeatKey, new_beat: BeatKey) {
         this.overwrite_beat(old_beat, new_beat)
         this.cursor.settle()
     }
-    open override fun _new() {
-        super._new()
-        this.cursor.set(0,0,[0])
+    override fun new() {
+        super.new()
+        this.cursor.set(0,0, listOf(0))
         this.cursor.settle()
     }
 
-    open override fun _load(path: String) {
-        super._load(path)
+    override fun load(path: String) {
+        super.load(path)
         this.cursor.settle()
     }
 
-    /////// HistoryLayer Methods
-    open override fun append_undoer() {}
-    open override fun close_multi() {
-        super.close_multi()
-        if (! this.history_locked || this.multi_counter > 0) {
-            this.history_ledger.get(-1).add(
-            )
-        }
-    }
+
 }

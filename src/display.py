@@ -383,6 +383,7 @@ class EditorEnvironment:
                 tmp.append(linked_beat)
         flagged_beat_changes = tmp
 
+
         output = True
         cursor = self.opus_manager.cursor.get_triplet()
         while flagged_beat_changes:

@@ -1,61 +1,71 @@
 package radixulous.app
 import radixulous.app.structure.OpusTree
-import radixulous.app.structure.OpusEvent
+import radixulous.app.opusmanager.OpusEvent
 
-val CH_OPEN = "["
-val CH_CLOSE = "]"
-val CH_NEXT = ","
-val CH_ADD = "+"
-val CH_SUBTRACT = "-"
-val CH_UP = "^"
-val CH_DOWN = "v"
-val CH_HOLD = "~"
-val CH_REPEAT = "="
-val CH_CLOPEN = "|"
+const val CH_OPEN = '['
+const val CH_CLOSE = ']'
+const val CH_NEXT = ','
+const val CH_ADD = '+'
+const val CH_SUBTRACT = '-'
+const val CH_UP = '^'
+const val CH_DOWN = 'v'
+const val CH_HOLD = '~'
+const val CH_REPEAT = '='
+const val CH_CLOPEN = '|'
 
 val REL_CHARS = listOf(CH_ADD, CH_SUBTRACT, CH_UP, CH_DOWN, CH_HOLD, CH_REPEAT)
 val SPECIAL_CHARS = listOf(CH_OPEN, CH_CLOSE, CH_NEXT, CH_CLOPEN, CH_ADD, CH_SUBTRACT, CH_UP, CH_DOWN, CH_HOLD, CH_REPEAT)
 
-fun to_string(node: OpusTree<OpusEvent>, depth: Int): String {
+public fun to_string(node: OpusTree<OpusEvent>, depth: Int): String {
     var output: String
     if (node.is_event()) {
-        output = ""
-        var event = node.get_event()
-        if (event.relative) {
+        var event = node.get_event()!!
+        output = if (event.relative) {
             var new_string: String
             if (event.note == 0 || event.note % event.radix != 0) {
-                if (event.note < 0) {
-                    new_string = CH_SUBTRACT
+                new_string = if (event.note < 0) {
+                    CH_SUBTRACT.toString()
                 } else {
-                    new_string = CH_ADD
+                    CH_ADD.toString()
                 }
-                new_string += get_number_string(Math.abs(event.note), evvent.radix, 1)
+                new_string += get_number_string(Math.abs(event.note), event.radix, 1)
             } else {
-                if (event.note < 0) {
-                    new_string = CH_DOWN
+                new_string = if (event.note < 0) {
+                    CH_DOWN.toString()
                 } else {
-                    new_string = CH_UP
+                    CH_UP.toString()
                 }
                 new_string += get_number_string(Math.abs(event.note) / event.radix, event.radix, 1)
             }
-            output = new_string
+            new_string
         } else {
-            output = get_number_string(event.note, event.radix, 2)
+            get_number_string(event.note, event.radix, 2)
         }
-    } else if (node.is_leaf()) {
+    } else if (node.is_leaf() && depth > 0) {
         output = "__"
     } else {
         output = ""
-        for i in 0 .. node.size {
+        for (i in 0 .. node.size - 1) {
             var child = node.get(i)
             output += to_string(child, depth + 1)
+            if (i < node.size - 1) {
+                if (depth > 0) {
+                    output += CH_NEXT
+                } else {
+                    output += CH_CLOPEN
+                }
+            }
+        }
+
+        if (node.size > 1 && depth != 1) {
+            output = "$CH_OPEN$output$CH_CLOSE"
         }
     }
 
     return output
 }
 
-fun from_string(input_string: String, radix: Int, channel: Int) -> OpusTree<OpusEvent> {
+fun from_string(input_string: String, radix: Int, channel: Int): OpusTree<OpusEvent> {
     var repstring = input_string.trim()
     repstring = repstring.replace(" ", "")
     repstring = repstring.replace("\n", "")
@@ -65,27 +75,27 @@ fun from_string(input_string: String, radix: Int, channel: Int) -> OpusTree<Opus
     var output = OpusTree<OpusEvent>()
 
     var tree_stack = mutableListOf(output)
-    var register: Pair<Int?, Int?> = Pair(null, null)
+    var register: Int? = null
     var opened_indeces: MutableList<Int> = mutableListOf()
-    var relative_flag: String? = null
+    var relative_flag: Char? = null
     var repeat_queue: MutableList<OpusTree<OpusEvent>> = mutableListOf()
 
-    for (i in 0 .. repstring.length) {
+    for (i in 0 .. repstring.length - 1) {
         var character = repstring[i]
         if (character == CH_CLOSE || character == CH_CLOPEN) {
             // Remove completed tree from stack
-            tree_stack.removeAt(-1)
-            opened_indeces.removeAt(-1)
+            tree_stack.removeLast()
+            opened_indeces.removeLast()
         }
 
         if (character == CH_NEXT || character == CH_CLOPEN) {
             // Resize Active Tree
-            tree_stack[-1].set_size(tree_stack[-1].size + 1, true)
+            tree_stack.last().set_size(tree_stack.last().size + 1, true)
         }
 
         if (character == CH_OPEN || character == CH_CLOPEN) {
-            var new_tree = tree_stack[-1].get(-1)
-            if (! new_tree.is_open()) {
+            var new_tree = tree_stack.last().get(tree_stack.last().size - 1)
+            if (! new_tree.is_leaf() && ! new_tree.is_event()) {
                 throw Exception("MISSING COMMA")
             }
             tree_stack.add(new_tree)
@@ -94,17 +104,22 @@ fun from_string(input_string: String, radix: Int, channel: Int) -> OpusTree<Opus
             // Maybe remove?
         } else if (relative_flag != null) {
             var odd_note = 0
-            if (relative_flag == CH_SUBTRACT) {
-                odd_note -= str_to_int(character, radix)
-            } else if (relative_flag == CH_ADD) {
-                odd_note += str_to_int(character, radix)
-            } else if (relative_flag == CH_UP) {
-                odd_note += str_to_int(character, radix) * radix
-            } else if (relative_flag == CH_DOWN) {
-                odd_note -= str_to_int(character, radix) * radix
+            when (relative_flag) {
+                CH_SUBTRACT -> {
+                    odd_note -= char_to_int(character, radix)
+                }
+                CH_ADD -> {
+                    odd_note += char_to_int(character, radix)
+                }
+                CH_UP -> {
+                    odd_note += char_to_int(character, radix) * radix
+                }
+                CH_DOWN -> {
+                    odd_note -= char_to_int(character, radix) * radix
+                }
             }
 
-            var leaf = tree_stack[-1].get(-1)
+            var leaf = tree_stack.last().get(tree_stack.last().size - 1)
             if (relative_flag != CH_HOLD) {
                 leaf.set_event(
                     OpusEvent(
@@ -115,17 +130,15 @@ fun from_string(input_string: String, radix: Int, channel: Int) -> OpusTree<Opus
                     )
                 )
             }
-            previous_note = odd_note
             relative_flag = null
         } else if (REL_CHARS.contains(character)) {
             relative_flag = character
         } else if (!SPECIAL_CHARS.contains(character)) {
-            if (register.first == null) {
-                register.first = str_to_int(character, radix)
-            } else if (register.second == null) {
-                register.second = str_to_int(character, radix)
-                var odd_note = (register.first * radix) + register.second
-                var leaf = tree_stack[-1].get(-1)
+            if (register == null) {
+                register = char_to_int(character, radix)
+            } else {
+                var odd_note = (register * radix) + char_to_int(character, radix)
+                var leaf = tree_stack.last().get(tree_stack.last().size - 1)
                 leaf.set_event(
                     OpusEvent(
                         odd_note,
@@ -134,7 +147,7 @@ fun from_string(input_string: String, radix: Int, channel: Int) -> OpusTree<Opus
                         false
                     )
                 )
-                register = Pair(null, null)
+                register = null
             }
 
         }
@@ -148,13 +161,13 @@ fun from_string(input_string: String, radix: Int, channel: Int) -> OpusTree<Opus
     return output
 }
 
-fun get_number_string(number: Int, radix: Int, digits: Int) -> String {
+fun get_number_string(number: Int, radix: Int, digits: Int): String {
     var output: String = ""
     var working_number = number
     var selector = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     while (working_number > 0) {
-        outpuut = selector[number % radix] + output
-        number /= radix
+        output = selector[number % radix] + output
+        working_number /= radix
     }
 
     while (output.length < digits) {
@@ -163,11 +176,13 @@ fun get_number_string(number: Int, radix: Int, digits: Int) -> String {
 
     return output
 }
-
+fun char_to_int(number: Char, radix: Int): Int {
+    return str_to_int(number.toString(), radix)
+}
 fun str_to_int(number: String, radix: Int): Int {
     var selector = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     var output: Int = 0
-    for (i in 0 .. number.length) {
+    for (i in 0 .. number.length - 1) {
         output *= radix
         var index = selector.indexOf(number[i].uppercase())
         output += index
@@ -175,4 +190,3 @@ fun str_to_int(number: String, radix: Int): Int {
 
     return output
 }
-

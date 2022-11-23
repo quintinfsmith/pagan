@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Optional, Dict, List, Tuple, Any
 
 from .miditree import MIDITree, MIDITreeEvent
-from .layer_links import LinksLayer, BeatKey
+from .layer_base import OpusManagerBase, BeatKey
 
 class UpdatesCache:
     """
@@ -36,7 +36,7 @@ class UpdatesCache:
             self.cache[key] = []
         return output
 
-class FlagLayer(LinksLayer):
+class FlagLayer(OpusManagerBase):
     """
         Flags changes made to the OpusManager
         so a GUI can update itself accordingly

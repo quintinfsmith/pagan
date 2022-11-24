@@ -163,7 +163,7 @@ open class CursorLayer() : LinksLayer() {
     var channel_order = Array(16, { i -> i })
     fun line_count(): Int {
         var output: Int = 0
-        for (channel in this.channel_trees) {
+        for (channel in this.channel_lines) {
             output += channel.size
         }
         return output
@@ -312,7 +312,7 @@ open class CursorLayer() : LinksLayer() {
     fun get_channel_index(y: Int): Pair<Int, Int> {
         var counter = 0
         for (channel in this.channel_order) {
-            for (i in 0 .. this.channel_trees[channel].size - 1) {
+            for (i in 0 .. this.channel_lines[channel].size - 1) {
                 if (counter == y) {
                     return Pair(channel, i)
                 }
@@ -324,14 +324,14 @@ open class CursorLayer() : LinksLayer() {
 
     fun get_y(channel: Int, rel_line_offset: Int): Int {
         val line_offset = if (rel_line_offset < 0) {
-            this.channel_trees[channel].size + rel_line_offset
+            this.channel_lines[channel].size + rel_line_offset
         } else {
             rel_line_offset
         }
 
         var y: Int = 0
         for (i in this.channel_order) {
-            for (j in 0 .. this.channel_trees[i].size - 1) {
+            for (j in 0 .. this.channel_lines[i].size - 1) {
                 if (channel == i && line_offset == j) {
                     return y
                 }
@@ -363,7 +363,7 @@ open class CursorLayer() : LinksLayer() {
         super.swap_channels(channel_a, channel_b)
 
         var new_y = this.get_y(original_beatkey.channel, 0)
-        new_y += min(original_beatkey.line_offset, this.channel_trees[original_beatkey.channel].size - 1)
+        new_y += min(original_beatkey.line_offset, this.channel_lines[original_beatkey.channel].size - 1)
 
         this.cursor.set_y(new_y)
         this.cursor.settle()

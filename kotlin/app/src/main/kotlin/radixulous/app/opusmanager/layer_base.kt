@@ -7,7 +7,7 @@ data class BeatKey(var channel: Int, var line_offset: Int, var beat: Int)
 open class OpusManagerBase {
     var RADIX: Int = 12
     var DEFAULT_PERCUSSION: Int = 0x35
-    var channel_trees: Array<MutableList<OpusTree<OpusEvent>>> = Array(16, { _ -> mutableListOf() })
+    var channel_lines: Array<MutableList<MutableList<OpusTree<OpusEvent>>>> = Array(16, { _ -> mutableListOf() })
     var opus_beat_count: Int = 1
     var path: String? = null
     var percussion_map: HashMap<Int, Int> = HashMap<Int, Int>()
@@ -123,15 +123,22 @@ open class OpusManagerBase {
     }
 
     open fun change_line_channel(old_channel: Int, line_index: Int, new_channel: Int) {
-        var tree = this.channel_trees[old_channel].removeAt(line_index)
-        this.channel_trees[new_channel].add(tree)
+        var tree = this.channel_lines[old_channel].removeAt(line_index)
+        this.channel_lines[new_channel].add(tree)
     }
 
     open fun insert_beat(index: Int?) {
+        var abs_index = if (index == null) {
+            this.opus_beat_count
+        } else if (index < 0) {
+            this.opus_beat_count + index + 1
+        } else {
+            index
+        }
         this.opus_beat_count += 1
-        for (channel in this.channel_trees) {
+        for (channel in this.channel_lines) {
             for (line in channel) {
-                line.insert(index, OpusTree<OpusEvent>())
+                line.add(abs_index, OpusTree<OpusEvent>())
             }
         }
     }
@@ -144,7 +151,7 @@ open class OpusManagerBase {
         // Adjust the new_index so it doesn't get confused
         // when we pop() the old_index
         var adj_new_index: Int = if (new_index < 0) {
-            this.channel_trees[channel].size + new_index
+            this.channel_lines[channel].size + new_index
         } else {
             new_index
         }
@@ -152,53 +159,61 @@ open class OpusManagerBase {
         if (new_index < 0) {
             throw Exception("INDEXERROR")
         }
-        if (old_index >= this.channel_trees[channel].size) {
+        if (old_index >= this.channel_lines[channel].size) {
             throw Exception("INDEXERROR")
         }
 
-        var tree = this.channel_trees[channel].removeAt(old_index)
-        this.channel_trees[channel].add(adj_new_index, tree)
+        var line = this.channel_lines[channel].removeAt(old_index)
+        this.channel_lines[channel].add(adj_new_index, line)
     }
 
     open fun new_line(channel: Int, index: Int? = null) {
-        var new_tree = OpusTree<OpusEvent>()
-        new_tree.set_size(this.opus_beat_count)
+        var line: MutableList<OpusTree<OpusEvent>> = MutableList(16, { _ -> OpusTree<OpusEvent>() })
 
         if (index == null) {
-            this.channel_trees[channel].add(new_tree)
+            this.channel_lines[channel].add(line)
         } else {
-            this.channel_trees[channel].add(index, new_tree)
+            this.channel_lines[channel].add(index, line)
         }
     }
+
     open fun overwrite_beat(old_beat: BeatKey, new_beat: BeatKey) {
-        var new_tree = this.channel_trees[new_beat.channel][new_beat.line_offset].get(new_beat.beat).copy()
-        var old_tree = this.channel_trees[old_beat.channel][old_beat.line_offset].get(old_beat.beat)
+        var new_tree = this.channel_lines[new_beat.channel][new_beat.line_offset][new_beat.beat].copy()
+        var old_tree = this.channel_lines[old_beat.channel][old_beat.line_offset][old_beat.beat]
         old_tree.replace_with(new_tree)
-        this.channel_trees[old_beat.channel][old_beat.line_offset].set(old_beat.beat, new_tree)
+        this.channel_lines[old_beat.channel][old_beat.line_offset][old_beat.beat] = new_tree
     }
 
-    open fun remove_beat(beat_index: Int?) {
-        for (channel in this.channel_trees) {
+    open fun remove_beat(rel_beat_index: Int?) {
+        var beat_index = if (rel_beat_index == null) {
+            this.opus_beat_count - 1
+        } else if (rel_beat_index < 0) {
+            this.opus_beat_count + rel_beat_index
+        } else {
+            rel_beat_index
+        }
+
+        for (channel in this.channel_lines) {
             for (line in channel) {
-                line.pop(beat_index)
+                line.removeAt(beat_index)
             }
         }
         this.set_beat_count(this.opus_beat_count - 1)
     }
 
     open fun remove_channel(channel: Int) {
-        while (this.channel_trees[channel].size > 0) {
+        while (this.channel_lines[channel].size > 0) {
             this.remove_line(channel, 0)
         }
     }
 
     open fun remove_line(channel: Int, index: Int? = null) {
         var adj_index = if (index == null) {
-            this.channel_trees[channel].size - 1
+            this.channel_lines[channel].size - 1
         } else {
             index
         }
-        this.channel_trees[channel].removeAt(adj_index)
+        this.channel_lines[channel].removeAt(adj_index)
     }
 
     open fun replace_tree(beat_key: BeatKey, position: List<Int>, tree: OpusTree<OpusEvent>) {
@@ -206,35 +221,33 @@ open class OpusManagerBase {
     }
 
     open fun replace_beat(beat_key: BeatKey, tree: OpusTree<OpusEvent>) {
-        var old_tree = this.channel_trees[beat_key.channel][beat_key.line_offset].get(beat_key.beat)
+        var old_tree = this.channel_lines[beat_key.channel][beat_key.line_offset][beat_key.beat]
         old_tree.replace_with(tree)
     }
 
-
-
     open fun swap_channels(channel_a: Int, channel_b: Int) {
-        var tmp = this.channel_trees[channel_b]
-        this.channel_trees.set(channel_b, this.channel_trees[channel_a])
-        this.channel_trees.set(channel_a, tmp)
+        var tmp = this.channel_lines[channel_b]
+        this.channel_lines[channel_b] = this.channel_lines[channel_a]
+        this.channel_lines[channel_a] = tmp
     }
 
     //open fun export(path: String? = null, kwargs: HashMap) { }
 
     fun get_beat_tree(beat_key: BeatKey): OpusTree<OpusEvent> {
         var line_offset: Int
-        if (beat_key.channel >= this.channel_trees.size) {
+        if (beat_key.channel >= this.channel_lines.size) {
             throw Exception("Invalid BeatKey {beat_key}")
         }
 
         if (beat_key.line_offset < 0) {
-            line_offset = this.channel_trees[beat_key.channel].size - beat_key.line_offset
+            line_offset = this.channel_lines[beat_key.channel].size - beat_key.line_offset
         } else {
             line_offset = beat_key.line_offset
         }
-        if (line_offset > this.channel_trees[beat_key.channel].size) {
+        if (line_offset > this.channel_lines[beat_key.channel].size) {
             throw Exception("Invalid BeatKey {beat_key}")
         }
-        return this.channel_trees[beat_key.channel][line_offset].get(beat_key.beat)
+        return this.channel_lines[beat_key.channel][line_offset][beat_key.beat]
     }
 
     fun get_tree(beat_key: BeatKey, position: List<Int>): OpusTree<OpusEvent> {
@@ -255,9 +268,14 @@ open class OpusManagerBase {
 
     private fun set_beat_count(new_count: Int) {
         this.opus_beat_count = new_count
-        for (channel in this.channel_trees) {
+        for (channel in this.channel_lines) {
             for (line in channel) {
-                line.set_size(new_count, true)
+                while (line.size > new_count) {
+                    line.removeLast()
+                }
+                while (new_count > line.size) {
+                    line.add(OpusTree<OpusEvent>())
+                }
             }
         }
     }
@@ -265,9 +283,10 @@ open class OpusManagerBase {
     open fun save(path: String? = null) { }
     open fun load(path: String) { }
     open fun new() {
-        var new_line = OpusTree<OpusEvent>()
-        new_line.set_size(4)
-        this.channel_trees[0].add(new_line)
+        var new_line: MutableList<OpusTree<OpusEvent>> = MutableList(4, { _ -> OpusTree<OpusEvent>() })
+
+        this.channel_lines[0].add(new_line)
+
         this.opus_beat_count = 4
     }
 

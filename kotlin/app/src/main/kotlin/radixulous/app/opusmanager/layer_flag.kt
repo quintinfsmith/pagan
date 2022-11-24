@@ -62,8 +62,8 @@ open class FlagLayer() : OpusManagerBase() {
 
     override fun swap_channels(channel_a: Int, channel_b: Int) {
         super.swap_channels(channel_a, channel_b)
-        var len_a = this.channel_trees[channel_a].size
-        var len_b = this.channel_trees[channel_b].size
+        var len_a = this.channel_lines[channel_a].size
+        var len_b = this.channel_lines[channel_b].size
         for (i in 0 .. len_b - 1) {
             this.cache.flag_line_pop(channel_a, len_b - 1 - i)
         }
@@ -86,8 +86,8 @@ open class FlagLayer() : OpusManagerBase() {
         for (i in 0 .. this.opus_beat_count - 1) {
             this.cache.flag_beat_new(i)
         }
-        for (i in 0 .. this.channel_trees.size - 1) {
-            var channel = this.channel_trees[i]
+        for (i in 0 .. this.channel_lines.size - 1) {
+            var channel = this.channel_lines[i]
             for (j in 0 .. channel.size - 1) {
                 this.cache.flag_line_init(i, j)
             }
@@ -98,8 +98,8 @@ open class FlagLayer() : OpusManagerBase() {
         for (i in 0 .. this.opus_beat_count - 1) {
             this.cache.flag_beat_new(i)
         }
-        for (i in 0 .. this.channel_trees.size - 1) {
-            var channel = this.channel_trees[i]
+        for (i in 0 .. this.channel_lines.size - 1) {
+            var channel = this.channel_lines[i]
             for (j in 0 .. channel.size - 1) {
                 this.cache.flag_line_init(i, j)
             }
@@ -138,7 +138,7 @@ open class FlagLayer() : OpusManagerBase() {
         super.new_line(channel, index)
 
         var line_index = if (index == null) {
-            this.channel_trees[channel].size - 1
+            this.channel_lines[channel].size - 1
         } else {
             index
         }
@@ -164,7 +164,7 @@ open class FlagLayer() : OpusManagerBase() {
         super.remove_line(channel, index)
 
         if (index == null) {
-            this.cache.flag_line_pop(channel, this.channel_trees[channel].size)
+            this.cache.flag_line_pop(channel, this.channel_lines[channel].size)
         } else {
             this.cache.flag_line_pop(channel, index)
         }

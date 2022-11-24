@@ -110,7 +110,7 @@ class OpusManagerBase:
         """Adjust the number of beats in the opus"""
         self.opus_beat_count = new_count
         for channel in self.channel_lines:
-            for i, line in enumerate(channel):
+            for line in channel:
                 while new_count < len(line):
                     line.pop()
                 while new_count > len(line):

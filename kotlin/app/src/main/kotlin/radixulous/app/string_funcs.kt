@@ -11,12 +11,12 @@ const val CH_UP = '^'
 const val CH_DOWN = 'v'
 const val CH_HOLD = '~'
 const val CH_REPEAT = '='
-const val CH_CLOPEN = '|'
+
 
 val REL_CHARS = listOf(CH_ADD, CH_SUBTRACT, CH_UP, CH_DOWN, CH_HOLD, CH_REPEAT)
-val SPECIAL_CHARS = listOf(CH_OPEN, CH_CLOSE, CH_NEXT, CH_CLOPEN, CH_ADD, CH_SUBTRACT, CH_UP, CH_DOWN, CH_HOLD, CH_REPEAT)
+val SPECIAL_CHARS = listOf(CH_OPEN, CH_CLOSE, CH_NEXT, CH_ADD, CH_SUBTRACT, CH_UP, CH_DOWN, CH_HOLD, CH_REPEAT)
 
-public fun to_string(node: OpusTree<OpusEvent>, depth: Int): String {
+public fun to_string(node: OpusTree<OpusEvent>): String {
     var output: String
     if (node.is_event()) {
         var event = node.get_event()!!
@@ -41,23 +41,19 @@ public fun to_string(node: OpusTree<OpusEvent>, depth: Int): String {
         } else {
             get_number_string(event.note, event.radix, 2)
         }
-    } else if (node.is_leaf() && depth > 0) {
+    } else if (node.is_leaf()) {
         output = "__"
     } else {
         output = ""
         for (i in 0 .. node.size - 1) {
             var child = node.get(i)
-            output += to_string(child, depth + 1)
+            output += to_string(child)
             if (i < node.size - 1) {
-                if (depth > 0) {
-                    output += CH_NEXT
-                } else {
-                    output += CH_CLOPEN
-                }
+                output += CH_NEXT
             }
         }
 
-        if (node.size > 1 && depth != 1) {
+        if (node.size > 1) {
             output = "$CH_OPEN$output$CH_CLOSE"
         }
     }
@@ -82,18 +78,18 @@ fun from_string(input_string: String, radix: Int, channel: Int): OpusTree<OpusEv
 
     for (i in 0 .. repstring.length - 1) {
         var character = repstring[i]
-        if (character == CH_CLOSE || character == CH_CLOPEN) {
+        if (character == CH_CLOSE) {
             // Remove completed tree from stack
             tree_stack.removeLast()
             opened_indeces.removeLast()
         }
 
-        if (character == CH_NEXT || character == CH_CLOPEN) {
+        if (character == CH_NEXT) {
             // Resize Active Tree
             tree_stack.last().set_size(tree_stack.last().size + 1, true)
         }
 
-        if (character == CH_OPEN || character == CH_CLOPEN) {
+        if (character == CH_OPEN) {
             var new_tree = tree_stack.last().get(tree_stack.last().size - 1)
             if (! new_tree.is_leaf() && ! new_tree.is_event()) {
                 throw Exception("MISSING COMMA")

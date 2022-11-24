@@ -53,38 +53,23 @@ class OpusManagerTest(unittest.TestCase):
             manager.insert_after(beat_key, [0])
         tree = manager.get_tree(beat_key, [3])
         manager.remove(beat_key, [2])
-        assert tree == manager.get_tree(beat_key, [2])
+        assert tree == manager.get_tree(beat_key, [2]), "sibling didn't get adjusted"
 
-        # check that N->1->N gets reduced to N->N
-        manager.split_tree(beat_key, [2], 2)
-        manager.split_tree(beat_key, [2,0], 2)
-        manager.split_tree(beat_key, [2,0,0], 2)
-        tree = manager.get_tree(beat_key, [2,0,0])
-        manager.remove(beat_key, [2,1])
-        assert tree == manager.get_tree(beat_key, [2,0])
-
-        # *Attempt* to remove a beat with remove()
-        try:
-            manager.remove(beat_key, [])
-        except InvalidPosition:
-            assert True
-        except Exception:
-            assert False, "Incorrect exception type raised"
-        assert len(beat_tree.parent) == manager.opus_beat_count, "Removed a beat with remove()"
 
     def test_split_tree(self):
         # Setup an opus
         manager = OpusManager.new()
         split_count = 5
         beat_key = (0,0,0)
-        beat_tree = manager.get_beat_tree(beat_key)
 
         # Split a beat
         manager.split_tree(beat_key, [], split_count)
+        beat_tree = manager.get_beat_tree(beat_key)
         assert len(beat_tree) == split_count, "Failed to split the beat"
 
         # Split an open leaf
         manager.split_tree(beat_key, [split_count - 1], split_count)
+        beat_tree = manager.get_beat_tree(beat_key)
         assert len(beat_tree[split_count - 1]) == split_count, "Failed to split a tree"
 
         # Split an event
@@ -119,15 +104,6 @@ class OpusManagerTest(unittest.TestCase):
         manager.set_event(beat_key, [0], MIDITreeEvent(event_value - 4))
         tree = manager.get_tree(beat_key, [0])
         assert tree.is_event(), "Failed to overwrite existing structure"
-
-        # *Attempt* To set event at beat
-        try:
-            manager.set_event(beat_key, [], MIDITreeEvent(event_value))
-            assert False, "Successfully set beat as an event"
-        except InvalidPosition:
-            assert True
-        except Exception:
-            assert False, "Failed to set beat as event, but failed incorrectly"
 
         p_beat_key = (9,0,0)
         # *Attempt* to set event on percussion channel
@@ -190,8 +166,8 @@ class OpusManagerTest(unittest.TestCase):
         beat_tree = manager.get_beat_tree(beat_key)
 
         manager.set_event(beat_key, [0], MIDITreeEvent(event_value))
-        tree = manager.get_tree(beat_key,[0])
         manager.unset(beat_key, [0])
+        tree = manager.get_tree(beat_key,[0])
         assert tree.is_open(), "Failed to unset event"
 
         # Make a little tree
@@ -202,14 +178,6 @@ class OpusManagerTest(unittest.TestCase):
         manager.unset(beat_key, [0])
         assert manager.get_tree(beat_key, [0]).is_open(), "Failed to unset a structural tree"
 
-        # *Attempt* to unset beat
-        try:
-            manager.unset(beat_key, [])
-            assert False, "Successfully unset a beat"
-        except InvalidPosition:
-            assert True
-        except Exception:
-            assert False, "Incorrect exception in failing to unset beat"
 
     def test_insert_beat(self):
         # Setup an opus
@@ -240,10 +208,10 @@ class OpusManagerTest(unittest.TestCase):
     def test_change_line_channel(self):
         manager = OpusManager.new()
         manager.add_channel(1)
-        line = manager.channel_trees[1][0]
+        line = manager.channel_lines[1][0]
         manager.change_line_channel(1, 0, 0)
 
-        assert line == manager.channel_trees[0][1], "Failed to move line to new channel"
+        assert line == manager.channel_lines[0][1], "Failed to move line to new channel"
 
     def test_swap_channels(self):
         index_a = 0
@@ -255,16 +223,16 @@ class OpusManagerTest(unittest.TestCase):
         # Add a channel to be  swapped with 0
         manager.add_channel(1)
         manager.new_line(1)
-        channel_a_line_a = manager.channel_trees[index_a][0]
-        channel_a_line_b = manager.channel_trees[index_a][1]
-        channel_b_line_a = manager.channel_trees[index_b][0]
-        channel_b_line_b = manager.channel_trees[index_b][1]
+        channel_a_line_a = manager.channel_lines[index_a][0]
+        channel_a_line_b = manager.channel_lines[index_a][1]
+        channel_b_line_a = manager.channel_lines[index_b][0]
+        channel_b_line_b = manager.channel_lines[index_b][1]
 
         manager.swap_channels(index_a, index_b)
-        assert channel_a_line_a == manager.channel_trees[index_b][0] \
-            and channel_b_line_a == manager.channel_trees[index_a][0] \
-            and channel_a_line_b == manager.channel_trees[index_b][1] \
-            and channel_b_line_b == manager.channel_trees[index_a][1], "Didn't swap lines in channels correctly"
+        assert channel_a_line_a == manager.channel_lines[index_b][0] \
+            and channel_b_line_a == manager.channel_lines[index_a][0] \
+            and channel_a_line_b == manager.channel_lines[index_b][1] \
+            and channel_b_line_b == manager.channel_lines[index_a][1], "Didn't swap lines in channels correctly"
 
     def test_remove_channel(self):
         # Set up an opus
@@ -273,7 +241,7 @@ class OpusManagerTest(unittest.TestCase):
         manager.new_line(1)
 
         manager.remove_channel(1)
-        assert not manager.channel_trees[1], "Failed to removed channel 1"
+        assert not manager.channel_lines[1], "Failed to removed channel 1"
 
     def test_remove_line(self):
         # Set up an opus
@@ -283,49 +251,49 @@ class OpusManagerTest(unittest.TestCase):
             manager.new_line(1)
 
         index = 12
-        line = manager.channel_trees[1][index]
+        line = manager.channel_lines[1][index]
 
         manager.remove_line(1, index - 1)
         # Checking that the line *before* the line to check is removed
-        assert manager.channel_trees[1][index - 1] == line, "Failed to remove line in channel 1"
+        assert manager.channel_lines[1][index - 1] == line, "Failed to remove line in channel 1"
 
-        current_length = len(manager.channel_trees[1])
+        current_length = len(manager.channel_lines[1])
 
         line_checks = []
-        for l in manager.channel_trees[1]:
+        for l in manager.channel_lines[1]:
             line_checks.append(l)
 
         manager.remove_line(1)
 
-        assert len(manager.channel_trees[1]) == current_length - 1, "Failed to remove line given no index"
+        assert len(manager.channel_lines[1]) == current_length - 1, "Failed to remove line given no index"
         removed_incorrect_line = False
         for l, line in enumerate(line_checks[0:-1]):
-            removed_incorrect_line |= line != manager.channel_trees[1][l]
+            removed_incorrect_line |= line != manager.channel_lines[1][l]
         assert not removed_incorrect_line, "Removed wrong line (should've assumed -1)"
 
     def test_add_line(self):
         manager = OpusManager.new()
-        line = manager.channel_trees[0][0]
+        line = manager.channel_lines[0][0]
         manager.new_line(0, 0)
-        assert line == manager.channel_trees[0][1], "Failed to insert line at index"
+        assert line == manager.channel_lines[0][1], "Failed to insert line at index"
 
     def test_move_line(self):
         manager = OpusManager.new()
-        line = manager.channel_trees[0][0]
+        line = manager.channel_lines[0][0]
         for i in range(12):
             manager.new_line(0)
         manager.move_line(channel=0, old_index=0, new_index=2)
-        assert line == manager.channel_trees[0][2]
+        assert line == manager.channel_lines[0][2]
 
         manager.move_line(channel=0, old_index=2, new_index=-1)
-        assert line == manager.channel_trees[0][-1], "Failed to move line to Nth-from-last"
+        assert line == manager.channel_lines[0][-1], "Failed to move line to Nth-from-last"
 
 
         manager.move_line(channel=0, old_index=-1, new_index=0)
-        assert line == manager.channel_trees[0][0], "Failed to move line by Nth-from-last index"
+        assert line == manager.channel_lines[0][0], "Failed to move line by Nth-from-last index"
 
         manager.move_line(0, 0, 0)
-        assert line == manager.channel_trees[0][0], "Something went wrong when moving a line to the same position"
+        assert line == manager.channel_lines[0][0], "Something went wrong when moving a line to the same position"
 
         # *Attempt* bad indices
         try:

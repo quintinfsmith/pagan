@@ -66,25 +66,28 @@ class HistoryLayerTest(unittest.TestCase):
 
     def test_lines_at_cursor(self):
         manager = OpusManager.new()
-        original_lines = len(manager.channel_trees[0])
+        original_lines = len(manager.channel_lines[0])
 
         manager.new_line_at_cursor()
-        assert original_lines + 1 == len(manager.channel_trees[0])
+        assert original_lines + 1 == len(manager.channel_lines[0])
 
         manager.cursor_down()
         manager.remove_line_at_cursor()
-        assert original_lines == len(manager.channel_trees[0])
+        assert original_lines == len(manager.channel_lines[0])
 
     def test_beats_at_cursor(self):
         manager = OpusManager.new()
-        original_beats = list(manager.channel_trees[0][0])
+        original_beats = list(manager.channel_lines[0][0])
         manager.insert_beat_at_cursor()
-        new_beats = list(manager.channel_trees[0][0])
+        new_beats = list(manager.channel_lines[0][0])
         assert original_beats[0] == new_beats[0] and original_beats[1] == new_beats[2], "insert_beat_at_cursor() inserted at wrong position"
 
         manager.cursor_right()
         manager.remove_beat_at_cursor()
-        assert original_beats == list(manager.channel_trees[0][0]), "remove_beat_at_cursor() removed wrong beat"
+
+        assert manager.opus_beat_count == len(original_beats)
+        assert len(manager.channel_lines[0][0]) == len(original_beats)
+        assert original_beats == list(manager.channel_lines[0][0]), "remove_beat_at_cursor() removed wrong beat"
 
 
     def test_split_tree_at_cursor(self):

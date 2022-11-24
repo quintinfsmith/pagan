@@ -235,8 +235,8 @@ class CursorLayer(LinksLayer):
         position = self.cursor.position
         beat_tree = self.get_beat_tree(beat_key)
 
-        # Special case for beat if beat is leaf
-        if beat_tree.size == 1:
+        # Special case for beats' only leaf
+        if beat_tree.size == 1 and position == [0]:
             self.insert_after(beat_key, position)
         else:
             self.split_tree(beat_key, position, 2)

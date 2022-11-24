@@ -110,8 +110,12 @@ class OpusManagerBase:
         """Adjust the number of beats in the opus"""
         self.opus_beat_count = new_count
         for channel in self.channel_lines:
-            for line in channel:
-                line.append(MIDITree())
+            for i, line in enumerate(channel):
+                while new_count < len(line):
+                    line.pop()
+                while new_count > len(line):
+                    line.append(MIDITree())
+
 
     def set_percussion_event(self, beat_key: BeatKey, position: List[int]) -> None:
         """
@@ -169,6 +173,12 @@ class OpusManagerBase:
         new_tree.set_size(splits, True)
         tree.replace_with(new_tree)
         new_tree[0].replace_with(tree)
+
+        while new_tree.parent is not None and new_tree.parent.size == 1:
+            new_tree.parent.replace_with(new_tree)
+
+        if new_tree.parent is None:
+            self.channel_lines[beat_key[0]][beat_key[1]][beat_key[2]] = new_tree
 
     def unset(
             self,
@@ -395,6 +405,7 @@ class OpusManagerBase:
         for channel in self.channel_lines:
             for line in channel:
                 line.pop(index)
+
         self._set_beat_count(self.opus_beat_count - 1)
 
 

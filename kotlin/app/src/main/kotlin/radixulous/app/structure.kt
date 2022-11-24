@@ -393,6 +393,24 @@ public class OpusTree<T> {
         return output
     }
 
+    fun detach() {
+        if (this.parent == null) {
+            return
+        }
+
+        var index = null
+        for (i in self.parent.divisions.keys) {
+            var node = self.parent.divisions[i]
+            if (this == node) {
+                index = i
+                break
+            }
+        }
+        if (index != null) {
+            this.parent.pop(index)
+        }
+    }
+
     public fun empty() {
         this.divisions = HashMap<Int, OpusTree<T>>()
         this.size = 1

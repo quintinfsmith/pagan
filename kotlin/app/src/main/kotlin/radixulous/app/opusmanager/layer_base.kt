@@ -32,30 +32,18 @@ open class OpusManagerBase {
 
     open fun remove(beat_key: BeatKey, position: List<Int>) {
         val tree = this.get_tree(beat_key, position)
-        val parent = tree.parent ?: return
 
-        if (position == listOf(0) && parent.size == 1) {
-            this.unset(beat_key, position)
+        // Can't remove beat
+        if (tree.parent == null) {
             return
         }
-
-        val index = position.last()
-        val new_size = parent.size - 1
-
-        if (new_size > 0) {
-            for (i in parent.divisions.keys) {
-                if (i < index || i == parent.size - 1) {
-                    continue
-                }
-                parent.set(i, parent.get(i + 1))
-            }
-            parent.set_size(new_size, true)
-
-            // replace the parent with the child
-            if (new_size == 1 && this.get_beat_tree(beat_key) != parent) {
-                parent.get_parent()!!.set(position[position.size - 2], parent.get(0))
-            }
+        if (tree.parent.size == 1) {
+            var next_postision = position.copy()
+            next_position.removeLast()
+            this.remove(beat_key, next_position)
         }
+
+        tree.detach
     }
 
     open fun set_percussion_event(beat_key: BeatKey, position: List<Int>) {
@@ -92,20 +80,17 @@ open class OpusManagerBase {
     }
 
     open fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
-        var beat_tree = this.get_beat_tree(beat_key) ?: return
-        val tree: OpusTree<OpusEvent> = if (position.size > 0) {
-            this.get_tree(beat_key, position)
-        } else {
-            beat_tree.get(0)
-        }
+        val tree: OpusTree<OpusEvent> = this.get_tree(beat_key, position)
 
-        if (tree.is_event()) {
-            var new_tree = OpusTree<OpusEvent>()
-            new_tree.set_size(splits)
-            tree.replace_with(new_tree)
-            new_tree.get(0).replace_with(tree)
-        } else {
-            tree.set_size(splits, true)
+        var new_tree = OpusTree<OpusEvent>()
+        new_tree.set_size(splits)
+        tree.replace_with(new_tree)
+        new_tree.get(0).replace_with(tree)
+        while (new_tree.parent != null && new_tree.parent.size == 1) {
+            new_tree.parent.replace_with(new_tree)
+
+        if (new_tree.parent == null) {
+            this.channel_lines[beat_key[0]][beat_key[1]][beat_key[2]] = new_tree
         }
     }
 

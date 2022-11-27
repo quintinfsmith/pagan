@@ -1,5 +1,5 @@
-package radixulous.app
-import radixulous.app.opusmanager.OpusEvent
+package com.qfs.radixulous
+import com.qfs.radixulous.opusmanager.OpusEvent
 
 class EventRegister {
     var RADIX = 12

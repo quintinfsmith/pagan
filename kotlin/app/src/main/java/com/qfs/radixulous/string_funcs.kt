@@ -1,6 +1,6 @@
-package radixulous.app
-import radixulous.app.structure.OpusTree
-import radixulous.app.opusmanager.OpusEvent
+package com.qfs.radixulous
+import com.qfs.radixulous.structure.OpusTree
+import com.qfs.radixulous.opusmanager.OpusEvent
 
 const val CH_OPEN = '['
 const val CH_CLOSE = ']'

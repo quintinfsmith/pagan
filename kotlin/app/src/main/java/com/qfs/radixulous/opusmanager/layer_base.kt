@@ -1,5 +1,5 @@
-package radixulous.app.opusmanager
-import radixulous.app.structure.OpusTree
+package com.qfs.radixulous.opusmanager
+import com.qfs.radixulous.structure.OpusTree
 
 data class OpusEvent(var note: Int, var radix: Int, var channel: Int, var relative: Boolean)
 data class BeatKey(var channel: Int, var line_offset: Int, var beat: Int)
@@ -37,13 +37,13 @@ open class OpusManagerBase {
         if (tree.parent == null) {
             return
         }
-        if (tree.parent.size == 1) {
-            var next_postision = position.copy()
+        if (tree.parent!!.size == 1) {
+            var next_position = position.toMutableList()
             next_position.removeLast()
             this.remove(beat_key, next_position)
         }
 
-        tree.detach
+        tree.detach()
     }
 
     open fun set_percussion_event(beat_key: BeatKey, position: List<Int>) {
@@ -86,11 +86,14 @@ open class OpusManagerBase {
         new_tree.set_size(splits)
         tree.replace_with(new_tree)
         new_tree.get(0).replace_with(tree)
-        while (new_tree.parent != null && new_tree.parent.size == 1) {
-            new_tree.parent.replace_with(new_tree)
+        var parent = new_tree.get_parent()
+        while (parent != null && parent.size == 1) {
+            parent.replace_with(new_tree)
+            parent = new_tree.parent
+        }
 
         if (new_tree.parent == null) {
-            this.channel_lines[beat_key[0]][beat_key[1]][beat_key[2]] = new_tree
+            this.channel_lines[beat_key.channel][beat_key.line_offset][beat_key.beat] = new_tree
         }
     }
 
@@ -153,7 +156,7 @@ open class OpusManagerBase {
     }
 
     open fun new_line(channel: Int, index: Int? = null) {
-        var line: MutableList<OpusTree<OpusEvent>> = MutableList(16, { _ -> OpusTree<OpusEvent>() })
+        var line: MutableList<OpusTree<OpusEvent>> = MutableList(this.opus_beat_count, { _ -> OpusTree<OpusEvent>() })
 
         if (index == null) {
             this.channel_lines[channel].add(line)
@@ -236,9 +239,7 @@ open class OpusManagerBase {
     }
 
     fun get_tree(beat_key: BeatKey, position: List<Int>): OpusTree<OpusEvent> {
-        if (position.size < 1) {
-            throw Exception("Invalid Position {position}")
-        }
+
         var tree = this.get_beat_tree(beat_key)
         for (pos in position) {
             if (pos < tree.size) {

@@ -1,8 +1,4 @@
-package radixulous.app.opusmanager
-import radixulous.app.structure.OpusTree
-import radixulous.app.opusmanager.BeatKey
-import radixulous.app.opusmanager.OpusEvent
-import radixulous.app.opusmanager.FlagLayer
+package com.qfs.radixulous.opusmanager
 
 open class LinksLayer() : FlagLayer() {
     var linked_beat_map: HashMap<BeatKey, BeatKey> = HashMap<BeatKey, BeatKey>()

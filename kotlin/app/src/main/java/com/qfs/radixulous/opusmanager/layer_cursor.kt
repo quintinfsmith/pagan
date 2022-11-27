@@ -1,8 +1,8 @@
-package radixulous.app.opusmanager
-import radixulous.app.structure.OpusTree
-import radixulous.app.opusmanager.BeatKey
-import radixulous.app.opusmanager.OpusEvent
-import radixulous.app.opusmanager.HistoryLayer
+package com.qfs.radixulous.opusmanager
+import com.qfs.radixulous.structure.OpusTree
+import com.qfs.radixulous.opusmanager.BeatKey
+import com.qfs.radixulous.opusmanager.OpusEvent
+import com.qfs.radixulous.opusmanager.HistoryLayer
 import kotlin.math.min
 import kotlin.math.max
 

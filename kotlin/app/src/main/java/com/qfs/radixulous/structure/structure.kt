@@ -1,4 +1,4 @@
-package radixulous.app.structure
+package com.qfs.radixulous.structure
 import kotlin.math.*
 
 fun greatest_common_denominator(first: Int, second: Int): Int {
@@ -176,12 +176,14 @@ public class OpusTree<T> {
 
 
                 if (minimum_divs.size > 0) {
-                    stack.add(ReducerTuple(
+                    stack.add(
+                        ReducerTuple(
                         denominator = minimum_divs[0],
                         indices = working_indices,
                         original_size = current_size,
                         parent_node = working_node
-                    ))
+                    )
+                    )
                 } else {
                     working_node.event = working_indices[0].second.event
                 }
@@ -394,20 +396,19 @@ public class OpusTree<T> {
     }
 
     fun detach() {
-        if (this.parent == null) {
-            return
-        }
+        var parent = this.get_parent() ?: return
 
-        var index = null
-        for (i in self.parent.divisions.keys) {
-            var node = self.parent.divisions[i]
+        var index: Int? = null
+
+        for (i in parent.divisions.keys) {
+            var node = parent.divisions[i]
             if (this == node) {
                 index = i
                 break
             }
         }
         if (index != null) {
-            this.parent.pop(index)
+            parent.pop(index)
         }
     }
 

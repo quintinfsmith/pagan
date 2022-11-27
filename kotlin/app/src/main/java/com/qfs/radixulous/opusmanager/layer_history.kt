@@ -1,8 +1,8 @@
-package radixulous.app.opusmanager
-import radixulous.app.structure.OpusTree
-import radixulous.app.opusmanager.CursorLayer
-import radixulous.app.opusmanager.BeatKey
-import radixulous.app.opusmanager.OpusEvent
+package com.qfs.radixulous.opusmanager
+import com.qfs.radixulous.structure.OpusTree
+import com.qfs.radixulous.opusmanager.CursorLayer
+import com.qfs.radixulous.opusmanager.BeatKey
+import com.qfs.radixulous.opusmanager.OpusEvent
 
 open class HistoryLayer() : CursorLayer() {
 

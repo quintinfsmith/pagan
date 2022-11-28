@@ -7,35 +7,32 @@
     android:paddingStart="8dp"
     android:paddingEnd="8dp">
 
-    <TextView
-        android:id="@+id/tvValue"
-        android:layout_width="wrap_content"
+    <Button
+        android:id="@+id/btnValue"
+        android:layout_width="18sp"
         android:layout_height="match_parent"
         android:text=""
-        app:layout_constraintStart_toStartOf="parent"
-        tools:layout_editor_absoluteY="174dp" />
+        android:backgroundTint="#adbeef"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
         android:id="@+id/tvOpenBrace"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:text="["
-        app:layout_constraintStart_toEndOf="@+id/tvValue"
-        tools:layout_editor_absoluteY="174dp" />
+        app:layout_constraintStart_toEndOf="@+id/btnValue"/>
 
     <LinearLayout
         android:id="@+id/llSubTree"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:orientation="horizontal"
-        app:layout_constraintStart_toEndOf="@+id/tvOpenBrace"
-        tools:layout_editor_absoluteY="174dp" />
+        app:layout_constraintStart_toEndOf="@+id/tvOpenBrace" />
 
     <TextView
         android:id="@+id/tvCloseBrace"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:text="]"
-        app:layout_constraintStart_toEndOf="@+id/llSubTree"
-        tools:layout_editor_absoluteY="174dp" />
+        app:layout_constraintStart_toEndOf="@+id/llSubTree" />
 </androidx.constraintlayout.widget.ConstraintLayout>

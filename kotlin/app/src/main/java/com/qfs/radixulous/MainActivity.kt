@@ -48,11 +48,7 @@ class MainActivity : AppCompatActivity() {
 
         opus_manager.new_line(0)
 
-        var mutlist: MutableList<MutableList<OpusTree<OpusEvent>>> = mutableListOf()
-        for (i in 0 until opus_manager.channel_lines[0].size) {
-            mutlist.add(opus_manager.channel_lines[0][i])
-        }
-        opusline_adapter = OpusLineAdapter(mutlist)
+        opusline_adapter = OpusLineAdapter(opus_manager)
 
         rvOpusLines.adapter = opusline_adapter
         rvOpusLines.layoutManager = LinearLayoutManager(this)

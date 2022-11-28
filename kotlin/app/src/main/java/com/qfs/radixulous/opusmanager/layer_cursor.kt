@@ -33,7 +33,11 @@ class Cursor(var opus_manager: CursorLayer) {
             this.position = mutableListOf(0)
         }
     }
-
+    fun set_by_beatkey_position(beat_key: BeatKey, position: List<Int>) {
+        this.y = this.opus_manager.get_y(beat_key.channel, beat_key.line_offset)
+        this.x = beat_key.beat
+        this.position = position.toMutableList()
+    }
     fun get_beatkey(): BeatKey {
         var channel_index = this.get_channel_index()
         return BeatKey(

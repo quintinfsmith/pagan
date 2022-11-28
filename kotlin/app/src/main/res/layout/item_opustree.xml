@@ -7,32 +7,39 @@
     android:paddingStart="8dp"
     android:paddingEnd="8dp">
 
-    <Button
-        android:id="@+id/btnValue"
-        android:layout_width="18sp"
-        android:layout_height="match_parent"
-        android:text=""
-        android:backgroundTint="#adbeef"
-        app:layout_constraintStart_toStartOf="parent" />
-
     <TextView
         android:id="@+id/tvOpenBrace"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:text="["
-        app:layout_constraintStart_toEndOf="@+id/btnValue"/>
+        app:layout_constraintStart_toStartOf="parent"/>
+
+    <Button
+        android:id="@+id/btnValue"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:paddingStart="2sp"
+        android:paddingEnd="2sp"
+        android:text=""
+        android:backgroundTint="#adbeef"
+        app:layout_constraintStart_toEndOf="@+id/tvOpenBrace"
+        app:layout_constraintEnd_toStartOf="@+id/tvCloseBrace" />
+
 
     <LinearLayout
         android:id="@+id/llSubTree"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:orientation="horizontal"
-        app:layout_constraintStart_toEndOf="@+id/tvOpenBrace" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/tvOpenBrace"
+        app:layout_constraintEnd_toStartOf="@+id/tvCloseBrace" />
 
     <TextView
         android:id="@+id/tvCloseBrace"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:text="]"
-        app:layout_constraintStart_toEndOf="@+id/llSubTree" />
+        app:layout_constraintEnd_toEndOf="parent" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -224,7 +224,7 @@ open class OpusManagerBase {
     fun get_beat_tree(beat_key: BeatKey): OpusTree<OpusEvent> {
         var line_offset: Int
         if (beat_key.channel >= this.channel_lines.size) {
-            throw Exception("Invalid BeatKey {beat_key}")
+            throw Exception("Invalid BeatKey ${beat_key}")
         }
 
         if (beat_key.line_offset < 0) {
@@ -233,7 +233,7 @@ open class OpusManagerBase {
             line_offset = beat_key.line_offset
         }
         if (line_offset > this.channel_lines[beat_key.channel].size) {
-            throw Exception("Invalid BeatKey {beat_key}")
+            throw Exception("Invalid BeatKey ${beat_key}")
         }
         return this.channel_lines[beat_key.channel][line_offset][beat_key.beat]
     }
@@ -245,7 +245,7 @@ open class OpusManagerBase {
             if (pos < tree.size) {
                 tree = tree.get(pos)
             } else {
-                throw Exception("Invalid Position {position}")
+                throw Exception("Invalid Position ${position}")
             }
         }
 

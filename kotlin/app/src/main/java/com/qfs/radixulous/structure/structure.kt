@@ -219,9 +219,9 @@ public class OpusTree<T> {
 
         var output: OpusTree<T>
         if (this.divisions.containsKey(index)) {
-            output = this.divisions[index] as OpusTree<T>
+            output = this.divisions[index]!!
         } else {
-            output = OpusTree<T>()
+            output = OpusTree()
             output.set_parent(this)
             this.divisions[index] = output
         }

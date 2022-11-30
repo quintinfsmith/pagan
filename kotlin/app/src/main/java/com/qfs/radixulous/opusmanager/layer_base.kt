@@ -34,16 +34,31 @@ open class OpusManagerBase {
         val tree = this.get_tree(beat_key, position)
 
         // Can't remove beat
-        if (tree.parent == null) {
+        if (tree.parent == null || position.isEmpty()) {
             return
         }
-        if (tree.parent!!.size == 1) {
-            var next_position = position.toMutableList()
-            next_position.removeLast()
-            this.remove(beat_key, next_position)
-        }
+        var parent_tree = tree.parent!!
 
-        tree.detach()
+        when (parent_tree.size) {
+            1 -> {
+                var next_position = position.toMutableList()
+                next_position.removeLast()
+                if (next_position.isNotEmpty()) {
+                    this.remove(beat_key, next_position)
+                }
+                tree.detach()
+            }
+            2 -> {
+                tree.detach()
+                var prev_position = position.toMutableList()
+                prev_position.removeLast()
+                var to_replace = parent_tree.get(0)
+                this.replace_tree(beat_key, prev_position, to_replace)
+            }
+            else -> {
+                tree.detach()
+            }
+        }
     }
 
     open fun set_percussion_event(beat_key: BeatKey, position: List<Int>) {
@@ -81,19 +96,15 @@ open class OpusManagerBase {
 
     open fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
         val tree: OpusTree<OpusEvent> = this.get_tree(beat_key, position)
-
-        var new_tree = OpusTree<OpusEvent>()
-        new_tree.set_size(splits)
-        tree.replace_with(new_tree)
-        new_tree.get(0).replace_with(tree)
-        var parent = new_tree.get_parent()
-        while (parent != null && parent.size == 1) {
-            parent.replace_with(new_tree)
-            parent = new_tree.parent
-        }
-
-        if (new_tree.parent == null) {
-            this.channel_lines[beat_key.channel][beat_key.line_offset][beat_key.beat] = new_tree
+        if (tree.is_leaf()) {
+            var event = tree.get_event()
+            tree.unset_event()
+            tree.set_size(splits)
+            if (event != null) {
+                tree.get(0).set_event(event!!)
+            }
+        } else {
+            tree.set_size(splits)
         }
     }
 
@@ -205,7 +216,11 @@ open class OpusManagerBase {
     }
 
     open fun replace_tree(beat_key: BeatKey, position: List<Int>, tree: OpusTree<OpusEvent>) {
-        this.get_tree(beat_key, position).replace_with(tree)
+        if (position.isEmpty()) {
+            this.channel_lines[beat_key.channel][beat_key.line_offset][beat_key.beat] = tree
+        } else {
+            this.get_tree(beat_key, position).replace_with(tree)
+        }
     }
 
     open fun replace_beat(beat_key: BeatKey, tree: OpusTree<OpusEvent>) {

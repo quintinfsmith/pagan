@@ -125,6 +125,10 @@ class Cursor(var opus_manager: CursorLayer) {
         var working_beat = this.opus_manager.get_beat_tree(this.get_beatkey())
         var working_tree = working_beat
 
+        if (working_tree.is_leaf()) {
+            return
+        }
+
         if (this.position.isEmpty()) {
             this.position = if (right_align) {
                 mutableListOf(working_tree.size - 1)
@@ -400,6 +404,4 @@ open class CursorLayer() : LinksLayer() {
         super.load(path)
         this.cursor.settle()
     }
-
-
 }

@@ -1,6 +1,7 @@
 package com.qfs.radixulous
 import com.qfs.radixulous.structure.OpusTree
 import com.qfs.radixulous.opusmanager.OpusEvent
+import java.lang.Math.floor
 
 const val CH_OPEN = '['
 const val CH_CLOSE = ']'
@@ -162,12 +163,12 @@ fun get_number_string(number: Int, radix: Int, digits: Int): String {
     var working_number = number
     var selector = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     while (working_number > 0) {
-        output = selector[number % radix] + output
+        output = "${selector[working_number % radix]}${output}"
         working_number /= radix
     }
 
     while (output.length < digits) {
-        output = "0" + output
+        output = "0${output}"
     }
 
     return output

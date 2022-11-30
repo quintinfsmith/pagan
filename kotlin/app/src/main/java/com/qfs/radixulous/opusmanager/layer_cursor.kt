@@ -115,7 +115,7 @@ class Cursor(var opus_manager: CursorLayer) {
         this.settle()
     }
     fun get_position(): List<Int> {
-        return this.position
+        return this.position.toList()
     }
 
     fun settle(right_align: Boolean = false) {

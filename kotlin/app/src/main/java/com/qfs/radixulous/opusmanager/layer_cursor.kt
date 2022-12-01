@@ -126,15 +126,7 @@ class Cursor(var opus_manager: CursorLayer) {
         var working_tree = working_beat
 
         if (working_tree.is_leaf()) {
-            return
-        }
-
-        if (this.position.isEmpty()) {
-            this.position = if (right_align) {
-                mutableListOf(working_tree.size - 1)
-            } else {
-                mutableListOf(0)
-            }
+            this.position = mutableListOf()
         }
 
         // Then get the current_working_tree
@@ -147,20 +139,18 @@ class Cursor(var opus_manager: CursorLayer) {
             index += 1
         }
 
-        while (this.position.size > index + 1) {
-            this.position.removeAt(this.position.size - 1)
+        while (index < this.position.size) {
+            this.position.removeLast()
         }
 
         // Then find the leaf if not already found
-        if (right_align) {
-            while (! working_tree.is_leaf() || working_tree == working_beat) {
+        while (! working_tree.is_leaf()) {
+            working_tree = if (right_align) {
                 this.position.add(working_tree.size - 1)
-                working_tree = working_tree.get(working_tree.size - 1)
-            }
-        } else {
-            while (! working_tree.is_leaf() || working_tree == working_beat) {
+                working_tree.get(working_tree.size - 1)
+            } else {
                 this.position.add(0)
-                working_tree = working_tree.get(0)
+                working_tree.get(0)
             }
         }
     }
@@ -233,7 +223,16 @@ open class CursorLayer() : LinksLayer() {
     fun remove_tree_at_cursor() {
         var beat_key = this.cursor.get_beatkey()
         var position = this.cursor.get_position()
+        var removed_parent = this.get_tree(beat_key, position).parent
+
         this.remove(beat_key, position)
+
+        if (removed_parent != null && removed_parent.size > 1) {
+            if (position.isNotEmpty() && position.last() > 0)  {
+                this.cursor.position[position.size - 1] = position.last() - 1
+            }
+        }
+
         this.cursor.settle()
     }
 

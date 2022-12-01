@@ -15,19 +15,14 @@ open class OpusManagerBase {
 
     open fun insert_after(beat_key: BeatKey, position: List<Int>) {
         if (position.isEmpty()) {
-            throw Exception("Invalid Position {position}")
+            throw Exception("Invalid Position ${position}")
         }
+
         val tree = this.get_tree(beat_key, position)
-        val parent = tree.get_parent()
-        if (parent != null && position.last() != parent.size - 1) {
-            val tmp = parent.get(parent.size - 1)
-            var i = parent.size - 1;
-            while (i > position.last() + 1) {
-                parent.set(i, parent.get(i - 1))
-                i -= 1
-            }
-            parent.set(i, tmp)
-        }
+        val parent = tree.get_parent() ?: throw Exception("Invalid Position ${position}")
+
+        var index = position.last()
+        parent.insert(index + 1, OpusTree<OpusEvent>())
     }
 
     open fun remove(beat_key: BeatKey, position: List<Int>) {

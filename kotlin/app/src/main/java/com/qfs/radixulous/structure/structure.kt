@@ -279,7 +279,7 @@ public class OpusTree<T> {
     }
 
     fun is_leaf(): Boolean {
-        return this.event != null || this.divisions.keys.size == 0
+        return this.event != null || (this.divisions.keys.size == 0 && this.size == 1)
     }
 
     fun is_event(): Boolean {
@@ -344,6 +344,7 @@ public class OpusTree<T> {
                 break
             }
             new_node.set_parent(parent)
+            this.parent = null
         }
     }
 
@@ -390,7 +391,7 @@ public class OpusTree<T> {
             }
         }
         this.divisions = new_divisions
-        this.size -= 1
+        this.size = max(this.size - 1, 1)
 
         return output
     }
@@ -410,6 +411,7 @@ public class OpusTree<T> {
         if (index != null) {
             parent.pop(index)
         }
+        this.parent = null
     }
 
     public fun empty() {

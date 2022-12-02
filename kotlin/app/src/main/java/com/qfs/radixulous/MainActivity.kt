@@ -97,7 +97,7 @@ class MainActivity : AppCompatActivity() {
         headerCellView.textView.setOnClickListener {
             this.opus_manager.jump_to_beat(x)
             var cursor = this.opus_manager.cursor
-            this.set_cursor_position(cursor.y, x, listOf())
+            this.update_cursor_position()
             this.setContextMenu(2)
         }
         this.column_label_cache.add(headerCellView)
@@ -181,10 +181,12 @@ class MainActivity : AppCompatActivity() {
 
             this.setContextMenu(1)
             if (y != null) {
-                this.set_cursor_position(y!!, cursor.x, listOf())
+                this.opus_manager.set_cursor_position(y, cursor.x, listOf())
+                this.update_cursor_position()
             }
         }
         this.line_label_cache.add(y, rowLabel.textView)
+
         rowView.addView(rowLabel)
 
         for (x in 0 until this.opus_manager.channel_lines[channel][line_offset].size) {
@@ -292,7 +294,7 @@ class MainActivity : AppCompatActivity() {
                                 that.line_label_cache.removeAt(cursor.y)
                             }
 
-                            that.set_cursor_position(cursor.y, cursor.x, cursor.get_position())
+                            that.update_cursor_position()
 
                             var beatkey = cursor.get_beatkey()
                             for (y in beatkey.line_offset until that.opus_manager.channel_lines[beatkey.channel].size) {
@@ -347,7 +349,7 @@ class MainActivity : AppCompatActivity() {
 
                             that.opus_manager.remove_beat_at_cursor()
 
-                            that.set_cursor_position(cursor.y, cursor.x, listOf())
+                            that.update_cursor_position()
                         }
                     }
                 }
@@ -368,46 +370,50 @@ class MainActivity : AppCompatActivity() {
                         this.sbOffset.progress = event.note % event.radix
                         this.sbOctave.progress = event.note / event.radix
                     }
-                    this.sbOffset?.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-                        override fun onProgressChanged(
-                            seek: SeekBar,
-                            progress: Int,
-                            fromUser: Boolean
-                        ) {
-                            if (!fromUser) {
-                                return
+
+                    this.sbOffset?.setOnSeekBarChangeListener(object :
+                        SeekBar.OnSeekBarChangeListener {
+                            override fun onProgressChanged(
+                                seek: SeekBar,
+                                progress: Int,
+                                fromUser: Boolean
+                            ) {
+                                if (!fromUser) {
+                                    return
+                                }
+                                var cursor = that.opus_manager.cursor
+                                var position = cursor.position
+                                var beatkey = cursor.get_beatkey()
+
+                                var event = if (current_tree.is_event()) {
+                                    var event = current_tree.get_event()!!
+                                    var old_octave = event.note / event.radix
+                                    event.note = (old_octave * event.radix) + progress
+
+                                    event
+                                } else {
+                                    OpusEvent(
+                                        progress,
+                                        opus_manager.RADIX,
+                                        beatkey.channel,
+                                        false
+                                    )
+                                }
+
+                                that.opus_manager.set_event(beatkey, position, event)
+                                that.getCachedTree(cursor.y,cursor.x,position)?.button?.text = get_number_string(event.note, event.radix, 2)
                             }
-                            var cursor = that.opus_manager.cursor
-                            var position = cursor.position
-                            var beatkey = cursor.get_beatkey()
 
-                            var event = if (current_tree.is_event()) {
-                                var event = current_tree.get_event()!!
-                                var old_octave = event.note / event.radix
-                                event.note = (old_octave * event.radix) + progress
+                            override fun onStartTrackingTouch(seek: SeekBar) {
 
-                                event
-                            } else {
-                                OpusEvent(
-                                    progress,
-                                    opus_manager.RADIX,
-                                    beatkey.channel,
-                                    false
-                                )
                             }
 
-                            that.opus_manager.set_event(beatkey, position, event)
-                            that.getCachedTree(cursor.y,cursor.x,position)?.button?.text = get_number_string(event.note, event.radix, 2)
+                            override fun onStopTrackingTouch(seek: SeekBar) {
+
+                            }
                         }
+                    )
 
-                        override fun onStartTrackingTouch(seek: SeekBar) {
-
-                        }
-
-                        override fun onStopTrackingTouch(seek: SeekBar) {
-
-                        }
-                    })
 
                     this.sbOctave?.setOnSeekBarChangeListener(object :
                         SeekBar.OnSeekBarChangeListener {
@@ -496,7 +502,6 @@ class MainActivity : AppCompatActivity() {
                         that.cellClickListener(cursor.y, cursor.x, cursor.get_position())
                     }
                 }
-
                 this.llContextMenu.addView(this.active_context_menu_view)
             }
         }
@@ -513,7 +518,7 @@ class MainActivity : AppCompatActivity() {
         this.buildTreeView(rowView, y, x, listOf())
     }
 
-    fun set_cursor_position(y: Int, x: Int, position: List<Int>) {
+    fun update_cursor_position() {
         var c = this.current_cursor_position
         if (c != null) {
             if (c.first < this.opus_manager.line_count() && c.second < this.opus_manager.opus_beat_count) {
@@ -523,20 +528,17 @@ class MainActivity : AppCompatActivity() {
         }
 
         var cursor = this.opus_manager.cursor
-        cursor.y = y
-        cursor.x = x
-        cursor.position = position.toMutableList()
-        cursor.settle()
-
-        this.current_cursor_position = Triple(y, x, cursor.get_position())
-        var view = this.getCachedTree(y, x, position)
+        var position = cursor.get_position()
+        this.current_cursor_position = Triple(cursor.y, cursor.x, position)
+        var view = this.getCachedTree(cursor.y, cursor.x, position)
         if (view != null) {
             view.button?.setBackgroundColor(Color.parseColor("#ff0000"))
         }
     }
 
     fun cellClickListener(y: Int, x: Int, position: List<Int>) {
-        this.set_cursor_position(y, x, position)
+        this.opus_manager.set_cursor_position(y, x, position)
+        this.update_cursor_position()
         this.setContextMenu(3)
     }
 }

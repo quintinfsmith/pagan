@@ -189,6 +189,12 @@ open class CursorLayer() : LinksLayer() {
         this.set_percussion_event(beat_key, this.cursor.get_position())
     }
 
+    fun set_cursor_position(y: Int, x: Int, position: List<Int>){
+        this.cursor.y = y
+        this.cursor.x = x
+        this.cursor.position = position.toMutableList()
+    }
+
     fun new_line_at_cursor() {
         this.new_line(this.cursor.get_beatkey().channel)
     }

@@ -204,7 +204,7 @@ open class CursorLayer() : LinksLayer() {
 
     fun remove_beat_at_cursor() {
         this.remove_beat(this.cursor.get_x())
-        this.cursor.move_left()
+        //this.cursor_left()
     }
 
     fun split_tree_at_cursor() {
@@ -238,7 +238,6 @@ open class CursorLayer() : LinksLayer() {
 
     fun insert_beat_at_cursor() {
         this.insert_beat(this.cursor.get_x() + 1)
-        this.cursor.settle()
     }
 
     fun get_tree_at_cursor(): OpusTree<OpusEvent> {

@@ -75,7 +75,7 @@ data class ReducerTuple<T>(
 )
 
 public class OpusTree<T> {
-    var size: Int = 1
+    var size: Int = 0
     var divisions: HashMap<Int, OpusTree<T>> = HashMap<Int, OpusTree<T>>()
     var event: T? = null
     var parent: OpusTree<T>? = null
@@ -217,6 +217,10 @@ public class OpusTree<T> {
             rel_index
         }
 
+        if (index < 0 || index >= this.size && (index != 0 || this.size != 0)) {
+            throw Exception ("Index out of bounds")
+        }
+
         var output: OpusTree<T>
         if (this.divisions.containsKey(index)) {
             output = this.divisions[index]!!
@@ -224,6 +228,10 @@ public class OpusTree<T> {
             output = OpusTree()
             output.set_parent(this)
             this.divisions[index] = output
+        }
+
+        if (this.size == 0) {
+            this.size == 1
         }
 
         return output
@@ -279,7 +287,7 @@ public class OpusTree<T> {
     }
 
     fun is_leaf(): Boolean {
-        return this.event != null || (this.divisions.keys.size == 0 && this.size == 1)
+        return this.event != null || this.size == 0
     }
 
     fun is_event(): Boolean {

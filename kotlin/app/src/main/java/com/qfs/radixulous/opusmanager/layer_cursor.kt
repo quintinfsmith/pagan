@@ -217,7 +217,6 @@ open class CursorLayer() : LinksLayer() {
         var beat_key = this.cursor.get_beatkey()
         var position = this.cursor.get_position()
         this.split_tree(beat_key, position, 2)
-        this.cursor.position.add(0)
     }
 
     fun unset_at_cursor() {
@@ -384,7 +383,7 @@ open class CursorLayer() : LinksLayer() {
 
     override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
         super.split_tree(beat_key, position, splits)
-        this.cursor.settle()
+        this.cursor.position.add(0)
     }
 
     override fun remove_line(channel: Int, index: Int?) {

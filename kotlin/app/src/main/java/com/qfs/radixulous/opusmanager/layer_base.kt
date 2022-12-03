@@ -252,7 +252,11 @@ open class OpusManagerBase {
 
         var tree = this.get_beat_tree(beat_key)
         for (pos in position) {
-            tree = tree.get(pos)
+            if (!tree.is_leaf()) {
+                tree = tree.get(pos)
+            } else {
+                throw Exception("Invalid position ${position}")
+            }
         }
 
         return tree

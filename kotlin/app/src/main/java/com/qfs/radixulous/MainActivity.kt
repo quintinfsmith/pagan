@@ -28,13 +28,101 @@ import kotlinx.android.synthetic.main.item_opustree.view.*
 import kotlinx.android.synthetic.main.numberline_item.view.*
 import kotlinx.android.synthetic.main.table_cell_label.view.*
 
-
-class MainActivity : AppCompatActivity() {
-    private lateinit var opus_manager: OpusManager
-    // TODO: a clean cache system
+class ViewCache {
     var view_cache: MutableList<Pair<LinearLayout, MutableList<Pair<View?, HashMap<List<Int>, View>>>>> = mutableListOf()
     var line_label_cache: MutableList<Button> = mutableListOf()
     var column_label_cache: MutableList<View> = mutableListOf()
+
+    fun cacheLine(view: LinearLayout, y: Int) {
+        if (y < this.view_cache.size) {
+            this.view_cache.add(y, Pair(view, mutableListOf()))
+        } else {
+            this.view_cache.add(Pair(view, mutableListOf()))
+        }
+    }
+    fun cacheTree(view: View, y: Int, x: Int, position: List<Int>) {
+        if (position.isEmpty()) {
+            if (x < this.view_cache[y].second.size) {
+                this.view_cache[y].second.add(x, Pair(view, HashMap<List<Int>, View>()))
+            } else {
+                this.view_cache[y].second.add(Pair(view, HashMap<List<Int>, View>()))
+            }
+        } else {
+            this.view_cache[y].second[x].second[position] = view
+        }
+    }
+    fun getTree(y: Int, x: Int, position: List<Int>): View? {
+        return if (position.isEmpty()) {
+            this.view_cache[y].second[x].first
+        } else {
+            this.view_cache[y].second[x].second[position]
+        }
+    }
+
+    fun getLine(y: Int): LinearLayout? {
+        return this.view_cache[y].first
+    }
+
+    fun addColumnLabel(view: View) {
+        this.column_label_cache.add(view)
+    }
+    fun getColumnLabel(x: Int): View? {
+        return this.column_label_cache[x]
+    }
+    fun detachColumnLabel() {
+        var label = this.column_label_cache.removeLast()
+        (label?.parent as ViewGroup).removeView(label)
+    }
+    fun addLineLabel(y: Int, view: Button) {
+        this.line_label_cache.add(y, view)
+    }
+    fun getLineLabel(y: Int): Button? {
+        return this.line_label_cache[y]
+    }
+    fun detachLine(y: Int) {
+        var view = this.view_cache.removeAt(y).first
+        this.line_label_cache.removeAt(y)
+        (view?.parent as ViewGroup).removeView(view)
+    }
+
+    fun removeBeatView(y: Int, x: Int) {
+        var beat_view = this.view_cache[y].second.removeAt(x).first
+        (beat_view?.parent as ViewGroup).removeView(beat_view)
+    }
+
+    fun getTreeViewYXPosition(view: View): Triple<Int, Int, List<Int>>? {
+        for (y in 0 until this.view_cache.size) {
+            var line_cache = this.view_cache[y].second
+            for (x in 0 until line_cache.size) {
+                if (view == line_cache[x].first) {
+                    return Triple(y, x, listOf())
+                }
+
+                for (key in line_cache[x].second.keys) {
+                    if (line_cache[x].second[key] == view) {
+                        return Triple(y, x, key)
+                    }
+                }
+            }
+        }
+        return null
+    }
+
+    fun getLineIndex(view: LinearLayout): Int? {
+        for (i in 0 until this.view_cache.size) {
+            if (this.view_cache[i].first == view) {
+                return i
+            }
+        }
+        return null
+    }
+
+}
+
+
+class MainActivity : AppCompatActivity() {
+    private var opus_manager = OpusManager()
+    private var cache = ViewCache()
     private var current_cursor_position: Triple<Int, Int, List<Int>>? = null
     private var active_context_menu_index: Int = 0
     private var active_context_menu_view: View? = null
@@ -43,34 +131,33 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        this.opus_manager  = OpusManager()
-        opus_manager.new()
-        opus_manager.split_tree(BeatKey(0,0,0), listOf(), 2)
+        this.opus_manager.new()
+        this.opus_manager.split_tree(BeatKey(0,0,0), listOf(), 2)
         //opus_manager.split_tree(BeatKey(0,0,0), listOf(0), 3)
 
-        opus_manager.set_event(BeatKey(0,0,0), listOf(0), OpusEvent(
+        this.opus_manager.set_event(BeatKey(0,0,0), listOf(0), OpusEvent(
             35,
             12,
             0,
             false
         ))
 
-        opus_manager.set_event(BeatKey(0,0,0), listOf(1), OpusEvent(
+        this.opus_manager.set_event(BeatKey(0,0,0), listOf(1), OpusEvent(
             35,
             12,
             0,
             false
         ))
-        opus_manager.split_tree(BeatKey(0,0,0), listOf(0),3)
+        this.opus_manager.split_tree(BeatKey(0,0,0), listOf(0),3)
 
-        opus_manager.set_event(BeatKey(0,0,0), listOf(0,1), OpusEvent(
+        this.opus_manager.set_event(BeatKey(0,0,0), listOf(0,1), OpusEvent(
         36,
         12,
         0,
         false
         ))
 
-        opus_manager.new_line(0)
+        this.opus_manager.new_line(0)
 
         this.populateTable()
         this.update_cursor_position()
@@ -97,71 +184,17 @@ class MainActivity : AppCompatActivity() {
             R.layout.table_cell_label,
             parent,
             false
-        )
+        ) as TextView
         var x = parent.getChildCount() - 1
-        headerCellView.textView.text = "${x}"
-        headerCellView.textView.setOnClickListener {
+        headerCellView.text = "${x}"
+        headerCellView.setOnClickListener {
             this.opus_manager.jump_to_beat(x)
             var cursor = this.opus_manager.cursor
             this.update_cursor_position()
             this.setContextMenu(2)
         }
-        this.column_label_cache.add(headerCellView)
+        this.cache.addColumnLabel(headerCellView)
         parent.addView(headerCellView)
-    }
-
-    private fun getLineViewIndex(view: LinearLayout): Int? {
-        for (i in 0 until this.view_cache.size) {
-            if (this.view_cache[i].first == view) {
-                return i
-            }
-        }
-
-        return null
-    }
-
-    private fun getTreeViewYXPosition(view: View): Triple<Int, Int, List<Int>>? {
-        for (y in 0 until this.view_cache.size) {
-            var line_cache = this.view_cache[y].second
-            for (x in 0 until line_cache.size) {
-                if (view == line_cache[x].first) {
-                    return Triple(y, x, listOf())
-                }
-
-                for (key in line_cache[x].second.keys) {
-                    if (line_cache[x].second[key] == view) {
-                        return Triple(y, x, key)
-                    }
-                }
-            }
-        }
-        return null
-    }
-
-    private fun addLineViewToCache(view: LinearLayout, y: Int) {
-        if (y < this.view_cache.size) {
-            this.view_cache.add(y, Pair(view, mutableListOf()))
-        } else {
-            this.view_cache.add(Pair(view, mutableListOf()))
-        }
-    }
-    private fun addTreeViewToCache(view: View, y: Int, x: Int, position: List<Int>) {
-        if (position.isEmpty()) {
-            if (x < this.view_cache[y].second.size) {
-                this.view_cache[y].second.add(x, Pair(view, HashMap<List<Int>, View>()))
-            } else {
-                this.view_cache[y].second.add(Pair(view, HashMap<List<Int>, View>()))
-            }
-        } else {
-            this.view_cache[y].second[x].second[position] = view
-        }
-    }
-    private fun getCachedTree(y: Int, x: Int, position: List<Int>): View? {
-        if (position.isEmpty()) {
-            return this.view_cache[y].second[x].first
-        } else {
-            return this.view_cache[y].second[x].second[position]
-        }
     }
 
     fun buildLineView(y: Int) {
@@ -173,7 +206,7 @@ class MainActivity : AppCompatActivity() {
         rowView.setPadding(0,0,0,0)
 
         this.tlOpusLines.addView(rowView)
-        this.addLineViewToCache(rowView, y)
+        this.cache.cacheLine(rowView, y)
 
         var rowLabel = LayoutInflater.from(rowView.context).inflate(
             R.layout.table_cell_label,
@@ -183,7 +216,7 @@ class MainActivity : AppCompatActivity() {
         var that = this
         rowLabel.textView.text = "${channel}:${line_offset}"
         rowLabel.textView.setOnClickListener {
-            var y: Int? = that.getLineViewIndex(rowView)
+            var y: Int? = that.cache.getLineIndex(rowView)
             var cursor = that.opus_manager.cursor
 
             this.setContextMenu(1)
@@ -192,7 +225,7 @@ class MainActivity : AppCompatActivity() {
                 this.update_cursor_position()
             }
         }
-        this.line_label_cache.add(y, rowLabel.textView)
+        this.cache.addLineLabel(y, rowLabel.textView)
 
         rowView.addView(rowLabel)
 
@@ -225,7 +258,7 @@ class MainActivity : AppCompatActivity() {
 
             var that = this
             leafView.button.setOnClickListener {
-                var key = that.getTreeViewYXPosition(leafView)
+                var key = that.cache.getTreeViewYXPosition(leafView)
                 if (key != null) {
                     this.cellClickListener(key.first, key.second, key.third)
                 }
@@ -237,7 +270,7 @@ class MainActivity : AppCompatActivity() {
                 parent.addView(leafView)
             }
 
-            this.addTreeViewToCache(leafView, y, x, position)
+            this.cache.cacheTree(leafView, y, x, position)
 
         } else {
             var tableLayout = LayoutInflater.from(parent.context).inflate(
@@ -245,7 +278,7 @@ class MainActivity : AppCompatActivity() {
                 parent,
                 false
             )
-            this.addTreeViewToCache(tableLayout, y, x, position)
+            this.cache.cacheTree(tableLayout, y, x, position)
             var treeLayout = tableLayout.tl.tr
 
             if (tree.size > 1) {
@@ -299,20 +332,13 @@ class MainActivity : AppCompatActivity() {
 
                             that.opus_manager.remove_line_at_cursor()
 
-                            var viewpair = that.view_cache[cursor.y]
-
-                            if (viewpair != null) {
-                                that.tlOpusLines.removeView(viewpair.first)
-                                that.view_cache.removeAt(cursor.y)
-                                that.line_label_cache.removeAt(cursor.y)
-                            }
+                            that.cache.detachLine(cursor.y)
 
                             that.update_cursor_position()
 
                             var beatkey = cursor.get_beatkey()
                             for (y in beatkey.line_offset until that.opus_manager.channel_lines[beatkey.channel].size) {
-                                that.line_label_cache[(cursor.y - beatkey.line_offset) + y].text =
-                                    "${beatkey.channel}:${y}"
+                                that.cache.getLineLabel((cursor.y - beatkey.line_offset) + y)?.text = "${beatkey.channel}:${y}"
                             }
                         }
                     }
@@ -343,14 +369,9 @@ class MainActivity : AppCompatActivity() {
                         that.opus_manager.insert_beat_at_cursor()
                         var cursor = that.opus_manager.cursor
                         that.newColumnLabel()
-                        for (y in 0 until that.view_cache.size) {
-                            var rowView = that.view_cache[y].first
+                        for (y in 0 until that.opus_manager.line_count()) {
+                            var rowView = that.cache.getLine(y)?: continue
                             var tree = that.opus_manager.get_tree_at_cursor()
-                            var parent_size: Int = if (tree.parent != null) {
-                                tree.parent!!.size
-                            } else {
-                                1
-                            }
 
                             that.buildTreeView(rowView, y, cursor.x + 1, listOf())
                         }
@@ -361,12 +382,10 @@ class MainActivity : AppCompatActivity() {
                             var cursor = that.opus_manager.cursor
 
                             for (y in 0 until that.opus_manager.line_count()) {
-                                that.removeBeatView(y, cursor.x)
+                                that.cache.removeBeatView(y, cursor.x)
                             }
 
-                            var label = that.column_label_cache.removeLast()
-                            (label?.parent as ViewGroup).removeView(label)
-
+                            var label = that.cache.detachColumnLabel()
                             that.opus_manager.remove_beat_at_cursor()
 
                             that.update_cursor_position()
@@ -421,7 +440,7 @@ class MainActivity : AppCompatActivity() {
                                 }
 
                                 that.opus_manager.set_event(beatkey, position, event)
-                                that.getCachedTree(cursor.y,cursor.x,position)?.button?.text = get_number_string(event.note, event.radix, 2)
+                                that.cache.getTree(cursor.y,cursor.x,position)?.button?.text = get_number_string(event.note, event.radix, 2)
                             }
 
                             override fun onStartTrackingTouch(seek: SeekBar) {
@@ -463,7 +482,7 @@ class MainActivity : AppCompatActivity() {
                                 }
 
                                 that.opus_manager.set_event(beatkey, position, event)
-                                that.getCachedTree(cursor.y,cursor.x,position)?.button?.text = get_number_string(event.note, event.radix, 2)
+                                that.cache.getTree(cursor.y,cursor.x,position)?.button?.text = get_number_string(event.note, event.radix, 2)
                             }
 
                             override fun onStartTrackingTouch(seek: SeekBar) {
@@ -492,7 +511,7 @@ class MainActivity : AppCompatActivity() {
                         that.sbOffset.progress = 0
                         that.sbOctave.progress = 0
 
-                        that.getCachedTree(cursor.y, cursor.x, position)?.button?.text = ".."
+                        that.cache.getTree(cursor.y, cursor.x, position)?.button?.text = ".."
                         that.cellClickListener(cursor.y, cursor.x, position)
                     }
 
@@ -532,6 +551,7 @@ class MainActivity : AppCompatActivity() {
                         leafView.tv.text = get_number_string(i, that.opus_manager.RADIX, 2)
                         numberLine.addView(leafView)
                     }
+                    this.clButtons.btnSplit?.text = "${that.opus_manager.cursor.position}"
                 }
 
                 this.llContextMenu.addView(this.active_context_menu_view)
@@ -539,14 +559,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun removeBeatView(y: Int, x: Int) {
-        var beat_view = this.view_cache[y].second.removeAt(x).first
-        (beat_view?.parent as ViewGroup).removeView(beat_view)
-    }
-
     fun rebuildBeatView(y: Int, x: Int) {
-        this.removeBeatView(y, x)
-        var rowView = this.view_cache[y].first
+        this.cache.removeBeatView(y, x)
+        var rowView = this.cache.getLine(y)!!
         this.buildTreeView(rowView, y, x, listOf())
     }
 
@@ -554,7 +569,7 @@ class MainActivity : AppCompatActivity() {
         var c = this.current_cursor_position
         if (c != null) {
             if (c.first < this.opus_manager.line_count() && c.second < this.opus_manager.opus_beat_count) {
-                var previous_view = this.getCachedTree(c.first, c.second, c.third)
+                var previous_view = this.cache.getTree(c.first, c.second, c.third)
                 previous_view?.button?.setBackgroundColor(Color.parseColor("#adbeef"))
             }
         }
@@ -562,7 +577,8 @@ class MainActivity : AppCompatActivity() {
         var cursor = this.opus_manager.cursor
         var position = cursor.get_position()
         this.current_cursor_position = Triple(cursor.y, cursor.x, position)
-        var view = this.getCachedTree(cursor.y, cursor.x, position)
+
+        var view = this.cache.getTree(cursor.y, cursor.x, position)
         if (view != null) {
             view.button?.setBackgroundColor(Color.parseColor("#ff0000"))
         }

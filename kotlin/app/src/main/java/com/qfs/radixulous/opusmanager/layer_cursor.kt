@@ -217,7 +217,7 @@ open class CursorLayer() : LinksLayer() {
         var beat_key = this.cursor.get_beatkey()
         var position = this.cursor.get_position()
         this.split_tree(beat_key, position, 2)
-        this.cursor.settle()
+        this.cursor.position.add(0)
     }
 
     fun unset_at_cursor() {
@@ -301,6 +301,7 @@ open class CursorLayer() : LinksLayer() {
 
     fun jump_to_beat(beat: Int) {
         this.cursor.set_x(beat)
+        this.cursor.settle()
     }
 
     fun overwrite_beat_at_cursor(beat_key: BeatKey) {

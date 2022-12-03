@@ -1,79 +1,101 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    android:layout_height="match_parent">
 
     <SeekBar
         android:id="@+id/sbOctave"
-        android:max="11"
-        android:min="0"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:max="11"
+        android:min="0"
         android:paddingTop="8dp"
         android:paddingBottom="8dp"
+        app:layout_constraintBottom_toTopOf="@+id/clNumberLine"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <TableLayout
+        android:id="@+id/clNumberLine"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toTopOf="@+id/sbOffset"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintBottom_toTopOf="@+id/sbOffset" />
+        android:stretchColumns="*">
+        <TableRow android:id="@+id/row" />
+    </TableLayout>
 
     <SeekBar
         android:id="@+id/sbOffset"
-        android:max="11"
-        android:min="0"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:max="11"
+        android:min="0"
         android:paddingTop="8dp"
         android:paddingBottom="8dp"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/clButtons"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@+id/clButtons"/>
+        app:layout_constraintStart_toStartOf="parent" />
+
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/clButtons"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent">
+        app:layout_constraintStart_toStartOf="parent">
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+        </ScrollView>
 
         <Button
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
             android:id="@+id/btnSplit"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:text="Split" />
+            android:text="Split"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <Button
             android:id="@+id/btnUnset"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            app:layout_constraintTop_toTopOf="parent"
+            android:text="Unset"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/btnSplit"
             app:layout_constraintEnd_toStartOf="@+id/btnInsert"
-            android:text="Unset" />
+            app:layout_constraintStart_toEndOf="@+id/btnSplit"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <Button
             android:id="@+id/btnInsert"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            app:layout_constraintTop_toTopOf="parent"
+            android:text="Insert"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/btnUnset"
             app:layout_constraintEnd_toStartOf="@+id/btnRemove"
-            android:text="Insert" />
+            app:layout_constraintStart_toEndOf="@+id/btnUnset"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <Button
             android:id="@+id/btnRemove"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            app:layout_constraintTop_toTopOf="parent"
+            android:text="Remove"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            android:text="Remove" />
+            app:layout_constraintTop_toTopOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

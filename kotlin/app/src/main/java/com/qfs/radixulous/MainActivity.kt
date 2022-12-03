@@ -4,13 +4,16 @@ import android.graphics.Color
 import com.qfs.radixulous.opusmanager.OpusEvent
 import com.qfs.radixulous.opusmanager.HistoryLayer as OpusManager
 import android.os.Bundle
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.*
 
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.constraintlayout.widget.ConstraintSet
 import com.qfs.radixulous.opusmanager.BeatKey
 
 import kotlinx.android.synthetic.main.activity_main.*
@@ -20,8 +23,9 @@ import kotlinx.android.synthetic.main.contextmenu_cell.view.*
 import kotlinx.android.synthetic.main.contextmenu_column.*
 import kotlinx.android.synthetic.main.contextmenu_column.view.*
 import kotlinx.android.synthetic.main.contextmenu_row.view.*
-import kotlinx.android.synthetic.main.item_opusbeat.view.*
 import kotlinx.android.synthetic.main.item_opusbutton.view.*
+import kotlinx.android.synthetic.main.item_opustree.view.*
+import kotlinx.android.synthetic.main.numberline_item.view.*
 import kotlinx.android.synthetic.main.table_cell_label.view.*
 
 
@@ -69,6 +73,8 @@ class MainActivity : AppCompatActivity() {
         opus_manager.new_line(0)
 
         this.populateTable()
+        this.update_cursor_position()
+        this.setContextMenu(3)
     }
 
     fun populateTable() {
@@ -110,6 +116,7 @@ class MainActivity : AppCompatActivity() {
                 return i
             }
         }
+
         return null
     }
 
@@ -141,7 +148,7 @@ class MainActivity : AppCompatActivity() {
     private fun addTreeViewToCache(view: View, y: Int, x: Int, position: List<Int>) {
         if (position.isEmpty()) {
             if (x < this.view_cache[y].second.size) {
-                this.view_cache[y].second.add(x, Pair(view, this.view_cache[y].second[x].second))
+                this.view_cache[y].second.add(x, Pair(view, HashMap<List<Int>, View>()))
             } else {
                 this.view_cache[y].second.add(Pair(view, HashMap<List<Int>, View>()))
             }
@@ -224,7 +231,6 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
-
             if (position.isEmpty()) {
                 parent.addView(leafView, x + 1) // (+1 considers row label)
             } else {
@@ -234,8 +240,14 @@ class MainActivity : AppCompatActivity() {
             this.addTreeViewToCache(leafView, y, x, position)
 
         } else {
-            var treeLayout = LinearLayout(parent.context)
-            this.addTreeViewToCache(treeLayout, y, x, position)
+            var tableLayout = LayoutInflater.from(parent.context).inflate(
+                R.layout.item_opustree,
+                parent,
+                false
+            )
+            this.addTreeViewToCache(tableLayout, y, x, position)
+            var treeLayout = tableLayout.tl.tr
+
             if (tree.size > 1) {
                 var open_brace = TextView(parent.context)
                 open_brace.text = "["
@@ -253,10 +265,11 @@ class MainActivity : AppCompatActivity() {
                 close_brace.text = "]"
                 treeLayout.addView(close_brace)
             }
+
             if (position.isEmpty()) {
-                parent.addView(treeLayout, x + 1) // (+1 considers row label)
+                parent.addView(tableLayout, x + 1) // (+1 considers row label)
             } else {
-                parent.addView(treeLayout)
+                parent.addView(tableLayout)
             }
         }
     }
@@ -332,6 +345,13 @@ class MainActivity : AppCompatActivity() {
                         that.newColumnLabel()
                         for (y in 0 until that.view_cache.size) {
                             var rowView = that.view_cache[y].first
+                            var tree = that.opus_manager.get_tree_at_cursor()
+                            var parent_size: Int = if (tree.parent != null) {
+                                tree.parent!!.size
+                            } else {
+                                1
+                            }
+
                             that.buildTreeView(rowView, y, cursor.x + 1, listOf())
                         }
                     }
@@ -458,7 +478,6 @@ class MainActivity : AppCompatActivity() {
 
                     this.clButtons.btnSplit?.setOnClickListener {
                         var cursor = that.opus_manager.cursor
-                        var position = cursor.get_position()
                         that.opus_manager.split_tree_at_cursor()
 
                         that.rebuildBeatView(cursor.y, cursor.x)
@@ -501,7 +520,20 @@ class MainActivity : AppCompatActivity() {
                         that.rebuildBeatView(cursor.y, cursor.x)
                         that.cellClickListener(cursor.y, cursor.x, cursor.get_position())
                     }
+
+                    var numberLine = this.clNumberLine.row
+                    for (i in 0 until that.opus_manager.RADIX) {
+                        var leafView = LayoutInflater.from(numberLine.context).inflate(
+                            R.layout.numberline_item,
+                            numberLine,
+                            false
+                        )
+
+                        leafView.tv.text = get_number_string(i, that.opus_manager.RADIX, 2)
+                        numberLine.addView(leafView)
+                    }
                 }
+
                 this.llContextMenu.addView(this.active_context_menu_view)
             }
         }

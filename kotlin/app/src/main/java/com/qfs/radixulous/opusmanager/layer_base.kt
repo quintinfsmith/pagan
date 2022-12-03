@@ -66,11 +66,7 @@ open class OpusManagerBase {
             tree.unset_event()
         }
 
-        var instrument = if (this.percussion_map.containsKey(beat_key.line_offset)) {
-            this.percussion_map[beat_key.line_offset]!!
-        } else {
-            this.DEFAULT_PERCUSSION
-        }
+        var instrument = this.get_percussion_instrument(beat_key.line_offset)
 
         tree.set_event(OpusEvent(
             instrument,
@@ -78,6 +74,14 @@ open class OpusManagerBase {
             9,
             false
         ))
+    }
+
+    open fun get_percussion_instrument(line_offset: Int): Int {
+        return if (this.percussion_map.containsKey(line_offset)) {
+            this.percussion_map[line_offset]!!
+        } else {
+            this.DEFAULT_PERCUSSION
+        }
     }
 
     open fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEvent) {

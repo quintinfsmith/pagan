@@ -4,16 +4,15 @@ import android.graphics.Color
 import com.qfs.radixulous.opusmanager.OpusEvent
 import com.qfs.radixulous.opusmanager.HistoryLayer as OpusManager
 import android.os.Bundle
-import android.view.Gravity
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.*
 
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
+import androidx.core.content.ContextCompat
+import androidx.core.content.res.ResourcesCompat.getColor
 import com.qfs.radixulous.opusmanager.BeatKey
 
 import kotlinx.android.synthetic.main.activity_main.*
@@ -32,6 +31,16 @@ class ViewCache {
     var view_cache: MutableList<Pair<LinearLayout, MutableList<Pair<View?, HashMap<List<Int>, View>>>>> = mutableListOf()
     var line_label_cache: MutableList<Button> = mutableListOf()
     var column_label_cache: MutableList<View> = mutableListOf()
+    var _cursor: Triple<Int, Int, List<Int>>? = null
+    private var active_context_menu_view: View? = null
+
+    fun setActiveContextMenu(view: View) {
+        this.active_context_menu_view = view
+    }
+
+    fun getActiveContextMenu(): View? {
+        return this.active_context_menu_view
+    }
 
     fun cacheLine(view: LinearLayout, y: Int) {
         if (y < this.view_cache.size) {
@@ -117,19 +126,35 @@ class ViewCache {
         return null
     }
 
-}
+    fun getCursor(): Triple<Int, Int, List<Int>>? {
+        return this._cursor
+    }
 
+    fun setCursor(y: Int, x: Int, position: List<Int>) {
+        this._cursor = Triple(y, x, position.toList())
+    }
+}
 
 class MainActivity : AppCompatActivity() {
     private var opus_manager = OpusManager()
     private var cache = ViewCache()
-    private var current_cursor_position: Triple<Int, Int, List<Int>>? = null
     private var active_context_menu_index: Int = 0
-    private var active_context_menu_view: View? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        // calling this activity's function to
+        // use ActionBar utility methods
+        val actionBar = supportActionBar
+        actionBar!!.title = "Boop"
+        actionBar.subtitle = "   Doop"
+        //actionBar.setIcon(R.drawable.app_logo)
+        // methods to display the icon in the ActionBar
+        actionBar.setDisplayUseLogoEnabled(true)
+        actionBar.setDisplayShowHomeEnabled(true)
+
+
 
         this.opus_manager.new()
         this.opus_manager.split_tree(BeatKey(0,0,0), listOf(), 2)
@@ -158,11 +183,29 @@ class MainActivity : AppCompatActivity() {
         ))
 
         this.opus_manager.new_line(0)
+        this.opus_manager.add_channel(9)
 
         this.populateTable()
         this.update_cursor_position()
         this.setContextMenu(3)
     }
+    //// method to inflate the options menu when
+    //// the user opens the menu for the first time
+    //override fun onCreateOptionsMenu(menu: Menu): Boolean {
+    //    menuInflater.inflate(R.menu.main, menu)
+    //    return super.onCreateOptionsMenu(menu)
+    //}
+
+    //// methods to control the operations that will
+    //// happen when user clicks on the action buttons
+    //override fun onOptionsItemSelected(item: MenuItem): Boolean {
+    //    when (item.itemId) {
+    //        R.id.search -> Toast.makeText(this, "Search Clicked", Toast.LENGTH_SHORT).show()
+    //        R.id.refresh -> Toast.makeText(this, "Refresh Clicked", Toast.LENGTH_SHORT).show()
+    //        R.id.copy -> Toast.makeText(this, "Copy Clicked", Toast.LENGTH_SHORT).show()
+    //    }
+    //    return super.onOptionsItemSelected(item)
+    //}
 
     fun populateTable() {
         for (i in 0 until this.opus_manager.opus_beat_count) {
@@ -214,7 +257,13 @@ class MainActivity : AppCompatActivity() {
             false
         )
         var that = this
-        rowLabel.textView.text = "${channel}:${line_offset}"
+        if (channel != 9) {
+            rowLabel.textView.text = "${channel}:${line_offset}"
+        } else {
+            var instrument = that.opus_manager.get_percussion_instrument(line_offset)
+            rowLabel.textView.text = "P:${get_number_string(instrument, that.opus_manager.RADIX, 2)}"
+        }
+
         rowLabel.textView.setOnClickListener {
             var y: Int? = that.cache.getLineIndex(rowView)
             var cursor = that.opus_manager.cursor
@@ -249,8 +298,10 @@ class MainActivity : AppCompatActivity() {
                 var event = tree.get_event()!!
                 leafView.button.text = if (event.relative) {
                     "T"
-                } else {
+                } else if (event.channel != 9) {
                     get_number_string(event.note, event.radix, 2)
+                } else {
+                    "!!"
                 }
             } else {
                 leafView.button.text = ".."
@@ -309,7 +360,7 @@ class MainActivity : AppCompatActivity() {
 
     fun setContextMenu(menu_index: Int) {
         this.active_context_menu_index = menu_index
-        var view = this.active_context_menu_view
+        var view = this.cache.getActiveContextMenu()
         (view?.parent as? ViewGroup)?.removeView(view)
 
         var opus_manager = opus_manager
@@ -318,27 +369,31 @@ class MainActivity : AppCompatActivity() {
 
         when (menu_index) {
             1 -> {
-                this.active_context_menu_view =
-                    LayoutInflater.from(this.llContextMenu.context).inflate(
-                        R.layout.contextmenu_row,
-                        this.llContextMenu,
-                        false
-                    )
+                var view = LayoutInflater.from(this.llContextMenu.context).inflate(
+                    R.layout.contextmenu_row,
+                    this.llContextMenu,
+                    false
+                )
 
-                this.active_context_menu_view!!.apply {
+                view.apply {
                     this.btnRemoveLine.setOnClickListener {
                         if (that.opus_manager.line_count() > 1) {
                             var cursor = that.opus_manager.cursor
 
                             that.opus_manager.remove_line_at_cursor()
-
                             that.cache.detachLine(cursor.y)
-
                             that.update_cursor_position()
 
                             var beatkey = cursor.get_beatkey()
                             for (y in beatkey.line_offset until that.opus_manager.channel_lines[beatkey.channel].size) {
-                                that.cache.getLineLabel((cursor.y - beatkey.line_offset) + y)?.text = "${beatkey.channel}:${y}"
+                                var line_offset = cursor.y - beatkey.line_offset  + y
+                                var label = that.cache.getLineLabel(line_offset)?: continue
+                                if (beatkey.channel != 9) {
+                                    label.text = "${beatkey.channel}:${y}"
+                                } else {
+                                    var instrument = that.opus_manager.get_percussion_instrument(line_offset)
+                                    label.text = "P:${get_number_string(instrument, that.opus_manager.RADIX, 2)}"
+                                }
                             }
                         }
                     }
@@ -355,16 +410,17 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
 
-                this.llContextMenu.addView(this.active_context_menu_view)
+                this.llContextMenu.addView(view)
+                this.cache.setActiveContextMenu(view)
             }
             2 -> {
-                this.active_context_menu_view = LayoutInflater.from(this.llContextMenu.context).inflate(
+                var view = LayoutInflater.from(this.llContextMenu.context).inflate(
                     R.layout.contextmenu_column,
                     this.llContextMenu,
                     false
                 )
 
-                this.active_context_menu_view!!.apply {
+                view.apply {
                     this.btnInsertBeat.setOnClickListener {
                         that.opus_manager.insert_beat_at_cursor()
                         var cursor = that.opus_manager.cursor
@@ -393,17 +449,17 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
 
-                this.llContextMenu.addView(this.active_context_menu_view)
+                this.llContextMenu.addView(view)
+                this.cache.setActiveContextMenu(view)
             }
             3 -> {
-                this.active_context_menu_view =
-                    LayoutInflater.from(this.llContextMenu.context).inflate(
-                        R.layout.contextmenu_cell,
-                        this.llContextMenu,
-                        false
-                    )
+                var view = LayoutInflater.from(this.llContextMenu.context).inflate(
+                    R.layout.contextmenu_cell,
+                    this.llContextMenu,
+                    false
+                )
 
-                this.active_context_menu_view!!.apply {
+                view.apply {
                     if (current_tree.is_event()) {
                         var event = current_tree.get_event()!!
                         this.sbOffset.progress = event.note % event.radix
@@ -554,7 +610,8 @@ class MainActivity : AppCompatActivity() {
                     this.clButtons.btnSplit?.text = "${that.opus_manager.cursor.position}"
                 }
 
-                this.llContextMenu.addView(this.active_context_menu_view)
+                this.llContextMenu.addView(view)
+                this.cache.setActiveContextMenu(view)
             }
         }
     }
@@ -566,17 +623,21 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun update_cursor_position() {
-        var c = this.current_cursor_position
+        var c = this.cache.getCursor()
         if (c != null) {
             if (c.first < this.opus_manager.line_count() && c.second < this.opus_manager.opus_beat_count) {
                 var previous_view = this.cache.getTree(c.first, c.second, c.third)
-                previous_view?.button?.setBackgroundColor(Color.parseColor("#adbeef"))
+                if (previous_view != null) {
+                    var button = this.cache.getTree(c.first, c.second, c.third)!!.button
+                    val changeColour = ContextCompat.getColor(button.context, R.color.leaf)
+                    button.setBackgroundColor(changeColour)
+                }
             }
         }
 
         var cursor = this.opus_manager.cursor
         var position = cursor.get_position()
-        this.current_cursor_position = Triple(cursor.y, cursor.x, position)
+        this.cache.setCursor(cursor.y, cursor.x, position)
 
         var view = this.cache.getTree(cursor.y, cursor.x, position)
         if (view != null) {
@@ -589,4 +650,5 @@ class MainActivity : AppCompatActivity() {
         this.update_cursor_position()
         this.setContextMenu(3)
     }
+
 }

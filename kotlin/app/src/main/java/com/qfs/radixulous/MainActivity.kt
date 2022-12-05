@@ -239,6 +239,25 @@ class MainActivity : AppCompatActivity() {
             chipView.isCheckable = true
             chipView.text = "${i}"
             chipView.isChecked = this.opus_manager.channel_lines[i].isNotEmpty()
+
+            // TODO: I suspect there is a better listener for this
+            chipView.setOnClickListener {
+                if (chipView.isChecked) {
+                    if (this.opus_manager.channel_lines[i].isEmpty()) {
+                        this.opus_manager.add_channel(i)
+                        var y = this.opus_manager.get_y(i, 0)
+                        this.buildLineView(y)
+                    }
+                } else {
+                    var y = this.opus_manager.get_y(i, 0)
+                    var line_count = this.opus_manager.channel_lines[i].size
+                    for (l in 0 until line_count) {
+                        this.cache.detachLine(l)
+                    }
+                    this.opus_manager.remove_channel(i)
+                    this.update_cursor_position()
+                }
+            }
             popupView.clA.clB.cgEnabledChannels.addView(chipView)
         }
 
@@ -308,7 +327,7 @@ class MainActivity : AppCompatActivity() {
         var rowView = TableRow(this.tlOpusLines.context)
         rowView.setPadding(0,0,0,0)
 
-        this.tlOpusLines.addView(rowView)
+        this.tlOpusLines.addView(rowView, y + 1)
         this.cache.cacheLine(rowView, y)
 
         var rowLabel = LayoutInflater.from(rowView.context).inflate(
@@ -318,7 +337,11 @@ class MainActivity : AppCompatActivity() {
         )
         var that = this
         if (channel != 9) {
-            rowLabel.textView.text = "${channel}:${line_offset}"
+            if (line_offset == 0) {
+                rowLabel.textView.text = "${channel}:${line_offset}"
+            } else {
+                rowLabel.textView.text = "  :${line_offset}"
+            }
         } else {
             var instrument = that.opus_manager.get_percussion_instrument(line_offset)
             rowLabel.textView.text = "P:${get_number_string(instrument, that.opus_manager.RADIX, 2)}"
@@ -463,8 +486,7 @@ class MainActivity : AppCompatActivity() {
                         var beat_key = cursor.get_beatkey()
                         that.opus_manager.new_line_at_cursor()
                         var new_line_channel = beat_key.channel
-                        var new_line_offset =
-                            that.opus_manager.channel_lines[new_line_channel].size - 1
+                        var new_line_offset = that.opus_manager.channel_lines[new_line_channel].size - 1
                         var line_y = that.opus_manager.get_y(new_line_channel, new_line_offset)
                         that.buildLineView(line_y)
                     }
@@ -672,7 +694,6 @@ class MainActivity : AppCompatActivity() {
 
                 this.llContextMenu.addView(view)
                 this.cache.setActiveContextMenu(view)
-
             }
         }
     }

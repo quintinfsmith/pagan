@@ -1,31 +1,28 @@
 package com.qfs.radixulous
 
 import android.graphics.Color
-import com.qfs.radixulous.opusmanager.OpusEvent
-import com.qfs.radixulous.opusmanager.HistoryLayer as OpusManager
 import android.os.Bundle
 import android.view.*
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.*
-
 import androidx.appcompat.app.AppCompatActivity
-import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.content.ContextCompat
-import androidx.core.content.res.ResourcesCompat.getColor
+import com.google.android.material.chip.Chip
 import com.qfs.radixulous.opusmanager.BeatKey
-
+import com.qfs.radixulous.opusmanager.OpusEvent
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.activity_main.view.*
+import kotlinx.android.synthetic.main.channel_ctrl.view.*
 import kotlinx.android.synthetic.main.contextmenu_cell.*
 import kotlinx.android.synthetic.main.contextmenu_cell.view.*
-import kotlinx.android.synthetic.main.contextmenu_column.*
 import kotlinx.android.synthetic.main.contextmenu_column.view.*
 import kotlinx.android.synthetic.main.contextmenu_row.view.*
 import kotlinx.android.synthetic.main.item_opusbutton.view.*
 import kotlinx.android.synthetic.main.item_opustree.view.*
 import kotlinx.android.synthetic.main.numberline_item.view.*
 import kotlinx.android.synthetic.main.table_cell_label.view.*
+import com.qfs.radixulous.opusmanager.HistoryLayer as OpusManager
+
 
 class ViewCache {
     var view_cache: MutableList<Pair<LinearLayout, MutableList<Pair<View?, HashMap<List<Int>, View>>>>> = mutableListOf()
@@ -155,7 +152,6 @@ class MainActivity : AppCompatActivity() {
         actionBar.setDisplayShowHomeEnabled(true)
 
 
-
         this.opus_manager.new()
         this.opus_manager.split_tree(BeatKey(0,0,0), listOf(), 2)
         //opus_manager.split_tree(BeatKey(0,0,0), listOf(0), 3)
@@ -188,6 +184,8 @@ class MainActivity : AppCompatActivity() {
         this.populateTable()
         this.update_cursor_position()
         this.setContextMenu(3)
+
+
     }
     //// method to inflate the options menu when
     //// the user opens the menu for the first time
@@ -211,6 +209,9 @@ class MainActivity : AppCompatActivity() {
         for (i in 0 until this.opus_manager.opus_beat_count) {
             this.newColumnLabel()
         }
+        this.tlOpusLines.trHeader.btnAction.setOnClickListener {
+            this.showPopup(this.tlOpusLines.trHeader.btnAction)
+        }
 
         var y = 0
         for (channel in 0 until this.opus_manager.channel_lines.size) {
@@ -220,6 +221,65 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+    fun showPopup(view: View?) {
+        val inflater = getSystemService(LAYOUT_INFLATER_SERVICE) as LayoutInflater
+        val popupView: View = inflater.inflate(R.layout.channel_ctrl, null)
+
+        val popupWindow = PopupWindow(
+            popupView,
+            MATCH_PARENT,
+            MATCH_PARENT,
+            true
+        )
+        for (i in 0 until this.opus_manager.channel_lines.size) {
+            if (i == 9) {
+                continue
+            }
+            var chipView = Chip(popupView.clA.clB.cgEnabledChannels.context)
+            chipView.isCheckable = true
+            chipView.text = "${i}"
+            chipView.isChecked = this.opus_manager.channel_lines[i].isNotEmpty()
+            popupView.clA.clB.cgEnabledChannels.addView(chipView)
+        }
+
+        // Add chip for drums
+        var chipView = Chip(popupView.clA.clB.cgEnabledChannels.context)
+        chipView.isCheckable = true
+        chipView.text = "drums"
+        chipView.isChecked = this.opus_manager.channel_lines[9].isNotEmpty()
+        popupView.clA.clB.cgEnabledChannels.addView(chipView)
+
+        popupWindow.showAtLocation(view, Gravity.CENTER, 0, 0)
+
+        popupView.setOnClickListener {
+            popupWindow.dismiss()
+        }
+    }
+
+    // private fun showPopup(view: View) {
+
+   //     val popup = PopupWindow(this)
+   //     popup.inflate(R.menu.popup_menu)
+
+   //     popup.setOnMenuItemClickListener(PopupMenu.OnMenuItemClickListener { item: MenuItem? ->
+
+   //         when (item!!.itemId) {
+   //             R.id.a -> {
+   //                 Toast.makeText(this@MainActivity, item.title, Toast.LENGTH_SHORT).show()
+   //             }
+   //             R.id.b -> {
+   //                 Toast.makeText(this@MainActivity, item.title, Toast.LENGTH_SHORT).show()
+   //             }
+   //             R.id.c -> {
+   //                 Toast.makeText(this@MainActivity, item.title, Toast.LENGTH_SHORT).show()
+   //             }
+   //         }
+
+   //         true
+   //     })
+
+   //     popup.show()
+   // }
 
     fun newColumnLabel() {
         var parent = this.tlOpusLines.trHeader
@@ -612,6 +672,7 @@ class MainActivity : AppCompatActivity() {
 
                 this.llContextMenu.addView(view)
                 this.cache.setActiveContextMenu(view)
+
             }
         }
     }

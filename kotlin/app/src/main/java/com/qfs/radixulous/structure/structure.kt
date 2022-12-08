@@ -1,5 +1,6 @@
 package com.qfs.radixulous.structure
 import kotlin.math.*
+import com.qfs.radixulous.apres.*
 
 fun greatest_common_denominator(first: Int, second: Int): Int {
     var tmp: Int;
@@ -46,9 +47,9 @@ fun get_prime_factors(n: Int): List<Int> {
 }
 
 fun lowest_common_multiple(number_list: List<Int>): Int {
-    var prime_factors: Array<List<Int>> = Array(number_list.size, {
-        i -> get_prime_factors(number_list[i])
-    })
+    var prime_factors: Array<List<Int>> = Array(number_list.size) { i ->
+        get_prime_factors(number_list[i])
+    }
     var common_factor_map: HashMap<Int, Int> = HashMap<Int, Int>()
     for (factors in prime_factors) {
         for (factor in factors) {
@@ -56,7 +57,7 @@ fun lowest_common_multiple(number_list: List<Int>): Int {
                 common_factor_map[factor] = 0
             }
             var current = common_factor_map[factor]!!
-            common_factor_map[factor] = max(current, factors.count({e -> e == factor}))
+            common_factor_map[factor] = max(current, factors.count { e -> e == factor })
         }
     }
     var output = 0;
@@ -117,7 +118,7 @@ public class OpusTree<T> {
         this.size = new_size
     }
 
-    fun reduce(target_size: Int) {
+    fun reduce(target_size: Int = 1) {
         var indices: MutableList<Pair<Int, OpusTree<T>>> = mutableListOf()
         for (key in this.divisions.keys) {
             indices.add(Pair(key, this.divisions[key] as OpusTree<T>))
@@ -178,11 +179,11 @@ public class OpusTree<T> {
                 if (minimum_divs.size > 0) {
                     stack.add(
                         ReducerTuple(
-                        denominator = minimum_divs[0],
-                        indices = working_indices,
-                        original_size = current_size,
-                        parent_node = working_node
-                    )
+                            denominator = minimum_divs[0],
+                            indices = working_indices,
+                            original_size = current_size,
+                            parent_node = working_node
+                        )
                     )
                 } else {
                     working_node.event = working_indices[0].second.event
@@ -425,5 +426,46 @@ public class OpusTree<T> {
     public fun empty() {
         this.divisions = HashMap<Int, OpusTree<T>>()
         this.size = 1
+    }
+
+    fun split(split_func: (event: T) -> Int): List<OpusTree<T>> {
+        var merged_map = HashMap<List<Pair<Int, Int>>, MutableList<T>>()
+        for ((path, event) in this.get_events_mapped()) {
+            if (!merged_map.containsKey(path)) {
+                merged_map[path] = mutableListOf()
+            }
+            merged_map[path]?.add(event)
+        }
+
+        var unstructured_splits = HashMap<Int, MutableList<Pair<List<Pair<Int,Int>>, T>>>()
+        for ((path, events) in merged_map) {
+            for (event in events) {
+                var key = split_func(event)
+                if (!unstructured_splits.containsKey(key)) {
+                    unstructured_splits[key] = mutableListOf()
+                }
+                unstructured_splits[key]?.add(Pair(path, event))
+            }
+        }
+        var tracks: MutableList<OpusTree<T>> = mutableListOf()
+        for ((key, events) in unstructured_splits) {
+            var node = OpusTree<T>()
+            for ((path, event) in events) {
+                var working_node = node
+                for ((x, size) in path) {
+                    if (working_node.size != size) {
+                        working_node.set_size(size)
+                    }
+                    working_node = working_node.get(x)
+                }
+                working_node = node
+                for ((x, size) in path) {
+                    working_node = working_node.get(x)
+                }
+                working_node.set_event(event)
+            }
+            tracks.add(node)
+        }
+        return tracks
     }
 }

@@ -1,5 +1,8 @@
 package com.qfs.radixulous.opusmanager
 import com.qfs.radixulous.structure.OpusTree
+import com.qfs.radixulous.from_string
+import java.io.File
+import java.lang.Math.max
 
 data class OpusEvent(var note: Int, var radix: Int, var channel: Int, var relative: Boolean)
 data class BeatKey(var channel: Int, var line_offset: Int, var beat: Int)
@@ -280,18 +283,65 @@ open class OpusManagerBase {
         }
     }
 
-    open fun save(path: String? = null) { }
-    open fun load(path: String) { }
+    open fun save(path: String? = null) {
+
+    }
+
+    open fun load(path: String) {
+        this.path = path
+        this.load_folder(path)
+    }
+
     open fun new() {
         var new_line: MutableList<OpusTree<OpusEvent>> = MutableList(4, { _ -> OpusTree<OpusEvent>() })
 
         this.channel_lines[0].add(new_line)
-
         this.opus_beat_count = 4
     }
 
-    private fun get_working_dir(): String? { return "" }
-    open fun load_folder(path: String) { }
+    private fun get_working_dir(): String? {
+        return this.path
+    }
+
+    open fun load_folder(path: String) {
+        var channel_map = HashMap<String, Int>()
+        var suffix_patt = ".*_((\\d{1,3})?)(\\..*)?".toRegex()
+        //suffix_patt.findAll().forEach{ f -> }
+        var filenames: MutableList<String> = mutableListOf()
+        for (file in File(path).list()) {
+            if (file.endsWith(".blah")) {
+                continue
+            }
+            var channel = suffix_patt.findAll(file).first().groups[1]?.value?.toInt()
+            if (channel != null) {
+                channel_map[path] = channel
+                filenames.add(file)
+            }
+        }
+
+        var line_patt = "\\{(.*?)\\}".toRegex()
+        var beat_count = 1
+        for (filename in filenames) {
+            var channel = channel_map.get(filename)!!
+            var content = File("${path}/${filename}").readText(Charsets.UTF_8)
+            var lines = line_patt.findAll(content)
+            for (line in lines) {
+                var opus_line: MutableList<OpusTree<OpusEvent>> = mutableListOf()
+                for (beat_str in line.groups[1]?.value?.split("|")!!) {
+                    var beat_tree = from_string(beat_str, this.RADIX, channel)
+                    beat_tree.clear_singles()
+                    opus_line.add(beat_tree)
+                }
+                beat_count = max(opus_line.size, beat_count)
+                while (opus_line.size < beat_count) {
+                    opus_line.add(OpusTree<OpusEvent>())
+                }
+                this.channel_lines[channel].add(opus_line)
+            }
+        }
+        this.opus_beat_count = beat_count
+    }
+
     open fun load_file(path: String) { }
 
     fun import_midi(path: String) { }

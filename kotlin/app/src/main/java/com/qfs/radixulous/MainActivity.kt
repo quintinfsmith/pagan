@@ -22,7 +22,13 @@ import kotlinx.android.synthetic.main.item_opustree.view.*
 import kotlinx.android.synthetic.main.numberline_item.view.*
 import kotlinx.android.synthetic.main.table_cell_label.view.*
 import com.qfs.radixulous.opusmanager.HistoryLayer as OpusManager
+import android.content.ActivityNotFoundException
 
+import androidx.core.app.ActivityCompat.startActivityForResult
+
+import android.content.Intent
+import java.io.File
+import java.io.FileOutputStream
 
 class ViewCache {
     var view_cache: MutableList<Pair<LinearLayout, MutableList<Pair<View?, HashMap<List<Int>, View>>>>> = mutableListOf()
@@ -77,7 +83,7 @@ class ViewCache {
     }
     fun detachColumnLabel() {
         var label = this.column_label_cache.removeLast()
-        (label?.parent as ViewGroup).removeView(label)
+        (label.parent as ViewGroup).removeView(label)
     }
     fun addLineLabel(y: Int, view: Button) {
         this.line_label_cache.add(y, view)
@@ -88,7 +94,7 @@ class ViewCache {
     fun detachLine(y: Int) {
         var view = this.view_cache.removeAt(y).first
         this.line_label_cache.removeAt(y)
-        (view?.parent as ViewGroup).removeView(view)
+        (view.parent as ViewGroup).removeView(view)
     }
 
     fun removeBeatView(y: Int, x: Int) {
@@ -210,7 +216,14 @@ class MainActivity : AppCompatActivity() {
             this.newColumnLabel()
         }
         this.tlOpusLines.trHeader.btnAction.setOnClickListener {
-            this.showPopup(this.tlOpusLines.trHeader.btnAction)
+
+            var f1 = File("file2.txt")
+            //var data = intent.agetExtras().get("data")
+            f1.writeBytes("test".toByteArray())
+
+
+            //this.openFileBrowser()
+            //this.showPopup(this.tlOpusLines.trHeader.btnAction)
         }
 
         var y = 0
@@ -307,7 +320,7 @@ class MainActivity : AppCompatActivity() {
             parent,
             false
         ) as TextView
-        var x = parent.getChildCount() - 1
+        var x = parent.childCount - 1
         headerCellView.text = "${x}"
         headerCellView.setOnClickListener {
             this.opus_manager.jump_to_beat(x)
@@ -733,4 +746,17 @@ class MainActivity : AppCompatActivity() {
         this.setContextMenu(3)
     }
 
+    fun openFileBrowser() {
+        val fileintent = Intent(Intent.ACTION_GET_CONTENT)
+        fileintent.type = "gagt/sdf"
+        startActivity(fileintent)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == 777) {
+            val filePath = data?.data?.path
+            this.opus_manager.load(filePath!!)
+        }
+    }
 }

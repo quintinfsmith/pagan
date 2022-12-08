@@ -486,7 +486,7 @@ class MIDITree(OpusTree):
         max_tick = 0
         press_map = {}
         for tick, event in midi.get_all_events():
-            max_tick = max(tick, tick)
+            max_tick = max(tick, max_tick)
             beat_index = ((tick - last_ts_change) // beat_size) + total_beat_offset
             inner_beat_offset = (tick - last_ts_change) % beat_size
 

@@ -16,7 +16,7 @@ fun greatest_common_denominator(first: Int, second: Int): Int {
 
 fun get_prime_factors(n: Int): List<Int> {
     var primes: MutableList<Int> = mutableListOf();
-    for (i in 2 .. (n / 2) - 1) {
+    for (i in 2 until (n / 2)) {
         var is_prime = true;
         for (p in primes) {
             if (i % p == 0) {
@@ -138,14 +138,14 @@ public class OpusTree<T> {
 
             var current_size = original_size / denominator;
 
-            var split_indices: Array<MutableList<Pair<Int, OpusTree<T>>>> = Array(denominator, { _ -> mutableListOf() })
+            var split_indices: Array<MutableList<Pair<Int, OpusTree<T>>>> = Array(denominator) { _ -> mutableListOf() }
             for (index_pair in element.indices) {
                 var child_index = index_pair.first;
                 var split_index = child_index / current_size
                 split_indices[split_index].add(Pair(index_pair.first % current_size, index_pair.second.copy()))
             }
 
-            for (i in 0..denominator - 1) {
+            for (i in 0 until denominator) {
                 var working_indices = split_indices[i]
                 if (working_indices.size == 0) {
                     continue
@@ -358,11 +358,7 @@ public class OpusTree<T> {
     }
 
     fun insert(index: Int?, new_tree: OpusTree<T>) {
-        var adj_index = if (index == null) {
-            this.size
-        } else {
-            index
-        }
+        var adj_index = index ?: this.size
 
         this.size += 1
         var new_indices = HashMap<Int, OpusTree<T>>()
@@ -384,11 +380,7 @@ public class OpusTree<T> {
     }
 
     fun pop(x: Int?=null): OpusTree<T> {
-        var index = if (x == null) {
-            this.size - 1
-        } else {
-            x
-        }
+        var index = x ?: this.size - 1
 
         var output = this.divisions[index]!!
         val new_divisions = HashMap<Int, OpusTree<T>>()
@@ -467,5 +459,22 @@ public class OpusTree<T> {
             tracks.add(node)
         }
         return tracks
+    }
+
+    fun get_events_mapped(): List<Pair<List<Pair<Int, Int>>, T>> {
+        var output: MutableList<Pair<MutableList<Pair<Int,Int>>, T>> = mutableListOf()
+        if (! this.is_leaf()) {
+            for ((i, node) in this.divisions) {
+                for ((path, event) in node.get_events_mapped()) {
+                    var new_path = path.toMutableList()
+                    new_path.add(0, Pair(i, this.size))
+                    output.add(Pair(new_path, event))
+                }
+            }
+        } else if (this.is_event()) {
+            output.add(Pair(mutableListOf(), this.get_event()!!))
+        }
+
+        return output
     }
 }

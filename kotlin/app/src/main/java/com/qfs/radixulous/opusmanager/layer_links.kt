@@ -248,6 +248,8 @@ open class LinksLayer() : FlagLayer() {
     }
 
     // TODO
-    override fun load_folder(path: String) { }
+    override fun load_folder(path: String) {
+        super.load_folder(path)
+    }
     override fun save(path: String?) { }
 }

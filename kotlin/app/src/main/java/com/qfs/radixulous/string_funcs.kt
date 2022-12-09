@@ -118,7 +118,9 @@ fun from_string(input_string: String, radix: Int, channel: Int): OpusTree<OpusEv
                     odd_note -= char_to_int(character, radix) * radix
                 }
             }
-
+            if (tree_stack.last().is_leaf()) {
+                tree_stack.last().set_size(1)
+            }
             var leaf = tree_stack.last().get(tree_stack.last().size - 1)
             if (relative_flag != CH_HOLD) {
                 leaf.set_event(
@@ -134,10 +136,13 @@ fun from_string(input_string: String, radix: Int, channel: Int): OpusTree<OpusEv
         } else if (REL_CHARS.contains(character)) {
             relative_flag = character
         } else if (!SPECIAL_CHARS.contains(character)) {
-            if (register == null) {
-                register = char_to_int(character, radix)
+            register = if (register == null) {
+                char_to_int(character, radix)
             } else {
                 var odd_note = (register * radix) + char_to_int(character, radix)
+                if (tree_stack.last().is_leaf()) {
+                    tree_stack.last().set_size(1)
+                }
                 var leaf = tree_stack.last().get(tree_stack.last().size - 1)
                 leaf.set_event(
                     OpusEvent(
@@ -147,7 +152,7 @@ fun from_string(input_string: String, radix: Int, channel: Int): OpusTree<OpusEv
                         false
                     )
                 )
-                register = null
+                null
             }
 
         }

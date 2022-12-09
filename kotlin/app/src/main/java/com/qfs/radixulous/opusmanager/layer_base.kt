@@ -1,4 +1,5 @@
 package com.qfs.radixulous.opusmanager
+import android.util.Log
 import com.qfs.radixulous.structure.OpusTree
 import com.qfs.radixulous.from_string
 import java.io.File
@@ -306,24 +307,27 @@ open class OpusManagerBase {
     open fun load_folder(path: String) {
         var channel_map = HashMap<String, Int>()
         var suffix_patt = ".*_((\\d{1,3})?)(\\..*)?".toRegex()
-        //suffix_patt.findAll().forEach{ f -> }
         var filenames: MutableList<String> = mutableListOf()
-        for (file in File(path).list()) {
-            if (file.endsWith(".blah")) {
+        for (file in File(path).list()!!) {
+            if (file.endsWith(".json")) {
                 continue
             }
-            var channel = suffix_patt.findAll(file).first().groups[1]?.value?.toInt()
-            if (channel != null) {
+            var matches = suffix_patt.findAll(file).toList()
+            if (matches.isNotEmpty()) {
+                var channel = matches.first().groups[1]?.value?.toInt()!!
                 channel_map[path] = channel
-                filenames.add(file)
+                filenames.add("${path}/${file}")
             }
         }
-
         var line_patt = "\\{(.*?)\\}".toRegex()
         var beat_count = 1
         for (filename in filenames) {
-            var channel = channel_map.get(filename)!!
-            var content = File("${path}/${filename}").readText(Charsets.UTF_8)
+            var channel = if (channel_map.containsKey(filename)) {
+                channel_map[filename]!!
+            } else {
+                0
+            }
+            var content = File(filename).readText(Charsets.UTF_8)
             var lines = line_patt.findAll(content)
             for (line in lines) {
                 var opus_line: MutableList<OpusTree<OpusEvent>> = mutableListOf()

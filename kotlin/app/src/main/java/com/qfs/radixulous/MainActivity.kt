@@ -22,11 +22,13 @@ import kotlinx.android.synthetic.main.item_opustree.view.*
 import kotlinx.android.synthetic.main.numberline_item.view.*
 import kotlinx.android.synthetic.main.table_cell_label.view.*
 import com.qfs.radixulous.opusmanager.HistoryLayer as OpusManager
+import com.qfs.radixulous.apres.*
 import android.content.ActivityNotFoundException
 
 import androidx.core.app.ActivityCompat.startActivityForResult
 
 import android.content.Intent
+import android.util.Log
 import java.io.File
 import java.io.FileOutputStream
 
@@ -158,38 +160,44 @@ class MainActivity : AppCompatActivity() {
         actionBar.setDisplayShowHomeEnabled(true)
 
 
-        this.opus_manager.new()
-        this.opus_manager.split_tree(BeatKey(0,0,0), listOf(), 2)
-        //opus_manager.split_tree(BeatKey(0,0,0), listOf(0), 3)
+        //this.opus_manager.new()
+        //this.opus_manager.split_tree(BeatKey(0,0,0), listOf(), 2)
+        ////opus_manager.split_tree(BeatKey(0,0,0), listOf(0), 3)
 
-        this.opus_manager.set_event(BeatKey(0,0,0), listOf(0), OpusEvent(
-            35,
-            12,
-            0,
-            false
-        ))
+        //this.opus_manager.set_event(BeatKey(0,0,0), listOf(0), OpusEvent(
+        //    35,
+        //    12,
+        //    0,
+        //    false
+        //))
 
-        this.opus_manager.set_event(BeatKey(0,0,0), listOf(1), OpusEvent(
-            35,
-            12,
-            0,
-            false
-        ))
-        this.opus_manager.split_tree(BeatKey(0,0,0), listOf(0),3)
+        //this.opus_manager.set_event(BeatKey(0,0,0), listOf(1), OpusEvent(
+        //    35,
+        //    12,
+        //    0,
+        //    false
+        //))
+        //this.opus_manager.split_tree(BeatKey(0,0,0), listOf(0),3)
 
-        this.opus_manager.set_event(BeatKey(0,0,0), listOf(0,1), OpusEvent(
-        36,
-        12,
-        0,
-        false
-        ))
+        //this.opus_manager.set_event(BeatKey(0,0,0), listOf(0,1), OpusEvent(
+        //36,
+        //12,
+        //0,
+        //false
+        //))
 
-        this.opus_manager.new_line(0)
-        this.opus_manager.add_channel(9)
-
+        //this.opus_manager.new_line(0)
+        //this.opus_manager.add_channel(9)
+        this.opus_manager.load("/data/data/com.qfs.radixulous/test")
+        //var view = TextView(this.test.context)
+        //var str = File("/data/data/com.qfs.radixulous/test/channel_0").readText(Charsets.UTF_8)
+        //view.text = str
+        //this.test.addView(view)
+        //this.horizontalScrollView.visibility = View.GONE
         this.populateTable()
         this.update_cursor_position()
         this.setContextMenu(3)
+
 
 
     }
@@ -217,13 +225,8 @@ class MainActivity : AppCompatActivity() {
         }
         this.tlOpusLines.trHeader.btnAction.setOnClickListener {
 
-            var f1 = File("file2.txt")
-            //var data = intent.agetExtras().get("data")
-            f1.writeBytes("test".toByteArray())
-
-
             //this.openFileBrowser()
-            //this.showPopup(this.tlOpusLines.trHeader.btnAction)
+            this.showPopup(this.tlOpusLines.trHeader.btnAction)
         }
 
         var y = 0
@@ -702,7 +705,7 @@ class MainActivity : AppCompatActivity() {
                         leafView.tv.text = get_number_string(i, that.opus_manager.RADIX, 2)
                         numberLine.addView(leafView)
                     }
-                    this.clButtons.btnSplit?.text = "${that.opus_manager.cursor.position}"
+                    //this.clButtons.btnSplit?.text = "${that.opus_manager.cursor.position}"
                 }
 
                 this.llContextMenu.addView(view)
@@ -717,7 +720,7 @@ class MainActivity : AppCompatActivity() {
         this.buildTreeView(rowView, y, x, listOf())
     }
 
-    fun update_cursor_position() {
+    private fun update_cursor_position() {
         var c = this.cache.getCursor()
         if (c != null) {
             if (c.first < this.opus_manager.line_count() && c.second < this.opus_manager.opus_beat_count) {

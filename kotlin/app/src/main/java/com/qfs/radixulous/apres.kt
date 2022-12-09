@@ -1322,37 +1322,41 @@ class MIDI {
                 }
 
 
-                if (chunk_type == "MThd") {
-                    dequeue_n(working_bytes, 4) // Get Size
-                    midi_format = dequeue_n(working_bytes, 2)
-                    dequeue_n(working_bytes, 4) // Get Number of tracks
-                    divword = dequeue_n(working_bytes, 2)
+                when (chunk_type) {
+                    "MThd" -> {
+                        dequeue_n(working_bytes, 4) // Get Size
+                        midi_format = dequeue_n(working_bytes, 2)
+                        dequeue_n(working_bytes, 4) // Get Number of tracks
+                        divword = dequeue_n(working_bytes, 2)
 
-                    if (divword and 0x8000 > 0) {
-                    //TODO: (from rust) handle divword > 0x8000
-                    } else {
-                        ppqn = (divword and 0x7FFF)
+                        if (divword and 0x8000 > 0) {
+                            //TODO: (from rust) handle divword > 0x8000
+                        } else {
+                            ppqn = (divword and 0x7FFF)
+                        }
+                        mlo.set_ppqn(ppqn)
+                        mlo.set_format(midi_format)
+                        found_header = true
                     }
-                    mlo.set_ppqn(ppqn)
-                    mlo.set_format(midi_format)
-                    found_header = true
-                } else if (chunk_type == "MTrk") {
-                    if (! found_header) {
-                        throw Exception("MISSING MTrk")
+                    "MTrk" -> {
+                        if (! found_header) {
+                            throw Exception("MISSING MTrk")
+                        }
+                        current_deltatime = 0
+                        track_length = dequeue_n(working_bytes, 4)
+                        sub_bytes = mutableListOf()
+                        for (i in 0 until track_length) {
+                            sub_bytes.add(working_bytes.removeFirst())
+                        }
+                        while (sub_bytes.isNotEmpty()) {
+                            current_deltatime += get_variable_length_number(sub_bytes)
+                            var eid = mlo.process_mtrk_event(sub_bytes, current_deltatime, current_track)
+                        }
+                        current_track += 1
                     }
-                    current_deltatime = 0
-                    track_length = dequeue_n(working_bytes, 4)
-                    sub_bytes = mutableListOf()
-                    for (i in 0 until track_length) {
-                        sub_bytes.add(working_bytes.removeFirst())
+                    else -> {
+                        throw Exception("Invalid Bytes")
                     }
-                    while (sub_bytes.isNotEmpty()) {
-                        current_deltatime += get_variable_length_number(sub_bytes)
-                        var eid = mlo.process_mtrk_event(sub_bytes, current_deltatime, current_track)
-                    }
-                    current_track += 1
-                } else {
-                    throw Exception("Invalid Bytes")
                 }
             }
             return mlo
@@ -1360,7 +1364,7 @@ class MIDI {
     }
 
     fun process_mtrk_event(bytes: MutableList<Byte>, current_deltatime: Int, track: Int): Int {
-        if (0x80 <= bytes.first() && bytes.first() < 0xF0) {
+        if (bytes.first() in 0x80..0xef) {
             this._active_byte = bytes.first()!!
         }
 
@@ -1368,7 +1372,7 @@ class MIDI {
 
         return this.insert_event(track, current_deltatime, event!!)
     }
-    fun as_bytes(): ByteArray {
+    public fun as_bytes(): ByteArray {
         var output: MutableList<Byte> = mutableListOf(
             'M'.toByte(),
             'T'.toByte(),
@@ -1554,7 +1558,6 @@ class MIDI {
 
         return output.sortedBy { it.first }
     }
-
 }
 
 fun dequeue_n(bytelist: MutableList<Byte>, n: Int): Int {
@@ -1694,7 +1697,6 @@ fun get_mi_sf(chord_name: String): Pair<Byte, Byte> {
     }
     return output
 }
-
 
 fun get_chord_name_from_mi_sf(mi: Byte, sf: Byte): String {
     var map: List<List<String>> = listOf(

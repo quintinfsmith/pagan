@@ -2,6 +2,7 @@ package com.qfs.radixulous.opusmanager
 import android.util.Log
 import com.qfs.radixulous.structure.OpusTree
 import com.qfs.radixulous.from_string
+import com.qfs.radixulous.to_string
 import java.io.File
 import java.lang.Math.max
 
@@ -302,7 +303,7 @@ open class OpusManagerBase {
             this.path = path
         }
 
-        var directory = File(self.path)
+        var directory = File(this.path)
         if (!directory.isDirectory()) {
             if (! directory.mkdirs()) {
                 throw Exception("Could not make directory")
@@ -322,11 +323,11 @@ open class OpusManagerBase {
             for (line in channel) {
                 var beatstrs: MutableList<String> = mutableListOf()
                 for (beat in line) {
-                    beatstrs.add(beat.to_string())
+                    beatstrs.add(to_string(beat))
                 }
                 var str_line =  beatstrs.joinToString("|", "{", "}")
             }
-            var channel_file = File("${this.path}/channel_$i").writeText(strLines.jointoString("\n"))
+            var channel_file = File("${this.path}/channel_$i").writeText(strLines.joinToString("\n"))
         }
     }
 

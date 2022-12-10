@@ -182,7 +182,7 @@ class MainActivity : AppCompatActivity() {
         actionBar.setDisplayUseLogoEnabled(true)
         actionBar.setDisplayShowHomeEnabled(true)
 
-        this.opus_manager.load("/data/data/com.qfs.radixulous/test")
+        this.opus_manager.load("/data/data/com.qfs.radixulous/projects/test")
 
         this.populateTable()
         this.update_cursor_position()

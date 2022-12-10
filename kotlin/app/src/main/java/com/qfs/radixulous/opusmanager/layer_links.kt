@@ -1,4 +1,5 @@
 package com.qfs.radixulous.opusmanager
+import java.io.File
 
 open class LinksLayer() : OpusManagerBase() {
     var linked_beat_map: HashMap<BeatKey, BeatKey> = HashMap<BeatKey, BeatKey>()
@@ -267,40 +268,42 @@ open class LinksLayer() : OpusManagerBase() {
         if (! file.isFile()) {
             return
         }
+        var json_patt = ".*?\"(?<a>\\d*)\\.(?<b>\\d*)\\.(?<c>\\d*)\".*?:.*?\\[(?<d>\\d*),(?<e>\\d*),(?<f>\\d*)\\]".toRegex()
+        var content = file.readText()
+        content = content.replace(" ", "")
+        content = content.replace("\t", "")
 
-        var compat_map = JSON.parse(file.readText())
-        for ((k, target) in compat_map) {
-            var values = k.split(".")
-            var new_key = BeatKey(
-                values[0].toInt(),
-                values[1].toInt(),
-                values[2].toInt()
+        for (hit in json_patt.findAll(content)) {
+            var key_beat = BeatKey(
+                hit.groups[1]!!.value.toInt(),
+                hit.groups[2]!!.value.toInt(),
+                hit.groups[3]!!.value.toInt()
             )
-
-            var new_target = BeatKey(
-                target[0],
-                target[1],
-                target[2]
+            var target_beat = BeatKey(
+                hit.groups[4]!!.value.toInt(),
+                hit.groups[5]!!.value.toInt(),
+                hit.groups[6]!!.value.toInt()
             )
-            this.linked_beat_map[new_key] = new_target
+            this.linked_beat_map[key_beat] = target_beat
         }
 
         for ((beat, target) in this.linked_beat_map) {
             if (!this.inv_linked_beat_map.containsKey(target)) {
                 this.inv_linked_beat_map[target] = mutableListOf()
             }
-            this.inv_linked_beat_map[target].add(beat)
+            this.inv_linked_beat_map[target]!!.add(beat)
         }
     }
 
     override fun save(path: String?) {
         super.save(path)
-        var compat_map = HashMap<String, List<Int>>()
+        var lines: MutableList<String> = mutableListOf()
         for ((k, target) in this.linked_beat_map) {
-            var new_key = "${k.channel}.${k.line_offset}.${k.beat}"
-            compat_map[new_key] = listOf(target.channel, target.line_offset, target.beat)
+            lines.add(
+                "    \"${k.channel}.${k.line_offset}.${k.beat}\": [${target.channel},${target.line_offset},${target.beat}]\""
+            )
         }
-
-        File("${this.path}/linkedbeats.json").writeText(JSON.stringify(compat_map))
+        var json_string: String = lines.joinToString(",\n", "{", "}")
+        File("${this.path}/linkedbeats.json").writeText(json_string)
     }
 }

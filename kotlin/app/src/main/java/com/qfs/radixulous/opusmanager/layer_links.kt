@@ -1,6 +1,6 @@
 package com.qfs.radixulous.opusmanager
 
-open class LinksLayer() : FlagLayer() {
+open class LinksLayer() : OpusManagerBase() {
     var linked_beat_map: HashMap<BeatKey, BeatKey> = HashMap<BeatKey, BeatKey>()
     var inv_linked_beat_map: HashMap<BeatKey, MutableList<BeatKey>> = HashMap<BeatKey, MutableList<BeatKey>>()
 
@@ -261,9 +261,46 @@ open class LinksLayer() : FlagLayer() {
         return this.inv_linked_beat_map.containsKey(BeatKey(channel, line_offset, beat))
     }
 
-    // TODO
     override fun load_folder(path: String) {
         super.load_folder(path)
+        var file = File("${this.path}/linkedbeats.json")
+        if (! file.isFile()) {
+            return
+        }
+
+        var compat_map = JSON.parse(file.readText())
+        for ((k, target) in compat_map) {
+            var values = k.split(".")
+            var new_key = BeatKey(
+                values[0].toInt(),
+                values[1].toInt(),
+                values[2].toInt()
+            )
+
+            var new_target = BeatKey(
+                target[0],
+                target[1],
+                target[2]
+            )
+            this.linked_beat_map[new_key] = new_target
+        }
+
+        for ((beat, target) in this.linked_beat_map) {
+            if (!this.inv_linked_beat_map.containsKey(target)) {
+                this.inv_linked_beat_map[target] = mutableListOf()
+            }
+            this.inv_linked_beat_map[target].add(beat)
+        }
     }
-    override fun save(path: String?) { }
+
+    override fun save(path: String?) {
+        super.save(path)
+        var compat_map = HashMap<String, List<Int>>()
+        for ((k, target) in this.linked_beat_map) {
+            var new_key = "${k.channel}.${k.line_offset}.${k.beat}"
+            compat_map[new_key] = listOf(target.channel, target.line_offset, target.beat)
+        }
+
+        File("${this.path}/linkedbeats.json").writeText(JSON.stringify(compat_map))
+    }
 }

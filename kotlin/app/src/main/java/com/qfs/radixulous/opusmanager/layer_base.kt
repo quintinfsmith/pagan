@@ -294,7 +294,40 @@ open class OpusManagerBase {
     }
 
     open fun save(path: String? = null) {
+        if (path == null && this.path == null) {
+            throw Exception("NoPathGiven")
+        }
 
+        if (path != null) {
+            this.path = path
+        }
+
+        var directory = File(self.path)
+        if (!directory.isDirectory()) {
+            if (! directory.mkdirs()) {
+                throw Exception("Could not make directory")
+            }
+        }
+
+        for (file in directory.list()!!) {
+            File("${this.path}/$file").delete()
+        }
+
+        for (i in 0 until this.channel_lines.size) {
+            var channel = this.channel_lines[i]
+            if (channel.isEmpty()) {
+                continue
+            }
+            var strLines: MutableList<String> = mutableListOf()
+            for (line in channel) {
+                var beatstrs: MutableList<String> = mutableListOf()
+                for (beat in line) {
+                    beatstrs.add(beat.to_string())
+                }
+                var str_line =  beatstrs.joinToString("|", "{", "}")
+            }
+            var channel_file = File("${this.path}/channel_$i").writeText(strLines.jointoString("\n"))
+        }
     }
 
     open fun load(path: String) {
@@ -357,8 +390,7 @@ open class OpusManagerBase {
         this.opus_beat_count = beat_count
     }
 
-    open fun load_file(path: String) { }
-
-    fun import_midi(path: String) { }
-
+    fun import_midi(path: String) {
+        
+    }
 }

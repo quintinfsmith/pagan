@@ -35,10 +35,25 @@ class UpdatesCache {
     public fun flag_line_init(channel: Int, line_offset: Int) {
         this.line_init.add(Pair(channel, line_offset))
     }
+
+    fun purge() {
+        this.beat_pop.clear()
+        this.beat_new.clear()
+        this.beat_change.clear()
+        this.line_new.clear()
+        this.line_pop.clear()
+        this.line_init.clear()
+    }
+
 }
 
 open class FlagLayer() : OpusManagerBase() {
     var cache = UpdatesCache()
+
+    override fun reset() {
+        this.cache.purge()
+        super.reset()
+    }
 
     override fun replace_tree(beat_key: BeatKey, position: List<Int>, tree: OpusTree<OpusEvent>) {
         super.replace_tree(beat_key, position, tree)

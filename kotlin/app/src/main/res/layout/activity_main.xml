@@ -29,16 +29,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:stretchColumns="*" >
-            <TableRow
-                android:id="@+id/trHeader"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-                <Button
-                    android:id="@+id/btnAction"
-                    android:text="BAP"/>
-            </TableRow>
         </TableLayout>
-
     </HorizontalScrollView>
 
     <LinearLayout
@@ -48,5 +39,4 @@
         android:orientation="vertical"
         app:layout_constraintBottom_toBottomOf="parent"
         tools:layout_editor_absoluteX="0dp" />
-
 </androidx.constraintlayout.widget.ConstraintLayout>

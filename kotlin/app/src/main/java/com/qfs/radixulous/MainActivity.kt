@@ -23,21 +23,35 @@ import kotlinx.android.synthetic.main.numberline_item.view.*
 import kotlinx.android.synthetic.main.table_cell_label.view.*
 import com.qfs.radixulous.opusmanager.HistoryLayer as OpusManager
 import com.qfs.radixulous.apres.*
-import android.content.ActivityNotFoundException
-
-import androidx.core.app.ActivityCompat.startActivityForResult
 
 import android.content.Intent
-import android.util.Log
-import java.io.File
-import java.io.FileOutputStream
+import kotlinx.android.synthetic.main.contextmenu_linking.view.*
+import java.lang.Math.abs
 
 class ViewCache {
     var view_cache: MutableList<Pair<LinearLayout, MutableList<Pair<View?, HashMap<List<Int>, View>>>>> = mutableListOf()
     var line_label_cache: MutableList<Button> = mutableListOf()
     var column_label_cache: MutableList<View> = mutableListOf()
+    var header_row: TableRow? = null
     var _cursor: Triple<Int, Int, List<Int>>? = null
     private var active_context_menu_view: View? = null
+
+    fun get_all_leafs(y: Int, x: Int, position: List<Int>): List<View> {
+        var output: MutableList<View> = mutableListOf()
+        if (y >= this.view_cache.size || x >= this.view_cache[y].second.size) {
+            return output
+        }
+        for ((key_pos, view) in this.view_cache[y].second[x].second) {
+            if (position.size <= key_pos.size && key_pos.subList(0, position.size) == position) {
+                output.add(view)
+            }
+        }
+        if (output.isEmpty() && position.isEmpty()) {
+            output.add(this.view_cache[y].second[x].first!!)
+        }
+
+        return output
+    }
 
     fun setActiveContextMenu(view: View) {
         this.active_context_menu_view = view
@@ -45,6 +59,14 @@ class ViewCache {
 
     fun getActiveContextMenu(): View? {
         return this.active_context_menu_view
+    }
+
+    fun getHeaderRow(): TableRow? {
+        return this.header_row
+    }
+
+    fun setHeaderRow(row: TableRow) {
+        this.header_row = row
     }
 
     fun cacheLine(view: LinearLayout, y: Int) {
@@ -144,6 +166,7 @@ class MainActivity : AppCompatActivity() {
     private var opus_manager = OpusManager()
     private var cache = ViewCache()
     private var active_context_menu_index: Int = 0
+    private var linking_beat: BeatKey? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -152,83 +175,73 @@ class MainActivity : AppCompatActivity() {
         // calling this activity's function to
         // use ActionBar utility methods
         val actionBar = supportActionBar
-        actionBar!!.title = "Boop"
+        actionBar!!.title = "Radixulous"
         actionBar.subtitle = "   Doop"
         //actionBar.setIcon(R.drawable.app_logo)
         // methods to display the icon in the ActionBar
         actionBar.setDisplayUseLogoEnabled(true)
         actionBar.setDisplayShowHomeEnabled(true)
 
-
-        //this.opus_manager.new()
-        //this.opus_manager.split_tree(BeatKey(0,0,0), listOf(), 2)
-        ////opus_manager.split_tree(BeatKey(0,0,0), listOf(0), 3)
-
-        //this.opus_manager.set_event(BeatKey(0,0,0), listOf(0), OpusEvent(
-        //    35,
-        //    12,
-        //    0,
-        //    false
-        //))
-
-        //this.opus_manager.set_event(BeatKey(0,0,0), listOf(1), OpusEvent(
-        //    35,
-        //    12,
-        //    0,
-        //    false
-        //))
-        //this.opus_manager.split_tree(BeatKey(0,0,0), listOf(0),3)
-
-        //this.opus_manager.set_event(BeatKey(0,0,0), listOf(0,1), OpusEvent(
-        //36,
-        //12,
-        //0,
-        //false
-        //))
-
-        //this.opus_manager.new_line(0)
-        //this.opus_manager.add_channel(9)
         this.opus_manager.load("/data/data/com.qfs.radixulous/test")
-        //var view = TextView(this.test.context)
-        //var str = File("/data/data/com.qfs.radixulous/test/channel_0").readText(Charsets.UTF_8)
-        //view.text = str
-        //this.test.addView(view)
-        //this.horizontalScrollView.visibility = View.GONE
+
         this.populateTable()
         this.update_cursor_position()
         this.setContextMenu(3)
-
-
-
     }
-    //// method to inflate the options menu when
-    //// the user opens the menu for the first time
-    //override fun onCreateOptionsMenu(menu: Menu): Boolean {
-    //    menuInflater.inflate(R.menu.main, menu)
-    //    return super.onCreateOptionsMenu(menu)
-    //}
 
-    //// methods to control the operations that will
-    //// happen when user clicks on the action buttons
-    //override fun onOptionsItemSelected(item: MenuItem): Boolean {
-    //    when (item.itemId) {
-    //        R.id.search -> Toast.makeText(this, "Search Clicked", Toast.LENGTH_SHORT).show()
-    //        R.id.refresh -> Toast.makeText(this, "Refresh Clicked", Toast.LENGTH_SHORT).show()
-    //        R.id.copy -> Toast.makeText(this, "Copy Clicked", Toast.LENGTH_SHORT).show()
-    //    }
-    //    return super.onOptionsItemSelected(item)
-    //}
+    // method to inflate the options menu when
+    // the user opens the menu for the first time
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.options_menu, menu)
+        return super.onCreateOptionsMenu(menu)
+    }
 
-    fun populateTable() {
+    // methods to control the operations that will
+    // happen when user clicks on the action buttons
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.itmNewProject -> this.newProject()
+            R.id.itmLoadProject -> Toast.makeText(this, "Load Clicked", Toast.LENGTH_SHORT).show()
+        }
+        return super.onOptionsItemSelected(item)
+    }
+
+    private fun newProject() {
+        // Check to save old
+        // destroy current layout
+        this.takedownCurrent()
+        this.opus_manager.new()
+        this.populateTable()
+        this.update_cursor_position()
+        this.setContextMenu(3)
+    }
+
+    private fun takedownCurrent() {
+        this.setContextMenu(0)
+        this.tlOpusLines.removeAllViews()
+        this.cache = ViewCache()
+    }
+
+    private fun buildHeader() {
+        var row = TableRow(this.tlOpusLines.context)
+        this.tlOpusLines.addView(row)
+        this.cache.setHeaderRow(row)
+
+        var action_button = Button(row.context)
+        action_button.setOnClickListener {
+            //this.openFileBrowser()
+            this.showPopup(action_button)
+        }
+        action_button.text = "Channels"
+        row.addView(action_button)
+
         for (i in 0 until this.opus_manager.opus_beat_count) {
             this.newColumnLabel()
         }
-        this.tlOpusLines.trHeader.btnAction.setOnClickListener {
+    }
 
-            //this.openFileBrowser()
-            this.showPopup(this.tlOpusLines.trHeader.btnAction)
-        }
-
+    fun populateTable() {
+        this.buildHeader()
         var y = 0
         for (channel in 0 until this.opus_manager.channel_lines.size) {
             for (line_offset in 0 until this.opus_manager.channel_lines[channel].size) {
@@ -237,6 +250,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
     fun showPopup(view: View?) {
         val inflater = getSystemService(LAYOUT_INFLATER_SERVICE) as LayoutInflater
         val popupView: View = inflater.inflate(R.layout.channel_ctrl, null)
@@ -248,12 +262,13 @@ class MainActivity : AppCompatActivity() {
             true
         )
         for (i in 0 until this.opus_manager.channel_lines.size) {
-            if (i == 9) {
-                continue
-            }
             var chipView = Chip(popupView.clA.clB.cgEnabledChannels.context)
             chipView.isCheckable = true
-            chipView.text = "${i}"
+            if (i == 9) {
+                chipView.text = "Drums"
+            } else {
+                chipView.text = "${i}"
+            }
             chipView.isChecked = this.opus_manager.channel_lines[i].isNotEmpty()
 
             // TODO: I suspect there is a better listener for this
@@ -267,22 +282,19 @@ class MainActivity : AppCompatActivity() {
                 } else {
                     var y = this.opus_manager.get_y(i, 0)
                     var line_count = this.opus_manager.channel_lines[i].size
-                    for (l in 0 until line_count) {
-                        this.cache.detachLine(l)
+                    if (this.opus_manager.line_count() > line_count) {
+                        for (l in 0 until line_count) {
+                            this.cache.detachLine(y)
+                        }
+                        this.opus_manager.remove_channel(i)
+                        this.update_cursor_position()
+                    } else {
+                        chipView.isChecked = true
                     }
-                    this.opus_manager.remove_channel(i)
-                    this.update_cursor_position()
                 }
             }
             popupView.clA.clB.cgEnabledChannels.addView(chipView)
         }
-
-        // Add chip for drums
-        var chipView = Chip(popupView.clA.clB.cgEnabledChannels.context)
-        chipView.isCheckable = true
-        chipView.text = "drums"
-        chipView.isChecked = this.opus_manager.channel_lines[9].isNotEmpty()
-        popupView.clA.clB.cgEnabledChannels.addView(chipView)
 
         popupWindow.showAtLocation(view, Gravity.CENTER, 0, 0)
 
@@ -317,7 +329,7 @@ class MainActivity : AppCompatActivity() {
    // }
 
     fun newColumnLabel() {
-        var parent = this.tlOpusLines.trHeader
+        var parent = this.cache.getHeaderRow() ?: throw Exception("Header Not initialized")
         var headerCellView = LayoutInflater.from(parent.context).inflate(
             R.layout.table_cell_label,
             parent,
@@ -392,11 +404,31 @@ class MainActivity : AppCompatActivity() {
                 parent,
                 false
             )
+            val changeColour = if (this.opus_manager.is_reflection(channel_index.first, channel_index.second, x)) {
+                ContextCompat.getColor(leafView.button.context, R.color.leaf_linked)
+            } else {
+                ContextCompat.getColor(leafView.button.context, R.color.leaf)
+            }
+            leafView.button.setBackgroundColor(changeColour)
 
             if (tree.is_event()) {
                 var event = tree.get_event()!!
                 leafView.button.text = if (event.relative) {
-                    "T"
+                    if (event.note == 0 || event.note % event.radix != 0) {
+                        var prefix = if (event.note < 0) {
+                            "-"
+                        } else {
+                            "+"
+                        }
+                        "$prefix${get_number_string(abs(event.note), event.radix, 1)}"
+                    } else {
+                        var prefix = if (event.note < 0) {
+                            "v"
+                        } else {
+                            "^"
+                        }
+                        "$prefix${get_number_string(abs(event.note) / event.radix, event.radix, 1)}"
+                    }
                 } else if (event.channel != 9) {
                     get_number_string(event.note, event.radix, 2)
                 } else {
@@ -410,8 +442,35 @@ class MainActivity : AppCompatActivity() {
             leafView.button.setOnClickListener {
                 var key = that.cache.getTreeViewYXPosition(leafView)
                 if (key != null) {
+                    if (this.linking_beat != null) {
+                        var pair = this.opus_manager.get_channel_index(key.first)
+                        var working_position = BeatKey(
+                            pair.first,
+                            pair.second,
+                            key.second
+                        )
+                        this.opus_manager.link_beats(this.linking_beat!!, working_position)
+                        this.rebuildBeatView(
+                            this.opus_manager.get_y(
+                                this.linking_beat!!.channel,
+                                this.linking_beat!!.line_offset
+                            ),
+                            this.linking_beat!!.beat
+                        )
+                        this.linking_beat = null
+                    }
                     this.cellClickListener(key.first, key.second, key.third)
                 }
+            }
+
+            leafView.button.setOnLongClickListener {
+                var key = that.cache.getTreeViewYXPosition(leafView)
+                if (key != null) {
+                    var pair = that.opus_manager.get_channel_index(key.first)
+                    this.linking_beat = BeatKey(pair.first, pair.second, key.second)
+                    this.cellClickListener(key.first, key.second, listOf())
+                }
+                true
             }
 
             if (position.isEmpty()) {
@@ -456,6 +515,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
 
     fun setContextMenu(menu_index: Int) {
         this.active_context_menu_index = menu_index
@@ -594,7 +654,12 @@ class MainActivity : AppCompatActivity() {
                                 }
 
                                 that.opus_manager.set_event(beatkey, position, event)
-                                that.cache.getTree(cursor.y,cursor.x,position)?.button?.text = get_number_string(event.note, event.radix, 2)
+                                for (linked_key in that.opus_manager.get_all_linked(beatkey)) {
+                                    var y = that.opus_manager.get_y(linked_key.channel, linked_key.line_offset)
+
+                                    that.cache.getTree(y, linked_key.beat, position)?.button?.text =
+                                        get_number_string(event.note, event.radix, 2)
+                                }
                             }
 
                             override fun onStartTrackingTouch(seek: SeekBar) {
@@ -636,7 +701,12 @@ class MainActivity : AppCompatActivity() {
                                 }
 
                                 that.opus_manager.set_event(beatkey, position, event)
-                                that.cache.getTree(cursor.y,cursor.x,position)?.button?.text = get_number_string(event.note, event.radix, 2)
+                                for (linked_key in that.opus_manager.get_all_linked(beatkey)) {
+                                    var y = that.opus_manager.get_y(linked_key.channel, linked_key.line_offset)
+
+                                    that.cache.getTree(y, linked_key.beat, position)?.button?.text =
+                                        get_number_string(event.note, event.radix, 2)
+                                }
                             }
 
                             override fun onStartTrackingTouch(seek: SeekBar) {
@@ -711,42 +781,106 @@ class MainActivity : AppCompatActivity() {
                 this.llContextMenu.addView(view)
                 this.cache.setActiveContextMenu(view)
             }
+            4 -> {
+                var view = LayoutInflater.from(this.llContextMenu.context).inflate(
+                    R.layout.contextmenu_linking,
+                    this.llContextMenu,
+                    false
+                )
+                view.apply {
+                    var cursor_key = that.opus_manager.cursor.get_beatkey()
+                    if (that.opus_manager.is_reflection(cursor_key.channel, cursor_key.line_offset, cursor_key.beat)) {
+                        this.btnUnLink.setOnClickListener {
+                            var cursor = that.opus_manager.cursor
+                            that.opus_manager.unlink_beat(cursor.get_beatkey())
+                            cursor.settle()
+                            that.linking_beat = null
+                            that.cellClickListener(cursor.y, cursor.x, cursor.position)
+                        }
+                    } else {
+                        this.btnUnLink.visibility = View.GONE
+                    }
+
+                    this.btnCancelLink.setOnClickListener {
+                        that.opus_manager.cursor.settle()
+                        that.linking_beat = null
+                        var cursor = that.opus_manager.cursor
+                        that.cellClickListener(cursor.y, cursor.x, cursor.position)
+                    }
+                }
+
+                this.llContextMenu.addView(view)
+                this.cache.setActiveContextMenu(view)
+            }
         }
     }
 
     fun rebuildBeatView(y: Int, x: Int) {
-        this.cache.removeBeatView(y, x)
-        var rowView = this.cache.getLine(y)!!
-        this.buildTreeView(rowView, y, x, listOf())
+        var pair = this.opus_manager.get_channel_index(y)
+        var main_beatkey = BeatKey(pair.first, pair.second, x)
+        for (beatkey in this.opus_manager.get_all_linked(main_beatkey)) {
+            var new_y = this.opus_manager.get_y(beatkey.channel, beatkey.line_offset)
+            var new_x = beatkey.beat
+            this.cache.removeBeatView(new_y, new_x)
+            var rowView = this.cache.getLine(new_y)!!
+            this.buildTreeView(rowView, new_y, new_x, listOf())
+        }
     }
 
     private fun update_cursor_position() {
         var c = this.cache.getCursor()
         if (c != null) {
-            if (c.first < this.opus_manager.line_count() && c.second < this.opus_manager.opus_beat_count) {
-                var previous_view = this.cache.getTree(c.first, c.second, c.third)
-                if (previous_view != null) {
-                    var button = this.cache.getTree(c.first, c.second, c.third)!!.button
-                    val changeColour = ContextCompat.getColor(button.context, R.color.leaf)
-                    button.setBackgroundColor(changeColour)
-                }
+            var pair = this.opus_manager.get_channel_index(c.first)
+            var color = if (this.opus_manager.is_reflection(pair.first, pair.second, c.second)) {
+                R.color.leaf_linked
+            } else {
+                R.color.leaf
+            }
+            for (view in this.cache.get_all_leafs(c.first, c.second, c.third)) {
+                val changeColour = ContextCompat.getColor(view.button.context, color)
+                view.button.setBackgroundColor(changeColour)
             }
         }
 
+        //if (this.selected_beat_key == null) {
+        //} else if (key != null) {
+        //    var pair = this.opus_manager.get_channel_index(key.first)
+        //    var beat_key = BeatKey(pair.first, pair.second, key.second)
+        //    this.opus_manager.link_beats(
+        //        beat_key,
+        //        this.selected_beat_key!!
+        //    )
+        //    var y = this.opus_manager.get_y(this.selected_beat_key!!.channel, this.selected_beat_key!!.line_offset)
+        //    this.rebuildBeatView(y, key.second)
+
+        //    this.selected_beat_key = null
+        //}
+
         var cursor = this.opus_manager.cursor
         var position = cursor.get_position()
-        this.cache.setCursor(cursor.y, cursor.x, position)
 
-        var view = this.cache.getTree(cursor.y, cursor.x, position)
-        if (view != null) {
-            view.button?.setBackgroundColor(Color.parseColor("#ff0000"))
+        for (view in this.cache.get_all_leafs(cursor.y, cursor.x, position)) {
+            var pair = this.opus_manager.get_channel_index(cursor.y)
+            var color = if (this.opus_manager.is_reflection(pair.first, pair.second, cursor.x)) {
+                R.color.leaf_linked_selected
+            } else {
+                R.color.leaf_selected
+            }
+            val changeColour = ContextCompat.getColor(view.button.context, color)
+            view.button.setBackgroundColor(changeColour)
         }
+
+        this.cache.setCursor(cursor.y, cursor.x, position)
     }
 
     fun cellClickListener(y: Int, x: Int, position: List<Int>) {
         this.opus_manager.set_cursor_position(y, x, position)
         this.update_cursor_position()
-        this.setContextMenu(3)
+        if (this.linking_beat == null) {
+            this.setContextMenu(3)
+        } else {
+            this.setContextMenu(4)
+        }
     }
 
     fun openFileBrowser() {

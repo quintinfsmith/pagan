@@ -8,4 +8,7 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="leaf">#FF008835</color>
+    <color name="leaf_linked">#34829C</color>
+    <color name="leaf_linked_selected">#19414E</color>
+    <color name="leaf_selected">#194E1B</color>
 </resources>

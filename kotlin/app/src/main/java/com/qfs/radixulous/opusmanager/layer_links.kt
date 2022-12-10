@@ -4,6 +4,12 @@ open class LinksLayer() : FlagLayer() {
     var linked_beat_map: HashMap<BeatKey, BeatKey> = HashMap<BeatKey, BeatKey>()
     var inv_linked_beat_map: HashMap<BeatKey, MutableList<BeatKey>> = HashMap<BeatKey, MutableList<BeatKey>>()
 
+    override fun reset() {
+        this.linked_beat_map.clear()
+        this.inv_linked_beat_map.clear()
+        super.reset()
+    }
+
     fun unlink_beat(beat_key: BeatKey) {
         if (! this.linked_beat_map.containsKey(beat_key)) {
            return
@@ -41,7 +47,7 @@ open class LinksLayer() : FlagLayer() {
         }
         this.inv_linked_beat_map[target]!!.add(beat_key)
     }
-    private fun get_all_linked(beat_key: BeatKey): List<BeatKey> {
+    fun get_all_linked(beat_key: BeatKey): List<BeatKey> {
         var output: MutableList<BeatKey> = mutableListOf()
         if (this.inv_linked_beat_map.containsKey(beat_key)) {
             output.add(beat_key)
@@ -245,6 +251,14 @@ open class LinksLayer() : FlagLayer() {
         } else {
             return beat
         }
+    }
+
+    fun is_reflection(channel: Int, line_offset: Int, beat: Int): Boolean {
+        return this.linked_beat_map.containsKey(BeatKey(channel, line_offset, beat))
+    }
+
+    fun is_reflected(channel: Int, line_offset: Int, beat: Int): Boolean {
+        return this.inv_linked_beat_map.containsKey(BeatKey(channel, line_offset, beat))
     }
 
     // TODO

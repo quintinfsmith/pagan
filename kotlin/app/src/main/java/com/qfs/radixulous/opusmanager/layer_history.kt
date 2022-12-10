@@ -12,6 +12,15 @@ open class HistoryLayer() : CursorLayer() {
     var int_stack: MutableList<Int> = mutableListOf()
     var beat_stack: MutableList<OpusTree<OpusEvent>> = mutableListOf()
 
+    override fun reset() {
+        this.history_ledger.clear()
+        this.history_locked = false
+        this.multi_counter = 0
+        this.int_stack.clear()
+        this.beat_stack.clear()
+        super.reset()
+    }
+
     private fun get_position_from_int_stack(): List<Int> {
         // List<Int> prefaced by length
         var position: MutableList<Int> = mutableListOf()

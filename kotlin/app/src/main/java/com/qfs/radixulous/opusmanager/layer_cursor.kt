@@ -159,6 +159,13 @@ class Cursor(var opus_manager: CursorLayer) {
 open class CursorLayer() : LinksLayer() {
     var cursor = Cursor(this)
     var channel_order = Array(16, { i -> i })
+
+    override fun reset() {
+        this.cursor = Cursor(this)
+        this.channel_order = Array(16, {i -> i})
+        super.reset()
+    }
+
     fun line_count(): Int {
         var output: Int = 0
         for (channel in this.channel_lines) {
@@ -395,9 +402,10 @@ open class CursorLayer() : LinksLayer() {
         this.cursor.settle()
     }
     override fun overwrite_beat(old_beat: BeatKey, new_beat: BeatKey) {
-        this.overwrite_beat(old_beat, new_beat)
+        super.overwrite_beat(old_beat, new_beat)
         this.cursor.settle()
     }
+
     override fun new() {
         super.new()
         this.cursor.set(0,0, listOf(0))

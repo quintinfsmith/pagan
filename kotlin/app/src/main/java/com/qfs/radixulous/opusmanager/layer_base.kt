@@ -17,6 +17,15 @@ open class OpusManagerBase {
     var percussion_map: HashMap<Int, Int> = HashMap<Int, Int>()
 
 
+    open fun reset() {
+        this.opus_beat_count = 1
+        for (channel in this.channel_lines) {
+            channel.clear()
+        }
+        this.percussion_map.clear()
+        this.path = null
+    }
+
     open fun insert_after(beat_key: BeatKey, position: List<Int>) {
         if (position.isEmpty()) {
             throw Exception("Invalid Position ${position}")
@@ -289,11 +298,13 @@ open class OpusManagerBase {
     }
 
     open fun load(path: String) {
+        this.reset()
         this.path = path
         this.load_folder(path)
     }
 
     open fun new() {
+        this.reset()
         var new_line: MutableList<OpusTree<OpusEvent>> = MutableList(4, { _ -> OpusTree<OpusEvent>() })
 
         this.channel_lines[0].add(new_line)
@@ -349,4 +360,5 @@ open class OpusManagerBase {
     open fun load_file(path: String) { }
 
     fun import_midi(path: String) { }
+
 }

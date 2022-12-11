@@ -1,58 +1,74 @@
 package com.qfs.radixulous.opusmanager
 import com.qfs.radixulous.structure.OpusTree
-import com.qfs.radixulous.opusmanager.BeatKey
-import com.qfs.radixulous.opusmanager.OpusEvent
-import com.qfs.radixulous.opusmanager.OpusManagerBase
 
 class UpdatesCache {
-    var beat_pop: MutableList<Int> = mutableListOf()
-    var beat_new: MutableList<Int> = mutableListOf()
-    var beat_change: MutableList<BeatKey> = mutableListOf()
-    var line_new: MutableList<Pair<Int, Int>> = mutableListOf()
-    var line_pop: MutableList<Pair<Int, Int>> = mutableListOf()
-    var line_init: MutableList<Pair<Int, Int>> = mutableListOf()
+    private var beat_flag: MutableList<Pair<Int, Int>> = mutableListOf()
+    private var beat_change: MutableList<BeatKey> = mutableListOf()
+    private var line_flag: MutableList<Triple<Int, Int, Int>> = mutableListOf()
 
-    public fun flag_beat_pop(index: Int) {
-        this.beat_pop.add(index)
+    fun dequeue_line(): Triple<Int, Int, Int>? {
+        return if (this.line_flag.isEmpty()) {
+            null
+        } else {
+            this.line_flag.removeFirst()
+        }
+    }
+    fun dequeue_beat(): Pair<Int, Int>? {
+        return if (this.beat_flag.isEmpty()) {
+            null
+        } else {
+            this.beat_flag.removeFirst()
+        }
+    }
+    fun dequeue_change(): BeatKey? {
+        return if (this.beat_change.isEmpty()) {
+            null
+        } else {
+            this.beat_change.removeFirst()
+        }
     }
 
-    public fun flag_beat_new(index: Int) {
-        this.beat_new.add(index)
+    fun flag_beat_pop(index: Int) {
+        this.beat_flag.add(Pair(index, 0))
     }
-
-    public fun flag_beat_change(beat_key: BeatKey) {
+    fun flag_beat_new(index: Int) {
+        this.beat_flag.add(Pair(index, 1))
+    }
+    fun flag_beat_change(beat_key: BeatKey) {
         this.beat_change.add(beat_key)
     }
-
-    public fun flag_line_pop(channel: Int, line_offset: Int) {
-        this.line_pop.add(Pair(channel, line_offset))
+    fun flag_line_pop(channel: Int, line_offset: Int) {
+        this.line_flag.add(Triple(channel, line_offset, 0))
     }
-
-    public fun flag_line_new(channel: Int, line_offset: Int) {
-        this.line_new.add(Pair(channel, line_offset))
+    fun flag_line_new(channel: Int, line_offset: Int) {
+        this.line_flag.add(Triple(channel, line_offset, 1))
     }
-
-    public fun flag_line_init(channel: Int, line_offset: Int) {
-        this.line_init.add(Pair(channel, line_offset))
-    }
-
     fun purge() {
-        this.beat_pop.clear()
-        this.beat_new.clear()
+        this.beat_flag.clear()
         this.beat_change.clear()
-        this.line_new.clear()
-        this.line_pop.clear()
-        this.line_init.clear()
+        this.line_flag.clear()
     }
 
 }
 
-open class FlagLayer() : OpusManagerBase() {
-    var cache = UpdatesCache()
+open class FlagLayer : OpusManagerBase() {
+    private var cache = UpdatesCache()
 
     override fun reset() {
         this.cache.purge()
         super.reset()
+    }
+
+    fun fetch_flag_line(): Triple<Int, Int, Int>? {
+        return this.cache.dequeue_line()
+    }
+
+    fun fetch_flag_beat(): Pair<Int, Int>? {
+        return this.cache.dequeue_beat()
+    }
+
+    fun fetch_flag_change(): BeatKey? {
+        return this.cache.dequeue_change()
     }
 
     override fun replace_tree(beat_key: BeatKey, position: List<Int>, tree: OpusTree<OpusEvent>) {
@@ -77,47 +93,46 @@ open class FlagLayer() : OpusManagerBase() {
 
     override fun swap_channels(channel_a: Int, channel_b: Int) {
         super.swap_channels(channel_a, channel_b)
-        var len_a = this.channel_lines[channel_a].size
-        var len_b = this.channel_lines[channel_b].size
-        for (i in 0 .. len_b - 1) {
+        val len_a = this.channel_lines[channel_a].size
+        val len_b = this.channel_lines[channel_b].size
+        for (i in 0 until len_b) {
             this.cache.flag_line_pop(channel_a, len_b - 1 - i)
         }
 
-        for (i in 0 .. len_a - 1) {
+        for (i in 0 until len_a) {
             this.cache.flag_line_pop(channel_b, len_a - 1 - i)
         }
 
-        for (i in 0 .. len_b - 1) {
+        for (i in 0 until len_b) {
             this.cache.flag_line_new(channel_b, i)
         }
 
-        for (i in 0 .. len_a - 1) {
+        for (i in 0 until len_a) {
             this.cache.flag_line_new(channel_a, i)
         }
     }
 
     override fun new() {
         super.new()
-        for (i in 0 .. this.opus_beat_count - 1) {
-            this.cache.flag_beat_new(i)
-        }
-        for (i in 0 .. this.channel_lines.size - 1) {
-            var channel = this.channel_lines[i]
-            for (j in 0 .. channel.size - 1) {
-                this.cache.flag_line_init(i, j)
+        for (i in 0 until this.channel_lines.size) {
+            for (j in 0 until this.channel_lines[i].size) {
+                this.cache.flag_line_new(i, j)
             }
+        }
+        for (x in 0 until this.opus_beat_count) {
+            this.cache.flag_beat_new(x)
         }
     }
+
     override fun load(path: String) {
         super.load(path)
-        for (i in 0 .. this.opus_beat_count - 1) {
-            this.cache.flag_beat_new(i)
-        }
-        for (i in 0 .. this.channel_lines.size - 1) {
-            var channel = this.channel_lines[i]
-            for (j in 0 .. channel.size - 1) {
-                this.cache.flag_line_init(i, j)
+        for (i in 0 until this.channel_lines.size) {
+            for (j in 0 until this.channel_lines[i].size) {
+                this.cache.flag_line_new(i, j)
             }
+        }
+        for (x in 0 until this.opus_beat_count) {
+            this.cache.flag_beat_new(x)
         }
     }
 
@@ -137,26 +152,17 @@ open class FlagLayer() : OpusManagerBase() {
     }
 
     override fun insert_beat(index: Int?) {
-        var rindex: Int
-        if (index == null) {
-            rindex = this.opus_beat_count - 1
-        } else {
-            rindex = index
-        }
+        val orig_index: Int = index ?: (this.opus_beat_count - 1)
 
         super.insert_beat(index)
 
-        this.cache.flag_beat_new(rindex)
+        this.cache.flag_beat_new(orig_index)
     }
 
     override fun new_line(channel: Int, index: Int?) {
         super.new_line(channel, index)
 
-        var line_index = if (index == null) {
-            this.channel_lines[channel].size - 1
-        } else {
-            index
-        }
+        val line_index = index ?: (this.channel_lines[channel].size - 1)
         this.cache.flag_line_new(channel, line_index)
     }
 
@@ -165,23 +171,15 @@ open class FlagLayer() : OpusManagerBase() {
         this.cache.flag_beat_change(beat_key)
     }
 
-    override fun remove_beat(index: Int?) {
-        var rindex = if (index == null) {
-            this.opus_beat_count - 1
-        } else {
-            index
-        }
-        super.remove_beat(index)
-        this.cache.flag_beat_pop(rindex)
+    override fun remove_beat(rel_beat_index: Int?) {
+        val orig_index = rel_beat_index ?: (this.opus_beat_count - 1)
+        super.remove_beat(rel_beat_index)
+        this.cache.flag_beat_pop(orig_index)
     }
 
     override fun remove_line(channel: Int, index: Int?) {
         super.remove_line(channel, index)
 
-        if (index == null) {
-            this.cache.flag_line_pop(channel, this.channel_lines[channel].size)
-        } else {
-            this.cache.flag_line_pop(channel, index)
-        }
+        this.cache.flag_line_pop(channel, index ?: this.channel_lines[channel].size)
     }
 }

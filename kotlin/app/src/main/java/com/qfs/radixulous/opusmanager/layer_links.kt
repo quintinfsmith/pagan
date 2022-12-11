@@ -1,7 +1,7 @@
 package com.qfs.radixulous.opusmanager
 import java.io.File
 
-open class LinksLayer() : OpusManagerBase() {
+open class LinksLayer() : FlagLayer() {
     var linked_beat_map: HashMap<BeatKey, BeatKey> = HashMap<BeatKey, BeatKey>()
     var inv_linked_beat_map: HashMap<BeatKey, MutableList<BeatKey>> = HashMap<BeatKey, MutableList<BeatKey>>()
 
@@ -29,7 +29,7 @@ open class LinksLayer() : OpusManagerBase() {
         if (! this.inv_linked_beat_map.containsKey(beat_key)) {
             return
         }
-        var links = this.inv_linked_beat_map.get(beat_key)!!
+        var links = this.inv_linked_beat_map[beat_key]!!
         for (link_key in links) {
             this.linked_beat_map.remove(link_key)
         }

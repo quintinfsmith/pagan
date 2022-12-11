@@ -119,6 +119,7 @@ class Cursor(var opus_manager: CursorLayer) {
     }
 
     fun settle(right_align: Boolean = false) {
+        this.y = max(0, min(this.y, this.opus_manager.line_count() - 1))
         this.x = max(0, min(this.x, this.opus_manager.opus_beat_count - 1))
 
         // First, get the beat
@@ -331,7 +332,7 @@ open class CursorLayer() : LinksLayer() {
     fun get_channel_index(y: Int): Pair<Int, Int> {
         var counter = 0
         for (channel in this.channel_order) {
-            for (i in 0 .. this.channel_lines[channel].size - 1) {
+            for (i in 0 until this.channel_lines[channel].size) {
                 if (counter == y) {
                     return Pair(channel, i)
                 }

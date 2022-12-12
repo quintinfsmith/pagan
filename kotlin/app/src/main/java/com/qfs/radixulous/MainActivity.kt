@@ -211,8 +211,14 @@ class MainActivity : AppCompatActivity() {
         when (item.itemId) {
             R.id.itmNewProject -> this.newProject()
             R.id.itmLoadProject -> Toast.makeText(this, "Load Clicked", Toast.LENGTH_SHORT).show()
+            R.id.itmUndo -> this.undo()
         }
         return super.onOptionsItemSelected(item)
+    }
+
+    private fun undo() {
+        this.opus_manager.apply_undo()
+        this.tick()
     }
 
     private fun newProject() {
@@ -501,7 +507,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
     fun setContextMenu(menu_index: Int) {
         this.active_context_menu_index = menu_index
         val view_to_remove = this.cache.getActiveContextMenu()
@@ -743,7 +748,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
     fun openFileBrowser() {
         val fileintent = Intent(Intent.ACTION_GET_CONTENT)
         fileintent.type = "gagt/sdf"
@@ -798,6 +802,8 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
+
     fun tick_manage_beats() {
         while (true) {
             val (index, operation) = this.opus_manager.fetch_flag_beat() ?: break

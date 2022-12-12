@@ -140,7 +140,7 @@ open class OpusManagerBase {
     }
 
     open fun insert_beat(index: Int?) {
-        var abs_index = if (index == null) {
+        val abs_index = if (index == null) {
             this.opus_beat_count
         } else if (index < 0) {
             this.opus_beat_count + index + 1
@@ -180,7 +180,7 @@ open class OpusManagerBase {
     }
 
     open fun new_line(channel: Int, index: Int? = null) {
-        var line: MutableList<OpusTree<OpusEvent>> = MutableList(this.opus_beat_count, { _ -> OpusTree<OpusEvent>() })
+        val line: MutableList<OpusTree<OpusEvent>> = MutableList(this.opus_beat_count) { _ -> OpusTree<OpusEvent>() }
 
         if (index == null) {
             this.channel_lines[channel].add(line)
@@ -250,18 +250,17 @@ open class OpusManagerBase {
     //open fun export(path: String? = null, kwargs: HashMap) { }
 
     fun get_beat_tree(beat_key: BeatKey): OpusTree<OpusEvent> {
-        var line_offset: Int
         if (beat_key.channel >= this.channel_lines.size) {
-            throw Exception("Invalid BeatKey ${beat_key}")
+            throw Exception("Invalid BeatKey $beat_key")
         }
 
-        if (beat_key.line_offset < 0) {
-            line_offset = this.channel_lines[beat_key.channel].size - beat_key.line_offset
+        var line_offset: Int = if (beat_key.line_offset < 0) {
+            this.channel_lines[beat_key.channel].size - beat_key.line_offset
         } else {
-            line_offset = beat_key.line_offset
+            beat_key.line_offset
         }
         if (line_offset > this.channel_lines[beat_key.channel].size) {
-            throw Exception("Invalid BeatKey ${beat_key}")
+            throw Exception("Invalid BeatKey $beat_key")
         }
         return this.channel_lines[beat_key.channel][line_offset][beat_key.beat]
     }
@@ -304,7 +303,7 @@ open class OpusManagerBase {
         }
 
         var directory = File(this.path)
-        if (!directory.isDirectory()) {
+        if (!directory.isDirectory) {
             if (! directory.mkdirs()) {
                 throw Exception("Could not make directory")
             }

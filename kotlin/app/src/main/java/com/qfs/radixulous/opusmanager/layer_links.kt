@@ -245,12 +245,16 @@ open class LinksLayer() : FlagLayer() {
         this.remap_links(this::rh_swap_channels, listOf(channel_a, channel_b))
     }
     private fun rh_swap_channels(beat: BeatKey, args: List<Int>): BeatKey? {
-        if (beat.channel == args[0]) {
-            return BeatKey(args[1], beat.line_offset, beat.beat)
-        } else if (beat.channel == args[1]) {
-            return BeatKey(args[0], beat.line_offset, beat.beat)
-        } else {
-            return beat
+        return when (beat.channel) {
+            args[0] -> {
+                BeatKey(args[1], beat.line_offset, beat.beat)
+            }
+            args[1] -> {
+                BeatKey(args[0], beat.line_offset, beat.beat)
+            }
+            else -> {
+                beat
+            }
         }
     }
 

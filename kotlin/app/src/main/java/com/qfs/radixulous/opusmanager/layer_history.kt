@@ -24,7 +24,8 @@ open class HistoryLayer() : CursorLayer() {
     private fun get_position_from_int_stack(): List<Int> {
         // List<Int> prefaced by length
         var position: MutableList<Int> = mutableListOf()
-        for (_i in 0 .. this.int_stack.removeLast() - 1) {
+        var length = this.int_stack.removeLast()
+        for (_i in 0 until length) {
             position.add(0, this.int_stack.removeLast())
         }
         return position
@@ -81,9 +82,9 @@ open class HistoryLayer() : CursorLayer() {
         for (func_name in this.history_ledger.removeLast()) {
             when (func_name) {
                 "split_tree" -> {
-                    var splits = this.get_int_from_int_stack()
-                    var position = this.get_position_from_int_stack()
-                    var beat_key = this.get_beatkey_from_int_stack()
+                    val splits = this.get_int_from_int_stack()
+                    val position = this.get_position_from_int_stack()
+                    val beat_key = this.get_beatkey_from_int_stack()
                     this.split_tree(beat_key, position, splits)
                 }
                 "set_event" -> {
@@ -197,10 +198,10 @@ open class HistoryLayer() : CursorLayer() {
 
         val beat_tree = this.channel_lines[beat_key.channel][beat_key.line_offset][beat_key.beat]
 
-        var stack: MutableList<List<Int>> = mutableListOf()
+        val stack: MutableList<List<Int>> = mutableListOf()
 
-        if (start_position.size == 0) {
-            for (i in 0..beat_tree.size - 1) {
+        if (start_position.isEmpty()) {
+            for (i in 0 until beat_tree.size) {
                 stack.add(listOf(i))
             }
 
@@ -216,7 +217,7 @@ open class HistoryLayer() : CursorLayer() {
         }
 
         while (stack.size > 0) {
-            var position = stack.removeAt(0)
+            val position = stack.removeAt(0)
             var tree = beat_tree
             for (i in position) {
                 tree = tree.get(i)
@@ -230,13 +231,13 @@ open class HistoryLayer() : CursorLayer() {
                     this.add_int_to_int_stack(tree.size)
                 }
                 //////////////////////
-                for (i in 0 .. tree.size - 1) {
-                    var next_position = position.toMutableList()
+                for (i in 0 until tree.size) {
+                    val next_position = position.toMutableList()
                     next_position.add(i)
                     stack.add(next_position)
                 }
             } else if (tree.is_event()) {
-                var event = tree.get_event()!!
+                val event = tree.get_event()!!
                 if (beat_key.channel != 9) {
                     //////////////////////
                     if (this.append_undoer_key("set_event")) {
@@ -282,11 +283,7 @@ open class HistoryLayer() : CursorLayer() {
 
     open override fun new_line(channel: Int, index: Int?) {
         if (this.append_undoer_key("remove_line")) {
-            var abs_index = if (index == null) {
-                this.channel_lines[channel].size - 1
-            } else {
-                index
-            }
+            var abs_index = index ?: (this.channel_lines[channel].size - 1)
 
             this.add_int_to_int_stack(channel)
             this.add_int_to_int_stack(abs_index)
@@ -296,12 +293,7 @@ open class HistoryLayer() : CursorLayer() {
     }
 
     open override fun remove_line(channel: Int, line_offset: Int?) {
-        var abs_line_offset: Int
-        if (line_offset == null) {
-            abs_line_offset = this.channel_lines[channel].size - 1
-        } else {
-            abs_line_offset = line_offset
-        }
+        val abs_line_offset: Int = line_offset ?: this.channel_lines[channel].size - 1
 
         this.open_multi()
         if (this.append_undoer_key("new_line")) {
@@ -318,7 +310,7 @@ open class HistoryLayer() : CursorLayer() {
     }
 
     open override fun insert_after(beat_key: BeatKey, position: List<Int>) {
-        if (position.size > 0) {
+        if (position.isNotEmpty()) {
             if (this.append_undoer_key("remove")) {
                 var rposition = position.toMutableList()
                 rposition[rposition.size - 1] += 1
@@ -331,7 +323,7 @@ open class HistoryLayer() : CursorLayer() {
     }
 
     open override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
-        this.setup_repopulate(beat_key, position.slice(0..position.size - 1))
+        this.setup_repopulate(beat_key, position.slice(position.indices))
         super.split_tree(beat_key, position, splits)
     }
 
@@ -342,11 +334,7 @@ open class HistoryLayer() : CursorLayer() {
 
     open override fun insert_beat(index: Int?) {
         if (this.append_undoer_key("remove_beat")) {
-            var abs_index = if (index == null) {
-                this.opus_beat_count - 1
-            } else {
-                index
-            }
+            var abs_index = index ?: this.opus_beat_count - 1
             this.add_int_to_int_stack(abs_index)
         }
 
@@ -354,22 +342,18 @@ open class HistoryLayer() : CursorLayer() {
     }
 
     override fun remove_beat(index: Int?) {
-        var abs_index = if (index == null) {
-            this.opus_beat_count - 1
-        } else {
-            index
-        }
+        var abs_index = index ?: (this.opus_beat_count - 1)
 
         this.open_multi()
         if (this.append_undoer_key("insert_beat")) {
             this.add_int_to_int_stack(abs_index)
         }
 
-        for (i in 0 .. this.channel_lines.size - 1) {
+        for (i in 0 until this.channel_lines.size) {
             var channel = this.channel_lines[i]
-            for (j in 0 .. channel.size - 1) {
+            for (j in 0 until channel.size) {
                 var line = channel[j]
-                for (k in abs_index .. line.size - 1) {
+                for (k in abs_index until line.size) {
                     this.setup_repopulate(BeatKey(i,j,k), listOf())
                 }
             }

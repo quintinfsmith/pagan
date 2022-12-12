@@ -2,6 +2,10 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
+        android:id="@+id/itmUndo"
+        android:title="Undo"
+        app:showAsAction="never"/>
+    <item
         android:id="@+id/itmNewProject"
         android:title="New Project"
         app:showAsAction="never"/>

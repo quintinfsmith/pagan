@@ -1,156 +1,16 @@
 package com.qfs.radixulous.opusmanager
 import com.qfs.radixulous.structure.OpusTree
-import com.qfs.radixulous.opusmanager.CursorLayer
-import com.qfs.radixulous.opusmanager.BeatKey
-import com.qfs.radixulous.opusmanager.OpusEvent
+import java.lang.Integer.max
 
-open class HistoryLayer() : CursorLayer() {
-
-    var history_ledger: MutableList<MutableList<String>> = mutableListOf()
+class HistoryCache {
     var history_locked = false
     var multi_counter: Int = 0
     var int_stack: MutableList<Int> = mutableListOf()
     var beat_stack: MutableList<OpusTree<OpusEvent>> = mutableListOf()
-
-    override fun reset() {
-        this.history_ledger.clear()
-        this.history_locked = false
-        this.multi_counter = 0
-        this.int_stack.clear()
-        this.beat_stack.clear()
-        super.reset()
+    var history_ledger: MutableList<MutableList<String>> = mutableListOf()
+    fun isLocked(): Boolean {
+        return this.history_locked
     }
-
-    private fun get_position_from_int_stack(): List<Int> {
-        // List<Int> prefaced by length
-        var position: MutableList<Int> = mutableListOf()
-        var length = this.int_stack.removeLast()
-        for (_i in 0 until length) {
-            position.add(0, this.int_stack.removeLast())
-        }
-        return position
-    }
-
-    private fun add_position_to_int_stack(position: List<Int>) {
-        var size = position.size
-        for (i in position) {
-            this.int_stack.add(i)
-        }
-        this.int_stack.add(size)
-    }
-
-    private fun get_beatkey_from_int_stack(): BeatKey {
-        return BeatKey(
-            this.int_stack.removeLast(),
-            this.int_stack.removeLast(),
-            this.int_stack.removeLast()
-        )
-    }
-
-    private fun add_beatkey_to_int_stack(beat_key: BeatKey) {
-        this.int_stack.add(beat_key.beat)
-        this.int_stack.add(beat_key.line_offset)
-        this.int_stack.add(beat_key.channel)
-    }
-
-    private fun get_boolean_from_int_stack(): Boolean {
-        return this.int_stack.removeLast() != 0
-    }
-
-    private fun add_boolean_to_int_stack(bool: Boolean) {
-        if (bool) {
-            this.int_stack.add(1)
-        } else {
-            this.int_stack.add(0)
-        }
-    }
-
-    private fun get_int_from_int_stack(): Int {
-        return this.int_stack.removeLast()
-    }
-    private fun add_int_to_int_stack(int: Int) {
-        this.int_stack.add(int)
-    }
-
-    fun apply_undo() {
-        if (this.history_ledger.size == 0) {
-            return
-        }
-
-        this.history_locked = true
-
-        for (func_name in this.history_ledger.removeLast()) {
-            when (func_name) {
-                "split_tree" -> {
-                    val splits = this.get_int_from_int_stack()
-                    val position = this.get_position_from_int_stack()
-                    val beat_key = this.get_beatkey_from_int_stack()
-                    this.split_tree(beat_key, position, splits)
-                }
-                "set_event" -> {
-                    var relative = this.get_boolean_from_int_stack()
-                    var value = this.get_int_from_int_stack()
-                    var position = this.get_position_from_int_stack()
-                    var beat_key = this.get_beatkey_from_int_stack()
-                    var event = OpusEvent(value, this.RADIX, beat_key.channel, relative)
-
-                    this.set_event(beat_key, position, event)
-                }
-                "set_percussion_event" -> {
-                    var position = this.get_position_from_int_stack()
-                    var beat_key = this.get_beatkey_from_int_stack()
-                    this.set_percussion_event(beat_key, position)
-                }
-                "unset" -> {
-                    var position = this.get_position_from_int_stack()
-                    var beat_key = this.get_beatkey_from_int_stack()
-                    this.unset(beat_key, position)
-                }
-                "replace_beat" -> {
-                    var beat = this.beat_stack.removeLast()
-                    var beat_key = this.get_beatkey_from_int_stack()
-                    this.replace_beat(beat_key, beat)
-                }
-                "swap_channels" -> {
-                    var channel_b = this.get_int_from_int_stack()
-                    var channel_a = this.get_int_from_int_stack()
-                    this.swap_channels(channel_a, channel_b)
-                }
-                "remove_line" -> {
-                    var line_offset = this.get_int_from_int_stack()
-                    var channel = this.get_int_from_int_stack()
-                    this.remove_line(channel, line_offset)
-                }
-                "new_line" -> {
-                    var line_offset = this.get_int_from_int_stack()
-                    var channel = this.get_int_from_int_stack()
-                    this.new_line(channel, line_offset)
-                }
-                "remove" -> {
-                    var position = this.get_position_from_int_stack()
-                    var beat_key = this.get_beatkey_from_int_stack()
-                    this.remove(beat_key, position)
-                }
-                "remove_beat" -> {
-                    var index = this.get_int_from_int_stack()
-                    this.remove_beat(index)
-                }
-                "insert_beat" -> {
-                    var index = this.get_int_from_int_stack()
-                    this.insert_beat(index)
-                }
-                "set_cursor" -> {
-                    var position = this.get_position_from_int_stack()
-                    var beat_key = this.get_beatkey_from_int_stack()
-                    var y = this.get_y(beat_key.channel, beat_key.line_offset)
-                    this.cursor.set(y, beat_key.beat, position)
-                }
-            }
-        }
-
-        this.history_locked = false
-    }
-
     private fun append_undoer_key(func: String): Boolean {
         if (this.history_locked) {
             return false
@@ -163,6 +23,14 @@ open class HistoryLayer() : CursorLayer() {
         }
 
         return true
+    }
+
+    public fun push_split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
+        if (this.append_undoer_key("split_tree")) {
+            this.add_beatkey(beat_key)
+            this.add_position(position)
+            this.add_int(splits)
+        }
     }
 
     private fun open_multi() {
@@ -183,15 +51,236 @@ open class HistoryLayer() : CursorLayer() {
         this.multi_counter -= 1
 
         if (! this.history_locked || this.multi_counter > 0) {
-            this.add_beatkey_to_int_stack(this.cursor.get_beatkey())
-            this.add_position_to_int_stack(this.cursor.get_position())
+            this.history_cache.add_beatkey(this.cursor.get_beatkey())
+            this.history_cache.add_position(this.cursor.get_position())
 
             this.history_ledger.last().add("set_cursor")
         }
     }
 
+    fun clear() {
+        this.int_stack.clear()
+        this.beat_stack.clear()
+        this.history_ledger.clear()
+        this.history_locked = false
+        this.multi_counter = 0
+    }
+
+    fun get_position(): List<Int> {
+        // List<Int> prefaced by length
+        var position: MutableList<Int> = mutableListOf()
+        var length = this.int_stack.removeLast()
+        for (_i in 0 until length) {
+            position.add(0, this.int_stack.removeLast())
+        }
+        return position
+    }
+
+    fun add_position(position: List<Int>) {
+        var size = position.size
+        for (i in position) {
+            this.int_stack.add(i)
+        }
+        this.int_stack.add(size)
+    }
+
+    fun get_beatkey(): BeatKey {
+        return BeatKey(
+            this.int_stack.removeLast(),
+            this.int_stack.removeLast(),
+            this.int_stack.removeLast()
+        )
+    }
+
+    fun add_beatkey(beat_key: BeatKey) {
+        this.int_stack.add(beat_key.beat)
+        this.int_stack.add(beat_key.line_offset)
+        this.int_stack.add(beat_key.channel)
+    }
+
+    fun get_boolean(): Boolean {
+        return this.int_stack.removeLast() != 0
+    }
+
+    fun add_boolean(bool: Boolean) {
+        if (bool) {
+            this.int_stack.add(1)
+        } else {
+            this.int_stack.add(0)
+        }
+    }
+
+    fun get_int(): Int {
+        return this.int_stack.removeLast()
+    }
+    fun add_int(int: Int) {
+        this.int_stack.add(int)
+    }
+
+    fun get_beat(): OpusTree<OpusEvent> {
+        return this.beat_stack.removeLast()
+    }
+    fun add_beat(beat: OpusTree<OpusEvent>) {
+        this.beat_stack.add(beat)
+    }
+    fun isEmpty(): Boolean {
+        return this.history_ledger.isEmpty()
+    }
+    fun lock() {
+        this.history_locked = true
+    }
+    fun unlock() {
+        this.history_locked = false
+    }
+    fun pop(): List<String> {
+        return if (this.history_ledger.isEmpty()){
+            listOf()
+        } else {
+            this.history_ledger.removeLast()
+        }
+    }
+
+    fun push_new_line(channel: Int, line_offset: Int, beat_count: Int) {
+        this.open_multi()
+        if (this.append_undoer_key("new_line")) {
+            this.add_int(channel)
+            this.add_int(line_offset)
+            for (i in 0 until beat_count) {
+                var beat_key = BeatKey(channel, line_offset, i)
+                this.setup_repopulate(beat_key, listOf())
+            }
+        }
+        this.close_multi()
+    }
+    fun push_remove(beat_key: BeatKey, position: MutableList<Int>) {
+        if (position.isNotEmpty()) {
+            if (this.append_undoer_key("remove")) {
+                position[position.size - 1] += 1
+
+                this.add_beatkey(beat_key)
+                this.add_position(position)
+            }
+        }
+    }
+    fun push_remove_beat(index: Int) {
+        if (this.append_undoer_key("remove_beat")) {
+            this.add_int(index)
+        }
+    }
+
+    fun push_insert_beat(index: Int, channel_sizes: List<Pair<Int,Int>>) {
+        this.open_multi()
+        if (this.append_undoer_key("insert_beat")) {
+            this.add_int(index)
+
+            for ((channel, line_count) in channel_sizes) {
+                for (j in 0 until line_count) {
+                    this.setup_repopulate(BeatKey(channel, j, index), listOf())
+                }
+            }
+        }
+        this.close_multi()
+    }
+    fun push_set_event(beat_key: BeatKey, position: List<Int>, note: Int, relative: Boolean) {
+        if (this.append_undoer_key("set_event")) {
+            this.add_beatkey(beat_key)
+            this.add_position(position)
+            this.add_int(note)
+            this.add_boolean(relative)
+        }
+    }
+}
+
+open class HistoryLayer() : CursorLayer() {
+    var history_cache = HistoryCache()
+
+    override fun reset() {
+        this.history_cache.clear()
+        super.reset()
+    }
+
+    fun apply_undo() {
+        if (this.history_cache.isEmpty()) {
+            return
+        }
+
+        this.history_cache.lock()
+
+        for (func_name in this.history_cache.pop()) {
+            when (func_name) {
+                "split_tree" -> {
+                    val splits = this.history_cache.get_int()
+                    val position = this.history_cache.get_position()
+                    val beat_key = this.history_cache.get_beatkey()
+                    this.split_tree(beat_key, position, splits)
+                }
+                "set_event" -> {
+                    var relative = this.history_cache.get_boolean()
+                    var value = this.history_cache.get_int()
+                    var position = this.history_cache.get_position()
+                    var beat_key = this.history_cache.get_beatkey()
+                    var event = OpusEvent(value, this.RADIX, beat_key.channel, relative)
+
+                    this.set_event(beat_key, position, event)
+                }
+                "set_percussion_event" -> {
+                    var position = this.history_cache.get_position()
+                    var beat_key = this.history_cache.get_beatkey()
+                    this.set_percussion_event(beat_key, position)
+                }
+                "unset" -> {
+                    var position = this.history_cache.get_position()
+                    var beat_key = this.history_cache.get_beatkey()
+                    this.unset(beat_key, position)
+                }
+                "replace_beat" -> {
+                    var beat = this.history_cache.get_beat()
+                    var beat_key = this.history_cache.get_beatkey()
+                    this.replace_beat(beat_key, beat)
+                }
+                "swap_channels" -> {
+                    var channel_b = this.history_cache.get_int()
+                    var channel_a = this.history_cache.get_int()
+                    this.swap_channels(channel_a, channel_b)
+                }
+                "remove_line" -> {
+                    var line_offset = this.history_cache.get_int()
+                    var channel = this.history_cache.get_int()
+                    this.remove_line(channel, line_offset)
+                }
+                "new_line" -> {
+                    var line_offset = this.history_cache.get_int()
+                    var channel = this.history_cache.get_int()
+                    this.new_line(channel, line_offset)
+                }
+                "remove" -> {
+                    var position = this.history_cache.get_position()
+                    var beat_key = this.history_cache.get_beatkey()
+                    this.remove(beat_key, position)
+                }
+                "remove_beat" -> {
+                    var index = this.history_cache.get_int()
+                    this.remove_beat(index)
+                }
+                "insert_beat" -> {
+                    var index = this.history_cache.get_int()
+                    this.insert_beat(index)
+                }
+                "set_cursor" -> {
+                    var position = this.history_cache.get_position()
+                    var beat_key = this.history_cache.get_beatkey()
+                    var y = this.get_y(beat_key.channel, beat_key.line_offset)
+                    this.cursor.set(y, beat_key.beat, position)
+                }
+            }
+        }
+
+        this.history_cache.unlock()
+    }
+
+
     private fun setup_repopulate(beat_key: BeatKey, start_position: List<Int>) {
-        if (this.history_locked) {
+        if (this.history_cache.isLocked()) {
             return
         }
         this.open_multi()
@@ -206,11 +295,7 @@ open class HistoryLayer() : CursorLayer() {
             }
 
             //////////////////////
-            if (this.append_undoer_key("split_tree")) {
-                this.add_beatkey_to_int_stack(beat_key)
-                this.add_position_to_int_stack(listOf())
-                this.add_int_to_int_stack(beat_tree.size)
-            }
+            this.history_cache.push_split_tree(beat_key, listOf(), beat_tree.size)
             //////////////////////
         } else {
             stack.add(start_position)
@@ -225,11 +310,7 @@ open class HistoryLayer() : CursorLayer() {
 
             if (! tree.is_leaf()) {
                 //////////////////////
-                if (this.append_undoer_key("split_tree")) {
-                    this.add_beatkey_to_int_stack(beat_key)
-                    this.add_position_to_int_stack(position)
-                    this.add_int_to_int_stack(tree.size)
-                }
+                this.history_cache.push_split_tree(beat_key, position, tree.size)
                 //////////////////////
                 for (i in 0 until tree.size) {
                     val next_position = position.toMutableList()
@@ -240,27 +321,16 @@ open class HistoryLayer() : CursorLayer() {
                 val event = tree.get_event()!!
                 if (beat_key.channel != 9) {
                     //////////////////////
-                    if (this.append_undoer_key("set_event")) {
-                        this.add_beatkey_to_int_stack(beat_key)
-                        this.add_position_to_int_stack(position)
-                        this.add_int_to_int_stack(event.note)
-                        this.add_boolean_to_int_stack(event.relative)
-                    }
+                    this.history_cache.push_set_event(beat_key, position, event.note, event.relative)
                     //////////////////////
                 } else {
                     //////////////////////
-                    if (this.append_undoer_key("set_percussion_event")) {
-                        this.add_beatkey_to_int_stack(beat_key)
-                        this.add_position_to_int_stack(position)
-                    }
+                    this.history_cache.push_set_percussion_event(beat_key, position)
                     //////////////////////
                 }
             } else {
                 //////////////////////
-                if (this.append_undoer_key("unset")) {
-                    this.add_beatkey_to_int_stack(beat_key)
-                    this.add_position_to_int_stack(position)
-                }
+                this.history_cache.push_unset(beat_key, position)
                 //////////////////////
             }
         }
@@ -273,93 +343,48 @@ open class HistoryLayer() : CursorLayer() {
     }
 
     open override fun swap_channels(channel_a: Int, channel_b: Int) {
-        if (this.append_undoer_key("swap_channels")) {
-            this.add_int_to_int_stack(channel_a)
-            this.add_int_to_int_stack(channel_b)
-        }
-
+        this.history_cache.push_swap_channels(channel_a, channel_b)
         super.swap_channels(channel_a, channel_b)
     }
 
     open override fun new_line(channel: Int, index: Int?) {
-        if (this.append_undoer_key("remove_line")) {
-            var abs_index = index ?: (this.channel_lines[channel].size - 1)
-
-            this.add_int_to_int_stack(channel)
-            this.add_int_to_int_stack(abs_index)
-        }
-
+        this.history_cache.push_remove_line(channel, index ?: this.channel_lines[channel].size - 1)
         super.new_line(channel, index)
     }
 
     open override fun remove_line(channel: Int, line_offset: Int?) {
-        val abs_line_offset: Int = line_offset ?: this.channel_lines[channel].size - 1
-
-        this.open_multi()
-        if (this.append_undoer_key("new_line")) {
-            this.add_int_to_int_stack(channel)
-            this.add_int_to_int_stack(abs_line_offset)
-            for (i in 0 .. this.opus_beat_count - 1) {
-                var beat_key = BeatKey(channel, abs_line_offset, i)
-                this.setup_repopulate(beat_key, listOf())
-            }
-        }
-        this.close_multi()
-
+        this.history_cache.push_new_line(channel, line_offset ?: this.channel_lines[channel].size - 1, this.opus_beat_count)
         super.remove_line(channel, line_offset)
     }
 
     open override fun insert_after(beat_key: BeatKey, position: List<Int>) {
-        if (position.isNotEmpty()) {
-            if (this.append_undoer_key("remove")) {
-                var rposition = position.toMutableList()
-                rposition[rposition.size - 1] += 1
-
-                this.add_beatkey_to_int_stack(beat_key)
-                this.add_position_to_int_stack(rposition)
-            }
-        }
+        this.history_cache.push_remove(beat_key, position.toMutableList())
         super.insert_after(beat_key, position)
     }
 
     open override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
-        this.setup_repopulate(beat_key, position.slice(position.indices))
+        var new_position = if (position.isEmpty()) {
+            listOf()
+        } else {
+            position.subList(0, position.size - 1)
+        }
+        this.setup_repopulate(beat_key, new_position)
         super.split_tree(beat_key, position, splits)
     }
 
     open override fun remove(beat_key: BeatKey, position: List<Int>) {
-        this.setup_repopulate(beat_key, position.slice(0..position.size - 1))
+        this.setup_repopulate(beat_key, position.subList(0, position.size - 1))
         super.remove(beat_key, position)
     }
 
     open override fun insert_beat(index: Int?) {
-        if (this.append_undoer_key("remove_beat")) {
-            var abs_index = index ?: this.opus_beat_count - 1
-            this.add_int_to_int_stack(abs_index)
-        }
+        this.history_cache.push_remove_beat(index ?: this.opus_beat_count - 1)
 
         super.insert_beat(index)
     }
 
     override fun remove_beat(index: Int?) {
-        var abs_index = index ?: (this.opus_beat_count - 1)
-
-        this.open_multi()
-        if (this.append_undoer_key("insert_beat")) {
-            this.add_int_to_int_stack(abs_index)
-        }
-
-        for (i in 0 until this.channel_lines.size) {
-            var channel = this.channel_lines[i]
-            for (j in 0 until channel.size) {
-                var line = channel[j]
-                for (k in abs_index until line.size) {
-                    this.setup_repopulate(BeatKey(i,j,k), listOf())
-                }
-            }
-        }
-        this.close_multi()
-
+        this.history_cache.push_insert_beat(index ?: this.opus_beat_count - 1, this.get_channel_line_counts())
         super.remove_beat(index)
     }
 
@@ -368,15 +393,15 @@ open class HistoryLayer() : CursorLayer() {
         if (tree.is_event()) {
             var original_event = tree.get_event()!!
             if (this.append_undoer_key("set_event")) {
-                this.add_beatkey_to_int_stack(beat_key)
-                this.add_position_to_int_stack(position)
-                this.add_int_to_int_stack(original_event.note)
-                this.add_boolean_to_int_stack(original_event.relative)
+                this.history_cache.add_beatkey(beat_key)
+                this.history_cache.add_position(position)
+                this.history_cache.add_int(original_event.note)
+                this.history_cache.add_boolean(original_event.relative)
             }
         } else {
             if (this.append_undoer_key("unset")) {
-                this.add_beatkey_to_int_stack(beat_key)
-                this.add_position_to_int_stack(position)
+                this.history_cache.add_beatkey(beat_key)
+                this.history_cache.add_position(position)
             }
         }
 
@@ -384,38 +409,33 @@ open class HistoryLayer() : CursorLayer() {
     }
 
     open override fun set_percussion_event(beat_key: BeatKey, position: List<Int>) {
-        var tree = this.get_tree(beat_key, position)
+        val tree = this.get_tree(beat_key, position)
         if (tree.is_event()) {
-            var original_event = tree.get_event()!!
+            val original_event = tree.get_event()!!
             if (beat_key.channel == 9) {
                 if (this.append_undoer_key("set_event")) {
-                    this.add_beatkey_to_int_stack(beat_key)
-                    this.add_position_to_int_stack(position)
-                    this.add_int_to_int_stack(original_event.note)
-                    this.add_boolean_to_int_stack(original_event.relative)
+                    this.history_cache.add_beatkey(beat_key)
+                    this.history_cache.add_position(position)
+                    this.history_cache.add_int(original_event.note)
+                    this.history_cache.add_boolean(original_event.relative)
                 }
             } else if (this.append_undoer_key("set_percussion_event")) {
-                this.add_beatkey_to_int_stack(beat_key)
-                this.add_position_to_int_stack(position)
+                this.history_cache.add_beatkey(beat_key)
+                this.history_cache.add_position(position)
             }
         } else if (this.append_undoer_key("unset")) {
-            this.add_beatkey_to_int_stack(beat_key)
-            this.add_position_to_int_stack(position)
+            this.history_cache.add_beatkey(beat_key)
+            this.history_cache.add_position(position)
         }
 
         super.set_percussion_event(beat_key, position)
     }
 
     open override fun unset(beat_key: BeatKey, position: List<Int>) {
-        var tree = this.get_tree(beat_key, position)
+        val tree = this.get_tree(beat_key, position)
         if (tree.is_event()) {
-            var original_event = tree.get_event()!!
-            if (this.append_undoer_key("set_event")) {
-                this.add_beatkey_to_int_stack(beat_key)
-                this.add_position_to_int_stack(position)
-                this.add_int_to_int_stack(original_event.note)
-                this.add_boolean_to_int_stack(original_event.relative)
-            }
+            val original_event = tree.get_event()!!
+            this.history_cache.push_set_event(beat_key, position, original_event.note, original_event.relative)
         }
         super.unset(beat_key, position)
     }

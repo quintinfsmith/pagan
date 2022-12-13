@@ -272,7 +272,7 @@ open class OpusManagerBase {
             if (!tree.is_leaf()) {
                 tree = tree.get(pos)
             } else {
-                throw Exception("Invalid position ${position}")
+                throw Exception("Invalid position $position")
             }
         }
 
@@ -392,5 +392,13 @@ open class OpusManagerBase {
 
     fun import_midi(path: String) {
         
+    }
+
+    fun get_channel_line_counts(): List<Pair<Int, Int>> {
+        var output: MutableList<Pair<Int, Int>> =mutableListOf()
+        for (i in 0 until this.channel_lines.size) {
+            output.add(Pair(i, this.channel_lines[i].size))
+        }
+        return output
     }
 }

@@ -331,7 +331,7 @@ class MainActivity : AppCompatActivity() {
         val x = parent.childCount - 1
         headerCellView.text = "$x"
         headerCellView.setOnClickListener {
-            val cursor = this.opus_manager.cursor
+            val cursor = this.opus_manager.get_cursor()
             this.opus_manager.set_cursor_position(cursor.y, x, listOf())
             this.setContextMenu(2)
             this.tick()
@@ -370,7 +370,7 @@ class MainActivity : AppCompatActivity() {
 
         rowLabel.textView.setOnClickListener {
             val y: Int? = that.cache.getLineIndex(rowView)
-            val cursor = that.opus_manager.cursor
+            val cursor = that.opus_manager.get_cursor()
             this.setContextMenu(1)
             if (y != null) {
                 this.opus_manager.set_cursor_position(y, cursor.x, listOf())
@@ -378,8 +378,8 @@ class MainActivity : AppCompatActivity() {
             this.tick()
         }
 
-        this.cache.addLineLabel(y, rowLabel.textView)
 
+        this.cache.addLineLabel(y, rowLabel.textView)
         rowView.addView(rowLabel)
 
         return rowView
@@ -584,7 +584,7 @@ class MainActivity : AppCompatActivity() {
                             if (!fromUser) {
                                 return
                             }
-                            var cursor = that.opus_manager.cursor
+                            var cursor = that.opus_manager.get_cursor()
                             var position = cursor.position
                             var beatkey = cursor.get_beatkey()
 
@@ -628,7 +628,7 @@ class MainActivity : AppCompatActivity() {
                             if (!fromUser) {
                                 return
                             }
-                            var cursor = opus_manager.cursor
+                            var cursor = opus_manager.get_cursor()
                             var position = cursor.position
                             var beatkey = cursor.get_beatkey()
 
@@ -671,7 +671,7 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 view.clButtons.btnRemove?.setOnClickListener {
-                    val cursor = this.opus_manager.cursor
+                    val cursor = this.opus_manager.get_cursor()
                     if (cursor.get_position().isNotEmpty()) {
                         this.opus_manager.remove_tree_at_cursor()
                     }
@@ -679,7 +679,7 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 view.clButtons.btnInsert?.setOnClickListener {
-                    val position = this.opus_manager.cursor.get_position()
+                    val position = this.opus_manager.get_cursor().get_position()
                     if (position.isEmpty()) {
                         this.opus_manager.split_tree_at_cursor()
                     } else {
@@ -710,10 +710,10 @@ class MainActivity : AppCompatActivity() {
                     false
                 )
 
-                val cursor_key = this.opus_manager.cursor.get_beatkey()
+                val cursor_key = this.opus_manager.get_cursor().get_beatkey()
                 if (this.opus_manager.is_reflection(cursor_key.channel, cursor_key.line_offset, cursor_key.beat)) {
                     view.btnUnLink.setOnClickListener {
-                        var cursor = this.opus_manager.cursor
+                        var cursor = this.opus_manager.get_cursor()
                         this.opus_manager.unlink_beat(cursor.get_beatkey())
                         cursor.settle()
                         this.linking_beat = null
@@ -725,7 +725,7 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 view.btnCancelLink.setOnClickListener {
-                    this.opus_manager.cursor.settle()
+                    this.opus_manager.get_cursor().settle()
                     this.linking_beat = null
                     this.setContextMenu(3)
                     this.tick()
@@ -773,13 +773,26 @@ class MainActivity : AppCompatActivity() {
     fun tick_manage_lines() {
         while (true) {
             val (channel, index, operation) = this.opus_manager.fetch_flag_line() ?: break
-            val y = this.opus_manager.get_y(channel, index)
             when (operation) {
                 0 -> {
-                    if (y == -1) {
-                        this.cache.unsetCursor()
+                    var counts = this.opus_manager.get_channel_line_counts()
+
+                    var y = 0
+                    for (i in 0 until channel) {
+                        y += counts[i]
                     }
-                    this.cache.detachLine(y)
+
+                    var cursor = this.cache.getCursor()
+                    if (cursor != null && y + index < cursor!!.first) {
+                        this.cache.setCursor(
+                            cursor.first - 1,
+                            cursor.second,
+                            cursor.third
+                        )
+                    }
+
+
+                    this.cache.detachLine(y + index)
 
                     // Redraw labels
                     // TODO: Redraw labels at end of function after all lines have been popped and added
@@ -798,6 +811,24 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
                 1 -> {
+                    val y = this.opus_manager.get_y(channel, index)
+
+                    var cursor = this.cache.getCursor()
+                    if (cursor != null && y + index < cursor!!.first) {
+                        this.cache.setCursor(
+                            cursor.first + 1,
+                            cursor.second,
+                            cursor.third
+                        )
+                    }
+
+                    var rowView = this.buildLineView(y)
+                    for (x in 0 until this.opus_manager.opus_beat_count) {
+                        this.buildTreeView(rowView, y, x, listOf())
+                    }
+                }
+                2 -> {
+                    val y = this.opus_manager.get_y(channel, index)
                     this.buildLineView(y)
                 }
             }
@@ -860,7 +891,7 @@ class MainActivity : AppCompatActivity() {
         }
 
 
-        val cursor = this.opus_manager.cursor
+        val cursor = this.opus_manager.get_cursor()
         val position = cursor.get_position()
 
         for (view in this.cache.get_all_leafs(cursor.y, cursor.x, position)) {
@@ -879,7 +910,7 @@ class MainActivity : AppCompatActivity() {
         this.cache.setCursor(cursor.y, cursor.x, position)
 
         // TODO: sliders
-        //var cursor = that.opus_manager.cursor
+        //var cursor = that.opus_manager.get_cursor()
         //var position = cursor.get_position()
         //that.sbOffset.progress = 0
         //that.sbOctave.progress = 0

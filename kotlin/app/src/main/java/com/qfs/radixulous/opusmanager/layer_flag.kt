@@ -43,12 +43,14 @@ class UpdatesCache {
     fun flag_line_new(channel: Int, line_offset: Int) {
         this.line_flag.add(Triple(channel, line_offset, 1))
     }
+    fun flag_line_init(channel: Int, line_offset: Int) {
+        this.line_flag.add(Triple(channel, line_offset, 2))
+    }
     fun purge() {
         this.beat_flag.clear()
         this.beat_change.clear()
         this.line_flag.clear()
     }
-
 }
 
 open class FlagLayer : OpusManagerBase() {
@@ -116,7 +118,7 @@ open class FlagLayer : OpusManagerBase() {
         super.new()
         for (i in 0 until this.channel_lines.size) {
             for (j in 0 until this.channel_lines[i].size) {
-                this.cache.flag_line_new(i, j)
+                this.cache.flag_line_init(i, j)
             }
         }
         for (x in 0 until this.opus_beat_count) {
@@ -128,7 +130,7 @@ open class FlagLayer : OpusManagerBase() {
         super.load(path)
         for (i in 0 until this.channel_lines.size) {
             for (j in 0 until this.channel_lines[i].size) {
-                this.cache.flag_line_new(i, j)
+                this.cache.flag_line_init(i, j)
             }
         }
         for (x in 0 until this.opus_beat_count) {

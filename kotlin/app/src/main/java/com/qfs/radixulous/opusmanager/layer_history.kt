@@ -11,6 +11,7 @@ class HistoryCache() {
     fun isLocked(): Boolean {
         return this.history_locked
     }
+
     fun append_undoer_key(func: String): Boolean {
         if (this.history_locked) {
             return false
@@ -223,13 +224,13 @@ open class HistoryLayer() : CursorLayer() {
                     var position = this.history_cache.get_position()
                     var beat_key = this.history_cache.get_beatkey()
                     var y = this.get_y(beat_key.channel, beat_key.line_offset)
-                    this.cursor.set(y, beat_key.beat, position)
+                    this.get_cursor().set(y, beat_key.beat, position)
                 }
             }
         }
 
         this.history_cache.unlock()
-        this.cursor.settle()
+        this.get_cursor().settle()
     }
 
     private fun setup_repopulate(beat_key: BeatKey, start_position: List<Int>) {
@@ -275,7 +276,7 @@ open class HistoryLayer() : CursorLayer() {
             this.push_split_tree(beat_key, position, size)
         }
 
-        this.history_cache.close_multi(this.cursor.get_beatkey(), this.cursor.get_position())
+        this.history_cache.close_multi(this.get_cursor().get_beatkey(), this.get_cursor().get_position())
     }
 
     open override fun overwrite_beat(old_beat: BeatKey, new_beat: BeatKey) {
@@ -372,7 +373,7 @@ open class HistoryLayer() : CursorLayer() {
                 this.setup_repopulate(beat_key, listOf())
             }
         }
-        this.history_cache.close_multi(this.cursor.get_beatkey(), this.cursor.get_position())
+        this.history_cache.close_multi(this.get_cursor().get_beatkey(), this.get_cursor().get_position())
     }
 
     fun push_remove(beat_key: BeatKey, position: MutableList<Int>) {
@@ -392,18 +393,19 @@ open class HistoryLayer() : CursorLayer() {
         }
     }
 
-    fun push_insert_beat(index: Int, channel_sizes: List<Pair<Int,Int>>) {
+    fun push_insert_beat(index: Int, channel_sizes: List<Int>) {
         this.history_cache.open_multi()
         if (this.history_cache.append_undoer_key("insert_beat")) {
             this.history_cache.add_int(index)
 
-            for ((channel, line_count) in channel_sizes) {
+            for (channel in channel_sizes.indices) {
+                var line_count = channel_sizes[channel]
                 for (j in 0 until line_count) {
                     this.setup_repopulate(BeatKey(channel, j, index), listOf())
                 }
             }
         }
-        this.history_cache.close_multi(this.cursor.get_beatkey(), this.cursor.get_position())
+        this.history_cache.close_multi(this.get_cursor().get_beatkey(), this.get_cursor().get_position())
     }
 
     fun push_set_event(beat_key: BeatKey, position: List<Int>, note: Int, relative: Boolean) {

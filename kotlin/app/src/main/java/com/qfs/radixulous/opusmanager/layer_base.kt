@@ -394,10 +394,10 @@ open class OpusManagerBase {
         
     }
 
-    fun get_channel_line_counts(): List<Pair<Int, Int>> {
-        var output: MutableList<Pair<Int, Int>> =mutableListOf()
+    fun get_channel_line_counts(): List<Int> {
+        var output: MutableList<Int> = mutableListOf()
         for (i in 0 until this.channel_lines.size) {
-            output.add(Pair(i, this.channel_lines[i].size))
+            output.add(this.channel_lines[i].size)
         }
         return output
     }

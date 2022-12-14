@@ -158,7 +158,7 @@ class Cursor(var opus_manager: CursorLayer) {
 }
 
 open class CursorLayer() : LinksLayer() {
-    var cursor = Cursor(this)
+    var cursor: Cursor? = null
     var channel_order = Array(16, { i -> i })
 
     override fun reset() {
@@ -175,87 +175,112 @@ open class CursorLayer() : LinksLayer() {
         return output
     }
 
+    fun get_cursor(): Cursor {
+        if (this.cursor == null) {
+            this.cursor = Cursor(this)
+        }
+
+        return this.cursor!!
+    }
+
     fun cursor_right() {
-        this.cursor.move_right()
+        this.get_cursor().move_right()
     }
     fun cursor_left() {
-        this.cursor.move_left()
+        this.get_cursor().move_left()
     }
     fun cursor_up() {
-        this.cursor.move_up()
+        this.get_cursor().move_up()
     }
     fun cursor_down() {
-        this.cursor.move_down()
+        this.get_cursor().move_down()
     }
 
     fun set_percurssion_event_at_cursor() {
-        var beat_key = this.cursor.get_beatkey()
+        var beat_key = this.get_cursor().get_beatkey()
         if (beat_key.channel != 9) {
             return
         }
 
-        this.set_percussion_event(beat_key, this.cursor.get_position())
+        this.set_percussion_event(beat_key, this.get_cursor().get_position())
     }
 
     fun set_cursor_position(y: Int, x: Int, position: List<Int>){
-        this.cursor.y = y
-        this.cursor.x = x
-        this.cursor.position = position.toMutableList()
+        this.get_cursor().y = y
+        this.get_cursor().x = x
+        this.get_cursor().position = position.toMutableList()
     }
 
     fun new_line_at_cursor() {
-        this.new_line(this.cursor.get_beatkey().channel)
+        this.new_line(this.get_cursor().get_beatkey().channel)
+    }
+
+    override fun new_line(channel: Int, index: Int?) {
+        var cursor = this.get_cursor()
+        var beat_key = cursor.get_beatkey()
+        var abs_index = if (index == null) {
+            this.channel_lines[channel].size - 1
+        } else if (index < 0) {
+            this.channel_lines[channel].size + index
+        } else {
+            index
+        }
+        super.new_line(channel, index)
+
+        if (channel < beat_key.channel || (channel == beat_key.channel && abs_index < beat_key.line_offset)) {
+            this.cursor_down()
+        }
     }
 
     fun remove_line_at_cursor() {
-        var cursor_y = this.cursor.get_y()
+        var cursor_y = this.get_cursor().get_y()
         if (cursor_y ==  this.line_count() - 1) {
-            this.cursor.set_y(cursor_y - 1)
+            this.get_cursor().set_y(cursor_y - 1)
         }
-        var beat_key = this.cursor.get_beatkey()
+        var beat_key = this.get_cursor().get_beatkey()
         this.remove_line(beat_key.channel, beat_key.line_offset)
     }
 
     fun remove_beat_at_cursor() {
-        this.remove_beat(this.cursor.get_x())
+        this.remove_beat(this.get_cursor().get_x())
         //this.cursor_left()
     }
 
     fun split_tree_at_cursor() {
-        var beat_key = this.cursor.get_beatkey()
-        var position = this.cursor.get_position()
+        var beat_key = this.get_cursor().get_beatkey()
+        var position = this.get_cursor().get_position()
         this.split_tree(beat_key, position, 2)
     }
 
     fun unset_at_cursor() {
-        var beat_key = this.cursor.get_beatkey()
-        var position = this.cursor.get_position()
+        var beat_key = this.get_cursor().get_beatkey()
+        var position = this.get_cursor().get_position()
         this.unset(beat_key, position)
     }
 
     fun remove_tree_at_cursor() {
-        var beat_key = this.cursor.get_beatkey()
-        var position = this.cursor.get_position()
+        var beat_key = this.get_cursor().get_beatkey()
+        var position = this.get_cursor().get_position()
         var removed_parent = this.get_tree(beat_key, position).parent
 
         this.remove(beat_key, position)
 
         if (removed_parent != null && removed_parent.size > 1) {
             if (position.isNotEmpty() && position.last() > 0)  {
-                this.cursor.position[position.size - 1] = position.last() - 1
+                this.get_cursor().position[position.size - 1] = position.last() - 1
             }
         }
 
-        this.cursor.settle()
+        this.get_cursor().settle()
     }
 
     fun insert_beat_at_cursor() {
-        this.insert_beat(this.cursor.get_x() + 1)
+        this.insert_beat(this.get_cursor().get_x() + 1)
     }
 
     fun get_tree_at_cursor(): OpusTree<OpusEvent> {
-        var beat_key = this.cursor.get_beatkey()
-        var position = this.cursor.get_position()
+        var beat_key = this.get_cursor().get_beatkey()
+        var position = this.get_cursor().get_position()
         return this.get_tree(beat_key, position)
     }
 
@@ -277,8 +302,8 @@ open class CursorLayer() : LinksLayer() {
             new_value = event.note + 1
         }
         var new_event = OpusEvent(new_value, event.radix, event.channel, event.relative)
-        var beat_key = this.cursor.get_beatkey()
-        var position = this.cursor.get_position()
+        var beat_key = this.get_cursor().get_beatkey()
+        var position = this.get_cursor().get_position()
         this.set_event(beat_key, position, new_event)
     }
 
@@ -300,32 +325,32 @@ open class CursorLayer() : LinksLayer() {
             new_value = event.note - 1
         }
 
-        var beat_key = this.cursor.get_beatkey()
-        var position = this.cursor.get_position()
+        var beat_key = this.get_cursor().get_beatkey()
+        var position = this.get_cursor().get_position()
         var new_event = OpusEvent(new_value, event.radix, event.channel, event.relative)
         this.set_event(beat_key, position, new_event)
     }
 
     fun jump_to_beat(beat: Int) {
-        this.cursor.set_x(beat)
-        this.cursor.settle()
+        this.get_cursor().set_x(beat)
+        this.get_cursor().settle()
     }
 
     fun overwrite_beat_at_cursor(beat_key: BeatKey) {
-        this.overwrite_beat(this.cursor.get_beatkey(), beat_key)
+        this.overwrite_beat(this.get_cursor().get_beatkey(), beat_key)
     }
 
     fun link_beat_at_cursor(beat_key: BeatKey) {
-        this.link_beats(this.cursor.get_beatkey(), beat_key)
+        this.link_beats(this.get_cursor().get_beatkey(), beat_key)
     }
 
     fun unlink_beat_at_cursor() {
-        this.unlink_beat(this.cursor.get_beatkey())
+        this.unlink_beat(this.get_cursor().get_beatkey())
     }
 
     fun insert_after_cursor() {
-        var beat_key = this.cursor.get_beatkey()
-        var position = this.cursor.get_position()
+        var beat_key = this.get_cursor().get_beatkey()
+        var position = this.get_cursor().get_position()
         this.insert_after(beat_key, position)
     }
 
@@ -365,56 +390,69 @@ open class CursorLayer() : LinksLayer() {
     ///////// OpusManagerBase methods
     override fun insert_beat(index: Int?) {
         super.insert_beat(index)
-        this.cursor.settle()
+        this.get_cursor().settle()
     }
 
     override fun remove_beat(index: Int?) {
         super.remove_beat(index)
-        this.cursor.settle()
+        this.get_cursor().settle()
     }
 
     override fun remove(beat_key: BeatKey, position: List<Int>) {
         super.remove(beat_key, position)
-        this.cursor.settle()
+        this.get_cursor().settle()
     }
 
     override fun swap_channels(channel_a: Int, channel_b: Int) {
-        var original_beatkey = this.cursor.get_beatkey()
+        var original_beatkey = this.get_cursor().get_beatkey()
         super.swap_channels(channel_a, channel_b)
 
         var new_y = this.get_y(original_beatkey.channel, 0)
         new_y += min(original_beatkey.line_offset, this.channel_lines[original_beatkey.channel].size - 1)
 
-        this.cursor.set_y(new_y)
-        this.cursor.settle()
+        this.get_cursor().set_y(new_y)
+        this.get_cursor().settle()
     }
 
     override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
         super.split_tree(beat_key, position, splits)
-        this.cursor.position.add(0)
+        this.get_cursor().position.add(0)
     }
 
     override fun remove_line(channel: Int, index: Int?) {
+        var cursor = this.get_cursor()
+        var beat_key = cursor.get_beatkey()
+        var abs_index = if (index == null) {
+            this.channel_lines[channel].size - 1
+        } else if (index < 0) {
+            this.channel_lines[channel].size + index
+        } else {
+            index
+        }
+
         super.remove_line(channel, index)
-        this.cursor.settle()
+
+        if (channel < beat_key.channel || (channel == beat_key.channel && abs_index < beat_key.line_offset)) {
+            this.cursor_up()
+        }
     }
     override fun remove_channel(channel: Int) {
         super.remove_channel(channel)
-        this.cursor.settle()
+        this.get_cursor().settle()
     }
     override fun overwrite_beat(old_beat: BeatKey, new_beat: BeatKey) {
         super.overwrite_beat(old_beat, new_beat)
-        this.cursor.settle()
+        this.get_cursor().settle()
     }
 
     override fun new() {
         super.new()
-        this.cursor.set(0,0, listOf(0))
-        this.cursor.settle()
+        this.get_cursor().set(0,0, listOf(0))
+        this.get_cursor().settle()
     }
 
     override fun load(path: String) {
         super.load(path)
-        this.cursor.settle()
+        this.get_cursor().settle()
     }
 }

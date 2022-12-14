@@ -34,6 +34,15 @@ class HistoryCacheUnitTest {
         assertEquals(cache.get_boolean(), false)
     }
 
+    @Test
+    fun test_int() {
+        var cache = HistoryCache()
+        cache.add_int(2)
+        cache.add_int(5)
+        assertEquals(cache.get_int(), 5)
+        assertEquals(cache.get_int(),2)
+    }
+
 
     @Test
     fun test_repopulate() {
@@ -43,4 +52,20 @@ class HistoryCacheUnitTest {
 
         manager.apply_undo()
     }
+
+   @Test
+   fun test_remove() {
+       var manager = OpusManager()
+       manager.new()
+       manager.split_tree(BeatKey(0,0,0), listOf(), 3)
+       manager.remove(BeatKey(0,0,0), listOf(1))
+       manager.apply_undo()
+   }
+
+   // @Test
+   // fun test_push_split_tree() {
+   //     var cache = HistoryCache()
+
+
+   // }
 }

@@ -662,10 +662,12 @@ class MainActivity : AppCompatActivity() {
 
                 view.clButtons.btnSplit?.setOnClickListener {
                     this.opus_manager.split_tree_at_cursor()
+                    this.tick()
                 }
 
                 view.clButtons.btnUnset?.setOnClickListener {
                     this.opus_manager.unset_at_cursor()
+                    this.tick()
                 }
 
                 view.clButtons.btnRemove?.setOnClickListener {
@@ -697,7 +699,6 @@ class MainActivity : AppCompatActivity() {
                     leafView.tv.text = get_number_string(i, this.opus_manager.RADIX, 2)
                     numberLine.addView(leafView)
                 }
-                //this.clButtons.btnSplit?.text = "${that.opus_manager.cursor.position}"
 
                 this.llContextMenu.addView(view)
                 this.cache.setActiveContextMenu(view)
@@ -872,6 +873,8 @@ class MainActivity : AppCompatActivity() {
             val changeColour = ContextCompat.getColor(view.button.context, color)
             view.button.setBackgroundColor(changeColour)
         }
+
+
 
         this.cache.setCursor(cursor.y, cursor.x, position)
 

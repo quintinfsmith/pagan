@@ -266,7 +266,6 @@ open class OpusManagerBase {
     }
 
     fun get_tree(beat_key: BeatKey, position: List<Int>): OpusTree<OpusEvent> {
-
         var tree = this.get_beat_tree(beat_key)
         for (pos in position) {
             if (!tree.is_leaf()) {
@@ -287,7 +286,7 @@ open class OpusManagerBase {
                     line.removeLast()
                 }
                 while (new_count > line.size) {
-                    line.add(OpusTree<OpusEvent>())
+                    line.add(OpusTree())
                 }
             }
         }
@@ -325,8 +324,9 @@ open class OpusManagerBase {
                     beatstrs.add(to_string(beat))
                 }
                 var str_line =  beatstrs.joinToString("|", "{", "}")
+                strLines.add(str_line)
             }
-            var channel_file = File("${this.path}/channel_$i").writeText(strLines.joinToString("\n"))
+            File("${this.path}/channel_$i").writeText(strLines.joinToString("\n"))
         }
     }
 
@@ -338,7 +338,7 @@ open class OpusManagerBase {
 
     open fun new() {
         this.reset()
-        var new_line: MutableList<OpusTree<OpusEvent>> = MutableList(4, { _ -> OpusTree<OpusEvent>() })
+        var new_line: MutableList<OpusTree<OpusEvent>> = MutableList(4) { _ -> OpusTree<OpusEvent>() }
 
         this.channel_lines[0].add(new_line)
         this.opus_beat_count = 4

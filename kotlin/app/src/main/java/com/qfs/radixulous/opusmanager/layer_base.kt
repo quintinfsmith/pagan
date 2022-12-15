@@ -143,7 +143,7 @@ open class OpusManagerBase {
         val abs_index = if (index == null) {
             this.opus_beat_count
         } else if (index < 0) {
-            this.opus_beat_count + index + 1
+            this.opus_beat_count + index
         } else {
             index
         }
@@ -220,11 +220,7 @@ open class OpusManagerBase {
     }
 
     open fun remove_line(channel: Int, index: Int? = null) {
-        var adj_index = if (index == null) {
-            this.channel_lines[channel].size - 1
-        } else {
-            index
-        }
+        val adj_index = index ?: (this.channel_lines[channel].size - 1)
         this.channel_lines[channel].removeAt(adj_index)
     }
 
@@ -344,7 +340,7 @@ open class OpusManagerBase {
         this.opus_beat_count = 4
     }
 
-    private fun get_working_dir(): String? {
+    fun get_working_dir(): String? {
         return this.path
     }
 

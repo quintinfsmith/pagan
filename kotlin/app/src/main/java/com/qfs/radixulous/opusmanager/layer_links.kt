@@ -168,12 +168,7 @@ open class LinksLayer() : FlagLayer() {
     override fun insert_beat(index: Int?) {
         super.insert_beat(index)
 
-        var index_remap: Int
-        if (index == null) {
-            index_remap = this.opus_beat_count
-        } else {
-            index_remap = index
-        }
+        var index_remap: Int = index ?: this.opus_beat_count
         this.remap_links(this::rh_insert_beat, listOf(index_remap))
     }
 

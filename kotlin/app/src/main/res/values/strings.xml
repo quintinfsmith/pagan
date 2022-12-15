@@ -1,3 +1,10 @@
 <resources>
     <string name="app_name">kotlin</string>
+    <string name="pfx_subtract">-</string>
+    <string name="pfx_add">+</string>
+    <string name="pfx_log">v</string>
+    <string name="pfx_double">^</string>
+    <string name="empty_note">..</string>
+    <string name="msg_undo_none">Nothing to be done</string>
+    <string name="label_channels_button">Channels</string>
 </resources>

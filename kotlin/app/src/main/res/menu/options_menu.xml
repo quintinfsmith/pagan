@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
-    <item
+    <item android:title="undo"
         android:id="@+id/itmUndo"
-        android:title="Undo"
-        app:showAsAction="never"/>
+        android:orderInCategory="0"
+        app:showAsAction="ifRoom"
+        android:icon="@drawable/ic_undo"/>
     <item
         android:id="@+id/itmNewProject"
         android:title="New Project"
@@ -12,5 +13,9 @@
     <item
         android:id="@+id/itmLoadProject"
         android:title="Load Project"
+        app:showAsAction="never"/>
+    <item
+        android:id="@+id/itmSaveProject"
+        android:title="Save Project"
         app:showAsAction="never"/>
 </menu>

@@ -243,6 +243,7 @@ open class HistoryLayer() : CursorLayer() {
         val stack: MutableList<List<Int>> = mutableListOf(start_position)
 
         var splits: MutableList<Pair<List<Int>, Int>> = mutableListOf()
+        var events: MutableList<Pair<List<Int>, OpusTree<OpusEvent>>> = mutableListOf()
         while (stack.isNotEmpty()) {
             val position = stack.removeAt(0)
             var tree = beat_tree
@@ -256,25 +257,30 @@ open class HistoryLayer() : CursorLayer() {
                     next_position.add(i)
                     stack.add(next_position)
                 }
-                splits.add(Pair(position, tree.size))
+                splits.add(0, Pair(position, tree.size))
             } else if (tree.is_event()) {
-                val event = tree.get_event()!!
-                if (beat_key.channel != 9) {
-                    this.push_set_event(
-                        beat_key,
-                        position,
-                        event.note,
-                        event.relative
-                    )
-                } else {
-                    this.push_set_percussion_event(beat_key, position)
-                }
+                events.add(0, Pair(position, tree))
+            }
+        }
+
+        for ((position, tree) in events) {
+            val event = tree.get_event()!!
+            if (beat_key.channel != 9) {
+                this.push_set_event(
+                    beat_key,
+                    position,
+                    event.note,
+                    event.relative
+                )
+            } else {
+                this.push_set_percussion_event(beat_key, position)
             }
         }
 
         for ((position, size) in splits) {
             this.push_split_tree(beat_key, position, size)
         }
+
 
         this.history_cache.close_multi(this.get_cursor().get_beatkey(), this.get_cursor().get_position())
     }
@@ -290,12 +296,12 @@ open class HistoryLayer() : CursorLayer() {
     }
 
     open override fun new_line(channel: Int, index: Int?) {
-        this.push_remove_line(channel, index ?: (this.channel_lines[channel].size - 1))
         super.new_line(channel, index)
+        this.push_remove_line(channel, index ?: (this.channel_lines[channel].size - 1))
     }
 
     open override fun remove_line(channel: Int, line_offset: Int?) {
-        this.push_new_line(channel, line_offset ?: (this.channel_lines[channel].size - 1), this.opus_beat_count)
+        this.push_new_line(channel, line_offset ?: (this.channel_lines[channel].size - 1))
         super.remove_line(channel, line_offset)
     }
 
@@ -363,17 +369,22 @@ open class HistoryLayer() : CursorLayer() {
     }
 
 
-    fun push_new_line(channel: Int, line_offset: Int, beat_count: Int) {
+    fun push_new_line(channel: Int, line_offset: Int) {
         this.history_cache.open_multi()
-        if (this.history_cache.append_undoer_key("new_line")) {
-            this.history_cache.add_int(channel)
-            this.history_cache.add_int(line_offset)
-            for (i in 0 until beat_count) {
-                var beat_key = BeatKey(channel, line_offset, i)
-                this.setup_repopulate(beat_key, listOf())
-            }
+
+        for (i in 0 until this.opus_beat_count) {
+            var beat_key = BeatKey(channel, line_offset, i)
+            this.setup_repopulate(beat_key, listOf())
         }
-        this.history_cache.close_multi(this.get_cursor().get_beatkey(), this.get_cursor().get_position())
+
+        this.history_cache.append_undoer_key("new_line")
+        this.history_cache.add_int(channel)
+        this.history_cache.add_int(line_offset)
+
+        this.history_cache.close_multi(
+            this.get_cursor().get_beatkey(),
+            this.get_cursor().get_position()
+        )
     }
 
     fun push_remove(beat_key: BeatKey, position: MutableList<Int>) {
@@ -395,15 +406,14 @@ open class HistoryLayer() : CursorLayer() {
 
     fun push_insert_beat(index: Int, channel_sizes: List<Int>) {
         this.history_cache.open_multi()
+        for (channel in channel_sizes.indices) {
+            var line_count = channel_sizes[channel]
+            for (j in 0 until line_count) {
+                this.setup_repopulate(BeatKey(channel, j, index), listOf())
+            }
+        }
         if (this.history_cache.append_undoer_key("insert_beat")) {
             this.history_cache.add_int(index)
-
-            for (channel in channel_sizes.indices) {
-                var line_count = channel_sizes[channel]
-                for (j in 0 until line_count) {
-                    this.setup_repopulate(BeatKey(channel, j, index), listOf())
-                }
-            }
         }
         this.history_cache.close_multi(this.get_cursor().get_beatkey(), this.get_cursor().get_position())
     }
@@ -450,5 +460,9 @@ open class HistoryLayer() : CursorLayer() {
             this.history_cache.add_position(position)
             this.history_cache.add_int(splits)
         }
+    }
+
+    fun has_history(): Boolean {
+        return ! this.history_cache.isEmpty()
     }
 }

@@ -217,7 +217,6 @@ open class CursorLayer() : LinksLayer() {
 
     override fun new_line(channel: Int, index: Int?) {
         var cursor = this.get_cursor()
-        var beat_key = cursor.get_beatkey()
         var abs_index = if (index == null) {
             this.channel_lines[channel].size - 1
         } else if (index < 0) {
@@ -227,6 +226,7 @@ open class CursorLayer() : LinksLayer() {
         }
         super.new_line(channel, index)
 
+        var beat_key = cursor.get_beatkey()
         if (channel < beat_key.channel || (channel == beat_key.channel && abs_index < beat_key.line_offset)) {
             this.cursor_down()
         }
@@ -234,11 +234,12 @@ open class CursorLayer() : LinksLayer() {
 
     fun remove_line_at_cursor() {
         var cursor_y = this.get_cursor().get_y()
+        var beat_key = this.get_cursor().get_beatkey()
+        this.remove_line(beat_key.channel, beat_key.line_offset)
+
         if (cursor_y ==  this.line_count() - 1) {
             this.get_cursor().set_y(cursor_y - 1)
         }
-        var beat_key = this.get_cursor().get_beatkey()
-        this.remove_line(beat_key.channel, beat_key.line_offset)
     }
 
     fun remove_beat_at_cursor() {

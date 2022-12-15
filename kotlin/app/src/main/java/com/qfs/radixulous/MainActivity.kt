@@ -78,9 +78,9 @@ class ViewCache {
     fun cacheTree(view: View, y: Int, x: Int, position: List<Int>) {
         if (position.isEmpty()) {
             if (x < this.view_cache[y].second.size) {
-                this.view_cache[y].second.add(x, Pair(view, HashMap<List<Int>, View>()))
+                this.view_cache[y].second.add(x, Pair(view, HashMap()))
             } else {
-                this.view_cache[y].second.add(Pair(view, HashMap<List<Int>, View>()))
+                this.view_cache[y].second.add(Pair(view, HashMap()))
             }
         } else {
             this.view_cache[y].second[x].second[position] = view
@@ -184,18 +184,26 @@ class MainActivity : AppCompatActivity() {
 
         // calling this activity's function to
         // use ActionBar utility methods
-        val actionBar = supportActionBar
-        actionBar!!.title = "Radixulous"
-        actionBar.subtitle = "   Doop"
+        val actionBar = supportActionBar!!
         //actionBar.setIcon(R.drawable.app_logo)
         // methods to display the icon in the ActionBar
         actionBar.setDisplayUseLogoEnabled(true)
         actionBar.setDisplayShowHomeEnabled(true)
 
-        this.opus_manager.load("/data/data/com.qfs.radixulous/projects/test")
+        this.load("/data/data/com.qfs.radixulous/projects/test")
+    }
+    fun load(path: String) {
+        this.opus_manager.load(path)
         this.buildHeader()
         this.tick()
         this.setContextMenu(3)
+
+        var name = this.opus_manager.get_working_dir()
+        if (name != null) {
+            name = name.substring(name.lastIndexOf("/") + 1)
+        }
+        val actionBar = supportActionBar
+        actionBar!!.title = name
     }
 
     // method to inflate the options menu when
@@ -217,8 +225,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun undo() {
-        this.opus_manager.apply_undo()
-        this.tick()
+        if (this.opus_manager.has_history()) {
+            this.opus_manager.apply_undo()
+            this.tick()
+            this.setContextMenu(3)
+        } else {
+            Toast.makeText(this, getString(R.string.msg_undo_none), Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun newProject() {
@@ -246,7 +259,7 @@ class MainActivity : AppCompatActivity() {
             //this.openFileBrowser()
             this.showPopup(action_button)
         }
-        action_button.text = "Channels"
+        action_button.text = getString(R.string.label_channels_button)
         row.addView(action_button)
     }
 
@@ -275,16 +288,17 @@ class MainActivity : AppCompatActivity() {
                 if (chipView.isChecked) {
                     if (this.opus_manager.channel_lines[i].isEmpty()) {
                         this.opus_manager.add_channel(i)
+                        this.tick()
                     }
                 } else {
                     val line_count = this.opus_manager.channel_lines[i].size
                     if (this.opus_manager.line_count() > line_count) {
                         this.opus_manager.remove_channel(i)
+                        this.tick()
                     } else {
                         chipView.isChecked = true
                     }
                 }
-                this.tick()
             }
             popupView.clA.clB.cgEnabledChannels.addView(chipView)
         }
@@ -378,7 +392,6 @@ class MainActivity : AppCompatActivity() {
             this.tick()
         }
 
-
         this.cache.addLineLabel(y, rowLabel.textView)
         rowView.addView(rowLabel)
 
@@ -408,16 +421,16 @@ class MainActivity : AppCompatActivity() {
                 leafView.button.text = if (event.relative) {
                     if (event.note == 0 || event.note % event.radix != 0) {
                         val prefix = if (event.note < 0) {
-                            "-"
+                            getString(R.string.pfx_subtract)
                         } else {
-                            "+"
+                            getString(R.string.pfx_add)
                         }
                         "$prefix${get_number_string(kotlin.math.abs(event.note), event.radix, 1)}"
                     } else {
                         val prefix = if (event.note < 0) {
-                            "v"
+                            getString(R.string.pfx_log)
                         } else {
-                            "^"
+                            getString(R.string.pfx_double)
                         }
                         "$prefix${get_number_string(kotlin.math.abs(event.note) / event.radix, event.radix, 1)}"
                     }
@@ -427,7 +440,7 @@ class MainActivity : AppCompatActivity() {
                     "!!"
                 }
             } else {
-                leafView.button.text = ".."
+                leafView.button.text = getString(R.string.empty_note)
             }
 
             leafView.button.setOnClickListener {
@@ -580,10 +593,12 @@ class MainActivity : AppCompatActivity() {
                             seek: SeekBar,
                             progress: Int,
                             fromUser: Boolean
-                        ) {
-                            if (!fromUser) {
-                                return
-                            }
+                        ) { }
+
+                        override fun onStartTrackingTouch(seek: SeekBar) { }
+                        override fun onStopTrackingTouch(seek: SeekBar) {
+                            var progress = seek.progress
+
                             var cursor = that.opus_manager.get_cursor()
                             var position = cursor.position
                             var beatkey = cursor.get_beatkey()
@@ -604,16 +619,9 @@ class MainActivity : AppCompatActivity() {
                             }
 
                             that.opus_manager.set_event(beatkey, position, event)
-                            for (linked_key in that.opus_manager.get_all_linked(beatkey)) {
-                                var y = that.opus_manager.get_y(linked_key.channel, linked_key.line_offset)
 
-                                that.cache.getTree(y, linked_key.beat, position)?.button?.text =
-                                    get_number_string(event.note, event.radix, 2)
-                            }
+                            that.tick()
                         }
-
-                        override fun onStartTrackingTouch(seek: SeekBar) { }
-                        override fun onStopTrackingTouch(seek: SeekBar) { }
                     }
                 )
 
@@ -624,10 +632,13 @@ class MainActivity : AppCompatActivity() {
                             seek: SeekBar,
                             progress: Int,
                             fromUser: Boolean
-                        ) {
-                            if (!fromUser) {
-                                return
-                            }
+                        ) { }
+
+                        override fun onStartTrackingTouch(seek: SeekBar) { }
+
+                        override fun onStopTrackingTouch(seek: SeekBar) {
+                            var progress = seek.progress
+
                             var cursor = opus_manager.get_cursor()
                             var position = cursor.position
                             var beatkey = cursor.get_beatkey()
@@ -646,17 +657,9 @@ class MainActivity : AppCompatActivity() {
                             }
 
                             that.opus_manager.set_event(beatkey, position, event)
-                            for (linked_key in that.opus_manager.get_all_linked(beatkey)) {
-                                var y = that.opus_manager.get_y(linked_key.channel, linked_key.line_offset)
 
-                                that.cache.getTree(y, linked_key.beat, position)?.button?.text =
-                                    get_number_string(event.note, event.radix, 2)
-                            }
+                            that.tick()
                         }
-
-                        override fun onStartTrackingTouch(seek: SeekBar) { }
-
-                        override fun onStopTrackingTouch(seek: SeekBar) { }
                     }
                 )
 
@@ -749,12 +752,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun openFileBrowser() {
-        val fileintent = Intent(Intent.ACTION_GET_CONTENT)
-        fileintent.type = "gagt/sdf"
-        startActivity(fileintent)
-    }
-
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == 777) {
@@ -764,10 +761,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun tick() {
+        this.tick_unapply_cursor()
         this.tick_manage_lines()
         this.tick_manage_beats() // new/pop
         this.tick_update_beats() // changes
-        this.tick_update_cursor()
+        this.tick_apply_cursor()
     }
 
     fun tick_manage_lines() {
@@ -857,7 +855,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun tick_update_beats() {
+    private fun tick_update_beats() {
         while (true) {
             val beatkey = this.opus_manager.fetch_flag_change() ?: break
             this.rebuildBeatView(
@@ -870,26 +868,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun tick_update_cursor() {
-        val c = this.cache.getCursor()
-        if (c != null) {
-            // TODO: specify Exception
-            try {
-                val pair = this.opus_manager.get_channel_index(c.first)
-                val color = if (this.opus_manager.is_reflection(pair.first, pair.second, c.second)) {
-                    R.color.leaf_linked
-                } else {
-                    R.color.leaf
-                }
-                for (view in this.cache.get_all_leafs(c.first, c.second, c.third)) {
-                    val changeColour = ContextCompat.getColor(view.button.context, color)
-                    view.button.setBackgroundColor(changeColour)
-                }
-            } catch (exception:Exception) {
-                this.cache.unsetCursor()
-            }
-        }
-
+    fun tick_apply_cursor() {
 
         val cursor = this.opus_manager.get_cursor()
         val position = cursor.get_position()
@@ -909,13 +888,26 @@ class MainActivity : AppCompatActivity() {
 
         this.cache.setCursor(cursor.y, cursor.x, position)
 
-        // TODO: sliders
-        //var cursor = that.opus_manager.get_cursor()
-        //var position = cursor.get_position()
-        //that.sbOffset.progress = 0
-        //that.sbOctave.progress = 0
+    }
+    fun tick_unapply_cursor() {
+        val c = this.cache.getCursor()
+        if (c != null) {
+            // TODO: specify Exception
+            try {
+                val pair = this.opus_manager.get_channel_index(c.first)
+                val color = if (this.opus_manager.is_reflection(pair.first, pair.second, c.second)) {
+                    R.color.leaf_linked
+                } else {
+                    R.color.leaf
+                }
+                for (view in this.cache.get_all_leafs(c.first, c.second, c.third)) {
+                    val changeColour = ContextCompat.getColor(view.button.context, color)
+                    view.button.setBackgroundColor(changeColour)
+                }
+            } catch (exception:Exception) {
+                this.cache.unsetCursor()
+            }
+        }
 
-        //that.cache.getTree(cursor.y, cursor.x, position)?.button?.text = ".."
-        //that.cellClickListener(cursor.y, cursor.x, position)
     }
 }

@@ -274,6 +274,42 @@ open class OpusManagerBase {
         return tree
     }
 
+    fun get_preceding_leaf(beat_key: BeatKey, position: List<Int>): OpusTree<OpusEvent>? {
+        var pair = this.get_preceding_leaf_position(beat_key, position) ?: return null
+        return this.get_tree(pair.first, pair.second)
+    }
+
+    private fun get_preceding_leaf_position(beat_key: BeatKey, position: List<Int>): Pair<BeatKey, List<Int>>? {
+        var working_position = position.toMutableList()
+        var working_beat_key = BeatKey(beat_key.channel, beat_key.line_offset, beat_key.beat)
+
+        // Move left/up
+        while (true) {
+            if (working_position.isNotEmpty()) {
+                if (working_position.last() > 0) {
+                    working_position[working_position.size - 1] -= 1
+                    break
+                } else {
+                    working_position.removeLast()
+                }
+            } else if (working_beat_key.beat > 0) {
+                working_beat_key.beat -= 1
+                break
+            } else {
+                return null
+            }
+        }
+
+        var working_tree = this.get_tree(working_beat_key, working_position)
+        // Move right/down to leaf
+        while (!working_tree.is_leaf()) {
+            working_position.add(working_tree.size - 1)
+            working_tree = working_tree.get(working_tree.size - 1)
+        }
+
+        return Pair(working_beat_key, working_position)
+    }
+
     private fun set_beat_count(new_count: Int) {
         this.opus_beat_count = new_count
         for (channel in this.channel_lines) {
@@ -386,15 +422,123 @@ open class OpusManagerBase {
         this.opus_beat_count = beat_count
     }
 
-    fun import_midi(path: String) {
-        
-    }
+    fun import_midi(path: String) { }
 
     fun get_channel_line_counts(): List<Int> {
         var output: MutableList<Int> = mutableListOf()
         for (i in 0 until this.channel_lines.size) {
             output.add(this.channel_lines[i].size)
         }
+        return output
+    }
+
+    fun convert_event_to_relative(beat_key: BeatKey, position: List<Int>) {
+        var tree = this.get_tree(beat_key, position)
+        if (!tree.is_event()) {
+            return
+        }
+
+        var event = tree.get_event()!!
+        if (event.relative) {
+            return
+        }
+
+        var working_beat_key: BeatKey = beat_key
+        var working_position: List<Int> = position
+        var preceding_value: Int? = null
+        while (preceding_value == null) {
+            var pair = this.get_preceding_leaf_position(working_beat_key, working_position) ?: throw Exception("No preceding value")
+            preceding_value = this.get_absolute_value(pair.first, pair.second)
+            working_beat_key = pair.first
+            working_position = pair.second
+        }
+
+        this.set_event(beat_key, position, OpusEvent(
+            event.note - preceding_value!!,
+            event.radix,
+            event.channel,
+            true
+        ))
+    }
+
+    fun convert_event_to_absolute(beat_key: BeatKey, position: List<Int>) {
+        var tree = this.get_tree(beat_key, position)
+        if (!tree.is_event()) {
+            return
+        }
+
+        var event = tree.get_event()!!
+        if (!event.relative) {
+            return
+        }
+
+        var value = this.get_absolute_value(beat_key, position) ?: throw Exception("No Preceding value")
+        this.set_event(beat_key, position, OpusEvent(
+            value,
+            event.radix,
+            event.channel,
+            false
+        ))
+    }
+
+    private fun get_absolute_value(beat_key: BeatKey, position: List<Int>): Int? {
+        var tree = this.get_tree(beat_key, position)
+
+        var abs_value = 0
+        if (tree.is_event()) {
+            var event = tree.get_event()!!
+            if (!event.relative) {
+                return event.note
+            } else {
+                abs_value = event.note
+            }
+        } else {
+            return null
+        }
+
+        var working_beat_key = beat_key
+        var working_position = position.toList()
+
+        while (true) {
+            var pair = this.get_preceding_leaf_position(working_beat_key, working_position) ?: throw Exception("No Initial Value")
+            working_beat_key = pair.first
+            working_position = pair.second
+
+            var working_tree = this.get_tree(working_beat_key, working_position)
+
+            if (working_tree.is_event()) {
+                var working_event = working_tree.get_event()!!
+                abs_value += working_event.note
+                if (!working_event.relative) {
+                    break
+                }
+            }
+        }
+
+        return abs_value
+    }
+
+    fun has_preceding_absolute_event(beat_key: BeatKey, position: List<Int>): Boolean {
+        var working_beat_key = beat_key
+        var working_position = position.toList()
+
+        var output = false
+        while (true) {
+            var pair = this.get_preceding_leaf_position(working_beat_key, working_position) ?: break
+            working_beat_key = pair.first
+            working_position = pair.second
+
+            var working_tree = this.get_tree(working_beat_key, working_position)
+
+            if (working_tree.is_event()) {
+                var working_event = working_tree.get_event()!!
+                if (!working_event.relative) {
+                    output = true
+                    break
+                }
+            }
+        }
+
         return output
     }
 }

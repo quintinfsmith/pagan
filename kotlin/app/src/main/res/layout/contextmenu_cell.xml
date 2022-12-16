@@ -5,46 +5,147 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <SeekBar
-        android:id="@+id/sbOctave"
-        android:layout_width="match_parent"
+    <Switch
+        android:id="@+id/sRelative"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:max="11"
-        android:min="0"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp"
-        app:layout_constraintBottom_toTopOf="@+id/clNumberLine"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"/>
 
-    <TableLayout
-        android:id="@+id/clNumberLine"
+    <LinearLayout
+        android:id="@+id/llRelativePalette"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintBottom_toTopOf="@+id/sbOffset"
+        android:orientation="vertical"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        android:stretchColumns="*">
-        <TableRow android:id="@+id/row" />
-    </TableLayout>
+        app:layout_constraintTop_toBottomOf="@+id/sRelative" >
 
-    <SeekBar
-        android:id="@+id/sbOffset"
+        <RadioGroup
+            android:id="@+id/rgRelOptions"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:button="@null"
+            android:orientation="horizontal"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" >
+
+            <RadioButton
+                android:id="@+id/rbAdd"
+                android:value="1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/rbSubtract"
+                android:text="@string/pfx_add" />
+
+            <RadioButton
+                android:id="@+id/rbSubtract"
+                android:value="2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintStart_toEndOf="@+id/rbAdd"
+                app:layout_constraintEnd_toStartOf="@+id/rbPow"
+                android:text="@string/pfx_subtract" />
+
+            <RadioButton
+                android:id="@+id/rbPow"
+                android:value="3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintStart_toEndOf="@+id/rbSubtract"
+                app:layout_constraintEnd_toStartOf="@+id/rbLog"
+                android:text="@string/pfx_pow" />
+
+            <RadioButton
+                android:id="@+id/rbLog"
+                android:value="4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintStart_toEndOf="@+id/rbPow"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:text="@string/pfx_log" />
+        </RadioGroup>
+
+        <TableLayout
+            android:id="@+id/tlNumberLineRel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/rgRelOptions"
+            android:stretchColumns="*">
+            <TableRow android:id="@+id/rowRel" />
+        </TableLayout>
+
+        <SeekBar
+            android:id="@+id/sbRelativeValue"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/llNumberLineRel"
+            android:max="11"
+            android:min="0"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp" />
+    </LinearLayout>
+
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:id="@+id/llAbsolutePalette"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:max="11"
-        android:min="0"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp"
-        app:layout_constraintBottom_toTopOf="@+id/clButtons"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/llRelativePalette" >
+
+        <SeekBar
+            android:id="@+id/sbOctave"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:max="11"
+            android:min="0"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp" />
+
+        <TableLayout
+            android:id="@+id/clNumberLine"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/sbOctave"
+            android:stretchColumns="*">
+            <TableRow android:id="@+id/row" />
+        </TableLayout>
+
+        <SeekBar
+            android:id="@+id/sbOffset"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/clNumberLine"
+            android:max="11"
+            android:min="0"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp" />
+
+    </LinearLayout>
 
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/clButtons"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@+id/llAbsolutePalette"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">

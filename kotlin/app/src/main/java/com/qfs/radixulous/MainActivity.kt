@@ -24,8 +24,8 @@ import com.qfs.radixulous.opusmanager.HistoryLayer as OpusManager
 import com.qfs.radixulous.apres.*
 
 import android.content.Intent
+import android.util.Log
 import kotlinx.android.synthetic.main.contextmenu_linking.view.*
-import java.lang.Math.abs
 
 class ViewCache {
     var view_cache: MutableList<Pair<LinearLayout, MutableList<Pair<View?, HashMap<List<Int>, View>>>>> = mutableListOf()
@@ -177,6 +177,7 @@ class MainActivity : AppCompatActivity() {
     private var cache = ViewCache()
     private var active_context_menu_index: Int = 0
     private var linking_beat: BeatKey? = null
+    private var relative_mode: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -430,7 +431,7 @@ class MainActivity : AppCompatActivity() {
                         val prefix = if (event.note < 0) {
                             getString(R.string.pfx_log)
                         } else {
-                            getString(R.string.pfx_double)
+                            getString(R.string.pfx_pow)
                         }
                         "$prefix${get_number_string(kotlin.math.abs(event.note) / event.radix, event.radix, 1)}"
                     }
@@ -581,21 +582,50 @@ class MainActivity : AppCompatActivity() {
 
                 val current_tree = this.opus_manager.get_tree_at_cursor()
                 if (current_tree.is_event()) {
-                    val event = current_tree.get_event()!!
-                    view.sbOffset.progress = event.note % event.radix
-                    view.sbOctave.progress = event.note / event.radix
+                    this.relative_mode = current_tree.get_event()!!.relative
                 }
 
-                var that = this
-                view.sbOffset?.setOnSeekBarChangeListener(object :
-                    SeekBar.OnSeekBarChangeListener {
+                // TODO: Specify exception
+                var cursor = this.opus_manager.get_cursor()
+                if (this.opus_manager.has_preceding_absolute_event(cursor.get_beatkey(), cursor.get_position())) {
+                    view.sRelative.isChecked = this.relative_mode
+                    view.sRelative.setOnCheckedChangeListener { _, isChecked ->
+                        this.relative_mode = isChecked
+                        if (isChecked) {
+                            this.opus_manager.convert_event_at_cursor_to_relative()
+                        } else {
+                            this.opus_manager.convert_event_at_cursor_to_absolute()
+                        }
+                        this.tick()
+                    }
+                } else {
+                    this.relative_mode = false
+                    view.sRelative.visibility = View.GONE
+                }
+
+
+                if (!this.relative_mode) {
+                    view.llRelativePalette.visibility = View.GONE
+
+                    if (current_tree.is_event()) {
+                        val event = current_tree.get_event()!!
+                        if (!event.relative) {
+                            view.sbOffset.progress = event.note % event.radix
+                            view.sbOctave.progress = event.note / event.radix
+                        }
+                    }
+
+                    var that = this
+                    view.llAbsolutePalette.sbOffset?.setOnSeekBarChangeListener(object :
+                        SeekBar.OnSeekBarChangeListener {
                         override fun onProgressChanged(
                             seek: SeekBar,
                             progress: Int,
                             fromUser: Boolean
-                        ) { }
+                        ) {
+                        }
 
-                        override fun onStartTrackingTouch(seek: SeekBar) { }
+                        override fun onStartTrackingTouch(seek: SeekBar) {}
                         override fun onStopTrackingTouch(seek: SeekBar) {
                             var progress = seek.progress
 
@@ -623,18 +653,19 @@ class MainActivity : AppCompatActivity() {
                             that.tick()
                         }
                     }
-                )
+                    )
 
 
-                view.sbOctave?.setOnSeekBarChangeListener(object :
-                    SeekBar.OnSeekBarChangeListener {
+                    view.llAbsolutePalette.sbOctave?.setOnSeekBarChangeListener(object :
+                        SeekBar.OnSeekBarChangeListener {
                         override fun onProgressChanged(
                             seek: SeekBar,
                             progress: Int,
                             fromUser: Boolean
-                        ) { }
+                        ) {
+                        }
 
-                        override fun onStartTrackingTouch(seek: SeekBar) { }
+                        override fun onStartTrackingTouch(seek: SeekBar) {}
 
                         override fun onStopTrackingTouch(seek: SeekBar) {
                             var progress = seek.progress
@@ -661,7 +692,149 @@ class MainActivity : AppCompatActivity() {
                             that.tick()
                         }
                     }
-                )
+                    )
+
+                    val numberLine = view.llAbsolutePalette.clNumberLine.row
+                    for (i in 0 until this.opus_manager.RADIX) {
+                        val leafView = LayoutInflater.from(numberLine.context).inflate(
+                            R.layout.numberline_item,
+                            numberLine,
+                            false
+                        )
+
+                        leafView.tv.text = get_number_string(i, this.opus_manager.RADIX, 2)
+                        numberLine.addView(leafView)
+                    }
+                } else {
+                    view.llAbsolutePalette.visibility = View.GONE
+
+                    view.llRelativePalette.rgRelOptions.check(R.id.rbAdd)
+                    if (current_tree.is_event()) {
+                        val event = current_tree.get_event()!!
+                        if (event.relative) {
+                            var selected_button = R.id.rbAdd
+                            var new_progress = if (event.note > 0) {
+                                if (event.note >= event.radix) {
+                                    selected_button = R.id.rbPow
+                                    event.note / event.radix
+                                } else {
+                                    event.note
+                                }
+                            } else if (event.note < 0) {
+                                if (event.note <= 0 - event.radix) {
+                                    selected_button = R.id.rbLog
+                                    event.note / (0 - event.radix)
+                                } else {
+                                    selected_button = R.id.rbSubtract
+                                    0 - event.note
+                                }
+                            } else {
+                                0
+                            }
+                            view.llRelativePalette.sbRelativeValue.progress = new_progress
+                            view.llRelativePalette.rgRelOptions.check(selected_button)
+                        }
+                    }
+
+
+                    val numberLine = view.llRelativePalette.tlNumberLineRel.rowRel
+                    for (i in 0 until this.opus_manager.RADIX) {
+                        val leafView = LayoutInflater.from(numberLine.context).inflate(
+                            R.layout.numberline_item,
+                            numberLine,
+                            false
+                        )
+
+                        leafView.tv.text = get_number_string(i, this.opus_manager.RADIX, 2)
+                        numberLine.addView(leafView)
+                    }
+
+                    var that = this
+                    view.llRelativePalette.sbRelativeValue?.setOnSeekBarChangeListener(object :
+                        SeekBar.OnSeekBarChangeListener {
+                        override fun onProgressChanged(
+                            seek: SeekBar,
+                            progress: Int,
+                            fromUser: Boolean
+                        ) { }
+
+                        override fun onStartTrackingTouch(seek: SeekBar) {}
+
+                        override fun onStopTrackingTouch(seek: SeekBar) {
+                            var progress = seek.progress
+                            var radio_button: Int = that.llRelativePalette.rgRelOptions.checkedRadioButtonId
+
+                            var cursor = opus_manager.get_cursor()
+                            var beatkey = cursor.get_beatkey()
+
+                            var new_value = when (radio_button) {
+                                R.id.rbAdd -> {
+                                    progress
+                                }
+                                R.id.rbSubtract -> {
+                                    0 - progress
+                                }
+                                R.id.rbPow -> {
+                                    that.opus_manager.RADIX * progress
+                                }
+                                R.id.rbLog -> {
+                                    0 - (that.opus_manager.RADIX * progress)
+                                }
+                                else -> {
+                                    0
+                                    // Should be Unreachable
+                                }
+                            }
+
+
+                            var event = OpusEvent(
+                                new_value,
+                                that.opus_manager.RADIX,
+                                beatkey.channel,
+                                true
+                            )
+
+                            that.opus_manager.set_event(beatkey, cursor.position, event)
+                            that.tick()
+                        }
+                    }
+                    )
+                    view.rgRelOptions.setOnCheckedChangeListener { _, checkedId ->
+                        var progress = view.llRelativePalette.sbRelativeValue.progress
+
+                        var cursor = this.opus_manager.get_cursor()
+                        var beatkey = cursor.get_beatkey()
+
+                        var new_value = when (checkedId) {
+                            R.id.rbAdd -> {
+                                progress
+                            }
+                            R.id.rbSubtract -> {
+                                0 - progress
+                            }
+                            R.id.rbPow -> {
+                                that.opus_manager.RADIX * progress
+                            }
+                            R.id.rbLog -> {
+                                0 - (that.opus_manager.RADIX * progress)
+                            }
+                            else -> {
+                                0
+                                // Should be Unreachable
+                            }
+                        }
+
+                        var event = OpusEvent(
+                            new_value,
+                            that.opus_manager.RADIX,
+                            beatkey.channel,
+                            true
+                        )
+
+                        that.opus_manager.set_event(beatkey, cursor.position, event)
+                        that.tick()
+                    }
+                }
 
                 view.clButtons.btnSplit?.setOnClickListener {
                     this.opus_manager.split_tree_at_cursor()
@@ -671,6 +844,7 @@ class MainActivity : AppCompatActivity() {
                 view.clButtons.btnUnset?.setOnClickListener {
                     this.opus_manager.unset_at_cursor()
                     this.tick()
+                    this.setContextMenu(3)
                 }
 
                 view.clButtons.btnRemove?.setOnClickListener {
@@ -691,20 +865,11 @@ class MainActivity : AppCompatActivity() {
                     this.tick()
                 }
 
-                val numberLine = view.clNumberLine.row
-                for (i in 0 until this.opus_manager.RADIX) {
-                    val leafView = LayoutInflater.from(numberLine.context).inflate(
-                        R.layout.numberline_item,
-                        numberLine,
-                        false
-                    )
 
-                    leafView.tv.text = get_number_string(i, this.opus_manager.RADIX, 2)
-                    numberLine.addView(leafView)
-                }
 
                 this.llContextMenu.addView(view)
                 this.cache.setActiveContextMenu(view)
+
             }
             4 -> {
                 val view = LayoutInflater.from(this.llContextMenu.context).inflate(
@@ -781,7 +946,7 @@ class MainActivity : AppCompatActivity() {
                     }
 
                     var cursor = this.cache.getCursor()
-                    if (cursor != null && y + index < cursor!!.first) {
+                    if (cursor != null && y + index < cursor.first) {
                         this.cache.setCursor(
                             cursor.first - 1,
                             cursor.second,
@@ -812,7 +977,7 @@ class MainActivity : AppCompatActivity() {
                     val y = this.opus_manager.get_y(channel, index)
 
                     var cursor = this.cache.getCursor()
-                    if (cursor != null && y + index < cursor!!.first) {
+                    if (cursor != null && y + index < cursor.first) {
                         this.cache.setCursor(
                             cursor.first + 1,
                             cursor.second,
@@ -908,6 +1073,9 @@ class MainActivity : AppCompatActivity() {
                 this.cache.unsetCursor()
             }
         }
+    }
 
+    fun setRelative(relative: Boolean) {
+        this.relative_mode = relative
     }
 }

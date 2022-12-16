@@ -237,9 +237,7 @@ open class CursorLayer() : LinksLayer() {
         var beat_key = this.get_cursor().get_beatkey()
         this.remove_line(beat_key.channel, beat_key.line_offset)
 
-        if (cursor_y ==  this.line_count() - 1) {
-            this.get_cursor().set_y(cursor_y - 1)
-        }
+        this.cursor_up()
     }
 
     fun remove_beat_at_cursor() {
@@ -455,5 +453,15 @@ open class CursorLayer() : LinksLayer() {
     override fun load(path: String) {
         super.load(path)
         this.get_cursor().settle()
+    }
+
+    fun convert_event_at_cursor_to_relative() {
+        var cursor = this.get_cursor()
+        this.convert_event_to_relative(cursor.get_beatkey(), cursor.get_position())
+    }
+
+    fun convert_event_at_cursor_to_absolute() {
+        var cursor = this.get_cursor()
+        this.convert_event_to_absolute(cursor.get_beatkey(), cursor.get_position())
     }
 }

@@ -1,4 +1,5 @@
 package com.qfs.radixulous.opusmanager
+import android.util.Log
 import com.qfs.radixulous.structure.OpusTree
 
 class UpdatesCache {
@@ -144,6 +145,7 @@ open class FlagLayer : OpusManagerBase() {
     }
 
     override fun set_percussion_event(beat_key: BeatKey, position: List<Int>) {
+        Log.e("AAA", "$beat_key, $position")
         super.set_percussion_event(beat_key, position)
         this.cache.flag_beat_change(beat_key)
     }

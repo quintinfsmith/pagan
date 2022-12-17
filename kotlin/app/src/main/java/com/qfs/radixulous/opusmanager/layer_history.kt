@@ -1,4 +1,5 @@
 package com.qfs.radixulous.opusmanager
+import android.util.Log
 import com.qfs.radixulous.structure.OpusTree
 import java.lang.Integer.max
 
@@ -345,13 +346,10 @@ open class HistoryLayer() : CursorLayer() {
 
     open override fun set_percussion_event(beat_key: BeatKey, position: List<Int>) {
         val tree = this.get_tree(beat_key, position)
+
         if (tree.is_event()) {
             val original_event = tree.get_event()!!
-            if (beat_key.channel == 9) {
-                this.push_set_event(beat_key, position, original_event.note, original_event.relative)
-            } else {
-                this.push_set_percussion_event(beat_key, position)
-            }
+            this.push_set_percussion_event(beat_key, position)
         } else {
             this.push_unset(beat_key, position)
         }
@@ -363,7 +361,16 @@ open class HistoryLayer() : CursorLayer() {
         val tree = this.get_tree(beat_key, position)
         if (tree.is_event()) {
             val original_event = tree.get_event()!!
-            this.push_set_event(beat_key, position, original_event.note, original_event.relative)
+            if (beat_key.channel != 9) {
+                this.push_set_event(
+                    beat_key,
+                    position,
+                    original_event.note,
+                    original_event.relative
+                )
+            } else {
+                this.push_set_percussion_event(beat_key, position)
+            }
         }
         super.unset(beat_key, position)
     }

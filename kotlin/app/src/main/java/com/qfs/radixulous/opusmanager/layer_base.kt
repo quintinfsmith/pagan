@@ -81,7 +81,7 @@ open class OpusManagerBase {
         }
 
         var instrument = this.get_percussion_instrument(beat_key.line_offset)
-
+        Log.e("AAA", "$beat_key, $position")
         tree.set_event(OpusEvent(
             instrument,
             this.RADIX,
@@ -391,7 +391,7 @@ open class OpusManagerBase {
             var matches = suffix_patt.findAll(file).toList()
             if (matches.isNotEmpty()) {
                 var channel = matches.first().groups[1]?.value?.toInt()!!
-                channel_map[path] = channel
+                channel_map["$path/$file"] = channel
                 filenames.add("${path}/${file}")
             }
         }

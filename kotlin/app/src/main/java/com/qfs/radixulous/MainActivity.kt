@@ -26,6 +26,8 @@ import com.qfs.radixulous.apres.*
 import android.content.Intent
 import android.util.Log
 import kotlinx.android.synthetic.main.contextmenu_linking.view.*
+import kotlinx.android.synthetic.main.load_project.view.*
+import java.io.File
 
 class ViewCache {
     var view_cache: MutableList<Pair<LinearLayout, MutableList<Pair<View?, HashMap<List<Int>, View>>>>> = mutableListOf()
@@ -193,6 +195,7 @@ class MainActivity : AppCompatActivity() {
 
         this.load("/data/data/com.qfs.radixulous/projects/test")
     }
+
     fun load(path: String) {
         this.opus_manager.load(path)
         this.buildHeader()
@@ -211,6 +214,7 @@ class MainActivity : AppCompatActivity() {
     // the user opens the menu for the first time
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.options_menu, menu)
+        //menuInflater.inflate(R.menu.channel_instruments, menu)
         return super.onCreateOptionsMenu(menu)
     }
 
@@ -219,7 +223,7 @@ class MainActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.itmNewProject -> this.newProject()
-            R.id.itmLoadProject -> Toast.makeText(this, "Load Clicked", Toast.LENGTH_SHORT).show()
+            R.id.itmLoadProject -> this.showLoadPopup()
             R.id.itmUndo -> this.undo()
         }
         return super.onOptionsItemSelected(item)
@@ -247,7 +251,7 @@ class MainActivity : AppCompatActivity() {
         this.setContextMenu(0)
         this.tlOpusLines.removeAllViews()
         this.cache = ViewCache()
-        this.buildHeader()
+        //this.buildHeader()
     }
 
     private fun buildHeader() {
@@ -258,13 +262,13 @@ class MainActivity : AppCompatActivity() {
         val action_button = Button(row.context)
         action_button.setOnClickListener {
             //this.openFileBrowser()
-            this.showPopup(action_button)
+            this.showChannelPopup(action_button)
         }
         action_button.text = getString(R.string.label_channels_button)
         row.addView(action_button)
     }
 
-    private fun showPopup(view: View?) {
+    private fun showChannelPopup(view: View?) {
         val inflater = getSystemService(LAYOUT_INFLATER_SERVICE) as LayoutInflater
         val popupView: View = inflater.inflate(R.layout.channel_ctrl, null)
 
@@ -275,7 +279,7 @@ class MainActivity : AppCompatActivity() {
             true
         )
         for (i in 0 until this.opus_manager.channel_lines.size) {
-            val chipView = Chip(popupView.clA.clB.cgEnabledChannels.context)
+            val chipView = Chip(popupView.clA.llB.cgEnabledChannels.context)
             chipView.isCheckable = true
             if (i == 9) {
                 chipView.text = "Drums"
@@ -301,7 +305,12 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             }
-            popupView.clA.clB.cgEnabledChannels.addView(chipView)
+            popupView.clA.llB.cgEnabledChannels.addView(chipView)
+        }
+        for (i in 0 until this.opus_manager.channel_lines.size) {
+            if (this.opus_manager.channel_lines[i].isEmpty()) {
+                continue
+            }
         }
 
         popupWindow.showAtLocation(view, Gravity.CENTER, 0, 0)
@@ -311,30 +320,48 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // private fun showPopup(view: View) {
+    private fun showLoadPopup() {
+        // TODO: Find way to use relative path
+        var projects_dir = "/data/data/com.qfs.radixulous/projects"
+        val inflater = getSystemService(LAYOUT_INFLATER_SERVICE) as LayoutInflater
+        val popupView: View = inflater.inflate(R.layout.load_project, null)
 
-   //     val popup = PopupWindow(this)
-   //     popup.inflate(R.menu.popup_menu)
+        val popupWindow = PopupWindow(
+            popupView,
+            MATCH_PARENT,
+            MATCH_PARENT,
+            true
+        )
 
-   //     popup.setOnMenuItemClickListener(PopupMenu.OnMenuItemClickListener { item: MenuItem? ->
+        var directory = File(projects_dir)
+        if (!directory.isDirectory) {
+            if (! directory.mkdirs()) {
+                throw Exception("Could not make directory")
+            }
+        }
+        for (file_name in directory.list()!!) {
+            var file = File("$projects_dir/$file_name")
+            if (!file.isDirectory) {
+                continue
+            }
+            // TODO: Check if directory is project directory
 
-   //         when (item!!.itemId) {
-   //             R.id.a -> {
-   //                 Toast.makeText(this@MainActivity, item.title, Toast.LENGTH_SHORT).show()
-   //             }
-   //             R.id.b -> {
-   //                 Toast.makeText(this@MainActivity, item.title, Toast.LENGTH_SHORT).show()
-   //             }
-   //             R.id.c -> {
-   //                 Toast.makeText(this@MainActivity, item.title, Toast.LENGTH_SHORT).show()
-   //             }
-   //         }
+            var row = TextView(popupView.svProjectList.llProjectList.context)
+            row.text = file_name
+            row.setOnClickListener {
+                this.takedownCurrent()
+                this.load("$projects_dir/$file_name")
+                popupWindow.dismiss()
+            }
+            popupView.svProjectList.llProjectList.addView(row)
+        }
 
-   //         true
-   //     })
+        popupWindow.showAtLocation(window.decorView.rootView, Gravity.CENTER, 0, 0)
 
-   //     popup.show()
-   // }
+        popupView.setOnClickListener {
+            popupWindow.dismiss()
+        }
+    }
 
     fun newColumnLabel() {
         val parent = this.cache.getHeaderRow() ?: throw Exception("Header Not initialized")
@@ -380,7 +407,8 @@ class MainActivity : AppCompatActivity() {
             }
         } else {
             var instrument = that.opus_manager.get_percussion_instrument(line_offset)
-            rowLabel.textView.text = "P:${get_number_string(instrument, that.opus_manager.RADIX, 2)}"
+            //rowLabel.textView.text = "P:${get_number_string(instrument, that.opus_manager.RADIX, 2)}"
+            rowLabel.textView.text = resources.getStringArray(R.array.midi_drums)[instrument - 35]
         }
 
         rowLabel.textView.setOnClickListener {
@@ -548,6 +576,16 @@ class MainActivity : AppCompatActivity() {
                     this.tick()
                 }
 
+                view.btnChooseInstrument.setOnClickListener {
+                    var popupMenu = PopupMenu(window.decorView.rootView.context, it)
+                    if (this.opus_manager.get_cursor().get_beatkey().channel == 9) {
+                        popupMenu.getMenuInflater().inflate(R.menu.percussion_instruments, popupMenu.getMenu())
+                    } else {
+                        popupMenu.getMenuInflater().inflate(R.menu.channel_instruments, popupMenu.getMenu())
+                    }
+                    popupMenu.show()
+                }
+
                 this.llContextMenu.addView(view)
                 this.cache.setActiveContextMenu(view)
             }
@@ -596,6 +634,7 @@ class MainActivity : AppCompatActivity() {
                         } else {
                             this.opus_manager.convert_event_at_cursor_to_absolute()
                         }
+                        this.setContextMenu(3)
                         this.tick()
                     }
                 } else {
@@ -603,8 +642,26 @@ class MainActivity : AppCompatActivity() {
                     view.sRelative.visibility = View.GONE
                 }
 
+                if (cursor.get_beatkey().channel == 9) {
+                    view.llAbsolutePalette.visibility = View.GONE
+                    view.llRelativePalette.visibility = View.GONE
+                    view.sRelative.visibility = View.GONE
 
-                if (!this.relative_mode) {
+                    if (!this.opus_manager.get_tree_at_cursor().is_event()) {
+                        view.clButtons.btnUnset?.text = "Set"
+                    }
+
+                    view.clButtons.btnUnset?.setOnClickListener {
+                        if (this.opus_manager.get_tree_at_cursor().is_event()) {
+                            this.opus_manager.unset_at_cursor()
+                        } else {
+                            this.opus_manager.set_percussion_event_at_cursor()
+                        }
+                        this.tick()
+                        this.setContextMenu(3)
+                    }
+
+                } else if (!this.relative_mode) {
                     view.llRelativePalette.visibility = View.GONE
 
                     if (current_tree.is_event()) {
@@ -842,7 +899,12 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 view.clButtons.btnUnset?.setOnClickListener {
-                    this.opus_manager.unset_at_cursor()
+                    if (this.opus_manager.get_cursor().get_beatkey().channel != 9 || this.opus_manager.get_tree_at_cursor().is_event()) {
+                        this.opus_manager.unset_at_cursor()
+                    } else {
+                        this.opus_manager.set_percussion_event_at_cursor()
+                    }
+
                     this.tick()
                     this.setContextMenu(3)
                 }

@@ -1,4 +1,5 @@
 package com.qfs.radixulous.opusmanager
+import android.util.Log
 import com.qfs.radixulous.structure.OpusTree
 import com.qfs.radixulous.opusmanager.BeatKey
 import com.qfs.radixulous.opusmanager.OpusEvent
@@ -196,7 +197,7 @@ open class CursorLayer() : LinksLayer() {
         this.get_cursor().move_down()
     }
 
-    fun set_percurssion_event_at_cursor() {
+    fun set_percussion_event_at_cursor() {
         var beat_key = this.get_cursor().get_beatkey()
         if (beat_key.channel != 9) {
             return
@@ -452,6 +453,7 @@ open class CursorLayer() : LinksLayer() {
 
     override fun load(path: String) {
         super.load(path)
+        this.get_cursor().set(0,0, listOf(0))
         this.get_cursor().settle()
     }
 

@@ -10,6 +10,15 @@ xmlns:app="http://schemas.android.com/apk/res-auto">
     android:layout_width="wrap_content"
     android:layout_height="match_parent"
     android:text="Remove Line"/>
+
+<Button
+    android:id="@+id/btnChooseInstrument"
+    android:layout_width="wrap_content"
+    android:layout_height="match_parent"
+    app:layout_constraintStart_toEndOf="@+id/btnRemoveLine"
+    app:layout_constraintEnd_toStartOf="@+id/btnInsertLine"
+    android:text="Instrument..." />
+
 <Button
     android:id="@+id/btnInsertLine"
     app:layout_constraintEnd_toEndOf="parent"

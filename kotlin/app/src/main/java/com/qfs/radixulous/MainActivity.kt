@@ -210,6 +210,10 @@ class MainActivity : AppCompatActivity() {
         actionBar!!.title = name
     }
 
+    fun save() {
+        this.opus_manager.save()
+    }
+
     // method to inflate the options menu when
     // the user opens the menu for the first time
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -224,6 +228,7 @@ class MainActivity : AppCompatActivity() {
         when (item.itemId) {
             R.id.itmNewProject -> this.newProject()
             R.id.itmLoadProject -> this.showLoadPopup()
+            R.id.itmSaveProject -> this.save()
             R.id.itmUndo -> this.undo()
         }
         return super.onOptionsItemSelected(item)
@@ -244,6 +249,17 @@ class MainActivity : AppCompatActivity() {
         // destroy current layout
         this.takedownCurrent()
         this.opus_manager.new()
+
+        var projects_dir = "/data/data/com.qfs.radixulous/projects"
+        var directory = File(projects_dir)
+        var i = 0
+        while (File("$projects_dir/opus$i").isFile) {
+            i += 1
+        }
+        this.opus_manager.path = "$projects_dir/opus$i"
+        val actionBar = supportActionBar
+        actionBar!!.title = "opus$i"
+
         this.setContextMenu(3)
     }
 
@@ -398,6 +414,7 @@ class MainActivity : AppCompatActivity() {
             rowView,
             false
         )
+
         var that = this
         if (channel != 9) {
             if (line_offset == 0) {
@@ -407,18 +424,18 @@ class MainActivity : AppCompatActivity() {
             }
         } else {
             var instrument = that.opus_manager.get_percussion_instrument(line_offset)
-            //rowLabel.textView.text = "P:${get_number_string(instrument, that.opus_manager.RADIX, 2)}"
-            rowLabel.textView.text = resources.getStringArray(R.array.midi_drums)[instrument - 35]
+            rowLabel.textView.text = "P:$instrument"
+            //rowLabel.textView.text = resources.getStringArray(R.array.midi_drums)[instrument - 35]
         }
 
         rowLabel.textView.setOnClickListener {
             val y: Int? = that.cache.getLineIndex(rowView)
             val cursor = that.opus_manager.get_cursor()
-            this.setContextMenu(1)
             if (y != null) {
                 this.opus_manager.set_cursor_position(y, cursor.x, listOf())
             }
             this.tick()
+            this.setContextMenu(1)
         }
 
         this.cache.addLineLabel(y, rowLabel.textView)
@@ -576,12 +593,53 @@ class MainActivity : AppCompatActivity() {
                     this.tick()
                 }
 
+                var beatkey = this.opus_manager.get_cursor().get_beatkey()
+                if (beatkey.channel == 9) {
+                    var instrument = this.opus_manager.get_percussion_instrument(beatkey.line_offset)
+                    view.btnChooseInstrument.text = resources.getStringArray(R.array.midi_drums)[instrument - 35]
+                } else {
+                    var instrument = this.opus_manager.get_channel_instrument(beatkey.channel)
+                    view.btnChooseInstrument.text = resources.getStringArray(R.array.midi_instruments)[instrument]
+                }
+
                 view.btnChooseInstrument.setOnClickListener {
                     var popupMenu = PopupMenu(window.decorView.rootView.context, it)
-                    if (this.opus_manager.get_cursor().get_beatkey().channel == 9) {
-                        popupMenu.getMenuInflater().inflate(R.menu.percussion_instruments, popupMenu.getMenu())
+                    var cursor = this.opus_manager.get_cursor()
+                    if (cursor.get_beatkey().channel == 9) {
+                        //popupMenu.menuInflater.inflate(R.menu.percussion_instruments, popupMenu.getMenu())
+                        var drums = resources.getStringArray(R.array.midi_drums)
+                        drums.forEachIndexed { i, string ->
+                            popupMenu.menu.add(0, i + 35, i, string)
+                        }
+
+                        popupMenu.setOnMenuItemClickListener {
+                            this.opus_manager.set_percussion_instrument(
+                                cursor.get_beatkey().line_offset,
+                                it.itemId
+                            )
+                            this.tick()
+                            var y = this.opus_manager.get_cursor().get_y()
+                            this.cache.getLineLabel(y)!!.text = "P:${it.itemId}"
+                            this.setContextMenu(1)
+                            true
+                        }
                     } else {
-                        popupMenu.getMenuInflater().inflate(R.menu.channel_instruments, popupMenu.getMenu())
+                        var instruments = resources.getStringArray(R.array.midi_instruments)
+                        instruments.forEachIndexed { i, string ->
+                            popupMenu.menu.add(0, i, i, string)
+                        }
+
+                        popupMenu.setOnMenuItemClickListener {
+                            this.opus_manager.set_channel_instrument(
+                                cursor.get_beatkey().channel,
+                                it.itemId
+                            )
+
+                            this.tick()
+                            var y = this.opus_manager.get_cursor().get_y()
+                            this.setContextMenu(1)
+                            true
+                        }
                     }
                     popupMenu.show()
                 }
@@ -1030,7 +1088,7 @@ class MainActivity : AppCompatActivity() {
                                 label.text = "$channel:$j"
                             } else {
                                 var instrument = this.opus_manager.get_percussion_instrument(j)
-                                label.text = "P:${get_number_string(instrument, this.opus_manager.RADIX, 2)}"
+                                label.text = "P:$instrument"
                             }
                         }
                     }

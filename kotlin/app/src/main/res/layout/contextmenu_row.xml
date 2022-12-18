@@ -5,22 +5,25 @@ android:layout_width="match_parent"
 android:layout_height="match_parent"
 xmlns:app="http://schemas.android.com/apk/res-auto">
 <Button
+    android:id="@+id/btnChooseInstrument"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintTop_toTopOf="parent"
+    android:text="Instrument..." />
+<Button
     android:id="@+id/btnRemoveLine"
     app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toBottomOf="@+id/btnChooseInstrument"
     android:layout_width="wrap_content"
     android:layout_height="match_parent"
     android:text="Remove Line"/>
 
-<Button
-    android:id="@+id/btnChooseInstrument"
-    android:layout_width="wrap_content"
-    android:layout_height="match_parent"
-    app:layout_constraintStart_toEndOf="@+id/btnRemoveLine"
-    app:layout_constraintEnd_toStartOf="@+id/btnInsertLine"
-    android:text="Instrument..." />
 
 <Button
     android:id="@+id/btnInsertLine"
+    app:layout_constraintTop_toBottomOf="@+id/btnChooseInstrument"
     app:layout_constraintEnd_toEndOf="parent"
     android:layout_width="wrap_content"
     android:layout_height="match_parent"

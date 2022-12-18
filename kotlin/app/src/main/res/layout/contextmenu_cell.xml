@@ -5,21 +5,24 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <Switch
+    <ToggleButton
         android:id="@+id/sRelative"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:textOn="Relative"
+        android:textOff="Absolute"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"/>
+
 
     <LinearLayout
         android:id="@+id/llRelativePalette"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
+        app:layout_constraintTop_toBottomOf="@+id/sRelative"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/clPercussionPalette" >
+        app:layout_constraintStart_toStartOf="parent" >
 
         <RadioGroup
             android:id="@+id/rgRelOptions"

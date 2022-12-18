@@ -1716,3 +1716,4 @@ fun get_chord_name_from_mi_sf(mi: Byte, sf: Byte): String {
 
     return map[mi as Int][(sf as Int) + 7]
 }
+

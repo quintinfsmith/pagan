@@ -16,6 +16,7 @@ open class OpusManagerBase {
     var opus_beat_count: Int = 1
     var path: String? = null
     var percussion_map: HashMap<Int, Int> = HashMap<Int, Int>()
+    var channel_instruments: HashMap<Int, Int> = HashMap()
 
 
     open fun reset() {
@@ -81,7 +82,6 @@ open class OpusManagerBase {
         }
 
         var instrument = this.get_percussion_instrument(beat_key.line_offset)
-        Log.e("AAA", "$beat_key, $position")
         tree.set_event(OpusEvent(
             instrument,
             this.RADIX,
@@ -95,6 +95,21 @@ open class OpusManagerBase {
             this.percussion_map[line_offset]!!
         } else {
             this.DEFAULT_PERCUSSION
+        }
+    }
+    open fun set_percussion_instrument(line_offset: Int, instrument: Int) {
+        this.percussion_map[line_offset] = instrument
+    }
+
+    fun set_channel_instrument(channel:Int, instrument: Int) {
+        this.channel_instruments[channel] = instrument
+    }
+
+    fun get_channel_instrument(channel: Int): Int {
+        return if (this.channel_instruments.containsKey(channel)) {
+            this.channel_instruments[channel]!!
+        } else {
+            0
         }
     }
 

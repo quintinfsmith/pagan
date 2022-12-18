@@ -6,14 +6,16 @@
     android:layout_height="wrap_content"
     android:layout_margin="1dp" >
 
-    <Button
+    <TextView
         android:id="@+id/button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:fontFamily="@font/fira_code"
+        android:paddingStart="3dp"
+        android:paddingEnd="3dp"
         android:text=".."
-        android:backgroundTint="@color/leaf"
-        android:minWidth="32dp"
 
+        android:textSize="24dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

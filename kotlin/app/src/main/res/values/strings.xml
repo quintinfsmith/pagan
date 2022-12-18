@@ -8,6 +8,152 @@
     <string name="msg_undo_none">Nothing to be done</string>
     <string name="label_channels_button">Chn</string>
 
+    <string-array name="midi_instruments">
+        <item>Grand Acoustic Piano</item>
+        <item>Bright Acoustic Piano</item>
+        <item>Electric Grand Piano</item>
+        <item>Honky-Tonk Piano</item>
+        <item>Electric Piano 1</item>
+        <item>Electric Piano 2</item>
+        <item>Harpsichord</item>
+        <item>Clavinet</item>
+
+        <item>Celesta</item>
+        <item>Glockenspiel</item>
+        <item>Music Box</item>
+        <item>Vibraphone</item>
+        <item>Marimba</item>
+        <item>Xylophone</item>
+        <item>Tubular Bells</item>
+        <item>Dulcimer</item>
+
+        <item>Drawbar Organ</item>
+        <item>Percussive Organ</item>
+        <item>Rock Organ</item>
+        <item>Church Organ</item>
+        <item>Reed Organ</item>
+        <item>Accordion</item>
+        <item>Harmonica</item>
+        <item>Tango Accordion</item>
+
+        <item>Acoustic Guitar (Nylon)</item>
+        <item>Acoustic Guitar (Steel)</item>
+        <item>Electric Guitar (Jazz)</item>
+        <item>Electric Guitar (Clean)</item>
+        <item>Electric Guitar (Muted)</item>
+        <item>Overdriven Guitar</item>
+        <item>Distortion Guitar</item>
+        <item>Guitar Harmonics</item>
+
+        <item>Acoustic Bass</item>
+        <item>Electric Bass (Finger)</item>
+        <item>Electric Bass (Pick)</item>
+        <item>Fretless Bass</item>
+        <item>Slap Bass 1</item>
+        <item>Slap Bass 2</item>
+        <item>Synth Bass 1</item>
+        <item>Synth Bass 2</item>
+
+        <item>Violin</item>
+        <item>Viola</item>
+        <item>Cello</item>
+        <item>Contrabass</item>
+        <item>Tremolo Strings</item>
+        <item>Pizzicato Strings</item>
+        <item>Orchestral Strings</item>
+        <item>Timpani</item>
+
+        <item>String Ensemble 1</item>
+        <item>String Ensemble 2</item>
+        <item>Synth Strings 1</item>
+        <item>Synth Strings 2</item>
+        <item>Choir Aahs</item>
+        <item>Voice Oohs</item>
+        <item>Synth Voice</item>
+        <item>Orchestra Hit</item>
+
+        <item>Trumpet</item>
+        <item>Trombone</item>
+        <item>Tuba</item>
+        <item>Muted Trumpet</item>
+        <item>French Horn</item>
+        <item>Brass Section</item>
+        <item>Synth Brass 1</item>
+        <item>Synth Brass 2</item>
+
+        <item>Soprano Sax</item>
+        <item>Alto Sax</item>
+        <item>Tenor Sax</item>
+        <item>Baritone Sax</item>
+        <item>Oboe</item>
+        <item>English Horn</item>
+        <item>Bassoon</item>
+        <item>Clarinet</item>
+
+        <item>Piccolo</item>
+        <item>Flute</item>
+        <item>Recorder</item>
+        <item>Pan Flute</item>
+        <item>Blown Bottle</item>
+        <item>Shakuhachi</item>
+        <item>Whistle</item>
+        <item>Ocarina</item>
+
+        <item>Lead 1: Square</item>
+        <item>Lead 2: Sawtooth</item>
+        <item>Lead 3: Calliope</item>
+        <item>Lead 4: Chiff</item>
+        <item>Lead 5: Charang</item>
+        <item>Lead 6: Voice</item>
+        <item>Lead 7: Fifths</item>
+        <item>Lead 8: Bass + Lead</item>
+
+        <item>Pad 1: New Age</item>
+        <item>Pad 2: Warm</item>
+        <item>Pad 3: Polysynth</item>
+        <item>Pad 4: Choir</item>
+        <item>Pad 5: Bowed</item>
+        <item>Pad 6: Metallic</item>
+        <item>Pad 7: Halo</item>
+        <item>Pad 8: Sweep</item>
+
+        <item>FX: Rain</item>
+        <item>FX: Soundtrack</item>
+        <item>FX: Crystal</item>
+        <item>FX: Atmosphere</item>
+        <item>FX: Brightness</item>
+        <item>FX: Goblins</item>
+        <item>FX: Echoes</item>
+        <item>FX: Sci-fi</item>
+
+        <item>Sitar</item>
+        <item>Banjo</item>
+        <item>Shamisen</item>
+        <item>Koto</item>
+        <item>Kalimba</item>
+        <item>Bagpipe</item>
+        <item>Fiddle</item>
+        <item>Shehnai</item>
+
+        <item>Tinkle Bell</item>
+        <item>Agogo</item>
+        <item>Steel Drum</item>
+        <item>Woodblock</item>
+        <item>Taiko Drum</item>
+        <item>Melodic Tom</item>
+        <item>Synth Drum</item>
+        <item>Reverse Cymbal</item>
+
+        <item>Guitar Fret Noise</item>
+        <item>Breath Noise</item>
+        <item>Seashore</item>
+        <item>Bird Tweet</item>
+        <item>Telephone Ring</item>
+        <item>Helicopter</item>
+        <item>Applause</item>
+        <item>Gunshot</item>
+    </string-array>
+
     <string-array name="midi_drums">
         <item>Acoustic Bass Drum</item>
         <item>Bass Drum 1</item>
@@ -57,6 +203,5 @@
         <item>Mute Triangle</item>
         <item>Open Triangle</item>
         <item>Shaker</item>
-
     </string-array>
 </resources>

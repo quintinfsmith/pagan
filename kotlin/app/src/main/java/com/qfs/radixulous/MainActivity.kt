@@ -1,33 +1,37 @@
 package com.qfs.radixulous
 
+import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.*
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.content.ContextCompat
 import com.google.android.material.chip.Chip
+import com.qfs.radixulous.apres.*
 import com.qfs.radixulous.opusmanager.BeatKey
 import com.qfs.radixulous.opusmanager.OpusEvent
+import com.qfs.radixulous.structure.OpusTree
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.activity_main.view.*
 import kotlinx.android.synthetic.main.channel_ctrl.view.*
 import kotlinx.android.synthetic.main.contextmenu_cell.*
 import kotlinx.android.synthetic.main.contextmenu_cell.view.*
 import kotlinx.android.synthetic.main.contextmenu_column.view.*
+import kotlinx.android.synthetic.main.contextmenu_linking.view.*
 import kotlinx.android.synthetic.main.contextmenu_row.view.*
 import kotlinx.android.synthetic.main.item_opusbutton.view.*
 import kotlinx.android.synthetic.main.item_opustree.view.*
+import kotlinx.android.synthetic.main.load_project.view.*
 import kotlinx.android.synthetic.main.numberline_item.view.*
 import kotlinx.android.synthetic.main.table_cell_label.view.*
-import com.qfs.radixulous.opusmanager.HistoryLayer as OpusManager
-import com.qfs.radixulous.apres.*
-
-import android.content.Intent
-import android.util.Log
-import kotlinx.android.synthetic.main.contextmenu_linking.view.*
-import kotlinx.android.synthetic.main.load_project.view.*
 import java.io.File
+import java.lang.Integer.max
+import com.qfs.radixulous.opusmanager.HistoryLayer as OpusManager
+
 
 class ViewCache {
     var view_cache: MutableList<Pair<LinearLayout, MutableList<Pair<View?, HashMap<List<Int>, View>>>>> = mutableListOf()
@@ -89,7 +93,7 @@ class ViewCache {
         }
     }
 
-    fun getTree(y: Int, x: Int, position: List<Int>): View? {
+    fun getTreeView(y: Int, x: Int, position: List<Int>): View? {
         return if (position.isEmpty()) {
             this.view_cache[y].second[x].first
         } else {
@@ -133,6 +137,10 @@ class ViewCache {
     fun removeBeatView(y: Int, x: Int) {
         val beat_view = this.view_cache[y].second.removeAt(x).first
         (beat_view?.parent as ViewGroup).removeView(beat_view)
+    }
+
+    fun getBeatView(y: Int, x: Int): View? {
+        return this.view_cache[y].second[x].first
     }
 
     fun getTreeViewYXPosition(view: View): Triple<Int, Int, List<Int>>? {
@@ -444,7 +452,7 @@ class MainActivity : AppCompatActivity() {
         return rowView
     }
 
-    private fun buildTreeView(parent: LinearLayout, y: Int, x: Int, position: List<Int>) {
+    private fun buildTreeView(parent: ViewGroup, y: Int, x: Int, position: List<Int>): View {
         var channel_index = this.opus_manager.get_channel_index(y)
         var tree = this.opus_manager.get_tree(BeatKey(channel_index.first, channel_index.second, x), position)
 
@@ -454,17 +462,17 @@ class MainActivity : AppCompatActivity() {
                 parent,
                 false
             )
-            leafView.button.setBackgroundColor(
+            leafView.setBackgroundColor(
                 if (this.opus_manager.is_reflection(channel_index.first, channel_index.second, x)) {
-                    ContextCompat.getColor(leafView.button.context, R.color.leaf_linked)
+                    ContextCompat.getColor(leafView.context, R.color.leaf_linked)
                 } else {
-                    ContextCompat.getColor(leafView.button.context, R.color.leaf)
+                    ContextCompat.getColor(leafView.context, R.color.leaf)
                 }
             )
 
             if (tree.is_event()) {
                 val event = tree.get_event()!!
-                leafView.button.text = if (event.relative) {
+                leafView.llLeaf.tvLeaf.text = if (event.relative) {
                     if (event.note == 0 || event.note % event.radix != 0) {
                         val prefix = if (event.note < 0) {
                             getString(R.string.pfx_subtract)
@@ -486,10 +494,10 @@ class MainActivity : AppCompatActivity() {
                     "!!"
                 }
             } else {
-                leafView.button.text = getString(R.string.empty_note)
+                leafView.llLeaf.tvLeaf.text = getString(R.string.empty_note)
             }
 
-            leafView.button.setOnClickListener {
+            leafView.setOnClickListener {
                 var key = this.cache.getTreeViewYXPosition(leafView)
                 if (key != null) {
                     if (this.linking_beat != null) {
@@ -510,7 +518,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
-            leafView.button.setOnLongClickListener {
+            leafView.setOnLongClickListener {
                 val key = this.cache.getTreeViewYXPosition(leafView)
                 if (key != null) {
                     var pair = this.opus_manager.get_channel_index(key.first)
@@ -530,48 +538,47 @@ class MainActivity : AppCompatActivity() {
 
             this.cache.cacheTree(leafView, y, x, position)
 
+            return leafView
         } else {
-            val tableLayout = LayoutInflater.from(parent.context).inflate(
-                R.layout.item_opustree,
-                parent,
-                false
-            )
-            this.cache.cacheTree(tableLayout, y, x, position)
+            var cellLayout = LinearLayout(parent.context)
+            this.cache.cacheTree(cellLayout, y, x, position)
 
-            val treeLayout = tableLayout.tl.tr
-
-            if (tree.size > 1) {
-                val open_brace = TextView(parent.context)
-                open_brace.text = "["
-                treeLayout.addView(open_brace)
-            }
-
+            //if (tree.size > 1) {
+            //    val open_brace = TextView(parent.context)
+            //    open_brace.text = "["
+            //    treeLayout.addView(open_brace)
+            //}
+            var max_weight = tree.get_max_child_weight()
             for (i in 0 until tree.size) {
                 val new_position = position.toMutableList()
                 new_position.add(i)
-                this.buildTreeView(treeLayout, y, x, new_position)
+                var tree_view = this.buildTreeView(cellLayout as ViewGroup, y, x, new_position)
+                //if (max_weight > 1) {
+                //    tree_view.layoutParams.width = max_weight * 100
+                //}
             }
 
-            if (tree.size > 1) {
-                val close_brace = TextView(parent.context)
-                close_brace.text = "]"
-                treeLayout.addView(close_brace)
-            }
+            //if (tree.size > 1) {
+            //    val close_brace = TextView(parent.context)
+            //    close_brace.text = "]"
+            //    treeLayout.addView(close_brace)
+            //}
 
             if (position.isEmpty()) {
-                parent.addView(tableLayout, x + 1) // (+1 considers row label)
+                parent.addView(cellLayout, x + 1) // (+1 considers row label)
             } else {
-                parent.addView(tableLayout)
+                parent.addView(cellLayout)
             }
+
+            return cellLayout
         }
+
     }
 
     fun setContextMenu(menu_index: Int) {
         this.active_context_menu_index = menu_index
         val view_to_remove = this.cache.getActiveContextMenu()
         (view_to_remove?.parent as? ViewGroup)?.removeView(view_to_remove)
-
-        val current_tree = this.opus_manager.get_tree_at_cursor()
 
         when (menu_index) {
             1 -> {
@@ -1120,6 +1127,7 @@ class MainActivity : AppCompatActivity() {
 
 
     fun tick_manage_beats() {
+        var updated_beats: MutableSet<Int> = mutableSetOf()
         while (true) {
             val (index, operation) = this.opus_manager.fetch_flag_beat() ?: break
             when (operation) {
@@ -1129,6 +1137,7 @@ class MainActivity : AppCompatActivity() {
                         var rowView = this.cache.getLine(y)?: continue
                         this.buildTreeView(rowView, y, index, listOf())
                     }
+                    updated_beats.add(index)
                 }
                 0 -> {
                     this.cache.detachColumnLabel()
@@ -1138,9 +1147,11 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+        this.tick_resize_beats(updated_beats.toList())
     }
 
     private fun tick_update_beats() {
+        var updated_beats: MutableSet<Int> = mutableSetOf()
         while (true) {
             val beatkey = this.opus_manager.fetch_flag_change() ?: break
             this.rebuildBeatView(
@@ -1150,6 +1161,49 @@ class MainActivity : AppCompatActivity() {
                 ),
                 beatkey.beat
             )
+
+            updated_beats.add(beatkey.beat)
+
+        }
+        this.tick_resize_beats(updated_beats.toList())
+    }
+    fun tick_resize_beats(updated_beats: List<Int>) {
+        // resize Columns
+        var line_count = this.opus_manager.line_count()
+        for (b in updated_beats) {
+            var max_width = 0
+            for (channel in 0 until this.opus_manager.channel_lines.size) {
+                for (line_offset in 0 until this.opus_manager.channel_lines[channel].size) {
+                    var tree = this.opus_manager.get_beat_tree(BeatKey(channel, line_offset, b))
+                    var size = tree.size * tree.get_max_child_weight()
+                    max_width = max(max_width, size)
+                }
+            }
+
+            var y = 0
+            for (channel in 0 until this.opus_manager.channel_lines.size) {
+                for (line_offset in 0 until this.opus_manager.channel_lines[channel].size) {
+                    var stack: MutableList<Pair<Float, List<Int>>> = mutableListOf(Pair(max_width.toFloat(), listOf()))
+                    var key = BeatKey(channel, line_offset, b)
+
+                    while (stack.isNotEmpty()) {
+                        var (new_size, current_position) = stack.removeFirst()
+                        var current_tree = this.opus_manager.get_tree(key, current_position)
+
+                        if (!current_tree.is_leaf()) {
+                            for (i in 0 until current_tree.size) {
+                                var next_pos = current_position.toMutableList()
+                                next_pos.add(i)
+                                stack.add(Pair(new_size / current_tree.size.toFloat(), next_pos))
+                            }
+                        }
+                        var current_view = this.cache.getTreeView(y, b, current_position)
+                        current_view!!.layoutParams.width = (new_size * 100.toFloat()).toInt()
+                    }
+
+                    y += 1
+                }
+            }
         }
     }
 
@@ -1165,8 +1219,8 @@ class MainActivity : AppCompatActivity() {
             } else {
                 R.color.leaf_selected
             }
-            val changeColour = ContextCompat.getColor(view.button.context, color)
-            view.button.setBackgroundColor(changeColour)
+            val changeColour = ContextCompat.getColor(view.context, color)
+            view.setBackgroundColor(changeColour)
         }
 
 
@@ -1186,8 +1240,8 @@ class MainActivity : AppCompatActivity() {
                     R.color.leaf
                 }
                 for (view in this.cache.get_all_leafs(c.first, c.second, c.third)) {
-                    val changeColour = ContextCompat.getColor(view.button.context, color)
-                    view.button.setBackgroundColor(changeColour)
+                    val changeColour = ContextCompat.getColor(view.context, color)
+                    view.setBackgroundColor(changeColour)
                 }
             } catch (exception:Exception) {
                 this.cache.unsetCursor()

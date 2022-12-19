@@ -477,4 +477,21 @@ public class OpusTree<T> {
 
         return output
     }
+
+    fun get_max_child_weight(): Int {
+        if (this.is_leaf()) {
+            return 1
+        }
+
+        var max_weight = 1
+        for (node in this.divisions.values) {
+            if (node.is_leaf()) {
+                continue
+            }
+
+            max_weight = max(max_weight, (node.size * node.get_max_child_weight()))
+        }
+
+        return max_weight
+    }
 }

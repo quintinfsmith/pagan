@@ -20,7 +20,7 @@ const val CH_REPEAT = '='
 val REL_CHARS = listOf(CH_ADD, CH_SUBTRACT, CH_UP, CH_DOWN, CH_HOLD, CH_REPEAT)
 val SPECIAL_CHARS = listOf(CH_OPEN, CH_CLOSE, CH_NEXT, CH_ADD, CH_SUBTRACT, CH_UP, CH_DOWN, CH_HOLD, CH_REPEAT)
 
-public fun to_string(node: OpusTree<OpusEvent>): String {
+public fun to_string(node: OpusTree<OpusEvent>, depth: Int = 0): String {
     var output: String
     if (node.is_event()) {
         var event = node.get_event()!!
@@ -51,13 +51,13 @@ public fun to_string(node: OpusTree<OpusEvent>): String {
         output = ""
         for (i in 0 until node.size) {
             var child = node.get(i)
-            output += to_string(child)
+            output += to_string(child, depth+1)
             if (i < node.size - 1) {
                 output += CH_NEXT
             }
         }
 
-        if (node.size > 1) {
+        if (node.size > 1 && depth > 0) {
             output = "$CH_OPEN$output$CH_CLOSE"
         }
     }
@@ -90,7 +90,11 @@ fun from_string(input_string: String, radix: Int, channel: Int): OpusTree<OpusEv
 
         if (character == CH_NEXT) {
             // Resize Active Tree
-            tree_stack.last().set_size(tree_stack.last().size + 1, true)
+            if (tree_stack.last().is_leaf()) {
+                tree_stack.last().set_size(2)
+            } else {
+                tree_stack.last().set_size(tree_stack.last().size + 1, true)
+            }
         }
 
         if (character == CH_OPEN) {

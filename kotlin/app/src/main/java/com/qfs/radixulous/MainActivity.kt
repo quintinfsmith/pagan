@@ -2,6 +2,7 @@ package com.qfs.radixulous
 
 import android.content.Intent
 import android.os.Bundle
+import android.provider.DocumentsContract
 import android.util.Log
 import android.view.*
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
@@ -29,6 +30,7 @@ import kotlinx.android.synthetic.main.load_project.view.*
 import kotlinx.android.synthetic.main.numberline_item.view.*
 import kotlinx.android.synthetic.main.table_cell_label.view.*
 import java.io.File
+import java.io.FileOutputStream
 import java.lang.Integer.max
 import com.qfs.radixulous.opusmanager.HistoryLayer as OpusManager
 
@@ -237,6 +239,7 @@ class MainActivity : AppCompatActivity() {
             R.id.itmNewProject -> this.newProject()
             R.id.itmLoadProject -> this.showLoadPopup()
             R.id.itmSaveProject -> this.save()
+            R.id.itmExportMidi -> this.export_midi()
             R.id.itmUndo -> this.undo()
         }
         return super.onOptionsItemSelected(item)
@@ -287,6 +290,7 @@ class MainActivity : AppCompatActivity() {
         action_button.setOnClickListener {
             //this.openFileBrowser()
             this.showChannelPopup(action_button)
+            //this.file_test()
         }
         action_button.text = getString(R.string.label_channels_button)
         row.addView(action_button)
@@ -331,6 +335,7 @@ class MainActivity : AppCompatActivity() {
             }
             popupView.clA.llB.cgEnabledChannels.addView(chipView)
         }
+
         for (i in 0 until this.opus_manager.channel_lines.size) {
             if (this.opus_manager.channel_lines[i].isEmpty()) {
                 continue
@@ -433,7 +438,6 @@ class MainActivity : AppCompatActivity() {
         } else {
             var instrument = that.opus_manager.get_percussion_instrument(line_offset)
             rowLabel.textView.text = "P:$instrument"
-            //rowLabel.textView.text = resources.getStringArray(R.array.midi_drums)[instrument - 35]
         }
 
         rowLabel.textView.setOnClickListener {
@@ -543,11 +547,11 @@ class MainActivity : AppCompatActivity() {
             var cellLayout = LinearLayout(parent.context)
             this.cache.cacheTree(cellLayout, y, x, position)
 
-            //if (tree.size > 1) {
-            //    val open_brace = TextView(parent.context)
-            //    open_brace.text = "["
-            //    treeLayout.addView(open_brace)
-            //}
+           // if (tree.size > 1) {
+           //     val open_brace = TextView(parent.context)
+           //     open_brace.text = "["
+           //     cellLayout.addView(open_brace)
+           // }
             var max_weight = tree.get_max_child_weight()
             for (i in 0 until tree.size) {
                 val new_position = position.toMutableList()
@@ -558,11 +562,11 @@ class MainActivity : AppCompatActivity() {
                 //}
             }
 
-            //if (tree.size > 1) {
-            //    val close_brace = TextView(parent.context)
-            //    close_brace.text = "]"
-            //    treeLayout.addView(close_brace)
-            //}
+           // if (tree.size > 1) {
+           //     val close_brace = TextView(parent.context)
+           //     close_brace.text = "]"
+           //     cellLayout.addView(close_brace)
+           // }
 
             if (position.isEmpty()) {
                 parent.addView(cellLayout, x + 1) // (+1 considers row label)
@@ -1208,7 +1212,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun tick_apply_cursor() {
-
         val cursor = this.opus_manager.get_cursor()
         val position = cursor.get_position()
 
@@ -1224,10 +1227,10 @@ class MainActivity : AppCompatActivity() {
         }
 
 
-
         this.cache.setCursor(cursor.y, cursor.x, position)
 
     }
+
     fun tick_unapply_cursor() {
         val c = this.cache.getCursor()
         if (c != null) {
@@ -1252,4 +1255,37 @@ class MainActivity : AppCompatActivity() {
     fun setRelative(relative: Boolean) {
         this.relative_mode = relative
     }
+
+    fun export_midi() {
+        var filea = File("/data/data/com.qfs.radixulous/projects/miditest.mid")
+
+        Log.e("AAA", "${filea.createNewFile()}")
+        filea.writeBytes(this.opus_manager.get_midi().as_bytes())
+        //val CREATE_FILE = 1
+
+        //var name = this.opus_manager.get_working_dir()
+        //if (name != null) {
+        //    name = name.substring(name.lastIndexOf("/") + 1)
+        //}
+        //val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+        //    addCategory(Intent.CATEGORY_OPENABLE)
+        //    type = "application/midi"
+        //    putExtra(Intent.EXTRA_TITLE, "$name.mid")
+        //    putExtra(DocumentsContract.EXTRA_INITIAL_URI, "")
+        //}
+        //startActivityForResult(intent, CREATE_FILE)
+        //val contentResolver = applicationContext.contentResolver
+        //if (intent.data != null) {
+        //    var midi = this.opus_manager.get_midi()
+        //    contentResolver.openFileDescriptor(intent.data!!, "w")?.use {
+        //        FileOutputStream(it.fileDescriptor).use { it ->
+        //            it.write(midi.as_bytes())
+        //        }
+        //    }
+        //}
+
+
+    }
+
+
 }

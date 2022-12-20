@@ -1,10 +1,13 @@
 package com.qfs.radixulous.opusmanager
 import android.util.Log
+import com.qfs.radixulous.apres.MIDI
 import com.qfs.radixulous.structure.OpusTree
 import com.qfs.radixulous.from_string
 import com.qfs.radixulous.to_string
+import com.qfs.radixulous.tree_to_midi
 import java.io.File
 import java.lang.Math.max
+
 
 data class OpusEvent(var note: Int, var radix: Int, var channel: Int, var relative: Boolean)
 data class BeatKey(var channel: Int, var line_offset: Int, var beat: Int)
@@ -258,7 +261,25 @@ open class OpusManagerBase {
         this.channel_lines[channel_a] = tmp
     }
 
-    //open fun export(path: String? = null, kwargs: HashMap) { }
+    open fun get_midi(): MIDI {
+        var opus = OpusTree<Set<OpusEvent>>()
+        opus.set_size(this.opus_beat_count)
+        var beatlists: MutableList<MutableList<OpusTree<OpusEvent>>> = mutableListOf()
+        for (i in 0 until this.opus_beat_count) {
+            beatlists.add(mutableListOf())
+        }
+
+        for (channel in this.channel_lines) {
+            for (line in channel) {
+                line.forEachIndexed{ i, beat ->
+                    opus.set(i, beat.merge(opus.get(i)))
+                }
+            }
+        }
+
+        // TODO: KWARGS
+        return tree_to_midi(opus)
+    }
 
     fun get_beat_tree(beat_key: BeatKey): OpusTree<OpusEvent> {
         if (beat_key.channel >= this.channel_lines.size) {
@@ -373,7 +394,9 @@ open class OpusManagerBase {
                 var str_line =  beatstrs.joinToString("|", "{", "}")
                 strLines.add(str_line)
             }
-            File("${this.path}/channel_$i").writeText(strLines.joinToString("\n"))
+            var working_file = File("${this.path}/channel_$i")
+            working_file.createNewFile()
+            working_file.writeText(strLines.joinToString("\n"))
         }
     }
 

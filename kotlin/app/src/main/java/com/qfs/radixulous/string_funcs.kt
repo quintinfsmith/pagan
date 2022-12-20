@@ -235,7 +235,7 @@ fun tree_from_midi(midi: MIDI): OpusTree<OpusEvent> {
         } else if (event is TimeSignature) {
             total_beat_offset += (tick - last_ts_change) / beat_size
             last_ts_change = tick
-            beat_size = midi.get_ppqn() / 2.toDouble().pow(event.get_denominator()).toInt()
+            beat_size = midi.get_ppqn() / 2.toFloat().pow(event.get_denominator()).toInt()
         } else if (event is SetTempo) {
             //pass TODO (maybe)
         }
@@ -259,9 +259,7 @@ fun tree_from_midi(midi: MIDI): OpusTree<OpusEvent> {
     return opus
 }
 
-fun tree_to_midi(tree: OpusTree<OpusEvent>, tempo: Double = 120.0, start: Int = 0, end: Int? = null, transpose: Int = 0, i_arg: HashMap<Int, Int>? = null): MIDI {
-    var slice_end = end ?: tree.size
-
+fun tree_to_midi(tree: OpusTree<Set<OpusEvent>>, tempo: Float = 120.0.toFloat(), transpose: Int = 0, i_arg: HashMap<Int, Int>? = null): MIDI {
     var instruments = i_arg ?: HashMap<Int, Int>()
 
     var midi = MIDI()
@@ -271,71 +269,61 @@ fun tree_to_midi(tree: OpusTree<OpusEvent>, tempo: Double = 120.0, start: Int = 
     }
 
     midi.insert_event(0,0, SetTempo.from_bpm(tempo))
-    var tracks = tree.split { it.channel }
-    for (tree in tracks) {
-        if (tree.is_leaf()) {
-            continue
+
+    var current_tick = 0
+    var prev_note: Int? = null
+    for (m in 0 until tree.size) {
+        var beat = tree.get(m)
+        if (beat.is_leaf()) {
+            var parent_tree = OpusTree<Set<OpusEvent>>()
+            parent_tree.set(0, beat)
+            beat = parent_tree
         }
-        var current_tick = 0
-        var prev_note: Int? = null
-
-        for (m in 0 until tree.size) {
-            var beat = tree.get(m)
-            if (beat.is_leaf()) {
-                var parent_tree = OpusTree<OpusEvent>()
-                parent_tree.set(0, beat)
-                beat = parent_tree
-            }
-            if (!beat.is_flat()) {
-                beat.flatten()
-            }
-            beat.reduce()
+        if (!beat.is_flat()) {
             beat.flatten()
+        }
+        beat.reduce()
+        beat.flatten()
 
+        if (!beat.is_leaf()) {
             var div_size: Int = midi.ppqn / beat.size
-            var open_events: MutableList<OpusEvent> = mutableListOf()
             for (i in 0 until beat.size) {
                 var leaf = beat.get(i)
-                if (! leaf.is_event()) {
+                if (!leaf.is_event()) {
                     continue
                 }
-                var event = leaf.get_event()!!
-                var channel = event.channel
-                open_events.add(event)
 
+                for (event in leaf.get_event()!!) {
+                    var channel = event.channel
 
-                var note = if (event.relative) {
-                    prev_note!! + event.note
-                } else {
-                    var tmp: Int = event.note
-                    if (channel == 9) {
-                        tmp -= 3
+                    var note = if (event.relative) {
+                        prev_note!! + event.note
                     } else {
-                        tmp += transpose
+                        var tmp: Int = event.note
+                        if (channel == 9) {
+                            tmp -= 3
+                        } else {
+                            tmp += transpose
+                        }
+                        tmp
                     }
-                    tmp
-                }
 
-                prev_note = note
-                if (m !in start until slice_end) {
-                    continue
+                    prev_note = note
+                    midi.insert_event(
+                        0,
+                        current_tick + (i * div_size),
+                        NoteOn(note, channel, 64)
+                    )
+                    midi.insert_event(
+                        0,
+                        current_tick + ((i + 1) * div_size),
+                        NoteOff(note, channel, 64)
+                    )
                 }
-                midi.insert_event(
-                    0,
-                    current_tick + (i * div_size),
-                    NoteOn(note, channel, 64)
-                )
-                midi.insert_event(
-                    0,
-                    current_tick + ((i + 1) * div_size),
-                    NoteOff(note, channel, 64)
-                )
-            }
-            if (m in (start + 1)..slice_end) {
-                current_tick += midi.ppqn
             }
         }
+        current_tick += midi.ppqn
     }
+
     return midi
 }
-

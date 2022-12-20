@@ -553,17 +553,17 @@ class SetTempo(var mspqn: Int): MIDIEvent {
         )
     }
     companion object {
-        fun from_bpm(bpm: Double): SetTempo {
-            return SetTempo((60000000.toDouble() / bpm) as Int)
+        fun from_bpm(bpm: Float): SetTempo {
+            return SetTempo((60000000.toFloat() / bpm).toInt())
         }
     }
 
-    fun get_bpm(): Double {
+    fun get_bpm(): Float {
         var mspqn = this.get_mspqn()
         return if (mspqn > 0) {
-            60000000.toDouble() / mspqn
+            60000000.toFloat() / mspqn
         } else {
-            0.toDouble()
+            0.toFloat()
         }
     }
 
@@ -575,9 +575,9 @@ class SetTempo(var mspqn: Int): MIDIEvent {
         this.mspqn = new_mspqn
     }
 
-    fun set_bpm(new_bpm: Double) {
+    fun set_bpm(new_bpm: Float) {
         if (new_bpm > 0) {
-            this.mspqn = (60000000.toDouble() / new_bpm) as Int
+            this.mspqn = (60000000.toFloat() / new_bpm) as Int
         } else {
             this.mspqn = 0
         }

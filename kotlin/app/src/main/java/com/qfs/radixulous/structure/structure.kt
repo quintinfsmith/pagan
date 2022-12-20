@@ -102,6 +102,7 @@ public class OpusTree<T> {
             }
         }
 
+
         this.size = new_size
     }
 
@@ -136,7 +137,7 @@ public class OpusTree<T> {
             var original_size: Int = element.original_size
             var parent_node: OpusTree<T> = element.parent_node;
 
-            var current_size = original_size / denominator;
+            var current_size = max((original_size / denominator), 1)
 
             var split_indices: Array<MutableList<Pair<Int, OpusTree<T>>>> = Array(denominator) { _ -> mutableListOf() }
             for (index_pair in element.indices) {
@@ -151,10 +152,13 @@ public class OpusTree<T> {
                     continue
                 }
 
+                if (parent_node.is_leaf()) {
+                    parent_node.set_size(1)
+                }
                 var working_node = parent_node.get(i)
                 var minimum_divs: MutableList<Int> = mutableListOf()
                 for (index_pair in working_indices) {
-                    var index: Int = index_pair.first
+                    var index: Int = max(1, index_pair.first)
                     var most_reduced: Int = current_size / greatest_common_denominator(current_size, index)
 
                     if (most_reduced > 1) {
@@ -171,7 +175,9 @@ public class OpusTree<T> {
                     } else {
                         j += 1
                     }
-                    previous_value = minimum_divs[j];
+                    if (j < minimum_divs.size) {
+                        previous_value = minimum_divs[j];
+                    }
                 }
                 minimum_divs.sort()
 
@@ -493,5 +499,121 @@ public class OpusTree<T> {
         }
 
         return max_weight
+    }
+
+    fun get_set_tree(): OpusTree<Set<T>> {
+        var output = OpusTree<Set<T>>()
+        if (this.is_event()) {
+            output.event = setOf(this.get_event()!!)
+        } else if (!this.is_leaf()) {
+            output.set_size(this.size)
+            for ((index, tree) in this.divisions) {
+                output.set(index, tree.get_set_tree())
+            }
+        }
+
+        return output
+    }
+
+    fun merge(tree: OpusTree<Set<T>>): OpusTree<Set<T>> {
+        if (tree.is_leaf() && ! tree.is_event()) {
+            return this.get_set_tree()
+        }
+
+        return if (!this.is_event()) {
+            if (!tree.is_leaf()) {
+                this.__merge_structural(tree)
+            } else {
+                this.__merge_event_into_structural(tree)
+            }
+        } else if (!tree.is_leaf()) {
+            this.__merge_structural_into_event(tree)
+        } else {
+            this.__merge_event(tree)
+        }
+    }
+
+    fun __merge_structural_into_event(s_tree: OpusTree<Set<T>>): OpusTree<Set<T>> {
+        var output = s_tree.copy()
+
+        var working_tree = output
+        while (!working_tree.is_leaf()) {
+            working_tree = working_tree.get(0)
+        }
+
+        if (working_tree.is_event()) {
+            var eventset = working_tree.get_event() as MutableSet<T>
+            eventset.add(this.get_event()!!)
+            working_tree.set_event(eventset)
+        } else {
+            working_tree.set_event(setOf(this.get_event()!!))
+        }
+
+        return output
+    }
+
+    fun __merge_event_into_structural(e_tree: OpusTree<Set<T>>): OpusTree<Set<T>> {
+        val output = this.get_set_tree()
+
+        var working_tree = output
+        while (!working_tree.is_leaf()) {
+            working_tree = working_tree.get(0)
+        }
+
+        if (working_tree.is_event()) {
+            val eventset = working_tree.get_event() as MutableSet<T>
+            for (elm in e_tree.get_event()!!) {
+                eventset.add(elm)
+            }
+            working_tree.set_event(eventset)
+        } else {
+            working_tree.set_event(e_tree.get_event()!!)
+        }
+
+        return output
+    }
+
+    fun __merge_event(event_node: OpusTree<Set<T>>): OpusTree<Set<T>> {
+        var output = OpusTree<Set<T>>()
+        var eventset = event_node.get_event()!! as MutableSet<T>
+        eventset.add(this.get_event()!!)
+
+        output.set_event(eventset)
+        return output
+    }
+
+    private fun __merge_structural(tree: OpusTree<Set<T>>): OpusTree<Set<T>> {
+        var original_size = this.size
+        var other = tree.copy()
+
+        var this_multi = this.get_set_tree()
+        other.flatten()
+        this_multi.flatten()
+
+        var new_size = lowest_common_multiple(listOf(max(1, this_multi.size), max(1, other.size)))
+        var factor = max(1, new_size) / max(1, other.size)
+        this_multi.resize(new_size)
+
+        for ((index, subtree) in other.divisions) {
+            var new_index = index * factor
+            var subtree_into = this_multi.get(new_index)
+
+            if (subtree.is_event()) {
+                if (subtree_into.is_event()) {
+                    var eventset = subtree_into.get_event()!!.toMutableSet()
+
+                    for (elm in subtree.get_event()!!) {
+                        eventset.add(elm)
+                    }
+
+                    subtree_into.set_event(eventset)
+                }
+            }
+        }
+
+
+        this_multi.reduce(max(original_size, tree.size))
+
+        return this_multi
     }
 }

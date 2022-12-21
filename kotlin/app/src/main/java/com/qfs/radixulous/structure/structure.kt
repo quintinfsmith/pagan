@@ -6,12 +6,16 @@ fun greatest_common_denominator(first: Int, second: Int): Int {
     var tmp: Int;
     var a = max(first, second);
     var b = min(first, second);
-    while ((a % b) > 0) {
-        tmp = a % b
-        a = b
-        b = tmp
+    return if (b > 0) {
+        while ((a % b) > 0) {
+            tmp = a % b
+            a = b
+            b = tmp
+        }
+        b
+    } else {
+        a
     }
-    return b
 }
 
 fun get_prime_factors(n: Int): List<Int> {
@@ -29,10 +33,6 @@ fun get_prime_factors(n: Int): List<Int> {
         }
     }
 
-    // No Primes found, n is prime
-    if (primes.size == 0) {
-        primes.add(n)
-    }
 
     var factors: MutableList<Int> = mutableListOf()
     for (p in primes) {
@@ -42,6 +42,10 @@ fun get_prime_factors(n: Int): List<Int> {
             factors.add(p)
         }
     }
+    // No Primes found, n is prime
+    if (factors.size == 0) {
+        factors.add(n)
+    }
 
     return factors
 }
@@ -50,6 +54,7 @@ fun lowest_common_multiple(number_list: List<Int>): Int {
     var prime_factors: Array<List<Int>> = Array(number_list.size) { i ->
         get_prime_factors(number_list[i])
     }
+
     var common_factor_map: HashMap<Int, Int> = HashMap<Int, Int>()
     for (factors in prime_factors) {
         for (factor in factors) {
@@ -60,6 +65,8 @@ fun lowest_common_multiple(number_list: List<Int>): Int {
             common_factor_map[factor] = max(current, factors.count { e -> e == factor })
         }
     }
+
+
     var output = 0;
     for (key in common_factor_map.keys) {
         output += key * common_factor_map[key]!!
@@ -120,9 +127,16 @@ public class OpusTree<T> {
     }
 
     fun reduce(target_size: Int = 1) {
+        if (this.is_leaf()) {
+            return
+        }
+        if (!this.is_flat()) {
+            this.flatten()
+        }
+
         var indices: MutableList<Pair<Int, OpusTree<T>>> = mutableListOf()
-        for (key in this.divisions.keys) {
-            indices.add(Pair(key, this.divisions[key] as OpusTree<T>))
+        for ((key, child_node) in this.divisions) {
+            indices.add(Pair(key, child_node))
         }
         indices.sortWith(compareBy { it.first })
 
@@ -136,63 +150,45 @@ public class OpusTree<T> {
             var denominator: Int = element.denominator
             var original_size: Int = element.original_size
             var parent_node: OpusTree<T> = element.parent_node;
-
-            var current_size = max((original_size / denominator), 1)
-
+            var current_size = original_size / denominator
             var split_indices: Array<MutableList<Pair<Int, OpusTree<T>>>> = Array(denominator) { _ -> mutableListOf() }
-            for (index_pair in element.indices) {
-                var child_index = index_pair.first;
-                var split_index = child_index / current_size
-                split_indices[split_index].add(Pair(index_pair.first % current_size, index_pair.second.copy()))
+            for ((i, subtree) in element.indices) {
+                var split_index = i / current_size
+                split_indices[split_index].add(Pair(i % current_size, subtree.copy()))
             }
 
             for (i in 0 until denominator) {
                 var working_indices = split_indices[i]
-                if (working_indices.size == 0) {
+                if (working_indices.isEmpty() || parent_node.is_leaf()) {
                     continue
                 }
 
-                if (parent_node.is_leaf()) {
-                    parent_node.set_size(1)
-                }
                 var working_node = parent_node.get(i)
-                var minimum_divs: MutableList<Int> = mutableListOf()
-                for (index_pair in working_indices) {
-                    var index: Int = max(1, index_pair.first)
+
+                var minimum_divs: MutableSet<Int> = mutableSetOf()
+                for ((index, subtree) in working_indices) {
                     var most_reduced: Int = current_size / greatest_common_denominator(current_size, index)
 
                     if (most_reduced > 1) {
                         minimum_divs.add(most_reduced)
                     }
                 }
-
-                // Remove duplicates in minimum divs
-                var j = 0;
-                var previous_value = 0;
-                while (j < minimum_divs.size) {
-                    if (minimum_divs[i] == previous_value) {
-                        minimum_divs.removeAt(j);
-                    } else {
-                        j += 1
-                    }
-                    if (j < minimum_divs.size) {
-                        previous_value = minimum_divs[j];
-                    }
-                }
-                minimum_divs.sort()
-
-
-                if (minimum_divs.size > 0) {
+                var sorted_minimum_divs = minimum_divs.toMutableList()
+                sorted_minimum_divs.sort()
+                if (sorted_minimum_divs.isNotEmpty()) {
                     stack.add(
                         ReducerTuple(
-                            denominator = minimum_divs[0],
-                            indices = working_indices,
-                            original_size = current_size,
-                            parent_node = working_node
+                            sorted_minimum_divs[0],
+                            working_indices,
+                            current_size,
+                            working_node
                         )
                     )
                 } else {
-                    working_node.event = working_indices[0].second.event
+                    var (_, event_tree) = working_indices.removeFirst()
+                    if (event_tree.is_event()) {
+                        working_node.set_event(event_tree.get_event()!!)
+                    }
                 }
             }
         }
@@ -218,13 +214,17 @@ public class OpusTree<T> {
     }
 
     fun get(rel_index: Int): OpusTree<T> {
+        if (this.is_leaf()) {
+            throw Exception("Get() called on leaf")
+        }
+
         var index = if (rel_index < 0) {
             this.size + rel_index
         } else {
             rel_index
         }
 
-        if (index < 0 || index >= this.size && (index != 0 || this.size != 0)) {
+        if (index >= this.size) {
             throw Exception ("Index out of bounds")
         }
 
@@ -237,9 +237,6 @@ public class OpusTree<T> {
             this.divisions[index] = output
         }
 
-        if (this.size == 0) {
-            this.size == 1
-        }
 
         return output
     }
@@ -261,8 +258,7 @@ public class OpusTree<T> {
             subnode_backup.add(Pair(key, child))
         }
         var new_chunk_size: Int = lowest_common_multiple(sizes)
-        var new_size = new_chunk_size * this.size
-
+        var new_size = new_chunk_size * max(this.size, 1)
 
         this.set_size(new_size)
         for (pair in subnode_backup) {
@@ -542,7 +538,7 @@ public class OpusTree<T> {
         }
 
         if (working_tree.is_event()) {
-            var eventset = working_tree.get_event() as MutableSet<T>
+            var eventset = working_tree.get_event()!!.toMutableSet()
             eventset.add(this.get_event()!!)
             working_tree.set_event(eventset)
         } else {
@@ -561,7 +557,7 @@ public class OpusTree<T> {
         }
 
         if (working_tree.is_event()) {
-            val eventset = working_tree.get_event() as MutableSet<T>
+            val eventset = working_tree.get_event()!!.toMutableSet()
             for (elm in e_tree.get_event()!!) {
                 eventset.add(elm)
             }
@@ -575,7 +571,7 @@ public class OpusTree<T> {
 
     fun __merge_event(event_node: OpusTree<Set<T>>): OpusTree<Set<T>> {
         var output = OpusTree<Set<T>>()
-        var eventset = event_node.get_event()!! as MutableSet<T>
+        var eventset = event_node.get_event()!!.toMutableSet()
         eventset.add(this.get_event()!!)
 
         output.set_event(eventset)
@@ -610,10 +606,26 @@ public class OpusTree<T> {
                 }
             }
         }
-
-
-        this_multi.reduce(max(original_size, tree.size))
+        this_multi.reduce(1)
 
         return this_multi
+    }
+
+    fun to_string(): String {
+        return if (this.is_event()) {
+            "E"
+        } else if (this.is_leaf()) {
+            "_"
+        } else {
+            var output = ""
+            for (i in 0 until this.size) {
+                output = if (i > 0) {
+                    "$output,${this.get(i).to_string()}"
+                } else {
+                    "${this.get(i).to_string()}"
+                }
+            }
+            "($output)"
+        }
     }
 }

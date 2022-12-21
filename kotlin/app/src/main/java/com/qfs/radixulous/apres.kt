@@ -14,12 +14,12 @@ fun event_from_bytes(bytes: MutableList<Byte>, default: Byte): MIDIEvent? {
     var realtimes = listOf(0xF1, 0xF, 0xF8, 0xFC, 0xFE, 0xF7)
     var undefineds = listOf(0xF4, 0xF5, 0xF9, 0xFD)
 
-    if (leadbyte in (0..0x80)) {
+    if ((leadbyte.toInt() and 0xFF)  in (0..0x7F)) {
         bytes.add(0, leadbyte)
         bytes.add(0, default)
         output = event_from_bytes(bytes, default)
-    } else if (leadbyte in (0x80..0xF0)) {
-        var leadnibble: Int = (leadbyte.toInt()) shr 4
+    } else if ((leadbyte.toInt() and 0xFF) in (0x80..0xF0)) {
+        var leadnibble: Int = (leadbyte.toInt() and 0xFF) shr 4
         when (leadnibble) {
             0x8 -> {
                 var channel = (leadbyte and 0x0F).toInt()
@@ -310,7 +310,7 @@ fun event_from_bytes(bytes: MutableList<Byte>, default: Byte): MIDIEvent? {
     } else if (leadbyte == 0xFF.toByte()) {
         var meta_byte = bytes.removeFirst().toInt()
         var varlength = get_variable_length_number(bytes)
-        if (meta_byte == 51) {
+        if (meta_byte == 0x51) {
             output = SetTempo(dequeue_n(bytes, varlength))
         } else {
             var bytedump_list: MutableList<Byte> = mutableListOf()
@@ -318,7 +318,6 @@ fun event_from_bytes(bytes: MutableList<Byte>, default: Byte): MIDIEvent? {
                 bytedump_list.add(bytes.removeFirst())
             }
             var bytedump: ByteArray = bytedump_list.toByteArray()
-
             when (meta_byte) {
                 0x00 -> {
                     output = SequenceNumber(
@@ -679,8 +678,8 @@ class KeySignature(var key: String): MIDIEvent {
             0xFF.toByte(),
             0x59.toByte(),
             0x02.toByte(),
-            misf.first,
-            misf.second
+            misf.second,
+            misf.first
         )
     }
 
@@ -1133,7 +1132,7 @@ class ChannelPressure(var channel: Int, var pressure: Int): MIDIEvent {
     }
 }
 
-class PitchWheelChange(var channel: Int, var value: Int): MIDIEvent {
+class PitchWheelChange(var channel: Int, var value: Float): MIDIEvent {
     override fun as_bytes(): ByteArray {
         var unsigned_value = this.get_unsigned_value()
         var least = unsigned_value and 0x007F
@@ -1151,18 +1150,20 @@ class PitchWheelChange(var channel: Int, var value: Int): MIDIEvent {
     fun set_channel(channel: Int) {
         this.channel = channel
     }
-    fun get_value(): Int {
+    fun get_value(): Float {
         return this.value
     }
-    fun set_value(value: Int) {
+    fun set_value(value: Float) {
         this.value = value
     }
 
     fun get_unsigned_value(): Int {
-        return if (this.value == 0) {
+        return if (this.value == 0.toFloat()) {
             0x2000
+        } else if (this.value < 0) {
+            ((1.toFloat() + this.value) * 0x2000.toFloat()).toInt()
         } else {
-            ((this.value + 1) * 0x3FFF) / 2
+            (this.value * 0x1FFF.toFloat()).toInt() + 0x2000
         }
     }
 }
@@ -1283,7 +1284,7 @@ class MIDI {
     var events = HashMap<Int, MIDIEvent>()
     var event_id_gen: Int = 1
     var event_positions = HashMap<Int, Pair<Int, Int>>()
-    var _active_byte: Byte? = null
+    var _active_byte: Byte = 0x90.toByte()
 
     public fun from_path(file_path: String): MIDI {
         var midibytes = File(file_path).readBytes()
@@ -1309,16 +1310,15 @@ class MIDI {
             var ppqn = 120
             while (working_bytes.isNotEmpty()) {
                 chunk_type = ""
-                for (i in 0 .. 4) {
-                    chunk_type = "${chunk_type}${working_bytes.removeFirst() as Char}"
+                for (i in 0 until 4) {
+                    chunk_type = "${chunk_type}${working_bytes.removeFirst().toInt().toChar()}"
                 }
-                var value: Int
+
                 if (chunkcount.containsKey(chunk_type)) {
-                    value = chunkcount[chunk_type]!!
+                    var value = chunkcount[chunk_type]!!
                     chunkcount[chunk_type] = value + 1
                 } else {
-                    value = 1
-                    chunkcount[chunk_type] = 0
+                    chunkcount[chunk_type] = 1
                 }
 
 
@@ -1326,7 +1326,7 @@ class MIDI {
                     "MThd" -> {
                         dequeue_n(working_bytes, 4) // Get Size
                         midi_format = dequeue_n(working_bytes, 2)
-                        dequeue_n(working_bytes, 4) // Get Number of tracks
+                        dequeue_n(working_bytes, 2) // Get Number of tracks
                         divword = dequeue_n(working_bytes, 2)
 
                         if (divword and 0x8000 > 0) {
@@ -1340,7 +1340,7 @@ class MIDI {
                     }
                     "MTrk" -> {
                         if (! found_header) {
-                            throw Exception("MISSING MTrk")
+                            throw Exception("MISSING MThd")
                         }
                         current_deltatime = 0
                         track_length = dequeue_n(working_bytes, 4)
@@ -1355,7 +1355,7 @@ class MIDI {
                         current_track += 1
                     }
                     else -> {
-                        throw Exception("Invalid Bytes")
+                        throw Exception("Invalid Bytes $chunk_type")
                     }
                 }
             }
@@ -1364,20 +1364,30 @@ class MIDI {
     }
 
     fun process_mtrk_event(bytes: MutableList<Byte>, current_deltatime: Int, track: Int): Int {
-        if (bytes.first() in 0x80..0xef) {
+        if (bytes.first() != null && bytes.first() in 0x80..0xef) {
             this._active_byte = bytes.first()!!
         }
 
-        var event: MIDIEvent? = event_from_bytes(bytes, this._active_byte!!) ?: throw Exception("Invalid Bytes")
+        var str = ""
+        for (b in bytes) {
+            str = "$str ${java.lang.Integer.toHexString(b.toInt() and 0xFF)}"
+        }
+
+        var event: MIDIEvent? = event_from_bytes(bytes, this._active_byte) ?: throw Exception("Invalid Bytes\n$str")
 
         return this.insert_event(track, current_deltatime, event!!)
     }
+
     public fun as_bytes(): ByteArray {
         var output: MutableList<Byte> = mutableListOf(
-            'M'.toByte(),
-            'T'.toByte(),
-            'h'.toByte(),
-            'd'.toByte()
+            'M'.code.toByte(),
+            'T'.code.toByte(),
+            'h'.code.toByte(),
+            'd'.code.toByte(),
+            0.toByte(),
+            0.toByte(),
+            0.toByte(),
+            6.toByte()
         )
 
         var format = this.get_format()
@@ -1403,18 +1413,23 @@ class MIDI {
             output.add('k'.toByte())
 
             track_event_bytes = mutableListOf()
+            var has_eot = false
             for (pair in ticks) {
                 var tick_delay = pair.first
                 var eid = pair.second
                 var working_event = this.get_event(eid)
                 if (working_event != null) {
+                    has_eot = has_eot || (working_event is EndOfTrack)
                     track_event_bytes += to_variable_length_bytes(tick_delay)
                     track_event_bytes += working_event.as_bytes().toMutableList()
                 }
             }
+
             // Automatically handle EndOfTrackEvent Here instead of requiring it to be in the MIDITrack object
-            track_event_bytes.add(0x00)
-            track_event_bytes += EndOfTrack().as_bytes().toMutableList()
+            if (!has_eot) {
+                track_event_bytes.add(0x00)
+                track_event_bytes += EndOfTrack().as_bytes().toMutableList()
+            }
 
             // track length in bytes
             track_byte_length = track_event_bytes.size
@@ -1564,8 +1579,8 @@ fun dequeue_n(bytelist: MutableList<Byte>, n: Int): Int {
     var output = 0
     for (_i in 0 until n) {
         output *= 256
-        var x = bytelist.removeFirst()
-        output += x as Int
+        var x = bytelist.removeFirst().toInt()
+        output += x
     }
     return output
 }
@@ -1575,7 +1590,7 @@ fun get_variable_length_number(bytes: MutableList<Byte>): Int {
 
     while (true) {
         output = output shl 7
-        var x = bytes.removeFirst() as Int
+        var x = bytes.removeFirst().toInt()
         output = output or (x and 0x7F)
         if (x and 0x80 == 0) {
             break
@@ -1618,9 +1633,9 @@ fun build_key_signature(mi: Byte, sf: Byte): KeySignature {
 }
 
 fun build_pitch_wheel_change(channel: Byte, lsb: Byte, msb: Byte): PitchWheelChange {
-    var unsigned_value = (msb as Int shl 8) + (lsb as Int)
+    var unsigned_value = ((msb.toInt() and 0xFF) shl 8) + (lsb.toInt() and 0xFF)
     var new_value: Float = ((unsigned_value.toFloat() * 2.toFloat()) / 0x3FFF.toFloat()) - 1
-    return PitchWheelChange(channel as Int, new_value as Int)
+    return PitchWheelChange(channel.toInt(), new_value)
 }
 
 fun get_mi_sf(chord_name: String): Pair<Byte, Byte> {
@@ -1699,6 +1714,13 @@ fun get_mi_sf(chord_name: String): Pair<Byte, Byte> {
 }
 
 fun get_chord_name_from_mi_sf(mi: Byte, sf: Byte): String {
+    var mi_int = mi.toInt()
+    var sf_int: Int = if (sf < 0) {
+        (sf and 0xFF.toByte()).toInt()
+    } else {
+        sf.toInt()
+    }
+
     var map: List<List<String>> = listOf(
         listOf(
             "Cb", "Gb", "Db", "Ab",
@@ -1714,6 +1736,6 @@ fun get_chord_name_from_mi_sf(mi: Byte, sf: Byte): String {
         )
     )
 
-    return map[mi as Int][(sf as Int) + 7]
+    return map[mi_int][sf_int + 7]
 }
 

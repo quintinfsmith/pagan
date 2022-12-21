@@ -515,6 +515,9 @@ public class OpusTree<T> {
         if (tree.is_leaf() && ! tree.is_event()) {
             return this.get_set_tree()
         }
+        if (this.is_leaf() && ! this.is_event()) {
+            return tree
+        }
 
         return if (!this.is_event()) {
             if (!tree.is_leaf()) {
@@ -613,7 +616,7 @@ public class OpusTree<T> {
 
     fun to_string(): String {
         return if (this.is_event()) {
-            "E"
+            "${this.get_event()!!}"
         } else if (this.is_leaf()) {
             "_"
         } else {

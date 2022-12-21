@@ -1173,7 +1173,6 @@ class MainActivity : AppCompatActivity() {
     }
     fun tick_resize_beats(updated_beats: List<Int>) {
         // resize Columns
-        var line_count = this.opus_manager.line_count()
         for (b in updated_beats) {
             var max_width = 0
             for (channel in 0 until this.opus_manager.channel_lines.size) {
@@ -1259,7 +1258,6 @@ class MainActivity : AppCompatActivity() {
     fun export_midi() {
         var filea = File("/data/data/com.qfs.radixulous/projects/miditest.mid")
 
-        Log.e("AAA", "${filea.createNewFile()}")
         filea.writeBytes(this.opus_manager.get_midi().as_bytes())
         //val CREATE_FILE = 1
 

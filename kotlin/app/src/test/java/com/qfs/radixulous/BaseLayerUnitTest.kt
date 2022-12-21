@@ -86,7 +86,4 @@ class BaseLayerUnitTest {
         var subtree = manager.get_tree(beat_key, position)
         assertEquals(subtree.size, split_count)
     }
-
-
-
 }

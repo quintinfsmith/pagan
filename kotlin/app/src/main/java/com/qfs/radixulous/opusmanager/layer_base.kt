@@ -271,14 +271,19 @@ open class OpusManagerBase {
 
         for (channel in this.channel_lines) {
             for (line in channel) {
-                line.forEachIndexed{ i, beat ->
-                    opus.set(i, beat.merge(opus.get(i)))
+                line.forEachIndexed { i, beat ->
+                    beatlists[i].add(beat)
                 }
             }
         }
-
+        beatlists.forEachIndexed { i, beatlist ->
+            beatlist.forEachIndexed { j, beat ->
+                var new_beat = beat.merge(opus.get(i))
+                opus.set(i, new_beat)
+            }
+        }
         // TODO: KWARGS
-        return tree_to_midi(opus)
+        return tree_to_midi(opus, 120.toFloat())
     }
 
     fun get_beat_tree(beat_key: BeatKey): OpusTree<OpusEvent> {

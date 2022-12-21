@@ -1,4 +1,5 @@
 package com.qfs.radixulous
+import android.util.Log
 import com.qfs.radixulous.opusmanager.OpusEvent
 import com.qfs.radixulous.structure.OpusTree
 import com.qfs.radixulous.apres.*
@@ -201,11 +202,11 @@ fun str_to_int(number: String, radix: Int): Int {
     return output
 }
 
-fun tree_from_midi(midi: MIDI): OpusTree<OpusEvent> {
+fun tree_from_midi(midi: MIDI): OpusTree<Set<OpusEvent>> {
     var beat_size = midi.get_ppqn()
     var total_beat_offset = 0
     var last_ts_change = 0
-    var beat_values: MutableList<OpusTree<OpusEvent>> = mutableListOf()
+    var beat_values: MutableList<OpusTree<Set<OpusEvent>>> = mutableListOf()
     var max_tick: Int = 0
     var press_map = HashMap<Int, Pair<Int, Int>>()
 
@@ -218,12 +219,17 @@ fun tree_from_midi(midi: MIDI): OpusTree<OpusEvent> {
         var inner_beat_offset = (tick - last_ts_change) % beat_size
         if (event is NoteOn && event.get_velocity() > 0) {
             while (beat_values.size <= beat_index) {
-                var new_tree = OpusTree<OpusEvent>()
+                var new_tree = OpusTree<Set<OpusEvent>>()
                 new_tree.set_size(beat_size)
                 beat_values.add(new_tree)
             }
             var tree = beat_values[beat_index]
-            tree.get(inner_beat_offset).set_event(
+            var eventset = if (tree.is_event()) {
+                tree.get_event()!!.toMutableSet()
+            } else {
+                mutableSetOf()
+            }
+            eventset.add(
                 OpusEvent(
                     event.get_note(),
                     12,
@@ -231,6 +237,8 @@ fun tree_from_midi(midi: MIDI): OpusTree<OpusEvent> {
                     false
                 )
             )
+
+            tree.get(inner_beat_offset).set_event(eventset)
             press_map[event.note] = Pair(beat_index, inner_beat_offset)
         } else if (event is TimeSignature) {
             total_beat_offset += (tick - last_ts_change) / beat_size
@@ -242,7 +250,7 @@ fun tree_from_midi(midi: MIDI): OpusTree<OpusEvent> {
     }
     total_beat_offset += (max_tick - last_ts_change) / beat_size
     total_beat_offset += 1
-    var opus = OpusTree<OpusEvent>()
+    var opus = OpusTree<Set<OpusEvent>>()
     opus.set_size(total_beat_offset)
     beat_values.forEachIndexed { i, beat_tree ->
         if (! beat_tree.is_leaf()) {
@@ -252,10 +260,12 @@ fun tree_from_midi(midi: MIDI): OpusTree<OpusEvent> {
         }
         opus.set(i, beat_tree)
     }
+
     for (beat in opus.divisions.values) {
         beat.flatten()
         beat.reduce()
     }
+
     return opus
 }
 
@@ -265,7 +275,7 @@ fun tree_to_midi(tree: OpusTree<Set<OpusEvent>>, tempo: Float = 120.0.toFloat(),
     var midi = MIDI()
     for (i in 0 until 16) {
         var instrument = instruments[i]?: 0
-        midi.insert_event(0,0, ProgramChange(instrument, i))
+        midi.insert_event(0,0, ProgramChange(i, instrument))
     }
 
     midi.insert_event(0,0, SetTempo.from_bpm(tempo))
@@ -274,18 +284,44 @@ fun tree_to_midi(tree: OpusTree<Set<OpusEvent>>, tempo: Float = 120.0.toFloat(),
     var prev_note: Int? = null
     for (m in 0 until tree.size) {
         var beat = tree.get(m)
-        if (beat.is_leaf()) {
-            var parent_tree = OpusTree<Set<OpusEvent>>()
-            parent_tree.set(0, beat)
-            beat = parent_tree
-        }
-        if (!beat.is_flat()) {
-            beat.flatten()
-        }
-        beat.reduce()
-        beat.flatten()
 
-        if (!beat.is_leaf()) {
+        if (beat.is_event()) {
+            for (event in beat.get_event()!!) {
+                var channel = event.channel
+
+                var note = if (event.relative) {
+                    prev_note!! + event.note
+                } else {
+                    var tmp: Int = event.note
+                    if (channel == 9) {
+                        tmp -= 3
+                    } else {
+                        tmp += transpose
+                    }
+                    tmp
+                }
+
+                prev_note = note
+                midi.insert_event(
+                    0,
+                    current_tick,
+                    NoteOn(channel, note, 64)
+                )
+                midi.insert_event(
+                    0,
+                    current_tick + midi.ppqn,
+                    NoteOff(channel, note, 64)
+                )
+            }
+
+        } else if (!beat.is_leaf()) {
+            if (!beat.is_flat()) {
+                beat.flatten()
+            }
+
+            beat.reduce()
+            beat.flatten()
+
             var div_size: Int = midi.ppqn / beat.size
             for (i in 0 until beat.size) {
                 var leaf = beat.get(i)
@@ -312,12 +348,12 @@ fun tree_to_midi(tree: OpusTree<Set<OpusEvent>>, tempo: Float = 120.0.toFloat(),
                     midi.insert_event(
                         0,
                         current_tick + (i * div_size),
-                        NoteOn(note, channel, 64)
+                        NoteOn(channel, note, 64)
                     )
                     midi.insert_event(
                         0,
                         current_tick + ((i + 1) * div_size),
-                        NoteOff(note, channel, 64)
+                        NoteOff(channel, note, 64)
                     )
                 }
             }

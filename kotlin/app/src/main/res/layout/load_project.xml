@@ -5,11 +5,24 @@
     android:background="#FFefefef"
     android:layout_height="match_parent">
 
+    <ImageButton
+        android:id="@+id/btnCloseLoadProject"
+        android:src="@drawable/ic_undo"
+        android:layout_height="32dp"
+        android:layout_width="32dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:contentDescription="TODO" />
+
 
     <ScrollView
         android:id="@+id/svProjectList"
+        app:layout_constraintTop_toBottomOf="@+id/btnCloseLoadProject"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:background="#FFafafaf"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="wrap_content">
         <LinearLayout
             android:id="@+id/llProjectList"
             android:layout_width="match_parent"

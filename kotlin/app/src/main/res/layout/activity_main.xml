@@ -4,31 +4,99 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-
     android:fontFamily="@font/fira_code"
     tools:context=".MainActivity">
 
-    <HorizontalScrollView
-        android:id="@+id/horizontalScrollView"
+    <TableLayout
+        android:id="@+id/tlMain"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        app:layout_constraintBottom_toTopOf="@+id/llContextMenu"
-        app:layout_constraintStart_toStartOf="parent"
+        android:layout_height="match_parent"
+        android:stretchColumns="*"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintStart_toStartOf="parent">
 
-        <TableLayout
-            android:id="@+id/tlOpusLines"
+        <TableRow
+            android:id="@+id/trMainA"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:id="@+id/btnChannelCtrl"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="CHNL"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <HorizontalScrollView
+                android:id="@+id/hsvColumnLabels"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:scrollbars="none"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <LinearLayout
+                    android:id="@+id/llColumnLabels"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent" />
+
+            </HorizontalScrollView>
+        </TableRow>
+
+        <TableRow
+            android:id="@+id/trMainB"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:stretchColumns="*" >
-        </TableLayout>
-    </HorizontalScrollView>
+            android:layout_weight="1">
 
-    <LinearLayout
-        android:id="@+id/llContextMenu"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        app:layout_constraintBottom_toBottomOf="parent" />
+            <ScrollView
+                android:id="@+id/svLineLabels"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scrollbars="none">
+
+                <LinearLayout
+                    android:id="@+id/llLineLabels"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"></LinearLayout>
+            </ScrollView>
+
+            <ScrollView
+                android:id="@+id/svTable"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1">
+
+                <HorizontalScrollView
+                    android:id="@+id/hsvTable"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <TableLayout
+                        android:id="@+id/tlOpusLines"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:stretchColumns="*" />
+                </HorizontalScrollView>
+            </ScrollView>
+        </TableRow>
+        <TableRow>
+            <LinearLayout
+                android:layout_span="2"
+                android:layout_weight="1"
+                android:id="@+id/llContextMenu"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent" />
+        </TableRow>
+    </TableLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

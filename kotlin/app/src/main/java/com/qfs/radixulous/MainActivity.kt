@@ -2,20 +2,16 @@ package com.qfs.radixulous
 
 import android.content.Intent
 import android.os.Bundle
-import android.provider.DocumentsContract
-import android.util.Log
 import android.view.*
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
+import android.view.ViewTreeObserver.OnScrollChangedListener
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
-import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.content.ContextCompat
 import com.google.android.material.chip.Chip
 import com.qfs.radixulous.apres.*
 import com.qfs.radixulous.opusmanager.BeatKey
 import com.qfs.radixulous.opusmanager.OpusEvent
-import com.qfs.radixulous.structure.OpusTree
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.activity_main.view.*
 import kotlinx.android.synthetic.main.channel_ctrl.view.*
@@ -30,14 +26,13 @@ import kotlinx.android.synthetic.main.load_project.view.*
 import kotlinx.android.synthetic.main.numberline_item.view.*
 import kotlinx.android.synthetic.main.table_cell_label.view.*
 import java.io.File
-import java.io.FileOutputStream
 import java.lang.Integer.max
 import com.qfs.radixulous.opusmanager.HistoryLayer as OpusManager
 
 
 class ViewCache {
     var view_cache: MutableList<Pair<LinearLayout, MutableList<Pair<View?, HashMap<List<Int>, View>>>>> = mutableListOf()
-    var line_label_cache: MutableList<Button> = mutableListOf()
+    var line_label_cache: MutableList<View> = mutableListOf()
     var column_label_cache: MutableList<View> = mutableListOf()
     var header_row: TableRow? = null
     var _cursor: Triple<Int, Int, List<Int>>? = null
@@ -114,25 +109,29 @@ class ViewCache {
     fun getColumnLabel(x: Int): View {
         return this.column_label_cache[x]
     }
+
     fun detachColumnLabel() {
         val label = this.column_label_cache.removeLast()
         (label.parent as ViewGroup).removeView(label)
     }
-    fun addLineLabel(y: Int, view: Button) {
-        this.line_label_cache.add(y, view)
+
+    fun addLineLabel(view: View) {
+        this.line_label_cache.add(view)
     }
 
-    fun getLineLabel(y: Int): Button? {
-        return if (this.line_label_cache.size <= y) {
-            null
+    fun getLineLabel(y: Int): View? {
+        if (y < this.line_label_cache.size) {
+            return this.line_label_cache[y]
         } else {
-            this.line_label_cache[y]
+            return null
         }
     }
 
     fun detachLine(y: Int) {
+        var label = this.line_label_cache.removeAt(y)
+        (label.parent as ViewGroup).removeView(label)
+
         val view = this.view_cache.removeAt(y).first
-        this.line_label_cache.removeAt(y)
         (view.parent as ViewGroup).removeView(view)
     }
 
@@ -202,6 +201,29 @@ class MainActivity : AppCompatActivity() {
         // methods to display the icon in the ActionBar
         actionBar.setDisplayUseLogoEnabled(true)
         actionBar.setDisplayShowHomeEnabled(true)
+
+        var hsvTable: HorizontalScrollView = findViewById(R.id.hsvTable)
+        var svTable: ScrollView = findViewById(R.id.svTable)
+        var hsvColumnLabels: HorizontalScrollView = findViewById(R.id.hsvColumnLabels)
+        var svLineLabels: ScrollView = findViewById(R.id.svLineLabels)
+
+        hsvTable.viewTreeObserver.addOnScrollChangedListener(OnScrollChangedListener {
+            hsvColumnLabels.scrollX = hsvTable.scrollX
+        })
+        svTable.viewTreeObserver.addOnScrollChangedListener(OnScrollChangedListener {
+            svLineLabels.scrollY = svTable.scrollY
+        })
+       // hsvColumnLabels.viewTreeObserver.addOnScrollChangedListener(OnScrollChangedListener {
+       //     hsvTable.scrollX = hsvColumnLabels.scrollX
+       // })
+       // svLineLabels.viewTreeObserver.addOnScrollChangedListener(OnScrollChangedListener {
+       //     svTable.scrollY = svLineLabels.scrollY
+       // })
+
+        var btnChannelCtrl: TextView = findViewById(R.id.btnChannelCtrl)
+        btnChannelCtrl.setOnClickListener{
+            this.showChannelPopup(it)
+        }
 
         this.load("/data/data/com.qfs.radixulous/projects/test")
     }
@@ -282,18 +304,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun buildHeader() {
-        val row = TableRow(this.tlOpusLines.context)
-        this.tlOpusLines.addView(row)
-        this.cache.setHeaderRow(row)
-
-        val action_button = Button(row.context)
-        action_button.setOnClickListener {
-            //this.openFileBrowser()
-            this.showChannelPopup(action_button)
-            //this.file_test()
-        }
-        action_button.text = getString(R.string.label_channels_button)
-        row.addView(action_button)
     }
 
     private fun showChannelPopup(view: View?) {
@@ -393,13 +403,19 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun newColumnLabel() {
-        val parent = this.cache.getHeaderRow() ?: throw Exception("Header Not initialized")
+        val parent = this.hsvColumnLabels.llColumnLabels
         val headerCellView = LayoutInflater.from(parent.context).inflate(
             R.layout.table_cell_label,
             parent,
             false
         ) as TextView
-        val x = parent.childCount - 1
+        var param = headerCellView.layoutParams as ViewGroup.MarginLayoutParams
+        param.setMargins(0,0,0,0)
+        headerCellView.layoutParams = param
+        headerCellView.setBackgroundColor(
+            ContextCompat.getColor(headerCellView.context, R.color.leaf_linked)
+        )
+        val x = parent.childCount
         headerCellView.text = "$x"
         headerCellView.setOnClickListener {
             val cursor = this.opus_manager.get_cursor()
@@ -419,12 +435,12 @@ class MainActivity : AppCompatActivity() {
         var rowView = TableRow(this.tlOpusLines.context)
         rowView.setPadding(0,0,0,0)
 
-        this.tlOpusLines.addView(rowView, y + 1)
+        this.tlOpusLines.addView(rowView, y)
         this.cache.cacheLine(rowView, y)
 
-        var rowLabel = LayoutInflater.from(rowView.context).inflate(
+        var rowLabel = LayoutInflater.from(this.svLineLabels.llLineLabels.context).inflate(
             R.layout.table_cell_label,
-            rowView,
+            this.svLineLabels.llLineLabels,
             false
         )
 
@@ -441,17 +457,28 @@ class MainActivity : AppCompatActivity() {
         }
 
         rowLabel.textView.setOnClickListener {
-            val y: Int? = that.cache.getLineIndex(rowView)
-            val cursor = that.opus_manager.get_cursor()
-            if (y != null) {
-                this.opus_manager.set_cursor_position(y, cursor.x, listOf())
+            var abs_y: Int = 0
+            var label_column = rowLabel.parent!! as ViewGroup
+            for (i in 0 until label_column.childCount) {
+                if (label_column.getChildAt(i) == rowLabel) {
+                    abs_y = i
+                    break
+                }
             }
+
+            val cursor = that.opus_manager.get_cursor()
+            this.opus_manager.set_cursor_position(abs_y, cursor.x, listOf())
             this.tick()
             this.setContextMenu(1)
         }
 
-        this.cache.addLineLabel(y, rowLabel.textView)
-        rowView.addView(rowLabel)
+        var rl_params = rowLabel.layoutParams as ViewGroup.MarginLayoutParams
+        rl_params.height = 130
+        rl_params.setMargins(0,0,0,0)
+        rowLabel.layoutParams = rl_params
+
+        this.cache.addLineLabel(rowLabel)
+        this.svLineLabels.llLineLabels.addView(rowLabel)
 
         return rowView
     }
@@ -535,13 +562,13 @@ class MainActivity : AppCompatActivity() {
             }
 
             if (position.isEmpty()) {
-                parent.addView(leafView, x + 1) // (+1 considers row label)
+                parent.addView(leafView, x)
             } else {
                 parent.addView(leafView)
             }
 
             this.cache.cacheTree(leafView, y, x, position)
-
+            leafView.layoutParams.height = 130
             return leafView
         } else {
             var cellLayout = LinearLayout(parent.context)
@@ -569,7 +596,7 @@ class MainActivity : AppCompatActivity() {
            // }
 
             if (position.isEmpty()) {
-                parent.addView(cellLayout, x + 1) // (+1 considers row label)
+                parent.addView(cellLayout, x)
             } else {
                 parent.addView(cellLayout)
             }
@@ -630,7 +657,7 @@ class MainActivity : AppCompatActivity() {
                             )
                             this.tick()
                             var y = this.opus_manager.get_cursor().get_y()
-                            this.cache.getLineLabel(y)!!.text = "P:${it.itemId}"
+                            this.cache.getLineLabel(y)!!.textView.text = "P:${it.itemId}"
                             this.setContextMenu(1)
                             true
                         }
@@ -1085,24 +1112,7 @@ class MainActivity : AppCompatActivity() {
                         )
                     }
 
-
                     this.cache.detachLine(y + index)
-
-                    // Redraw labels
-                    // TODO: Redraw labels at end of function after all lines have been popped and added
-                    if (this.opus_manager.channel_lines[channel].isNotEmpty()) {
-                        val initial_y = this.opus_manager.get_y(channel, 0)
-                        for (j in 0 until this.opus_manager.channel_lines[channel].size) {
-                            val line_offset = initial_y + j
-                            val label = this.cache.getLineLabel(line_offset)?: continue
-                            if (channel != 9) {
-                                label.text = "$channel:$j"
-                            } else {
-                                var instrument = this.opus_manager.get_percussion_instrument(j)
-                                label.text = "P:$instrument"
-                            }
-                        }
-                    }
                 }
                 1 -> {
                     val y = this.opus_manager.get_y(channel, index)
@@ -1127,8 +1137,25 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
-    }
 
+        // Redraw labels
+        // TODO: Redraw labels at end of function after all lines have been popped and added
+        var line_counts = this.opus_manager.get_channel_line_counts()
+
+        var y = 0
+        for (channel in this.opus_manager.channel_order) {
+            for (i in 0 until line_counts[channel]) {
+                val label = this.cache.getLineLabel(y)!!
+                if (channel != 9) {
+                    label.textView.text = "$channel:$i"
+                } else {
+                    var instrument = this.opus_manager.get_percussion_instrument(i)
+                    label.textView.text = "P:$instrument"
+                }
+                y += 1
+            }
+        }
+    }
 
     fun tick_manage_beats() {
         var updated_beats: MutableSet<Int> = mutableSetOf()
@@ -1171,6 +1198,7 @@ class MainActivity : AppCompatActivity() {
         }
         this.tick_resize_beats(updated_beats.toList())
     }
+
     fun tick_resize_beats(updated_beats: List<Int>) {
         // resize Columns
         for (b in updated_beats) {
@@ -1182,6 +1210,9 @@ class MainActivity : AppCompatActivity() {
                     max_width = max(max_width, size)
                 }
             }
+
+            var label_view = this.cache.getColumnLabel(b)
+            label_view.layoutParams.width = max_width * 100
 
             var y = 0
             for (channel in 0 until this.opus_manager.channel_lines.size) {

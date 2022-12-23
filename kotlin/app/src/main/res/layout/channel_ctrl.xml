@@ -18,6 +18,20 @@
         app:layout_constraintTop_toTopOf="parent"
         android:orientation="vertical">
 
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" >
+            <ImageButton
+                android:id="@+id/btnCloseChannelCtl"
+                android:src="@drawable/ic_undo"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                android:contentDescription="TODO" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
         <com.google.android.material.chip.ChipGroup
             android:id="@+id/cgEnabledChannels"
             android:layout_width="wrap_content"
@@ -25,15 +39,6 @@
 
         </com.google.android.material.chip.ChipGroup>
 
-        <ScrollView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical" />
-        </ScrollView>
 
     </LinearLayout>
 

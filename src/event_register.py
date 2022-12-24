@@ -2,7 +2,7 @@
 from __future__ import annotations
 from typing import List, Optional, Tuple, Union, Any
 from collections.abc import Callable
-from .opusmanager.miditree import MIDITree, MIDITreeEvent
+from .opusmanager.miditree import MIDITreeEvent
 
 class EventRegister:
     RADIX = 12

@@ -2,7 +2,8 @@
 from __future__ import annotations
 from typing import Optional, Dict, List, Tuple, Any
 
-from .miditree import MIDITree, MIDITreeEvent
+from .structures import OpusTree
+from .miditree import MIDITreeEvent
 from .layer_base import OpusManagerBase, BeatKey
 
 class UpdatesCache:
@@ -59,7 +60,7 @@ class FlagLayer(OpusManagerBase):
             self,
             beat_key: BeatKey,
             position: List[int],
-            tree: MIDITree) -> None:
+            tree: OpusTree[MIDITreeEvent]) -> None:
         super().replace_tree(beat_key, position, tree)
         self.flag('beat_change', beat_key)
 

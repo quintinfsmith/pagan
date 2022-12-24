@@ -496,8 +496,10 @@ class MainActivity : AppCompatActivity() {
             leafView.setBackgroundColor(
                 if (this.opus_manager.is_reflection(channel_index.first, channel_index.second, x)) {
                     ContextCompat.getColor(leafView.context, R.color.leaf_linked)
+                } else if (y % 2 == 0) {
+                    ContextCompat.getColor(leafView.context, R.color.leaf_even)
                 } else {
-                    ContextCompat.getColor(leafView.context, R.color.leaf)
+                    ContextCompat.getColor(leafView.context, R.color.leaf_odd)
                 }
             )
 
@@ -568,7 +570,6 @@ class MainActivity : AppCompatActivity() {
             }
 
             this.cache.cacheTree(leafView, y, x, position)
-            leafView.layoutParams.height = 130
             return leafView
         } else {
             var cellLayout = LinearLayout(parent.context)
@@ -584,9 +585,10 @@ class MainActivity : AppCompatActivity() {
                 val new_position = position.toMutableList()
                 new_position.add(i)
                 var tree_view = this.buildTreeView(cellLayout as ViewGroup, y, x, new_position)
-                //if (max_weight > 1) {
-                //    tree_view.layoutParams.width = max_weight * 100
-                //}
+                var param = tree_view.layoutParams as ViewGroup.MarginLayoutParams
+                //param.setMargins(5,0,5,0)
+
+                tree_view.layoutParams = param
             }
 
            // if (tree.size > 1) {
@@ -1152,6 +1154,22 @@ class MainActivity : AppCompatActivity() {
                     var instrument = this.opus_manager.get_percussion_instrument(i)
                     label.textView.text = "P:$instrument"
                 }
+
+                var line_color = if (y % 2 == 0) {
+                    R.color.leaf_even
+                } else {
+                    R.color.leaf_odd
+                }
+
+                for (x in 0 until this.opus_manager.opus_beat_count) {
+                    for (leaf in this.cache.get_all_leafs(y, x, listOf())) {
+                        if ((leaf as ViewGroup).childCount > 0) {
+                            continue
+                        }
+                        val changeColour = ContextCompat.getColor(leaf.context, line_color)
+                        leaf.setBackgroundColor(changeColour)
+                    }
+                }
                 y += 1
             }
         }
@@ -1212,7 +1230,10 @@ class MainActivity : AppCompatActivity() {
             }
 
             var label_view = this.cache.getColumnLabel(b)
-            label_view.layoutParams.width = max_width * 100
+            var param = label_view.layoutParams as ViewGroup.MarginLayoutParams
+            param.width = (max_width * 100) - 10
+            param.setMargins(5,0,5,0)
+            label_view.layoutParams = param
 
             var y = 0
             for (channel in 0 until this.opus_manager.channel_lines.size) {
@@ -1224,15 +1245,26 @@ class MainActivity : AppCompatActivity() {
                         var (new_size, current_position) = stack.removeFirst()
                         var current_tree = this.opus_manager.get_tree(key, current_position)
 
+                        var current_view = this.cache.getTreeView(y, b, current_position)
+                        var param = current_view!!.layoutParams as ViewGroup.MarginLayoutParams
+
+
                         if (!current_tree.is_leaf()) {
                             for (i in 0 until current_tree.size) {
                                 var next_pos = current_position.toMutableList()
                                 next_pos.add(i)
                                 stack.add(Pair(new_size / current_tree.size.toFloat(), next_pos))
                             }
+
+                            param.width = (new_size * 100.toFloat()).toInt()
+                            param.height = 130
+                        } else {
+                            param.width = (new_size * 100.toFloat()).toInt() - 10
+                            param.height = 120
+                            param.setMargins(5,5,5,5)
                         }
-                        var current_view = this.cache.getTreeView(y, b, current_position)
-                        current_view!!.layoutParams.width = (new_size * 100.toFloat()).toInt()
+
+                        current_view!!.layoutParams = param
                     }
 
                     y += 1
@@ -1267,11 +1299,15 @@ class MainActivity : AppCompatActivity() {
             // TODO: specify Exception
             try {
                 val pair = this.opus_manager.get_channel_index(c.first)
+
                 val color = if (this.opus_manager.is_reflection(pair.first, pair.second, c.second)) {
                     R.color.leaf_linked
+                } else if (c.first % 2 == 0) {
+                    R.color.leaf_even
                 } else {
-                    R.color.leaf
+                    R.color.leaf_odd
                 }
+
                 for (view in this.cache.get_all_leafs(c.first, c.second, c.third)) {
                     val changeColour = ContextCompat.getColor(view.context, color)
                     view.setBackgroundColor(changeColour)

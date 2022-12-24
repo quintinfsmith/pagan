@@ -5,7 +5,7 @@
 from __future__ import annotations
 import math, json
 from enum import Enum, auto
-from typing import Optional, List, Tuple, Dict, TypeVar
+from typing import Optional, List, Tuple, Dict, TypeVar, Set, Generic
 
 class BadStateError(Exception):
     """Thrown if an incompatible operation is attempted on a OpusTree Object"""
@@ -14,7 +14,7 @@ class SelfAssignError(Exception):
 
 T = TypeVar("T")
 
-class OpusTree:
+class OpusTree(Generic[T]):
     """
         Tree-like structure that can be flattened and
         unflattened as necessary while keeping relative positions
@@ -194,62 +194,92 @@ class OpusTree:
         self.divisions = new_indices
         new_node.parent = self
 
-    def merge(self, tree):
-        if tree.is_open():
-            return
+    def get_set_tree(self):
+        output = OpusTree()
+        if self.is_event():
+            output.event = set(self.get_event())
+        elif self.is_leaf():
+            output.set_size(self.size)
+            for index, tree in self.divisions.items():
+                output[index] = tree.get_set_tree()
+        return output
 
-        if not self.is_event():
-            if not tree.is_leaf():
-                self.__merge_structural(tree)
+    def merge(self, tree: OpusTree[Set[T]]) -> OpusTree[Set[T]]:
+        if tree.is_event():
+            if self.is_event():
+                return self.__merge_event(tree)
+            elif self.is_leaf():
+                return self.get_set_tree()
             else:
-                self.__merge_event_into_structural(tree)
-        elif not tree.is_open():
-            if not tree.is_leaf():
-                self.__merge_structural_into_event(tree)
-            else:
-                self.__merge_event(tree)
+                return self.__merge_event_into_structural(tree)
+        elif tree.is_leaf():
+            return self.get_set_tree()
+        elif self.is_event():
+            return self.__merge_structural_into_event(tree)
+        elif self.is_leaf():
+            return self.get_set_tree()
+        else:
+            return self.__merge_structural(tree)
 
-    def __merge_structural_into_event(self, s_tree):
-        clone_tree = self.copy()
-        self.unset_event()
 
-        self.set_size(len(s_tree))
-        self.__merge_structural(s_tree)
-
-        self.__merge_event_into_structural(clone_tree)
-
-    def __merge_event_into_structural(self, e_tree):
-        working_tree = self
+    def __merge_structural_into_event(self, s_tree: OpusTree[Set[T]]) -> OpusTree[Set[T]]:
+        output = s_tree.get_set_tree()
+        working_tree = output
         while not working_tree.is_leaf():
             working_tree = working_tree[0]
 
-        # TODO: require events have __add__
-        working_tree.event += e_tree.event
+        if working_tree.is_event():
+            eventset = working_tree.get_event()
+            eventset.add(self.get_event())
+        else:
+            working_tree.set_event(set([self.get_event()]))
+
+        return output
+
+    def __merge_event_into_structural(self, e_tree):
+        output = self.get_set_tree()
+        working_tree = output
+        while not working_tree.is_leaf():
+            working_tree = working_tree[0]
+        if working_tree.is_event():
+            eventset = working_tree.get_event
+            for elm in e_tree.get_event():
+                eventset.add(elm)
+            working_tree.set_event(eventset)
+
+        else:
+            working_tree.set_event(e_tree.get_event())
+
+        return output
 
     def __merge_event(self, event_node):
-        # TODO: require events have __add__
-        self.event += event_node.event
+        output = OpusTree()
+        eventset = event_node.get_event()
+        eventset.add(self.get_event())
+        output.set_event(eventset)
+        return output
 
     def __merge_structural(self, tree):
-        original_size = len(self)
-        clone = tree.copy()
-        clone.flatten()
-        self.flatten()
-
-        new_size = math.lcm(len(self), len(clone))
-        factor = new_size // len(clone)
-        self.resize(new_size)
-
-        for index, subtree in clone.divisions.items():
+        original_size = self.size
+        other = tree.copy()
+        this_multi = self.get_set_tree()
+        other.flatten()
+        this_multi.flatten()
+        new_size = math.lcm(max(1, this_multi.size), max(1, other.size))
+        factor = max(1, new_size) / max(1, other.size)
+        this_multi.resize(new_size)
+        for (index, subtree) in other.divisions.items():
             new_index = index * factor
-            subtree_into = self[new_index]
+            subtree_into = this_multi[new_index]
+            if subtree.is_event():
+                if subtree_into.is_event():
+                    eventset = subtree_into.get_event()
+                    for elm in subtree.get_event():
+                        eventset.add(elm)
+                    subtree_into.set_event(eventset)
 
-            if subtree_into.is_open():
-                self[new_index] = subtree
-            else:
-                subtree_into.merge(subtree)
-
-        self.reduce(max(original_size, len(tree)))
+        this_multi.reduce(1)
+        return this_multi
 
     def clear(self):
         for item in self:

@@ -17,7 +17,6 @@ const val CH_DOWN = 'v'
 const val CH_HOLD = '~'
 const val CH_REPEAT = '='
 
-
 val REL_CHARS = listOf(CH_ADD, CH_SUBTRACT, CH_UP, CH_DOWN, CH_HOLD, CH_REPEAT)
 val SPECIAL_CHARS = listOf(CH_OPEN, CH_CLOSE, CH_NEXT, CH_ADD, CH_SUBTRACT, CH_UP, CH_DOWN, CH_HOLD, CH_REPEAT)
 
@@ -161,7 +160,6 @@ fun from_string(input_string: String, radix: Int, channel: Int): OpusTree<OpusEv
             }
 
         }
-
     }
 
     if (tree_stack.size > 1) {
@@ -268,6 +266,7 @@ fun tree_from_midi(midi: MIDI): OpusTree<Set<OpusEvent>> {
 
     return opus
 }
+
 
 fun tree_to_midi(tree: OpusTree<Set<OpusEvent>>, tempo: Float = 120.0.toFloat(), transpose: Int = 0, i_arg: HashMap<Int, Int>? = null): MIDI {
     var instruments = i_arg ?: HashMap<Int, Int>()

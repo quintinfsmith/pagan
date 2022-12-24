@@ -2,7 +2,7 @@
 from __future__ import annotations
 from typing import List, Optional, Tuple, Union, Any
 from collections.abc import Callable
-from .miditree import MIDITree, MIDITreeEvent
+from .miditree import MIDITreeEvent
 from .layer_links import LinksLayer, BeatKey
 
 class ReadyEvent:
@@ -264,7 +264,7 @@ class CursorLayer(LinksLayer):
         self.insert_beat(self.cursor.x + 1)
         self.cursor.settle()
 
-    def get_tree_at_cursor(self) -> MIDITree:
+    def get_tree_at_cursor(self) -> OpusTree[MIDITreeEvent]:
         """
             Get the tree object pointed to by the cursor.
         """

@@ -4,12 +4,10 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.*
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
-import android.view.ViewTreeObserver.OnScrollChangedListener
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.google.android.material.chip.Chip
-import com.qfs.radixulous.apres.*
 import com.qfs.radixulous.opusmanager.BeatKey
 import com.qfs.radixulous.opusmanager.OpusEvent
 import kotlinx.android.synthetic.main.activity_main.*
@@ -21,7 +19,6 @@ import kotlinx.android.synthetic.main.contextmenu_column.view.*
 import kotlinx.android.synthetic.main.contextmenu_linking.view.*
 import kotlinx.android.synthetic.main.contextmenu_row.view.*
 import kotlinx.android.synthetic.main.item_opusbutton.view.*
-import kotlinx.android.synthetic.main.item_opustree.view.*
 import kotlinx.android.synthetic.main.load_project.view.*
 import kotlinx.android.synthetic.main.numberline_item.view.*
 import kotlinx.android.synthetic.main.table_cell_label.view.*
@@ -29,17 +26,23 @@ import java.io.File
 import java.lang.Integer.max
 import com.qfs.radixulous.opusmanager.HistoryLayer as OpusManager
 
+enum class ContextMenu {
+    Leaf,
+    Line,
+    Beat,
+    Linking,
+    None
+}
 
 class ViewCache {
     var view_cache: MutableList<Pair<LinearLayout, MutableList<Pair<View?, HashMap<List<Int>, View>>>>> = mutableListOf()
     var line_label_cache: MutableList<View> = mutableListOf()
     var column_label_cache: MutableList<View> = mutableListOf()
-    var header_row: TableRow? = null
     var _cursor: Triple<Int, Int, List<Int>>? = null
     private var active_context_menu_view: View? = null
 
     fun get_all_leafs(y: Int, x: Int, position: List<Int>): List<View> {
-        var output: MutableList<View> = mutableListOf()
+        val output: MutableList<View> = mutableListOf()
         if (y >= this.view_cache.size || x >= this.view_cache[y].second.size) {
             return output
         }
@@ -61,14 +64,6 @@ class ViewCache {
 
     fun getActiveContextMenu(): View? {
         return this.active_context_menu_view
-    }
-
-    fun getHeaderRow(): TableRow? {
-        return this.header_row
-    }
-
-    fun setHeaderRow(row: TableRow) {
-        this.header_row = row
     }
 
     fun cacheLine(view: LinearLayout, y: Int) {
@@ -98,7 +93,7 @@ class ViewCache {
         }
     }
 
-    fun getLine(y: Int): LinearLayout? {
+    fun getLine(y: Int): LinearLayout {
         return this.view_cache[y].first
     }
 
@@ -128,7 +123,7 @@ class ViewCache {
     }
 
     fun detachLine(y: Int) {
-        var label = this.line_label_cache.removeAt(y)
+        val label = this.line_label_cache.removeAt(y)
         (label.parent as ViewGroup).removeView(label)
 
         val view = this.view_cache.removeAt(y).first
@@ -138,10 +133,6 @@ class ViewCache {
     fun removeBeatView(y: Int, x: Int) {
         val beat_view = this.view_cache[y].second.removeAt(x).first
         (beat_view?.parent as ViewGroup).removeView(beat_view)
-    }
-
-    fun getBeatView(y: Int, x: Int): View? {
-        return this.view_cache[y].second[x].first
     }
 
     fun getTreeViewYXPosition(view: View): Triple<Int, Int, List<Int>>? {
@@ -162,15 +153,6 @@ class ViewCache {
         return null
     }
 
-    fun getLineIndex(view: LinearLayout): Int? {
-        for (i in 0 until this.view_cache.size) {
-            if (this.view_cache[i].first == view) {
-                return i
-            }
-        }
-        return null
-    }
-
     fun getCursor(): Triple<Int, Int, List<Int>>? {
         return this._cursor
     }
@@ -186,7 +168,7 @@ class ViewCache {
 class MainActivity : AppCompatActivity() {
     private var opus_manager = OpusManager()
     private var cache = ViewCache()
-    private var active_context_menu_index: Int = 0
+    private var active_context_menu_index: ContextMenu = ContextMenu.None
     private var linking_beat: BeatKey? = null
     private var relative_mode: Boolean = false
 
@@ -202,25 +184,25 @@ class MainActivity : AppCompatActivity() {
         actionBar.setDisplayUseLogoEnabled(true)
         actionBar.setDisplayShowHomeEnabled(true)
 
-        var hsvTable: HorizontalScrollView = findViewById(R.id.hsvTable)
-        var svTable: ScrollView = findViewById(R.id.svTable)
-        var hsvColumnLabels: HorizontalScrollView = findViewById(R.id.hsvColumnLabels)
-        var svLineLabels: ScrollView = findViewById(R.id.svLineLabels)
+        val hsvTable: HorizontalScrollView = findViewById(R.id.hsvTable)
+        val svTable: ScrollView = findViewById(R.id.svTable)
+        val hsvColumnLabels: HorizontalScrollView = findViewById(R.id.hsvColumnLabels)
+        val svLineLabels: ScrollView = findViewById(R.id.svLineLabels)
 
-        hsvTable.viewTreeObserver.addOnScrollChangedListener(OnScrollChangedListener {
+        hsvTable.viewTreeObserver.addOnScrollChangedListener {
             hsvColumnLabels.scrollX = hsvTable.scrollX
-        })
-        svTable.viewTreeObserver.addOnScrollChangedListener(OnScrollChangedListener {
+        }
+        svTable.viewTreeObserver.addOnScrollChangedListener {
             svLineLabels.scrollY = svTable.scrollY
-        })
-       // hsvColumnLabels.viewTreeObserver.addOnScrollChangedListener(OnScrollChangedListener {
+        }
+        // hsvColumnLabels.viewTreeObserver.addOnScrollChangedListener(OnScrollChangedListener {
        //     hsvTable.scrollX = hsvColumnLabels.scrollX
        // })
        // svLineLabels.viewTreeObserver.addOnScrollChangedListener(OnScrollChangedListener {
        //     svTable.scrollY = svLineLabels.scrollY
        // })
 
-        var btnChannelCtrl: TextView = findViewById(R.id.btnChannelCtrl)
+        val btnChannelCtrl: TextView = findViewById(R.id.btnChannelCtrl)
         btnChannelCtrl.setOnClickListener{
             this.showChannelPopup(it)
         }
@@ -230,9 +212,8 @@ class MainActivity : AppCompatActivity() {
 
     fun load(path: String) {
         this.opus_manager.load(path)
-        this.buildHeader()
         this.tick()
-        this.setContextMenu(3)
+        this.setContextMenu(ContextMenu.Leaf)
 
         var name = this.opus_manager.get_working_dir()
         if (name != null) {
@@ -271,7 +252,7 @@ class MainActivity : AppCompatActivity() {
         if (this.opus_manager.has_history()) {
             this.opus_manager.apply_undo()
             this.tick()
-            this.setContextMenu(3)
+            this.setContextMenu(ContextMenu.Leaf)
         } else {
             Toast.makeText(this, getString(R.string.msg_undo_none), Toast.LENGTH_SHORT).show()
         }
@@ -284,7 +265,6 @@ class MainActivity : AppCompatActivity() {
         this.opus_manager.new()
 
         var projects_dir = "/data/data/com.qfs.radixulous/projects"
-        var directory = File(projects_dir)
         var i = 0
         while (File("$projects_dir/opus$i").isFile) {
             i += 1
@@ -293,17 +273,13 @@ class MainActivity : AppCompatActivity() {
         val actionBar = supportActionBar
         actionBar!!.title = "opus$i"
 
-        this.setContextMenu(3)
+        this.setContextMenu(ContextMenu.Leaf)
     }
 
     private fun takedownCurrent() {
-        this.setContextMenu(0)
+        this.setContextMenu(ContextMenu.None)
         this.tlOpusLines.removeAllViews()
         this.cache = ViewCache()
-        //this.buildHeader()
-    }
-
-    private fun buildHeader() {
     }
 
     private fun showChannelPopup(view: View?) {
@@ -372,20 +348,20 @@ class MainActivity : AppCompatActivity() {
             true
         )
 
-        var directory = File(projects_dir)
+        val directory = File(projects_dir)
         if (!directory.isDirectory) {
             if (! directory.mkdirs()) {
                 throw Exception("Could not make directory")
             }
         }
         for (file_name in directory.list()!!) {
-            var file = File("$projects_dir/$file_name")
+            val file = File("$projects_dir/$file_name")
             if (!file.isDirectory) {
                 continue
             }
             // TODO: Check if directory is project directory
 
-            var row = TextView(popupView.svProjectList.llProjectList.context)
+            val row = TextView(popupView.svProjectList.llProjectList.context)
             row.text = file_name
             row.setOnClickListener {
                 this.takedownCurrent()
@@ -409,7 +385,7 @@ class MainActivity : AppCompatActivity() {
             parent,
             false
         ) as TextView
-        var param = headerCellView.layoutParams as ViewGroup.MarginLayoutParams
+        val param = headerCellView.layoutParams as ViewGroup.MarginLayoutParams
         param.setMargins(0,0,0,0)
         headerCellView.layoutParams = param
         headerCellView.setBackgroundColor(
@@ -420,7 +396,7 @@ class MainActivity : AppCompatActivity() {
         headerCellView.setOnClickListener {
             val cursor = this.opus_manager.get_cursor()
             this.opus_manager.set_cursor_position(cursor.y, x, listOf())
-            this.setContextMenu(2)
+            this.setContextMenu(ContextMenu.Beat)
             this.tick()
         }
         this.cache.addColumnLabel(headerCellView)
@@ -428,23 +404,23 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun buildLineView(y: Int): TableRow {
-        var clo = this.opus_manager.get_channel_index(y)
-        var channel = clo.first
-        var line_offset = clo.second
+        val clo = this.opus_manager.get_channel_index(y)
+        val channel = clo.first
+        val line_offset = clo.second
 
-        var rowView = TableRow(this.tlOpusLines.context)
+        val rowView = TableRow(this.tlOpusLines.context)
         rowView.setPadding(0,0,0,0)
 
         this.tlOpusLines.addView(rowView, y)
         this.cache.cacheLine(rowView, y)
 
-        var rowLabel = LayoutInflater.from(this.svLineLabels.llLineLabels.context).inflate(
+        val rowLabel = LayoutInflater.from(this.svLineLabels.llLineLabels.context).inflate(
             R.layout.table_cell_label,
             this.svLineLabels.llLineLabels,
             false
         )
 
-        var that = this
+        val that = this
         if (channel != 9) {
             if (line_offset == 0) {
                 rowLabel.textView.text = "$channel:$line_offset"
@@ -452,13 +428,13 @@ class MainActivity : AppCompatActivity() {
                 rowLabel.textView.text = "  :$line_offset"
             }
         } else {
-            var instrument = that.opus_manager.get_percussion_instrument(line_offset)
+            val instrument = that.opus_manager.get_percussion_instrument(line_offset)
             rowLabel.textView.text = "P:$instrument"
         }
 
         rowLabel.textView.setOnClickListener {
             var abs_y: Int = 0
-            var label_column = rowLabel.parent!! as ViewGroup
+            val label_column = rowLabel.parent!! as ViewGroup
             for (i in 0 until label_column.childCount) {
                 if (label_column.getChildAt(i) == rowLabel) {
                     abs_y = i
@@ -469,10 +445,10 @@ class MainActivity : AppCompatActivity() {
             val cursor = that.opus_manager.get_cursor()
             this.opus_manager.set_cursor_position(abs_y, cursor.x, listOf())
             this.tick()
-            this.setContextMenu(1)
+            this.setContextMenu(ContextMenu.Line)
         }
 
-        var rl_params = rowLabel.layoutParams as ViewGroup.MarginLayoutParams
+        val rl_params = rowLabel.layoutParams as ViewGroup.MarginLayoutParams
         rl_params.height = 130
         rl_params.setMargins(0,0,0,0)
         rowLabel.layoutParams = rl_params
@@ -484,11 +460,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun buildTreeView(parent: ViewGroup, y: Int, x: Int, position: List<Int>): View {
-        var channel_index = this.opus_manager.get_channel_index(y)
-        var tree = this.opus_manager.get_tree(BeatKey(channel_index.first, channel_index.second, x), position)
+        val channel_index = this.opus_manager.get_channel_index(y)
+        val tree = this.opus_manager.get_tree(BeatKey(channel_index.first, channel_index.second, x), position)
 
         if (tree.is_leaf()) {
-            var leafView = LayoutInflater.from(parent.context).inflate(
+            val leafView = LayoutInflater.from(parent.context).inflate(
                 R.layout.item_opusbutton,
                 parent,
                 false
@@ -531,11 +507,11 @@ class MainActivity : AppCompatActivity() {
             }
 
             leafView.setOnClickListener {
-                var key = this.cache.getTreeViewYXPosition(leafView)
+                val key = this.cache.getTreeViewYXPosition(leafView)
                 if (key != null) {
                     if (this.linking_beat != null) {
-                        var pair = this.opus_manager.get_channel_index(key.first)
-                        var working_position = BeatKey(
+                        val pair = this.opus_manager.get_channel_index(key.first)
+                        val working_position = BeatKey(
                             pair.first,
                             pair.second,
                             key.second
@@ -545,7 +521,7 @@ class MainActivity : AppCompatActivity() {
                     }
 
                     this.opus_manager.set_cursor_position(key.first, key.second, key.third)
-                    this.setContextMenu(3)
+                    this.setContextMenu(ContextMenu.Leaf)
 
                     this.tick()
                 }
@@ -554,10 +530,10 @@ class MainActivity : AppCompatActivity() {
             leafView.setOnLongClickListener {
                 val key = this.cache.getTreeViewYXPosition(leafView)
                 if (key != null) {
-                    var pair = this.opus_manager.get_channel_index(key.first)
+                    val pair = this.opus_manager.get_channel_index(key.first)
                     this.linking_beat = BeatKey(pair.first, pair.second, key.second)
                     this.opus_manager.set_cursor_position(key.first, key.second, listOf())
-                    this.setContextMenu(4)
+                    this.setContextMenu(ContextMenu.Linking)
                     this.tick()
                 }
                 true
@@ -572,7 +548,7 @@ class MainActivity : AppCompatActivity() {
             this.cache.cacheTree(leafView, y, x, position)
             return leafView
         } else {
-            var cellLayout = LinearLayout(parent.context)
+            val cellLayout = LinearLayout(parent.context)
             this.cache.cacheTree(cellLayout, y, x, position)
 
            // if (tree.size > 1) {
@@ -580,15 +556,10 @@ class MainActivity : AppCompatActivity() {
            //     open_brace.text = "["
            //     cellLayout.addView(open_brace)
            // }
-            var max_weight = tree.get_max_child_weight()
             for (i in 0 until tree.size) {
                 val new_position = position.toMutableList()
                 new_position.add(i)
-                var tree_view = this.buildTreeView(cellLayout as ViewGroup, y, x, new_position)
-                var param = tree_view.layoutParams as ViewGroup.MarginLayoutParams
-                //param.setMargins(5,0,5,0)
-
-                tree_view.layoutParams = param
+                this.buildTreeView(cellLayout as ViewGroup, y, x, new_position)
             }
 
            // if (tree.size > 1) {
@@ -608,13 +579,13 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-    fun setContextMenu(menu_index: Int) {
+    fun setContextMenu(menu_index: ContextMenu) {
         this.active_context_menu_index = menu_index
         val view_to_remove = this.cache.getActiveContextMenu()
         (view_to_remove?.parent as? ViewGroup)?.removeView(view_to_remove)
 
         when (menu_index) {
-            1 -> {
+            ContextMenu.Line -> {
                 val view = LayoutInflater.from(this.llContextMenu.context).inflate(
                     R.layout.contextmenu_row,
                     this.llContextMenu,
@@ -633,21 +604,21 @@ class MainActivity : AppCompatActivity() {
                     this.tick()
                 }
 
-                var beatkey = this.opus_manager.get_cursor().get_beatkey()
+                val beatkey = this.opus_manager.get_cursor().get_beatkey()
                 if (beatkey.channel == 9) {
-                    var instrument = this.opus_manager.get_percussion_instrument(beatkey.line_offset)
+                    val instrument = this.opus_manager.get_percussion_instrument(beatkey.line_offset)
                     view.btnChooseInstrument.text = resources.getStringArray(R.array.midi_drums)[instrument - 35]
                 } else {
-                    var instrument = this.opus_manager.get_channel_instrument(beatkey.channel)
+                    val instrument = this.opus_manager.get_channel_instrument(beatkey.channel)
                     view.btnChooseInstrument.text = resources.getStringArray(R.array.midi_instruments)[instrument]
                 }
 
                 view.btnChooseInstrument.setOnClickListener {
-                    var popupMenu = PopupMenu(window.decorView.rootView.context, it)
-                    var cursor = this.opus_manager.get_cursor()
+                    val popupMenu = PopupMenu(window.decorView.rootView.context, it)
+                    val cursor = this.opus_manager.get_cursor()
                     if (cursor.get_beatkey().channel == 9) {
                         //popupMenu.menuInflater.inflate(R.menu.percussion_instruments, popupMenu.getMenu())
-                        var drums = resources.getStringArray(R.array.midi_drums)
+                        val drums = resources.getStringArray(R.array.midi_drums)
                         drums.forEachIndexed { i, string ->
                             popupMenu.menu.add(0, i + 35, i, string)
                         }
@@ -658,13 +629,13 @@ class MainActivity : AppCompatActivity() {
                                 it.itemId
                             )
                             this.tick()
-                            var y = this.opus_manager.get_cursor().get_y()
+                            val y = this.opus_manager.get_cursor().get_y()
                             this.cache.getLineLabel(y)!!.textView.text = "P:${it.itemId}"
-                            this.setContextMenu(1)
+                            this.setContextMenu(ContextMenu.Line) // TODO: overkill?
                             true
                         }
                     } else {
-                        var instruments = resources.getStringArray(R.array.midi_instruments)
+                        val instruments = resources.getStringArray(R.array.midi_instruments)
                         instruments.forEachIndexed { i, string ->
                             popupMenu.menu.add(0, i, i, string)
                         }
@@ -676,8 +647,7 @@ class MainActivity : AppCompatActivity() {
                             )
 
                             this.tick()
-                            var y = this.opus_manager.get_cursor().get_y()
-                            this.setContextMenu(1)
+                            this.setContextMenu(ContextMenu.Line) //TODO: Overkill?
                             true
                         }
                     }
@@ -687,7 +657,7 @@ class MainActivity : AppCompatActivity() {
                 this.llContextMenu.addView(view)
                 this.cache.setActiveContextMenu(view)
             }
-            2 -> {
+            ContextMenu.Beat -> {
                 val view = LayoutInflater.from(this.llContextMenu.context).inflate(
                     R.layout.contextmenu_column,
                     this.llContextMenu,
@@ -709,7 +679,7 @@ class MainActivity : AppCompatActivity() {
                 this.llContextMenu.addView(view)
                 this.cache.setActiveContextMenu(view)
             }
-            3 -> {
+            ContextMenu.Leaf -> {
                 val view = LayoutInflater.from(this.llContextMenu.context).inflate(
                     R.layout.contextmenu_cell,
                     this.llContextMenu,
@@ -722,7 +692,7 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 // TODO: Specify exception
-                var cursor = this.opus_manager.get_cursor()
+                val cursor = this.opus_manager.get_cursor()
                 if (this.opus_manager.has_preceding_absolute_event(cursor.get_beatkey(), cursor.get_position())) {
                     view.sRelative.isChecked = this.relative_mode
                     view.sRelative.setOnCheckedChangeListener { _, isChecked ->
@@ -732,7 +702,7 @@ class MainActivity : AppCompatActivity() {
                         } else {
                             this.opus_manager.convert_event_at_cursor_to_absolute()
                         }
-                        this.setContextMenu(3)
+                        this.setContextMenu(ContextMenu.Leaf)
                         this.tick()
                     }
                 } else {
@@ -756,7 +726,7 @@ class MainActivity : AppCompatActivity() {
                             this.opus_manager.set_percussion_event_at_cursor()
                         }
                         this.tick()
-                        this.setContextMenu(3)
+                        this.setContextMenu(ContextMenu.Leaf)
                     }
 
                 } else if (!this.relative_mode) {
@@ -770,7 +740,7 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
 
-                    var that = this
+                    val that = this
                     view.llAbsolutePalette.sbOffset?.setOnSeekBarChangeListener(object :
                         SeekBar.OnSeekBarChangeListener {
                         override fun onProgressChanged(
@@ -782,15 +752,15 @@ class MainActivity : AppCompatActivity() {
 
                         override fun onStartTrackingTouch(seek: SeekBar) {}
                         override fun onStopTrackingTouch(seek: SeekBar) {
-                            var progress = seek.progress
+                            val progress = seek.progress
 
-                            var cursor = that.opus_manager.get_cursor()
-                            var position = cursor.position
-                            var beatkey = cursor.get_beatkey()
+                            val cursor = that.opus_manager.get_cursor()
+                            val position = cursor.position
+                            val beatkey = cursor.get_beatkey()
 
-                            var event = if (current_tree.is_event()) {
-                                var event = current_tree.get_event()!!
-                                var old_octave = event.note / event.radix
+                            val event = if (current_tree.is_event()) {
+                                val event = current_tree.get_event()!!
+                                val old_octave = event.note / event.radix
                                 event.note = (old_octave * event.radix) + progress
 
                                 event
@@ -823,14 +793,14 @@ class MainActivity : AppCompatActivity() {
                         override fun onStartTrackingTouch(seek: SeekBar) {}
 
                         override fun onStopTrackingTouch(seek: SeekBar) {
-                            var progress = seek.progress
+                            val progress = seek.progress
 
-                            var cursor = opus_manager.get_cursor()
-                            var position = cursor.position
-                            var beatkey = cursor.get_beatkey()
+                            val cursor = opus_manager.get_cursor()
+                            val position = cursor.position
+                            val beatkey = cursor.get_beatkey()
 
-                            var event = if (current_tree.is_event()) {
-                                var event = current_tree.get_event()!!
+                            val event = if (current_tree.is_event()) {
+                                val event = current_tree.get_event()!!
                                 event.note = (progress * event.radix) + (event.note % event.radix)
                                 event
                             } else {
@@ -868,7 +838,7 @@ class MainActivity : AppCompatActivity() {
                         val event = current_tree.get_event()!!
                         if (event.relative) {
                             var selected_button = R.id.rbAdd
-                            var new_progress = if (event.note > 0) {
+                            val new_progress = if (event.note > 0) {
                                 if (event.note >= event.radix) {
                                     selected_button = R.id.rbPow
                                     event.note / event.radix
@@ -904,7 +874,7 @@ class MainActivity : AppCompatActivity() {
                         numberLine.addView(leafView)
                     }
 
-                    var that = this
+                    val that = this
                     view.llRelativePalette.sbRelativeValue?.setOnSeekBarChangeListener(object :
                         SeekBar.OnSeekBarChangeListener {
                         override fun onProgressChanged(
@@ -916,13 +886,13 @@ class MainActivity : AppCompatActivity() {
                         override fun onStartTrackingTouch(seek: SeekBar) {}
 
                         override fun onStopTrackingTouch(seek: SeekBar) {
-                            var progress = seek.progress
-                            var radio_button: Int = that.llRelativePalette.rgRelOptions.checkedRadioButtonId
+                            val progress = seek.progress
+                            val radio_button: Int = that.llRelativePalette.rgRelOptions.checkedRadioButtonId
 
-                            var cursor = opus_manager.get_cursor()
-                            var beatkey = cursor.get_beatkey()
+                            val cursor = opus_manager.get_cursor()
+                            val beatkey = cursor.get_beatkey()
 
-                            var new_value = when (radio_button) {
+                            val new_value = when (radio_button) {
                                 R.id.rbAdd -> {
                                     progress
                                 }
@@ -942,7 +912,7 @@ class MainActivity : AppCompatActivity() {
                             }
 
 
-                            var event = OpusEvent(
+                            val event = OpusEvent(
                                 new_value,
                                 that.opus_manager.RADIX,
                                 beatkey.channel,
@@ -955,12 +925,12 @@ class MainActivity : AppCompatActivity() {
                     }
                     )
                     view.rgRelOptions.setOnCheckedChangeListener { _, checkedId ->
-                        var progress = view.llRelativePalette.sbRelativeValue.progress
+                        val progress = view.llRelativePalette.sbRelativeValue.progress
 
-                        var cursor = this.opus_manager.get_cursor()
-                        var beatkey = cursor.get_beatkey()
+                        val cursor = this.opus_manager.get_cursor()
+                        val beatkey = cursor.get_beatkey()
 
-                        var new_value = when (checkedId) {
+                        val new_value = when (checkedId) {
                             R.id.rbAdd -> {
                                 progress
                             }
@@ -979,7 +949,7 @@ class MainActivity : AppCompatActivity() {
                             }
                         }
 
-                        var event = OpusEvent(
+                        val event = OpusEvent(
                             new_value,
                             that.opus_manager.RADIX,
                             beatkey.channel,
@@ -1004,7 +974,7 @@ class MainActivity : AppCompatActivity() {
                     }
 
                     this.tick()
-                    this.setContextMenu(3)
+                    this.setContextMenu(ContextMenu.Leaf)
                 }
 
                 view.clButtons.btnRemove?.setOnClickListener {
@@ -1031,7 +1001,7 @@ class MainActivity : AppCompatActivity() {
                 this.cache.setActiveContextMenu(view)
 
             }
-            4 -> {
+            ContextMenu.Linking -> {
                 val view = LayoutInflater.from(this.llContextMenu.context).inflate(
                     R.layout.contextmenu_linking,
                     this.llContextMenu,
@@ -1041,11 +1011,11 @@ class MainActivity : AppCompatActivity() {
                 val cursor_key = this.opus_manager.get_cursor().get_beatkey()
                 if (this.opus_manager.is_reflection(cursor_key.channel, cursor_key.line_offset, cursor_key.beat)) {
                     view.btnUnLink.setOnClickListener {
-                        var cursor = this.opus_manager.get_cursor()
+                        val cursor = this.opus_manager.get_cursor()
                         this.opus_manager.unlink_beat(cursor.get_beatkey())
                         cursor.settle()
                         this.linking_beat = null
-                        this.setContextMenu(3)
+                        this.setContextMenu(ContextMenu.Leaf)
                         this.tick()
                     }
                 } else {
@@ -1055,28 +1025,30 @@ class MainActivity : AppCompatActivity() {
                 view.btnCancelLink.setOnClickListener {
                     this.opus_manager.get_cursor().settle()
                     this.linking_beat = null
-                    this.setContextMenu(3)
+                    this.setContextMenu(ContextMenu.Leaf)
                     this.tick()
                 }
 
                 this.llContextMenu.addView(view)
                 this.cache.setActiveContextMenu(view)
             }
+            else -> { }
         }
     }
 
     fun rebuildBeatView(y: Int, x: Int) {
-        var pair = this.opus_manager.get_channel_index(y)
-        var main_beatkey = BeatKey(pair.first, pair.second, x)
+        val pair = this.opus_manager.get_channel_index(y)
+        val main_beatkey = BeatKey(pair.first, pair.second, x)
         for (beatkey in this.opus_manager.get_all_linked(main_beatkey)) {
-            var new_y = this.opus_manager.get_y(beatkey.channel, beatkey.line_offset)
-            var new_x = beatkey.beat
+            val new_y = this.opus_manager.get_y(beatkey.channel, beatkey.line_offset)
+            val new_x = beatkey.beat
             this.cache.removeBeatView(new_y, new_x)
-            var rowView = this.cache.getLine(new_y)!!
+            val rowView = this.cache.getLine(new_y)
             this.buildTreeView(rowView, new_y, new_x, listOf())
         }
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == 777) {
@@ -1098,14 +1070,14 @@ class MainActivity : AppCompatActivity() {
             val (channel, index, operation) = this.opus_manager.fetch_flag_line() ?: break
             when (operation) {
                 0 -> {
-                    var counts = this.opus_manager.get_channel_line_counts()
+                    val counts = this.opus_manager.get_channel_line_counts()
 
                     var y = 0
                     for (i in 0 until channel) {
                         y += counts[i]
                     }
 
-                    var cursor = this.cache.getCursor()
+                    val cursor = this.cache.getCursor()
                     if (cursor != null && y + index < cursor.first) {
                         this.cache.setCursor(
                             cursor.first - 1,
@@ -1119,7 +1091,7 @@ class MainActivity : AppCompatActivity() {
                 1 -> {
                     val y = this.opus_manager.get_y(channel, index)
 
-                    var cursor = this.cache.getCursor()
+                    val cursor = this.cache.getCursor()
                     if (cursor != null && y + index < cursor.first) {
                         this.cache.setCursor(
                             cursor.first + 1,
@@ -1128,7 +1100,7 @@ class MainActivity : AppCompatActivity() {
                         )
                     }
 
-                    var rowView = this.buildLineView(y)
+                    val rowView = this.buildLineView(y)
                     for (x in 0 until this.opus_manager.opus_beat_count) {
                         this.buildTreeView(rowView, y, x, listOf())
                     }
@@ -1141,9 +1113,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         // Redraw labels
-        // TODO: Redraw labels at end of function after all lines have been popped and added
-        var line_counts = this.opus_manager.get_channel_line_counts()
-
+        val line_counts = this.opus_manager.get_channel_line_counts()
         var y = 0
         for (channel in this.opus_manager.channel_order) {
             for (i in 0 until line_counts[channel]) {
@@ -1151,11 +1121,11 @@ class MainActivity : AppCompatActivity() {
                 if (channel != 9) {
                     label.textView.text = "$channel:$i"
                 } else {
-                    var instrument = this.opus_manager.get_percussion_instrument(i)
+                    val instrument = this.opus_manager.get_percussion_instrument(i)
                     label.textView.text = "P:$instrument"
                 }
 
-                var line_color = if (y % 2 == 0) {
+                val line_color = if (y % 2 == 0) {
                     R.color.leaf_even
                 } else {
                     R.color.leaf_odd
@@ -1176,14 +1146,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun tick_manage_beats() {
-        var updated_beats: MutableSet<Int> = mutableSetOf()
+        val updated_beats: MutableSet<Int> = mutableSetOf()
         while (true) {
             val (index, operation) = this.opus_manager.fetch_flag_beat() ?: break
             when (operation) {
                 1 -> {
                     this.newColumnLabel()
                     for (y in 0 until this.opus_manager.line_count()) {
-                        var rowView = this.cache.getLine(y)?: continue
+                        val rowView = this.cache.getLine(y)?: continue
                         this.buildTreeView(rowView, y, index, listOf())
                     }
                     updated_beats.add(index)
@@ -1200,7 +1170,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun tick_update_beats() {
-        var updated_beats: MutableSet<Int> = mutableSetOf()
+        val updated_beats: MutableSet<Int> = mutableSetOf()
         while (true) {
             val beatkey = this.opus_manager.fetch_flag_change() ?: break
             this.rebuildBeatView(
@@ -1223,14 +1193,14 @@ class MainActivity : AppCompatActivity() {
             var max_width = 0
             for (channel in 0 until this.opus_manager.channel_lines.size) {
                 for (line_offset in 0 until this.opus_manager.channel_lines[channel].size) {
-                    var tree = this.opus_manager.get_beat_tree(BeatKey(channel, line_offset, b))
-                    var size = tree.size * tree.get_max_child_weight()
+                    val tree = this.opus_manager.get_beat_tree(BeatKey(channel, line_offset, b))
+                    val size = tree.size * tree.get_max_child_weight()
                     max_width = max(max_width, size)
                 }
             }
 
-            var label_view = this.cache.getColumnLabel(b)
-            var param = label_view.layoutParams as ViewGroup.MarginLayoutParams
+            val label_view = this.cache.getColumnLabel(b)
+            val param = label_view.layoutParams as ViewGroup.MarginLayoutParams
             param.width = (max_width * 100) - 10
             param.setMargins(5,0,5,0)
             label_view.layoutParams = param
@@ -1238,20 +1208,20 @@ class MainActivity : AppCompatActivity() {
             var y = 0
             for (channel in 0 until this.opus_manager.channel_lines.size) {
                 for (line_offset in 0 until this.opus_manager.channel_lines[channel].size) {
-                    var stack: MutableList<Pair<Float, List<Int>>> = mutableListOf(Pair(max_width.toFloat(), listOf()))
-                    var key = BeatKey(channel, line_offset, b)
+                    val stack: MutableList<Pair<Float, List<Int>>> = mutableListOf(Pair(max_width.toFloat(), listOf()))
+                    val key = BeatKey(channel, line_offset, b)
 
                     while (stack.isNotEmpty()) {
-                        var (new_size, current_position) = stack.removeFirst()
-                        var current_tree = this.opus_manager.get_tree(key, current_position)
+                        val (new_size, current_position) = stack.removeFirst()
+                        val current_tree = this.opus_manager.get_tree(key, current_position)
 
-                        var current_view = this.cache.getTreeView(y, b, current_position)
-                        var param = current_view!!.layoutParams as ViewGroup.MarginLayoutParams
+                        val current_view = this.cache.getTreeView(y, b, current_position)
+                        val param = current_view!!.layoutParams as ViewGroup.MarginLayoutParams
 
 
                         if (!current_tree.is_leaf()) {
                             for (i in 0 until current_tree.size) {
-                                var next_pos = current_position.toMutableList()
+                                val next_pos = current_position.toMutableList()
                                 next_pos.add(i)
                                 stack.add(Pair(new_size / current_tree.size.toFloat(), next_pos))
                             }
@@ -1290,7 +1260,6 @@ class MainActivity : AppCompatActivity() {
 
 
         this.cache.setCursor(cursor.y, cursor.x, position)
-
     }
 
     fun tick_unapply_cursor() {
@@ -1349,8 +1318,5 @@ class MainActivity : AppCompatActivity() {
         //    }
         //}
 
-
     }
-
-
 }

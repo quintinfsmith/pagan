@@ -293,7 +293,7 @@ class OpusManagerBase:
         radix = self.RADIX
 
         channel_map = {}
-        suffix_patt = re.compile(".*_(?P<suffix>([0-9A-Z]{1,3})?)(\\..*)?", re.I)
+        suffix_patt = re.compile(".*_(?P<suffix>(\d{1,3})?)(\\..*)?", re.I)
         filenames = os.listdir(path)
         filenames_clean = []
 
@@ -304,7 +304,7 @@ class OpusManagerBase:
 
             channel = None
             for hit in suffix_patt.finditer(filename):
-                channel = int(hit.group('suffix'), 16)
+                channel = int(hit.group('suffix'))
 
             if channel is not None:
                 channel_map[filename] = channel
@@ -317,7 +317,7 @@ class OpusManagerBase:
             content = ""
 
             with open(f"{path}/{filename}", 'r', encoding="utf-8") as fp:
-                content = fp.read().strip()
+                content = fp.read().strip().replace("\n", "")
 
             for i, hit in enumerate(line_patt.finditer(content)):
                 line = []
@@ -459,7 +459,7 @@ class OpusManagerBase:
 
             strlines = []
             for line in channel_lines:
-                str_line = "{" + "|".join([beat.to_string() for beat in line]) + "}"
+                str_line = "{" + "|".join([opustree_to_string(beat) for beat in line]) + "}"
                 strlines.append(str_line)
 
             hexrep = hex(i)[2:].upper()

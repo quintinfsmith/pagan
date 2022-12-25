@@ -256,6 +256,7 @@ open class CursorLayer() : LinksLayer() {
         var beat_key = this.get_cursor().get_beatkey()
         var position = this.get_cursor().get_position()
         this.unset(beat_key, position)
+        this.get_cursor().settle()
     }
 
     fun remove_tree_at_cursor() {

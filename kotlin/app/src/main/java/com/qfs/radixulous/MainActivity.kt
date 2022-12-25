@@ -2,6 +2,7 @@ package com.qfs.radixulous
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.*
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.*
@@ -389,7 +390,10 @@ class MainActivity : AppCompatActivity() {
         param.setMargins(0,0,0,0)
         headerCellView.layoutParams = param
         headerCellView.setBackgroundColor(
-            ContextCompat.getColor(headerCellView.context, R.color.leaf_linked)
+            ContextCompat.getColor(headerCellView.context, R.color.label_bg)
+        )
+        headerCellView.setTextColor(
+            ContextCompat.getColor(headerCellView.context, R.color.label_fg)
         )
         val x = parent.childCount
         headerCellView.text = "$x"
@@ -419,6 +423,7 @@ class MainActivity : AppCompatActivity() {
             this.svLineLabels.llLineLabels,
             false
         )
+
 
         val that = this
         if (channel != 9) {
@@ -462,6 +467,7 @@ class MainActivity : AppCompatActivity() {
     private fun buildTreeView(parent: ViewGroup, y: Int, x: Int, position: List<Int>): View {
         val channel_index = this.opus_manager.get_channel_index(y)
         val tree = this.opus_manager.get_tree(BeatKey(channel_index.first, channel_index.second, x), position)
+
 
         if (tree.is_leaf()) {
             val leafView = LayoutInflater.from(parent.context).inflate(
@@ -1103,6 +1109,8 @@ class MainActivity : AppCompatActivity() {
                     val rowView = this.buildLineView(y)
                     for (x in 0 until this.opus_manager.opus_beat_count) {
                         this.buildTreeView(rowView, y, x, listOf())
+                        this.opus_manager.flag_beat_change(BeatKey(channel, index, x))
+                        //this.__tick_resize_beat_cell(channel, index, x, leaf.layoutParams.width)
                     }
                 }
                 2 -> {
@@ -1140,7 +1148,10 @@ class MainActivity : AppCompatActivity() {
                         leaf.setBackgroundColor(changeColour)
                     }
                 }
+
+
                 y += 1
+
             }
         }
     }
@@ -1153,7 +1164,7 @@ class MainActivity : AppCompatActivity() {
                 1 -> {
                     this.newColumnLabel()
                     for (y in 0 until this.opus_manager.line_count()) {
-                        val rowView = this.cache.getLine(y)?: continue
+                        val rowView = this.cache.getLine(y)
                         this.buildTreeView(rowView, y, index, listOf())
                     }
                     updated_beats.add(index)
@@ -1182,7 +1193,6 @@ class MainActivity : AppCompatActivity() {
             )
 
             updated_beats.add(beatkey.beat)
-
         }
         this.tick_resize_beats(updated_beats.toList())
     }
@@ -1208,38 +1218,54 @@ class MainActivity : AppCompatActivity() {
             var y = 0
             for (channel in 0 until this.opus_manager.channel_lines.size) {
                 for (line_offset in 0 until this.opus_manager.channel_lines[channel].size) {
-                    val stack: MutableList<Pair<Float, List<Int>>> = mutableListOf(Pair(max_width.toFloat(), listOf()))
-                    val key = BeatKey(channel, line_offset, b)
-
-                    while (stack.isNotEmpty()) {
-                        val (new_size, current_position) = stack.removeFirst()
-                        val current_tree = this.opus_manager.get_tree(key, current_position)
-
-                        val current_view = this.cache.getTreeView(y, b, current_position)
-                        val param = current_view!!.layoutParams as ViewGroup.MarginLayoutParams
-
-
-                        if (!current_tree.is_leaf()) {
-                            for (i in 0 until current_tree.size) {
-                                val next_pos = current_position.toMutableList()
-                                next_pos.add(i)
-                                stack.add(Pair(new_size / current_tree.size.toFloat(), next_pos))
-                            }
-
-                            param.width = (new_size * 100.toFloat()).toInt()
-                            param.height = 130
-                        } else {
-                            param.width = (new_size * 100.toFloat()).toInt() - 10
-                            param.height = 120
-                            param.setMargins(5,5,5,5)
-                        }
-
-                        current_view!!.layoutParams = param
-                    }
+                    this.__tick_resize_beat_cell(channel, line_offset, b, max_width)
 
                     y += 1
                 }
             }
+        }
+    }
+
+    fun __tick_resize_beat_cell(channel: Int, line_offset: Int, beat: Int, new_width: Int) {
+        val stack: MutableList<Pair<Float, List<Int>>> = mutableListOf(Pair(new_width.toFloat(), listOf()))
+        val key = BeatKey(channel, line_offset, beat)
+        var y = this.opus_manager.get_y(channel, line_offset)
+        while (stack.isNotEmpty()) {
+            val (new_size, current_position) = stack.removeFirst()
+            val current_tree = this.opus_manager.get_tree(key, current_position)
+
+            val current_view = this.cache.getTreeView(y, beat, current_position)
+            val param = current_view!!.layoutParams as ViewGroup.MarginLayoutParams
+
+
+            if (!current_tree.is_leaf()) {
+                for (i in 0 until current_tree.size) {
+                    val next_pos = current_position.toMutableList()
+                    next_pos.add(i)
+                    stack.add(Pair(new_size / current_tree.size.toFloat(), next_pos))
+                }
+
+                param.width = (new_size * 100.toFloat()).toInt()
+                param.height = 130
+            } else {
+                param.width = (new_size * 100.toFloat()).toInt() - 10
+                param.height = 120
+                param.setMargins(5,5,5,5)
+
+                // TODO: Move this somewhere better
+                val color = if (this.opus_manager.is_reflection(channel, line_offset, beat)) {
+                    R.color.leaf_linked
+                } else if (y % 2 == 0) {
+                    R.color.leaf_even
+                } else {
+                    R.color.leaf_odd
+                }
+                val changeColour = ContextCompat.getColor(current_view.context, color)
+                current_view.setBackgroundColor(changeColour)
+
+            }
+
+            current_view.layoutParams = param
         }
     }
 
@@ -1248,6 +1274,9 @@ class MainActivity : AppCompatActivity() {
         val position = cursor.get_position()
 
         for (view in this.cache.get_all_leafs(cursor.y, cursor.x, position)) {
+            if (view is LinearLayout) {
+                continue
+            }
             val pair = this.opus_manager.get_channel_index(cursor.y)
             val color = if (this.opus_manager.is_reflection(pair.first, pair.second, cursor.x)) {
                 R.color.leaf_linked_selected
@@ -1278,6 +1307,9 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 for (view in this.cache.get_all_leafs(c.first, c.second, c.third)) {
+                    if (view is LinearLayout) {
+                        continue
+                    }
                     val changeColour = ContextCompat.getColor(view.context, color)
                     view.setBackgroundColor(changeColour)
                 }
@@ -1285,6 +1317,10 @@ class MainActivity : AppCompatActivity() {
                 this.cache.unsetCursor()
             }
         }
+    }
+
+    fun tick_update_beat_cell_color(beatkey: BeatKey) {
+
     }
 
     fun setRelative(relative: Boolean) {

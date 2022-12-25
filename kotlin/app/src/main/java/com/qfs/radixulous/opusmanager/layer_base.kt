@@ -141,7 +141,10 @@ open class OpusManagerBase {
 
     open fun unset(beat_key: BeatKey, position: List<Int>) {
         val tree = this.get_tree(beat_key, position)
-        if (tree.is_event()) {
+        if (tree.parent != null) {
+            var index = tree.getIndex()
+            tree.parent!!.divisions.remove(index)
+        } else if (tree.is_event()) {
             tree.unset_event()
         } else {
             tree.empty()

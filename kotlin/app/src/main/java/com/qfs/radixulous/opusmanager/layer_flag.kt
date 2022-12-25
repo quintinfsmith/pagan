@@ -74,6 +74,10 @@ open class FlagLayer : OpusManagerBase() {
         return this.cache.dequeue_change()
     }
 
+    fun flag_beat_change(beat_key: BeatKey) {
+        this.cache.flag_beat_change(beat_key)
+    }
+
     override fun replace_tree(beat_key: BeatKey, position: List<Int>, tree: OpusTree<OpusEvent>) {
         super.replace_tree(beat_key, position, tree)
         this.cache.flag_beat_change(beat_key)

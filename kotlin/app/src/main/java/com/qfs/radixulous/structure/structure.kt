@@ -91,6 +91,20 @@ public class OpusTree<T> {
     fun get_parent(): OpusTree<T>? {
         return this.parent
     }
+    fun getIndex(): Int? {
+        if (this.parent == null) {
+            return null
+        }
+
+        for ((i, node) in this.parent!!.divisions) {
+            if (node == this) {
+                return i
+            }
+        }
+
+        // TODO: Throw error
+        return null
+    }
     fun has_parent(): Boolean {
         return this.parent != null
     }

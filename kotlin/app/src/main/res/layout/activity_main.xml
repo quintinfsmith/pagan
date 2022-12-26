@@ -18,6 +18,7 @@
 
         <TableRow
             android:id="@+id/trMainA"
+            android:background="@color/table_bg"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
@@ -25,6 +26,7 @@
                 android:id="@+id/btnChannelCtrl"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_margin="0px"
                 android:background="@color/channel_button_bg"
                 android:textColor="@color/channel_button_fg"
                 android:padding="6dp"
@@ -65,6 +67,7 @@
                 android:scrollbars="none">
 
                 <LinearLayout
+                    android:background="@color/table_bg"
                     android:id="@+id/llLineLabels"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
@@ -83,6 +86,7 @@
                     android:layout_height="match_parent">
 
                     <TableLayout
+                        android:background="@color/table_bg"
                         android:id="@+id/tlOpusLines"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"

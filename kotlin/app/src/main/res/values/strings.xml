@@ -4,7 +4,7 @@
     <string name="pfx_add">+</string>
     <string name="pfx_log">\u2193</string>
     <string name="pfx_pow">\u2191</string>
-    <string name="empty_note">__</string>
+    <string name="empty_note">  </string>
     <string name="msg_undo_none">Nothing to be done</string>
     <string name="label_channels_button">Chn</string>
 

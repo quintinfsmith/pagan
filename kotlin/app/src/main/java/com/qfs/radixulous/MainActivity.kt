@@ -2,7 +2,6 @@ package com.qfs.radixulous
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.*
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.*
@@ -22,7 +21,7 @@ import kotlinx.android.synthetic.main.contextmenu_row.view.*
 import kotlinx.android.synthetic.main.item_opusbutton.view.*
 import kotlinx.android.synthetic.main.load_project.view.*
 import kotlinx.android.synthetic.main.numberline_item.view.*
-import kotlinx.android.synthetic.main.table_cell_label.view.*
+import kotlinx.android.synthetic.main.table_line_label.view.*
 import java.io.File
 import java.lang.Integer.max
 import com.qfs.radixulous.opusmanager.HistoryLayer as OpusManager
@@ -172,6 +171,7 @@ class MainActivity : AppCompatActivity() {
     private var active_context_menu_index: ContextMenu = ContextMenu.None
     private var linking_beat: BeatKey? = null
     private var relative_mode: Boolean = false
+    private var active_relative_option: Int? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -382,13 +382,10 @@ class MainActivity : AppCompatActivity() {
     fun newColumnLabel() {
         val parent = this.hsvColumnLabels.llColumnLabels
         val headerCellView = LayoutInflater.from(parent.context).inflate(
-            R.layout.table_cell_label,
+            R.layout.table_column_label,
             parent,
             false
         ) as TextView
-        val param = headerCellView.layoutParams as ViewGroup.MarginLayoutParams
-        param.setMargins(0,0,0,0)
-        headerCellView.layoutParams = param
         headerCellView.setBackgroundColor(
             ContextCompat.getColor(headerCellView.context, R.color.label_bg)
         )
@@ -419,11 +416,10 @@ class MainActivity : AppCompatActivity() {
         this.cache.cacheLine(rowView, y)
 
         val rowLabel = LayoutInflater.from(this.svLineLabels.llLineLabels.context).inflate(
-            R.layout.table_cell_label,
+            R.layout.table_line_label,
             this.svLineLabels.llLineLabels,
             false
         )
-
 
         val that = this
         if (channel != 9) {
@@ -453,10 +449,7 @@ class MainActivity : AppCompatActivity() {
             this.setContextMenu(ContextMenu.Line)
         }
 
-        val rl_params = rowLabel.layoutParams as ViewGroup.MarginLayoutParams
-        rl_params.height = 130
-        rl_params.setMargins(0,0,0,0)
-        rowLabel.layoutParams = rl_params
+        rowLabel.layoutParams.height = 125
 
         this.cache.addLineLabel(rowLabel)
         this.svLineLabels.llLineLabels.addView(rowLabel)
@@ -478,10 +471,8 @@ class MainActivity : AppCompatActivity() {
             leafView.setBackgroundColor(
                 if (this.opus_manager.is_reflection(channel_index.first, channel_index.second, x)) {
                     ContextCompat.getColor(leafView.context, R.color.leaf_linked)
-                } else if (y % 2 == 0) {
-                    ContextCompat.getColor(leafView.context, R.color.leaf_even)
                 } else {
-                    ContextCompat.getColor(leafView.context, R.color.leaf_odd)
+                    ContextCompat.getColor(leafView.context, R.color.leaf)
                 }
             )
 
@@ -839,7 +830,6 @@ class MainActivity : AppCompatActivity() {
                 } else {
                     view.llAbsolutePalette.visibility = View.GONE
 
-                    view.llRelativePalette.rgRelOptions.check(R.id.rbAdd)
                     if (current_tree.is_event()) {
                         val event = current_tree.get_event()!!
                         if (event.relative) {
@@ -862,8 +852,14 @@ class MainActivity : AppCompatActivity() {
                             } else {
                                 0
                             }
+
                             view.llRelativePalette.sbRelativeValue.progress = new_progress
-                            view.llRelativePalette.rgRelOptions.check(selected_button)
+                            var button_view: View? = findViewById(selected_button)
+                            if (button_view != null) {
+                                this.apply_relative_option_facade(findViewById(selected_button)!!)
+                            }
+
+                     //       view.llRelativePalette.rgRelOptions.check(selected_button)
                         }
                     }
 
@@ -893,7 +889,7 @@ class MainActivity : AppCompatActivity() {
 
                         override fun onStopTrackingTouch(seek: SeekBar) {
                             val progress = seek.progress
-                            val radio_button: Int = that.llRelativePalette.rgRelOptions.checkedRadioButtonId
+                            val radio_button: Int? = that.active_relative_option
 
                             val cursor = opus_manager.get_cursor()
                             val beatkey = cursor.get_beatkey()
@@ -913,7 +909,6 @@ class MainActivity : AppCompatActivity() {
                                 }
                                 else -> {
                                     0
-                                    // Should be Unreachable
                                 }
                             }
 
@@ -930,41 +925,6 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
                     )
-                    view.rgRelOptions.setOnCheckedChangeListener { _, checkedId ->
-                        val progress = view.llRelativePalette.sbRelativeValue.progress
-
-                        val cursor = this.opus_manager.get_cursor()
-                        val beatkey = cursor.get_beatkey()
-
-                        val new_value = when (checkedId) {
-                            R.id.rbAdd -> {
-                                progress
-                            }
-                            R.id.rbSubtract -> {
-                                0 - progress
-                            }
-                            R.id.rbPow -> {
-                                that.opus_manager.RADIX * progress
-                            }
-                            R.id.rbLog -> {
-                                0 - (that.opus_manager.RADIX * progress)
-                            }
-                            else -> {
-                                0
-                                // Should be Unreachable
-                            }
-                        }
-
-                        val event = OpusEvent(
-                            new_value,
-                            that.opus_manager.RADIX,
-                            beatkey.channel,
-                            true
-                        )
-
-                        that.opus_manager.set_event(beatkey, cursor.position, event)
-                        that.tick()
-                    }
                 }
 
                 view.clButtons.btnSplit?.setOnClickListener {
@@ -1133,18 +1093,12 @@ class MainActivity : AppCompatActivity() {
                     label.textView.text = "P:$instrument"
                 }
 
-                val line_color = if (y % 2 == 0) {
-                    R.color.leaf_even
-                } else {
-                    R.color.leaf_odd
-                }
-
                 for (x in 0 until this.opus_manager.opus_beat_count) {
                     for (leaf in this.cache.get_all_leafs(y, x, listOf())) {
                         if ((leaf as ViewGroup).childCount > 0) {
                             continue
                         }
-                        val changeColour = ContextCompat.getColor(leaf.context, line_color)
+                        val changeColour = ContextCompat.getColor(leaf.context, R.color.leaf)
                         leaf.setBackgroundColor(changeColour)
                     }
                 }
@@ -1210,16 +1164,12 @@ class MainActivity : AppCompatActivity() {
             }
 
             val label_view = this.cache.getColumnLabel(b)
-            val param = label_view.layoutParams as ViewGroup.MarginLayoutParams
-            param.width = (max_width * 100) - 10
-            param.setMargins(5,0,5,0)
-            label_view.layoutParams = param
+            label_view.layoutParams.width = (max_width * 100) - 5
 
             var y = 0
             for (channel in 0 until this.opus_manager.channel_lines.size) {
                 for (line_offset in 0 until this.opus_manager.channel_lines[channel].size) {
                     this.__tick_resize_beat_cell(channel, line_offset, b, max_width)
-
                     y += 1
                 }
             }
@@ -1248,17 +1198,15 @@ class MainActivity : AppCompatActivity() {
                 param.width = (new_size * 100.toFloat()).toInt()
                 param.height = 130
             } else {
-                param.width = (new_size * 100.toFloat()).toInt() - 10
-                param.height = 120
-                param.setMargins(5,5,5,5)
+                param.width = (new_size * 100.toFloat()).toInt() - 5
+                param.height = 125
+                param.setMargins(0,0,5,5)
 
                 // TODO: Move this somewhere better
                 val color = if (this.opus_manager.is_reflection(channel, line_offset, beat)) {
                     R.color.leaf_linked
-                } else if (y % 2 == 0) {
-                    R.color.leaf_even
                 } else {
-                    R.color.leaf_odd
+                    R.color.leaf
                 }
                 val changeColour = ContextCompat.getColor(current_view.context, color)
                 current_view.setBackgroundColor(changeColour)
@@ -1300,10 +1248,8 @@ class MainActivity : AppCompatActivity() {
 
                 val color = if (this.opus_manager.is_reflection(pair.first, pair.second, c.second)) {
                     R.color.leaf_linked
-                } else if (c.first % 2 == 0) {
-                    R.color.leaf_even
                 } else {
-                    R.color.leaf_odd
+                    R.color.leaf
                 }
 
                 for (view in this.cache.get_all_leafs(c.first, c.second, c.third)) {
@@ -1355,4 +1301,57 @@ class MainActivity : AppCompatActivity() {
         //}
 
     }
+
+    fun change_relative_option(view: View) {
+        var progress_bar: SeekBar = findViewById(R.id.sbRelativeValue)
+        var progress = progress_bar.progress
+
+        val cursor = this.opus_manager.get_cursor()
+        val beatkey = cursor.get_beatkey()
+
+        this.apply_relative_option_facade(view)
+
+        var new_value = when (view.id) {
+            R.id.rbSubtract -> {
+                0 - progress
+            }
+            R.id.rbAdd -> {
+                progress
+            }
+            R.id.rbLog -> {
+                0 - (this.opus_manager.RADIX * progress)
+            }
+            R.id.rbPow -> {
+                this.opus_manager.RADIX * progress
+            }
+            else -> {
+                0
+            }
+        }
+
+        val event = OpusEvent(
+            new_value,
+            this.opus_manager.RADIX,
+            beatkey.channel,
+            true
+        )
+
+        this.opus_manager.set_event(beatkey, cursor.position, event)
+        this.tick()
+    }
+
+    fun apply_relative_option_facade(view: View) {
+        if (this.active_relative_option != null) {
+            var old_view: View = findViewById(this.active_relative_option!!)
+            old_view.setBackgroundColor(
+                ContextCompat.getColor(old_view.context, R.color.leaf)
+            )
+        }
+
+        view.setBackgroundColor(
+            ContextCompat.getColor(view.context, R.color.leaf_selected)
+        )
+        this.active_relative_option = view.id
+    }
+
 }

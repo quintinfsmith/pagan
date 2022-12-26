@@ -7,14 +7,14 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="leaf_even">#E4E4E4</color>
-    <color name="leaf_odd">#B3B2B2</color>
+    <color name="leaf">#f0f0f0</color>
     <color name="leaf_linked">#34829C</color>
     <color name="leaf_linked_selected">#19414E</color>
     <color name="leaf_selected">#836C95</color>
     <color name="label_bg">#FF474747</color>
     <color name="label_fg">#FFFFFFFF</color>
-    <color name="channel_button_bg">#ECFF58</color>
+    <color name="channel_button_bg">#BABABA</color>
     <color name="channel_button_fg">#2E2E2E</color>
+    <color name="table_bg">#FF2d2d2d</color>
 
 </resources>

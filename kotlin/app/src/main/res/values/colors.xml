@@ -16,5 +16,7 @@
     <color name="channel_button_bg">#BABABA</color>
     <color name="channel_button_fg">#2E2E2E</color>
     <color name="table_bg">#FF2d2d2d</color>
+    <color name="interface_bg">#f0f0f0</color>
+    <color name="interface_fg">#2a2a2a</color>
 
 </resources>

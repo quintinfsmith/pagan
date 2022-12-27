@@ -32,7 +32,6 @@
             android:orientation="horizontal" >
             <TextView
                 android:id="@+id/rbAdd"
-                android:button="@drawable/radio_add"
                 android:textSize="24sp"
                 android:layout_width="0dp"
                 android:layout_weight="1"
@@ -42,12 +41,12 @@
                 app:layout_constraintEnd_toStartOf="@+id/rbSubtract"
                 android:layout_marginRight="5px"
                 android:onClick="change_relative_option"
-                android:background="@color/leaf"
+                android:background="@color/interface_bg"
+                android:textColor="@color/interface_fg"
                 android:text="@string/pfx_add"/>
 
             <TextView
                 android:id="@+id/rbSubtract"
-                android:button="@drawable/radio_minus"
                 android:textSize="24sp"
                 android:layout_width="0dp"
                 android:layout_weight="1"
@@ -57,13 +56,13 @@
                 app:layout_constraintEnd_toStartOf="@+id/rbPow"
                 android:layout_marginRight="5px"
                 android:onClick="change_relative_option"
-                android:background="@color/leaf"
+                android:background="@color/interface_bg"
+                android:textColor="@color/interface_fg"
                 android:text="@string/pfx_subtract" />
 
 
             <TextView
                 android:id="@+id/rbPow"
-                android:button="@drawable/radio_log"
                 android:textSize="24sp"
                 android:layout_width="0dp"
                 android:layout_weight="1"
@@ -74,11 +73,11 @@
                 android:layout_marginRight="5px"
                 android:text="@string/pfx_log"
                 android:onClick="change_relative_option"
-                android:background="@color/leaf"
+                android:background="@color/interface_bg"
+                android:textColor="@color/interface_fg"
                 />
             <TextView
                 android:id="@+id/rbLog"
-                android:button="@drawable/radio_pow"
                 android:textSize="24sp"
                 android:gravity="center"
                 android:layout_width="0dp"
@@ -86,7 +85,8 @@
                 android:layout_height="wrap_content"
                 app:layout_constraintStart_toEndOf="@+id/rbPow"
                 app:layout_constraintEnd_toEndOf="parent"
-                android:background="@color/leaf"
+                android:background="@color/interface_bg"
+                android:textColor="@color/interface_fg"
                 android:onClick="change_relative_option"
 
                 android:text="@string/pfx_pow" />
@@ -165,37 +165,41 @@
     </LinearLayout>
 
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <LinearLayout
         android:id="@+id/clButtons"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:layout_constraintTop_toBottomOf="@+id/llAbsolutePalette"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        android:background="@color/table_bg"
+        android:padding="5px"
         app:layout_constraintStart_toStartOf="parent">
 
-        <ScrollView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical" />
-        </ScrollView>
-
-        <Button
+        <TextView
             android:id="@+id/btnSplit"
-            android:layout_width="wrap_content"
+            android:textSize="20sp"
+            android:gravity="center"
+            android:background="@color/interface_bg"
+            android:textColor="@color/interface_fg"
+            android:layout_width="0dp"
+            android:layout_weight="1"
             android:layout_height="match_parent"
             android:text="Split"
+            android:layout_marginRight="5px"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <Button
+        <TextView
             android:id="@+id/btnUnset"
-            android:layout_width="wrap_content"
+            android:textSize="20sp"
+            android:gravity="center"
+            android:background="@color/interface_bg"
+            android:textColor="@color/interface_fg"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_marginRight="5px"
             android:layout_height="match_parent"
             android:text="Unset"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -203,9 +207,15 @@
             app:layout_constraintStart_toEndOf="@+id/btnSplit"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <Button
+        <TextView
             android:id="@+id/btnInsert"
-            android:layout_width="wrap_content"
+            android:textSize="20sp"
+            android:gravity="center"
+            android:background="@color/interface_bg"
+            android:textColor="@color/interface_fg"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_marginRight="5px"
             android:layout_height="match_parent"
             android:text="Insert"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -213,14 +223,19 @@
             app:layout_constraintStart_toEndOf="@+id/btnUnset"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <Button
+        <TextView
             android:id="@+id/btnRemove"
-            android:layout_width="wrap_content"
+            android:textSize="20sp"
+            android:gravity="center"
+            android:background="@color/interface_bg"
+            android:textColor="@color/interface_fg"
+            android:layout_width="0dp"
+            android:layout_weight="1"
             android:layout_height="match_parent"
             android:text="Remove"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
-    </androidx.constraintlayout.widget.ConstraintLayout>
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,8 +1,13 @@
 package com.qfs.radixulous.apres
 
+import android.content.Context
+import android.media.midi.*
+import android.os.Build
+import androidx.annotation.RequiresApi
 import java.io.File
 import java.lang.Math.max
 import kotlin.experimental.and
+
 
 interface MIDIEvent {
     abstract fun as_bytes(): ByteArray
@@ -1737,5 +1742,31 @@ fun get_chord_name_from_mi_sf(mi: Byte, sf: Byte): String {
     )
 
     return map[mi_int][sf_int + 7]
+}
+
+
+
+//AppMidiManager.kt
+@RequiresApi(Build.VERSION_CODES.M)
+class AppMidiManager(context : Context) {
+    private external fun startReadingMidi(midiDevice: MidiDevice, portNumber: Int)
+    val mMidiManager : MidiManager = context.getSystemService(Context.MIDI_SERVICE) as MidiManager
+    init {
+        val midiDevices = getMidiDevices(true) // method defined in snippet above
+        if (midiDevices.isNotEmpty()) {
+            mMidiManager.openDevice(midiDevices[0], {
+                startReadingMidi(it, 0)
+            }, null)
+        }
+    }
+
+    private fun getMidiDevices(isOutput: Boolean) : List {
+        if (isOutput) {
+            return mMidiManager.devices.filter { it.outputPortCount > 0 }
+        } else {
+            return mMidiManager.devices.filter { it.inputPortCount > 0 }
+        }
+    }
+
 }
 

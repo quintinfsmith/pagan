@@ -2,7 +2,9 @@ package com.qfs.radixulous.apres
 
 import android.content.Context
 import android.media.midi.*
+import android.media.midi.MidiManager.OnDeviceOpenedListener
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import java.io.File
 import java.lang.Math.max
@@ -13,11 +15,11 @@ interface MIDIEvent {
     abstract fun as_bytes(): ByteArray
 }
 
-fun event_from_bytes(bytes: MutableList<Byte>, default: Byte): MIDIEvent? {
+fun event_from_bytes(bytes: MutableList<Byte>, default: Byte = 0x90.toByte()): MIDIEvent? {
     var output: MIDIEvent? = null
-    var leadbyte = bytes.removeFirst()
-    var realtimes = listOf(0xF1, 0xF, 0xF8, 0xFC, 0xFE, 0xF7)
-    var undefineds = listOf(0xF4, 0xF5, 0xF9, 0xFD)
+    val leadbyte = bytes.removeFirst()
+    val realtimes = listOf(0xF1, 0xF, 0xF8, 0xFC, 0xFE, 0xF7)
+    val undefineds = listOf(0xF4, 0xF5, 0xF9, 0xFD)
 
     if ((leadbyte.toInt() and 0xFF)  in (0..0x7F)) {
         bytes.add(0, leadbyte)
@@ -1564,7 +1566,7 @@ class MIDI {
 
     fun replace_event(event_id: Int, new_midi_event: MIDIEvent) {
         if (!this.events.containsKey(event_id)) {
-            throw Exception("EventNotFound: ${event_id}")
+            throw Exception("EventNotFound: $event_id")
         }
         this.events[event_id] = new_midi_event
     }
@@ -1743,30 +1745,99 @@ fun get_chord_name_from_mi_sf(mi: Byte, sf: Byte): String {
 
     return map[mi_int][sf_int + 7]
 }
-
-
-
-//AppMidiManager.kt
+// Reference code base on https://github.com/android/ndk-samples/tree/main/native-midi
 @RequiresApi(Build.VERSION_CODES.M)
-class AppMidiManager(context : Context) {
-    private external fun startReadingMidi(midiDevice: MidiDevice, portNumber: Int)
-    val mMidiManager : MidiManager = context.getSystemService(Context.MIDI_SERVICE) as MidiManager
+open class MIDIController(var context: Context) {
+    private val midiManager = context.getSystemService(Context.MIDI_SERVICE) as MidiManager
+
+    // Selected Device(s)
+    private var incomingDevice : MidiDevice? = null
+    private var outgoingDevice : MidiDevice? = null
+    private val outgoingPort: MidiInputPort? = null
+
+    private var process_queue: MutableList<MIDIEvent> = mutableListOf()
+
     init {
-        val midiDevices = getMidiDevices(true) // method defined in snippet above
+        val midiDevices = getIncomingDevices() // method defined in snippet above
         if (midiDevices.isNotEmpty()) {
-            mMidiManager.openDevice(midiDevices[0], {
-                startReadingMidi(it, 0)
-            }, null)
+            this.openIncomingDevice(midiDevices[0])
         }
     }
 
-    private fun getMidiDevices(isOutput: Boolean) : List {
-        if (isOutput) {
-            return mMidiManager.devices.filter { it.outputPortCount > 0 }
-        } else {
-            return mMidiManager.devices.filter { it.inputPortCount > 0 }
+    class OpenIncomingDeviceListener : OnDeviceOpenedListener {
+        open external fun startReadingMidi(incomingDevice: MidiDevice?, portNumber: Int)
+        open external fun stopReadingMidi()
+        override fun onDeviceOpened(device: MidiDevice) {
+            this.startReadingMidi(device, 0 /*mPortNumber*/)
         }
     }
 
+    open fun openIncomingDevice(devInfo: MidiDeviceInfo?) {
+        midiManager.openDevice(devInfo, OpenIncomingDeviceListener(), null)
+    }
+
+    open fun closeIncomingDevice() {
+        if (this.incomingDevice != null) {
+            // Native API
+            this.incomingDevice = null
+        }
+    }
+
+    open fun onNoteOn(event: NoteOn) { }
+
+    open fun onNativeMessageReceive(message: ByteArray) {
+        var event = event_from_bytes(message.toMutableList()) ?: return
+        if (event is NoteOn) {
+            this.onNoteOn(event)
+        }
+        this.process_queue.add(event)
+        // Messages are received on some other thread, so switch to the UI thread
+        // before attempting to access the UI
+        // UiThreadStatement.runOnUiThread(Runnable { showReceivedMessage(message) })
+    }
+
+
+    //
+    // Send Device
+    //
+    class OpenOutgoingDeviceListener : OnDeviceOpenedListener {
+        open external fun startWritingMidi(sendDevice: MidiDevice?, portNumber: Int)
+        open external fun stopWritingMidi()
+        override fun onDeviceOpened(device: MidiDevice) {
+            this.startWritingMidi(device, 0 /*mPortNumber*/)
+        }
+    }
+
+    open fun openSendDevice(devInfo: MidiDeviceInfo?) {
+        this.midiManager.openDevice(devInfo, OpenOutgoingDeviceListener(), null)
+    }
+
+    open fun closeSendDevice() {
+        if (this.outgoingDevice != null) {
+            // Native API
+            this.outgoingDevice = null
+        }
+    }
+
+    public fun sendMessage(event: MIDIEvent) {
+        var bytes = event.as_bytes()
+        this.writeMidi(bytes, bytes.size)
+    }
+
+    private fun getOutgoingDevices(): List<MidiDeviceInfo> {
+        return midiManager.devices.filter { it.outputPortCount > 0 }
+    }
+
+    private fun getIncomingDevices() : List<MidiDeviceInfo> {
+        return midiManager.devices.filter { it.inputPortCount > 0 }
+    }
+
+    //
+    // Native API stuff
+    //
+    open fun loadNativeAPI() {
+        System.loadLibrary("native_midi")
+    }
+
+    open external fun writeMidi(data: ByteArray?, length: Int)
 }
-

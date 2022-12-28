@@ -349,6 +349,12 @@ open class CursorLayer() : LinksLayer() {
         this.unlink_beat(this.get_cursor().get_beatkey())
     }
 
+    fun set_event_at_cursor(event: OpusEvent) {
+        var beat_key = this.get_cursor().get_beatkey()
+        var position = this.get_cursor().get_position()
+        this.set_event(beat_key, position, event)
+    }
+
     fun insert_after_cursor() {
         var beat_key = this.get_cursor().get_beatkey()
         var position = this.get_cursor().get_position()

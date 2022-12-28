@@ -1,10 +1,13 @@
 package com.qfs.radixulous
 
+import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.view.*
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.*
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.google.android.material.chip.Chip
@@ -25,6 +28,9 @@ import kotlinx.android.synthetic.main.table_line_label.view.*
 import java.io.File
 import java.lang.Integer.max
 import com.qfs.radixulous.opusmanager.HistoryLayer as OpusManager
+import com.qfs.radixulous.apres.MIDIController
+import com.qfs.radixulous.apres.NoteOn
+import com.qfs.radixulous.MidiPlayer
 
 enum class ContextMenu {
     Leaf,
@@ -172,11 +178,15 @@ class MainActivity : AppCompatActivity() {
     private var linking_beat: BeatKey? = null
     private var relative_mode: Boolean = false
     private var active_relative_option: Int? = null
+    private var midi_player: MidiPlayer = MidiPlayer()
+    lateinit var midi_controller: MIDIController
 
+    @RequiresApi(Build.VERSION_CODES.M)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        this.midi_controller = RadMidiController(this.opus_manager, window.decorView.rootView.context)
         // calling this activity's function to
         // use ActionBar utility methods
         val actionBar = supportActionBar!!
@@ -208,7 +218,8 @@ class MainActivity : AppCompatActivity() {
             this.showChannelPopup(it)
         }
 
-        this.load("/data/data/com.qfs.radixulous/projects/test")
+        //this.load("/data/data/com.qfs.radixulous/projects/test")
+        this.newProject()
     }
 
     fun load(path: String) {
@@ -772,6 +783,7 @@ class MainActivity : AppCompatActivity() {
 
                             that.opus_manager.set_event(beatkey, position, event)
 
+                            //that.midi_player.play(event.note)
                             that.tick()
                         }
                     }
@@ -811,6 +823,7 @@ class MainActivity : AppCompatActivity() {
 
                             that.opus_manager.set_event(beatkey, position, event)
 
+                            //that.midi_player.play(event.note)
                             that.tick()
                         }
                     }
@@ -819,12 +832,13 @@ class MainActivity : AppCompatActivity() {
                     val numberLine = view.llAbsolutePalette.clNumberLine.row
                     for (i in 0 until this.opus_manager.RADIX) {
                         val leafView = LayoutInflater.from(numberLine.context).inflate(
-                            R.layout.numberline_item,
+                            R.layout.button_standard,
                             numberLine,
                             false
                         )
 
-                        leafView.tv.text = get_number_string(i, this.opus_manager.RADIX, 2)
+                        (leafView as TextView).text = get_number_string(i, this.opus_manager.RADIX, 2)
+
                         numberLine.addView(leafView)
                     }
                 } else {
@@ -867,12 +881,12 @@ class MainActivity : AppCompatActivity() {
                     val numberLine = view.llRelativePalette.tlNumberLineRel.rowRel
                     for (i in 0 until this.opus_manager.RADIX) {
                         val leafView = LayoutInflater.from(numberLine.context).inflate(
-                            R.layout.numberline_item,
+                            R.layout.button_standard,
                             numberLine,
                             false
                         )
 
-                        leafView.tv.text = get_number_string(i, this.opus_manager.RADIX, 2)
+                        (leafView as TextView).text = get_number_string(i, this.opus_manager.RADIX, 2)
                         numberLine.addView(leafView)
                     }
 
@@ -1355,3 +1369,18 @@ class MainActivity : AppCompatActivity() {
     }
 
 }
+
+
+@RequiresApi(Build.VERSION_CODES.M)
+class RadMidiController(var opus_manager: OpusManager, context: Context): MIDIController(context) {
+    override fun onNoteOn(event: NoteOn) {
+        var mevent = OpusEvent(
+            event.note,
+            this.opus_manager.RADIX,
+            event.channel,
+            false
+        )
+        this.opus_manager.set_event_at_cursor(mevent)
+    }
+}
+

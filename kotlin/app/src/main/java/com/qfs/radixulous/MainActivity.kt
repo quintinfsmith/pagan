@@ -1117,7 +1117,6 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
 
-
                 y += 1
 
             }
@@ -1177,8 +1176,13 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
+            // Kludge: Need to remove/reattach label so it will shrink to a smaller
+            // size if necessary
             val label_view = this.cache.getColumnLabel(b)
+            var label_row = label_view.parent as ViewGroup
+            label_row.removeView(label_view)
             label_view.layoutParams.width = (max_width * 100) - 5
+            label_row.addView(label_view,b)
 
             var y = 0
             for (channel in 0 until this.opus_manager.channel_lines.size) {
@@ -1200,7 +1204,6 @@ class MainActivity : AppCompatActivity() {
 
             val current_view = this.cache.getTreeView(y, beat, current_position)
             val param = current_view!!.layoutParams as ViewGroup.MarginLayoutParams
-
 
             if (!current_tree.is_leaf()) {
                 for (i in 0 until current_tree.size) {
@@ -1224,7 +1227,6 @@ class MainActivity : AppCompatActivity() {
                 }
                 val changeColour = ContextCompat.getColor(current_view.context, color)
                 current_view.setBackgroundColor(changeColour)
-
             }
 
             current_view.layoutParams = param

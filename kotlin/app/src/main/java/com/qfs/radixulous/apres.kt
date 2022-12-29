@@ -1745,6 +1745,7 @@ fun get_chord_name_from_mi_sf(mi: Byte, sf: Byte): String {
 
     return map[mi_int][sf_int + 7]
 }
+
 // Reference code base on https://github.com/android/ndk-samples/tree/main/native-midi
 @RequiresApi(Build.VERSION_CODES.M)
 open class MIDIController(var context: Context) {
@@ -1786,7 +1787,7 @@ open class MIDIController(var context: Context) {
     open fun onNativeMessageReceive(message: ByteArray) {
         var event = event_from_bytes(message.toMutableList()) ?: return
         when (event) {
-            is SequenceNumber -> { this.onSequenceNumber(event) }
+            is SequenceNumber -> {this.onSequenceNumber(event) }
             is Text -> { this.onText(event) }
             is CopyRightNotice -> { this.onCopyRightNotice(event) }
             is TrackName -> { this.onTrackName(event) }
@@ -1897,10 +1898,7 @@ open class MIDIController(var context: Context) {
         // UiThreadStatement.runOnUiThread(Runnable { showReceivedMessage(message) })
     }
 
-
-    //
     // Send Device
-    //
     class OpenOutgoingDeviceListener : OnDeviceOpenedListener {
         open external fun startWritingMidi(sendDevice: MidiDevice?, portNumber: Int)
         open external fun stopWritingMidi()
@@ -1920,7 +1918,7 @@ open class MIDIController(var context: Context) {
         }
     }
 
-    public fun sendMessage(event: MIDIEvent) {
+    fun sendMessage(event: MIDIEvent) {
         var bytes = event.as_bytes()
         this.writeMidi(bytes, bytes.size)
     }

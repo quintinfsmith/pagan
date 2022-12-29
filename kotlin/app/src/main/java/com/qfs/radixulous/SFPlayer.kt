@@ -3,11 +3,7 @@ package com.qfs.radixulous
 import android.media.AudioFormat
 import android.media.AudioManager
 import android.media.AudioTrack
-import android.os.Bundle
 import android.os.Handler
-import android.util.Log
-import androidx.appcompat.app.AppCompatActivity
-import kotlin.experimental.and
 import kotlin.math.sin
 import kotlin.math.pow
 
@@ -17,7 +13,7 @@ class MidiPlayer {
     private val numSamples = duration * sampleRate
     private val sample = DoubleArray(numSamples)
     private val generatedSnd = ByteArray( numSamples * 2)
-    var handler: Handler = Handler()
+ //   var handler: Handler = Handler()
     var BASE_FREQ = 8.175798915643707
 
     fun play(midi_note: Int) {

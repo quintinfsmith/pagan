@@ -23,6 +23,18 @@
         app:layout_constraintTop_toBottomOf="@+id/sRelative"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" >
+        <com.qfs.radixulous.NumberSelector xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:custom="http://schemas.android.com/apk/res-auto"
+            android:id="@+id/nsRelOctave"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/table_bg"
+            custom:active_bg="@color/leaf_selected"
+            custom:active_fg="#000000"
+            custom:button_bg="#efefef"
+            custom:button_fg="#000000"
+            custom:size="12"/>
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -60,7 +72,6 @@
                 android:textColor="@color/interface_fg"
                 android:text="@string/pfx_subtract" />
 
-
             <TextView
                 android:id="@+id/rbPow"
                 android:textSize="24sp"
@@ -71,7 +82,7 @@
                 app:layout_constraintStart_toEndOf="@+id/rbSubtract"
                 app:layout_constraintEnd_toStartOf="@+id/rbLog"
                 android:layout_marginRight="5px"
-                android:text="@string/pfx_log"
+                android:text="@string/pfx_pow"
                 android:onClick="change_relative_option"
                 android:background="@color/interface_bg"
                 android:textColor="@color/interface_fg"
@@ -88,8 +99,7 @@
                 android:background="@color/interface_bg"
                 android:textColor="@color/interface_fg"
                 android:onClick="change_relative_option"
-
-                android:text="@string/pfx_pow" />
+                android:text="@string/pfx_log" />
         </LinearLayout>
 
         <TableLayout

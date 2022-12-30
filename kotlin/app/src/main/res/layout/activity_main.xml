@@ -11,7 +11,6 @@
         android:id="@+id/tlMain"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:stretchColumns="*"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
@@ -89,8 +88,7 @@
                         android:background="@color/table_bg"
                         android:id="@+id/tlOpusLines"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:stretchColumns="*" />
+                        android:layout_height="wrap_content" />
                 </HorizontalScrollView>
             </ScrollView>
         </TableRow>

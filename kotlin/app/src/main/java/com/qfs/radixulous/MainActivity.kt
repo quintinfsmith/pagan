@@ -1,9 +1,11 @@
 package com.qfs.radixulous
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.*
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.*
@@ -16,21 +18,18 @@ import com.qfs.radixulous.opusmanager.OpusEvent
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.activity_main.view.*
 import kotlinx.android.synthetic.main.channel_ctrl.view.*
-import kotlinx.android.synthetic.main.contextmenu_cell.*
 import kotlinx.android.synthetic.main.contextmenu_cell.view.*
 import kotlinx.android.synthetic.main.contextmenu_column.view.*
 import kotlinx.android.synthetic.main.contextmenu_linking.view.*
 import kotlinx.android.synthetic.main.contextmenu_row.view.*
 import kotlinx.android.synthetic.main.item_opusbutton.view.*
 import kotlinx.android.synthetic.main.load_project.view.*
-import kotlinx.android.synthetic.main.numberline_item.view.*
 import kotlinx.android.synthetic.main.table_line_label.view.*
 import java.io.File
 import java.lang.Integer.max
 import com.qfs.radixulous.opusmanager.HistoryLayer as OpusManager
 import com.qfs.radixulous.apres.MIDIController
 import com.qfs.radixulous.apres.NoteOn
-import com.qfs.radixulous.MidiPlayer
 
 enum class ContextMenu {
     Leaf,
@@ -46,6 +45,19 @@ class ViewCache {
     var column_label_cache: MutableList<View> = mutableListOf()
     var _cursor: Triple<Int, Int, List<Int>>? = null
     private var active_context_menu_view: View? = null
+    var column_widths: MutableList<Int> = mutableListOf()
+    fun set_column_width(x: Int, size: Int) {
+        this.column_widths[x] = size
+    }
+    fun get_column_width(x: Int): Int {
+        return this.column_widths[x]
+    }
+    fun add_column_width(x: Int) {
+        this.column_widths.add(x, 0)
+    }
+    fun remove_column_width(x: Int): Int {
+        return this.column_widths.removeAt(x)
+    }
 
     fun get_all_leafs(y: Int, x: Int, position: List<Int>): List<View> {
         val output: MutableList<View> = mutableListOf()
@@ -286,11 +298,14 @@ class MainActivity : AppCompatActivity() {
         actionBar!!.title = "opus$i"
 
         this.setContextMenu(ContextMenu.Leaf)
+        this.tick()
     }
 
     private fun takedownCurrent() {
         this.setContextMenu(ContextMenu.None)
         this.tlOpusLines.removeAllViews()
+        this.llLineLabels.removeAllViews()
+        this.llColumnLabels.removeAllViews()
         this.cache = ViewCache()
     }
 
@@ -587,6 +602,7 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     fun setContextMenu(menu_index: ContextMenu) {
         this.active_context_menu_index = menu_index
         val view_to_remove = this.cache.getActiveContextMenu()
@@ -843,7 +859,6 @@ class MainActivity : AppCompatActivity() {
                     }
                 } else {
                     view.llAbsolutePalette.visibility = View.GONE
-
                     if (current_tree.is_event()) {
                         val event = current_tree.get_event()!!
                         if (event.relative) {
@@ -940,6 +955,13 @@ class MainActivity : AppCompatActivity() {
                     }
                     )
                 }
+
+                val that = this
+                view.llRelativePalette.nsRelOctave.setOnTouchListener { it: View, motionEvent: MotionEvent ->
+                    that.change_relative_octave((it as NumberSelector).getState())
+                    true
+                }
+
 
                 view.clButtons.btnSplit?.setOnClickListener {
                     this.opus_manager.split_tree_at_cursor()
@@ -1135,9 +1157,11 @@ class MainActivity : AppCompatActivity() {
                         this.buildTreeView(rowView, y, index, listOf())
                     }
                     updated_beats.add(index)
+                    this.cache.add_column_width(index)
                 }
                 0 -> {
                     this.cache.detachColumnLabel()
+                    this.cache.remove_column_width(index)
                     for (y in 0 until this.opus_manager.line_count()) {
                         this.cache.removeBeatView(y, index)
                     }
@@ -1171,18 +1195,10 @@ class MainActivity : AppCompatActivity() {
             for (channel in 0 until this.opus_manager.channel_lines.size) {
                 for (line_offset in 0 until this.opus_manager.channel_lines[channel].size) {
                     val tree = this.opus_manager.get_beat_tree(BeatKey(channel, line_offset, b))
-                    val size = tree.size * tree.get_max_child_weight()
+                    val size = max(1, tree.size) * tree.get_max_child_weight()
                     max_width = max(max_width, size)
                 }
             }
-
-            // Kludge: Need to remove/reattach label so it will shrink to a smaller
-            // size if necessary
-            val label_view = this.cache.getColumnLabel(b)
-            var label_row = label_view.parent as ViewGroup
-            label_row.removeView(label_view)
-            label_view.layoutParams.width = (max_width * 100) - 5
-            label_row.addView(label_view,b)
 
             var y = 0
             for (channel in 0 until this.opus_manager.channel_lines.size) {
@@ -1191,7 +1207,23 @@ class MainActivity : AppCompatActivity() {
                     y += 1
                 }
             }
+
+            this.cache.set_column_width(b, max_width)
+
+            this.__tick_update_column_label_size(b)
         }
+    }
+
+    fun __tick_update_column_label_size(beat: Int) {
+        var width = this.cache.get_column_width(beat)
+        // Kludge: Need to remove/reattach label so it will shrink to a smaller
+        // size if necessary
+        val label_view = this.cache.getColumnLabel(beat)
+        var label_row = label_view.parent as ViewGroup
+        label_row.removeView(label_view)
+        label_view.layoutParams.width = (width * 100) - 5
+        label_row.addView(label_view, beat)
+
     }
 
     fun __tick_resize_beat_cell(channel: Int, line_offset: Int, beat: Int, new_width: Int) {
@@ -1344,6 +1376,43 @@ class MainActivity : AppCompatActivity() {
                 0
             }
         }
+
+        val event = OpusEvent(
+            new_value,
+            this.opus_manager.RADIX,
+            beatkey.channel,
+            true
+        )
+
+        this.opus_manager.set_event(beatkey, cursor.position, event)
+        this.tick()
+    }
+
+    fun change_relative_octave(progress: Int) {
+        val radio_button: Int? = this.active_relative_option
+        Log.e("AAA", "get: $progress")
+
+        val cursor = opus_manager.get_cursor()
+        val beatkey = cursor.get_beatkey()
+
+        val new_value = when (radio_button) {
+            R.id.rbAdd -> {
+                progress
+            }
+            R.id.rbSubtract -> {
+                0 - progress
+            }
+            R.id.rbPow -> {
+                this.opus_manager.RADIX * progress
+            }
+            R.id.rbLog -> {
+                0 - (this.opus_manager.RADIX * progress)
+            }
+            else -> {
+                0
+            }
+        }
+
 
         val event = OpusEvent(
             new_value,

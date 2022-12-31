@@ -375,34 +375,43 @@ class MainActivity : AppCompatActivity() {
             true
         )
 
+        var close_btn: ImageButton = popupView.findViewById(R.id.btnCloseLoadProject)
+        close_btn.setOnTouchListener { it: View, motionEvent: MotionEvent ->
+            popupWindow.dismiss()
+            true
+        }
+
         val directory = File(projects_dir)
         if (!directory.isDirectory) {
             if (! directory.mkdirs()) {
                 throw Exception("Could not make directory")
             }
         }
+
         for (file_name in directory.list()!!) {
             val file = File("$projects_dir/$file_name")
             if (!file.isDirectory) {
                 continue
             }
+
             // TODO: Check if directory is project directory
 
-            val row = TextView(popupView.svProjectList.llProjectList.context)
-            row.text = file_name
+            val row = LayoutInflater.from(popupView.svProjectList.llProjectList.context).inflate(
+                R.layout.loadmenu_item,
+                popupView.svProjectList.llProjectList,
+                false
+            ) as ViewGroup
+            (row.getChildAt(0) as TextView).text = file_name
             row.setOnClickListener {
                 this.takedownCurrent()
                 this.load("$projects_dir/$file_name")
                 popupWindow.dismiss()
             }
+
             popupView.svProjectList.llProjectList.addView(row)
         }
 
         popupWindow.showAtLocation(window.decorView.rootView, Gravity.CENTER, 0, 0)
-
-        popupView.setOnClickListener {
-            popupWindow.dismiss()
-        }
     }
 
     fun newColumnLabel() {

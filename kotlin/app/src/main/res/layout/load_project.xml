@@ -1,33 +1,47 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
     android:layout_width="match_parent"
     android:background="#FFefefef"
     android:layout_height="match_parent">
 
-    <ImageButton
-        android:id="@+id/btnCloseLoadProject"
-        android:src="@drawable/ic_undo"
-        android:layout_height="32dp"
-        android:layout_width="32dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        android:contentDescription="TODO" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/purple_500"
+        android:orientation="horizontal">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/white"
+            android:textSize="24sp"
+            android:layout_weight="1"
+            android:text="Load Project..." />
+
+        <ImageButton
+            android:id="@+id/btnCloseLoadProject"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:contentDescription="Cancel"
+            android:background="@color/purple_500"
+
+            android:src="@drawable/ic_baseline_close_24" />
+    </LinearLayout>
 
 
     <ScrollView
         android:id="@+id/svProjectList"
-        app:layout_constraintTop_toBottomOf="@+id/btnCloseLoadProject"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_weight="1"
         android:background="#FFafafaf"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="0dp">
         <LinearLayout
             android:id="@+id/llProjectList"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:orientation="vertical" />
     </ScrollView>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+</LinearLayout>

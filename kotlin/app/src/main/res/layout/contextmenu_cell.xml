@@ -23,24 +23,13 @@
         app:layout_constraintTop_toBottomOf="@+id/sRelative"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" >
-        <com.qfs.radixulous.NumberSelector xmlns:android="http://schemas.android.com/apk/res/android"
-            xmlns:custom="http://schemas.android.com/apk/res-auto"
-            android:id="@+id/nsRelOctave"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@color/table_bg"
-            custom:active_bg="@color/leaf_selected"
-            custom:active_fg="#000000"
-            custom:button_bg="#efefef"
-            custom:button_fg="#000000"
-            custom:size="12"/>
+
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@color/table_bg"
-            android:layout_marginTop="5px"
-            android:layout_marginBottom="5px"
+            android:paddingTop="5px"
             android:orientation="horizontal" >
             <TextView
                 android:id="@+id/rbAdd"
@@ -102,29 +91,23 @@
                 android:text="@string/pfx_log" />
         </LinearLayout>
 
-        <TableLayout
-            android:id="@+id/tlNumberLineRel"
+        <com.qfs.radixulous.NumberSelector xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:custom="http://schemas.android.com/apk/res-auto"
+            android:id="@+id/nsRelativeValue"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/rgRelOptions"
-            android:stretchColumns="*">
-            <TableRow android:id="@+id/rowRel" />
-        </TableLayout>
-
-        <SeekBar
-            android:id="@+id/sbRelativeValue"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:background="@color/table_bg"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/llNumberLineRel"
-            android:max="11"
-            android:min="0"
-            android:paddingTop="8dp"
-            android:paddingBottom="8dp" />
+            android:paddingTop="5px"
+            custom:active_bg="@color/leaf_selected"
+            custom:active_fg="#000000"
+            custom:button_bg="#efefef"
+            custom:button_fg="#000000"
+            custom:min="0"
+            custom:max="11"/>
     </LinearLayout>
 
 
@@ -137,41 +120,39 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/llRelativePalette" >
 
-        <SeekBar
-            android:id="@+id/sbOctave"
+        <com.qfs.radixulous.NumberSelector xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:custom="http://schemas.android.com/apk/res-auto"
+            android:id="@+id/nsOctave"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:background="@color/table_bg"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            android:max="11"
-            android:min="0"
-            android:paddingTop="8dp"
-            android:paddingBottom="8dp" />
+            android:paddingTop="5px"
+            custom:active_bg="@color/leaf_selected"
+            custom:active_fg="#000000"
+            custom:button_bg="#efefef"
+            custom:button_fg="#000000"
+            custom:min="0"
+            custom:max="11"/>
 
-        <TableLayout
-            android:id="@+id/clNumberLine"
+        <com.qfs.radixulous.NumberSelector xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:custom="http://schemas.android.com/apk/res-auto"
+            android:id="@+id/nsOffset"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:background="@color/table_bg"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/sbOctave"
-            android:stretchColumns="*">
-            <TableRow android:id="@+id/row" />
-        </TableLayout>
-
-        <SeekBar
-            android:id="@+id/sbOffset"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/clNumberLine"
-            android:max="11"
-            android:min="0"
-            android:paddingTop="8dp"
-            android:paddingBottom="8dp" />
-
+            app:layout_constraintTop_toBottomOf="@+id/nsOctave"
+            android:paddingTop="5px"
+            custom:active_bg="@color/leaf_selected"
+            custom:active_fg="#000000"
+            custom:button_bg="#efefef"
+            custom:button_fg="#000000"
+            custom:min="0"
+            custom:max="11"/>
     </LinearLayout>
 
 
@@ -183,7 +164,8 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:background="@color/table_bg"
-        android:padding="5px"
+        android:paddingTop="5px"
+        android:paddingBottom="5px"
         app:layout_constraintStart_toStartOf="parent">
 
         <TextView

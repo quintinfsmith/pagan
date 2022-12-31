@@ -710,6 +710,10 @@ class MainActivity : AppCompatActivity() {
                     false
                 )
 
+                this.llContextMenu.addView(view)
+                this.cache.setActiveContextMenu(view)
+                this.active_relative_option = null
+
                 val current_tree = this.opus_manager.get_tree_at_cursor()
                 if (current_tree.is_event()) {
                     this.relative_mode = current_tree.get_event()!!.relative
@@ -759,103 +763,73 @@ class MainActivity : AppCompatActivity() {
                     if (current_tree.is_event()) {
                         val event = current_tree.get_event()!!
                         if (!event.relative) {
-                            view.sbOffset.progress = event.note % event.radix
-                            view.sbOctave.progress = event.note / event.radix
+                            view.nsOffset.setState(event.note % event.radix)
+                            view.nsOctave.setState(event.note / event.radix)
                         }
                     }
 
-                    val that = this
-                    view.llAbsolutePalette.sbOffset?.setOnSeekBarChangeListener(object :
-                        SeekBar.OnSeekBarChangeListener {
-                        override fun onProgressChanged(
-                            seek: SeekBar,
-                            progress: Int,
-                            fromUser: Boolean
-                        ) {
+                    view.llAbsolutePalette.nsOffset?.setOnTouchListener { it: View, motionEvent: MotionEvent ->
+                        val progress = (it as NumberSelector).getState()!!
+
+                        val cursor = this.opus_manager.get_cursor()
+                        val position = cursor.position
+                        val beatkey = cursor.get_beatkey()
+
+                        val event = if (current_tree.is_event()) {
+                            val event = current_tree.get_event()!!
+                            val old_octave = event.note / event.radix
+                            event.note = (old_octave * event.radix) + progress
+
+                            event
+                        } else {
+                            OpusEvent(
+                                progress,
+                                opus_manager.RADIX,
+                                beatkey.channel,
+                                false
+                            )
                         }
 
-                        override fun onStartTrackingTouch(seek: SeekBar) {}
-                        override fun onStopTrackingTouch(seek: SeekBar) {
-                            val progress = seek.progress
-
-                            val cursor = that.opus_manager.get_cursor()
-                            val position = cursor.position
-                            val beatkey = cursor.get_beatkey()
-
-                            val event = if (current_tree.is_event()) {
-                                val event = current_tree.get_event()!!
-                                val old_octave = event.note / event.radix
-                                event.note = (old_octave * event.radix) + progress
-
-                                event
-                            } else {
-                                OpusEvent(
-                                    progress,
-                                    opus_manager.RADIX,
-                                    beatkey.channel,
-                                    false
-                                )
-                            }
-
-                            that.opus_manager.set_event(beatkey, position, event)
-
-                            //that.midi_player.play(event.note)
-                            that.tick()
+                        this.opus_manager.set_event(beatkey, position, event)
+                        if (view.llAbsolutePalette.nsOctave.getState() == null) {
+                            view.llAbsolutePalette.nsOctave.setState(event.note / event.radix)
                         }
+
+                        //that.midi_player.play(event.note)
+                        this.tick()
+
+                        true
                     }
-                    )
 
+                    view.llAbsolutePalette.nsOctave?.setOnTouchListener { it: View, motionEvent: MotionEvent ->
+                        val progress = (it as NumberSelector).getState()!!
 
-                    view.llAbsolutePalette.sbOctave?.setOnSeekBarChangeListener(object :
-                        SeekBar.OnSeekBarChangeListener {
-                        override fun onProgressChanged(
-                            seek: SeekBar,
-                            progress: Int,
-                            fromUser: Boolean
-                        ) {
+                        val cursor = opus_manager.get_cursor()
+                        val position = cursor.position
+                        val beatkey = cursor.get_beatkey()
+
+                        val event = if (current_tree.is_event()) {
+                            val event = current_tree.get_event()!!
+                            event.note = (progress * event.radix) + (event.note % event.radix)
+                            event
+                        } else {
+                            OpusEvent(
+                                progress * opus_manager.RADIX,
+                                opus_manager.RADIX,
+                                beatkey.channel,
+                                false
+                            )
                         }
 
-                        override fun onStartTrackingTouch(seek: SeekBar) {}
-
-                        override fun onStopTrackingTouch(seek: SeekBar) {
-                            val progress = seek.progress
-
-                            val cursor = opus_manager.get_cursor()
-                            val position = cursor.position
-                            val beatkey = cursor.get_beatkey()
-
-                            val event = if (current_tree.is_event()) {
-                                val event = current_tree.get_event()!!
-                                event.note = (progress * event.radix) + (event.note % event.radix)
-                                event
-                            } else {
-                                OpusEvent(
-                                    progress * opus_manager.RADIX,
-                                    opus_manager.RADIX,
-                                    beatkey.channel,
-                                    false
-                                )
-                            }
-
-                            that.opus_manager.set_event(beatkey, position, event)
-
-                            //that.midi_player.play(event.note)
-                            that.tick()
+                        this.opus_manager.set_event(beatkey, position, event)
+                        if (view.llAbsolutePalette.nsOffset.getState() == null) {
+                            view.llAbsolutePalette.nsOffset.setState(event.note % event.radix)
                         }
-                    }
-                    )
 
-                    val numberLine = view.llAbsolutePalette.clNumberLine.row
-                    for (i in 0 until this.opus_manager.RADIX) {
-                        val leafView = LayoutInflater.from(numberLine.context).inflate(
-                            R.layout.button_standard,
-                            numberLine,
-                            false
-                        )
+                        //that.midi_player.play(event.note)
+                        this.tick()
 
-                        (leafView as TextView).text = get_number_string(i, this.opus_manager.RADIX, 2)
-
-                        numberLine.addView(leafView)
+                        true
                     }
                 } else {
                     view.llAbsolutePalette.visibility = View.GONE
@@ -882,85 +856,24 @@ class MainActivity : AppCompatActivity() {
                                 0
                             }
 
-                            view.llRelativePalette.sbRelativeValue.progress = new_progress
-                            var button_view: View? = findViewById(selected_button)
+                            view.llRelativePalette.nsRelativeValue.setState(new_progress)
+                            var button_view: View? = view.findViewById(selected_button)
+                            Log.e("AAA", "$button_view")
                             if (button_view != null) {
-                                this.apply_relative_option_facade(findViewById(selected_button)!!)
+                                this.change_relative_option(button_view)
                             }
 
                      //       view.llRelativePalette.rgRelOptions.check(selected_button)
                         }
                     }
-
-
-                    val numberLine = view.llRelativePalette.tlNumberLineRel.rowRel
-                    for (i in 0 until this.opus_manager.RADIX) {
-                        val leafView = LayoutInflater.from(numberLine.context).inflate(
-                            R.layout.button_standard,
-                            numberLine,
-                            false
-                        )
-
-                        (leafView as TextView).text = get_number_string(i, this.opus_manager.RADIX, 2)
-                        numberLine.addView(leafView)
+                    view.llRelativePalette.nsRelativeValue.setOnTouchListener { it: View, motionEvent: MotionEvent ->
+                        this.change_relative_value((it as NumberSelector).getState()!!)
+                        true
                     }
 
-                    val that = this
-                    view.llRelativePalette.sbRelativeValue?.setOnSeekBarChangeListener(object :
-                        SeekBar.OnSeekBarChangeListener {
-                        override fun onProgressChanged(
-                            seek: SeekBar,
-                            progress: Int,
-                            fromUser: Boolean
-                        ) { }
 
-                        override fun onStartTrackingTouch(seek: SeekBar) {}
-
-                        override fun onStopTrackingTouch(seek: SeekBar) {
-                            val progress = seek.progress
-                            val radio_button: Int? = that.active_relative_option
-
-                            val cursor = opus_manager.get_cursor()
-                            val beatkey = cursor.get_beatkey()
-
-                            val new_value = when (radio_button) {
-                                R.id.rbAdd -> {
-                                    progress
-                                }
-                                R.id.rbSubtract -> {
-                                    0 - progress
-                                }
-                                R.id.rbPow -> {
-                                    that.opus_manager.RADIX * progress
-                                }
-                                R.id.rbLog -> {
-                                    0 - (that.opus_manager.RADIX * progress)
-                                }
-                                else -> {
-                                    0
-                                }
-                            }
-
-
-                            val event = OpusEvent(
-                                new_value,
-                                that.opus_manager.RADIX,
-                                beatkey.channel,
-                                true
-                            )
-
-                            that.opus_manager.set_event(beatkey, cursor.position, event)
-                            that.tick()
-                        }
-                    }
-                    )
                 }
 
-                val that = this
-                view.llRelativePalette.nsRelOctave.setOnTouchListener { it: View, motionEvent: MotionEvent ->
-                    that.change_relative_octave((it as NumberSelector).getState())
-                    true
-                }
 
 
                 view.clButtons.btnSplit?.setOnClickListener {
@@ -996,13 +909,8 @@ class MainActivity : AppCompatActivity() {
                     }
                     this.tick()
                 }
-
-
-
-                this.llContextMenu.addView(view)
-                this.cache.setActiveContextMenu(view)
-
             }
+
             ContextMenu.Linking -> {
                 val view = LayoutInflater.from(this.llContextMenu.context).inflate(
                     R.layout.contextmenu_linking,
@@ -1351,13 +1259,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun change_relative_option(view: View) {
-        var progress_bar: SeekBar = findViewById(R.id.sbRelativeValue)
-        var progress = progress_bar.progress
+        var progress_bar: NumberSelector = findViewById(R.id.nsRelativeValue)
+        var progress = progress_bar.getState() ?: 0
 
         val cursor = this.opus_manager.get_cursor()
         val beatkey = cursor.get_beatkey()
-
-        this.apply_relative_option_facade(view)
 
         var new_value = when (view.id) {
             R.id.rbSubtract -> {
@@ -1385,12 +1291,13 @@ class MainActivity : AppCompatActivity() {
         )
 
         this.opus_manager.set_event(beatkey, cursor.position, event)
+
+        this.apply_relative_option_facade(view)
         this.tick()
     }
 
-    fun change_relative_octave(progress: Int) {
+    fun change_relative_value(progress: Int) {
         val radio_button: Int? = this.active_relative_option
-        Log.e("AAA", "get: $progress")
 
         val cursor = opus_manager.get_cursor()
         val beatkey = cursor.get_beatkey()
@@ -1409,10 +1316,11 @@ class MainActivity : AppCompatActivity() {
                 0 - (this.opus_manager.RADIX * progress)
             }
             else -> {
-                0
+                this.active_relative_option = R.id.rbAdd
+                this.apply_relative_option_facade(findViewById(R.id.rbAdd))
+                progress
             }
         }
-
 
         val event = OpusEvent(
             new_value,

@@ -33,22 +33,18 @@
             android:orientation="horizontal" >
             <TextView
                 android:id="@+id/rbAdd"
-                android:textSize="24sp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/rbSubtract"
+                style="@style/buttonStyle"
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
-                android:gravity="center"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/rbSubtract"
                 android:layout_marginRight="5px"
                 android:onClick="change_relative_option"
-                android:background="@color/interface_bg"
-                android:textColor="@color/interface_fg"
                 android:text="@string/pfx_add"/>
 
             <TextView
                 android:id="@+id/rbSubtract"
-                android:textSize="24sp"
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:gravity="center"
@@ -57,13 +53,11 @@
                 app:layout_constraintEnd_toStartOf="@+id/rbPow"
                 android:layout_marginRight="5px"
                 android:onClick="change_relative_option"
-                android:background="@color/interface_bg"
-                android:textColor="@color/interface_fg"
+                style="@style/buttonStyle"
                 android:text="@string/pfx_subtract" />
 
             <TextView
                 android:id="@+id/rbPow"
-                android:textSize="24sp"
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:gravity="center"
@@ -73,28 +67,23 @@
                 android:layout_marginRight="5px"
                 android:text="@string/pfx_pow"
                 android:onClick="change_relative_option"
-                android:background="@color/interface_bg"
-                android:textColor="@color/interface_fg"
-                />
+                style="@style/buttonStyle" />
             <TextView
                 android:id="@+id/rbLog"
-                android:textSize="24sp"
                 android:gravity="center"
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
                 app:layout_constraintStart_toEndOf="@+id/rbPow"
                 app:layout_constraintEnd_toEndOf="parent"
-                android:background="@color/interface_bg"
-                android:textColor="@color/interface_fg"
                 android:onClick="change_relative_option"
-                android:text="@string/pfx_log" />
+                android:text="@string/pfx_log"
+                style="@style/buttonStyle" />
         </LinearLayout>
 
         <com.qfs.radixulous.NumberSelector xmlns:android="http://schemas.android.com/apk/res/android"
             xmlns:custom="http://schemas.android.com/apk/res-auto"
             android:id="@+id/nsRelativeValue"
-            android:textSize="24sp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@color/table_bg"
@@ -124,7 +113,6 @@
         <com.qfs.radixulous.NumberSelector xmlns:android="http://schemas.android.com/apk/res/android"
             xmlns:custom="http://schemas.android.com/apk/res-auto"
             android:id="@+id/nsOctave"
-            android:textSize="24sp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@color/table_bg"
@@ -136,13 +124,12 @@
             custom:active_fg="#000000"
             custom:button_bg="#efefef"
             custom:button_fg="#000000"
-            custom:min="0"
-            custom:max="11"/>
+            custom:min="1"
+            custom:max="8"/>
 
         <com.qfs.radixulous.NumberSelector xmlns:android="http://schemas.android.com/apk/res/android"
             xmlns:custom="http://schemas.android.com/apk/res-auto"
             android:id="@+id/nsOffset"
-            android:textSize="24sp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@color/table_bg"

@@ -1,10 +1,11 @@
 package com.qfs.radixulous
 
-import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.provider.DocumentsContract
 import android.util.Log
 import android.view.*
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
@@ -30,6 +31,7 @@ import java.lang.Integer.max
 import com.qfs.radixulous.opusmanager.HistoryLayer as OpusManager
 import com.qfs.radixulous.apres.MIDIController
 import com.qfs.radixulous.apres.NoteOn
+import java.io.FileOutputStream
 
 enum class ContextMenu {
     Leaf,
@@ -40,12 +42,12 @@ enum class ContextMenu {
 }
 
 class ViewCache {
-    var view_cache: MutableList<Pair<LinearLayout, MutableList<Pair<View?, HashMap<List<Int>, View>>>>> = mutableListOf()
-    var line_label_cache: MutableList<View> = mutableListOf()
-    var column_label_cache: MutableList<View> = mutableListOf()
-    var _cursor: Triple<Int, Int, List<Int>>? = null
+    private var view_cache: MutableList<Pair<LinearLayout, MutableList<Pair<View?, HashMap<List<Int>, View>>>>> = mutableListOf()
+    private var line_label_cache: MutableList<View> = mutableListOf()
+    private var column_label_cache: MutableList<View> = mutableListOf()
+    private var _cursor: Triple<Int, Int, List<Int>>? = null
     private var active_context_menu_view: View? = null
-    var column_widths: MutableList<Int> = mutableListOf()
+    private var column_widths: MutableList<Int> = mutableListOf()
     fun set_column_width(x: Int, size: Int) {
         this.column_widths[x] = size
     }
@@ -218,19 +220,12 @@ class MainActivity : AppCompatActivity() {
         svTable.viewTreeObserver.addOnScrollChangedListener {
             svLineLabels.scrollY = svTable.scrollY
         }
-        // hsvColumnLabels.viewTreeObserver.addOnScrollChangedListener(OnScrollChangedListener {
-       //     hsvTable.scrollX = hsvColumnLabels.scrollX
-       // })
-       // svLineLabels.viewTreeObserver.addOnScrollChangedListener(OnScrollChangedListener {
-       //     svTable.scrollY = svLineLabels.scrollY
-       // })
 
         val btnChannelCtrl: TextView = findViewById(R.id.btnChannelCtrl)
         btnChannelCtrl.setOnClickListener{
             this.showChannelPopup(it)
         }
 
-        //this.load("/data/data/com.qfs.radixulous/projects/test")
         this.newProject()
     }
 
@@ -247,8 +242,9 @@ class MainActivity : AppCompatActivity() {
         actionBar!!.title = name
     }
 
-    fun save() {
+    private fun save() {
         this.opus_manager.save()
+        Toast.makeText(this, "Project Saved", Toast.LENGTH_SHORT).show()
     }
 
     // method to inflate the options menu when
@@ -414,7 +410,7 @@ class MainActivity : AppCompatActivity() {
         popupWindow.showAtLocation(window.decorView.rootView, Gravity.CENTER, 0, 0)
     }
 
-    fun newColumnLabel() {
+    private fun newColumnLabel() {
         val parent = this.hsvColumnLabels.llColumnLabels
         val headerCellView = LayoutInflater.from(parent.context).inflate(
             R.layout.table_column_label,
@@ -439,7 +435,7 @@ class MainActivity : AppCompatActivity() {
         parent.addView(headerCellView)
     }
 
-    fun buildLineView(y: Int): TableRow {
+    private fun buildLineView(y: Int): TableRow {
         val clo = this.opus_manager.get_channel_index(y)
         val channel = clo.first
         val line_offset = clo.second
@@ -611,8 +607,7 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-    @SuppressLint("ClickableViewAccessibility")
-    fun setContextMenu(menu_index: ContextMenu) {
+    private fun setContextMenu(menu_index: ContextMenu) {
         this.active_context_menu_index = menu_index
         val view_to_remove = this.cache.getActiveContextMenu()
         (view_to_remove?.parent as? ViewGroup)?.removeView(view_to_remove)
@@ -792,7 +787,7 @@ class MainActivity : AppCompatActivity() {
                             event
                         } else {
                             OpusEvent(
-                                progress,
+                                progress + opus_manager.RADIX,
                                 opus_manager.RADIX,
                                 beatkey.channel,
                                 false
@@ -955,7 +950,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun rebuildBeatView(y: Int, x: Int) {
+    private fun rebuildBeatView(y: Int, x: Int) {
         val pair = this.opus_manager.get_channel_index(y)
         val main_beatkey = BeatKey(pair.first, pair.second, x)
         for (beatkey in this.opus_manager.get_all_linked(main_beatkey)) {
@@ -967,15 +962,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    @Deprecated("Deprecated in Java")
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == 777) {
-            val filePath = data?.data?.path
-            this.opus_manager.load(filePath!!)
-        }
-    }
-
     private fun tick() {
         this.tick_unapply_cursor()
         this.tick_manage_lines()
@@ -984,7 +970,7 @@ class MainActivity : AppCompatActivity() {
         this.tick_apply_cursor()
     }
 
-    fun tick_manage_lines() {
+    private fun tick_manage_lines() {
         while (true) {
             val (channel, index, operation) = this.opus_manager.fetch_flag_line() ?: break
             when (operation) {
@@ -1062,7 +1048,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun tick_manage_beats() {
+    private fun tick_manage_beats() {
         val updated_beats: MutableSet<Int> = mutableSetOf()
         while (true) {
             val (index, operation) = this.opus_manager.fetch_flag_beat() ?: break
@@ -1105,7 +1091,7 @@ class MainActivity : AppCompatActivity() {
         this.tick_resize_beats(updated_beats.toList())
     }
 
-    fun tick_resize_beats(updated_beats: List<Int>) {
+    private fun tick_resize_beats(updated_beats: List<Int>) {
         // resize Columns
         for (b in updated_beats) {
             var max_width = 0
@@ -1131,7 +1117,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun __tick_update_column_label_size(beat: Int) {
+    private fun __tick_update_column_label_size(beat: Int) {
         var width = this.cache.get_column_width(beat)
         // Kludge: Need to remove/reattach label so it will shrink to a smaller
         // size if necessary
@@ -1143,7 +1129,7 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-    fun __tick_resize_beat_cell(channel: Int, line_offset: Int, beat: Int, new_width: Int) {
+    private fun __tick_resize_beat_cell(channel: Int, line_offset: Int, beat: Int, new_width: Int) {
         val stack: MutableList<Pair<Float, List<Int>>> = mutableListOf(Pair(new_width.toFloat(), listOf()))
         val key = BeatKey(channel, line_offset, beat)
         var y = this.opus_manager.get_y(channel, line_offset)
@@ -1182,7 +1168,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun tick_apply_cursor() {
+    private fun tick_apply_cursor() {
         val cursor = this.opus_manager.get_cursor()
         val position = cursor.get_position()
 
@@ -1204,7 +1190,7 @@ class MainActivity : AppCompatActivity() {
         this.cache.setCursor(cursor.y, cursor.x, position)
     }
 
-    fun tick_unapply_cursor() {
+    private fun tick_unapply_cursor() {
         val c = this.cache.getCursor()
         if (c != null) {
             // TODO: specify Exception
@@ -1230,41 +1216,41 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun tick_update_beat_cell_color(beatkey: BeatKey) {
-
-    }
+    fun tick_update_beat_cell_color(beatkey: BeatKey) { }
 
     fun setRelative(relative: Boolean) {
         this.relative_mode = relative
     }
 
-    fun export_midi() {
-        var filea = File("/data/data/com.qfs.radixulous/projects/miditest.mid")
+    private fun export_midi() {
+        val CREATE_FILE = 2
 
-        filea.writeBytes(this.opus_manager.get_midi().as_bytes())
-        //val CREATE_FILE = 1
+        var name = this.opus_manager.get_working_dir()
+        if (name != null) {
+            name = name.substring(name.lastIndexOf("/") + 1)
+        }
 
-        //var name = this.opus_manager.get_working_dir()
-        //if (name != null) {
-        //    name = name.substring(name.lastIndexOf("/") + 1)
-        //}
-        //val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
-        //    addCategory(Intent.CATEGORY_OPENABLE)
-        //    type = "application/midi"
-        //    putExtra(Intent.EXTRA_TITLE, "$name.mid")
-        //    putExtra(DocumentsContract.EXTRA_INITIAL_URI, "")
-        //}
-        //startActivityForResult(intent, CREATE_FILE)
-        //val contentResolver = applicationContext.contentResolver
-        //if (intent.data != null) {
-        //    var midi = this.opus_manager.get_midi()
-        //    contentResolver.openFileDescriptor(intent.data!!, "w")?.use {
-        //        FileOutputStream(it.fileDescriptor).use { it ->
-        //            it.write(midi.as_bytes())
-        //        }
-        //    }
-        //}
+        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "application/midi"
+            putExtra(Intent.EXTRA_TITLE, "$name.mid")
+            putExtra(DocumentsContract.EXTRA_INITIAL_URI, "")
+        }
 
+        startActivityForResult(intent, CREATE_FILE)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, resultData: Intent?) {
+        super.onActivityResult(requestCode, resultCode, resultData)
+
+        if (requestCode == 2 && resultCode == Activity.RESULT_OK) {
+            resultData?.data?.also { uri ->
+                applicationContext.contentResolver.openFileDescriptor(uri, "w")?.use {
+                    FileOutputStream(it.fileDescriptor).write(this.opus_manager.get_midi().as_bytes())
+                    Toast.makeText(this, "Exported to midi", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
     }
 
     fun change_relative_option(view: View) {
@@ -1272,7 +1258,7 @@ class MainActivity : AppCompatActivity() {
         var progress = progress_bar.getState() ?: 0
 
         val cursor = this.opus_manager.get_cursor()
-        val beatkey = cursor.get_beatkey()
+        val beat_key = cursor.get_beatkey()
 
         var new_value = when (view.id) {
             R.id.rbSubtract -> {
@@ -1295,21 +1281,21 @@ class MainActivity : AppCompatActivity() {
         val event = OpusEvent(
             new_value,
             this.opus_manager.RADIX,
-            beatkey.channel,
+            beat_key.channel,
             true
         )
 
-        this.opus_manager.set_event(beatkey, cursor.position, event)
+        this.opus_manager.set_event(beat_key, cursor.position, event)
 
         this.apply_relative_option_facade(view)
         this.tick()
     }
 
-    fun change_relative_value(progress: Int) {
+    private fun change_relative_value(progress: Int) {
         val radio_button: Int? = this.active_relative_option
 
         val cursor = opus_manager.get_cursor()
-        val beatkey = cursor.get_beatkey()
+        val beat_key = cursor.get_beatkey()
 
         val new_value = when (radio_button) {
             R.id.rbAdd -> {
@@ -1334,15 +1320,15 @@ class MainActivity : AppCompatActivity() {
         val event = OpusEvent(
             new_value,
             this.opus_manager.RADIX,
-            beatkey.channel,
+            beat_key.channel,
             true
         )
 
-        this.opus_manager.set_event(beatkey, cursor.position, event)
+        this.opus_manager.set_event(beat_key, cursor.position, event)
         this.tick()
     }
 
-    fun apply_relative_option_facade(view: View) {
+    private fun apply_relative_option_facade(view: View) {
         if (this.active_relative_option != null) {
             var old_view: View = findViewById(this.active_relative_option!!)
             old_view.setBackgroundColor(
@@ -1371,4 +1357,3 @@ class RadMidiController(var opus_manager: OpusManager, context: Context): MIDICo
         this.opus_manager.set_event_at_cursor(mevent)
     }
 }
-

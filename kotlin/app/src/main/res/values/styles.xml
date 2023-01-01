@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="buttonStyle" parent="@android:style/Widget.TextView">
+        <item name="android:textSize">24sp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:background">@color/interface_bg</item>
+        <item name="android:textColor">@color/interface_fg</item>
+    </style>
+</resources>

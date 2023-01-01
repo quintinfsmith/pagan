@@ -2,12 +2,14 @@ package com.qfs.radixulous
 
 import android.content.Context
 import android.util.AttributeSet
+import android.util.Log
+import android.util.TypedValue
 import android.view.Gravity.CENTER
 import android.view.MotionEvent
 import android.view.View
-import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
+import com.google.android.material.internal.ViewUtils.dpToPx
 import java.lang.Integer.min
 
 
@@ -45,14 +47,15 @@ class NumberSelector: LinearLayout {
         var inner_width = (working_width - ((size - 1) * margin)) / size
         var remainder = working_width % inner_width
         for (i in this.min .. this.max) {
-            var button = this.getChildAt(i)
-            var x = (i * (margin + inner_width)) + this.paddingLeft
+            var j = i - this.min
+            var button = this.getChildAt(j)
+            var x = (j * (margin + inner_width)) + this.paddingLeft
             var working_width = inner_width
-            if (i < remainder) {
+            if (j < remainder) {
                 working_width += 1
             }
 
-            x += min(remainder, i)
+            x += min(remainder, j)
             (button as TextView).gravity = CENTER
             button.layout(x, this.paddingTop, x + working_width, bottom - this.paddingBottom)
         }
@@ -81,16 +84,17 @@ class NumberSelector: LinearLayout {
 
     fun populate() {
         for (i in this.min .. this.max) {
-            var currentView = TextView(this.context)
+            val currentView = TextView(this.context)
             this.addView(currentView)
+            // TODO: use dimens.xml (seems to be a bug treating sp as dp)
+            currentView.textSize = 24F
             currentView.text = "${get_number_string(i, 12,2)}"
             currentView.setBackgroundColor(this.button_color_bg)
             currentView.setTextColor(this.button_color_fg)
             this.button_map[currentView] = i
 
-            var that = this
             currentView.setOnTouchListener { view: View, _: MotionEvent ->
-                that.set_active_button(view)
+                this.set_active_button(view)
                 false
             }
         }

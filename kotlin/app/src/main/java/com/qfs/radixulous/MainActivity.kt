@@ -901,6 +901,10 @@ class MainActivity : AppCompatActivity() {
             }
 
             var preceding_leaf = this.opus_manager.get_preceding_leaf_position(cursor.get_beatkey(), cursor.get_position())!!
+            while (!this.opus_manager.get_tree(preceding_leaf.first, preceding_leaf.second).is_event()) {
+                preceding_leaf = this.opus_manager.get_preceding_leaf_position(preceding_leaf.first, preceding_leaf.second)!!
+            }
+
             var preceding_value = this.opus_manager.get_absolute_value(preceding_leaf.first, preceding_leaf.second)!!
             this.resize_relative_value_selector(preceding_value, selected_button)
 
@@ -1344,6 +1348,9 @@ class MainActivity : AppCompatActivity() {
         this.opus_manager.set_event(beat_key, cursor.position, event)
 
         var preceding_leaf = this.opus_manager.get_preceding_leaf_position(cursor.get_beatkey(), cursor.get_position())!!
+        while (!this.opus_manager.get_tree(preceding_leaf.first, preceding_leaf.second).is_event()) {
+            preceding_leaf = this.opus_manager.get_preceding_leaf_position(preceding_leaf.first, preceding_leaf.second)!!
+        }
         var preceding_value = this.opus_manager.get_absolute_value(preceding_leaf.first, preceding_leaf.second)!!
 
         this.apply_relative_option_facade(view)

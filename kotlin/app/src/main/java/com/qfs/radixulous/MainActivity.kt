@@ -504,7 +504,7 @@ class MainActivity : AppCompatActivity() {
                 if (this.opus_manager.is_reflection(channel_index.first, channel_index.second, x)) {
                     ContextCompat.getColor(leafView.context, R.color.leaf_linked)
                 } else {
-                    ContextCompat.getColor(leafView.context, R.color.leaf)
+                    ContextCompat.getColor(leafView.context, R.color.leaf_bg)
                 }
             )
 
@@ -580,22 +580,11 @@ class MainActivity : AppCompatActivity() {
             val cellLayout = LinearLayout(parent.context)
             this.cache.cacheTree(cellLayout, y, x, position)
 
-           // if (tree.size > 1) {
-           //     val open_brace = TextView(parent.context)
-           //     open_brace.text = "["
-           //     cellLayout.addView(open_brace)
-           // }
             for (i in 0 until tree.size) {
                 val new_position = position.toMutableList()
                 new_position.add(i)
                 this.buildTreeView(cellLayout as ViewGroup, y, x, new_position)
             }
-
-           // if (tree.size > 1) {
-           //     val close_brace = TextView(parent.context)
-           //     close_brace.text = "]"
-           //     cellLayout.addView(close_brace)
-           // }
 
             if (position.isEmpty()) {
                 parent.addView(cellLayout, x)
@@ -1105,7 +1094,7 @@ class MainActivity : AppCompatActivity() {
                         if ((leaf as ViewGroup).childCount > 0) {
                             continue
                         }
-                        val changeColour = ContextCompat.getColor(leaf.context, R.color.leaf)
+                        val changeColour = ContextCompat.getColor(leaf.context, R.color.leaf_bg)
                         leaf.setBackgroundColor(changeColour)
                     }
                 }
@@ -1225,7 +1214,7 @@ class MainActivity : AppCompatActivity() {
                 val color = if (this.opus_manager.is_reflection(channel, line_offset, beat)) {
                     R.color.leaf_linked
                 } else {
-                    R.color.leaf
+                    R.color.leaf_bg
                 }
                 val changeColour = ContextCompat.getColor(current_view.context, color)
                 current_view.setBackgroundColor(changeColour)
@@ -1267,7 +1256,7 @@ class MainActivity : AppCompatActivity() {
                 val color = if (this.opus_manager.is_reflection(pair.first, pair.second, c.second)) {
                     R.color.leaf_linked
                 } else {
-                    R.color.leaf
+                    R.color.leaf_bg
                 }
 
                 for (view in this.cache.get_all_leafs(c.first, c.second, c.third)) {
@@ -1405,7 +1394,7 @@ class MainActivity : AppCompatActivity() {
         if (this.active_relative_option != null) {
             var old_view: View = findViewById(this.active_relative_option!!)
             old_view.setBackgroundColor(
-                ContextCompat.getColor(old_view.context, R.color.leaf)
+                ContextCompat.getColor(old_view.context, R.color.leaf_bg)
             )
         }
 

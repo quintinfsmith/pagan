@@ -125,7 +125,7 @@
             custom:button_bg="#efefef"
             custom:button_fg="#000000"
             custom:min="0"
-            custom:max="11"/>
+            custom:max="7"/>
 
         <com.qfs.radixulous.NumberSelector xmlns:android="http://schemas.android.com/apk/res/android"
             xmlns:custom="http://schemas.android.com/apk/res-auto"

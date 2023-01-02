@@ -784,9 +784,6 @@ class MainActivity : AppCompatActivity() {
             view.sRelative.visibility = View.GONE
         }
 
-        var minimum_note = 0
-        var maximum_note = 88
-
         if (cursor.get_beatkey().channel == 9) {
             view.llAbsolutePalette.visibility = View.GONE
             view.llRelativePalette.visibility = View.GONE
@@ -816,7 +813,6 @@ class MainActivity : AppCompatActivity() {
                     view.nsOctave.setState(event.note / event.radix)
                 }
             }
-
             view.llAbsolutePalette.nsOffset?.setOnTouchListener { it: View, motionEvent: MotionEvent ->
                 val progress = (it as NumberSelector).getState()!!
 
@@ -963,7 +959,7 @@ class MainActivity : AppCompatActivity() {
     private fun resize_relative_value_selector(preceding_value: Int, selected_button: Int) {
         var cursor = this.opus_manager.get_cursor()
 
-        var maximum_note = 88
+        var maximum_note = 95
         var minimum_note = 0
 
         // Hide/ Show Relative options if they don't/do need to be visible
@@ -1004,8 +1000,7 @@ class MainActivity : AppCompatActivity() {
                 relMax = min(maximum_note - preceding_value, relMax)
             }
             R.id.rbSubtract -> {
-
-                relMax = min(relMax, preceding_value)
+                relMax = min(this.opus_manager.RADIX  - 1, preceding_value)
             }
             R.id.rbPow -> {
                 relMax = min((maximum_note - preceding_value) / this.opus_manager.RADIX, relMax)

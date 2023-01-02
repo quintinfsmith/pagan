@@ -291,7 +291,7 @@ fun tree_to_midi(tree: OpusTree<Set<OpusEvent>>, tempo: Float = 120.0.toFloat(),
                 var note = if (event.relative) {
                     prev_note!! + event.note
                 } else {
-                    var tmp: Int = event.note
+                    var tmp: Int = event.note + 21 // 21 being A0 on piano keyboard
                     if (channel == 9) {
                         tmp -= 3
                     } else {

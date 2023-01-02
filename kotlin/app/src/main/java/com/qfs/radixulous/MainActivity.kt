@@ -32,6 +32,7 @@ import com.qfs.radixulous.opusmanager.HistoryLayer as OpusManager
 import com.qfs.radixulous.apres.MIDIController
 import com.qfs.radixulous.apres.NoteOn
 import java.io.FileOutputStream
+import java.lang.Integer.min
 
 enum class ContextMenu {
     Leaf,
@@ -607,6 +608,7 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+
     private fun setContextMenu(menu_index: ContextMenu) {
         this.active_context_menu_index = menu_index
         val view_to_remove = this.cache.getActiveContextMenu()
@@ -708,211 +710,7 @@ class MainActivity : AppCompatActivity() {
                 this.cache.setActiveContextMenu(view)
             }
             ContextMenu.Leaf -> {
-                val view = LayoutInflater.from(this.llContextMenu.context).inflate(
-                    R.layout.contextmenu_cell,
-                    this.llContextMenu,
-                    false
-                )
-
-                this.llContextMenu.addView(view)
-                this.cache.setActiveContextMenu(view)
-                this.active_relative_option = null
-
-                val current_tree = this.opus_manager.get_tree_at_cursor()
-                if (current_tree.is_event()) {
-                    this.relative_mode = current_tree.get_event()!!.relative
-                }
-
-                // TODO: Specify exception
-                val cursor = this.opus_manager.get_cursor()
-                if (this.opus_manager.has_preceding_absolute_event(cursor.get_beatkey(), cursor.get_position())) {
-                    view.sRelative.isChecked = this.relative_mode
-                    view.sRelative.setOnCheckedChangeListener { _, isChecked ->
-                        this.relative_mode = isChecked
-                        if (isChecked) {
-                            this.opus_manager.convert_event_at_cursor_to_relative()
-                        } else {
-                            this.opus_manager.convert_event_at_cursor_to_absolute()
-                        }
-                        this.setContextMenu(ContextMenu.Leaf)
-                        this.tick()
-                    }
-                } else {
-                    this.relative_mode = false
-                    view.sRelative.visibility = View.GONE
-                }
-
-                if (cursor.get_beatkey().channel == 9) {
-                    view.llAbsolutePalette.visibility = View.GONE
-                    view.llRelativePalette.visibility = View.GONE
-                    view.sRelative.visibility = View.GONE
-
-                    if (!this.opus_manager.get_tree_at_cursor().is_event()) {
-                        view.clButtons.btnUnset?.text = "Set"
-                    }
-
-                    view.clButtons.btnUnset?.setOnClickListener {
-                        if (this.opus_manager.get_tree_at_cursor().is_event()) {
-                            this.opus_manager.unset_at_cursor()
-                        } else {
-                            this.opus_manager.set_percussion_event_at_cursor()
-                        }
-                        this.tick()
-                        this.setContextMenu(ContextMenu.Leaf)
-                    }
-
-                } else if (!this.relative_mode) {
-                    view.llRelativePalette.visibility = View.GONE
-
-                    if (current_tree.is_event()) {
-                        val event = current_tree.get_event()!!
-                        if (!event.relative) {
-                            view.nsOffset.setState(event.note % event.radix)
-                            view.nsOctave.setState(event.note / event.radix)
-                        }
-                    }
-
-                    view.llAbsolutePalette.nsOffset?.setOnTouchListener { it: View, motionEvent: MotionEvent ->
-                        val progress = (it as NumberSelector).getState()!!
-
-                        val cursor = this.opus_manager.get_cursor()
-                        val position = cursor.position
-                        val beatkey = cursor.get_beatkey()
-
-                        val event = if (current_tree.is_event()) {
-                            val event = current_tree.get_event()!!
-                            val old_octave = event.note / event.radix
-                            event.note = (old_octave * event.radix) + progress
-
-                            event
-                        } else {
-                            OpusEvent(
-                                progress + opus_manager.RADIX,
-                                opus_manager.RADIX,
-                                beatkey.channel,
-                                false
-                            )
-                        }
-
-                        this.opus_manager.set_event(beatkey, position, event)
-                        if (view.llAbsolutePalette.nsOctave.getState() == null) {
-                            view.llAbsolutePalette.nsOctave.setState(event.note / event.radix)
-                        }
-
-                        //that.midi_player.play(event.note)
-                        this.tick()
-
-                        true
-                    }
-
-                    view.llAbsolutePalette.nsOctave?.setOnTouchListener { it: View, motionEvent: MotionEvent ->
-                        val progress = (it as NumberSelector).getState()!!
-
-                        val cursor = opus_manager.get_cursor()
-                        val position = cursor.position
-                        val beatkey = cursor.get_beatkey()
-
-                        val event = if (current_tree.is_event()) {
-                            val event = current_tree.get_event()!!
-                            event.note = (progress * event.radix) + (event.note % event.radix)
-                            event
-                        } else {
-                            OpusEvent(
-                                progress * opus_manager.RADIX,
-                                opus_manager.RADIX,
-                                beatkey.channel,
-                                false
-                            )
-                        }
-
-                        this.opus_manager.set_event(beatkey, position, event)
-                        if (view.llAbsolutePalette.nsOffset.getState() == null) {
-                            view.llAbsolutePalette.nsOffset.setState(event.note % event.radix)
-                        }
-
-                        //that.midi_player.play(event.note)
-                        this.tick()
-
-                        true
-                    }
-                } else {
-                    view.llAbsolutePalette.visibility = View.GONE
-                    if (current_tree.is_event()) {
-                        val event = current_tree.get_event()!!
-                        if (event.relative) {
-                            var selected_button = R.id.rbAdd
-                            val new_progress = if (event.note > 0) {
-                                if (event.note >= event.radix) {
-                                    selected_button = R.id.rbPow
-                                    event.note / event.radix
-                                } else {
-                                    event.note
-                                }
-                            } else if (event.note < 0) {
-                                if (event.note <= 0 - event.radix) {
-                                    selected_button = R.id.rbLog
-                                    event.note / (0 - event.radix)
-                                } else {
-                                    selected_button = R.id.rbSubtract
-                                    0 - event.note
-                                }
-                            } else {
-                                0
-                            }
-
-                            view.llRelativePalette.nsRelativeValue.setState(new_progress)
-                            var button_view: View? = view.findViewById(selected_button)
-                            Log.e("AAA", "$button_view")
-                            if (button_view != null) {
-                                this.change_relative_option(button_view)
-                            }
-
-                     //       view.llRelativePalette.rgRelOptions.check(selected_button)
-                        }
-                    }
-                    view.llRelativePalette.nsRelativeValue.setOnTouchListener { it: View, motionEvent: MotionEvent ->
-                        this.change_relative_value((it as NumberSelector).getState()!!)
-                        true
-                    }
-
-
-                }
-
-
-
-                view.clButtons.btnSplit?.setOnClickListener {
-                    this.opus_manager.split_tree_at_cursor()
-                    this.tick()
-                }
-
-                view.clButtons.btnUnset?.setOnClickListener {
-                    if (this.opus_manager.get_cursor().get_beatkey().channel != 9 || this.opus_manager.get_tree_at_cursor().is_event()) {
-                        this.opus_manager.unset_at_cursor()
-                    } else {
-                        this.opus_manager.set_percussion_event_at_cursor()
-                    }
-
-                    this.tick()
-                    this.setContextMenu(ContextMenu.Leaf)
-                }
-
-                view.clButtons.btnRemove?.setOnClickListener {
-                    val cursor = this.opus_manager.get_cursor()
-                    if (cursor.get_position().isNotEmpty()) {
-                        this.opus_manager.remove_tree_at_cursor()
-                    }
-                    this.tick()
-                }
-
-                view.clButtons.btnInsert?.setOnClickListener {
-                    val position = this.opus_manager.get_cursor().get_position()
-                    if (position.isEmpty()) {
-                        this.opus_manager.split_tree_at_cursor()
-                    } else {
-                        this.opus_manager.insert_after_cursor()
-                    }
-                    this.tick()
-                }
+                this.setContextMenu_leaf()
             }
 
             ContextMenu.Linking -> {
@@ -947,6 +745,281 @@ class MainActivity : AppCompatActivity() {
                 this.cache.setActiveContextMenu(view)
             }
             else -> { }
+        }
+    }
+
+    private fun setContextMenu_leaf() {
+        val view = LayoutInflater.from(this.llContextMenu.context).inflate(
+            R.layout.contextmenu_cell,
+            this.llContextMenu,
+            false
+        )
+
+        this.llContextMenu.addView(view)
+        this.cache.setActiveContextMenu(view)
+        this.active_relative_option = null
+
+        val current_tree = this.opus_manager.get_tree_at_cursor()
+        if (current_tree.is_event()) {
+            this.relative_mode = current_tree.get_event()!!.relative
+        }
+
+        val cursor = this.opus_manager.get_cursor()
+
+        if (this.opus_manager.has_preceding_absolute_event(cursor.get_beatkey(), cursor.get_position())) {
+
+            view.sRelative.isChecked = this.relative_mode
+            view.sRelative.setOnCheckedChangeListener { _, isChecked ->
+                this.relative_mode = isChecked
+                if (isChecked) {
+                    this.opus_manager.convert_event_at_cursor_to_relative()
+                } else {
+                    this.opus_manager.convert_event_at_cursor_to_absolute()
+                }
+                this.setContextMenu(ContextMenu.Leaf)
+                this.tick()
+            }
+        } else {
+            this.relative_mode = false
+            view.sRelative.visibility = View.GONE
+        }
+
+        var minimum_note = 0
+        var maximum_note = 88
+
+        if (cursor.get_beatkey().channel == 9) {
+            view.llAbsolutePalette.visibility = View.GONE
+            view.llRelativePalette.visibility = View.GONE
+            view.sRelative.visibility = View.GONE
+
+            if (!this.opus_manager.get_tree_at_cursor().is_event()) {
+                view.clButtons.btnUnset?.text = "Set"
+            }
+
+            view.clButtons.btnUnset?.setOnClickListener {
+                if (this.opus_manager.get_tree_at_cursor().is_event()) {
+                    this.opus_manager.unset_at_cursor()
+                } else {
+                    this.opus_manager.set_percussion_event_at_cursor()
+                }
+                this.tick()
+                this.setContextMenu(ContextMenu.Leaf)
+            }
+
+        } else if (!this.relative_mode) {
+            view.llRelativePalette.visibility = View.GONE
+
+            if (current_tree.is_event()) {
+                val event = current_tree.get_event()!!
+                if (!event.relative) {
+                    view.nsOffset.setState(event.note % event.radix)
+                    view.nsOctave.setState(event.note / event.radix)
+                }
+            }
+
+            view.llAbsolutePalette.nsOffset?.setOnTouchListener { it: View, motionEvent: MotionEvent ->
+                val progress = (it as NumberSelector).getState()!!
+
+                val cursor = this.opus_manager.get_cursor()
+                val position = cursor.position
+                val beatkey = cursor.get_beatkey()
+
+                val event = if (current_tree.is_event()) {
+                    val event = current_tree.get_event()!!
+                    val old_octave = event.note / event.radix
+                    event.note = (old_octave * event.radix) + progress
+
+                    event
+                } else {
+                    OpusEvent(
+                        progress + opus_manager.RADIX,
+                        opus_manager.RADIX,
+                        beatkey.channel,
+                        false
+                    )
+                }
+
+                this.opus_manager.set_event(beatkey, position, event)
+                if (view.llAbsolutePalette.nsOctave.getState() == null) {
+                    view.llAbsolutePalette.nsOctave.setState(event.note / event.radix)
+                }
+
+                //that.midi_player.play(event.note)
+                this.tick()
+
+                true
+            }
+
+            view.llAbsolutePalette.nsOctave?.setOnTouchListener { it: View, motionEvent: MotionEvent ->
+                val progress = (it as NumberSelector).getState()!!
+
+                val cursor = opus_manager.get_cursor()
+                val position = cursor.position
+                val beatkey = cursor.get_beatkey()
+
+                val event = if (current_tree.is_event()) {
+                    val event = current_tree.get_event()!!
+                    event.note = (progress * event.radix) + (event.note % event.radix)
+                    event
+                } else {
+                    OpusEvent(
+                        progress * opus_manager.RADIX,
+                        opus_manager.RADIX,
+                        beatkey.channel,
+                        false
+                    )
+                }
+
+                this.opus_manager.set_event(beatkey, position, event)
+                if (view.llAbsolutePalette.nsOffset.getState() == null) {
+                    view.llAbsolutePalette.nsOffset.setState(event.note % event.radix)
+                }
+
+                //that.midi_player.play(event.note)
+                this.tick()
+
+                true
+            }
+        } else {
+            view.llAbsolutePalette.visibility = View.GONE
+            var selected_button = R.id.rbAdd
+            if (current_tree.is_event()) {
+                val event = current_tree.get_event()!!
+                if (event.relative) {
+                    val new_progress = if (event.note > 0) {
+                        if (event.note >= event.radix) {
+                            selected_button = R.id.rbPow
+                            event.note / event.radix
+                        } else {
+                            event.note
+                        }
+                    } else if (event.note < 0) {
+                        if (event.note <= 0 - event.radix) {
+                            selected_button = R.id.rbLog
+                            event.note / (0 - event.radix)
+                        } else {
+                            selected_button = R.id.rbSubtract
+                            0 - event.note
+                        }
+                    } else {
+                        0
+                    }
+
+                    view.llRelativePalette.nsRelativeValue.setState(new_progress)
+                    var button_view: View? = view.findViewById(selected_button)
+                    if (button_view != null) {
+                        this.change_relative_option(button_view)
+                    }
+
+                    //       view.llRelativePalette.rgRelOptions.check(selected_button)
+                }
+            }
+
+            var preceding_leaf = this.opus_manager.get_preceding_leaf_position(cursor.get_beatkey(), cursor.get_position())!!
+            var preceding_value = this.opus_manager.get_absolute_value(preceding_leaf.first, preceding_leaf.second)!!
+            this.resize_relative_value_selector(preceding_value, selected_button)
+
+            view.llRelativePalette.nsRelativeValue.setOnTouchListener { it: View, motionEvent: MotionEvent ->
+                this.change_relative_value((it as NumberSelector).getState()!!)
+                true
+            }
+        }
+
+        view.clButtons.btnSplit?.setOnClickListener {
+            this.opus_manager.split_tree_at_cursor()
+            this.tick()
+        }
+
+        view.clButtons.btnUnset?.setOnClickListener {
+            if (this.opus_manager.get_cursor().get_beatkey().channel != 9 || this.opus_manager.get_tree_at_cursor().is_event()) {
+                this.opus_manager.unset_at_cursor()
+            } else {
+                this.opus_manager.set_percussion_event_at_cursor()
+            }
+
+            this.tick()
+            this.setContextMenu(ContextMenu.Leaf)
+        }
+
+        view.clButtons.btnRemove?.setOnClickListener {
+            val cursor = this.opus_manager.get_cursor()
+            if (cursor.get_position().isNotEmpty()) {
+                this.opus_manager.remove_tree_at_cursor()
+            }
+            this.tick()
+        }
+
+        view.clButtons.btnInsert?.setOnClickListener {
+            val position = this.opus_manager.get_cursor().get_position()
+            if (position.isEmpty()) {
+                this.opus_manager.split_tree_at_cursor()
+            } else {
+                this.opus_manager.insert_after_cursor()
+            }
+            this.tick()
+        }
+    }
+
+    private fun resize_relative_value_selector(preceding_value: Int, selected_button: Int) {
+        var cursor = this.opus_manager.get_cursor()
+
+        var maximum_note = 88
+        var minimum_note = 0
+
+        // Hide/ Show Relative options if they don't/do need to be visible
+        var btnPow: TextView = findViewById(R.id.rbPow)
+        if (preceding_value > maximum_note - this.opus_manager.RADIX) {
+            btnPow.visibility = View.GONE
+        } else {
+            btnPow.visibility = View.VISIBLE
+        }
+
+        var btnLog: TextView = findViewById(R.id.rbLog)
+        if (preceding_value < this.opus_manager.RADIX) {
+            btnLog.visibility = View.GONE
+        } else {
+            btnLog.visibility = View.VISIBLE
+        }
+
+        var btnAdd: TextView = findViewById(R.id.rbAdd)
+        if (preceding_value > maximum_note) {
+            btnAdd.visibility = View.GONE
+        } else {
+            btnAdd.visibility = View.VISIBLE
+        }
+
+        var btnSubtract: TextView = findViewById(R.id.rbSubtract)
+        if (preceding_value == 0) {
+            btnSubtract.visibility = View.GONE
+        } else {
+            btnSubtract.visibility = View.VISIBLE
+        }
+
+
+        var relMin = 1
+        var relMax = maximum_note / this.opus_manager.RADIX
+        when (selected_button) {
+            R.id.rbAdd -> {
+                relMin = 0
+                relMax = min(maximum_note - preceding_value, relMax)
+            }
+            R.id.rbSubtract -> {
+
+                relMax = min(relMax, preceding_value)
+            }
+            R.id.rbPow -> {
+                relMax = min((maximum_note - preceding_value) / this.opus_manager.RADIX, relMax)
+            }
+            R.id.rbLog -> {
+                relMax = min(preceding_value / this.opus_manager.RADIX, relMax)
+            }
+            else -> {}
+        }
+        var view: NumberSelector = findViewById(R.id.nsRelativeValue)
+        var orig_val = view.getState()
+        view.setRange(relMin, relMax)
+        if (orig_val != view.getState()) {
+            this.change_relative_value(view.getState()!!)
         }
     }
 
@@ -1112,7 +1185,6 @@ class MainActivity : AppCompatActivity() {
             }
 
             this.cache.set_column_width(b, max_width)
-
             this.__tick_update_column_label_size(b)
         }
     }
@@ -1287,7 +1359,13 @@ class MainActivity : AppCompatActivity() {
 
         this.opus_manager.set_event(beat_key, cursor.position, event)
 
+        var preceding_leaf = this.opus_manager.get_preceding_leaf_position(cursor.get_beatkey(), cursor.get_position())!!
+        var preceding_value = this.opus_manager.get_absolute_value(preceding_leaf.first, preceding_leaf.second)!!
+
         this.apply_relative_option_facade(view)
+        this.resize_relative_value_selector(preceding_value, view.id)
+
+
         this.tick()
     }
 
@@ -1339,9 +1417,9 @@ class MainActivity : AppCompatActivity() {
         view.setBackgroundColor(
             ContextCompat.getColor(view.context, R.color.leaf_selected)
         )
+
         this.active_relative_option = view.id
     }
-
 }
 
 

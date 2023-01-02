@@ -323,7 +323,7 @@ open class OpusManagerBase {
         return this.get_tree(pair.first, pair.second)
     }
 
-    private fun get_preceding_leaf_position(beat_key: BeatKey, position: List<Int>): Pair<BeatKey, List<Int>>? {
+    fun get_preceding_leaf_position(beat_key: BeatKey, position: List<Int>): Pair<BeatKey, List<Int>>? {
         var working_position = position.toMutableList()
         var working_beat_key = BeatKey(beat_key.channel, beat_key.line_offset, beat_key.beat)
 
@@ -527,7 +527,7 @@ open class OpusManagerBase {
         ))
     }
 
-    private fun get_absolute_value(beat_key: BeatKey, position: List<Int>): Int? {
+    fun get_absolute_value(beat_key: BeatKey, position: List<Int>): Int? {
         var tree = this.get_tree(beat_key, position)
 
         var abs_value = 0

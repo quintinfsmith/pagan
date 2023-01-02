@@ -41,7 +41,7 @@ class NumberSelector: LinearLayout {
 
     override fun onLayout(isChanged: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         super.onLayout(isChanged, left, top, right, bottom)
-        var size = this.max - this.min
+        var size = 1 + (this.max - this.min)
         var margin = 5
         var working_width = (this.width - (this.paddingLeft + this.paddingRight))
         var inner_width = (working_width - ((size - 1) * margin)) / size
@@ -82,10 +82,48 @@ class NumberSelector: LinearLayout {
         }
     }
 
+    fun set_max(new_max: Int) {
+        this.clear()
+        this.max = new_max
+        this.populate()
+    }
+
+    fun set_min(new_min: Int) {
+        this.clear()
+        this.min = new_min
+        this.populate()
+    }
+
+    fun setRange(min: Int, max: Int) {
+        var original_value = this.button_map[this.active_button]
+
+        this.clear()
+        this.min = min
+        this.max = max
+        this.populate()
+
+        if (original_value != null) {
+            if (original_value >= this.min && original_value <= this.max) {
+                this.setState(original_value)
+            } else if (original_value < this.min) {
+                this.setState(this.min)
+            } else {
+                this.setState(this.max)
+            }
+        }
+    }
+
+    fun clear() {
+        this.active_button = null
+        this.button_map.clear()
+        this.removeAllViews()
+    }
+
     fun populate() {
         for (i in this.min .. this.max) {
             val currentView = TextView(this.context)
             this.addView(currentView)
+
             // TODO: use dimens.xml (seems to be a bug treating sp as dp)
             currentView.textSize = 24F
             currentView.text = "${get_number_string(i, 12,2)}"

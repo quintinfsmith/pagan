@@ -267,13 +267,13 @@ fun tree_from_midi(midi: MIDI): OpusTree<Set<OpusEvent>> {
     return opus
 }
 
-
 fun tree_to_midi(
         tree: OpusTree<Set<OpusEvent>>,
         tempo: Float = 120.0.toFloat(),
         transpose: Int = 0,
         i_arg: HashMap<Int, Int>? = null
         ): MIDI {
+
     var instruments = i_arg ?: HashMap<Int, Int>()
 
     var midi = MIDI()

@@ -1,6 +1,6 @@
 package com.qfs.radixulous.opusmanager
 import android.util.Log
-import com.qfs.radixulous.apres.MIDI
+import com.qfs.radixulous.apres.*
 import com.qfs.radixulous.structure.OpusTree
 import com.qfs.radixulous.from_string
 import com.qfs.radixulous.to_string
@@ -265,30 +265,73 @@ open class OpusManagerBase {
     }
 
     open fun get_midi(): MIDI {
-        var opus = OpusTree<Set<OpusEvent>>()
-        opus.set_size(this.opus_beat_count)
-        var beatlists: MutableList<MutableList<OpusTree<OpusEvent>>> = mutableListOf()
-        for (i in 0 until this.opus_beat_count) {
-            beatlists.add(mutableListOf())
+        //var instruments = i_arg ?: HashMap<Int, Int>()
+        var instruments = HashMap<Int, Int>()
+        var tempo = 120F
+
+        var midi = MIDI()
+        for (i in 0 until 16) {
+            var instrument = instruments[i]?: 0
+            midi.insert_event(0,0, ProgramChange(i, instrument))
         }
 
-        for (channel in this.channel_lines) {
+        midi.insert_event(0,0, SetTempo.from_bpm(tempo))
+        data class StackItem(var tree: OpusTree<OpusEvent>, var divisions: Int, var offset: Int, var size: Int)
+        this.channel_lines.forEachIndexed { c, channel ->
             for (line in channel) {
-                line.forEachIndexed { i, beat ->
-                    beatlists[i].add(beat)
+                var current_tick = 0
+                var prev_note = 0
+                line.forEachIndexed { b, beat ->
+                    var stack: MutableList<StackItem> = mutableListOf(StackItem(beat, 1, current_tick, midi.ppqn))
+                    while (stack.isNotEmpty()) {
+                        var current = stack.removeFirst()
+
+                        if (current.tree.is_event()) {
+                            var event = current.tree.get_event()!!
+                            var note = if (c == 9) {
+                                event.note
+                            } else if (event.relative) {
+                                event.note + prev_note
+                            } else {
+                                event.note + 21
+                            }
+
+
+                            midi.insert_event(
+                                0,
+                                current.offset,
+                                NoteOn(c, note, 64)
+                            )
+                            midi.insert_event(
+                                0,
+                                current.offset + current.size,
+                                NoteOff(c, note, 64)
+                            )
+                            prev_note = note
+                        } else if (!current.tree.is_leaf()) {
+                            var working_subdiv_size = current.size / current.tree.size
+                            for ((i, subtree) in current.tree.divisions) {
+                                stack.add(
+                                    StackItem(
+                                        subtree,
+                                        current.tree.size,
+                                        current.offset + (working_subdiv_size * i),
+                                        working_subdiv_size
+                                    )
+                                )
+                            }
+
+                        }
+                    }
+
+                    current_tick += midi.ppqn
                 }
             }
         }
-        beatlists.forEachIndexed { i, beatlist ->
-            beatlist.forEachIndexed { j, beat ->
-                var new_beat = beat.merge(opus.get(i))
-                opus.set(i, new_beat)
-                Log.e("AAA", "${opus.get(i).to_string()}, ${opus.get(i).size}")
-            }
-        }
-        // TODO: KWARGS
-        return tree_to_midi(opus, 120F)
+
+        return midi
     }
+
 
     fun get_beat_tree(beat_key: BeatKey): OpusTree<OpusEvent> {
         if (beat_key.channel >= this.channel_lines.size) {

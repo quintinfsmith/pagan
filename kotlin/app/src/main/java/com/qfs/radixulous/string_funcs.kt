@@ -268,7 +268,12 @@ fun tree_from_midi(midi: MIDI): OpusTree<Set<OpusEvent>> {
 }
 
 
-fun tree_to_midi(tree: OpusTree<Set<OpusEvent>>, tempo: Float = 120.0.toFloat(), transpose: Int = 0, i_arg: HashMap<Int, Int>? = null): MIDI {
+fun tree_to_midi(
+        tree: OpusTree<Set<OpusEvent>>,
+        tempo: Float = 120.0.toFloat(),
+        transpose: Int = 0,
+        i_arg: HashMap<Int, Int>? = null
+        ): MIDI {
     var instruments = i_arg ?: HashMap<Int, Int>()
 
     var midi = MIDI()
@@ -280,7 +285,7 @@ fun tree_to_midi(tree: OpusTree<Set<OpusEvent>>, tempo: Float = 120.0.toFloat(),
     midi.insert_event(0,0, SetTempo.from_bpm(tempo))
 
     var current_tick = 0
-    var prev_note: Int? = null
+    var prev_note_map = HashMap<Int, Int>()
     for (m in 0 until tree.size) {
         var beat = tree.get(m)
 
@@ -289,18 +294,18 @@ fun tree_to_midi(tree: OpusTree<Set<OpusEvent>>, tempo: Float = 120.0.toFloat(),
                 var channel = event.channel
 
                 var note = if (event.relative) {
-                    prev_note!! + event.note
+                    prev_note_map[channel]!! + event.note
                 } else {
-                    var tmp: Int = event.note + 21 // 21 being A0 on piano keyboard
+                    var tmp: Int = event.note
                     if (channel == 9) {
                         tmp -= 3
                     } else {
-                        tmp += transpose
+                        tmp += transpose + 21
                     }
                     tmp
                 }
 
-                prev_note = note
+                prev_note_map[channel] = note
                 midi.insert_event(
                     0,
                     current_tick,
@@ -332,18 +337,17 @@ fun tree_to_midi(tree: OpusTree<Set<OpusEvent>>, tempo: Float = 120.0.toFloat(),
                     var channel = event.channel
 
                     var note = if (event.relative) {
-                        prev_note!! + event.note
+                        prev_note_map[channel]!! + event.note
                     } else {
-                        var tmp: Int = event.note + 21
+                        var tmp: Int = event.note
                         if (channel == 9) {
                             tmp -= 3
                         } else {
-                            tmp += transpose
+                            tmp += transpose + 21
                         }
                         tmp
                     }
-
-                    prev_note = note
+                    prev_note_map[channel] = note
                     midi.insert_event(
                         0,
                         current_tick + (i * div_size),

@@ -1,4 +1,5 @@
 package com.qfs.radixulous.structure
+import android.util.Log
 import kotlin.math.*
 import com.qfs.radixulous.apres.*
 
@@ -66,10 +67,9 @@ fun lowest_common_multiple(number_list: List<Int>): Int {
         }
     }
 
-
-    var output = 0;
+    var output = 1;
     for (key in common_factor_map.keys) {
-        output += key * common_factor_map[key]!!
+        output *= key * common_factor_map[key]!!
     }
 
     return output
@@ -602,9 +602,8 @@ public class OpusTree<T> {
         var this_multi = this.get_set_tree()
         other.flatten()
         this_multi.flatten()
-
         var new_size = lowest_common_multiple(listOf(max(1, this_multi.size), max(1, other.size)))
-        var factor = max(1, new_size) / max(1, other.size)
+        var factor = new_size / max(1, other.size)
         this_multi.resize(new_size)
 
         for ((index, subtree) in other.divisions) {
@@ -612,17 +611,20 @@ public class OpusTree<T> {
             var subtree_into = this_multi.get(new_index)
 
             if (subtree.is_event()) {
-                if (subtree_into.is_event()) {
-                    var eventset = subtree_into.get_event()!!.toMutableSet()
-
-                    for (elm in subtree.get_event()!!) {
-                        eventset.add(elm)
-                    }
-
-                    subtree_into.set_event(eventset)
+                var eventset = if (subtree_into.is_event()) {
+                    subtree_into.get_event()!!.toMutableSet()
+                } else {
+                    mutableSetOf()
                 }
+
+                for (elm in subtree.get_event()!!) {
+                    eventset.add(elm)
+                }
+
+                subtree_into.set_event(eventset)
             }
         }
+
         this_multi.reduce(1)
 
         return this_multi

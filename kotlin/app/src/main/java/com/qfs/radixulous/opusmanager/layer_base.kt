@@ -283,10 +283,11 @@ open class OpusManagerBase {
             beatlist.forEachIndexed { j, beat ->
                 var new_beat = beat.merge(opus.get(i))
                 opus.set(i, new_beat)
+                Log.e("AAA", "${opus.get(i).to_string()}, ${opus.get(i).size}")
             }
         }
         // TODO: KWARGS
-        return tree_to_midi(opus, 120.toFloat())
+        return tree_to_midi(opus, 120F)
     }
 
     fun get_beat_tree(beat_key: BeatKey): OpusTree<OpusEvent> {

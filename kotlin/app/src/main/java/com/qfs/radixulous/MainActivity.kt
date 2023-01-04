@@ -923,7 +923,6 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 y += 1
-
             }
         }
     }
@@ -958,7 +957,6 @@ class MainActivity : AppCompatActivity() {
         val updated_beats: MutableSet<Int> = mutableSetOf()
         while (true) {
             val beatkey = this.opus_manager.fetch_flag_change() ?: break
-            Log.e("AAA", "$beatkey")
             this.rebuildBeatView(
                 this.opus_manager.get_y(
                     beatkey.channel,
@@ -967,7 +965,9 @@ class MainActivity : AppCompatActivity() {
                 beatkey.beat
             )
 
-            updated_beats.add(beatkey.beat)
+            for (linked_beatkey in this.opus_manager.get_all_linked(beatkey)) {
+                updated_beats.add(linked_beatkey.beat)
+            }
         }
         this.tick_resize_beats(updated_beats.toList())
     }
@@ -1006,7 +1006,6 @@ class MainActivity : AppCompatActivity() {
         label_row.removeView(label_view)
         label_view.layoutParams.width = (width * 100) - 5
         label_row.addView(label_view, beat)
-
     }
 
     private fun __tick_resize_beat_cell(channel: Int, line_offset: Int, beat: Int, new_width: Int) {
@@ -1040,6 +1039,7 @@ class MainActivity : AppCompatActivity() {
                 } else {
                     R.color.leaf_bg
                 }
+
                 val changeColour = ContextCompat.getColor(current_view.context, color)
                 current_view.setBackgroundColor(changeColour)
             }
@@ -1065,7 +1065,6 @@ class MainActivity : AppCompatActivity() {
             val changeColour = ContextCompat.getColor(view.context, color)
             view.setBackgroundColor(changeColour)
         }
-
 
         this.cache.setCursor(cursor.y, cursor.x, position)
     }
@@ -1094,12 +1093,6 @@ class MainActivity : AppCompatActivity() {
                 this.cache.unsetCursor()
             }
         }
-    }
-
-    fun tick_update_beat_cell_color(beatkey: BeatKey) { }
-
-    fun setRelative(relative: Boolean) {
-        this.relative_mode = relative
     }
 
     private fun export_midi() {
@@ -1230,6 +1223,7 @@ class MainActivity : AppCompatActivity() {
         }
         this.tick()
     }
+
     private fun interact_btnRemoveLine(view: View) {
         if (this.opus_manager.line_count() > 1) {
             this.opus_manager.remove_line_at_cursor()
@@ -1291,17 +1285,18 @@ class MainActivity : AppCompatActivity() {
                 pair.second,
                 key.second
             )
+
             this.opus_manager.link_beats(this.linking_beat!!, working_position)
             this.linking_beat = null
-        }
+       }
 
         this.opus_manager.set_cursor_position(key.first, key.second, key.third)
-        this.setContextMenu(ContextMenu.Leaf)
 
         this.tick()
+        this.setContextMenu(ContextMenu.Leaf)
     }
 
-    private fun interact_leafView_longclick(view: View) {
+    fun interact_leafView_longclick(view: View) {
         val key = this.cache.getTreeViewYXPosition(view) ?: return
         val pair = this.opus_manager.get_channel_index(key.first)
         this.linking_beat = BeatKey(pair.first, pair.second, key.second)

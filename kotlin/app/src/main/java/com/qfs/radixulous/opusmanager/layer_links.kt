@@ -42,12 +42,13 @@ open class LinksLayer() : FlagLayer() {
         // Replace existing tree with a copy of the target
         this.overwrite_beat(beat_key, target)
 
-        this.linked_beat_map.put(beat_key, target)
+        this.linked_beat_map[beat_key] = target
         if (! this.inv_linked_beat_map.containsKey(target)) {
-            this.inv_linked_beat_map.put(target, mutableListOf())
+            this.inv_linked_beat_map[target] = mutableListOf()
         }
         this.inv_linked_beat_map[target]!!.add(beat_key)
     }
+
     fun get_all_linked(beat_key: BeatKey): List<BeatKey> {
         var output: MutableList<BeatKey> = mutableListOf()
         if (this.inv_linked_beat_map.containsKey(beat_key)) {

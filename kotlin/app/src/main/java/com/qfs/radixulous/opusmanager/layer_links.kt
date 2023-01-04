@@ -37,11 +37,20 @@ open class LinksLayer() : FlagLayer() {
     }
 
     open fun link_beats(beat_key: BeatKey, target: BeatKey) {
+        // Don't chain links. if attempting to reflect a reflection, find the root beat
+        // and reflect that
+        if (this.linked_beat_map.containsKey(target)) {
+            this.link_beats(
+                beat_key,
+                this.linked_beat_map[target]!!
+            )
+            return
+        }
+
         // Remove any existing link
         this.unlink_beat(beat_key)
         // Replace existing tree with a copy of the target
         this.overwrite_beat(beat_key, target)
-
         this.linked_beat_map[beat_key] = target
         if (! this.inv_linked_beat_map.containsKey(target)) {
             this.inv_linked_beat_map[target] = mutableListOf()

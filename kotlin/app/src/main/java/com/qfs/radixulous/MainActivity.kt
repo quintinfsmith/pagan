@@ -493,7 +493,9 @@ class MainActivity : AppCompatActivity() {
             )
             leafView.setBackgroundColor(
                 if (this.opus_manager.is_reflection(channel_index.first, channel_index.second, x)) {
-                    ContextCompat.getColor(leafView.context, R.color.leaf_linked)
+                    ContextCompat.getColor(leafView.context, R.color.leaf_reflection)
+                } else if (this.opus_manager.is_reflected(channel_index.first, channel_index.second, x)) {
+                    ContextCompat.getColor(leafView.context, R.color.leaf_reflected)
                 } else {
                     ContextCompat.getColor(leafView.context, R.color.leaf_bg)
                 }
@@ -1035,7 +1037,9 @@ class MainActivity : AppCompatActivity() {
 
                 // TODO: Move this somewhere better
                 val color = if (this.opus_manager.is_reflection(channel, line_offset, beat)) {
-                    R.color.leaf_linked
+                    R.color.leaf_reflection
+                } else if (this.opus_manager.is_reflected(channel, line_offset, beat)) {
+                    R.color.leaf_reflected
                 } else {
                     R.color.leaf_bg
                 }
@@ -1058,7 +1062,9 @@ class MainActivity : AppCompatActivity() {
             }
             val pair = this.opus_manager.get_channel_index(cursor.y)
             val color = if (this.opus_manager.is_reflection(pair.first, pair.second, cursor.x)) {
-                R.color.leaf_linked_selected
+                R.color.leaf_reflection_selected
+            } else if (this.opus_manager.is_reflected(pair.first, pair.second, cursor.x)) {
+                R.color.leaf_reflected_selected
             } else {
                 R.color.leaf_selected
             }
@@ -1077,7 +1083,9 @@ class MainActivity : AppCompatActivity() {
                 val pair = this.opus_manager.get_channel_index(c.first)
 
                 val color = if (this.opus_manager.is_reflection(pair.first, pair.second, c.second)) {
-                    R.color.leaf_linked
+                    R.color.leaf_reflection
+                } else if (this.opus_manager.is_reflected(pair.first, pair.second, c.second)) {
+                    R.color.leaf_reflected
                 } else {
                     R.color.leaf_bg
                 }

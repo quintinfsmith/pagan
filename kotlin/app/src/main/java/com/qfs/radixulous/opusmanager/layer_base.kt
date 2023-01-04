@@ -14,7 +14,7 @@ data class BeatKey(var channel: Int, var line_offset: Int, var beat: Int)
 
 open class OpusManagerBase {
     var RADIX: Int = 12
-    var DEFAULT_PERCUSSION: Int = 0x35
+    var DEFAULT_PERCUSSION: Int = 0
     var channel_lines: Array<MutableList<MutableList<OpusTree<OpusEvent>>>> = Array(16, { _ -> mutableListOf() })
     var opus_beat_count: Int = 1
     var path: String? = null
@@ -104,7 +104,7 @@ open class OpusManagerBase {
         this.percussion_map[line_offset] = instrument
     }
 
-    fun set_channel_instrument(channel:Int, instrument: Int) {
+    open fun set_channel_instrument(channel:Int, instrument: Int) {
         this.channel_instruments[channel] = instrument
     }
 
@@ -117,6 +117,7 @@ open class OpusManagerBase {
     }
 
     open fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEvent) {
+        Log.e("AAA", "${beat_key}")
         if (beat_key.channel == 9) {
             throw Exception("Attempting to set percussion channel")
         }
@@ -278,7 +279,7 @@ open class OpusManagerBase {
         midi.insert_event(0,0, SetTempo.from_bpm(tempo))
         data class StackItem(var tree: OpusTree<OpusEvent>, var divisions: Int, var offset: Int, var size: Int)
         this.channel_lines.forEachIndexed { c, channel ->
-            for (line in channel) {
+            channel.forEachIndexed { l, line ->
                 var current_tick = 0
                 var prev_note = 0
                 line.forEachIndexed { b, beat ->
@@ -288,14 +289,13 @@ open class OpusManagerBase {
 
                         if (current.tree.is_event()) {
                             var event = current.tree.get_event()!!
-                            var note = if (c == 9) {
-                                event.note
+                            var note = if (c == 9) { // Ignore the event data and use percussion map
+                                this.get_percussion_instrument(l) + 35
                             } else if (event.relative) {
                                 event.note + prev_note
                             } else {
                                 event.note + 21
                             }
-
 
                             midi.insert_event(
                                 0,
@@ -328,7 +328,6 @@ open class OpusManagerBase {
                 }
             }
         }
-
         return midi
     }
 
@@ -398,7 +397,7 @@ open class OpusManagerBase {
         return Pair(working_beat_key, working_position)
     }
 
-    private fun set_beat_count(new_count: Int) {
+    open fun set_beat_count(new_count: Int) {
         this.opus_beat_count = new_count
         for (channel in this.channel_lines) {
             for (line in channel) {
@@ -563,6 +562,9 @@ open class OpusManagerBase {
         }
 
         var value = this.get_absolute_value(beat_key, position) ?: throw Exception("No Preceding value")
+        if (value < 0 || value > 95) {
+            throw Exception("Note out of bounds ($value)")
+        }
         this.set_event(beat_key, position, OpusEvent(
             value,
             event.radix,

@@ -473,4 +473,9 @@ open class CursorLayer() : LinksLayer() {
         var cursor = this.get_cursor()
         this.convert_event_to_absolute(cursor.get_beatkey(), cursor.get_position())
     }
+
+    fun has_preceding_absolute_event_at_cursor(): Boolean {
+        var cursor = this.get_cursor()
+        return this.has_preceding_absolute_event(cursor.get_beatkey(), cursor.get_position())
+    }
 }

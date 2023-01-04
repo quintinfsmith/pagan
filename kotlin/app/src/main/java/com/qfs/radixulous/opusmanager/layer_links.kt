@@ -36,7 +36,7 @@ open class LinksLayer() : FlagLayer() {
         this.inv_linked_beat_map.remove(beat_key)
     }
 
-    fun link_beats(beat_key: BeatKey, target: BeatKey) {
+    open fun link_beats(beat_key: BeatKey, target: BeatKey) {
         // Remove any existing link
         this.unlink_beat(beat_key)
         // Replace existing tree with a copy of the target

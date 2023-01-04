@@ -7,6 +7,12 @@
     <string name="empty_note">  </string>
     <string name="msg_undo_none">Nothing to be done</string>
     <string name="label_channels_button">Chn</string>
+    <string-array name="relative">
+        <item>@string/pfx_add</item>
+        <item>@string/pfx_subtract</item>
+        <item>@string/pfx_log</item>
+        <item>@string/pfx_pow</item>
+    </string-array>
 
     <string-array name="midi_instruments">
         <item>Grand Acoustic Piano</item>

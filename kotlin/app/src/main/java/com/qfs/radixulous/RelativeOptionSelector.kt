@@ -1,34 +1,36 @@
 package com.qfs.radixulous
 
 import android.content.Context
+import android.opengl.Visibility
 import android.util.AttributeSet
-import android.util.Log
-import android.util.TypedValue
 import android.view.Gravity.CENTER
 import android.view.MotionEvent
 import android.view.View
+import android.view.View.GONE
 import android.widget.LinearLayout
 import android.widget.TextView
-import com.google.android.material.internal.ViewUtils.dpToPx
 import java.lang.Integer.min
 
 
-class NumberSelector: LinearLayout {
-    var min: Int = 0
-    var max: Int = 1
-    var button_map = HashMap<View, Int>()
+class RelativeOptionSelector: LinearLayout {
     var active_button: View? = null
     var active_color_fg: Int = 0
     var active_color_bg: Int = 0
     var button_color_fg: Int = 0
     var button_color_bg: Int = 0
-    var on_change_hook: ((NumberSelector) -> Unit)? = null
+    var button_map = HashMap<View, Int>()
+    var itemList: List<Int> = listOf(
+        R.string.pfx_add,
+        R.string.pfx_subtract,
+        R.string.pfx_pow,
+        R.string.pfx_log
+    )
+    private var hidden_options: MutableSet<Int> = mutableSetOf()
+    var on_change_hook: ((RelativeOptionSelector) -> Unit)? = null
 
     constructor(context: Context, attrs: AttributeSet) : super(context, attrs) {
         context.theme.obtainStyledAttributes(attrs, R.styleable.NumberSelector, 0, 0).apply {
             try {
-                max = getInteger(R.styleable.NumberSelector_max, 2)
-                min = getInteger(R.styleable.NumberSelector_min, 0)
                 active_color_bg = getColor(R.styleable.NumberSelector_active_bg, 0)
                 active_color_fg = getColor(R.styleable.NumberSelector_active_fg, 0)
                 button_color_bg = getColor(R.styleable.NumberSelector_button_bg, 0)
@@ -42,24 +44,32 @@ class NumberSelector: LinearLayout {
 
     override fun onLayout(isChanged: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         super.onLayout(isChanged, left, top, right, bottom)
-        var size = 1 + (this.max - this.min)
-        Log.e("AAA", "${this.max}, ${this.min}")
-        var margin = 5
-        var working_width = (this.width - (this.paddingLeft + this.paddingRight))
-        var inner_width = (working_width - ((size - 1) * margin)) / size
-        var remainder = working_width % inner_width
-        for (i in this.min .. this.max) {
-            var j = i - this.min
-            var button = this.getChildAt(j)
-            var x = (j * (margin + inner_width)) + this.paddingLeft
+        val size = this.itemList.size - this.hidden_options.size
+        val margin = 5
+        val _width = (this.width - (this.paddingLeft + this.paddingRight))
+        val inner_width = (_width - ((size - 1) * margin)) / size
+        val remainder = _width % inner_width
+
+        var i = 0
+        for (j in 0 until this.childCount) {
+            val button = this.getChildAt(j)
+            if (this.hidden_options.contains(j)) {
+                button.visibility = View.GONE
+                continue
+            } else {
+                button.visibility = View.VISIBLE
+            }
+
+            var x = (i * (margin + inner_width)) + this.paddingLeft
             var working_width = inner_width
-            if (j < remainder) {
+            if (i < remainder) {
                 working_width += 1
             }
 
-            x += min(remainder, j)
+            x += min(remainder, i)
             (button as TextView).gravity = CENTER
             button.layout(x, this.paddingTop, x + working_width, bottom - this.paddingBottom)
+            i += 1
         }
     }
 
@@ -67,49 +77,18 @@ class NumberSelector: LinearLayout {
         if (this.active_button == null) {
             return null
         }
-        return this.button_map[this.active_button] ?: null
+        return this.button_map[this.active_button!!]!!
     }
 
     fun setState(new_state: Int) {
-        if (new_state < this.min || new_state > this.max) {
-            throw Exception("OutOfBounds")
+        if (new_state >= this.itemList.size) {
+            throw Exception("Not an option")
         }
 
         for ((button, value) in this.button_map) {
             if (value == new_state) {
                 this.set_active_button(button)
                 return
-            }
-        }
-    }
-
-    fun set_max(new_max: Int) {
-        this.clear()
-        this.max = new_max
-        this.populate()
-    }
-
-    fun set_min(new_min: Int) {
-        this.clear()
-        this.min = new_min
-        this.populate()
-    }
-
-    fun setRange(new_min: Int, new_max: Int) {
-        var original_value = this.button_map[this.active_button]
-
-        this.clear()
-        this.min = new_min
-        this.max = new_max
-        this.populate()
-
-        if (original_value != null) {
-            if (original_value >= this.min && original_value <= this.max) {
-                this.setState(original_value)
-            } else if (original_value < this.min) {
-                this.setState(this.min)
-            } else {
-                this.setState(this.max)
             }
         }
     }
@@ -121,13 +100,13 @@ class NumberSelector: LinearLayout {
     }
 
     fun populate() {
-        for (i in this.min .. this.max) {
+        this.itemList.forEachIndexed { i, string_index ->
             val currentView = TextView(this.context)
             this.addView(currentView)
 
             // TODO: use dimens.xml (seems to be a bug treating sp as dp)
             currentView.textSize = 24F
-            currentView.text = "${get_number_string(i, 12,2)}"
+            currentView.text = resources.getString(string_index)
             currentView.setBackgroundColor(this.button_color_bg)
             currentView.setTextColor(this.button_color_fg)
             this.button_map[currentView] = i
@@ -138,14 +117,13 @@ class NumberSelector: LinearLayout {
                     if (this.on_change_hook != null) {
                         this.on_change_hook!!(this)
                     }
-                    false
-                } else {
-                    true
                 }
+                true
             }
         }
     }
-    fun setOnChange(hook: (NumberSelector) -> Unit) {
+
+    fun setOnChange(hook: (RelativeOptionSelector) -> Unit) {
         this.on_change_hook = hook
     }
 
@@ -163,6 +141,14 @@ class NumberSelector: LinearLayout {
         this.active_button!!.setBackgroundColor(this.button_color_bg)
         (this.active_button as TextView).setTextColor(this.button_color_fg)
         this.active_button = null
+    }
 
+    fun hideOption(index: Int) {
+        this.hidden_options.add(index)
+        for ((view, i) in this.button_map) {
+            if (i == index) {
+                view.visibility = View.GONE
+            }
+        }
     }
 }

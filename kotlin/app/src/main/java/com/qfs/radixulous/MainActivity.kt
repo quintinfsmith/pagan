@@ -94,6 +94,7 @@ class ViewCache {
             this.view_cache.add(Pair(view, mutableListOf()))
         }
     }
+
     fun cacheTree(view: View, y: Int, x: Int, position: List<Int>) {
         if (position.isEmpty()) {
             if (x < this.view_cache[y].second.size) {
@@ -192,16 +193,16 @@ class MainActivity : AppCompatActivity() {
     private var active_context_menu_index: ContextMenu = ContextMenu.None
     private var linking_beat: BeatKey? = null
     private var relative_mode: Boolean = false
-    private var active_relative_option: Int? = null
     private var midi_player: MidiPlayer = MidiPlayer()
-    lateinit var midi_controller: MIDIController
+    private var ticking: Boolean = false // Lock to prevent multiple attempts at updating from happening at once
+    //lateinit var midi_controller: MIDIController
 
     @RequiresApi(Build.VERSION_CODES.M)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        this.midi_controller = RadMidiController(this.opus_manager, window.decorView.rootView.context)
+        //this.midi_controller = RadMidiController(this.opus_manager, window.decorView.rootView.context)
         // calling this activity's function to
         // use ActionBar utility methods
         val actionBar = supportActionBar!!
@@ -374,7 +375,9 @@ class MainActivity : AppCompatActivity() {
 
         var close_btn: ImageButton = popupView.findViewById(R.id.btnCloseLoadProject)
         close_btn.setOnTouchListener { it: View, motionEvent: MotionEvent ->
-            popupWindow.dismiss()
+            if (motionEvent.action == MotionEvent.ACTION_UP) {
+                popupWindow.dismiss()
+            }
             true
         }
 
@@ -466,19 +469,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         rowLabel.textView.setOnClickListener {
-            var abs_y: Int = 0
-            val label_column = rowLabel.parent!! as ViewGroup
-            for (i in 0 until label_column.childCount) {
-                if (label_column.getChildAt(i) == rowLabel) {
-                    abs_y = i
-                    break
-                }
-            }
-
-            val cursor = that.opus_manager.get_cursor()
-            this.opus_manager.set_cursor_position(abs_y, cursor.x, listOf())
-            this.tick()
-            this.setContextMenu(ContextMenu.Line)
+            this.interact_rowLabel(it)
         }
 
         rowLabel.layoutParams.height = 125
@@ -536,35 +527,11 @@ class MainActivity : AppCompatActivity() {
             }
 
             leafView.setOnClickListener {
-                val key = this.cache.getTreeViewYXPosition(leafView)
-                if (key != null) {
-                    if (this.linking_beat != null) {
-                        val pair = this.opus_manager.get_channel_index(key.first)
-                        val working_position = BeatKey(
-                            pair.first,
-                            pair.second,
-                            key.second
-                        )
-                        this.opus_manager.link_beats(this.linking_beat!!, working_position)
-                        this.linking_beat = null
-                    }
-
-                    this.opus_manager.set_cursor_position(key.first, key.second, key.third)
-                    this.setContextMenu(ContextMenu.Leaf)
-
-                    this.tick()
-                }
+                this.interact_leafView_click(it)
             }
 
             leafView.setOnLongClickListener {
-                val key = this.cache.getTreeViewYXPosition(leafView)
-                if (key != null) {
-                    val pair = this.opus_manager.get_channel_index(key.first)
-                    this.linking_beat = BeatKey(pair.first, pair.second, key.second)
-                    this.opus_manager.set_cursor_position(key.first, key.second, listOf())
-                    this.setContextMenu(ContextMenu.Linking)
-                    this.tick()
-                }
+                this.interact_leafView_longclick(it)
                 true
             }
 
@@ -594,9 +561,7 @@ class MainActivity : AppCompatActivity() {
 
             return cellLayout
         }
-
     }
-
 
     private fun setContextMenu(menu_index: ContextMenu) {
         this.active_context_menu_index = menu_index
@@ -612,65 +577,24 @@ class MainActivity : AppCompatActivity() {
                 )
 
                 view.btnRemoveLine.setOnClickListener {
-                    if (this.opus_manager.line_count() > 1) {
-                        this.opus_manager.remove_line_at_cursor()
-                    }
-                    this.tick()
+                    this.interact_btnRemoveLine(it)
                 }
 
                 view.btnInsertLine.setOnClickListener {
-                    this.opus_manager.new_line_at_cursor()
-                    this.tick()
+                    this.interact_btnInsertLine(it)
                 }
 
                 val beatkey = this.opus_manager.get_cursor().get_beatkey()
                 if (beatkey.channel == 9) {
                     val instrument = this.opus_manager.get_percussion_instrument(beatkey.line_offset)
-                    view.btnChooseInstrument.text = resources.getStringArray(R.array.midi_drums)[instrument - 35]
+                    view.btnChooseInstrument.text = resources.getStringArray(R.array.midi_drums)[instrument]
                 } else {
                     val instrument = this.opus_manager.get_channel_instrument(beatkey.channel)
                     view.btnChooseInstrument.text = resources.getStringArray(R.array.midi_instruments)[instrument]
                 }
 
                 view.btnChooseInstrument.setOnClickListener {
-                    val popupMenu = PopupMenu(window.decorView.rootView.context, it)
-                    val cursor = this.opus_manager.get_cursor()
-                    if (cursor.get_beatkey().channel == 9) {
-                        //popupMenu.menuInflater.inflate(R.menu.percussion_instruments, popupMenu.getMenu())
-                        val drums = resources.getStringArray(R.array.midi_drums)
-                        drums.forEachIndexed { i, string ->
-                            popupMenu.menu.add(0, i + 35, i, string)
-                        }
-
-                        popupMenu.setOnMenuItemClickListener {
-                            this.opus_manager.set_percussion_instrument(
-                                cursor.get_beatkey().line_offset,
-                                it.itemId
-                            )
-                            this.tick()
-                            val y = this.opus_manager.get_cursor().get_y()
-                            this.cache.getLineLabel(y)!!.textView.text = "P:${it.itemId}"
-                            this.setContextMenu(ContextMenu.Line) // TODO: overkill?
-                            true
-                        }
-                    } else {
-                        val instruments = resources.getStringArray(R.array.midi_instruments)
-                        instruments.forEachIndexed { i, string ->
-                            popupMenu.menu.add(0, i, i, string)
-                        }
-
-                        popupMenu.setOnMenuItemClickListener {
-                            this.opus_manager.set_channel_instrument(
-                                cursor.get_beatkey().channel,
-                                it.itemId
-                            )
-
-                            this.tick()
-                            this.setContextMenu(ContextMenu.Line) //TODO: Overkill?
-                            true
-                        }
-                    }
-                    popupMenu.show()
+                    this.interact_btnChooseInstrument(it)
                 }
 
                 this.llContextMenu.addView(view)
@@ -684,15 +608,11 @@ class MainActivity : AppCompatActivity() {
                 )
 
                 view.btnInsertBeat.setOnClickListener {
-                    this.opus_manager.insert_beat_at_cursor()
-                    this.tick()
+                    this.interact_btnInsertBeat(it)
                 }
 
                 view.btnRemoveBeat.setOnClickListener {
-                    if (this.opus_manager.opus_beat_count > 1) {
-                        this.opus_manager.remove_beat_at_cursor()
-                    }
-                    this.tick()
+                    this.interact_btnRemoveBeat(it)
                 }
 
                 this.llContextMenu.addView(view)
@@ -712,22 +632,14 @@ class MainActivity : AppCompatActivity() {
                 val cursor_key = this.opus_manager.get_cursor().get_beatkey()
                 if (this.opus_manager.is_reflection(cursor_key.channel, cursor_key.line_offset, cursor_key.beat)) {
                     view.btnUnLink.setOnClickListener {
-                        val cursor = this.opus_manager.get_cursor()
-                        this.opus_manager.unlink_beat(cursor.get_beatkey())
-                        cursor.settle()
-                        this.linking_beat = null
-                        this.setContextMenu(ContextMenu.Leaf)
-                        this.tick()
+                        this.interact_btnUnlink(it)
                     }
                 } else {
                     view.btnUnLink.visibility = View.GONE
                 }
 
                 view.btnCancelLink.setOnClickListener {
-                    this.opus_manager.get_cursor().settle()
-                    this.linking_beat = null
-                    this.setContextMenu(ContextMenu.Leaf)
-                    this.tick()
+                    this.interact_btnCancelLink(it)
                 }
 
                 this.llContextMenu.addView(view)
@@ -746,7 +658,6 @@ class MainActivity : AppCompatActivity() {
 
         this.llContextMenu.addView(view)
         this.cache.setActiveContextMenu(view)
-        this.active_relative_option = null
 
         val current_tree = this.opus_manager.get_tree_at_cursor()
         if (current_tree.is_event()) {
@@ -758,15 +669,8 @@ class MainActivity : AppCompatActivity() {
         if (this.opus_manager.has_preceding_absolute_event(cursor.get_beatkey(), cursor.get_position())) {
 
             view.sRelative.isChecked = this.relative_mode
-            view.sRelative.setOnCheckedChangeListener { _, isChecked ->
-                this.relative_mode = isChecked
-                if (isChecked) {
-                    this.opus_manager.convert_event_at_cursor_to_relative()
-                } else {
-                    this.opus_manager.convert_event_at_cursor_to_absolute()
-                }
-                this.setContextMenu(ContextMenu.Leaf)
-                this.tick()
+            view.sRelative.setOnCheckedChangeListener { it, isChecked ->
+                this.interact_sRelative_changed(it, isChecked)
             }
         } else {
             this.relative_mode = false
@@ -802,213 +706,125 @@ class MainActivity : AppCompatActivity() {
                     view.nsOctave.setState(event.note / event.radix)
                 }
             }
-            view.llAbsolutePalette.nsOffset?.setOnTouchListener { it: View, motionEvent: MotionEvent ->
-                val progress = (it as NumberSelector).getState()!!
-
-                val cursor = this.opus_manager.get_cursor()
-                val position = cursor.position
-                val beatkey = cursor.get_beatkey()
-
-                val event = if (current_tree.is_event()) {
-                    val event = current_tree.get_event()!!
-                    val old_octave = event.note / event.radix
-                    event.note = (old_octave * event.radix) + progress
-
-                    event
-                } else {
-                    OpusEvent(
-                        progress + opus_manager.RADIX,
-                        opus_manager.RADIX,
-                        beatkey.channel,
-                        false
-                    )
-                }
-
-                this.opus_manager.set_event(beatkey, position, event)
-                if (view.llAbsolutePalette.nsOctave.getState() == null) {
-                    view.llAbsolutePalette.nsOctave.setState(event.note / event.radix)
-                }
-
-                //that.midi_player.play(event.note)
-                this.tick()
-
-                true
-            }
-
-            view.llAbsolutePalette.nsOctave?.setOnTouchListener { it: View, motionEvent: MotionEvent ->
-                val progress = (it as NumberSelector).getState()!!
-
-                val cursor = opus_manager.get_cursor()
-                val position = cursor.position
-                val beatkey = cursor.get_beatkey()
-
-                val event = if (current_tree.is_event()) {
-                    val event = current_tree.get_event()!!
-                    event.note = (progress * event.radix) + (event.note % event.radix)
-                    event
-                } else {
-                    OpusEvent(
-                        progress * opus_manager.RADIX,
-                        opus_manager.RADIX,
-                        beatkey.channel,
-                        false
-                    )
-                }
-
-                this.opus_manager.set_event(beatkey, position, event)
-                if (view.llAbsolutePalette.nsOffset.getState() == null) {
-                    view.llAbsolutePalette.nsOffset.setState(event.note % event.radix)
-                }
-
-                //that.midi_player.play(event.note)
-                this.tick()
-
-                true
-            }
+            view.llAbsolutePalette.nsOffset?.setOnChange(this::interact_nsOffset)
+            view.llAbsolutePalette.nsOctave?.setOnChange(this::interact_nsOctave)
         } else {
             view.llAbsolutePalette.visibility = View.GONE
-            var selected_button = R.id.rbAdd
-            if (current_tree.is_event()) {
+            var selected_button = 0
+            var new_progress: Int? = if (current_tree.is_event()) {
                 val event = current_tree.get_event()!!
                 if (event.relative) {
-                    val new_progress = if (event.note > 0) {
+                    if (event.note > 0) {
                         if (event.note >= event.radix) {
-                            selected_button = R.id.rbPow
+                            selected_button = 2
                             event.note / event.radix
                         } else {
                             event.note
                         }
                     } else if (event.note < 0) {
                         if (event.note <= 0 - event.radix) {
-                            selected_button = R.id.rbLog
+                            selected_button = 3
                             event.note / (0 - event.radix)
                         } else {
-                            selected_button = R.id.rbSubtract
+                            selected_button = 1
                             0 - event.note
                         }
                     } else {
                         0
                     }
+                } else {
+                    null
+                }
+            } else {
+                null
+            }
 
+            var relativeOptions: RelativeOptionSelector = findViewById(R.id.rosRelativeOption)
+            relativeOptions.setState(selected_button)
+
+            this.resize_relative_value_selector()
+            if (new_progress != null) {
+                try {
                     view.llRelativePalette.nsRelativeValue.setState(new_progress)
-                    var button_view: View? = view.findViewById(selected_button)
-                    if (button_view != null) {
-                        this.change_relative_option(button_view)
-                    }
-
-                    //       view.llRelativePalette.rgRelOptions.check(selected_button)
+                } catch (e: Exception) {
+                    view.llRelativePalette.nsRelativeValue.unset_active_button()
                 }
             }
 
-            var preceding_leaf = this.opus_manager.get_preceding_leaf_position(cursor.get_beatkey(), cursor.get_position())!!
-            while (!this.opus_manager.get_tree(preceding_leaf.first, preceding_leaf.second).is_event()) {
-                preceding_leaf = this.opus_manager.get_preceding_leaf_position(preceding_leaf.first, preceding_leaf.second)!!
-            }
-
-            var preceding_value = this.opus_manager.get_absolute_value(preceding_leaf.first, preceding_leaf.second)!!
-            this.resize_relative_value_selector(preceding_value, selected_button)
-
-            view.llRelativePalette.nsRelativeValue.setOnTouchListener { it: View, motionEvent: MotionEvent ->
-                this.change_relative_value((it as NumberSelector).getState()!!)
-                true
-            }
+            view.llRelativePalette.rosRelativeOption.setOnChange(this::interact_rosRelativeOption)
+            view.llRelativePalette.nsRelativeValue.setOnChange(this::interact_nsRelativeValue)
         }
 
         view.clButtons.btnSplit?.setOnClickListener {
-            this.opus_manager.split_tree_at_cursor()
-            this.tick()
+            this.interact_btnSplit(it)
         }
 
         view.clButtons.btnUnset?.setOnClickListener {
-            if (this.opus_manager.get_cursor().get_beatkey().channel != 9 || this.opus_manager.get_tree_at_cursor().is_event()) {
-                this.opus_manager.unset_at_cursor()
-            } else {
-                this.opus_manager.set_percussion_event_at_cursor()
-            }
-
-            this.tick()
-            this.setContextMenu(ContextMenu.Leaf)
+            this.interact_btnUnset(it)
         }
 
         view.clButtons.btnRemove?.setOnClickListener {
-            val cursor = this.opus_manager.get_cursor()
-            if (cursor.get_position().isNotEmpty()) {
-                this.opus_manager.remove_tree_at_cursor()
-            }
-            this.tick()
+            this.interact_btnRemove(it)
         }
 
         view.clButtons.btnInsert?.setOnClickListener {
-            val position = this.opus_manager.get_cursor().get_position()
-            if (position.isEmpty()) {
-                this.opus_manager.split_tree_at_cursor()
-            } else {
-                this.opus_manager.insert_after_cursor()
-            }
-            this.tick()
+            this.interact_btnInsert(it)
         }
     }
 
-    private fun resize_relative_value_selector(preceding_value: Int, selected_button: Int) {
-        var cursor = this.opus_manager.get_cursor()
-
+    private fun resize_relative_value_selector() {
         var maximum_note = 95
-        var minimum_note = 0
+
+        var cursor = this.opus_manager.get_cursor()
+        var preceding_leaf = this.opus_manager.get_preceding_leaf_position(cursor.get_beatkey(), cursor.get_position())!!
+        while (!this.opus_manager.get_tree(preceding_leaf.first, preceding_leaf.second).is_event()) {
+            preceding_leaf = this.opus_manager.get_preceding_leaf_position(preceding_leaf.first, preceding_leaf.second)!!
+        }
+        var preceding_value = this.opus_manager.get_absolute_value(preceding_leaf.first, preceding_leaf.second)!!
 
         // Hide/ Show Relative options if they don't/do need to be visible
-        var btnPow: TextView = findViewById(R.id.rbPow)
+        var selector: RelativeOptionSelector = findViewById(R.id.rosRelativeOption)
         if (preceding_value > maximum_note - this.opus_manager.RADIX) {
-            btnPow.visibility = View.GONE
-        } else {
-            btnPow.visibility = View.VISIBLE
+            selector.hideOption(2)
         }
 
-        var btnLog: TextView = findViewById(R.id.rbLog)
         if (preceding_value < this.opus_manager.RADIX) {
-            btnLog.visibility = View.GONE
-        } else {
-            btnLog.visibility = View.VISIBLE
+            selector.hideOption(3)
         }
 
-        var btnAdd: TextView = findViewById(R.id.rbAdd)
         if (preceding_value > maximum_note) {
-            btnAdd.visibility = View.GONE
-        } else {
-            btnAdd.visibility = View.VISIBLE
+            selector.hideOption(0)
         }
 
-        var btnSubtract: TextView = findViewById(R.id.rbSubtract)
         if (preceding_value == 0) {
-            btnSubtract.visibility = View.GONE
-        } else {
-            btnSubtract.visibility = View.VISIBLE
+            selector.hideOption(1)
         }
-
 
         var relMin = 1
         var relMax = maximum_note / this.opus_manager.RADIX
-        when (selected_button) {
-            R.id.rbAdd -> {
+        when (selector.getState()) {
+            0 -> {
                 relMin = 0
-                relMax = min(maximum_note - preceding_value, relMax)
+                relMax = min(maximum_note - preceding_value, this.opus_manager.RADIX - 1)
             }
-            R.id.rbSubtract -> {
-                relMax = min(this.opus_manager.RADIX  - 1, preceding_value)
+            1 -> {
+                relMax = min(this.opus_manager.RADIX - 1, preceding_value)
+                relMin = min(relMin, relMax)
             }
-            R.id.rbPow -> {
+            2 -> {
                 relMax = min((maximum_note - preceding_value) / this.opus_manager.RADIX, relMax)
+                relMin = min(relMin, relMax)
             }
-            R.id.rbLog -> {
+            3 -> {
                 relMax = min(preceding_value / this.opus_manager.RADIX, relMax)
+                relMin = min(relMin, relMax)
             }
-            else -> {}
+            else -> { }
         }
+
         var view: NumberSelector = findViewById(R.id.nsRelativeValue)
-        var orig_val = view.getState()
         view.setRange(relMin, relMax)
-        if (orig_val != view.getState()) {
-            this.change_relative_value(view.getState()!!)
-        }
+        view.unset_active_button()
     }
 
     private fun rebuildBeatView(y: Int, x: Int) {
@@ -1024,11 +840,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun tick() {
-        this.tick_unapply_cursor()
-        this.tick_manage_lines()
-        this.tick_manage_beats() // new/pop
-        this.tick_update_beats() // changes
-        this.tick_apply_cursor()
+        if (! this.ticking) {
+            this.ticking = true
+            this.tick_unapply_cursor()
+            this.tick_manage_lines()
+            this.tick_manage_beats() // new/pop
+            this.tick_update_beats() // changes
+            this.tick_apply_cursor()
+            this.ticking = false
+        }
     }
 
     private fun tick_manage_lines() {
@@ -1070,7 +890,6 @@ class MainActivity : AppCompatActivity() {
                     for (x in 0 until this.opus_manager.opus_beat_count) {
                         this.buildTreeView(rowView, y, x, listOf())
                         this.opus_manager.flag_beat_change(BeatKey(channel, index, x))
-                        //this.__tick_resize_beat_cell(channel, index, x, leaf.layoutParams.width)
                     }
                 }
                 2 -> {
@@ -1139,6 +958,7 @@ class MainActivity : AppCompatActivity() {
         val updated_beats: MutableSet<Int> = mutableSetOf()
         while (true) {
             val beatkey = this.opus_manager.fetch_flag_change() ?: break
+            Log.e("AAA", "$beatkey")
             this.rebuildBeatView(
                 this.opus_manager.get_y(
                     beatkey.channel,
@@ -1313,77 +1133,46 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun change_relative_option(view: View) {
-        var progress_bar: NumberSelector = findViewById(R.id.nsRelativeValue)
-        var progress = progress_bar.getState() ?: 0
-
-        val cursor = this.opus_manager.get_cursor()
-        val beat_key = cursor.get_beatkey()
-
-        var new_value = when (view.id) {
-            R.id.rbSubtract -> {
-                0 - progress
-            }
-            R.id.rbAdd -> {
-                progress
-            }
-            R.id.rbLog -> {
-                0 - (this.opus_manager.RADIX * progress)
-            }
-            R.id.rbPow -> {
-                this.opus_manager.RADIX * progress
-            }
-            else -> {
-                0
-            }
+    fun interact_rosRelativeOption(view: RelativeOptionSelector) {
+        this.resize_relative_value_selector()
+        var current_tree = this.opus_manager.get_tree_at_cursor()
+        if (! current_tree.is_event() || ! current_tree.get_event()!!.relative) {
+            return
         }
 
-        val event = OpusEvent(
-            new_value,
-            this.opus_manager.RADIX,
-            beat_key.channel,
-            true
-        )
-
-        this.opus_manager.set_event(beat_key, cursor.position, event)
-
-        var preceding_leaf = this.opus_manager.get_preceding_leaf_position(cursor.get_beatkey(), cursor.get_position())!!
-        while (!this.opus_manager.get_tree(preceding_leaf.first, preceding_leaf.second).is_event()) {
-            preceding_leaf = this.opus_manager.get_preceding_leaf_position(preceding_leaf.first, preceding_leaf.second)!!
+        val event = current_tree.get_event()!!
+        var checkstate_and_value: Pair<Int, Int> = if (event.note >= event.radix) {
+            Pair(2, event.note / event.radix)
+        } else if (event.note > 0) {
+            Pair(0, event.note)
+        } else if (event.note <= 0 - event.radix) {
+            Pair(3, 0 - (event.note / event.radix))
+        } else if (event.note < 0) {
+            Pair(1, 0 - event.note)
+        } else {
+            Pair(0, 0)
         }
-        var preceding_value = this.opus_manager.get_absolute_value(preceding_leaf.first, preceding_leaf.second)!!
 
-        this.apply_relative_option_facade(view)
-        this.resize_relative_value_selector(preceding_value, view.id)
-
-
-        this.tick()
+        if (checkstate_and_value.first == view.getState()) {
+            var valueSelector: NumberSelector = findViewById(R.id.nsRelativeValue)
+            try {
+                valueSelector.setState(checkstate_and_value.second)
+            } catch (e: Exception) {
+                valueSelector.unset_active_button()
+            }
+        }
     }
 
     private fun change_relative_value(progress: Int) {
-        val radio_button: Int? = this.active_relative_option
-
         val cursor = opus_manager.get_cursor()
         val beat_key = cursor.get_beatkey()
-
-        val new_value = when (radio_button) {
-            R.id.rbAdd -> {
-                progress
-            }
-            R.id.rbSubtract -> {
-                0 - progress
-            }
-            R.id.rbPow -> {
-                this.opus_manager.RADIX * progress
-            }
-            R.id.rbLog -> {
-                0 - (this.opus_manager.RADIX * progress)
-            }
-            else -> {
-                this.active_relative_option = R.id.rbAdd
-                this.apply_relative_option_facade(findViewById(R.id.rbAdd))
-                progress
-            }
+        var relativeOptionSelector: RelativeOptionSelector = findViewById(R.id.rosRelativeOption)
+        val new_value = when (relativeOptionSelector.getState()) {
+            0 -> { progress }
+            1 -> { 0 - progress }
+            2 -> { this.opus_manager.RADIX * progress }
+            3 -> { 0 - (this.opus_manager.RADIX * progress) }
+            else -> { progress }
         }
 
         val event = OpusEvent(
@@ -1397,22 +1186,249 @@ class MainActivity : AppCompatActivity() {
         this.tick()
     }
 
-    private fun apply_relative_option_facade(view: View) {
-        if (this.active_relative_option != null) {
-            var old_view: View = findViewById(this.active_relative_option!!)
-            old_view.setBackgroundColor(
-                ContextCompat.getColor(old_view.context, R.color.leaf_bg)
+    private fun interact_btnSplit(view: View) {
+        this.opus_manager.split_tree_at_cursor()
+        this.tick()
+    }
+
+    private fun interact_btnUnset(view: View) {
+        if (this.opus_manager.get_cursor().get_beatkey().channel != 9 || this.opus_manager.get_tree_at_cursor().is_event()) {
+            this.opus_manager.unset_at_cursor()
+        } else {
+            this.opus_manager.set_percussion_event_at_cursor()
+        }
+
+        this.tick()
+        this.setContextMenu(ContextMenu.Leaf)
+    }
+
+    private fun interact_btnUnlink(view: View) {
+        val cursor = this.opus_manager.get_cursor()
+        this.opus_manager.unlink_beat(cursor.get_beatkey())
+        cursor.settle()
+        this.linking_beat = null
+        this.setContextMenu(ContextMenu.Leaf)
+        this.tick()
+
+    }
+
+    private fun interact_btnCancelLink(view: View) {
+        this.opus_manager.get_cursor().settle()
+        this.linking_beat = null
+        this.setContextMenu(ContextMenu.Leaf)
+        this.tick()
+    }
+
+    private fun interact_btnInsertBeat(view: View) {
+        this.opus_manager.insert_beat_at_cursor()
+        this.tick()
+    }
+
+    private fun interact_btnRemoveBeat(view: View) {
+        if (this.opus_manager.opus_beat_count > 1) {
+            this.opus_manager.remove_beat_at_cursor()
+        }
+        this.tick()
+    }
+    private fun interact_btnRemoveLine(view: View) {
+        if (this.opus_manager.line_count() > 1) {
+            this.opus_manager.remove_line_at_cursor()
+        }
+        this.tick()
+    }
+
+    private fun interact_btnInsertLine(view: View) {
+        this.opus_manager.new_line_at_cursor()
+        this.tick()
+    }
+
+    private fun interact_btnChooseInstrument(view: View) {
+        val popupMenu = PopupMenu(window.decorView.rootView.context, view)
+        val cursor = this.opus_manager.get_cursor()
+        if (cursor.get_beatkey().channel == 9) {
+            val drums = resources.getStringArray(R.array.midi_drums)
+            drums.forEachIndexed { i, string ->
+                popupMenu.menu.add(0, i, i, string)
+            }
+
+            popupMenu.setOnMenuItemClickListener {
+                this.opus_manager.set_percussion_instrument(
+                    cursor.get_beatkey().line_offset,
+                    it.itemId
+                )
+                this.tick()
+                val y = this.opus_manager.get_cursor().get_y()
+                this.cache.getLineLabel(y)!!.textView.text = "P:${it.itemId}"
+                this.setContextMenu(ContextMenu.Line) // TODO: overkill?
+                true
+            }
+        } else {
+            val instruments = resources.getStringArray(R.array.midi_instruments)
+            instruments.forEachIndexed { i, string ->
+                popupMenu.menu.add(0, i, i, string)
+            }
+
+            popupMenu.setOnMenuItemClickListener {
+                this.opus_manager.set_channel_instrument(
+                    cursor.get_beatkey().channel,
+                    it.itemId
+                )
+
+                this.tick()
+                this.setContextMenu(ContextMenu.Line) //TODO: Overkill?
+                true
+            }
+        }
+        popupMenu.show()
+    }
+
+    private fun interact_leafView_click(view: View) {
+        val key = this.cache.getTreeViewYXPosition(view) ?: return
+        if (this.linking_beat != null) {
+            val pair = this.opus_manager.get_channel_index(key.first)
+            val working_position = BeatKey(
+                pair.first,
+                pair.second,
+                key.second
+            )
+            this.opus_manager.link_beats(this.linking_beat!!, working_position)
+            this.linking_beat = null
+        }
+
+        this.opus_manager.set_cursor_position(key.first, key.second, key.third)
+        this.setContextMenu(ContextMenu.Leaf)
+
+        this.tick()
+    }
+
+    private fun interact_leafView_longclick(view: View) {
+        val key = this.cache.getTreeViewYXPosition(view) ?: return
+        val pair = this.opus_manager.get_channel_index(key.first)
+        this.linking_beat = BeatKey(pair.first, pair.second, key.second)
+        this.opus_manager.set_cursor_position(key.first, key.second, listOf())
+        this.setContextMenu(ContextMenu.Linking)
+        this.tick()
+    }
+
+    public fun interact_nsOffset(view: NumberSelector) {
+        val progress = view.getState()!!
+        var current_tree = this.opus_manager.get_tree_at_cursor()
+
+        val cursor = this.opus_manager.get_cursor()
+        val position = cursor.position
+        val beatkey = cursor.get_beatkey()
+
+        val event = if (current_tree.is_event()) {
+            val event = current_tree.get_event()!!
+            val old_octave = event.note / event.radix
+            event.note = (old_octave * event.radix) + progress
+
+            event
+        } else {
+            OpusEvent(
+                progress,
+                opus_manager.RADIX,
+                beatkey.channel,
+                false
             )
         }
 
-        view.setBackgroundColor(
-            ContextCompat.getColor(view.context, R.color.leaf_selected)
-        )
+        this.opus_manager.set_event(beatkey, position, event)
+        var nsOctave: NumberSelector = findViewById(R.id.nsOctave)
+        if (nsOctave.getState() == null) {
+            nsOctave.setState(event.note / event.radix)
+        }
 
-        this.active_relative_option = view.id
+        //that.midi_player.play(event.note)
+        this.tick()
+    }
+
+    public fun interact_nsOctave(view: NumberSelector) {
+        val progress = view.getState() ?: return
+
+        var current_tree = this.opus_manager.get_tree_at_cursor()
+        val cursor = opus_manager.get_cursor()
+        val position = cursor.position
+        val beatkey = cursor.get_beatkey()
+
+        val event = if (current_tree.is_event()) {
+            val event = current_tree.get_event()!!
+            event.note = (progress * event.radix) + (event.note % event.radix)
+            event
+        } else {
+            OpusEvent(
+                progress * opus_manager.RADIX,
+                opus_manager.RADIX,
+                beatkey.channel,
+                false
+            )
+        }
+
+        this.opus_manager.set_event(beatkey, position, event)
+        var nsOffset: NumberSelector = findViewById(R.id.nsOffset)
+        if (nsOffset.getState() == null) {
+            nsOffset.setState(event.note % event.radix)
+        }
+
+        //that.midi_player.play(event.note)
+        this.tick()
+    }
+
+    private fun interact_rowLabel(view: View) {
+        var abs_y: Int = 0
+        val label_column = view.parent!! as ViewGroup
+        for (i in 0 until label_column.childCount) {
+            if (label_column.getChildAt(i) == view) {
+                abs_y = i
+                break
+            }
+        }
+
+        val cursor = this.opus_manager.get_cursor()
+        this.opus_manager.set_cursor_position(abs_y, cursor.x, listOf())
+        this.tick()
+        this.setContextMenu(ContextMenu.Line)
+    }
+
+    private fun interact_sRelative_changed(view: View, isChecked: Boolean) {
+        if (isChecked) {
+            this.opus_manager.convert_event_at_cursor_to_relative()
+        } else {
+            try {
+                this.opus_manager.convert_event_at_cursor_to_absolute()
+            } catch (e: Exception) {
+                Toast.makeText(this, "Can't convert event", Toast.LENGTH_SHORT).show()
+                (view as ToggleButton).isChecked = true
+                return
+            }
+        }
+        this.relative_mode = isChecked
+        this.setContextMenu(ContextMenu.Leaf)
+        this.tick()
+    }
+
+    private fun interact_btnRemove(view: View) {
+        val cursor = this.opus_manager.get_cursor()
+        if (cursor.get_position().isNotEmpty()) {
+            this.opus_manager.remove_tree_at_cursor()
+        }
+        this.tick()
+    }
+
+    private fun interact_btnInsert(view: View) {
+        val position = this.opus_manager.get_cursor().get_position()
+        if (position.isEmpty()) {
+            this.opus_manager.split_tree_at_cursor()
+        } else {
+            this.opus_manager.insert_after_cursor()
+        }
+        this.tick()
+    }
+
+    public fun interact_nsRelativeValue(view: NumberSelector) {
+        this.change_relative_value(view.getState()!!)
     }
 }
-
 
 @RequiresApi(Build.VERSION_CODES.M)
 class RadMidiController(var opus_manager: OpusManager, context: Context): MIDIController(context) {

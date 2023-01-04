@@ -154,7 +154,7 @@ open class HistoryLayer() : CursorLayer() {
         super.reset()
     }
 
-    fun apply_undo() {
+    open fun apply_undo() {
         if (this.history_cache.isEmpty()) {
             return
         }
@@ -168,6 +168,10 @@ open class HistoryLayer() : CursorLayer() {
                     val position = this.history_cache.get_position()
                     val beat_key = this.history_cache.get_beatkey()
                     this.split_tree(beat_key, position, splits)
+                }
+                "unlink_beats" -> {
+                    var beatkey = this.history_cache.get_beatkey()
+                    this.unlink_beat(beatkey)
                 }
                 "set_event" -> {
                     var relative = this.history_cache.get_boolean()
@@ -471,5 +475,18 @@ open class HistoryLayer() : CursorLayer() {
 
     fun has_history(): Boolean {
         return ! this.history_cache.isEmpty()
+    }
+
+    override fun link_beats(beat_key: BeatKey, target: BeatKey) {
+        this.history_cache.open_multi()
+        if (this.history_cache.append_undoer_key("unlink_beats")) {
+            this.history_cache.add_beatkey(beat_key)
+            this.setup_repopulate(beat_key, listOf())
+        }
+        this.history_cache.close_multi(
+            this.get_cursor().get_beatkey(),
+            this.get_cursor().get_position()
+        )
+        super.link_beats(beat_key, target)
     }
 }

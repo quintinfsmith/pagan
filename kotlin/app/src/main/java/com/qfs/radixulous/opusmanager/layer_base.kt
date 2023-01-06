@@ -117,7 +117,6 @@ open class OpusManagerBase {
     }
 
     open fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEvent) {
-        Log.e("AAA", "${beat_key}")
         if (beat_key.channel == 9) {
             throw Exception("Attempting to set percussion channel")
         }
@@ -142,13 +141,13 @@ open class OpusManagerBase {
 
     open fun unset(beat_key: BeatKey, position: List<Int>) {
         val tree = this.get_tree(beat_key, position)
+
+        tree.unset_event()
+        tree.empty()
+
         if (tree.parent != null) {
             var index = tree.getIndex()
             tree.parent!!.divisions.remove(index)
-        } else if (tree.is_event()) {
-            tree.unset_event()
-        } else {
-            tree.empty()
         }
     }
 

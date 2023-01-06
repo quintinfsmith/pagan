@@ -43,6 +43,12 @@ class RelativeOptionSelector: LinearLayout {
     }
 
     override fun onLayout(isChanged: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
+        var current_state = this.getState()
+        this.clear()
+        this.populate()
+        if (current_state != null) {
+            this.setState(current_state)
+        }
         super.onLayout(isChanged, left, top, right, bottom)
         val size = this.itemList.size - this.hidden_options.size
         val margin = 5

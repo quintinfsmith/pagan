@@ -41,9 +41,12 @@ class NumberSelector: LinearLayout {
     }
 
     override fun onLayout(isChanged: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
+        var current_state = this.getState()
         this.clear()
         this.populate()
-
+        if (current_state != null) {
+            this.setState(current_state)
+        }
         super.onLayout(isChanged, left, top, right, bottom)
         var size = 1 + (this.max - this.min)
         var margin = 5

@@ -698,13 +698,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             view.clButtons.btnUnset?.setOnClickListener {
-                if (this.opus_manager.get_tree_at_cursor().is_event()) {
-                    this.opus_manager.unset_at_cursor()
-                } else {
-                    this.opus_manager.set_percussion_event_at_cursor()
-                }
-                this.tick()
-                this.setContextMenu(ContextMenu.Leaf)
+                this.interact_btnUnset(it)
             }
 
         } else if (!this.relative_mode) {
@@ -1202,7 +1196,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun interact_btnUnset(view: View) {
-        if (this.opus_manager.get_cursor().get_beatkey().channel != 9 || this.opus_manager.get_tree_at_cursor().is_event()) {
+        this.setContextMenu(ContextMenu.Leaf)
+        var cursor = this.opus_manager.get_cursor()
+        Log.e("AAA", "${cursor.position}")
+        if (cursor.get_beatkey().channel != 9 || this.opus_manager.get_tree_at_cursor().is_event()) {
             this.opus_manager.unset_at_cursor()
         } else {
             this.opus_manager.set_percussion_event_at_cursor()
@@ -1431,6 +1428,7 @@ class MainActivity : AppCompatActivity() {
         if (cursor.get_position().isNotEmpty()) {
             this.opus_manager.remove_tree_at_cursor()
         }
+        Log.e("AAA", "${cursor.position}")
         this.tick()
     }
 

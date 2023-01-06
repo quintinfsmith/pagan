@@ -29,12 +29,9 @@ import kotlinx.android.synthetic.main.table_line_label.view.*
 import java.io.File
 import java.lang.Integer.max
 import com.qfs.radixulous.opusmanager.HistoryLayer as OpusManager
-import com.qfs.radixulous.apres.MIDIController
-import com.qfs.radixulous.apres.VirtualMIDIDevice
 import com.qfs.radixulous.MIDIPlaybackDevice
+import com.qfs.radixulous.apres.*
 
-import com.qfs.radixulous.apres.NoteOff
-import com.qfs.radixulous.apres.NoteOn
 import java.io.FileOutputStream
 import java.lang.Integer.min
 import kotlin.concurrent.thread
@@ -202,7 +199,9 @@ class MainActivity : AppCompatActivity() {
     lateinit var midi_controller: MIDIController
     lateinit var midi_playback_device: MIDIPlaybackDevice
     private var midi_input_device = MIDIInputDevice()
+    private var midi_player = MIDIPlayer()
 
+    @RequiresApi(Build.VERSION_CODES.M)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -211,6 +210,7 @@ class MainActivity : AppCompatActivity() {
         this.midi_controller = RadMidiController(window.decorView.rootView.context)
         this.midi_controller.registerVirtualDevice(this.midi_playback_device)
         this.midi_controller.registerVirtualDevice(this.midi_input_device)
+        this.midi_controller.registerVirtualDevice(this.midi_player)
 
         // calling this activity's function to
         // use ActionBar utility methods
@@ -1347,11 +1347,12 @@ class MainActivity : AppCompatActivity() {
 
         this.opus_manager.set_event(beatkey, position, event)
 
-        this.midi_input_device.sendEvent(NoteOn(beatkey.channel, event.note + 21, 64))
-        thread {
-            Thread.sleep(2000)
-            this.midi_input_device.sendEvent(NoteOff(beatkey.channel, event.note + 21, 64))
-        }
+        // DEBUG
+        //this.midi_input_device.sendEvent(NoteOn(beatkey.channel, event.note + 21, 64))
+        //thread {
+        //    Thread.sleep(300)
+        //    this.midi_input_device.sendEvent(NoteOff(beatkey.channel, event.note + 21, 64))
+        //}
 
         var nsOctave: NumberSelector = findViewById(R.id.nsOctave)
         if (nsOctave.getState() == null) {

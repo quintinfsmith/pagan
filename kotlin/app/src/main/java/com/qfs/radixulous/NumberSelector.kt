@@ -41,9 +41,11 @@ class NumberSelector: LinearLayout {
     }
 
     override fun onLayout(isChanged: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
+        this.clear()
+        this.populate()
+
         super.onLayout(isChanged, left, top, right, bottom)
         var size = 1 + (this.max - this.min)
-        Log.e("AAA", "${this.max}, ${this.min}")
         var margin = 5
         var working_width = (this.width - (this.paddingLeft + this.paddingRight))
         var inner_width = (working_width - ((size - 1) * margin)) / size
@@ -58,8 +60,8 @@ class NumberSelector: LinearLayout {
             }
 
             x += min(remainder, j)
-            (button as TextView).gravity = CENTER
             button.layout(x, this.paddingTop, x + working_width, bottom - this.paddingBottom)
+            (button as TextView).gravity = CENTER
         }
     }
 

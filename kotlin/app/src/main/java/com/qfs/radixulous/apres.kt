@@ -8,6 +8,7 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import java.io.File
 import java.lang.Math.max
+import kotlin.concurrent.thread
 import kotlin.experimental.and
 
 
@@ -1414,10 +1415,10 @@ class MIDI {
         var tracks = this.get_tracks()
 
         for (ticks in tracks) {
-            output.add('M'.toByte())
-            output.add('T'.toByte())
-            output.add('r'.toByte())
-            output.add('k'.toByte())
+            output.add('M'.code.toByte())
+            output.add('T'.code.toByte())
+            output.add('r'.code.toByte())
+            output.add('k'.code.toByte())
 
             track_event_bytes = mutableListOf()
             var has_eot = false
@@ -1797,7 +1798,9 @@ open class MIDIController(var context: Context) {
             if (device == source) {
                 continue
             }
-            device.receiveMessage(event)
+            thread {
+                device.receiveMessage(event)
+            }
         }
     }
 
@@ -1859,12 +1862,17 @@ open class VirtualMIDIDevice {
         this.midi_controller = controller
     }
 
+    fun is_registered(): Boolean {
+        return this.midi_controller != null
+    }
+
     fun sendEvent(event: MIDIEvent) {
         // TODO: Throw error?
-        if (this.midi_controller == null) {
-            return
+        if (is_registered()) {
+            thread {
+                this.midi_controller!!.receiveMessage(event, this)
+            }
         }
-        this.midi_controller!!.receiveMessage(event, this)
     }
 
     fun receiveMessage(event: MIDIEvent) {
@@ -2082,3 +2090,34 @@ open class VirtualMIDIDevice {
     open fun onReset(event: Reset) { }
     open fun onTimeCode(event: TimeCode) { }
 }
+
+class MIDIPlayer: VirtualMIDIDevice() {
+    fun play_midi(midi: MIDI) {
+        if (! this.is_registered()) {
+            Log.w("apres", "Can't play without registering a midi controller first")
+            return
+        }
+
+        var ppqn = midi.get_ppqn()
+        var ms_per_tick = 60000 / (ppqn * 120)
+        var previous_tick = 0
+        var start_time = System.currentTimeMillis()
+        var delay_accum = 0
+        for ((tick, event) in midi.get_all_events()) {
+            if ((tick - previous_tick) > 0) {
+                var delay = (tick - previous_tick) * ms_per_tick
+                var drift = delay_accum - (System.currentTimeMillis() - start_time)
+                delay_accum += delay
+                if (delay + drift > 0) {
+                    Thread.sleep(delay + drift)
+                }
+                previous_tick = tick
+            }
+            if (event is SetTempo) {
+                ms_per_tick = 60000 / (midi.ppqn * event.get_bpm()).toInt()
+            }
+            this.sendEvent(event)
+        }
+    }
+}
+

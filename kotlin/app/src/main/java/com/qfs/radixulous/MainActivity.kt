@@ -30,9 +30,14 @@ import java.io.File
 import java.lang.Integer.max
 import com.qfs.radixulous.opusmanager.HistoryLayer as OpusManager
 import com.qfs.radixulous.apres.MIDIController
+import com.qfs.radixulous.apres.VirtualMIDIDevice
+import com.qfs.radixulous.MIDIPlaybackDevice
+
+import com.qfs.radixulous.apres.NoteOff
 import com.qfs.radixulous.apres.NoteOn
 import java.io.FileOutputStream
 import java.lang.Integer.min
+import kotlin.concurrent.thread
 
 enum class ContextMenu {
     Leaf,
@@ -193,16 +198,20 @@ class MainActivity : AppCompatActivity() {
     private var active_context_menu_index: ContextMenu = ContextMenu.None
     private var linking_beat: BeatKey? = null
     private var relative_mode: Boolean = false
-    private var midi_player: MidiPlayer = MidiPlayer()
     private var ticking: Boolean = false // Lock to prevent multiple attempts at updating from happening at once
-    //lateinit var midi_controller: MIDIController
+    lateinit var midi_controller: MIDIController
+    lateinit var midi_playback_device: MIDIPlaybackDevice
+    private var midi_input_device = MIDIInputDevice()
 
-    @RequiresApi(Build.VERSION_CODES.M)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        this.midi_playback_device = MIDIPlaybackDevice(this)
 
-        //this.midi_controller = RadMidiController(this.opus_manager, window.decorView.rootView.context)
+        this.midi_controller = RadMidiController(window.decorView.rootView.context)
+        this.midi_controller.registerVirtualDevice(this.midi_playback_device)
+        this.midi_controller.registerVirtualDevice(this.midi_input_device)
+
         // calling this activity's function to
         // use ActionBar utility methods
         val actionBar = supportActionBar!!
@@ -1337,12 +1346,18 @@ class MainActivity : AppCompatActivity() {
         }
 
         this.opus_manager.set_event(beatkey, position, event)
+
+        this.midi_input_device.sendEvent(NoteOn(beatkey.channel, event.note + 21, 64))
+        thread {
+            Thread.sleep(2000)
+            this.midi_input_device.sendEvent(NoteOff(beatkey.channel, event.note + 21, 64))
+        }
+
         var nsOctave: NumberSelector = findViewById(R.id.nsOctave)
         if (nsOctave.getState() == null) {
             nsOctave.setState(event.note / event.radix)
         }
 
-        //that.midi_player.play(event.note)
         this.tick()
     }
 
@@ -1433,15 +1448,6 @@ class MainActivity : AppCompatActivity() {
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.M)
-class RadMidiController(var opus_manager: OpusManager, context: Context): MIDIController(context) {
-    override fun onNoteOn(event: NoteOn) {
-        var mevent = OpusEvent(
-            event.note,
-            this.opus_manager.RADIX,
-            event.channel,
-            false
-        )
-        this.opus_manager.set_event_at_cursor(mevent)
-    }
-}
+class RadMidiController(context: Context): MIDIController(context) { }
+
+class MIDIInputDevice: VirtualMIDIDevice() {}

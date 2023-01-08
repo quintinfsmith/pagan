@@ -3,7 +3,39 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/table_bg"
+    android:paddingTop="5px"
     xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <LinearLayout
+        android:id="@+id/llPlaybackctl"
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:paddingBottom="5px"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" >
+        <TextView
+            android:id="@+id/btnPlayback"
+            android:textSize="20sp"
+            android:gravity="center"
+            android:background="@color/interface_bg"
+            android:textColor="@color/interface_fg"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="match_parent"
+            android:layout_marginEnd="5px"
+            android:text="|>" />
+        <TextView
+            android:id="@+id/btnStopPlayback"
+            android:textSize="20sp"
+            android:gravity="center"
+            android:background="@color/interface_bg"
+            android:textColor="@color/interface_fg"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="match_parent"
+            android:text="[]" />
+    </LinearLayout>
 
     <TextView
         android:id="@+id/btnRemoveBeat"
@@ -18,6 +50,7 @@
         android:layout_height="match_parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/btnInsertBeat"
+        app:layout_constraintTop_toBottomOf="@+id/llPlaybackctl"
         android:text="Remove Beat"/>
     <TextView
         android:id="@+id/btnInsertBeat"
@@ -26,6 +59,7 @@
         android:layout_width="0dp"
         android:layout_weight="1"
         android:layout_height="match_parent"
+        app:layout_constraintTop_toBottomOf="@+id/llPlaybackctl"
         app:layout_constraintStart_toEndOf="@+id/btnRemoveBeat"
         app:layout_constraintEnd_toEndOf="parent"
         android:background="@color/interface_bg"

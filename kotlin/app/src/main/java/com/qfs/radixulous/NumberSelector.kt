@@ -9,6 +9,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import com.google.android.material.internal.ViewUtils.dpToPx
 import java.lang.Integer.min
 
@@ -131,8 +132,9 @@ class NumberSelector: LinearLayout {
             this.addView(currentView)
 
             // TODO: use dimens.xml (seems to be a bug treating sp as dp)
-            currentView.textSize = 24F
+            currentView.textSize = 20F
             currentView.text = "${get_number_string(i, 12,2)}"
+            currentView.setPadding(0,10,0,10)
             currentView.setBackgroundColor(this.button_color_bg)
             currentView.setTextColor(this.button_color_fg)
             this.button_map[currentView] = i

@@ -5,21 +5,12 @@
     android:layout_width="wrap_content"
     android:layout_height="wrap_content">
 
-    <LinearLayout
-        android:id="@+id/llLeaf"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-
 
         <TextView
             android:id="@+id/tvLeaf"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:layout_gravity="center"
             android:textColor="@color/leaf_fg"
             android:fontFamily="@font/fira_code"
@@ -30,7 +21,6 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
-    </LinearLayout>
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

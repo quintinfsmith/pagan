@@ -264,7 +264,14 @@ open class OpusManagerBase {
         this.channel_lines[channel_a] = tmp
     }
 
-    open fun get_midi(): MIDI {
+    open fun get_midi(start_beat: Int = 0, end_beat_rel: Int? = null): MIDI {
+        var end_beat = if (end_beat_rel == null) {
+            this.opus_beat_count
+        } else if (end_beat_rel < 0) {
+            this.opus_beat_count + end_beat_rel
+        } else {
+            end_beat_rel
+        }
         //var instruments = i_arg ?: HashMap<Int, Int>()
         var instruments = HashMap<Int, Int>()
         var tempo = 120F
@@ -282,6 +289,7 @@ open class OpusManagerBase {
                 var current_tick = 0
                 var prev_note = 0
                 line.forEachIndexed { b, beat ->
+
                     var stack: MutableList<StackItem> = mutableListOf(StackItem(beat, 1, current_tick, midi.ppqn))
                     while (stack.isNotEmpty()) {
                         var current = stack.removeFirst()
@@ -296,16 +304,18 @@ open class OpusManagerBase {
                                 event.note + 21
                             }
 
-                            midi.insert_event(
-                                0,
-                                current.offset,
-                                NoteOn(c, note, 64)
-                            )
-                            midi.insert_event(
-                                0,
-                                current.offset + current.size,
-                                NoteOff(c, note, 64)
-                            )
+                            if (!(b < start_beat || b >= end_beat)) {
+                                midi.insert_event(
+                                    0,
+                                    current.offset,
+                                    NoteOn(c, note, 64)
+                                )
+                                midi.insert_event(
+                                    0,
+                                    current.offset + current.size,
+                                    NoteOff(c, note, 64)
+                                )
+                            }
                             prev_note = note
                         } else if (!current.tree.is_leaf()) {
                             var working_subdiv_size = current.size / current.tree.size
@@ -323,7 +333,9 @@ open class OpusManagerBase {
                         }
                     }
 
-                    current_tick += midi.ppqn
+                    if (!(b < start_beat || b >= end_beat)) {
+                        current_tick += midi.ppqn
+                    }
                 }
             }
         }

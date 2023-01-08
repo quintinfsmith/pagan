@@ -3,29 +3,53 @@
 android:id="@+id/layout"
 android:layout_width="match_parent"
 android:layout_height="match_parent"
+android:background="@color/table_bg"
 xmlns:app="http://schemas.android.com/apk/res-auto">
-<Button
+<TextView
     android:id="@+id/btnChooseInstrument"
-    android:layout_width="match_parent"
+    android:textSize="20sp"
+    android:gravity="center"
+    android:background="@color/interface_bg"
+    android:textColor="@color/interface_fg"
+    android:layout_width="0dp"
+    android:layout_weight="1"
     android:layout_height="match_parent"
+    android:layout_marginTop="5px"
     app:layout_constraintStart_toStartOf="parent"
     app:layout_constraintEnd_toEndOf="parent"
     app:layout_constraintTop_toTopOf="parent"
     android:text="Instrument..." />
-<Button
+
+<TextView
     android:id="@+id/btnRemoveLine"
+    android:textSize="20sp"
+    android:gravity="center"
+    android:background="@color/interface_bg"
+    android:textColor="@color/interface_fg"
+    android:layout_width="0dp"
+    android:layout_weight="1"
+    android:layout_height="match_parent"
+    android:layout_marginEnd="5px"
+    android:layout_marginTop="5px"
     app:layout_constraintStart_toStartOf="parent"
     app:layout_constraintTop_toBottomOf="@+id/btnChooseInstrument"
-    android:layout_width="wrap_content"
-    android:layout_height="match_parent"
+    app:layout_constraintEnd_toStartOf="@+id/btnInsertLine"
     android:text="Remove Line"/>
 
 
-<Button
+<TextView
     android:id="@+id/btnInsertLine"
-    app:layout_constraintTop_toBottomOf="@+id/btnChooseInstrument"
-    app:layout_constraintEnd_toEndOf="parent"
-    android:layout_width="wrap_content"
+    android:textSize="20sp"
+    android:gravity="center"
+    android:background="@color/interface_bg"
+    android:textColor="@color/interface_fg"
+    android:layout_width="0dp"
+    android:layout_weight="1"
     android:layout_height="match_parent"
+    android:layout_marginTop="5px"
+    app:layout_constraintTop_toBottomOf="@+id/btnChooseInstrument"
+    app:layout_constraintStart_toEndOf="@+id/btnRemoveLine"
+    app:layout_constraintEnd_toEndOf="parent"
     android:text="Insert Line"/>
+
 </androidx.constraintlayout.widget.ConstraintLayout>

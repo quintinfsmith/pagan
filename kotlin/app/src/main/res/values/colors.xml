@@ -7,8 +7,9 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="leaf_bg">#f0f0f0</color>
+    <color name="leaf_empty_bg">#f0f0f0</color>
     <color name="leaf_fg">#1d1d1d</color>
+    <color name="leaf_bg">#c0c0c0</color>
     <color name="leaf_reflection">#34829C</color>
     <color name="leaf_reflection_selected">#19414E</color>
     <color name="leaf_reflected">#D1B4EC</color>
@@ -21,5 +22,4 @@
     <color name="table_bg">#FF2d2d2d</color>
     <color name="interface_bg">#f0f0f0</color>
     <color name="interface_fg">#2a2a2a</color>
-
 </resources>

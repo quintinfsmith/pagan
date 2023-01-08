@@ -64,18 +64,18 @@ class ViewCache {
         return this.column_widths.removeAt(x)
     }
 
-    fun get_all_leafs(y: Int, x: Int, position: List<Int>): List<View> {
-        val output: MutableList<View> = mutableListOf()
+    fun get_all_leafs(y: Int, x: Int, position: List<Int>): List<Pair<View, List<Int>>> {
+        val output: MutableList<Pair<View, List<Int>>> = mutableListOf()
         if (y >= this.view_cache.size || x >= this.view_cache[y].second.size) {
             return output
         }
         for ((key_pos, view) in this.view_cache[y].second[x].second) {
             if (position.size <= key_pos.size && key_pos.subList(0, position.size) == position) {
-                output.add(view)
+                output.add(Pair(view, key_pos))
             }
         }
         if (output.isEmpty() && position.isEmpty()) {
-            output.add(this.view_cache[y].second[x].first!!)
+            output.add(Pair(this.view_cache[y].second[x].first!!, position))
         }
 
         return output
@@ -404,7 +404,6 @@ class MainActivity : AppCompatActivity() {
             }
 
             // TODO: Check if directory is project directory
-
             val row = LayoutInflater.from(popupView.svProjectList.llProjectList.context).inflate(
                 R.layout.loadmenu_item,
                 popupView.svProjectList.llProjectList,
@@ -441,6 +440,7 @@ class MainActivity : AppCompatActivity() {
         headerCellView.setOnClickListener {
             val cursor = this.opus_manager.get_cursor()
             this.opus_manager.set_cursor_position(cursor.y, x, listOf())
+            //this.play_beat(x)
             this.setContextMenu(ContextMenu.Beat)
             this.tick()
         }
@@ -505,6 +505,8 @@ class MainActivity : AppCompatActivity() {
                     ContextCompat.getColor(leafView.context, R.color.leaf_reflection)
                 } else if (this.opus_manager.is_reflected(channel_index.first, channel_index.second, x)) {
                     ContextCompat.getColor(leafView.context, R.color.leaf_reflected)
+                } else if (!tree.is_event()) {
+                    ContextCompat.getColor(leafView.context, R.color.leaf_empty_bg)
                 } else {
                     ContextCompat.getColor(leafView.context, R.color.leaf_bg)
                 }
@@ -512,7 +514,7 @@ class MainActivity : AppCompatActivity() {
 
             if (tree.is_event()) {
                 val event = tree.get_event()!!
-                leafView.llLeaf.tvLeaf.text = if (event.relative) {
+                leafView.tvLeaf.text = if (event.relative) {
                     if (event.note == 0 || event.note % event.radix != 0) {
                         val prefix = if (event.note < 0) {
                             getString(R.string.pfx_subtract)
@@ -534,7 +536,7 @@ class MainActivity : AppCompatActivity() {
                     "!!"
                 }
             } else {
-                leafView.llLeaf.tvLeaf.text = getString(R.string.empty_note)
+                leafView.tvLeaf.text = getString(R.string.empty_note)
             }
 
             leafView.setOnClickListener {
@@ -918,7 +920,7 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 for (x in 0 until this.opus_manager.opus_beat_count) {
-                    for (leaf in this.cache.get_all_leafs(y, x, listOf())) {
+                    for ((leaf, leaf_pos) in this.cache.get_all_leafs(y, x, listOf())) {
                         if ((leaf as ViewGroup).childCount > 0) {
                             continue
                         }
@@ -1043,6 +1045,8 @@ class MainActivity : AppCompatActivity() {
                     R.color.leaf_reflection
                 } else if (this.opus_manager.is_reflected(channel, line_offset, beat)) {
                     R.color.leaf_reflected
+                } else if (!current_tree.is_event()) {
+                     R.color.leaf_empty_bg
                 } else {
                     R.color.leaf_bg
                 }
@@ -1059,7 +1063,7 @@ class MainActivity : AppCompatActivity() {
         val cursor = this.opus_manager.get_cursor()
         val position = cursor.get_position()
 
-        for (view in this.cache.get_all_leafs(cursor.y, cursor.x, position)) {
+        for ((view, leaf_pos) in this.cache.get_all_leafs(cursor.y, cursor.x, position)) {
             if (view is LinearLayout) {
                 continue
             }
@@ -1085,6 +1089,7 @@ class MainActivity : AppCompatActivity() {
             try {
                 val pair = this.opus_manager.get_channel_index(c.first)
 
+
                 val color = if (this.opus_manager.is_reflection(pair.first, pair.second, c.second)) {
                     R.color.leaf_reflection
                 } else if (this.opus_manager.is_reflected(pair.first, pair.second, c.second)) {
@@ -1093,12 +1098,20 @@ class MainActivity : AppCompatActivity() {
                     R.color.leaf_bg
                 }
 
-                for (view in this.cache.get_all_leafs(c.first, c.second, c.third)) {
+                for ((view, leaf_pos) in this.cache.get_all_leafs(c.first, c.second, c.third)) {
                     if (view is LinearLayout) {
                         continue
                     }
-                    val changeColour = ContextCompat.getColor(view.context, color)
-                    view.setBackgroundColor(changeColour)
+                    var changeColor = if (color == R.color.leaf_bg) {
+                         if (!this.opus_manager.get_tree(BeatKey(pair.first, pair.second, c.second), leaf_pos).is_event()) {
+                             ContextCompat.getColor(view.context, R.color.leaf_empty_bg)
+                         } else {
+                             ContextCompat.getColor(view.context, color)
+                         }
+                    } else {
+                        ContextCompat.getColor(view.context, color)
+                    }
+                    view.setBackgroundColor(changeColor)
                 }
             } catch (exception:Exception) {
                 this.cache.unsetCursor()
@@ -1428,7 +1441,6 @@ class MainActivity : AppCompatActivity() {
         if (cursor.get_position().isNotEmpty()) {
             this.opus_manager.remove_tree_at_cursor()
         }
-        Log.e("AAA", "${cursor.position}")
         this.tick()
     }
 
@@ -1444,6 +1456,11 @@ class MainActivity : AppCompatActivity() {
 
     public fun interact_nsRelativeValue(view: NumberSelector) {
         this.change_relative_value(view.getState()!!)
+    }
+
+    fun play_beat(beat: Int) {
+        var midi = this.opus_manager.get_midi(beat, beat + 1)
+        this.midi_player.play_midi(midi)
     }
 }
 

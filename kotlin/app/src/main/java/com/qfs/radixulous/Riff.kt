@@ -1,7 +1,6 @@
 package com.qfs.radixulous
 
-
-class SoundFont(riff: Riff) {
+class SoundFont {
     // Mandatory INFO
     var ifil: Pair<Int, Int> = Pair(0,0)
     var isng: String = "EMU8000"
@@ -9,7 +8,7 @@ class SoundFont(riff: Riff) {
 
     //Optional INFO
     var irom: String? = null
-    var iver: Double? = null
+    var iver: Pair<Int, Int>? = null
     var icrd: String? = null // Date
     var ieng: String? = null
     var iprd: String? = null
@@ -24,9 +23,10 @@ class SoundFont(riff: Riff) {
     var presets: List<Preset> = listOf()
 
     constructor(riff: Riff) {
-        var tmp_samples_a: ByteArray? = null
-        var tmp_samples_b: ByteArray? = null
-        for (list_chunk in riff.list_chunks) {
+        var tmp_sample_a: ByteArray? = null
+        var tmp_sample_b: ByteArray? = null
+        var pdta_index: Int = 0
+        riff.list_chunks.forEachIndexed { i, list_chunk ->
             when (list_chunk.type) {
                 "INFO" -> {
                     for (sub_chunk in list_chunk.sub_chunks) {
@@ -45,7 +45,7 @@ class SoundFont(riff: Riff) {
                                 this.inam = bytes.toString()
                             }
                             "irom" -> {
-                                this.inam = bytes.toString()
+                                this.irom = bytes.toString()
                             }
                             "iver" -> {
                                 this.iver = Pair(
@@ -81,7 +81,7 @@ class SoundFont(riff: Riff) {
                         when (sub_chunk.type) {
                             "smpl" -> {
                                 tmp_sample_a = bytes
-                            },
+                            }
                             "sm24" -> {
                                 tmp_sample_b = bytes
                             }
@@ -90,13 +90,7 @@ class SoundFont(riff: Riff) {
                     }
                 }
                 "pdta" -> {
-                    for (sub_chunk in list_chunk.sub_chunks) {
-                        var bytes = sub_chunk.bytes
-                        when (sub_chunk.type) {
-                            "phdr" -> {
-                            }
-                        }
-                    }
+                    pdta_index = i
                 }
                 else -> {}
             }
@@ -105,21 +99,80 @@ class SoundFont(riff: Riff) {
         // Merge sample data and convert to big-endian
         if (tmp_sample_a != null) {
             if (tmp_sample_b != null) {
-                this.sampleData = ByteArray(tmp_sample_a.size * 1.5)
-                for (i in 0 until tmp_sample_a.size) {
-                    this.sampleData[(i * 3)] = tmp_sample_a[(2 * i) + 1]
-                    this.sampleData[(i * 3) + 1] = tmp_sample_a[(2 * i)]
+                this.sampleData = ByteArray(tmp_sample_a!!.size + tmp_sample_b!!.size)
+                for (i in 0 until tmp_sample_a!!.size) {
+                    this.sampleData[(i * 3)] = tmp_sample_a!![(2 * i) + 1]
+                    this.sampleData[(i * 3) + 1] = tmp_sample_a!![(2 * i)]
                 }
-                for (i in 0 until tmp_sample_b.size) {
-                    this.sampleData[(i * 3) + 2] = tmp_sample_b[i]
+                for (i in 0 until tmp_sample_b!!.size) {
+                    this.sampleData[(i * 3) + 2] = tmp_sample_b!![i]
                 }
             } else {
-                this.sampleData = ByteArray(tmp_sample_a.size)
-                for (i in 0 until tmp_sample_a.size) {
-                    this.sampleData[(i * 2)] = tmp_sample_a[(2 * i) + 1]
-                    this.sampleData[(i * 2) + 1] = tmp_sample_a[(2 * i)]
+                this.sampleData = ByteArray(tmp_sample_a!!.size)
+                for (i in 0 until tmp_sample_a!!.size) {
+                    this.sampleData[(i * 2)] = tmp_sample_a!![(2 * i) + 1]
+                    this.sampleData[(i * 2) + 1] = tmp_sample_a!![(2 * i)]
                 }
             }
+        }
+
+        var pdta_chunk = riff.list_chunks[pdta_index]
+
+        // Make a hashmap for easier access
+        var pdta_map = HashMap<String, SubChunk>()
+        for (sub_chunk in pdta_chunk.sub_chunks) {
+            pdta_map[sub_chunk.type] = sub_chunk
+        }
+
+        var pgenerators: MutableList<Triple<Int, Int, Int>> = mutableListOf()
+        for (i in 0 until pdta_map["pgen"]!!.bytes.size / 4) {
+            pgenerators.add(
+                Triple(
+                    pdta_map["pgen"]!!.bytes[(i * 4)].toInt() + (pdta_map["pgen"]!!.bytes[(i * 4) + 1].toInt() * 256),
+                    pdta_map["pgen"]!!.bytes[(i * 4) + 2].toInt(),
+                    pdta_map["pgen"]!!.bytes[(i * 4) + 3].toInt()
+                )
+            )
+        }
+
+
+        var preset_count = pdta_map["phdr"]!!.bytes.size / 38
+        var pbag_entry_size = pdta_map["pbag"]!!.bytes.size / preset_count
+
+
+        for (i in 0 until preset_count) {
+            var wPresetBadIndex = pdta_map["phdr"]!!.bytes[(i * 38) + 24]
+                + (pdta_map["phdr"]!!.bytes[(i * 38) + 25] * 256)
+
+            var wGenNdx = pdta_map["pbag"]!!.bytes[(i * pbag_entry_size)]
+                + (pdta_map["pbag"]!!.bytes[(i * pbag_entry_size) + 1] * 256)
+            var wModNdx = pdta_map["pbag"]!!.bytes[(i * pbag_entry_size) + 2]
+                + (pdta_map["pbag"]!!.bytes[(i * pbag_entry_size) + 3] * 256)
+            var sfModList = (0 until 10)
+                .map { j: Int -> pdta_map["pmod"]!!.bytes[j + (wModNdx * 10)] }
+                .toByteArray()
+
+            //TODO  Come Back to PMOD
+            var preset_generators: MutableList<Triple<Int, Int, Int>> = mutableListOf()
+            var j = 0
+            while (wGenNdx + j < pgenerators.size) {
+                var generator = pgenerators[wGenNdx + j]
+                preset_generators.add(generator)
+                if (generator.first == 41) {
+                    break
+                }
+                j += 1
+            }
+
+            var preset = Preset(
+                // TODO: May need to drop 0's
+                ((i * 38) until ((i * 38) + 20))
+                    .map { j: Int -> pdta_map["phdr"]!!.bytes[j + (i * 38)] }
+                    .toString(),
+                pdta_map["phdr"]!!.bytes[(i * 38) + 20] + (pdta_map["phdr"]!!.bytes[(i * 38) + 21] * 256),
+                pdta_map["phdr"]!!.bytes[(i * 38) + 22] + (pdta_map["phdr"]!!.bytes[(i * 38) + 22] * 256),
+                preset_generators,
+            )
         }
     }
 }
@@ -129,13 +182,14 @@ enum class SFGenerator {}
 enum class Transform {}
 
 //PHDR
-class Preset {
-    var name: String = ""
-    var preset: Int = 0 // MIDI Preset Number
-    var bank: Int = 0 // MIDI Bank Number
-    var preset_generat
+class Preset(
+    var name: String = "",
+    var preset: Int = 0, // MIDI Preset Number
+    var bank: Int = 0, // MIDI Bank Number
     // dwLibrary, dwGenre, dwMorphology don't do anything yet
-}
+    var generators: List<Triple<Int, Int, Int>>,
+    
+) {}
 
 //PBAG
 class PresetBag {

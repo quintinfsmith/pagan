@@ -134,20 +134,56 @@ class SoundFont {
                 )
             )
         }
+        var pmodulators: MutableList<Modulator> = mutableListOf()
+        var pmod_bytes = pdta_map["pmod"]!!.bytes
+        for (i in 0 until pmod_bytes.size / 10) {
+            pmodulators.add(
+                Modulator(
+                    pmod_bytes[(i * 10)].toInt() + (pmod_bytes[(i * 10) + 1].toInt() * 256),
+                    pmod_bytes[(i * 10) + 2].toInt() + (pmod_bytes[(i * 10) + 3].toInt() * 256),
+                    pmod_bytes[(i * 10) + 4].toInt() + (pmod_bytes[(i * 10) + 5].toInt() * 256),
+                    pmod_bytes[(i * 10) + 6].toInt() + (pmod_bytes[(i * 10) + 7].toInt() * 256),
+                    pmod_bytes[(i * 10) + 8].toInt() + (pmod_bytes[(i * 10) + 9].toInt() * 256)
+                )
+            )
+        }
+        var igenerators: MutableList<Triple<Int, Int, Int>> = mutableListOf()
+        for (i in 0 until pdta_map["igen"]!!.bytes.size / 4) {
+            igenerators.add(
+                Triple(
+                    pdta_map["igen"]!!.bytes[(i * 4)].toInt() + (pdta_map["igen"]!!.bytes[(i * 4) + 1].toInt() * 256),
+                    pdta_map["igen"]!!.bytes[(i * 4) + 2].toInt(),
+                    pdta_map["igen"]!!.bytes[(i * 4) + 3].toInt()
+                )
+            )
+        }
+        var imodulators: MutableList<Modulator> = mutableListOf()
+        var imod_bytes = pdta_map["imod"]!!.bytes
+        for (i in 0 until imod_bytes.size / 10) {
+            imodulators.add(
+                Modulator(
+                    imod_bytes[(i * 10)].toInt() + (imod_bytes[(i * 10) + 1].toInt() * 256),
+                    imod_bytes[(i * 10) + 2].toInt() + (imod_bytes[(i * 10) + 3].toInt() * 256),
+                    imod_bytes[(i * 10) + 4].toInt() + (imod_bytes[(i * 10) + 5].toInt() * 256),
+                    imod_bytes[(i * 10) + 6].toInt() + (imod_bytes[(i * 10) + 7].toInt() * 256),
+                    imod_bytes[(i * 10) + 8].toInt() + (imod_bytes[(i * 10) + 9].toInt() * 256)
+                )
+            )
+        }
 
 
         var preset_count = pdta_map["phdr"]!!.bytes.size / 38
-        var pbag_entry_size = pdta_map["pbag"]!!.bytes.size / preset_count
+        var pbag_entry_size = 4
+        var ibag_entry_size = 4
 
 
         for (i in 0 until preset_count) {
-            var wPresetBadIndex = pdta_map["phdr"]!!.bytes[(i * 38) + 24]
-                + (pdta_map["phdr"]!!.bytes[(i * 38) + 25] * 256)
+            var wPresetBagIndex = pdta_map["phdr"]!!.bytes[(i * 38) + 24] + (pdta_map["phdr"]!!.bytes[(i * 38) + 25] * 256)
 
-            var wGenNdx = pdta_map["pbag"]!!.bytes[(i * pbag_entry_size)]
-                + (pdta_map["pbag"]!!.bytes[(i * pbag_entry_size) + 1] * 256)
-            var wModNdx = pdta_map["pbag"]!!.bytes[(i * pbag_entry_size) + 2]
-                + (pdta_map["pbag"]!!.bytes[(i * pbag_entry_size) + 3] * 256)
+            var wGenNdx = pdta_map["pbag"]!!.bytes[(wPresetBagIndex * pbag_entry_size)] + (pdta_map["pbag"]!!.bytes[(wPresetBagIndex * pbag_entry_size) + 1] * 256)
+
+            var wModNdx = pdta_map["pbag"]!!.bytes[(wPresetBagIndex * pbag_entry_size) + 2] + (pdta_map["pbag"]!!.bytes[(wPresetBagIndex * pbag_entry_size) + 3] * 256)
+
             var sfModList = (0 until 10)
                 .map { j: Int -> pdta_map["pmod"]!!.bytes[j + (wModNdx * 10)] }
                 .toByteArray()
@@ -155,6 +191,7 @@ class SoundFont {
             //TODO  Come Back to PMOD
             var preset_generators: MutableList<Triple<Int, Int, Int>> = mutableListOf()
             var j = 0
+            // TODO: change this to be the difference between presets' wGenNdx's
             while (wGenNdx + j < pgenerators.size) {
                 var generator = pgenerators[wGenNdx + j]
                 preset_generators.add(generator)
@@ -164,6 +201,23 @@ class SoundFont {
                 j += 1
             }
 
+            var wInstGenNdx = pdta_map["ibag"]!!.bytes[(i * ibag_entry_size)] + (pdta_map["ibag"]!!.bytes[(i * ibag_entry_size) + 1] * 256)
+
+            var wInstModNdx = pdta_map["ibag"]!!.bytes[(i * ibag_entry_size) + 2] + (pdta_map["ibag"]!!.bytes[(i * ibag_entry_size) + 3] * 256)
+
+            var instrument_generators: MutableList<Triple<Int, Int, Int>> = mutableListOf()
+            j = 0
+            while (wInstGenNdx + j < igenerators.size) {
+                var generator = igenerators[wInstGenNdx + j]
+                instrument_generators.add(generator)
+                if (generator.first == 53) {
+                    break
+                }
+                j += 1
+            }
+
+
+
             var preset = Preset(
                 // TODO: May need to drop 0's
                 ((i * 38) until ((i * 38) + 20))
@@ -172,39 +226,46 @@ class SoundFont {
                 pdta_map["phdr"]!!.bytes[(i * 38) + 20] + (pdta_map["phdr"]!!.bytes[(i * 38) + 21] * 256),
                 pdta_map["phdr"]!!.bytes[(i * 38) + 22] + (pdta_map["phdr"]!!.bytes[(i * 38) + 22] * 256),
                 preset_generators,
+                pmodulators[wModNdx],
+                instrument_generators,
+                imodulators[wInstModNdx]
             )
         }
     }
 }
 
+data class Modulator(
+    var sfModSrcOper: Int,
+    var sfModDestOper: Int,
+    var modAmount: Int,
+    var sfModAmtSrcOper: Int,
+    var sfModTransOper: Int
+)
+
+data class SFSample(
+    var name: String,
+    var chunk: ByteArray,
+    var loopStart: Int,
+    var loopEnd: Int,
+    var sampleRate: Int,
+    var originalPitch: Int,
+    var pithCorrection: Int
+)
+
 enum class SFModulator {}
 enum class SFGenerator {}
 enum class Transform {}
 
-//PHDR
 class Preset(
     var name: String = "",
     var preset: Int = 0, // MIDI Preset Number
     var bank: Int = 0, // MIDI Bank Number
     // dwLibrary, dwGenre, dwMorphology don't do anything yet
-    var generators: List<Triple<Int, Int, Int>>,
-    
-) {}
-
-//PBAG
-class PresetBag {
-    var preset_generators: List<PresetGenerator>
-    var preset_modulators: SfModList
-}
-
-//PMOD
-class SfModList {
-    var sfModSrcOper: SFModulator
-    var sfDestOper: SFGenerator
-    var modAmount: Int
-    var sfModAmtSrcOper: SFModulator
-    var sfModTransOper: SFTransform
-}
+    var preset_generators: List<Triple<Int, Int, Int>>,
+    var preset_modulator: Modulator,
+    var instrument_generators: List<Triple<Int, Int, Int>>,
+    var instrument_modulator: Modulator
+)
 
 
 open class RiffChunk(var type: String)

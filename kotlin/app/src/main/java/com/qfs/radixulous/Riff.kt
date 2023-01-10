@@ -20,7 +20,7 @@ class SoundFont {
     // NOTE: smpl size needs to be 2 * sm24 size
     var sampleData: ByteArray = ByteArray(0)
 
-    var presets: List<Preset> = listOf()
+    var presets: MutableList<Preset> = mutableListOf()
 
     constructor(riff: Riff) {
         var tmp_sample_a: ByteArray? = null
@@ -176,61 +176,84 @@ class SoundFont {
         var pbag_entry_size = 4
         var ibag_entry_size = 4
 
-
-        for (i in 0 until preset_count) {
+        var list_indices: MutableList<Array<Int>> = mutableListOf()
+        for (i in 0 until preset_count - 1) {
             var wPresetBagIndex = pdta_map["phdr"]!!.bytes[(i * 38) + 24] + (pdta_map["phdr"]!!.bytes[(i * 38) + 25] * 256)
+            list_indices.add(
+                pdta_map["pbag"]!!.bytes[(wPresetBagIndex * pbag_entry_size)]
+                    + (pdta_map["pbag"]!!.bytes[(wPresetBagIndex * pbag_entry_size) + 1] * 256),
+                pdta_map["pbag"]!!.bytes[(wPresetBagIndex * pbag_entry_size) + 2]
+                    + (pdta_map["pbag"]!!.bytes[(wPresetBagIndex * pbag_entry_size) + 3] * 256),
+                pdta_map["ibag"]!!.bytes[(i * ibag_entry_size)]
+                    + (pdta_map["ibag"]!!.bytes[(i * ibag_entry_size) + 1] * 256),
+                pdta_map["ibag"]!!.bytes[(i * ibag_entry_size) + 2]
+                    + (pdta_map["ibag"]!!.bytes[(i * ibag_entry_size) + 3] * 256)
+            )
+        }
+        list_indices.add(
+            pdta_map["pgen"]!!.bytes.size / 4,
+            pdta_map["pmod"]!!.bytes.size / 10,
+            pdta_map["igen"]!!.bytes.size / 4,
+            pdta_map["imod"]!!.bytes.size / 10
+        )
 
-            var wGenNdx = pdta_map["pbag"]!!.bytes[(wPresetBagIndex * pbag_entry_size)] + (pdta_map["pbag"]!!.bytes[(wPresetBagIndex * pbag_entry_size) + 1] * 256)
 
-            var wModNdx = pdta_map["pbag"]!!.bytes[(wPresetBagIndex * pbag_entry_size) + 2] + (pdta_map["pbag"]!!.bytes[(wPresetBagIndex * pbag_entry_size) + 3] * 256)
+        for (i in 0 until preset_count - 1) {
+            var wGenNdx = list_indices[i][0]
+            var wModNdx = list_indices[i][1]
+            var wInstGenNdx = list_indices[i][2]
+            var wInstModNdx = list_indices[i][3]
 
-            var sfModList = (0 until 10)
-                .map { j: Int -> pdta_map["pmod"]!!.bytes[j + (wModNdx * 10)] }
-                .toByteArray()
+            var wGenNdx_next = list_indices[i + 1][0]
+            var wModNdx_next = list_indices[i + 1][1]
+            var wInstGenNdx_next = list_indices[i + 1][2]
+            var wInstModNdx_next = list_indices[i + 1][3]
 
-            //TODO  Come Back to PMOD
             var preset_generators: MutableList<Triple<Int, Int, Int>> = mutableListOf()
-            var j = 0
-            // TODO: change this to be the difference between presets' wGenNdx's
-            while (wGenNdx + j < pgenerators.size) {
-                var generator = pgenerators[wGenNdx + j]
+            for (j in wGenNdx until wGenNdx_next) {
+                var generator = pgenerators[j]
                 preset_generators.add(generator)
                 if (generator.first == 41) {
                     break
                 }
-                j += 1
             }
-
-            var wInstGenNdx = pdta_map["ibag"]!!.bytes[(i * ibag_entry_size)] + (pdta_map["ibag"]!!.bytes[(i * ibag_entry_size) + 1] * 256)
-
-            var wInstModNdx = pdta_map["ibag"]!!.bytes[(i * ibag_entry_size) + 2] + (pdta_map["ibag"]!!.bytes[(i * ibag_entry_size) + 3] * 256)
 
             var instrument_generators: MutableList<Triple<Int, Int, Int>> = mutableListOf()
-            j = 0
-            while (wInstGenNdx + j < igenerators.size) {
-                var generator = igenerators[wInstGenNdx + j]
+            for (j in wGenNdx until wGenNdx_next) {
+                var generator = igenerators[j]
                 instrument_generators.add(generator)
-                if (generator.first == 53) {
+                if (generator.first == 41) {
                     break
                 }
-                j += 1
+            }
+
+            var name = ""
+            var phdr_bytes = pdta_map["phdr"]!!.bytes
+            for (j in 0 until 20) {
+                var b = phdr_bytes[j + (i * 38)].toInt()
+                if (b != 0) {
+                    name = "$name${b.toChar()}"
+                } else {
+                    break
+                }
             }
 
 
-
-            var preset = Preset(
-                // TODO: May need to drop 0's
-                ((i * 38) until ((i * 38) + 20))
-                    .map { j: Int -> pdta_map["phdr"]!!.bytes[j + (i * 38)] }
-                    .toString(),
-                pdta_map["phdr"]!!.bytes[(i * 38) + 20] + (pdta_map["phdr"]!!.bytes[(i * 38) + 21] * 256),
-                pdta_map["phdr"]!!.bytes[(i * 38) + 22] + (pdta_map["phdr"]!!.bytes[(i * 38) + 22] * 256),
-                preset_generators,
-                pmodulators[wModNdx],
-                instrument_generators,
-                imodulators[wInstModNdx]
+            this.presets.add(
+                Preset(
+                    name,
+                    pdta_map["phdr"]!!.bytes[(i * 38) + 20] + (pdta_map["phdr"]!!.bytes[(i * 38) + 21] * 256),
+                    pdta_map["phdr"]!!.bytes[(i * 38) + 22] + (pdta_map["phdr"]!!.bytes[(i * 38) + 22] * 256),
+                    preset_generators,
+                    pmodulators[wModNdx],
+                    instrument_generators,
+                    imodulators[wInstModNdx]
+                )
             )
         }
+
+        // Populate Samples
+
     }
 }
 
@@ -242,7 +265,7 @@ data class Modulator(
     var sfModTransOper: Int
 )
 
-data class SFSample(
+data class Sample(
     var name: String,
     var chunk: ByteArray,
     var loopStart: Int,
@@ -256,6 +279,51 @@ enum class SFModulator {}
 enum class SFGenerator {}
 enum class Transform {}
 
+abstract class ModulatedGenerated() {
+    var key_range: Pair<Int, Int>? = null
+    var velocity_range: Pair<Int, Int>? = null
+    var attenuation: Double? = null
+    var pan: Int? = null
+    var tuning_semi: Int? = null
+    var tuning_cent: Int? = null
+    var scale_tuning: Int? = null
+    var filter_cutoff: Int? = null
+    var filter_resonance: Double? = null
+    var vol_env_delay: Double? = null
+    var vol_env_attack: Double? = null
+    var vol_env_hold: Double? = null
+    var vol_env_decay: Double? = null
+    var vol_env_sustain: Double? = null
+    var vol_env_release: Double? = null
+    var key_vol_env_hold: Int? = null
+    var key_vol_env_decay: Int? = null
+    var mod_env_delay: Double? = null
+    var mod_env_attack: Double? = null
+    var mod_env_hold: Double? = null
+    var mod_env_delay: Double? = null
+    var mod_env_sustain: Double? = null
+    var mod_env_release: Double? = null
+    var mod_env_pitch: Int? = null
+    var mod_env_filter: Int? = null
+    var key_mod_env_hold: Int? = null
+    var key_mod_env_decay: Int? = null
+    var mod_lfo_delay
+    var mod_lfo_freq
+    var mod_lfo_pitch
+    var mod_lfo_filter
+    var mod_lfo_volume
+    var vib_lfo_delay
+    var vib_lfo_freq
+    var vib_lfo_pitch
+    var chorus
+    var reverb
+
+    fun modulate(sfModSrcOper: Int, sfModDestOper: Int, modAmount: Int, sfModAmtSrcOper: Int, sfModTransOper: Int): {
+    }
+    fun generate(sfGenOper: String, shAmount: Int, wAmount: Int): {
+    }
+}
+
 class Preset(
     var name: String = "",
     var preset: Int = 0, // MIDI Preset Number
@@ -263,9 +331,13 @@ class Preset(
     // dwLibrary, dwGenre, dwMorphology don't do anything yet
     var preset_generators: List<Triple<Int, Int, Int>>,
     var preset_modulator: Modulator,
-    var instrument_generators: List<Triple<Int, Int, Int>>,
-    var instrument_modulator: Modulator
-)
+): ModulatedGenerated() {
+
+}
+
+class Instrument(var name: String): ModulatedGenerated() {
+
+}
 
 
 open class RiffChunk(var type: String)

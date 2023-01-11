@@ -334,8 +334,132 @@ class SoundFont {
         // Populate Samples
     }
 
-    private fun modulate(modulatable: ModulatedGenerated, modulator: Modulator) {
+    // TODO
+    private fun modulate(modulatable: ModulatedGenerated, modulator: Modulator) { }
 
+    private fun generate(working_generated: Generated, generator: Generator) {
+        when (generator.sfGenOper) {
+            0x05 -> {
+                working_generated.mod_lfo_pitch = generator.asInt()
+            }
+            0x06 -> {
+                working_generated.vib_lfo_pitch = generator.asInt()
+            }
+            0x07 -> {
+                working_generated.mod_env_pitch = generator.asInt()
+            }
+            0x08 -> {
+                working_generated.filter_cutoff = generator.asInt()
+            }
+            0x09 -> {
+                working_generated.filter_resonance = generator.asInt()
+            }
+            0x0A -> {
+                working_generated.mod_lfo_filter = generator.asInt()
+            }
+            0x0B -> {
+                working_generated.mod_env_filter = generator.asInt()
+            }
+            0x0D -> {
+                working_generated.mod_lfo_volume = generator.asInt()
+            }
+            0x0E -> { } // Unused
+            0x0F -> {
+                working_generated.chorus = (generator.asInt()).toDouble()) / 10.0
+            }
+            0x10 -> {
+                working_generated.reverb = (generator.asInt().toDouble()) / 10.0
+            }
+            0x11 -> {
+                working_generated.pan = (generator.asIntSigned().toDouble()) / 10
+            }
+            0x12 -> {}
+            0x13 -> {}
+            0x14 -> {}
+            0x15 -> {
+                working_generated.mod_lfo_delay = generator.asTimecent()
+            }
+            0x16 -> {
+                working_generated.mod_lfo_freq = generator.asTimecent() * 8.176
+            }
+            0x17 -> {
+                working_generated.vib_lfo_delay = generator.asTimecent()
+            }
+            0x18 -> {
+                working_generated.vib_lfo_freq = generator.asTimecent() * 8.176
+            }
+            0x19 -> {
+                working_generated.mod_env_delay = generator.asTimecent()
+            }
+            0x1A -> {
+                working_generated.mod_env_attack = generator.asTimecent()
+            }
+            0x1B -> {
+                working_generated.mod_env_hold = generator.asTimecent()
+            }
+            0x1C -> {
+                working_generated.mod_env_decay = generator.asTimecent()
+            }
+            0x1D -> {
+                working_generated.mod_env_sustain = max(1000, generator.asInt()).toDouble() / 10.0
+            }
+            0x1E -> {
+                working_generated.mod_env_release = generator.asTimecent()
+            }
+            0x1F -> {
+                working_generated.key_mod_env_hold = generator.asInt()
+            }
+            0x20 -> {
+                working_generated.key_mod_env_decay = generator.asInt()
+            }
+            0x21 -> {
+                working_generated.vol_env_delay = generator.asTimecent()
+            }
+            0x22 -> {
+                working_generated.vol_env_attack = generator.asTimecent()
+            }
+            0x23 -> {
+                working_generated.vol_env_hold = generator.asTimecent()
+            }
+            0x24 -> {
+                working_generated.vol_env_decay = generator.asTimecent()
+            }
+            0x25 -> {
+                working_generated.vol_env_sustain = max(1000, generator.asInt()).toDouble() / 10.0
+            }
+            0x26 -> {
+                working_generated.vol_env_release = generator.asTimecent()
+            }
+            0x27 -> {
+                working_generated.key_vol_env_hold = generator.asInt()
+            }
+            0x28 -> {
+                working_generated.key_vol_env_decay = generator.asInt()
+            }
+            0x2A -> { } // Reserved
+            0x2B -> {
+                working_generated.key_range = generator.asPair()
+            }
+            0x2C -> {
+                working_generated.velocity_range = generator.asPair()
+            }
+            0x30 -> {
+                working_generated.attenuation = generator.asInt().toDouble() / 10
+            }
+            0x31 -> {} //reserved 2
+            0x33 -> {
+                working_generated.tuning_semi = generator.asInt()
+            }
+            0x34 -> {
+                working_generated.tuning_cent = generator.asInt()
+            }
+            0x37 -> {} // Reserved 3
+            0x38 -> {
+                working_generated.scale_tuning = generator.asInt()
+            }
+            0x3B -> {} // Unused
+            0x3C -> {} // Unused / EOS
+        }
     }
 
     private fun generate_instrument(instrument: Instrument, generators: List<Generator>) {
@@ -343,6 +467,7 @@ class SoundFont {
         for (generator in generators) {
             when (generator.sfGenOper) {
                 0x35 -> {
+                    working_sample.sampleIndex = generator.asInt()
                     instrument.add_sample(working_sample)
                     working_sample = InstrumentSample()
                 }
@@ -369,17 +494,65 @@ class SoundFont {
                         working_sample.sampleStartOffset!! + (generator.asInt() * 32768)
                     }
                 }
-                0x05 -> {
-                    working_sample.mod_lfo_pitch = generator.asInt()
+                0x0C -> {
+                    working_sample.sampleEndOffset = if (working_sample.sampleEndOffset == null) {
+                        generator.asInt() * 32768
+                    } else {
+                        working_sample.sampleEndOffset!! + (generator.asInt() * 32768)
+                    }
                 }
-                0x06 -> {
-                    working_sample.vib_lfo_pitch = generator.asInt()
+                0x2A -> { } // Reserved
+                0x2B -> { } // Key Range
+                0x2C -> { } // VelRange
+                0x2D -> {
+                    working_sample.loopStartOffset = if (working_sample.loopStartOffset == null) {
+                        generator.asInt() * 32768
+                    } else {
+                        working_sample.loopStartOffset!! + (generator.asInt() * 32768)
+                    }
                 }
-                0x07 -> {
-                    working_sample.mod_env_pitch = generator.asInt()
+                0x2E -> { // Instrument Specific  (keynum)
+                    working_sample.keynum = generator.asInt()
+                }
+                0x2F -> { //Instrument Specific (velocity)
+                    working_sample.velocity = generator.asInt()
+                }
+                0x32 -> {
+                    working_sample.loopEndOffset = if (working_sample.loopEndOffset == null) {
+                        generator.asInt() * 32768
+                    } else {
+                        working_sample.loopEndOffset!! + (generator.asInt() * 32768)
+                    }
+                }
+                0x36 -> {
+                    working_sample.sampleMode = generator.asInt()
+                }
+                0x39 -> {
+                    working_sample.exclusive_class = generator.asInt()
+                }
+                0x3A -> {
+                    working_sample.root_key = generator.asInt()
+                }
+                else -> {
+                    this.generate(working_sample, generator)
                 }
             }
 
+        }
+    }
+    private fun generate_preset(preset: Preset, generators: List<Generator>) {
+        var working_instrument = PresetInstrument()
+        for (generator in generators) {
+            when (generator.sfGenOper) {
+                0x29 -> {
+                    working_instrument.instrumentIndex = generator.asInt()
+                    preset.add_instrument(working_instrument)
+                    working_instrument = PresetInstrument()
+                }
+                else -> {
+                    this.generate(working_instrument, generator)
+                }
+            }
         }
     }
 }
@@ -400,8 +573,20 @@ class Generator(
     fun asInt(): Int {
         return shAmount + (wAmount * 256)
     }
-    fun asDouble(): Double {
-
+    fun asIntSigned(): Int {
+        var unsigned = shAmount + (wAmount * 256)
+        // Get 2's compliment
+        return if (unsigned shr 15 == 1) {
+            (not unsigned) + 1
+        } else {
+            unsigned
+        }
+    }
+    fun asTimecent(): Double {
+        return (2.0).pow(this.asIntSigned().toDouble() / 1200)
+    }
+    fun asPair(): Pair<Int, Int> {
+        return Pair(this.shAmount, this.wAmount)
     }
 }
 
@@ -418,13 +603,7 @@ data class Sample(
     var sampleType: Int
 )
 
-enum class SFModulator {}
-enum class SFGenerator {}
-enum class Transform {}
-
-open class ModulatedGenerated() {
-    //var generators: List<Generator>,
-    //var modulators: List<Modulator>,
+open class Generated() {
     var key_range: Pair<Int, Int>? = null
     var velocity_range: Pair<Int, Int>? = null
     var attenuation: Double? = null
@@ -459,7 +638,7 @@ open class ModulatedGenerated() {
     var vib_lfo_delay: Int? = null
     var vib_lfo_freq: Int? = null
     var vib_lfo_pitch: Int? = null
-    var chorus: Int? = null
+    var chorus: Double? = null
     var reverb: Int? = null
 }
 
@@ -468,17 +647,65 @@ class Preset(
     var preset: Int = 0, // MIDI Preset Number
     var bank: Int = 0, // MIDI Bank Number
     // dwLibrary, dwGenre, dwMorphology don't do anything yet
-): ModulatedGenerated() {
+    var instruments: MutableList<PresetInstrument> = mutableListOf()
+    var key_instrument_map = HashMap<Int, Int>()
+    var vel_instrument_map = HashMap<Int, Int>()
+) {
+    fun add_instrument(pinstrument: PresetInstrument) {
+        this.instruments.add(pinstrument)
+        var key_range = if (pinstrument.key_range != null) {
+            pinstrument.key_range
+        } else {
+            Pair(0, 127)
+        }
+        for (i in key_range.first .. key_range.second) { // INCLUSIVE
+            key_instrument_map[i] = this.instruments.size - 1
+        }
 
+
+        var vel_range = if (pinstrument.vel_range != null) {
+            pinstrument.vel_range
+        } else {
+            Pair(0, 127)
+        }
+        for (i in vel_range.first .. vel_range.second) { // INCLUSIVE
+            vel_instrument_map[i] = this.instruments.size - 1
+        }
+    }
+}
+
+class PresetInstrument: Generated() {
+    var instrumentIndex: Int = 0
 }
 
 class Instrument(var name: String) {
     var samples: MutableList<InstrumentSample> = mutableListOf()
+    var key_sample_map = HashMap<Int, Int>()
+    var vel_sample_map = HashMap<Int, Int>()
     fun add_sample(isample: InstrumentSample) {
         this.samples.add(isample)
+        var key_range = if (isample.key_range != null) {
+            isample.key_range
+        } else {
+            Pair(0, 127)
+        }
+        for (i in key_range.first .. key_range.second) { // INCLUSIVE
+            key_sample_map[i] = this.samples.size - 1
+        }
+
+
+        var vel_range = if (isample.vel_range != null) {
+            isample.vel_range
+        } else {
+            Pair(0, 127)
+        }
+        for (i in vel_range.first .. vel_range.second) { // INCLUSIVE
+            vel_sample_map[i] = this.samples.size - 1
+        }
     }
 }
-class InstrumentSample: ModulatedGenerated() {
+
+class InstrumentSample: Generated() {
     var sampleIndex: Int = 0
     var fixedKey: Int? = null
     var fixedVelocity: Int? = null
@@ -486,46 +713,17 @@ class InstrumentSample: ModulatedGenerated() {
     var sampleEndOffset: Int? = null
     var loopStartOffset: Int? = null
     var loopEndOffset: Int? = null
-    var vib_lfo_delay: Double? = null
-    var vib_lf_freq: Double? = null
-    var vib_lfo_pitch: Int? = null
+    var sampleMode: Int? = null
+    var root_key: Int? = null
+    var exclusive_class: Int? = null
 }
 
 
-
+//------------ RIFF  --------------//
 open class RiffChunk(var type: String)
 class Riff(type: String, var list_chunks: List<ListChunk>): RiffChunk(type)
 class ListChunk(type: String, var sub_chunks: List<SubChunk>): RiffChunk(type)
 data class SubChunk(var type: String, var bytes: ByteArray)
-
-//abstract class InfoChunk: SubChunk() { }
-//abstract class SdtaChunk: SubChunk() { }
-//abstract class PdtaChunk: SubChunk() { }
-//
-//data class IfilChunk: InfoChunk() { }
-//data class IsngChunk: InfoChunk() { }
-//data class InamChunk: InfoChunk() { }
-//data class IromChunk: InfoChunk() { }
-//data class IverChunk: InfoChunk() { }
-//data class IcrdChunk: InfoChunk() { }
-//data class IengChunk: InfoChunk() { }
-//data class IprdChunk: InfoChunk() { }
-//data class IcopChunk: InfoChunk() { }
-//data class IcmtChunk: InfoChunk() { }
-//data class IsftChunk: InfoChunk() { }
-//
-//data class SmplChunk: SdtaChunk() { }
-//data class Sm24Chunk: SdtaChunk() { }
-//
-//data class PhdrChunk: PdtaChunk() {}
-//data class PbagChunk: PdtaChunk() {}
-//data class PmodChunk: PdtaChunk() {}
-//data class PgenChunk: PdtaChunk() {}
-//data class InstChunk: PdtaChunk() {}
-//data class IbagChunk: PdtaChunk() {}
-//data class ImodChunk: PdtaChunk() {}
-//data class IgenChunk: PdtaChunk() {}
-//data class ShdrChunk: PdtaChunk() {}
 
 class RiffReader {
     fun from_bytes(bytes: ByteArray): Riff {

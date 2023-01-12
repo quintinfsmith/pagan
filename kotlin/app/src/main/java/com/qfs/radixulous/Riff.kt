@@ -1,29 +1,33 @@
 package com.qfs.radixulous
 
-class SoundFont {
+import kotlin.math.max
+import kotlin.math.pow
+
+class SoundFont(riff: Riff) {
     // Mandatory INFO
-    var ifil: Pair<Int, Int> = Pair(0,0)
-    var isng: String = "EMU8000"
-    var inam: String = ""
+    private var ifil: Pair<Int, Int> = Pair(0,0)
+    private var isng: String = "EMU8000"
+    private var inam: String = ""
 
     //Optional INFO
-    var irom: String? = null
-    var iver: Pair<Int, Int>? = null
-    var icrd: String? = null // Date
-    var ieng: String? = null
-    var iprd: String? = null
-    var icop: String? = null
-    var icmt: String? = null
-    var isft: String? = null
+    private var irom: String? = null
+    private var iver: Pair<Int, Int>? = null
+    private var icrd: String? = null // Date
+    private var ieng: String? = null
+    private var iprd: String? = null
+    private var icop: String? = null
+    private var icmt: String? = null
+    private var isft: String? = null
 
     // Populated by sdta
     // NOTE: smpl size needs to be 2 * sm24 size
-    var instruments: MutableList<Instrument> = mutableListOf()
-    var presets: MutableList<Preset> = mutableListOf()
-    var samples: MutableList<Sample> = mutableListOf()
-    var sampleData: ByteArray = ByteArray(0)
+    private var instruments: MutableList<Instrument> = mutableListOf()
+    private var presets: MutableList<Preset> = mutableListOf()
+    private var samples: MutableList<Sample> = mutableListOf()
+    private var sampleData: ByteArray = ByteArray(0)
+    private var sampleWordSize: Int = 2
 
-    constructor(riff: Riff) {
+    init {
         var tmp_sample_a: ByteArray? = null
         var tmp_sample_b: ByteArray? = null
         var pdta_index: Int = 0
@@ -31,7 +35,7 @@ class SoundFont {
             when (list_chunk.type) {
                 "INFO" -> {
                     for (sub_chunk in list_chunk.sub_chunks) {
-                        var bytes = sub_chunk.bytes
+                        val bytes = sub_chunk.bytes
                         when (sub_chunk.type) {
                             "ifil" -> {
                                 this.ifil = Pair(
@@ -78,7 +82,7 @@ class SoundFont {
                 }
                 "sdta" -> {
                     for (sub_chunk in list_chunk.sub_chunks) {
-                        var bytes = sub_chunk.bytes
+                        val bytes = sub_chunk.bytes
                         when (sub_chunk.type) {
                             "smpl" -> {
                                 tmp_sample_a = bytes
@@ -98,10 +102,9 @@ class SoundFont {
         }
 
         // Merge sample data and convert to big-endian
-        var sample_word_size = 2
         if (tmp_sample_a != null) {
             if (tmp_sample_b != null) {
-                sample_word_size = 3
+                this.sampleWordSize = 3
                 this.sampleData = ByteArray(tmp_sample_a!!.size + tmp_sample_b!!.size)
                 for (i in 0 until tmp_sample_a!!.size) {
                     this.sampleData[(i * 3)] = tmp_sample_a!![(2 * i) + 1]
@@ -119,23 +122,26 @@ class SoundFont {
             }
         }
 
-        var pdta_chunk = riff.list_chunks[pdta_index]
+        val pdta_chunk = riff.list_chunks[pdta_index]
 
         // Make a hashmap for easier access
-        var pdta_map = HashMap<String, SubChunk>()
+        val pdta_map = HashMap<String, SubChunk>()
         for (sub_chunk in pdta_chunk.sub_chunks) {
             pdta_map[sub_chunk.type] = sub_chunk
         }
 
-        var ibag_bytes = pdta_map["ibag"]!!.bytes
-        var inst_bytes = pdta_map["inst"]!!.bytes
-        var shdr_bytes = pdta_map["shdr"]!!.bytes
+        val ibag_bytes = pdta_map["ibag"]!!.bytes
+        val inst_bytes = pdta_map["inst"]!!.bytes
+        val shdr_bytes = pdta_map["shdr"]!!.bytes
+        val imod_bytes = pdta_map["imod"]!!.bytes
+        val pbag_bytes = pdta_map["pbag"]!!.bytes
+        val phdr_bytes = pdta_map["phdr"]!!.bytes
 
         for (i in 0 until shdr_bytes.size / 46) {
-            var offset = i * 46
+            val offset = i * 46
             var sample_name = ""
             for (j in 0 until 20) {
-                var b = shdr_bytes[offset + j].toInt()
+                val b = shdr_bytes[offset + j].toInt()
                 if (b == 0) {
                     break
                 }
@@ -174,13 +180,12 @@ class SoundFont {
         }
 
         // TODO: Verify INST chunk (mod 22 == 0, min size 44, and exists)
-        var instrument_count = pdta_map["inst"]!!.bytes.size / 22
-        var ibag_entry_size = 4
+        val instrument_count = inst_bytes.size / 22
+        val ibag_entry_size = 4
 
-        var instrument_list_indices: MutableList<Pair<Int, Int>> = mutableListOf()
+        val instrument_list_indices: MutableList<Pair<Int, Int>> = mutableListOf()
         for (i in 0 until instrument_count) {
-            var ibag_index = inst_bytes[(i * ibag_entry_size)] + (inst_bytes[(i * ibag_entry_size) + 1] * 256)
-            var offset = i * ibag_entry_size
+            val offset = i * ibag_entry_size
             instrument_list_indices.add(
                 Pair(
                     ibag_bytes[offset + 0] + (ibag_bytes[offset + 1] * 256),
@@ -189,9 +194,9 @@ class SoundFont {
             )
         }
 
-        var igenerators: MutableList<Generator> = mutableListOf()
+        val igenerators: MutableList<Generator> = mutableListOf()
         for (i in 0 until pdta_map["igen"]!!.bytes.size / 4) {
-            var offset = i * 4
+            val offset = i * 4
             igenerators.add(
                 Generator(
                     pdta_map["igen"]!!.bytes[offset].toInt() + (pdta_map["igen"]!!.bytes[offset + 1].toInt() * 256),
@@ -200,10 +205,10 @@ class SoundFont {
                 )
             )
         }
-        var imodulators: MutableList<Modulator> = mutableListOf()
-        var imod_bytes = pdta_map["imod"]!!.bytes
+
+        val imodulators: MutableList<Modulator> = mutableListOf()
         for (i in 0 until imod_bytes.size / 10) {
-            var offset = i * 10
+            val offset = i * 10
             imodulators.add(
                 Modulator(
                     imod_bytes[offset + 0].toInt() + (imod_bytes[offset + 1].toInt() * 256),
@@ -219,32 +224,34 @@ class SoundFont {
         for (i in 0 until instrument_count - 1) {
             var instrument_name = ""
             for (j in 0 until 20) {
-                var b = inst_bytes[(i * 22) + j].toInt()
+                val b = inst_bytes[(i * 22) + j].toInt()
                 if (b == 0) {
                     break
                 }
                 instrument_name = "$instrument_name${b.toChar()}"
             }
 
-            var instrument = Instrument(instrument_name)
+            val instrument = Instrument(instrument_name)
             // Generators
-            var generators_to_use: MutableList<Generator> = mutableListOf()
+            val generators_to_use: MutableList<Generator> = mutableListOf()
 
             for (j in instrument_list_indices[i].first until instrument_list_indices[i + 1].first) {
                 generators_to_use.add(igenerators[j])
             }
             this.generate_instrument(instrument, generators_to_use)
+            this.instruments.add(instrument)
 
+            // TODO: Modulators
             // Modulators
-            for (j in instrument_list_indices[i].second until instrument_list_indices[i + 1].second) {
-                this.modulate(instrument, imodulators[j])
-            }
+            // for (j in instrument_list_indices[i].second until instrument_list_indices[i + 1].second) {
+            //     this.modulate(instrument, imodulators[j])
+            // }
         }
 
 
-        var pgenerators: MutableList<Generator> = mutableListOf()
+        val pgenerators: MutableList<Generator> = mutableListOf()
         for (i in 0 until pdta_map["pgen"]!!.bytes.size / 4) {
-            var offset = i * 4
+            val offset = i * 4
             pgenerators.add(
                 Generator(
                     pdta_map["pgen"]!!.bytes[offset + 0].toInt() + (pdta_map["pgen"]!!.bytes[offset + 1].toInt() * 256),
@@ -253,10 +260,11 @@ class SoundFont {
                 )
             )
         }
-        var pmodulators: MutableList<Modulator> = mutableListOf()
-        var pmod_bytes = pdta_map["pmod"]!!.bytes
+
+        val pmodulators: MutableList<Modulator> = mutableListOf()
+        val pmod_bytes = pdta_map["pmod"]!!.bytes
         for (i in 0 until pmod_bytes.size / 10) {
-            var offset = i * 10
+            val offset = i * 10
             pmodulators.add(
                 Modulator(
                     pmod_bytes[offset + 0].toInt() + (pmod_bytes[offset + 1].toInt() * 256),
@@ -269,51 +277,40 @@ class SoundFont {
         }
 
 
-        var preset_count = pdta_map["phdr"]!!.bytes.size / 38
-        var pbag_entry_size = 4
+        val preset_count = phdr_bytes.size / 38
+        val pbag_entry_size = 4
 
-        var preset_list_indices: MutableList<Pair<Int, Int>> = mutableListOf()
-        var pbag_bytes = pdta_map["pbag"]!!.bytes
+        val preset_list_indices: MutableList<Pair<Int, Int>> = mutableListOf()
         for (i in 0 until preset_count) {
-            var wPresetBagIndex = pdta_map["phdr"]!!.bytes[(i * 38) + 24] + (pdta_map["phdr"]!!.bytes[(i * 38) + 25] * 256)
-            var offset = wPresetBagIndex * pbag_entry_size
+            val wPresetBagIndex = phdr_bytes[(i * 38) + 24] + (phdr_bytes[(i * 38) + 25] * 256)
+            val offset = wPresetBagIndex * pbag_entry_size
             preset_list_indices.add(
                 Pair(
-                    pbag_bytes[offset + 0].toInt() + (pbag_bytes[offset + 1] * 256).toInt(),
-                    pbag_bytes[offset + 2].toInt() + (pbag_bytes[offset + 3] * 256).toInt()
+                    pbag_bytes[offset + 0].toInt() + (pbag_bytes[offset + 1].toInt() * 256),
+                    pbag_bytes[offset + 2].toInt() + (pbag_bytes[offset + 3].toInt() * 256)
                 )
             )
         }
 
         for (i in 0 until preset_count - 1) {
-            var wGenNdx = preset_list_indices[i].first
-            var wModNdx = preset_list_indices[i].second
+            val wGenNdx = preset_list_indices[i].first
+            val wGenNdx_next = preset_list_indices[i + 1].first
 
-            var wGenNdx_next = preset_list_indices[i + 1].first
+            var wModNdx = preset_list_indices[i].second
             var wModNdx_next = preset_list_indices[i + 1].second
 
-            var preset_generators: MutableList<Generator> = mutableListOf()
+            val preset_generators: MutableList<Generator> = mutableListOf()
             for (j in wGenNdx until wGenNdx_next) {
-                var generator = pgenerators[j]
+                val generator = pgenerators[j]
                 preset_generators.add(generator)
                 if (generator.sfGenOper == 41) {
                     break
                 }
             }
 
-            var instrument_generators: MutableList<Generator> = mutableListOf()
-            for (j in wGenNdx until wGenNdx_next) {
-                var generator = igenerators[j]
-                instrument_generators.add(generator)
-                if (generator.sfGenOper == 41) {
-                    break
-                }
-            }
-
             var name = ""
-            var phdr_bytes = pdta_map["phdr"]!!.bytes
             for (j in 0 until 20) {
-                var b = phdr_bytes[j + (i * 38)].toInt()
+                val b = phdr_bytes[j + (i * 38)].toInt()
                 if (b != 0) {
                     name = "$name${b.toChar()}"
                 } else {
@@ -321,21 +318,20 @@ class SoundFont {
                 }
             }
 
-            this.presets.add(
-                Preset(
-                    name,
-                    pdta_map["phdr"]!!.bytes[(i * 38) + 20] + (pdta_map["phdr"]!!.bytes[(i * 38) + 21] * 256),
-                    pdta_map["phdr"]!!.bytes[(i * 38) + 22] + (pdta_map["phdr"]!!.bytes[(i * 38) + 22] * 256),
-                    preset_generators,
-                    pmodulators[wModNdx],
-                )
+            val preset = Preset(
+                name,
+                phdr_bytes[(i * 38) + 20].toInt() + (phdr_bytes[(i * 38) + 21].toInt() * 256),
+                phdr_bytes[(i * 38) + 22].toInt() + (phdr_bytes[(i * 38) + 22].toInt() * 256)
             )
+
+            this.generate_preset(preset, preset_generators)
+            this.presets.add(preset)
         }
         // Populate Samples
     }
 
     // TODO
-    private fun modulate(modulatable: ModulatedGenerated, modulator: Modulator) { }
+    //private fun modulate(modulatable: ModulatedGenerated, modulator: Modulator) { }
 
     private fun generate(working_generated: Generated, generator: Generator) {
         when (generator.sfGenOper) {
@@ -352,7 +348,7 @@ class SoundFont {
                 working_generated.filter_cutoff = generator.asInt()
             }
             0x09 -> {
-                working_generated.filter_resonance = generator.asInt()
+                working_generated.filter_resonance = generator.asInt().toDouble()
             }
             0x0A -> {
                 working_generated.mod_lfo_filter = generator.asInt()
@@ -365,7 +361,7 @@ class SoundFont {
             }
             0x0E -> { } // Unused
             0x0F -> {
-                working_generated.chorus = (generator.asInt()).toDouble()) / 10.0
+                working_generated.chorus = generator.asInt().toDouble() / 10.0
             }
             0x10 -> {
                 working_generated.reverb = (generator.asInt().toDouble()) / 10.0
@@ -574,10 +570,10 @@ class Generator(
         return shAmount + (wAmount * 256)
     }
     fun asIntSigned(): Int {
-        var unsigned = shAmount + (wAmount * 256)
+        val unsigned = shAmount + (wAmount * 256)
         // Get 2's compliment
         return if (unsigned shr 15 == 1) {
-            (not unsigned) + 1
+            unsigned.inv()
         } else {
             unsigned
         }
@@ -603,11 +599,11 @@ data class Sample(
     var sampleType: Int
 )
 
-open class Generated() {
+open class Generated {
     var key_range: Pair<Int, Int>? = null
     var velocity_range: Pair<Int, Int>? = null
     var attenuation: Double? = null
-    var pan: Int? = null
+    var pan: Double? = null
     var tuning_semi: Int? = null
     var tuning_cent: Int? = null
     var scale_tuning: Int? = null
@@ -624,22 +620,23 @@ open class Generated() {
     var mod_env_attack: Double? = null
     var mod_env_hold: Double? = null
     var mod_env_delay: Double? = null
+    var mod_env_decay: Double? = null
     var mod_env_sustain: Double? = null
     var mod_env_release: Double? = null
     var mod_env_pitch: Int? = null
     var mod_env_filter: Int? = null
     var key_mod_env_hold: Int? = null
     var key_mod_env_decay: Int? = null
-    var mod_lfo_delay: Int? = null
-    var mod_lfo_freq: Int? = null
+    var mod_lfo_delay: Double? = null
+    var mod_lfo_freq: Double? = null
     var mod_lfo_pitch: Int? = null
     var mod_lfo_filter: Int? = null
     var mod_lfo_volume: Int? = null
-    var vib_lfo_delay: Int? = null
-    var vib_lfo_freq: Int? = null
+    var vib_lfo_delay: Double? = null
+    var vib_lfo_freq: Double? = null
     var vib_lfo_pitch: Int? = null
     var chorus: Double? = null
-    var reverb: Int? = null
+    var reverb: Double? = null
 }
 
 class Preset(
@@ -647,30 +644,48 @@ class Preset(
     var preset: Int = 0, // MIDI Preset Number
     var bank: Int = 0, // MIDI Bank Number
     // dwLibrary, dwGenre, dwMorphology don't do anything yet
-    var instruments: MutableList<PresetInstrument> = mutableListOf()
-    var key_instrument_map = HashMap<Int, Int>()
-    var vel_instrument_map = HashMap<Int, Int>()
 ) {
+    var instruments: MutableList<PresetInstrument> = mutableListOf()
+    var key_instrument_map = HashMap<Int, MutableList<Int>>()
+    var vel_instrument_map = HashMap<Int, MutableList<Int>>()
     fun add_instrument(pinstrument: PresetInstrument) {
         this.instruments.add(pinstrument)
-        var key_range = if (pinstrument.key_range != null) {
-            pinstrument.key_range
+        val key_range = if (pinstrument.key_range != null) {
+            pinstrument.key_range!!
         } else {
             Pair(0, 127)
         }
         for (i in key_range.first .. key_range.second) { // INCLUSIVE
-            key_instrument_map[i] = this.instruments.size - 1
+            if (!this.key_instrument_map.containsKey(i)) {
+                this.key_instrument_map[i] = mutableListOf()
+            }
+            this.key_instrument_map[i]!!.add(this.instruments.size - 1)
         }
 
 
-        var vel_range = if (pinstrument.vel_range != null) {
-            pinstrument.vel_range
+        val velocity_range = if (pinstrument.velocity_range != null) {
+            pinstrument.velocity_range!!
         } else {
             Pair(0, 127)
         }
-        for (i in vel_range.first .. vel_range.second) { // INCLUSIVE
-            vel_instrument_map[i] = this.instruments.size - 1
+        for (i in velocity_range.first .. velocity_range.second) { // INCLUSIVE
+            if (!this.vel_instrument_map.containsKey(i)) {
+                this.vel_instrument_map[i] = mutableListOf()
+            }
+            this.vel_instrument_map[i]!!.add(this.instruments.size - 1)
         }
+    }
+
+    fun get_instruments(key: Int, velocity: Int): List<PresetInstrument> {
+        var output: MutableList<PresetInstrument> = mutableListOf()
+        var key_indices = this.key_instrument_map[key]!!.toSet()
+        var vel_indices = this.vel_instrument_map[velocity]!!.toSet()
+        var active_indices = key_indices.intersect(vel_indices)
+        for (index in active_indices) {
+            output.add(this.instruments[index])
+        }
+
+        return output
     }
 }
 
@@ -680,35 +695,51 @@ class PresetInstrument: Generated() {
 
 class Instrument(var name: String) {
     var samples: MutableList<InstrumentSample> = mutableListOf()
-    var key_sample_map = HashMap<Int, Int>()
-    var vel_sample_map = HashMap<Int, Int>()
+    var key_sample_map = HashMap<Int, MutableList<Int>>()
+    var vel_sample_map = HashMap<Int, MutableList<Int>>()
     fun add_sample(isample: InstrumentSample) {
         this.samples.add(isample)
-        var key_range = if (isample.key_range != null) {
-            isample.key_range
+        val key_range = if (isample.key_range != null) {
+            isample.key_range!!
         } else {
             Pair(0, 127)
         }
         for (i in key_range.first .. key_range.second) { // INCLUSIVE
-            key_sample_map[i] = this.samples.size - 1
+            if (!this.key_sample_map.containsKey(i)) {
+                this.key_sample_map[i] = mutableListOf()
+            }
+            this.key_sample_map[i]!!.add(this.samples.size - 1)
         }
 
 
-        var vel_range = if (isample.vel_range != null) {
-            isample.vel_range
+        val velocity_range = if (isample.velocity_range != null) {
+            isample.velocity_range!!
         } else {
             Pair(0, 127)
         }
-        for (i in vel_range.first .. vel_range.second) { // INCLUSIVE
-            vel_sample_map[i] = this.samples.size - 1
+        for (i in velocity_range.first .. velocity_range.second) { // INCLUSIVE
+            if (!this.vel_sample_map.containsKey(i)) {
+                this.vel_sample_map[i] = mutableListOf()
+            }
+            this.vel_sample_map[i]!!.add(this.samples.size - 1)
         }
+    }
+
+    fun get_samples(key: Int, velocity: Int): List<InstrumentSample> {
+        var output: MutableList<InstrumentSample> = mutableListOf()
+        var key_indices = this.key_sample_map[key]!!.toSet()
+        var vel_indices = this.vel_sample_map[velocity]!!.toSet()
+        var active_indices = key_indices.intersect(vel_indices)
+        for (index in active_indices) {
+            output.add(this.samples[index])
+        }
+
+        return output
     }
 }
 
 class InstrumentSample: Generated() {
     var sampleIndex: Int = 0
-    var fixedKey: Int? = null
-    var fixedVelocity: Int? = null
     var sampleStartOffset: Int? = null
     var sampleEndOffset: Int? = null
     var loopStartOffset: Int? = null
@@ -716,8 +747,9 @@ class InstrumentSample: Generated() {
     var sampleMode: Int? = null
     var root_key: Int? = null
     var exclusive_class: Int? = null
+    var keynum: Int? = null
+    var velocity: Int? = null
 }
-
 
 //------------ RIFF  --------------//
 open class RiffChunk(var type: String)
@@ -745,7 +777,7 @@ class RiffReader {
             size += 1
         }
 
-        var next_bytes = ByteArray(size)
+        val next_bytes = ByteArray(size)
         for (i in 0 until size) {
             next_bytes[i] = bytes[i + 12]
         }
@@ -755,7 +787,7 @@ class RiffReader {
     }
 
     fun get_list_chunks(bytes: ByteArray): List<ListChunk> {
-        var output: MutableList<ListChunk> = mutableListOf()
+        val output: MutableList<ListChunk> = mutableListOf()
         var current_offset = 0
         while (current_offset < bytes.size) {
             var fourcc: String = ""
@@ -772,7 +804,7 @@ class RiffReader {
                 throw Exception("Invalid LIST Chunk")
             }
 
-            var next_bytes = ByteArray(size)
+            val next_bytes = ByteArray(size)
             for (i in 0 until size) {
                 next_bytes[i] = bytes[i + 12]
             }
@@ -787,7 +819,7 @@ class RiffReader {
     }
 
     fun get_sub_chunks(bytes: ByteArray): List<SubChunk> {
-        var output: MutableList<SubChunk> = mutableListOf()
+        val output: MutableList<SubChunk> = mutableListOf()
         var current_offset = 0
         while (current_offset < bytes.size) {
             var fourcc: String = ""
@@ -798,7 +830,7 @@ class RiffReader {
                 size += bytes[current_offset + 7 - i].toInt()
             }
 
-            var next_bytes = ByteArray(size)
+            val next_bytes = ByteArray(size)
             for (i in 0 until size) {
                 next_bytes[i] = bytes[i + 12]
             }
@@ -810,5 +842,4 @@ class RiffReader {
         }
         return output
     }
-
 }

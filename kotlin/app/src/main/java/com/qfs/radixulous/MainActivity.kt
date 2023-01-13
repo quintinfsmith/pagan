@@ -1,6 +1,7 @@
 package com.qfs.radixulous
 
 import android.app.Activity
+import android.app.ActivityManager
 import android.content.Context
 import android.content.Intent
 import android.os.Build
@@ -29,11 +30,14 @@ import kotlinx.android.synthetic.main.table_line_label.view.*
 import java.io.File
 import java.lang.Integer.max
 import com.qfs.radixulous.opusmanager.HistoryLayer as OpusManager
-import com.qfs.radixulous.MIDIPlaybackDevice
+//import com.qfs.radixulous.MIDIPlaybackDevice
 import com.qfs.radixulous.apres.*
 
 import java.io.FileOutputStream
+import java.io.InputStream
 import java.lang.Integer.min
+import java.util.*
+import kotlin.collections.HashMap
 import kotlin.concurrent.thread
 
 enum class ContextMenu {
@@ -197,7 +201,7 @@ class MainActivity : AppCompatActivity() {
     private var relative_mode: Boolean = false
     private var ticking: Boolean = false // Lock to prevent multiple attempts at updating from happening at once
     lateinit var midi_controller: MIDIController
-    lateinit var midi_playback_device: MIDIPlaybackDevice
+    // lateinit var midi_playback_device: MIDIPlaybackDevice
     private var midi_input_device = MIDIInputDevice()
     private var midi_player = MIDIPlayer()
 
@@ -205,10 +209,20 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        this.midi_playback_device = MIDIPlaybackDevice(this)
+
+        // TODO: clean up the file -> riff -> soundfont -> midi playback device process
+        //val inputStream: InputStream = assets.open("freepats-general-midi.sf2")
+        //val size: Int = inputStream.available()
+        //val sound_font_buffer = ByteArray(size)
+        //inputStream.read(sound_font_buffer)
+        //var riffReader = RiffReader()
+        //var soundfont = SoundFont(inputStream)
+
+        //this.midi_playback_device = MIDIPlaybackDevice(this, soundfont)
+
 
         this.midi_controller = RadMidiController(window.decorView.rootView.context)
-        this.midi_controller.registerVirtualDevice(this.midi_playback_device)
+        //this.midi_controller.registerVirtualDevice(this.midi_playback_device)
         this.midi_controller.registerVirtualDevice(this.midi_input_device)
         this.midi_controller.registerVirtualDevice(this.midi_player)
 
@@ -440,7 +454,7 @@ class MainActivity : AppCompatActivity() {
         headerCellView.setOnClickListener {
             val cursor = this.opus_manager.get_cursor()
             this.opus_manager.set_cursor_position(cursor.y, x, listOf())
-            //this.play_beat(x)
+            this.play_beat(x)
             this.setContextMenu(ContextMenu.Beat)
             this.tick()
         }
@@ -1358,11 +1372,11 @@ class MainActivity : AppCompatActivity() {
         this.opus_manager.set_event(beatkey, position, event)
 
         // DEBUG
-        //this.midi_input_device.sendEvent(NoteOn(beatkey.channel, event.note + 21, 64))
-        //thread {
-        //    Thread.sleep(300)
-        //    this.midi_input_device.sendEvent(NoteOff(beatkey.channel, event.note + 21, 64))
-        //}
+        this.midi_input_device.sendEvent(NoteOn(beatkey.channel, event.note + 21, 64))
+        thread {
+            Thread.sleep(300)
+            this.midi_input_device.sendEvent(NoteOff(beatkey.channel, event.note + 21, 64))
+        }
 
         var nsOctave: NumberSelector = findViewById(R.id.nsOctave)
         if (nsOctave.getState() == null) {
@@ -1399,7 +1413,6 @@ class MainActivity : AppCompatActivity() {
             nsOffset.setState(event.note % event.radix)
         }
 
-        //that.midi_player.play(event.note)
         this.tick()
     }
 

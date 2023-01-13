@@ -1,9 +1,12 @@
 package com.qfs.radixulous
 
+import java.io.FileDescriptor
+import java.io.FileInputStream
+import java.io.InputStream
 import kotlin.math.max
 import kotlin.math.pow
 
-class SoundFont(riff: Riff) {
+class SoundFont(var riff: Riff) {
     // Mandatory INFO
     private var ifil: Pair<Int, Int> = Pair(0,0)
     private var isng: String = "EMU8000"
@@ -24,118 +27,25 @@ class SoundFont(riff: Riff) {
     private var instruments: MutableList<Instrument> = mutableListOf()
     private var presets: MutableList<Preset> = mutableListOf()
     private var samples: MutableList<Sample> = mutableListOf()
-    private var sampleData: ByteArray = ByteArray(0)
-    private var sampleWordSize: Int = 2
 
     init {
-        var tmp_sample_a: ByteArray? = null
-        var tmp_sample_b: ByteArray? = null
-        var pdta_index: Int = 0
-        riff.list_chunks.forEachIndexed { i, list_chunk ->
-            when (list_chunk.type) {
-                "INFO" -> {
-                    for (sub_chunk in list_chunk.sub_chunks) {
-                        val bytes = sub_chunk.bytes
-                        when (sub_chunk.type) {
-                            "ifil" -> {
-                                this.ifil = Pair(
-                                    bytes[0].toInt() + (bytes[1].toInt() * 256),
-                                    bytes[2].toInt() + (bytes[3].toInt() * 256)
-                                )
-                            }
-                            "isng" -> {
-                                this.isng = bytes.toString()
-                            }
-                            "INAM" -> {
-                                this.inam = bytes.toString()
-                            }
-                            "irom" -> {
-                                this.irom = bytes.toString()
-                            }
-                            "iver" -> {
-                                this.iver = Pair(
-                                    bytes[0].toInt() + (bytes[1].toInt() * 256),
-                                    bytes[2].toInt() + (bytes[3].toInt() * 256)
-                                )
-                            }
-                            "ICRD" -> {
-                                this.icrd = bytes.toString()
-                            }
-                            "IENG" -> {
-                                this.ieng = bytes.toString()
-                            }
-                            "IPRD" -> {
-                                this.iprd = bytes.toString()
-                            }
-                            "ICOP" -> {
-                                this.icop = bytes.toString()
-                            }
-                            "ICMT" -> {
-                                this.icmt = bytes.toString()
-                            }
-                            "ISFT" -> {
-                                this.isft = bytes.toString()
-                            }
-                            else -> {} // Throw error
-                        }
-                    }
-                }
-                "sdta" -> {
-                    for (sub_chunk in list_chunk.sub_chunks) {
-                        val bytes = sub_chunk.bytes
-                        when (sub_chunk.type) {
-                            "smpl" -> {
-                                tmp_sample_a = bytes
-                            }
-                            "sm24" -> {
-                                tmp_sample_b = bytes
-                            }
-                            else -> {} // Throw error
-                        }
-                    }
-                }
-                "pdta" -> {
-                    pdta_index = i
-                }
-                else -> {}
-            }
-        }
-
-        // Merge sample data and convert to big-endian
-        if (tmp_sample_a != null) {
-            if (tmp_sample_b != null) {
-                this.sampleWordSize = 3
-                this.sampleData = ByteArray(tmp_sample_a!!.size + tmp_sample_b!!.size)
-                for (i in 0 until tmp_sample_a!!.size) {
-                    this.sampleData[(i * 3)] = tmp_sample_a!![(2 * i) + 1]
-                    this.sampleData[(i * 3) + 1] = tmp_sample_a!![(2 * i)]
-                }
-                for (i in 0 until tmp_sample_b!!.size) {
-                    this.sampleData[(i * 3) + 2] = tmp_sample_b!![i]
-                }
-            } else {
-                this.sampleData = ByteArray(tmp_sample_a!!.size)
-                for (i in 0 until tmp_sample_a!!.size) {
-                    this.sampleData[(i * 2)] = tmp_sample_a!![(2 * i) + 1]
-                    this.sampleData[(i * 2) + 1] = tmp_sample_a!![(2 * i)]
-                }
-            }
-        }
-
-        val pdta_chunk = riff.list_chunks[pdta_index]
-
         // Make a hashmap for easier access
-        val pdta_map = HashMap<String, SubChunk>()
-        for (sub_chunk in pdta_chunk.sub_chunks) {
-            pdta_map[sub_chunk.type] = sub_chunk
+        val pdta_map = HashMap<String, ByteArray>()
+        for (index in this.riff.sub_chunks[2]) {
+            var sub_chunk_type = this.riff.get_sub_chunk_type(2, index)
+            var sub_chunk = this.riff.get_sub_chunk_data(2, index)
+            pdta_map[sub_chunk_type] = sub_chunk
         }
 
-        val ibag_bytes = pdta_map["ibag"]!!.bytes
-        val inst_bytes = pdta_map["inst"]!!.bytes
-        val shdr_bytes = pdta_map["shdr"]!!.bytes
-        val imod_bytes = pdta_map["imod"]!!.bytes
-        val pbag_bytes = pdta_map["pbag"]!!.bytes
-        val phdr_bytes = pdta_map["phdr"]!!.bytes
+        val ibag_bytes = pdta_map["ibag"]!!
+        val inst_bytes = pdta_map["inst"]!!
+        val shdr_bytes = pdta_map["shdr"]!!
+        val imod_bytes = pdta_map["imod"]!!
+        val pbag_bytes = pdta_map["pbag"]!!
+        val phdr_bytes = pdta_map["phdr"]!!
+        val igen_bytes = pdta_map["igen"]!!
+        val pmod_bytes = pdta_map["pmod"]!!
+        val pgen_bytes = pdta_map["pgen"]!!
 
         for (i in 0 until shdr_bytes.size / 46) {
             val offset = i * 46
@@ -195,13 +105,13 @@ class SoundFont(riff: Riff) {
         }
 
         val igenerators: MutableList<Generator> = mutableListOf()
-        for (i in 0 until pdta_map["igen"]!!.bytes.size / 4) {
+        for (i in 0 until igen_bytes.size / 4) {
             val offset = i * 4
             igenerators.add(
                 Generator(
-                    pdta_map["igen"]!!.bytes[offset].toInt() + (pdta_map["igen"]!!.bytes[offset + 1].toInt() * 256),
-                    pdta_map["igen"]!!.bytes[offset + 2].toInt(),
-                    pdta_map["igen"]!!.bytes[offset + 3].toInt()
+                    igen_bytes[offset + 0].toInt() + (igen_bytes[offset + 1].toInt() * 256),
+                    igen_bytes[offset + 2].toInt(),
+                    igen_bytes[offset + 3].toInt()
                 )
             )
         }
@@ -250,19 +160,18 @@ class SoundFont(riff: Riff) {
 
 
         val pgenerators: MutableList<Generator> = mutableListOf()
-        for (i in 0 until pdta_map["pgen"]!!.bytes.size / 4) {
+        for (i in 0 until pgen_bytes.size / 4) {
             val offset = i * 4
             pgenerators.add(
                 Generator(
-                    pdta_map["pgen"]!!.bytes[offset + 0].toInt() + (pdta_map["pgen"]!!.bytes[offset + 1].toInt() * 256),
-                    pdta_map["pgen"]!!.bytes[offset + 2].toInt(),
-                    pdta_map["pgen"]!!.bytes[offset + 3].toInt()
+                    pgen_bytes[offset + 0].toInt() + (pgen_bytes[offset + 1].toInt() * 256),
+                    pgen_bytes[offset + 2].toInt(),
+                    pgen_bytes[offset + 3].toInt()
                 )
             )
         }
 
         val pmodulators: MutableList<Modulator> = mutableListOf()
-        val pmod_bytes = pdta_map["pmod"]!!.bytes
         for (i in 0 until pmod_bytes.size / 10) {
             val offset = i * 10
             pmodulators.add(
@@ -551,6 +460,108 @@ class SoundFont(riff: Riff) {
             }
         }
     }
+
+    fun get_info_subchunk(tag: String): ByteArray? {
+        for (i in this.riff.sub_chunks[0]) {
+            if (this.riff.get_sub_chunk_type(0, i) != tag) {
+                continue
+            }
+
+            return this.riff.get_sub_chunk_data(0, i)
+        }
+        return null
+    }
+
+    fun get_ifil(): Pair<Int, Int>? {
+        var bytes = this.get_info_subchunk("ifil") ?: return null
+        return Pair(
+            bytes[0].toInt() + (bytes[1].toInt() * 256),
+            bytes[2].toInt() + (bytes[3].toInt() * 256)
+        )
+    }
+
+    fun get_isng(): String? {
+        var bytes = this.get_info_subchunk("isng") ?: return null
+        return bytes.toString()
+    }
+
+    fun get_inam(): String? {
+        var bytes = this.get_info_subchunk("INAM") ?: return null
+        return bytes.toString()
+    }
+
+    fun get_irom(): String? {
+        var bytes = this.get_info_subchunk("irom") ?: return null
+        return bytes.toString()
+    }
+
+    fun get_iver(): Pair<Int, Int>? {
+        var bytes = this.get_info_subchunk("iver") ?: return null
+        return Pair(
+            bytes[0].toInt() + (bytes[1].toInt() * 256),
+            bytes[2].toInt() + (bytes[3].toInt() * 256)
+        )
+    }
+
+    fun get_icrd(): String? {
+        var bytes = this.get_info_subchunk("ICRD") ?: return null
+        return bytes.toString()
+    }
+
+    fun get_ieng(): String? {
+        var bytes = this.get_info_subchunk("IENG") ?: return null
+        return bytes.toString()
+    }
+
+    fun get_iprd(): String? {
+        var bytes = this.get_info_subchunk("IPRD") ?: return null
+        return bytes.toString()
+    }
+
+    fun get_icop(): String? {
+        var bytes = this.get_info_subchunk("ICOP") ?: return null
+        return bytes.toString()
+    }
+
+    fun get_icmt(): String? {
+        var bytes = this.get_info_subchunk("ICMT") ?: return null
+        return bytes.toString()
+    }
+
+    fun get_isft(): String? {
+        var bytes = this.get_info_subchunk("ISFT") ?: return null
+        return bytes.toString()
+    }
+
+    fun get_sample_data(start_index: Int, end_index: Int): ByteArray? {
+        var smpl = this.riff.get_sub_chunk_data(1, 0, start_index * 2, 2 * (end_index - start_index))
+        var wordsize = 2
+        var sm24 = if (this.riff.sub_chunks[1].size == 2) {
+            wordsize = 3
+            this.riff.get_sub_chunk_data(1, 1, start_index, end_index - start_index)
+        } else {
+            null
+        }
+
+        var output = if (sm24 != null) {
+            ByteArray(smpl.size + sm24.size)
+        } else {
+            ByteArray(smpl.size)
+        }
+
+        for (i in 0 until smpl.size / 2) {
+            output[(i * 3) + 0] = smpl[(i * 2)]
+            output[(i * 3) + 1] = smpl[(i * 2) + 1]
+        }
+
+        if (sm24 != null) {
+            for (i in sm24.indices) {
+                output[(i * 3) + 2] = sm24[i]
+            }
+        }
+
+        return output
+    }
 }
 
 data class Modulator(
@@ -753,93 +764,98 @@ class InstrumentSample: Generated() {
 
 //------------ RIFF  --------------//
 open class RiffChunk(var type: String)
-class Riff(type: String, var list_chunks: List<ListChunk>): RiffChunk(type)
 class ListChunk(type: String, var sub_chunks: List<SubChunk>): RiffChunk(type)
 data class SubChunk(var type: String, var bytes: ByteArray)
 
-class RiffReader {
-    fun from_bytes(bytes: ByteArray): Riff {
-        var fourcc: String = ""
-        var size = 0
-        var typecc: String = ""
-        for (i in 0 until 4) {
-            fourcc = "$fourcc${bytes[i].toInt().toChar()}"
-            typecc = "$typecc${bytes[i + 8].toInt().toChar()}"
-            size *= 256
-            size += bytes[7 - i].toInt()
+class Riff(var fileDescriptor: FileDescriptor) {
+    var list_chunks: MutableList<Int> = mutableListOf()
+    var sub_chunks: MutableList<List<Int>> = mutableListOf()
+
+    init {
+        var input_stream = FileInputStream(this.fileDescriptor)
+        var fourcc = this.get_bytes(input_stream, 4).toString()
+        var riff_size = this.get_little_endian(input_stream, 4)
+        var typecc = this.get_bytes(input_stream, 4).toString()
+
+        var working_index = 12
+        while (working_index < riff_size - 4) {
+            this.list_chunks.add(working_index)
+            var tag = this.get_bytes(input_stream, 4).toString()
+            working_index += 4
+            var chunk_size = this.get_little_endian(input_stream, 4)
+            working_index += 4
+
+            var type = this.get_bytes(input_stream, 4)
+            working_index += 4
+
+            var sub_chunk_list: MutableList<Int> = mutableListOf()
+            var sub_index = 0
+            while (sub_index < chunk_size - 4) {
+                sub_chunk_list.add(working_index + sub_index)
+                var sub_chunk_tag = this.get_bytes(input_stream, 4).toString()
+                sub_index += 4
+                var sub_chunk_size = this.get_little_endian(input_stream, 4)
+                sub_index += 4
+                sub_index += sub_chunk_size
+            }
+            this.sub_chunks.add(sub_chunk_list)
+        }
+        input_stream.close()
+    }
+
+    fun get_list_chunk_type(list_index: Int): String {
+        var input_stream = FileInputStream(this.fileDescriptor)
+        var offset = this.list_chunks[list_index]
+        this.get_bytes(input_stream, offset + 8) // Eat to offset
+        var output = this.get_bytes(input_stream, 4).toString()
+        input_stream.close()
+        return output
+    }
+    fun get_sub_chunk_type(list_index: Int, chunk_index: Int): String {
+        var input_stream = FileInputStream(this.fileDescriptor)
+        var offset = this.sub_chunks[list_index][chunk_index]
+        this.get_bytes(input_stream, offset) // Eat to offset
+        var output = this.get_bytes(input_stream, 4).toString()
+        input_stream.close()
+        return output
+    }
+
+    fun get_sub_chunk_data(list_index: Int, chunk_index: Int, inner_offset: Int? = null, cropped_size: Int? = null): ByteArray {
+        var input_stream = FileInputStream(this.fileDescriptor)
+        var offset = this.sub_chunks[list_index][chunk_index]
+        this.get_bytes(input_stream, offset + 4) // Eat to offset
+
+        var size = this.get_little_endian(input_stream, 4)
+
+        if (inner_offset != null) {
+            this.get_bytes(input_stream, inner_offset)
+            size -= inner_offset
         }
 
-        if  (fourcc != "RIFF") {
-            throw Exception("Invalid RIFF")
+        if (cropped_size != null && cropped_size <= size) {
+            size = cropped_size
         }
 
-        if (size % 2 == 1) {
-            size += 1
-        }
+        var output = this.get_bytes(input_stream, size)
+        input_stream.close()
+        return output
+    }
 
-        val next_bytes = ByteArray(size)
+    fun get_bytes(input_stream: FileInputStream, size: Int): ByteArray {
+        var buffer = ByteArray(size)
+        input_stream.read(buffer)
+        return buffer
+    }
+
+    fun get_little_endian(input_stream: FileInputStream, size: Int): Int {
+        var buffer = ByteArray(size)
+        input_stream.read(buffer)
+        var output = 0
         for (i in 0 until size) {
-            next_bytes[i] = bytes[i + 12]
-        }
-
-
-        return Riff(typecc, this.get_list_chunks(next_bytes))
-    }
-
-    fun get_list_chunks(bytes: ByteArray): List<ListChunk> {
-        val output: MutableList<ListChunk> = mutableListOf()
-        var current_offset = 0
-        while (current_offset < bytes.size) {
-            var fourcc: String = ""
-            var typecc: String = ""
-            var size = 0
-            for (i in 0 until 4) {
-                fourcc = "$fourcc${bytes[i + current_offset].toInt().toChar()}"
-                typecc = "$typecc${bytes[current_offset + i + 8].toInt().toChar()}"
-                size *= 256
-                size += bytes[current_offset + 7 - i].toInt()
-            }
-
-            if (fourcc != "LIST") {
-                throw Exception("Invalid LIST Chunk")
-            }
-
-            val next_bytes = ByteArray(size)
-            for (i in 0 until size) {
-                next_bytes[i] = bytes[i + 12]
-            }
-
-            output.add(ListChunk(typecc, this.get_sub_chunks(next_bytes)))
-
-            size += (size % 2) // consider padding
-            current_offset += size
-        }
-
-        return output
-    }
-
-    fun get_sub_chunks(bytes: ByteArray): List<SubChunk> {
-        val output: MutableList<SubChunk> = mutableListOf()
-        var current_offset = 0
-        while (current_offset < bytes.size) {
-            var fourcc: String = ""
-            var size = 0
-            for (i in 0 until 4) {
-                fourcc = "$fourcc${bytes[i + current_offset].toInt().toChar()}"
-                size *= 256
-                size += bytes[current_offset + 7 - i].toInt()
-            }
-
-            val next_bytes = ByteArray(size)
-            for (i in 0 until size) {
-                next_bytes[i] = bytes[i + 12]
-            }
-
-            output.add(SubChunk(fourcc, next_bytes))
-
-            size += (size % 2) // consider padding
-            current_offset += size
+            output *= 256
+            output += buffer[size - 1 - i].toInt()
         }
         return output
     }
+
 }

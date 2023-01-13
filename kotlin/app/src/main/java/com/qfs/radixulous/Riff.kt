@@ -1,8 +1,12 @@
 package com.qfs.radixulous
 
+import android.content.res.AssetFileDescriptor
+import android.content.res.AssetManager
+import android.util.Log
 import java.io.FileDescriptor
 import java.io.FileInputStream
 import java.io.InputStream
+import kotlin.experimental.and
 import kotlin.math.max
 import kotlin.math.pow
 
@@ -24,14 +28,16 @@ class SoundFont(var riff: Riff) {
 
     // Populated by sdta
     // NOTE: smpl size needs to be 2 * sm24 size
-    private var instruments: MutableList<Instrument> = mutableListOf()
+    var instruments: MutableList<Instrument> = mutableListOf()
     private var presets: MutableList<Preset> = mutableListOf()
-    private var samples: MutableList<Sample> = mutableListOf()
+    var samples: MutableList<Sample> = mutableListOf()
+
+    private var preset_map = HashMap<Pair<Int, Int>, Int>()
 
     init {
         // Make a hashmap for easier access
         val pdta_map = HashMap<String, ByteArray>()
-        for (index in this.riff.sub_chunks[2]) {
+        for (index in 0 until this.riff.sub_chunks[2].size) {
             var sub_chunk_type = this.riff.get_sub_chunk_type(2, index)
             var sub_chunk = this.riff.get_sub_chunk_data(2, index)
             pdta_map[sub_chunk_type] = sub_chunk
@@ -51,7 +57,7 @@ class SoundFont(var riff: Riff) {
             val offset = i * 46
             var sample_name = ""
             for (j in 0 until 20) {
-                val b = shdr_bytes[offset + j].toInt()
+                val b = toUInt(shdr_bytes[offset + j])
                 if (b == 0) {
                     break
                 }
@@ -61,32 +67,33 @@ class SoundFont(var riff: Riff) {
             this.samples.add(
                 Sample(
                     sample_name,
-                    shdr_bytes[offset + 20].toInt()
-                        + (shdr_bytes[offset + 21].toInt() * 256)
-                        + (shdr_bytes[offset + 22].toInt() * (256 * 256))
-                        + (shdr_bytes[offset + 23].toInt() * (256 * 256 * 256)),
-                    shdr_bytes[offset + 24].toInt()
-                        + (shdr_bytes[offset + 25].toInt() * 256)
-                        + (shdr_bytes[offset + 26].toInt() * (256 * 256))
-                        + (shdr_bytes[offset + 27].toInt() * (256 * 256 * 256)),
-                    shdr_bytes[offset + 28].toInt()
-                        + (shdr_bytes[offset + 29].toInt() * 256)
-                        + (shdr_bytes[offset + 30].toInt() * (256 * 256))
-                        + (shdr_bytes[offset + 31].toInt() * (256 * 256 * 256)),
-                    shdr_bytes[offset + 32].toInt()
-                        + (shdr_bytes[offset + 33].toInt() * 256)
-                        + (shdr_bytes[offset + 34].toInt() * (256 * 256))
-                        + (shdr_bytes[offset + 35].toInt() * (256 * 256 * 256)),
-                    shdr_bytes[offset + 36].toInt()
-                        + (shdr_bytes[offset + 37].toInt() * 256)
-                        + (shdr_bytes[offset + 38].toInt() * (256 * 256))
-                        + (shdr_bytes[offset + 39].toInt() * (256 * 256 * 256)),
-                    shdr_bytes[offset + 40].toInt(),
-                    shdr_bytes[offset + 41].toInt(),
-                    shdr_bytes[offset + 42].toInt() + (shdr_bytes[offset + 43].toInt() * 256),
-                    shdr_bytes[offset + 44].toInt() + (shdr_bytes[offset + 45].toInt() * 256)
+                    toUInt(shdr_bytes[offset + 20])
+                        + (toUInt(shdr_bytes[offset + 21]) * 256)
+                        + (toUInt(shdr_bytes[offset + 22]) * (256 * 256))
+                        + (toUInt(shdr_bytes[offset + 23]) * (256 * 256 * 256)),
+                    toUInt(shdr_bytes[offset + 24])
+                        + (toUInt(shdr_bytes[offset + 25]) * 256)
+                        + (toUInt(shdr_bytes[offset + 26]) * (256 * 256))
+                        + (toUInt(shdr_bytes[offset + 27]) * (256 * 256 * 256)),
+                    toUInt(shdr_bytes[offset + 28])
+                        + (toUInt(shdr_bytes[offset + 29]) * 256)
+                        + (toUInt(shdr_bytes[offset + 30]) * (256 * 256))
+                        + (toUInt(shdr_bytes[offset + 31]) * (256 * 256 * 256)),
+                    toUInt(shdr_bytes[offset + 32])
+                        + (toUInt(shdr_bytes[offset + 33]) * 256)
+                        + (toUInt(shdr_bytes[offset + 34]) * (256 * 256))
+                        + (toUInt(shdr_bytes[offset + 35]) * (256 * 256 * 256)),
+                    toUInt(shdr_bytes[offset + 36])
+                        + (toUInt(shdr_bytes[offset + 37]) * 256)
+                        + (toUInt(shdr_bytes[offset + 38]) * (256 * 256))
+                        + (toUInt(shdr_bytes[offset + 39]) * (256 * 256 * 256)),
+                    toUInt(shdr_bytes[offset + 40]),
+                    toUInt(shdr_bytes[offset + 41]),
+                    toUInt(shdr_bytes[offset + 42]) + (toUInt(shdr_bytes[offset + 43]) * 256),
+                    toUInt(shdr_bytes[offset + 44]) + (toUInt(shdr_bytes[offset + 45]) * 256)
                 )
             )
+
         }
 
         // TODO: Verify INST chunk (mod 22 == 0, min size 44, and exists)
@@ -98,8 +105,8 @@ class SoundFont(var riff: Riff) {
             val offset = i * ibag_entry_size
             instrument_list_indices.add(
                 Pair(
-                    ibag_bytes[offset + 0] + (ibag_bytes[offset + 1] * 256),
-                    ibag_bytes[offset + 2] + (ibag_bytes[offset + 3] * 256)
+                    toUInt(ibag_bytes[offset + 0]) + (toUInt(ibag_bytes[offset + 1]) * 256),
+                    toUInt(ibag_bytes[offset + 2]) + (toUInt(ibag_bytes[offset + 3]) * 256)
                 )
             )
         }
@@ -109,9 +116,9 @@ class SoundFont(var riff: Riff) {
             val offset = i * 4
             igenerators.add(
                 Generator(
-                    igen_bytes[offset + 0].toInt() + (igen_bytes[offset + 1].toInt() * 256),
-                    igen_bytes[offset + 2].toInt(),
-                    igen_bytes[offset + 3].toInt()
+                    toUInt(igen_bytes[offset + 0]) + (toUInt(igen_bytes[offset + 1]) * 256),
+                    toUInt(igen_bytes[offset + 2]),
+                    toUInt(igen_bytes[offset + 3])
                 )
             )
         }
@@ -121,11 +128,11 @@ class SoundFont(var riff: Riff) {
             val offset = i * 10
             imodulators.add(
                 Modulator(
-                    imod_bytes[offset + 0].toInt() + (imod_bytes[offset + 1].toInt() * 256),
-                    imod_bytes[offset + 2].toInt() + (imod_bytes[offset + 3].toInt() * 256),
-                    imod_bytes[offset + 4].toInt() + (imod_bytes[offset + 5].toInt() * 256),
-                    imod_bytes[offset + 6].toInt() + (imod_bytes[offset + 7].toInt() * 256),
-                    imod_bytes[offset + 8].toInt() + (imod_bytes[offset + 9].toInt() * 256)
+                    toUInt(imod_bytes[offset + 0]) + (toUInt(imod_bytes[offset + 1]) * 256),
+                    toUInt(imod_bytes[offset + 2]) + (toUInt(imod_bytes[offset + 3]) * 256),
+                    toUInt(imod_bytes[offset + 4]) + (toUInt(imod_bytes[offset + 5]) * 256),
+                    toUInt(imod_bytes[offset + 6]) + (toUInt(imod_bytes[offset + 7]) * 256),
+                    toUInt(imod_bytes[offset + 8]) + (toUInt(imod_bytes[offset + 9]) * 256)
                 )
             )
         }
@@ -134,7 +141,7 @@ class SoundFont(var riff: Riff) {
         for (i in 0 until instrument_count - 1) {
             var instrument_name = ""
             for (j in 0 until 20) {
-                val b = inst_bytes[(i * 22) + j].toInt()
+                val b = toUInt(inst_bytes[(i * 22) + j])
                 if (b == 0) {
                     break
                 }
@@ -164,9 +171,9 @@ class SoundFont(var riff: Riff) {
             val offset = i * 4
             pgenerators.add(
                 Generator(
-                    pgen_bytes[offset + 0].toInt() + (pgen_bytes[offset + 1].toInt() * 256),
-                    pgen_bytes[offset + 2].toInt(),
-                    pgen_bytes[offset + 3].toInt()
+                    toUInt(pgen_bytes[offset + 0]) + (toUInt(pgen_bytes[offset + 1]) * 256),
+                    toUInt(pgen_bytes[offset + 2]),
+                    toUInt(pgen_bytes[offset + 3])
                 )
             )
         }
@@ -176,11 +183,11 @@ class SoundFont(var riff: Riff) {
             val offset = i * 10
             pmodulators.add(
                 Modulator(
-                    pmod_bytes[offset + 0].toInt() + (pmod_bytes[offset + 1].toInt() * 256),
-                    pmod_bytes[offset + 2].toInt() + (pmod_bytes[offset + 3].toInt() * 256),
-                    pmod_bytes[offset + 4].toInt() + (pmod_bytes[offset + 5].toInt() * 256),
-                    pmod_bytes[offset + 6].toInt() + (pmod_bytes[offset + 7].toInt() * 256),
-                    pmod_bytes[offset + 8].toInt() + (pmod_bytes[offset + 9].toInt() * 256)
+                    toUInt(pmod_bytes[offset + 0]) + (toUInt(pmod_bytes[offset + 1]) * 256),
+                    toUInt(pmod_bytes[offset + 2]) + (toUInt(pmod_bytes[offset + 3]) * 256),
+                    toUInt(pmod_bytes[offset + 4]) + (toUInt(pmod_bytes[offset + 5]) * 256),
+                    toUInt(pmod_bytes[offset + 6]) + (toUInt(pmod_bytes[offset + 7]) * 256),
+                    toUInt(pmod_bytes[offset + 8]) + (toUInt(pmod_bytes[offset + 9]) * 256)
                 )
             )
         }
@@ -191,12 +198,12 @@ class SoundFont(var riff: Riff) {
 
         val preset_list_indices: MutableList<Pair<Int, Int>> = mutableListOf()
         for (i in 0 until preset_count) {
-            val wPresetBagIndex = phdr_bytes[(i * 38) + 24] + (phdr_bytes[(i * 38) + 25] * 256)
+            val wPresetBagIndex = toUInt(phdr_bytes[(i * 38) + 24]) + (toUInt(phdr_bytes[(i * 38) + 25]) * 256)
             val offset = wPresetBagIndex * pbag_entry_size
             preset_list_indices.add(
                 Pair(
-                    pbag_bytes[offset + 0].toInt() + (pbag_bytes[offset + 1].toInt() * 256),
-                    pbag_bytes[offset + 2].toInt() + (pbag_bytes[offset + 3].toInt() * 256)
+                    toUInt(pbag_bytes[offset + 0]) + (toUInt(pbag_bytes[offset + 1]) * 256),
+                    toUInt(pbag_bytes[offset + 2]) + (toUInt(pbag_bytes[offset + 3]) * 256)
                 )
             )
         }
@@ -219,7 +226,7 @@ class SoundFont(var riff: Riff) {
 
             var name = ""
             for (j in 0 until 20) {
-                val b = phdr_bytes[j + (i * 38)].toInt()
+                val b = toUInt(phdr_bytes[j + (i * 38)])
                 if (b != 0) {
                     name = "$name${b.toChar()}"
                 } else {
@@ -229,15 +236,21 @@ class SoundFont(var riff: Riff) {
 
             val preset = Preset(
                 name,
-                phdr_bytes[(i * 38) + 20].toInt() + (phdr_bytes[(i * 38) + 21].toInt() * 256),
-                phdr_bytes[(i * 38) + 22].toInt() + (phdr_bytes[(i * 38) + 22].toInt() * 256)
+                toUInt(phdr_bytes[(i * 38) + 20]) + (toUInt(phdr_bytes[(i * 38) + 21]) * 256),
+                toUInt(phdr_bytes[(i * 38) + 22]) + (toUInt(phdr_bytes[(i * 38) + 22]) * 256)
             )
 
             this.generate_preset(preset, preset_generators)
             this.presets.add(preset)
+            this.preset_map[Pair(preset.bank, preset.preset)] = this.presets.size - 1
         }
-        // Populate Samples
     }
+
+    fun get_preset(preset_index: Int, bank: Int): Preset? {
+        var i: Int? = this.preset_map[Pair(bank, preset_index)] ?: return null
+        return this.presets[i!!]
+    }
+
 
     // TODO
     //private fun modulate(modulatable: ModulatedGenerated, modulator: Modulator) { }
@@ -445,6 +458,7 @@ class SoundFont(var riff: Riff) {
 
         }
     }
+
     private fun generate_preset(preset: Preset, generators: List<Generator>) {
         var working_instrument = PresetInstrument()
         for (generator in generators) {
@@ -475,62 +489,62 @@ class SoundFont(var riff: Riff) {
     fun get_ifil(): Pair<Int, Int>? {
         var bytes = this.get_info_subchunk("ifil") ?: return null
         return Pair(
-            bytes[0].toInt() + (bytes[1].toInt() * 256),
-            bytes[2].toInt() + (bytes[3].toInt() * 256)
+            toUInt(bytes[0]) + (toUInt(bytes[1]) * 256),
+            toUInt(bytes[2]) + (toUInt(bytes[3]) * 256)
         )
     }
 
     fun get_isng(): String? {
         var bytes = this.get_info_subchunk("isng") ?: return null
-        return bytes.toString()
+        return bytes.toString(Charsets.UTF_8)
     }
 
     fun get_inam(): String? {
         var bytes = this.get_info_subchunk("INAM") ?: return null
-        return bytes.toString()
+        return bytes.toString(Charsets.UTF_8)
     }
 
     fun get_irom(): String? {
         var bytes = this.get_info_subchunk("irom") ?: return null
-        return bytes.toString()
+        return bytes.toString(Charsets.UTF_8)
     }
 
     fun get_iver(): Pair<Int, Int>? {
         var bytes = this.get_info_subchunk("iver") ?: return null
         return Pair(
-            bytes[0].toInt() + (bytes[1].toInt() * 256),
-            bytes[2].toInt() + (bytes[3].toInt() * 256)
+            toUInt(bytes[0]) + (toUInt(bytes[1]) * 256),
+            toUInt(bytes[2]) + (toUInt(bytes[3]) * 256)
         )
     }
 
     fun get_icrd(): String? {
         var bytes = this.get_info_subchunk("ICRD") ?: return null
-        return bytes.toString()
+        return bytes.toString(Charsets.UTF_8)
     }
 
     fun get_ieng(): String? {
         var bytes = this.get_info_subchunk("IENG") ?: return null
-        return bytes.toString()
+        return bytes.toString(Charsets.UTF_8)
     }
 
     fun get_iprd(): String? {
         var bytes = this.get_info_subchunk("IPRD") ?: return null
-        return bytes.toString()
+        return bytes.toString(Charsets.UTF_8)
     }
 
     fun get_icop(): String? {
         var bytes = this.get_info_subchunk("ICOP") ?: return null
-        return bytes.toString()
+        return bytes.toString(Charsets.UTF_8)
     }
 
     fun get_icmt(): String? {
         var bytes = this.get_info_subchunk("ICMT") ?: return null
-        return bytes.toString()
+        return bytes.toString(Charsets.UTF_8)
     }
 
     fun get_isft(): String? {
         var bytes = this.get_info_subchunk("ISFT") ?: return null
-        return bytes.toString()
+        return bytes.toString(Charsets.UTF_8)
     }
 
     fun get_sample_data(start_index: Int, end_index: Int): ByteArray? {
@@ -767,63 +781,73 @@ open class RiffChunk(var type: String)
 class ListChunk(type: String, var sub_chunks: List<SubChunk>): RiffChunk(type)
 data class SubChunk(var type: String, var bytes: ByteArray)
 
-class Riff(var fileDescriptor: FileDescriptor) {
+//class Riff(var fileDescriptor: AssetFileDescriptor) {
+class Riff(var assetmanager: AssetManager, var filePath: String) {
     var list_chunks: MutableList<Int> = mutableListOf()
     var sub_chunks: MutableList<List<Int>> = mutableListOf()
 
     init {
-        var input_stream = FileInputStream(this.fileDescriptor)
-        var fourcc = this.get_bytes(input_stream, 4).toString()
+        var input_stream = this.assetmanager.open(filePath)
+        var fourcc = this.get_string(input_stream, 4)
         var riff_size = this.get_little_endian(input_stream, 4)
-        var typecc = this.get_bytes(input_stream, 4).toString()
+        var typecc = this.get_string(input_stream, 4)
 
         var working_index = 12
         while (working_index < riff_size - 4) {
             this.list_chunks.add(working_index)
-            var tag = this.get_bytes(input_stream, 4).toString()
+            var tag = this.get_string(input_stream, 4)
             working_index += 4
+
             var chunk_size = this.get_little_endian(input_stream, 4)
             working_index += 4
 
-            var type = this.get_bytes(input_stream, 4)
+            var type = this.get_string(input_stream, 4)
             working_index += 4
 
             var sub_chunk_list: MutableList<Int> = mutableListOf()
             var sub_index = 0
             while (sub_index < chunk_size - 4) {
                 sub_chunk_list.add(working_index + sub_index)
-                var sub_chunk_tag = this.get_bytes(input_stream, 4).toString()
+
+                var sub_chunk_tag = this.get_string(input_stream, 4)
                 sub_index += 4
+
                 var sub_chunk_size = this.get_little_endian(input_stream, 4)
                 sub_index += 4
+
+
+                input_stream.skip(sub_chunk_size.toLong()) // Eat chunk
                 sub_index += sub_chunk_size
             }
+
+            working_index += sub_index
             this.sub_chunks.add(sub_chunk_list)
         }
+
         input_stream.close()
     }
 
     fun get_list_chunk_type(list_index: Int): String {
-        var input_stream = FileInputStream(this.fileDescriptor)
+        var input_stream = this.assetmanager.open(this.filePath)
         var offset = this.list_chunks[list_index]
         this.get_bytes(input_stream, offset + 8) // Eat to offset
-        var output = this.get_bytes(input_stream, 4).toString()
+        var output = this.get_string(input_stream, 4)
         input_stream.close()
         return output
     }
     fun get_sub_chunk_type(list_index: Int, chunk_index: Int): String {
-        var input_stream = FileInputStream(this.fileDescriptor)
+        var input_stream = this.assetmanager.open(this.filePath)
         var offset = this.sub_chunks[list_index][chunk_index]
-        this.get_bytes(input_stream, offset) // Eat to offset
-        var output = this.get_bytes(input_stream, 4).toString()
+        input_stream.skip(offset.toLong()) // Eat to offset
+        var output = this.get_string(input_stream, 4)
         input_stream.close()
         return output
     }
 
     fun get_sub_chunk_data(list_index: Int, chunk_index: Int, inner_offset: Int? = null, cropped_size: Int? = null): ByteArray {
-        var input_stream = FileInputStream(this.fileDescriptor)
+        var input_stream = this.assetmanager.open(this.filePath)
         var offset = this.sub_chunks[list_index][chunk_index]
-        this.get_bytes(input_stream, offset + 4) // Eat to offset
+        input_stream.skip((offset + 4).toLong()) // Eat to offset
 
         var size = this.get_little_endian(input_stream, 4)
 
@@ -841,21 +865,31 @@ class Riff(var fileDescriptor: FileDescriptor) {
         return output
     }
 
-    fun get_bytes(input_stream: FileInputStream, size: Int): ByteArray {
+    fun get_bytes(input_stream: InputStream, size: Int): ByteArray {
         var buffer = ByteArray(size)
         input_stream.read(buffer)
         return buffer
     }
 
-    fun get_little_endian(input_stream: FileInputStream, size: Int): Int {
+    fun get_string(input_stream: InputStream, size: Int): String {
+        return this.get_bytes(input_stream, size).toString(Charsets.UTF_8)
+    }
+
+    fun get_little_endian(input_stream: InputStream, size: Int): Int {
         var buffer = ByteArray(size)
         input_stream.read(buffer)
         var output = 0
         for (i in 0 until size) {
             output *= 256
-            output += buffer[size - 1 - i].toInt()
+            output += toUInt(buffer[size - 1 - i])
         }
         return output
     }
-
+}
+fun toUInt(byte: Byte): Int {
+    var new_int = (byte and 0x7F.toByte()).toInt()
+    if (byte and 0x80.toByte() == 0x80.toByte()) {
+        new_int += 128
+    }
+    return new_int
 }

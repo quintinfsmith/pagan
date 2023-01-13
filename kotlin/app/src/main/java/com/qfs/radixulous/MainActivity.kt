@@ -201,7 +201,7 @@ class MainActivity : AppCompatActivity() {
     private var relative_mode: Boolean = false
     private var ticking: Boolean = false // Lock to prevent multiple attempts at updating from happening at once
     lateinit var midi_controller: MIDIController
-    // lateinit var midi_playback_device: MIDIPlaybackDevice
+    lateinit var midi_playback_device: MIDIPlaybackDevice
     private var midi_input_device = MIDIInputDevice()
     private var midi_player = MIDIPlayer()
 
@@ -211,14 +211,8 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         // TODO: clean up the file -> riff -> soundfont -> midi playback device process
-        //val inputStream: InputStream = assets.open("freepats-general-midi.sf2")
-        //val size: Int = inputStream.available()
-        //val sound_font_buffer = ByteArray(size)
-        //inputStream.read(sound_font_buffer)
-        //var riffReader = RiffReader()
-        //var soundfont = SoundFont(inputStream)
-
-        //this.midi_playback_device = MIDIPlaybackDevice(this, soundfont)
+        var soundfont = SoundFont(Riff(assets, "freepats-general-midi.sf2"))
+        this.midi_playback_device = MIDIPlaybackDevice(this, soundfont)
 
 
         this.midi_controller = RadMidiController(window.decorView.rootView.context)

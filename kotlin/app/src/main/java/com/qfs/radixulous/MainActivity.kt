@@ -216,9 +216,10 @@ class MainActivity : AppCompatActivity() {
 
 
         this.midi_controller = RadMidiController(window.decorView.rootView.context)
-        //this.midi_controller.registerVirtualDevice(this.midi_playback_device)
+        this.midi_controller.registerVirtualDevice(this.midi_playback_device)
         this.midi_controller.registerVirtualDevice(this.midi_input_device)
         this.midi_controller.registerVirtualDevice(this.midi_player)
+
 
         // calling this activity's function to
         // use ActionBar utility methods
@@ -1219,7 +1220,6 @@ class MainActivity : AppCompatActivity() {
     private fun interact_btnUnset(view: View) {
         this.setContextMenu(ContextMenu.Leaf)
         var cursor = this.opus_manager.get_cursor()
-        Log.e("AAA", "${cursor.position}")
         if (cursor.get_beatkey().channel != 9 || this.opus_manager.get_tree_at_cursor().is_event()) {
             this.opus_manager.unset_at_cursor()
         } else {

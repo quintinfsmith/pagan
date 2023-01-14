@@ -2097,7 +2097,6 @@ class MIDIPlayer: VirtualMIDIDevice() {
             Log.w("apres", "Can't play without registering a midi controller first")
             return
         }
-
         var ppqn = midi.get_ppqn()
         var ms_per_tick = 60000 / (ppqn * 120)
         var previous_tick = 0
@@ -2108,6 +2107,7 @@ class MIDIPlayer: VirtualMIDIDevice() {
                 var delay = (tick - previous_tick) * ms_per_tick
                 var drift = delay_accum - (System.currentTimeMillis() - start_time)
                 delay_accum += delay
+                Log.e("AAA", "SLEEP: ${delay}, $drift")
                 if (delay + drift > 0) {
                     Thread.sleep(delay + drift)
                 }

@@ -10,6 +10,7 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import com.qfs.radixulous.apres.NoteOff
 import com.qfs.radixulous.apres.NoteOn
+import com.qfs.radixulous.apres.ProgramChange
 import com.qfs.radixulous.apres.VirtualMIDIDevice
 import kotlin.concurrent.thread
 import kotlin.math.pow
@@ -18,16 +19,14 @@ import kotlin.math.sin
 @RequiresApi(Build.VERSION_CODES.M)
 class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): VirtualMIDIDevice() {
     private var sampleRate = 44100
-    private var sampleSize = AudioTrack.getMinBufferSize(sampleRate, AudioFormat.CHANNEL_OUT_STEREO, AudioFormat.ENCODING_PCM_FLOAT)
+    private var sampleSize = AudioTrack.getMinBufferSize(sampleRate, AudioFormat.CHANNEL_OUT_STEREO, AudioFormat.ENCODING_PCM_16BIT)
 
     private val active_notes: MutableSet<Int> = mutableSetOf()
     lateinit var audioTrack: AudioTrack
-    private val instrument_sample_map = HashMap<Int, HashMap<Int, Sample>>()
     private val instrument_channel_map = HashMap<Int, Int>()
     private val audio_tracks = HashMap<Int, AudioTrack>()
 
-    init {
-    }
+    init { }
 
     //fun start_play() {
     //    thread {
@@ -54,39 +53,51 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
     //    }
     //}
 
-    override fun onNoteOn(event: NoteOn) {
-        var preset = this.soundFont.get_preset(event.note, 0) // TODO: Handle Bank
-        if (preset == null) {
-            return
+    fun get_channel_instrument(channel: Int): Int {
+        return if (this.instrument_channel_map.containsKey(channel)) {
+            this.instrument_channel_map[channel]!!
+        } else {
+            0
         }
+    }
 
-        for (instrument in preset!!.get_instruments(event.note, event.velocity)) {
-            var real_instrument = this.soundFont.instruments[instrument.instrumentIndex]
+    override fun onNoteOn(event: NoteOn) {
+        //TODO: Handle Bank
+        var preset: Preset? = this.soundFont.get_preset(0)
+
+        for (instrument in preset!!.instruments) {
+            var real_instrument = this.soundFont.get_instrument(instrument.instrumentIndex)
             for (sample in real_instrument.get_samples(event.note, event.velocity)) {
-                var real_sample = this.soundFont.samples[sample.sampleIndex]
+                Log.e("AAA", "$sample")
+                var real_sample = this.soundFont.get_sample(sample.sampleIndex)
                 var sample_data = this.soundFont.get_sample_data(real_sample.start, real_sample.end)!!
+                var minSize = AudioTrack.getMinBufferSize(sampleRate, AudioFormat.CHANNEL_OUT_STEREO, AudioFormat.ENCODING_PCM_16BIT)
+                Log.e("AAA", "${real_sample.sampleRate}, $minSize, ${sample_data.size}")
+
+
 
                 var track = AudioTrack.Builder()
                     .setAudioAttributes(AudioAttributes.Builder()
                         .setUsage(AudioAttributes.USAGE_MEDIA)
                         .build())
                     .setAudioFormat(AudioFormat.Builder()
-                        .setEncoding(AudioFormat.ENCODING_PCM_FLOAT)
+                        .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
                         .setSampleRate(real_sample.sampleRate)
                         .setChannelMask(AudioFormat.CHANNEL_OUT_STEREO)
                         .build())
-                    .setBufferSizeInBytes(sample_data.size)
+                    .setBufferSizeInBytes(minSize)
                     .build()
-
-
-                track.write(sample_data, 0, sample_data.size, AudioTrack.WRITE_BLOCKING)
+                var towrite = ByteArray(sample_data.size * 2)
+                for (i in sample_data.indices) {
+                    towrite[i * 2] = sample_data[i]
+                    towrite[1  + (i * 2)] = sample_data[i]
+                }
+                track.write(towrite, 0, towrite.size, AudioTrack.WRITE_BLOCKING)
                 track.play()
-                track.stop()
 
                 this.active_notes.add(event.note)
             }
         }
-
     }
 
     override fun onNoteOff(event: NoteOff) {
@@ -94,6 +105,13 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
             return
         }
         this.active_notes.remove(event.note)
+    }
+
+    override fun onProgramChange(event: ProgramChange) {
+        if (event.channel == 9) {
+            return
+        }
+        this.instrument_channel_map[event.channel] = event.program
     }
 }
 

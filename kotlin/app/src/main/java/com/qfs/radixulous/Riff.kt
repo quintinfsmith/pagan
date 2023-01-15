@@ -1,10 +1,6 @@
 package com.qfs.radixulous
 
-import android.content.res.AssetFileDescriptor
-import android.content.res.AssetManager
 import android.util.Log
-import java.io.FileDescriptor
-import java.io.FileInputStream
 import java.io.InputStream
 import kotlin.experimental.and
 import kotlin.math.max
@@ -27,232 +23,320 @@ class SoundFont(var riff: Riff) {
     private var isft: String? = null
 
     var pdta_indices = HashMap<String, Int>()
-    var info_indices = HashMap<String, Int>()
 
+    var samples: List<Sample> = listOf()
+    var instruments: List<Instrument> = listOf()
+    var presets: List<Preset> = listOf()
 
     init {
         // Make a hashmap for easier access
-        for (index in 0 until this.riff.sub_chunks[2].size) {
-            var sub_chunk_type = this.riff.get_sub_chunk_type(2, index)
+        for (index in 0 until riff.sub_chunks[2].size) {
+            var sub_chunk_type = riff.get_sub_chunk_type(2, index)
             this.pdta_indices[sub_chunk_type] = index
         }
-        for (index in 0 until this.riff.sub_chunks[0].size) {
-            var sub_chunk_type = this.riff.get_sub_chunk_type(2, index)
-            this.info_indices[sub_chunk_type] = index
+
+        for (index in 0 until riff.sub_chunks[0].size) {
+            when (riff.get_sub_chunk_type(2, index)) {
+                "ifil" -> {
+                    var bytes = riff.get_sub_chunk_data(2, index)
+                    this.ifil = Pair(
+                        toUInt(bytes[0]) + (toUInt(bytes[1]) * 256),
+                        toUInt(bytes[2]) + (toUInt(bytes[3]) * 256)
+                    )
+                }
+                "isng" -> {
+                    this.isng = riff.get_sub_chunk_data(2, index).toString(Charsets.UTF_8)
+                }
+                "INAM" -> {
+                    this.inam = riff.get_sub_chunk_data(2, index).toString(Charsets.UTF_8)
+                }
+                "irom" -> {
+                    this.irom = riff.get_sub_chunk_data(2, index).toString(Charsets.UTF_8)
+                }
+                "iver" -> {
+                    var bytes = riff.get_sub_chunk_data(2, index)
+                    this.iver = Pair(
+                        toUInt(bytes[0]) + (toUInt(bytes[1]) * 256),
+                        toUInt(bytes[2]) + (toUInt(bytes[3]) * 256)
+                    )
+
+                }
+                "ICRD" -> {
+                    this.icrd = riff.get_sub_chunk_data(2, index).toString(Charsets.UTF_8)
+                }
+                "IENG" -> {
+                    this.ieng = riff.get_sub_chunk_data(2, index).toString(Charsets.UTF_8)
+                }
+                "IPRD" -> {
+                    this.iprd = riff.get_sub_chunk_data(2, index).toString(Charsets.UTF_8)
+                }
+                "ICOP" -> {
+                    this.icop = riff.get_sub_chunk_data(2, index).toString(Charsets.UTF_8)
+                }
+                "ICMT" -> {
+                    this.icmt = riff.get_sub_chunk_data(2, index).toString(Charsets.UTF_8)
+                }
+                "ISFT" -> {
+                    this.isft = riff.get_sub_chunk_data(2, index).toString(Charsets.UTF_8)
+                }
+                else -> {}
+            }
         }
+
+        this.samples = this.init_samples(riff)
+        this.instruments = this.init_instruments(riff)
+        this.presets = this.init_presets(riff)
     }
 
-    fun get_sample(index: Int): Sample {
+    private fun init_samples(riff: Riff): List<Sample> {
+        var output: MutableList<Sample> = mutableListOf()
         var shdr_index = this.pdta_indices["shdr"]!!
-        var shdr_bytes = this.riff.get_sub_chunk_data(2, shdr_index, (index * 46), 46)
-
-        var sample_name = ""
-        for (j in 0 until 20) {
-            val b = toUInt(shdr_bytes[j])
-            if (b == 0) {
-                break
+        var shdr_bytes = riff.get_sub_chunk_data(2, shdr_index)
+        for (index in 0 until shdr_bytes.size / 46) {
+            var offset = index * 46
+            var sample_name = ""
+            for (j in 0 until 20) {
+                val b = toUInt(shdr_bytes[offset + j])
+                if (b == 0) {
+                    break
+                }
+                sample_name = "$sample_name${b.toChar()}"
             }
-            sample_name = "$sample_name${b.toChar()}"
+
+            output.add(
+                Sample(
+                    sample_name,
+                    toUInt(shdr_bytes[offset + 20])
+                            + (toUInt(shdr_bytes[offset + 21]) * 256)
+                            + (toUInt(shdr_bytes[offset + 22]) * 65536)
+                            + (toUInt(shdr_bytes[offset + 23]) * 16777216),
+                    toUInt(shdr_bytes[offset + 24])
+                            + (toUInt(shdr_bytes[offset + 25]) * 256)
+                            + (toUInt(shdr_bytes[offset + 26]) * 65536)
+                            + (toUInt(shdr_bytes[offset + 27]) * 16777216),
+                    toUInt(shdr_bytes[offset + 28])
+                            + (toUInt(shdr_bytes[offset + 29]) * 256)
+                            + (toUInt(shdr_bytes[offset + 30]) * 65536)
+                            + (toUInt(shdr_bytes[offset + 31]) * 16777216),
+                    toUInt(shdr_bytes[offset + 32])
+                            + (toUInt(shdr_bytes[offset + 33]) * 256)
+                            + (toUInt(shdr_bytes[offset + 34]) * 65536)
+                            + (toUInt(shdr_bytes[offset + 35]) * 16777216),
+                    toUInt(shdr_bytes[offset + 36])
+                            + (toUInt(shdr_bytes[offset + 37]) * 256)
+                            + (toUInt(shdr_bytes[offset + 38]) * 65536)
+                            + (toUInt(shdr_bytes[offset + 39]) * 16777216),
+                    toUInt(shdr_bytes[offset + 40]),
+                    toUInt(shdr_bytes[offset + 41]),
+                    toUInt(shdr_bytes[offset + 42]) + (toUInt(shdr_bytes[offset + 43]) * 256),
+                    toUInt(shdr_bytes[offset + 44]) + (toUInt(shdr_bytes[offset + 45]) * 256)
+                )
+            )
         }
-
-
-        return Sample(
-            sample_name,
-            toUInt(shdr_bytes[20])
-                    + (toUInt(shdr_bytes[21]) * 256)
-                    + (toUInt(shdr_bytes[22]) * 65536)
-                    + (toUInt(shdr_bytes[23]) * 16777216),
-            toUInt(shdr_bytes[24])
-                    + (toUInt(shdr_bytes[25]) * 256)
-                    + (toUInt(shdr_bytes[26]) * 65536)
-                    + (toUInt(shdr_bytes[27]) * 16777216),
-            toUInt(shdr_bytes[28])
-                    + (toUInt(shdr_bytes[29]) * 256)
-                    + (toUInt(shdr_bytes[30]) * 65536)
-                    + (toUInt(shdr_bytes[31]) * 16777216),
-            toUInt(shdr_bytes[32])
-                    + (toUInt(shdr_bytes[33]) * 256)
-                    + (toUInt(shdr_bytes[34]) * 65536)
-                    + (toUInt(shdr_bytes[35]) * 16777216),
-            toUInt(shdr_bytes[36])
-                    + (toUInt(shdr_bytes[37]) * 256)
-                    + (toUInt(shdr_bytes[38]) * 65536)
-                    + (toUInt(shdr_bytes[39]) * 16777216),
-            toUInt(shdr_bytes[40]),
-            toUInt(shdr_bytes[41]),
-            toUInt(shdr_bytes[42]) + (toUInt(shdr_bytes[43]) * 256),
-            toUInt(shdr_bytes[44]) + (toUInt(shdr_bytes[45]) * 256)
-        )
+        return output
     }
 
-    fun get_preset(index: Int): Preset {
+    private fun init_presets(riff: Riff): List<Preset> {
+        var output: MutableList<Preset> = mutableListOf()
         val phdr_index = this.pdta_indices["phdr"]!!
-        var phdr_bytes = this.riff.get_sub_chunk_data(2, phdr_index, index * 38, 38)
-        var phdr_name = ""
-        for (j in 0 until 20) {
-            val b = toUInt(phdr_bytes[j])
-            if (b == 0) {
-                break
-            }
-            phdr_name = "$phdr_name${b.toChar()}"
-        }
+        val pbag_index = this.pdta_indices["pbag"]!!
 
-        val wPresetBagIndex = toUInt(phdr_bytes[24]) + (toUInt(phdr_bytes[25]) * 256)
+        var phdr_bytes = riff.get_sub_chunk_data(2, phdr_index)
 
         val pbag_entry_size = 4
-        val pbag_index = this.pdta_indices["pbag"]!!
-        var ibag_bytes = this.riff.get_sub_chunk_data(
-            2,
-            pbag_index,
-            (wPresetBagIndex * pbag_entry_size),
-            pbag_entry_size * 2
-        )
+        for (index in 0 until (phdr_bytes.size / 38) - 1) {
+            var offset = index * 38
+            var phdr_name = ""
+            for (j in 0 until 20) {
+                val b = toUInt(phdr_bytes[j + offset])
+                if (b == 0) {
+                    break
+                }
+                phdr_name = "$phdr_name${b.toChar()}"
+            }
+            val wPresetBagIndex = toUInt(phdr_bytes[offset + 24]) + (toUInt(phdr_bytes[offset + 25]) * 256)
 
-        var pbag = Pair(
-            toUInt(ibag_bytes[0]) + (toUInt(ibag_bytes[1]) * 256),
-            toUInt(ibag_bytes[2]) + (toUInt(ibag_bytes[3]) * 256)
-        )
+            var pbag_bytes = riff.get_sub_chunk_data(
+                2,
+                pbag_index,
+                (wPresetBagIndex * pbag_entry_size),
+                pbag_entry_size * 2
+            )
 
-        var next_pbag = Pair(
-            toUInt(ibag_bytes[4]) + (toUInt(ibag_bytes[5]) * 256),
-            toUInt(ibag_bytes[6]) + (toUInt(ibag_bytes[7]) * 256)
-        )
+            var pbag = Pair(
+                toUInt(pbag_bytes[0]) + (toUInt(pbag_bytes[1]) * 256),
+                toUInt(pbag_bytes[2]) + (toUInt(pbag_bytes[3]) * 256)
+            )
 
-        val preset = Preset(phdr_name,
-            toUInt(phdr_bytes[20]) + (toUInt(phdr_bytes[21]) * 256),
-            toUInt(phdr_bytes[22]) + (toUInt(phdr_bytes[22]) * 256)
-        )
-        val generators_to_use: List<Generator> = this.get_preset_generators(
-            pbag.first,
-            next_pbag.first
-        )
+            var next_pbag = Pair(
+                toUInt(pbag_bytes[4]) + (toUInt(pbag_bytes[5]) * 256),
+                toUInt(pbag_bytes[6]) + (toUInt(pbag_bytes[7]) * 256)
+            )
 
-        this.generate_preset(preset, generators_to_use)
+            val preset = Preset(phdr_name,
+                toUInt(phdr_bytes[offset + 20]) + (toUInt(phdr_bytes[offset + 21]) * 256),
+                toUInt(phdr_bytes[offset + 22]) + (toUInt(phdr_bytes[offset + 22]) * 256)
+            )
+            val generators_to_use: List<Generator> = this.get_preset_generators(
+                riff,
+                pbag.first,
+                next_pbag.first
+            )
 
-        return preset
+            this.generate_preset(preset, generators_to_use)
+            output.add(preset)
+        }
+
+        return output
+    }
+
+    private fun init_instruments(riff: Riff): List<Instrument> {
+        var output: MutableList<Instrument> = mutableListOf()
+        val inst_index = this.pdta_indices["inst"]!!
+        val ibag_index = this.pdta_indices["ibag"]!!
+        val ibag_entry_size = 4
+        var inst_bytes = riff.get_sub_chunk_data(2, inst_index)
+        for (index in 0 until (inst_bytes.size / 22) - 1) {
+            var offset = index * 22
+            var inst_name = ""
+            for (j in 0 until 20) {
+                val b = toUInt(inst_bytes[offset + j])
+                if (b == 0) {
+                    break
+                }
+                inst_name = "$inst_name${b.toChar()}"
+            }
+
+            var ibag_bytes = riff.get_sub_chunk_data(
+                2,
+                ibag_index,
+                ibag_entry_size * (toUInt(inst_bytes[offset + 20]) + (toUInt(inst_bytes[offset + 21]) * 256)),
+                ibag_entry_size
+            )
+
+            var ibag = Pair(
+                toUInt(ibag_bytes[0]) + (toUInt(ibag_bytes[1]) * 256),
+                toUInt(ibag_bytes[2]) + (toUInt(ibag_bytes[3]) * 256)
+            )
+
+            var next_ibag_bytes = riff.get_sub_chunk_data(
+                2,
+                ibag_index,
+                ibag_entry_size * (toUInt(inst_bytes[22 + offset + 20]) + (toUInt(inst_bytes[22 + offset + 21]) * 256)),
+                ibag_entry_size
+            )
+
+            var next_ibag = Pair(
+                toUInt(next_ibag_bytes[0]) + (toUInt(next_ibag_bytes[1]) * 256),
+                toUInt(next_ibag_bytes[2]) + (toUInt(next_ibag_bytes[3]) * 256)
+            )
+
+            val instrument = Instrument(inst_name)
+            val generators_to_use: List<Generator> = this.get_instrument_generators(
+                riff,
+                ibag.first,
+                next_ibag.first
+            )
+
+            this.generate_instrument(instrument, generators_to_use)
+
+            output.add(instrument)
+        }
+        return output
+    }
+
+    private fun get_instrument_modulators(riff: Riff, from_index: Int, to_index: Int): List<Modulator> {
+        var imod_index = this.pdta_indices["imod"]!!
+        var output: MutableList<Modulator> = mutableListOf()
+        var bytes = riff.get_sub_chunk_data(2, imod_index, from_index * 10, (to_index - from_index) * 10)
+
+        for (i in 0 until bytes.size / 10) {
+            val offset = i * 10
+            output.add(
+                Modulator(
+                    toUInt(bytes[offset + 0]) + (toUInt(bytes[offset + 1]) * 256),
+                    toUInt(bytes[offset + 2]) + (toUInt(bytes[offset + 3]) * 256),
+                    toUInt(bytes[offset + 4]) + (toUInt(bytes[offset + 5]) * 256),
+                    toUInt(bytes[offset + 6]) + (toUInt(bytes[offset + 7]) * 256),
+                    toUInt(bytes[offset + 8]) + (toUInt(bytes[offset + 9]) * 256)
+                )
+            )
+        }
+
+        return output
+    }
+
+    private fun get_preset_modulators(riff: Riff, from_index: Int, to_index: Int): List<Modulator> {
+        var pmod_index = this.pdta_indices["pmod"]!!
+        var output: MutableList<Modulator> = mutableListOf()
+        var bytes = riff.get_sub_chunk_data(2, pmod_index, from_index * 10, (to_index - from_index) * 10)
+
+        for (i in 0 until bytes.size / 10) {
+            val offset = i * 10
+            output.add(
+                Modulator(
+                    toUInt(bytes[offset + 0]) + (toUInt(bytes[offset + 1]) * 256),
+                    toUInt(bytes[offset + 2]) + (toUInt(bytes[offset + 3]) * 256),
+                    toUInt(bytes[offset + 4]) + (toUInt(bytes[offset + 5]) * 256),
+                    toUInt(bytes[offset + 6]) + (toUInt(bytes[offset + 7]) * 256),
+                    toUInt(bytes[offset + 8]) + (toUInt(bytes[offset + 9]) * 256)
+                )
+            )
+        }
+
+        return output
+    }
+
+    private fun get_preset_generators(riff: Riff, from_index: Int, to_index: Int): List<Generator> {
+
+        var pgen_index = this.pdta_indices["pgen"]!!
+        var output: MutableList<Generator> = mutableListOf()
+        var bytes = riff.get_sub_chunk_data(2, pgen_index, from_index * 10, (to_index - from_index) * 10)
+
+        for (i in 0 until bytes.size / 10) {
+            val offset = i * 10
+            output.add(
+                Generator(
+                    toUInt(bytes[offset + 0]) + (toUInt(bytes[offset + 1]) * 256),
+                    toUInt(bytes[offset + 2]),
+                    toUInt(bytes[offset + 3])
+                )
+            )
+        }
+
+        return output
+    }
+
+    private fun get_instrument_generators(riff: Riff, from_index: Int, to_index: Int): List<Generator> {
+        var igen_index = this.pdta_indices["igen"]!!
+        var output: MutableList<Generator> = mutableListOf()
+        var bytes = riff.get_sub_chunk_data(2, igen_index, from_index * 10, (to_index - from_index) * 10)
+
+        for (i in 0 until bytes.size / 10) {
+            val offset = i * 10
+            output.add(
+                Generator(
+                    toUInt(bytes[offset + 0]) + (toUInt(bytes[offset + 1]) * 256),
+                    toUInt(bytes[offset + 2]),
+                    toUInt(bytes[offset + 3])
+                )
+            )
+        }
+
+        return output
     }
 
     fun get_instrument(index: Int): Instrument {
-        val inst_index = this.pdta_indices["inst"]!!
-        var name_bytes = this.riff.get_sub_chunk_data(2, inst_index, 0, 20)
-        var inst_name = ""
-        for (j in 0 until 20) {
-            val b = toUInt(name_bytes[j])
-            if (b == 0) {
-                break
-            }
-            inst_name = "$inst_name${b.toChar()}"
-        }
-
-        val ibag_entry_size = 4
-        val ibag_index = this.pdta_indices["ibag"]!!
-        var bytes = this.riff.get_sub_chunk_data(
-            2,
-            ibag_index,
-            (index * ibag_entry_size),
-            ibag_entry_size * 2
-        )
-
-        var ibag = Pair(
-            toUInt(bytes[0]) + (toUInt(bytes[1]) * 256),
-            toUInt(bytes[2]) + (toUInt(bytes[3]) * 256)
-        )
-
-        var next_ibag = Pair(
-            toUInt(bytes[4]) + (toUInt(bytes[5]) * 256),
-            toUInt(bytes[6]) + (toUInt(bytes[7]) * 256)
-        )
-
-        val instrument = Instrument(inst_name)
-        val generators_to_use: List<Generator> = this.get_instrument_generators(
-            ibag.first,
-            next_ibag.first
-        )
-
-        this.generate_instrument(instrument, generators_to_use)
-
-        return instrument
+        return this.instruments[index]
+    }
+    fun get_preset(index: Int): Preset {
+        return this.presets[index]
+    }
+    fun get_sample(index: Int): Sample {
+        return samples[index]
     }
 
-    fun get_instrument_modulators(from_index: Int, to_index: Int): List<Modulator> {
-        var imod_index = this.pdta_indices["imod"]!!
-        var output: MutableList<Modulator> = mutableListOf()
-        var bytes = this.riff.get_sub_chunk_data(2, imod_index, from_index * 10, (to_index - from_index) * 10)
 
-        for (i in 0 until bytes.size / 10) {
-            val offset = i * 10
-            output.add(
-                Modulator(
-                    toUInt(bytes[offset + 0]) + (toUInt(bytes[offset + 1]) * 256),
-                    toUInt(bytes[offset + 2]) + (toUInt(bytes[offset + 3]) * 256),
-                    toUInt(bytes[offset + 4]) + (toUInt(bytes[offset + 5]) * 256),
-                    toUInt(bytes[offset + 6]) + (toUInt(bytes[offset + 7]) * 256),
-                    toUInt(bytes[offset + 8]) + (toUInt(bytes[offset + 9]) * 256)
-                )
-            )
-        }
-
-        return output
-    }
-
-    fun get_instrument_generators(from_index: Int, to_index: Int): List<Generator> {
-        var igen_index = this.pdta_indices["igen"]!!
-        var output: MutableList<Generator> = mutableListOf()
-        var bytes = this.riff.get_sub_chunk_data(2, igen_index, from_index * 10, (to_index - from_index) * 10)
-
-        for (i in 0 until bytes.size / 10) {
-            val offset = i * 10
-            output.add(
-                Generator(
-                    toUInt(bytes[offset + 0]) + (toUInt(bytes[offset + 1]) * 256),
-                    toUInt(bytes[offset + 2]),
-                    toUInt(bytes[offset + 3])
-                )
-            )
-        }
-
-        return output
-    }
-
-    fun get_preset_modulators(from_index: Int, to_index: Int): List<Modulator> {
-        var pmod_index = this.pdta_indices["pmod"]!!
-        var output: MutableList<Modulator> = mutableListOf()
-        var bytes = this.riff.get_sub_chunk_data(2, pmod_index, from_index * 10, (to_index - from_index) * 10)
-
-        for (i in 0 until bytes.size / 10) {
-            val offset = i * 10
-            output.add(
-                Modulator(
-                    toUInt(bytes[offset + 0]) + (toUInt(bytes[offset + 1]) * 256),
-                    toUInt(bytes[offset + 2]) + (toUInt(bytes[offset + 3]) * 256),
-                    toUInt(bytes[offset + 4]) + (toUInt(bytes[offset + 5]) * 256),
-                    toUInt(bytes[offset + 6]) + (toUInt(bytes[offset + 7]) * 256),
-                    toUInt(bytes[offset + 8]) + (toUInt(bytes[offset + 9]) * 256)
-                )
-            )
-        }
-
-        return output
-    }
-
-    fun get_preset_generators(from_index: Int, to_index: Int): List<Generator> {
-        var pgen_index = this.pdta_indices["pgen"]!!
-        var output: MutableList<Generator> = mutableListOf()
-        var bytes = this.riff.get_sub_chunk_data(2, pgen_index, from_index * 10, (to_index - from_index) * 10)
-
-        for (i in 0 until bytes.size / 10) {
-            val offset = i * 10
-            output.add(
-                Generator(
-                    toUInt(bytes[offset + 0]) + (toUInt(bytes[offset + 1]) * 256),
-                    toUInt(bytes[offset + 2]),
-                    toUInt(bytes[offset + 3])
-                )
-            )
-        }
-
-        return output
-    }
 
     // TODO
     //private fun modulate(modulatable: ModulatedGenerated, modulator: Modulator) { }
@@ -384,10 +468,13 @@ class SoundFont(var riff: Riff) {
 
     private fun generate_instrument(instrument: Instrument, generators: List<Generator>) {
         var working_sample = InstrumentSample()
+        instrument.add_sample(working_sample)
         for (generator in generators) {
             when (generator.sfGenOper) {
                 0x35 -> {
                     working_sample.sampleIndex = generator.asInt()
+                    working_sample = InstrumentSample()
+                    instrument.add_sample(working_sample)
                 }
                 0x00 -> {
                     working_sample.sampleStartOffset = if (working_sample.sampleStartOffset == null) {
@@ -419,9 +506,6 @@ class SoundFont(var riff: Riff) {
                         working_sample.sampleEndOffset!! + (generator.asInt() * 32768)
                     }
                 }
-                0x2A -> { } // Reserved
-                0x2B -> { } // Key Range
-                0x2C -> { } // VelRange
                 0x2D -> {
                     working_sample.loopStartOffset = if (working_sample.loopStartOffset == null) {
                         generator.asInt() * 32768
@@ -456,7 +540,6 @@ class SoundFont(var riff: Riff) {
                 }
             }
         }
-        instrument.add_sample(working_sample)
     }
 
     private fun generate_preset(preset: Preset, generators: List<Generator>) {
@@ -474,75 +557,6 @@ class SoundFont(var riff: Riff) {
         preset.add_instrument(working_instrument)
     }
 
-    fun get_info_subchunk(tag: String): ByteArray? {
-        if (!this.info_indices.containsKey(tag)) {
-            return null
-        }
-
-        var tag_index = this.info_indices[tag]!!
-        return this.riff.get_sub_chunk_data(0, tag_index)
-    }
-
-    fun get_ifil(): Pair<Int, Int>? {
-        var bytes = this.get_info_subchunk("ifil") ?: return null
-        return Pair(
-            toUInt(bytes[0]) + (toUInt(bytes[1]) * 256),
-            toUInt(bytes[2]) + (toUInt(bytes[3]) * 256)
-        )
-    }
-
-    fun get_isng(): String? {
-        var bytes = this.get_info_subchunk("isng") ?: return null
-        return bytes.toString(Charsets.UTF_8)
-    }
-
-    fun get_inam(): String? {
-        var bytes = this.get_info_subchunk("INAM") ?: return null
-        return bytes.toString(Charsets.UTF_8)
-    }
-
-    fun get_irom(): String? {
-        var bytes = this.get_info_subchunk("irom") ?: return null
-        return bytes.toString(Charsets.UTF_8)
-    }
-
-    fun get_iver(): Pair<Int, Int>? {
-        var bytes = this.get_info_subchunk("iver") ?: return null
-        return Pair(
-            toUInt(bytes[0]) + (toUInt(bytes[1]) * 256),
-            toUInt(bytes[2]) + (toUInt(bytes[3]) * 256)
-        )
-    }
-
-    fun get_icrd(): String? {
-        var bytes = this.get_info_subchunk("ICRD") ?: return null
-        return bytes.toString(Charsets.UTF_8)
-    }
-
-    fun get_ieng(): String? {
-        var bytes = this.get_info_subchunk("IENG") ?: return null
-        return bytes.toString(Charsets.UTF_8)
-    }
-
-    fun get_iprd(): String? {
-        var bytes = this.get_info_subchunk("IPRD") ?: return null
-        return bytes.toString(Charsets.UTF_8)
-    }
-
-    fun get_icop(): String? {
-        var bytes = this.get_info_subchunk("ICOP") ?: return null
-        return bytes.toString(Charsets.UTF_8)
-    }
-
-    fun get_icmt(): String? {
-        var bytes = this.get_info_subchunk("ICMT") ?: return null
-        return bytes.toString(Charsets.UTF_8)
-    }
-
-    fun get_isft(): String? {
-        var bytes = this.get_info_subchunk("ISFT") ?: return null
-        return bytes.toString(Charsets.UTF_8)
-    }
 
     fun get_sample_data(start_index: Int, end_index: Int): ByteArray? {
         var smpl = this.riff.get_sub_chunk_data(1, 0, (start_index * 2), 2 * (end_index - start_index))
@@ -569,8 +583,10 @@ class SoundFont(var riff: Riff) {
             // TODO: May need to handle smpl.size % 2 == 1
             output = ByteArray(smpl.size)
             for (i in 0 until (smpl.size / 2)) {
-                output[i * 2] = smpl[(i * 2) + 1]
-                output[(i * 2) + 1] = smpl[i * 2]
+                //output[i * 2] = smpl[(i * 2) + 1]
+                //output[(i * 2) + 1] = smpl[i * 2]
+                output[i * 2] = smpl[(i * 2)]
+                output[(i * 2) + 1] = smpl[(i * 2) + 1]
             }
         }
 
@@ -682,55 +698,21 @@ class PresetInstrument: Generated() {
 
 class Instrument(var name: String) {
     var samples: MutableList<InstrumentSample> = mutableListOf()
-    var key_sample_map = HashMap<Int, MutableList<Int>>()
-    var vel_sample_map = HashMap<Int, MutableList<Int>>()
     fun add_sample(isample: InstrumentSample) {
         this.samples.add(isample)
-        val key_range = if (isample.key_range != null) {
-            isample.key_range!!
-        } else {
-            Pair(0, 127)
-        }
-        for (i in key_range.first .. key_range.second) { // INCLUSIVE
-            if (!this.key_sample_map.containsKey(i)) {
-                this.key_sample_map[i] = mutableListOf()
-            }
-            this.key_sample_map[i]!!.add(this.samples.size - 1)
-        }
-
-
-        val velocity_range = if (isample.velocity_range != null) {
-            isample.velocity_range!!
-        } else {
-            Pair(0, 127)
-        }
-        for (i in velocity_range.first .. velocity_range.second) { // INCLUSIVE
-            if (!this.vel_sample_map.containsKey(i)) {
-                this.vel_sample_map[i] = mutableListOf()
-            }
-            this.vel_sample_map[i]!!.add(this.samples.size - 1)
-        }
     }
 
-    fun get_samples(key: Int, velocity: Int): List<InstrumentSample> {
+    fun get_sample(key: Int, velocity: Int): InstrumentSample? {
         var output: MutableList<InstrumentSample> = mutableListOf()
-        var key_indices = if (this.key_sample_map.containsKey(key)) {
-            this.key_sample_map[key]!!.toSet()
-        } else {
-            setOf()
+        Log.e("AAA", "$key, $velocity")
+        this.samples.forEachIndexed { i, sample ->
+            Log.e("AAA", "$i -> ${sample.sampleIndex}, ${sample.key_range}, ${sample.velocity_range}")
+            if ( (sample.key_range == null || (sample.key_range!!.first <= key && sample.key_range!!.second >= key)) &&
+                (sample.velocity_range == null || (sample.velocity_range!!.first <= velocity && sample.velocity_range!!.second >= velocity))) {
+                return sample
+            }
         }
-        var vel_indices = if (this.vel_sample_map.containsKey(velocity)) {
-            this.vel_sample_map[velocity]!!.toSet()
-        } else {
-            setOf()
-        }
-
-        var active_indices = key_indices.intersect(vel_indices)
-        for (index in active_indices) {
-            output.add(this.samples[index])
-        }
-
-        return output
+        return null
     }
 }
 
@@ -748,31 +730,30 @@ class InstrumentSample: Generated() {
 }
 
 //------------ RIFF  --------------//
-open class RiffChunk(var type: String)
-class ListChunk(type: String, var sub_chunks: List<SubChunk>): RiffChunk(type)
-data class SubChunk(var type: String, var bytes: ByteArray)
-
-//class Riff(var fileDescriptor: AssetFileDescriptor) {
-class Riff(var assetmanager: AssetManager, var filePath: String) {
+class Riff(input_stream: InputStream) {
     var list_chunks: MutableList<Int> = mutableListOf()
     var sub_chunks: MutableList<List<Int>> = mutableListOf()
+    var bytes: ByteArray
 
     init {
-        var input_stream = this.assetmanager.open(filePath)
-        var fourcc = this.get_string(input_stream, 4)
-        var riff_size = this.get_little_endian(input_stream, 4)
-        var typecc = this.get_string(input_stream, 4)
+        this.bytes = ByteArray(input_stream.available())
+        input_stream.read(this.bytes)
+        input_stream.close()
+
+        var fourcc = this.get_string(0, 4)
+        var riff_size = this.get_little_endian(4, 4)
+        var typecc = this.get_string(8, 4)
 
         var working_index = 12
         while (working_index < riff_size - 4) {
             this.list_chunks.add(working_index)
-            var tag = this.get_string(input_stream, 4)
+            var tag = this.get_string(working_index, 4)
             working_index += 4
 
-            var chunk_size = this.get_little_endian(input_stream, 4)
+            var chunk_size = this.get_little_endian(working_index, 4)
             working_index += 4
 
-            var type = this.get_string(input_stream, 4)
+            var type = this.get_string(working_index, 4)
             working_index += 4
 
             var sub_chunk_list: MutableList<Int> = mutableListOf()
@@ -780,100 +761,76 @@ class Riff(var assetmanager: AssetManager, var filePath: String) {
             while (sub_index < chunk_size - 4) {
                 sub_chunk_list.add(working_index + sub_index)
 
-                var sub_chunk_tag = this.get_string(input_stream, 4)
+                var sub_chunk_tag = this.get_string(working_index + sub_index, 4)
                 sub_index += 4
 
-                var sub_chunk_size = this.get_little_endian(input_stream, 4)
+                var sub_chunk_size = this.get_little_endian(working_index + sub_index, 4)
                 sub_index += 4
 
-
-                input_stream.skip(sub_chunk_size.toLong()) // Eat chunk
                 sub_index += sub_chunk_size
             }
 
             working_index += sub_index
             this.sub_chunks.add(sub_chunk_list)
         }
-
-        input_stream.close()
     }
 
     fun get_list_chunk_type(list_index: Int): String {
-        var input_stream = this.assetmanager.open(this.filePath)
         var offset = this.list_chunks[list_index]
-        this.get_bytes(input_stream, offset + 8) // Eat to offset
-        var output = this.get_string(input_stream, 4)
-        input_stream.close()
-        return output
+        return this.get_string(offset + 8, 4)
     }
 
     fun get_sub_chunk_type(list_index: Int, chunk_index: Int): String {
-        var input_stream = this.assetmanager.open(this.filePath)
+        var start_time = System.currentTimeMillis()
         var offset = this.sub_chunks[list_index][chunk_index]
-        input_stream.skip(offset.toLong()) // Eat to offset
-        var output = this.get_string(input_stream, 4)
-        input_stream.close()
-        return output
+        return this.get_string(offset, 4)
     }
 
     fun get_sub_chunk_size(list_index: Int, chunk_index: Int): Int {
-        var input_stream = this.assetmanager.open(this.filePath)
         var offset = this.sub_chunks[list_index][chunk_index]
-        input_stream.skip(offset.toLong() + 4) // Eat to offset
-        var output = this.get_little_endian(input_stream, 4)
-        input_stream.close()
-        return output
+        return this.get_little_endian(offset + 4, 4)
     }
 
     fun get_sub_chunk_data(list_index: Int, chunk_index: Int, inner_offset: Int? = null, cropped_size: Int? = null): ByteArray {
-        var input_stream = this.assetmanager.open(this.filePath)
-
         // First get the offset of the sub chunk
         var offset = this.sub_chunks[list_index][chunk_index]
-        // skip to offset
-        input_stream.skip((offset + 4).toLong())
-        // get the *actual* size of the sub chunk
-        var size = this.get_little_endian(input_stream, 4)
 
+        // get the *actual* size of the sub chunk
+        var size = this.get_little_endian(offset + 4, 4)
+        offset += 8
 
         if (inner_offset != null) {
-            input_stream.skip(inner_offset.toLong())
             size -= inner_offset
+            offset += inner_offset
         }
 
         if (cropped_size != null && cropped_size <= size) {
             size = cropped_size
         }
-
-        var output = this.get_bytes(input_stream, size)
-        input_stream.close()
-        return output
+        return this.get_bytes(offset, size)
     }
 
-    fun get_bytes(input_stream: InputStream, size: Int): ByteArray {
-        var buffer = ByteArray(size)
-        input_stream.read(buffer)
-        return buffer
+    fun get_bytes(offset: Int, size: Int): ByteArray {
+        return this.bytes.sliceArray(offset until offset + size)
     }
 
-    fun get_string(input_stream: InputStream, size: Int): String {
-        return this.get_bytes(input_stream, size).toString(Charsets.UTF_8)
+    fun get_string(offset: Int, size: Int): String {
+        return this.get_bytes(offset, size).toString(Charsets.UTF_8)
     }
 
-    fun get_little_endian(input_stream: InputStream, size: Int): Int {
-        var buffer = ByteArray(size)
-        input_stream.read(buffer)
+    fun get_little_endian(offset: Int, size: Int): Int {
         var output = 0
         for (i in 0 until size) {
             output *= 256
-            output += toUInt(buffer[size - 1 - i])
+            output += toUInt(this.bytes[offset + (size - 1 - i)])
         }
         return output
     }
 }
+
 fun toUInt(byte: Byte): Int {
     var new_int = (byte and 0x7F.toByte()).toInt()
-    if (byte and 0x80.toByte() == 0x80.toByte()) {
+    if (byte.toInt() < 0) {
         new_int += 128
     }
     return new_int

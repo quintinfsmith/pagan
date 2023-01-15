@@ -211,7 +211,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         // TODO: clean up the file -> riff -> soundfont -> midi playback device process
-        var soundfont = SoundFont(Riff(assets, "freepats-general-midi.sf2"))
+        var soundfont = SoundFont(Riff(assets.open("freepats-general-midi.sf2")))
         this.midi_playback_device = MIDIPlaybackDevice(this, soundfont)
 
 

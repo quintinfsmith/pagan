@@ -154,36 +154,43 @@ class SoundFont(var riff: Riff) {
                 }
                 phdr_name = "$phdr_name${b.toChar()}"
             }
-            val wPresetBagIndex = toUInt(phdr_bytes[offset + 24]) + (toUInt(phdr_bytes[offset + 25]) * 256)
 
-            var pbag_bytes = riff.get_sub_chunk_data(
-                2,
-                pbag_index,
-                (wPresetBagIndex * pbag_entry_size),
-                pbag_entry_size * 2
-            )
-
-            var pbag = Pair(
-                toUInt(pbag_bytes[0]) + (toUInt(pbag_bytes[1]) * 256),
-                toUInt(pbag_bytes[2]) + (toUInt(pbag_bytes[3]) * 256)
-            )
-
-            var next_pbag = Pair(
-                toUInt(pbag_bytes[4]) + (toUInt(pbag_bytes[5]) * 256),
-                toUInt(pbag_bytes[6]) + (toUInt(pbag_bytes[7]) * 256)
-            )
-
-            val preset = Preset(phdr_name,
+            val preset = Preset(
+                phdr_name,
                 toUInt(phdr_bytes[offset + 20]) + (toUInt(phdr_bytes[offset + 21]) * 256),
                 toUInt(phdr_bytes[offset + 22]) + (toUInt(phdr_bytes[offset + 22]) * 256)
             )
-            val generators_to_use: List<Generator> = this.get_preset_generators(
-                riff,
-                pbag.first,
-                next_pbag.first
-            )
 
-            this.generate_preset(preset, generators_to_use)
+            val wPresetBagIndex = toUInt(phdr_bytes[offset + 24]) + (toUInt(phdr_bytes[offset + 25]) * 256)
+            val next_wPresetBagIndex = toUInt(phdr_bytes[38 + offset + 24]) + (toUInt(phdr_bytes[38 + offset + 25]) * 256)
+            val zone_count = next_wPresetBagIndex - wPresetBagIndex
+            for (j in 0 until zone_count) {
+
+                var pbag_bytes = riff.get_sub_chunk_data(
+                    2,
+                    pbag_index,
+                    (j + wPresetBagIndex) * pbag_entry_size,
+                    pbag_entry_size * 2
+                )
+
+                var pbag = Pair(
+                    toUInt(pbag_bytes[0]) + (toUInt(pbag_bytes[1]) * 256),
+                    toUInt(pbag_bytes[2]) + (toUInt(pbag_bytes[3]) * 256)
+                )
+
+                var next_pbag = Pair(
+                    toUInt(pbag_bytes[4]) + (toUInt(pbag_bytes[5]) * 256),
+                    toUInt(pbag_bytes[6]) + (toUInt(pbag_bytes[7]) * 256)
+                )
+
+                val generators_to_use: List<Generator> = this.get_preset_generators(
+                    riff,
+                    pbag.first,
+                    next_pbag.first
+                )
+
+                this.generate_preset(preset, generators_to_use)
+            }
             output.add(preset)
         }
 

@@ -193,7 +193,7 @@ class SoundFont(var riff: Riff) {
     private fun init_instruments(riff: Riff): List<Instrument> {
         var output: MutableList<Instrument> = mutableListOf()
         val inst_index = this.pdta_indices["inst"]!!
-        val ibag_index = this.pdta_indices["ibag"]!!
+        val ibag_bytes_index = this.pdta_indices["ibag"]!!
         val ibag_entry_size = 4
         var inst_bytes = riff.get_sub_chunk_data(2, inst_index)
         for (index in 0 until (inst_bytes.size / 22) - 1) {
@@ -207,38 +207,42 @@ class SoundFont(var riff: Riff) {
                 inst_name = "$inst_name${b.toChar()}"
             }
 
-            var ibag_bytes = riff.get_sub_chunk_data(
-                2,
-                ibag_index,
-                ibag_entry_size * (toUInt(inst_bytes[offset + 20]) + (toUInt(inst_bytes[offset + 21]) * 256)),
-                ibag_entry_size
-            )
-
-            var ibag = Pair(
-                toUInt(ibag_bytes[0]) + (toUInt(ibag_bytes[1]) * 256),
-                toUInt(ibag_bytes[2]) + (toUInt(ibag_bytes[3]) * 256)
-            )
-
-            var next_ibag_bytes = riff.get_sub_chunk_data(
-                2,
-                ibag_index,
-                ibag_entry_size * (toUInt(inst_bytes[22 + offset + 20]) + (toUInt(inst_bytes[22 + offset + 21]) * 256)),
-                ibag_entry_size
-            )
-
-            var next_ibag = Pair(
-                toUInt(next_ibag_bytes[0]) + (toUInt(next_ibag_bytes[1]) * 256),
-                toUInt(next_ibag_bytes[2]) + (toUInt(next_ibag_bytes[3]) * 256)
-            )
+            var first_ibag_index = toUInt(inst_bytes[offset + 20]) + (toUInt(inst_bytes[offset + 21]) * 256)
+            var next_first_ibag_index = toUInt(inst_bytes[22 + offset + 20]) + (toUInt(inst_bytes[22 + offset + 21]) * 256)
+            var zone_count = next_first_ibag_index - first_ibag_index
 
             val instrument = Instrument(inst_name)
-            val generators_to_use: List<Generator> = this.get_instrument_generators(
-                riff,
-                ibag.first,
-                next_ibag.first
-            )
+            for (j in 0 until zone_count) {
+                var ibag_bytes = riff.get_sub_chunk_data(
+                    2,
+                    ibag_bytes_index,
+                    ibag_entry_size * (first_ibag_index + j),
+                    ibag_entry_size
+                )
+                var ibag = Pair(
+                    toUInt(ibag_bytes[0]) + (toUInt(ibag_bytes[1]) * 256),
+                    toUInt(ibag_bytes[2]) + (toUInt(ibag_bytes[3]) * 256)
+                )
+                var next_ibag_bytes = riff.get_sub_chunk_data(
+                    2,
+                    ibag_bytes_index,
+                    ibag_entry_size * (first_ibag_index + j + 1),
+                    ibag_entry_size
+                )
 
-            this.generate_instrument(instrument, generators_to_use)
+                var next_ibag = Pair(
+                    toUInt(next_ibag_bytes[0]) + (toUInt(next_ibag_bytes[1]) * 256),
+                    toUInt(next_ibag_bytes[2]) + (toUInt(next_ibag_bytes[3]) * 256)
+                )
+
+                val generators_to_use: List<Generator> = this.get_instrument_generators(
+                    riff,
+                    ibag.first,
+                    next_ibag.first
+                )
+
+                this.generate_instrument(instrument, generators_to_use)
+            }
 
             output.add(instrument)
         }
@@ -288,13 +292,12 @@ class SoundFont(var riff: Riff) {
     }
 
     private fun get_preset_generators(riff: Riff, from_index: Int, to_index: Int): List<Generator> {
-
         var pgen_index = this.pdta_indices["pgen"]!!
         var output: MutableList<Generator> = mutableListOf()
-        var bytes = riff.get_sub_chunk_data(2, pgen_index, from_index * 10, (to_index - from_index) * 10)
+        var bytes = riff.get_sub_chunk_data(2, pgen_index, from_index * 4, (to_index - from_index) * 4)
 
-        for (i in 0 until bytes.size / 10) {
-            val offset = i * 10
+        for (i in 0 until bytes.size / 4) {
+            val offset = i * 4
             output.add(
                 Generator(
                     toUInt(bytes[offset + 0]) + (toUInt(bytes[offset + 1]) * 256),
@@ -310,10 +313,10 @@ class SoundFont(var riff: Riff) {
     private fun get_instrument_generators(riff: Riff, from_index: Int, to_index: Int): List<Generator> {
         var igen_index = this.pdta_indices["igen"]!!
         var output: MutableList<Generator> = mutableListOf()
-        var bytes = riff.get_sub_chunk_data(2, igen_index, from_index * 10, (to_index - from_index) * 10)
+        var bytes = riff.get_sub_chunk_data(2, igen_index, from_index * 4, (to_index - from_index) * 4)
 
-        for (i in 0 until bytes.size / 10) {
-            val offset = i * 10
+        for (i in 0 until bytes.size / 4) {
+            val offset = i * 4
             output.add(
                 Generator(
                     toUInt(bytes[offset + 0]) + (toUInt(bytes[offset + 1]) * 256),
@@ -469,12 +472,13 @@ class SoundFont(var riff: Riff) {
     private fun generate_instrument(instrument: Instrument, generators: List<Generator>) {
         var working_sample = InstrumentSample()
         instrument.add_sample(working_sample)
-        for (generator in generators) {
+        generators.forEachIndexed { i, generator ->
             when (generator.sfGenOper) {
                 0x35 -> {
+                    if (i != generators.size - 1) {
+                        throw Exception("SampleId Generator Out of order ($i / ${generators.size})")
+                    }
                     working_sample.sampleIndex = generator.asInt()
-                    working_sample = InstrumentSample()
-                    instrument.add_sample(working_sample)
                 }
                 0x00 -> {
                     working_sample.sampleStartOffset = if (working_sample.sampleStartOffset == null) {
@@ -704,10 +708,9 @@ class Instrument(var name: String) {
 
     fun get_sample(key: Int, velocity: Int): InstrumentSample? {
         var output: MutableList<InstrumentSample> = mutableListOf()
-        Log.e("AAA", "$key, $velocity")
         this.samples.forEachIndexed { i, sample ->
-            Log.e("AAA", "$i -> ${sample.sampleIndex}, ${sample.key_range}, ${sample.velocity_range}")
-            if ( (sample.key_range == null || (sample.key_range!!.first <= key && sample.key_range!!.second >= key)) &&
+            // TODO: right now, i is the global sample so ignore it. this needs to be changed
+            if (i != 0 && (sample.key_range == null || (sample.key_range!!.first <= key && sample.key_range!!.second >= key)) &&
                 (sample.velocity_range == null || (sample.velocity_range!!.first <= velocity && sample.velocity_range!!.second >= velocity))) {
                 return sample
             }

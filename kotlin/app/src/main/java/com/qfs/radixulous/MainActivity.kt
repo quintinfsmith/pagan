@@ -1367,10 +1367,8 @@ class MainActivity : AppCompatActivity() {
 
         // DEBUG
         this.midi_input_device.sendEvent(NoteOn(beatkey.channel, event.note + 21, 64))
-        thread {
-            Thread.sleep(300)
+            Thread.sleep(100)
             this.midi_input_device.sendEvent(NoteOff(beatkey.channel, event.note + 21, 64))
-        }
 
         var nsOctave: NumberSelector = findViewById(R.id.nsOctave)
         if (nsOctave.getState() == null) {

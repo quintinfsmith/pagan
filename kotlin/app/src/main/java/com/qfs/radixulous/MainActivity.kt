@@ -1367,8 +1367,10 @@ class MainActivity : AppCompatActivity() {
 
         // DEBUG
         this.midi_input_device.sendEvent(NoteOn(beatkey.channel, event.note + 21, 64))
-            Thread.sleep(100)
+        thread {
+            Thread.sleep(200)
             this.midi_input_device.sendEvent(NoteOff(beatkey.channel, event.note + 21, 64))
+        }
 
         var nsOctave: NumberSelector = findViewById(R.id.nsOctave)
         if (nsOctave.getState() == null) {
@@ -1464,7 +1466,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun play_beat(beat: Int) {
-        var midi = this.opus_manager.get_midi(beat, beat + 1)
+        var midi = this.opus_manager.get_midi(beat)
         this.midi_player.play_midi(midi)
     }
 }

@@ -26,7 +26,7 @@ class SoundFont(var riff: Riff) {
 
     var samples: List<Sample> = listOf()
     var instruments: List<Instrument> = listOf()
-    var presets: List<Preset> = listOf()
+    var presets: HashMap<Pair<Int, Int>, Preset>
 
     init {
         // Make a hashmap for easier access
@@ -136,8 +136,8 @@ class SoundFont(var riff: Riff) {
         return output
     }
 
-    private fun init_presets(riff: Riff): List<Preset> {
-        var output: MutableList<Preset> = mutableListOf()
+    private fun init_presets(riff: Riff): HashMap<Pair<Int, Int>, Preset> {
+        var output = HashMap<Pair<Int, Int>, Preset>()
         val phdr_index = this.pdta_indices["phdr"]!!
         val pbag_index = this.pdta_indices["pbag"]!!
 
@@ -158,7 +158,7 @@ class SoundFont(var riff: Riff) {
             val preset = Preset(
                 phdr_name,
                 toUInt(phdr_bytes[offset + 20]) + (toUInt(phdr_bytes[offset + 21]) * 256),
-                toUInt(phdr_bytes[offset + 22]) + (toUInt(phdr_bytes[offset + 22]) * 256)
+                toUInt(phdr_bytes[offset + 22]) + (toUInt(phdr_bytes[offset + 23]) * 256)
             )
 
             val wPresetBagIndex = toUInt(phdr_bytes[offset + 24]) + (toUInt(phdr_bytes[offset + 25]) * 256)
@@ -191,7 +191,7 @@ class SoundFont(var riff: Riff) {
 
                 this.generate_preset(preset, generators_to_use)
             }
-            output.add(preset)
+            output[Pair(preset.bank, preset.preset)] = preset
         }
 
         return output
@@ -339,8 +339,8 @@ class SoundFont(var riff: Riff) {
     fun get_instrument(index: Int): Instrument {
         return this.instruments[index]
     }
-    fun get_preset(index: Int): Preset {
-        return this.presets[index]
+    fun get_preset(index: Int, bank: Int = 0): Preset? {
+        return this.presets[Pair(bank, index)]
     }
     fun get_sample(index: Int): Sample {
         return samples[index]

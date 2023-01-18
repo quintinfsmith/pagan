@@ -2107,7 +2107,7 @@ class MIDIPlayer: VirtualMIDIDevice() {
                 var delay = (tick - previous_tick) * ms_per_tick
                 var drift = delay_accum - (System.currentTimeMillis() - start_time)
                 delay_accum += delay
-                Log.e("AAA", "SLEEP: ${delay}, $drift")
+
                 if (delay + drift > 0) {
                     Thread.sleep(delay + drift)
                 }

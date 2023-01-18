@@ -28,6 +28,7 @@ class ActiveSample(var note: Int, var instrument_sample: InstrumentSample, var s
     var audioTrack: AudioTrack
     var sample: Sample
     var sampleData: ByteArray
+    var volume_decay_shaper: MutableList<Float>? = null
 
     init {
         this.sample = this.soundFont.get_sample(instrument_sample.sampleIndex)
@@ -82,11 +83,21 @@ class ActiveSample(var note: Int, var instrument_sample: InstrumentSample, var s
 
             if (this.current_frame < sampleData.size / 2) {
                 var j = this.current_frame * 2
+                var byte_pair = if (this.volume_decay_shaper == null) {
+                    Pair(sampleData[j], sampleData[j + 1])
+                } else {
+                    var short = toUInt(sampleData[j]) + (toUInt(sampleData[j + 1]) * 256)
+                    var altered: Int = (short.toFloat() * this.volume_decay_shaper!!.removeFirst()).toInt()
+                    Pair(
+                        (altered and 0xFF).toByte(),
+                        ((altered and 0xFF00) shr 8).toByte()
+                    )
+                }
 
-                use_bytes[(4 * x)] = sampleData[j]
-                use_bytes[(4 * x) + 1] = sampleData[j + 1]
-                use_bytes[(4 * x) + 2] = sampleData[j]
-                use_bytes[(4 * x) + 3] = sampleData[j + 1]
+                use_bytes[(4 * x)] =    byte_pair.first
+                use_bytes[(4 * x) + 1] = byte_pair.second
+                use_bytes[(4 * x) + 2] = byte_pair.first
+                use_bytes[(4 * x) + 3] = byte_pair.second
 
             }
             this.current_frame += 1
@@ -108,6 +119,12 @@ class ActiveSample(var note: Int, var instrument_sample: InstrumentSample, var s
     }
 
     fun stop() {
+        // TODO: set volume_decay_shaper instead of just calling really_stop()
+        this.really_stop()
+        //this.volume_decay_shaper = Array(
+    }
+
+    private fun really_stop() {
         this.audioTrack.stop()
         this.audioTrack.release()
     }
@@ -136,19 +153,23 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
         return if (this.preset_channel_map.containsKey(channel)) {
             this.preset_channel_map[channel]!!
         } else {
-            26
+            0
         }
     }
 
     override fun onNoteOn(event: NoteOn) {
         //TODO: Handle Bank
-        var preset = this.soundFont.get_preset(this.get_channel_preset(event.channel))
+        var bank = if (event.channel == 9) {
+            128
+        } else {
+            0
+        }
+        Log.e("AAA", "${this.soundFont.presets}")
+        var preset = this.soundFont.get_preset(this.get_channel_preset(event.channel), bank) ?: return
         var instrument = this.soundFont.get_instrument(preset.instruments[0]!!.instrumentIndex)
         var isample = instrument.get_sample(event.note, event.velocity)
 
         if (isample != null) {
-            var sample = this.soundFont.get_sample(isample.sampleIndex)
-
             var active_sample = ActiveSample(event.note, isample, this.soundFont)
             this.active_samples[Pair(event.note, event.channel)] = active_sample
             active_sample.play()

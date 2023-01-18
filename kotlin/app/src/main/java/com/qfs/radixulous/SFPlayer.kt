@@ -1,10 +1,7 @@
 package com.qfs.radixulous
 
 import android.content.Context
-import android.media.AudioAttributes
-import android.media.AudioFormat
-import android.media.AudioManager
-import android.media.AudioTrack
+import android.media.*
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
@@ -17,8 +14,10 @@ import kotlin.concurrent.thread
 import kotlin.math.pow
 import kotlin.math.sin
 
+val BASE_FREQ = 8.175798915643707
+
 @RequiresApi(Build.VERSION_CODES.M)
-class ActiveSample(var sample: Sample, var soundFont: SoundFont) {
+class ActiveSample(var note: Int, var instrument_sample: InstrumentSample, var soundFont: SoundFont) {
     var current_frame = 0
     var buffer_size_in_frames: Int
     var buffer_size_in_bytes: Int
@@ -27,8 +26,13 @@ class ActiveSample(var sample: Sample, var soundFont: SoundFont) {
     var chunk_size_in_bytes: Int
     var is_pressed: Boolean = false
     var audioTrack: AudioTrack
+    var sample: Sample
+    var sampleData: ByteArray
 
     init {
+        this.sample = this.soundFont.get_sample(instrument_sample.sampleIndex)
+        this.sampleData = this.soundFont.get_sample_data(this.sample.start, this.sample.end)!!
+
         this.buffer_size_in_bytes = sample.sampleRate
         this.buffer_size_in_frames = buffer_size_in_bytes / 4
 
@@ -52,6 +56,13 @@ class ActiveSample(var sample: Sample, var soundFont: SoundFont) {
             .setBufferSizeInBytes(this.buffer_size_in_bytes)
             .build()
 
+        if (this.sample.originalPitch != this.note) {
+            var samplePitch = BASE_FREQ * 2F.pow(this.sample.originalPitch!!.toFloat() / 12.toFloat())
+            var requiredPitch = BASE_FREQ * 2F.pow(this.note.toFloat() / 12.toFloat())
+            this.audioTrack.playbackParams =
+                PlaybackParams().setPitch((requiredPitch / samplePitch).toFloat())
+        }
+
         var playbacklistener = SFPlaybackListener(this)
         this.audioTrack.setPlaybackPositionUpdateListener( playbacklistener )
         this.audioTrack.positionNotificationPeriod = this.chunk_size_in_frames
@@ -59,7 +70,6 @@ class ActiveSample(var sample: Sample, var soundFont: SoundFont) {
     }
 
     fun write_next_chunk() {
-        var sample_data = this.soundFont.get_sample_data(this.sample.start, this.sample.end)!!
         var loop_start = this.sample.loopStart - this.sample.start
         var loop_end = this.sample.loopEnd - this.sample.start
 
@@ -70,13 +80,13 @@ class ActiveSample(var sample: Sample, var soundFont: SoundFont) {
                 this.current_frame %= loop_end  - loop_start
             }
 
-            if (this.current_frame < sample_data.size / 2) {
+            if (this.current_frame < sampleData.size / 2) {
                 var j = this.current_frame * 2
 
-                use_bytes[(4 * x)] = sample_data[j]
-                use_bytes[(4 * x) + 1] = sample_data[j + 1]
-                use_bytes[(4 * x) + 2] = sample_data[j]
-                use_bytes[(4 * x) + 3] = sample_data[j + 1]
+                use_bytes[(4 * x)] = sampleData[j]
+                use_bytes[(4 * x) + 1] = sampleData[j + 1]
+                use_bytes[(4 * x) + 2] = sampleData[j]
+                use_bytes[(4 * x) + 3] = sampleData[j + 1]
 
             }
             this.current_frame += 1
@@ -88,7 +98,6 @@ class ActiveSample(var sample: Sample, var soundFont: SoundFont) {
             use_bytes.size,
             AudioTrack.WRITE_BLOCKING
         )
-
     }
 
     fun play() {
@@ -112,7 +121,6 @@ class SFPlaybackListener(var active_sample: ActiveSample): AudioTrack.OnPlayback
 
     override fun onPeriodicNotification(p0: AudioTrack?) {
         if (p0 != null) {
-            Log.e("AAA", "${p0.getPlaybackHeadPosition()}")
             this.active_sample.write_next_chunk()
         }
     }
@@ -141,14 +149,13 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
         if (isample != null) {
             var sample = this.soundFont.get_sample(isample.sampleIndex)
 
-            var active_sample = ActiveSample(sample, this.soundFont)
+            var active_sample = ActiveSample(event.note, isample, this.soundFont)
             this.active_samples[Pair(event.note, event.channel)] = active_sample
             active_sample.play()
         }
     }
 
     override fun onNoteOff(event: NoteOff) {
-        Log.e("AAA", "Release ${event.note} ${event.channel}")
         this.active_samples.remove(Pair(event.note, event.channel))?.stop()
     }
 

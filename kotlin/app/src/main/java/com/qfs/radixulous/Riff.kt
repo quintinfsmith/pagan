@@ -716,7 +716,7 @@ class Instrument(var name: String) {
     fun get_sample(key: Int, velocity: Int): InstrumentSample? {
         var output: MutableList<InstrumentSample> = mutableListOf()
         this.samples.forEachIndexed { i, sample ->
-            // TODO: right now, i is the global sample so ignore it. this needs to be changed
+            // TODO: right now, 0 is the global sample so ignore it. this needs to be changed
             if (i != 0 && (sample.key_range == null || (sample.key_range!!.first <= key && sample.key_range!!.second >= key)) &&
                 (sample.velocity_range == null || (sample.velocity_range!!.first <= velocity && sample.velocity_range!!.second >= velocity))) {
                 return sample

@@ -165,7 +165,10 @@ class ViewCache {
     }
 
     fun removeBeatView(y: Int, x: Int) {
-        val beat_view = this.view_cache[y].second.removeAt(x).first
+        val line_cache = this.view_cache[y].second
+        line_cache[x].second.clear()
+
+        val beat_view = line_cache.removeAt(x).first
         (beat_view?.parent as ViewGroup).removeView(beat_view)
     }
 
@@ -875,6 +878,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun tick_manage_lines() {
+        var lines_changed = false
         while (true) {
             val (channel, index, operation) = this.opus_manager.fetch_flag_line() ?: break
             when (operation) {
@@ -896,6 +900,7 @@ class MainActivity : AppCompatActivity() {
                     }
 
                     this.cache.detachLine(y + index)
+                    lines_changed = true
                 }
                 1 -> {
                     val y = this.opus_manager.get_y(channel, index)
@@ -914,44 +919,51 @@ class MainActivity : AppCompatActivity() {
                         this.buildTreeView(rowView, y, x, listOf())
                         this.opus_manager.flag_beat_change(BeatKey(channel, index, x))
                     }
+                    lines_changed = true
                 }
                 2 -> {
                     val y = this.opus_manager.get_y(channel, index)
                     this.buildLineView(y)
+                    lines_changed = true
                 }
             }
         }
 
-        // Redraw labels
-        val line_counts = this.opus_manager.get_channel_line_counts()
-        var y = 0
-        for (channel in this.opus_manager.channel_order) {
-            for (i in 0 until line_counts[channel]) {
-                val label = this.cache.getLineLabel(y)!!
-                if (channel != 9) {
-                    label.textView.text = "$channel:$i"
-                } else {
-                    val instrument = this.opus_manager.get_percussion_instrument(i)
-                    label.textView.text = "P:$instrument"
-                }
-
-                for (x in 0 until this.opus_manager.opus_beat_count) {
-                    for ((leaf, leaf_pos) in this.cache.get_all_leafs(y, x, listOf())) {
-                        leaf.background = resources.getDrawable(
-                            if (this.opus_manager.is_reflection(channel, i, x)) {
-                                R.drawable.leaf_reflection
-                            } else if (this.opus_manager.is_reflected(channel, i, x)) {
-                                R.drawable.leaf_reflected
-                            } else if (!this.opus_manager.get_tree(BeatKey(channel, i, x), leaf_pos).is_event()) {
-                                R.drawable.leaf
-                            } else {
-                                R.drawable.leaf_active
-                            }
-                        )
+        if (lines_changed) { // Redraw labels
+            val line_counts = this.opus_manager.get_channel_line_counts()
+            var y = 0
+            for (channel in this.opus_manager.channel_order) {
+                for (i in 0 until line_counts[channel]) {
+                    val label = this.cache.getLineLabel(y)!!
+                    if (channel != 9) {
+                        label.textView.text = "$channel:$i"
+                    } else {
+                        val instrument = this.opus_manager.get_percussion_instrument(i)
+                        label.textView.text = "P:$instrument"
                     }
-                }
 
-                y += 1
+                    for (x in 0 until this.opus_manager.opus_beat_count) {
+                        for ((leaf, leaf_pos) in this.cache.get_all_leafs(y, x, listOf())) {
+                            leaf.background = resources.getDrawable(
+                                if (this.opus_manager.is_reflection(channel, i, x)) {
+                                    R.drawable.leaf_reflection
+                                } else if (this.opus_manager.is_reflected(channel, i, x)) {
+                                    R.drawable.leaf_reflected
+                                } else if (!this.opus_manager.get_tree(
+                                        BeatKey(channel, i, x),
+                                        leaf_pos
+                                    ).is_event()
+                                ) {
+                                    R.drawable.leaf
+                                } else {
+                                    R.drawable.leaf_active
+                                }
+                            )
+                        }
+                    }
+
+                    y += 1
+                }
             }
         }
     }

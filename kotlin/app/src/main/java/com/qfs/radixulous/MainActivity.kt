@@ -74,6 +74,12 @@ class ViewCache {
             return output
         }
         for ((key_pos, view) in this.view_cache[y].second[x].second) {
+            try {
+                view as ViewGroup
+                continue
+            } catch (e: Exception) {
+                // pass. leaves can't be view groups so this is just a check
+            }
             if (position.size <= key_pos.size && key_pos.subList(0, position.size) == position) {
                 output.add(Pair(view, key_pos))
             }
@@ -251,8 +257,6 @@ class MainActivity : AppCompatActivity() {
 
     fun load(path: String) {
         this.opus_manager.load(path)
-        this.tick()
-        this.setContextMenu(ContextMenu.Leaf)
 
         var name = this.opus_manager.get_working_dir()
         if (name != null) {
@@ -260,6 +264,9 @@ class MainActivity : AppCompatActivity() {
         }
         val actionBar = supportActionBar
         actionBar!!.title = name
+        this.setContextMenu(ContextMenu.Leaf)
+        this.tick()
+        // TODO: Investigate why adding a second tick fixes colouring issue
     }
 
     private fun save() {
@@ -509,15 +516,15 @@ class MainActivity : AppCompatActivity() {
                 parent,
                 false
             )
-            leafView.setBackgroundColor(
+            leafView.tvLeaf.background = resources.getDrawable(
                 if (this.opus_manager.is_reflection(channel_index.first, channel_index.second, x)) {
-                    ContextCompat.getColor(leafView.context, R.color.leaf_reflection)
+                    R.drawable.leaf_reflection
                 } else if (this.opus_manager.is_reflected(channel_index.first, channel_index.second, x)) {
-                    ContextCompat.getColor(leafView.context, R.color.leaf_reflected)
+                    R.drawable.leaf_reflected
                 } else if (!tree.is_event()) {
-                    ContextCompat.getColor(leafView.context, R.color.leaf_empty_bg)
+                    R.drawable.leaf
                 } else {
-                    ContextCompat.getColor(leafView.context, R.color.leaf_bg)
+                    R.drawable.leaf_active
                 }
             )
 
@@ -548,11 +555,11 @@ class MainActivity : AppCompatActivity() {
                 leafView.tvLeaf.text = getString(R.string.empty_note)
             }
 
-            leafView.setOnClickListener {
+            leafView.tvLeaf.setOnClickListener {
                 this.interact_leafView_click(it)
             }
 
-            leafView.setOnLongClickListener {
+            leafView.tvLeaf.setOnLongClickListener {
                 this.interact_leafView_longclick(it)
                 true
             }
@@ -563,7 +570,7 @@ class MainActivity : AppCompatActivity() {
                 parent.addView(leafView)
             }
 
-            this.cache.cacheTree(leafView, y, x, position)
+            this.cache.cacheTree(leafView.tvLeaf, y, x, position)
             return leafView
         } else {
             val cellLayout = LinearLayout(parent.context)
@@ -930,11 +937,17 @@ class MainActivity : AppCompatActivity() {
 
                 for (x in 0 until this.opus_manager.opus_beat_count) {
                     for ((leaf, leaf_pos) in this.cache.get_all_leafs(y, x, listOf())) {
-                        if ((leaf as ViewGroup).childCount > 0) {
-                            continue
-                        }
-                        val changeColour = ContextCompat.getColor(leaf.context, R.color.leaf_bg)
-                        leaf.setBackgroundColor(changeColour)
+                        leaf.background = resources.getDrawable(
+                            if (this.opus_manager.is_reflection(channel, i, x)) {
+                                R.drawable.leaf_reflection
+                            } else if (this.opus_manager.is_reflected(channel, i, x)) {
+                                R.drawable.leaf_reflected
+                            } else if (!this.opus_manager.get_tree(BeatKey(channel, i, x), leaf_pos).is_event()) {
+                                R.drawable.leaf
+                            } else {
+                                R.drawable.leaf_active
+                            }
+                        )
                     }
                 }
 
@@ -1050,18 +1063,18 @@ class MainActivity : AppCompatActivity() {
                 param.setMargins(0,0,5,5)
 
                 // TODO: Move this somewhere better
-                val color = if (this.opus_manager.is_reflection(channel, line_offset, beat)) {
-                    R.color.leaf_reflection
-                } else if (this.opus_manager.is_reflected(channel, line_offset, beat)) {
-                    R.color.leaf_reflected
-                } else if (!current_tree.is_event()) {
-                     R.color.leaf_empty_bg
-                } else {
-                    R.color.leaf_bg
-                }
+                current_view.background = resources.getDrawable(
+                    if (this.opus_manager.is_reflection(channel, line_offset, beat)) {
+                        R.drawable.leaf_reflection
+                    } else if (this.opus_manager.is_reflected(channel, line_offset, beat)) {
+                        R.drawable.leaf_reflected
+                    } else if (!current_tree.is_event()) {
+                         R.drawable.leaf
+                    } else {
+                        R.drawable.leaf
+                    }
+                )
 
-                val changeColour = ContextCompat.getColor(current_view.context, color)
-                current_view.setBackgroundColor(changeColour)
             }
 
             current_view.layoutParams = param
@@ -1077,15 +1090,17 @@ class MainActivity : AppCompatActivity() {
                 continue
             }
             val pair = this.opus_manager.get_channel_index(cursor.y)
-            val color = if (this.opus_manager.is_reflection(pair.first, pair.second, cursor.x)) {
-                R.color.leaf_reflection_selected
-            } else if (this.opus_manager.is_reflected(pair.first, pair.second, cursor.x)) {
-                R.color.leaf_reflected_selected
-            } else {
-                R.color.leaf_selected
-            }
-            val changeColour = ContextCompat.getColor(view.context, color)
-            view.setBackgroundColor(changeColour)
+            view.background = resources.getDrawable(
+                if (this.opus_manager.is_reflection(pair.first, pair.second, cursor.x)) {
+                    R.drawable.focus_leaf_reflection
+                } else if (this.opus_manager.is_reflected(pair.first, pair.second, cursor.x)) {
+                    R.drawable.focus_leaf_reflected
+                } else if (this.opus_manager.get_tree(cursor.get_beatkey(), leaf_pos).is_event()) {
+                    R.drawable.focus_leaf_active
+                } else {
+                    R.drawable.focus_leaf
+                }
+            )
         }
 
         this.cache.setCursor(cursor.y, cursor.x, position)
@@ -1098,29 +1113,25 @@ class MainActivity : AppCompatActivity() {
             try {
                 val pair = this.opus_manager.get_channel_index(c.first)
 
-
-                val color = if (this.opus_manager.is_reflection(pair.first, pair.second, c.second)) {
-                    R.color.leaf_reflection
+                val drawable_id = if (this.opus_manager.is_reflection(pair.first, pair.second, c.second)) {
+                    R.drawable.leaf_reflection
                 } else if (this.opus_manager.is_reflected(pair.first, pair.second, c.second)) {
-                    R.color.leaf_reflected
+                    R.drawable.leaf_reflected
                 } else {
-                    R.color.leaf_bg
+                    R.drawable.leaf
                 }
+
 
                 for ((view, leaf_pos) in this.cache.get_all_leafs(c.first, c.second, c.third)) {
                     if (view is LinearLayout) {
                         continue
                     }
-                    var changeColor = if (color == R.color.leaf_bg) {
-                         if (!this.opus_manager.get_tree(BeatKey(pair.first, pair.second, c.second), leaf_pos).is_event()) {
-                             ContextCompat.getColor(view.context, R.color.leaf_empty_bg)
-                         } else {
-                             ContextCompat.getColor(view.context, color)
-                         }
+
+                    if (drawable_id == R.drawable.leaf && this.opus_manager.get_tree(BeatKey(pair.first, pair.second, c.second), leaf_pos).is_event()) {
+                        view.background = resources.getDrawable(R.drawable.leaf_active)
                     } else {
-                        ContextCompat.getColor(view.context, color)
+                        view.background = resources.getDrawable(drawable_id)
                     }
-                    view.setBackgroundColor(changeColor)
                 }
             } catch (exception:Exception) {
                 this.cache.unsetCursor()
@@ -1207,6 +1218,8 @@ class MainActivity : AppCompatActivity() {
             beat_key.channel,
             true
         )
+
+        this.play_event(beat_key.channel, event.note)
 
         this.opus_manager.set_event(beat_key, cursor.position, event)
         this.tick()
@@ -1327,6 +1340,10 @@ class MainActivity : AppCompatActivity() {
 
         this.opus_manager.set_cursor_position(key.first, key.second, key.third)
 
+        var cursor_tree = this.opus_manager.get_tree_at_cursor()
+        if (cursor_tree.is_event()) {
+            this.play_event(cursor_tree.get_event()!!.channel, cursor_tree.get_event()!!.note)
+        }
         this.tick()
         this.setContextMenu(ContextMenu.Leaf)
     }
@@ -1365,12 +1382,7 @@ class MainActivity : AppCompatActivity() {
 
         this.opus_manager.set_event(beatkey, position, event)
 
-        // DEBUG
-        this.midi_input_device.sendEvent(NoteOn(beatkey.channel, event.note + 21, 64))
-        thread {
-            Thread.sleep(200)
-            this.midi_input_device.sendEvent(NoteOff(beatkey.channel, event.note + 21, 64))
-        }
+        this.play_event(beatkey.channel, event.note)
 
         var nsOctave: NumberSelector = findViewById(R.id.nsOctave)
         if (nsOctave.getState() == null) {
@@ -1466,8 +1478,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun play_beat(beat: Int) {
-        var midi = this.opus_manager.get_midi(beat)
+        var midi = this.opus_manager.get_midi(beat, beat + 1)
         this.midi_player.play_midi(midi)
+    }
+
+    fun play_event(channel: Int, event_value: Int) {
+        this.midi_input_device.sendEvent(NoteOn(channel, event_value + 21, 64))
+        thread {
+            Thread.sleep(200)
+            this.midi_input_device.sendEvent(NoteOff(channel, event_value + 21, 64))
+        }
     }
 }
 

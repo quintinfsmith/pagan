@@ -166,10 +166,15 @@ class ViewCache {
 
     fun removeBeatView(y: Int, x: Int) {
         val line_cache = this.view_cache[y].second
+        for ((pos, view) in line_cache[x].second) {
+            (view.parent as ViewGroup).removeView(view)
+        }
         line_cache[x].second.clear()
 
-        val beat_view = line_cache.removeAt(x).first
-        (beat_view?.parent as ViewGroup).removeView(beat_view)
+        line_cache.removeAt(x)
+        // Detach using line. we cache each leaf, but there is still a wrapper to deal with.
+        var line = this.getLine(y)
+        line.removeViewAt(x)
     }
 
     fun getTreeViewYXPosition(view: View): Triple<Int, Int, List<Int>>? {
@@ -213,6 +218,7 @@ class MainActivity : AppCompatActivity() {
     lateinit var midi_playback_device: MIDIPlaybackDevice
     private var midi_input_device = MIDIInputDevice()
     private var midi_player = MIDIPlayer()
+    private var in_playback = false
 
     @RequiresApi(Build.VERSION_CODES.M)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -970,6 +976,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun tick_manage_beats() {
         val updated_beats: MutableSet<Int> = mutableSetOf()
+        var beats_changed = false
         while (true) {
             val (index, operation) = this.opus_manager.fetch_flag_beat() ?: break
             when (operation) {
@@ -981,6 +988,7 @@ class MainActivity : AppCompatActivity() {
                     }
                     updated_beats.add(index)
                     this.cache.add_column_width(index)
+                    beats_changed = true
                 }
                 0 -> {
                     this.cache.detachColumnLabel()
@@ -988,29 +996,34 @@ class MainActivity : AppCompatActivity() {
                     for (y in 0 until this.opus_manager.line_count()) {
                         this.cache.removeBeatView(y, index)
                     }
+                    beats_changed = true
                 }
             }
         }
-        this.tick_resize_beats(updated_beats.toList())
+        if (beats_changed) {
+            this.tick_resize_beats(updated_beats.toList())
+        }
     }
 
     private fun tick_update_beats() {
         val updated_beats: MutableSet<Int> = mutableSetOf()
+        var beats_changed = false
         while (true) {
             val beatkey = this.opus_manager.fetch_flag_change() ?: break
-            this.rebuildBeatView(
-                this.opus_manager.get_y(
-                    beatkey.channel,
-                    beatkey.line_offset
-                ),
-                beatkey.beat
+            var y = this.opus_manager.get_y(
+                beatkey.channel,
+                beatkey.line_offset
             )
+            this.rebuildBeatView(y, beatkey.beat )
 
             for (linked_beatkey in this.opus_manager.get_all_linked(beatkey)) {
                 updated_beats.add(linked_beatkey.beat)
             }
+            beats_changed = true
         }
-        this.tick_resize_beats(updated_beats.toList())
+        if (beats_changed) {
+            this.tick_resize_beats(updated_beats.toList())
+        }
     }
 
     private fun tick_resize_beats(updated_beats: List<Int>) {
@@ -1490,15 +1503,23 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun play_beat(beat: Int) {
-        var midi = this.opus_manager.get_midi(beat, beat + 1)
-        this.midi_player.play_midi(midi)
+        if (! this.in_playback) {
+            this.in_playback = true
+            var midi = this.opus_manager.get_midi(beat, beat + 1)
+            this.midi_player.play_midi(midi)
+            this.in_playback = false
+        }
     }
 
     fun play_event(channel: Int, event_value: Int) {
-        this.midi_input_device.sendEvent(NoteOn(channel, event_value + 21, 64))
-        thread {
-            Thread.sleep(200)
-            this.midi_input_device.sendEvent(NoteOff(channel, event_value + 21, 64))
+        if (! this.in_playback) {
+            this.in_playback = true
+            this.midi_input_device.sendEvent(NoteOn(channel, event_value + 21, 64))
+            thread {
+                Thread.sleep(200)
+                this.midi_input_device.sendEvent(NoteOff(channel, event_value + 21, 64))
+                this.in_playback = false
+            }
         }
     }
 }

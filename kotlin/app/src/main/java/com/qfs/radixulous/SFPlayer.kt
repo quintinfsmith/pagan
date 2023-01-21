@@ -103,12 +103,18 @@ class ActiveSample(var note: Int, var instrument_sample: InstrumentSample, var s
             this.current_frame += 1
         }
 
-        this.audioTrack.write(
-            use_bytes,
-            0,
-            use_bytes.size,
-            AudioTrack.WRITE_BLOCKING
-        )
+        if (this.audioTrack.state != AudioTrack.STATE_UNINITIALIZED) {
+            try {
+                this.audioTrack.write(
+                    use_bytes,
+                    0,
+                    use_bytes.size,
+                    AudioTrack.WRITE_BLOCKING
+                )
+            } catch (e: IllegalStateException) {
+                // Shouldn't need to do anything. the audio track was released and this should stop on its own
+            }
+        }
     }
 
     fun play() {
@@ -121,12 +127,15 @@ class ActiveSample(var note: Int, var instrument_sample: InstrumentSample, var s
     fun stop() {
         // TODO: set volume_decay_shaper instead of just calling really_stop()
         this.really_stop()
-        //this.volume_decay_shaper = Array(
     }
 
-    private fun really_stop() {
-        this.audioTrack.stop()
-        this.audioTrack.release()
+    fun really_stop() {
+        if (this.audioTrack.state == AudioTrack.STATE_INITIALIZED) {
+            if (this.audioTrack.getPlayState() != AudioTrack.PLAYSTATE_STOPPED) {
+                this.audioTrack.stop()
+            }
+            this.audioTrack.release()
+        }
     }
 }
 
@@ -138,6 +147,7 @@ class SFPlaybackListener(var active_sample: ActiveSample): AudioTrack.OnPlayback
 
     override fun onPeriodicNotification(p0: AudioTrack?) {
         if (p0 != null) {
+
             this.active_sample.write_next_chunk()
         }
     }
@@ -158,13 +168,16 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
     }
 
     override fun onNoteOn(event: NoteOn) {
+        var currently_active_sample: ActiveSample? = this.active_samples[Pair(event.note, event.channel)]
+        currently_active_sample?.really_stop()
+
         //TODO: Handle Bank
         var bank = if (event.channel == 9) {
             128
         } else {
             0
         }
-        Log.e("AAA", "${this.soundFont.presets}")
+
         var preset = this.soundFont.get_preset(this.get_channel_preset(event.channel), bank) ?: return
         var instrument = this.soundFont.get_instrument(preset.instruments[0]!!.instrumentIndex)
         var isample = instrument.get_sample(event.note, event.velocity)

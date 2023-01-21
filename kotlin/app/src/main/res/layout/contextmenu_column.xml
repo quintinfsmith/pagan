@@ -2,35 +2,35 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/table_bg"
-    android:paddingTop="5px"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <LinearLayout
         android:id="@+id/llPlaybackctl"
         android:layout_height="wrap_content"
         android:layout_width="match_parent"
+        android:paddingTop="5px"
         android:paddingBottom="5px"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" >
         <TextView
             android:id="@+id/btnPlayback"
-            android:textSize="20sp"
+            android:theme="@style/button"
+            android:background="@drawable/button"
+            android:layout_marginEnd="5px"
+            android:layout_marginStart="5px"
             android:gravity="center"
-            android:background="@color/interface_bg"
-            android:textColor="@color/interface_fg"
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="match_parent"
-            android:layout_marginEnd="5px"
             android:text="|>" />
         <TextView
             android:id="@+id/btnStopPlayback"
-            android:textSize="20sp"
+            android:theme="@style/button"
+            android:background="@drawable/button"
+            android:layout_marginEnd="5px"
+            android:layout_marginStart="5px"
             android:gravity="center"
-            android:background="@color/interface_bg"
-            android:textColor="@color/interface_fg"
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="match_parent"
@@ -39,13 +39,13 @@
 
     <TextView
         android:id="@+id/btnRemoveBeat"
-        android:textSize="@dimen/font_button"
+        android:theme="@style/button"
+        android:background="@drawable/button"
+        android:layout_marginEnd="5px"
+        android:layout_marginStart="5px"
         android:gravity="center"
-        android:background="@color/interface_bg"
-        android:textColor="@color/interface_fg"
         android:layout_width="0dp"
         android:layout_weight="1"
-        android:layout_marginRight="5px"
 
         android:layout_height="match_parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -54,7 +54,10 @@
         android:text="Remove Beat"/>
     <TextView
         android:id="@+id/btnInsertBeat"
-        android:textSize="24sp"
+        android:theme="@style/button"
+        android:background="@drawable/button"
+        android:layout_marginEnd="5px"
+        android:layout_marginStart="5px"
         android:gravity="center"
         android:layout_width="0dp"
         android:layout_weight="1"
@@ -62,7 +65,5 @@
         app:layout_constraintTop_toBottomOf="@+id/llPlaybackctl"
         app:layout_constraintStart_toEndOf="@+id/btnRemoveBeat"
         app:layout_constraintEnd_toEndOf="parent"
-        android:background="@color/interface_bg"
-        android:textColor="@color/interface_fg"
         android:text="Insert Beat"/>
 </androidx.constraintlayout.widget.ConstraintLayout>

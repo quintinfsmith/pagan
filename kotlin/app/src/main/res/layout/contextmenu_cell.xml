@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -27,30 +26,18 @@
         <com.qfs.radixulous.RelativeOptionSelector xmlns:android="http://schemas.android.com/apk/res/android"
             xmlns:custom="http://schemas.android.com/apk/res-auto"
             android:id="@+id/rosRelativeOption"
+            app:theme="@style/numberSelector"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@color/table_bg"
-            android:paddingTop="5px"
-            custom:active_bg="@color/leaf_selected"
-            custom:active_fg="#000000"
-            custom:button_bg="#efefef"
-            custom:button_fg="#000000" />
+            android:layout_height="wrap_content" />
 
         <com.qfs.radixulous.NumberSelector xmlns:android="http://schemas.android.com/apk/res/android"
             xmlns:custom="http://schemas.android.com/apk/res-auto"
             android:id="@+id/nsRelativeValue"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@color/table_bg"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/llNumberLineRel"
-            android:paddingTop="5px"
-            custom:active_bg="@color/leaf_selected"
-            custom:active_fg="#000000"
-            custom:button_bg="#efefef"
-            custom:button_fg="#000000"
+            app:theme="@style/numberSelector"
             custom:min="0"
             custom:max="11"/>
     </LinearLayout>
@@ -70,15 +57,9 @@
             android:id="@+id/nsOctave"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@color/table_bg"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            android:paddingTop="5px"
-            custom:active_bg="@color/leaf_selected"
-            custom:active_fg="#000000"
-            custom:button_bg="#efefef"
-            custom:button_fg="#000000"
+            app:theme="@style/numberSelector"
             custom:min="0"
             custom:max="7"/>
 
@@ -87,15 +68,9 @@
             android:id="@+id/nsOffset"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@color/table_bg"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/nsOctave"
-            android:paddingTop="5px"
-            custom:active_bg="@color/leaf_selected"
-            custom:active_fg="#000000"
-            custom:button_bg="#efefef"
-            custom:button_fg="#000000"
+            app:theme="@style/numberSelector"
             custom:min="0"
             custom:max="11"/>
     </LinearLayout>

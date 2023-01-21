@@ -14,10 +14,6 @@ import java.lang.Integer.min
 
 class RelativeOptionSelector: LinearLayout {
     var active_button: View? = null
-    var active_color_fg: Int = 0
-    var active_color_bg: Int = 0
-    var button_color_fg: Int = 0
-    var button_color_bg: Int = 0
     var button_map = HashMap<View, Int>()
     var itemList: List<Int> = listOf(
         R.string.pfx_add,
@@ -29,16 +25,6 @@ class RelativeOptionSelector: LinearLayout {
     var on_change_hook: ((RelativeOptionSelector) -> Unit)? = null
 
     constructor(context: Context, attrs: AttributeSet) : super(context, attrs) {
-        context.theme.obtainStyledAttributes(attrs, R.styleable.NumberSelector, 0, 0).apply {
-            try {
-                active_color_bg = getColor(R.styleable.NumberSelector_active_bg, 0)
-                active_color_fg = getColor(R.styleable.NumberSelector_active_fg, 0)
-                button_color_bg = getColor(R.styleable.NumberSelector_button_bg, 0)
-                button_color_fg = getColor(R.styleable.NumberSelector_button_fg, 0)
-            } finally {
-                recycle()
-            }
-        }
         this.populate()
     }
 
@@ -51,7 +37,7 @@ class RelativeOptionSelector: LinearLayout {
         }
         super.onLayout(isChanged, left, top, right, bottom)
         val size = this.itemList.size - this.hidden_options.size
-        val margin = 5
+        val margin = 0
         val _width = (this.width - (this.paddingLeft + this.paddingRight))
         val inner_width = (_width - ((size - 1) * margin)) / size
         val remainder = _width % inner_width
@@ -74,7 +60,7 @@ class RelativeOptionSelector: LinearLayout {
 
             x += min(remainder, i)
             (button as TextView).gravity = CENTER
-            button.layout(x, this.paddingTop, x + working_width, bottom - this.paddingBottom)
+            button.layout(x, this.paddingTop, x + working_width, (bottom - top) - this.paddingBottom)
             i += 1
         }
     }
@@ -111,11 +97,22 @@ class RelativeOptionSelector: LinearLayout {
             this.addView(currentView)
 
             // TODO: use dimens.xml (seems to be a bug treating sp as dp)
-            currentView.textSize = 24F
             currentView.text = resources.getString(string_index)
-            currentView.setBackgroundColor(this.button_color_bg)
-            currentView.setTextColor(this.button_color_fg)
             this.button_map[currentView] = i
+
+            currentView.background = resources.getDrawable(
+                when (i) {
+                    0 -> {
+                        R.drawable.ns_start
+                    }
+                    this.itemList.size - 1 -> {
+                        R.drawable.ns_end
+                    }
+                    else -> {
+                        R.drawable.ns_middle
+                    }
+                }
+            )
 
             currentView.setOnTouchListener { view: View, motionEvent: MotionEvent ->
                 if (motionEvent.action == MotionEvent.ACTION_UP) {
@@ -136,16 +133,39 @@ class RelativeOptionSelector: LinearLayout {
     fun set_active_button(view: View) {
         this.unset_active_button()
         this.active_button = view
-        view.setBackgroundColor(this.active_color_bg)
-        (view as TextView).setTextColor(this.active_color_fg)
+
+        this.active_button!!.background = resources.getDrawable(
+            when (this.getState()) {
+                0 -> {
+                    R.drawable.ns_selected_start
+                }
+                this.itemList.size - 1 -> {
+                    R.drawable.ns_selected_end
+                }
+                else -> {
+                    R.drawable.ns_selected_middle
+                }
+            }
+        )
     }
 
     fun unset_active_button() {
         if (this.active_button == null) {
             return
         }
-        this.active_button!!.setBackgroundColor(this.button_color_bg)
-        (this.active_button as TextView).setTextColor(this.button_color_fg)
+        this.active_button!!.background = resources.getDrawable(
+            when (this.getState()) {
+                0 -> {
+                    R.drawable.ns_start
+                }
+                this.itemList.size - 1 -> {
+                    R.drawable.ns_end
+                }
+                else -> {
+                    R.drawable.ns_middle
+                }
+            }
+        )
         this.active_button = null
     }
 

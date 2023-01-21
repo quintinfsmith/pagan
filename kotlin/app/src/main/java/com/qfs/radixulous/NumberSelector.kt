@@ -19,10 +19,6 @@ class NumberSelector: LinearLayout {
     var max: Int = 1
     var button_map = HashMap<View, Int>()
     var active_button: View? = null
-    var active_color_fg: Int = 0
-    var active_color_bg: Int = 0
-    var button_color_fg: Int = 0
-    var button_color_bg: Int = 0
     var on_change_hook: ((NumberSelector) -> Unit)? = null
 
     constructor(context: Context, attrs: AttributeSet) : super(context, attrs) {
@@ -30,10 +26,6 @@ class NumberSelector: LinearLayout {
             try {
                 max = getInteger(R.styleable.NumberSelector_max, 2)
                 min = getInteger(R.styleable.NumberSelector_min, 0)
-                active_color_bg = getColor(R.styleable.NumberSelector_active_bg, 0)
-                active_color_fg = getColor(R.styleable.NumberSelector_active_fg, 0)
-                button_color_bg = getColor(R.styleable.NumberSelector_button_bg, 0)
-                button_color_fg = getColor(R.styleable.NumberSelector_button_fg, 0)
             } finally {
                 recycle()
             }
@@ -50,7 +42,7 @@ class NumberSelector: LinearLayout {
         }
         super.onLayout(isChanged, left, top, right, bottom)
         var size = 1 + (this.max - this.min)
-        var margin = 5
+        var margin = 0
         var working_width = (this.width - (this.paddingLeft + this.paddingRight))
         var inner_width = (working_width - ((size - 1) * margin)) / size
         var remainder = working_width % inner_width
@@ -64,8 +56,8 @@ class NumberSelector: LinearLayout {
             }
 
             x += min(remainder, j)
-            button.layout(x, this.paddingTop, x + working_width, bottom - this.paddingBottom)
             (button as TextView).gravity = CENTER
+            button.layout(x, this.paddingTop, x + working_width, (bottom - top) - this.paddingBottom)
         }
     }
 
@@ -131,24 +123,27 @@ class NumberSelector: LinearLayout {
             val currentView = TextView(this.context)
             this.addView(currentView)
 
-            // TODO: use dimens.xml (seems to be a bug treating sp as dp)
-            currentView.textSize = 20F
             currentView.text = "${get_number_string(i, 12,2)}"
-            currentView.setPadding(0,10,0,10)
-            currentView.setBackgroundColor(this.button_color_bg)
-            currentView.setTextColor(this.button_color_fg)
             this.button_map[currentView] = i
-
+            currentView.background = when (i) {
+                this.min -> {
+                    resources.getDrawable(R.drawable.ns_start)
+                }
+                this.max -> {
+                    resources.getDrawable(R.drawable.ns_end)
+                }
+                else -> {
+                    resources.getDrawable(R.drawable.ns_middle)
+                }
+            }
             currentView.setOnTouchListener { view: View, motionEvent: MotionEvent ->
                 if (motionEvent.action == MotionEvent.ACTION_UP) {
                     this.set_active_button(view)
                     if (this.on_change_hook != null) {
                         this.on_change_hook!!(this)
                     }
-                    false
-                } else {
-                    true
                 }
+                false
             }
         }
     }
@@ -159,17 +154,41 @@ class NumberSelector: LinearLayout {
     fun set_active_button(view: View) {
         this.unset_active_button()
         this.active_button = view
-        view.setBackgroundColor(this.active_color_bg)
-        (view as TextView).setTextColor(this.active_color_fg)
+
+        this.active_button!!.background = resources.getDrawable(
+            when (this.getState()) {
+                this.min -> {
+                    R.drawable.ns_selected_start
+                }
+                this.max -> {
+                    R.drawable.ns_selected_end
+                }
+                else -> {
+                    R.drawable.ns_selected_middle
+                }
+            }
+        )
     }
 
     fun unset_active_button() {
         if (this.active_button == null) {
             return
         }
-        this.active_button!!.setBackgroundColor(this.button_color_bg)
-        (this.active_button as TextView).setTextColor(this.button_color_fg)
-        this.active_button = null
 
+        this.active_button!!.background = resources.getDrawable(
+            when (this.getState()) {
+                this.min -> {
+                    R.drawable.ns_start
+                }
+                this.max -> {
+                    R.drawable.ns_end
+                }
+                else -> {
+                    R.drawable.ns_middle
+                }
+            }
+        )
+
+        this.active_button = null
     }
 }

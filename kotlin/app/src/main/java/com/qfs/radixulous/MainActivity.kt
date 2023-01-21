@@ -269,7 +269,6 @@ class MainActivity : AppCompatActivity() {
         actionBar!!.title = name
         this.setContextMenu(ContextMenu.Leaf)
         this.tick()
-        // TODO: Investigate why adding a second tick fixes colouring issue
     }
 
     private fun save() {
@@ -519,6 +518,7 @@ class MainActivity : AppCompatActivity() {
                 parent,
                 false
             )
+
             leafView.tvLeaf.background = resources.getDrawable(
                 if (this.opus_manager.is_reflection(channel_index.first, channel_index.second, x)) {
                     R.drawable.leaf_reflection
@@ -1083,7 +1083,7 @@ class MainActivity : AppCompatActivity() {
                     } else if (!current_tree.is_event()) {
                          R.drawable.leaf
                     } else {
-                        R.drawable.leaf
+                        R.drawable.leaf_active
                     }
                 )
 

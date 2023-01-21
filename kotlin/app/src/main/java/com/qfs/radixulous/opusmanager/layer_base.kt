@@ -21,7 +21,6 @@ open class OpusManagerBase {
     var percussion_map: HashMap<Int, Int> = HashMap<Int, Int>()
     var channel_instruments: HashMap<Int, Int> = HashMap()
 
-
     open fun reset() {
         this.opus_beat_count = 1
         for (channel in this.channel_lines) {

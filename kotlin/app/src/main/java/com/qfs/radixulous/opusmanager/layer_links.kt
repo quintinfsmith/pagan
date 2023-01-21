@@ -35,7 +35,6 @@ open class LinksLayer() : FlagLayer() {
         }
         this.inv_linked_beat_map.remove(beat_key)
     }
-
     open fun link_beats(beat_key: BeatKey, target: BeatKey) {
         // Don't chain links. if attempting to reflect a reflection, find the root beat
         // and reflect that

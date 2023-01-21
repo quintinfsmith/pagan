@@ -478,4 +478,12 @@ open class CursorLayer() : LinksLayer() {
         var cursor = this.get_cursor()
         return this.has_preceding_absolute_event(cursor.get_beatkey(), cursor.get_position())
     }
+
+    // NOTE: This *has* to be in the CursorLayer. a beatkey range assumes
+    open fun get_cursor_difference(beata: BeatKey, beatb: BeatKey): Pair<Int, Int> {
+        var beata_y = this.get_y(beata.channel, beata.line_offset)
+        var beatb_y = this.get_y(beatb.channel, beatb.line_offset)
+
+        return Pair(beatb_y - beata_y, beatb.beat - beata.beat)
+    }
 }

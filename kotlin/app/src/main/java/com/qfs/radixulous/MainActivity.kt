@@ -212,6 +212,7 @@ class MainActivity : AppCompatActivity() {
     private var cache = ViewCache()
     private var active_context_menu_index: ContextMenu = ContextMenu.None
     private var linking_beat: BeatKey? = null
+    private var linking_beat_b: BeatKey? = null
     private var relative_mode: Boolean = false
     private var ticking: Boolean = false // Lock to prevent multiple attempts at updating from happening at once
     lateinit var midi_controller: MIDIController
@@ -464,7 +465,9 @@ class MainActivity : AppCompatActivity() {
         headerCellView.setOnClickListener {
             val cursor = this.opus_manager.get_cursor()
             this.opus_manager.set_cursor_position(cursor.y, x, listOf())
-            this.play_beat(x)
+            if (! this.in_playback) {
+                this.play_beat(x)
+            }
             this.setContextMenu(ContextMenu.Beat)
             this.tick()
         }
@@ -1273,6 +1276,7 @@ class MainActivity : AppCompatActivity() {
         this.opus_manager.unlink_beat(cursor.get_beatkey())
         cursor.settle()
         this.linking_beat = null
+        this.linking_beat_b = null
         this.setContextMenu(ContextMenu.Leaf)
         this.tick()
 
@@ -1281,6 +1285,7 @@ class MainActivity : AppCompatActivity() {
     private fun interact_btnCancelLink(view: View) {
         this.opus_manager.get_cursor().settle()
         this.linking_beat = null
+        this.linking_beat_b = null
         this.setContextMenu(ContextMenu.Leaf)
         this.tick()
     }
@@ -1343,6 +1348,8 @@ class MainActivity : AppCompatActivity() {
 
                 this.tick()
                 this.setContextMenu(ContextMenu.Line) //TODO: Overkill?
+
+                this.midi_input_device.sendEvent(ProgramChange(cursor.get_beatkey().channel, it.itemId))
                 true
             }
         }
@@ -1351,32 +1358,73 @@ class MainActivity : AppCompatActivity() {
 
     private fun interact_leafView_click(view: View) {
         val key = this.cache.getTreeViewYXPosition(view) ?: return
-        if (this.linking_beat != null) {
-            val pair = this.opus_manager.get_channel_index(key.first)
-            val working_position = BeatKey(
-                pair.first,
-                pair.second,
-                key.second
-            )
+        this.opus_manager.set_cursor_position(key.first, key.second, key.third)
 
-            this.opus_manager.link_beats(this.linking_beat!!, working_position)
+        if (this.linking_beat != null) {
+
+            // If a second link point hasn't been selected, assume just one beat is being linked
+            if (this.linking_beat_b == null) {
+                val pair = this.opus_manager.get_channel_index(key.first)
+                val working_position = BeatKey(
+                    pair.first,
+                    pair.second,
+                    key.second
+                )
+                this.opus_manager.link_beats(working_position, this.linking_beat!!)
+            } else {
+                // TODO: This feels sloppy. figure out where to put it INSIDE the opusmanager structure
+                var cursor_diff = this.opus_manager.get_cursor_difference(
+                    this.linking_beat!!,
+                    this.linking_beat_b!!
+                )
+                Log.e("AAA", "${cursor_diff}")
+                for (y in 0 .. cursor_diff.first) {
+                    var pair = this.opus_manager.get_channel_index(y + key.first)
+                    var target_pair = this.opus_manager.get_channel_index(
+                        y + this.opus_manager.get_y(
+                            this.linking_beat!!.channel,
+                            this.linking_beat!!.line_offset
+                        )
+                    )
+                    for (x in 0 .. cursor_diff.second) {
+                        var working_position = BeatKey(
+                            pair.first,
+                            pair.second,
+                            x + key.second
+                        )
+                        var working_target = BeatKey(
+                            target_pair.first,
+                            target_pair.second,
+                            x + this.linking_beat!!.beat
+                        )
+
+                        this.opus_manager.link_beats(working_position, working_target)
+                    }
+                }
+
+            }
+
             this.linking_beat = null
+            this.linking_beat_b = null
        }
 
-        this.opus_manager.set_cursor_position(key.first, key.second, key.third)
+        this.tick()
+        this.setContextMenu(ContextMenu.Leaf)
 
         var cursor_tree = this.opus_manager.get_tree_at_cursor()
         if (cursor_tree.is_event()) {
             this.play_event(cursor_tree.get_event()!!.channel, cursor_tree.get_event()!!.note)
         }
-        this.tick()
-        this.setContextMenu(ContextMenu.Leaf)
     }
 
     fun interact_leafView_longclick(view: View) {
         val key = this.cache.getTreeViewYXPosition(view) ?: return
         val pair = this.opus_manager.get_channel_index(key.first)
-        this.linking_beat = BeatKey(pair.first, pair.second, key.second)
+        if (this.linking_beat == null) {
+            this.linking_beat = BeatKey(pair.first, pair.second, key.second)
+        } else {
+            this.linking_beat_b = BeatKey(pair.first, pair.second, key.second)
+        }
         this.opus_manager.set_cursor_position(key.first, key.second, listOf())
         this.setContextMenu(ContextMenu.Linking)
         this.tick()
@@ -1503,23 +1551,17 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun play_beat(beat: Int) {
-        if (! this.in_playback) {
-            this.in_playback = true
-            var midi = this.opus_manager.get_midi(beat, beat + 1)
-            this.midi_player.play_midi(midi)
-            this.in_playback = false
-        }
+        this.in_playback = true
+        var midi = this.opus_manager.get_midi(beat, beat + 1)
+        this.midi_player.play_midi(midi)
+        this.in_playback = false
     }
 
     fun play_event(channel: Int, event_value: Int) {
-        if (! this.in_playback) {
-            this.in_playback = true
-            this.midi_input_device.sendEvent(NoteOn(channel, event_value + 21, 64))
-            thread {
-                Thread.sleep(200)
-                this.midi_input_device.sendEvent(NoteOff(channel, event_value + 21, 64))
-                this.in_playback = false
-            }
+        this.midi_input_device.sendEvent(NoteOn(channel, event_value + 21, 64))
+        thread {
+            Thread.sleep(200)
+            this.midi_input_device.sendEvent(NoteOff(channel, event_value + 21, 64))
         }
     }
 }

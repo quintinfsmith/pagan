@@ -1355,58 +1355,22 @@ class MainActivity : AppCompatActivity() {
         }
         popupMenu.show()
     }
-
     private fun interact_leafView_click(view: View) {
         val key = this.cache.getTreeViewYXPosition(view) ?: return
         this.opus_manager.set_cursor_position(key.first, key.second, key.third)
 
         if (this.linking_beat != null) {
-
+            var cursor_beatkey = this.opus_manager.get_cursor().get_beatkey()
             // If a second link point hasn't been selected, assume just one beat is being linked
             if (this.linking_beat_b == null) {
-                val pair = this.opus_manager.get_channel_index(key.first)
-                val working_position = BeatKey(
-                    pair.first,
-                    pair.second,
-                    key.second
-                )
-                this.opus_manager.link_beats(working_position, this.linking_beat!!)
+                this.opus_manager.link_beats(cursor_beatkey, this.linking_beat!!)
             } else {
-                // TODO: This feels sloppy. figure out where to put it INSIDE the opusmanager structure
-                var cursor_diff = this.opus_manager.get_cursor_difference(
-                    this.linking_beat!!,
-                    this.linking_beat_b!!
-                )
-                Log.e("AAA", "${cursor_diff}")
-                for (y in 0 .. cursor_diff.first) {
-                    var pair = this.opus_manager.get_channel_index(y + key.first)
-                    var target_pair = this.opus_manager.get_channel_index(
-                        y + this.opus_manager.get_y(
-                            this.linking_beat!!.channel,
-                            this.linking_beat!!.line_offset
-                        )
-                    )
-                    for (x in 0 .. cursor_diff.second) {
-                        var working_position = BeatKey(
-                            pair.first,
-                            pair.second,
-                            x + key.second
-                        )
-                        var working_target = BeatKey(
-                            target_pair.first,
-                            target_pair.second,
-                            x + this.linking_beat!!.beat
-                        )
-
-                        this.opus_manager.link_beats(working_position, working_target)
-                    }
-                }
-
+                this.opus_manager.link_beat_range(cursor_beatkey, this.linking_beat!!, this.linking_beat_b!!)
             }
 
             this.linking_beat = null
             this.linking_beat_b = null
-       }
+        }
 
         this.tick()
         this.setContextMenu(ContextMenu.Leaf)

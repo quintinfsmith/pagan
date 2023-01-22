@@ -479,14 +479,28 @@ open class HistoryLayer() : CursorLayer() {
 
     override fun link_beats(beat_key: BeatKey, target: BeatKey) {
         this.history_cache.open_multi()
+
         if (this.history_cache.append_undoer_key("unlink_beats")) {
             this.history_cache.add_beatkey(beat_key)
             this.setup_repopulate(beat_key, listOf())
         }
+
         this.history_cache.close_multi(
             this.get_cursor().get_beatkey(),
             this.get_cursor().get_position()
         )
+
         super.link_beats(beat_key, target)
+    }
+
+    override fun link_beat_range(beat: BeatKey, target_a: BeatKey, target_b: BeatKey) {
+        this.history_cache.open_multi()
+
+        super.link_beat_range(beat, target_a, target_b)
+
+        this.history_cache.close_multi(
+            this.get_cursor().get_beatkey(),
+            this.get_cursor().get_position()
+        )
     }
 }

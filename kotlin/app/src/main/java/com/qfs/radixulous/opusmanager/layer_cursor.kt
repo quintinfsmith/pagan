@@ -158,7 +158,7 @@ class Cursor(var opus_manager: CursorLayer) {
     }
 }
 
-open class CursorLayer() : LinksLayer() {
+open class CursorLayer() : FlagLayer() {
     var cursor: Cursor? = null
     var channel_order = Array(16, { i -> i })
 
@@ -485,5 +485,34 @@ open class CursorLayer() : LinksLayer() {
         var beatb_y = this.get_y(beatb.channel, beatb.line_offset)
 
         return Pair(beatb_y - beata_y, beatb.beat - beata.beat)
+    }
+
+    open fun link_beat_range(beat: BeatKey, target_a: BeatKey, target_b: BeatKey) {
+        var cursor_diff = this.get_cursor_difference(target_a, target_b)
+
+        for (y in 0 .. cursor_diff.first) {
+            var pair = this.get_channel_index(y + this.get_y(beat.channel, beat.line_offset))
+            var target_pair = this.get_channel_index(
+                y + this.get_y(
+                    target_a.channel,
+                    target_a.line_offset
+                )
+            )
+            for (x in 0 .. cursor_diff.second) {
+                var working_position = BeatKey(
+                    pair.first,
+                    pair.second,
+                    x + beat.beat
+                )
+
+                var working_target = BeatKey(
+                    target_pair.first,
+                    target_pair.second,
+                    x + target_a.beat
+                )
+
+                this.link_beats(working_position, working_target)
+            }
+        }
     }
 }

@@ -54,7 +54,7 @@ class UpdatesCache {
     }
 }
 
-open class FlagLayer : OpusManagerBase() {
+open class FlagLayer : LinksLayer() {
     private var cache = UpdatesCache()
 
     override fun reset() {
@@ -189,5 +189,20 @@ open class FlagLayer : OpusManagerBase() {
         super.remove_line(channel, index)
 
         this.cache.flag_line_pop(channel, index ?: this.channel_lines[channel].size)
+    }
+
+    //override fun link_beats(beat_key: BeatKey, target: BeatKey) {
+    //    super.link_beats(beat_key, target)
+    //    this.cache.flag_beat_change(beat_key)
+    //    this.cache.flag_beat_change(target)
+    //}
+
+    override fun unlink_beat(beat_key: BeatKey) {
+        this.cache.flag_beat_change(beat_key)
+        var target_key = this.linked_beat_map.get(beat_key)
+        if (target_key != null) {
+            this.cache.flag_beat_change(target_key!!)
+        }
+        super.unlink_beat(beat_key)
     }
 }

@@ -69,6 +69,9 @@ open class LinksLayer() : OpusManagerBase() {
     }
 
     open fun link_beats(beat_key: BeatKey, target: BeatKey) {
+        if (beat_key == target) {
+            return
+        }
         // Don't chain links. if attempting to reflect a reflection, find the root beat
         // and reflect that
         if (this.linked_beat_map.containsKey(target)) {

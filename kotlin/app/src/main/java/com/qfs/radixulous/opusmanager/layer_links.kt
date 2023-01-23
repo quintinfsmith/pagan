@@ -35,6 +35,39 @@ open class LinksLayer() : OpusManagerBase() {
         }
         this.inv_linked_beat_map.remove(beat_key)
     }
+
+    fun clear_links_in_network(beat_key: BeatKey) {
+        if (this.is_reflection(beat_key.channel, beat_key.line_offset, beat_key.beat)) {
+            this.clear_links_to_beat(this.linked_beat_map[beat_key]!!)
+        } else if (this.is_reflected(beat_key.channel, beat_key.line_offset, beat_key.beat)) {
+            this.clear_links_to_beat(beat_key)
+        }
+
+    }
+
+    // Remove a link from a network without destroying the remaining links
+    // this will arbitrarily pick another central beat to be reflected
+    // TODO: Remove the need for a central beat?
+    fun remove_link_from_network(beat_key: BeatKey) {
+        if (this.is_reflection(beat_key.channel, beat_key.line_offset, beat_key.beat)) {
+            // Nothing special, can just remove the link
+            this.unlink_beat(beat_key)
+        } else if (this.is_reflected(beat_key.channel, beat_key.line_offset, beat_key.beat)) {
+            if (this.inv_linked_beat_map[beat_key]!!.size > 1) {
+                // arbitrarily pick a new focal beat, and relink all beats to it
+                var new_center = this.inv_linked_beat_map[beat_key]!!.first()
+                this.unlink_beat(new_center)
+
+                for (to_relink in this.inv_linked_beat_map[beat_key]!!) {
+                    this.link_beats(to_relink, new_center)
+                }
+            } else {
+                // network isn't large enough to need re-focusing. just remove the 1 link
+                this.clear_links_to_beat(beat_key)
+            }
+        }
+    }
+
     open fun link_beats(beat_key: BeatKey, target: BeatKey) {
         // Don't chain links. if attempting to reflect a reflection, find the root beat
         // and reflect that
@@ -271,6 +304,10 @@ open class LinksLayer() : OpusManagerBase() {
 
     fun is_reflected(channel: Int, line_offset: Int, beat: Int): Boolean {
         return this.inv_linked_beat_map.containsKey(BeatKey(channel, line_offset, beat))
+    }
+
+    fun is_networked(channel: Int, line_offset: Int, beat: Int): Boolean {
+        return this.linked_beat_map.containsKey(BeatKey(channel, line_offset, beat)) || this.inv_linked_beat_map.containsKey(BeatKey(channel, line_offset, beat))
     }
 
     override fun load_folder(path: String) {

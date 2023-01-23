@@ -529,11 +529,7 @@ class MainActivity : AppCompatActivity() {
             )
 
             leafView.tvLeaf.background = resources.getDrawable(
-                if (this.opus_manager.is_reflection(channel_index.first, channel_index.second, x)) {
-                    R.drawable.leaf_reflection
-                } else if (this.opus_manager.is_reflected(channel_index.first, channel_index.second, x)) {
-                    R.drawable.leaf_reflected
-                } else if (!tree.is_event()) {
+                if (!tree.is_event()) {
                     R.drawable.leaf
                 } else {
                     R.drawable.leaf_active
@@ -671,12 +667,16 @@ class MainActivity : AppCompatActivity() {
                 )
 
                 val cursor_key = this.opus_manager.get_cursor().get_beatkey()
-                if (this.opus_manager.is_reflection(cursor_key.channel, cursor_key.line_offset, cursor_key.beat)) {
+                if (this.opus_manager.is_networked(cursor_key.channel, cursor_key.line_offset, cursor_key.beat)) {
                     view.btnUnLink.setOnClickListener {
                         this.interact_btnUnlink(it)
                     }
+                    view.btnUnLinkAll.setOnClickListener {
+                        this.interact_btnUnlinkAll(it)
+                    }
                 } else {
                     view.btnUnLink.visibility = View.GONE
+                    view.btnUnLinkAll.visibility = View.GONE
                 }
 
                 view.btnCancelLink.setOnClickListener {
@@ -954,15 +954,7 @@ class MainActivity : AppCompatActivity() {
                     for (x in 0 until this.opus_manager.opus_beat_count) {
                         for ((leaf, leaf_pos) in this.cache.get_all_leafs(y, x, listOf())) {
                             leaf.background = resources.getDrawable(
-                                if (this.opus_manager.is_reflection(channel, i, x)) {
-                                    R.drawable.leaf_reflection
-                                } else if (this.opus_manager.is_reflected(channel, i, x)) {
-                                    R.drawable.leaf_reflected
-                                } else if (!this.opus_manager.get_tree(
-                                        BeatKey(channel, i, x),
-                                        leaf_pos
-                                    ).is_event()
-                                ) {
+                                if (!this.opus_manager.get_tree(BeatKey(channel, i, x), leaf_pos).is_event()) {
                                     R.drawable.leaf
                                 } else {
                                     R.drawable.leaf_active
@@ -1092,11 +1084,7 @@ class MainActivity : AppCompatActivity() {
 
                 // TODO: Move this somewhere better
                 current_view.background = resources.getDrawable(
-                    if (this.opus_manager.is_reflection(channel, line_offset, beat)) {
-                        R.drawable.leaf_reflection
-                    } else if (this.opus_manager.is_reflected(channel, line_offset, beat)) {
-                        R.drawable.leaf_reflected
-                    } else if (!current_tree.is_event()) {
+                    if (!current_tree.is_event()) {
                          R.drawable.leaf
                     } else {
                         R.drawable.leaf_active
@@ -1113,22 +1101,22 @@ class MainActivity : AppCompatActivity() {
         val cursor = this.opus_manager.get_cursor()
         val position = cursor.get_position()
 
-        for ((view, leaf_pos) in this.cache.get_all_leafs(cursor.y, cursor.x, position)) {
-            if (view is LinearLayout) {
-                continue
-            }
-            val pair = this.opus_manager.get_channel_index(cursor.y)
-            view.background = resources.getDrawable(
-                if (this.opus_manager.is_reflection(pair.first, pair.second, cursor.x)) {
-                    R.drawable.focus_leaf_reflection
-                } else if (this.opus_manager.is_reflected(pair.first, pair.second, cursor.x)) {
-                    R.drawable.focus_leaf_reflected
-                } else if (this.opus_manager.get_tree(cursor.get_beatkey(), leaf_pos).is_event()) {
-                    R.drawable.focus_leaf_active
-                } else {
-                    R.drawable.focus_leaf
+        var linked_beats = this.opus_manager.get_all_linked(cursor.get_beatkey())
+
+        for (linked_beat in linked_beats) {
+            for ((view, leaf_pos) in this.cache.get_all_leafs(this.opus_manager.get_y(linked_beat.channel, linked_beat.line_offset), linked_beat.beat, position)) {
+                if (view is LinearLayout) {
+                    continue
                 }
-            )
+                val pair = this.opus_manager.get_channel_index(cursor.y)
+                view.background = resources.getDrawable(
+                    if (this.opus_manager.get_tree(linked_beat, leaf_pos).is_event()) {
+                        R.drawable.focus_leaf_active
+                    } else {
+                        R.drawable.focus_leaf
+                    }
+                )
+            }
         }
 
         this.cache.setCursor(cursor.y, cursor.x, position)
@@ -1140,26 +1128,21 @@ class MainActivity : AppCompatActivity() {
             // TODO: specify Exception
             try {
                 val pair = this.opus_manager.get_channel_index(c.first)
-
-                val drawable_id = if (this.opus_manager.is_reflection(pair.first, pair.second, c.second)) {
-                    R.drawable.leaf_reflection
-                } else if (this.opus_manager.is_reflected(pair.first, pair.second, c.second)) {
-                    R.drawable.leaf_reflected
-                } else {
-                    R.drawable.leaf
-                }
+                for (linked_beat in this.opus_manager.get_all_linked(BeatKey(pair.first, pair.second, c.second))) {
 
 
-                for ((view, leaf_pos) in this.cache.get_all_leafs(c.first, c.second, c.third)) {
-                    if (view is LinearLayout) {
-                        continue
+                    for ((view, leaf_pos) in this.cache.get_all_leafs(this.opus_manager.get_y(linked_beat.channel, linked_beat.line_offset), linked_beat.beat, c.third)) {
+                        if (view is LinearLayout) {
+                            continue
+                        }
+
+                        if (this.opus_manager.get_tree(BeatKey(pair.first, pair.second, c.second), leaf_pos).is_event()) {
+                            view.background = resources.getDrawable(R.drawable.leaf_active)
+                        } else {
+                            view.background = resources.getDrawable(R.drawable.leaf)
+                        }
                     }
 
-                    if (drawable_id == R.drawable.leaf && this.opus_manager.get_tree(BeatKey(pair.first, pair.second, c.second), leaf_pos).is_event()) {
-                        view.background = resources.getDrawable(R.drawable.leaf_active)
-                    } else {
-                        view.background = resources.getDrawable(drawable_id)
-                    }
                 }
             } catch (exception:Exception) {
                 this.cache.unsetCursor()
@@ -1273,13 +1256,22 @@ class MainActivity : AppCompatActivity() {
 
     private fun interact_btnUnlink(view: View) {
         val cursor = this.opus_manager.get_cursor()
-        this.opus_manager.unlink_beat(cursor.get_beatkey())
+        this.opus_manager.remove_link_from_network(cursor.get_beatkey())
         cursor.settle()
         this.linking_beat = null
         this.linking_beat_b = null
         this.setContextMenu(ContextMenu.Leaf)
         this.tick()
+    }
 
+    private fun interact_btnUnlinkAll(view: View) {
+        val cursor = this.opus_manager.get_cursor()
+        this.opus_manager.clear_links_in_network(cursor.get_beatkey())
+        cursor.settle()
+        this.linking_beat = null
+        this.linking_beat_b = null
+        this.setContextMenu(ContextMenu.Leaf)
+        this.tick()
     }
 
     private fun interact_btnCancelLink(view: View) {

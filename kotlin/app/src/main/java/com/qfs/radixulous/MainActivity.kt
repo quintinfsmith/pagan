@@ -811,54 +811,65 @@ class MainActivity : AppCompatActivity() {
         var maximum_note = 95
 
         var cursor = this.opus_manager.get_cursor()
-        var preceding_leaf = this.opus_manager.get_preceding_leaf_position(cursor.get_beatkey(), cursor.get_position())!!
-        while (!this.opus_manager.get_tree(preceding_leaf.first, preceding_leaf.second).is_event()) {
-            preceding_leaf = this.opus_manager.get_preceding_leaf_position(preceding_leaf.first, preceding_leaf.second)!!
-        }
-        var preceding_value = this.opus_manager.get_absolute_value(preceding_leaf.first, preceding_leaf.second)!!
-
-        // Hide/ Show Relative options if they don't/do need to be visible
+        var mainMax = maximum_note
+        var mainMin = 0
+        var options_to_hide: MutableSet<Int> = mutableSetOf()
         var selector: RelativeOptionSelector = findViewById(R.id.rosRelativeOption)
-        if (preceding_value > maximum_note - this.opus_manager.RADIX) {
-            selector.hideOption(2)
-        }
-
-        if (preceding_value < this.opus_manager.RADIX) {
-            selector.hideOption(3)
-        }
-
-        if (preceding_value > maximum_note) {
-            selector.hideOption(0)
-        }
-
-        if (preceding_value == 0) {
-            selector.hideOption(1)
-        }
-
-        var relMin = 1
-        var relMax = maximum_note / this.opus_manager.RADIX
-        when (selector.getState()) {
-            0 -> {
-                relMin = 0
-                relMax = min(maximum_note - preceding_value, this.opus_manager.RADIX - 1)
+        // Need to consider all linked values as preceding values may differ
+        for (linked_beat in this.opus_manager.get_all_linked(cursor.get_beatkey())) {
+            var preceding_leaf = this.opus_manager.get_preceding_leaf_position(linked_beat, cursor.get_position())!!
+            while (!this.opus_manager.get_tree(preceding_leaf.first, preceding_leaf.second).is_event()) {
+                preceding_leaf = this.opus_manager.get_preceding_leaf_position(preceding_leaf.first, preceding_leaf.second)!!
             }
-            1 -> {
-                relMax = min(this.opus_manager.RADIX - 1, preceding_value)
-                relMin = min(relMin, relMax)
+            var preceding_value = this.opus_manager.get_absolute_value(preceding_leaf.first, preceding_leaf.second)!!
+
+            // Hide Relative options if they can't be used
+            if (preceding_value > maximum_note - this.opus_manager.RADIX) {
+                options_to_hide.add(2)
             }
-            2 -> {
-                relMax = min((maximum_note - preceding_value) / this.opus_manager.RADIX, relMax)
-                relMin = min(relMin, relMax)
+
+            if (preceding_value < this.opus_manager.RADIX) {
+                options_to_hide.add(3)
             }
-            3 -> {
-                relMax = min(preceding_value / this.opus_manager.RADIX, relMax)
-                relMin = min(relMin, relMax)
+
+            if (preceding_value > maximum_note) {
+                options_to_hide.add(0)
             }
-            else -> { }
+
+            if (preceding_value == 0) {
+                options_to_hide.add(1)
+            }
+
+            var relMin = 1
+            var relMax = maximum_note / this.opus_manager.RADIX
+            when (selector.getState()) {
+                0 -> {
+                    relMin = 0
+                    relMax = min(maximum_note - preceding_value, this.opus_manager.RADIX - 1)
+                }
+                1 -> {
+                    relMax = min(this.opus_manager.RADIX - 1, preceding_value)
+                    relMin = min(relMin, relMax)
+                }
+                2 -> {
+                    relMax = min((maximum_note - preceding_value) / this.opus_manager.RADIX, relMax)
+                    relMin = min(relMin, relMax)
+                }
+                3 -> {
+                    relMax = min(preceding_value / this.opus_manager.RADIX, relMax)
+                    relMin = min(relMin, relMax)
+                }
+                else -> { }
+            }
+            mainMax = min(mainMax, relMax)
+            mainMin = max(mainMin, relMin)
         }
 
+        for (option in options_to_hide) {
+            selector.hideOption(option)
+        }
         var view: NumberSelector = findViewById(R.id.nsRelativeValue)
-        view.setRange(relMin, relMax)
+        view.setRange(mainMin, mainMax)
         view.unset_active_button()
     }
 

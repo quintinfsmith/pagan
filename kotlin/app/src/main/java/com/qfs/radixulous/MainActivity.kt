@@ -52,7 +52,7 @@ class ViewCache {
     private var view_cache: MutableList<Pair<LinearLayout, MutableList<Pair<View?, HashMap<List<Int>, View>>>>> = mutableListOf()
     private var line_label_cache: MutableList<View> = mutableListOf()
     private var column_label_cache: MutableList<View> = mutableListOf()
-    private var _cursor: Triple<Int, Int, List<Int>>? = null
+    private var focused_leafs: MutableSet<Triple<Int, Int, List<Int>>> = mutableSetOf()
     private var active_context_menu_view: View? = null
     private var column_widths: MutableList<Int> = mutableListOf()
     fun set_column_width(x: Int, size: Int) {
@@ -195,31 +195,43 @@ class ViewCache {
         return null
     }
 
-    fun getCursor(): Triple<Int, Int, List<Int>>? {
-        return this._cursor
+    fun popFocusedLeaf(): Triple<Int, Int, List<Int>>? {
+        return if (this.focused_leafs.any()) {
+            var output = this.focused_leafs.first()
+            this.focused_leafs.remove(output)
+            output
+        } else {
+            null
+        }
     }
 
-    fun setCursor(y: Int, x: Int, position: List<Int>) {
-        this._cursor = Triple(y, x, position.toList())
+    fun addFocusedLeaf(y: Int, x: Int, position: List<Int>) {
+        this.focused_leafs.add(Triple(y, x, position))
     }
-    fun unsetCursor() {
-        this._cursor = null
+
+    fun getFocusedLeafs(): MutableSet<Triple<Int, Int, List<Int>>> {
+        return this.focused_leafs
     }
 }
+
 
 class MainActivity : AppCompatActivity() {
     private var opus_manager = OpusManager()
     private var cache = ViewCache()
     private var active_context_menu_index: ContextMenu = ContextMenu.None
-    private var linking_beat: BeatKey? = null
-    private var linking_beat_b: BeatKey? = null
-    private var relative_mode: Boolean = false
     private var ticking: Boolean = false // Lock to prevent multiple attempts at updating from happening at once
+
     lateinit var midi_controller: MIDIController
     lateinit var midi_playback_device: MIDIPlaybackDevice
     private var midi_input_device = MIDIInputDevice()
     private var midi_player = MIDIPlayer()
     private var in_playback = false
+
+    private var focus_row = false
+    private var focus_column = false
+    private var linking_beat: BeatKey? = null
+    private var linking_beat_b: BeatKey? = null
+    private var relative_mode: Boolean = false
 
     @RequiresApi(Build.VERSION_CODES.M)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -463,13 +475,15 @@ class MainActivity : AppCompatActivity() {
         val x = parent.childCount
         headerCellView.text = "$x"
         headerCellView.setOnClickListener {
+            this.focus_column = true
+            this.focus_row = false
             val cursor = this.opus_manager.get_cursor()
             this.opus_manager.set_cursor_position(cursor.y, x, listOf())
+            this.setContextMenu(ContextMenu.Beat)
+            this.tick()
             if (! this.in_playback) {
                 this.play_beat(x)
             }
-            this.setContextMenu(ContextMenu.Beat)
-            this.tick()
         }
         this.cache.addColumnLabel(headerCellView)
         parent.addView(headerCellView)
@@ -888,11 +902,11 @@ class MainActivity : AppCompatActivity() {
     private fun tick() {
         if (! this.ticking) {
             this.ticking = true
-            this.tick_unapply_cursor()
+            this.tick_unapply_focus()
             this.tick_manage_lines()
             this.tick_manage_beats() // new/pop
             this.tick_update_beats() // changes
-            this.tick_apply_cursor()
+            this.tick_apply_focus()
             this.ticking = false
         }
     }
@@ -910,14 +924,14 @@ class MainActivity : AppCompatActivity() {
                         y += counts[i]
                     }
 
-                    val cursor = this.cache.getCursor()
-                    if (cursor != null && y + index < cursor.first) {
-                        this.cache.setCursor(
-                            cursor.first - 1,
-                            cursor.second,
-                            cursor.third
-                        )
-                    }
+                    //val cursor = this.cache.getCursor()
+                    //if (cursor != null && y + index < cursor.first) {
+                    //    this.cache.setCursor(
+                    //        cursor.first - 1,
+                    //        cursor.second,
+                    //        cursor.third
+                    //    )
+                    //}
 
                     this.cache.detachLine(y + index)
                     lines_changed = true
@@ -925,14 +939,14 @@ class MainActivity : AppCompatActivity() {
                 1 -> {
                     val y = this.opus_manager.get_y(channel, index)
 
-                    val cursor = this.cache.getCursor()
-                    if (cursor != null && y + index < cursor.first) {
-                        this.cache.setCursor(
-                            cursor.first + 1,
-                            cursor.second,
-                            cursor.third
-                        )
-                    }
+                    //val cursor = this.cache.getCursor()
+                    //if (cursor != null && y + index < cursor.first) {
+                    //    this.cache.setCursor(
+                    //        cursor.first + 1,
+                    //        cursor.second,
+                    //        cursor.third
+                    //    )
+                    //}
 
                     val rowView = this.buildLineView(y)
                     for (x in 0 until this.opus_manager.opus_beat_count) {
@@ -1108,55 +1122,101 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun tick_apply_cursor() {
+    private fun tick_apply_focus() {
         val cursor = this.opus_manager.get_cursor()
-        val position = cursor.get_position()
-
-        var linked_beats = this.opus_manager.get_all_linked(cursor.get_beatkey())
-
-        for (linked_beat in linked_beats) {
-            for ((view, leaf_pos) in this.cache.get_all_leafs(this.opus_manager.get_y(linked_beat.channel, linked_beat.line_offset), linked_beat.beat, position)) {
-                if (view is LinearLayout) {
-                    continue
-                }
-                val pair = this.opus_manager.get_channel_index(cursor.y)
-                view.background = resources.getDrawable(
-                    if (this.opus_manager.get_tree(linked_beat, leaf_pos).is_event()) {
-                        R.drawable.focus_leaf_active
-                    } else {
-                        R.drawable.focus_leaf
-                    }
+        var focused: MutableSet<Pair<BeatKey, List<Int>>> = mutableSetOf()
+        if (this.focus_column) {
+            for (y in 0 until this.opus_manager.line_count()) {
+                var (channel, index) = this.opus_manager.get_channel_index(y)
+                focused.add(
+                    Pair(
+                        BeatKey(channel, index, cursor.get_beatkey().beat),
+                        listOf()
+                    )
                 )
+            }
+        } else if (this.focus_row) {
+            for (x in 0 until this.opus_manager.opus_beat_count) {
+                var beatkey = cursor.get_beatkey()
+                focused.add(
+                    Pair(
+                        BeatKey(beatkey.channel, beatkey.line_offset, x),
+                        listOf()
+                    )
+                )
+            }
+        } else {
+            focused.add(Pair(cursor.get_beatkey(), cursor.get_position()))
+        }
+
+        for ((beatkey, position) in focused) {
+            var linked_beats = this.opus_manager.get_all_linked(beatkey)
+
+            for (linked_beat in linked_beats) {
+                var y = this.opus_manager.get_y(linked_beat.channel, linked_beat.line_offset)
+                for ((view, leaf_pos) in this.cache.get_all_leafs(y, linked_beat.beat, position)) {
+                    if (view is LinearLayout) {
+                        continue
+                    }
+
+                    view.background = resources.getDrawable(
+                        if (this.opus_manager.get_tree(linked_beat, leaf_pos).is_event()) {
+                            R.drawable.focus_leaf_active
+                        } else {
+                            R.drawable.focus_leaf
+                        }
+                    )
+
+                    this.cache.addFocusedLeaf(y, linked_beat.beat, leaf_pos)
+                }
             }
         }
 
-        this.cache.setCursor(cursor.y, cursor.x, position)
+        if (this.linking_beat_b != null) {
+            var cursor_diff = this.opus_manager.get_cursor_difference(this.linking_beat!!, this.linking_beat_b!!)
+
+            for (y in 0 .. cursor_diff.first) {
+                var new_y = y + this.opus_manager.get_y(
+                    this.linking_beat!!.channel,
+                    this.linking_beat!!.line_offset
+                )
+
+                var target_pair = this.opus_manager.get_channel_index(new_y)
+                for (x in 0 .. cursor_diff.second) {
+                    var new_x = x + this.linking_beat!!.beat
+                    var new_beatkey = BeatKey(target_pair.first, target_pair.second, new_x)
+                    for ((view, leaf_pos) in this.cache.get_all_leafs(new_y, new_x, listOf())) {
+                        view.background = resources.getDrawable(
+                            if (this.opus_manager.get_tree(new_beatkey, leaf_pos).is_event()) {
+                                R.drawable.focus_leaf_active
+                            } else {
+                                R.drawable.focus_leaf
+                            }
+                        )
+                        this.cache.addFocusedLeaf(new_y, new_x, leaf_pos)
+                    }
+                }
+            }
+        }
     }
 
-    private fun tick_unapply_cursor() {
-        val c = this.cache.getCursor()
-        if (c != null) {
-            // TODO: specify Exception
+    private fun tick_unapply_focus() {
+        while (true) {
+            var (y, x, cached_position) = this.cache.popFocusedLeaf() ?: break
+            var view = this.cache.getTreeView(y, x, cached_position) ?: continue
+            if (y >= this.opus_manager.line_count()) {
+                continue
+            }
+            var pair = this.opus_manager.get_channel_index(y)
+
             try {
-                val pair = this.opus_manager.get_channel_index(c.first)
-                for (linked_beat in this.opus_manager.get_all_linked(BeatKey(pair.first, pair.second, c.second))) {
-
-
-                    for ((view, leaf_pos) in this.cache.get_all_leafs(this.opus_manager.get_y(linked_beat.channel, linked_beat.line_offset), linked_beat.beat, c.third)) {
-                        if (view is LinearLayout) {
-                            continue
-                        }
-
-                        if (this.opus_manager.get_tree(BeatKey(pair.first, pair.second, c.second), leaf_pos).is_event()) {
-                            view.background = resources.getDrawable(R.drawable.leaf_active)
-                        } else {
-                            view.background = resources.getDrawable(R.drawable.leaf)
-                        }
-                    }
-
+                if (this.opus_manager.get_tree(BeatKey(pair.first, pair.second, x), cached_position).is_event()) {
+                    view.background = resources.getDrawable(R.drawable.leaf_active)
+                } else {
+                    view.background = resources.getDrawable(R.drawable.leaf)
                 }
-            } catch (exception:Exception) {
-                this.cache.unsetCursor()
+            } catch (e: Exception) {
+                continue
             }
         }
     }
@@ -1359,6 +1419,9 @@ class MainActivity : AppCompatActivity() {
         popupMenu.show()
     }
     private fun interact_leafView_click(view: View) {
+        this.focus_column = false
+        this.focus_row = false
+
         val key = this.cache.getTreeViewYXPosition(view) ?: return
         this.opus_manager.set_cursor_position(key.first, key.second, key.third)
 
@@ -1463,6 +1526,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun interact_rowLabel(view: View) {
+        this.focus_column = false
+        this.focus_row = true
+
         var abs_y: Int = 0
         val label_column = view.parent!! as ViewGroup
         for (i in 0 until label_column.childCount) {

@@ -238,7 +238,6 @@ open class CursorLayer() : FlagLayer() {
         var beat_key = this.get_cursor().get_beatkey()
         this.remove_line(beat_key.channel, beat_key.line_offset)
 
-        this.cursor_up()
     }
 
     fun remove_beat_at_cursor() {
@@ -439,14 +438,16 @@ open class CursorLayer() : FlagLayer() {
 
         super.remove_line(channel, index)
 
-        if (channel < beat_key.channel || (channel == beat_key.channel && abs_index < beat_key.line_offset)) {
+        if (channel < beat_key.channel || (channel == beat_key.channel && abs_index <= beat_key.line_offset)) {
             this.cursor_up()
         }
     }
+
     override fun remove_channel(channel: Int) {
         super.remove_channel(channel)
         this.get_cursor().settle()
     }
+
     override fun overwrite_beat(old_beat: BeatKey, new_beat: BeatKey) {
         super.overwrite_beat(old_beat, new_beat)
         this.get_cursor().settle()

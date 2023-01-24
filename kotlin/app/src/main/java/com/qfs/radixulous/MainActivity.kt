@@ -162,6 +162,15 @@ class ViewCache {
 
         val view = this.view_cache.removeAt(y).first
         (view.parent as ViewGroup).removeView(view)
+
+        for (i in 0 until this.focused_leafs.size) {
+            var (vy, vx, position) = this.popFocusedLeaf()!!
+            if (vy < y) {
+                this.addFocusedLeaf(vy, vx, position)
+            } else if (vy > y) {
+                this.addFocusedLeaf(vy - 1, vx, position)
+            }
+        }
     }
 
     fun removeBeatView(y: Int, x: Int) {
@@ -420,7 +429,7 @@ class MainActivity : AppCompatActivity() {
         )
 
         var close_btn: ImageButton = popupView.findViewById(R.id.btnCloseLoadProject)
-        close_btn.setOnTouchListener { it: View, motionEvent: MotionEvent ->
+        close_btn.setOnTouchListener { _: View, motionEvent: MotionEvent ->
             if (motionEvent.action == MotionEvent.ACTION_UP) {
                 popupWindow.dismiss()
             }
@@ -711,6 +720,7 @@ class MainActivity : AppCompatActivity() {
             false
         )
 
+
         this.llContextMenu.addView(view)
         this.cache.setActiveContextMenu(view)
 
@@ -722,7 +732,6 @@ class MainActivity : AppCompatActivity() {
         val cursor = this.opus_manager.get_cursor()
 
         if (this.opus_manager.has_preceding_absolute_event(cursor.get_beatkey(), cursor.get_position())) {
-
             view.sRelative.isChecked = this.relative_mode
             view.sRelative.setOnCheckedChangeListener { it, isChecked ->
                 this.interact_sRelative_changed(it, isChecked)
@@ -811,9 +820,17 @@ class MainActivity : AppCompatActivity() {
         view.clButtons.btnUnset?.setOnClickListener {
             this.interact_btnUnset(it)
         }
+        if (current_tree.is_leaf() && !current_tree.is_event()) {
+            view.clButtons.btnUnset?.visibility = View.GONE
+        }
 
-        view.clButtons.btnRemove?.setOnClickListener {
-            this.interact_btnRemove(it)
+        if (this.opus_manager.get_cursor().get_position().isEmpty()) {
+            view.clButtons.btnRemove.visibility = View.GONE
+        } else {
+            view.clButtons.btnRemove.visibility = View.VISIBLE
+            view.clButtons.btnRemove?.setOnClickListener {
+                this.interact_btnRemove(it)
+            }
         }
 
         view.clButtons.btnInsert?.setOnClickListener {
@@ -907,6 +924,7 @@ class MainActivity : AppCompatActivity() {
             this.tick_manage_beats() // new/pop
             this.tick_update_beats() // changes
             this.tick_apply_focus()
+
             this.ticking = false
         }
     }
@@ -1309,6 +1327,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun interact_btnSplit(view: View) {
         this.opus_manager.split_tree_at_cursor()
+        this.setContextMenu(ContextMenu.Leaf)
         this.tick()
     }
 
@@ -1492,6 +1511,7 @@ class MainActivity : AppCompatActivity() {
             nsOctave.setState(event.note / event.radix)
         }
 
+        this.setContextMenu(ContextMenu.Leaf)
         this.tick()
     }
 
@@ -1522,6 +1542,7 @@ class MainActivity : AppCompatActivity() {
             nsOffset.setState(event.note % event.radix)
         }
 
+        this.setContextMenu(ContextMenu.Leaf)
         this.tick()
     }
 
@@ -1566,6 +1587,7 @@ class MainActivity : AppCompatActivity() {
         if (cursor.get_position().isNotEmpty()) {
             this.opus_manager.remove_tree_at_cursor()
         }
+        this.setContextMenu(ContextMenu.Leaf)
         this.tick()
     }
 
@@ -1576,6 +1598,7 @@ class MainActivity : AppCompatActivity() {
         } else {
             this.opus_manager.insert_after_cursor()
         }
+        this.setContextMenu(ContextMenu.Leaf)
         this.tick()
     }
 

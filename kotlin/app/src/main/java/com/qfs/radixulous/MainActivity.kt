@@ -1015,8 +1015,10 @@ class MainActivity : AppCompatActivity() {
     private fun tick_manage_beats() {
         val updated_beats: MutableSet<Int> = mutableSetOf()
         var beats_changed = false
+        var min_changed = this.opus_manager.opus_beat_count
         while (true) {
             val (index, operation) = this.opus_manager.fetch_flag_beat() ?: break
+            min_changed = min(min_changed, index)
             when (operation) {
                 1 -> {
                     this.newColumnLabel()
@@ -1040,6 +1042,9 @@ class MainActivity : AppCompatActivity() {
         }
         if (beats_changed) {
             this.tick_resize_beats(updated_beats.toList())
+            for (i in min_changed until this.opus_manager.opus_beat_count) {
+                this.__tick_update_column_label_size(i)
+            }
         }
     }
 

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/MainFragment">
+
+    <fragment
+        android:id="@+id/MainFragment"
+        android:name="com.qfs.radixulous.MainFragment"
+        android:label="@string/main_fragment_label"
+        tools:layout="@layout/fragment_main">
+
+        <action
+            android:id="@+id/action_MainFragment_to_LoadFragment"
+            app:destination="@id/LoadFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/LoadFragment"
+        android:name="com.qfs.radixulous.LoadFragment"
+        android:label="@string/load_fragment_label"
+        tools:layout="@layout/fragment_load">
+
+        <action
+            android:id="@+id/action_LoadFragment_to_MainFragment"
+            app:destination="@id/MainFragment" />
+    </fragment>
+</navigation>

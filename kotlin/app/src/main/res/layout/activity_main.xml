@@ -1,104 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fontFamily="@font/fira_code"
     tools:context=".MainActivity">
 
-    <TableLayout
-        android:id="@+id/tlMain"
+    <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
+        android:layout_height="wrap_content"
+        android:theme="@style/Theme.Kotlin.AppBarOverlay">
 
-        <TableRow
-            android:id="@+id/trMainA"
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="?attr/actionBarSize"
+            android:background="?attr/colorPrimary"
+            app:popupTheme="@style/Theme.Kotlin.PopupOverlay" />
 
-            <TextView
-                android:id="@+id/btnChannelCtrl"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_margin="0px"
-                android:background="@color/channel_button_bg"
-                android:textColor="@color/channel_button_fg"
-                android:padding="6dp"
-                android:text="CHNL"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+    </com.google.android.material.appbar.AppBarLayout>
 
-            <HorizontalScrollView
-                android:id="@+id/hsvColumnLabels"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:scrollbars="none"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent">
+    <include layout="@layout/content_main" />
 
-                <LinearLayout
-                    android:id="@+id/llColumnLabels"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:orientation="horizontal"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent" />
 
-            </HorizontalScrollView>
-        </TableRow>
-
-        <TableRow
-            android:id="@+id/trMainB"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_weight="1">
-
-            <ScrollView
-                android:id="@+id/svLineLabels"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:scrollbars="none">
-
-                <LinearLayout
-                    android:id="@+id/llLineLabels"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:orientation="vertical"></LinearLayout>
-            </ScrollView>
-
-            <ScrollView
-                android:id="@+id/svTable"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_weight="1">
-
-                <HorizontalScrollView
-                    android:id="@+id/hsvTable"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent">
-
-                    <TableLayout
-                        android:id="@+id/tlOpusLines"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content" />
-                </HorizontalScrollView>
-            </ScrollView>
-        </TableRow>
-        <TableRow>
-            <LinearLayout
-                android:layout_span="2"
-                android:layout_weight="1"
-                android:id="@+id/llContextMenu"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent" />
-        </TableRow>
-    </TableLayout>
-</androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -7,6 +7,8 @@
     <string name="empty_note">  </string>
     <string name="msg_undo_none">Nothing to be done</string>
     <string name="label_channels_button">Chn</string>
+    <string name="main_fragment_label">Main Fragment</string>
+    <string name="load_fragment_label">Load Fragment</string>
     <string-array name="relative">
         <item>@string/pfx_add</item>
         <item>@string/pfx_subtract</item>

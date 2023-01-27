@@ -1,7 +1,10 @@
 package com.qfs.radixulous
 
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.*
+import android.widget.EditText
 import android.widget.PopupWindow
 import android.widget.TextView
 import androidx.core.os.bundleOf
@@ -41,12 +44,38 @@ class ConfigFragment : Fragment() {
 
     override fun onStart() {
         super.onStart()
-        this.getMain().set_title_text("Config Project")
+        var main = this.getMain()
+        main.getOpusManager().get_working_dir()?.let { name: String ->
+            main.set_title_text(
+                "${name.substring(name.lastIndexOf("/") + 1)}"
+            )
+        }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setFragmentResult("RETURNED", bundleOf())
+        var main = this.getMain()
+
+        var etTempo: EditText = view.findViewById(R.id.etTempo)
+        etTempo.setText(main.getOpusManager().tempo.toString())
+        etTempo.addTextChangedListener(object: TextWatcher {
+            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
+                //TODO("Not yet implemented")
+            }
+
+            override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
+                //TODO("Not yet implemented")
+            }
+
+            override fun afterTextChanged(editable: Editable?) {
+                try {
+                    main.getOpusManager().tempo = editable.toString().toFloat()
+                } catch (exception: Exception) {
+
+                }
+            }
+        })
 
         var opus_manager = this.getMain().getOpusManager()
 

@@ -109,6 +109,12 @@ class MainFragment : Fragment() {
             var main = this.getMain()
             this.takedownCurrent()
             main.getOpusManager().reflag()
+
+            main.getOpusManager().get_working_dir()?.let { name: String ->
+                main.set_title_text(
+                    name.substring(name.lastIndexOf("/") + 1)
+                )
+            }
             this.setContextMenu(ContextMenu.Leaf)
             this.tick()
         }
@@ -160,7 +166,7 @@ class MainFragment : Fragment() {
     }
 
 
-    private fun undo() {
+    fun undo() {
         var opus_manager = this.getMain().getOpusManager()
         if (opus_manager.has_history()) {
             opus_manager.apply_undo()
@@ -586,7 +592,7 @@ class MainFragment : Fragment() {
         view.clButtons.btnUnset?.setOnClickListener {
             this.interact_btnUnset(it)
         }
-        if (current_tree.is_leaf() && !current_tree.is_event()) {
+        if (opus_manager.get_cursor().get_beatkey().channel != 9 && current_tree.is_leaf() && !current_tree.is_event()) {
             view.clButtons.btnUnset?.visibility = View.GONE
         }
 

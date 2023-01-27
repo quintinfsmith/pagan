@@ -4,35 +4,18 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/clA"
     android:layout_width="match_parent"
-    android:padding="32dp"
     android:layout_height="match_parent"
     tools:context=".ConfigFragment">
 
 <LinearLayout
     android:id="@+id/llB"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:background="#FFefefef"
-    app:layout_constraintBottom_toBottomOf="parent"
+    android:layout_height="0dp"
+    app:layout_constraintBottom_toTopOf="@+id/llProjectOptions"
     app:layout_constraintEnd_toEndOf="parent"
     app:layout_constraintStart_toStartOf="parent"
     app:layout_constraintTop_toTopOf="parent"
     android:orientation="vertical">
-
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
-        <ImageButton
-            android:id="@+id/btnCloseChannelCtl"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:contentDescription="TODO"
-            android:src="@drawable/ic_baseline_close_24"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <LinearLayout
         android:orientation="horizontal"
@@ -47,19 +30,60 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:ems="4"
-            android:text="120"
+            android:text="0"
             android:gravity="right"
             android:inputType="numberDecimal" />
     </LinearLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ems="4"
+        android:text="Active Channels"
+        android:gravity="center" />
 
     <com.google.android.material.chip.ChipGroup
         android:id="@+id/cgEnabledChannels"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content">
-
     </com.google.android.material.chip.ChipGroup>
 
 
+</LinearLayout>
+
+<LinearLayout
+    android:id="@+id/llProjectOptions"
+    android:orientation="horizontal"
+    android:gravity="bottom"
+
+    app:layout_constraintTop_toBottomOf="@+id/llB"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintBottom_toBottomOf="parent"
+
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content" >
+    <Button
+        android:id="@+id/btnCopyProject"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_height="wrap_content"
+        android:ems="4"
+        android:text="Copy" />
+    <Button
+        android:id="@+id/btnDeleteProject"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_height="wrap_content"
+        android:ems="4"
+        android:text="Delete" />
+    <Button
+        android:id="@+id/btnExportProject"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_height="wrap_content"
+        android:ems="4"
+        android:text="Export" />
 </LinearLayout>
 
 

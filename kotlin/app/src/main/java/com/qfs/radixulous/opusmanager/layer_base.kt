@@ -20,6 +20,7 @@ open class OpusManagerBase {
     var path: String? = null
     var percussion_map: HashMap<Int, Int> = HashMap<Int, Int>()
     var channel_instruments: HashMap<Int, Int> = HashMap()
+    var tempo: Float = 120F
 
     open fun reset() {
         this.opus_beat_count = 1
@@ -273,7 +274,7 @@ open class OpusManagerBase {
         }
         //var instruments = i_arg ?: HashMap<Int, Int>()
         var instruments = HashMap<Int, Int>()
-        var tempo = 120F
+        var tempo = this.tempo
 
         var midi = MIDI()
         for (i in 0 until 16) {

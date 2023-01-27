@@ -1,5 +1,7 @@
 package com.qfs.radixulous
 
+//import com.qfs.radixulous.MIDIPlaybackDevice
+
 import android.content.Context
 import android.os.Build
 import android.os.Bundle
@@ -7,21 +9,16 @@ import android.util.Log
 import android.view.*
 import android.widget.Toast
 import androidx.annotation.RequiresApi
-import com.google.android.material.snackbar.Snackbar
 import androidx.appcompat.app.AppCompatActivity
+import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
-import androidx.navigation.findNavController
-import androidx.navigation.fragment.findNavController
-//import com.qfs.radixulous.MIDIPlaybackDevice
 import com.qfs.radixulous.apres.*
-
-import kotlin.concurrent.thread
-
 import com.qfs.radixulous.databinding.ActivityMainBinding
 import com.qfs.radixulous.opusmanager.HistoryLayer
 import java.io.File
+import kotlin.concurrent.thread
 
 enum class ContextMenu {
     Leaf,
@@ -110,7 +107,13 @@ class MainActivity : AppCompatActivity() {
             R.id.itmLoadProject -> navController.navigate(R.id.action_MainFragment_to_LoadFragment)
             //R.id.itmSaveProject -> this.save()
             //R.id.itmExportMidi -> this.export_midi()
-            //R.id.itmUndo -> this.undo()
+            R.id.itmUndo -> {
+                var navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main)
+                var main_fragment = navHost?.childFragmentManager?.fragments?.get(0)
+                if (main_fragment is MainFragment) {
+                    main_fragment.undo()
+                }
+            }
         }
         return super.onOptionsItemSelected(item)
     }

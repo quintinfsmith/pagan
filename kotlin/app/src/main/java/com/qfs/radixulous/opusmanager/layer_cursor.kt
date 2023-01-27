@@ -47,6 +47,7 @@ class Cursor(var opus_manager: CursorLayer) {
             this.x
         )
     }
+
     fun get_channel_index(): Pair<Int, Int> {
         return this.opus_manager.get_channel_index(this.y)
     }
@@ -85,7 +86,7 @@ class Cursor(var opus_manager: CursorLayer) {
             working_tree = working_tree.get(i)
         }
 
-        while (! this.position.isEmpty()) {
+        while (this.position.isNotEmpty()) {
             if (working_tree.parent!!.size - 1 == this.position.last()) {
                 this.position.removeAt(this.position.size - 1)
                 working_tree = working_tree.parent!!
@@ -102,12 +103,14 @@ class Cursor(var opus_manager: CursorLayer) {
             this.settle(true)
         }
     }
+
     fun move_up() {
         if (this.y > 0) {
             this.y -= 1
         }
         this.settle()
     }
+
     fun move_down() {
         var line_count = this.opus_manager.line_count()
         if (this.y < line_count - 1) {
@@ -115,6 +118,7 @@ class Cursor(var opus_manager: CursorLayer) {
         }
         this.settle()
     }
+
     fun get_position(): List<Int> {
         return this.position.toList()
     }
@@ -160,11 +164,11 @@ class Cursor(var opus_manager: CursorLayer) {
 
 open class CursorLayer() : FlagLayer() {
     var cursor: Cursor? = null
-    var channel_order = Array(16, { i -> i })
+    var channel_order = Array(16) { i -> i }
 
     override fun reset() {
         this.cursor = Cursor(this)
-        this.channel_order = Array(16, {i -> i})
+        this.channel_order = Array(16) { i -> i }
         super.reset()
     }
 

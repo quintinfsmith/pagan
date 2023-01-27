@@ -42,6 +42,7 @@ class MainActivity : AppCompatActivity() {
     private var midi_player = MIDIPlayer()
 
     private var opus_manager = HistoryLayer()
+    var working_path: String? = null
 
 
     @RequiresApi(Build.VERSION_CODES.M)
@@ -66,14 +67,13 @@ class MainActivity : AppCompatActivity() {
         this.midi_controller.registerVirtualDevice(this.midi_input_device)
         this.midi_controller.registerVirtualDevice(this.midi_player)
         ///////////////////////////////////////////
-        this.newProject()
     }
 
     fun getOpusManager(): HistoryLayer {
         return this.opus_manager
     }
 
-    private fun newProject() {
+    fun newProject() {
         this.opus_manager.new()
 
         var projects_dir = "/data/data/com.qfs.radixulous/projects"
@@ -82,10 +82,6 @@ class MainActivity : AppCompatActivity() {
             i += 1
         }
         this.opus_manager.path = "$projects_dir/opus$i"
-    }
-
-    fun load(path: String) {
-        this.opus_manager.load(path)
     }
 
     private fun save() {
@@ -119,6 +115,9 @@ class MainActivity : AppCompatActivity() {
         return super.onOptionsItemSelected(item)
     }
 
+    override fun onBackPressed() {
+        super.onBackPressed()
+    }
 
     fun play_event(channel: Int, event_value: Int) {
         this.midi_input_device.sendEvent(NoteOn(channel, event_value + 21, 64))
@@ -132,11 +131,11 @@ class MainActivity : AppCompatActivity() {
         this.midi_player.play_midi(midi)
     }
 
-    //override fun onSupportNavigateUp(): Boolean {
-    //    val navController = findNavController(R.id.nav_host_fragment_content_main)
-    //    return navController.navigateUp(appBarConfiguration)
-    //            || super.onSupportNavigateUp()
-    //}
+    override fun onSupportNavigateUp(): Boolean {
+        val navController = findNavController(R.id.nav_host_fragment_content_main)
+        return navController.navigateUp(appBarConfiguration)
+                || super.onSupportNavigateUp()
+    }
 }
 
 class RadMidiController(context: Context): MIDIController(context) { }

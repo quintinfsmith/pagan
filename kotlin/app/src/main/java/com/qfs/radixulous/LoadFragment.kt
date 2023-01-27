@@ -2,12 +2,11 @@ package com.qfs.radixulous
 
 import android.os.Bundle
 import android.view.*
-import androidx.fragment.app.Fragment
-import android.widget.ImageButton
-import android.widget.PopupWindow
 import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
-import androidx.navigation.findNavController
+import androidx.core.os.bundleOf
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
+import androidx.fragment.app.setFragmentResult
 import androidx.navigation.fragment.findNavController
 import com.qfs.radixulous.databinding.FragmentLoadBinding
 import kotlinx.android.synthetic.main.fragment_load.view.*
@@ -47,6 +46,7 @@ class LoadFragment : Fragment() {
         // TODO: Find way to use relative path
         var projects_dir = "/data/data/com.qfs.radixulous/projects"
 
+        setFragmentResult("RETURNED", bundleOf())
         val directory = File(projects_dir)
         if (!directory.isDirectory) {
             if (! directory.mkdirs()) {
@@ -71,11 +71,8 @@ class LoadFragment : Fragment() {
 
             row.setOnClickListener {
                 // TODO: Show loading reticule
-                this.getMain().load("$projects_dir/$file_name")
+                setFragmentResult("LOAD", bundleOf(Pair("PATH", "$projects_dir/$file_name")))
                 findNavController().navigate(R.id.action_LoadFragment_to_MainFragment)
-                //this.takedownCurrent()
-                //this.load("$projects_dir/$file_name")
-                //popupWindow.dismiss()
             }
 
             view.svProjectList.llProjectList.addView(row)

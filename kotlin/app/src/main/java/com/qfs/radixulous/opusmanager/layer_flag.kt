@@ -121,18 +121,16 @@ open class FlagLayer : LinksLayer() {
 
     override fun new() {
         super.new()
-        for (i in 0 until this.channel_lines.size) {
-            for (j in 0 until this.channel_lines[i].size) {
-                this.cache.flag_line_init(i, j)
-            }
-        }
-        for (x in 0 until this.opus_beat_count) {
-            this.cache.flag_beat_new(x)
-        }
+        this.reflag()
     }
 
     override fun load(path: String) {
         super.load(path)
+        this.reflag()
+    }
+
+    fun reflag() {
+        this.cache.purge()
         for (i in 0 until this.channel_lines.size) {
             for (j in 0 until this.channel_lines[i].size) {
                 this.cache.flag_line_init(i, j)
@@ -149,7 +147,6 @@ open class FlagLayer : LinksLayer() {
     }
 
     override fun set_percussion_event(beat_key: BeatKey, position: List<Int>) {
-        Log.e("AAA", "$beat_key, $position")
         super.set_percussion_event(beat_key, position)
         this.cache.flag_beat_change(beat_key)
     }

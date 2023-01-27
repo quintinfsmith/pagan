@@ -9,6 +9,7 @@ import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.setFragmentResultListener
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.chip.Chip
 import com.qfs.radixulous.databinding.FragmentMainBinding
@@ -43,9 +44,7 @@ class MainFragment : Fragment() {
     private var linking_beat: BeatKey? = null
     private var linking_beat_b: BeatKey? = null
     private var relative_mode: Boolean = false
-
-    private var label_scroll_lock = false
-
+    private var is_loaded: Boolean = false
 
     private var _binding: FragmentMainBinding? = null
     private var cache = ViewCache()
@@ -58,7 +57,6 @@ class MainFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-
         _binding = FragmentMainBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -87,24 +85,70 @@ class MainFragment : Fragment() {
 
         val btnChannelCtrl: TextView = view.findViewById(R.id.btnChannelCtrl)
         btnChannelCtrl.setOnClickListener{
-            this.showChannelPopup(it)
+            findNavController().navigate(R.id.action_MainFragment_to_ConfigFragment)
+            //this.showChannelPopup(it)
         }
 
+        setFragmentResultListener("LOAD") { _, bundle: Bundle? ->
+            var main = this.getMain()
+            bundle!!.getString("PATH")?.let { path: String ->
+                this.takedownCurrent()
+                main.getOpusManager().load(path)
+                main.getOpusManager().get_working_dir()?.let { name: String ->
+                    main.set_title_text(
+                        name.substring(name.lastIndexOf("/") + 1)
+                    )
+                }
+
+                this.setContextMenu(ContextMenu.Leaf)
+                this.tick()
+            }
+        }
+
+        setFragmentResultListener("RETURNED") { _, bundle: Bundle? ->
+            var main = this.getMain()
+            this.takedownCurrent()
+            main.getOpusManager().reflag()
+            this.setContextMenu(ContextMenu.Leaf)
+            this.tick()
+        }
 
         //binding.buttonFirst.setOnClickListener {
         //    findNavController().navigate(R.id.action_FirstFragment_to_SecondFragment)
         //}
     }
+
     override fun onStart() {
         super.onStart()
-        var name = this.getMain().getOpusManager().get_working_dir()
-        if (name != null) {
-            name = name.substring(name.lastIndexOf("/") + 1)
-            this.getMain().set_title_text(name)
+        var main = this.getMain()
+        if (!this.is_loaded) {
+            main.newProject()
+            main.getOpusManager().get_working_dir()?.let {
+                main.set_title_text(
+                    it.substring(it.lastIndexOf("/") + 1)
+                )
+            }
+            this.setContextMenu(ContextMenu.Leaf)
+            this.tick()
+
+            this.is_loaded = true
         }
-        this.setContextMenu(ContextMenu.Leaf)
-        this.tick()
+
     }
+
+    //override fun onResume() {
+    //    super.onResume()
+    //}
+    //override fun onStop() {
+    //    super.onStop()
+    //}
+
+    //override fun onSaveInstanceState(savedInstanceState: Bundle) {
+    //    super.onSaveInstanceState(savedInstanceState)
+    //}
+    //override fun onViewStateRestored(savedInstanceState: Bundle?) {
+    //    super.onViewStateRestored(savedInstanceState)
+    //}
 
     override fun onDestroyView() {
         super.onDestroyView()
@@ -126,7 +170,6 @@ class MainFragment : Fragment() {
             Toast.makeText(activity?.applicationContext, getString(R.string.msg_undo_none), Toast.LENGTH_SHORT).show()
         }
     }
-
 
     private fun takedownCurrent() {
         this.setContextMenu(ContextMenu.None)
@@ -188,7 +231,6 @@ class MainFragment : Fragment() {
             popupWindow.dismiss()
         }
     }
-
 
     private fun newColumnLabel() {
         var opus_manager = this.getMain().getOpusManager()
@@ -673,29 +715,11 @@ class MainFragment : Fragment() {
                         y += counts[i]
                     }
 
-                    //val cursor = this.cache.getCursor()
-                    //if (cursor != null && y + index < cursor.first) {
-                    //    this.cache.setCursor(
-                    //        cursor.first - 1,
-                    //        cursor.second,
-                    //        cursor.third
-                    //    )
-                    //}
-
                     this.cache.detachLine(y + index)
                     lines_changed = true
                 }
                 1 -> {
                     val y = opus_manager.get_y(channel, index)
-
-                    //val cursor = this.cache.getCursor()
-                    //if (cursor != null && y + index < cursor.first) {
-                    //    this.cache.setCursor(
-                    //        cursor.first + 1,
-                    //        cursor.second,
-                    //        cursor.third
-                    //    )
-                    //}
 
                     val rowView = this.buildLineView(y)
                     for (x in 0 until opus_manager.opus_beat_count) {

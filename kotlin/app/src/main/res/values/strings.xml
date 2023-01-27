@@ -9,6 +9,7 @@
     <string name="label_channels_button">Chn</string>
     <string name="main_fragment_label">Main Fragment</string>
     <string name="load_fragment_label">Load Fragment</string>
+    <string name="config_fragment_label">Config</string>
     <string-array name="relative">
         <item>@string/pfx_add</item>
         <item>@string/pfx_subtract</item>

@@ -14,7 +14,11 @@
         <action
             android:id="@+id/action_MainFragment_to_LoadFragment"
             app:destination="@id/LoadFragment" />
+        <action
+            android:id="@+id/action_MainFragment_to_ConfigFragment"
+            app:destination="@id/ConfigFragment" />
     </fragment>
+
     <fragment
         android:id="@+id/LoadFragment"
         android:name="com.qfs.radixulous.LoadFragment"
@@ -23,6 +27,21 @@
 
         <action
             android:id="@+id/action_LoadFragment_to_MainFragment"
+            app:popUpTo="@id/MainFragment"
+            app:popUpToInclusive="true"
+            app:destination="@id/MainFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/ConfigFragment"
+        android:name="com.qfs.radixulous.ConfigFragment"
+        android:label="@string/config_fragment_label"
+        tools:layout="@layout/fragment_config">
+
+        <action
+            android:id="@+id/action_ConfigFragment_to_MainFragment"
+            app:popUpTo="@id/MainFragment"
+            app:popUpToInclusive="true"
             app:destination="@id/MainFragment" />
     </fragment>
 </navigation>

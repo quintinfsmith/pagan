@@ -2,12 +2,15 @@ package com.qfs.radixulous
 
 //import com.qfs.radixulous.MIDIPlaybackDevice
 
+import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
+import android.provider.DocumentsContract
 import android.view.*
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.findNavController
@@ -18,7 +21,9 @@ import com.qfs.radixulous.apres.*
 import com.qfs.radixulous.databinding.ActivityMainBinding
 import com.qfs.radixulous.opusmanager.HistoryLayer
 import java.io.File
+import java.io.FileOutputStream
 import kotlin.concurrent.thread
+
 
 enum class ContextMenu {
     Leaf,
@@ -29,7 +34,6 @@ enum class ContextMenu {
 }
 
 class MainActivity : AppCompatActivity() {
-
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
 
@@ -41,6 +45,19 @@ class MainActivity : AppCompatActivity() {
     private var opus_manager = HistoryLayer()
     var working_path: String? = null
 
+    private lateinit var optionsMenu: Menu
+
+    var export_midi_intent = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            var opus_manager = this.getOpusManager()
+            result?.data?.data?.also { uri ->
+                applicationContext.contentResolver.openFileDescriptor(uri, "w")?.use {
+                    FileOutputStream(it.fileDescriptor).write(opus_manager.get_midi().as_bytes())
+                    Toast.makeText(this, "Exported to midi", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
 
     @RequiresApi(Build.VERSION_CODES.M)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -64,10 +81,93 @@ class MainActivity : AppCompatActivity() {
         this.midi_controller.registerVirtualDevice(this.midi_input_device)
         this.midi_controller.registerVirtualDevice(this.midi_player)
         ///////////////////////////////////////////
+
+    }
+
+    override fun onBackPressed() {
+        super.onBackPressed()
+    }
+
+    override fun onSupportNavigateUp(): Boolean {
+        val navController = findNavController(R.id.nav_host_fragment_content_main)
+        return navController.navigateUp(appBarConfiguration)
+                || super.onSupportNavigateUp()
+    }
+    // method to inflate the options menu when
+    // the user opens the menu for the first time
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        // TODO: decide which menu based on active fragment?
+        this.menuInflater.inflate(R.menu.main_options_menu, menu)
+        this.optionsMenu = menu
+        return super.onCreateOptionsMenu(menu)
+    }
+
+    // methods to control the operations that will
+    // happen when user clicks on the action buttons
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        val navController = findNavController(R.id.nav_host_fragment_content_main)
+        when (item.itemId) {
+            R.id.itmNewProject -> {
+                // TODO: Save or discard popup dialog
+                var navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main)
+                var main_fragment = navHost?.childFragmentManager?.fragments?.get(0)
+                if (main_fragment is MainFragment) {
+                    main_fragment.takedownCurrent()
+                    this.newProject()
+
+                    this.getOpusManager().get_working_dir()?.let {
+                        this.set_title_text(
+                            it.substring(it.lastIndexOf("/") + 1)
+                        )
+                    }
+
+                    main_fragment.setContextMenu(ContextMenu.Leaf)
+                    main_fragment.tick()
+                }
+            }
+            R.id.itmLoadProject -> {
+                navController.navigate(R.id.action_MainFragment_to_LoadFragment)
+            }
+            R.id.itmSaveProject -> {
+                this.save()
+            }
+            R.id.itmExportMidi -> this.export_midi()
+            R.id.itmUndo -> {
+                var navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main)
+                var main_fragment = navHost?.childFragmentManager?.fragments?.get(0)
+                if (main_fragment is MainFragment) {
+                    main_fragment.undo()
+                }
+            }
+        }
+        return super.onOptionsItemSelected(item)
     }
 
     fun getOpusManager(): HistoryLayer {
         return this.opus_manager
+    }
+
+    fun update_menu_options() {
+        var navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main)
+        var fragment = navHost?.childFragmentManager?.fragments?.get(0)
+        when (fragment) {
+            is MainFragment -> {
+                this.optionsMenu.findItem(R.id.itmLoadProject).isVisible = true
+                this.optionsMenu.findItem(R.id.itmSaveProject).isVisible = true
+                this.optionsMenu.findItem(R.id.itmUndo).isVisible = true
+                this.optionsMenu.findItem(R.id.itmNewProject).isVisible = true
+                this.optionsMenu.findItem(R.id.itmExportMidi).isVisible = true
+            }
+            //is LoadFragment -> { }
+            //is ConfigFragment -> { }
+            else -> {
+                this.optionsMenu.findItem(R.id.itmLoadProject).isVisible = false
+                this.optionsMenu.findItem(R.id.itmSaveProject).isVisible = false
+                this.optionsMenu.findItem(R.id.itmUndo).isVisible = false
+                this.optionsMenu.findItem(R.id.itmNewProject).isVisible = false
+                this.optionsMenu.findItem(R.id.itmExportMidi).isVisible = false
+            }
+        }
     }
 
     fun newProject() {
@@ -90,38 +190,6 @@ class MainActivity : AppCompatActivity() {
         this.binding.toolbar!!.title = new_text
     }
 
-    // method to inflate the options menu when
-    // the user opens the menu for the first time
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        // TODO: decide which menu based on active fragment?
-        this.menuInflater.inflate(R.menu.main_options_menu, menu)
-        return super.onCreateOptionsMenu(menu)
-    }
-
-    // methods to control the operations that will
-    // happen when user clicks on the action buttons
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        val navController = findNavController(R.id.nav_host_fragment_content_main)
-        when (item.itemId) {
-            //R.id.itmNewProject -> this.newProject()
-            R.id.itmLoadProject -> navController.navigate(R.id.action_MainFragment_to_LoadFragment)
-            //R.id.itmSaveProject -> this.save()
-            //R.id.itmExportMidi -> this.export_midi()
-            R.id.itmUndo -> {
-                var navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main)
-                var main_fragment = navHost?.childFragmentManager?.fragments?.get(0)
-                if (main_fragment is MainFragment) {
-                    main_fragment.undo()
-                }
-            }
-        }
-        return super.onOptionsItemSelected(item)
-    }
-
-    override fun onBackPressed() {
-        super.onBackPressed()
-    }
-
     fun play_event(channel: Int, event_value: Int) {
         this.midi_input_device.sendEvent(NoteOn(channel, event_value + 21, 64))
         thread {
@@ -134,11 +202,24 @@ class MainActivity : AppCompatActivity() {
         this.midi_player.play_midi(midi)
     }
 
-    override fun onSupportNavigateUp(): Boolean {
-        val navController = findNavController(R.id.nav_host_fragment_content_main)
-        return navController.navigateUp(appBarConfiguration)
-                || super.onSupportNavigateUp()
+    fun export_midi() {
+        var opus_manager = this.getOpusManager()
+
+        var name = opus_manager.get_working_dir()
+        if (name != null) {
+            name = name.substring(name.lastIndexOf("/") + 1)
+        }
+
+        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "application/midi"
+            putExtra(Intent.EXTRA_TITLE, "$name.mid")
+            putExtra(DocumentsContract.EXTRA_INITIAL_URI, "")
+        }
+
+        this.export_midi_intent.launch(intent)
     }
+
 }
 
 class RadMidiController(context: Context): MIDIController(context) { }

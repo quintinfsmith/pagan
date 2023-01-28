@@ -5,18 +5,12 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.view.*
 import android.widget.EditText
-import android.widget.PopupWindow
-import android.widget.TextView
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.setFragmentResult
-import androidx.navigation.fragment.findNavController
 import com.google.android.material.chip.Chip
 import com.qfs.radixulous.databinding.FragmentConfigBinding
 import kotlinx.android.synthetic.main.channel_ctrl.view.*
-import kotlinx.android.synthetic.main.fragment_load.view.*
-import java.io.File
 
 /**
  * A simple [Fragment] subclass as the second destination in the navigation.
@@ -44,6 +38,7 @@ class ConfigFragment : Fragment() {
 
     override fun onStart() {
         super.onStart()
+        this.getMain().update_menu_options()
         var main = this.getMain()
         main.getOpusManager().get_working_dir()?.let { name: String ->
             main.set_title_text(

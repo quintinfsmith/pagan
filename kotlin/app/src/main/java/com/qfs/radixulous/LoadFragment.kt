@@ -38,6 +38,7 @@ class LoadFragment : Fragment() {
 
     override fun onStart() {
         super.onStart()
+        this.getMain().update_menu_options()
         this.getMain().set_title_text("Load Project")
     }
 

@@ -26,7 +26,7 @@
         <com.qfs.radixulous.RelativeOptionSelector xmlns:android="http://schemas.android.com/apk/res/android"
             xmlns:custom="http://schemas.android.com/apk/res-auto"
             android:id="@+id/rosRelativeOption"
-            app:theme="@style/numberSelector"
+            android:theme="@style/numberSelector"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
@@ -37,7 +37,7 @@
             android:layout_height="wrap_content"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:theme="@style/numberSelector"
+            android:theme="@style/numberSelector"
             custom:min="0"
             custom:max="11"/>
     </LinearLayout>
@@ -59,7 +59,7 @@
             android:layout_height="wrap_content"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:theme="@style/numberSelector"
+            android:theme="@style/numberSelector"
             custom:min="0"
             custom:max="7"/>
 
@@ -70,7 +70,7 @@
             android:layout_height="wrap_content"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:theme="@style/numberSelector"
+            android:theme="@style/numberSelector"
             custom:min="0"
             custom:max="11"/>
     </LinearLayout>

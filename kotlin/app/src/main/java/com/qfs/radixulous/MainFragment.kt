@@ -1,22 +1,16 @@
 package com.qfs.radixulous
 
-import android.content.Intent
 import android.os.Bundle
-import android.provider.DocumentsContract
-import android.util.Log
 import android.view.*
 import android.widget.*
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResultListener
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.chip.Chip
 import com.qfs.radixulous.databinding.FragmentMainBinding
-import com.qfs.radixulous.*
 import com.qfs.radixulous.apres.*
 import com.qfs.radixulous.opusmanager.BeatKey
-import com.qfs.radixulous.opusmanager.HistoryLayer
 import com.qfs.radixulous.opusmanager.OpusEvent
 import kotlinx.android.synthetic.main.channel_ctrl.view.*
 import kotlinx.android.synthetic.main.contextmenu_cell.view.*
@@ -27,9 +21,6 @@ import kotlinx.android.synthetic.main.fragment_main.*
 import kotlinx.android.synthetic.main.fragment_main.view.*
 import kotlinx.android.synthetic.main.item_opusbutton.view.*
 import kotlinx.android.synthetic.main.table_line_label.view.*
-import java.io.File
-import java.io.FileOutputStream
-import kotlin.concurrent.thread
 import kotlin.math.abs
 
 /**
@@ -103,6 +94,7 @@ class MainFragment : Fragment() {
                 this.setContextMenu(ContextMenu.Leaf)
                 this.tick()
             }
+            main.update_menu_options()
         }
 
         setFragmentResultListener("RETURNED") { _, bundle: Bundle? ->
@@ -117,6 +109,7 @@ class MainFragment : Fragment() {
             }
             this.setContextMenu(ContextMenu.Leaf)
             this.tick()
+            main.update_menu_options()
         }
 
         //binding.buttonFirst.setOnClickListener {
@@ -126,6 +119,7 @@ class MainFragment : Fragment() {
 
     override fun onStart() {
         super.onStart()
+
         var main = this.getMain()
         if (!this.is_loaded) {
             main.newProject()
@@ -177,7 +171,7 @@ class MainFragment : Fragment() {
         }
     }
 
-    private fun takedownCurrent() {
+    fun takedownCurrent() {
         this.setContextMenu(ContextMenu.None)
         this.tlOpusLines.removeAllViews()
         this.llLineLabels.removeAllViews()
@@ -393,7 +387,7 @@ class MainFragment : Fragment() {
         }
     }
 
-    private fun setContextMenu(menu_index: ContextMenu) {
+    fun setContextMenu(menu_index: ContextMenu) {
         var opus_manager = this.getMain().getOpusManager()
         this.active_context_menu_index = menu_index
         val view_to_remove = this.cache.getActiveContextMenu()
@@ -694,7 +688,7 @@ class MainFragment : Fragment() {
         }
     }
 
-    private fun tick() {
+    fun tick() {
         if (! this.ticking) {
             this.ticking = true
             this.tick_unapply_focus()
@@ -1007,39 +1001,6 @@ class MainFragment : Fragment() {
                 }
             } catch (e: Exception) {
                 continue
-            }
-        }
-    }
-
-    private fun export_midi() {
-        var opus_manager = this.getMain().getOpusManager()
-        val CREATE_FILE = 2
-
-        var name = opus_manager.get_working_dir()
-        if (name != null) {
-            name = name.substring(name.lastIndexOf("/") + 1)
-        }
-
-        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
-            addCategory(Intent.CATEGORY_OPENABLE)
-            type = "application/midi"
-            putExtra(Intent.EXTRA_TITLE, "$name.mid")
-            putExtra(DocumentsContract.EXTRA_INITIAL_URI, "")
-        }
-
-        startActivityForResult(intent, CREATE_FILE)
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, resultData: Intent?) {
-        var opus_manager = this.getMain().getOpusManager()
-        super.onActivityResult(requestCode, resultCode, resultData)
-
-        if (requestCode == 2 && resultCode == AppCompatActivity.RESULT_OK) {
-            resultData?.data?.also { uri ->
-                activity?.applicationContext?.contentResolver?.openFileDescriptor(uri, "w")?.use {
-                    FileOutputStream(it.fileDescriptor).write(opus_manager.get_midi().as_bytes())
-                    Toast.makeText(activity?.applicationContext, "Exported to midi", Toast.LENGTH_SHORT).show()
-                }
             }
         }
     }
@@ -1407,5 +1368,4 @@ class MainFragment : Fragment() {
         var midi = opus_manager.get_midi(beat, beat + 1)
         this.getMain().play_midi(midi)
     }
-
 }

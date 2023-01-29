@@ -85,11 +85,7 @@ class MainFragment : Fragment() {
             bundle!!.getString("PATH")?.let { path: String ->
                 this.takedownCurrent()
                 main.getOpusManager().load(path)
-                main.getOpusManager().get_working_dir()?.let { name: String ->
-                    main.set_title_text(
-                        name.substring(name.lastIndexOf("/") + 1)
-                    )
-                }
+                main.update_title_text()
 
                 this.setContextMenu(ContextMenu.Leaf)
                 this.tick()
@@ -101,12 +97,8 @@ class MainFragment : Fragment() {
             var main = this.getMain()
             this.takedownCurrent()
             main.getOpusManager().reflag()
+            main.update_title_text()
 
-            main.getOpusManager().get_working_dir()?.let { name: String ->
-                main.set_title_text(
-                    name.substring(name.lastIndexOf("/") + 1)
-                )
-            }
             this.setContextMenu(ContextMenu.Leaf)
             this.tick()
             main.update_menu_options()
@@ -123,11 +115,7 @@ class MainFragment : Fragment() {
         var main = this.getMain()
         if (!this.is_loaded) {
             main.newProject()
-            main.getOpusManager().get_working_dir()?.let {
-                main.set_title_text(
-                    it.substring(it.lastIndexOf("/") + 1)
-                )
-            }
+            main.update_title_text()
             this.setContextMenu(ContextMenu.Leaf)
             this.tick()
 
@@ -401,6 +389,9 @@ class MainFragment : Fragment() {
                     false
                 )
 
+                if (opus_manager.line_count() == 1) {
+                    view.btnRemoveLine.visibility = View.GONE
+                }
                 view.btnRemoveLine.setOnClickListener {
                     this.interact_btnRemoveLine(it)
                 }
@@ -1133,12 +1124,14 @@ class MainFragment : Fragment() {
         if (opus_manager.line_count() > 1) {
             opus_manager.remove_line_at_cursor()
         }
+        this.setContextMenu(ContextMenu.Line) // TODO: overkill?
         this.tick()
     }
 
     private fun interact_btnInsertLine(view: View) {
         var opus_manager = this.getMain().getOpusManager()
         opus_manager.new_line_at_cursor()
+        this.setContextMenu(ContextMenu.Line) // TODO: overkill?
         this.tick()
     }
 

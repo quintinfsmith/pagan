@@ -8,18 +8,21 @@ import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.provider.DocumentsContract
+import android.util.Log
 import android.view.*
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.Fragment
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import com.qfs.radixulous.apres.*
 import com.qfs.radixulous.databinding.ActivityMainBinding
-import com.qfs.radixulous.opusmanager.HistoryLayer
+import com.qfs.radixulous.opusmanager.OpusManagerBase
+import com.qfs.radixulous.opusmanager.HistoryLayer as OpusManager
 import java.io.File
 import java.io.FileOutputStream
 import kotlin.concurrent.thread
@@ -42,12 +45,12 @@ class MainActivity : AppCompatActivity() {
     var midi_input_device = MIDIInputDevice()
     private var midi_player = MIDIPlayer()
 
-    private var opus_manager = HistoryLayer()
-    var working_path: String? = null
+    private var opus_manager = OpusManager()
+    private var project_manager = ProjectManager("/data/data/com.qfs.radixulous/projects")
 
     private lateinit var optionsMenu: Menu
 
-    var export_midi_intent = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+    var export_midi_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             var opus_manager = this.getOpusManager()
             result?.data?.data?.also { uri ->
@@ -109,32 +112,23 @@ class MainActivity : AppCompatActivity() {
         when (item.itemId) {
             R.id.itmNewProject -> {
                 // TODO: Save or discard popup dialog
-                var navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main)
-                var main_fragment = navHost?.childFragmentManager?.fragments?.get(0)
+                var main_fragment = this.getActiveFragment()
                 if (main_fragment is MainFragment) {
                     main_fragment.takedownCurrent()
                     this.newProject()
-
-                    this.getOpusManager().get_working_dir()?.let {
-                        this.set_title_text(
-                            it.substring(it.lastIndexOf("/") + 1)
-                        )
-                    }
-
+                    this.update_title_text()
                     main_fragment.setContextMenu(ContextMenu.Leaf)
                     main_fragment.tick()
                 }
             }
             R.id.itmLoadProject -> {
-                navController.navigate(R.id.action_MainFragment_to_LoadFragment)
+                this.navTo("load")
             }
             R.id.itmSaveProject -> {
                 this.save()
             }
-            R.id.itmExportMidi -> this.export_midi()
             R.id.itmUndo -> {
-                var navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main)
-                var main_fragment = navHost?.childFragmentManager?.fragments?.get(0)
+                var main_fragment = this.getActiveFragment()
                 if (main_fragment is MainFragment) {
                     main_fragment.undo()
                 }
@@ -143,7 +137,7 @@ class MainActivity : AppCompatActivity() {
         return super.onOptionsItemSelected(item)
     }
 
-    fun getOpusManager(): HistoryLayer {
+    fun getOpusManager(): OpusManager {
         return this.opus_manager
     }
 
@@ -156,7 +150,6 @@ class MainActivity : AppCompatActivity() {
                 this.optionsMenu.findItem(R.id.itmSaveProject).isVisible = true
                 this.optionsMenu.findItem(R.id.itmUndo).isVisible = true
                 this.optionsMenu.findItem(R.id.itmNewProject).isVisible = true
-                this.optionsMenu.findItem(R.id.itmExportMidi).isVisible = true
             }
             //is LoadFragment -> { }
             //is ConfigFragment -> { }
@@ -165,7 +158,6 @@ class MainActivity : AppCompatActivity() {
                 this.optionsMenu.findItem(R.id.itmSaveProject).isVisible = false
                 this.optionsMenu.findItem(R.id.itmUndo).isVisible = false
                 this.optionsMenu.findItem(R.id.itmNewProject).isVisible = false
-                this.optionsMenu.findItem(R.id.itmExportMidi).isVisible = false
             }
         }
     }
@@ -175,7 +167,7 @@ class MainActivity : AppCompatActivity() {
 
         var projects_dir = "/data/data/com.qfs.radixulous/projects"
         var i = 0
-        while (File("$projects_dir/opus$i").isFile) {
+        while (File("$projects_dir/opus$i").isDirectory) {
             i += 1
         }
         this.opus_manager.path = "$projects_dir/opus$i"
@@ -186,6 +178,15 @@ class MainActivity : AppCompatActivity() {
         Toast.makeText(this, "Project Saved", Toast.LENGTH_SHORT).show()
     }
 
+    fun update_title_text() {
+        this.getOpusManager().get_working_dir()?.let {
+            var unesc_name = it.substring(it.lastIndexOf("/") + 1)
+                .replace("&#47;", "/")
+                .replace("&#92;", "\\")
+
+            this.set_title_text(unesc_name)
+        }
+    }
     fun set_title_text(new_text: String) {
         this.binding.toolbar!!.title = new_text
     }
@@ -217,9 +218,68 @@ class MainActivity : AppCompatActivity() {
             putExtra(DocumentsContract.EXTRA_INITIAL_URI, "")
         }
 
-        this.export_midi_intent.launch(intent)
+        this.export_midi_intent_launcher.launch(intent)
     }
 
+    fun delete_project() {
+        this.project_manager.delete(this.opus_manager)
+
+        this.newProject()
+        this.navTo("main")
+    }
+
+    fun rename_project(new_name: String) {
+        this.project_manager.rename(this.opus_manager, new_name)
+        this.update_title_text()
+    }
+
+    fun copy_project() {
+        this.project_manager.copy(this.opus_manager)
+        Toast.makeText(this, "Now working on copy", Toast.LENGTH_SHORT).show()
+        this.update_title_text()
+    }
+
+    fun navTo(fragmentName: String) {
+        var navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main)
+        var fragment = navHost?.childFragmentManager?.fragments?.get(0)
+        val navController = findNavController(R.id.nav_host_fragment_content_main)
+        when (fragment) {
+            is ConfigFragment -> {
+                when (fragmentName) {
+                    "main" -> {
+                        navController.navigate(R.id.action_ConfigFragment_to_MainFragment)
+                    }
+                    else -> {}
+                }
+            }
+            is LoadFragment -> {
+                when (fragmentName) {
+                    "main" -> {
+                        navController.navigate(R.id.action_LoadFragment_to_MainFragment)
+                    }
+                    else -> {}
+                }
+
+            }
+            is MainFragment -> {
+                when (fragmentName) {
+                    "config" -> {
+                        navController.navigate(R.id.action_MainFragment_to_ConfigFragment)
+                    }
+                    "load" -> {
+                        navController.navigate(R.id.action_MainFragment_to_LoadFragment)
+                    }
+                    else -> {}
+                }
+            }
+            else -> {}
+        }
+    }
+
+    fun getActiveFragment(): Fragment? {
+        var navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main)
+        return navHost?.childFragmentManager?.fragments?.get(0)
+    }
 }
 
 class RadMidiController(context: Context): MIDIController(context) { }

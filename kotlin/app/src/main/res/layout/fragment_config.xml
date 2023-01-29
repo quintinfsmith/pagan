@@ -17,6 +17,12 @@
     app:layout_constraintTop_toTopOf="parent"
     android:orientation="vertical">
 
+    <TextView
+        android:id="@+id/tvChangeProjectName"
+        android:text="Change Project Name..."
+        android:background="@drawable/button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
     <LinearLayout
         android:orientation="horizontal"
         android:layout_width="match_parent"
@@ -27,8 +33,10 @@
             android:layout_height="wrap_content" />
         <EditText
             android:id="@+id/etTempo"
+            android:maxLines="1"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:digits=".0123456789"
             android:ems="4"
             android:text="0"
             android:gravity="right"
@@ -63,26 +71,32 @@
 
     android:layout_width="match_parent"
     android:layout_height="wrap_content" >
-    <Button
+    <TextView
         android:id="@+id/btnCopyProject"
+        android:theme="@style/button"
+        android:background="@drawable/button"
         android:layout_width="0dp"
         android:layout_weight="1"
         android:layout_height="wrap_content"
-        android:ems="4"
+        android:layout_margin="2dp"
         android:text="Copy" />
-    <Button
+    <TextView
         android:id="@+id/btnDeleteProject"
+        android:theme="@style/button"
+        android:background="@drawable/button"
+        android:layout_margin="2dp"
         android:layout_width="0dp"
         android:layout_weight="1"
         android:layout_height="wrap_content"
-        android:ems="4"
         android:text="Delete" />
-    <Button
+    <TextView
         android:id="@+id/btnExportProject"
+        android:theme="@style/button"
+        android:background="@drawable/button"
         android:layout_width="0dp"
         android:layout_weight="1"
         android:layout_height="wrap_content"
-        android:ems="4"
+        android:layout_margin="2dp"
         android:text="Export" />
 </LinearLayout>
 

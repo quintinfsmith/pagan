@@ -69,6 +69,8 @@ class LoadFragment : Fragment() {
             ) as ViewGroup
 
             (row.getChildAt(0) as TextView).text = file_name
+                 .replace("&#47;", "/")
+                 .replace("&#92;", "\\")
 
             row.setOnClickListener {
                 // TODO: Show loading reticule

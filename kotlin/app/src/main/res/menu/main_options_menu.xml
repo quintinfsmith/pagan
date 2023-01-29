@@ -18,9 +18,4 @@
         android:id="@+id/itmSaveProject"
         android:title="Save Project"
         app:showAsAction="never"/>
-
-    <item
-        android:id="@+id/itmExportMidi"
-        android:title="Export MIDI"
-        app:showAsAction="never"/>
 </menu>

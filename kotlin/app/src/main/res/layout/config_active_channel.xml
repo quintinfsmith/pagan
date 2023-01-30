@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="80dp"
+    android:paddingStart="8dp"
+    android:paddingEnd="8dp">
+
+
+    <TextView
+        android:id="@+id/btnChooseInstrument"
+        android:theme="@style/button"
+        android:background="@drawable/button"
+        android:layout_marginEnd="5px"
+        android:layout_marginStart="5px"
+        android:layout_marginTop="5px"
+        android:gravity="center"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_height="match_parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:text="Instrument..." />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

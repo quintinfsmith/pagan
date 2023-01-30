@@ -5,15 +5,19 @@ import android.content.DialogInterface
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.view.*
 import android.widget.EditText
 import android.widget.TextView
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResult
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.chip.Chip
 import com.qfs.radixulous.databinding.FragmentConfigBinding
 import kotlinx.android.synthetic.main.channel_ctrl.view.*
+import kotlinx.android.synthetic.main.fragment_config.*
 
 
 /**
@@ -22,6 +26,7 @@ import kotlinx.android.synthetic.main.channel_ctrl.view.*
 class ConfigFragment : Fragment() {
 
     private var _binding: FragmentConfigBinding? = null
+    private lateinit var channelAdapter: ChannelOptionAdapter
 
     // This property is only valid between onCreateView and
     // onDestroyView.
@@ -31,8 +36,9 @@ class ConfigFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        this._binding = FragmentConfigBinding.inflate(inflater, container, false)
 
-        _binding = FragmentConfigBinding.inflate(inflater, container, false)
+
         return binding.root
 
     }
@@ -49,6 +55,12 @@ class ConfigFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        this.channelAdapter = ChannelOptionAdapter(mutableListOf())
+        var rvActiveChannels: RecyclerView = view.findViewById(R.id.rvActiveChannels)
+        rvActiveChannels.adapter = this.channelAdapter
+        rvActiveChannels.layoutManager = LinearLayoutManager(view.context)
+
         setFragmentResult("RETURNED", bundleOf())
         var main = this.getMain()
         var tvChangeProjectName: TextView = view.findViewById(R.id.tvChangeProjectName)
@@ -60,59 +72,20 @@ class ConfigFragment : Fragment() {
         var etTempo: EditText = view.findViewById(R.id.etTempo)
         etTempo.setText(main.getOpusManager().tempo.toString())
         etTempo.addTextChangedListener(object: TextWatcher {
-            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
-                //TODO("Not yet implemented")
-            }
-
-            override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
-                //TODO("Not yet implemented")
-            }
-
+            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
+            override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
             override fun afterTextChanged(editable: Editable?) {
                 try {
                     main.getOpusManager().tempo = editable.toString().toFloat()
-                } catch (exception: Exception) {
-
-                }
+                } catch (exception: Exception) { }
             }
         })
 
         var opus_manager = this.getMain().getOpusManager()
 
-        for (i in 0 until opus_manager.channel_lines.size) {
-            val chipView = Chip((this.getMain().findViewById(R.id.cgEnabledChannels) as View).context)
-            chipView.isCheckable = true
-            if (i == 9) {
-                chipView.text = "Drums"
-            } else {
-                chipView.text = "$i"
-            }
-            chipView.isChecked = opus_manager.channel_lines[i].isNotEmpty()
-
-            // TODO: I suspect there is a better listener for this
-            chipView.setOnClickListener {
-                if (chipView.isChecked) {
-                    if (opus_manager.channel_lines[i].isEmpty()) {
-                        opus_manager.add_channel(i)
-                        //this.tick()
-                    }
-                } else {
-                    val line_count = opus_manager.channel_lines[i].size
-                    if (opus_manager.line_count() > line_count) {
-                        opus_manager.remove_channel(i)
-                        //this.tick()
-                    } else {
-                        chipView.isChecked = true
-                    }
-                }
-            }
-            view.llB.cgEnabledChannels.addView(chipView)
-        }
-
-        for (i in 0 until opus_manager.channel_lines.size) {
-            if (opus_manager.channel_lines[i].isEmpty()) {
-                continue
-            }
+        for (i in 0 until opus_manager.channels.size) {
+            var channel = opus_manager.channels[i]
+            this.channelAdapter.addChannel(channel)
         }
 
         (view.findViewById(R.id.btnExportProject) as TextView).setOnClickListener {

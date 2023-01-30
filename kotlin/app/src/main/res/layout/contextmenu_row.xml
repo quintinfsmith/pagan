@@ -4,7 +4,7 @@ android:id="@+id/layout"
 android:layout_width="match_parent"
 android:layout_height="match_parent"
 xmlns:app="http://schemas.android.com/apk/res-auto">
-<TextView
+<!-- TextView
     android:id="@+id/btnChooseInstrument"
     android:theme="@style/button"
     android:background="@drawable/button"
@@ -18,7 +18,7 @@ xmlns:app="http://schemas.android.com/apk/res-auto">
     app:layout_constraintStart_toStartOf="parent"
     app:layout_constraintEnd_toEndOf="parent"
     app:layout_constraintTop_toTopOf="parent"
-    android:text="Instrument..." />
+    android:text="Instrument..." /-->
 
 <TextView
     android:id="@+id/btnRemoveLine"

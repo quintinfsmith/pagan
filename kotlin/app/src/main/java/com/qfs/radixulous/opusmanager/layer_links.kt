@@ -168,7 +168,7 @@ open class LinksLayer() : OpusManagerBase() {
 
     override fun change_line_channel(old_channel: Int, line_offset: Int, new_channel: Int) {
         super.change_line_channel(old_channel, line_offset, new_channel)
-        var new_offset = this.channel_lines[new_channel].size - 1
+        var new_offset = this.channels[new_channel].size - 1
         this.remap_links(this::rh_change_line_channel, listOf(old_channel, line_offset, new_channel, new_offset))
     }
     private fun rh_change_line_channel(beat_key: BeatKey, args: List<Int>): BeatKey? {

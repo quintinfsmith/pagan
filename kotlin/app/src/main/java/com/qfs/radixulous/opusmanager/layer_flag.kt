@@ -100,8 +100,8 @@ open class FlagLayer : LinksLayer() {
 
     override fun swap_channels(channel_a: Int, channel_b: Int) {
         super.swap_channels(channel_a, channel_b)
-        val len_a = this.channel_lines[channel_a].size
-        val len_b = this.channel_lines[channel_b].size
+        val len_a = this.channels[channel_a].size
+        val len_b = this.channels[channel_b].size
         for (i in 0 until len_b) {
             this.cache.flag_line_pop(channel_a, len_b - 1 - i)
         }
@@ -131,8 +131,8 @@ open class FlagLayer : LinksLayer() {
 
     fun reflag() {
         this.cache.purge()
-        for (i in 0 until this.channel_lines.size) {
-            for (j in 0 until this.channel_lines[i].size) {
+        for (i in 0 until this.channels.size) {
+            for (j in 0 until this.channels[i].size) {
                 this.cache.flag_line_init(i, j)
             }
         }
@@ -167,7 +167,7 @@ open class FlagLayer : LinksLayer() {
     override fun new_line(channel: Int, index: Int?) {
         super.new_line(channel, index)
 
-        val line_index = index ?: (this.channel_lines[channel].size - 1)
+        val line_index = index ?: (this.channels[channel].size - 1)
         this.cache.flag_line_new(channel, line_index)
     }
 
@@ -185,7 +185,7 @@ open class FlagLayer : LinksLayer() {
     override fun remove_line(channel: Int, index: Int?) {
         super.remove_line(channel, index)
 
-        this.cache.flag_line_pop(channel, index ?: this.channel_lines[channel].size)
+        this.cache.flag_line_pop(channel, index ?: this.channels[channel].size)
     }
 
     //override fun link_beats(beat_key: BeatKey, target: BeatKey) {

@@ -1,43 +1,52 @@
 package com.qfs.radixulous.opusmanager
-import android.util.Log
 import com.qfs.radixulous.apres.*
 import com.qfs.radixulous.structure.OpusTree
 import com.qfs.radixulous.from_string
 import com.qfs.radixulous.to_string
-import com.qfs.radixulous.tree_to_midi
 import java.io.File
-import java.lang.Math.max
 
-
-data class OpusEvent(var note: Int, var radix: Int, var channel: Int, var relative: Boolean)
-data class BeatKey(var channel: Int, var line_offset: Int, var beat: Int)
 
 open class OpusManagerBase {
     var RADIX: Int = 12
     var DEFAULT_PERCUSSION: Int = 0
-    var channel_lines: Array<MutableList<MutableList<OpusTree<OpusEvent>>>> = Array(16, { _ -> mutableListOf() })
+    var channels: MutableList<OpusChannel> = mutableListOf()
     var opus_beat_count: Int = 1
     var path: String? = null
     var percussion_map: HashMap<Int, Int> = HashMap<Int, Int>()
+    var percussion_channel: Int? = null
     var channel_instruments: HashMap<Int, Int> = HashMap()
     var tempo: Float = 120F
 
     open fun reset() {
         this.opus_beat_count = 1
-        for (channel in this.channel_lines) {
-            channel.clear()
-        }
+        this.channels.clear()
         this.percussion_map.clear()
         this.path = null
     }
 
+    fun set_percussion_channel(channel: Int) {
+        this.percussion_channel = channel
+    }
+
+    fun unset_percussion_channel() {
+        this.percussion_channel = null
+    }
+
+    fun is_percussion(channel: Int): Boolean {
+        return channel == this.percussion_channel
+    }
+
+    fun get_channel_count(): Int {
+        return this.channels.size
+    }
+
     open fun insert_after(beat_key: BeatKey, position: List<Int>) {
         if (position.isEmpty()) {
-            throw Exception("Invalid Position ${position}")
+            throw Exception("Invalid Position $position")
         }
 
         val tree = this.get_tree(beat_key, position)
-        val parent = tree.get_parent() ?: throw Exception("Invalid Position ${position}")
+        val parent = tree.get_parent() ?: throw Exception("Invalid Position $position")
 
         var index = position.last()
         parent.insert(index + 1, OpusTree<OpusEvent>())
@@ -75,7 +84,7 @@ open class OpusManagerBase {
     }
 
     open fun set_percussion_event(beat_key: BeatKey, position: List<Int>) {
-        if (beat_key.channel != 9) {
+        if (!this.is_percussion(beat_key.channel)) {
             throw Exception("Attempting to set non-percussion channel")
         }
 
@@ -117,7 +126,7 @@ open class OpusManagerBase {
     }
 
     open fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEvent) {
-        if (beat_key.channel == 9) {
+        if (this.is_percussion(beat_key.channel)) {
             throw Exception("Attempting to set percussion channel")
         }
 
@@ -151,13 +160,15 @@ open class OpusManagerBase {
         }
     }
 
-    open fun add_channel(channel: Int) {
-        this.new_line(channel)
+    open fun new_channel() {
+        var new_channel = OpusChannel()
+        new_channel.set_beat_count(this.opus_beat_count)
+        this.channels.add(new_channel)
     }
 
     open fun change_line_channel(old_channel: Int, line_index: Int, new_channel: Int) {
-        var tree = this.channel_lines[old_channel].removeAt(line_index)
-        this.channel_lines[new_channel].add(tree)
+        var line = this.channels[old_channel].remove_line(line_index)
+        this.channels[new_channel].insert_line(new_channel, line)
     }
 
     open fun insert_beat(index: Int?) {
@@ -169,52 +180,28 @@ open class OpusManagerBase {
             index
         }
         this.opus_beat_count += 1
-        for (channel in this.channel_lines) {
-            for (line in channel) {
-                line.add(abs_index, OpusTree<OpusEvent>())
-            }
+        for (channel in this.channels) {
+            channel.set_beat_count(this.opus_beat_count)
         }
     }
 
     open fun move_line(channel: Int, old_index: Int, new_index: Int) {
-        if (old_index == new_index) {
-            return
-        }
-
-        // Adjust the new_index so it doesn't get confused
-        // when we pop() the old_index
-        var adj_new_index: Int = if (new_index < 0) {
-            this.channel_lines[channel].size + new_index
-        } else {
-            new_index
-        }
-
-        if (new_index < 0) {
-            throw Exception("INDEXERROR")
-        }
-        if (old_index >= this.channel_lines[channel].size) {
-            throw Exception("INDEXERROR")
-        }
-
-        var line = this.channel_lines[channel].removeAt(old_index)
-        this.channel_lines[channel].add(adj_new_index, line)
+        this.channels[channel].move_line(old_index, new_index)
     }
 
     open fun new_line(channel: Int, index: Int? = null) {
-        val line: MutableList<OpusTree<OpusEvent>> = MutableList(this.opus_beat_count) { _ -> OpusTree<OpusEvent>() }
-
-        if (index == null) {
-            this.channel_lines[channel].add(line)
-        } else {
-            this.channel_lines[channel].add(index, line)
-        }
+        this.channels[channel].new_line(index)
     }
 
     open fun overwrite_beat(old_beat: BeatKey, new_beat: BeatKey) {
-        var new_tree = this.channel_lines[new_beat.channel][new_beat.line_offset][new_beat.beat].copy()
-        var old_tree = this.channel_lines[old_beat.channel][old_beat.line_offset][old_beat.beat]
+        var new_tree = this.channels[new_beat.channel].get_line(new_beat.line_offset)[new_beat.beat].copy()
+        var old_line = this.channels[old_beat.channel].get_line(old_beat.line_offset)
+        var old_tree = old_line[old_beat.beat]
+
+        // replaces in parents
         old_tree.replace_with(new_tree)
-        this.channel_lines[old_beat.channel][old_beat.line_offset][old_beat.beat] = new_tree
+
+        old_line[old_beat.beat] = new_tree
     }
 
     open fun remove_beat(rel_beat_index: Int?) {
@@ -226,42 +213,32 @@ open class OpusManagerBase {
             rel_beat_index
         }
 
-        for (channel in this.channel_lines) {
-            for (line in channel) {
-                line.removeAt(beat_index)
-            }
+        for (channel in this.channels) {
+            channel.remove_beat(beat_index)
         }
         this.set_beat_count(this.opus_beat_count - 1)
     }
 
     open fun remove_channel(channel: Int) {
-        while (this.channel_lines[channel].size > 0) {
-            this.remove_line(channel, 0)
-        }
+        this.channels.removeAt(channel)
     }
 
     open fun remove_line(channel: Int, index: Int? = null) {
-        val adj_index = index ?: (this.channel_lines[channel].size - 1)
-        this.channel_lines[channel].removeAt(adj_index)
+        this.channels[channel].remove_line(index)
     }
 
     open fun replace_tree(beat_key: BeatKey, position: List<Int>, tree: OpusTree<OpusEvent>) {
-        if (position.isEmpty()) {
-            this.channel_lines[beat_key.channel][beat_key.line_offset][beat_key.beat] = tree
-        } else {
-            this.get_tree(beat_key, position).replace_with(tree)
-        }
+        this.channels[beat_key.channel].replace_tree(beat_key.line_offset, beat_key.beat, position, tree)
     }
 
     open fun replace_beat(beat_key: BeatKey, tree: OpusTree<OpusEvent>) {
-        var old_tree = this.channel_lines[beat_key.channel][beat_key.line_offset][beat_key.beat]
-        old_tree.replace_with(tree)
+        this.channels[beat_key.channel].replace_tree(beat_key.line_offset, beat_key.beat, listOf(), tree)
     }
 
     open fun swap_channels(channel_a: Int, channel_b: Int) {
-        var tmp = this.channel_lines[channel_b]
-        this.channel_lines[channel_b] = this.channel_lines[channel_a]
-        this.channel_lines[channel_a] = tmp
+        var tmp = this.channels[channel_b]
+        this.channels[channel_b] = this.channels[channel_a]
+        this.channels[channel_a] = tmp
     }
 
     open fun get_midi(start_beat: Int = 0, end_beat_rel: Int? = null): MIDI {
@@ -284,19 +261,19 @@ open class OpusManagerBase {
 
         midi.insert_event(0,0, SetTempo.from_bpm(tempo))
         data class StackItem(var tree: OpusTree<OpusEvent>, var divisions: Int, var offset: Int, var size: Int)
-        this.channel_lines.forEachIndexed { c, channel ->
-            channel.forEachIndexed { l, line ->
+        this.channels.forEachIndexed { c, channel ->
+            for (l in 0 until channel.size) {
+                var line = channel.get_line(l)
                 var current_tick = 0
                 var prev_note = 0
                 line.forEachIndexed { b, beat ->
-
                     var stack: MutableList<StackItem> = mutableListOf(StackItem(beat, 1, current_tick, midi.ppqn))
                     while (stack.isNotEmpty()) {
                         var current = stack.removeFirst()
 
                         if (current.tree.is_event()) {
                             var event = current.tree.get_event()!!
-                            var note = if (c == 9) { // Ignore the event data and use percussion map
+                            var note = if (this.is_percussion(c)) { // Ignore the event data and use percussion map
                                 this.get_percussion_instrument(l) + 35
                             } else if (event.relative) {
                                 event.note + prev_note
@@ -344,32 +321,25 @@ open class OpusManagerBase {
 
 
     fun get_beat_tree(beat_key: BeatKey): OpusTree<OpusEvent> {
-        if (beat_key.channel >= this.channel_lines.size) {
+        if (beat_key.channel >= this.channels.size) {
             throw Exception("Invalid BeatKey $beat_key")
         }
 
+        // TODO: Check if i ever use a negative line_offset. and change it if i do
         var line_offset: Int = if (beat_key.line_offset < 0) {
-            this.channel_lines[beat_key.channel].size - beat_key.line_offset
+            this.channels[beat_key.channel].size - beat_key.line_offset
         } else {
             beat_key.line_offset
         }
-        if (line_offset > this.channel_lines[beat_key.channel].size) {
+        if (line_offset > this.channels[beat_key.channel].size) {
             throw Exception("Invalid BeatKey $beat_key")
         }
-        return this.channel_lines[beat_key.channel][line_offset][beat_key.beat]
+
+        return this.channels[beat_key.channel].get_tree(line_offset, beat_key.line_offset)
     }
 
     fun get_tree(beat_key: BeatKey, position: List<Int>): OpusTree<OpusEvent> {
-        var tree = this.get_beat_tree(beat_key)
-        for (pos in position) {
-            if (!tree.is_leaf()) {
-                tree = tree.get(pos)
-            } else {
-                throw Exception("Invalid position $position")
-            }
-        }
-
-        return tree
+        return this.channels[beat_key.channel].get_tree(beat_key.line_offset, beat_key.beat, position)
     }
 
     fun get_preceding_leaf(beat_key: BeatKey, position: List<Int>): OpusTree<OpusEvent>? {
@@ -410,15 +380,8 @@ open class OpusManagerBase {
 
     open fun set_beat_count(new_count: Int) {
         this.opus_beat_count = new_count
-        for (channel in this.channel_lines) {
-            for (line in channel) {
-                while (line.size > new_count) {
-                    line.removeLast()
-                }
-                while (new_count > line.size) {
-                    line.add(OpusTree())
-                }
-            }
+        for (channel in this.channels) {
+            channel.set_beat_count(new_count)
         }
     }
 
@@ -442,13 +405,11 @@ open class OpusManagerBase {
             File("${this.path}/$file").delete()
         }
 
-        for (i in 0 until this.channel_lines.size) {
-            var channel = this.channel_lines[i]
-            if (channel.isEmpty()) {
-                continue
-            }
+        for (i in 0 until this.channels.size) {
+            var channel = this.channels[i]
             var strLines: MutableList<String> = mutableListOf()
-            for (line in channel) {
+            for (j in 0 until channel.size) {
+                var line = channel.get_line(j)
                 var beatstrs: MutableList<String> = mutableListOf()
                 for (beat in line) {
                     beatstrs.add(to_string(beat))
@@ -470,10 +431,9 @@ open class OpusManagerBase {
 
     open fun new() {
         this.reset()
-        var new_line: MutableList<OpusTree<OpusEvent>> = MutableList(4) { _ -> OpusTree<OpusEvent>() }
-
-        this.channel_lines[0].add(new_line)
-        this.opus_beat_count = 4
+        this.new_channel()
+        this.new_line(0)
+        this.set_beat_count(4)
     }
 
     fun get_working_dir(): String? {
@@ -503,6 +463,11 @@ open class OpusManagerBase {
             } else {
                 0
             }
+
+            while (channel >= this.get_channel_count()) {
+                this.new_channel()
+            }
+
             var content = File(filename).readText(Charsets.UTF_8)
             var lines = line_patt.findAll(content)
             for (line in lines) {
@@ -512,11 +477,14 @@ open class OpusManagerBase {
                     beat_tree.clear_singles()
                     opus_line.add(beat_tree)
                 }
-                beat_count = max(opus_line.size, beat_count)
+                beat_count = kotlin.math.max(opus_line.size, beat_count)
                 while (opus_line.size < beat_count) {
                     opus_line.add(OpusTree<OpusEvent>())
                 }
-                this.channel_lines[channel].add(opus_line)
+                if (this.channels[channel].size != beat_count) {
+                    this.channels[channel].set_beat_count(beat_count)
+                }
+                this.channels[channel].insert_line(this.channels[channel].size, opus_line)
             }
         }
         this.opus_beat_count = beat_count
@@ -526,8 +494,8 @@ open class OpusManagerBase {
 
     fun get_channel_line_counts(): List<Int> {
         var output: MutableList<Int> = mutableListOf()
-        for (i in 0 until this.channel_lines.size) {
-            output.add(this.channel_lines[i].size)
+        for (i in 0 until this.channels.size) {
+            output.add(this.channels[i].size)
         }
         return output
     }

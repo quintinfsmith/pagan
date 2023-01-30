@@ -164,17 +164,15 @@ class Cursor(var opus_manager: CursorLayer) {
 
 open class CursorLayer() : FlagLayer() {
     var cursor: Cursor? = null
-    var channel_order = Array(16) { i -> i }
 
     override fun reset() {
         this.cursor = Cursor(this)
-        this.channel_order = Array(16) { i -> i }
         super.reset()
     }
 
     fun line_count(): Int {
         var output: Int = 0
-        for (channel in this.channel_lines) {
+        for (channel in this.channels) {
             output += channel.size
         }
         return output
@@ -223,9 +221,9 @@ open class CursorLayer() : FlagLayer() {
     override fun new_line(channel: Int, index: Int?) {
         var cursor = this.get_cursor()
         var abs_index = if (index == null) {
-            this.channel_lines[channel].size - 1
+            this.channels[channel].size - 1
         } else if (index < 0) {
-            this.channel_lines[channel].size + index
+            this.channels[channel].size + index
         } else {
             index
         }
@@ -366,8 +364,8 @@ open class CursorLayer() : FlagLayer() {
 
     fun get_channel_index(y: Int): Pair<Int, Int> {
         var counter = 0
-        for (channel in this.channel_order) {
-            for (i in 0 until this.channel_lines[channel].size) {
+        for (channel in 0 until this.channels.size) {
+            for (i in 0 until this.channels[channel].size) {
                 if (counter == y) {
                     return Pair(channel, i)
                 }
@@ -379,14 +377,14 @@ open class CursorLayer() : FlagLayer() {
 
     fun get_y(channel: Int, rel_line_offset: Int): Int {
         val line_offset = if (rel_line_offset < 0) {
-            this.channel_lines[channel].size + rel_line_offset
+            this.channels[channel].size + rel_line_offset
         } else {
             rel_line_offset
         }
 
         var y: Int = 0
-        for (i in this.channel_order) {
-            for (j in 0 .. this.channel_lines[i].size - 1) {
+        for (i in 0 until this.channels.size) {
+            for (j in 0 .. this.channels[i].size - 1) {
                 if (channel == i && line_offset == j) {
                     return y
                 }
@@ -418,7 +416,7 @@ open class CursorLayer() : FlagLayer() {
         super.swap_channels(channel_a, channel_b)
 
         var new_y = this.get_y(original_beatkey.channel, 0)
-        new_y += min(original_beatkey.line_offset, this.channel_lines[original_beatkey.channel].size - 1)
+        new_y += min(original_beatkey.line_offset, this.channels[original_beatkey.channel].size - 1)
 
         this.get_cursor().set_y(new_y)
         this.get_cursor().settle()
@@ -433,9 +431,9 @@ open class CursorLayer() : FlagLayer() {
         var cursor = this.get_cursor()
         var beat_key = cursor.get_beatkey()
         var abs_index = if (index == null) {
-            this.channel_lines[channel].size - 1
+            this.channels[channel].size - 1
         } else if (index < 0) {
-            this.channel_lines[channel].size + index
+            this.channels[channel].size + index
         } else {
             index
         }

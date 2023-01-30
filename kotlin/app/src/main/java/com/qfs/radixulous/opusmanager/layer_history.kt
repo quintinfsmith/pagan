@@ -244,7 +244,7 @@ open class HistoryLayer() : CursorLayer() {
         }
         this.history_cache.open_multi()
 
-        val beat_tree = this.channel_lines[beat_key.channel][beat_key.line_offset][beat_key.beat]
+        val beat_tree = this.channels[beat_key.channel].get_tree(beat_key.line_offset, beat_key.beat)
         val stack: MutableList<List<Int>> = mutableListOf(start_position)
 
         var splits: MutableList<Pair<List<Int>, Int>> = mutableListOf()
@@ -302,11 +302,11 @@ open class HistoryLayer() : CursorLayer() {
 
     open override fun new_line(channel: Int, index: Int?) {
         super.new_line(channel, index)
-        this.push_remove_line(channel, index ?: (this.channel_lines[channel].size - 1))
+        this.push_remove_line(channel, index ?: (this.channels[channel].size - 1))
     }
 
     open override fun remove_line(channel: Int, line_offset: Int?) {
-        this.push_new_line(channel, line_offset ?: (this.channel_lines[channel].size - 1))
+        this.push_new_line(channel, line_offset ?: (this.channels[channel].size - 1))
         super.remove_line(channel, line_offset)
     }
 

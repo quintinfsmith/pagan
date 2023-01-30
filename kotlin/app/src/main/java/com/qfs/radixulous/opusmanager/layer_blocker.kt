@@ -61,7 +61,7 @@ open class BlockerLayer(): HistoryLayer() {
     }
 
     override fun remove_channel(channel: Int) {
-        if (this.channel_lines[channel].isEmpty()) {
+        if (this.channels[channel].size == 0) {
             Log.e("blocker", "inane event blocked")
             return
         }

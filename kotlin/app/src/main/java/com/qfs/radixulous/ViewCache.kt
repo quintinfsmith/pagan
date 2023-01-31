@@ -105,10 +105,10 @@ class ViewCache {
     }
 
     fun getLineLabel(y: Int): View? {
-        if (y < this.line_label_cache.size) {
-            return this.line_label_cache[y]
+        return if (y < this.line_label_cache.size) {
+            this.line_label_cache[y]
         } else {
-            return null
+            null
         }
     }
 

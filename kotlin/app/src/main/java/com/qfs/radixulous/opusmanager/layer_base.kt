@@ -12,24 +12,31 @@ open class OpusManagerBase {
     var channels: MutableList<OpusChannel> = mutableListOf()
     var opus_beat_count: Int = 1
     var path: String? = null
-    var percussion_map: HashMap<Int, Int> = HashMap<Int, Int>()
     var percussion_channel: Int? = null
-    var channel_instruments: HashMap<Int, Int> = HashMap()
     var tempo: Float = 120F
 
     open fun reset() {
         this.opus_beat_count = 1
         this.channels.clear()
-        this.percussion_map.clear()
         this.path = null
     }
 
     fun set_percussion_channel(channel: Int) {
+        this.unset_percussion_channel()
+
         this.percussion_channel = channel
+        this.channels[channel].midi_instrument = 0
+        this.channels[channel].midi_channel = 9
+        this.channels[channel].set_mapped()
     }
 
     fun unset_percussion_channel() {
-        this.percussion_channel = null
+        if (this.percussion_channel != null) {
+            this.channels[this.percussion_channel!!].midi_channel = 0
+            this.channels[this.percussion_channel!!].midi_instrument = 1
+            this.channels[this.percussion_channel!!].unmap()
+            this.percussion_channel = null
+        }
     }
 
     fun is_percussion(channel: Int): Boolean {
@@ -103,26 +110,34 @@ open class OpusManagerBase {
     }
 
     open fun get_percussion_instrument(line_offset: Int): Int {
-        return if (this.percussion_map.containsKey(line_offset)) {
-            this.percussion_map[line_offset]!!
-        } else {
-            this.DEFAULT_PERCUSSION
+        if (this.percussion_channel == null) {
+            return this.DEFAULT_PERCUSSION
         }
-    }
-    open fun set_percussion_instrument(line_offset: Int, instrument: Int) {
-        this.percussion_map[line_offset] = instrument
+
+        var channel = this.channels[this.percussion_channel!!]
+        return channel.get_mapped_line_offset(line_offset) ?: this.DEFAULT_PERCUSSION
     }
 
-    open fun set_channel_instrument(channel:Int, instrument: Int) {
-        this.channel_instruments[channel] = instrument
+    open fun set_percussion_instrument(line_offset: Int, instrument: Int) {
+        if (this.percussion_channel == null) {
+            return
+        }
+
+        var channel = this.channels[this.percussion_channel!!]
+        channel.map_line(line_offset, instrument)
+    }
+
+    open fun set_channel_instrument(channel: Int, instrument: Int) {
+        if (channel == this.percussion_channel) {
+            this.unset_percussion_channel()
+        }
+        var channel = this.channels[channel]
+        channel.set_instrument(instrument)
     }
 
     fun get_channel_instrument(channel: Int): Int {
-        return if (this.channel_instruments.containsKey(channel)) {
-            this.channel_instruments[channel]!!
-        } else {
-            0
-        }
+        var channel = this.channels[channel]
+        return channel.get_instrument()
     }
 
     open fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEvent) {
@@ -172,13 +187,6 @@ open class OpusManagerBase {
     }
 
     open fun insert_beat(index: Int?) {
-        val abs_index = if (index == null) {
-            this.opus_beat_count
-        } else if (index < 0) {
-            this.opus_beat_count + index
-        } else {
-            index
-        }
         this.opus_beat_count += 1
         for (channel in this.channels) {
             channel.set_beat_count(this.opus_beat_count)

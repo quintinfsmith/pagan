@@ -1,6 +1,7 @@
 package com.qfs.radixulous
 
 import android.os.Bundle
+import android.util.Log
 import android.view.*
 import android.widget.*
 import androidx.core.content.ContextCompat
@@ -51,6 +52,7 @@ class MainFragment : Fragment() {
         _binding = FragmentMainBinding.inflate(inflater, container, false)
         return binding.root
     }
+
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -165,58 +167,6 @@ class MainFragment : Fragment() {
         this.cache = ViewCache()
     }
 
-    //private fun showChannelPopup(view: View?) {
-    //    var opus_manager = this.getMain().getOpusManager()
-    //    val popupView: View = activity?.layoutInflater?.inflate(R.layout.channel_ctrl, null) ?: return
-
-    //    val popupWindow = PopupWindow(
-    //        popupView,
-    //        ViewGroup.LayoutParams.MATCH_PARENT,
-    //        ViewGroup.LayoutParams.MATCH_PARENT,
-    //        true
-    //    )
-    //    for (i in 0 until opus_manager.channel_lines.size) {
-    //        val chipView = Chip(popupView.clA.llB.cgEnabledChannels.context)
-    //        chipView.isCheckable = true
-    //        if (opus_manager.is_percussion(i)) {
-    //            chipView.text = "Drums"
-    //        } else {
-    //            chipView.text = "$i"
-    //        }
-    //        chipView.isChecked = opus_manager.channel_lines[i].isNotEmpty()
-
-    //        // TODO: I suspect there is a better listener for this
-    //        chipView.setOnClickListener {
-    //            if (chipView.isChecked) {
-    //                if (opus_manager.channel_lines[i].isEmpty()) {
-    //                    //opus_manager.add_channel(i)
-    //                    this.tick()
-    //                }
-    //            } else {
-    //                val line_count = opus_manager.channel_lines[i].size
-    //                if (opus_manager.line_count() > line_count) {
-    //                    //opus_manager.remove_channel(i)
-    //                    this.tick()
-    //                } else {
-    //                    chipView.isChecked = true
-    //                }
-    //            }
-    //        }
-    //        popupView.clA.llB.cgEnabledChannels.addView(chipView)
-    //    }
-
-    //    for (i in 0 until opus_manager.channel_lines.size) {
-    //        if (opus_manager.channel_lines[i].isEmpty()) {
-    //            continue
-    //        }
-    //    }
-
-    //    popupWindow.showAtLocation(view, Gravity.CENTER, 0, 0)
-
-    //    popupView.setOnClickListener {
-    //        popupWindow.dismiss()
-    //    }
-    //}
 
     private fun newColumnLabel() {
         var opus_manager = this.getMain().getOpusManager()
@@ -398,18 +348,6 @@ class MainFragment : Fragment() {
                     this.interact_btnInsertLine(it)
                 }
 
-                val beatkey = opus_manager.get_cursor().get_beatkey()
-                //if (opus_manager.is_percussion(beatkey.channel)) {
-                //    val instrument = opus_manager.get_percussion_instrument(beatkey.line_offset)
-                //    view.btnChooseInstrument.text = resources.getStringArray(R.array.midi_drums)[instrument]
-                //} else {
-                //    val instrument = opus_manager.get_channel_instrument(beatkey.channel)
-                //    view.btnChooseInstrument.text = resources.getStringArray(R.array.midi_instruments)[instrument]
-                //}
-
-                //view.btnChooseInstrument.setOnClickListener {
-                //    this.interact_btnChooseInstrument(it)
-                //}
 
                 this.llContextMenu.addView(view)
                 this.cache.setActiveContextMenu(view)
@@ -726,11 +664,14 @@ class MainFragment : Fragment() {
         }
 
         if (lines_changed) { // Redraw labels
-            val line_counts = opus_manager.get_channel_line_counts()
             var y = 0
-            for (channel in 0 until opus_manager.get_channel_count()) {
-                for (i in 0 until line_counts[channel]) {
-                    val label = this.cache.getLineLabel(y)!!
+            var line_counts = opus_manager.get_channel_line_counts()
+            line_counts.forEachIndexed { channel, line_count ->
+                for (i in 0 until line_count) {
+                    // TODO: I think this being a bug *shouldn't* be possible, but i clearly introduced a bug with the Channel refactor
+                    val label = this.cache.getLineLabel(y) ?: continue
+
+                    // TODO: fix naming to reflect changes to channel handling
                     if (channel != 9) {
                         label.textView.text = "$channel:$i"
                     } else {
@@ -1133,50 +1074,6 @@ class MainFragment : Fragment() {
         this.tick()
     }
 
-    private fun interact_btnChooseInstrument(view: View) {
-        var opus_manager = this.getMain().getOpusManager()
-        val popupMenu = PopupMenu(this.activity?.window?.decorView?.rootView?.context, view)
-        val cursor = opus_manager.get_cursor()
-        if (opus_manager.is_percussion(cursor.get_beatkey().channel)) {
-            val drums = resources.getStringArray(R.array.midi_drums)
-            drums.forEachIndexed { i, string ->
-                popupMenu.menu.add(0, i, i, string)
-            }
-
-            popupMenu.setOnMenuItemClickListener {
-                opus_manager.set_percussion_instrument(
-                    cursor.get_beatkey().line_offset,
-                    it.itemId
-                )
-                this.tick()
-                val y = opus_manager.get_cursor().get_y()
-                this.cache.getLineLabel(y)!!.textView.text = "P:${it.itemId}"
-                this.setContextMenu(ContextMenu.Line) // TODO: overkill?
-                true
-            }
-        } else {
-            val instruments = resources.getStringArray(R.array.midi_instruments)
-            instruments.forEachIndexed { i, string ->
-                popupMenu.menu.add(0, i, i, string)
-            }
-
-            popupMenu.setOnMenuItemClickListener {
-                opus_manager.set_channel_instrument(
-                    cursor.get_beatkey().channel,
-                    it.itemId
-                )
-
-                this.tick()
-                this.setContextMenu(ContextMenu.Line) //TODO: Overkill?
-
-                // TODO: This feels sloppy
-                this.getMain().midi_input_device.sendEvent(ProgramChange(cursor.get_beatkey().channel, it.itemId))
-
-                true
-            }
-        }
-        popupMenu.show()
-    }
     private fun interact_leafView_click(view: View) {
         var opus_manager = this.getMain().getOpusManager()
         this.focus_column = false

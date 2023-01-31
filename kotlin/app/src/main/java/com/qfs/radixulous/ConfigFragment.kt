@@ -37,8 +37,6 @@ class ConfigFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         this._binding = FragmentConfigBinding.inflate(inflater, container, false)
-
-
         return binding.root
 
     }
@@ -56,10 +54,11 @@ class ConfigFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        this.channelAdapter = ChannelOptionAdapter(mutableListOf())
+        this.channelAdapter = ChannelOptionAdapter(this.getMain().getOpusManager())
         var rvActiveChannels: RecyclerView = view.findViewById(R.id.rvActiveChannels)
         rvActiveChannels.adapter = this.channelAdapter
         rvActiveChannels.layoutManager = LinearLayoutManager(view.context)
+        this.channelAdapter.recycler = rvActiveChannels
 
         setFragmentResult("RETURNED", bundleOf())
         var main = this.getMain()
@@ -67,7 +66,6 @@ class ConfigFragment : Fragment() {
         tvChangeProjectName.setOnClickListener {
             this.change_name_dialog()
         }
-
 
         var etTempo: EditText = view.findViewById(R.id.etTempo)
         etTempo.setText(main.getOpusManager().tempo.toString())
@@ -81,11 +79,8 @@ class ConfigFragment : Fragment() {
             }
         })
 
-        var opus_manager = this.getMain().getOpusManager()
-
-        for (i in 0 until opus_manager.channels.size) {
-            var channel = opus_manager.channels[i]
-            this.channelAdapter.addChannel(channel)
+        (view.findViewById(R.id.btnAddChannel) as TextView).setOnClickListener {
+            this.channelAdapter.addChannel()
         }
 
         (view.findViewById(R.id.btnExportProject) as TextView).setOnClickListener {
@@ -101,6 +96,7 @@ class ConfigFragment : Fragment() {
             main.copy_project()
             // TODO: Toast Feedback
         }
+
     }
 
     private fun change_name_dialog() {

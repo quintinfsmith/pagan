@@ -9,9 +9,37 @@ data class BeatKey(var channel: Int, var line_offset: Int, var beat: Int)
 
 class OpusChannel() {
     private var lines: MutableList<MutableList<OpusTree<OpusEvent>>> = mutableListOf()
-    var instrument: Int = 0
+    var midi_instrument: Int = 1
+    var midi_channel: Int = 0
     var beat_count: Int = 0
     var size: Int = 0
+    private var line_map: HashMap<Int, Int>? = null
+
+    fun is_mapped(): Boolean {
+        return this.line_map != null
+    }
+
+    fun map_line(line: Int, offset: Int) {
+        if (this.line_map == null) {
+            this.set_mapped()
+        }
+        this.line_map!![line] = offset
+    }
+
+    fun unmap() {
+        this.line_map = null
+    }
+
+    fun set_mapped() {
+        this.line_map = HashMap<Int, Int>()
+    }
+
+    fun get_mapped_line_offset(line: Int): Int? {
+        if (this.line_map == null) {
+            return null
+        }
+        return this.line_map!![line]
+    }
 
     fun new_line(index: Int? = null) {
         if (index == null) {
@@ -86,7 +114,11 @@ class OpusChannel() {
     }
 
     fun set_instrument(instrument: Int) {
-        this.instrument = instrument
+        this.midi_instrument = instrument
+    }
+
+    fun get_instrument(): Int {
+        return this.midi_instrument
     }
 
     fun swap_lines(first_index: Int, second_index: Int) {

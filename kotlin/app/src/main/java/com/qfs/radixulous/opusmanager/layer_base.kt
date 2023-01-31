@@ -176,8 +176,19 @@ open class OpusManagerBase {
     }
 
     open fun new_channel() {
+        // Find the next available MIDI channel, ignore '9' which needs to be manually set
+        // NOTE: This *will* generate past MIDI 1's limit of 16 channels
+        var used_channels: MutableSet<Int> = mutableSetOf(9)
+        for (channel in this.channels) {
+            used_channels.add(channel.midi_instrument)
+        }
+
         var new_channel = OpusChannel()
         new_channel.set_beat_count(this.opus_beat_count)
+        while (new_channel.midi_channel in used_channels) {
+            new_channel.midi_channel += 1
+        }
+
         this.channels.add(new_channel)
     }
 
@@ -228,7 +239,21 @@ open class OpusManagerBase {
     }
 
     open fun remove_channel(channel: Int) {
-        this.channels.removeAt(channel)
+        var free_midi_channel = this.channels.removeAt(channel).midi_channel
+        if (free_midi_channel == 9) {
+            return
+        }
+
+        // Auto adjust midi channels, skipping over 9 (reserved for percussion)
+        for (opus_channel in this.channels) {
+            if (opus_channel.midi_channel > free_midi_channel) {
+                if (opus_channel.midi_channel == 10) {
+                    opus_channel.midi_channel -= 2
+                } else {
+                    opus_channel.midi_channel -= 1
+                }
+            }
+        }
     }
 
     open fun remove_line(channel: Int, index: Int? = null) {

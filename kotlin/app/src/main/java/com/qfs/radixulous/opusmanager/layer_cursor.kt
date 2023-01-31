@@ -201,7 +201,7 @@ open class CursorLayer() : FlagLayer() {
 
     fun set_percussion_event_at_cursor() {
         var beat_key = this.get_cursor().get_beatkey()
-        if (beat_key.channel != 9) {
+        if (!this.is_percussion(beat_key.channel)) {
             return
         }
 

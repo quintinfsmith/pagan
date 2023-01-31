@@ -127,12 +127,12 @@ class ChannelOptionAdapter(
         val instruments = view.resources.getStringArray(R.array.midi_instruments)
         var x = 0
         if (this.opus_manager.percussion_channel == null) {
-            popupMenu.menu.add(0, x, 0, "Percussion")
+            popupMenu.menu.add(0, x, 0, "0: Percussion")
             x += 1
         }
 
         instruments.forEachIndexed { i, string ->
-            popupMenu.menu.add(0, x, i + 1, string)
+            popupMenu.menu.add(0, x, i + 1, "${i + 1}: $string")
             x += 1
         }
 

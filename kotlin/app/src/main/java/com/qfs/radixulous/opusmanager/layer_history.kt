@@ -270,7 +270,7 @@ open class HistoryLayer() : CursorLayer() {
 
         for ((position, tree) in events) {
             val event = tree.get_event()!!
-            if (beat_key.channel != 9) {
+            if (!this.is_percussion(beat_key.channel)) {
                 this.push_set_event(
                     beat_key,
                     position,
@@ -365,7 +365,7 @@ open class HistoryLayer() : CursorLayer() {
         val tree = this.get_tree(beat_key, position)
         if (tree.is_event()) {
             val original_event = tree.get_event()!!
-            if (beat_key.channel != 9) {
+            if (!this.is_percussion(beat_key.channel)) {
                 this.push_set_event(
                     beat_key,
                     position,

@@ -215,7 +215,7 @@ class MainFragment : Fragment() {
             false
         )
 
-        if (channel != 9) {
+        if (!opus_manager.is_percussion(channel)) {
             if (line_offset == 0) {
                 rowLabel.textView.text = "$channel:$line_offset"
             } else {
@@ -513,7 +513,8 @@ class MainFragment : Fragment() {
         view.clButtons.btnUnset?.setOnClickListener {
             this.interact_btnUnset(it)
         }
-        if (opus_manager.get_cursor().get_beatkey().channel != 9 && current_tree.is_leaf() && !current_tree.is_event()) {
+        var channel = opus_manager.get_cursor().get_beatkey().channel
+        if (!opus_manager.is_percussion(channel) && current_tree.is_leaf() && !current_tree.is_event()) {
             view.clButtons.btnUnset?.visibility = View.GONE
         }
 
@@ -672,7 +673,7 @@ class MainFragment : Fragment() {
                     val label = this.cache.getLineLabel(y) ?: continue
 
                     // TODO: fix naming to reflect changes to channel handling
-                    if (channel != 9) {
+                    if (!opus_manager.is_percussion(channel)) {
                         label.textView.text = "$channel:$i"
                     } else {
                         val instrument = opus_manager.get_percussion_instrument(i)
@@ -1003,7 +1004,9 @@ class MainFragment : Fragment() {
         var opus_manager = this.getMain().getOpusManager()
         this.setContextMenu(ContextMenu.Leaf)
         var cursor = opus_manager.get_cursor()
-        if (cursor.get_beatkey().channel != 9 || opus_manager.get_tree_at_cursor().is_event()) {
+        var channel = cursor.get_beatkey().channel
+        if (!opus_manager.is_percussion(channel) || opus_manager.get_tree_at_cursor().is_event()) {
+            Log.e("AAA", "Attempingunset")
             opus_manager.unset_at_cursor()
         } else {
             opus_manager.set_percussion_event_at_cursor()

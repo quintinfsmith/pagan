@@ -16,8 +16,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.chip.Chip
 import com.qfs.radixulous.databinding.FragmentConfigBinding
-import kotlinx.android.synthetic.main.channel_ctrl.view.*
-import kotlinx.android.synthetic.main.fragment_config.*
 
 
 /**

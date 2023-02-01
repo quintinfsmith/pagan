@@ -2,6 +2,7 @@ package com.qfs.radixulous
 
 import android.os.Bundle
 import android.view.*
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
@@ -9,7 +10,6 @@ import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.setFragmentResult
 import androidx.navigation.fragment.findNavController
 import com.qfs.radixulous.databinding.FragmentLoadBinding
-import kotlinx.android.synthetic.main.fragment_load.view.*
 import java.io.File
 
 /**
@@ -62,9 +62,10 @@ class LoadFragment : Fragment() {
             }
 
             // TODO: Check if directory is project directory
-            val row = LayoutInflater.from(view.svProjectList.llProjectList.context).inflate(
+            var llProjectList: LinearLayout = view.findViewById(R.id.llProjectList)
+            val row = LayoutInflater.from(llProjectList.context).inflate(
                 R.layout.loadmenu_item,
-                view.svProjectList.llProjectList,
+                llProjectList,
                 false
             ) as ViewGroup
 
@@ -78,7 +79,7 @@ class LoadFragment : Fragment() {
                 findNavController().navigate(R.id.action_LoadFragment_to_MainFragment)
             }
 
-            view.svProjectList.llProjectList.addView(row)
+            llProjectList.addView(row)
         }
 
         //binding.buttonLoad.setOnClickListener {

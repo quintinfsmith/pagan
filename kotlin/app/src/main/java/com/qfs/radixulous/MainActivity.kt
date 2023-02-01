@@ -9,7 +9,8 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.DocumentsContract
 import android.util.Log
-import android.view.*
+import android.view.Menu
+import android.view.MenuItem
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
@@ -21,11 +22,10 @@ import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import com.qfs.radixulous.apres.*
 import com.qfs.radixulous.databinding.ActivityMainBinding
-import com.qfs.radixulous.opusmanager.OpusManagerBase
-import com.qfs.radixulous.opusmanager.HistoryLayer as OpusManager
 import java.io.File
 import java.io.FileOutputStream
 import kotlin.concurrent.thread
+import com.qfs.radixulous.opusmanager.HistoryLayer as OpusManager
 
 
 enum class ContextMenu {
@@ -192,10 +192,17 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun play_event(channel: Int, event_value: Int) {
-        this.midi_input_device.sendEvent(NoteOn(channel, event_value + 21, 64))
+        var midi_channel = this.opus_manager.channels[channel].midi_channel
+        var note = if (this.opus_manager.is_percussion(channel)) {
+            event_value + 35
+        } else {
+            event_value + 21
+        }
+        Log.e("AAA", "$midi_channel -- ")
+        this.midi_input_device.sendEvent(NoteOn(midi_channel, note, 64))
         thread {
             Thread.sleep(200)
-            this.midi_input_device.sendEvent(NoteOff(channel, event_value + 21, 64))
+            this.midi_input_device.sendEvent(NoteOff(midi_channel, note, 64))
         }
     }
 

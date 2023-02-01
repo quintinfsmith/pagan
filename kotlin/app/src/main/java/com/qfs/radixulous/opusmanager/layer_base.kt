@@ -1,11 +1,9 @@
 package com.qfs.radixulous.opusmanager
 import com.qfs.radixulous.apres.*
-import com.qfs.radixulous.structure.OpusTree
 import com.qfs.radixulous.from_string
+import com.qfs.radixulous.structure.OpusTree
 import com.qfs.radixulous.to_string
 import java.io.File
-
-
 open class OpusManagerBase {
     var RADIX: Int = 12
     var DEFAULT_PERCUSSION: Int = 0
@@ -318,12 +316,12 @@ open class OpusManagerBase {
                                 midi.insert_event(
                                     0,
                                     current.offset,
-                                    NoteOn(c, note, 64)
+                                    NoteOn(channel.midi_channel, note, 64)
                                 )
                                 midi.insert_event(
                                     0,
                                     current.offset + current.size,
-                                    NoteOff(c, note, 64)
+                                    NoteOff(channel.midi_channel, note, 64)
                                 )
                             }
                             prev_note = note
@@ -339,7 +337,6 @@ open class OpusManagerBase {
                                     )
                                 )
                             }
-
                         }
                     }
 
@@ -351,7 +348,6 @@ open class OpusManagerBase {
         }
         return midi
     }
-
 
     fun get_beat_tree(beat_key: BeatKey): OpusTree<OpusEvent> {
         if (beat_key.channel >= this.channels.size) {

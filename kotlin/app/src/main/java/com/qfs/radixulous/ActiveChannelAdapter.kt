@@ -1,19 +1,13 @@
 package com.qfs.radixulous
 
 import android.content.Context
-import android.graphics.Paint.STRIKE_THRU_TEXT_FLAG
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.PopupMenu
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.qfs.radixulous.apres.ProgramChange
-import com.qfs.radixulous.opusmanager.OpusChannel
 import com.qfs.radixulous.opusmanager.CursorLayer as OpusManager
-import kotlinx.android.synthetic.main.config_active_channel.view.*
-import kotlinx.android.synthetic.main.table_line_label.view.*
 
 class ChannelOptionAdapter(
     private val opus_manager: OpusManager
@@ -60,17 +54,19 @@ class ChannelOptionAdapter(
         val curChannel = channels[position]
 
         val instrument = curChannel.midi_instrument
-        holder.itemView.btnChooseInstrument.text = if (instrument == 0) {
+        var btnChooseInstrument: TextView = holder.itemView.findViewById(R.id.btnChooseInstrument)
+        btnChooseInstrument.text = if (instrument == 0) {
             "$position: Percussion"
         } else {
             "$position: ${holder.itemView.resources.getStringArray(R.array.midi_instruments)[instrument - 1]}"
         }
 
-        holder.itemView.btnChooseInstrument.setOnClickListener {
+        btnChooseInstrument.setOnClickListener {
             this.interact_btnChooseInstrument(holder.itemView.context, it)
         }
 
-        holder.itemView.btnRemoveChannel.setOnClickListener {
+        var btnRemoveChannel: TextView = holder.itemView.findViewById(R.id.btnRemoveChannel)
+        btnRemoveChannel.setOnClickListener {
             this.interact_btnRemoveChannel(it)
         }
     }
@@ -108,31 +104,15 @@ class ChannelOptionAdapter(
         val popupMenu = PopupMenu(context, view)
         var channel = this.get_view_channel(view)
 
-        //if (opus_manager.is_percussion(channel)) {
-        //    val drums = view.resources.getStringArray(R.array.midi_drums)
-        //    drums.forEachIndexed { i, string ->
-        //        popupMenu.menu.add(0, i, i, string)
-        //    }
-
-        //    popupMenu.setOnMenuItemClickListener {
-        //        opus_manager.set_percussion_instrument(
-        //            cursor.get_beatkey().line_offset,
-        //            it.itemId
-        //        )
-        //        true
-        //    }
-        //}
-
-
         val instruments = view.resources.getStringArray(R.array.midi_instruments)
         var x = 0
         if (this.opus_manager.percussion_channel == null) {
-            popupMenu.menu.add(0, x, 0, "0: Percussion")
+            popupMenu.menu.add(0, 0, 0, "0: Percussion")
             x += 1
         }
 
         instruments.forEachIndexed { i, string ->
-            popupMenu.menu.add(0, x, i + 1, "${i + 1}: $string")
+            popupMenu.menu.add(0, i + 1, x, "${i + 1}: $string")
             x += 1
         }
 
@@ -159,13 +139,9 @@ class ChannelOptionAdapter(
 
         var view = this.recycler?.getChildAt(channel)
         if (view != null) {
+            var btn: TextView = view.findViewById(R.id.btnChooseInstrument)
             val instruments = view!!.resources.getStringArray(R.array.midi_instruments)
-            var index = if (this.opus_manager.percussion_channel == null) {
-                instrument - 1
-            } else {
-                instrument
-            }
-            (view.btnChooseInstrument as TextView).text = "$channel: ${instruments[index]}"
+            btn.text = "$channel: ${instruments[instrument - 1]}"
         }
 
         this.opus_manager.set_channel_instrument(channel, instrument)
@@ -178,7 +154,8 @@ class ChannelOptionAdapter(
 
         var view = this.recycler?.getChildAt(channel)
         if (view != null) {
-            (view.btnChooseInstrument as TextView).text = "$channel: Percussion"
+            var btn: TextView = view.findViewById(R.id.btnChooseInstrument)
+            btn.text = "$channel: Percussion"
         }
         this.opus_manager.set_percussion_channel(channel)
     }

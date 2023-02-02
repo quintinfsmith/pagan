@@ -41,19 +41,19 @@ class OpusChannel() {
         return this.line_map!![line]
     }
 
-    fun new_line(index: Int? = null) {
+    fun new_line(index: Int? = null): List<OpusTree<OpusEvent>> {
+        var new_line: MutableList<OpusTree<OpusEvent>> = mutableListOf()
+        for (i in 0 until this.beat_count) {
+            new_line.add(OpusTree())
+        }
         if (index == null) {
-            this.lines.add(mutableListOf())
-            while (this.lines.last().size < this.beat_count) {
-                this.lines.last().add(OpusTree<OpusEvent>())
-            }
+            this.lines.add(new_line)
         }  else {
-            this.lines.add(index, mutableListOf())
-            while (this.lines[index].size < this.beat_count) {
-                this.lines[index].add(OpusTree<OpusEvent>())
-            }
+            this.lines.add(index, new_line)
         }
         this.size += 1
+
+        return new_line
     }
 
     fun insert_line(index: Int, line: MutableList<OpusTree<OpusEvent>>) {
@@ -66,13 +66,12 @@ class OpusChannel() {
     }
 
     fun remove_line(index: Int? = null): MutableList<OpusTree<OpusEvent>> {
+        this.size -= 1
         return if (index == null) {
             lines.removeLast()
         } else {
             lines.removeAt(index)
         }
-
-        this.size -= 1
     }
 
     fun replace_tree(line: Int, beat: Int, position: List<Int>, tree: OpusTree<OpusEvent>) {

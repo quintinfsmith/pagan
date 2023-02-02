@@ -164,11 +164,12 @@ open class FlagLayer : LinksLayer() {
         this.cache.flag_beat_new(orig_index)
     }
 
-    override fun new_line(channel: Int, index: Int?) {
-        super.new_line(channel, index)
+    override fun new_line(channel: Int, index: Int?): List<OpusTree<OpusEvent>> {
+        var output = super.new_line(channel, index)
 
         val line_index = index ?: (this.channels[channel].size - 1)
         this.cache.flag_line_new(channel, line_index)
+        return output
     }
 
     override fun remove(beat_key: BeatKey, position: List<Int>) {

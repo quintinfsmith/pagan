@@ -300,9 +300,10 @@ open class HistoryLayer() : CursorLayer() {
         super.swap_channels(channel_a, channel_b)
     }
 
-    open override fun new_line(channel: Int, index: Int?) {
-        super.new_line(channel, index)
+    open override fun new_line(channel: Int, index: Int?): List<OpusTree<OpusEvent>> {
+        var output = super.new_line(channel, index)
         this.push_remove_line(channel, index ?: (this.channels[channel].size - 1))
+        return output
     }
 
     open override fun remove_line(channel: Int, line_offset: Int?) {

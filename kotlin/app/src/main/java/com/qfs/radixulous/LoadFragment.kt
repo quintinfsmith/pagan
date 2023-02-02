@@ -10,6 +10,10 @@ import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.setFragmentResult
 import androidx.navigation.fragment.findNavController
 import com.qfs.radixulous.databinding.FragmentLoadBinding
+import com.qfs.radixulous.opusmanager.LoadedJSONData
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import java.io.File
 
 /**
@@ -56,10 +60,17 @@ class LoadFragment : Fragment() {
         }
 
         for (file_name in directory.list()!!) {
-            val file = File("$projects_dir/$file_name")
-            if (!file.isDirectory) {
+            if (!file_name.lowercase().endsWith("json")) {
                 continue
             }
+
+            val file = File("$projects_dir/$file_name")
+            if (!file.isFile) {
+                continue
+            }
+
+            var json_content = file.readText(Charsets.UTF_8)
+            var json_data = Json.decodeFromString<LoadedJSONData>(json_content)
 
             // TODO: Check if directory is project directory
             var llProjectList: LinearLayout = view.findViewById(R.id.llProjectList)
@@ -69,9 +80,7 @@ class LoadFragment : Fragment() {
                 false
             ) as ViewGroup
 
-            (row.getChildAt(0) as TextView).text = file_name
-                 .replace("&#47;", "/")
-                 .replace("&#92;", "\\")
+            (row.getChildAt(0) as TextView).text = json_data.project_name
 
             row.setOnClickListener {
                 // TODO: Show loading reticule

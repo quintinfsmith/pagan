@@ -210,7 +210,7 @@ class MainFragment : Fragment() {
             llLineLabels,
             false
         ) as TextView
-        // TODO: This feels sloppy
+
 
         if (!opus_manager.is_percussion(channel)) {
             if (line_offset == 0) {

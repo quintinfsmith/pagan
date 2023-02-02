@@ -218,7 +218,7 @@ open class CursorLayer() : FlagLayer() {
         this.new_line(this.get_cursor().get_beatkey().channel)
     }
 
-    override fun new_line(channel: Int, index: Int?) {
+    override fun new_line(channel: Int, index: Int?): List<OpusTree<OpusEvent>> {
         var cursor = this.get_cursor()
         var abs_index = if (index == null) {
             this.channels[channel].size - 1
@@ -227,12 +227,13 @@ open class CursorLayer() : FlagLayer() {
         } else {
             index
         }
-        super.new_line(channel, index)
+        var output = super.new_line(channel, index)
 
         var beat_key = cursor.get_beatkey()
         if (channel < beat_key.channel || (channel == beat_key.channel && abs_index < beat_key.line_offset)) {
             this.cursor_down()
         }
+        return output
     }
 
     fun remove_line_at_cursor() {

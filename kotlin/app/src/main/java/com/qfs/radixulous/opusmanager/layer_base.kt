@@ -477,7 +477,7 @@ open class OpusManagerBase {
     open fun load(path: String) {
         this.reset()
         this.path = path
-        this.load_folder(path)
+        this.load_json_file(path)
     }
 
     open fun new() {
@@ -507,17 +507,32 @@ open class OpusManagerBase {
         var beat_count = 0
         json_data.channels.forEachIndexed { i, channel_data ->
             this.new_channel()
+            if (i == this.percussion_channel) {
+                this.channels[i].midi_channel = 9
+            }
             channel_data.lines.forEachIndexed { j, line_str ->
                 var opus_line: MutableList<OpusTree<OpusEvent>> = mutableListOf()
+                var note_set: MutableSet<Int> = mutableSetOf()
                 for (beat_str in line_str.split("|")!!) {
                     var beat_tree = from_string(beat_str, this.RADIX, channel_data.midi_channel)
                     beat_tree.clear_singles()
                     opus_line.add(beat_tree)
+                    for ((event_path, event) in beat_tree.get_events_mapped()) {
+                        note_set.add(event.note)
+                    }
                 }
-                beat_count = kotlin.math.max(opus_line.size, beat_count)
+                // TODO: Allow any channel to be line_mapped here. for now, staying with percussion only
+                if (i == this.percussion_channel) {
+                    this.set_percussion_instrument(j, note_set.first())
+                }
 
+                beat_count = kotlin.math.max(opus_line.size, beat_count)
+                if (this.opus_beat_count != beat_count) {
+                    this.set_beat_count(beat_count)
+                }
                 this.channels[i].insert_line(j, opus_line)
             }
+
         }
 
     }

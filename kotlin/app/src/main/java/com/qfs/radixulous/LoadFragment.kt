@@ -1,6 +1,7 @@
 package com.qfs.radixulous
 
 import android.os.Bundle
+import android.util.Log
 import android.view.*
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -9,6 +10,8 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.setFragmentResult
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.qfs.radixulous.databinding.FragmentLoadBinding
 import com.qfs.radixulous.opusmanager.LoadedJSONData
 import kotlinx.serialization.decodeFromString
@@ -48,6 +51,13 @@ class LoadFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        var loadprojectAdapter = ProjectToLoadAdapter(this)
+        var rvProjectList: RecyclerView = view.findViewById(R.id.rvProjectList)
+
+        rvProjectList.adapter = loadprojectAdapter
+        rvProjectList.layoutManager = LinearLayoutManager(view.context)
+
         // TODO: Find way to use relative path
         var projects_dir = "/data/data/com.qfs.radixulous/projects"
 
@@ -58,7 +68,7 @@ class LoadFragment : Fragment() {
                 throw Exception("Could not make directory")
             }
         }
-
+        var project_list: MutableList<Pair<String, String>> = mutableListOf()
         for (file_name in directory.list()!!) {
             if (!file_name.lowercase().endsWith("json")) {
                 continue
@@ -70,30 +80,24 @@ class LoadFragment : Fragment() {
             }
 
             var json_content = file.readText(Charsets.UTF_8)
-            var json_data = Json.decodeFromString<LoadedJSONData>(json_content)
 
-            // TODO: Check if directory is project directory
-            var llProjectList: LinearLayout = view.findViewById(R.id.llProjectList)
-            val row = LayoutInflater.from(llProjectList.context).inflate(
-                R.layout.loadmenu_item,
-                llProjectList,
-                false
-            ) as ViewGroup
-
-            (row.getChildAt(0) as TextView).text = json_data.project_name
-
-            row.setOnClickListener {
-                // TODO: Show loading reticule
-                setFragmentResult("LOAD", bundleOf(Pair("PATH", "$projects_dir/$file_name")))
-                findNavController().navigate(R.id.action_LoadFragment_to_MainFragment)
-            }
-
-            llProjectList.addView(row)
+            project_list.add(
+                Pair(
+                    Json.decodeFromString<LoadedJSONData>(json_content).project_name,
+                    "$projects_dir/$file_name"
+                )
+            )
         }
+        project_list.sortBy { it.first }
+        for (name_and_path in project_list) {
+            loadprojectAdapter.addProject(name_and_path)
+        }
+    }
 
-        //binding.buttonLoad.setOnClickListener {
-        //    findNavController().navigate(R.id.action_LoadFragment_to_FirstFragment)
-        //}
+    fun load_project(path: String) {
+        Log.e("AAA", path)
+        setFragmentResult("LOAD", bundleOf(Pair("PATH", path)))
+        this.getMain().navTo("main")
     }
 
     override fun onDestroyView() {

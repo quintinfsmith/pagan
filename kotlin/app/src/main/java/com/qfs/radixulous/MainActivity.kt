@@ -198,7 +198,6 @@ class MainActivity : AppCompatActivity() {
         } else {
             event_value + 21
         }
-        Log.e("AAA", "$midi_channel -- ")
         this.midi_input_device.sendEvent(NoteOn(midi_channel, note, 64))
         thread {
             Thread.sleep(200)

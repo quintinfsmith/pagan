@@ -13,7 +13,9 @@ import androidx.fragment.app.setFragmentResultListener
 import androidx.navigation.fragment.findNavController
 import com.qfs.radixulous.databinding.FragmentMainBinding
 import com.qfs.radixulous.opusmanager.BeatKey
+import com.qfs.radixulous.opusmanager.LoadedJSONData
 import com.qfs.radixulous.opusmanager.OpusEvent
+import kotlinx.serialization.Serializable
 import kotlin.math.abs
 
 /**
@@ -74,8 +76,10 @@ class MainFragment : Fragment() {
 
         setFragmentResultListener("LOAD") { _, bundle: Bundle? ->
             var main = this.getMain()
+
             bundle!!.getString("PATH")?.let { path: String ->
                 this.takedownCurrent()
+
                 main.getOpusManager().load(path)
                 main.update_title_text()
 

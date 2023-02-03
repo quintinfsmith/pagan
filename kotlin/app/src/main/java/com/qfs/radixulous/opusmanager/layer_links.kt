@@ -346,15 +346,18 @@ open class LinksLayer() : OpusManagerBase() {
         }
     }
 
-    override fun save(path: String?) {
-        super.save(path)
-        var lines: MutableList<String> = mutableListOf()
-        for ((k, target) in this.linked_beat_map) {
-            lines.add(
-                "    \"${k.channel}.${k.line_offset}.${k.beat}\": [${target.channel},${target.line_offset},${target.beat}]\""
-            )
+    override fun to_json(): LoadedJSONData {
+        var data = super.to_json()
+        var reflections: MutableList<List<BeatKey>> = mutableListOf()
+        for ((target, others) in this.inv_linked_beat_map) {
+            var pool: MutableList<BeatKey> = mutableListOf()
+            pool.add(target)
+            for (other in others) {
+                pool.add(other)
+            }
+            reflections.add(pool)
         }
-        var json_string: String = lines.joinToString(",\n", "{", "}")
-        File("${this.path}/linkedbeats.json").writeText(json_string)
+        data.reflections = reflections
+        return data
     }
 }

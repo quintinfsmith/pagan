@@ -5,7 +5,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.qfs.radixulous.opusmanager.LoadedJSONData
 
 class ProjectToLoadAdapter(
     private val load_fragment: LoadFragment
@@ -24,19 +23,19 @@ class ProjectToLoadAdapter(
         )
     }
 
-    fun addProject(name_and_path: Pair<String, String>) {
-        this.projects.add(name_and_path)
+    fun addProject(title_and_path: Pair<String, String>) {
+        this.projects.add(title_and_path)
         notifyItemInserted(this.projects.size - 1)
     }
 
     override fun onBindViewHolder(holder: ProjectToLoadViewHolder, position: Int) {
-        var (name, path) = this.projects[position]
+        var (title, path) = this.projects[position]
 
         var tvProjectLabel: TextView = holder.itemView.findViewById(R.id.tvProjectLabel)
-        tvProjectLabel.text = name
+        tvProjectLabel.text = title
 
         tvProjectLabel.setOnClickListener {
-            this.load_fragment.load_project(path)
+            this.load_fragment.load_project(path, title)
         }
     }
 

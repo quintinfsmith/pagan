@@ -1,10 +1,13 @@
 package com.qfs.radixulous.opusmanager
 
 import com.qfs.radixulous.structure.OpusTree
+import kotlinx.serialization.Serializable
 import java.lang.Integer.max
 import java.lang.Integer.min
 
+@Serializable
 data class OpusEvent(var note: Int, var radix: Int, var channel: Int, var relative: Boolean)
+@Serializable
 data class BeatKey(var channel: Int, var line_offset: Int, var beat: Int)
 
 class OpusChannel() {

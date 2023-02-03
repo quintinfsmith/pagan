@@ -102,19 +102,13 @@ class ConfigFragment : Fragment() {
         val viewInflated: View = LayoutInflater.from(context)
             .inflate(R.layout.text_name_change, view as ViewGroup?, false)
         val input: EditText = viewInflated.findViewById(R.id.etProjectName)
-        main.getOpusManager().get_working_dir()?.let {
-            input.setText(
-                it.substring(it.lastIndexOf("/") + 1)
-                    .replace("&#47;", "/")
-                    .replace("&#92;", "\\")
-            )
-        }
+        input.setText(main.get_current_project_title() ?: "Untitled Project")
 
         AlertDialog.Builder(context).apply {
             setTitle("Change Project Name")
             setView(viewInflated)
             setPositiveButton(android.R.string.ok) { dialog, _ ->
-                main.rename_project(input.text.toString())
+                main.set_current_project_title(input.text.toString())
                 dialog.dismiss()
             }
             setNegativeButton(android.R.string.cancel) { dialog, _ ->

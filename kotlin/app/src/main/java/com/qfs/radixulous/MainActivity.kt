@@ -15,13 +15,18 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.setFragmentResult
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import com.qfs.radixulous.apres.*
 import com.qfs.radixulous.databinding.ActivityMainBinding
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import java.io.File
 import java.io.FileOutputStream
 import kotlin.concurrent.thread
@@ -45,6 +50,7 @@ class MainActivity : AppCompatActivity() {
     var midi_input_device = MIDIInputDevice()
     private var midi_player = MIDIPlayer()
 
+    private var current_project_title: String? = null
     private var opus_manager = OpusManager()
     private var project_manager = ProjectManager("/data/data/com.qfs.radixulous/projects")
 
@@ -125,7 +131,7 @@ class MainActivity : AppCompatActivity() {
                 this.navTo("load")
             }
             R.id.itmSaveProject -> {
-                this.save()
+                this.save_current_project()
             }
             R.id.itmUndo -> {
                 var main_fragment = this.getActiveFragment()
@@ -135,6 +141,50 @@ class MainActivity : AppCompatActivity() {
             }
         }
         return super.onOptionsItemSelected(item)
+    }
+
+    private fun save_current_project() {
+        // Saving opus_manager first ensures projects path exists
+        this.opus_manager.save()
+        var path = this.opus_manager.path!!
+        var filename = path.substring(path.lastIndexOf("/") + 1)
+
+        var projects_list_file_path = "/data/data/com.qfs.radixulous/projects.json"
+        var project_list_file = File(projects_list_file_path)
+        var project_list = if (project_list_file.isFile) {
+            var content = project_list_file.readText(Charsets.UTF_8)
+            var json_project_list: MutableList<ProjectDirPair> = Json.decodeFromString(content)
+
+            json_project_list.forEachIndexed { _, pair ->
+                if (pair.filename == filename) {
+                    pair.title = this.current_project_title!!
+                }
+            }
+            json_project_list
+        } else {
+            mutableListOf(
+                ProjectDirPair(
+                    title = this.current_project_title!!,
+                    filename = filename
+                )
+            )
+        }
+
+        project_list_file.writeText(
+            Json.encodeToString(
+                project_list
+            )
+        )
+
+        Toast.makeText(this, "Project Saved", Toast.LENGTH_SHORT).show()
+    }
+
+    fun set_current_project_title(title: String) {
+        this.current_project_title = title
+        this.update_title_text()
+    }
+    fun get_current_project_title(): String? {
+        return this.current_project_title
     }
 
     fun getOpusManager(): OpusManager {
@@ -163,30 +213,22 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun newProject() {
+        Log.e("AAA", "NEW CALED")
         this.opus_manager.new()
+        this.set_current_project_title("New Opus")
 
         var projects_dir = "/data/data/com.qfs.radixulous/projects"
         var i = 0
-        while (File("$projects_dir/opus$i").isDirectory) {
+        while (File("$projects_dir/opus_$i.json").isFile) {
             i += 1
         }
-        this.opus_manager.path = "$projects_dir/opus$i"
-    }
-
-    private fun save() {
-        this.opus_manager.save()
-        Toast.makeText(this, "Project Saved", Toast.LENGTH_SHORT).show()
+        this.opus_manager.path = "$projects_dir/opus_$i.json"
     }
 
     fun update_title_text() {
-        this.getOpusManager().get_working_dir()?.let {
-            var unesc_name = it.substring(it.lastIndexOf("/") + 1)
-                .replace("&#47;", "/")
-                .replace("&#92;", "\\")
-
-            this.set_title_text(unesc_name)
-        }
+        this.set_title_text(this.get_current_project_title() ?: "Untitled Opus")
     }
+
     fun set_title_text(new_text: String) {
         this.binding.toolbar!!.title = new_text
     }
@@ -232,11 +274,6 @@ class MainActivity : AppCompatActivity() {
 
         this.newProject()
         this.navTo("main")
-    }
-
-    fun rename_project(new_name: String) {
-        this.project_manager.rename(this.opus_manager, new_name)
-        this.update_title_text()
     }
 
     fun copy_project() {

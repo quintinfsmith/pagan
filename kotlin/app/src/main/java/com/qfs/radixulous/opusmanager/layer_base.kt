@@ -1,31 +1,16 @@
 package com.qfs.radixulous.opusmanager
+import android.util.Log
 import com.qfs.radixulous.apres.*
 import com.qfs.radixulous.from_string
 import com.qfs.radixulous.structure.OpusTree
 import com.qfs.radixulous.to_string
 import java.io.File
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.decodeFromString
-
-@Serializable
-data class ChannelJSONData(
-    var midi_channel: Int,
-    var midi_instrument: Int,
-    var lines: List<String>
-)
-
-@Serializable
-data class LoadedJSONData(
-    var project_name: String,
-    var tempo: Float,
-    var radix: Int,
-    var percussion_channel: Int,
-    var channels: List<ChannelJSONData>,
-    var reflections: List<List<List<Int>>>
-)
+import kotlinx.serialization.encodeToString
 
 open class OpusManagerBase {
+    var project_name: String = ""
     var RADIX: Int = 12
     var DEFAULT_PERCUSSION: Int = 0
     var channels: MutableList<OpusChannel> = mutableListOf()
@@ -260,6 +245,9 @@ open class OpusManagerBase {
 
     open fun remove_channel(channel: Int) {
         var free_midi_channel = this.channels.removeAt(channel).midi_channel
+        if (this.percussion_channel != null && this.percussion_channel!! > channel) {
+            this.percussion_channel = this.percussion_channel!! - 1
+        }
         if (free_midi_channel == 9) {
             return
         }
@@ -302,19 +290,20 @@ open class OpusManagerBase {
         } else {
             end_beat_rel
         }
-        //var instruments = i_arg ?: HashMap<Int, Int>()
-        var instruments = HashMap<Int, Int>()
         var tempo = this.tempo
 
         var midi = MIDI()
-        for (i in 0 until 16) {
-            var instrument = instruments[i]?: 0
-            midi.insert_event(0,0, ProgramChange(i, instrument))
-        }
 
         midi.insert_event(0,0, SetTempo.from_bpm(tempo))
         data class StackItem(var tree: OpusTree<OpusEvent>, var divisions: Int, var offset: Int, var size: Int)
         this.channels.forEachIndexed { c, channel ->
+            if (channel.midi_instrument != 9) {
+                midi.insert_event(
+                    0,
+                    0,
+                    ProgramChange(channel.midi_channel, channel.midi_instrument)
+                )
+            }
             for (l in 0 until channel.size) {
                 var line = channel.get_line(l)
                 var current_tick = 0
@@ -436,6 +425,35 @@ open class OpusManagerBase {
         }
     }
 
+    open fun to_json(): LoadedJSONData {
+        var channels: MutableList<ChannelJSONData> = mutableListOf()
+        for (channel in this.channels) {
+            var lines: MutableList<String> = mutableListOf()
+            for (i in 0 until channel.size) {
+                var line = channel.get_line(i)
+                var beatstrs: MutableList<String> = mutableListOf()
+                for (beat in line) {
+                    beatstrs.add(to_string(beat))
+                }
+                var str_line =  beatstrs.joinToString("|")
+                lines.add(str_line)
+            }
+
+            channels.add(
+                ChannelJSONData(
+                    midi_channel = channel.midi_channel,
+                    midi_instrument = channel.midi_instrument,
+                    lines = lines
+                )
+            )
+        }
+        return LoadedJSONData(
+            tempo = this.tempo,
+            radix = this.RADIX,
+            channels = channels,
+        )
+    }
+
     open fun save(path: String? = null) {
         if (path == null && this.path == null) {
             throw Exception("NoPathGiven")
@@ -445,33 +463,9 @@ open class OpusManagerBase {
             this.path = path
         }
 
-        var directory = File(this.path)
-        if (!directory.isDirectory) {
-            if (! directory.mkdirs()) {
-                throw Exception("Could not make directory")
-            }
-        }
-
-        for (file in directory.list()!!) {
-            File("${this.path}/$file").delete()
-        }
-
-        for (i in 0 until this.channels.size) {
-            var channel = this.channels[i]
-            var strLines: MutableList<String> = mutableListOf()
-            for (j in 0 until channel.size) {
-                var line = channel.get_line(j)
-                var beatstrs: MutableList<String> = mutableListOf()
-                for (beat in line) {
-                    beatstrs.add(to_string(beat))
-                }
-                var str_line =  beatstrs.joinToString("|", "{", "}")
-                strLines.add(str_line)
-            }
-            var working_file = File("${this.path}/channel_$i")
-            working_file.createNewFile()
-            working_file.writeText(strLines.joinToString("\n"))
-        }
+        var file_obj = File(this.path)
+        val json_string = Json.encodeToString(this.to_json())
+        file_obj.writeText(json_string)
     }
 
     open fun load(path: String) {
@@ -493,23 +487,22 @@ open class OpusManagerBase {
 
     open fun load_json_file(path: String) {
         var json_content = File(path).readText(Charsets.UTF_8)
-        this.load_json(Json.decodeFromString<LoadedJSONData>(json_content))
+        this.load_json(Json.decodeFromString(json_content))
     }
 
     open fun load_json(json_data: LoadedJSONData) {
         this.RADIX = json_data.radix
         this.tempo = json_data.tempo
-        this.percussion_channel = if (json_data.percussion_channel >= 0) {
-            json_data.percussion_channel
-        } else {
-            null
-        }
         var beat_count = 0
         json_data.channels.forEachIndexed { i, channel_data ->
             this.new_channel()
-            if (i == this.percussion_channel) {
-                this.channels[i].midi_channel = 9
+            if (channel_data.midi_channel == 9) {
+                this.percussion_channel = i
             }
+
+            this.channels[i].midi_channel = channel_data.midi_channel
+            this.channels[i].midi_instrument = channel_data.midi_instrument
+
             channel_data.lines.forEachIndexed { j, line_str ->
                 var opus_line: MutableList<OpusTree<OpusEvent>> = mutableListOf()
                 var note_set: MutableSet<Int> = mutableSetOf()
@@ -517,10 +510,13 @@ open class OpusManagerBase {
                     var beat_tree = from_string(beat_str, this.RADIX, channel_data.midi_channel)
                     beat_tree.clear_singles()
                     opus_line.add(beat_tree)
-                    for ((event_path, event) in beat_tree.get_events_mapped()) {
-                        note_set.add(event.note)
+                    if (i == this.percussion_channel) {
+                        for ((_, event) in beat_tree.get_events_mapped()) {
+                            note_set.add(event.note)
+                        }
                     }
                 }
+
                 // TODO: Allow any channel to be line_mapped here. for now, staying with percussion only
                 if (i == this.percussion_channel) {
                     this.set_percussion_instrument(j, note_set.first())
@@ -530,11 +526,10 @@ open class OpusManagerBase {
                 if (this.opus_beat_count != beat_count) {
                     this.set_beat_count(beat_count)
                 }
+
                 this.channels[i].insert_line(j, opus_line)
             }
-
         }
-
     }
 
     open fun load_folder(path: String) {
@@ -709,5 +704,9 @@ open class OpusManagerBase {
         }
 
         return output
+    }
+
+    fun set_name(new_name: String) {
+        this.project_name = new_name
     }
 }

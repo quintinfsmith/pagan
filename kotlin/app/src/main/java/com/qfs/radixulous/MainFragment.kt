@@ -100,6 +100,8 @@ class MainFragment : Fragment() {
             main.update_menu_options()
         }
 
+
+
         //binding.buttonFirst.setOnClickListener {
         //    findNavController().navigate(R.id.action_FirstFragment_to_SecondFragment)
         //}
@@ -109,13 +111,11 @@ class MainFragment : Fragment() {
         super.onStart()
 
         var main = this.getMain()
-        if (!this.is_loaded) {
+        if (main.get_current_project_title() == null) {
             main.newProject()
             main.update_title_text()
             this.setContextMenu(ContextMenu.Leaf)
             this.tick()
-
-            this.is_loaded = true
         }
 
     }
@@ -1322,7 +1322,9 @@ class MainFragment : Fragment() {
 
     fun play_beat(beat: Int) {
         var opus_manager = this.getMain().getOpusManager()
+        Log.e("AAA", "___")
         var midi = opus_manager.get_midi(beat, beat + 1)
+        Log.e("AAA", "___")
         this.getMain().play_midi(midi)
     }
 }

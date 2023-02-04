@@ -16,6 +16,7 @@ import com.qfs.radixulous.opusmanager.BeatKey
 import com.qfs.radixulous.opusmanager.LoadedJSONData
 import com.qfs.radixulous.opusmanager.OpusEvent
 import kotlinx.serialization.Serializable
+import kotlin.concurrent.thread
 import kotlin.math.abs
 
 /**
@@ -31,6 +32,7 @@ class MainFragment : Fragment() {
     private var linking_beat_b: BeatKey? = null
     private var relative_mode: Boolean = false
     private var is_loaded: Boolean = false
+    var in_play_back: Boolean = false
 
     private var _binding: FragmentMainBinding? = null
     private var cache = ViewCache()
@@ -99,7 +101,6 @@ class MainFragment : Fragment() {
             this.tick()
             main.update_menu_options()
         }
-
 
 
         //binding.buttonFirst.setOnClickListener {
@@ -181,13 +182,7 @@ class MainFragment : Fragment() {
         val x = parent.childCount
         headerCellView.text = "$x"
         headerCellView.setOnClickListener {
-            this.focus_column = true
-            this.focus_row = false
-            val cursor = opus_manager.get_cursor()
-            opus_manager.set_cursor_position(cursor.y, x, listOf())
-            this.setContextMenu(ContextMenu.Beat)
-            this.tick()
-            this.play_beat(x)
+            this.interact_column_header(it)
         }
         this.cache.addColumnLabel(headerCellView)
         parent.addView(headerCellView)
@@ -1029,7 +1024,10 @@ class MainFragment : Fragment() {
             true
         )
 
-        this.getMain().play_event(beat_key.channel, event.note)
+        var note = opus_manager.get_absolute_value(beat_key, cursor.get_position())
+        if (note != null) {
+            this.getMain().play_event(beat_key.channel, note!! + new_value)
+        }
 
         opus_manager.set_event(beat_key, cursor.position, event)
         this.tick()
@@ -1145,7 +1143,10 @@ class MainFragment : Fragment() {
 
         var cursor_tree = opus_manager.get_tree_at_cursor()
         if (cursor_tree.is_event()) {
-            this.getMain().play_event(cursor_beatkey.channel, cursor_tree.get_event()!!.note)
+            var abs_value = opus_manager.get_absolute_value(cursor_beatkey, opus_manager.get_cursor().get_position())
+            if (abs_value != null) {
+                this.getMain().play_event(cursor_beatkey.channel, abs_value)
+            }
         }
     }
 
@@ -1295,6 +1296,7 @@ class MainFragment : Fragment() {
     fun interact_nsRelativeValue(view: NumberSelector) {
         this.change_relative_value(view.getState()!!)
     }
+
     private fun interact_btnChoosePercussion(view: View) {
         var opus_manager = this.getMain().getOpusManager()
         val popupMenu = PopupMenu(this.activity?.window?.decorView?.rootView?.context, view)
@@ -1320,9 +1322,64 @@ class MainFragment : Fragment() {
 
     fun play_beat(beat: Int) {
         var opus_manager = this.getMain().getOpusManager()
-        Log.e("AAA", "___")
         var midi = opus_manager.get_midi(beat, beat + 1)
-        Log.e("AAA", "___")
         this.getMain().play_midi(midi)
     }
+
+    fun scroll_to_beat(beat: Int, select: Boolean = false) {
+
+        val hsvTable: HorizontalScrollView = this.getMain().findViewById(R.id.hsvTable)
+        val llColumnLabels: LinearLayout = this.getMain().findViewById(R.id.llColumnLabels)
+
+        var view = llColumnLabels.getChildAt(beat)
+        if (view != null) {
+            hsvTable.smoothScrollTo(view.left, hsvTable.scrollY)
+            if (select) {
+                this.interact_column_header(view)
+            }
+        }
+    }
+
+    fun play_from_current_beat() {
+        var beat = this.getMain().getOpusManager().get_cursor().x
+        this.play_from_beat(beat)
+    }
+
+    fun stop_playback() {
+        this.in_play_back = false
+    }
+
+    fun play_from_beat(beat:Int) {
+        this.in_play_back = true
+        var opus_manager = this.getMain().getOpusManager()
+        for (i in beat until opus_manager.opus_beat_count) {
+            if (!this.in_play_back) {
+                break
+            }
+
+            this.scroll_to_beat(i)
+
+            thread {
+                this.play_beat(i)
+            }
+
+            var delay = (60F / this.getMain().getOpusManager().tempo) * 1000
+            Thread.sleep(delay.toLong())
+        }
+
+        this.getMain().stop_playback()
+    }
+
+    fun interact_column_header(view: View) {
+        var x = (view.parent as ViewGroup).indexOfChild(view)
+        var opus_manager = this.getMain().getOpusManager()
+        this.focus_column = true
+        this.focus_row = false
+        val cursor = opus_manager.get_cursor()
+        opus_manager.set_cursor_position(cursor.y, x, listOf())
+
+        this.setContextMenu(ContextMenu.Beat)
+        this.tick()
+    }
+
 }

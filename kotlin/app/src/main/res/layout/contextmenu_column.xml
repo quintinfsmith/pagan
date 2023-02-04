@@ -4,39 +4,6 @@
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <LinearLayout
-        android:id="@+id/llPlaybackctl"
-        android:layout_height="wrap_content"
-        android:layout_width="match_parent"
-        android:paddingTop="5px"
-        android:paddingBottom="5px"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" >
-        <TextView
-            android:id="@+id/btnPlayback"
-            android:theme="@style/button"
-            android:background="@drawable/button"
-            android:layout_marginEnd="5px"
-            android:layout_marginStart="5px"
-            android:gravity="center"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="match_parent"
-            android:text="|>" />
-        <TextView
-            android:id="@+id/btnStopPlayback"
-            android:theme="@style/button"
-            android:background="@drawable/button"
-            android:layout_marginEnd="5px"
-            android:layout_marginStart="5px"
-            android:gravity="center"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="match_parent"
-            android:text="[]" />
-    </LinearLayout>
-
     <TextView
         android:id="@+id/btnRemoveBeat"
         android:theme="@style/button"
@@ -50,7 +17,6 @@
         android:layout_height="match_parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/btnInsertBeat"
-        app:layout_constraintTop_toBottomOf="@+id/llPlaybackctl"
         android:text="Remove Beat"/>
     <TextView
         android:id="@+id/btnInsertBeat"
@@ -62,7 +28,6 @@
         android:layout_width="0dp"
         android:layout_weight="1"
         android:layout_height="match_parent"
-        app:layout_constraintTop_toBottomOf="@+id/llPlaybackctl"
         app:layout_constraintStart_toEndOf="@+id/btnRemoveBeat"
         app:layout_constraintEnd_toEndOf="parent"
         android:text="Insert Beat"/>

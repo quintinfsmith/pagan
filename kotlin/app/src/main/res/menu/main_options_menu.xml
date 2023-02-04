@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item android:title="playpause"
+        android:id="@+id/itmPlay"
+        android:orderInCategory="0"
+        app:showAsAction="always"
+        android:icon="@drawable/ic_baseline_play_arrow_24"/>
+
     <item android:title="undo"
         android:id="@+id/itmUndo"
         android:orderInCategory="0"

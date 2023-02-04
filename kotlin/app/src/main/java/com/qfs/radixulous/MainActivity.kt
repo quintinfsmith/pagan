@@ -139,8 +139,51 @@ class MainActivity : AppCompatActivity() {
                     main_fragment.undo()
                 }
             }
+            R.id.itmPlay -> {
+                var main_fragment = this.getActiveFragment()
+                if (main_fragment is MainFragment) {
+                    if (!main_fragment.in_play_back) {
+                        this.start_playback()
+                    } else {
+                        this.stop_playback()
+                        main_fragment.in_play_back = false
+                    }
+                }
+
+            }
         }
         return super.onOptionsItemSelected(item)
+    }
+
+    fun start_playback() {
+        var main_fragment = this.getActiveFragment()
+        if (main_fragment !is MainFragment) {
+            return
+        }
+        if (main_fragment.in_play_back) {
+            return
+        }
+        var item = this.optionsMenu.findItem(R.id.itmPlay)
+        item.icon = resources.getDrawable(R.drawable.ic_baseline_pause_24)
+        thread {
+            main_fragment.play_from_current_beat()
+        }
+    }
+
+    fun stop_playback() {
+        var main_fragment = this.getActiveFragment()
+        if (main_fragment !is MainFragment) {
+            return
+        }
+
+        if (!main_fragment.in_play_back) {
+            return
+        }
+
+        var item = this.optionsMenu.findItem(R.id.itmPlay)
+        item.icon = resources.getDrawable(R.drawable.ic_baseline_play_arrow_24)
+
+        main_fragment.stop_playback()
     }
 
     private fun save_current_project() {

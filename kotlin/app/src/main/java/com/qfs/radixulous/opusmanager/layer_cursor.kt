@@ -138,13 +138,16 @@ class Cursor(var opus_manager: CursorLayer) {
         // Then get the current_working_tree
         var index = 0
         for (j in this.position) {
-            if (working_tree.is_leaf() || working_tree.size <= j) {
+            if (working_tree.is_leaf()) {
                 break
             }
-            working_tree = working_tree.get(j)
+            working_tree = if (working_tree.size <= j) {
+                working_tree.get(working_tree.size - 1)
+            } else {
+                working_tree.get(j)
+            }
             index += 1
         }
-
         while (index < this.position.size) {
             this.position.removeLast()
         }
@@ -264,17 +267,9 @@ open class CursorLayer() : FlagLayer() {
     fun remove_tree_at_cursor() {
         var beat_key = this.get_cursor().get_beatkey()
         var position = this.get_cursor().get_position()
-        var removed_parent = this.get_tree(beat_key, position).parent
 
         this.remove(beat_key, position)
 
-        if (removed_parent != null && removed_parent.size > 1) {
-            if (position.isNotEmpty() && position.last() > 0)  {
-                this.get_cursor().position[position.size - 1] = position.last() - 1
-            }
-        }
-
-        this.get_cursor().settle()
     }
 
     fun insert_beat_at_cursor() {
@@ -408,7 +403,19 @@ open class CursorLayer() : FlagLayer() {
     }
 
     override fun remove(beat_key: BeatKey, position: List<Int>) {
+
         super.remove(beat_key, position)
+
+        var cursor = this.get_cursor()
+        if (position.isNotEmpty() && cursor.get_beatkey() == beat_key && cursor.get_position() == position) {
+            var parent_tree = this.get_tree(beat_key, position.subList(0, position.size - 1))
+            if (parent_tree != null && parent_tree.size > 1) {
+                if (position.isNotEmpty() && position.last() > 0)  {
+                    this.get_cursor().position[position.size - 1] = position.last() - 1
+                }
+            }
+        }
+
         this.get_cursor().settle()
     }
 

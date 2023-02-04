@@ -151,18 +151,23 @@ class MainActivity : AppCompatActivity() {
 
         var projects_list_file_path = "/data/data/com.qfs.radixulous/projects.json"
         var project_list_file = File(projects_list_file_path)
+        var current_exists = false
         var project_list = if (project_list_file.isFile) {
             var content = project_list_file.readText(Charsets.UTF_8)
             var json_project_list: MutableList<ProjectDirPair> = Json.decodeFromString(content)
 
             json_project_list.forEachIndexed { _, pair ->
                 if (pair.filename == filename) {
+                    current_exists = true
                     pair.title = this.current_project_title!!
                 }
             }
             json_project_list
         } else {
-            mutableListOf(
+            mutableListOf()
+        }
+        if (! current_exists) {
+            project_list.add(
                 ProjectDirPair(
                     title = this.current_project_title!!,
                     filename = filename
@@ -257,6 +262,7 @@ class MainActivity : AppCompatActivity() {
         var name = opus_manager.get_working_dir()
         if (name != null) {
             name = name.substring(name.lastIndexOf("/") + 1)
+            name = name.substring(0, name.lastIndexOf("."))
         }
 
         val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {

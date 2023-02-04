@@ -346,6 +346,22 @@ open class LinksLayer() : OpusManagerBase() {
         }
     }
 
+    override fun load_json(json_data: LoadedJSONData) {
+        super.load_json(json_data)
+        if (json_data.reflections == null) {
+            return
+        }
+
+        for (pool in json_data.reflections!!) {
+            var target = pool[0]
+            this.inv_linked_beat_map[target] = mutableListOf()
+            for (i in 1 until pool.size) {
+                this.linked_beat_map[pool[i]] = target
+                inv_linked_beat_map[target]!!.add(pool[i])
+            }
+        }
+    }
+
     override fun to_json(): LoadedJSONData {
         var data = super.to_json()
         var reflections: MutableList<List<BeatKey>> = mutableListOf()

@@ -375,7 +375,7 @@ open class OpusManagerBase {
             throw Exception("Invalid BeatKey $beat_key")
         }
 
-        return this.channels[beat_key.channel].get_tree(line_offset, beat_key.line_offset)
+        return this.channels[beat_key.channel].get_tree(line_offset, beat_key.beat)
     }
 
     fun get_tree(beat_key: BeatKey, position: List<Int>): OpusTree<OpusEvent> {

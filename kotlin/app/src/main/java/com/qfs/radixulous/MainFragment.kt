@@ -109,7 +109,6 @@ class MainFragment : Fragment() {
 
     override fun onStart() {
         super.onStart()
-
         var main = this.getMain()
         if (main.get_current_project_title() == null) {
             main.newProject()
@@ -117,7 +116,6 @@ class MainFragment : Fragment() {
             this.setContextMenu(ContextMenu.Leaf)
             this.tick()
         }
-
     }
 
     //override fun onResume() {

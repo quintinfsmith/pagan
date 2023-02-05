@@ -256,10 +256,10 @@ open class LinksLayer() : OpusManagerBase() {
     }
 
     private fun rh_remove_channel(beat: BeatKey, args: List<Int>): BeatKey? {
-        if (beat.channel == args[0]) {
-            return null
+        return if (beat.channel == args[0]) {
+            null
         } else {
-            return beat
+            beat
         }
     }
 

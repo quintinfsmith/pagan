@@ -7,7 +7,6 @@
     <TextView
         android:id="@+id/btnRemoveBeat"
         android:theme="@style/button"
-        android:background="@drawable/button"
         android:layout_marginEnd="5px"
         android:layout_marginStart="5px"
         android:gravity="center"
@@ -21,7 +20,6 @@
     <TextView
         android:id="@+id/btnInsertBeat"
         android:theme="@style/button"
-        android:background="@drawable/button"
         android:layout_marginEnd="5px"
         android:layout_marginStart="5px"
         android:gravity="center"

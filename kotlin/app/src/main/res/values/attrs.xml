@@ -7,4 +7,5 @@
         <attr name="button_fg" format="color"/>
         <attr name="button_bg" format="color"/>
     </declare-styleable>
+    <attr name="drawerBG" format="color" />
 </resources>

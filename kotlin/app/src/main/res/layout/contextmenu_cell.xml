@@ -90,7 +90,6 @@
         <TextView
             android:id="@+id/btnSplit"
             android:theme="@style/button"
-            android:background="@drawable/button"
             android:gravity="center"
             android:layout_width="0dp"
             android:layout_weight="1"
@@ -105,7 +104,6 @@
         <TextView
             android:id="@+id/btnUnset"
             android:theme="@style/button"
-            android:background="@drawable/button"
             android:gravity="center"
             android:layout_width="0dp"
             android:layout_weight="1"
@@ -121,7 +119,6 @@
         <TextView
             android:id="@+id/btnInsert"
             android:theme="@style/button"
-            android:background="@drawable/button"
             android:gravity="center"
             android:layout_width="0dp"
             android:layout_weight="1"
@@ -137,7 +134,6 @@
         <TextView
             android:id="@+id/btnRemove"
             android:theme="@style/button"
-            android:background="@drawable/button"
             android:gravity="center"
             android:layout_width="0dp"
             android:layout_weight="1"

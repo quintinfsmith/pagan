@@ -78,6 +78,13 @@ open class FlagLayer : LinksLayer() {
         this.cache.flag_beat_change(beat_key)
     }
 
+    override fun remove_channel(channel: Int) {
+        for (i in 0 until this.channels[channel].size) {
+            this.cache.flag_line_pop(channel, 0)
+        }
+        super.remove_channel(channel)
+    }
+
     override fun replace_tree(beat_key: BeatKey, position: List<Int>, tree: OpusTree<OpusEvent>) {
         super.replace_tree(beat_key, position, tree)
         this.cache.flag_beat_change(beat_key)

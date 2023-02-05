@@ -3,25 +3,27 @@ package com.qfs.radixulous
 //import com.qfs.radixulous.MIDIPlaybackDevice
 
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.provider.DocumentsContract
-import android.util.Log
-import android.view.Menu
-import android.view.MenuItem
+import android.text.Editable
+import android.text.TextWatcher
+import android.view.*
+import android.widget.EditText
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.setFragmentResult
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
+import androidx.recyclerview.widget.RecyclerView
 import com.qfs.radixulous.apres.*
 import com.qfs.radixulous.databinding.ActivityMainBinding
 import kotlinx.serialization.decodeFromString
@@ -75,10 +77,11 @@ class MainActivity : AppCompatActivity() {
         this.binding = ActivityMainBinding.inflate(this.layoutInflater)
         setContentView(this.binding.root)
 
-        setSupportActionBar(this.binding.toolbar)
+        setSupportActionBar(this.binding.appBarMain.toolbar)
         val navController = findNavController(R.id.nav_host_fragment_content_main)
         this.appBarConfiguration = AppBarConfiguration(navController.graph)
         setupActionBarWithNavController(navController, this.appBarConfiguration)
+
 
         //////////////////////////////////////////
         // TODO: clean up the file -> riff -> soundfont -> midi playback device process
@@ -90,8 +93,8 @@ class MainActivity : AppCompatActivity() {
         this.midi_controller.registerVirtualDevice(this.midi_input_device)
         this.midi_controller.registerVirtualDevice(this.midi_player)
         ///////////////////////////////////////////
-
     }
+
 
     override fun onBackPressed() {
         super.onBackPressed()
@@ -114,7 +117,6 @@ class MainActivity : AppCompatActivity() {
     // methods to control the operations that will
     // happen when user clicks on the action buttons
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        val navController = findNavController(R.id.nav_host_fragment_content_main)
         when (item.itemId) {
             R.id.itmNewProject -> {
                 // TODO: Save or discard popup dialog
@@ -149,10 +151,82 @@ class MainActivity : AppCompatActivity() {
                         main_fragment.in_play_back = false
                     }
                 }
-
             }
         }
         return super.onOptionsItemSelected(item)
+    }
+
+    fun setup_config_drawer() {
+        var opus_manager = this.getOpusManager()
+        var rvActiveChannels: RecyclerView = this.findViewById(R.id.rvActiveChannels)
+        var channelAdapter = ChannelOptionAdapter(this, rvActiveChannels)
+
+        var tvChangeProjectName: TextView = this.findViewById(R.id.tvChangeProjectName)
+        tvChangeProjectName.setOnClickListener {
+            this.change_name_dialog()
+        }
+
+        var etTempo: EditText = this.findViewById(R.id.etTempo)
+        etTempo.setText(opus_manager.tempo.toString())
+        etTempo.addTextChangedListener(object: TextWatcher {
+            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
+            override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
+            override fun afterTextChanged(editable: Editable?) {
+                try {
+                    opus_manager.tempo = editable.toString().toFloat()
+                } catch (exception: Exception) { }
+            }
+        })
+
+        (this.findViewById(R.id.btnAddChannel) as TextView).setOnClickListener {
+            channelAdapter.addChannel()
+            var fragment = this.getActiveFragment()
+            if (fragment is MainFragment) {
+                fragment.tick()
+            }
+        }
+
+        (this.findViewById(R.id.btnExportProject) as TextView).setOnClickListener {
+            this.export_midi()
+        }
+
+        (this.findViewById(R.id.btnDeleteProject) as TextView).setOnClickListener {
+            // TODO: Warning dialog
+            this.delete_project()
+            // TODO: Toast Feedback
+        }
+        (this.findViewById(R.id.btnCopyProject) as TextView).setOnClickListener {
+            this.copy_project()
+            // TODO: Toast Feedback
+        }
+
+    }
+
+    private fun change_name_dialog() {
+        var main_fragment = this.getActiveFragment()
+
+        val viewInflated: View = LayoutInflater.from(main_fragment!!.context)
+            .inflate(
+                R.layout.text_name_change,
+                main_fragment.view as ViewGroup,
+                false
+            )
+        val input: EditText = viewInflated.findViewById(R.id.etProjectName)
+        input.setText(this.get_current_project_title() ?: "Untitled Project")
+
+        var that = this
+        AlertDialog.Builder(main_fragment!!.context).apply {
+            setTitle("Change Project Name")
+            setView(viewInflated)
+            setPositiveButton(android.R.string.ok) { dialog, _ ->
+                that.set_current_project_title(input.text.toString())
+                dialog.dismiss()
+            }
+            setNegativeButton(android.R.string.cancel) { dialog, _ ->
+                dialog.cancel()
+            }
+            show()
+        }
     }
 
     fun start_playback() {
@@ -250,7 +324,6 @@ class MainActivity : AppCompatActivity() {
                 this.optionsMenu.findItem(R.id.itmNewProject).isVisible = true
             }
             //is LoadFragment -> { }
-            //is ConfigFragment -> { }
             else -> {
                 this.optionsMenu.findItem(R.id.itmLoadProject).isVisible = false
                 this.optionsMenu.findItem(R.id.itmSaveProject).isVisible = false
@@ -261,7 +334,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun newProject() {
-        Log.e("AAA", "NEW CALED")
         this.opus_manager.new()
         this.set_current_project_title("New Opus")
 
@@ -278,7 +350,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun set_title_text(new_text: String) {
-        this.binding.toolbar!!.title = new_text
+        this.binding.appBarMain.toolbar!!.title = new_text
     }
 
     fun play_event(channel: Int, event_value: Int) {
@@ -336,14 +408,6 @@ class MainActivity : AppCompatActivity() {
         var fragment = navHost?.childFragmentManager?.fragments?.get(0)
         val navController = findNavController(R.id.nav_host_fragment_content_main)
         when (fragment) {
-            is ConfigFragment -> {
-                when (fragmentName) {
-                    "main" -> {
-                        navController.navigate(R.id.action_ConfigFragment_to_MainFragment)
-                    }
-                    else -> {}
-                }
-            }
             is LoadFragment -> {
                 when (fragmentName) {
                     "main" -> {
@@ -355,9 +419,6 @@ class MainActivity : AppCompatActivity() {
             }
             is MainFragment -> {
                 when (fragmentName) {
-                    "config" -> {
-                        navController.navigate(R.id.action_MainFragment_to_ConfigFragment)
-                    }
                     "load" -> {
                         navController.navigate(R.id.action_MainFragment_to_LoadFragment)
                     }

@@ -262,6 +262,7 @@ open class OpusManagerBase {
                 }
             }
         }
+
     }
 
     open fun remove_line(channel: Int, index: Int? = null) {

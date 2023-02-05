@@ -2,20 +2,18 @@ package com.qfs.radixulous
 
 import android.os.Bundle
 import android.util.Log
+import android.view.ContextThemeWrapper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
-import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResultListener
 import androidx.navigation.fragment.findNavController
 import com.qfs.radixulous.databinding.FragmentMainBinding
 import com.qfs.radixulous.opusmanager.BeatKey
-import com.qfs.radixulous.opusmanager.LoadedJSONData
 import com.qfs.radixulous.opusmanager.OpusEvent
-import kotlinx.serialization.Serializable
 import kotlin.concurrent.thread
 import kotlin.math.abs
 
@@ -71,11 +69,6 @@ class MainFragment : Fragment() {
             svLineLabels.scrollY = svTable.scrollY
         }
 
-        val btnChannelCtrl: TextView = view.findViewById(R.id.btnChannelCtrl)
-        btnChannelCtrl.setOnClickListener{
-            findNavController().navigate(R.id.action_MainFragment_to_ConfigFragment)
-        }
-
         setFragmentResultListener("LOAD") { _, bundle: Bundle? ->
             var main = this.getMain()
 
@@ -101,8 +94,6 @@ class MainFragment : Fragment() {
             this.tick()
             main.update_menu_options()
         }
-
-
         //binding.buttonFirst.setOnClickListener {
         //    findNavController().navigate(R.id.action_FirstFragment_to_SecondFragment)
         //}
@@ -111,6 +102,7 @@ class MainFragment : Fragment() {
     override fun onStart() {
         super.onStart()
         var main = this.getMain()
+        main.setup_config_drawer()
         if (main.get_current_project_title() == null) {
             main.newProject()
             main.update_title_text()
@@ -166,7 +158,6 @@ class MainFragment : Fragment() {
 
 
     private fun newColumnLabel() {
-        var opus_manager = this.getMain().getOpusManager()
         val parent: ViewGroup = this.activity!!.findViewById(R.id.llColumnLabels)
         val headerCellView = LayoutInflater.from(parent.context).inflate(
             R.layout.table_column_label,
@@ -669,6 +660,7 @@ class MainFragment : Fragment() {
         var lines_changed = false
         while (true) {
             val (channel, index, operation) = opus_manager.fetch_flag_line() ?: break
+            Log.e("AAA", "$channel, $index, $operation")
             when (operation) {
                 0 -> {
                     val counts = opus_manager.get_channel_line_counts()
@@ -1299,7 +1291,8 @@ class MainFragment : Fragment() {
 
     private fun interact_btnChoosePercussion(view: View) {
         var opus_manager = this.getMain().getOpusManager()
-        val popupMenu = PopupMenu(this.activity?.window?.decorView?.rootView?.context, view)
+        var wrapper = ContextThemeWrapper(this.activity?.window?.decorView?.rootView?.context, R.style.PopupMenu)
+        val popupMenu = PopupMenu(wrapper, view)
         val cursor = opus_manager.get_cursor()
         val drums = resources.getStringArray(R.array.midi_drums)
         drums.forEachIndexed { i, string ->

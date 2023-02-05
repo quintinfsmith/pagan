@@ -3,6 +3,15 @@
     <style name="button" parent="@android:style/Widget.Button">
         <item name="android:textSize">24sp</item>
         <item name="android:gravity">center</item>
+        <item name="android:background">@drawable/button</item>
+        <item name="android:textColor">@color/interface_fg</item>
+        <item name="android:clickable">true</item>
+        <item name="android:padding">0dp</item>
+    </style>
+
+    <style name="edittext" parent="@android:style/Widget.EditText">
+        <item name="android:textSize">24sp</item>
+        <item name="android:gravity">center</item>
         <item name="android:background">@color/interface_bg</item>
         <item name="android:textColor">@color/interface_fg</item>
         <item name="android:clickable">true</item>
@@ -43,6 +52,7 @@
         <item name="android:gravity">center_vertical|center_horizontal</item>
         <item name="android:textColor">@color/leaf_fg</item>
         <item name="android:shadowColor">#FF000000</item>
+
         <item name="android:shadowDx">0</item>
         <item name="android:shadowDy">0</item>
         <item name="android:shadowRadius">0</item>

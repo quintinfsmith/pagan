@@ -1,20 +1,27 @@
 package com.qfs.radixulous
 
 import android.content.Context
+import android.util.Log
+import android.view.ContextThemeWrapper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.PopupMenu
 import android.widget.TextView
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.radixulous.opusmanager.CursorLayer as OpusManager
 
 class ChannelOptionAdapter(
-    private val opus_manager: OpusManager
+    private val activity: MainActivity,
+    private val recycler: RecyclerView
 ) : RecyclerView.Adapter<ChannelOptionAdapter.ChannelOptionViewHolder>() {
-
     class ChannelOptionViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
-    var recycler: RecyclerView? = null
+    init {
+        this.recycler.adapter = this
+        this.recycler.layoutManager = LinearLayoutManager(this.activity)
+    }
+
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChannelOptionViewHolder {
         return ChannelOptionViewHolder(
@@ -27,30 +34,16 @@ class ChannelOptionAdapter(
     }
 
     fun addChannel() {
-        this.opus_manager.new_channel()
-        this.opus_manager.new_line(this.opus_manager.channels.size - 1)
+        var opus_manager = this.activity.getOpusManager()
+        opus_manager.new_channel()
+        opus_manager.new_line(opus_manager.channels.size - 1)
 
-        notifyItemInserted(this.opus_manager.channels.size - 1)
+        notifyItemInserted(opus_manager.channels.size - 1)
     }
 
-    //fun deleteDoneTodos() {
-    //    channels.removeAll { todo ->
-    //        todo.isChecked
-    //    }
-    //    notifyDataSetChanged()
-    //}
-
-    //private fun toggleStrikeThrough(tvTodoTitle: TextView, isChecked: Boolean) {
-    //    if(isChecked) {
-    //        tvTodoTitle.paintFlags = tvTodoTitle.paintFlags or STRIKE_THRU_TEXT_FLAG
-    //    } else {
-    //        tvTodoTitle.paintFlags = tvTodoTitle.paintFlags and STRIKE_THRU_TEXT_FLAG.inv()
-    //    }
-    //}
-
     override fun onBindViewHolder(holder: ChannelOptionViewHolder, position: Int) {
-        var channels = this.opus_manager.channels
-
+        var opus_manager = this.activity.getOpusManager()
+        var channels = opus_manager.channels
         val curChannel = channels[position]
 
         val instrument = curChannel.midi_instrument
@@ -68,6 +61,10 @@ class ChannelOptionAdapter(
         var btnRemoveChannel: TextView = holder.itemView.findViewById(R.id.btnRemoveChannel)
         btnRemoveChannel.setOnClickListener {
             this.interact_btnRemoveChannel(it)
+            var fragment = this.activity.getActiveFragment()
+            if (fragment is MainFragment) {
+                fragment.tick()
+            }
         }
     }
 
@@ -95,18 +92,22 @@ class ChannelOptionAdapter(
     }
 
     private fun interact_btnRemoveChannel(view: View) {
+        var opus_manager = this.activity.getOpusManager()
         var x = this.get_view_channel(view)
-        this.opus_manager.remove_channel(x)
+        opus_manager.remove_channel(x)
+
         this.notifyItemRemoved(x)
     }
 
     private fun interact_btnChooseInstrument(context: Context, view: View) {
-        val popupMenu = PopupMenu(context, view)
+        var opus_manager = this.activity.getOpusManager()
+        var wrapper = ContextThemeWrapper(context, R.style.PopupMenu)
+        val popupMenu = PopupMenu(wrapper, view)
         var channel = this.get_view_channel(view)
 
         val instruments = view.resources.getStringArray(R.array.midi_instruments)
         var x = 0
-        if (this.opus_manager.percussion_channel == null) {
+        if (opus_manager.percussion_channel == null) {
             popupMenu.menu.add(0, 0, 0, "0: Percussion")
             x += 1
         }
@@ -144,12 +145,14 @@ class ChannelOptionAdapter(
             btn.text = "$channel: ${instruments[instrument - 1]}"
         }
 
-        this.opus_manager.set_channel_instrument(channel, instrument)
+        var opus_manager = this.activity.getOpusManager()
+        opus_manager.set_channel_instrument(channel, instrument)
     }
 
     private fun set_percussion_channel(channel: Int) {
-        if (this.opus_manager.percussion_channel != null) {
-            this.set_channel_instrument(this.opus_manager.percussion_channel!!, 1)
+        var opus_manager = this.activity.getOpusManager()
+        if (opus_manager.percussion_channel != null) {
+            this.set_channel_instrument(opus_manager.percussion_channel!!, 1)
         }
 
         var view = this.recycler?.getChildAt(channel)
@@ -157,11 +160,11 @@ class ChannelOptionAdapter(
             var btn: TextView = view.findViewById(R.id.btnChooseInstrument)
             btn.text = "$channel: Percussion"
         }
-        this.opus_manager.set_percussion_channel(channel)
+        opus_manager.set_percussion_channel(channel)
     }
 
     override fun getItemCount(): Int {
-        return this.opus_manager.channels.size
+        return this.activity.getOpusManager().channels.size
     }
 }
 

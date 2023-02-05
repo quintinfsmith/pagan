@@ -12,6 +12,8 @@
         <!-- Status bar color. -->
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
         <!-- Customize your theme here. -->
+        <item name="drawerBG">@color/white</item>
+        <item name="popupMenuStyle">@style/PopupMenu</item>
     </style>
     <style name="Theme.Kotlin.NoActionBar">
         <item name="windowActionBar">false</item>
@@ -21,4 +23,10 @@
     <style name="Theme.Kotlin.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
 
     <style name="Theme.Kotlin.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+    <style name="PopupMenu" parent="ThemeOverlay.AppCompat.Dark.ActionBar">
+        <item name="android:popupBackground">?attr/colorPrimary</item>
+        <item name="android:colorBackground">?attr/colorPrimary</item>
+        <item name="android:itemBackground">?attr/colorPrimary</item>
+        <item name="android:textColor">?attr/colorOnPrimary</item>
+    </style>
 </resources>

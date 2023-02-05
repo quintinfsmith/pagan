@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/clA"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ConfigFragment">
+    android:background="?attr/drawerBG" >
 
 <LinearLayout
     android:id="@+id/llB"
@@ -20,7 +19,7 @@
     <TextView
         android:id="@+id/tvChangeProjectName"
         android:text="Change Project Name..."
-        android:background="@drawable/button"
+        android:theme="@style/button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
     <LinearLayout
@@ -34,6 +33,7 @@
         <EditText
             android:id="@+id/etTempo"
             android:maxLines="1"
+            android:theme="@style/edittext"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:digits=".0123456789"
@@ -46,7 +46,6 @@
     <TextView
         android:id="@+id/btnAddChannel"
         android:theme="@style/button"
-        android:background="@drawable/button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="2dp"
@@ -77,28 +76,25 @@
     android:layout_height="wrap_content" >
     <TextView
         android:id="@+id/btnCopyProject"
+        android:maxLines="1"
         android:theme="@style/button"
-        android:background="@drawable/button"
-        android:layout_width="0dp"
-        android:layout_weight="1"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="2dp"
         android:text="Copy" />
     <TextView
         android:id="@+id/btnDeleteProject"
+        android:maxLines="1"
         android:theme="@style/button"
-        android:background="@drawable/button"
         android:layout_margin="2dp"
-        android:layout_width="0dp"
-        android:layout_weight="1"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Delete" />
     <TextView
         android:id="@+id/btnExportProject"
+        android:maxLines="1"
         android:theme="@style/button"
-        android:background="@drawable/button"
-        android:layout_width="0dp"
-        android:layout_weight="1"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="2dp"
         android:text="Export" />

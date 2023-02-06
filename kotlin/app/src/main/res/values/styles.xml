@@ -26,8 +26,7 @@
         <item name="android:shadowDy">0</item>
         <item name="android:shadowRadius">0</item>
         <item name="android:textSize">18sp</item>
-        <item name="android:textStyle">normal</item>
-        <item name="android:fontFamily">@font/fira_code</item>
+        <item name="android:textStyle">bold</item>
         <item name="android:background">@drawable/leaf</item>
         <item name="android:clickable">true</item>
         <item name="android:padding">0dp</item>
@@ -42,7 +41,6 @@
         <item name="android:shadowRadius">0</item>
         <item name="android:textSize">18sp</item>
         <item name="android:textStyle">normal</item>
-        <item name="android:fontFamily">@font/fira_code</item>
         <item name="android:background">@drawable/leaf</item>
         <item name="android:clickable">true</item>
         <item name="android:padding">0dp</item>
@@ -58,7 +56,6 @@
         <item name="android:shadowRadius">0</item>
         <item name="android:textSize">18sp</item>
         <item name="android:textStyle">normal</item>
-        <item name="android:fontFamily">@font/fira_code</item>
         <item name="android:background">@drawable/leaf</item>
         <item name="android:padding">0dp</item>
     </style>

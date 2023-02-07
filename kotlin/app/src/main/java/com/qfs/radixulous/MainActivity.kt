@@ -29,6 +29,8 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.radixulous.apres.*
 import com.qfs.radixulous.databinding.ActivityMainBinding
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -264,11 +266,14 @@ class MainActivity : AppCompatActivity() {
         }
     }
     private fun changeback_playbutton() {
-        while (this.in_play_back) {
-            Thread.sleep(100)
-        }
-        var item = this.optionsMenu.findItem(R.id.itmPlay)
-        item.icon = ContextCompat.getDrawable(this, R.drawable.ic_baseline_play_arrow_24)
+        var that = this
+        this@MainActivity.runOnUiThread(java.lang.Runnable {
+            while (that.in_play_back) {
+                Thread.sleep(100)
+            }
+            var item = that.optionsMenu.findItem(R.id.itmPlay)
+            item.icon = ContextCompat.getDrawable(that, R.drawable.ic_baseline_play_arrow_24)
+        })
     }
 
     private fun play_beat(beat: Int) {

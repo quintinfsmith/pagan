@@ -8,9 +8,11 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.provider.Contacts
 import android.provider.DocumentsContract
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.view.*
 import android.widget.EditText
 import android.widget.TextView
@@ -18,6 +20,7 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
@@ -56,6 +59,7 @@ class MainActivity : AppCompatActivity() {
     private var opus_manager = OpusManager()
     private var project_manager = ProjectManager("/data/data/com.qfs.radixulous/projects")
 
+    private var in_play_back: Boolean = false
     private lateinit var optionsMenu: Menu
 
     var export_midi_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -142,14 +146,13 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             R.id.itmPlay -> {
-                var main_fragment = this.getActiveFragment()
-                if (main_fragment is MainFragment) {
-                    if (!main_fragment.in_play_back) {
-                        this.start_playback()
-                    } else {
-                        this.stop_playback()
-                        main_fragment.in_play_back = false
+                if (!this.in_play_back) {
+                    this.playback()
+                    thread {
+                        this.changeback_playbutton()
                     }
+                } else {
+                    this.in_play_back = false
                 }
             }
         }
@@ -229,36 +232,51 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun start_playback() {
-        var main_fragment = this.getActiveFragment()
-        if (main_fragment !is MainFragment) {
+    fun playback() {
+        if (this.in_play_back) {
             return
         }
-        if (main_fragment.in_play_back) {
-            return
-        }
+        this.in_play_back = true
+
         var item = this.optionsMenu.findItem(R.id.itmPlay)
         item.icon = resources.getDrawable(R.drawable.ic_baseline_pause_24)
         thread {
-            main_fragment.play_from_current_beat()
+            val opus_manager = this.getOpusManager()
+            val beat = opus_manager.get_cursor().x
+            for (i in beat until opus_manager.opus_beat_count) {
+                if (!this.in_play_back) {
+                    break
+                }
+
+                //if (main_fragment is MainFragment) {
+                //    main_fragment.scroll_to_beat(i)
+                //}
+
+                thread {
+                    this.play_beat(i)
+                }
+
+                val delay = (60F / opus_manager.tempo) * 1000
+                Thread.sleep(delay.toLong())
+            }
+            this.in_play_back = false
+
         }
     }
-
-    fun stop_playback() {
-        var main_fragment = this.getActiveFragment()
-        if (main_fragment !is MainFragment) {
-            return
+    private fun changeback_playbutton() {
+        while (this.in_play_back) {
+            Thread.sleep(100)
         }
-
-        if (!main_fragment.in_play_back) {
-            return
-        }
-
         var item = this.optionsMenu.findItem(R.id.itmPlay)
-        item.icon = resources.getDrawable(R.drawable.ic_baseline_play_arrow_24)
-
-        main_fragment.stop_playback()
+        item.icon = ContextCompat.getDrawable(this, R.drawable.ic_baseline_play_arrow_24)
     }
+
+    private fun play_beat(beat: Int) {
+        val opus_manager = this.getOpusManager()
+        val midi = opus_manager.get_midi(beat, beat + 1)
+        this.play_midi(midi)
+    }
+
 
     private fun save_current_project() {
         // Saving opus_manager first ensures projects path exists
@@ -366,6 +384,7 @@ class MainActivity : AppCompatActivity() {
             this.midi_input_device.sendEvent(NoteOff(midi_channel, note, 64))
         }
     }
+
 
     fun play_midi(midi: MIDI) {
         this.midi_player.play_midi(midi)

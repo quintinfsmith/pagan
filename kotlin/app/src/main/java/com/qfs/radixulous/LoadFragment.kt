@@ -3,6 +3,7 @@ package com.qfs.radixulous
 import android.os.Bundle
 import android.util.Log
 import android.view.*
+import android.widget.Toast
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResult
@@ -96,4 +97,5 @@ class LoadFragment : Fragment() {
         super.onDestroyView()
         _binding = null
     }
+
 }

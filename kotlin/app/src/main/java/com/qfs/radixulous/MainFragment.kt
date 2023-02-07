@@ -266,7 +266,7 @@ class MainFragment : Fragment() {
                 } else if (!opus_manager.is_percussion(channel_index.first)) {
                     get_number_string(event.note, event.radix, 2)
                 } else {
-                    "!!"
+                    ""
                 }
             } else {
                 tvLeaf.text = getString(R.string.empty_note)
@@ -1333,35 +1333,6 @@ class MainFragment : Fragment() {
         }
     }
 
-    fun play_from_current_beat() {
-        val beat = this.getMain().getOpusManager().get_cursor().x
-        this.play_from_beat(beat)
-    }
-
-    fun stop_playback() {
-        this.in_play_back = false
-    }
-
-    fun play_from_beat(beat:Int) {
-        this.in_play_back = true
-        val opus_manager = this.getMain().getOpusManager()
-        for (i in beat until opus_manager.opus_beat_count) {
-            if (!this.in_play_back) {
-                break
-            }
-
-            this.scroll_to_beat(i)
-
-            thread {
-                this.play_beat(i)
-            }
-
-            val delay = (60F / this.getMain().getOpusManager().tempo) * 1000
-            Thread.sleep(delay.toLong())
-        }
-
-        this.getMain().stop_playback()
-    }
 
     fun interact_column_header(view: View) {
         val x = (view.parent as ViewGroup).indexOfChild(view)

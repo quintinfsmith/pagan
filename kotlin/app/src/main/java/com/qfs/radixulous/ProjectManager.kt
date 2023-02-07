@@ -46,6 +46,4 @@ class ProjectManager(var projects_dir: String) {
         opus_manager.path = "$current_dir (Copy $i)"
         opus_manager.save()
     }
-
-
 }

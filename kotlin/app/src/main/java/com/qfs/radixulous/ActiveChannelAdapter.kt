@@ -61,10 +61,7 @@ class ChannelOptionAdapter(
         var btnRemoveChannel: TextView = holder.itemView.findViewById(R.id.btnRemoveChannel)
         btnRemoveChannel.setOnClickListener {
             this.interact_btnRemoveChannel(it)
-            var fragment = this.activity.getActiveFragment()
-            if (fragment is MainFragment) {
-                fragment.tick()
-            }
+            this.activity.tick()
         }
     }
 

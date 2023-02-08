@@ -15,6 +15,7 @@ import android.text.TextWatcher
 import android.util.Log
 import android.view.*
 import android.widget.EditText
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -29,6 +30,7 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.radixulous.apres.*
 import com.qfs.radixulous.databinding.ActivityMainBinding
+import com.qfs.radixulous.opusmanager.BeatKey
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.serialization.decodeFromString
@@ -62,11 +64,16 @@ class MainActivity : AppCompatActivity() {
     private var project_manager = ProjectManager("/data/data/com.qfs.radixulous/projects")
 
     private var in_play_back: Boolean = false
+    private var ticking: Boolean = false
+
     private lateinit var optionsMenu: Menu
+    // TODO: Convert focus booleans to 1 enum SINGLE, ROW, COLUMN
+    var focus_row: Boolean = false
+    var focus_column: Boolean = false
 
     var export_midi_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
-            var opus_manager = this.getOpusManager()
+            val opus_manager = this.getOpusManager()
             result?.data?.data?.also { uri ->
                 applicationContext.contentResolver.openFileDescriptor(uri, "w")?.use {
                     FileOutputStream(it.fileDescriptor).write(opus_manager.get_midi().as_bytes())
@@ -91,7 +98,7 @@ class MainActivity : AppCompatActivity() {
 
         //////////////////////////////////////////
         // TODO: clean up the file -> riff -> soundfont -> midi playback device process
-        var soundfont = SoundFont(Riff(assets.open("freepats-general-midi.sf2")))
+        val soundfont = SoundFont(Riff(assets.open("freepats-general-midi.sf2")))
         this.midi_playback_device = MIDIPlaybackDevice(this, soundfont)
 
         this.midi_controller = RadMidiController(window.decorView.rootView.context)
@@ -126,13 +133,13 @@ class MainActivity : AppCompatActivity() {
         when (item.itemId) {
             R.id.itmNewProject -> {
                 // TODO: Save or discard popup dialog
-                var main_fragment = this.getActiveFragment()
+                val main_fragment = this.getActiveFragment()
                 if (main_fragment is MainFragment) {
                     main_fragment.takedownCurrent()
                     this.newProject()
                     this.update_title_text()
                     main_fragment.setContextMenu(ContextMenu.Leaf)
-                    main_fragment.tick()
+                    this.tick()
                 }
             }
             R.id.itmLoadProject -> {
@@ -142,7 +149,7 @@ class MainActivity : AppCompatActivity() {
                 this.save_current_project()
             }
             R.id.itmUndo -> {
-                var main_fragment = this.getActiveFragment()
+                val main_fragment = this.getActiveFragment()
                 if (main_fragment is MainFragment) {
                     main_fragment.undo()
                 }
@@ -162,16 +169,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun setup_config_drawer() {
-        var opus_manager = this.getOpusManager()
-        var rvActiveChannels: RecyclerView = this.findViewById(R.id.rvActiveChannels)
-        var channelAdapter = ChannelOptionAdapter(this, rvActiveChannels)
+        val opus_manager = this.getOpusManager()
+        val rvActiveChannels: RecyclerView = this.findViewById(R.id.rvActiveChannels)
+        val channelAdapter = ChannelOptionAdapter(this, rvActiveChannels)
 
-        var tvChangeProjectName: TextView = this.findViewById(R.id.tvChangeProjectName)
+        val tvChangeProjectName: TextView = this.findViewById(R.id.tvChangeProjectName)
         tvChangeProjectName.setOnClickListener {
             this.change_name_dialog()
         }
 
-        var etTempo: EditText = this.findViewById(R.id.etTempo)
+        val etTempo: EditText = this.findViewById(R.id.etTempo)
         etTempo.setText(opus_manager.tempo.toString())
         etTempo.addTextChangedListener(object: TextWatcher {
             override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
@@ -185,10 +192,7 @@ class MainActivity : AppCompatActivity() {
 
         (this.findViewById(R.id.btnAddChannel) as TextView).setOnClickListener {
             channelAdapter.addChannel()
-            var fragment = this.getActiveFragment()
-            if (fragment is MainFragment) {
-                fragment.tick()
-            }
+            this.tick()
         }
 
         (this.findViewById(R.id.btnExportProject) as TextView).setOnClickListener {
@@ -208,7 +212,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun change_name_dialog() {
-        var main_fragment = this.getActiveFragment()
+        val main_fragment = this.getActiveFragment()
 
         val viewInflated: View = LayoutInflater.from(main_fragment!!.context)
             .inflate(
@@ -219,7 +223,7 @@ class MainActivity : AppCompatActivity() {
         val input: EditText = viewInflated.findViewById(R.id.etProjectName)
         input.setText(this.get_current_project_title() ?: "Untitled Project")
 
-        var that = this
+        val that = this
         AlertDialog.Builder(main_fragment!!.context).apply {
             setTitle("Change Project Name")
             setView(viewInflated)
@@ -239,9 +243,9 @@ class MainActivity : AppCompatActivity() {
             return
         }
         this.in_play_back = true
-
-        var item = this.optionsMenu.findItem(R.id.itmPlay)
-        item.icon = resources.getDrawable(R.drawable.ic_baseline_pause_24)
+        val main_fragment = this.getActiveFragment()
+        val item = this.optionsMenu.findItem(R.id.itmPlay)
+        item.icon = ContextCompat.getDrawable(this, R.drawable.ic_baseline_pause_24)
         thread {
             val opus_manager = this.getOpusManager()
             val beat = opus_manager.get_cursor().x
@@ -250,9 +254,9 @@ class MainActivity : AppCompatActivity() {
                     break
                 }
 
-                //if (main_fragment is MainFragment) {
-                //    main_fragment.scroll_to_beat(i)
-                //}
+                if (main_fragment is MainFragment) {
+                    main_fragment.scroll_to_beat(i, true)
+                }
 
                 thread {
                     this.play_beat(i)
@@ -265,15 +269,15 @@ class MainActivity : AppCompatActivity() {
 
         }
     }
+
     private fun changeback_playbutton() {
-        var that = this
-        this@MainActivity.runOnUiThread(java.lang.Runnable {
-            while (that.in_play_back) {
+        this@MainActivity.runOnUiThread {
+            while (this.in_play_back) {
                 Thread.sleep(100)
             }
-            var item = that.optionsMenu.findItem(R.id.itmPlay)
-            item.icon = ContextCompat.getDrawable(that, R.drawable.ic_baseline_play_arrow_24)
-        })
+            val item = this.optionsMenu.findItem(R.id.itmPlay)
+            item.icon = ContextCompat.getDrawable(this, R.drawable.ic_baseline_play_arrow_24)
+        }
     }
 
     private fun play_beat(beat: Int) {
@@ -286,15 +290,15 @@ class MainActivity : AppCompatActivity() {
     private fun save_current_project() {
         // Saving opus_manager first ensures projects path exists
         this.opus_manager.save()
-        var path = this.opus_manager.path!!
-        var filename = path.substring(path.lastIndexOf("/") + 1)
+        val path = this.opus_manager.path!!
+        val filename = path.substring(path.lastIndexOf("/") + 1)
 
-        var projects_list_file_path = "/data/data/com.qfs.radixulous/projects.json"
-        var project_list_file = File(projects_list_file_path)
+        val projects_list_file_path = "/data/data/com.qfs.radixulous/projects.json"
+        val project_list_file = File(projects_list_file_path)
         var current_exists = false
-        var project_list = if (project_list_file.isFile) {
-            var content = project_list_file.readText(Charsets.UTF_8)
-            var json_project_list: MutableList<ProjectDirPair> = Json.decodeFromString(content)
+        val project_list = if (project_list_file.isFile) {
+            val content = project_list_file.readText(Charsets.UTF_8)
+            val json_project_list: MutableList<ProjectDirPair> = Json.decodeFromString(content)
 
             json_project_list.forEachIndexed { _, pair ->
                 if (pair.filename == filename) {
@@ -337,8 +341,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun update_menu_options() {
-        var navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main)
-        var fragment = navHost?.childFragmentManager?.fragments?.get(0)
+        val navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main)
+        val fragment = navHost?.childFragmentManager?.fragments?.get(0)
         when (fragment) {
             is MainFragment -> {
                 this.optionsMenu.findItem(R.id.itmLoadProject).isVisible = true
@@ -360,7 +364,7 @@ class MainActivity : AppCompatActivity() {
         this.opus_manager.new()
         this.set_current_project_title("New Opus")
 
-        var projects_dir = "/data/data/com.qfs.radixulous/projects"
+        val projects_dir = "/data/data/com.qfs.radixulous/projects"
         var i = 0
         while (File("$projects_dir/opus_$i.json").isFile) {
             i += 1
@@ -377,8 +381,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun play_event(channel: Int, event_value: Int) {
-        var midi_channel = this.opus_manager.channels[channel].midi_channel
-        var note = if (this.opus_manager.is_percussion(channel)) {
+        val midi_channel = this.opus_manager.channels[channel].midi_channel
+        val note = if (this.opus_manager.is_percussion(channel)) {
             event_value + 35
         } else {
             event_value + 21
@@ -396,7 +400,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun export_midi() {
-        var opus_manager = this.getOpusManager()
+        val opus_manager = this.getOpusManager()
 
         var name = opus_manager.get_working_dir()
         if (name != null) {
@@ -428,8 +432,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun navTo(fragmentName: String) {
-        var navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main)
-        var fragment = navHost?.childFragmentManager?.fragments?.get(0)
+        val navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main)
+        val fragment = navHost?.childFragmentManager?.fragments?.get(0)
         val navController = findNavController(R.id.nav_host_fragment_content_main)
         when (fragment) {
             is LoadFragment -> {
@@ -454,8 +458,161 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun getActiveFragment(): Fragment? {
-        var navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main)
+        val navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main)
         return navHost?.childFragmentManager?.fragments?.get(0)
+    }
+
+    fun tick() {
+        if (! this.ticking) {
+            this.ticking = true
+            this.tick_unapply_focus()
+            this.tick_manage_lines()
+            this.tick_manage_beats() // new/pop
+            this.tick_update_beats() // changes
+            this.tick_apply_focus()
+
+            this.ticking = false
+        }
+    }
+
+    private fun tick_manage_lines() {
+        val opus_manager = this.getOpusManager()
+        val main_fragment = this.getActiveFragment()
+        while (true) {
+            val (channel, index, operation) = opus_manager.fetch_flag_line() ?: break
+            if (main_fragment !is MainFragment) {
+                continue
+            }
+
+            when (operation) {
+                0 -> {
+                    val counts = opus_manager.get_channel_line_counts()
+                    var y = 0
+                    for (i in 0 until channel) {
+                        y += counts[i]
+                    }
+                    main_fragment.line_remove(y + index)
+
+                }
+                1 -> {
+                    val y = opus_manager.get_y(channel, index)
+                    main_fragment.line_new(y, opus_manager.opus_beat_count)
+
+                    //val rowView = this.buildLineView(y, opus_manager.opus_beat_count)
+                    //for (x in 0 until opus_manager.opus_beat_count) {
+                    //    this.buildTreeView(rowView, y, x, listOf())
+                    //    opus_manager.flag_beat_change(BeatKey(channel, index, x))
+                    //}
+                }
+                2 -> {
+                    val y = opus_manager.get_y(channel, index)
+                    main_fragment.line_new(y, 0)
+                }
+            }
+        }
+
+        if (main_fragment is MainFragment) {
+            main_fragment.line_update_labels(opus_manager)
+        }
+    }
+
+    private fun tick_manage_beats() {
+        val opus_manager = this.getOpusManager()
+        val updated_beats: MutableSet<Int> = mutableSetOf()
+        var beats_changed = false
+        var min_changed = opus_manager.opus_beat_count
+        val main_fragment = this.getActiveFragment()
+
+        while (true) {
+            val (index, operation) = opus_manager.fetch_flag_beat() ?: break
+            min_changed = Integer.min(min_changed, index)
+
+            if (main_fragment !is MainFragment) {
+                continue
+            }
+            when (operation) {
+                1 -> {
+                    main_fragment.beat_new(index)
+                    updated_beats.add(index)
+                    beats_changed = true
+                }
+                0 -> {
+                    main_fragment.beat_remove(index)
+                    beats_changed = true
+                }
+            }
+        }
+
+        if (main_fragment is MainFragment) {
+            main_fragment.update_column_labels(min_changed, opus_manager.opus_beat_count)
+        }
+    }
+
+    private fun tick_update_beats() {
+        val opus_manager = this.getOpusManager()
+        val main_fragment = this.getActiveFragment()
+        val updated_beats: MutableSet<Int> = mutableSetOf()
+        while (true) {
+            val beatkey = opus_manager.fetch_flag_change() ?: break
+            if (main_fragment !is MainFragment) {
+                continue
+            }
+
+            val y = opus_manager.get_y(beatkey.channel, beatkey.line_offset)
+
+            main_fragment.beat_update(y, beatkey.beat)
+
+            for (linked_beatkey in opus_manager.get_all_linked(beatkey)) {
+                updated_beats.add(linked_beatkey.beat)
+            }
+        }
+
+        if (main_fragment is MainFragment) {
+            for (b in updated_beats) {
+                main_fragment.update_column_label_size(b)
+            }
+        }
+    }
+
+    private fun tick_apply_focus() {
+        val opus_manager = this.getOpusManager()
+        val cursor = opus_manager.get_cursor()
+        val focused: MutableSet<Pair<BeatKey, List<Int>>> = mutableSetOf()
+        if (this.focus_column) {
+            for (y in 0 until opus_manager.line_count()) {
+                val (channel, index) = opus_manager.get_channel_index(y)
+                focused.add(
+                    Pair(
+                        BeatKey(channel, index, cursor.get_beatkey().beat),
+                        listOf()
+                    )
+                )
+            }
+        } else if (this.focus_row) {
+            for (x in 0 until opus_manager.opus_beat_count) {
+                val beatkey = cursor.get_beatkey()
+                focused.add(
+                    Pair(
+                        BeatKey(beatkey.channel, beatkey.line_offset, x),
+                        listOf()
+                    )
+                )
+            }
+        } else {
+            focused.add(Pair(cursor.get_beatkey(), cursor.get_position()))
+        }
+
+        var active_fragment = this.getActiveFragment()
+        if (active_fragment is MainFragment) {
+            active_fragment.apply_focus(focused, opus_manager)
+        }
+    }
+
+    private fun tick_unapply_focus() {
+        var active_fragment = this.getActiveFragment()
+        if (active_fragment is MainFragment) {
+            active_fragment.unapply_focus(this.getOpusManager())
+        }
     }
 }
 

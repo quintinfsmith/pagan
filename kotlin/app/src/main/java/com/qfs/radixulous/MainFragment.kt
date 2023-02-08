@@ -10,11 +10,11 @@ import android.widget.*
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResultListener
-import androidx.navigation.fragment.findNavController
 import com.qfs.radixulous.databinding.FragmentMainBinding
 import com.qfs.radixulous.opusmanager.BeatKey
 import com.qfs.radixulous.opusmanager.OpusEvent
-import kotlin.concurrent.thread
+import com.qfs.radixulous.structure.OpusTree
+import com.qfs.radixulous.opusmanager.HistoryLayer as OpusManager
 import kotlin.math.abs
 
 /**
@@ -24,10 +24,8 @@ class MainFragment : Fragment() {
     private var active_context_menu_index: ContextMenu = ContextMenu.None
     private var ticking: Boolean = false // Lock to prevent multiple attempts at updating from happening at once
 
-    private var focus_row = false
-    private var focus_column = false
-    private var linking_beat: BeatKey? = null
-    private var linking_beat_b: BeatKey? = null
+    var linking_beat: BeatKey? = null
+    var linking_beat_b: BeatKey? = null
     private var relative_mode: Boolean = false
     private var is_loaded: Boolean = false
     var in_play_back: Boolean = false
@@ -79,7 +77,7 @@ class MainFragment : Fragment() {
                 main.update_title_text()
 
                 this.setContextMenu(ContextMenu.Leaf)
-                this.tick()
+                main.tick()
             }
             main.update_menu_options()
         }
@@ -91,7 +89,7 @@ class MainFragment : Fragment() {
             main.update_title_text()
 
             this.setContextMenu(ContextMenu.Leaf)
-            this.tick()
+            main.tick()
             main.update_menu_options()
         }
         //binding.buttonFirst.setOnClickListener {
@@ -107,7 +105,7 @@ class MainFragment : Fragment() {
             main.newProject()
             main.update_title_text()
             this.setContextMenu(ContextMenu.Leaf)
-            this.tick()
+            main.tick()
         }
     }
 
@@ -136,10 +134,11 @@ class MainFragment : Fragment() {
 
 
     fun undo() {
-        val opus_manager = this.getMain().getOpusManager()
+        var main = this.getMain()
+        val opus_manager = main.getOpusManager()
         if (opus_manager.has_history()) {
             opus_manager.apply_undo()
-            this.tick()
+            main.tick()
             this.setContextMenu(ContextMenu.Leaf)
         } else {
             Toast.makeText(activity?.applicationContext, getString(R.string.msg_undo_none), Toast.LENGTH_SHORT).show()
@@ -180,18 +179,26 @@ class MainFragment : Fragment() {
     }
 
     private fun buildLineView(y: Int): TableRow {
-        val opus_manager = this.getMain().getOpusManager()
+        var main = this.getMain()
+        val opus_manager = main.getOpusManager()
         val clo = opus_manager.get_channel_index(y)
         val channel = clo.first
         val line_offset = clo.second
 
         val tlOpusLines: TableLayout = this.activity!!.findViewById(R.id.tlOpusLines)
         val llLineLabels: LinearLayout = this.activity!!.findViewById(R.id.llLineLabels)
-        val rowView = TableRow(tlOpusLines.context)
-        rowView.setPadding(0,0,0,0)
+        var rowView: TableRow = LayoutInflater.from(tlOpusLines.context).inflate(
+            R.layout.table_row,
+            tlOpusLines,
+            false
+        ) as TableRow
 
         tlOpusLines.addView(rowView, y)
         this.cache.cacheLine(rowView, y)
+
+        for (i in 0 until opus_manager.opus_beat_count) {
+            rowView.addView(LinearLayout(rowView.context))
+        }
 
         val rowLabel = LayoutInflater.from(llLineLabels.context).inflate(
             R.layout.table_line_label,
@@ -220,24 +227,24 @@ class MainFragment : Fragment() {
         this.cache.addLineLabel(rowLabel)
         llLineLabels.addView(rowLabel)
 
+
         return rowView
     }
 
     private fun buildTreeView(parent: ViewGroup, y: Int, x: Int, position: List<Int>): View {
-        val opus_manager = this.getMain().getOpusManager()
+        var main = this.getMain()
+        val opus_manager = main.getOpusManager()
         val channel_index = opus_manager.get_channel_index(y)
         val tree = opus_manager.get_tree(BeatKey(channel_index.first, channel_index.second, x), position)
 
-
         if (tree.is_leaf()) {
-            val leafView = LayoutInflater.from(parent.context).inflate(
-                R.layout.item_opusbutton,
+            val tvLeaf: TextView = LayoutInflater.from(parent.context).inflate(
+                R.layout.leaf,
                 parent,
                 false
-            )
-            val tvLeaf: TextView = leafView.findViewById(R.id.tvLeaf)
+            ) as TextView
 
-            tvLeaf.background = ContextCompat.getDrawable(this.getMain(),
+            tvLeaf.background = ContextCompat.getDrawable(main,
                 if (!tree.is_event()) {
                     R.drawable.leaf
                 } else {
@@ -281,16 +288,17 @@ class MainFragment : Fragment() {
                 true
             }
 
-            if (position.isEmpty()) {
-                parent.addView(leafView, x)
-            } else {
-                parent.addView(leafView)
-            }
+            parent.addView(tvLeaf)
 
             this.cache.cacheTree(tvLeaf, y, x, position)
-            return leafView
+            return tvLeaf
         } else {
-            val cellLayout = LinearLayout(parent.context)
+            val cellLayout: LinearLayout = LayoutInflater.from(parent.context).inflate(
+                R.layout.tree_node,
+                parent,
+                false
+            ) as LinearLayout
+
             this.cache.cacheTree(cellLayout, y, x, position)
 
             for (i in 0 until tree.size) {
@@ -299,18 +307,15 @@ class MainFragment : Fragment() {
                 this.buildTreeView(cellLayout as ViewGroup, y, x, new_position)
             }
 
-            if (position.isEmpty()) {
-                parent.addView(cellLayout, x)
-            } else {
-                parent.addView(cellLayout)
-            }
+            parent.addView(cellLayout)
 
             return cellLayout
         }
     }
 
     fun setContextMenu(menu_index: ContextMenu) {
-        val opus_manager = this.getMain().getOpusManager()
+        var main = this.getMain()
+        val opus_manager = main.getOpusManager()
         this.active_context_menu_index = menu_index
         val view_to_remove = this.cache.getActiveContextMenu()
         (view_to_remove?.parent as? ViewGroup)?.removeView(view_to_remove)
@@ -418,7 +423,8 @@ class MainFragment : Fragment() {
     }
 
     private fun setContextMenu_leaf() {
-        val opus_manager = this.getMain().getOpusManager()
+        var main = this.getMain()
+        val opus_manager = main.getOpusManager()
         val llContextMenu: LinearLayout = this.activity!!.findViewById(R.id.llContextMenu)
         val view = LayoutInflater.from(llContextMenu.context).inflate(
             R.layout.contextmenu_cell,
@@ -558,8 +564,9 @@ class MainFragment : Fragment() {
     }
 
     private fun resize_relative_value_selector() {
+        var main = this.getMain()
         val llContextMenu: LinearLayout = this.activity!!.findViewById(R.id.llContextMenu)
-        val opus_manager = this.getMain().getOpusManager()
+        val opus_manager = main.getOpusManager()
         val maximum_note = 95
 
         val cursor = opus_manager.get_cursor()
@@ -630,7 +637,8 @@ class MainFragment : Fragment() {
     }
 
     private fun rebuildBeatView(y: Int, x: Int) {
-        val opus_manager = this.getMain().getOpusManager()
+        var main = this.getMain()
+        val opus_manager = main.getOpusManager()
         val pair = opus_manager.get_channel_index(y)
         val main_beatkey = BeatKey(pair.first, pair.second, x)
         for (beatkey in opus_manager.get_all_linked(main_beatkey)) {
@@ -638,333 +646,13 @@ class MainFragment : Fragment() {
             val new_x = beatkey.beat
             this.cache.removeBeatView(new_y, new_x)
             val rowView = this.cache.getLine(new_y)
-            this.buildTreeView(rowView, new_y, new_x, listOf())
-        }
-    }
-
-    fun tick() {
-        if (! this.ticking) {
-            this.ticking = true
-            this.tick_unapply_focus()
-            this.tick_manage_lines()
-            this.tick_manage_beats() // new/pop
-            this.tick_update_beats() // changes
-            this.tick_apply_focus()
-
-            this.ticking = false
-        }
-    }
-
-    private fun tick_manage_lines() {
-        val opus_manager = this.getMain().getOpusManager()
-        var lines_changed = false
-        while (true) {
-            val (channel, index, operation) = opus_manager.fetch_flag_line() ?: break
-            Log.e("AAA", "$channel, $index, $operation")
-            when (operation) {
-                0 -> {
-                    val counts = opus_manager.get_channel_line_counts()
-
-                    var y = 0
-                    for (i in 0 until channel) {
-                        y += counts[i]
-                    }
-
-                    this.cache.detachLine(y + index)
-                    lines_changed = true
-                }
-                1 -> {
-                    val y = opus_manager.get_y(channel, index)
-
-                    val rowView = this.buildLineView(y)
-                    for (x in 0 until opus_manager.opus_beat_count) {
-                        this.buildTreeView(rowView, y, x, listOf())
-                        opus_manager.flag_beat_change(BeatKey(channel, index, x))
-                    }
-                    lines_changed = true
-                }
-                2 -> {
-                    val y = opus_manager.get_y(channel, index)
-                    this.buildLineView(y)
-                    lines_changed = true
-                }
-            }
-        }
-
-        if (lines_changed) { // Redraw labels
-            var y = 0
-            val line_counts = opus_manager.get_channel_line_counts()
-            line_counts.forEachIndexed { channel, line_count ->
-                for (i in 0 until line_count) {
-                    val label = this.cache.getLineLabel(y) ?: continue
-                    val textView: TextView = label.findViewById(R.id.textView)
-
-                    // TODO: fix naming to reflect changes to channel handling
-                    if (!opus_manager.is_percussion(channel)) {
-                        textView.text = "$channel:$i"
-                    } else {
-                        val instrument = opus_manager.get_percussion_instrument(i)
-                        textView.text = "P:$instrument"
-                    }
-
-                    for (x in 0 until opus_manager.opus_beat_count) {
-                        for ((leaf, leaf_pos) in this.cache.get_all_leafs(y, x, listOf())) {
-                            leaf.background = ContextCompat.getDrawable(this.getMain(),
-                                if (!opus_manager.get_tree(BeatKey(channel, i, x), leaf_pos).is_event()) {
-                                    R.drawable.leaf
-                                } else {
-                                    R.drawable.leaf_active
-                                }
-                            )
-                        }
-                    }
-
-                    y += 1
-                }
-            }
-        }
-    }
-
-    private fun tick_manage_beats() {
-        val opus_manager = this.getMain().getOpusManager()
-        val updated_beats: MutableSet<Int> = mutableSetOf()
-        var beats_changed = false
-        var min_changed = opus_manager.opus_beat_count
-        while (true) {
-            val (index, operation) = opus_manager.fetch_flag_beat() ?: break
-            min_changed = Integer.min(min_changed, index)
-            when (operation) {
-                1 -> {
-                    this.newColumnLabel()
-                    for (y in 0 until opus_manager.line_count()) {
-                        val rowView = this.cache.getLine(y)
-                        this.buildTreeView(rowView, y, index, listOf())
-                    }
-                    updated_beats.add(index)
-                    this.cache.add_column_width(index)
-                    beats_changed = true
-                }
-                0 -> {
-                    this.cache.detachColumnLabel()
-                    this.cache.remove_column_width(index)
-                    for (y in 0 until opus_manager.line_count()) {
-                        this.cache.removeBeatView(y, index)
-                    }
-                    beats_changed = true
-                }
-            }
-        }
-        if (beats_changed) {
-            this.tick_resize_beats(updated_beats.toList())
-            for (i in min_changed until opus_manager.opus_beat_count) {
-                this.__tick_update_column_label_size(i)
-            }
-        }
-    }
-
-    private fun tick_update_beats() {
-        val opus_manager = this.getMain().getOpusManager()
-        val updated_beats: MutableSet<Int> = mutableSetOf()
-        var beats_changed = false
-        while (true) {
-            val beatkey = opus_manager.fetch_flag_change() ?: break
-            val y = opus_manager.get_y(
-                beatkey.channel,
-                beatkey.line_offset
-            )
-            this.rebuildBeatView(y, beatkey.beat )
-
-            for (linked_beatkey in opus_manager.get_all_linked(beatkey)) {
-                updated_beats.add(linked_beatkey.beat)
-            }
-            beats_changed = true
-        }
-        if (beats_changed) {
-            this.tick_resize_beats(updated_beats.toList())
-        }
-    }
-
-    private fun tick_resize_beats(updated_beats: List<Int>) {
-        val opus_manager = this.getMain().getOpusManager()
-        // resize Columns
-        for (b in updated_beats) {
-            var max_width = 0
-            for (channel in 0 until opus_manager.channels.size) {
-                for (line_offset in 0 until opus_manager.channels[channel].size) {
-                    val tree = opus_manager.get_beat_tree(BeatKey(channel, line_offset, b))
-                    val size = Integer.max(1, tree.size) * tree.get_max_child_weight()
-                    max_width = Integer.max(max_width, size)
-                }
-            }
-
-            var y = 0
-            for (channel in 0 until opus_manager.channels.size) {
-                for (line_offset in 0 until opus_manager.channels[channel].size) {
-                    this.__tick_resize_beat_cell(channel, line_offset, b, max_width)
-                    y += 1
-                }
-            }
-
-            this.cache.set_column_width(b, max_width)
-            this.__tick_update_column_label_size(b)
-        }
-    }
-
-    private fun __tick_update_column_label_size(beat: Int) {
-        val width = this.cache.get_column_width(beat)
-        // Kludge: Need to remove/reattach label so it will shrink to a smaller
-        // size if necessary
-        val label_view = this.cache.getColumnLabel(beat)
-        val label_row = label_view.parent as ViewGroup
-        label_row.removeView(label_view)
-        label_view.layoutParams.width = (width * 100) - 5
-        label_row.addView(label_view, beat)
-    }
-
-    private fun __tick_resize_beat_cell(channel: Int, line_offset: Int, beat: Int, new_width: Int) {
-        val opus_manager = this.getMain().getOpusManager()
-        val stack: MutableList<Pair<Float, List<Int>>> = mutableListOf(Pair(new_width.toFloat(), listOf()))
-        val key = BeatKey(channel, line_offset, beat)
-        val y = opus_manager.get_y(channel, line_offset)
-        while (stack.isNotEmpty()) {
-            val (new_size, current_position) = stack.removeFirst()
-            val current_tree = opus_manager.get_tree(key, current_position)
-
-            val current_view = this.cache.getTreeView(y, beat, current_position)
-            val param = current_view!!.layoutParams as ViewGroup.MarginLayoutParams
-
-            if (!current_tree.is_leaf()) {
-                for (i in 0 until current_tree.size) {
-                    val next_pos = current_position.toMutableList()
-                    next_pos.add(i)
-                    stack.add(Pair(new_size / current_tree.size.toFloat(), next_pos))
-                }
-
-                param.width = (new_size * 100.toFloat()).toInt()
-                param.height = 130
-            } else {
-                param.width = (new_size * 100.toFloat()).toInt() - 5
-                param.height = 125
-                param.setMargins(0,0,5,5)
-
-                // TODO: Move this somewhere better
-                current_view.background = ContextCompat.getDrawable(this.getMain(),
-                        if (!current_tree.is_event()) {
-                        R.drawable.leaf
-                    } else {
-                        R.drawable.leaf_active
-                    }
-                )
-
-            }
-
-            current_view.layoutParams = param
-        }
-    }
-
-    private fun tick_apply_focus() {
-        val opus_manager = this.getMain().getOpusManager()
-        val cursor = opus_manager.get_cursor()
-        val focused: MutableSet<Pair<BeatKey, List<Int>>> = mutableSetOf()
-        if (this.focus_column) {
-            for (y in 0 until opus_manager.line_count()) {
-                val (channel, index) = opus_manager.get_channel_index(y)
-                focused.add(
-                    Pair(
-                        BeatKey(channel, index, cursor.get_beatkey().beat),
-                        listOf()
-                    )
-                )
-            }
-        } else if (this.focus_row) {
-            for (x in 0 until opus_manager.opus_beat_count) {
-                val beatkey = cursor.get_beatkey()
-                focused.add(
-                    Pair(
-                        BeatKey(beatkey.channel, beatkey.line_offset, x),
-                        listOf()
-                    )
-                )
-            }
-        } else {
-            focused.add(Pair(cursor.get_beatkey(), cursor.get_position()))
-        }
-
-        for ((beatkey, position) in focused) {
-            val linked_beats = opus_manager.get_all_linked(beatkey)
-
-            for (linked_beat in linked_beats) {
-                val y = opus_manager.get_y(linked_beat.channel, linked_beat.line_offset)
-                for ((view, leaf_pos) in this.cache.get_all_leafs(y, linked_beat.beat, position)) {
-                    if (view is LinearLayout) {
-                        continue
-                    }
-
-                    view.background = ContextCompat.getDrawable(this.getMain(),
-                        if (opus_manager.get_tree(linked_beat, leaf_pos).is_event()) {
-                            R.drawable.focus_leaf_active
-                        } else {
-                            R.drawable.focus_leaf
-                        }
-                    )
-
-                    this.cache.addFocusedLeaf(y, linked_beat.beat, leaf_pos)
-                }
-            }
-        }
-
-        if (this.linking_beat_b != null) {
-            val cursor_diff = opus_manager.get_cursor_difference(this.linking_beat!!, this.linking_beat_b!!)
-
-            for (y in 0 .. cursor_diff.first) {
-                val new_y = y + opus_manager.get_y(
-                    this.linking_beat!!.channel,
-                    this.linking_beat!!.line_offset
-                )
-
-                val target_pair = opus_manager.get_channel_index(new_y)
-                for (x in 0 .. cursor_diff.second) {
-                    val new_x = x + this.linking_beat!!.beat
-                    val new_beatkey = BeatKey(target_pair.first, target_pair.second, new_x)
-                    for ((view, leaf_pos) in this.cache.get_all_leafs(new_y, new_x, listOf())) {
-                        view.background = ContextCompat.getDrawable(this.getMain(),
-                            if (opus_manager.get_tree(new_beatkey, leaf_pos).is_event()) {
-                                R.drawable.focus_leaf_active
-                            } else {
-                                R.drawable.focus_leaf
-                            }
-                        )
-                        this.cache.addFocusedLeaf(new_y, new_x, leaf_pos)
-                    }
-                }
-            }
-        }
-    }
-
-    private fun tick_unapply_focus() {
-        val opus_manager = this.getMain().getOpusManager()
-        while (true) {
-            val (y, x, cached_position) = this.cache.popFocusedLeaf() ?: break
-            val view = this.cache.getTreeView(y, x, cached_position) ?: continue
-            if (y >= opus_manager.line_count()) {
-                continue
-            }
-            val pair = opus_manager.get_channel_index(y)
-
-            try {
-                if (opus_manager.get_tree(BeatKey(pair.first, pair.second, x), cached_position).is_event()) {
-                    view.background = ContextCompat.getDrawable(this.getMain(), R.drawable.leaf_active)
-                } else {
-                    view.background = ContextCompat.getDrawable(this.getMain(), R.drawable.leaf)
-                }
-            } catch (e: Exception) {
-                continue
-            }
+            this.buildTreeView(rowView.getChildAt(x) as ViewGroup, new_y, new_x, listOf())
         }
     }
 
     private fun interact_rosRelativeOption(view: RelativeOptionSelector) {
-        val opus_manager = this.getMain().getOpusManager()
+        var main = this.getMain()
+        val opus_manager = main.getOpusManager()
         this.resize_relative_value_selector()
         val current_tree = opus_manager.get_tree_at_cursor()
         if (! current_tree.is_event() || ! current_tree.get_event()!!.relative) {
@@ -996,8 +684,9 @@ class MainFragment : Fragment() {
     }
 
     private fun change_relative_value(progress: Int) {
+        var main = this.getMain()
         val llContextMenu: LinearLayout = this.activity!!.findViewById(R.id.llContextMenu)
-        val opus_manager = this.getMain().getOpusManager()
+        val opus_manager = main.getOpusManager()
         val cursor = opus_manager.get_cursor()
         val beat_key = cursor.get_beatkey()
         val relativeOptionSelector: RelativeOptionSelector = llContextMenu.findViewById(R.id.rosRelativeOption)
@@ -1018,22 +707,24 @@ class MainFragment : Fragment() {
 
         val note = opus_manager.get_absolute_value(beat_key, cursor.get_position())
         if (note != null) {
-            this.getMain().play_event(beat_key.channel, note!! + new_value)
+            main.play_event(beat_key.channel, note!! + new_value)
         }
 
         opus_manager.set_event(beat_key, cursor.position, event)
-        this.tick()
+        main.tick()
     }
 
     private fun interact_btnSplit(view: View) {
-        val opus_manager = this.getMain().getOpusManager()
+        var main = this.getMain()
+        val opus_manager = main.getOpusManager()
         opus_manager.split_tree_at_cursor()
         this.setContextMenu(ContextMenu.Leaf)
-        this.tick()
+        main.tick()
     }
 
     private fun interact_btnUnset(view: View) {
-        val opus_manager = this.getMain().getOpusManager()
+        var main = this.getMain()
+        val opus_manager = main.getOpusManager()
         this.setContextMenu(ContextMenu.Leaf)
         val cursor = opus_manager.get_cursor()
         val channel = cursor.get_beatkey().channel
@@ -1044,75 +735,83 @@ class MainFragment : Fragment() {
             opus_manager.set_percussion_event_at_cursor()
         }
 
-        this.tick()
+        main.tick()
         this.setContextMenu(ContextMenu.Leaf)
     }
 
     private fun interact_btnUnlink(view: View) {
-        val opus_manager = this.getMain().getOpusManager()
+        var main = this.getMain()
+        val opus_manager = main.getOpusManager()
         val cursor = opus_manager.get_cursor()
         opus_manager.remove_link_from_network(cursor.get_beatkey())
         cursor.settle()
         this.linking_beat = null
         this.linking_beat_b = null
         this.setContextMenu(ContextMenu.Leaf)
-        this.tick()
+        main.tick()
     }
 
     private fun interact_btnUnlinkAll(view: View) {
-        val opus_manager = this.getMain().getOpusManager()
+        var main = this.getMain()
+        val opus_manager = main.getOpusManager()
         val cursor = opus_manager.get_cursor()
         opus_manager.clear_links_in_network(cursor.get_beatkey())
         cursor.settle()
         this.linking_beat = null
         this.linking_beat_b = null
         this.setContextMenu(ContextMenu.Leaf)
-        this.tick()
+        main.tick()
     }
 
     private fun interact_btnCancelLink(view: View) {
-        val opus_manager = this.getMain().getOpusManager()
+        var main = this.getMain()
+        val opus_manager = main.getOpusManager()
         opus_manager.get_cursor().settle()
         this.linking_beat = null
         this.linking_beat_b = null
         this.setContextMenu(ContextMenu.Leaf)
-        this.tick()
+        main.tick()
     }
 
     private fun interact_btnInsertBeat(view: View) {
-        val opus_manager = this.getMain().getOpusManager()
+        var main = this.getMain()
+        val opus_manager = main.getOpusManager()
         opus_manager.insert_beat_at_cursor()
-        this.tick()
+        main.tick()
     }
 
     private fun interact_btnRemoveBeat(view: View) {
-        val opus_manager = this.getMain().getOpusManager()
+        var main = this.getMain()
+        val opus_manager = main.getOpusManager()
         if (opus_manager.opus_beat_count > 1) {
             opus_manager.remove_beat_at_cursor()
         }
-        this.tick()
+        main.tick()
     }
 
     private fun interact_btnRemoveLine(view: View) {
-        val opus_manager = this.getMain().getOpusManager()
+        var main = this.getMain()
+        val opus_manager = main.getOpusManager()
         if (opus_manager.line_count() > 1) {
             opus_manager.remove_line_at_cursor()
         }
         this.setContextMenu(ContextMenu.Line) // TODO: overkill?
-        this.tick()
+        main.tick()
     }
 
     private fun interact_btnInsertLine(view: View) {
-        val opus_manager = this.getMain().getOpusManager()
+        var main = this.getMain()
+        val opus_manager = main.getOpusManager()
         opus_manager.new_line_at_cursor()
         this.setContextMenu(ContextMenu.Line) // TODO: overkill?
-        this.tick()
+        main.tick()
     }
 
     private fun interact_leafView_click(view: View) {
-        val opus_manager = this.getMain().getOpusManager()
-        this.focus_column = false
-        this.focus_row = false
+        var main = this.getMain()
+        val opus_manager = main.getOpusManager()
+        main.focus_column = false
+        main.focus_row = false
 
         val key = this.cache.getTreeViewYXPosition(view) ?: return
         opus_manager.set_cursor_position(key.first, key.second, key.third)
@@ -1130,20 +829,21 @@ class MainFragment : Fragment() {
             this.linking_beat_b = null
         }
 
-        this.tick()
+        main.tick()
         this.setContextMenu(ContextMenu.Leaf)
 
         val cursor_tree = opus_manager.get_tree_at_cursor()
         if (cursor_tree.is_event()) {
             val abs_value = opus_manager.get_absolute_value(cursor_beatkey, opus_manager.get_cursor().get_position())
             if (abs_value != null) {
-                this.getMain().play_event(cursor_beatkey.channel, abs_value)
+                main.play_event(cursor_beatkey.channel, abs_value)
             }
         }
     }
 
     private fun interact_leafView_longclick(view: View) {
-        val opus_manager = this.getMain().getOpusManager()
+        var main = this.getMain()
+        val opus_manager = main.getOpusManager()
         val key = this.cache.getTreeViewYXPosition(view) ?: return
         val pair = opus_manager.get_channel_index(key.first)
         if (this.linking_beat == null) {
@@ -1153,11 +853,12 @@ class MainFragment : Fragment() {
         }
         opus_manager.set_cursor_position(key.first, key.second, listOf())
         this.setContextMenu(ContextMenu.Linking)
-        this.tick()
+        main.tick()
     }
 
     private fun interact_nsOffset(view: NumberSelector) {
-        val opus_manager = this.getMain().getOpusManager()
+        var main = this.getMain()
+        val opus_manager = main.getOpusManager()
         val progress = view.getState()!!
         val current_tree = opus_manager.get_tree_at_cursor()
 
@@ -1182,7 +883,7 @@ class MainFragment : Fragment() {
 
         opus_manager.set_event(beatkey, position, event)
 
-        this.getMain().play_event(beatkey.channel, event.note)
+        main.play_event(beatkey.channel, event.note)
 
         val nsOctave: NumberSelector = this.activity!!.findViewById(R.id.nsOctave)
         if (nsOctave.getState() == null) {
@@ -1190,11 +891,12 @@ class MainFragment : Fragment() {
         }
 
         this.setContextMenu(ContextMenu.Leaf)
-        this.tick()
+        main.tick()
     }
 
     private fun interact_nsOctave(view: NumberSelector) {
-        val opus_manager = this.getMain().getOpusManager()
+        var main = this.getMain()
+        val opus_manager = main.getOpusManager()
         val progress = view.getState() ?: return
 
         val current_tree = opus_manager.get_tree_at_cursor()
@@ -1222,12 +924,13 @@ class MainFragment : Fragment() {
         }
 
         this.setContextMenu(ContextMenu.Leaf)
-        this.tick()
+        main.tick()
     }
 
     private fun interact_rowLabel(view: View) {
-        this.focus_column = false
-        this.focus_row = true
+        var main = this.getMain()
+        main.focus_column = false
+        main.focus_row = true
 
         var abs_y: Int = 0
         val label_column = view.parent!! as ViewGroup
@@ -1238,15 +941,16 @@ class MainFragment : Fragment() {
             }
         }
 
-        val opus_manager = this.getMain().getOpusManager()
+        val opus_manager = main.getOpusManager()
         val cursor = opus_manager.get_cursor()
         opus_manager.set_cursor_position(abs_y, cursor.x, listOf())
-        this.tick()
+        main.tick()
         this.setContextMenu(ContextMenu.Line)
     }
 
     private fun interact_sRelative_changed(view: View, isChecked: Boolean) {
-        val opus_manager = this.getMain().getOpusManager()
+        var main = this.getMain()
+        val opus_manager = main.getOpusManager()
         if (isChecked) {
             opus_manager.convert_event_at_cursor_to_relative()
         } else {
@@ -1260,21 +964,23 @@ class MainFragment : Fragment() {
         }
         this.relative_mode = isChecked
         this.setContextMenu(ContextMenu.Leaf)
-        this.tick()
+        main.tick()
     }
 
     private fun interact_btnRemove(view: View) {
-        val opus_manager = this.getMain().getOpusManager()
+        var main = this.getMain()
+        val opus_manager = main.getOpusManager()
         val cursor = opus_manager.get_cursor()
         if (cursor.get_position().isNotEmpty()) {
             opus_manager.remove_tree_at_cursor()
         }
         this.setContextMenu(ContextMenu.Leaf)
-        this.tick()
+        main.tick()
     }
 
     private fun interact_btnInsert(view: View) {
-        val opus_manager = this.getMain().getOpusManager()
+        var main = this.getMain()
+        val opus_manager = main.getOpusManager()
         val position = opus_manager.get_cursor().get_position()
         if (position.isEmpty()) {
             opus_manager.split_tree_at_cursor()
@@ -1282,7 +988,7 @@ class MainFragment : Fragment() {
             opus_manager.insert_after_cursor()
         }
         this.setContextMenu(ContextMenu.Leaf)
-        this.tick()
+        main.tick()
     }
 
     private fun interact_nsRelativeValue(view: NumberSelector) {
@@ -1290,7 +996,8 @@ class MainFragment : Fragment() {
     }
 
     private fun interact_btnChoosePercussion(view: View) {
-        val opus_manager = this.getMain().getOpusManager()
+        var main = this.getMain()
+        val opus_manager = main.getOpusManager()
         val wrapper = ContextThemeWrapper(this.activity?.window?.decorView?.rootView?.context, R.style.PopupMenu)
         val popupMenu = PopupMenu(wrapper, view)
         val cursor = opus_manager.get_cursor()
@@ -1303,7 +1010,7 @@ class MainFragment : Fragment() {
                 cursor.get_beatkey().line_offset,
                 it.itemId
             )
-            this.tick()
+            main.tick()
             val y = opus_manager.get_cursor().get_y()
             val textView: TextView = this.cache.getLineLabel(y)!!.findViewById(R.id.textView)
             textView.text = "P:${it.itemId}"
@@ -1314,15 +1021,17 @@ class MainFragment : Fragment() {
     }
 
     fun play_beat(beat: Int) {
-        val opus_manager = this.getMain().getOpusManager()
+        var main = this.getMain()
+        val opus_manager = main.getOpusManager()
         val midi = opus_manager.get_midi(beat, beat + 1)
-        this.getMain().play_midi(midi)
+        main.play_midi(midi)
     }
 
     fun scroll_to_beat(beat: Int, select: Boolean = false) {
+        var main = this.getMain()
 
-        val hsvTable: HorizontalScrollView = this.getMain().findViewById(R.id.hsvTable)
-        val llColumnLabels: LinearLayout = this.getMain().findViewById(R.id.llColumnLabels)
+        val hsvTable: HorizontalScrollView = main.findViewById(R.id.hsvTable)
+        val llColumnLabels: LinearLayout = main.findViewById(R.id.llColumnLabels)
 
         val view = llColumnLabels.getChildAt(beat)
         if (view != null) {
@@ -1335,15 +1044,247 @@ class MainFragment : Fragment() {
 
 
     fun interact_column_header(view: View) {
+        var main = this.getMain()
         val x = (view.parent as ViewGroup).indexOfChild(view)
-        val opus_manager = this.getMain().getOpusManager()
-        this.focus_column = true
-        this.focus_row = false
+        val opus_manager = main.getOpusManager()
+        main.focus_column = true
+        main.focus_row = false
         val cursor = opus_manager.get_cursor()
         opus_manager.set_cursor_position(cursor.y, x, listOf())
 
         this.setContextMenu(ContextMenu.Beat)
-        this.tick()
+        main.tick()
     }
 
+    fun line_remove(index: Int) {
+        this.cache.detachLine(index)
+    }
+
+    fun line_new(index: Int, beat_count: Int) {
+        val rowView = this.buildLineView(index)
+        for (x in 0 until beat_count) {
+            this.buildTreeView(rowView.getChildAt(x) as ViewGroup, index, x, listOf())
+            // TODO: Handle flag beat change that WAS here (needs to be handled when flagging a new line)
+        }
+    }
+
+    fun line_update_labels(opus_manager: OpusManager) {
+        var y = 0
+        val line_counts = opus_manager.get_channel_line_counts()
+        line_counts.forEachIndexed { channel, line_count ->
+            for (i in 0 until line_count) {
+                val label = this.cache.getLineLabel(y) ?: continue
+                val textView: TextView = label.findViewById(R.id.textView)
+
+                // TODO: fix naming to reflect changes to channel handling
+                if (!opus_manager.is_percussion(channel)) {
+                    textView.text = "$channel:$i"
+                } else {
+                    val instrument = opus_manager.get_percussion_instrument(i)
+                    textView.text = "P:$instrument"
+                }
+
+                // TODO: Did i paste this accidentally and not notice?
+                //for (x in 0 until opus_manager.opus_beat_count) {
+                //    for ((leaf, leaf_pos) in this.cache.get_all_leafs(y, x, listOf())) {
+                //        leaf.background = ContextCompat.getDrawable(this.getMain(),
+                //            if (!opus_manager.get_tree(BeatKey(channel, i, x), leaf_pos).is_event()) {
+                //                R.drawable.leaf
+                //            } else {
+                //                R.drawable.leaf_active
+                //            }
+                //        )
+                //    }
+                //}
+
+                y += 1
+            }
+        }
+    }
+
+    fun beat_new(index: Int) {
+        this.newColumnLabel()
+
+        this.cache.getLines().forEachIndexed { y: Int, rowView: LinearLayout ->
+            var new_wrapper = LinearLayout(rowView.context)
+            rowView.addView(new_wrapper, index)
+            this.buildTreeView(new_wrapper, y, index, listOf())
+        }
+
+    }
+
+    fun beat_remove(index: Int) {
+        this.cache.detachColumnLabel()
+        for (y in 0 until this.cache.getLineCount()) {
+            this.cache.removeBeatView(y, index)
+        }
+    }
+
+    fun beat_update(y: Int, x: Int) {
+        this.rebuildBeatView(y, x)
+    }
+
+    private fun tree_cell_resize(tree: OpusTree<OpusEvent>, y: Int, x: Int, position: List<Int>, new_width: Int) {
+        //val current_view = this.cache.getTreeView(y, x, position)
+        //val param = current_view!!.layoutParams as ViewGroup.MarginLayoutParams
+        //if (!tree.is_leaf()) {
+        //    for (i in 0 until tree.size) {
+        //        val next_pos = position.toMutableList()
+        //        next_pos.add(i)
+        //        this.tree_cell_resize(tree.get(i), y, x, next_pos, new_width / tree.size.toFloat())
+        //    }
+
+        //    param.width = (new_size * 100.toFloat()).toInt()
+        //    param.height = 130
+        //} else {
+        //    param.width = (new_size * 100.toFloat()).toInt() - 5
+        //    param.height = 125
+        //    param.setMargins(0,0,5,5)
+
+        //    // TODO: Move this somewhere better
+        //    current_view.background = ContextCompat.getDrawable(main,
+        //        if (!tree.is_event()) {
+        //            R.drawable.leaf
+        //        } else {
+        //            R.drawable.leaf_active
+        //        }
+        //    )
+
+        //}
+
+    }
+
+    private fun beat_cell_resize(beat_tree: OpusTree<OpusEvent>, new_width: Int) {
+        //val opus_manager = main.getOpusManager()
+        //val stack: MutableList<Pair<Float, List<Int>>> = mutableListOf(Pair(new_width.toFloat(), listOf()))
+
+        //while (stack.isNotEmpty()) {
+        //    val (new_size, current_position) = stack.removeFirst()
+        //    val current_tree = opus_manager.get_tree(key, current_position)
+
+        //    val current_view = this.cache.getTreeView(y, beat, current_position)
+        //    val param = current_view!!.layoutParams as ViewGroup.MarginLayoutParams
+
+        //    if (!current_tree.is_leaf()) {
+        //        for (i in 0 until current_tree.size) {
+        //            val next_pos = current_position.toMutableList()
+        //            next_pos.add(i)
+        //            stack.add(Pair(new_size / current_tree.size.toFloat(), next_pos))
+        //        }
+
+        //        param.width = (new_size * 100.toFloat()).toInt()
+        //        param.height = 130
+        //    } else {
+        //        param.width = (new_size * 100.toFloat()).toInt() - 5
+        //        param.height = 125
+        //        param.setMargins(0,0,5,5)
+
+        //        // TODO: Move this somewhere better
+        //        current_view.background = ContextCompat.getDrawable(main,
+        //            if (!current_tree.is_event()) {
+        //                R.drawable.leaf
+        //            } else {
+        //                R.drawable.leaf_active
+        //            }
+        //        )
+
+        //    }
+
+        //    current_view.layoutParams = param
+        //}
+    }
+
+    fun update_column_labels(from: Int, to: Int) {
+        for (i in from until to) {
+            this.update_column_label_size(i)
+        }
+    }
+
+    fun update_column_label_size(beat: Int) {
+        val width = this.cache.get_column_width(beat)
+        Log.e("AAA", "$width")
+        // Kludge: Need to remove/reattach label so it will shrink to a smaller
+        // size if necessary
+        val label_view = this.cache.getColumnLabel(beat)
+        val label_row = label_view.parent as ViewGroup
+        label_row.removeView(label_view)
+        label_view.layoutParams.width = (width * 100) - 5
+        label_row.addView(label_view, beat)
+    }
+
+
+    fun apply_focus(focused: Set<Pair<BeatKey, List<Int>>>, opus_manager: OpusManager) {
+        for ((beatkey, position) in focused) {
+            val linked_beats = opus_manager.get_all_linked(beatkey)
+
+            for (linked_beat in linked_beats) {
+                val y = opus_manager.get_y(linked_beat.channel, linked_beat.line_offset)
+                for ((view, leaf_pos) in this.cache.get_all_leafs(y, beatkey.beat, position)) {
+                    if (view is LinearLayout) {
+                        continue
+                    }
+
+                    view.background = ContextCompat.getDrawable(
+                        this.getMain(),
+                        if (opus_manager.get_tree(linked_beat, leaf_pos).is_event()) {
+                            R.drawable.focus_leaf_active
+                        } else {
+                            R.drawable.focus_leaf
+                        }
+                    )
+
+                    this.cache.addFocusedLeaf(y, linked_beat.beat, leaf_pos)
+                }
+            }
+        }
+
+        if (this.linking_beat_b != null) {
+            val cursor_diff = opus_manager.get_cursor_difference(this.linking_beat!!, this.linking_beat_b!!)
+
+            for (y in 0 .. cursor_diff.first) {
+                val new_y = y + opus_manager.get_y(
+                    this.linking_beat!!.channel,
+                    this.linking_beat!!.line_offset
+                )
+
+                val target_pair = opus_manager.get_channel_index(new_y)
+                for (x in 0 .. cursor_diff.second) {
+                    val new_x = x + this.linking_beat!!.beat
+                    val new_beatkey = BeatKey(target_pair.first, target_pair.second, new_x)
+
+                    for ((view, leaf_pos) in this.cache.get_all_leafs(new_y, new_x, listOf())) {
+                        view.background = ContextCompat.getDrawable(this.getMain(),
+                            if (opus_manager.get_tree(new_beatkey, leaf_pos).is_event()) {
+                                R.drawable.focus_leaf_active
+                            } else {
+                                R.drawable.focus_leaf
+                            }
+                        )
+                        this.cache.addFocusedLeaf(new_y, new_x, leaf_pos)
+                    }
+                }
+            }
+        }
+    }
+
+    fun unapply_focus(opus_manager: OpusManager) {
+        while (true) {
+            val (y, x, cached_position) = this.cache.popFocusedLeaf() ?: break
+            val view = this.cache.getTreeView(y, x, cached_position) ?: continue
+            if (y >= opus_manager.line_count()) {
+                continue
+            }
+            val pair = opus_manager.get_channel_index(y)
+
+            try {
+                if (opus_manager.get_tree(BeatKey(pair.first, pair.second, x), cached_position).is_event()) {
+                    view.background = ContextCompat.getDrawable(this.getMain(), R.drawable.leaf_active)
+                } else {
+                    view.background = ContextCompat.getDrawable(this.getMain(), R.drawable.leaf)
+                }
+            } catch (e: Exception) {
+                continue
+            }
+        }
+    }
 }

@@ -10,18 +10,8 @@ class ViewCache {
     private var column_label_cache: MutableList<View> = mutableListOf()
     private var focused_leafs: MutableSet<Triple<Int, Int, List<Int>>> = mutableSetOf()
     private var active_context_menu_view: View? = null
-    private var column_widths: MutableList<Int> = mutableListOf()
-    fun set_column_width(x: Int, size: Int) {
-        this.column_widths[x] = size
-    }
     fun get_column_width(x: Int): Int {
-        return this.column_widths[x]
-    }
-    fun add_column_width(x: Int) {
-        this.column_widths.add(x, 0)
-    }
-    fun remove_column_width(x: Int): Int {
-        return this.column_widths.removeAt(x)
+        return this.getLine(0).getChildAt(x).getWidth()
     }
 
     fun get_all_leafs(y: Int, x: Int, position: List<Int>): List<Pair<View, List<Int>>> {
@@ -87,6 +77,14 @@ class ViewCache {
         return this.view_cache[y].first
     }
 
+    fun getLines(): List<LinearLayout> {
+        var output: MutableList<LinearLayout> = mutableListOf()
+        for (pair in this.view_cache) {
+            output.add(pair.first)
+        }
+        return output
+    }
+
     fun addColumnLabel(view: View) {
         this.column_label_cache.add(view)
     }
@@ -131,9 +129,12 @@ class ViewCache {
 
     fun removeBeatView(y: Int, x: Int) {
         val line_cache = this.view_cache[y].second
-        for ((pos, view) in line_cache[x].second) {
-            (view.parent as ViewGroup).removeView(view)
-        }
+
+        // I think this is redundant. commenting out for now
+        //for ((pos, view) in line_cache[x].second) {
+        //    (view.parent as ViewGroup).removeView(view)
+        //}
+
         line_cache[x].second.clear()
 
         line_cache.removeAt(x)
@@ -176,5 +177,9 @@ class ViewCache {
 
     fun getFocusedLeafs(): MutableSet<Triple<Int, Int, List<Int>>> {
         return this.focused_leafs
+    }
+
+    fun getLineCount(): Int {
+        return this.view_cache.size
     }
 }

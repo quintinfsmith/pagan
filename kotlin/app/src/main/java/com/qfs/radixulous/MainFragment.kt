@@ -161,13 +161,20 @@ class MainFragment : Fragment() {
             parent,
             false
         ) as TextView
+        val x = parent.childCount
         headerCellView.setBackgroundColor(
-            ContextCompat.getColor(headerCellView.context, R.color.label_bg)
+            ContextCompat.getColor(
+                headerCellView.context,
+                if (x % 2 == 0) {
+                    R.color.column_label_even
+                } else {
+                    R.color.column_label_odd
+                }
+            )
         )
         headerCellView.setTextColor(
             ContextCompat.getColor(headerCellView.context, R.color.label_fg)
         )
-        val x = parent.childCount
         headerCellView.text = "$x"
         headerCellView.setOnClickListener {
             this.interact_column_header(it)
@@ -1177,6 +1184,22 @@ class MainFragment : Fragment() {
         label_row.addView(label_view, beat)
     }
 
+    fun update_column_background_color(beat: Int) {
+        for (line in this.cache.getLines()) {
+            var wrapper = line.getChildAt(beat)
+            wrapper.setBackgroundColor(
+                ContextCompat.getColor(
+                    wrapper.context,
+                    if (beat % 2 == 0) {
+                        R.color.column_even
+                    } else {
+                        R.color.column_odd
+                    }
+                )
+            )
+        }
+    }
+
     fun apply_focus(focused: Set<Pair<BeatKey, List<Int>>>, opus_manager: OpusManager) {
         for ((beatkey, position) in focused) {
             val linked_beats = opus_manager.get_all_linked(beatkey)
@@ -1249,6 +1272,73 @@ class MainFragment : Fragment() {
             } catch (e: Exception) {
                 continue
             }
+        }
+    }
+
+    private fun __tick_update_column_label_size(beat: Int) {
+        var width = this.cache.get_column_width(beat)
+        // Kludge: Need to remove/reattach label so it will shrink to a smaller
+        // size if necessary
+        val label_view = this.cache.getColumnLabel(beat)
+        var label_row = label_view.parent as ViewGroup
+        label_row.removeView(label_view)
+        label_view.layoutParams.width = (width * 100) - 5
+        label_row.addView(label_view, beat)
+    }
+
+    fun __tick_resize_beat_cell(channel: Int, line_offset: Int, beat: Int, new_width: Int) {
+        var opus_manager = this.getMain().getOpusManager()
+        val stack: MutableList<Pair<Float, List<Int>>> = mutableListOf(Pair(new_width.toFloat(), listOf()))
+        val key = BeatKey(channel, line_offset, beat)
+        var y = opus_manager.get_y(channel, line_offset)
+        while (stack.isNotEmpty()) {
+            val (new_size, current_position) = stack.removeFirst()
+            val current_tree = opus_manager.get_tree(key, current_position)
+
+            val current_view = this.cache.getTreeView(y, beat, current_position)
+            val param = current_view!!.layoutParams as ViewGroup.MarginLayoutParams
+
+            if (!current_tree.is_leaf()) {
+                for (i in 0 until current_tree.size) {
+                    val next_pos = current_position.toMutableList()
+                    next_pos.add(i)
+                    stack.add(Pair(new_size / current_tree.size.toFloat(), next_pos))
+                }
+
+                param.width = (new_size * 120.toFloat()).toInt()
+            } else {
+                param.width = (new_size * 120.toFloat()).toInt() - 5
+                //param.setMargins(0,0,5,5)
+
+            }
+
+            current_view.layoutParams = param
+        }
+    }
+
+    fun tick_resize_beats(updated_beats: List<Int>) {
+        var opus_manager = this.getMain().getOpusManager()
+        // resize Columns
+        for (b in updated_beats) {
+            var max_width = 0
+            for (channel in 0 until opus_manager.channels.size) {
+                for (line_offset in 0 until opus_manager.channels[channel].size) {
+                    val tree = opus_manager.get_beat_tree(BeatKey(channel, line_offset, b))
+                    val size = Integer.max(1, tree.size) * tree.get_max_child_weight()
+                    max_width = Integer.max(max_width, size)
+                }
+            }
+
+            var y = 0
+            for (channel in 0 until opus_manager.channels.size) {
+                for (line_offset in 0 until opus_manager.channels[channel].size) {
+                    this.__tick_resize_beat_cell(channel, line_offset, b, max_width)
+                    y += 1
+                }
+            }
+
+            this.cache.set_column_width(b, max_width)
+            this.__tick_update_column_label_size(b)
         }
     }
 }

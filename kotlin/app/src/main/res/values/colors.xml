@@ -15,6 +15,8 @@
 
     <color name="column_even">#cccccc</color>
     <color name="column_odd">#aaaaaa</color>
+    <color name="column_label_even">#888888</color>
+    <color name="column_label_odd">#555555</color>
 
     <color name="focus_leaf">#f0f0f0</color>
     <color name="focus_leaf_pressed">#c0c0c0</color>

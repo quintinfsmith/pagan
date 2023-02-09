@@ -156,10 +156,11 @@ class MainActivity : AppCompatActivity() {
             }
             R.id.itmPlay -> {
                 if (!this.in_play_back) {
+
                     this.playback()
-                    thread {
-                        this.changeback_playbutton()
-                    }
+                    //thread {
+                    //    this.changeback_playbutton()
+                    //}
                 } else {
                     this.in_play_back = false
                 }
@@ -255,7 +256,9 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 if (main_fragment is MainFragment) {
-                    main_fragment.scroll_to_beat(i, true)
+                    this@MainActivity.runOnUiThread {
+                        main_fragment.scroll_to_beat(i, true)
+                    }
                 }
 
                 thread {
@@ -266,17 +269,11 @@ class MainActivity : AppCompatActivity() {
                 Thread.sleep(delay.toLong())
             }
             this.in_play_back = false
-
-        }
-    }
-
-    private fun changeback_playbutton() {
-        this@MainActivity.runOnUiThread {
-            while (this.in_play_back) {
-                Thread.sleep(100)
+            this@MainActivity.runOnUiThread {
+                val item = this.optionsMenu.findItem(R.id.itmPlay)
+                item.icon = ContextCompat.getDrawable(this, R.drawable.ic_baseline_play_arrow_24)
             }
-            val item = this.optionsMenu.findItem(R.id.itmPlay)
-            item.icon = ContextCompat.getDrawable(this, R.drawable.ic_baseline_play_arrow_24)
+
         }
     }
 
@@ -538,8 +535,10 @@ class MainActivity : AppCompatActivity() {
         }
 
         if (main_fragment is MainFragment) {
-            for (index in updated_beats) {
+            main_fragment.tick_resize_beats(updated_beats.toList())
+            for (index in min_changed until opus_manager.opus_beat_count) {
                 main_fragment.update_column_label_size(index)
+                main_fragment.update_column_background_color(index)
             }
         }
     }
@@ -564,11 +563,13 @@ class MainActivity : AppCompatActivity() {
         }
 
         if (main_fragment is MainFragment) {
+            main_fragment.tick_resize_beats(updated_beats.toList())
             for (b in updated_beats) {
                 main_fragment.update_column_label_size(b)
             }
         }
     }
+
 
     private fun tick_apply_focus() {
         val opus_manager = this.getOpusManager()

@@ -14,6 +14,8 @@
         <!-- Customize your theme here. -->
         <item name="drawerBG">@color/black</item>
         <item name="android:popupMenuStyle">@style/PopupMenu</item>
+        <item name="colorLeaf">?attr/colorPrimary</item>
+        <item name="colorOnLeaf">?attr/colorOnPrimary</item>
     </style>
     <style name="Theme.Kotlin.NoActionBar">
         <item name="windowActionBar">false</item>

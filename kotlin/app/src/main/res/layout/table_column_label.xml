@@ -2,12 +2,10 @@
 <TextView
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:gravity="center"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
     android:background="@color/label_bg"
     android:textColor="@color/label_fg"
     android:id="@+id/textView"
     android:minWidth="32dp"
-    android:layout_marginRight="5px"
-    android:layout_marginBottom="5px"
     android:text="" />

@@ -9,25 +9,18 @@
     <color name="white">#FFFFFFFF</color>
 
     <color name="leaf_fg">#1d1d1d</color>
-    <color name="leaf">#f0f0f0</color>
     <color name="leaf_pressed">#c0c0c0</color>
     <color name="leaf_active">#c0c0c0</color>
     <color name="leaf_active_pressed">#808080</color>
-    <color name="leaf_reflection">#34829C</color>
-    <color name="leaf_reflection_pressed">#19414E</color>
-    <color name="leaf_reflected">#D1B4EC</color>
-    <color name="leaf_reflected_pressed">#B668CD</color>
+
+    <color name="column_even">#cccccc</color>
+    <color name="column_odd">#aaaaaa</color>
 
     <color name="focus_leaf">#f0f0f0</color>
     <color name="focus_leaf_pressed">#c0c0c0</color>
     <color name="focus_leaf_active">#c0c0c0</color>
     <color name="focus_leaf_active_pressed">#808080</color>
-    <color name="focus_leaf_reflection">#34829C</color>
-    <color name="focus_leaf_reflection_pressed">#19414E</color>
-    <color name="focus_leaf_reflected">#D1B4EC</color>
-    <color name="focus_leaf_reflected_pressed">#B668CD</color>
 
-    <color name="leaf_selected">#836C95</color>
     <color name="label_bg">#FF474747</color>
     <color name="label_fg">#FFFFFFFF</color>
     <color name="channel_button_bg">#BABABA</color>

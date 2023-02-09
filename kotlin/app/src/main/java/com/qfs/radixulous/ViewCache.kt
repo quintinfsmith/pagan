@@ -1,17 +1,40 @@
 package com.qfs.radixulous
 
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
+import java.lang.Integer.max
 
 class ViewCache {
     private var view_cache: MutableList<Pair<LinearLayout, MutableList<Pair<View?, HashMap<List<Int>, View>>>>> = mutableListOf()
     private var line_label_cache: MutableList<View> = mutableListOf()
     private var column_label_cache: MutableList<View> = mutableListOf()
+    private var column_widths: MutableList<Int> = mutableListOf()
     private var focused_leafs: MutableSet<Triple<Int, Int, List<Int>>> = mutableSetOf()
     private var active_context_menu_view: View? = null
+
     fun get_column_width(x: Int): Int {
-        return this.getLine(0).getChildAt(x).getWidth()
+        var w = 0
+        for (y in 0 until this.view_cache.size) {
+            var line = this.getLine(y)
+            var wrapper = line.getChildAt(x)
+            wrapper.measure(0,0)
+            w = max(wrapper.measuredWidth, w)
+        }
+        return w
+    }
+
+    fun set_column_width(x: Int, new_width: Int) {
+        this.column_widths[x] = max(new_width, this.column_widths[x])
+    }
+
+    fun add_column_width(x: Int) {
+        this.column_widths.add(x, 0)
+    }
+
+    fun remove_column_width(x: Int) {
+        this.column_widths.remove(x)
     }
 
     fun get_all_leafs(y: Int, x: Int, position: List<Int>): List<Pair<View, List<Int>>> {

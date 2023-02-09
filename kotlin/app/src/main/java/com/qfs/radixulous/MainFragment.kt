@@ -1,7 +1,6 @@
 package com.qfs.radixulous
 
 import android.os.Bundle
-import android.util.Log
 import android.view.ContextThemeWrapper
 import android.view.LayoutInflater
 import android.view.View
@@ -13,7 +12,6 @@ import androidx.fragment.app.setFragmentResultListener
 import com.qfs.radixulous.databinding.FragmentMainBinding
 import com.qfs.radixulous.opusmanager.BeatKey
 import com.qfs.radixulous.opusmanager.OpusEvent
-import com.qfs.radixulous.structure.OpusTree
 import com.qfs.radixulous.opusmanager.HistoryLayer as OpusManager
 import kotlin.math.abs
 
@@ -187,6 +185,7 @@ class MainFragment : Fragment() {
 
         val tlOpusLines: TableLayout = this.activity!!.findViewById(R.id.tlOpusLines)
         val llLineLabels: LinearLayout = this.activity!!.findViewById(R.id.llLineLabels)
+
         var rowView: TableRow = LayoutInflater.from(tlOpusLines.context).inflate(
             R.layout.table_row,
             tlOpusLines,
@@ -197,8 +196,25 @@ class MainFragment : Fragment() {
         this.cache.cacheLine(rowView, y)
 
         for (i in 0 until opus_manager.opus_beat_count) {
-            rowView.addView(LinearLayout(rowView.context))
+            var wrapper = LayoutInflater.from(rowView.context).inflate(
+                R.layout.beat_node,
+                rowView,
+                false
+            )
+            wrapper.setBackgroundColor(
+                ContextCompat.getColor(
+                    wrapper.context,
+                    if (i % 2 == 0) {
+                        R.color.column_even
+                    } else {
+                        R.color.column_odd
+                    }
+                )
+            )
+            rowView.addView(wrapper)
         }
+
+        /////////////////////////////////
 
         val rowLabel = LayoutInflater.from(llLineLabels.context).inflate(
             R.layout.table_line_label,
@@ -222,11 +238,8 @@ class MainFragment : Fragment() {
             this.interact_rowLabel(it)
         }
 
-        rowLabel.layoutParams.height = 125
-
         this.cache.addLineLabel(rowLabel)
         llLineLabels.addView(rowLabel)
-
 
         return rowView
     }
@@ -246,7 +259,7 @@ class MainFragment : Fragment() {
 
             tvLeaf.background = ContextCompat.getDrawable(main,
                 if (!tree.is_event()) {
-                    R.drawable.leaf
+                    R.drawable.leaf_button
                 } else {
                     R.drawable.leaf_active
                 }
@@ -646,7 +659,26 @@ class MainFragment : Fragment() {
             val new_x = beatkey.beat
             this.cache.removeBeatView(new_y, new_x)
             val rowView = this.cache.getLine(new_y)
-            this.buildTreeView(rowView.getChildAt(x) as ViewGroup, new_y, new_x, listOf())
+            var new_wrapper = LayoutInflater.from(rowView.context).inflate(
+                R.layout.beat_node,
+                rowView,
+                false
+            )
+            new_wrapper.setBackgroundColor(
+                ContextCompat.getColor(
+                    new_wrapper.context,
+                    if (x % 2 == 0) {
+                        R.color.column_even
+                    } else {
+                        R.color.column_odd
+                    }
+                )
+            )
+
+            rowView.addView(new_wrapper, new_x)
+            this.buildTreeView(rowView.getChildAt(new_x) as ViewGroup, new_y, new_x, listOf())
+            new_wrapper.measure(0,0)
+            this.cache.set_column_width(new_x, new_wrapper.measuredWidth)
         }
     }
 
@@ -729,7 +761,6 @@ class MainFragment : Fragment() {
         val cursor = opus_manager.get_cursor()
         val channel = cursor.get_beatkey().channel
         if (!opus_manager.is_percussion(channel) || opus_manager.get_tree_at_cursor().is_event()) {
-            Log.e("AAA", "Attempingunset")
             opus_manager.unset_at_cursor()
         } else {
             opus_manager.set_percussion_event_at_cursor()
@@ -1064,7 +1095,6 @@ class MainFragment : Fragment() {
         val rowView = this.buildLineView(index)
         for (x in 0 until beat_count) {
             this.buildTreeView(rowView.getChildAt(x) as ViewGroup, index, x, listOf())
-            // TODO: Handle flag beat change that WAS here (needs to be handled when flagging a new line)
         }
     }
 
@@ -1084,19 +1114,6 @@ class MainFragment : Fragment() {
                     textView.text = "P:$instrument"
                 }
 
-                // TODO: Did i paste this accidentally and not notice?
-                //for (x in 0 until opus_manager.opus_beat_count) {
-                //    for ((leaf, leaf_pos) in this.cache.get_all_leafs(y, x, listOf())) {
-                //        leaf.background = ContextCompat.getDrawable(this.getMain(),
-                //            if (!opus_manager.get_tree(BeatKey(channel, i, x), leaf_pos).is_event()) {
-                //                R.drawable.leaf
-                //            } else {
-                //                R.drawable.leaf_active
-                //            }
-                //        )
-                //    }
-                //}
-
                 y += 1
             }
         }
@@ -1106,11 +1123,27 @@ class MainFragment : Fragment() {
         this.newColumnLabel()
 
         this.cache.getLines().forEachIndexed { y: Int, rowView: LinearLayout ->
-            var new_wrapper = LinearLayout(rowView.context)
+            var new_wrapper = LayoutInflater.from(rowView.context).inflate(
+                R.layout.beat_node,
+                rowView,
+                false
+            ) as ViewGroup
+            new_wrapper.setBackgroundColor(
+                ContextCompat.getColor(
+                    new_wrapper.context,
+                    if (index % 2 == 0) {
+                        R.color.column_even
+                    } else {
+                        R.color.column_odd
+                    }
+                )
+            )
             rowView.addView(new_wrapper, index)
             this.buildTreeView(new_wrapper, y, index, listOf())
         }
 
+        this.cache.add_column_width(index)
+        this.update_column_label_size(index)
     }
 
     fun beat_remove(index: Int) {
@@ -1118,80 +1151,13 @@ class MainFragment : Fragment() {
         for (y in 0 until this.cache.getLineCount()) {
             this.cache.removeBeatView(y, index)
         }
+
+        this.cache.remove_column_width(index)
     }
 
     fun beat_update(y: Int, x: Int) {
         this.rebuildBeatView(y, x)
-    }
-
-    private fun tree_cell_resize(tree: OpusTree<OpusEvent>, y: Int, x: Int, position: List<Int>, new_width: Int) {
-        //val current_view = this.cache.getTreeView(y, x, position)
-        //val param = current_view!!.layoutParams as ViewGroup.MarginLayoutParams
-        //if (!tree.is_leaf()) {
-        //    for (i in 0 until tree.size) {
-        //        val next_pos = position.toMutableList()
-        //        next_pos.add(i)
-        //        this.tree_cell_resize(tree.get(i), y, x, next_pos, new_width / tree.size.toFloat())
-        //    }
-
-        //    param.width = (new_size * 100.toFloat()).toInt()
-        //    param.height = 130
-        //} else {
-        //    param.width = (new_size * 100.toFloat()).toInt() - 5
-        //    param.height = 125
-        //    param.setMargins(0,0,5,5)
-
-        //    // TODO: Move this somewhere better
-        //    current_view.background = ContextCompat.getDrawable(main,
-        //        if (!tree.is_event()) {
-        //            R.drawable.leaf
-        //        } else {
-        //            R.drawable.leaf_active
-        //        }
-        //    )
-
-        //}
-
-    }
-
-    private fun beat_cell_resize(beat_tree: OpusTree<OpusEvent>, new_width: Int) {
-        //val opus_manager = main.getOpusManager()
-        //val stack: MutableList<Pair<Float, List<Int>>> = mutableListOf(Pair(new_width.toFloat(), listOf()))
-
-        //while (stack.isNotEmpty()) {
-        //    val (new_size, current_position) = stack.removeFirst()
-        //    val current_tree = opus_manager.get_tree(key, current_position)
-
-        //    val current_view = this.cache.getTreeView(y, beat, current_position)
-        //    val param = current_view!!.layoutParams as ViewGroup.MarginLayoutParams
-
-        //    if (!current_tree.is_leaf()) {
-        //        for (i in 0 until current_tree.size) {
-        //            val next_pos = current_position.toMutableList()
-        //            next_pos.add(i)
-        //            stack.add(Pair(new_size / current_tree.size.toFloat(), next_pos))
-        //        }
-
-        //        param.width = (new_size * 100.toFloat()).toInt()
-        //        param.height = 130
-        //    } else {
-        //        param.width = (new_size * 100.toFloat()).toInt() - 5
-        //        param.height = 125
-        //        param.setMargins(0,0,5,5)
-
-        //        // TODO: Move this somewhere better
-        //        current_view.background = ContextCompat.getDrawable(main,
-        //            if (!current_tree.is_event()) {
-        //                R.drawable.leaf
-        //            } else {
-        //                R.drawable.leaf_active
-        //            }
-        //        )
-
-        //    }
-
-        //    current_view.layoutParams = param
-        //}
+        this.update_column_label_size(x)
     }
 
     fun update_column_labels(from: Int, to: Int) {
@@ -1202,16 +1168,14 @@ class MainFragment : Fragment() {
 
     fun update_column_label_size(beat: Int) {
         val width = this.cache.get_column_width(beat)
-        Log.e("AAA", "$width")
         // Kludge: Need to remove/reattach label so it will shrink to a smaller
         // size if necessary
         val label_view = this.cache.getColumnLabel(beat)
         val label_row = label_view.parent as ViewGroup
         label_row.removeView(label_view)
-        label_view.layoutParams.width = (width * 100) - 5
+        label_view.layoutParams.width = width
         label_row.addView(label_view, beat)
     }
-
 
     fun apply_focus(focused: Set<Pair<BeatKey, List<Int>>>, opus_manager: OpusManager) {
         for ((beatkey, position) in focused) {
@@ -1280,7 +1244,7 @@ class MainFragment : Fragment() {
                 if (opus_manager.get_tree(BeatKey(pair.first, pair.second, x), cached_position).is_event()) {
                     view.background = ContextCompat.getDrawable(this.getMain(), R.drawable.leaf_active)
                 } else {
-                    view.background = ContextCompat.getDrawable(this.getMain(), R.drawable.leaf)
+                    view.background = ContextCompat.getDrawable(this.getMain(), R.drawable.leaf_button)
                 }
             } catch (e: Exception) {
                 continue

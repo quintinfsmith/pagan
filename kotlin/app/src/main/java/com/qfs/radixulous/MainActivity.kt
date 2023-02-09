@@ -470,7 +470,10 @@ class MainActivity : AppCompatActivity() {
             this.tick_manage_beats() // new/pop
             this.tick_update_beats() // changes
             this.tick_apply_focus()
-
+            //var main_fragment = this.getActiveFragment()
+            //if (main_fragment is MainFragment) {
+            //    main_fragment.update_column_labels(0, this.opus_manager.opus_beat_count)
+            //}
             this.ticking = false
         }
     }
@@ -497,12 +500,6 @@ class MainActivity : AppCompatActivity() {
                 1 -> {
                     val y = opus_manager.get_y(channel, index)
                     main_fragment.line_new(y, opus_manager.opus_beat_count)
-
-                    //val rowView = this.buildLineView(y, opus_manager.opus_beat_count)
-                    //for (x in 0 until opus_manager.opus_beat_count) {
-                    //    this.buildTreeView(rowView, y, x, listOf())
-                    //    opus_manager.flag_beat_change(BeatKey(channel, index, x))
-                    //}
                 }
                 2 -> {
                     val y = opus_manager.get_y(channel, index)
@@ -519,7 +516,6 @@ class MainActivity : AppCompatActivity() {
     private fun tick_manage_beats() {
         val opus_manager = this.getOpusManager()
         val updated_beats: MutableSet<Int> = mutableSetOf()
-        var beats_changed = false
         var min_changed = opus_manager.opus_beat_count
         val main_fragment = this.getActiveFragment()
 
@@ -534,17 +530,17 @@ class MainActivity : AppCompatActivity() {
                 1 -> {
                     main_fragment.beat_new(index)
                     updated_beats.add(index)
-                    beats_changed = true
                 }
                 0 -> {
                     main_fragment.beat_remove(index)
-                    beats_changed = true
                 }
             }
         }
 
         if (main_fragment is MainFragment) {
-            main_fragment.update_column_labels(min_changed, opus_manager.opus_beat_count)
+            for (index in updated_beats) {
+                main_fragment.update_column_label_size(index)
+            }
         }
     }
 

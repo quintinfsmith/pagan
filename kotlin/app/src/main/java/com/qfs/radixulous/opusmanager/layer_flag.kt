@@ -176,6 +176,11 @@ open class FlagLayer : LinksLayer() {
 
         val line_index = index ?: (this.channels[channel].size - 1)
         this.cache.flag_line_new(channel, line_index)
+
+        for (i in 0 until this.opus_beat_count)     {
+            this.cache.flag_beat_change(BeatKey(channel, line_index, i))
+        }
+
         return output
     }
 

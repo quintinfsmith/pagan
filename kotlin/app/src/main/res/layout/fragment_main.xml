@@ -17,59 +17,53 @@ tools:context=".MainFragment">
     <TableRow
         android:id="@+id/trMainA"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:layout_height="match_parent" >
 
         <Space
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             android:layout_width="wrap_content"
-            android:layout_height="32dp" />
+            android:layout_height="wrap_content" />
 
         <HorizontalScrollView
             android:id="@+id/hsvColumnLabels"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:scrollbars="none"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:scrollbars="none">
 
             <LinearLayout
                 android:id="@+id/llColumnLabels"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:orientation="horizontal"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent" />
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" />
 
         </HorizontalScrollView>
     </TableRow>
 
     <TableRow
         android:id="@+id/trMainB"
+        android:layout_weight="1"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_weight="1">
+        android:layout_height="match_parent">
 
         <ScrollView
             android:id="@+id/svLineLabels"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:scrollbars="none">
 
             <LinearLayout
                 android:id="@+id/llLineLabels"
+                android:background="#4bb54f"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:orientation="vertical"></LinearLayout>
+                android:orientation="vertical"/>
         </ScrollView>
 
         <ScrollView
             android:id="@+id/svTable"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_weight="1">
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent">
 
             <HorizontalScrollView
                 android:id="@+id/hsvTable"
@@ -78,8 +72,8 @@ tools:context=".MainFragment">
 
                 <TableLayout
                     android:id="@+id/tlOpusLines"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
             </HorizontalScrollView>
         </ScrollView>
     </TableRow>

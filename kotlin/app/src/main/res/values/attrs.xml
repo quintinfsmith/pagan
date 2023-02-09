@@ -7,5 +7,13 @@
         <attr name="button_fg" format="color"/>
         <attr name="button_bg" format="color"/>
     </declare-styleable>
+
+    <declare-styleable name="leaf">
+        <attr name="state_focused" format="boolean" />
+        <attr name="state_reflected" format="boolean" />
+    </declare-styleable>
+
     <attr name="drawerBG" format="color" />
+    <attr name="colorLeaf" format="color" />
+    <attr name="colorOnLeaf" format="color" />
 </resources>

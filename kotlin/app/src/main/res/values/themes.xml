@@ -14,6 +14,9 @@
         <!-- Customize your theme here. -->
         <item name="drawerBG">@color/white</item>
         <item name="popupMenuStyle">@style/PopupMenu</item>
+
+        <item name="colorLeaf">?attr/colorPrimary</item>
+        <item name="colorOnLeaf">?attr/colorOnPrimary</item>
     </style>
     <style name="Theme.Kotlin.NoActionBar">
         <item name="windowActionBar">false</item>

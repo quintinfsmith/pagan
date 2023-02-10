@@ -35,9 +35,6 @@
             android:id="@+id/nsRelativeValue"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            android:theme="@style/numberSelector"
             custom:min="0"
             custom:max="11"/>
     </LinearLayout>
@@ -57,9 +54,6 @@
             android:id="@+id/nsOctave"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            android:theme="@style/numberSelector"
             custom:min="0"
             custom:max="7"/>
 
@@ -68,9 +62,6 @@
             android:id="@+id/nsOffset"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            android:theme="@style/numberSelector"
             custom:min="0"
             custom:max="11"/>
     </LinearLayout>

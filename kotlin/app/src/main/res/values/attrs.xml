@@ -8,6 +8,10 @@
         <attr name="button_bg" format="color"/>
     </declare-styleable>
 
+    <declare-styleable name="NumberSelectorButton">
+        <attr name="state_active" format="boolean"/>
+    </declare-styleable>
+
     <declare-styleable name="leaf">
         <attr name="state_focused" format="boolean" />
         <attr name="state_reflected" format="boolean" />

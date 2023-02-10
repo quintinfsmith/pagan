@@ -336,7 +336,6 @@ class MainFragment : Fragment() {
     fun setContextMenu(menu_index: ContextMenu) {
         var main = this.getMain()
         val opus_manager = main.getOpusManager()
-        this.active_context_menu_index = menu_index
         val view_to_remove = this.cache.getActiveContextMenu()
         (view_to_remove?.parent as? ViewGroup)?.removeView(view_to_remove)
         val llContextMenu: LinearLayout = this.activity!!.findViewById(R.id.llContextMenu)
@@ -440,17 +439,22 @@ class MainFragment : Fragment() {
             }
             else -> { }
         }
+        this.active_context_menu_index = menu_index
     }
 
     private fun setContextMenu_leaf() {
         var main = this.getMain()
         val opus_manager = main.getOpusManager()
         val llContextMenu: LinearLayout = this.activity!!.findViewById(R.id.llContextMenu)
+
         val view = LayoutInflater.from(llContextMenu.context).inflate(
             R.layout.contextmenu_cell,
             llContextMenu,
             false
         )
+        llContextMenu.addView(view)
+        this.cache.setActiveContextMenu(view)
+
         val sRelative: ToggleButton = view.findViewById(R.id.sRelative)
         val llAbsolutePalette: LinearLayout = view.findViewById(R.id.llAbsolutePalette)
         val llRelativePalette: LinearLayout = view.findViewById(R.id.llRelativePalette)
@@ -464,10 +468,6 @@ class MainFragment : Fragment() {
         val nsRelativeValue: NumberSelector = view.findViewById(R.id.nsRelativeValue)
         val rosRelativeOption: RelativeOptionSelector = view.findViewById(R.id.rosRelativeOption)
 
-
-
-        llContextMenu.addView(view)
-        this.cache.setActiveContextMenu(view)
 
         val current_tree = opus_manager.get_tree_at_cursor()
         if (current_tree.is_event()) {
@@ -505,8 +505,8 @@ class MainFragment : Fragment() {
             if (current_tree.is_event()) {
                 val event = current_tree.get_event()!!
                 if (!event.relative) {
-                    nsOffset.setState(event.note % event.radix)
-                    nsOctave.setState(event.note / event.radix)
+                    nsOffset.setState(event.note % event.radix, true)
+                    nsOctave.setState(event.note / event.radix, true)
                 }
             }
             nsOffset.setOnChange(this::interact_nsOffset)
@@ -547,7 +547,7 @@ class MainFragment : Fragment() {
             this.resize_relative_value_selector()
             if (new_progress != null) {
                 try {
-                    nsRelativeValue.setState(new_progress)
+                    nsRelativeValue.setState(new_progress, true)
                 } catch (e: Exception) {
                     nsRelativeValue.unset_active_button()
                 }
@@ -715,7 +715,7 @@ class MainFragment : Fragment() {
         if (checkstate_and_value.first == view.getState()) {
             val valueSelector: NumberSelector = llContextMenu.findViewById(R.id.nsRelativeValue)
             try {
-                valueSelector.setState(checkstate_and_value.second)
+                valueSelector.setState(checkstate_and_value.second, true)
             } catch (e: Exception) {
                 valueSelector.unset_active_button()
             }
@@ -925,7 +925,7 @@ class MainFragment : Fragment() {
 
         val nsOctave: NumberSelector = this.activity!!.findViewById(R.id.nsOctave)
         if (nsOctave.getState() == null) {
-            nsOctave.setState(event.note / event.radix)
+            nsOctave.setState(event.note / event.radix, true)
         }
 
         this.setContextMenu(ContextMenu.Leaf)
@@ -958,7 +958,7 @@ class MainFragment : Fragment() {
         opus_manager.set_event(beatkey, position, event)
         val nsOffset: NumberSelector = this.activity!!.findViewById(R.id.nsOffset)
         if (nsOffset.getState() == null) {
-            nsOffset.setState(event.note % event.radix)
+            nsOffset.setState(event.note % event.radix, true)
         }
 
         this.setContextMenu(ContextMenu.Leaf)

@@ -137,13 +137,13 @@ class RelativeOptionSelector: LinearLayout {
         this.active_button!!.background = resources.getDrawable(
             when (this.getState()) {
                 0 -> {
-                    R.drawable.ns_selected_start
+                    R.drawable.ns_start
                 }
                 this.itemList.size - 1 -> {
-                    R.drawable.ns_selected_end
+                    R.drawable.ns_end
                 }
                 else -> {
-                    R.drawable.ns_selected_middle
+                    R.drawable.ns_middle
                 }
             }
         )

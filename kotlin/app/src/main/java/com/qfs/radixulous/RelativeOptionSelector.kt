@@ -13,8 +13,8 @@ import java.lang.Integer.min
 
 
 class RelativeOptionSelector: LinearLayout {
-    var active_button: View? = null
-    var button_map = HashMap<View, Int>()
+    var active_button: RelativeOptionSelectorButton? = null
+    var button_map = HashMap<RelativeOptionSelectorButton, Int>()
     var itemList: List<Int> = listOf(
         R.string.pfx_add,
         R.string.pfx_subtract,
@@ -27,41 +27,17 @@ class RelativeOptionSelector: LinearLayout {
     constructor(context: Context, attrs: AttributeSet) : super(context, attrs) {
         this.populate()
     }
-
     override fun onLayout(isChanged: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
-        var current_state = this.getState()
-        this.clear()
-        this.populate()
-        if (current_state != null) {
-            this.setState(current_state)
-        }
         super.onLayout(isChanged, left, top, right, bottom)
-        val size = this.itemList.size - this.hidden_options.size
-        val margin = 0
-        val _width = (this.width - (this.paddingLeft + this.paddingRight))
-        val inner_width = (_width - ((size - 1) * margin)) / size
-        val remainder = _width % inner_width
 
-        var i = 0
-        for (j in 0 until this.childCount) {
-            val button = this.getChildAt(j)
-            if (this.hidden_options.contains(j)) {
-                button.visibility = View.GONE
-                continue
-            } else {
-                button.visibility = View.VISIBLE
+        var visible_count = (this.childCount - this.hidden_options.size)
+        if (visible_count > 0) {
+            var width = ((right - left) - (this.paddingLeft + this.paddingRight)) / visible_count
+            for (i in 0 until this.childCount) {
+                this.getChildAt(i).apply {
+                    layoutParams.width = width
+                }.requestLayout()
             }
-
-            var x = (i * (margin + inner_width)) + this.paddingLeft
-            var working_width = inner_width
-            if (i < remainder) {
-                working_width += 1
-            }
-
-            x += min(remainder, i)
-            (button as TextView).gravity = CENTER
-            button.layout(x, this.paddingTop, x + working_width, (bottom - top) - this.paddingBottom)
-            i += 1
         }
     }
 
@@ -72,7 +48,7 @@ class RelativeOptionSelector: LinearLayout {
         return this.button_map[this.active_button!!]!!
     }
 
-    fun setState(new_state: Int) {
+    fun setState(new_state: Int, manual: Boolean = false) {
         if (new_state >= this.itemList.size) {
             throw Exception("Not an option")
         }
@@ -80,6 +56,9 @@ class RelativeOptionSelector: LinearLayout {
         for ((button, value) in this.button_map) {
             if (value == new_state) {
                 this.set_active_button(button)
+                if (manual) {
+                    button.setActive(true)
+                }
                 return
             }
         }
@@ -93,36 +72,15 @@ class RelativeOptionSelector: LinearLayout {
 
     fun populate() {
         this.itemList.forEachIndexed { i, string_index ->
-            val currentView = TextView(this.context)
-            this.addView(currentView)
-
-            // TODO: use dimens.xml (seems to be a bug treating sp as dp)
-            currentView.text = resources.getString(string_index)
-            this.button_map[currentView] = i
-
-            currentView.background = resources.getDrawable(
-                when (i) {
-                    0 -> {
-                        R.drawable.ns_start
-                    }
-                    this.itemList.size - 1 -> {
-                        R.drawable.ns_end
-                    }
-                    else -> {
-                        R.drawable.ns_middle
-                    }
-                }
-            )
-
-            currentView.setOnTouchListener { view: View, motionEvent: MotionEvent ->
-                if (motionEvent.action == MotionEvent.ACTION_UP) {
-                    this.set_active_button(view)
-                    if (this.on_change_hook != null) {
-                        this.on_change_hook!!(this)
-                    }
-                }
-                true
+            var position = when (i) {
+                0 -> { 0 }
+                this.itemList.size - 1 -> { 2 }
+                else -> { 1 }
             }
+
+            val currentView = RelativeOptionSelectorButton(this, position, string_index)
+            this.addView(currentView)
+            this.button_map[currentView] = i
         }
     }
 
@@ -130,44 +88,27 @@ class RelativeOptionSelector: LinearLayout {
         this.on_change_hook = hook
     }
 
-    fun set_active_button(view: View) {
+    fun set_active_button(view: RelativeOptionSelectorButton) {
+        if (this.active_button != view && this.active_button != null) {
+            this.active_button!!.setActive(false)
+        }
         this.unset_active_button()
+
         this.active_button = view
 
-        this.active_button!!.background = resources.getDrawable(
-            when (this.getState()) {
-                0 -> {
-                    R.drawable.ns_start
-                }
-                this.itemList.size - 1 -> {
-                    R.drawable.ns_end
-                }
-                else -> {
-                    R.drawable.ns_middle
-                }
-            }
-        )
+        if (this.on_change_hook != null) {
+            this.on_change_hook!!(this)
+        }
     }
 
     fun unset_active_button() {
         if (this.active_button == null) {
             return
         }
-        this.active_button!!.background = resources.getDrawable(
-            when (this.getState()) {
-                0 -> {
-                    R.drawable.ns_start
-                }
-                this.itemList.size - 1 -> {
-                    R.drawable.ns_end
-                }
-                else -> {
-                    R.drawable.ns_middle
-                }
-            }
-        )
+        this.active_button!!.setActive(false)
         this.active_button = null
     }
+
 
     fun hideOption(index: Int) {
         this.hidden_options.add(index)
@@ -176,5 +117,45 @@ class RelativeOptionSelector: LinearLayout {
                 view.visibility = View.GONE
             }
         }
+    }
+}
+
+class RelativeOptionSelectorButton(var roSelector: RelativeOptionSelector, var position: Int, var value: Int): androidx.appcompat.widget.AppCompatTextView(roSelector.context) {
+    private val STATE_ACTIVE = intArrayOf(R.attr.state_active)
+    var state_active: Boolean = false
+    init {
+        // TODO: Handle any radix
+        this.text = resources.getString(this.value)
+        this.gravity = CENTER
+
+        this.background = when (this.value) {
+            0 -> {
+                resources.getDrawable(R.drawable.ns_start)
+            }
+            2 -> {
+                resources.getDrawable(R.drawable.ns_end)
+            }
+            else -> {
+                resources.getDrawable(R.drawable.ns_middle)
+            }
+        }
+
+        this.setOnClickListener {
+            this.roSelector.set_active_button(this)
+            this.setActive(true)
+        }
+    }
+
+    override fun onCreateDrawableState(extraSpace: Int): IntArray? {
+        val drawableState = super.onCreateDrawableState(extraSpace + 1)
+        if (this.state_active) {
+            mergeDrawableStates(drawableState, STATE_ACTIVE)
+        }
+        return drawableState
+    }
+
+    fun setActive(value: Boolean) {
+        this.state_active = value
+        refreshDrawableState()
     }
 }

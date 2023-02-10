@@ -99,7 +99,7 @@ class NumberSelector: LinearLayout {
 
     fun populate() {
         for (i in this.min .. this.max) {
-            val currentView = NumberSelectorButton(this, i, this.context)
+            val currentView = NumberSelectorButton(this, i)
             this.addView(currentView)
             this.button_map[currentView] = i
         }
@@ -131,7 +131,7 @@ class NumberSelector: LinearLayout {
     }
 }
 
-class NumberSelectorButton(var numberSelector: NumberSelector, var value: Int, context: Context): androidx.appcompat.widget.AppCompatTextView(context) {
+class NumberSelectorButton(var numberSelector: NumberSelector, var value: Int): androidx.appcompat.widget.AppCompatTextView(numberSelector.context) {
     private val STATE_ACTIVE = intArrayOf(R.attr.state_active)
     var state_active: Boolean = false
     init {

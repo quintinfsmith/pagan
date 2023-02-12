@@ -17,6 +17,8 @@
 
         <item name="colorLeaf">?attr/colorPrimary</item>
         <item name="colorOnLeaf">?attr/colorOnPrimary</item>
+        <item name="colorLeafInactive">@color/leaf</item>
+        <item name="colorOnLeafInactive">@color/leaf_fg</item>
     </style>
     <style name="Theme.Kotlin.NoActionBar">
         <item name="windowActionBar">false</item>

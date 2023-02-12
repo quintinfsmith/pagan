@@ -4,15 +4,46 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
         android:state_pressed="true"
+        app:state_focused="true"
+        app:state_active="true"
+        android:drawable="@drawable/leaf_active_focused_pressed" />
+    <item
+        android:state_pressed="false"
+        app:state_focused="true"
+        app:state_active="true"
+        android:drawable="@drawable/leaf_active_focused" />
+    <item
+        android:state_pressed="true"
+        app:state_focused="false"
+        app:state_active="true"
+        android:drawable="@drawable/leaf_active_pressed" />
+
+    <item
+        android:state_pressed="false"
+        app:state_focused="false"
+        app:state_active="true"
+        android:drawable="@drawable/leaf_active" />
+
+    <item
+        android:state_pressed="true"
+        app:state_focused="true"
+        app:state_active="false"
+        android:drawable="@drawable/leaf_focused_pressed" />
+    <item
+        android:state_pressed="false"
+        app:state_focused="true"
+        app:state_active="false"
+        android:drawable="@drawable/leaf_focused" />
+    <item
+        android:state_pressed="true"
+        app:state_focused="false"
+        app:state_active="false"
         android:drawable="@drawable/leaf_pressed" />
     <item
-        android:state_enabled="true"
         android:state_pressed="false"
-        app:state_reflected="false"
         app:state_focused="false"
-        android:drawable="@drawable/leaf_enabled" />
-    <item
-        android:state_enabled="true"
-        android:state_pressed="false"
-        android:drawable="@drawable/leaf_enabled" />
+        app:state_active="false"
+        android:drawable="@drawable/leaf_default" />
+
+
 </selector>

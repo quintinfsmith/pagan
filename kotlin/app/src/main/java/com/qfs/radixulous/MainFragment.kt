@@ -1,10 +1,9 @@
 package com.qfs.radixulous
 
 import android.os.Bundle
-import android.view.ContextThemeWrapper
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
+import android.view.ViewGroup.LayoutParams.MATCH_PARENT
+import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.*
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
@@ -254,50 +253,12 @@ class MainFragment : Fragment() {
     private fun buildTreeView(parent: ViewGroup, y: Int, x: Int, position: List<Int>): View {
         var main = this.getMain()
         val opus_manager = main.getOpusManager()
-        val channel_index = opus_manager.get_channel_index(y)
-        val tree = opus_manager.get_tree(BeatKey(channel_index.first, channel_index.second, x), position)
+        val (channel, index) = opus_manager.get_channel_index(y)
+        var beatKey = BeatKey(channel, index, x)
+        val tree = opus_manager.get_tree(beatKey, position)
 
         if (tree.is_leaf()) {
-            val tvLeaf: TextView = LayoutInflater.from(parent.context).inflate(
-                R.layout.leaf,
-                parent,
-                false
-            ) as TextView
-
-            tvLeaf.background = ContextCompat.getDrawable(main,
-                if (!tree.is_event()) {
-                    R.drawable.leaf_button
-                } else {
-                    R.drawable.leaf_active
-                }
-            )
-
-            if (tree.is_event()) {
-                val event = tree.get_event()!!
-                tvLeaf.text = if (event.relative) {
-                    if (event.note == 0 || event.note % event.radix != 0) {
-                        val prefix = if (event.note < 0) {
-                            getString(R.string.pfx_subtract)
-                        } else {
-                            getString(R.string.pfx_add)
-                        }
-                        "$prefix${get_number_string(abs(event.note), event.radix, 1)}"
-                    } else {
-                        val prefix = if (event.note < 0) {
-                            getString(R.string.pfx_log)
-                        } else {
-                            getString(R.string.pfx_pow)
-                        }
-                        "$prefix${get_number_string(abs(event.note) / event.radix, event.radix, 1)}"
-                    }
-                } else if (!opus_manager.is_percussion(channel_index.first)) {
-                    get_number_string(event.note, event.radix, 2)
-                } else {
-                    ""
-                }
-            } else {
-                tvLeaf.text = getString(R.string.empty_note)
-            }
+            val tvLeaf = LeafButton(parent.context, main, tree.get_event(), opus_manager.is_percussion(channel))
 
             tvLeaf.setOnClickListener {
                 this.interact_leafView_click(it)
@@ -309,6 +270,10 @@ class MainFragment : Fragment() {
             }
 
             parent.addView(tvLeaf)
+            val param = tvLeaf!!.layoutParams as LinearLayout.LayoutParams
+            param.gravity = Gravity.CENTER
+            param.height = MATCH_PARENT
+            tvLeaf.setLayoutParams(param)
 
             this.cache.cacheTree(tvLeaf, y, x, position)
             return tvLeaf
@@ -664,13 +629,16 @@ class MainFragment : Fragment() {
         for (beatkey in opus_manager.get_all_linked(main_beatkey)) {
             val new_y = opus_manager.get_y(beatkey.channel, beatkey.line_offset)
             val new_x = beatkey.beat
+
             this.cache.removeBeatView(new_y, new_x)
             val rowView = this.cache.getLine(new_y)
+
             var new_wrapper = LayoutInflater.from(rowView.context).inflate(
                 R.layout.beat_node,
                 rowView,
                 false
             )
+
             new_wrapper.setBackgroundColor(
                 ContextCompat.getColor(
                     new_wrapper.context,
@@ -683,7 +651,7 @@ class MainFragment : Fragment() {
             )
 
             rowView.addView(new_wrapper, new_x)
-            this.buildTreeView(rowView.getChildAt(new_x) as ViewGroup, new_y, new_x, listOf())
+            this.buildTreeView(new_wrapper as ViewGroup, new_y, new_x, listOf())
             new_wrapper.measure(0,0)
             this.cache.set_column_width(new_x, new_wrapper.measuredWidth)
         }
@@ -1135,6 +1103,7 @@ class MainFragment : Fragment() {
                 rowView,
                 false
             ) as ViewGroup
+
             new_wrapper.setBackgroundColor(
                 ContextCompat.getColor(
                     new_wrapper.context,
@@ -1145,6 +1114,7 @@ class MainFragment : Fragment() {
                     }
                 )
             )
+
             rowView.addView(new_wrapper, index)
             this.buildTreeView(new_wrapper, y, index, listOf())
         }
@@ -1207,19 +1177,10 @@ class MainFragment : Fragment() {
             for (linked_beat in linked_beats) {
                 val y = opus_manager.get_y(linked_beat.channel, linked_beat.line_offset)
                 for ((view, leaf_pos) in this.cache.get_all_leafs(y, beatkey.beat, position)) {
-                    if (view is LinearLayout) {
+                    if (view !is LeafButton) {
                         continue
                     }
-
-                    view.background = ContextCompat.getDrawable(
-                        this.getMain(),
-                        if (opus_manager.get_tree(linked_beat, leaf_pos).is_event()) {
-                            R.drawable.focus_leaf_active
-                        } else {
-                            R.drawable.focus_leaf
-                        }
-                    )
-
+                    view.setFocused(true)
                     this.cache.addFocusedLeaf(y, linked_beat.beat, leaf_pos)
                 }
             }
@@ -1234,19 +1195,14 @@ class MainFragment : Fragment() {
                     this.linking_beat!!.line_offset
                 )
 
-                val target_pair = opus_manager.get_channel_index(new_y)
                 for (x in 0 .. cursor_diff.second) {
                     val new_x = x + this.linking_beat!!.beat
-                    val new_beatkey = BeatKey(target_pair.first, target_pair.second, new_x)
-
                     for ((view, leaf_pos) in this.cache.get_all_leafs(new_y, new_x, listOf())) {
-                        view.background = ContextCompat.getDrawable(this.getMain(),
-                            if (opus_manager.get_tree(new_beatkey, leaf_pos).is_event()) {
-                                R.drawable.focus_leaf_active
-                            } else {
-                                R.drawable.focus_leaf
-                            }
-                        )
+                        if (view !is LeafButton) {
+                            continue
+                        }
+
+                        view.setFocused(true)
                         this.cache.addFocusedLeaf(new_y, new_x, leaf_pos)
                     }
                 }
@@ -1258,17 +1214,13 @@ class MainFragment : Fragment() {
         while (true) {
             val (y, x, cached_position) = this.cache.popFocusedLeaf() ?: break
             val view = this.cache.getTreeView(y, x, cached_position) ?: continue
-            if (y >= opus_manager.line_count()) {
+            if (view !is LeafButton || y >= opus_manager.line_count()) {
                 continue
             }
-            val pair = opus_manager.get_channel_index(y)
 
             try {
-                if (opus_manager.get_tree(BeatKey(pair.first, pair.second, x), cached_position).is_event()) {
-                    view.background = ContextCompat.getDrawable(this.getMain(), R.drawable.leaf_active)
-                } else {
-                    view.background = ContextCompat.getDrawable(this.getMain(), R.drawable.leaf_button)
-                }
+                view.setFocused(false)
+                //TODO: check if attached instead of catching
             } catch (e: Exception) {
                 continue
             }
@@ -1307,9 +1259,9 @@ class MainFragment : Fragment() {
 
                 param.width = (new_size * 120.toFloat()).toInt()
             } else {
-                param.width = (new_size * 120.toFloat()).toInt() - 5
-                //param.setMargins(0,0,5,5)
-
+                param.setMarginStart(5)
+                param.setMarginEnd(5)
+                param.width = (new_size * 120.toFloat()).toInt() - param.getMarginStart() - param.getMarginEnd()
             }
 
             current_view.layoutParams = param

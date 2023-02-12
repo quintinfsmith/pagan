@@ -1,15 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
-<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-    <solid android:color="@color/leaf_active_pressed"/>
-    <padding
-        android:left="7dp"
-        android:top="7dp"
-        android:right="7dp"
-        android:bottom="7dp" />
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+<item>
+    <shape android:shape="rectangle">
+        <solid android:color="?attr/colorLeaf"/>
+        <corners
+            android:topLeftRadius="8dp"
+            android:topRightRadius="8dp"
+            android:bottomLeftRadius="8dp"
+            android:bottomRightRadius="8dp"/>
 
-    <corners
-        android:topLeftRadius="8dp"
-        android:topRightRadius="8dp"
-        android:bottomLeftRadius="8dp"
-        android:bottomRightRadius="8dp"/>
-</shape>
+    </shape>
+</item>
+<item>
+    <shape android:shape="rectangle">
+        <solid android:color="#88FFFFFF"/>
+        <corners
+            android:topLeftRadius="8dp"
+            android:topRightRadius="8dp"
+            android:bottomLeftRadius="8dp"
+            android:bottomRightRadius="8dp"/>
+    </shape>
+</item>
+</layer-list>

@@ -15,9 +15,11 @@
     <declare-styleable name="leaf">
         <attr name="state_focused" format="boolean" />
         <attr name="state_reflected" format="boolean" />
+        <attr name="colorLeaf" format="color" />
+        <attr name="colorOnLeaf" format="color" />
+        <attr name="colorLeafInactive" format="color" />
+        <attr name="colorOnLeafInactive" format="color" />
     </declare-styleable>
 
     <attr name="drawerBG" format="color" />
-    <attr name="colorLeaf" format="color" />
-    <attr name="colorOnLeaf" format="color" />
 </resources>

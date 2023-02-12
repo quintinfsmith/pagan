@@ -9,9 +9,8 @@
     <color name="white">#FFFFFFFF</color>
 
     <color name="leaf_fg">#1d1d1d</color>
-    <color name="leaf_pressed">#c0c0c0</color>
-    <color name="leaf_active">#c0c0c0</color>
-    <color name="leaf_active_pressed">#808080</color>
+    <color name="leaf">#c0c0c0</color>
+    <color name="leaf_pressed">#808080</color>
 
     <color name="column_even">#cccccc</color>
     <color name="column_odd">#aaaaaa</color>

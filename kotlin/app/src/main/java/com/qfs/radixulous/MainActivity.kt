@@ -501,6 +501,9 @@ class MainActivity : AppCompatActivity() {
                 2 -> {
                     val y = opus_manager.get_y(channel, index)
                     main_fragment.line_new(y, 0)
+                    //for (i in 0 until opus_manager.opus_beat_count) {
+                    //    opus_manager.flag_beat_change(BeatKey(channel, index, i))
+                    //}
                 }
             }
         }
@@ -547,6 +550,7 @@ class MainActivity : AppCompatActivity() {
         val opus_manager = this.getOpusManager()
         val main_fragment = this.getActiveFragment()
         val updated_beats: MutableSet<Int> = mutableSetOf()
+
         while (true) {
             val beatkey = opus_manager.fetch_flag_change() ?: break
             if (main_fragment !is MainFragment) {

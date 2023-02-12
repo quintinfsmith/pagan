@@ -34,9 +34,11 @@ class RelativeOptionSelector: LinearLayout {
         if (visible_count > 0) {
             var width = ((right - left) - (this.paddingLeft + this.paddingRight)) / visible_count
             for (i in 0 until this.childCount) {
-                this.getChildAt(i).apply {
-                    layoutParams.width = width
-                }.requestLayout()
+                var view = this.getChildAt(i)
+                if (view.layoutParams.width  != width) {
+                    view.layoutParams.width = width
+                    view.requestLayout()
+                }
             }
         }
     }

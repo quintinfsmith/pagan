@@ -22,6 +22,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
@@ -203,6 +204,7 @@ class MainActivity : AppCompatActivity() {
         (this.findViewById(R.id.btnDeleteProject) as TextView).setOnClickListener {
             // TODO: Warning dialog
             this.delete_project()
+            findViewById<DrawerLayout>(R.id.drawer_layout).closeDrawers()
             // TODO: Toast Feedback
         }
         (this.findViewById(R.id.btnCopyProject) as TextView).setOnClickListener {
@@ -285,43 +287,7 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun save_current_project() {
-        // Saving opus_manager first ensures projects path exists
-        this.opus_manager.save()
-        val path = this.opus_manager.path!!
-        val filename = path.substring(path.lastIndexOf("/") + 1)
-
-        val projects_list_file_path = "/data/data/com.qfs.radixulous/projects.json"
-        val project_list_file = File(projects_list_file_path)
-        var current_exists = false
-        val project_list = if (project_list_file.isFile) {
-            val content = project_list_file.readText(Charsets.UTF_8)
-            val json_project_list: MutableList<ProjectDirPair> = Json.decodeFromString(content)
-
-            json_project_list.forEachIndexed { _, pair ->
-                if (pair.filename == filename) {
-                    current_exists = true
-                    pair.title = this.current_project_title!!
-                }
-            }
-            json_project_list
-        } else {
-            mutableListOf()
-        }
-        if (! current_exists) {
-            project_list.add(
-                ProjectDirPair(
-                    title = this.current_project_title!!,
-                    filename = filename
-                )
-            )
-        }
-
-        project_list_file.writeText(
-            Json.encodeToString(
-                project_list
-            )
-        )
-
+        this.project_manager.save(this.current_project_title!!, this.opus_manager)
         Toast.makeText(this, "Project Saved", Toast.LENGTH_SHORT).show()
     }
 
@@ -359,14 +325,9 @@ class MainActivity : AppCompatActivity() {
 
     fun newProject() {
         this.opus_manager.new()
+        var new_path = this.project_manager.get_new_path()
         this.set_current_project_title("New Opus")
-
-        val projects_dir = "/data/data/com.qfs.radixulous/projects"
-        var i = 0
-        while (File("$projects_dir/opus_$i.json").isFile) {
-            i += 1
-        }
-        this.opus_manager.path = "$projects_dir/opus_$i.json"
+        this.opus_manager.path = new_path
     }
 
     fun update_title_text() {
@@ -417,13 +378,19 @@ class MainActivity : AppCompatActivity() {
 
     fun delete_project() {
         this.project_manager.delete(this.opus_manager)
+        var main_fragment = this.getActiveFragment()
 
-        this.newProject()
-        this.navTo("main")
+        if (main_fragment is MainFragment) {
+            main_fragment.takedownCurrent()
+            this.newProject()
+            this.update_title_text()
+            main_fragment.setContextMenu(ContextMenu.Leaf)
+            this.tick()
+        }
     }
 
     fun copy_project() {
-        this.project_manager.copy(this.opus_manager)
+        this.current_project_title = this.project_manager.copy(this.opus_manager)
         Toast.makeText(this, "Now working on copy", Toast.LENGTH_SHORT).show()
         this.update_title_text()
     }
@@ -467,10 +434,6 @@ class MainActivity : AppCompatActivity() {
             this.tick_manage_beats() // new/pop
             this.tick_update_beats() // changes
             this.tick_apply_focus()
-            //var main_fragment = this.getActiveFragment()
-            //if (main_fragment is MainFragment) {
-            //    main_fragment.update_column_labels(0, this.opus_manager.opus_beat_count)
-            //}
             this.ticking = false
         }
     }

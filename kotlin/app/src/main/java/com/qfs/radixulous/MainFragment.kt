@@ -229,6 +229,8 @@ class MainFragment : Fragment() {
         ) as TextView
 
 
+
+
         if (!opus_manager.is_percussion(channel)) {
             if (line_offset == 0) {
                 rowLabel.text = "$channel:$line_offset"
@@ -1076,9 +1078,29 @@ class MainFragment : Fragment() {
     fun line_update_labels(opus_manager: OpusManager) {
         var y = 0
         val line_counts = opus_manager.get_channel_line_counts()
+        var channel_offset = 0
         line_counts.forEachIndexed { channel, line_count ->
             for (i in 0 until line_count) {
                 val label = this.cache.getLineLabel(y) ?: continue
+                label.setBackgroundColor(
+                    ContextCompat.getColor(
+                        label.context,
+                        if (channel_offset % 2 == 0) {
+                            if (i % 2 == 0) {
+                                R.color.line_label_channel_even_line_even
+                            } else {
+                                R.color.line_label_channel_even_line_odd
+                            }
+                        } else {
+                            if (i % 2 == 0) {
+                                R.color.line_label_channel_odd_line_even
+                            } else {
+                                R.color.line_label_channel_odd_line_odd
+                            }
+                        }
+                    )
+                )
+
                 val textView: TextView = label.findViewById(R.id.textView)
 
                 // TODO: fix naming to reflect changes to channel handling
@@ -1091,6 +1113,7 @@ class MainFragment : Fragment() {
 
                 y += 1
             }
+            channel_offset += 1
         }
     }
 

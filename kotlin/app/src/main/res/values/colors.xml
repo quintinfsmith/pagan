@@ -29,4 +29,9 @@
     <color name="table_bg">#FF2d2d2d</color>
     <color name="interface_bg">#f0f0f0</color>
     <color name="interface_fg">#2a2a2a</color>
+
+    <color name="line_label_channel_even_line_odd">#4d4d4d</color>
+    <color name="line_label_channel_even_line_even">#5d5d5d</color>
+    <color name="line_label_channel_odd_line_odd">#acacac</color>
+    <color name="line_label_channel_odd_line_even">#bcbcbc</color>
 </resources>

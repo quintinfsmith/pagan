@@ -30,10 +30,12 @@ class NumberSelector: LinearLayout {
         super.onLayout(isChanged, left, top, right, bottom)
 
         var width = ((right - left) - (this.paddingLeft + this.paddingRight)) / this.childCount
+        var request = false
         for (i in 0 until this.childCount) {
-            this.getChildAt(i).apply {
-                layoutParams.width = width
-            }.requestLayout()
+            var view = this.getChildAt(i)
+            view.layoutParams.width = width
+            // TODO: This, the right way. i'm getting warnings
+            view.requestLayout()
         }
     }
 

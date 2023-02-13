@@ -1,104 +1,107 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
     android:id="@+id/clA"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="?attr/drawerBG" >
 
-<LinearLayout
-    android:id="@+id/llB"
-    android:layout_width="match_parent"
-    android:layout_height="0dp"
-    app:layout_constraintBottom_toTopOf="@+id/llProjectOptions"
-    app:layout_constraintEnd_toEndOf="parent"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toTopOf="parent"
-    android:orientation="vertical">
-
-    <TextView
-        android:id="@+id/tvChangeProjectName"
-        android:text="Change Project Name..."
-        android:theme="@style/button"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
     <LinearLayout
-        android:orientation="horizontal"
+        android:id="@+id/llB"
+        android:layout_width="match_parent"
+        android:layout_weight="1"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toTopOf="@+id/llProjectOptions"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tvChangeProjectName"
+            android:text="Change Project Name..."
+            android:theme="@style/button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+        <LinearLayout
+            android:layout_marginTop="2dp"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" >
+            <TextView
+                android:text="BPM:"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+            <EditText
+                android:id="@+id/etTempo"
+                android:maxLines="1"
+                android:theme="@style/edittext"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:digits=".0123456789"
+                android:ems="4"
+                android:text="0"
+                android:gravity="right"
+                android:inputType="numberDecimal" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_marginTop="2dp"
+            android:id="@+id/btnAddChannel"
+            android:theme="@style/button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Add Channel" />
+
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvActiveChannels"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_marginTop="2dp"
+        android:id="@+id/llProjectOptions"
+        android:orientation="vertical"
+        android:gravity="bottom"
+
         android:layout_width="match_parent"
         android:layout_height="wrap_content" >
         <TextView
-            android:text="BPM:"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-        <EditText
-            android:id="@+id/etTempo"
+            android:id="@+id/btnCopyProject"
             android:maxLines="1"
-            android:theme="@style/edittext"
-            android:layout_width="wrap_content"
+            android:theme="@style/button"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:digits=".0123456789"
-            android:ems="4"
-            android:text="0"
-            android:gravity="right"
-            android:inputType="numberDecimal" />
+            android:layout_marginBottom="2dp"
+            android:text="Copy" />
+        <TextView
+            android:id="@+id/btnDeleteProject"
+            android:maxLines="1"
+            android:theme="@style/button"
+            android:layout_marginBottom="2dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Delete" />
+        <TextView
+            android:id="@+id/btnExportProject"
+            android:maxLines="1"
+            android:theme="@style/button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginBottom="2dp"
+            android:text="Export" />
     </LinearLayout>
 
-    <TextView
-        android:id="@+id/btnAddChannel"
-        android:theme="@style/button"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="2dp"
-        android:text="Add Channel"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvActiveChannels"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
 </LinearLayout>
-
-<LinearLayout
-    android:id="@+id/llProjectOptions"
-    android:orientation="horizontal"
-    android:gravity="bottom"
-
-    app:layout_constraintTop_toBottomOf="@+id/llB"
-    app:layout_constraintEnd_toEndOf="parent"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintBottom_toBottomOf="parent"
-
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content" >
-    <TextView
-        android:id="@+id/btnCopyProject"
-        android:maxLines="1"
-        android:theme="@style/button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="2dp"
-        android:text="Copy" />
-    <TextView
-        android:id="@+id/btnDeleteProject"
-        android:maxLines="1"
-        android:theme="@style/button"
-        android:layout_margin="2dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Delete" />
-    <TextView
-        android:id="@+id/btnExportProject"
-        android:maxLines="1"
-        android:theme="@style/button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="2dp"
-        android:text="Export" />
-</LinearLayout>
-
-
-</androidx.constraintlayout.widget.ConstraintLayout>

@@ -34,4 +34,8 @@
     <color name="line_label_channel_even_line_even">#5d5d5d</color>
     <color name="line_label_channel_odd_line_odd">#acacac</color>
     <color name="line_label_channel_odd_line_even">#bcbcbc</color>
+
+
+    <color name="bg_dark">#2d2d2d</color>
+    <color name="bg_light">#efefef</color>
 </resources>

@@ -1,15 +1,11 @@
 package com.qfs.radixulous
 
 import android.content.Context
-import android.opengl.Visibility
 import android.util.AttributeSet
 import android.view.Gravity.CENTER
-import android.view.MotionEvent
 import android.view.View
-import android.view.View.GONE
 import android.widget.LinearLayout
-import android.widget.TextView
-import java.lang.Integer.min
+import androidx.appcompat.view.ContextThemeWrapper
 
 
 class RelativeOptionSelector: LinearLayout {
@@ -122,25 +118,20 @@ class RelativeOptionSelector: LinearLayout {
     }
 }
 
-class RelativeOptionSelectorButton(var roSelector: RelativeOptionSelector, var position: Int, var value: Int): androidx.appcompat.widget.AppCompatTextView(roSelector.context) {
+class RelativeOptionSelectorButton: androidx.appcompat.widget.AppCompatTextView {
+    private var roSelector: RelativeOptionSelector
+    private var position: Int
+    private var value: Int
     private val STATE_ACTIVE = intArrayOf(R.attr.state_active)
     var state_active: Boolean = false
-    init {
+    constructor(roSelector: RelativeOptionSelector, position: Int, value: Int): super(ContextThemeWrapper(roSelector.context, R.style.numberSelector)) {
         // TODO: Handle any radix
+        this.roSelector = roSelector
+        this.value = value
+        this.position = position
+
         this.text = resources.getString(this.value)
         this.gravity = CENTER
-
-        this.background = when (this.value) {
-            0 -> {
-                resources.getDrawable(R.drawable.ns_start)
-            }
-            2 -> {
-                resources.getDrawable(R.drawable.ns_end)
-            }
-            else -> {
-                resources.getDrawable(R.drawable.ns_middle)
-            }
-        }
 
         this.setOnClickListener {
             this.roSelector.set_active_button(this)

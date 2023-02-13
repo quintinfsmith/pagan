@@ -55,7 +55,7 @@ tools:context=".MainFragment">
 
             <LinearLayout
                 android:id="@+id/llLineLabels"
-                android:background="#4bb54f"
+                android:paddingRight="2dp"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:orientation="vertical"/>

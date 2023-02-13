@@ -2,9 +2,9 @@
     <!-- Base application theme. -->
     <style name="Theme.Kotlin" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
         <!-- Primary brand color. -->
-        <item name="colorPrimary">@color/purple_200</item>
-        <item name="colorPrimaryVariant">@color/purple_700</item>
-        <item name="colorOnPrimary">@color/black</item>
+        <item name="colorPrimary">#2d2d2d</item>
+        <item name="colorPrimaryVariant">#474747</item>
+        <item name="colorOnPrimary">#a7a7a7</item>
         <!-- Secondary brand color. -->
         <item name="colorSecondary">@color/teal_200</item>
         <item name="colorSecondaryVariant">@color/teal_200</item>
@@ -12,12 +12,27 @@
         <!-- Status bar color. -->
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
         <!-- Customize your theme here. -->
-        <item name="drawerBG">@color/black</item>
+        <item name="drawerBG">#424242</item>
         <item name="android:popupMenuStyle">@style/PopupMenu</item>
-        <item name="colorLeaf">?attr/colorPrimary</item>
+        <item name="colorLeaf">#765bd5</item>
+        <item name="colorLeafFocused">#967fe9</item>
         <item name="colorOnLeaf">?attr/colorOnPrimary</item>
-        <item name="colorLeafInactive">@color/leaf</item>
-        <item name="colorOnLeafInactive">@color/leaf_fg</item>
+        <item name="colorLeafOutline">?attr/colorPrimaryVariant</item>
+        <item name="colorLeafInactive">#373737</item>
+        <item name="colorLeafFocusedInactive">#424242</item>
+        <item name="colorLeafPressed">#11000000</item>
+        <item name="mainBG">@color/bg_dark</item>
+        <item name="labelBG">#424242</item>
+        <item name="labelFG">#A7A7A7</item>
+
+        <item name="buttonBG">#A7A7A7</item>
+        <item name="buttonFG">#2D2D2D</item>
+
+        <item name="NumberSelectorDefaultBG">?attr/buttonBG</item>
+        <item name="NumberSelectorDefaultFG">?attr/buttonFG</item>
+        <item name="NumberSelectorSelectedBG">?attr/colorLeaf</item>
+        <item name="NumberSelectorSelectedFG">?attr/colorOnLeaf</item>
+
     </style>
     <style name="Theme.Kotlin.NoActionBar">
         <item name="windowActionBar">false</item>

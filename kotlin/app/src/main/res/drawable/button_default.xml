@@ -1,13 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item>
+    <item
+        android:padding="5dp"
+        android:elevation="5dp" >
         <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-            <solid android:color="?attr/colorLeafFocusedInactive"/>
-        </shape>
-    </item>
-    <item>
-        <shape android:shape="rectangle">
-            <solid android:color="?attr/colorLeafPressed"/>
+            <solid android:color="?attr/buttonBG"/>
         </shape>
     </item>
 </layer-list>

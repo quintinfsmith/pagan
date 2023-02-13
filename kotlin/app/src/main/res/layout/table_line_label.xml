@@ -1,12 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<TextView
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    android:gravity="center"
-    android:layout_width="match_parent"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
     android:layout_height="45dp"
-    android:padding="0dp"
-    android:background="@color/label_bg"
-    android:textColor="@color/label_fg"
-    android:id="@+id/textView"
+    android:paddingTop="2dp"
+    android:paddingBottom="2dp"
     android:minWidth="32dp"
-    android:text="" />
+    android:layout_width="wrap_content">
+
+    <TextView
+        android:gravity="center"
+        android:layout_width="match_parent"
+        android:background="?attr/labelBG"
+        android:textColor="?attr/labelFG"
+        android:id="@+id/textView"
+        android:text=""
+        android:layout_height="match_parent"/>
+</LinearLayout>
+

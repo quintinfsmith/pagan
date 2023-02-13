@@ -2,30 +2,7 @@
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item>
         <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-            <solid android:color="?attr/colorOnLeaf"/>
-            <padding
-                android:left="2dp"
-                android:top="2dp"
-                android:right="2dp"
-                android:bottom="2dp" />
-            <corners
-                android:topLeftRadius="8dp"
-                android:topRightRadius="8dp"
-                android:bottomLeftRadius="8dp"
-                android:bottomRightRadius="8dp"/>
-
-        </shape>
-    </item>
-    <item>
-        <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-            <solid android:color="?attr/colorLeaf"/>
-
-            <corners
-                android:topLeftRadius="8dp"
-                android:topRightRadius="8dp"
-                android:bottomLeftRadius="8dp"
-                android:bottomRightRadius="8dp"/>
-
+            <solid android:color="?attr/colorLeafFocused"/>
         </shape>
     </item>
 </layer-list>

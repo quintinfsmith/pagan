@@ -4,7 +4,11 @@ import android.content.Context
 import android.util.AttributeSet
 import android.util.Log
 import android.view.Gravity.CENTER
+import android.view.ViewGroup
 import android.widget.LinearLayout
+import android.widget.TextView
+import androidx.appcompat.view.ContextThemeWrapper
+import com.qfs.radixulous.opusmanager.OpusEvent
 
 
 class NumberSelector: LinearLayout {
@@ -14,7 +18,7 @@ class NumberSelector: LinearLayout {
     var active_button: NumberSelectorButton? = null
     var on_change_hook: ((NumberSelector) -> Unit)? = null
 
-    constructor(context: Context, attrs: AttributeSet) : super(context, attrs) {
+    constructor(context: Context, attrs: AttributeSet) : super(context, attrs, R.style.numberSelector) {
         context.theme.obtainStyledAttributes(attrs, R.styleable.NumberSelector, 0, 0).apply {
             try {
                 max = getInteger(R.styleable.NumberSelector_max, 2)
@@ -30,10 +34,11 @@ class NumberSelector: LinearLayout {
         super.onLayout(isChanged, left, top, right, bottom)
 
         var width = ((right - left) - (this.paddingLeft + this.paddingRight)) / this.childCount
-        var request = false
+
         for (i in 0 until this.childCount) {
             var view = this.getChildAt(i)
-            view.layoutParams.width = width
+            val param = view!!.layoutParams as ViewGroup.MarginLayoutParams
+            param.width = width
             // TODO: This, the right way. i'm getting warnings
             view.requestLayout()
         }
@@ -133,24 +138,18 @@ class NumberSelector: LinearLayout {
     }
 }
 
-class NumberSelectorButton(var numberSelector: NumberSelector, var value: Int): androidx.appcompat.widget.AppCompatTextView(numberSelector.context) {
+//constructor(context: Context, activity: MainActivity, event: OpusEvent?, is_percussion:Boolean = false) : super(ContextThemeWrapper(context, R.style.leaf))
+class NumberSelectorButton: androidx.appcompat.widget.AppCompatTextView {
+    var numberSelector: NumberSelector
+    var value: Int
     private val STATE_ACTIVE = intArrayOf(R.attr.state_active)
     var state_active: Boolean = false
-    init {
+    constructor(numberSelector: NumberSelector, value: Int): super(ContextThemeWrapper(numberSelector.context, R.style.numberSelector)) {
         // TODO: Handle any radix
+        this.numberSelector = numberSelector
+        this.value = value
         this.text = "${get_number_string(this.value, 12,2)}"
         this.gravity = CENTER
-        this.background = when (this.value) {
-            this.numberSelector.min -> {
-                resources.getDrawable(R.drawable.ns_start)
-            }
-            this.numberSelector.max -> {
-                resources.getDrawable(R.drawable.ns_end)
-            }
-            else -> {
-                resources.getDrawable(R.drawable.ns_middle)
-            }
-        }
 
         this.setOnClickListener {
             this.numberSelector.set_active_button(this)

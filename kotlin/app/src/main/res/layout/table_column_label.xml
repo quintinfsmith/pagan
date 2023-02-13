@@ -1,11 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<TextView
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    android:gravity="center"
-    android:layout_width="wrap_content"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:paddingLeft="2dp"
+    android:paddingRight="2dp"
+    android:paddingBottom="2dp"
     android:layout_height="wrap_content"
-    android:background="@color/label_bg"
-    android:textColor="@color/label_fg"
-    android:id="@+id/textView"
-    android:minWidth="32dp"
-    android:text="" />
+    android:layout_width="wrap_content">
+    <TextView
+        android:gravity="center"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_height="wrap_content"
+        android:padding="4dp"
+        android:background="?attr/labelBG"
+        android:textColor="?attr/labelFG"
+        android:id="@+id/textView"
+        android:text="" />
+</LinearLayout>

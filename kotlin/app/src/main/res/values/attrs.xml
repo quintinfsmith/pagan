@@ -2,10 +2,10 @@
     <declare-styleable name="NumberSelector">
         <attr name="min" format="integer" />
         <attr name="max" format="integer" />
-        <attr name="active_bg" format="color"/>
-        <attr name="active_fg" format="color"/>
-        <attr name="button_fg" format="color"/>
-        <attr name="button_bg" format="color"/>
+        <attr name="NumberSelectorDefaultBG" format="color"/>
+        <attr name="NumberSelectorDefaultFG" format="color"/>
+        <attr name="NumberSelectorSelectedBG" format="color"/>
+        <attr name="NumberSelectorSelectedFG" format="color"/>
     </declare-styleable>
 
     <declare-styleable name="NumberSelectorButton">
@@ -16,10 +16,22 @@
         <attr name="state_focused" format="boolean" />
         <attr name="state_reflected" format="boolean" />
         <attr name="colorLeaf" format="color" />
+        <attr name="colorLeafPressed" format="color" />
+        <attr name="colorLeafFocused" format="color" />
+        <attr name="colorLeafOutline" format="color" />
         <attr name="colorOnLeaf" format="color" />
         <attr name="colorLeafInactive" format="color" />
+        <attr name="colorLeafFocusedInactive" format="color" />
         <attr name="colorOnLeafInactive" format="color" />
     </declare-styleable>
 
+    <attr name="mainBG" format="color" />
     <attr name="drawerBG" format="color" />
+    <attr name="labelBG" format="color" />
+    <attr name="labelFG" format="color" />
+    <attr name="buttonBG" format="color" />
+    <attr name="buttonFG" format="color" />
+
+
+
 </resources>

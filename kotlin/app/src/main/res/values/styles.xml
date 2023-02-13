@@ -39,21 +39,13 @@
         <item name="android:shadowDx">0</item>
         <item name="android:shadowDy">0</item>
         <item name="android:shadowRadius">0</item>
-        <item name="android:textSize">18sp</item>
+        <item name="android:textSize">20sp</item>
         <item name="android:textStyle">normal</item>
         <item name="android:clickable">true</item>
-        <item name="android:padding">0dp</item>
+        <item name="android:paddingTop">5dp</item>
+        <item name="android:paddingBottom">5dp</item>
         <item name="android:elevation">2dp</item>
-    </style>
-
-    <style name="numberSelectorStart" parent="@style/numberSelector">
-        <item name="android:background">@drawable/ns_start</item>
-    </style>
-    <style name="numberSelectorMiddle" parent="@style/numberSelector">
-        <item name="android:background">@drawable/ns_middle</item>
-    </style>
-    <style name="numberSelectorEnd" parent="@style/numberSelector">
-        <item name="android:background">@drawable/ns_end</item>
+        <item name="android:background">@drawable/numberselector</item>
     </style>
 
     <style name="load_option" parent="@android:style/Widget.TextView">

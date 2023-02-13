@@ -35,6 +35,7 @@
             android:id="@+id/nsRelativeValue"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
             custom:min="0"
             custom:max="11"/>
     </LinearLayout>
@@ -60,6 +61,7 @@
         <com.qfs.radixulous.NumberSelector xmlns:android="http://schemas.android.com/apk/res/android"
             xmlns:custom="http://schemas.android.com/apk/res-auto"
             android:id="@+id/nsOffset"
+            android:layout_marginTop="2dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             custom:min="0"

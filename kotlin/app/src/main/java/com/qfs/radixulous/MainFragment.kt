@@ -19,13 +19,10 @@ import kotlin.math.abs
  */
 class MainFragment : Fragment() {
     private var active_context_menu_index: ContextMenu = ContextMenu.None
-    private var ticking: Boolean = false // Lock to prevent multiple attempts at updating from happening at once
 
     var linking_beat: BeatKey? = null
     var linking_beat_b: BeatKey? = null
     private var relative_mode: Boolean = false
-    private var is_loaded: Boolean = false
-    var in_play_back: Boolean = false
 
     private var _binding: FragmentMainBinding? = null
     private var cache = ViewCache()
@@ -77,6 +74,7 @@ class MainFragment : Fragment() {
                 main.tick()
             }
             main.update_menu_options()
+            main.setup_config_drawer()
         }
 
         setFragmentResultListener("RETURNED") { _, bundle: Bundle? ->
@@ -138,7 +136,7 @@ class MainFragment : Fragment() {
             main.tick()
             this.setContextMenu(ContextMenu.Leaf)
         } else {
-            Toast.makeText(activity?.applicationContext, getString(R.string.msg_undo_none), Toast.LENGTH_SHORT).show()
+            main.feedback_msg(getString(R.string.msg_undo_none))
         }
     }
 
@@ -159,22 +157,24 @@ class MainFragment : Fragment() {
             R.layout.table_column_label,
             parent,
             false
-        ) as TextView
+        ) as LinearLayout
+        var textView: TextView = headerCellView.findViewById(R.id.textView)
+
         val x = parent.childCount
-        headerCellView.setBackgroundColor(
-            ContextCompat.getColor(
-                headerCellView.context,
-                if (x % 2 == 0) {
-                    R.color.column_label_even
-                } else {
-                    R.color.column_label_odd
-                }
-            )
-        )
-        headerCellView.setTextColor(
-            ContextCompat.getColor(headerCellView.context, R.color.label_fg)
-        )
-        headerCellView.text = "$x"
+        //textView.setBackgroundColor(
+        //    ContextCompat.getColor(
+        //        textView.context,
+        //        if (x % 2 == 0) {
+        //            R.color.column_label_even
+        //        } else {
+        //            R.color.column_label_odd
+        //        }
+        //    )
+        //)
+        //textView.setTextColor(
+        //    ContextCompat.getColor(headerCellView.context, R.color.label_fg)
+        //)
+        textView.text = "$x"
         headerCellView.setOnClickListener {
             this.interact_column_header(it)
         }
@@ -207,16 +207,6 @@ class MainFragment : Fragment() {
                 rowView,
                 false
             )
-            wrapper.setBackgroundColor(
-                ContextCompat.getColor(
-                    wrapper.context,
-                    if (i % 2 == 0) {
-                        R.color.column_even
-                    } else {
-                        R.color.column_odd
-                    }
-                )
-            )
             rowView.addView(wrapper)
         }
 
@@ -226,20 +216,19 @@ class MainFragment : Fragment() {
             R.layout.table_line_label,
             llLineLabels,
             false
-        ) as TextView
+        ) as LinearLayout
 
-
-
+        var rowLabelText = rowLabel.getChildAt(0) as TextView
 
         if (!opus_manager.is_percussion(channel)) {
             if (line_offset == 0) {
-                rowLabel.text = "$channel:$line_offset"
+                rowLabelText.text = "$channel:$line_offset"
             } else {
-                rowLabel.text = "  :$line_offset"
+                rowLabelText.text = "  :$line_offset"
             }
         } else {
             val instrument = opus_manager.get_percussion_instrument(line_offset)
-            rowLabel.text = "P:$instrument"
+            rowLabelText.text = "P:$instrument"
         }
 
         rowLabel.setOnClickListener {
@@ -641,17 +630,6 @@ class MainFragment : Fragment() {
                 false
             )
 
-            new_wrapper.setBackgroundColor(
-                ContextCompat.getColor(
-                    new_wrapper.context,
-                    if (x % 2 == 0) {
-                        R.color.column_even
-                    } else {
-                        R.color.column_odd
-                    }
-                )
-            )
-
             rowView.addView(new_wrapper, new_x)
             this.buildTreeView(new_wrapper as ViewGroup, new_y, new_x, listOf())
             new_wrapper.measure(0,0)
@@ -965,7 +943,7 @@ class MainFragment : Fragment() {
             try {
                 opus_manager.convert_event_at_cursor_to_absolute()
             } catch (e: Exception) {
-                Toast.makeText(activity?.applicationContext, "Can't convert event", Toast.LENGTH_SHORT).show()
+                main.feedback_msg("Can't convert event")
                 (view as ToggleButton).isChecked = true
                 return
             }
@@ -1082,26 +1060,26 @@ class MainFragment : Fragment() {
         line_counts.forEachIndexed { channel, line_count ->
             for (i in 0 until line_count) {
                 val label = this.cache.getLineLabel(y) ?: continue
-                label.setBackgroundColor(
-                    ContextCompat.getColor(
-                        label.context,
-                        if (channel_offset % 2 == 0) {
-                            if (i % 2 == 0) {
-                                R.color.line_label_channel_even_line_even
-                            } else {
-                                R.color.line_label_channel_even_line_odd
-                            }
-                        } else {
-                            if (i % 2 == 0) {
-                                R.color.line_label_channel_odd_line_even
-                            } else {
-                                R.color.line_label_channel_odd_line_odd
-                            }
-                        }
-                    )
-                )
-
                 val textView: TextView = label.findViewById(R.id.textView)
+                //textView.setBackgroundColor(
+                //    ContextCompat.getColor(
+                //        textView.context,
+                //        if (channel_offset % 2 == 0) {
+                //            if (i % 2 == 0) {
+                //                R.color.line_label_channel_even_line_even
+                //            } else {
+                //                R.color.line_label_channel_even_line_odd
+                //            }
+                //        } else {
+                //            if (i % 2 == 0) {
+                //                R.color.line_label_channel_odd_line_even
+                //            } else {
+                //                R.color.line_label_channel_odd_line_odd
+                //            }
+                //        }
+                //    )
+                //)
+
 
                 // TODO: fix naming to reflect changes to channel handling
                 if (!opus_manager.is_percussion(channel)) {
@@ -1126,17 +1104,6 @@ class MainFragment : Fragment() {
                 rowView,
                 false
             ) as ViewGroup
-
-            new_wrapper.setBackgroundColor(
-                ContextCompat.getColor(
-                    new_wrapper.context,
-                    if (index % 2 == 0) {
-                        R.color.column_even
-                    } else {
-                        R.color.column_odd
-                    }
-                )
-            )
 
             rowView.addView(new_wrapper, index)
             this.buildTreeView(new_wrapper, y, index, listOf())
@@ -1177,29 +1144,28 @@ class MainFragment : Fragment() {
         label_row.addView(label_view, beat)
     }
 
-    fun update_column_background_color(beat: Int) {
-        for (line in this.cache.getLines()) {
-            var wrapper = line.getChildAt(beat)
-            wrapper.setBackgroundColor(
-                ContextCompat.getColor(
-                    wrapper.context,
-                    if (beat % 2 == 0) {
-                        R.color.column_even
-                    } else {
-                        R.color.column_odd
-                    }
-                )
-            )
-        }
-    }
+    //fun update_column_background_color(beat: Int) {
+    //    for (line in this.cache.getLines()) {
+    //        var wrapper = line.getChildAt(beat)
+    //        wrapper.setBackgroundColor(
+    //            ContextCompat.getColor(
+    //                wrapper.context,
+    //                if (beat % 2 == 0) {
+    //                    R.color.column_even
+    //                } else {
+    //                    R.color.column_odd
+    //                }
+    //            )
+    //        )
+    //    }
+    //}
 
     fun apply_focus(focused: Set<Pair<BeatKey, List<Int>>>, opus_manager: OpusManager) {
         for ((beatkey, position) in focused) {
             val linked_beats = opus_manager.get_all_linked(beatkey)
-
             for (linked_beat in linked_beats) {
                 val y = opus_manager.get_y(linked_beat.channel, linked_beat.line_offset)
-                for ((view, leaf_pos) in this.cache.get_all_leafs(y, beatkey.beat, position)) {
+                for ((view, leaf_pos) in this.cache.get_all_leafs(y, linked_beat.beat, position)) {
                     if (view !is LeafButton) {
                         continue
                     }

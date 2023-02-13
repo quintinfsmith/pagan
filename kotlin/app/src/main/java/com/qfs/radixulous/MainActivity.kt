@@ -78,7 +78,7 @@ class MainActivity : AppCompatActivity() {
             result?.data?.data?.also { uri ->
                 applicationContext.contentResolver.openFileDescriptor(uri, "w")?.use {
                     FileOutputStream(it.fileDescriptor).write(opus_manager.get_midi().as_bytes())
-                    Toast.makeText(this, "Exported to midi", Toast.LENGTH_SHORT).show()
+                    this.feedback_msg("Exported to midi")
                 }
             }
         }
@@ -157,11 +157,7 @@ class MainActivity : AppCompatActivity() {
             }
             R.id.itmPlay -> {
                 if (!this.in_play_back) {
-
                     this.playback()
-                    //thread {
-                    //    this.changeback_playbutton()
-                    //}
                 } else {
                     this.in_play_back = false
                 }
@@ -201,15 +197,21 @@ class MainActivity : AppCompatActivity() {
             this.export_midi()
         }
 
-        (this.findViewById(R.id.btnDeleteProject) as TextView).setOnClickListener {
-            // TODO: Warning dialog
-            this.delete_project()
-            findViewById<DrawerLayout>(R.id.drawer_layout).closeDrawers()
-            // TODO: Toast Feedback
-        }
-        (this.findViewById(R.id.btnCopyProject) as TextView).setOnClickListener {
-            this.copy_project()
-            // TODO: Toast Feedback
+        var btnDeleteProject: TextView = this.findViewById(R.id.btnDeleteProject)
+        var btnCopyProject: TextView = this.findViewById(R.id.btnCopyProject)
+        if (opus_manager.path != null && File(opus_manager.path!!).isFile) {
+            btnDeleteProject.setOnClickListener {
+                this.delete_project_dialog()
+            }
+            btnCopyProject.setOnClickListener {
+                this.copy_project()
+                this.closeDrawer()
+            }
+            btnDeleteProject.visibility = View.VISIBLE
+            btnCopyProject.visibility = View.VISIBLE
+        } else {
+            btnDeleteProject.visibility = View.GONE
+            btnCopyProject.visibility = View.GONE
         }
 
     }
@@ -288,11 +290,14 @@ class MainActivity : AppCompatActivity() {
 
     private fun save_current_project() {
         this.project_manager.save(this.current_project_title!!, this.opus_manager)
-        Toast.makeText(this, "Project Saved", Toast.LENGTH_SHORT).show()
+        this.feedback_msg("Project Saved")
     }
 
     fun set_current_project_title(title: String) {
         this.current_project_title = title
+        if (this.opus_manager.path != null && File(this.opus_manager.path!!).isFile) {
+            this.project_manager.save(title, this.opus_manager)
+        }
         this.update_title_text()
     }
     fun get_current_project_title(): String? {
@@ -376,7 +381,29 @@ class MainActivity : AppCompatActivity() {
         this.export_midi_intent_launcher.launch(intent)
     }
 
+    private fun delete_project_dialog() {
+        val main_fragment = this.getActiveFragment()
+
+        var title = this.get_current_project_title() ?: "Untitled Project"
+
+        val that = this
+        AlertDialog.Builder(main_fragment!!.context).apply {
+            setTitle("Really delete $title?")
+
+            setPositiveButton(android.R.string.ok) { dialog, _ ->
+                that.delete_project()
+                dialog.dismiss()
+                that.closeDrawer()
+            }
+            setNegativeButton(android.R.string.cancel) { dialog, _ ->
+                dialog.cancel()
+            }
+            show()
+        }
+    }
+
     fun delete_project() {
+        var title = this.get_current_project_title() ?: "Untitled Project"
         this.project_manager.delete(this.opus_manager)
         var main_fragment = this.getActiveFragment()
 
@@ -387,12 +414,18 @@ class MainActivity : AppCompatActivity() {
             main_fragment.setContextMenu(ContextMenu.Leaf)
             this.tick()
         }
+
+        this.feedback_msg("Deleted \"$title\"")
     }
 
     fun copy_project() {
         this.current_project_title = this.project_manager.copy(this.opus_manager)
-        Toast.makeText(this, "Now working on copy", Toast.LENGTH_SHORT).show()
+        this.feedback_msg("Now working on copy")
         this.update_title_text()
+    }
+
+    fun closeDrawer() {
+        findViewById<DrawerLayout>(R.id.drawer_layout).closeDrawers()
     }
 
     fun navTo(fragmentName: String) {
@@ -504,7 +537,6 @@ class MainActivity : AppCompatActivity() {
             main_fragment.tick_resize_beats(updated_beats.toList())
             for (index in min_changed until opus_manager.opus_beat_count) {
                 main_fragment.update_column_label_size(index)
-                main_fragment.update_column_background_color(index)
             }
         }
     }
@@ -577,6 +609,10 @@ class MainActivity : AppCompatActivity() {
         if (active_fragment is MainFragment) {
             active_fragment.unapply_focus(this.getOpusManager())
         }
+    }
+
+    fun feedback_msg(msg: String) {
+        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
     }
 }
 

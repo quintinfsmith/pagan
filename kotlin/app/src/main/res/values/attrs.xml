@@ -30,8 +30,7 @@
     <attr name="labelBG" format="color" />
     <attr name="labelFG" format="color" />
     <attr name="buttonBG" format="color" />
-    <attr name="buttonFG" format="color" />
 
-
-
+    <attr name="button_fg_default" format="color" />
+    <attr name="button_fg_pressed" format="color" />
 </resources>

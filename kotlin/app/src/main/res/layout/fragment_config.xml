@@ -8,6 +8,13 @@
     android:layout_height="match_parent"
     android:background="?attr/drawerBG" >
 
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="?attr/colorPrimary"
+        app:srcCompat="@drawable/settings_50" />
+
     <LinearLayout
         android:id="@+id/llB"
         android:layout_width="match_parent"
@@ -45,6 +52,7 @@
                 android:ems="4"
                 android:text="0"
                 android:gravity="right"
+                android:background="@null"
                 android:inputType="numberDecimal" />
         </LinearLayout>
 

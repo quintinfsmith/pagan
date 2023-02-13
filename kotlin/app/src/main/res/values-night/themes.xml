@@ -26,14 +26,16 @@
         <item name="labelFG">#A7A7A7</item>
 
         <item name="buttonBG">#A7A7A7</item>
-        <item name="buttonFG">#2D2D2D</item>
+
 
         <item name="NumberSelectorDefaultBG">?attr/buttonBG</item>
-        <item name="NumberSelectorDefaultFG">?attr/buttonFG</item>
         <item name="NumberSelectorSelectedBG">?attr/colorLeaf</item>
         <item name="NumberSelectorSelectedFG">?attr/colorOnLeaf</item>
 
+        <item name="button_fg_default">?attr/colorPrimary</item>
+        <item name="button_fg_pressed">?attr/colorPrimaryVariant</item>
     </style>
+
     <style name="Theme.Kotlin.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>

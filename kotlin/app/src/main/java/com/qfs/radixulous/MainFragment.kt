@@ -424,7 +424,6 @@ class MainFragment : Fragment() {
         val nsRelativeValue: NumberSelector = view.findViewById(R.id.nsRelativeValue)
         val rosRelativeOption: RelativeOptionSelector = view.findViewById(R.id.rosRelativeOption)
 
-
         val current_tree = opus_manager.get_tree_at_cursor()
         if (current_tree.is_event()) {
             this.relative_mode = current_tree.get_event()!!.relative
@@ -461,8 +460,8 @@ class MainFragment : Fragment() {
             if (current_tree.is_event()) {
                 val event = current_tree.get_event()!!
                 if (!event.relative) {
-                    nsOffset.setState(event.note % event.radix, true)
-                    nsOctave.setState(event.note / event.radix, true)
+                    nsOffset.setState(event.note % event.radix, true, true)
+                    nsOctave.setState(event.note / event.radix, true, true)
                 }
             }
             nsOffset.setOnChange(this::interact_nsOffset)
@@ -632,7 +631,7 @@ class MainFragment : Fragment() {
 
             rowView.addView(new_wrapper, new_x)
             this.buildTreeView(new_wrapper as ViewGroup, new_y, new_x, listOf())
-            new_wrapper.measure(0,0)
+            new_wrapper.measure(0, 0)
             this.cache.set_column_width(new_x, new_wrapper.measuredWidth)
         }
     }
@@ -663,7 +662,7 @@ class MainFragment : Fragment() {
         if (checkstate_and_value.first == view.getState()) {
             val valueSelector: NumberSelector = llContextMenu.findViewById(R.id.nsRelativeValue)
             try {
-                valueSelector.setState(checkstate_and_value.second, true)
+                valueSelector.setState(checkstate_and_value.second, true, true)
             } catch (e: Exception) {
                 valueSelector.unset_active_button()
             }
@@ -692,12 +691,13 @@ class MainFragment : Fragment() {
             true
         )
 
+        opus_manager.set_event(beat_key, cursor.position, event)
+
         val note = opus_manager.get_absolute_value(beat_key, cursor.get_position())
         if (note != null) {
             main.play_event(beat_key.channel, note!! + new_value)
         }
 
-        opus_manager.set_event(beat_key, cursor.position, event)
         main.tick()
     }
 

@@ -63,14 +63,14 @@ class NumberSelector: LinearLayout {
         return this.active_button!!.value
     }
 
-    fun setState(new_state: Int, manual: Boolean = false) {
+    fun setState(new_state: Int, manual: Boolean = false, surpress_callback: Boolean = false) {
         if (new_state < this.min || new_state > this.max) {
             throw Exception("OutOfBounds")
         }
 
         for ((button, value) in this.button_map) {
             if (value == new_state) {
-                this.set_active_button(button)
+                this.set_active_button(button, surpress_callback)
                 if (manual) {
                     button.setActive(true)
                 }
@@ -100,13 +100,14 @@ class NumberSelector: LinearLayout {
         this.populate()
 
         if (original_value != null) {
-            if (original_value >= this.min && original_value <= this.max) {
-                this.setState(original_value)
+            var new_state = if (original_value >= this.min && original_value <= this.max) {
+                original_value
             } else if (original_value < this.min) {
-                this.setState(this.min)
+                this.min
             } else {
-                this.setState(this.max)
+                this.max
             }
+            this.setState(new_state, true, true)
         }
     }
 
@@ -127,7 +128,7 @@ class NumberSelector: LinearLayout {
         this.on_change_hook = hook
     }
 
-    fun set_active_button(view: NumberSelectorButton) {
+    fun set_active_button(view: NumberSelectorButton, surpress_callback: Boolean = false) {
         if (this.active_button != view && this.active_button != null) {
             this.active_button!!.setActive(false)
         }
@@ -135,8 +136,7 @@ class NumberSelector: LinearLayout {
 
         this.active_button = view
 
-
-        if (this.on_change_hook != null) {
+        if (!surpress_callback && this.on_change_hook != null) {
             this.on_change_hook!!(this)
         }
     }

@@ -8,11 +8,11 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.provider.Contacts
 import android.provider.DocumentsContract
 import android.text.Editable
+import android.text.InputFilter
+import android.text.Spanned
 import android.text.TextWatcher
-import android.util.Log
 import android.view.*
 import android.widget.EditText
 import android.widget.LinearLayout
@@ -187,6 +187,8 @@ class MainActivity : AppCompatActivity() {
                 } catch (exception: Exception) { }
             }
         })
+        etTempo.filters = arrayOf(RangeFilter(1F, 999F))
+
 
         (this.findViewById(R.id.btnAddChannel) as TextView).setOnClickListener {
             channelAdapter.addChannel()
@@ -310,13 +312,13 @@ class MainActivity : AppCompatActivity() {
 
     fun update_menu_options() {
         val navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main)
-        val fragment = navHost?.childFragmentManager?.fragments?.get(0)
-        when (fragment) {
+        when (navHost?.childFragmentManager?.fragments?.get(0)) {
             is MainFragment -> {
                 this.optionsMenu.findItem(R.id.itmLoadProject).isVisible = true
                 this.optionsMenu.findItem(R.id.itmSaveProject).isVisible = true
                 this.optionsMenu.findItem(R.id.itmUndo).isVisible = true
                 this.optionsMenu.findItem(R.id.itmNewProject).isVisible = true
+                this.optionsMenu.findItem(R.id.itmPlay).isVisible = true
             }
             //is LoadFragment -> { }
             else -> {
@@ -324,6 +326,7 @@ class MainActivity : AppCompatActivity() {
                 this.optionsMenu.findItem(R.id.itmSaveProject).isVisible = false
                 this.optionsMenu.findItem(R.id.itmUndo).isVisible = false
                 this.optionsMenu.findItem(R.id.itmNewProject).isVisible = false
+                this.optionsMenu.findItem(R.id.itmPlay).isVisible = false
             }
         }
     }

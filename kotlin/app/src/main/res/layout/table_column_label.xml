@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:paddingLeft="2dp"
-    android:paddingRight="2dp"
-    android:paddingBottom="2dp"
+    android:paddingLeft="@dimen/normal_padding"
+    android:paddingRight="@dimen/normal_padding"
+    android:paddingBottom="@dimen/normal_padding"
     android:layout_height="wrap_content"
     android:layout_width="wrap_content">
     <TextView

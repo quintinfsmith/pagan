@@ -6,7 +6,7 @@
     android:id="@+id/clA"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="2dp"
+    android:padding="@dimen/normal_padding"
     android:background="?attr/drawer_bg" >
 
     <ImageView
@@ -35,8 +35,8 @@
             android:layout_height="wrap_content"/>
 
         <LinearLayout
-            android:layout_marginTop="2dp"
-            android:padding="2dp"
+            android:layout_marginTop="@dimen/normal_padding"
+            android:padding="@dimen/normal_padding"
             android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" >
@@ -60,7 +60,7 @@
         </LinearLayout>
 
         <TextView
-            android:layout_marginTop="2dp"
+            android:layout_marginTop="@dimen/normal_padding"
             android:id="@+id/btnAddChannel"
             android:theme="@style/button"
             android:layout_width="match_parent"
@@ -79,7 +79,7 @@
     </LinearLayout>
 
     <LinearLayout
-        android:layout_marginTop="2dp"
+        android:layout_marginTop="@dimen/normal_padding"
         android:id="@+id/llProjectOptions"
         android:orientation="vertical"
         android:gravity="bottom"
@@ -92,13 +92,13 @@
             android:theme="@style/button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="2dp"
+            android:layout_marginBottom="@dimen/normal_padding"
             android:text="Copy" />
         <TextView
             android:id="@+id/btnDeleteProject"
             android:maxLines="1"
             android:theme="@style/button"
-            android:layout_marginBottom="2dp"
+            android:layout_marginBottom="@dimen/normal_padding"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -110,7 +110,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginBottom="2dp"
+            android:layout_marginBottom="@dimen/normal_padding"
             android:text="Export" />
     </LinearLayout>
 

@@ -6,7 +6,8 @@
     android:id="@+id/clA"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?attr/drawerBG" >
+    android:padding="2dp"
+    android:background="?attr/drawer_bg" >
 
     <ImageView
         android:id="@+id/imageView"
@@ -35,6 +36,7 @@
 
         <LinearLayout
             android:layout_marginTop="2dp"
+            android:padding="2dp"
             android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" >
@@ -46,7 +48,8 @@
                 android:id="@+id/etTempo"
                 android:maxLines="1"
                 android:theme="@style/edittext"
-                android:layout_width="wrap_content"
+                android:layout_weight="1"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:digits=".0123456789"
                 android:ems="4"

@@ -10,8 +10,8 @@
     <TextView
         android:gravity="center"
         android:layout_width="match_parent"
-        android:background="?attr/labelBG"
-        android:textColor="?attr/labelFG"
+        android:background="?attr/label_bg"
+        android:textColor="?attr/label_fg"
         android:id="@+id/textView"
         android:text=""
         android:layout_height="match_parent"/>

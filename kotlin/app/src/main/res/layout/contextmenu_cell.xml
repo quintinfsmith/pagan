@@ -18,6 +18,8 @@
         android:id="@+id/llRelativePalette"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:paddingLeft="2dp"
+        android:paddingRight="2dp"
         android:orientation="vertical"
         app:layout_constraintTop_toBottomOf="@+id/sRelative"
         app:layout_constraintEnd_toEndOf="parent"
@@ -26,7 +28,6 @@
         <com.qfs.radixulous.RelativeOptionSelector xmlns:android="http://schemas.android.com/apk/res/android"
             xmlns:custom="http://schemas.android.com/apk/res-auto"
             android:id="@+id/rosRelativeOption"
-            android:theme="@style/numberSelector"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
@@ -40,12 +41,13 @@
             custom:max="11"/>
     </LinearLayout>
 
-
     <LinearLayout
         android:orientation="vertical"
         android:id="@+id/llAbsolutePalette"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:paddingLeft="2dp"
+        android:paddingRight="2dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/llRelativePalette" >
@@ -67,7 +69,6 @@
             custom:min="0"
             custom:max="11"/>
     </LinearLayout>
-
 
     <LinearLayout
         android:id="@+id/clButtons"

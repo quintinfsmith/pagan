@@ -33,12 +33,24 @@ class NumberSelector: LinearLayout {
     override fun onLayout(isChanged: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         super.onLayout(isChanged, left, top, right, bottom)
 
-        var width = ((right - left) - (this.paddingLeft + this.paddingRight)) / this.childCount
+        val scale = resources.displayMetrics.density
+        var margin = (2 * scale + 0.5f).toInt()
+
+        var available_space = ((right - left) - (this.paddingLeft + this.paddingRight))
+        available_space -= (this.childCount - 1) * margin
+
+        var width = available_space / this.childCount
+        var remainder = available_space % this.childCount
 
         for (i in 0 until this.childCount) {
             var view = this.getChildAt(i)
             val param = view!!.layoutParams as ViewGroup.MarginLayoutParams
             param.width = width
+            param.setMargins(0, 0, margin, 0)
+            if (remainder > 0) {
+                param.width += 1
+                remainder -= 1
+            }
             // TODO: This, the right way. i'm getting warnings
             view.requestLayout()
         }

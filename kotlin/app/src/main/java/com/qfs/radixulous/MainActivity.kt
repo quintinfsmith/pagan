@@ -460,7 +460,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun tick() {
-        if (! this.ticking) {
+        if (!this.ticking) {
             this.ticking = true
             this.tick_unapply_focus()
             this.tick_manage_lines()
@@ -488,7 +488,6 @@ class MainActivity : AppCompatActivity() {
                         y += counts[i]
                     }
                     main_fragment.line_remove(y + index)
-
                 }
                 1 -> {
                     val y = opus_manager.get_y(channel, index)
@@ -568,7 +567,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
 
     private fun tick_apply_focus() {
         val opus_manager = this.getOpusManager()

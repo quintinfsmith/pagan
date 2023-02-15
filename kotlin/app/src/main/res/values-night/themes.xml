@@ -6,34 +6,52 @@
         <item name="colorPrimaryVariant">#474747</item>
         <item name="colorOnPrimary">#a7a7a7</item>
         <!-- Secondary brand color. -->
-        <item name="colorSecondary">@color/teal_200</item>
-        <item name="colorSecondaryVariant">@color/teal_200</item>
-        <item name="colorOnSecondary">@color/black</item>
+        <item name="colorSecondary">#765bd5</item>
+        <item name="colorSecondaryVariant">#967FE9</item>
+        <item name="colorOnSecondary">@color/white</item>
         <!-- Status bar color. -->
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
         <!-- Customize your theme here. -->
-        <item name="drawerBG">#424242</item>
         <item name="android:popupMenuStyle">@style/PopupMenu</item>
-        <item name="colorLeaf">#765bd5</item>
-        <item name="colorLeafFocused">#967fe9</item>
-        <item name="colorOnLeaf">?attr/colorOnPrimary</item>
-        <item name="colorLeafOutline">?attr/colorPrimaryVariant</item>
-        <item name="colorLeafInactive">#373737</item>
-        <item name="colorLeafFocusedInactive">#424242</item>
-        <item name="colorLeafPressed">#11000000</item>
-        <item name="mainBG">@color/bg_dark</item>
-        <item name="labelBG">#424242</item>
-        <item name="labelFG">#A7A7A7</item>
 
-        <item name="buttonBG">#A7A7A7</item>
+        <item name="drawer_bg">#2D2D2D</item>
+        <item name="main_bg">#2D2D2D</item>
+        <item name="label_bg">#424242</item>
+        <item name="label_fg">#A7A7A7</item>
 
+        <item name="button_fg_default">?attr/colorOnPrimary</item>
+        <item name="button_fg_pressed">?attr/colorOnPrimary</item>
+        <item name="button_bg_default">?attr/colorPrimaryVariant</item>
+        <item name="button_bg_pressed">?attr/colorPrimary</item>
 
-        <item name="NumberSelectorDefaultBG">?attr/buttonBG</item>
-        <item name="NumberSelectorSelectedBG">?attr/colorLeaf</item>
-        <item name="NumberSelectorSelectedFG">?attr/colorOnLeaf</item>
+        <!-- LEAF COLORS -->
+        <item name="leaf_fg_active">?attr/colorOnSecondary</item>
+        <item name="leaf_fg_active_focused">?attr/colorOnSecondary</item>
+        <item name="leaf_fg_active_pressed">?attr/colorOnSecondary</item>
+        <item name="leaf_fg_active_focused_pressed">?attr/colorOnSecondary</item>
 
-        <item name="button_fg_default">?attr/colorPrimary</item>
-        <item name="button_fg_pressed">?attr/colorPrimaryVariant</item>
+        <item name="leaf_bg_default">#373737</item>
+        <item name="leaf_bg_focused">#424242</item>
+        <!--_pressed are just 93% of the regular colors -->
+        <item name="leaf_bg_pressed">#333333</item>
+        <item name="leaf_bg_focused_pressed">#3D3D3D</item>
+
+        <!-- Active Leaf colors are same between dark/light -->
+        <item name="leaf_bg_active">?attr/colorSecondary</item>
+        <item name="leaf_bg_active_focused">?attr/colorSecondaryVariant</item>
+        <!--_pressed are just 93% of the regular colors -->
+        <item name="leaf_bg_active_pressed">#6D54C6</item>
+        <item name="leaf_bg_active_focused_pressed">#BDBDBD</item>
+        <!-- END OF LEAF COLORS -->
+
+        <item name="numberselector_bg_default">?attr/button_bg_default</item>
+        <item name="numberselector_fg_default">?attr/button_fg_default</item>
+        <item name="numberselector_bg_pressed">?attr/button_bg_pressed</item>
+        <item name="numberselector_fg_pressed">?attr/button_fg_pressed</item>
+        <item name="numberselector_bg_selected">?attr/leaf_bg_active</item>
+        <item name="numberselector_fg_selected">?attr/leaf_fg_active</item>
+        <item name="numberselector_bg_selected_pressed">?attr/leaf_bg_active_pressed</item>
+        <item name="numberselector_fg_selected_pressed">?attr/leaf_fg_active_pressed</item>
     </style>
 
     <style name="Theme.Kotlin.NoActionBar">

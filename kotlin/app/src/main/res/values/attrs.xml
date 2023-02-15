@@ -2,10 +2,14 @@
     <declare-styleable name="NumberSelector">
         <attr name="min" format="integer" />
         <attr name="max" format="integer" />
-        <attr name="NumberSelectorDefaultBG" format="color"/>
-        <attr name="NumberSelectorDefaultFG" format="color"/>
-        <attr name="NumberSelectorSelectedBG" format="color"/>
-        <attr name="NumberSelectorSelectedFG" format="color"/>
+        <attr name="numberselector_bg_default" format="color"/>
+        <attr name="numberselector_fg_default" format="color"/>
+        <attr name="numberselector_bg_pressed" format="color"/>
+        <attr name="numberselector_fg_pressed" format="color"/>
+        <attr name="numberselector_bg_selected" format="color"/>
+        <attr name="numberselector_fg_selected" format="color"/>
+        <attr name="numberselector_bg_selected_pressed" format="color"/>
+        <attr name="numberselector_fg_selected_pressed" format="color"/>
     </declare-styleable>
 
     <declare-styleable name="NumberSelectorButton">
@@ -15,22 +19,37 @@
     <declare-styleable name="leaf">
         <attr name="state_focused" format="boolean" />
         <attr name="state_reflected" format="boolean" />
-        <attr name="colorLeaf" format="color" />
-        <attr name="colorLeafPressed" format="color" />
-        <attr name="colorLeafFocused" format="color" />
-        <attr name="colorLeafOutline" format="color" />
-        <attr name="colorOnLeaf" format="color" />
-        <attr name="colorLeafInactive" format="color" />
-        <attr name="colorLeafFocusedInactive" format="color" />
-        <attr name="colorOnLeafInactive" format="color" />
+
+        <!-- No foreground to color on inactive leafs
+        <attr name="leaf_fg_default" format="color" />
+        <attr name="leaf_fg_focused" format="color" />
+        <attr name="leaf_fg_pressed" format="color" />
+        <attr name="leaf_fg_focused_pressed" format="color" />
+        -->
+
+        <attr name="leaf_fg_active" format="color" />
+        <attr name="leaf_fg_active_focused" format="color" />
+        <attr name="leaf_fg_active_pressed" format="color" />
+        <attr name="leaf_fg_active_focused_pressed" format="color" />
+
+        <attr name="leaf_bg_default" format="color" />
+        <attr name="leaf_bg_active" format="color" />
+        <attr name="leaf_bg_focused" format="color" />
+        <attr name="leaf_bg_pressed" format="color" />
+        <attr name="leaf_bg_active_focused" format="color" />
+        <attr name="leaf_bg_active_pressed" format="color" />
+        <attr name="leaf_bg_focused_pressed" format="color" />
+        <attr name="leaf_bg_active_focused_pressed" format="color" />
     </declare-styleable>
 
-    <attr name="mainBG" format="color" />
-    <attr name="drawerBG" format="color" />
-    <attr name="labelBG" format="color" />
-    <attr name="labelFG" format="color" />
-    <attr name="buttonBG" format="color" />
+    <attr name="main_bg" format="color" />
+    <attr name="drawer_bg" format="color" />
+    <attr name="label_bg" format="color" />
+    <attr name="label_fg" format="color" />
 
     <attr name="button_fg_default" format="color" />
     <attr name="button_fg_pressed" format="color" />
+    <attr name="button_bg_default" format="color" />
+    <attr name="button_bg_pressed" format="color" />
+
 </resources>

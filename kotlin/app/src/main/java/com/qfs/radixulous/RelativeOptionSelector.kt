@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.Gravity.CENTER
 import android.view.View
+import android.view.ViewGroup
 import android.widget.LinearLayout
 import androidx.appcompat.view.ContextThemeWrapper
 
@@ -26,16 +27,31 @@ class RelativeOptionSelector: LinearLayout {
     override fun onLayout(isChanged: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         super.onLayout(isChanged, left, top, right, bottom)
 
+        val scale = resources.displayMetrics.density
+        var margin = (2 * scale + 0.5f).toInt()
+
         var visible_count = (this.childCount - this.hidden_options.size)
-        if (visible_count > 0) {
-            var width = ((right - left) - (this.paddingLeft + this.paddingRight)) / visible_count
-            for (i in 0 until this.childCount) {
-                var view = this.getChildAt(i)
-                if (view.layoutParams.width  != width) {
-                    view.layoutParams.width = width
-                    view.requestLayout()
-                }
+        if (visible_count == 0) {
+            return
+        }
+
+        var available_space = ((right - left) - (this.paddingLeft + this.paddingRight))
+        available_space -= (visible_count - 1) * margin
+
+        var width = available_space / visible_count
+        var remainder = available_space % visible_count
+
+        for (i in 0 until this.childCount) {
+            var view = this.getChildAt(i)
+            val param = view!!.layoutParams as ViewGroup.MarginLayoutParams
+            param.width = width
+            param.setMargins(0, 0, margin, 0)
+            if (remainder > 0) {
+                param.width += 1
+                remainder -= 1
             }
+            // TODO: This, the right way. i'm getting warnings
+            view.requestLayout()
         }
     }
 

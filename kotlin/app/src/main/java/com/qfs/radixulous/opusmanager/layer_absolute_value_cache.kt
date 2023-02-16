@@ -1,12 +1,12 @@
 package com.qfs.radixulous.opusmanager
 
-import android.util.Log
 import com.qfs.radixulous.structure.OpusTree
 
 open class AbsoluteValueLayer: OpusManagerBase() {
     var absolute_values_cache = HashMap<Pair<BeatKey, List<Int>>, Int>()
     // Layer-Specific //
     private fun cache_absolute_value(beat_key: BeatKey, position: List<Int>, event: OpusEvent) {
+        this.decache_absolute_value(beat_key, position)
         var event_value = if (event.relative) {
             this.get_absolute_value(beat_key, position)
                 ?: throw Exception("Can't cache relative value with no preceding absolute value")
@@ -14,8 +14,18 @@ open class AbsoluteValueLayer: OpusManagerBase() {
             event.note
         }
 
-        this.absolute_values_cache[Pair(beat_key, position)] = event_value
+        this.cache_absolute_value(beat_key, position, event_value)
+    }
 
+    open fun cache_absolute_value(beat_key: BeatKey, position: List<Int>, event_value: Int) {
+        this.absolute_values_cache[Pair(beat_key, position)] = event_value
+    }
+
+    override fun get_absolute_value(beat_key: BeatKey, position: List<Int>): Int? {
+        return absolute_values_cache[Pair(beat_key, position)] ?: super.get_absolute_value(
+            beat_key,
+            position
+        )
     }
 
     // Update proceding absolute values in cache
@@ -35,7 +45,7 @@ open class AbsoluteValueLayer: OpusManagerBase() {
             }
 
             event_value += next_event.note
-            this.absolute_values_cache[next] = event_value
+            this.cache_absolute_value(next.first, next.second, event_value)
         }
     }
 
@@ -122,7 +132,6 @@ open class AbsoluteValueLayer: OpusManagerBase() {
         }
         this.absolute_values_cache = new_map
     }
-
     // End Layer-Specific //
 
     override fun change_line_channel(old_channel: Int, line_index: Int, new_channel: Int) {
@@ -222,7 +231,7 @@ open class AbsoluteValueLayer: OpusManagerBase() {
 
     override fun set_percussion_event(beatkey: BeatKey, position: List<Int>) {
         super.set_percussion_event(beatkey, position)
-        this.absolute_values_cache[Pair(beatkey, position)] = this.get_percussion_instrument(beatkey.line_offset)
+        this.cache_absolute_value(beatkey, position, this.get_percussion_instrument(beatkey.line_offset))
     }
 
     override fun reset() {

@@ -6,6 +6,7 @@ class UpdatesCache {
     private var beat_flag: MutableList<Pair<Int, Int>> = mutableListOf()
     private var beat_change: MutableList<BeatKey> = mutableListOf()
     private var line_flag: MutableList<Triple<Int, Int, Int>> = mutableListOf()
+    private var absolute_value_flag: MutableList<Pair<BeatKey, List<Int>>> = mutableListOf()
 
     fun dequeue_line(): Triple<Int, Int, Int>? {
         return if (this.line_flag.isEmpty()) {
@@ -29,6 +30,14 @@ class UpdatesCache {
         }
     }
 
+    fun dequeue_absolute_value(): Pair<BeatKey, List<Int>>? {
+        return if (this.absolute_value_flag.isEmpty()) {
+            null
+        } else {
+            this.absolute_value_flag.removeFirst()
+        }
+    }
+
     fun flag_beat_pop(index: Int) {
         this.beat_flag.add(Pair(index, 0))
     }
@@ -47,10 +56,14 @@ class UpdatesCache {
     fun flag_line_init(channel: Int, line_offset: Int) {
         this.line_flag.add(Triple(channel, line_offset, 2))
     }
+    fun flag_absolute_value(beatkey: BeatKey, position: List<Int>) {
+        this.absolute_value_flag.add(Pair(beatkey, position))
+    }
     fun purge() {
         this.beat_flag.clear()
         this.beat_change.clear()
         this.line_flag.clear()
+        this.absolute_value_flag.clear()
     }
 }
 
@@ -74,9 +87,14 @@ open class FlagLayer : LinksLayer() {
         return this.cache.dequeue_change()
     }
 
+    fun fetch_flag_absolute_value(): Pair<BeatKey, List<Int>>? {
+        return this.cache.dequeue_absolute_value()
+    }
+
     fun flag_beat_change(beat_key: BeatKey) {
         this.cache.flag_beat_change(beat_key)
     }
+
 
     override fun remove_channel(channel: Int) {
         for (i in 0 until this.channels[channel].size) {
@@ -191,5 +209,10 @@ open class FlagLayer : LinksLayer() {
             this.cache.flag_beat_change(target_key!!)
         }
         super.unlink_beat(beat_key)
+    }
+
+    override fun cache_absolute_value(beat_key: BeatKey, position: List<Int>, event_value: Int) {
+        super.cache_absolute_value(beat_key, position, event_value)
+        this.cache.flag_absolute_value(beat_key, position)
     }
 }

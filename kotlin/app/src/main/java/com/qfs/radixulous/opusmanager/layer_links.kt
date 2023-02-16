@@ -145,7 +145,6 @@ open class LinksLayer() : AbsoluteValueLayer() {
     }
 
     /////////
-
     private fun remap_links(remap_hook: (beat_key: BeatKey, args: List<Int>) -> BeatKey?, args: List<Int>) {
         var new_link_map = HashMap<BeatKey, BeatKey>()
         this.inv_linked_beat_map.clear()
@@ -156,7 +155,7 @@ open class LinksLayer() : AbsoluteValueLayer() {
             if (new_beat == null || new_target == null) {
                 continue
             }
-            new_link_map.put(new_beat, new_target)
+            new_link_map[new_beat] = new_target
 
             if (! this.inv_linked_beat_map.containsKey(new_target)) {
                 this.inv_linked_beat_map.put(new_target, mutableListOf())
@@ -171,6 +170,7 @@ open class LinksLayer() : AbsoluteValueLayer() {
         var new_offset = this.channels[new_channel].size - 1
         this.remap_links(this::rh_change_line_channel, listOf(old_channel, line_offset, new_channel, new_offset))
     }
+
     private fun rh_change_line_channel(beat_key: BeatKey, args: List<Int>): BeatKey? {
         var old_channel = args[0]
         var line_offset = args[1]

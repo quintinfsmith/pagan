@@ -33,6 +33,7 @@
         <attr name="leaf_fg_active_pressed" format="color" />
         <attr name="leaf_fg_active_focused_pressed" format="color" />
 
+        <attr name="leaf_bg_invalid" format="color" />
         <attr name="leaf_bg_default" format="color" />
         <attr name="leaf_bg_active" format="color" />
         <attr name="leaf_bg_focused" format="color" />

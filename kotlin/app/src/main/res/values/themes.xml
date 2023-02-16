@@ -38,6 +38,7 @@
         <item name="leaf_bg_pressed">#ABABAB</item>
         <item name="leaf_bg_focused_pressed">#3D3D3D</item>
 
+        <item name="leaf_bg_invalid">#aa4433</item>
         <!-- Active Leaf colors are same between dark/light -->
         <item name="leaf_bg_active">?attr/colorSecondary</item>
         <item name="leaf_bg_active_focused">?attr/colorSecondaryVariant</item>

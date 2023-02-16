@@ -1223,6 +1223,13 @@ class MainFragment : Fragment() {
         }
     }
 
+    fun validate_leaf(y: Int, x: Int, position: List<Int>, valid: Boolean) {
+        var view = this.cache.getTreeView(y, x, position) ?: return
+        if (view is LeafButton) {
+            view.setInvalid(!valid)
+        }
+    }
+
     private fun __tick_update_column_label_size(beat: Int) {
         var width = this.cache.get_column_width(beat)
         // Kludge: Need to remove/reattach label so it will shrink to a smaller
@@ -1289,4 +1296,5 @@ class MainFragment : Fragment() {
             this.__tick_update_column_label_size(b)
         }
     }
+
 }

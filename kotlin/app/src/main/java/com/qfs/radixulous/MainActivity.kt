@@ -469,8 +469,23 @@ class MainActivity : AppCompatActivity() {
             this.tick_manage_lines()
             this.tick_manage_beats() // new/pop
             this.tick_update_beats() // changes
+            this.tick_validate_leafs()
             this.tick_apply_focus()
             this.ticking = false
+        }
+    }
+
+    private fun tick_validate_leafs() {
+        val opus_manager = this.getOpusManager()
+        val main_fragment = this.getActiveFragment()
+        while (true) {
+            val (beatkey, position) = opus_manager.fetch_flag_absolute_value() ?: break
+            if (main_fragment !is MainFragment) {
+                continue
+            }
+            var y = opus_manager.get_y(beatkey.channel, beatkey.line_offset)
+            var abs_value = opus_manager.get_absolute_value(beatkey, position) ?: continue
+            main_fragment.validate_leaf(y, beatkey.beat, position, abs_value in 0..95)
         }
     }
 

@@ -134,7 +134,7 @@ open class OpusManagerBase {
         return Pair(working_beat_key, working_position)
     }
 
-    fun get_absolute_value(beat_key: BeatKey, position: List<Int>): Int? {
+    open fun get_absolute_value(beat_key: BeatKey, position: List<Int>): Int? {
         var tree = this.get_tree(beat_key, position)
 
         var abs_value = 0

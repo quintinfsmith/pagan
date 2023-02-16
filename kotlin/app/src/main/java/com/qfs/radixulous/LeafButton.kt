@@ -9,10 +9,12 @@ class LeafButton: androidx.appcompat.widget.AppCompatTextView {
     private val STATE_REFLECTED = intArrayOf(R.attr.state_reflected)
     private val STATE_ACTIVE = intArrayOf(R.attr.state_active)
     private val STATE_FOCUSED = intArrayOf(R.attr.state_focused)
+    private val STATE_INVALID = intArrayOf(R.attr.state_invalid)
 
     private var state_active: Boolean = false
     private var state_reflected: Boolean = false
     private var state_focused: Boolean = false
+    private var state_invalid: Boolean = false
     private var event: OpusEvent?
     private var activity: MainActivity
 
@@ -61,6 +63,9 @@ class LeafButton: androidx.appcompat.widget.AppCompatTextView {
         if (this.state_focused) {
             mergeDrawableStates(drawableState, STATE_FOCUSED)
         }
+        if (this.state_invalid) {
+            mergeDrawableStates(drawableState, STATE_INVALID)
+        }
         return drawableState
     }
 
@@ -77,5 +82,11 @@ class LeafButton: androidx.appcompat.widget.AppCompatTextView {
     fun setFocused(value: Boolean) {
         this.state_focused = value
         refreshDrawableState()
+    }
+
+    fun setInvalid(value: Boolean) {
+        this.state_invalid = value
+        refreshDrawableState()
+
     }
 }

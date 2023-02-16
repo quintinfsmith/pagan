@@ -139,27 +139,6 @@ class OpusChannel() {
         this.lines[second_index] = tmp
     }
 
-    fun move_line(old_index: Int, new_index: Int) {
-        // Adjust the new_index so it doesn't get confused
-        // when we pop() the old_index
-        var adj_new_index: Int = if (new_index < 0) {
-            this.lines.size + new_index
-        } else {
-            new_index
-        }
-
-        if (adj_new_index < 0) {
-            throw Exception("INDEXERROR")
-        }
-        if (old_index >= this.lines.size) {
-            throw Exception("INDEXERROR")
-        }
-
-        var line = this.lines.removeAt(old_index)
-        this.lines.add(adj_new_index, line)
-
-    }
-
     fun get_line(index: Int): MutableList<OpusTree<OpusEvent>> {
         return this.lines[index]
     }

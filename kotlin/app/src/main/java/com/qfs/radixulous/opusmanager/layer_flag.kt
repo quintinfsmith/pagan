@@ -189,15 +189,13 @@ open class FlagLayer : LinksLayer() {
         this.cache.flag_beat_change(beat_key)
     }
 
-    override fun remove_beat(rel_beat_index: Int?) {
-        val orig_index = rel_beat_index ?: (this.opus_beat_count - 1)
-        super.remove_beat(rel_beat_index)
-        this.cache.flag_beat_pop(orig_index)
+    override fun remove_beat(beat_index: Int) {
+        super.remove_beat(beat_index)
+        this.cache.flag_beat_pop(beat_index)
     }
 
     override fun remove_line(channel: Int, index: Int?) {
         super.remove_line(channel, index)
-
         this.cache.flag_line_pop(channel, index ?: this.channels[channel].size)
     }
 

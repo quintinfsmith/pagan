@@ -171,4 +171,15 @@ class OpusChannel() {
         this.beat_count -= 1
     }
 
+    fun insert_beat(index: Int? = null) {
+        if (index == null) {
+            this.set_beat_count(this.beat_count + 1)
+            return
+        }
+        this.beat_count += 1
+        for (line in this.lines) {
+            line.add(index, OpusTree<OpusEvent>())
+        }
+    }
+
 }

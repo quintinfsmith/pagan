@@ -154,15 +154,18 @@ open class OpusManagerBase {
         tree.set_event(event)
     }
 
+
     open fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
         val tree: OpusTree<OpusEvent> = this.get_tree(beat_key, position)
-        if (tree.is_leaf()) {
+        if (tree.is_event()) {
             var event = tree.get_event()
-            tree.unset_event()
+
+            this.unset(beat_key, position)
             tree.set_size(splits)
-            if (event != null) {
-                tree.get(0).set_event(event!!)
-            }
+
+            var new_position = position.toMutableList()
+            new_position.add(0)
+            this.set_event(beat_key, new_position, event!!)
         } else {
             tree.set_size(splits)
         }
@@ -202,12 +205,14 @@ open class OpusManagerBase {
         this.channels[new_channel].insert_line(new_channel, line)
     }
 
-    open fun insert_beat(index: Int?) {
+    open fun insert_beat(index: Int? = null) {
         this.opus_beat_count += 1
         for (channel in this.channels) {
+            channel.insert_beat(index)
             channel.set_beat_count(this.opus_beat_count)
         }
     }
+
 
     open fun move_line(channel: Int, old_index: Int, new_index: Int) {
         this.channels[channel].move_line(old_index, new_index)
@@ -219,24 +224,10 @@ open class OpusManagerBase {
 
     open fun overwrite_beat(old_beat: BeatKey, new_beat: BeatKey) {
         var new_tree = this.channels[new_beat.channel].get_line(new_beat.line_offset)[new_beat.beat].copy()
-        var old_line = this.channels[old_beat.channel].get_line(old_beat.line_offset)
-        var old_tree = old_line[old_beat.beat]
-
-        // replaces in parents
-        old_tree.replace_with(new_tree)
-
-        old_line[old_beat.beat] = new_tree
+        this.replace_tree(old_beat, listOf(), new_tree)
     }
 
-    open fun remove_beat(rel_beat_index: Int?) {
-        var beat_index = if (rel_beat_index == null) {
-            this.opus_beat_count - 1
-        } else if (rel_beat_index < 0) {
-            this.opus_beat_count + rel_beat_index
-        } else {
-            rel_beat_index
-        }
-
+    open fun remove_beat(beat_index: Int) {
         for (channel in this.channels) {
             channel.remove_beat(beat_index)
         }
@@ -383,6 +374,11 @@ open class OpusManagerBase {
         return this.channels[beat_key.channel].get_tree(beat_key.line_offset, beat_key.beat, position)
     }
 
+    fun get_proceding_leaf(beat_key: BeatKey, position: List<Int>): OpusTree<OpusEvent>? {
+        var pair = this.get_proceding_leaf_position(beat_key, position) ?: return null
+        return this.get_tree(pair.first, pair.second)
+    }
+
     fun get_preceding_leaf(beat_key: BeatKey, position: List<Int>): OpusTree<OpusEvent>? {
         var pair = this.get_preceding_leaf_position(beat_key, position) ?: return null
         return this.get_tree(pair.first, pair.second)
@@ -410,7 +406,42 @@ open class OpusManagerBase {
         }
 
         var working_tree = this.get_tree(working_beat_key, working_position)
+
         // Move right/down to leaf
+        while (!working_tree.is_leaf()) {
+            working_position.add(working_tree.size - 1)
+            working_tree = working_tree.get(working_tree.size - 1)
+        }
+
+        return Pair(working_beat_key, working_position)
+    }
+
+    fun get_proceding_leaf_position(beat_key: BeatKey, position: List<Int>): Pair<BeatKey, List<Int>>? {
+        var working_position = position.toMutableList()
+        var working_beat_key = BeatKey(beat_key.channel, beat_key.line_offset, beat_key.beat)
+        var working_tree = this.get_tree(working_beat_key, working_position)
+
+        // Move right/up
+        while (true) {
+            if (working_tree.parent != null) {
+                if (working_tree.size - 1 > working_position.last()) {
+                    working_position[working_position.size - 1] += 1
+                    break
+                } else {
+                    working_position.removeLast()
+                    working_tree = working_tree.parent!!
+                }
+            } else if (working_beat_key.beat < this.opus_beat_count - 1) {
+                working_beat_key.beat += 1
+                working_tree = this.get_tree(working_beat_key, listOf())
+                break
+            } else {
+                return null
+            }
+
+        }
+
+        // Move left/down to leaf
         while (!working_tree.is_leaf()) {
             working_position.add(working_tree.size - 1)
             working_tree = working_tree.get(working_tree.size - 1)

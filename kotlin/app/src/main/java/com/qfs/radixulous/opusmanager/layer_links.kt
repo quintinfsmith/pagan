@@ -1,7 +1,7 @@
 package com.qfs.radixulous.opusmanager
 import java.io.File
 
-open class LinksLayer() : OpusManagerBase() {
+open class LinksLayer() : AbsoluteValueLayer() {
     var linked_beat_map: HashMap<BeatKey, BeatKey> = HashMap<BeatKey, BeatKey>()
     var inv_linked_beat_map: HashMap<BeatKey, MutableList<BeatKey>> = HashMap<BeatKey, MutableList<BeatKey>>()
 
@@ -227,24 +227,17 @@ open class LinksLayer() : OpusManagerBase() {
         return new_beat
     }
 
-    override fun remove_beat(index: Int?) {
+    override fun remove_beat(index: Int) {
         super.remove_beat(index)
-        var adj_index = if (index == null) {
-            -1
-        } else {
-            index
-        }
-        this.remap_links(this::rh_remove_beat, listOf(adj_index))
+        this.remap_links(this::rh_remove_beat, listOf(index))
     }
 
     private fun rh_remove_beat(beat: BeatKey, args: List<Int>): BeatKey? {
         var index = args[0]
-        var new_beat: BeatKey
-
-        if (beat.beat >= index) {
-            new_beat = BeatKey(beat.channel, beat.line_offset, beat.beat - 1)
+        var new_beat = if (beat.beat >= index) {
+            BeatKey(beat.channel, beat.line_offset, beat.beat - 1)
         } else {
-            new_beat = beat
+            beat
         }
 
         return new_beat

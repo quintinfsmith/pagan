@@ -691,7 +691,7 @@ class MainFragment : Fragment() {
             true
         )
 
-        opus_manager.set_event(beat_key, cursor.position, event)
+        this.set_event(beat_key, cursor.position, event)
 
         val note = opus_manager.get_absolute_value(beat_key, cursor.get_position())
         if (note != null) {
@@ -699,6 +699,13 @@ class MainFragment : Fragment() {
         }
 
         main.tick()
+    }
+
+    // Wrapper around the OpusManager::set_event(). needed in order to validate proceding events
+    private fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEvent) {
+        var main = this.getMain()
+        val opus_manager = main.getOpusManager()
+        opus_manager.set_event(beat_key, position, event)
     }
 
     private fun interact_btnSplit(view: View) {

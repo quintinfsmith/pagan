@@ -332,8 +332,8 @@ open class HistoryLayer() : CursorLayer() {
         super.insert_beat(index)
     }
 
-    override fun remove_beat(index: Int?) {
-        this.push_insert_beat(index ?: (this.opus_beat_count - 1), this.get_channel_line_counts())
+    override fun remove_beat(index: Int) {
+        this.push_insert_beat(index, this.get_channel_line_counts())
         super.remove_beat(index)
     }
 

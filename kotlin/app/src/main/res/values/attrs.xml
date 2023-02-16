@@ -19,6 +19,7 @@
     <declare-styleable name="leaf">
         <attr name="state_focused" format="boolean" />
         <attr name="state_reflected" format="boolean" />
+        <attr name="state_invalid" format="boolean" />
 
         <!-- No foreground to color on inactive leafs
         <attr name="leaf_fg_default" format="color" />

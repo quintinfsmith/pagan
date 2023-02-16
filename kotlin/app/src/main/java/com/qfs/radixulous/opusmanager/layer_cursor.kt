@@ -397,7 +397,7 @@ open class CursorLayer() : FlagLayer() {
         this.get_cursor().settle()
     }
 
-    override fun remove_beat(index: Int?) {
+    override fun remove_beat(index: Int) {
         super.remove_beat(index)
         this.get_cursor().settle()
     }

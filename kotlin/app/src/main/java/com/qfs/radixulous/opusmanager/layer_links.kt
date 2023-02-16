@@ -188,49 +188,6 @@ open class LinksLayer() : AbsoluteValueLayer() {
         return new_beat
     }
 
-    override fun move_line(channel: Int, old_index: Int, new_index: Int) {
-        super.move_line(channel, old_index, new_index)
-
-        this.remap_links(this::rh_move_line, listOf(channel, old_index, new_index))
-    }
-
-    private fun rh_move_line(beat: BeatKey, args: List<Int>): BeatKey? {
-        var channel = args[0]
-        var old_index = args[1]
-        var new_index = args[2]
-
-        var new_beat = beat
-        if (beat.channel == channel) {
-            if (beat.line_offset == old_index) {
-                new_beat = BeatKey(beat.channel, new_index, beat.beat)
-            } else if (old_index < beat.line_offset && beat.line_offset < new_index) {
-                new_beat = BeatKey(beat.channel, beat.line_offset - 1, beat.beat)
-            }
-        }
-        return new_beat
-    }
-
-    override fun insert_beat(index: Int?) {
-        super.insert_beat(index)
-
-        var index_remap: Int = index ?: this.opus_beat_count
-        this.remap_links(this::rh_insert_beat, listOf(index_remap))
-    }
-
-    private fun rh_insert_beat(beat: BeatKey, args: List<Int>): BeatKey? {
-        var index = args[0]
-        var new_beat = if (beat.beat >= index) {
-            BeatKey(beat.channel, beat.line_offset, beat.beat + 1)
-        } else {
-            beat
-        }
-        return new_beat
-    }
-
-    override fun remove_beat(index: Int) {
-        super.remove_beat(index)
-        this.remap_links(this::rh_remove_beat, listOf(index))
-    }
 
     private fun rh_remove_beat(beat: BeatKey, args: List<Int>): BeatKey? {
         var index = args[0]
@@ -256,9 +213,6 @@ open class LinksLayer() : AbsoluteValueLayer() {
         }
     }
 
-    override fun remove_line(channel: Int, line_offset: Int?) {
-        super.remove_line(channel, line_offset)
-    }
     private fun rh_remove_line(beat: BeatKey, args: List<Int>): BeatKey? {
         var channel = args[0]
         var line_offset = args[1]
@@ -273,23 +227,6 @@ open class LinksLayer() : AbsoluteValueLayer() {
         return new_beat
     }
 
-    override fun swap_channels(channel_a: Int, channel_b: Int) {
-        super.swap_channels(channel_a, channel_b)
-        this.remap_links(this::rh_swap_channels, listOf(channel_a, channel_b))
-    }
-    private fun rh_swap_channels(beat: BeatKey, args: List<Int>): BeatKey? {
-        return when (beat.channel) {
-            args[0] -> {
-                BeatKey(args[1], beat.line_offset, beat.beat)
-            }
-            args[1] -> {
-                BeatKey(args[0], beat.line_offset, beat.beat)
-            }
-            else -> {
-                beat
-            }
-        }
-    }
     fun get_reflected(channel: Int, line_offset: Int, beat: Int): BeatKey? {
         return this.linked_beat_map[BeatKey(channel, line_offset, beat)]
     }

@@ -105,27 +105,6 @@ open class FlagLayer : LinksLayer() {
         this.cache.flag_beat_change(beat_key)
     }
 
-    override fun swap_channels(channel_a: Int, channel_b: Int) {
-        super.swap_channels(channel_a, channel_b)
-        val len_a = this.channels[channel_a].size
-        val len_b = this.channels[channel_b].size
-        for (i in 0 until len_b) {
-            this.cache.flag_line_pop(channel_a, len_b - 1 - i)
-        }
-
-        for (i in 0 until len_a) {
-            this.cache.flag_line_pop(channel_b, len_a - 1 - i)
-        }
-
-        for (i in 0 until len_b) {
-            this.cache.flag_line_new(channel_b, i)
-        }
-
-        for (i in 0 until len_a) {
-            this.cache.flag_line_new(channel_a, i)
-        }
-    }
-
     override fun new() {
         super.new()
         this.reflag()
@@ -194,9 +173,9 @@ open class FlagLayer : LinksLayer() {
         this.cache.flag_beat_pop(beat_index)
     }
 
-    override fun remove_line(channel: Int, index: Int?) {
+    override fun remove_line(channel: Int, index: Int) {
         super.remove_line(channel, index)
-        this.cache.flag_line_pop(channel, index ?: this.channels[channel].size)
+        this.cache.flag_line_pop(channel, index)
     }
 
     //override fun link_beats(beat_key: BeatKey, target: BeatKey) {

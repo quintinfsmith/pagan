@@ -368,7 +368,7 @@ class MainActivity : AppCompatActivity() {
     fun export_midi() {
         val opus_manager = this.getOpusManager()
 
-        var name = opus_manager.get_working_dir()
+        var name = opus_manager.path
         if (name != null) {
             name = name.substring(name.lastIndexOf("/") + 1)
             name = name.substring(0, name.lastIndexOf("."))

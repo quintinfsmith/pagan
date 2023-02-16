@@ -240,7 +240,6 @@ open class CursorLayer() : FlagLayer() {
     }
 
     fun remove_line_at_cursor() {
-        var cursor_y = this.get_cursor().get_y()
         var beat_key = this.get_cursor().get_beatkey()
         this.remove_line(beat_key.channel, beat_key.line_offset)
 
@@ -419,36 +418,18 @@ open class CursorLayer() : FlagLayer() {
         this.get_cursor().settle()
     }
 
-    override fun swap_channels(channel_a: Int, channel_b: Int) {
-        var original_beatkey = this.get_cursor().get_beatkey()
-        super.swap_channels(channel_a, channel_b)
-
-        var new_y = this.get_y(original_beatkey.channel, 0)
-        new_y += min(original_beatkey.line_offset, this.channels[original_beatkey.channel].size - 1)
-
-        this.get_cursor().set_y(new_y)
-        this.get_cursor().settle()
-    }
-
     override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
         super.split_tree(beat_key, position, splits)
         this.get_cursor().position.add(0)
     }
 
-    override fun remove_line(channel: Int, index: Int?) {
+    override fun remove_line(channel: Int, index: Int) {
         var cursor = this.get_cursor()
         var beat_key = cursor.get_beatkey()
-        var abs_index = if (index == null) {
-            this.channels[channel].size - 1
-        } else if (index < 0) {
-            this.channels[channel].size + index
-        } else {
-            index
-        }
 
         super.remove_line(channel, index)
 
-        if (channel < beat_key.channel || (channel == beat_key.channel && abs_index <= beat_key.line_offset)) {
+        if (channel < beat_key.channel || (channel == beat_key.channel && index <= beat_key.line_offset)) {
             this.cursor_up()
         }
     }

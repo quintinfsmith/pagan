@@ -76,14 +76,6 @@ open class BlockerLayer(): HistoryLayer() {
         super.replace_tree(beat_key, position, tree)
     }
 
-    override fun swap_channels(channel_a: Int, channel_b: Int) {
-        if (channel_a == channel_b) {
-            Log.e("blocker", "inane event blocked")
-            return
-        }
-        super.swap_channels(channel_a, channel_b)
-    }
-
     override fun set_beat_count(new_count: Int) {
         if (new_count == this.opus_beat_count) {
             Log.e("blocker", "inane event blocked")

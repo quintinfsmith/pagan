@@ -197,11 +197,6 @@ open class HistoryLayer() : CursorLayer() {
                     var beat_key = this.history_cache.get_beatkey()
                     this.replace_beat(beat_key, beat)
                 }
-                "swap_channels" -> {
-                    var channel_b = this.history_cache.get_int()
-                    var channel_a = this.history_cache.get_int()
-                    this.swap_channels(channel_a, channel_b)
-                }
                 "remove_line" -> {
                     var line_offset = this.history_cache.get_int()
                     var channel = this.history_cache.get_int()
@@ -295,19 +290,14 @@ open class HistoryLayer() : CursorLayer() {
         super.overwrite_beat(old_beat, new_beat)
     }
 
-    open override fun swap_channels(channel_a: Int, channel_b: Int) {
-        this.push_swap_channels(channel_a, channel_b)
-        super.swap_channels(channel_a, channel_b)
-    }
-
     open override fun new_line(channel: Int, index: Int?): List<OpusTree<OpusEvent>> {
         var output = super.new_line(channel, index)
         this.push_remove_line(channel, index ?: (this.channels[channel].size - 1))
         return output
     }
 
-    open override fun remove_line(channel: Int, line_offset: Int?) {
-        this.push_new_line(channel, line_offset ?: (this.channels[channel].size - 1))
+    open override fun remove_line(channel: Int, line_offset: Int) {
+        this.push_new_line(channel, line_offset)
         super.remove_line(channel, line_offset)
     }
 
@@ -456,13 +446,6 @@ open class HistoryLayer() : CursorLayer() {
         if (this.history_cache.append_undoer_key("remove_line")) {
             this.history_cache.add_int(channel)
             this.history_cache.add_int(index)
-        }
-    }
-
-    fun push_swap_channels(channel_a: Int, channel_b: Int) {
-        if (this.history_cache.append_undoer_key("swap_channels")) {
-            this.history_cache.add_int(channel_a)
-            this.history_cache.add_int(channel_b)
         }
     }
 

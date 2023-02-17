@@ -4,16 +4,13 @@ import android.os.Bundle
 import android.util.Log
 import android.view.*
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
-import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.*
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResultListener
 import com.qfs.radixulous.databinding.FragmentMainBinding
 import com.qfs.radixulous.opusmanager.BeatKey
 import com.qfs.radixulous.opusmanager.OpusEvent
 import com.qfs.radixulous.opusmanager.HistoryLayer as OpusManager
-import kotlin.math.abs
 
 /**
  * A simple [Fragment] subclass as the default destination in the navigation.

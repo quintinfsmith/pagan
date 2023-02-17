@@ -3,6 +3,7 @@ package com.qfs.radixulous
 import android.content.Context
 import android.util.AttributeSet
 import android.util.Log
+import android.view.Gravity
 import android.view.Gravity.CENTER
 import android.view.ViewGroup
 import android.widget.LinearLayout
@@ -32,31 +33,38 @@ class NumberSelector: LinearLayout {
 
     override fun onLayout(isChanged: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         super.onLayout(isChanged, left, top, right, bottom)
-        if (this.childCount == 0) {
-            return
-        }
+        if (this.childCount > 0) {
+            val scale = resources.displayMetrics.density
+            var margin = (2 * scale + 0.5f).toInt()
 
-        val scale = resources.displayMetrics.density
-        var margin = (2 * scale + 0.5f).toInt()
+            var available_space = ((right - left) - (this.paddingLeft + this.paddingRight))
+            available_space -= (this.childCount - 1) * margin
 
-        var available_space = ((right - left) - (this.paddingLeft + this.paddingRight))
-        available_space -= (this.childCount - 1) * margin
+            var width = available_space / this.childCount
+            var remainder = available_space % this.childCount
+            var total_width = 0
 
-        var width = available_space / this.childCount
-        var remainder = available_space % this.childCount
+            for (i in 0 until this.childCount) {
+                var view = this.getChildAt(i)
+                var working_width = width
 
-        for (i in 0 until this.childCount) {
-            var view = this.getChildAt(i)
-            val param = view!!.layoutParams as ViewGroup.MarginLayoutParams
-            param.width = width
-            param.setMargins(0, 0, margin, 0)
-            if (remainder > 0) {
-                param.width += 1
-                remainder -= 1
+                if (remainder > 0) {
+                    working_width += 1
+                    remainder -= 1
+                }
+
+                var offset = this.paddingLeft + (i * margin) + total_width
+                view.layout(
+                    offset,
+                    0,
+                    offset + working_width,
+                    bottom - top
+                )
+
+                total_width += working_width
             }
-            // TODO: This, the right way. i'm getting warnings
-            //view.requestLayout()
         }
+
     }
 
     fun getState(): Int? {
@@ -157,14 +165,15 @@ class NumberSelector: LinearLayout {
 class NumberSelectorButton: androidx.appcompat.widget.AppCompatTextView {
     var numberSelector: NumberSelector
     var value: Int
+    var bkp_text: String
     private val STATE_ACTIVE = intArrayOf(R.attr.state_active)
     var state_active: Boolean = false
     constructor(numberSelector: NumberSelector, value: Int): super(ContextThemeWrapper(numberSelector.context, R.style.numberSelector)) {
         // TODO: Handle any radix
         this.numberSelector = numberSelector
         this.value = value
-        this.text = "${get_number_string(this.value, 12,2)}"
-        this.gravity = CENTER
+        this.bkp_text = "${get_number_string(this.value, 12,2)}"
+        this.text = this.bkp_text
 
         this.setOnClickListener {
             this.numberSelector.set_active_button(this)
@@ -178,6 +187,13 @@ class NumberSelectorButton: androidx.appcompat.widget.AppCompatTextView {
             mergeDrawableStates(drawableState, STATE_ACTIVE)
         }
         return drawableState
+    }
+
+
+    override fun onLayout(isChanged: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
+        super.onLayout(isChanged, left, top, right, bottom)
+        this.text = this.bkp_text
+        this.gravity = CENTER
     }
 
     fun setActive(value: Boolean) {

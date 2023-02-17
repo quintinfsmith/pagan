@@ -33,6 +33,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.qfs.radixulous.apres.*
 import com.qfs.radixulous.databinding.ActivityMainBinding
 import com.qfs.radixulous.opusmanager.BeatKey
+import com.qfs.radixulous.opusmanager.FlagOperation
 import com.qfs.radixulous.opusmanager.UpdateFlag
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -43,7 +44,6 @@ import java.io.File
 import java.io.FileOutputStream
 import kotlin.concurrent.thread
 import com.qfs.radixulous.opusmanager.HistoryLayer as OpusManager
-
 
 enum class ContextMenu {
     Leaf,
@@ -477,18 +477,12 @@ class MainActivity : AppCompatActivity() {
 
             val updated_beats: MutableSet<Int> = mutableSetOf()
             var min_changed_beat = opus_manager.opus_beat_count
-
+            var validate_count = 0
             while (true) {
                 when (opus_manager.fetch_next_flag()) {
                     UpdateFlag.AbsVal -> {
-                        val (beatkey, position) = opus_manager.fetch_flag_absolute_value() ?: break
-                        if (main_fragment !is MainFragment) {
-                            continue
-                        }
-                        var y = opus_manager.get_y(beatkey.channel, beatkey.line_offset)
-
-                        var abs_value = opus_manager.get_absolute_value(beatkey, position) ?: continue
-                        main_fragment.validate_leaf(y, beatkey.beat, position, abs_value in 0..95)
+                        //Validation has to happen after all beat updates
+                        validate_count += 1
                     }
                     UpdateFlag.Beat -> {
                         val (index, operation) = opus_manager.fetch_flag_beat() ?: break
@@ -498,11 +492,11 @@ class MainActivity : AppCompatActivity() {
                             continue
                         }
                         when (operation) {
-                            1 -> {
+                            FlagOperation.New -> {
                                 main_fragment.beat_new(index)
                                 updated_beats.add(index)
                             }
-                            0 -> {
+                            FlagOperation.Pop -> {
                                 main_fragment.beat_remove(index)
                             }
                         }
@@ -529,7 +523,7 @@ class MainActivity : AppCompatActivity() {
                         }
 
                         when (line_flag.operation) {
-                            0 -> {
+                            FlagOperation.Pop -> {
                                 val counts = opus_manager.get_channel_line_counts()
                                 var y = 0
                                 for (i in 0 until line_flag.channel) {
@@ -537,7 +531,7 @@ class MainActivity : AppCompatActivity() {
                                 }
                                 main_fragment.line_remove(y + line_flag.line)
                             }
-                            1 -> {
+                            FlagOperation.New -> {
                                 val y = opus_manager.get_y(line_flag.channel, line_flag.line)
                                 main_fragment.line_new(y, line_flag.beat_count)
                             }
@@ -565,6 +559,18 @@ class MainActivity : AppCompatActivity() {
                 for (b in updated_beats) {
                     main_fragment.update_column_label_size(b)
                 }
+
+            }
+
+            for (i in 0 until validate_count) {
+                val (beatkey, position) = opus_manager.fetch_flag_absolute_value() ?: break
+                if (main_fragment !is MainFragment) {
+                    continue
+                }
+                var y = opus_manager.get_y(beatkey.channel, beatkey.line_offset)
+
+                var abs_value = opus_manager.get_absolute_value(beatkey, position) ?: continue
+                main_fragment.validate_leaf(y, beatkey.beat, position, abs_value in 0..95)
 
             }
 

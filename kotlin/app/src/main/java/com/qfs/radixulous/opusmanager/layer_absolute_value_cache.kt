@@ -1,5 +1,6 @@
 package com.qfs.radixulous.opusmanager
 
+import android.util.Log
 import com.qfs.radixulous.structure.OpusTree
 
 open class AbsoluteValueLayer: OpusManagerBase() {
@@ -257,6 +258,7 @@ open class AbsoluteValueLayer: OpusManagerBase() {
                 var next: Pair<BeatKey, List<Int>>? = Pair(key, position)
                 while (next != null) {
                     var working_leaf = this.get_tree(next.first, next.second)
+
                     if (working_leaf.is_event()) {
                         var event = working_leaf.get_event()!!
                         if (event.relative) {
@@ -268,9 +270,9 @@ open class AbsoluteValueLayer: OpusManagerBase() {
                         } else {
                             working_value = event.note
                         }
+                        this.decache_absolute_value(next.first, next.second)
                         this.cache_absolute_value(next.first, next.second, working_value)
                     }
-
                     next = this.get_proceding_leaf_position(next.first, next.second)
                 }
             }

@@ -64,7 +64,6 @@ class NumberSelector: LinearLayout {
                 total_width += working_width
             }
         }
-
     }
 
     fun getState(): Int? {

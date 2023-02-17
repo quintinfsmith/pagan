@@ -1,7 +1,6 @@
 package com.qfs.radixulous
 
 import android.os.Bundle
-import android.util.Log
 import android.view.*
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.*
@@ -270,7 +269,6 @@ class MainFragment : Fragment() {
             param.gravity = Gravity.CENTER
             param.height = MATCH_PARENT
             tvLeaf.setLayoutParams(param)
-            Log.e("AAA", "$y, $x")
             this.cache.cacheTree(tvLeaf, y, x, position)
             return tvLeaf
         } else {
@@ -383,8 +381,13 @@ class MainFragment : Fragment() {
                     btnUnLink.setOnClickListener {
                         this.interact_btnUnlink(it)
                     }
-                    btnUnLinkAll.setOnClickListener {
-                        this.interact_btnUnlinkAll(it)
+                    if (opus_manager.get_all_linked(cursor_key).size == 2) {
+                        btnUnLinkAll.visibility = View.GONE
+                    } else {
+
+                        btnUnLinkAll.setOnClickListener {
+                            this.interact_btnUnlinkAll(it)
+                        }
                     }
                 } else {
                     btnUnLink.visibility = View.GONE

@@ -8,10 +8,14 @@ enum class UpdateFlag {
     Line,
     AbsVal
 }
-data class LineFlag(var channel: Int, var line: Int, var beat_count: Int, var operation: Int) {}
+enum class FlagOperation {
+    Pop,
+    New
+}
+data class LineFlag(var channel: Int, var line: Int, var beat_count: Int, var operation: FlagOperation) {}
 class UpdatesCache {
     var order_queue: MutableList<UpdateFlag> = mutableListOf()
-    private var beat_flag: MutableList<Pair<Int, Int>> = mutableListOf()
+    private var beat_flag: MutableList<Pair<Int, FlagOperation>> = mutableListOf()
     private var beat_change: MutableList<BeatKey> = mutableListOf()
     private var line_flag: MutableList<LineFlag> = mutableListOf()
     private var absolute_value_flag: MutableList<Pair<BeatKey, List<Int>>> = mutableListOf()
@@ -31,7 +35,7 @@ class UpdatesCache {
             this.line_flag.removeFirst()
         }
     }
-    fun dequeue_beat(): Pair<Int, Int>? {
+    fun dequeue_beat(): Pair<Int, FlagOperation>? {
         return if (this.beat_flag.isEmpty()) {
             null
         } else {
@@ -56,11 +60,11 @@ class UpdatesCache {
 
     fun flag_beat_pop(index: Int) {
         this.order_queue.add(UpdateFlag.Beat)
-        this.beat_flag.add(Pair(index, 0))
+        this.beat_flag.add(Pair(index, FlagOperation.Pop))
     }
     fun flag_beat_new(index: Int) {
         this.order_queue.add(UpdateFlag.Beat)
-        this.beat_flag.add(Pair(index, 1))
+        this.beat_flag.add(Pair(index, FlagOperation.New))
     }
     fun flag_beat_change(beat_key: BeatKey) {
         this.order_queue.add(UpdateFlag.BeatMod)
@@ -68,11 +72,11 @@ class UpdatesCache {
     }
     fun flag_line_pop(channel: Int, line_offset: Int) {
         this.order_queue.add(UpdateFlag.Line)
-        this.line_flag.add(LineFlag(channel, line_offset, 0, 0))
+        this.line_flag.add(LineFlag(channel, line_offset, 0, FlagOperation.Pop))
     }
     fun flag_line_new(channel: Int, line_offset: Int, beat_count: Int) {
         this.order_queue.add(UpdateFlag.Line)
-        this.line_flag.add(LineFlag(channel, line_offset, beat_count, 1))
+        this.line_flag.add(LineFlag(channel, line_offset, beat_count, FlagOperation.New))
     }
     fun flag_absolute_value(beatkey: BeatKey, position: List<Int>) {
         this.order_queue.add(UpdateFlag.AbsVal)
@@ -97,7 +101,7 @@ open class FlagLayer : LinksLayer() {
         return this.cache.dequeue_line()
     }
 
-    fun fetch_flag_beat(): Pair<Int, Int>? {
+    fun fetch_flag_beat(): Pair<Int, FlagOperation>? {
         return this.cache.dequeue_beat()
     }
 
@@ -215,7 +219,7 @@ open class FlagLayer : LinksLayer() {
 
     override fun unlink_beat(beat_key: BeatKey) {
         this.cache.flag_beat_change(beat_key)
-        var target_key = this.linked_beat_map.get(beat_key)
+        var target_key = this.linked_beat_map[beat_key]
         if (target_key != null) {
             this.cache.flag_beat_change(target_key!!)
         }

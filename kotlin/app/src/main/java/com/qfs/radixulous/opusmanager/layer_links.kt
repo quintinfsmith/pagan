@@ -5,12 +5,6 @@ open class LinksLayer() : AbsoluteValueLayer() {
     var linked_beat_map: HashMap<BeatKey, BeatKey> = HashMap<BeatKey, BeatKey>()
     var inv_linked_beat_map: HashMap<BeatKey, MutableList<BeatKey>> = HashMap<BeatKey, MutableList<BeatKey>>()
 
-    override fun reset() {
-        this.linked_beat_map.clear()
-        this.inv_linked_beat_map.clear()
-        super.reset()
-    }
-
     open fun unlink_beat(beat_key: BeatKey) {
         if (! this.linked_beat_map.containsKey(beat_key)) {
            return
@@ -243,38 +237,6 @@ open class LinksLayer() : AbsoluteValueLayer() {
         return this.linked_beat_map.containsKey(BeatKey(channel, line_offset, beat)) || this.inv_linked_beat_map.containsKey(BeatKey(channel, line_offset, beat))
     }
 
-    override fun load_folder(path: String) {
-        super.load_folder(path)
-        var file = File("${this.path}/linkedbeats.json")
-        if (! file.isFile()) {
-            return
-        }
-        var json_patt = ".*?\"(?<a>\\d*)\\.(?<b>\\d*)\\.(?<c>\\d*)\".*?:.*?\\[(?<d>\\d*),(?<e>\\d*),(?<f>\\d*)\\]".toRegex()
-        var content = file.readText()
-        content = content.replace(" ", "")
-        content = content.replace("\t", "")
-
-        for (hit in json_patt.findAll(content)) {
-            var key_beat = BeatKey(
-                hit.groups[1]!!.value.toInt(),
-                hit.groups[2]!!.value.toInt(),
-                hit.groups[3]!!.value.toInt()
-            )
-            var target_beat = BeatKey(
-                hit.groups[4]!!.value.toInt(),
-                hit.groups[5]!!.value.toInt(),
-                hit.groups[6]!!.value.toInt()
-            )
-            this.linked_beat_map[key_beat] = target_beat
-        }
-
-        for ((beat, target) in this.linked_beat_map) {
-            if (!this.inv_linked_beat_map.containsKey(target)) {
-                this.inv_linked_beat_map[target] = mutableListOf()
-            }
-            this.inv_linked_beat_map[target]!!.add(beat)
-        }
-    }
 
     override fun load_json(json_data: LoadedJSONData) {
         super.load_json(json_data)

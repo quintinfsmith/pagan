@@ -32,6 +32,9 @@ class NumberSelector: LinearLayout {
 
     override fun onLayout(isChanged: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         super.onLayout(isChanged, left, top, right, bottom)
+        if (this.childCount == 0) {
+            return
+        }
 
         val scale = resources.displayMetrics.density
         var margin = (2 * scale + 0.5f).toInt()
@@ -52,7 +55,7 @@ class NumberSelector: LinearLayout {
                 remainder -= 1
             }
             // TODO: This, the right way. i'm getting warnings
-            view.requestLayout()
+            //view.requestLayout()
         }
     }
 

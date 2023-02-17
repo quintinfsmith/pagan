@@ -1,5 +1,6 @@
 package com.qfs.radixulous.opusmanager
 
+import android.util.Log
 import com.qfs.radixulous.structure.OpusTree
 import kotlinx.serialization.Serializable
 import java.lang.Integer.max
@@ -11,7 +12,7 @@ data class OpusEvent(var note: Int, var radix: Int, var channel: Int, var relati
 data class BeatKey(var channel: Int, var line_offset: Int, var beat: Int)
 
 class OpusChannel() {
-    private var lines: MutableList<MutableList<OpusTree<OpusEvent>>> = mutableListOf()
+    var lines: MutableList<MutableList<OpusTree<OpusEvent>>> = mutableListOf()
     var midi_instrument: Int = 1
     var midi_channel: Int = 0
     var beat_count: Int = 0

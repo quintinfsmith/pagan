@@ -149,11 +149,6 @@ class HistoryCache() {
 open class HistoryLayer() : CursorLayer() {
     var history_cache = HistoryCache()
 
-    override fun reset() {
-        this.history_cache.clear()
-        super.reset()
-    }
-
     open fun apply_undo() {
         if (this.history_cache.isEmpty()) {
             return

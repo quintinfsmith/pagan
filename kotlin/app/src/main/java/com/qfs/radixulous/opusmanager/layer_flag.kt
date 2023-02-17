@@ -1,14 +1,30 @@
 package com.qfs.radixulous.opusmanager
 import android.util.Log
 import com.qfs.radixulous.structure.OpusTree
-
+import java.lang.Integer.max
+enum class UpdateFlag {
+    Beat,
+    BeatMod,
+    Line,
+    AbsVal
+}
+data class LineFlag(var channel: Int, var line: Int, var beat_count: Int, var operation: Int) {}
 class UpdatesCache {
+    var order_queue: MutableList<UpdateFlag> = mutableListOf()
     private var beat_flag: MutableList<Pair<Int, Int>> = mutableListOf()
     private var beat_change: MutableList<BeatKey> = mutableListOf()
-    private var line_flag: MutableList<Triple<Int, Int, Int>> = mutableListOf()
+    private var line_flag: MutableList<LineFlag> = mutableListOf()
     private var absolute_value_flag: MutableList<Pair<BeatKey, List<Int>>> = mutableListOf()
 
-    fun dequeue_line(): Triple<Int, Int, Int>? {
+    fun dequeue_order_flag(): UpdateFlag? {
+        return if (this.order_queue.isEmpty()) {
+            null
+        } else {
+            this.order_queue.removeFirst()
+        }
+    }
+
+    fun dequeue_line(): LineFlag? {
         return if (this.line_flag.isEmpty()) {
             null
         } else {
@@ -39,27 +55,31 @@ class UpdatesCache {
     }
 
     fun flag_beat_pop(index: Int) {
+        this.order_queue.add(UpdateFlag.Beat)
         this.beat_flag.add(Pair(index, 0))
     }
     fun flag_beat_new(index: Int) {
+        this.order_queue.add(UpdateFlag.Beat)
         this.beat_flag.add(Pair(index, 1))
     }
     fun flag_beat_change(beat_key: BeatKey) {
+        this.order_queue.add(UpdateFlag.BeatMod)
         this.beat_change.add(beat_key)
     }
     fun flag_line_pop(channel: Int, line_offset: Int) {
-        this.line_flag.add(Triple(channel, line_offset, 0))
+        this.order_queue.add(UpdateFlag.Line)
+        this.line_flag.add(LineFlag(channel, line_offset, 0, 0))
     }
-    fun flag_line_new(channel: Int, line_offset: Int) {
-        this.line_flag.add(Triple(channel, line_offset, 1))
-    }
-    fun flag_line_init(channel: Int, line_offset: Int) {
-        this.line_flag.add(Triple(channel, line_offset, 2))
+    fun flag_line_new(channel: Int, line_offset: Int, beat_count: Int) {
+        this.order_queue.add(UpdateFlag.Line)
+        this.line_flag.add(LineFlag(channel, line_offset, beat_count, 1))
     }
     fun flag_absolute_value(beatkey: BeatKey, position: List<Int>) {
+        this.order_queue.add(UpdateFlag.AbsVal)
         this.absolute_value_flag.add(Pair(beatkey, position))
     }
     fun purge() {
+        this.order_queue.clear()
         this.beat_flag.clear()
         this.beat_change.clear()
         this.line_flag.clear()
@@ -70,12 +90,10 @@ class UpdatesCache {
 open class FlagLayer : LinksLayer() {
     private var cache = UpdatesCache()
 
-    override fun reset() {
-        this.cache.purge()
-        super.reset()
+    fun fetch_next_flag(): UpdateFlag? {
+        return this.cache.dequeue_order_flag()
     }
-
-    fun fetch_flag_line(): Triple<Int, Int, Int>? {
+    fun fetch_flag_line(): LineFlag? {
         return this.cache.dequeue_line()
     }
 
@@ -123,21 +141,16 @@ open class FlagLayer : LinksLayer() {
         this.cache.flag_beat_change(beat_key)
     }
 
-    override fun new() {
-        super.new()
-        this.reflag()
-    }
-
-    override fun load(path: String) {
-        super.load(path)
-        this.reflag()
-    }
-
-    fun reflag() {
+    override fun purge_cache() {
         this.cache.purge()
+        super.purge_cache()
+    }
+
+    override fun reset_cache() {
+        super.reset_cache()
         for (i in 0 until this.channels.size) {
             for (j in 0 until this.channels[i].size) {
-                this.cache.flag_line_init(i, j)
+                this.cache.flag_line_new(i, j, 0)
             }
         }
         for (x in 0 until this.opus_beat_count) {
@@ -146,6 +159,7 @@ open class FlagLayer : LinksLayer() {
     }
 
     override fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEvent) {
+
         super.set_event(beat_key, position, event)
         this.cache.flag_beat_change(beat_key)
     }
@@ -161,18 +175,15 @@ open class FlagLayer : LinksLayer() {
     }
 
     override fun insert_beat(index: Int?) {
-        val orig_index: Int = index ?: (this.opus_beat_count - 1)
-
         super.insert_beat(index)
-
-        this.cache.flag_beat_new(orig_index)
+        this.cache.flag_beat_new(index ?: this.opus_beat_count - 1)
     }
 
     override fun new_line(channel: Int, index: Int?): List<OpusTree<OpusEvent>> {
         var output = super.new_line(channel, index)
 
         val line_index = index ?: (this.channels[channel].size - 1)
-        this.cache.flag_line_new(channel, line_index)
+        this.cache.flag_line_new(channel, line_index, this.opus_beat_count)
 
         for (i in 0 until this.opus_beat_count)     {
             this.cache.flag_beat_change(BeatKey(channel, line_index, i))

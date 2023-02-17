@@ -37,6 +37,7 @@ class LoadFragment : Fragment() {
         return binding.root
 
     }
+
     private fun getMain(): MainActivity {
         return this.activity!! as MainActivity
     }
@@ -85,7 +86,6 @@ class LoadFragment : Fragment() {
             }
         }
     }
-
 
     fun load_project(path: String, title: String) {
         setFragmentResult("LOAD", bundleOf(Pair("PATH", path)))

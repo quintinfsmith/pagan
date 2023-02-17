@@ -1,6 +1,7 @@
 package com.qfs.radixulous
 
 import android.os.Bundle
+import android.util.Log
 import android.view.*
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
@@ -26,6 +27,8 @@ class MainFragment : Fragment() {
 
     private var _binding: FragmentMainBinding? = null
     private var cache = ViewCache()
+
+    private var block_default_return = false
 
     // This property is only valid between onCreateView and
     // onDestroyView.
@@ -62,6 +65,7 @@ class MainFragment : Fragment() {
         }
 
         setFragmentResultListener("LOAD") { _, bundle: Bundle? ->
+            this.block_default_return = true
             val main = this.getMain()
 
             bundle!!.getString("PATH")?.let { path: String ->
@@ -78,9 +82,14 @@ class MainFragment : Fragment() {
         }
 
         setFragmentResultListener("RETURNED") { _, bundle: Bundle? ->
+            if (this.block_default_return) {
+                this.block_default_return = false
+                return@setFragmentResultListener
+            }
+
             val main = this.getMain()
             this.takedownCurrent()
-            main.getOpusManager().reflag()
+            main.getOpusManager().reset_cache()
             main.update_title_text()
 
             this.setContextMenu(ContextMenu.Leaf)
@@ -126,7 +135,6 @@ class MainFragment : Fragment() {
     private fun getMain(): MainActivity {
         return this.activity!! as MainActivity
     }
-
 
     fun undo() {
         var main = this.getMain()
@@ -265,7 +273,7 @@ class MainFragment : Fragment() {
             param.gravity = Gravity.CENTER
             param.height = MATCH_PARENT
             tvLeaf.setLayoutParams(param)
-
+            Log.e("AAA", "$y, $x")
             this.cache.cacheTree(tvLeaf, y, x, position)
             return tvLeaf
         } else {
@@ -1111,7 +1119,6 @@ class MainFragment : Fragment() {
                 rowView,
                 false
             ) as ViewGroup
-
             rowView.addView(new_wrapper, index)
             this.buildTreeView(new_wrapper, y, index, listOf())
         }
@@ -1156,7 +1163,7 @@ class MainFragment : Fragment() {
     //        var wrapper = line.getChildAt(beat)
     //        wrapper.setBackgroundColor(
     //            ContextCompat.getColor(
-    //                wrapper.context,
+    //                wrapper.context
     //                if (beat % 2 == 0) {
     //                    R.color.column_even
     //                } else {
@@ -1224,7 +1231,7 @@ class MainFragment : Fragment() {
     }
 
     fun validate_leaf(y: Int, x: Int, position: List<Int>, valid: Boolean) {
-        var view = this.cache.getTreeView(y, x, position) ?: return
+        val view = this.cache.getTreeView(y, x, position) ?: return
         if (view is LeafButton) {
             view.setInvalid(!valid)
         }

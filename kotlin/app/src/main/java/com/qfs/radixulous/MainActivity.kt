@@ -13,6 +13,7 @@ import android.text.Editable
 import android.text.InputFilter
 import android.text.Spanned
 import android.text.TextWatcher
+import android.util.Log
 import android.view.*
 import android.widget.EditText
 import android.widget.LinearLayout
@@ -32,6 +33,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.qfs.radixulous.apres.*
 import com.qfs.radixulous.databinding.ActivityMainBinding
 import com.qfs.radixulous.opusmanager.BeatKey
+import com.qfs.radixulous.opusmanager.UpdateFlag
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.serialization.decodeFromString
@@ -463,126 +465,111 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun tick() {
+        /*
+        TODO: break this function up. Only a monolith since changing to handle all flags in
+            the exact order they were created
+         */
         if (!this.ticking) {
             this.ticking = true
+            val opus_manager = this.getOpusManager()
+            val main_fragment = this.getActiveFragment()
             this.tick_unapply_focus()
-            this.tick_manage_lines()
-            this.tick_manage_beats() // new/pop
-            this.tick_update_beats() // changes
-            this.tick_validate_leafs()
+
+            val updated_beats: MutableSet<Int> = mutableSetOf()
+            var min_changed_beat = opus_manager.opus_beat_count
+
+            while (true) {
+                when (opus_manager.fetch_next_flag()) {
+                    UpdateFlag.AbsVal -> {
+                        val (beatkey, position) = opus_manager.fetch_flag_absolute_value() ?: break
+                        if (main_fragment !is MainFragment) {
+                            continue
+                        }
+                        var y = opus_manager.get_y(beatkey.channel, beatkey.line_offset)
+
+                        var abs_value = opus_manager.get_absolute_value(beatkey, position) ?: continue
+                        main_fragment.validate_leaf(y, beatkey.beat, position, abs_value in 0..95)
+                    }
+                    UpdateFlag.Beat -> {
+                        val (index, operation) = opus_manager.fetch_flag_beat() ?: break
+                        min_changed_beat = Integer.min(min_changed_beat, index)
+
+                        if (main_fragment !is MainFragment) {
+                            continue
+                        }
+                        when (operation) {
+                            1 -> {
+                                main_fragment.beat_new(index)
+                                updated_beats.add(index)
+                            }
+                            0 -> {
+                                main_fragment.beat_remove(index)
+                            }
+                        }
+                    }
+                    UpdateFlag.BeatMod -> {
+                        val beatkey = opus_manager.fetch_flag_change() ?: break
+                        if (main_fragment !is MainFragment) {
+                            continue
+                        }
+
+                        val y = opus_manager.get_y(beatkey.channel, beatkey.line_offset)
+
+                        main_fragment.beat_update(y, beatkey.beat)
+
+                        for (linked_beatkey in opus_manager.get_all_linked(beatkey)) {
+                            updated_beats.add(linked_beatkey.beat)
+                        }
+
+                    }
+                    UpdateFlag.Line -> {
+                        var line_flag = opus_manager.fetch_flag_line() ?: break
+                        if (main_fragment !is MainFragment) {
+                            continue
+                        }
+
+                        when (line_flag.operation) {
+                            0 -> {
+                                val counts = opus_manager.get_channel_line_counts()
+                                var y = 0
+                                for (i in 0 until line_flag.channel) {
+                                    y += counts[i]
+                                }
+                                main_fragment.line_remove(y + line_flag.line)
+                            }
+                            1 -> {
+                                val y = opus_manager.get_y(line_flag.channel, line_flag.line)
+                                main_fragment.line_new(y, line_flag.beat_count)
+                            }
+                        }
+
+                    }
+                    null -> {
+                        break
+                    }
+                    else -> {
+                        throw Exception("Received unknown update Flag")
+                    }
+                }
+
+            }
+
+            if (main_fragment is MainFragment) {
+                main_fragment.line_update_labels(opus_manager)
+
+                main_fragment.tick_resize_beats(updated_beats.toList())
+                for (index in min_changed_beat until opus_manager.opus_beat_count) {
+                    main_fragment.update_column_label_size(index)
+                }
+
+                for (b in updated_beats) {
+                    main_fragment.update_column_label_size(b)
+                }
+
+            }
+
             this.tick_apply_focus()
             this.ticking = false
-        }
-    }
-
-    private fun tick_validate_leafs() {
-        val opus_manager = this.getOpusManager()
-        val main_fragment = this.getActiveFragment()
-        while (true) {
-            val (beatkey, position) = opus_manager.fetch_flag_absolute_value() ?: break
-            if (main_fragment !is MainFragment) {
-                continue
-            }
-            var y = opus_manager.get_y(beatkey.channel, beatkey.line_offset)
-            var abs_value = opus_manager.get_absolute_value(beatkey, position) ?: continue
-            main_fragment.validate_leaf(y, beatkey.beat, position, abs_value in 0..95)
-        }
-    }
-
-    private fun tick_manage_lines() {
-        val opus_manager = this.getOpusManager()
-        val main_fragment = this.getActiveFragment()
-        while (true) {
-            val (channel, index, operation) = opus_manager.fetch_flag_line() ?: break
-            if (main_fragment !is MainFragment) {
-                continue
-            }
-
-            when (operation) {
-                0 -> {
-                    val counts = opus_manager.get_channel_line_counts()
-                    var y = 0
-                    for (i in 0 until channel) {
-                        y += counts[i]
-                    }
-                    main_fragment.line_remove(y + index)
-                }
-                1 -> {
-                    val y = opus_manager.get_y(channel, index)
-                    main_fragment.line_new(y, opus_manager.opus_beat_count)
-                }
-                2 -> {
-                    val y = opus_manager.get_y(channel, index)
-                    main_fragment.line_new(y, 0)
-                    //for (i in 0 until opus_manager.opus_beat_count) {
-                    //    opus_manager.flag_beat_change(BeatKey(channel, index, i))
-                    //}
-                }
-            }
-        }
-
-        if (main_fragment is MainFragment) {
-            main_fragment.line_update_labels(opus_manager)
-        }
-    }
-
-    private fun tick_manage_beats() {
-        val opus_manager = this.getOpusManager()
-        val updated_beats: MutableSet<Int> = mutableSetOf()
-        var min_changed = opus_manager.opus_beat_count
-        val main_fragment = this.getActiveFragment()
-
-        while (true) {
-            val (index, operation) = opus_manager.fetch_flag_beat() ?: break
-            min_changed = Integer.min(min_changed, index)
-
-            if (main_fragment !is MainFragment) {
-                continue
-            }
-            when (operation) {
-                1 -> {
-                    main_fragment.beat_new(index)
-                    updated_beats.add(index)
-                }
-                0 -> {
-                    main_fragment.beat_remove(index)
-                }
-            }
-        }
-
-        if (main_fragment is MainFragment) {
-            main_fragment.tick_resize_beats(updated_beats.toList())
-            for (index in min_changed until opus_manager.opus_beat_count) {
-                main_fragment.update_column_label_size(index)
-            }
-        }
-    }
-
-    private fun tick_update_beats() {
-        val opus_manager = this.getOpusManager()
-        val main_fragment = this.getActiveFragment()
-        val updated_beats: MutableSet<Int> = mutableSetOf()
-
-        while (true) {
-            val beatkey = opus_manager.fetch_flag_change() ?: break
-            if (main_fragment !is MainFragment) {
-                continue
-            }
-
-            val y = opus_manager.get_y(beatkey.channel, beatkey.line_offset)
-
-            main_fragment.beat_update(y, beatkey.beat)
-
-            for (linked_beatkey in opus_manager.get_all_linked(beatkey)) {
-                updated_beats.add(linked_beatkey.beat)
-            }
-        }
-
-        if (main_fragment is MainFragment) {
-            main_fragment.tick_resize_beats(updated_beats.toList())
-            for (b in updated_beats) {
-                main_fragment.update_column_label_size(b)
-            }
         }
     }
 

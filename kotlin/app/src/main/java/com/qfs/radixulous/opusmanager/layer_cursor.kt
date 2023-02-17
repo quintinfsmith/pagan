@@ -124,9 +124,14 @@ class Cursor(var opus_manager: CursorLayer) {
     }
 
     fun settle(right_align: Boolean = false) {
+
+        if (this.opus_manager.opus_beat_count == 0) {
+            // TODO: This'll problem bite me in the ass...
+            return
+        }
+
         this.y = max(0, min(this.y, this.opus_manager.line_count() - 1))
         this.x = max(0, min(this.x, this.opus_manager.opus_beat_count - 1))
-
         // First, get the beat
         var working_beat = this.opus_manager.get_beat_tree(this.get_beatkey())
         var working_tree = working_beat
@@ -167,11 +172,6 @@ class Cursor(var opus_manager: CursorLayer) {
 
 open class CursorLayer() : FlagLayer() {
     var cursor: Cursor? = null
-
-    override fun reset() {
-        this.cursor = Cursor(this)
-        super.reset()
-    }
 
     fun line_count(): Int {
         var output: Int = 0
@@ -379,7 +379,7 @@ open class CursorLayer() : FlagLayer() {
 
         var y: Int = 0
         for (i in 0 until this.channels.size) {
-            for (j in 0 .. this.channels[i].size - 1) {
+            for (j in 0 until this.channels[i].size) {
                 if (channel == i && line_offset == j) {
                     return y
                 }

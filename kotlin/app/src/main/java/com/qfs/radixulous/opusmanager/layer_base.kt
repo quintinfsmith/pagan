@@ -8,6 +8,7 @@ import java.io.File
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
+import java.lang.Integer.max
 
 open class OpusManagerBase {
     var RADIX: Int = 12
@@ -109,7 +110,7 @@ open class OpusManagerBase {
         // Move right/up
         while (true) {
             if (working_tree.parent != null) {
-                if (working_tree.size - 1 > working_position.last()) {
+                if (working_tree.parent!!.size - 1 > working_position.last()) {
                     working_position[working_position.size - 1] += 1
                     break
                 } else {
@@ -125,7 +126,6 @@ open class OpusManagerBase {
                 return null
             }
         }
-
         // Move left/down to leaf
         while (!working_tree.is_leaf()) {
             working_position.add(working_tree.size - 1)
@@ -208,11 +208,6 @@ open class OpusManagerBase {
     }
     //// END RO Functions ////
 
-    open fun reset() {
-        this.opus_beat_count = 1
-        this.channels.clear()
-        this.path = null
-    }
 
     fun convert_event_to_relative(beat_key: BeatKey, position: List<Int>) {
         var tree = this.get_tree(beat_key, position)
@@ -610,16 +605,28 @@ open class OpusManagerBase {
     }
 
     open fun load(path: String) {
-        this.reset()
+        this.purge_cache()
+
+        this.opus_beat_count = 0
+        this.channels.clear()
         this.path = path
+
         this.load_json_file(path)
     }
 
     open fun new() {
-        this.reset()
+        this.purge_cache()
+
+        this.opus_beat_count = 0
+        this.channels.clear()
+        this.path = null
+
         this.new_channel()
         this.new_line(0)
-        this.set_beat_count(4)
+
+        for (i in 0 until 4) {
+            this.insert_beat()
+        }
     }
 
     open fun load_json_file(path: String) {
@@ -630,9 +637,21 @@ open class OpusManagerBase {
     open fun load_json(json_data: LoadedJSONData) {
         this.RADIX = json_data.radix
         this.tempo = json_data.tempo
+
         var beat_count = 0
         json_data.channels.forEachIndexed { i, channel_data ->
             this.new_channel()
+            channel_data.lines.forEachIndexed { j, line_str ->
+                this.new_line(i)
+                var beatstrs = line_str.split("|")!!
+                beat_count = max(beat_count, beatstrs.size)
+            }
+        }
+        for (i in 0 until beat_count) {
+            this.insert_beat()
+        }
+
+        json_data.channels.forEachIndexed { i, channel_data ->
             if (channel_data.midi_channel == 9) {
                 this.percussion_channel = i
             }
@@ -641,12 +660,11 @@ open class OpusManagerBase {
             this.channels[i].midi_instrument = channel_data.midi_instrument
 
             channel_data.lines.forEachIndexed { j, line_str ->
-                var opus_line: MutableList<OpusTree<OpusEvent>> = mutableListOf()
                 var note_set: MutableSet<Int> = mutableSetOf()
-                for (beat_str in line_str.split("|")!!) {
+                line_str.split("|").forEachIndexed { b, beat_str ->
                     var beat_tree = from_string(beat_str, this.RADIX, channel_data.midi_channel)
                     beat_tree.clear_singles()
-                    opus_line.add(beat_tree)
+                    this.replace_tree(BeatKey(i, j, b), listOf(), beat_tree)
                     if (i == this.percussion_channel) {
                         for ((_, event) in beat_tree.get_events_mapped()) {
                             note_set.add(event.note)
@@ -658,68 +676,20 @@ open class OpusManagerBase {
                 if (i == this.percussion_channel) {
                     this.set_percussion_instrument(j, note_set.first())
                 }
-
-                beat_count = kotlin.math.max(opus_line.size, beat_count)
-                if (this.opus_beat_count != beat_count) {
-                    this.set_beat_count(beat_count)
-                }
-
-                this.channels[i].insert_line(j, opus_line)
             }
         }
-    }
-
-    open fun load_folder(path: String) {
-        var channel_map = HashMap<String, Int>()
-        var suffix_patt = ".*_((\\d{1,3})?)(\\..*)?".toRegex()
-        var filenames: MutableList<String> = mutableListOf()
-        for (file in File(path).list()!!) {
-            if (file.endsWith(".json")) {
-                continue
-            }
-            var matches = suffix_patt.findAll(file).toList()
-            if (matches.isNotEmpty()) {
-                var channel = matches.first().groups[1]?.value?.toInt()!!
-                channel_map["$path/$file"] = channel
-                filenames.add("${path}/${file}")
-            }
-        }
-
-        var line_patt = "\\{(.*?)\\}".toRegex()
-        var beat_count = 1
-        for (filename in filenames) {
-            var channel = if (channel_map.containsKey(filename)) {
-                channel_map[filename]!!
-            } else {
-                0
-            }
-
-            while (channel >= this.get_channel_count()) {
-                this.new_channel()
-            }
-
-            var content = File(filename).readText(Charsets.UTF_8)
-            var lines = line_patt.findAll(content)
-            for (line in lines) {
-                var opus_line: MutableList<OpusTree<OpusEvent>> = mutableListOf()
-                for (beat_str in line.groups[1]?.value?.split("|")!!) {
-                    var beat_tree = from_string(beat_str, this.RADIX, channel)
-                    beat_tree.clear_singles()
-                    opus_line.add(beat_tree)
-                }
-                beat_count = kotlin.math.max(opus_line.size, beat_count)
-                while (opus_line.size < beat_count) {
-                    opus_line.add(OpusTree<OpusEvent>())
-                }
-                if (this.channels[channel].size != beat_count) {
-                    this.channels[channel].set_beat_count(beat_count)
-                }
-                this.channels[channel].insert_line(this.channels[channel].size, opus_line)
-            }
-        }
-        this.opus_beat_count = beat_count
     }
 
     fun import_midi(path: String) { }
+
+    open fun purge_cache() {
+        // Nothin should be in the base layer
+        // this is a function to call to clear any peripheral/cached information in higher layers
+    }
+    open fun reset_cache() {
+        this.purge_cache()
+        // Nothing should be in the base layer
+        // this is the base function to call to setup any caches or peripheral data needed for a layer to function
+    }
 
 }

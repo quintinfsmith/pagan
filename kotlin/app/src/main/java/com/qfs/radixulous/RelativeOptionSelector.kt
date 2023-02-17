@@ -27,31 +27,39 @@ class RelativeOptionSelector: LinearLayout {
     override fun onLayout(isChanged: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         super.onLayout(isChanged, left, top, right, bottom)
 
-        val scale = resources.displayMetrics.density
-        var margin = (2 * scale + 0.5f).toInt()
-
         var visible_count = (this.childCount - this.hidden_options.size)
         if (visible_count == 0) {
             return
         }
+
+        val scale = resources.displayMetrics.density
+        var margin = (2 * scale + 0.5f).toInt()
 
         var available_space = ((right - left) - (this.paddingLeft + this.paddingRight))
         available_space -= (visible_count - 1) * margin
 
         var width = available_space / visible_count
         var remainder = available_space % visible_count
+        var total_width = 0
 
         for (i in 0 until this.childCount) {
             var view = this.getChildAt(i)
-            val param = view!!.layoutParams as ViewGroup.MarginLayoutParams
-            param.width = width
-            param.setMargins(0, 0, margin, 0)
+            var working_width = width
+
             if (remainder > 0) {
-                param.width += 1
+                working_width += 1
                 remainder -= 1
             }
-            // TODO: This, the right way. i'm getting warnings
-            view.requestLayout()
+
+            var offset = this.paddingLeft + (i * margin) + total_width
+            view.layout(
+                offset,
+                0,
+                offset + working_width,
+                bottom - top
+            )
+
+            total_width += working_width
         }
     }
 
@@ -145,7 +153,6 @@ class RelativeOptionSelectorButton: androidx.appcompat.widget.AppCompatTextView 
         this.roSelector = roSelector
         this.value = value
         this.position = position
-
         this.text = resources.getString(this.value)
         this.gravity = CENTER
 
@@ -166,5 +173,11 @@ class RelativeOptionSelectorButton: androidx.appcompat.widget.AppCompatTextView 
     fun setActive(value: Boolean) {
         this.state_active = value
         refreshDrawableState()
+    }
+
+    override fun onLayout(isChanged: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
+        super.onLayout(isChanged, left, top, right, bottom)
+        this.text = resources.getString(this.value)
+        this.gravity = CENTER
     }
 }

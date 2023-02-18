@@ -10,13 +10,11 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.DocumentsContract
 import android.text.Editable
-import android.text.InputFilter
-import android.text.Spanned
 import android.text.TextWatcher
 import android.util.Log
 import android.view.*
+import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
-import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -35,11 +33,6 @@ import com.qfs.radixulous.databinding.ActivityMainBinding
 import com.qfs.radixulous.opusmanager.BeatKey
 import com.qfs.radixulous.opusmanager.FlagOperation
 import com.qfs.radixulous.opusmanager.UpdateFlag
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import java.io.File
 import java.io.FileOutputStream
 import kotlin.concurrent.thread
@@ -61,6 +54,7 @@ class MainActivity : AppCompatActivity() {
     lateinit var midi_playback_device: MIDIPlaybackDevice
     var midi_input_device = MIDIInputDevice()
     private var midi_player = MIDIPlayer()
+    lateinit var soundfont: SoundFont
 
     private var current_project_title: String? = null
     private var opus_manager = OpusManager()
@@ -106,7 +100,13 @@ class MainActivity : AppCompatActivity() {
                 var opus_manager = that.getOpusManager()
                 var y = 0
                 opus_manager.channels.forEachIndexed { i, channel ->
-                    channel.lines.forEachIndexed { j, line ->
+
+                    // change instrument in midi playback device
+                    //that.midi_input_device.sendEvent(
+                    //    ProgramChange(channel.midi_channel, channel.midi_instrument)
+                    //)
+
+                    channel.lines.forEachIndexed { j, _ ->
                         val textView: TextView = fragment.cache.getLineLabel(y)!!.findViewById(R.id.textView)
                         if (i == opus_manager.percussion_channel) {
                             textView.text = "P:$j"
@@ -114,6 +114,7 @@ class MainActivity : AppCompatActivity() {
                             textView.text = "$i:$j"
                         }
                         y += 1
+
                     }
                 }
             }
@@ -123,8 +124,8 @@ class MainActivity : AppCompatActivity() {
         })
         //////////////////////////////////////////
         // TODO: clean up the file -> riff -> soundfont -> midi playback device process
-        val soundfont = SoundFont(Riff(assets.open("freepats-general-midi.sf2")))
-        this.midi_playback_device = MIDIPlaybackDevice(this, soundfont)
+        this.soundfont = SoundFont(Riff(assets.open("freepats-general-midi.sf2")))
+        this.midi_playback_device = MIDIPlaybackDevice(this, this.soundfont)
 
         this.midi_controller = RadMidiController(window.decorView.rootView.context)
         this.midi_controller.registerVirtualDevice(this.midi_playback_device)
@@ -193,7 +194,7 @@ class MainActivity : AppCompatActivity() {
     fun setup_config_drawer() {
         val opus_manager = this.getOpusManager()
         val rvActiveChannels: RecyclerView = this.findViewById(R.id.rvActiveChannels)
-        val channelAdapter = ChannelOptionAdapter(this, rvActiveChannels)
+        val channelAdapter = ChannelOptionAdapter(this, rvActiveChannels, this.soundfont)
 
         val tvChangeProjectName: TextView = this.findViewById(R.id.tvChangeProjectName)
         tvChangeProjectName.setOnClickListener {
@@ -645,6 +646,62 @@ class MainActivity : AppCompatActivity() {
     fun feedback_msg(msg: String) {
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
     }
+
+    internal fun popup_number_dialog(title: String, hint: String, callback: (value: Int) -> Unit) {
+        val main_fragment = this.getActiveFragment()
+
+        val viewInflated: View = LayoutInflater.from(main_fragment!!.context)
+            .inflate(
+                R.layout.dialog_split,
+                main_fragment.view as ViewGroup,
+                false
+            )
+
+        var etValue = viewInflated.findViewById<EditText>(R.id.etValue)
+        etValue.hint = hint
+
+        var dialog = AlertDialog.Builder(main_fragment!!.context)
+            .setTitle(title)
+            .setView(viewInflated)
+            .setPositiveButton(android.R.string.ok) { dialog, _ ->
+                var str_value = etValue.text.toString()
+                if (str_value != "") {
+                    callback(str_value.toInt())
+                }
+            }
+            .setNegativeButton(android.R.string.cancel) { dialog, _ ->
+            }
+            .show()
+
+        etValue.setOnKeyListener { v, keyCode, event ->
+            if ((keyCode == KeyEvent.KEYCODE_ENTER) && (event.action == KeyEvent.ACTION_UP)) {
+                var str_value = etValue.text.toString()
+                if (str_value != "") {
+                    callback(str_value.toInt())
+                    dialog.dismiss()
+                    return@setOnKeyListener true
+                }
+            }
+
+            false
+        }
+
+        etValue.requestFocus()
+        // bring up the keyboard automatically
+        thread {
+            Thread.sleep(100)
+            var imm: InputMethodManager =
+                getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+            imm.showSoftInput(etValue, InputMethodManager.SHOW_IMPLICIT)
+        }
+    }
+
+    private fun popup_insert_dialog() {}
+    private fun popup_remove_dialog() {}
+    private fun popup_insertbeat_dialog() {}
+    private fun popup_removebeat_dialog() {}
+    private fun popup_insertline_dialog() {}
+    private fun popup_removeline_dialog() {}
 }
 
 class RadMidiController(context: Context): MIDIController(context) { }

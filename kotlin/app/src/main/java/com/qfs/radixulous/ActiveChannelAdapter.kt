@@ -13,8 +13,10 @@ import androidx.recyclerview.widget.RecyclerView
 
 class ChannelOptionAdapter(
     private val activity: MainActivity,
-    private val recycler: RecyclerView
+    private val recycler: RecyclerView,
+    private val soundfont: SoundFont
 ) : RecyclerView.Adapter<ChannelOptionAdapter.ChannelOptionViewHolder>() {
+    var supported_instruments: Set<Int>
     class ChannelOptionViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
     init {
         this.recycler.adapter = this
@@ -27,12 +29,17 @@ class ChannelOptionAdapter(
                         that.notifyItemChanged(i)
                     }
                 }
-                override fun onChanged() {
-                    // TODO: This is slap-dash but i don't have a better place to put it at the moment
-
-                }
+                //override fun onChanged() { }
             }
         )
+
+        var supported_instruments: MutableSet<Int> = mutableSetOf()
+        for ((pair, preset) in this.soundfont.presets) {
+            if (pair.first != 128) {
+                supported_instruments.add(pair.second)
+            }
+        }
+        this.supported_instruments = supported_instruments
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChannelOptionViewHolder {
@@ -60,10 +67,25 @@ class ChannelOptionAdapter(
 
         val instrument = curChannel.midi_instrument
         var btnChooseInstrument: TextView = view.findViewById(R.id.btnChooseInstrument)
-        btnChooseInstrument.text = if (instrument == 0) {
-            "$position: Percussion"
+        var prefix = if (instrument == 0) {
+            // TODO: I don't think this is 100% how percussion gets stored in a soundfont.
+            //  but it'll work until I support imported soundfonts
+            if (this.soundfont.presets[Pair(128,0)] != null) {
+                ""
+            } else {
+                "\uD83D\uDD07"
+            }
         } else {
-            "$position: ${view.resources.getStringArray(R.array.midi_instruments)[instrument - 1]}"
+            if (instrument - 1 in this.supported_instruments) {
+                ""
+            } else {
+                "\uD83D\uDD07"
+            }
+        }
+        btnChooseInstrument.text = if (instrument == 0) {
+            "$position: $prefix Percussion"
+        } else {
+            "$position: $prefix ${view.resources.getStringArray(R.array.midi_instruments)[instrument - 1]}"
         }
     }
 
@@ -127,7 +149,12 @@ class ChannelOptionAdapter(
         }
 
         instruments.forEachIndexed { i, string ->
-            popupMenu.menu.add(0, i + 1, x, "${i + 1}: $string")
+            var display_name = if (i in this.supported_instruments) {
+                "$string"
+            } else {
+                "\uD83D\uDD07 $string"
+            }
+            popupMenu.menu.add(0, i + 1, x, "${i + 1}: $display_name")
             x += 1
         }
 

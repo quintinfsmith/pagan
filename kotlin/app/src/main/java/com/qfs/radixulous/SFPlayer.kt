@@ -172,7 +172,6 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
         currently_active_sample?.really_stop()
 
         //TODO: Handle Bank
-        Log.e("AAA", "NOTE ON: ${event.channel}")
         var bank = if (event.channel == 9) {
             128
         } else {

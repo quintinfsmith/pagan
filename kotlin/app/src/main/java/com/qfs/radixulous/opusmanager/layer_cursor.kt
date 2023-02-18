@@ -250,10 +250,10 @@ open class CursorLayer() : FlagLayer() {
         //this.cursor_left()
     }
 
-    fun split_tree_at_cursor() {
+    fun split_tree_at_cursor(splits: Int = 2) {
         var beat_key = this.get_cursor().get_beatkey()
         var position = this.get_cursor().get_position()
-        this.split_tree(beat_key, position, 2)
+        this.split_tree(beat_key, position, splits)
     }
 
     fun unset_at_cursor() {

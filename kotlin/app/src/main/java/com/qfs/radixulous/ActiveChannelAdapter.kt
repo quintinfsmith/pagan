@@ -1,6 +1,7 @@
 package com.qfs.radixulous
 
 import android.content.Context
+import android.util.Log
 import android.view.ContextThemeWrapper
 import android.view.LayoutInflater
 import android.view.View
@@ -18,8 +19,17 @@ class ChannelOptionAdapter(
     init {
         this.recycler.adapter = this
         this.recycler.layoutManager = LinearLayoutManager(this.activity)
+        var that = this
+        this.registerAdapterDataObserver(
+            object: RecyclerView.AdapterDataObserver() {
+                override fun onItemRangeRemoved(start: Int, count: Int) {
+                    for (i in start until that.recycler.childCount) {
+                        that.notifyItemChanged(i)
+                    }
+                }
+            }
+        )
     }
-
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChannelOptionViewHolder {
         return ChannelOptionViewHolder(
@@ -39,19 +49,23 @@ class ChannelOptionAdapter(
         notifyItemInserted(opus_manager.channels.size - 1)
     }
 
-    override fun onBindViewHolder(holder: ChannelOptionViewHolder, position: Int) {
+    fun set_text(view: View, position: Int) {
         var opus_manager = this.activity.getOpusManager()
         var channels = opus_manager.channels
         val curChannel = channels[position]
 
         val instrument = curChannel.midi_instrument
-        var btnChooseInstrument: TextView = holder.itemView.findViewById(R.id.btnChooseInstrument)
+        var btnChooseInstrument: TextView = view.findViewById(R.id.btnChooseInstrument)
         btnChooseInstrument.text = if (instrument == 0) {
             "$position: Percussion"
         } else {
-            "$position: ${holder.itemView.resources.getStringArray(R.array.midi_instruments)[instrument - 1]}"
+            "$position: ${view.resources.getStringArray(R.array.midi_instruments)[instrument - 1]}"
         }
+    }
 
+    override fun onBindViewHolder(holder: ChannelOptionViewHolder, position: Int) {
+        this.set_text(holder.itemView as ViewGroup, position)
+        var btnChooseInstrument: TextView = holder.itemView.findViewById(R.id.btnChooseInstrument)
         btnChooseInstrument.setOnClickListener {
             this.interact_btnChooseInstrument(holder.itemView.context, it)
         }
@@ -93,6 +107,7 @@ class ChannelOptionAdapter(
 
         this.notifyItemRemoved(x)
     }
+
 
     private fun interact_btnChooseInstrument(context: Context, view: View) {
         var opus_manager = this.activity.getOpusManager()

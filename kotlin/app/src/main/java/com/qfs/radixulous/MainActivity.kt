@@ -98,7 +98,29 @@ class MainActivity : AppCompatActivity() {
         this.appBarConfiguration = AppBarConfiguration(navController.graph)
         setupActionBarWithNavController(navController, this.appBarConfiguration)
 
-
+        var drawerlayout = findViewById<DrawerLayout>(R.id.drawer_layout)
+        var that = this
+        drawerlayout.addDrawerListener( object: DrawerLayout.DrawerListener {
+            override fun onDrawerClosed(drawerView: View) {
+                var fragment = that.getActiveFragment() as MainFragment
+                var opus_manager = that.getOpusManager()
+                var y = 0
+                opus_manager.channels.forEachIndexed { i, channel ->
+                    channel.lines.forEachIndexed { j, line ->
+                        val textView: TextView = fragment.cache.getLineLabel(y)!!.findViewById(R.id.textView)
+                        if (i == opus_manager.percussion_channel) {
+                            textView.text = "P:$j"
+                        } else {
+                            textView.text = "$i:$j"
+                        }
+                        y += 1
+                    }
+                }
+            }
+            override fun onDrawerSlide(drawerView: View, slideOffset: Float) { }
+            override fun onDrawerOpened(drawerView: View) { }
+            override fun onDrawerStateChanged(newState: Int) { }
+        })
         //////////////////////////////////////////
         // TODO: clean up the file -> riff -> soundfont -> midi playback device process
         val soundfont = SoundFont(Riff(assets.open("freepats-general-midi.sf2")))

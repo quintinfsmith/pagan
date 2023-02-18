@@ -22,7 +22,7 @@ class MainFragment : Fragment() {
     private var relative_mode: Boolean = false
 
     private var _binding: FragmentMainBinding? = null
-    private var cache = ViewCache()
+    internal var cache = ViewCache()
 
     private var block_default_return = false
 

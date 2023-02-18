@@ -27,6 +27,10 @@ class ChannelOptionAdapter(
                         that.notifyItemChanged(i)
                     }
                 }
+                override fun onChanged() {
+                    // TODO: This is slap-dash but i don't have a better place to put it at the moment
+
+                }
             }
         )
     }
@@ -67,7 +71,7 @@ class ChannelOptionAdapter(
         this.set_text(holder.itemView as ViewGroup, position)
         var btnChooseInstrument: TextView = holder.itemView.findViewById(R.id.btnChooseInstrument)
         btnChooseInstrument.setOnClickListener {
-            this.interact_btnChooseInstrument(holder.itemView.context, it)
+            this.interact_btnChooseInstrument(holder.itemView.context, it, position)
         }
 
         var btnRemoveChannel: TextView = holder.itemView.findViewById(R.id.btnRemoveChannel)
@@ -109,7 +113,7 @@ class ChannelOptionAdapter(
     }
 
 
-    private fun interact_btnChooseInstrument(context: Context, view: View) {
+    private fun interact_btnChooseInstrument(context: Context, view: View, index: Int) {
         var opus_manager = this.activity.getOpusManager()
         var wrapper = ContextThemeWrapper(context, R.style.PopupMenu)
         val popupMenu = PopupMenu(wrapper, view)
@@ -133,6 +137,7 @@ class ChannelOptionAdapter(
             } else {
                 this.set_channel_instrument(channel, it.itemId)
             }
+            this.notifyItemChanged(index)
 
             // TODO: This feels sloppy
             //this.getMain().midi_input_device.sendEvent(ProgramChange(cursor.get_beatkey().channel, it.itemId))
@@ -148,13 +153,6 @@ class ChannelOptionAdapter(
             return
         }
 
-        var view = this.recycler?.getChildAt(channel)
-        if (view != null) {
-            var btn: TextView = view.findViewById(R.id.btnChooseInstrument)
-            val instruments = view!!.resources.getStringArray(R.array.midi_instruments)
-            btn.text = "$channel: ${instruments[instrument - 1]}"
-        }
-
         var opus_manager = this.activity.getOpusManager()
         opus_manager.set_channel_instrument(channel, instrument)
     }
@@ -163,12 +161,6 @@ class ChannelOptionAdapter(
         var opus_manager = this.activity.getOpusManager()
         if (opus_manager.percussion_channel != null) {
             this.set_channel_instrument(opus_manager.percussion_channel!!, 1)
-        }
-
-        var view = this.recycler?.getChildAt(channel)
-        if (view != null) {
-            var btn: TextView = view.findViewById(R.id.btnChooseInstrument)
-            btn.text = "$channel: Percussion"
         }
         opus_manager.set_percussion_channel(channel)
     }

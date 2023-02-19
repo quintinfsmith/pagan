@@ -9,8 +9,9 @@ import java.io.File
 import java.util.*
 import com.qfs.radixulous.opusmanager.OpusManagerBase as OpusManager
 
-class ProjectManager(var projects_dir: String) {
-    val projects_list_file_path = "/data/data/com.qfs.radixulous/projects.json"
+class ProjectManager() {
+    val projects_dir = "./projects/"
+    val projects_list_file_path = "./projects.json"
     private fun get_title(path: String): String? {
         val project_list_file = File(this.projects_list_file_path)
 

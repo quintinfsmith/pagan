@@ -58,7 +58,7 @@ class MainActivity : AppCompatActivity() {
 
     private var current_project_title: String? = null
     private var opus_manager = OpusManager()
-    private var project_manager = ProjectManager("/data/data/com.qfs.radixulous/projects")
+    private var project_manager = ProjectManager()
 
     private var in_play_back: Boolean = false
     private var ticking: Boolean = false

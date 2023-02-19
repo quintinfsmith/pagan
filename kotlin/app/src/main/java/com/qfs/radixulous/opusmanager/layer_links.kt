@@ -4,6 +4,7 @@ import java.io.File
 open class LinksLayer() : AbsoluteValueLayer() {
     var linked_beat_map: HashMap<BeatKey, BeatKey> = HashMap<BeatKey, BeatKey>()
     var inv_linked_beat_map: HashMap<BeatKey, MutableList<BeatKey>> = HashMap<BeatKey, MutableList<BeatKey>>()
+    var link_locker: Int = 0
 
     open fun unlink_beat(beat_key: BeatKey) {
         if (! this.linked_beat_map.containsKey(beat_key)) {
@@ -88,6 +89,10 @@ open class LinksLayer() : AbsoluteValueLayer() {
     }
 
     fun get_all_linked(beat_key: BeatKey): Set<BeatKey> {
+        if (this.link_locker > 1) {
+            return setOf(beat_key)
+        }
+
         var output: MutableSet<BeatKey> = mutableSetOf()
         if (this.inv_linked_beat_map.containsKey(beat_key)) {
             output.add(beat_key)
@@ -107,35 +112,48 @@ open class LinksLayer() : AbsoluteValueLayer() {
         return output
     }
 
+
     override fun insert_after(beat_key: BeatKey, position: List<Int>) {
+        this.link_locker += 1
         for (linked_key in this.get_all_linked(beat_key)) {
             super.insert_after(linked_key, position)
         }
+        this.link_locker -= 1
     }
     override fun remove(beat_key: BeatKey, position: List<Int>) {
+        this.link_locker += 1
         for (linked_key in this.get_all_linked(beat_key)) {
             super.remove(linked_key, position)
         }
+        this.link_locker -= 1
     }
     override fun set_percussion_event(beat_key: BeatKey, position: List<Int>) {
+        this.link_locker += 1
         for (linked_key in this.get_all_linked(beat_key)) {
             super.set_percussion_event(linked_key, position)
         }
+        this.link_locker -= 1
     }
     override fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEvent) {
+        this.link_locker += 1
         for (linked_key in this.get_all_linked(beat_key)) {
             super.set_event(linked_key, position, event)
         }
+        this.link_locker -= 1
     }
     override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
+        this.link_locker += 1
         for (linked_key in this.get_all_linked(beat_key)) {
             super.split_tree(linked_key, position, splits)
         }
+        this.link_locker -= 1
     }
     override fun unset(beat_key: BeatKey, position: List<Int>) {
+        this.link_locker += 1
         for (linked_key in this.get_all_linked(beat_key)) {
             super.unset(linked_key, position)
         }
+        this.link_locker -= 1
     }
 
     /////////

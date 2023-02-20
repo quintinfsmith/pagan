@@ -148,7 +148,7 @@ class ActiveSample(var event: NoteOn, var instrument: Instrument, var soundFont:
             }
         }
         val newConfig = VolumeShaper.Configuration.Builder()
-            .setDuration(vol_env_release!!.toLong())
+            .setDuration((vol_env_release!! * 1000F).toLong())
             .setCurve(floatArrayOf(0f, 1f), floatArrayOf(this.volume, 0f))
             .setInterpolatorType(VolumeShaper.Configuration.INTERPOLATOR_TYPE_LINEAR)
             .build()

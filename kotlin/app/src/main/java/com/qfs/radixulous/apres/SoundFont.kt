@@ -1,8 +1,7 @@
-package com.qfs.radixulous
+package com.qfs.radixulous.apres
 
-import android.util.Log
-import java.io.InputStream
-import kotlin.experimental.and
+import com.qfs.radixulous.apres.riffreader.Riff
+import com.qfs.radixulous.apres.riffreader.toUInt
 import kotlin.math.max
 import kotlin.math.pow
 
@@ -31,14 +30,14 @@ class SoundFont(var riff: Riff) {
     init {
         // Make a hashmap for easier access
         for (index in 0 until riff.sub_chunks[2].size) {
-            var sub_chunk_type = riff.get_sub_chunk_type(2, index)
+            val sub_chunk_type = riff.get_sub_chunk_type(2, index)
             this.pdta_indices[sub_chunk_type] = index
         }
 
         for (index in 0 until riff.sub_chunks[0].size) {
             when (riff.get_sub_chunk_type(2, index)) {
                 "ifil" -> {
-                    var bytes = riff.get_sub_chunk_data(2, index)
+                    val bytes = riff.get_sub_chunk_data(2, index)
                     this.ifil = Pair(
                         toUInt(bytes[0]) + (toUInt(bytes[1]) * 256),
                         toUInt(bytes[2]) + (toUInt(bytes[3]) * 256)
@@ -54,7 +53,7 @@ class SoundFont(var riff: Riff) {
                     this.irom = riff.get_sub_chunk_data(2, index).toString(Charsets.UTF_8)
                 }
                 "iver" -> {
-                    var bytes = riff.get_sub_chunk_data(2, index)
+                    val bytes = riff.get_sub_chunk_data(2, index)
                     this.iver = Pair(
                         toUInt(bytes[0]) + (toUInt(bytes[1]) * 256),
                         toUInt(bytes[2]) + (toUInt(bytes[3]) * 256)
@@ -89,11 +88,11 @@ class SoundFont(var riff: Riff) {
     }
 
     private fun init_samples(riff: Riff): List<Sample> {
-        var output: MutableList<Sample> = mutableListOf()
-        var shdr_index = this.pdta_indices["shdr"]!!
-        var shdr_bytes = riff.get_sub_chunk_data(2, shdr_index)
+        val output: MutableList<Sample> = mutableListOf()
+        val shdr_index = this.pdta_indices["shdr"]!!
+        val shdr_bytes = riff.get_sub_chunk_data(2, shdr_index)
         for (index in 0 until shdr_bytes.size / 46) {
-            var offset = index * 46
+            val offset = index * 46
             var sample_name = ""
             for (j in 0 until 20) {
                 val b = toUInt(shdr_bytes[offset + j])
@@ -137,15 +136,15 @@ class SoundFont(var riff: Riff) {
     }
 
     private fun init_presets(riff: Riff): HashMap<Pair<Int, Int>, Preset> {
-        var output = HashMap<Pair<Int, Int>, Preset>()
+        val output = HashMap<Pair<Int, Int>, Preset>()
         val phdr_index = this.pdta_indices["phdr"]!!
         val pbag_index = this.pdta_indices["pbag"]!!
 
-        var phdr_bytes = riff.get_sub_chunk_data(2, phdr_index)
+        val phdr_bytes = riff.get_sub_chunk_data(2, phdr_index)
 
         val pbag_entry_size = 4
         for (index in 0 until (phdr_bytes.size / 38) - 1) {
-            var offset = index * 38
+            val offset = index * 38
             var phdr_name = ""
             for (j in 0 until 20) {
                 val b = toUInt(phdr_bytes[j + offset])
@@ -166,19 +165,19 @@ class SoundFont(var riff: Riff) {
             val zone_count = next_wPresetBagIndex - wPresetBagIndex
             for (j in 0 until zone_count) {
 
-                var pbag_bytes = riff.get_sub_chunk_data(
+                val pbag_bytes = riff.get_sub_chunk_data(
                     2,
                     pbag_index,
                     (j + wPresetBagIndex) * pbag_entry_size,
                     pbag_entry_size * 2
                 )
 
-                var pbag = Pair(
+                val pbag = Pair(
                     toUInt(pbag_bytes[0]) + (toUInt(pbag_bytes[1]) * 256),
                     toUInt(pbag_bytes[2]) + (toUInt(pbag_bytes[3]) * 256)
                 )
 
-                var next_pbag = Pair(
+                val next_pbag = Pair(
                     toUInt(pbag_bytes[4]) + (toUInt(pbag_bytes[5]) * 256),
                     toUInt(pbag_bytes[6]) + (toUInt(pbag_bytes[7]) * 256)
                 )
@@ -198,13 +197,13 @@ class SoundFont(var riff: Riff) {
     }
 
     private fun init_instruments(riff: Riff): List<Instrument> {
-        var output: MutableList<Instrument> = mutableListOf()
+        val output: MutableList<Instrument> = mutableListOf()
         val inst_index = this.pdta_indices["inst"]!!
         val ibag_bytes_index = this.pdta_indices["ibag"]!!
         val ibag_entry_size = 4
-        var inst_bytes = riff.get_sub_chunk_data(2, inst_index)
+        val inst_bytes = riff.get_sub_chunk_data(2, inst_index)
         for (index in 0 until (inst_bytes.size / 22) - 1) {
-            var offset = index * 22
+            val offset = index * 22
             var inst_name = ""
             for (j in 0 until 20) {
                 val b = toUInt(inst_bytes[offset + j])
@@ -214,30 +213,30 @@ class SoundFont(var riff: Riff) {
                 inst_name = "$inst_name${b.toChar()}"
             }
 
-            var first_ibag_index = toUInt(inst_bytes[offset + 20]) + (toUInt(inst_bytes[offset + 21]) * 256)
-            var next_first_ibag_index = toUInt(inst_bytes[22 + offset + 20]) + (toUInt(inst_bytes[22 + offset + 21]) * 256)
-            var zone_count = next_first_ibag_index - first_ibag_index
+            val first_ibag_index = toUInt(inst_bytes[offset + 20]) + (toUInt(inst_bytes[offset + 21]) * 256)
+            val next_first_ibag_index = toUInt(inst_bytes[22 + offset + 20]) + (toUInt(inst_bytes[22 + offset + 21]) * 256)
+            val zone_count = next_first_ibag_index - first_ibag_index
 
             val instrument = Instrument(inst_name)
             for (j in 0 until zone_count) {
-                var ibag_bytes = riff.get_sub_chunk_data(
+                val ibag_bytes = riff.get_sub_chunk_data(
                     2,
                     ibag_bytes_index,
                     ibag_entry_size * (first_ibag_index + j),
                     ibag_entry_size
                 )
-                var ibag = Pair(
+                val ibag = Pair(
                     toUInt(ibag_bytes[0]) + (toUInt(ibag_bytes[1]) * 256),
                     toUInt(ibag_bytes[2]) + (toUInt(ibag_bytes[3]) * 256)
                 )
-                var next_ibag_bytes = riff.get_sub_chunk_data(
+                val next_ibag_bytes = riff.get_sub_chunk_data(
                     2,
                     ibag_bytes_index,
                     ibag_entry_size * (first_ibag_index + j + 1),
                     ibag_entry_size
                 )
 
-                var next_ibag = Pair(
+                val next_ibag = Pair(
                     toUInt(next_ibag_bytes[0]) + (toUInt(next_ibag_bytes[1]) * 256),
                     toUInt(next_ibag_bytes[2]) + (toUInt(next_ibag_bytes[3]) * 256)
                 )
@@ -257,9 +256,9 @@ class SoundFont(var riff: Riff) {
     }
 
     private fun get_instrument_modulators(riff: Riff, from_index: Int, to_index: Int): List<Modulator> {
-        var imod_index = this.pdta_indices["imod"]!!
-        var output: MutableList<Modulator> = mutableListOf()
-        var bytes = riff.get_sub_chunk_data(2, imod_index, from_index * 10, (to_index - from_index) * 10)
+        val imod_index = this.pdta_indices["imod"]!!
+        val output: MutableList<Modulator> = mutableListOf()
+        val bytes = riff.get_sub_chunk_data(2, imod_index, from_index * 10, (to_index - from_index) * 10)
 
         for (i in 0 until bytes.size / 10) {
             val offset = i * 10
@@ -278,9 +277,9 @@ class SoundFont(var riff: Riff) {
     }
 
     private fun get_preset_modulators(riff: Riff, from_index: Int, to_index: Int): List<Modulator> {
-        var pmod_index = this.pdta_indices["pmod"]!!
-        var output: MutableList<Modulator> = mutableListOf()
-        var bytes = riff.get_sub_chunk_data(2, pmod_index, from_index * 10, (to_index - from_index) * 10)
+        val pmod_index = this.pdta_indices["pmod"]!!
+        val output: MutableList<Modulator> = mutableListOf()
+        val bytes = riff.get_sub_chunk_data(2, pmod_index, from_index * 10, (to_index - from_index) * 10)
 
         for (i in 0 until bytes.size / 10) {
             val offset = i * 10
@@ -299,9 +298,9 @@ class SoundFont(var riff: Riff) {
     }
 
     private fun get_preset_generators(riff: Riff, from_index: Int, to_index: Int): List<Generator> {
-        var pgen_index = this.pdta_indices["pgen"]!!
-        var output: MutableList<Generator> = mutableListOf()
-        var bytes = riff.get_sub_chunk_data(2, pgen_index, from_index * 4, (to_index - from_index) * 4)
+        val pgen_index = this.pdta_indices["pgen"]!!
+        val output: MutableList<Generator> = mutableListOf()
+        val bytes = riff.get_sub_chunk_data(2, pgen_index, from_index * 4, (to_index - from_index) * 4)
 
         for (i in 0 until bytes.size / 4) {
             val offset = i * 4
@@ -318,9 +317,9 @@ class SoundFont(var riff: Riff) {
     }
 
     private fun get_instrument_generators(riff: Riff, from_index: Int, to_index: Int): List<Generator> {
-        var igen_index = this.pdta_indices["igen"]!!
-        var output: MutableList<Generator> = mutableListOf()
-        var bytes = riff.get_sub_chunk_data(2, igen_index, from_index * 4, (to_index - from_index) * 4)
+        val igen_index = this.pdta_indices["igen"]!!
+        val output: MutableList<Generator> = mutableListOf()
+        val bytes = riff.get_sub_chunk_data(2, igen_index, from_index * 4, (to_index - from_index) * 4)
 
         for (i in 0 until bytes.size / 4) {
             val offset = i * 4
@@ -477,8 +476,7 @@ class SoundFont(var riff: Riff) {
     }
 
     private fun generate_instrument(instrument: Instrument, generators: List<Generator>) {
-        var working_sample = InstrumentSample()
-        instrument.add_sample(working_sample)
+        val working_sample = InstrumentSample()
         generators.forEachIndexed { i, generator ->
             when (generator.sfGenOper) {
                 0x35 -> {
@@ -551,10 +549,11 @@ class SoundFont(var riff: Riff) {
                 }
             }
         }
+        instrument.add_sample(working_sample)
     }
 
     private fun generate_preset(preset: Preset, generators: List<Generator>) {
-        var working_instrument = PresetInstrument()
+        val working_instrument = PresetInstrument()
         for (generator in generators) {
             when (generator.sfGenOper) {
                 0x29 -> {
@@ -570,19 +569,18 @@ class SoundFont(var riff: Riff) {
 
 
     fun get_sample_data(start_index: Int, end_index: Int): ByteArray? {
-        var smpl = this.riff.get_sub_chunk_data(1, 0, (start_index * 2), 2 * (end_index - start_index))
+        val smpl = this.riff.get_sub_chunk_data(1, 0, (start_index * 2), 2 * (end_index - start_index))
         var wordsize = 2
-        var sm24 = if (this.riff.sub_chunks[1].size == 2) {
+        val sm24 = if (this.riff.sub_chunks[1].size == 2) {
             wordsize = 3
             this.riff.get_sub_chunk_data(1, 1, start_index, end_index - start_index)
         } else {
             null
         }
 
-        var output: ByteArray
+        val output: ByteArray
         if (sm24 != null) {
             output = ByteArray(smpl.size + sm24.size)
-            var bump = 0
             for (i in 0 until (smpl.size / 2)) {
                 output[i + (i * 2)] = smpl[(i * 2) + 1]
                 output[i + ((i * 2) + 1)] = smpl[i * 2]
@@ -594,8 +592,6 @@ class SoundFont(var riff: Riff) {
             // TODO: May need to handle smpl.size % 2 == 1
             output = ByteArray(smpl.size)
             for (i in 0 until (smpl.size / 2)) {
-                //output[i * 2] = smpl[(i * 2) + 1]
-                //output[(i * 2) + 1] = smpl[i * 2]
                 output[i * 2] = smpl[(i * 2)]
                 output[(i * 2) + 1] = smpl[(i * 2) + 1]
             }
@@ -621,17 +617,19 @@ class Generator(
     fun asInt(): Int {
         return shAmount + (wAmount * 256)
     }
+
     fun asIntSigned(): Int {
         val unsigned = shAmount + (wAmount * 256)
         // Get 2's compliment
         return if (unsigned shr 15 == 1) {
-            unsigned.inv()
+            0 - (((unsigned xor 0xFFFF) + 1) and 0x7FFF)
         } else {
             unsigned
         }
     }
     fun asTimecent(): Double {
-        return (2.0).pow(this.asIntSigned().toDouble() / 1200)
+        var p = this.asIntSigned() / 1200
+        return (2.0).pow(p.toDouble())
     }
     fun asPair(): Pair<Int, Int> {
         return Pair(this.shAmount, this.wAmount)
@@ -709,8 +707,13 @@ class PresetInstrument: Generated() {
 
 class Instrument(var name: String) {
     var samples: MutableList<InstrumentSample> = mutableListOf()
+    var global_sample: InstrumentSample? = null
     fun add_sample(isample: InstrumentSample) {
-        this.samples.add(isample)
+        if (global_sample == null) {
+            global_sample = isample
+        } else {
+            this.samples.add(isample)
+        }
     }
 
     fun get_sample(key: Int, velocity: Int): InstrumentSample? {
@@ -737,111 +740,4 @@ class InstrumentSample: Generated() {
     var exclusive_class: Int? = null
     var keynum: Int? = null
     var velocity: Int? = null
-}
-
-//------------ RIFF  --------------//
-class Riff(input_stream: InputStream) {
-    var list_chunks: MutableList<Int> = mutableListOf()
-    var sub_chunks: MutableList<List<Int>> = mutableListOf()
-    var bytes: ByteArray
-
-    init {
-        this.bytes = ByteArray(input_stream.available())
-        input_stream.read(this.bytes)
-        input_stream.close()
-
-        var fourcc = this.get_string(0, 4)
-        var riff_size = this.get_little_endian(4, 4)
-        var typecc = this.get_string(8, 4)
-
-        var working_index = 12
-        while (working_index < riff_size - 4) {
-            this.list_chunks.add(working_index)
-            var tag = this.get_string(working_index, 4)
-            working_index += 4
-
-            var chunk_size = this.get_little_endian(working_index, 4)
-            working_index += 4
-
-            var type = this.get_string(working_index, 4)
-            working_index += 4
-
-            var sub_chunk_list: MutableList<Int> = mutableListOf()
-            var sub_index = 0
-            while (sub_index < chunk_size - 4) {
-                sub_chunk_list.add(working_index + sub_index)
-
-                var sub_chunk_tag = this.get_string(working_index + sub_index, 4)
-                sub_index += 4
-
-                var sub_chunk_size = this.get_little_endian(working_index + sub_index, 4)
-                sub_index += 4
-
-                sub_index += sub_chunk_size
-            }
-
-            working_index += sub_index
-            this.sub_chunks.add(sub_chunk_list)
-        }
-    }
-
-    fun get_list_chunk_type(list_index: Int): String {
-        var offset = this.list_chunks[list_index]
-        return this.get_string(offset + 8, 4)
-    }
-
-    fun get_sub_chunk_type(list_index: Int, chunk_index: Int): String {
-        var start_time = System.currentTimeMillis()
-        var offset = this.sub_chunks[list_index][chunk_index]
-        return this.get_string(offset, 4)
-    }
-
-    fun get_sub_chunk_size(list_index: Int, chunk_index: Int): Int {
-        var offset = this.sub_chunks[list_index][chunk_index]
-        return this.get_little_endian(offset + 4, 4)
-    }
-
-    fun get_sub_chunk_data(list_index: Int, chunk_index: Int, inner_offset: Int? = null, cropped_size: Int? = null): ByteArray {
-        // First get the offset of the sub chunk
-        var offset = this.sub_chunks[list_index][chunk_index]
-
-        // get the *actual* size of the sub chunk
-        var size = this.get_little_endian(offset + 4, 4)
-        offset += 8
-
-        if (inner_offset != null) {
-            size -= inner_offset
-            offset += inner_offset
-        }
-
-        if (cropped_size != null && cropped_size <= size) {
-            size = cropped_size
-        }
-        return this.get_bytes(offset, size)
-    }
-
-    fun get_bytes(offset: Int, size: Int): ByteArray {
-        return this.bytes.sliceArray(offset until offset + size)
-    }
-
-    fun get_string(offset: Int, size: Int): String {
-        return this.get_bytes(offset, size).toString(Charsets.UTF_8)
-    }
-
-    fun get_little_endian(offset: Int, size: Int): Int {
-        var output = 0
-        for (i in 0 until size) {
-            output *= 256
-            output += toUInt(this.bytes[offset + (size - 1 - i)])
-        }
-        return output
-    }
-}
-
-fun toUInt(byte: Byte): Int {
-    var new_int = (byte and 0x7F.toByte()).toInt()
-    if (byte.toInt() < 0) {
-        new_int += 128
-    }
-    return new_int
 }

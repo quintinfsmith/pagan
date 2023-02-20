@@ -3,11 +3,8 @@ package com.qfs.radixulous.apres
 import android.content.Context
 import android.media.midi.*
 import android.media.midi.MidiManager.OnDeviceOpenedListener
-import android.os.Build
 import android.util.Log
-import androidx.annotation.RequiresApi
 import java.io.File
-import java.lang.Math.max
 import kotlin.concurrent.thread
 import kotlin.experimental.and
 
@@ -27,18 +24,18 @@ fun event_from_bytes(bytes: MutableList<Byte>, default: Byte = 0x90.toByte()): M
         bytes.add(0, default)
         output = event_from_bytes(bytes, default)
     } else if ((leadbyte.toInt() and 0xFF) in (0x80..0xF0)) {
-        var leadnibble: Int = (leadbyte.toInt() and 0xFF) shr 4
+        val leadnibble: Int = (leadbyte.toInt() and 0xFF) shr 4
         when (leadnibble) {
             0x8 -> {
-                var channel = (leadbyte and 0x0F).toInt()
-                var note = bytes.removeFirst().toInt()
-                var velocity = bytes.removeFirst().toInt()
+                val channel = (leadbyte and 0x0F).toInt()
+                val note = bytes.removeFirst().toInt()
+                val velocity = bytes.removeFirst().toInt()
                 output = NoteOff(channel, note, velocity)
             }
             0x9 -> {
-                var channel = (leadbyte and 0x0F).toInt()
-                var note = bytes.removeFirst().toInt()
-                var velocity = bytes.removeFirst().toInt()
+                val channel = (leadbyte and 0x0F).toInt()
+                val note = bytes.removeFirst().toInt()
+                val velocity = bytes.removeFirst().toInt()
                 output = if (velocity == 0) {
                     NoteOff(channel, note, velocity)
                 } else {
@@ -46,15 +43,15 @@ fun event_from_bytes(bytes: MutableList<Byte>, default: Byte = 0x90.toByte()): M
                 }
             }
             0xA -> {
-                var channel = (leadbyte and 0x0F).toInt()
-                var note = bytes.removeFirst().toInt()
-                var velocity = bytes.removeFirst().toInt()
+                val channel = (leadbyte and 0x0F).toInt()
+                val note = bytes.removeFirst().toInt()
+                val velocity = bytes.removeFirst().toInt()
                 output = PolyphonicKeyPressure(channel, note, velocity)
             }
             0xB -> {
-                var channel = (leadbyte and 0x0F).toInt()
-                var controller = bytes.removeFirst().toInt()
-                var value = bytes.removeFirst().toInt()
+                val channel = (leadbyte and 0x0F).toInt()
+                val controller = bytes.removeFirst().toInt()
+                val value = bytes.removeFirst().toInt()
                 output = when (controller) {
                     0x00 -> {
                         BankSelect(channel, value)
@@ -298,9 +295,9 @@ fun event_from_bytes(bytes: MutableList<Byte>, default: Byte = 0x90.toByte()): M
 
         }
     } else if (leadbyte == 0xF0.toByte()) {
-        var bytedump: MutableList<Byte> = mutableListOf()
+        val bytedump: MutableList<Byte> = mutableListOf()
         while (true) {
-            var byte = bytes.removeFirst()
+            val byte = bytes.removeFirst()
             if (byte.toInt() == 0xF7) {
                 break
             } else {
@@ -309,23 +306,23 @@ fun event_from_bytes(bytes: MutableList<Byte>, default: Byte = 0x90.toByte()): M
         }
         output = SystemExclusive(bytedump.toByteArray())
     } else if (leadbyte == 0xF2.toByte()) {
-        var lsb = bytes.removeFirst().toInt()
-        var msb = bytes.removeFirst().toInt()
-        var beat: Int = (msb shl 8) + lsb
+        val lsb = bytes.removeFirst().toInt()
+        val msb = bytes.removeFirst().toInt()
+        val beat: Int = (msb shl 8) + lsb
         output = SongPositionPointer(beat)
     } else if (leadbyte == 0xF3.toByte()) {
         output = SongSelect((bytes.removeFirst().toInt()) and 0x7F)
     } else if (leadbyte == 0xFF.toByte()) {
-        var meta_byte = bytes.removeFirst().toInt()
-        var varlength = get_variable_length_number(bytes)
+        val meta_byte = bytes.removeFirst().toInt()
+        val varlength = get_variable_length_number(bytes)
         if (meta_byte == 0x51) {
             output = SetTempo(dequeue_n(bytes, varlength))
         } else {
-            var bytedump_list: MutableList<Byte> = mutableListOf()
+            val bytedump_list: MutableList<Byte> = mutableListOf()
             for (i in 0 until varlength) {
                 bytedump_list.add(bytes.removeFirst())
             }
-            var bytedump: ByteArray = bytedump_list.toByteArray()
+            val bytedump: ByteArray = bytedump_list.toByteArray()
             when (meta_byte) {
                 0x00 -> {
                     output = SequenceNumber(
@@ -422,7 +419,7 @@ class SequenceNumber(var sequence: Int): MIDIEvent {
 
 class Text(var text: String): MIDIEvent {
     override fun as_bytes(): ByteArray {
-        var text_bytes = this.text.toByteArray()
+        val text_bytes = this.text.toByteArray()
         return byteArrayOf(0xFF.toByte(), 0x01.toByte()) + to_variable_length_bytes(text_bytes.size) + text_bytes
     }
 
@@ -437,7 +434,7 @@ class Text(var text: String): MIDIEvent {
 
 class CopyRightNotice(var text: String): MIDIEvent {
     override fun as_bytes(): ByteArray {
-        var text_bytes = this.text.toByteArray()
+        val text_bytes = this.text.toByteArray()
         return byteArrayOf(0xFF.toByte(), 0x02.toByte()) + to_variable_length_bytes(text_bytes.size) + text_bytes
     }
     fun get_text(): String {
@@ -451,7 +448,7 @@ class CopyRightNotice(var text: String): MIDIEvent {
 
 class TrackName(var name: String): MIDIEvent {
     override fun as_bytes(): ByteArray {
-        var name_bytes = this.name.toByteArray()
+        val name_bytes = this.name.toByteArray()
         return byteArrayOf(0xFF.toByte(), 0x03.toByte()) + to_variable_length_bytes(name_bytes.size) + name_bytes
     }
 
@@ -466,7 +463,7 @@ class TrackName(var name: String): MIDIEvent {
 
 class InstrumentName(var name: String): MIDIEvent {
     override fun as_bytes(): ByteArray {
-        var name_bytes = this.name.toByteArray()
+        val name_bytes = this.name.toByteArray()
         return byteArrayOf(0xFF.toByte(), 0x04.toByte()) + to_variable_length_bytes(name_bytes.size) + name_bytes
     }
 
@@ -481,7 +478,7 @@ class InstrumentName(var name: String): MIDIEvent {
 
 class Lyric(var text: String): MIDIEvent {
     override fun as_bytes(): ByteArray {
-        var text_bytes = this.text.toByteArray()
+        val text_bytes = this.text.toByteArray()
         return byteArrayOf(0xFF.toByte(), 0x05.toByte()) + to_variable_length_bytes(text_bytes.size) + text_bytes
     }
 
@@ -496,7 +493,7 @@ class Lyric(var text: String): MIDIEvent {
 
 class Marker(var text: String): MIDIEvent {
     override fun as_bytes(): ByteArray {
-        var text_bytes = this.text.toByteArray()
+        val text_bytes = this.text.toByteArray()
         return byteArrayOf(0xFF.toByte(), 0x06.toByte()) + to_variable_length_bytes(text_bytes.size) + text_bytes
     }
 
@@ -511,7 +508,7 @@ class Marker(var text: String): MIDIEvent {
 
 class CuePoint(var text: String): MIDIEvent {
     override fun as_bytes(): ByteArray {
-        var text_bytes = this.text.toByteArray()
+        val text_bytes = this.text.toByteArray()
         return byteArrayOf(0xFF.toByte(), 0x07.toByte()) + to_variable_length_bytes(text_bytes.size) + text_bytes
     }
 
@@ -566,7 +563,7 @@ class SetTempo(var mspqn: Int): MIDIEvent {
     }
 
     fun get_bpm(): Float {
-        var mspqn = this.get_mspqn()
+        val mspqn = this.get_mspqn()
         return if (mspqn > 0) {
             60000000.toFloat() / mspqn
         } else {
@@ -681,7 +678,7 @@ class TimeSignature(var numerator: Int, var denominator: Int, var clocks_per_met
 
 class KeySignature(var key: String): MIDIEvent {
     override fun as_bytes(): ByteArray {
-        var misf = get_mi_sf(this.key)
+        val misf = get_mi_sf(this.key)
         return byteArrayOf(
             0xFF.toByte(),
             0x59.toByte(),
@@ -693,7 +690,7 @@ class KeySignature(var key: String): MIDIEvent {
 
     companion object {
         fun from_mi_sf(mi: Byte, sf: Byte): KeySignature {
-            var chord_name = get_chord_name_from_mi_sf(mi, sf)
+            val chord_name = get_chord_name_from_mi_sf(mi, sf)
             return KeySignature(chord_name)
         }
     }
@@ -1142,9 +1139,9 @@ class ChannelPressure(var channel: Int, var pressure: Int): MIDIEvent {
 
 class PitchWheelChange(var channel: Int, var value: Float): MIDIEvent {
     override fun as_bytes(): ByteArray {
-        var unsigned_value = this.get_unsigned_value()
-        var least = unsigned_value and 0x007F
-        var most = (unsigned_value shr 8) and 0x007F
+        val unsigned_value = this.get_unsigned_value()
+        val least = unsigned_value and 0x007F
+        val most = (unsigned_value shr 8) and 0x007F
         return byteArrayOf(
             (0xE0 or this.channel).toByte(),
             least.toByte(),
@@ -1205,8 +1202,8 @@ class MTCQuarterFrame(var time_code: Int): MIDIEvent {
 
 class SongPositionPointer(var beat: Int): MIDIEvent {
     override fun as_bytes(): ByteArray {
-        var least = this.beat and 0x007F
-        var most = (this.beat shr 8) and 0x007F
+        val least = this.beat and 0x007F
+        val most = (this.beat shr 8) and 0x007F
 
         return byteArrayOf(
             0xF2.toByte(),
@@ -1295,18 +1292,18 @@ class MIDI {
     var _active_byte: Byte = 0x90.toByte()
 
     public fun from_path(file_path: String): MIDI {
-        var midibytes = File(file_path).readBytes()
+        val midibytes = File(file_path).readBytes()
         return MIDI.from_bytes(midibytes)
     }
     companion object {
         fun from_bytes(file_bytes: ByteArray): MIDI {
-            var working_bytes: MutableList<Byte> = mutableListOf()
+            val working_bytes: MutableList<Byte> = mutableListOf()
             for (b in file_bytes) {
                 working_bytes.add(b)
             }
-            var mlo = MIDI()
+            val mlo = MIDI()
             var sub_bytes: MutableList<Byte> = mutableListOf()
-            var chunkcount = HashMap<String, Int>()
+            val chunkcount = HashMap<String, Int>()
             var current_track: Int = 0
             var current_deltatime: Int = 0
             var chunk_type: String = ""
@@ -1323,7 +1320,7 @@ class MIDI {
                 }
 
                 if (chunkcount.containsKey(chunk_type)) {
-                    var value = chunkcount[chunk_type]!!
+                    val value = chunkcount[chunk_type]!!
                     chunkcount[chunk_type] = value + 1
                 } else {
                     chunkcount[chunk_type] = 1
@@ -1381,13 +1378,13 @@ class MIDI {
             str = "$str ${java.lang.Integer.toHexString(b.toInt() and 0xFF)}"
         }
 
-        var event: MIDIEvent? = event_from_bytes(bytes, this._active_byte) ?: throw Exception("Invalid Bytes\n$str")
+        val event: MIDIEvent? = event_from_bytes(bytes, this._active_byte) ?: throw Exception("Invalid Bytes\n$str")
 
         return this.insert_event(track, current_deltatime, event!!)
     }
 
     public fun as_bytes(): ByteArray {
-        var output: MutableList<Byte> = mutableListOf(
+        val output: MutableList<Byte> = mutableListOf(
             'M'.code.toByte(),
             'T'.code.toByte(),
             'h'.code.toByte(),
@@ -1398,21 +1395,21 @@ class MIDI {
             6.toByte()
         )
 
-        var format = this.get_format()
+        val format = this.get_format()
         output.add((format / 256).toByte())
         output.add((format % 256).toByte())
 
-        var track_count = this.count_tracks()
+        val track_count = this.count_tracks()
         output.add((track_count / 256).toByte())
         output.add((track_count % 256).toByte())
 
-        var ppqn = this.get_ppqn()
+        val ppqn = this.get_ppqn()
         output.add((ppqn / 256).toByte())
         output.add((ppqn % 256).toByte())
 
         var track_event_bytes: MutableList<Byte>
         var track_byte_length: Int = 0
-        var tracks = this.get_tracks()
+        val tracks = this.get_tracks()
 
         for (ticks in tracks) {
             output.add('M'.code.toByte())
@@ -1423,9 +1420,9 @@ class MIDI {
             track_event_bytes = mutableListOf()
             var has_eot = false
             for (pair in ticks) {
-                var tick_delay = pair.first
-                var eid = pair.second
-                var working_event = this.get_event(eid)
+                val tick_delay = pair.first
+                val eid = pair.second
+                val working_event = this.get_event(eid)
                 if (working_event != null) {
                     has_eot = has_eot || (working_event is EndOfTrack)
                     track_event_bytes += to_variable_length_bytes(tick_delay)
@@ -1453,7 +1450,7 @@ class MIDI {
 
     // Save the midi object to a file
     fun save(path: String) {
-        var bytes = this.as_bytes()
+        val bytes = this.as_bytes()
         File(path).writeBytes(bytes)
     }
 
@@ -1463,24 +1460,24 @@ class MIDI {
     }
 
     fun get_tracks(): List<List<Pair<Int, Int>>> {
-        var tracks: MutableList<MutableList<Pair<Int, Int>>> = mutableListOf()
+        val tracks: MutableList<MutableList<Pair<Int, Int>>> = mutableListOf()
         for (eid in this.event_positions.keys) {
-            var track = this.event_positions[eid]?.first!!
-            var tick = this.event_positions[eid]?.second!!
+            val track = this.event_positions[eid]?.first!!
+            val tick = this.event_positions[eid]?.second!!
             while (tracks.size <= track) {
                 tracks.add(mutableListOf())
             }
             tracks[track].add(Pair(tick, eid))
         }
 
-        var output: MutableList<MutableList<Pair<Int, Int>>> = mutableListOf()
+        val output: MutableList<MutableList<Pair<Int, Int>>> = mutableListOf()
         for (unsorted_track in tracks) {
-            var track = unsorted_track.sortedBy { it.first }
-            var current: MutableList<Pair<Int, Int>> = mutableListOf()
+            val track = unsorted_track.sortedBy { it.first }
+            val current: MutableList<Pair<Int, Int>> = mutableListOf()
             var previous_tick: Int = 0
             for (pair in track) {
-                var current_tick = pair.first
-                var eid = pair.second
+                val current_tick = pair.first
+                val eid = pair.second
                 current.add(Pair(current_tick - previous_tick, eid))
                 previous_tick = current_tick
             }
@@ -1490,7 +1487,7 @@ class MIDI {
     }
 
     fun count_tracks(): Int {
-        var used_tracks = HashSet<Int>()
+        val used_tracks = HashSet<Int>()
         for (pair in this.event_positions.values) {
             used_tracks.add(pair.first)
         }
@@ -1505,7 +1502,7 @@ class MIDI {
         var max_tick: Int = 0
         for (pair in this.event_positions.values) {
             if (pair.first == track) {
-                max_tick = max(max_tick, pair.second)
+                max_tick = kotlin.math.max(max_tick, pair.second)
             }
         }
 
@@ -1532,7 +1529,7 @@ class MIDI {
         if (track > 15) {
             throw Exception("TrackOutOfBounds")
         }
-        var new_event_id = this.event_id_gen
+        val new_event_id = this.event_id_gen
         this.event_id_gen += 1
 
         this.events[new_event_id] = event
@@ -1550,18 +1547,18 @@ class MIDI {
             throw Exception("TrackOutOfBounds")
         }
 
-        var new_event_id = this.event_id_gen
+        val new_event_id = this.event_id_gen
         this.event_id_gen += 1
         this.events[new_event_id] = event
 
-        var last_tick_in_track = this.get_track_length(track) - 1
+        val last_tick_in_track = this.get_track_length(track) - 1
         this.move_event(track, last_tick_in_track + wait, new_event_id)
 
         return new_event_id
     }
 
     fun get_event(event_id: Int): MIDIEvent? {
-        var output: MIDIEvent? = this.events[event_id]
+        val output: MIDIEvent? = this.events[event_id]
         return output
     }
 
@@ -1573,9 +1570,9 @@ class MIDI {
     }
 
     fun get_all_events(): List<Pair<Int, MIDIEvent>> {
-        var output: MutableList<Pair<Int, MIDIEvent>> = mutableListOf()
+        val output: MutableList<Pair<Int, MIDIEvent>> = mutableListOf()
         for (eid in this.event_positions.keys) {
-            var tick = this.event_positions[eid]!!.second
+            val tick = this.event_positions[eid]!!.second
             output.add(Pair(tick, this.events[eid]!!))
         }
 
@@ -1587,7 +1584,7 @@ fun dequeue_n(bytelist: MutableList<Byte>, n: Int): Int {
     var output = 0
     for (_i in 0 until n) {
         output *= 256
-        var x = bytelist.removeFirst().toInt()
+        val x = bytelist.removeFirst().toInt()
         output += x
     }
     return output
@@ -1598,7 +1595,7 @@ fun get_variable_length_number(bytes: MutableList<Byte>): Int {
 
     while (true) {
         output = output shl 7
-        var x = bytes.removeFirst().toInt()
+        val x = bytes.removeFirst().toInt()
         output = output or (x and 0x7F)
         if (x and 0x80 == 0) {
             break
@@ -1608,7 +1605,7 @@ fun get_variable_length_number(bytes: MutableList<Byte>): Int {
 }
 
 fun to_variable_length_bytes(number: Int): List<Byte> {
-    var output: MutableList<Byte> = mutableListOf()
+    val output: MutableList<Byte> = mutableListOf()
     var first_pass = true
     var working_number = number
     while (working_number > 0 || first_pass) {
@@ -1625,10 +1622,10 @@ fun to_variable_length_bytes(number: Int): List<Byte> {
 }
 
 fun get_pitchwheel_value(n: Float): Int {
-    var output = if (n < 0) {
+    val output = if (n < 0) {
         ((1 + n) * (0x2000)).toInt()
     } else if (n > 0) {
-        ((n * 0x1FFF) as Int) + 0x2000
+        (n * 0x1FFF).toInt() + 0x2000
     } else {
         0x2000
     }
@@ -1636,18 +1633,18 @@ fun get_pitchwheel_value(n: Float): Int {
 }
 
 fun build_key_signature(mi: Byte, sf: Byte): KeySignature {
-    var chord_name = get_chord_name_from_mi_sf(mi, sf)
+    val chord_name = get_chord_name_from_mi_sf(mi, sf)
     return KeySignature(chord_name)
 }
 
 fun build_pitch_wheel_change(channel: Byte, lsb: Byte, msb: Byte): PitchWheelChange {
-    var unsigned_value = ((msb.toInt() and 0xFF) shl 8) + (lsb.toInt() and 0xFF)
-    var new_value: Float = ((unsigned_value.toFloat() * 2.toFloat()) / 0x3FFF.toFloat()) - 1
+    val unsigned_value = ((msb.toInt() and 0xFF) shl 8) + (lsb.toInt() and 0xFF)
+    val new_value: Float = ((unsigned_value.toFloat() * 2.toFloat()) / 0x3FFF.toFloat()) - 1
     return PitchWheelChange(channel.toInt(), new_value)
 }
 
 fun get_mi_sf(chord_name: String): Pair<Byte, Byte> {
-    var output: Pair<Byte, Byte> = when (chord_name) {
+    val output: Pair<Byte, Byte> = when (chord_name) {
         "A" -> {
             Pair(0, 3)
         }
@@ -1722,14 +1719,14 @@ fun get_mi_sf(chord_name: String): Pair<Byte, Byte> {
 }
 
 fun get_chord_name_from_mi_sf(mi: Byte, sf: Byte): String {
-    var mi_int = mi.toInt()
-    var sf_int: Int = if (sf < 0) {
+    val mi_int = mi.toInt()
+    val sf_int: Int = if (sf < 0) {
         (sf and 0xFF.toByte()).toInt()
     } else {
         sf.toInt()
     }
 
-    var map: List<List<String>> = listOf(
+    val map: List<List<String>> = listOf(
         listOf(
             "Cb", "Gb", "Db", "Ab",
             "Eb", "Bb", "F",
@@ -2097,15 +2094,15 @@ class MIDIPlayer: VirtualMIDIDevice() {
             Log.w("apres", "Can't play without registering a midi controller first")
             return
         }
-        var ppqn = midi.get_ppqn()
+        val ppqn = midi.get_ppqn()
         var ms_per_tick = 60000 / (ppqn * 120)
         var previous_tick = 0
-        var start_time = System.currentTimeMillis()
+        val start_time = System.currentTimeMillis()
         var delay_accum = 0
         for ((tick, event) in midi.get_all_events()) {
             if ((tick - previous_tick) > 0) {
-                var delay = (tick - previous_tick) * ms_per_tick
-                var drift = delay_accum - (System.currentTimeMillis() - start_time)
+                val delay = (tick - previous_tick) * ms_per_tick
+                val drift = delay_accum - (System.currentTimeMillis() - start_time)
                 delay_accum += delay
 
                 if (delay + drift > 0) {

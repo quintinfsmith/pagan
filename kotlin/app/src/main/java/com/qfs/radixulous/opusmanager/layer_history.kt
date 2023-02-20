@@ -3,8 +3,6 @@ import android.util.Log
 import com.qfs.radixulous.structure.OpusTree
 import java.lang.Integer.max
 
-// TODO: I think i may be able to put the cursor layer above the history layer. come back to that
-
 class HistoryCache() {
     var history_locked = false
     var multi_counter: Int = 0

@@ -15,6 +15,7 @@ import android.util.Log
 import android.view.*
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
+import android.widget.NumberPicker
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -36,6 +37,7 @@ import com.qfs.radixulous.opusmanager.FlagOperation
 import com.qfs.radixulous.opusmanager.UpdateFlag
 import java.io.File
 import java.io.FileOutputStream
+import java.lang.Integer.max
 import kotlin.concurrent.thread
 import com.qfs.radixulous.opusmanager.HistoryLayer as OpusManager
 
@@ -262,6 +264,9 @@ class MainActivity : AppCompatActivity() {
             setView(viewInflated)
             setPositiveButton(android.R.string.ok) { dialog, _ ->
                 that.set_current_project_title(input.text.toString())
+                if (that.opus_manager.path != null && File(that.opus_manager.path!!).isFile) {
+                    that.project_manager.set_title(input.text.toString(), that.opus_manager)
+                }
                 dialog.dismiss()
             }
             setNegativeButton(android.R.string.cancel) { dialog, _ ->
@@ -323,9 +328,6 @@ class MainActivity : AppCompatActivity() {
 
     fun set_current_project_title(title: String) {
         this.current_project_title = title
-        if (this.opus_manager.path != null && File(this.opus_manager.path!!).isFile) {
-            this.project_manager.save(title, this.opus_manager)
-        }
         this.update_title_text()
     }
     fun get_current_project_title(): String? {
@@ -648,7 +650,7 @@ class MainActivity : AppCompatActivity() {
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
     }
 
-    internal fun popup_number_dialog(title: String, hint: String, callback: (value: Int) -> Unit) {
+    internal fun popup_number_dialog(title: String, min_value: Int, max_value: Int, callback: (value: Int) -> Unit) {
         val main_fragment = this.getActiveFragment()
 
         val viewInflated: View = LayoutInflater.from(main_fragment!!.context)
@@ -658,43 +660,93 @@ class MainActivity : AppCompatActivity() {
                 false
             )
 
-        var etValue = viewInflated.findViewById<EditText>(R.id.etValue)
-        etValue.hint = hint
+        var ones_min = if (min_value > 9 || max_value > 9) {
+            0
+        } else {
+            min_value
+        }
+
+        var ones_max = if (max_value > 9) {
+            9
+        } else {
+            max_value % 10
+        }
+
+        var npOnes = viewInflated.findViewById<NumberPicker>(R.id.npOnes)
+        npOnes.setMinValue(ones_min)
+        npOnes.setMaxValue(ones_max)
+
+        var tens_min = if (min_value / 10 > 9 || max_value / 10 > 9) {
+            0
+        } else {
+            (min_value / 10) % 10
+        }
+
+        var tens_max = if (max_value / 10 > 9) {
+            9
+        } else {
+            (max_value / 10)
+        }
+
+        var npTens = viewInflated.findViewById<NumberPicker>(R.id.npTens)
+        npTens.setMinValue(tens_min)
+        npTens.setMaxValue(tens_max)
+
+        var hundreds_min = if (min_value / 100 > 9 || max_value / 100 > 9) {
+            0
+        } else {
+            (min_value / 100) % 10
+        }
+
+        var hundreds_max = if (max_value / 100 > 9) {
+            9
+        } else {
+            (max_value / 100)
+        }
+        var npHundreds = viewInflated.findViewById<NumberPicker>(R.id.npHundreds)
+        npHundreds.setMaxValue(hundreds_max)
+        npHundreds.setMinValue(hundreds_min)
+
+        if (hundreds_max == 0) {
+            npHundreds.visibility = View.GONE
+            if (tens_max == 0) {
+                npTens.visibility = View.GONE
+            }
+        }
+        //etValue.hint = hint
 
         var dialog = AlertDialog.Builder(main_fragment!!.context)
             .setTitle(title)
             .setView(viewInflated)
             .setPositiveButton(android.R.string.ok) { dialog, _ ->
-                var str_value = etValue.text.toString()
-                if (str_value != "") {
-                    callback(str_value.toInt())
-                }
+                var value = (npHundreds.value * 100) + (npTens.value * 10) + npOnes.value
+                callback(value)
             }
             .setNegativeButton(android.R.string.cancel) { dialog, _ ->
             }
             .show()
 
-        etValue.setOnKeyListener { v, keyCode, event ->
-            if ((keyCode == KeyEvent.KEYCODE_ENTER) && (event.action == KeyEvent.ACTION_UP)) {
-                var str_value = etValue.text.toString()
-                if (str_value != "") {
-                    callback(str_value.toInt())
-                    dialog.dismiss()
-                    return@setOnKeyListener true
-                }
-            }
+        //etValue.setOnKeyListener { v, keyCode, event ->
+        //    if ((keyCode == KeyEvent.KEYCODE_ENTER) && (event.action == KeyEvent.ACTION_UP)) {
+        //        var str_value = etValue.text.toString()
+        //        if (str_value != "") {
+        //            callback(str_value.toInt())
+        //            dialog.dismiss()
+        //            return@setOnKeyListener true
+        //        }
+        //    }
 
-            false
-        }
+        //    false
+        //}
 
-        etValue.requestFocus()
         // bring up the keyboard automatically
-        thread {
-            Thread.sleep(100)
-            var imm: InputMethodManager =
-                getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-            imm.showSoftInput(etValue, InputMethodManager.SHOW_IMPLICIT)
-        }
+        //thread {
+        //    // TODO: See if the popup dialog has a callback instead of using thread.sleep
+        //    Thread.sleep(300)
+        //    var imm: InputMethodManager =
+        //        getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        //    imm.showSoftInput(etValue, InputMethodManager.SHOW_IMPLICIT)
+        //}
     }
 
     private fun popup_insert_dialog() {}

@@ -4,15 +4,34 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <EditText
-        android:id="@+id/etValue"
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_gravity="center"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent">
+
+    <NumberPicker
+        android:id="@+id/npHundreds"
         android:layout_gravity="right"
-        android:text=""
         android:gravity="right"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:digits="0123456789"
-        android:inputType="number" />
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"  />
+
+    <NumberPicker
+        android:id="@+id/npTens"
+        android:layout_gravity="right"
+        android:gravity="right"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"  />
+
+    <NumberPicker
+        android:id="@+id/npOnes"
+        android:layout_gravity="right"
+        android:gravity="right"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"  />
+
+    </LinearLayout>
 
 
 </LinearLayout>

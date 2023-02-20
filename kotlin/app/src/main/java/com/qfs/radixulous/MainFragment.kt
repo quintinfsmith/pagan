@@ -336,7 +336,12 @@ class MainFragment : Fragment() {
 
                 btnRemoveLine.setOnLongClickListener {
                     val main = this.getMain()
-                    main.popup_number_dialog("Remove Lines", "How many lines?", this::om_remove_line)
+                    main.popup_number_dialog(
+                        "Remove Lines",
+                        1,
+                        kotlin.math.max(1, opus_manager.line_count() - 1),
+                        this::om_remove_line
+                    )
                     true
                 }
 
@@ -346,7 +351,12 @@ class MainFragment : Fragment() {
 
                 btnInsertLine.setOnLongClickListener {
                     val main = this.getMain()
-                    main.popup_number_dialog("Insert Lines", "How many new lines?", this::om_insert_line)
+                    main.popup_number_dialog(
+                        "Insert Lines",
+                        1,
+                        9,
+                        this::om_insert_line
+                    )
                     true
                 }
 
@@ -368,7 +378,7 @@ class MainFragment : Fragment() {
                 }
                 btnInsertBeat.setOnLongClickListener {
                     val main = this.getMain()
-                    main.popup_number_dialog("Insert Beats", "How many beats?", this::om_insert_beat)
+                    main.popup_number_dialog("Insert Beats", 1, 99, this::om_insert_beat)
                     true
                 }
 
@@ -378,7 +388,7 @@ class MainFragment : Fragment() {
 
                 btnRemoveBeat.setOnLongClickListener {
                     val main = this.getMain()
-                    main.popup_number_dialog("Remove Beats", "How many beats?", this::om_remove_beat)
+                    main.popup_number_dialog("Remove Beats", 1, opus_manager.opus_beat_count, this::om_remove_beat)
                     true
                 }
 
@@ -548,7 +558,7 @@ class MainFragment : Fragment() {
         }
         btnSplit.setOnLongClickListener {
             val main = this.getMain()
-            main.popup_number_dialog("Split", "How many divisions?", this::om_split)
+            main.popup_number_dialog("Split", 2, 29, this::om_split)
             true
         }
 
@@ -569,7 +579,8 @@ class MainFragment : Fragment() {
             }
             btnRemove.setOnLongClickListener {
                 val main = this.getMain()
-                main.popup_number_dialog("Remove", "How many divisions?", this::om_remove)
+                // TODO: get max from tree
+                main.popup_number_dialog("Remove", 1, 99, this::om_remove)
                 true
             }
         }
@@ -579,7 +590,7 @@ class MainFragment : Fragment() {
         }
         btnInsert.setOnLongClickListener {
             val main = this.getMain()
-            main.popup_number_dialog("Insert", "How many divisions?", this::om_insert)
+            main.popup_number_dialog("Insert", 1, 29, this::om_insert)
             true
         }
     }

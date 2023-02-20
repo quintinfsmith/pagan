@@ -309,11 +309,9 @@ open class HistoryLayer() : CursorLayer() {
         val initial_beatkey = this.get_cursor().get_beatkey()
         val initial_position = this.get_cursor().get_position()
         this.history_cache.open_multi()
-
-        var line_count = this.channels.size
-        for (i in 0 until  count) {
-            if (line_count > 1) {
-                this.remove_line(channel, line_offset)
+        for (i in 0 until count) {
+            if (this.channels[channel].size > 1) {
+                this.remove_line(channel, kotlin.math.min(line_offset, this.channels[channel].size - 1))
             } else {
                 break
             }

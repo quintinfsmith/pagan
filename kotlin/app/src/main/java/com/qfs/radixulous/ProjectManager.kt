@@ -44,6 +44,11 @@ class ProjectManager() {
     //    return null
     //}
 
+    fun set_title(title: String, opus_manager: OpusManager) {
+        val path = opus_manager.path!!
+        val filename = path.substring(path.lastIndexOf("/") + 1)
+        this.set_title(title, filename)
+    }
     private fun set_title(title: String, filename: String) {
         val project_list_file = File(this.projects_list_file_path)
 

@@ -204,18 +204,23 @@ class MainActivity : AppCompatActivity() {
             this.change_name_dialog()
         }
 
-        val etTempo: EditText = this.findViewById(R.id.etTempo)
-        etTempo.setText(opus_manager.tempo.toString())
-        etTempo.addTextChangedListener(object: TextWatcher {
-            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
-            override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
-            override fun afterTextChanged(editable: Editable?) {
-                try {
-                    opus_manager.tempo = editable.toString().toFloat()
-                } catch (exception: Exception) { }
-            }
-        })
-        etTempo.filters = arrayOf(RangeFilter(1F, 999F))
+        val tvTempo: TextView = this.findViewById(R.id.tvTempo)
+        tvTempo.text = "${opus_manager.tempo.toInt()} BPM"
+        tvTempo.setOnClickListener {
+            this.popup_number_dialog("Set Tempo (BPM)", 1, 999, this::om_set_tempo, opus_manager.tempo.toInt())
+        }
+
+        //tvTempo.setText(opus_manager.tempo.toString())
+        //tvTempo.addTextChangedListener(object: TextWatcher {
+        //    override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
+        //    override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
+        //    override fun afterTextChanged(editable: Editable?) {
+        //        try {
+        //            opus_manager.tempo = editable.toString().toFloat()
+        //        } catch (exception: Exception) { }
+        //    }
+        //})
+        //tvTempo.filters = arrayOf(RangeFilter(1F, 999F))
 
 
         (this.findViewById(R.id.btnAddChannel) as TextView).setOnClickListener {
@@ -255,6 +260,7 @@ class MainActivity : AppCompatActivity() {
                 main_fragment.view as ViewGroup,
                 false
             )
+
         val input: EditText = viewInflated.findViewById(R.id.etProjectName)
         input.setText(this.get_current_project_title() ?: "Untitled Project")
 
@@ -650,7 +656,7 @@ class MainActivity : AppCompatActivity() {
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
     }
 
-    internal fun popup_number_dialog(title: String, min_value: Int, max_value: Int, callback: (value: Int) -> Unit) {
+    internal fun popup_number_dialog(title: String, min_value: Int, max_value: Int, callback: (value: Int) -> Unit, default: Int = min_value) {
         val main_fragment = this.getActiveFragment()
 
         val viewInflated: View = LayoutInflater.from(main_fragment!!.context)
@@ -707,13 +713,16 @@ class MainActivity : AppCompatActivity() {
         npHundreds.setMaxValue(hundreds_max)
         npHundreds.setMinValue(hundreds_min)
 
+        npHundreds.setValue((default / 100) % 10)
+        npTens.setValue((default / 10) % 10)
+        npOnes.setValue(default % 10)
+
         if (hundreds_max == 0) {
             npHundreds.visibility = View.GONE
             if (tens_max == 0) {
                 npTens.visibility = View.GONE
             }
         }
-        //etValue.hint = hint
 
         var dialog = AlertDialog.Builder(main_fragment!!.context)
             .setTitle(title)
@@ -726,18 +735,6 @@ class MainActivity : AppCompatActivity() {
             }
             .show()
 
-        //etValue.setOnKeyListener { v, keyCode, event ->
-        //    if ((keyCode == KeyEvent.KEYCODE_ENTER) && (event.action == KeyEvent.ACTION_UP)) {
-        //        var str_value = etValue.text.toString()
-        //        if (str_value != "") {
-        //            callback(str_value.toInt())
-        //            dialog.dismiss()
-        //            return@setOnKeyListener true
-        //        }
-        //    }
-
-        //    false
-        //}
 
         // bring up the keyboard automatically
         //thread {
@@ -749,12 +746,12 @@ class MainActivity : AppCompatActivity() {
         //}
     }
 
-    private fun popup_insert_dialog() {}
-    private fun popup_remove_dialog() {}
-    private fun popup_insertbeat_dialog() {}
-    private fun popup_removebeat_dialog() {}
-    private fun popup_insertline_dialog() {}
-    private fun popup_removeline_dialog() {}
+    private fun om_set_tempo(value: Int) {
+        val opus_manager = this.getOpusManager()
+        opus_manager.tempo = value.toFloat()
+        val tvTempo: TextView = this.findViewById(R.id.tvTempo)
+        tvTempo.text = "${opus_manager.tempo.toInt()} BPM"
+    }
 }
 
 class RadMidiController(context: Context): MIDIController(context) { }

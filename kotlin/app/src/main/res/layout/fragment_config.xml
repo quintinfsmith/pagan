@@ -35,37 +35,31 @@
             android:layout_height="wrap_content"/>
 
         <LinearLayout
-            android:layout_marginTop="@dimen/normal_padding"
-            android:padding="@dimen/normal_padding"
-            android:orientation="horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" >
-            <TextView
-                android:text="BPM:"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
-            <EditText
-                android:id="@+id/etTempo"
-                android:maxLines="1"
-                android:theme="@style/edittext"
-                android:layout_weight="1"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:digits=".0123456789"
-                android:ems="4"
-                android:text="0"
-                android:gravity="right"
-                android:background="@null"
-                android:inputType="numberDecimal" />
-        </LinearLayout>
-
-        <TextView
-            android:layout_marginTop="@dimen/normal_padding"
-            android:id="@+id/btnAddChannel"
-            android:theme="@style/button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Add Channel" />
+            android:layout_marginTop="@dimen/normal_padding">
+
+            <TextView
+                android:id="@+id/btnAddChannel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="@dimen/normal_padding"
+                android:text="Add Channel"
+                android:theme="@style/button" />
+
+            <Space
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1" />
+
+            <TextView
+                android:id="@+id/tvTempo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="right"
+                android:theme="@style/button" />
+
+        </LinearLayout>
 
 
         <androidx.recyclerview.widget.RecyclerView

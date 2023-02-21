@@ -113,20 +113,6 @@
             app:layout_constraintStart_toEndOf="@+id/btnSplit"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <TextView
-            android:id="@+id/btnInsert"
-            android:theme="@style/button"
-            android:gravity="center"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="match_parent"
-            android:layout_marginStart="5px"
-            android:layout_marginEnd="5px"
-            android:text="Insert"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/btnRemove"
-            app:layout_constraintStart_toEndOf="@+id/btnUnset"
-            app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:id="@+id/btnRemove"
@@ -139,7 +125,22 @@
             android:layout_marginEnd="5px"
             android:text="Remove"
             app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/btnInsert"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/btnInsert"
+            android:theme="@style/button"
+            android:gravity="center"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="match_parent"
+            android:layout_marginStart="5px"
+            android:layout_marginEnd="5px"
+            android:text="Insert"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/btnUnset"
             app:layout_constraintTop_toTopOf="parent" />
     </LinearLayout>
 

@@ -22,8 +22,10 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.os.bundleOf
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.setFragmentResult
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
@@ -64,12 +66,8 @@ class MainActivity : AppCompatActivity() {
     private var project_manager = ProjectManager()
 
     private var in_play_back: Boolean = false
-    private var ticking: Boolean = false
 
     private lateinit var optionsMenu: Menu
-    // TODO: Convert focus booleans to 1 enum SINGLE, ROW, COLUMN
-    var focus_row: Boolean = false
-    var focus_column: Boolean = false
 
     var export_midi_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
@@ -100,6 +98,8 @@ class MainActivity : AppCompatActivity() {
         drawerlayout.addDrawerListener( object: DrawerLayout.DrawerListener {
             override fun onDrawerClosed(drawerView: View) {
                 var fragment = that.getActiveFragment() as MainFragment
+                fragment.tick()
+
                 var opus_manager = that.getOpusManager()
                 var y = 0
                 opus_manager.channels.forEachIndexed { i, channel ->
@@ -162,14 +162,9 @@ class MainActivity : AppCompatActivity() {
         when (item.itemId) {
             R.id.itmNewProject -> {
                 // TODO: Save or discard popup dialog
-                val main_fragment = this.getActiveFragment()
-                if (main_fragment is MainFragment) {
-                    main_fragment.takedownCurrent()
-                    this.newProject()
-                    this.update_title_text()
-                    main_fragment.setContextMenu(ContextMenu.Leaf)
-                    this.tick()
-                }
+                val fragment = this.getActiveFragment()
+                fragment?.setFragmentResult("NEW", bundleOf())
+                this.navTo("main")
             }
             R.id.itmLoadProject -> {
                 this.navTo("load")
@@ -207,7 +202,7 @@ class MainActivity : AppCompatActivity() {
         val tvTempo: TextView = this.findViewById(R.id.tvTempo)
         tvTempo.text = "${opus_manager.tempo.toInt()} BPM"
         tvTempo.setOnClickListener {
-            this.popup_number_dialog("Set Tempo (BPM)", 1, 999, this::om_set_tempo, opus_manager.tempo.toInt())
+            this.popup_number_dialog("Set Tempo (BPM)", 1, 999, this::set_tempo, opus_manager.tempo.toInt())
         }
 
         //tvTempo.setText(opus_manager.tempo.toString())
@@ -225,7 +220,6 @@ class MainActivity : AppCompatActivity() {
 
         (this.findViewById(R.id.btnAddChannel) as TextView).setOnClickListener {
             channelAdapter.addChannel()
-            this.tick()
         }
 
         (this.findViewById(R.id.btnExportProject) as TextView).setOnClickListener {
@@ -365,11 +359,13 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // Only called from MainFragment
     fun newProject() {
         this.opus_manager.new()
         var new_path = this.project_manager.get_new_path()
         this.set_current_project_title("New Opus")
         this.opus_manager.path = new_path
+        this.setup_config_drawer()
     }
 
     fun update_title_text() {
@@ -440,17 +436,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun delete_project() {
-        var title = this.get_current_project_title() ?: "Untitled Project"
         this.project_manager.delete(this.opus_manager)
-        var main_fragment = this.getActiveFragment()
 
-        if (main_fragment is MainFragment) {
-            main_fragment.takedownCurrent()
-            this.newProject()
-            this.update_title_text()
-            main_fragment.setContextMenu(ContextMenu.Leaf)
-            this.tick()
-        }
+        val fragment = this.getActiveFragment()
+        fragment?.setFragmentResult("NEW", bundleOf())
+        this.navTo("main")
 
         this.feedback_msg("Deleted \"$title\"")
     }
@@ -496,173 +486,15 @@ class MainActivity : AppCompatActivity() {
         return navHost?.childFragmentManager?.fragments?.get(0)
     }
 
-    fun tick() {
-        /*
-        TODO: break this function up. Only a monolith since changing to handle all flags in
-            the exact order they were created
-         */
-        if (!this.ticking) {
-            this.ticking = true
-            val opus_manager = this.getOpusManager()
-            val main_fragment = this.getActiveFragment()
-            this.tick_unapply_focus()
-
-            val updated_beats: MutableSet<Int> = mutableSetOf()
-            var min_changed_beat = opus_manager.opus_beat_count
-            var validate_count = 0
-            while (true) {
-                when (opus_manager.fetch_next_flag()) {
-                    UpdateFlag.AbsVal -> {
-                        //Validation has to happen after all beat updates
-                        validate_count += 1
-                    }
-                    UpdateFlag.Beat -> {
-                        val (index, operation) = opus_manager.fetch_flag_beat() ?: break
-                        min_changed_beat = Integer.min(min_changed_beat, index)
-
-                        if (main_fragment !is MainFragment) {
-                            continue
-                        }
-                        when (operation) {
-                            FlagOperation.New -> {
-                                main_fragment.beat_new(index)
-                                updated_beats.add(index)
-                            }
-                            FlagOperation.Pop -> {
-                                main_fragment.beat_remove(index)
-                            }
-                        }
-                    }
-                    UpdateFlag.BeatMod -> {
-                        val beatkey = opus_manager.fetch_flag_change() ?: break
-                        if (main_fragment !is MainFragment) {
-                            continue
-                        }
-
-                        val y = opus_manager.get_y(beatkey.channel, beatkey.line_offset)
-
-                        main_fragment.beat_update(y, beatkey.beat)
-
-                        for (linked_beatkey in opus_manager.get_all_linked(beatkey)) {
-                            updated_beats.add(linked_beatkey.beat)
-                        }
-
-                    }
-                    UpdateFlag.Line -> {
-                        var line_flag = opus_manager.fetch_flag_line() ?: break
-                        if (main_fragment !is MainFragment) {
-                            continue
-                        }
-
-                        when (line_flag.operation) {
-                            FlagOperation.Pop -> {
-                                val counts = opus_manager.get_channel_line_counts()
-                                var y = 0
-                                for (i in 0 until line_flag.channel) {
-                                    y += counts[i]
-                                }
-                                main_fragment.line_remove(y + line_flag.line)
-                            }
-                            FlagOperation.New -> {
-                                val y = opus_manager.get_y(line_flag.channel, line_flag.line)
-                                main_fragment.line_new(y, line_flag.beat_count)
-                            }
-                        }
-
-                    }
-                    null -> {
-                        break
-                    }
-                    else -> {
-                        throw Exception("Received unknown update Flag")
-                    }
-                }
-
-            }
-
-            if (main_fragment is MainFragment) {
-                main_fragment.line_update_labels(opus_manager)
-
-                main_fragment.tick_resize_beats(updated_beats.toList())
-                for (index in min_changed_beat until opus_manager.opus_beat_count) {
-                    main_fragment.update_column_label_size(index)
-                }
-
-                for (b in updated_beats) {
-                    main_fragment.update_column_label_size(b)
-                }
-
-            }
-
-            for (i in 0 until validate_count) {
-                val (beatkey, position) = opus_manager.fetch_flag_absolute_value() ?: break
-                if (main_fragment !is MainFragment) {
-                    continue
-                }
-                var y = opus_manager.get_y(beatkey.channel, beatkey.line_offset)
-
-                var abs_value = opus_manager.get_absolute_value(beatkey, position) ?: continue
-                main_fragment.validate_leaf(y, beatkey.beat, position, abs_value in 0..95)
-
-            }
-
-            this.tick_apply_focus()
-            this.ticking = false
-        }
-    }
-
-    private fun tick_apply_focus() {
-        val opus_manager = this.getOpusManager()
-        val cursor = opus_manager.get_cursor()
-        val focused: MutableSet<Pair<BeatKey, List<Int>>> = mutableSetOf()
-        if (this.focus_column) {
-            for (y in 0 until opus_manager.line_count()) {
-                val (channel, index) = opus_manager.get_channel_index(y)
-                focused.add(
-                    Pair(
-                        BeatKey(channel, index, cursor.get_beatkey().beat),
-                        listOf()
-                    )
-                )
-            }
-        } else if (this.focus_row) {
-            for (x in 0 until opus_manager.opus_beat_count) {
-                val beatkey = cursor.get_beatkey()
-                focused.add(
-                    Pair(
-                        BeatKey(beatkey.channel, beatkey.line_offset, x),
-                        listOf()
-                    )
-                )
-            }
-        } else {
-            focused.add(Pair(cursor.get_beatkey(), cursor.get_position()))
-        }
-
-        var active_fragment = this.getActiveFragment()
-        if (active_fragment is MainFragment) {
-            active_fragment.apply_focus(focused, opus_manager)
-        }
-    }
-
-    private fun tick_unapply_focus() {
-        var active_fragment = this.getActiveFragment()
-        if (active_fragment is MainFragment) {
-            active_fragment.unapply_focus(this.getOpusManager())
-        }
-    }
-
     fun feedback_msg(msg: String) {
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
     }
 
     internal fun popup_number_dialog(title: String, min_value: Int, max_value: Int, callback: (value: Int) -> Unit, default: Int = min_value) {
-        val main_fragment = this.getActiveFragment()
-
-        val viewInflated: View = LayoutInflater.from(main_fragment!!.context)
+        val viewInflated: View = LayoutInflater.from(this)
             .inflate(
                 R.layout.dialog_split,
-                main_fragment.view as ViewGroup,
+                window.decorView.rootView as ViewGroup,
                 false
             )
 
@@ -679,8 +511,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         var npOnes = viewInflated.findViewById<NumberPicker>(R.id.npOnes)
-        npOnes.setMinValue(ones_min)
-        npOnes.setMaxValue(ones_max)
+        npOnes.minValue = ones_min
+        npOnes.maxValue = ones_max
 
         var tens_min = if (min_value / 10 > 9 || max_value / 10 > 9) {
             0
@@ -695,8 +527,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         var npTens = viewInflated.findViewById<NumberPicker>(R.id.npTens)
-        npTens.setMinValue(tens_min)
-        npTens.setMaxValue(tens_max)
+        npTens.minValue = tens_min
+        npTens.maxValue = tens_max
 
         var hundreds_min = if (min_value / 100 > 9 || max_value / 100 > 9) {
             0
@@ -710,12 +542,12 @@ class MainActivity : AppCompatActivity() {
             (max_value / 100)
         }
         var npHundreds = viewInflated.findViewById<NumberPicker>(R.id.npHundreds)
-        npHundreds.setMaxValue(hundreds_max)
-        npHundreds.setMinValue(hundreds_min)
+        npHundreds.maxValue = hundreds_max
+        npHundreds.minValue = hundreds_min
 
-        npHundreds.setValue((default / 100) % 10)
-        npTens.setValue((default / 10) % 10)
-        npOnes.setValue(default % 10)
+        npHundreds.value = (default / 100) % 10
+        npTens.value = (default / 10) % 10
+        npOnes.value = default % 10
 
         if (hundreds_max == 0) {
             npHundreds.visibility = View.GONE
@@ -724,7 +556,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        var dialog = AlertDialog.Builder(main_fragment!!.context)
+        var dialog = AlertDialog.Builder(this)
             .setTitle(title)
             .setView(viewInflated)
             .setPositiveButton(android.R.string.ok) { dialog, _ ->
@@ -734,20 +566,11 @@ class MainActivity : AppCompatActivity() {
             .setNegativeButton(android.R.string.cancel) { dialog, _ ->
             }
             .show()
-
-
-        // bring up the keyboard automatically
-        //thread {
-        //    // TODO: See if the popup dialog has a callback instead of using thread.sleep
-        //    Thread.sleep(300)
-        //    var imm: InputMethodManager =
-        //        getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-        //    imm.showSoftInput(etValue, InputMethodManager.SHOW_IMPLICIT)
-        //}
     }
 
-    private fun om_set_tempo(value: Int) {
+    private fun set_tempo(value: Int) {
         val opus_manager = this.getOpusManager()
+
         opus_manager.tempo = value.toFloat()
         val tvTempo: TextView = this.findViewById(R.id.tvTempo)
         tvTempo.text = "${opus_manager.tempo.toInt()} BPM"

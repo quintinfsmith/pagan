@@ -211,6 +211,12 @@ open class CursorLayer() : FlagLayer() {
         this.set_percussion_event(beat_key, this.get_cursor().get_position())
     }
 
+    fun set_cursor_position(beatkey: BeatKey, position: List<Int>){
+        this.get_cursor().y = this.get_y(beatkey.channel, beatkey.line_offset)
+        this.get_cursor().x = beatkey.beat
+        this.get_cursor().position = position.toMutableList()
+    }
+
     fun set_cursor_position(y: Int, x: Int, position: List<Int>){
         this.get_cursor().y = y
         this.get_cursor().x = x

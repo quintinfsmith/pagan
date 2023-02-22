@@ -100,7 +100,6 @@ class ChannelOptionAdapter(
         var btnRemoveChannel: TextView = holder.itemView.findViewById(R.id.btnRemoveChannel)
         btnRemoveChannel.setOnClickListener {
             this.interact_btnRemoveChannel(it)
-            this.activity.tick()
         }
     }
 
@@ -167,8 +166,6 @@ class ChannelOptionAdapter(
             }
             this.notifyItemChanged(index)
 
-            // TODO: This feels sloppy
-            //this.getMain().midi_input_device.sendEvent(ProgramChange(cursor.get_beatkey().channel, it.itemId))
             true
         }
 

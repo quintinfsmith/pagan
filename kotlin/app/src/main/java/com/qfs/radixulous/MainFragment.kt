@@ -1372,7 +1372,6 @@ class MainFragment : Fragment() {
                     }
                     UpdateFlag.Line -> {
                         var line_flag = opus_manager.fetch_flag_line() ?: break
-                        Log.e("AAA", "$line_flag")
                         when (line_flag.operation) {
                             FlagOperation.Pop -> {
                                 this.line_remove(line_flag.channel, line_flag.line)

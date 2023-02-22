@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.PopupMenu
 import android.widget.TextView
+import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.radixulous.apres.SoundFont
@@ -57,8 +58,20 @@ class ChannelOptionAdapter(
         var opus_manager = this.activity.getOpusManager()
         opus_manager.new_channel()
         opus_manager.new_line(opus_manager.channels.size - 1)
-
+        this.call_tick()
         notifyItemInserted(opus_manager.channels.size - 1)
+    }
+    fun call_tick() {
+        var fragment = this.activity.getActiveFragment()
+        when (fragment) {
+            is MainFragment -> {
+                fragment.tick()
+            }
+            else -> {
+
+            }
+        }
+
     }
 
     fun set_text(view: View, position: Int) {
@@ -130,6 +143,7 @@ class ChannelOptionAdapter(
         var opus_manager = this.activity.getOpusManager()
         var x = this.get_view_channel(view)
         opus_manager.remove_channel(x)
+        this.call_tick()
 
         this.notifyItemRemoved(x)
     }

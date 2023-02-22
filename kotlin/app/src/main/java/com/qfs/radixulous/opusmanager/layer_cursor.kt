@@ -34,11 +34,7 @@ class Cursor(var opus_manager: CursorLayer) {
             this.position = mutableListOf(0)
         }
     }
-    fun set_by_beatkey_position(beat_key: BeatKey, position: List<Int>) {
-        this.y = this.opus_manager.get_y(beat_key.channel, beat_key.line_offset)
-        this.x = beat_key.beat
-        this.position = position.toMutableList()
-    }
+
     fun get_beatkey(): BeatKey {
         var channel_index = this.get_channel_index()
         return BeatKey(
@@ -124,7 +120,6 @@ class Cursor(var opus_manager: CursorLayer) {
     }
 
     fun settle(right_align: Boolean = false) {
-
         if (this.opus_manager.opus_beat_count == 0) {
             // TODO: This'll problem bite me in the ass...
             return
@@ -248,7 +243,6 @@ open class CursorLayer() : FlagLayer() {
     fun remove_line_at_cursor() {
         var beat_key = this.get_cursor().get_beatkey()
         this.remove_line(beat_key.channel, beat_key.line_offset)
-
     }
 
     fun remove_beat_at_cursor() {
@@ -430,18 +424,21 @@ open class CursorLayer() : FlagLayer() {
     }
 
     override fun remove_line(channel: Int, index: Int) {
-        var cursor = this.get_cursor()
-        var beat_key = cursor.get_beatkey()
-
-        if (channel < beat_key.channel || (channel == beat_key.channel && beat_key.line_offset == this.channels[channel].size - 1)) {
-            this.cursor_up()
-        }
         super.remove_line(channel, index)
 
+        if (channel > this.channels.size - 1) {
+            this.cursor_up()
+        } else if (channel == this.channels.size - 1 && index >= this.channels[channel].size) {
+             this.cursor_up()
+        }
     }
 
     override fun remove_channel(channel: Int) {
         super.remove_channel(channel)
+        var cursor = this.get_cursor()
+        if (cursor.get_beatkey().channel > this.channels.size - 1) {
+            this.cursor_up()
+        }
         this.get_cursor().settle()
     }
 

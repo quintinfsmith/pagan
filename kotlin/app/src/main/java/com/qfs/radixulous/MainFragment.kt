@@ -819,7 +819,6 @@ class MainFragment : Fragment() {
 
         val (beatkey, position) = this.cache.getTreeViewPosition(view) ?: return
         opus_manager.set_cursor_position(beatkey, position)
-
         val cursor_beatkey = opus_manager.get_cursor().get_beatkey()
         if (this.linking_beat != null) {
             // If a second link point hasn't been selected, assume just one beat is being linked

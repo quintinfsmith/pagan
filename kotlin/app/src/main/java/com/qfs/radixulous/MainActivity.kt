@@ -556,7 +556,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        var dialog = AlertDialog.Builder(this)
+        AlertDialog.Builder(this)
             .setTitle(title)
             .setView(viewInflated)
             .setPositiveButton(android.R.string.ok) { dialog, _ ->

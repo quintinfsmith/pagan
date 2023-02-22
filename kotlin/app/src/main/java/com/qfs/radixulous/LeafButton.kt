@@ -87,6 +87,5 @@ class LeafButton: androidx.appcompat.widget.AppCompatTextView {
     fun setInvalid(value: Boolean) {
         this.state_invalid = value
         refreshDrawableState()
-
     }
 }

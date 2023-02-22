@@ -160,6 +160,11 @@ class ViewCache {
         val view = this.view_cache[channel].removeAt(line_offset).first
         (view.parent as ViewGroup).removeView(view)
 
+        // Remove empty channel
+        if (this.view_cache[channel].isEmpty()) {
+            this.view_cache.removeAt(channel)
+        }
+
         for (i in 0 until this.focused_leafs.size) {
             var (beatkey, position) = this.popFocusedLeaf()!!
             if (channel == beatkey.channel && line_offset == beatkey.line_offset) {

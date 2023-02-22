@@ -141,11 +141,14 @@ class ChannelOptionAdapter(
 
     private fun interact_btnRemoveChannel(view: View) {
         var opus_manager = this.activity.getOpusManager()
-        var x = this.get_view_channel(view)
-        opus_manager.remove_channel(x)
-        this.call_tick()
 
-        this.notifyItemRemoved(x)
+        if (opus_manager.channels.size > 1) {
+            var x = this.get_view_channel(view)
+            opus_manager.remove_channel(x)
+            this.call_tick()
+            this.notifyItemRemoved(x)
+        }
+
     }
 
 

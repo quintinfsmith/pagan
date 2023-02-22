@@ -1,6 +1,7 @@
 package com.qfs.radixulous
 
 import android.os.Bundle
+import android.util.Log
 import android.view.*
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.*
@@ -1033,7 +1034,11 @@ class MainFragment : Fragment() {
     fun line_new(channel: Int, line_offset: Int, beat_count: Int) {
         val rowView = this.buildLineView(channel, line_offset)
         for (x in 0 until beat_count) {
-            this.buildTreeView(rowView.getChildAt(x) as ViewGroup, BeatKey(channel, line_offset, x), listOf())
+            this.buildTreeView(
+                rowView.getChildAt(x) as ViewGroup,
+                BeatKey(channel, line_offset, x),
+                listOf()
+            )
         }
     }
 
@@ -1157,8 +1162,8 @@ class MainFragment : Fragment() {
             val (cached_beatkey, cached_position) = this.cache.popFocusedLeaf() ?: break
             val view = this.cache.getTreeView(cached_beatkey, cached_position) ?: continue
             if (view !is LeafButton
-                || cached_beatkey.channel < opus_manager.channels.size - 1
-                || !(cached_beatkey.channel == opus_manager.channels.size - 1 && cached_beatkey.line_offset < opus_manager.channels[cached_beatkey.channel].size)
+                || cached_beatkey.channel > opus_manager.channels.size - 1
+                || cached_beatkey.line_offset > opus_manager.channels[cached_beatkey.channel].size - 1
             ) {
                 continue
             }
@@ -1194,7 +1199,6 @@ class MainFragment : Fragment() {
         val opus_manager = this.getMain().getOpusManager()
         val stack: MutableList<Pair<Float, List<Int>>> = mutableListOf(Pair(new_width.toFloat(), listOf()))
         val key = BeatKey(channel, line_offset, beat)
-        val y = opus_manager.get_y(channel, line_offset)
         while (stack.isNotEmpty()) {
             val (new_size, current_position) = stack.removeFirst()
             val current_tree = opus_manager.get_tree(key, current_position)
@@ -1211,9 +1215,9 @@ class MainFragment : Fragment() {
 
                 param.width = (new_size * 120.toFloat()).toInt()
             } else {
-                param.setMarginStart(5)
-                param.setMarginEnd(5)
-                param.width = (new_size * 120.toFloat()).toInt() - param.getMarginStart() - param.getMarginEnd()
+                param.marginStart = 5
+                param.marginEnd = 5
+                param.width = (new_size * 120.toFloat()).toInt() - param.marginStart - param.marginEnd
             }
 
             current_view.layoutParams = param
@@ -1233,11 +1237,9 @@ class MainFragment : Fragment() {
                 }
             }
 
-            var y = 0
             for (channel in 0 until opus_manager.channels.size) {
                 for (line_offset in 0 until opus_manager.channels[channel].size) {
                     this.__tick_resize_beat_cell(channel, line_offset, b, max_width)
-                    y += 1
                 }
             }
 
@@ -1370,7 +1372,7 @@ class MainFragment : Fragment() {
                     }
                     UpdateFlag.Line -> {
                         var line_flag = opus_manager.fetch_flag_line() ?: break
-
+                        Log.e("AAA", "$line_flag")
                         when (line_flag.operation) {
                             FlagOperation.Pop -> {
                                 this.line_remove(line_flag.channel, line_flag.line)
@@ -1379,7 +1381,6 @@ class MainFragment : Fragment() {
                                 this.line_new(line_flag.channel, line_flag.line, line_flag.beat_count)
                             }
                         }
-
                     }
                     null -> {
                         break
@@ -1401,8 +1402,6 @@ class MainFragment : Fragment() {
 
             for (i in 0 until validate_count) {
                 val (beatkey, position) = opus_manager.fetch_flag_absolute_value() ?: break
-                var y = opus_manager.get_y(beatkey.channel, beatkey.line_offset)
-
                 var abs_value = opus_manager.get_absolute_value(beatkey, position) ?: continue
                 this.validate_leaf(beatkey, position, abs_value in 0..95)
 

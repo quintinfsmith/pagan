@@ -48,6 +48,7 @@ open class OpusManagerBase {
         } else {
             beat_key.line_offset
         }
+
         if (line_offset > this.channels[beat_key.channel].size) {
             throw Exception("Invalid BeatKey $beat_key")
         }

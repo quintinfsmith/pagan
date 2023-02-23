@@ -1,5 +1,6 @@
 package com.qfs.radixulous
 
+import android.util.Log
 import com.qfs.radixulous.opusmanager.BeatKey
 import com.qfs.radixulous.opusmanager.OpusEvent
 import org.junit.Test
@@ -31,7 +32,6 @@ class BaseLayerUnitTest {
         var beat_key = BeatKey(0, 0, 0)
         var beat_tree = manager.get_beat_tree(beat_key)
         beat_tree.set_size(1)
-        var tree = manager.get_tree(beat_key, listOf(0))
         var initial_length = beat_tree.size
         manager.insert_after(beat_key, listOf(0))
         assertEquals(beat_tree.size, initial_length + 1)
@@ -81,7 +81,11 @@ class BaseLayerUnitTest {
 
         // split an event
         var position = mutableListOf(split_count - 1, 0)
-        manager.set_event(beat_key, position, OpusEvent(30, 0, 0,false))
+        println("$position, ${beat_tree.size}, ${beat_tree.get(split_count - 1).size}")
+
+        manager.set_event(beat_key, position, OpusEvent(30, 0, 0, false))
+        println("${manager.get_tree(beat_key, position)}")
+
         manager.split_tree(beat_key, position, split_count)
         var subtree = manager.get_tree(beat_key, position)
         assertEquals(subtree.size, split_count)

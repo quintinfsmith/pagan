@@ -254,6 +254,7 @@ open class CursorLayer() : FlagLayer() {
         var beat_key = this.get_cursor().get_beatkey()
         var position = this.get_cursor().get_position()
         this.split_tree(beat_key, position, splits)
+        this.get_cursor().settle()
     }
 
     fun unset_at_cursor() {
@@ -420,7 +421,7 @@ open class CursorLayer() : FlagLayer() {
 
     override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
         super.split_tree(beat_key, position, splits)
-        this.get_cursor().position.add(0)
+        this.get_cursor().settle()
     }
 
     override fun remove_line(channel: Int, index: Int) {

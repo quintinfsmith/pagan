@@ -1,5 +1,4 @@
 package com.qfs.radixulous.opusmanager
-import android.util.Log
 import com.qfs.radixulous.structure.OpusTree
 import java.lang.Integer.max
 
@@ -174,7 +173,6 @@ open class HistoryLayer() : CursorLayer() {
                     val position = this.history_cache.get_position()
                     val beat_key = this.history_cache.get_beatkey()
                     val event = OpusEvent(value, this.RADIX, beat_key.channel, relative)
-
                     this.set_event(beat_key, position, event)
                 }
                 "set_percussion_event" -> {
@@ -339,8 +337,19 @@ open class HistoryLayer() : CursorLayer() {
     }
 
     override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
-        this.setup_repopulate(beat_key, position.toList())
+        this.history_cache.open_multi()
+
+        val tree: OpusTree<OpusEvent> = this.get_tree(beat_key, position)
+        this.push_split_tree(beat_key, position, 1)
+
+        if (tree.is_event()) {
+            var event = tree.get_event()!!
+            this.push_set_event(beat_key, position, event.note, event.relative)
+        }
+
+
         super.split_tree(beat_key, position, splits)
+        this.history_cache.close_multi(beat_key, position)
     }
 
     fun remove(beat_key: BeatKey, position: List<Int>, count: Int) {
@@ -400,6 +409,7 @@ open class HistoryLayer() : CursorLayer() {
     }
 
     override fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEvent) {
+        this.history_cache.open_multi()
         val tree = this.get_tree(beat_key, position)
         if (tree.is_event()) {
             val original_event = tree.get_event()!!
@@ -409,13 +419,13 @@ open class HistoryLayer() : CursorLayer() {
         }
 
         super.set_event(beat_key, position, event)
+        this.history_cache.close_multi(beat_key, position)
     }
 
     override fun set_percussion_event(beat_key: BeatKey, position: List<Int>) {
         val tree = this.get_tree(beat_key, position)
 
         if (tree.is_event()) {
-            val original_event = tree.get_event()!!
             this.push_set_percussion_event(beat_key, position)
         } else {
             this.push_unset(beat_key, position)
@@ -442,6 +452,15 @@ open class HistoryLayer() : CursorLayer() {
         super.unset(beat_key, position)
     }
 
+    override fun load(path: String) {
+        super.load(path)
+        this.history_cache.clear()
+    }
+
+    override fun new() {
+        super.new()
+        this.history_cache.clear()
+    }
 
     fun push_new_line(channel: Int, line_offset: Int) {
         this.history_cache.open_multi()

@@ -1,7 +1,6 @@
 package com.qfs.radixulous
 
 import android.os.Bundle
-import android.util.Log
 import android.view.*
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.*
@@ -150,6 +149,7 @@ class MainFragment : Fragment() {
             this.setContextMenu(ContextMenu.Leaf)
         } else {
             main.feedback_msg(getString(R.string.msg_undo_none))
+
         }
     }
 
@@ -509,6 +509,7 @@ class MainFragment : Fragment() {
                     nsOctave.setState(event.note / event.radix, true, true)
                 }
             }
+
             nsOffset.setOnChange(this::interact_nsOffset)
             nsOctave.setOnChange(this::interact_nsOctave)
         } else {
@@ -860,27 +861,22 @@ class MainFragment : Fragment() {
         val position = cursor.position
         val beatkey = cursor.get_beatkey()
 
-        val event = if (current_tree.is_event()) {
-            val event = current_tree.get_event()!!
-            val old_octave = event.note / event.radix
-            event.note = (old_octave * event.radix) + progress
 
-            event
-        } else {
-            OpusEvent(
-                progress,
-                opus_manager.RADIX,
-                beatkey.channel,
-                false
-            )
-        }
+        var event = OpusEvent(
+            if (current_tree.is_event()) {
+                val event = current_tree.get_event()!!
+                val old_octave = event.note / event.radix
 
-        opus_manager.set_event(beatkey, position, event)
+                (old_octave * event.radix) + progress
+            } else {
+                progress
+            },
+            opus_manager.RADIX,
+            beatkey.channel,
+            false
+        )
 
-        val nsOctave: NumberSelector = this.activity!!.findViewById(R.id.nsOctave)
-        if (nsOctave.getState() == null) {
-            nsOctave.setState(event.note / event.radix, true)
-        }
+        this.set_event(beatkey, position, event)
 
         this.setContextMenu(ContextMenu.Leaf)
         this.tick()
@@ -909,11 +905,7 @@ class MainFragment : Fragment() {
             )
         }
 
-        opus_manager.set_event(beatkey, position, event)
-        val nsOffset: NumberSelector = this.activity!!.findViewById(R.id.nsOffset)
-        if (nsOffset.getState() == null) {
-            nsOffset.setState(event.note % event.radix, true)
-        }
+        this.set_event(beatkey, position, event)
 
         this.setContextMenu(ContextMenu.Leaf)
         this.tick()

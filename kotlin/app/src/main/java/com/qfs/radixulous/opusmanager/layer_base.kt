@@ -1,5 +1,4 @@
 package com.qfs.radixulous.opusmanager
-import android.util.Log
 import com.qfs.radixulous.apres.*
 import com.qfs.radixulous.from_string
 import com.qfs.radixulous.structure.OpusTree
@@ -364,21 +363,25 @@ open class OpusManagerBase {
         if (this.is_percussion(beat_key.channel)) {
             throw Exception("Attempting to set percussion channel")
         }
-
         var tree = this.get_tree(beat_key, position)
         tree.set_event(event)
     }
 
     open fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
-        val tree: OpusTree<OpusEvent> = this.get_tree(beat_key, position)
+        var tree: OpusTree<OpusEvent> = this.get_tree(beat_key, position)
         if (tree.is_event()) {
             var event = tree.get_event()
 
             this.unset(beat_key, position)
+
+            tree = this.get_tree(beat_key, position)
             tree.set_size(splits)
 
             var new_position = position.toMutableList()
-            new_position.add(0)
+            if (splits > 1) {
+                new_position.add(0)
+            }
+
             this.set_event(beat_key, new_position, event!!)
         } else {
             tree.set_size(splits)
@@ -644,7 +647,7 @@ open class OpusManagerBase {
             this.new_channel()
             channel_data.lines.forEachIndexed { j, line_str ->
                 this.new_line(i)
-                var beatstrs = line_str.split("|")!!
+                var beatstrs = line_str.split("|")
                 beat_count = max(beat_count, beatstrs.size)
             }
         }

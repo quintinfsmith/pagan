@@ -305,6 +305,13 @@ class MainActivity : AppCompatActivity() {
                 val delay = (60F / opus_manager.tempo) * 1000
                 Thread.sleep(delay.toLong())
             }
+
+            if (this.in_play_back && main_fragment is MainFragment) {
+                this@MainActivity.runOnUiThread {
+                    main_fragment.scroll_to_beat(0, true)
+                }
+            }
+
             this.in_play_back = false
             this@MainActivity.runOnUiThread {
                 val item = this.optionsMenu.findItem(R.id.itmPlay)

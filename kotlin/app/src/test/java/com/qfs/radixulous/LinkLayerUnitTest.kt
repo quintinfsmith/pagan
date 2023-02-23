@@ -5,21 +5,46 @@ import com.qfs.radixulous.opusmanager.BeatKey
 import com.qfs.radixulous.opusmanager.OpusEvent
 import org.junit.Test
 import org.junit.Assert.*
-import com.qfs.radixulous.opusmanager.OpusManagerBase as OpusManager
+import com.qfs.radixulous.opusmanager.LinksLayer as OpusManager
 
 /**
  * Example local unit test, which will execute on the development machine (host).
  *
  * See [testing documentation](http://d.android.com/tools/testing).
  */
-class BaseLayerUnitTest {
+class LinkLayerUnitTest {
+    @Test
+    fun test_unlink_beat() {
+        TODO("test_unlink_beat")
+    }
+    @Test
+    fun test_clear_links_to_beat() {
+        TODO("test_clear_links_to_beat")
+    }
+    @Test
+    fun test_clear_links_in_network() {
+        TODO("test_clear_links_in_network")
+    }
+    @Test
+    fun test_remove_link_from_network() {
+        TODO("test_remove_link_from_network")
+    }
+    @Test
+    fun test_link_beats() {
+        TODO("test_link_beats")
+    }
+    @Test
+    fun test_get_all_linked() {
+        TODO("test_get_all_linked")
+    }
+    @Test
+    fun test_reflection_checks() {
+        TODO("test_reflection_checks")
+    }
     @Test
     fun test_new() {
-        var manager = OpusManager()
-        manager.new()
-        assertNotEquals(manager.opus_beat_count, 0)
+        TODO("test_new")
     }
-
     @Test
     fun test_get_channel_count() {
         TODO("test_get_channel_count")
@@ -173,68 +198,18 @@ class BaseLayerUnitTest {
         TODO("test_reset_cache")
     }
 
-
     @Test
     fun test_insert_after() {
-        var manager = OpusManager()
-        manager.new()
-        var beat_key = BeatKey(0, 0, 0)
-        var beat_tree = manager.get_beat_tree(beat_key)
-        beat_tree.set_size(1)
-        var initial_length = beat_tree.size
-        manager.insert_after(beat_key, listOf(0))
-        assertEquals(beat_tree.size, initial_length + 1)
-
-        //manager.insert_after(beat_key, listOf())
+        TODO("test_insert_after")
     }
 
     @Test
     fun test_remove() {
-        var manager = OpusManager()
-        manager.new()
-        var beat_key = BeatKey(0, 0, 0)
-        var beat_tree = manager.get_beat_tree(beat_key)
-        beat_tree.set_size(2)
-        // Insert empty tree in the first beat
-        manager.insert_after(beat_key, listOf(0))
-
-        //Then remove that tree
-        manager.remove(beat_key, listOf(1))
-        assertEquals(beat_tree.size, 2)
-
-        // Check that the siblings get adjusted
-        for (i in 0 until 3) {
-            manager.insert_after(beat_key, listOf(0))
-        }
-        var tree = manager.get_tree(beat_key, listOf(3))
-        manager.remove(beat_key, listOf(2))
-        assertEquals(tree, manager.get_tree(beat_key, listOf(2)))
+        TODO("test_remove")
     }
 
     @Test
     fun test_split_tree() {
-        var manager = OpusManager()
-        manager.new()
-        var split_count = 5
-        var beat_key = BeatKey(0, 0, 0)
-
-        // split a beat
-        manager.split_tree(beat_key, listOf(), split_count)
-        var beat_tree = manager.get_beat_tree(beat_key)
-        assertEquals(beat_tree.size, split_count)
-
-        // Split an open leaf
-        manager.split_tree(beat_key, listOf(split_count - 1), split_count)
-        beat_tree = manager.get_beat_tree(beat_key)
-        assertEquals(beat_tree.get(split_count - 1).size, split_count)
-
-        // split an event
-        var position = mutableListOf(split_count - 1, 0)
-
-        manager.set_event(beat_key, position, OpusEvent(30, 0, 0, false))
-
-        manager.split_tree(beat_key, position, split_count)
-        var subtree = manager.get_tree(beat_key, position)
-        assertEquals(subtree.size, split_count)
+        TODO("test_split_tree")
     }
 }

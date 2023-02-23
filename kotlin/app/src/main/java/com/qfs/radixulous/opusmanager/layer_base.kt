@@ -337,6 +337,7 @@ open class OpusManagerBase {
         if (channel == this.percussion_channel) {
             this.unset_percussion_channel()
         }
+
         var channel = this.channels[channel]
         channel.set_instrument(instrument)
     }
@@ -400,7 +401,7 @@ open class OpusManagerBase {
         }
     }
 
-    open fun new_channel() {
+    open fun new_channel(channel: Int? = null) {
         // Find the next available MIDI channel, ignore '9' which needs to be manually set
         // NOTE: This *will* generate past MIDI 1's limit of 16 channels
         var used_channels: MutableSet<Int> = mutableSetOf(9)
@@ -414,7 +415,12 @@ open class OpusManagerBase {
             new_channel.midi_channel += 1
         }
 
-        this.channels.add(new_channel)
+        if (channel != null) {
+            this.channels.add(channel, new_channel)
+        } else {
+            this.channels.add(new_channel)
+        }
+
     }
 
     open fun change_line_channel(old_channel: Int, line_index: Int, new_channel: Int) {

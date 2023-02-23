@@ -12,7 +12,7 @@ import com.qfs.radixulous.opusmanager.OpusManagerBase as OpusManager
  *
  * See [testing documentation](http://d.android.com/tools/testing).
  */
-class BaseLayerUnitTest {
+class FlagLayerUnitTest {
     @Test
     fun test_new() {
         var manager = OpusManager()

@@ -62,17 +62,13 @@ class HistoryCache() {
         this.multi_counter = 0
     }
 
-    fun intpop(): Int {
-        val output = this.int_stack.removeLast()
-        return output
-    }
 
     fun get_position(): List<Int> {
         // List<Int> prefaced by length
         val position: MutableList<Int> = mutableListOf()
-        val length = this.intpop()
+        val length = this.get_int()
         for (_i in 0 until length) {
-            position.add(0, this.intpop())
+            position.add(0, this.get_int())
         }
         return position
     }
@@ -90,9 +86,9 @@ class HistoryCache() {
     }
 
     fun get_beatkey(): BeatKey {
-        val channel = this.intpop()
-        val line_offset = this.intpop()
-        val beat = this.intpop()
+        val channel = this.get_int()
+        val line_offset = this.get_int()
+        val beat = this.get_int()
         return BeatKey(channel, line_offset, beat)
     }
 
@@ -103,7 +99,7 @@ class HistoryCache() {
     }
 
     fun get_boolean(): Boolean {
-        return this.intpop() != 0
+        return this.get_int() != 0
     }
 
     fun add_boolean(bool: Boolean) {
@@ -115,7 +111,7 @@ class HistoryCache() {
     }
 
     fun get_int(): Int {
-        return this.intpop()
+        return this.int_stack.removeLast()
     }
     fun add_int(int: Int) {
         this.int_stack.add(int)
@@ -199,6 +195,14 @@ open class HistoryLayer() : CursorLayer() {
                     val line_offset = this.history_cache.get_int()
                     val channel = this.history_cache.get_int()
                     this.new_line(channel, line_offset)
+                }
+                "remove_channel" -> {
+                    val channel = this.history_cache.get_int()
+                    this.remove_channel(channel)
+                }
+                "new_channel" -> {
+                    val channel = this.history_cache.get_int()
+                    this.new_channel(channel)
                 }
                 "remove" -> {
                     val position = this.history_cache.get_position()
@@ -462,6 +466,19 @@ open class HistoryLayer() : CursorLayer() {
         this.history_cache.clear()
     }
 
+    fun push_new_channel(channel: Int) {
+        this.history_cache.open_multi()
+        for (i in 0 until this.channels[channel].size) {
+            this.push_new_line(channel, i)
+        }
+        this.history_cache.append_undoer_key("new_channel")
+        this.history_cache.add_int(channel)
+        this.history_cache.close_multi(
+            this.get_cursor().get_beatkey(),
+            this.get_cursor().get_position()
+        )
+    }
+
     fun push_new_line(channel: Int, line_offset: Int) {
         this.history_cache.open_multi()
 
@@ -533,6 +550,12 @@ open class HistoryLayer() : CursorLayer() {
         }
     }
 
+    fun push_remove_channel(channel: Int) {
+        if (this.history_cache.append_undoer_key("remove_channel")) {
+            this.history_cache.add_int(channel)
+        }
+    }
+
     fun push_remove_line(channel: Int, index: Int) {
         if (this.history_cache.append_undoer_key("remove_line")) {
             this.history_cache.add_int(channel)
@@ -577,5 +600,15 @@ open class HistoryLayer() : CursorLayer() {
             this.get_cursor().get_beatkey(),
             this.get_cursor().get_position()
         )
+    }
+
+    override fun remove_channel(channel: Int) {
+        this.push_new_channel(channel)
+        super.remove_channel(channel)
+    }
+
+    override fun new_channel(channel: Int?) {
+        this.push_remove_channel(this.channels.size)
+        super.new_channel(channel)
     }
 }

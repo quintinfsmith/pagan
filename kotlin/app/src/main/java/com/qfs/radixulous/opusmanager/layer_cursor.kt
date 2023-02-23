@@ -232,11 +232,12 @@ open class CursorLayer() : FlagLayer() {
             index
         }
         var output = super.new_line(channel, index)
-
-        var beat_key = cursor.get_beatkey()
-        if (channel < beat_key.channel || (channel == beat_key.channel && abs_index < beat_key.line_offset)) {
+        try {
+            var beat_key = cursor.get_beatkey()
+        } catch (e: Exception) {
             this.cursor_down()
         }
+        this.cursor!!.settle()
         return output
     }
 
@@ -437,7 +438,9 @@ open class CursorLayer() : FlagLayer() {
     override fun remove_channel(channel: Int) {
         super.remove_channel(channel)
         var cursor = this.get_cursor()
-        if (cursor.get_beatkey().channel > this.channels.size - 1) {
+        try {
+            cursor.get_beatkey()
+        } catch (e: Exception) {
             this.cursor_up()
         }
         this.get_cursor().settle()

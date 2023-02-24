@@ -24,7 +24,7 @@ open class OpusManagerBase {
     }
 
     fun get_channel_instrument(channel: Int): Int {
-        var channel = this.channels[channel]
+        val channel = this.channels[channel]
         return channel.get_instrument()
     }
 
@@ -33,7 +33,7 @@ open class OpusManagerBase {
             return this.DEFAULT_PERCUSSION
         }
 
-        var channel = this.channels[this.percussion_channel!!]
+        val channel = this.channels[this.percussion_channel!!]
         return channel.get_mapped_line_offset(line_offset) ?: this.DEFAULT_PERCUSSION
     }
 
@@ -43,7 +43,7 @@ open class OpusManagerBase {
         }
 
         // TODO: Check if i ever use a negative line_offset. and change it if i do
-        var line_offset: Int = if (beat_key.line_offset < 0) {
+        val line_offset: Int = if (beat_key.line_offset < 0) {
             this.channels[beat_key.channel].size - beat_key.line_offset
         } else {
             beat_key.line_offset
@@ -61,18 +61,18 @@ open class OpusManagerBase {
     }
 
     fun get_proceding_leaf(beat_key: BeatKey, position: List<Int>): OpusTree<OpusEvent>? {
-        var pair = this.get_proceding_leaf_position(beat_key, position) ?: return null
+        val pair = this.get_proceding_leaf_position(beat_key, position) ?: return null
         return this.get_tree(pair.first, pair.second)
     }
 
     fun get_preceding_leaf(beat_key: BeatKey, position: List<Int>): OpusTree<OpusEvent>? {
-        var pair = this.get_preceding_leaf_position(beat_key, position) ?: return null
+        val pair = this.get_preceding_leaf_position(beat_key, position) ?: return null
         return this.get_tree(pair.first, pair.second)
     }
 
     fun get_preceding_leaf_position(beat_key: BeatKey, position: List<Int>): Pair<BeatKey, List<Int>>? {
-        var working_position = position.toMutableList()
-        var working_beat_key = BeatKey(beat_key.channel, beat_key.line_offset, beat_key.beat)
+        val working_position = position.toMutableList()
+        val working_beat_key = BeatKey(beat_key.channel, beat_key.line_offset, beat_key.beat)
 
         // Move left/up
         while (true) {
@@ -104,7 +104,7 @@ open class OpusManagerBase {
 
     fun get_proceding_leaf_position(beat_key: BeatKey, position: List<Int>): Pair<BeatKey, List<Int>>? {
         var working_position = position.toMutableList()
-        var working_beat_key = BeatKey(beat_key.channel, beat_key.line_offset, beat_key.beat)
+        val working_beat_key = BeatKey(beat_key.channel, beat_key.line_offset, beat_key.beat)
         var working_tree = this.get_tree(working_beat_key, working_position)
 
         // Move right/up
@@ -136,11 +136,11 @@ open class OpusManagerBase {
     }
 
     open fun get_absolute_value(beat_key: BeatKey, position: List<Int>): Int? {
-        var tree = this.get_tree(beat_key, position)
+        val tree = this.get_tree(beat_key, position)
 
         var abs_value = 0
         if (tree.is_event()) {
-            var event = tree.get_event()!!
+            val event = tree.get_event()!!
             if (!event.relative) {
                 return event.note
             } else {
@@ -154,14 +154,14 @@ open class OpusManagerBase {
         var working_position = position.toList()
 
         while (true) {
-            var pair = this.get_preceding_leaf_position(working_beat_key, working_position) ?: return null
+            val pair = this.get_preceding_leaf_position(working_beat_key, working_position) ?: return null
             working_beat_key = pair.first
             working_position = pair.second
 
-            var working_tree = this.get_tree(working_beat_key, working_position)
+            val working_tree = this.get_tree(working_beat_key, working_position)
 
             if (working_tree.is_event()) {
-                var working_event = working_tree.get_event()!!
+                val working_event = working_tree.get_event()!!
                 abs_value += working_event.note
                 if (!working_event.relative) {
                     break
@@ -173,7 +173,7 @@ open class OpusManagerBase {
     }
 
     fun get_channel_line_counts(): List<Int> {
-        var output: MutableList<Int> = mutableListOf()
+        val output: MutableList<Int> = mutableListOf()
         for (i in 0 until this.channels.size) {
             output.add(this.channels[i].size)
         }
@@ -186,14 +186,14 @@ open class OpusManagerBase {
 
         var output = false
         while (true) {
-            var pair = this.get_preceding_leaf_position(working_beat_key, working_position) ?: break
+            val pair = this.get_preceding_leaf_position(working_beat_key, working_position) ?: break
             working_beat_key = pair.first
             working_position = pair.second
 
-            var working_tree = this.get_tree(working_beat_key, working_position)
+            val working_tree = this.get_tree(working_beat_key, working_position)
 
             if (working_tree.is_event()) {
-                var working_event = working_tree.get_event()!!
+                val working_event = working_tree.get_event()!!
                 if (!working_event.relative) {
                     output = true
                     break
@@ -211,12 +211,12 @@ open class OpusManagerBase {
 
 
     fun convert_event_to_relative(beat_key: BeatKey, position: List<Int>) {
-        var tree = this.get_tree(beat_key, position)
+        val tree = this.get_tree(beat_key, position)
         if (!tree.is_event()) {
             throw Exception("Can't Convert a non-event")
         }
 
-        var event = tree.get_event()!!
+        val event = tree.get_event()!!
         if (event.relative) {
             return
         }
@@ -225,7 +225,7 @@ open class OpusManagerBase {
         var working_position: List<Int> = position
         var preceding_value: Int? = null
         while (preceding_value == null) {
-            var pair = this.get_preceding_leaf_position(working_beat_key, working_position) ?: throw Exception("No preceding value")
+            val pair = this.get_preceding_leaf_position(working_beat_key, working_position) ?: throw Exception("No preceding value")
             preceding_value = this.get_absolute_value(pair.first, pair.second)
             working_beat_key = pair.first
             working_position = pair.second
@@ -240,17 +240,17 @@ open class OpusManagerBase {
     }
 
     fun convert_event_to_absolute(beat_key: BeatKey, position: List<Int>) {
-        var tree = this.get_tree(beat_key, position)
+        val tree = this.get_tree(beat_key, position)
         if (!tree.is_event()) {
             throw Exception("Can't Convert a non-event")
         }
 
-        var event = tree.get_event()!!
+        val event = tree.get_event()!!
         if (!event.relative) {
             return
         }
 
-        var value = this.get_absolute_value(beat_key, position) ?: throw Exception("No Preceding value")
+        val value = this.get_absolute_value(beat_key, position) ?: throw Exception("No Preceding value")
         if (value < 0 || value > 95) {
             throw Exception("Note out of bounds ($value)")
         }
@@ -270,7 +270,7 @@ open class OpusManagerBase {
         val tree = this.get_tree(beat_key, position)
         val parent = tree.get_parent() ?: throw Exception("Invalid Position $position")
 
-        var index = position.last()
+        val index = position.last()
         parent.insert(index + 1, OpusTree())
     }
 
@@ -282,11 +282,11 @@ open class OpusManagerBase {
             return
         }
 
-        var parent_tree = tree.parent!!
+        val parent_tree = tree.parent!!
 
         when (parent_tree.size) {
             1 -> {
-                var next_position = position.toMutableList()
+                val next_position = position.toMutableList()
                 next_position.removeLast()
                 if (next_position.isNotEmpty()) {
                     this.remove(beat_key, next_position)
@@ -295,9 +295,9 @@ open class OpusManagerBase {
             }
             2 -> {
                 tree.detach()
-                var prev_position = position.toMutableList()
+                val prev_position = position.toMutableList()
                 prev_position.removeLast()
-                var to_replace = parent_tree.get(0)
+                val to_replace = parent_tree.get(0)
                 this.replace_tree(beat_key, prev_position, to_replace)
             }
             else -> {
@@ -311,12 +311,12 @@ open class OpusManagerBase {
             throw Exception("Attempting to set non-percussion channel")
         }
 
-        var tree = this.get_tree(beat_key, position)
+        val tree = this.get_tree(beat_key, position)
         if (tree.is_event()) {
             tree.unset_event()
         }
 
-        var instrument = this.get_percussion_instrument(beat_key.line_offset)
+        val instrument = this.get_percussion_instrument(beat_key.line_offset)
         tree.set_event(OpusEvent(
             instrument,
             this.RADIX,
@@ -330,7 +330,7 @@ open class OpusManagerBase {
             return
         }
 
-        var channel = this.channels[this.percussion_channel!!]
+        val channel = this.channels[this.percussion_channel!!]
         channel.map_line(line_offset, instrument)
     }
 
@@ -339,7 +339,7 @@ open class OpusManagerBase {
             this.unset_percussion_channel()
         }
 
-        var channel = this.channels[channel]
+        val channel = this.channels[channel]
         channel.set_instrument(instrument)
     }
 
@@ -354,7 +354,7 @@ open class OpusManagerBase {
 
     fun unset_percussion_channel() {
         if (this.percussion_channel != null) {
-            this.channels[this.percussion_channel!!].midi_channel = 0
+            this.channels[this.percussion_channel!!].midi_channel = this.get_next_available_midi_channel()
             this.channels[this.percussion_channel!!].midi_instrument = 1
             this.channels[this.percussion_channel!!].unmap()
             this.percussion_channel = null
@@ -365,21 +365,21 @@ open class OpusManagerBase {
         if (this.is_percussion(beat_key.channel)) {
             throw Exception("Attempting to set percussion channel")
         }
-        var tree = this.get_tree(beat_key, position)
+        val tree = this.get_tree(beat_key, position)
         tree.set_event(event)
     }
 
     open fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
         var tree: OpusTree<OpusEvent> = this.get_tree(beat_key, position)
         if (tree.is_event()) {
-            var event = tree.get_event()
+            val event = tree.get_event()
 
             this.unset(beat_key, position)
 
             tree = this.get_tree(beat_key, position)
             tree.set_size(splits)
 
-            var new_position = position.toMutableList()
+            val new_position = position.toMutableList()
             if (splits > 1) {
                 new_position.add(0)
             }
@@ -397,24 +397,29 @@ open class OpusManagerBase {
         tree.empty()
 
         if (tree.parent != null) {
-            var index = tree.getIndex()
+            val index = tree.getIndex()
             tree.parent!!.divisions.remove(index)
         }
     }
 
-    open fun new_channel(channel: Int? = null) {
+    private fun get_next_available_midi_channel(): Int {
         // Find the next available MIDI channel, ignore '9' which needs to be manually set
         // NOTE: This *will* generate past MIDI 1's limit of 16 channels
-        var used_channels: MutableSet<Int> = mutableSetOf(9)
+        val used_channels: MutableSet<Int> = mutableSetOf(9)
         for (channel in this.channels) {
-            used_channels.add(channel.midi_instrument)
+            used_channels.add(channel.midi_channel)
+        }
+        var new_channel = 0
+        while (new_channel in used_channels) {
+            new_channel += 1
         }
 
-        var new_channel = OpusChannel()
+        return new_channel
+    }
+    open fun new_channel(channel: Int? = null) {
+        val new_channel = OpusChannel()
         new_channel.set_beat_count(this.opus_beat_count)
-        while (new_channel.midi_channel in used_channels) {
-            new_channel.midi_channel += 1
-        }
+        new_channel.midi_channel = this.get_next_available_midi_channel()
 
         if (channel != null) {
             this.channels.add(channel, new_channel)
@@ -425,7 +430,7 @@ open class OpusManagerBase {
     }
 
     open fun change_line_channel(old_channel: Int, line_index: Int, new_channel: Int) {
-        var line = this.channels[old_channel].remove_line(line_index)
+        val line = this.channels[old_channel].remove_line(line_index)
         this.channels[new_channel].insert_line(new_channel, line)
     }
 
@@ -442,7 +447,7 @@ open class OpusManagerBase {
     }
 
     open fun overwrite_beat(old_beat: BeatKey, new_beat: BeatKey) {
-        var new_tree = this.channels[new_beat.channel].get_line(new_beat.line_offset)[new_beat.beat].copy()
+        val new_tree = this.channels[new_beat.channel].get_line(new_beat.line_offset)[new_beat.beat].copy()
         this.replace_tree(old_beat, listOf(), new_tree)
     }
 
@@ -454,7 +459,7 @@ open class OpusManagerBase {
     }
 
     open fun remove_channel(channel: Int) {
-        var free_midi_channel = this.channels.removeAt(channel).midi_channel
+        val free_midi_channel = this.channels.removeAt(channel).midi_channel
         if (this.percussion_channel != null && this.percussion_channel!! > channel) {
             this.percussion_channel = this.percussion_channel!! - 1
         }
@@ -495,16 +500,16 @@ open class OpusManagerBase {
     }
 
     open fun get_midi(start_beat: Int = 0, end_beat_rel: Int? = null): MIDI {
-        var end_beat = if (end_beat_rel == null) {
+        val end_beat = if (end_beat_rel == null) {
             this.opus_beat_count
         } else if (end_beat_rel < 0) {
             this.opus_beat_count + end_beat_rel
         } else {
             end_beat_rel
         }
-        var tempo = this.tempo
+        val tempo = this.tempo
 
-        var midi = MIDI()
+        val midi = MIDI()
 
         midi.insert_event(0,0, SetTempo.from_bpm(tempo))
         data class StackItem(var tree: OpusTree<OpusEvent>, var divisions: Int, var offset: Int, var size: Int)
@@ -517,17 +522,17 @@ open class OpusManagerBase {
                 )
             }
             for (l in 0 until channel.size) {
-                var line = channel.get_line(l)
+                val line = channel.get_line(l)
                 var current_tick = 0
                 var prev_note = 0
                 line.forEachIndexed { b, beat ->
-                    var stack: MutableList<StackItem> = mutableListOf(StackItem(beat, 1, current_tick, midi.ppqn))
+                    val stack: MutableList<StackItem> = mutableListOf(StackItem(beat, 1, current_tick, midi.ppqn))
                     while (stack.isNotEmpty()) {
-                        var current = stack.removeFirst()
+                        val current = stack.removeFirst()
 
                         if (current.tree.is_event()) {
-                            var event = current.tree.get_event()!!
-                            var note = if (this.is_percussion(c)) { // Ignore the event data and use percussion map
+                            val event = current.tree.get_event()!!
+                            val note = if (this.is_percussion(c)) { // Ignore the event data and use percussion map
                                 this.get_percussion_instrument(l) + 35
                             } else if (event.relative) {
                                 event.note + prev_note
@@ -549,7 +554,7 @@ open class OpusManagerBase {
                             }
                             prev_note = note
                         } else if (!current.tree.is_leaf()) {
-                            var working_subdiv_size = current.size / current.tree.size
+                            val working_subdiv_size = current.size / current.tree.size
                             for ((i, subtree) in current.tree.divisions) {
                                 stack.add(
                                     StackItem(
@@ -573,16 +578,16 @@ open class OpusManagerBase {
     }
 
     open fun to_json(): LoadedJSONData {
-        var channels: MutableList<ChannelJSONData> = mutableListOf()
+        val channels: MutableList<ChannelJSONData> = mutableListOf()
         for (channel in this.channels) {
-            var lines: MutableList<String> = mutableListOf()
+            val lines: MutableList<String> = mutableListOf()
             for (i in 0 until channel.size) {
-                var line = channel.get_line(i)
-                var beatstrs: MutableList<String> = mutableListOf()
+                val line = channel.get_line(i)
+                val beatstrs: MutableList<String> = mutableListOf()
                 for (beat in line) {
                     beatstrs.add(to_string(beat))
                 }
-                var str_line =  beatstrs.joinToString("|")
+                val str_line =  beatstrs.joinToString("|")
                 lines.add(str_line)
             }
 
@@ -610,7 +615,7 @@ open class OpusManagerBase {
             this.path = path
         }
 
-        var file_obj = File(this.path)
+        val file_obj = File(this.path)
         val json_string = Json.encodeToString(this.to_json())
         file_obj.writeText(json_string)
     }
@@ -641,7 +646,7 @@ open class OpusManagerBase {
     }
 
     open fun load_json_file(path: String) {
-        var json_content = File(path).readText(Charsets.UTF_8)
+        val json_content = File(path).readText(Charsets.UTF_8)
         this.load_json(Json.decodeFromString(json_content))
     }
 
@@ -654,7 +659,7 @@ open class OpusManagerBase {
             this.new_channel()
             channel_data.lines.forEachIndexed { j, line_str ->
                 this.new_line(i)
-                var beatstrs = line_str.split("|")
+                val beatstrs = line_str.split("|")
                 beat_count = max(beat_count, beatstrs.size)
             }
         }
@@ -671,9 +676,9 @@ open class OpusManagerBase {
             this.channels[i].midi_instrument = channel_data.midi_instrument
 
             channel_data.lines.forEachIndexed { j, line_str ->
-                var note_set: MutableSet<Int> = mutableSetOf()
+                val note_set: MutableSet<Int> = mutableSetOf()
                 line_str.split("|").forEachIndexed { b, beat_str ->
-                    var beat_tree = from_string(beat_str, this.RADIX, channel_data.midi_channel)
+                    val beat_tree = from_string(beat_str, this.RADIX, channel_data.midi_channel)
                     beat_tree.clear_singles()
                     this.replace_tree(BeatKey(i, j, b), listOf(), beat_tree)
                     if (i == this.percussion_channel) {

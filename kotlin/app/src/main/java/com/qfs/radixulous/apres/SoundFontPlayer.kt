@@ -235,9 +235,13 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
         var preset = this.soundFont.get_preset(this.get_channel_preset(event.channel), bank) ?: return
         var instrument = this.soundFont.get_instrument(preset.instruments[0]!!.instrumentIndex)
 
-        var active_sample = ActiveSample(event, instrument, this.soundFont)
-        this.active_samples[Pair(event.note, event.channel)] = active_sample
-        active_sample.play(event.velocity)
+        try {
+            var active_sample = ActiveSample(event, instrument, this.soundFont)
+            this.active_samples[Pair(event.note, event.channel)] = active_sample
+            active_sample.play(event.velocity)
+        } catch (e: Exception) {
+            Log.e("SoundFontPlayer", "$e")
+        }
     }
 
     override fun onNoteOff(event: NoteOff) {

@@ -63,11 +63,11 @@ class MainActivity : AppCompatActivity() {
 
     private var current_project_title: String? = null
     private var opus_manager = OpusManager()
-    private var project_manager = ProjectManager()
 
     private var in_play_back: Boolean = false
 
     private lateinit var optionsMenu: Menu
+    private lateinit var project_manager: ProjectManager
 
     var export_midi_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
@@ -84,7 +84,7 @@ class MainActivity : AppCompatActivity() {
     @RequiresApi(Build.VERSION_CODES.M)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        this.project_manager = ProjectManager(applicationInfo.dataDir)
         this.binding = ActivityMainBinding.inflate(this.layoutInflater)
         setContentView(this.binding.root)
 

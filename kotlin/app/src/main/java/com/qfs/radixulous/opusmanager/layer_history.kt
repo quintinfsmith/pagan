@@ -33,6 +33,7 @@ class HistoryCache() {
         if (this.multi_counter == 0) {
             this.history_ledger.add(mutableListOf())
         }
+
         this.multi_counter += 1
     }
 
@@ -40,10 +41,20 @@ class HistoryCache() {
         if (this.history_locked) {
             return
         }
+
         this.multi_counter -= 1
 
         if (this.multi_counter > 0) {
             this.push_set_cursor(beat_key, position)
+        }
+    }
+
+    open fun cancel_multi() {
+        if (this.history_locked) {
+            return
+        }
+        if (this.multi_counter > 0) {
+            this.multi_counter -= 1
         }
     }
 
@@ -139,11 +150,77 @@ class HistoryCache() {
             this.history_ledger.removeLast()
         }
     }
+
 }
 
 open class HistoryLayer() : CursorLayer() {
     var history_cache = HistoryCache()
 
+    fun cancel_undo() {
+        if (this.history_cache.isEmpty()) {
+            return
+        }
+
+        for (func_name in this.history_cache.pop()) {
+            when (func_name) {
+                "split_tree" -> {
+                    this.history_cache.get_int()
+                    this.history_cache.get_position()
+                    this.history_cache.get_beatkey()
+                }
+                "unlink_beats" -> {
+                    this.history_cache.get_beatkey()
+                }
+                "set_event" -> {
+                    this.history_cache.get_boolean()
+                    this.history_cache.get_int()
+                    this.history_cache.get_position()
+                    this.history_cache.get_beatkey()
+                }
+                "set_percussion_event" -> {
+                    this.history_cache.get_position()
+                    this.history_cache.get_beatkey()
+                }
+                "unset" -> {
+                    this.history_cache.get_position()
+                    this.history_cache.get_beatkey()
+                }
+                "replace_beat" -> {
+                    this.history_cache.get_beat()
+                    this.history_cache.get_beatkey()
+                }
+                "remove_line" -> {
+                    this.history_cache.get_int()
+                    this.history_cache.get_int()
+                }
+                "new_line" -> {
+                    this.history_cache.get_int()
+                    this.history_cache.get_int()
+                }
+                "remove_channel" -> {
+                    this.history_cache.get_int()
+                }
+                "new_channel" -> {
+                    this.history_cache.get_int()
+                }
+                "remove" -> {
+                    this.history_cache.get_position()
+                    this.history_cache.get_beatkey()
+                }
+                "remove_beat" -> {
+                    this.history_cache.get_int()
+                }
+                "insert_beat" -> {
+                    this.history_cache.get_int()
+                }
+                "set_cursor" -> {
+                    this.history_cache.get_position()
+                    this.history_cache.get_beatkey()
+                }
+            }
+        }
+        this.history_cache.cancel_multi()
+    }
     open fun apply_undo() {
         if (this.history_cache.isEmpty()) {
             return
@@ -197,8 +274,8 @@ open class HistoryLayer() : CursorLayer() {
                     this.new_line(channel, line_offset)
                 }
                 "remove_channel" -> {
-                    val channel = this.history_cache.get_int()
-                    this.remove_channel(channel)
+                    val channel_uuid = this.history_cache.get_int()
+                    this.remove_channel_by_uuid(channel_uuid)
                 }
                 "new_channel" -> {
                     val channel = this.history_cache.get_int()
@@ -414,7 +491,9 @@ open class HistoryLayer() : CursorLayer() {
 
     override fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEvent) {
         this.history_cache.open_multi()
+
         val tree = this.get_tree(beat_key, position)
+
         if (tree.is_event()) {
             val original_event = tree.get_event()!!
             this.push_set_event(beat_key, position, original_event.note, original_event.relative)
@@ -422,20 +501,32 @@ open class HistoryLayer() : CursorLayer() {
             this.push_unset(beat_key, position)
         }
 
-        super.set_event(beat_key, position, event)
+        try {
+            super.set_event(beat_key, position, event)
+        } catch (e: Exception) {
+            this.cancel_undo()
+            throw e
+        }
+
         this.history_cache.close_multi(beat_key, position)
+
     }
 
     override fun set_percussion_event(beat_key: BeatKey, position: List<Int>) {
         val tree = this.get_tree(beat_key, position)
-
         if (tree.is_event()) {
             this.push_set_percussion_event(beat_key, position)
         } else {
             this.push_unset(beat_key, position)
         }
 
-        super.set_percussion_event(beat_key, position)
+        try {
+            super.set_percussion_event(beat_key, position)
+        } catch (e: Exception) {
+            this.cancel_undo()
+            throw e
+        }
+
     }
 
     override fun unset(beat_key: BeatKey, position: List<Int>) {
@@ -468,15 +559,18 @@ open class HistoryLayer() : CursorLayer() {
 
     fun push_new_channel(channel: Int) {
         this.history_cache.open_multi()
+
         for (i in 0 until this.channels[channel].size) {
             this.push_new_line(channel, i)
         }
-        this.history_cache.append_undoer_key("new_channel")
-        this.history_cache.add_int(channel)
-        this.history_cache.close_multi(
-            this.get_cursor().get_beatkey(),
-            this.get_cursor().get_position()
-        )
+
+        if (this.history_cache.append_undoer_key("new_channel")) {
+            this.history_cache.add_int(channel)
+            this.history_cache.close_multi(
+                this.get_cursor().get_beatkey(),
+                this.get_cursor().get_position()
+            )
+        }
     }
 
     fun push_new_line(channel: Int, line_offset: Int) {
@@ -487,9 +581,10 @@ open class HistoryLayer() : CursorLayer() {
             this.setup_repopulate(beat_key, listOf())
         }
 
-        this.history_cache.append_undoer_key("new_line")
-        this.history_cache.add_int(channel)
-        this.history_cache.add_int(line_offset)
+        if (this.history_cache.append_undoer_key("new_line")) {
+            this.history_cache.add_int(channel)
+            this.history_cache.add_int(line_offset)
+        }
 
         this.history_cache.close_multi(
             this.get_cursor().get_beatkey(),
@@ -552,7 +647,8 @@ open class HistoryLayer() : CursorLayer() {
 
     fun push_remove_channel(channel: Int) {
         if (this.history_cache.append_undoer_key("remove_channel")) {
-            this.history_cache.add_int(channel)
+            var channel_uuid = this.channels[channel].uuid
+            this.history_cache.add_int(channel_uuid)
         }
     }
 
@@ -608,7 +704,13 @@ open class HistoryLayer() : CursorLayer() {
     }
 
     override fun new_channel(channel: Int?) {
-        this.push_remove_channel(this.channels.size)
+
         super.new_channel(channel)
+        if (channel != null) {
+            this.push_remove_channel(channel)
+        } else {
+            this.push_remove_channel(this.channels.size - 1)
+        }
+
     }
 }

@@ -13,6 +13,8 @@ open class OpusManagerBase {
     var RADIX: Int = 12
     var DEFAULT_PERCUSSION: Int = 0
     var channels: MutableList<OpusChannel> = mutableListOf()
+    private var channel_uuid_generator: Int = 0xFF
+    internal var channel_uuid_map = HashMap<Int, OpusChannel>()
     var opus_beat_count: Int = 1
     var path: String? = null
     var percussion_channel: Int? = null
@@ -416,10 +418,18 @@ open class OpusManagerBase {
 
         return new_channel
     }
+
+    private fun gen_channel_uuid(): Int {
+        var output = this.channel_uuid_generator
+        this.channel_uuid_generator += 1
+        return output
+    }
+
     open fun new_channel(channel: Int? = null) {
-        val new_channel = OpusChannel()
+        val new_channel = OpusChannel(this.gen_channel_uuid())
         new_channel.set_beat_count(this.opus_beat_count)
         new_channel.midi_channel = this.get_next_available_midi_channel()
+        this.channel_uuid_map[new_channel.uuid] = new_channel
 
         if (channel != null) {
             this.channels.add(channel, new_channel)
@@ -458,8 +468,25 @@ open class OpusManagerBase {
         this.set_beat_count(this.opus_beat_count - 1)
     }
 
+    fun remove_channel_by_uuid(uuid: Int) {
+        var channel = this.channel_uuid_map[uuid] ?: throw Exception("Channel UUID $uuid Not found")
+        var channel_index: Int? = null
+        for (i in 0 until this.channels.size) {
+            if (this.channels[i] == channel) {
+                channel_index = i
+                break
+            }
+        }
+        if (channel_index != null) {
+            this.remove_channel(channel_index)
+        }
+    }
+
     open fun remove_channel(channel: Int) {
-        val free_midi_channel = this.channels.removeAt(channel).midi_channel
+        var opus_channel = this.channels.removeAt(channel)
+        this.channel_uuid_map.remove(opus_channel.uuid)
+
+        val free_midi_channel = opus_channel.midi_channel
         if (this.percussion_channel != null && this.percussion_channel!! > channel) {
             this.percussion_channel = this.percussion_channel!! - 1
         }

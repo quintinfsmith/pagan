@@ -11,7 +11,7 @@ data class OpusEvent(var note: Int, var radix: Int, var channel: Int, var relati
 @Serializable
 data class BeatKey(var channel: Int, var line_offset: Int, var beat: Int)
 
-class OpusChannel() {
+class OpusChannel(var uuid: Int) {
     var lines: MutableList<MutableList<OpusTree<OpusEvent>>> = mutableListOf()
     var midi_instrument: Int = 1
     var midi_channel: Int = 0

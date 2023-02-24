@@ -297,15 +297,44 @@ class BaseLayerUnitTest {
     }
 
     @Test
-    fun test_set_percussion_event() {
-        //TODO("test_set_percussion_event")
-    }
+    fun test_percussion() {
+        val manager = OpusManager()
+        manager.new()
 
-    @Test
-    fun test_set_percussion_channel() {
-        //TODO("test_is_percussion")
-        //TODO("test_set_percussion_channel")
-        //TODO("test_unset_percussion_channel")
+        val beatkey = BeatKey(0,0,0)
+        val position: List<Int> = listOf()
+
+        manager.set_percussion_channel(0)
+        assertThrows(Exception::class.java) { manager.set_event(beatkey, position, OpusEvent(10, 12, 0, false)) }
+        assertEquals(
+            "[Correctly] Threw an error, but still set the event",
+            false,
+            manager.get_tree(beatkey, position).is_event()
+        )
+
+        manager.set_percussion_event(beatkey, position)
+        assertEquals(
+            "Failed to set percussion_event",
+            true,
+            manager.get_tree(beatkey, position).is_event()
+        )
+        manager.unset(beatkey, position)
+        manager.unset_percussion_channel()
+
+        assertEquals(
+            "Failed to unset Percussion Channel",
+            null,
+            manager.percussion_channel
+        )
+
+        assertThrows(Exception::class.java) { manager.set_percussion_event(beatkey, position) }
+        assertEquals(
+            "[Correctly] Threw an error, but still set the event",
+            false,
+            manager.get_tree(beatkey, position).is_event()
+        )
+
+
     }
 
     @Test
@@ -316,6 +345,8 @@ class BaseLayerUnitTest {
         // set/unset leaf
         val beatkey = BeatKey(0,0,0)
         val position: List<Int> = listOf()
+
+
         manager.set_event(beatkey, position, OpusEvent(10, 12, 0, false))
         val tree = manager.get_tree(beatkey, position)
         assertEquals(

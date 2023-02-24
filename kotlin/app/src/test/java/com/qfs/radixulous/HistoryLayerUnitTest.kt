@@ -7,12 +7,9 @@ import org.junit.Assert.*
 import com.qfs.radixulous.opusmanager.HistoryLayer as OpusManager
 import com.qfs.radixulous.opusmanager.HistoryCache
 import com.qfs.radixulous.opusmanager.OpusManagerBase
+import com.qfs.radixulous.structure.OpusTree
 
 class HistoryCacheUnitTest {
-    @Test
-    fun test_historycache_append_undoer_key() {
-        //TODO("test_historycache_append_undoer_key")
-    }
     @Test
     fun test_historycache_multi_counter() {
         //TODO("test_historycache_multi_counter")
@@ -58,15 +55,43 @@ class HistoryCacheUnitTest {
     }
     @Test
     fun test_historycache_beat() {
-        //TODO("test_historycache_beat")
+        var cache = HistoryCache()
+        var test_a = OpusTree<OpusEvent>()
+        var test_b = OpusTree<OpusEvent>()
+        cache.add_beat(test_a)
+        cache.add_beat(test_b)
+
+        assertEquals(
+            "Failed To cache beat correctly",
+            cache.get_beat(),
+            test_b
+        )
+        assertEquals(
+            "Failed To cache beat correctly",
+            cache.get_beat(),
+            test_a
+        )
     }
+
     @Test
-    fun test_historycache_lock() {
-        //TODO("test_historycache_lock")
-    }
-    @Test
-    fun test_historycache_pop() {
-        //TODO("test_historycache_pop")
+    fun test_historycache_undoer_keys() {
+        var cache = HistoryCache()
+
+        cache.append_undoer_key("test_key_a")
+        cache.append_undoer_key("test_key_b")
+        assertEquals( "Popped wrong undoer key", listOf("test_key_b"), cache.pop() )
+        assertEquals( "Popped wrong undoer key", listOf("test_key_a"), cache.pop() )
+        cache.lock()
+        assertFalse( cache.append_undoer_key("test_key") )
+        cache.unlock()
+        assertEquals(
+            "[Correctly] returned false when calling append_undoer_key, but still appended key\n",
+            listOf<List<String>>(),
+            cache.pop()
+        )
+
+
+
     }
     ///------------------------------------------------------
 
@@ -86,63 +111,36 @@ class HistoryCacheUnitTest {
 
    @Test
    fun test_remove() {
+       var key = BeatKey(0,0,0)
+       var test_event = OpusEvent(12,12,0,false)
+
        var manager = OpusManager()
        manager.new()
-       manager.split_tree(BeatKey(0,0,0), listOf(), 3)
-       manager.remove(BeatKey(0,0,0), listOf(1))
+       manager.split_tree(key, listOf(), 3)
+       manager.set_event(key, listOf(1), test_event)
+       manager.remove(key, listOf(1))
+
        manager.apply_undo()
+       assertEquals(
+           "Failed to undo remove",
+           3,
+           manager.get_tree(key, listOf()).size,
+       )
+       assertEquals(
+           "Failed to undo remove with correct tree",
+           test_event,
+           manager.get_tree(key, listOf(1)).get_event()
+       )
    }
 
-   @Test
-   fun test_get_channel_count() {
-       //TODO("test_get_channel_count")
-   }
-    @Test
-    fun test_get_channel_instrument() {
-        //TODO("test_get_channel_instrument")
-    }
-    @Test
-    fun test_get_percussion_instrument() {
-        //TODO("test_get_percussion_instrument")
-    }
-    @Test
-    fun test_get_beat_tree() {
-        //TODO("test_get_beat_tree")
-    }
-    @Test
-    fun test_get_proceding_leaf() {
-        //TODO("test_get_proceding_leaf")
-    }
-    @Test
-    fun test_get_preceding_leaf() {
-        //TODO("test_get_preceding_leaf")
-    }
-    @Test
-    fun test_get_proceding_leaf_position() {
-        //TODO("test_get_proceding_leaf_position")
-    }
-    @Test
-    fun test_get_preceding_leaf_position() {
-        //TODO("test_get_preceding_leaf_position")
-    }
-    @Test
-    fun test_get_absolute_value() {
-        //TODO("test_get_absolute_value")
-    }
-    @Test
-    fun test_get_channel_line_counts() {
-        //TODO("test_get_channel_line_counts")
-    }
-    @Test
-    fun test_has_preceding_absolute_event() {
-        //TODO("test_has_preceding_absolute_event")
-    }
-    @Test
-    fun test_is_percussion() {
-        //TODO("test_is_percussion")
-    }
     @Test
     fun test_convert_event_to_relative() {
+        //var manager = OpusManager()
+        //manager.new()
+        //manager.set_event(BeatKey(0,0,0), listOf(), OpusEvent(12,12,0,false))
+        //manager.set_event(BeatKey(0,0,1), listOf(), OpusEvent(24,12,0,false))
+        //manager.convert_event_to_relative(BeatKey(0,0,1), listOf())
+        //manager.apply_undo()
         //TODO("test_convert_event_to_relative")
     }
     @Test
@@ -151,32 +149,101 @@ class HistoryCacheUnitTest {
     }
     @Test
     fun test_set_percussion_event() {
-        //TODO("test_set_percussion_event")
+        var manager = OpusManager()
+        manager.new()
+
+        try { manager.set_percussion_event(BeatKey(0,0,0), listOf()) } catch (e: Exception) {}
+        assertEquals(
+            "Appended to history stack on failure.",
+            true,
+            manager.history_cache.isEmpty()
+        )
+
+        manager.set_percussion_channel(0)
+        manager.set_percussion_event(BeatKey(0,0,0), listOf())
+
+        manager.apply_undo()
+
+        assertEquals(
+            "Failed to undo set_percussion_event().",
+            false,
+            manager.get_tree(BeatKey(0,0,0), listOf()).is_event()
+        )
     }
-    @Test
-    fun test_set_percussion_instrument() {
-        //TODO("test_set_percussion_instrument")
-    }
-    @Test
-    fun test_set_percussion_channel() {
-        //TODO("test_set_percussion_channel")
-    }
-    @Test
-    fun test_unset_percussion_channel() {
-        //TODO("test_unset_percussion_channel")
-    }
+
     @Test
     fun test_set_event() {
-        //TODO("test_set_event")
+        var event = OpusEvent(12, 12, 0, false)
+        var event_b = OpusEvent(12, 12, 0, false)
+        var manager = OpusManager()
+        manager.new()
+
+        manager.set_percussion_channel(0)
+        // WILL throw. don't want to assertThrows.
+        try { manager.set_event(BeatKey(0, 0, 0), listOf(), event) } catch (e: Exception) {}
+        assertEquals(
+            "Appended to history stack on failure.",
+            true,
+            manager.history_cache.isEmpty()
+        )
+
+        manager.unset_percussion_channel()
+        manager.set_event(BeatKey(0,0,0), listOf(), event)
+        manager.apply_undo()
+
+        assertEquals(
+            "Failed to undo set_event()",
+            false,
+            manager.get_tree(BeatKey(0,0,0), listOf()).is_event()
+        )
+
+        manager.set_event(BeatKey(0,0,0), listOf(), event_b)
+        manager.set_event(BeatKey(0,0,0), listOf(), event)
+
+        assertEquals(
+            "Failed to undo set_event()",
+            event_b,
+            manager.get_tree(BeatKey(0,0,0), listOf()).get_event()
+        )
     }
+
     @Test
     fun test_unset() {
-        //TODO("test_unset")
+        var event = OpusEvent(12, 12, 0, false)
+        var manager = OpusManager()
+        manager.new()
+        manager.set_event(BeatKey(0,0,0), listOf(), event)
+        manager.unset(BeatKey(0,0,0), listOf())
+        manager.apply_undo()
+
+        assertEquals(
+            "Failed to undo unset()",
+            event,
+            manager.get_tree(BeatKey(0,0,0), listOf()).get_event()
+        )
     }
+
     @Test
     fun test_new_channel() {
-        //TODO("test_new_channel")
+        var manager = OpusManager()
+        manager.new()
+
+        manager.new_channel()
+        manager.new_channel()
+        manager.apply_undo()
+        assertEquals(
+            "Failed to undo new_channel",
+            2,
+            manager.channels.size
+        )
+        manager.apply_undo()
+        assertEquals(
+            "Failed to undo new_channel",
+            1,
+            manager.channels.size
+        )
     }
+
     @Test
     fun test_change_line_channel() {
         //TODO("test_change_line_channel")

@@ -70,11 +70,14 @@ class OpusChannel() {
     }
 
     fun remove_line(index: Int? = null): MutableList<OpusTree<OpusEvent>> {
-        this.size -= 1
         return if (index == null) {
+            this.size -= 1
             lines.removeLast()
-        } else {
+        } else if (index < lines.size) {
+            this.size -= 1
             lines.removeAt(index)
+        } else {
+            throw Exception("Index Error $index / ${lines.size}")
         }
     }
 
@@ -156,6 +159,7 @@ class OpusChannel() {
             this.set_beat_count(this.beat_count + 1)
             return
         }
+
         this.beat_count += 1
         for (line in this.lines) {
             line.add(index, OpusTree<OpusEvent>())

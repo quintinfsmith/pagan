@@ -184,7 +184,7 @@ open class HistoryLayer() : CursorLayer() {
                 "replace_beat" -> {
                     val beat = this.history_cache.get_beat()
                     val beat_key = this.history_cache.get_beatkey()
-                    this.replace_beat(beat_key, beat)
+                    this.replace_beat_tree(beat_key, beat)
                 }
                 "remove_line" -> {
                     val line_offset = this.history_cache.get_int()

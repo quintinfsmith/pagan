@@ -153,7 +153,7 @@ open class OpusManagerBase {
         var working_position = position.toList()
 
         while (true) {
-            var pair = this.get_preceding_leaf_position(working_beat_key, working_position) ?: throw Exception("No Initial Value")
+            var pair = this.get_preceding_leaf_position(working_beat_key, working_position) ?: return null
             working_beat_key = pair.first
             working_position = pair.second
 
@@ -212,7 +212,7 @@ open class OpusManagerBase {
     fun convert_event_to_relative(beat_key: BeatKey, position: List<Int>) {
         var tree = this.get_tree(beat_key, position)
         if (!tree.is_event()) {
-            return
+            throw Exception("Can't Convert a non-event")
         }
 
         var event = tree.get_event()!!
@@ -241,7 +241,7 @@ open class OpusManagerBase {
     fun convert_event_to_absolute(beat_key: BeatKey, position: List<Int>) {
         var tree = this.get_tree(beat_key, position)
         if (!tree.is_event()) {
-            return
+            throw Exception("Can't Convert a non-event")
         }
 
         var event = tree.get_event()!!
@@ -482,7 +482,7 @@ open class OpusManagerBase {
         this.channels[beat_key.channel].replace_tree(beat_key.line_offset, beat_key.beat, position, tree)
     }
 
-    open fun replace_beat(beat_key: BeatKey, tree: OpusTree<OpusEvent>) {
+    open fun replace_beat_tree(beat_key: BeatKey, tree: OpusTree<OpusEvent>) {
         this.replace_tree(beat_key, listOf(), tree)
     }
 
@@ -701,5 +701,4 @@ open class OpusManagerBase {
         // Nothing should be in the base layer
         // this is the base function to call to setup any caches or peripheral data needed for a layer to function
     }
-
 }

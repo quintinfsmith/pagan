@@ -120,7 +120,7 @@ class BaseLayerUnitTest {
         assertEquals(
             "Failed to get proceding leaf across beats",
             Pair(first, listOf(0,0)),
-            manager.get_preceding_leaf_position(BeatKey(0,0,0), listOf())
+            manager.get_proceding_leaf_position(BeatKey(0,0,0), listOf())
         )
     }
     @Test
@@ -246,17 +246,14 @@ class BaseLayerUnitTest {
 
         assertThrows(Exception::class.java) { manager.convert_event_to_relative(BeatKey(0,0,0), listOf()) }
 
-        manager.set_event(BeatKey(0,0,0), listOf(), OpusEvent(12,12,0,true))
-        assertThrows(Exception::class.java) { manager.convert_event_to_relative(BeatKey(0,0,0), listOf()) }
-
         manager.set_event(BeatKey(0,0,0), listOf(), OpusEvent(12,12,0,false))
         assertThrows(Exception::class.java) { manager.convert_event_to_relative(BeatKey(0,0,0), listOf()) }
 
-        manager.set_event(BeatKey(0,0,1), listOf(), OpusEvent(12,12,0, false))
+        manager.set_event(BeatKey(0,0,1), listOf(), OpusEvent(24,12,0, false))
         manager.convert_event_to_relative(BeatKey(0,0,1), listOf())
         assertEquals(
-            "Failed to convert absolute_event_to_relative",
-            OpusEvent(+12, 12, 0, true),
+            "Failed to convert absolute event to relative",
+            OpusEvent(12, 12, 0, true),
             manager.get_tree(BeatKey(0,0,1), listOf()).get_event()!!
         )
 

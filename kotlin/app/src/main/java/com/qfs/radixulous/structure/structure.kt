@@ -227,7 +227,7 @@ public class OpusTree<T> {
         return copied
     }
 
-    fun get(rel_index: Int): OpusTree<T> {
+    operator fun get(rel_index: Int): OpusTree<T> {
         if (this.is_leaf()) {
             throw Exception("Get() called on leaf")
         }

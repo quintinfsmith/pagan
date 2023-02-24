@@ -112,6 +112,7 @@ open class OpusManagerBase {
             if (working_tree.parent != null) {
                 if (working_tree.parent!!.size - 1 > working_position.last()) {
                     working_position[working_position.size - 1] += 1
+                    working_tree = this.get_tree(working_beat_key, working_position)
                     break
                 } else {
                     working_position.removeLast()
@@ -128,8 +129,8 @@ open class OpusManagerBase {
         }
         // Move left/down to leaf
         while (!working_tree.is_leaf()) {
-            working_position.add(working_tree.size - 1)
-            working_tree = working_tree.get(working_tree.size - 1)
+            working_position.add(0)
+            working_tree = working_tree.get(0)
         }
         return Pair(working_beat_key, working_position)
     }

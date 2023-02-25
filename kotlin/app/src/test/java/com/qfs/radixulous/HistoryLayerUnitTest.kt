@@ -11,10 +11,6 @@ import com.qfs.radixulous.structure.OpusTree
 
 class HistoryCacheUnitTest {
     @Test
-    fun test_historycache_multi_counter() {
-        //TODO("test_historycache_multi_counter")
-    }
-    @Test
     fun test_historycache_push_set_cursor() {
         //TODO("test_historycache_push_set_cursor")
     }
@@ -22,92 +18,8 @@ class HistoryCacheUnitTest {
     fun test_historycache_clear() {
         //TODO("test_historycache_clear")
     }
-    @Test
-    fun test_historycache_position() {
-        var cache = HistoryCache()
-        cache.add_position(listOf(0,1))
 
-        var cached_position = cache.get_position()
-        assertEquals(cached_position, listOf(0,1))
-    }
-    @Test
-    fun test_historycache_beatkey() {
-        var cache = HistoryCache()
-        cache.add_beatkey(BeatKey(1,2,3))
-        var cached_beatkey = cache.get_beatkey()
-        assertEquals(cached_beatkey, BeatKey(1,2,3))
-    }
-    @Test
-    fun test_historycache_boolean() {
-        var cache = HistoryCache()
-        cache.add_boolean(false)
-        cache.add_boolean(true )
-        assertEquals(cache.get_boolean(), true)
-        assertEquals(cache.get_boolean(), false)
-    }
-    @Test
-    fun test_historycache_int() {
-        var cache = HistoryCache()
-        cache.add_int(2)
-        cache.add_int(5)
-        assertEquals(cache.get_int(), 5)
-        assertEquals(cache.get_int(),2)
-    }
-    @Test
-    fun test_historycache_beat() {
-        var cache = HistoryCache()
-        var test_a = OpusTree<OpusEvent>()
-        var test_b = OpusTree<OpusEvent>()
-        cache.add_beat(test_a)
-        cache.add_beat(test_b)
-
-        assertEquals(
-            "Failed To cache beat correctly",
-            cache.get_beat(),
-            test_b
-        )
-        assertEquals(
-            "Failed To cache beat correctly",
-            cache.get_beat(),
-            test_a
-        )
-    }
-
-    @Test
-    fun test_historycache_undoer_keys() {
-        var cache = HistoryCache()
-
-        cache.append_undoer_key("test_key_a")
-        cache.append_undoer_key("test_key_b")
-        assertEquals( "Popped wrong undoer key", listOf("test_key_b"), cache.pop() )
-        assertEquals( "Popped wrong undoer key", listOf("test_key_a"), cache.pop() )
-        cache.lock()
-        assertFalse( cache.append_undoer_key("test_key") )
-        cache.unlock()
-        assertEquals(
-            "[Correctly] returned false when calling append_undoer_key, but still appended key\n",
-            listOf<List<String>>(),
-            cache.pop()
-        )
-
-
-
-    }
     ///------------------------------------------------------
-
-    @Test
-    fun test_setup_repopulate() {
-        //TODO("test_setup_repopulate")
-    }
-
-    @Test
-    fun test_repopulate() {
-        var manager = OpusManager()
-        manager.new()
-        manager.split_tree(BeatKey(0,0,0), listOf(), 5)
-
-        manager.apply_undo()
-    }
 
    @Test
    fun test_remove() {
@@ -119,13 +31,13 @@ class HistoryCacheUnitTest {
        manager.split_tree(key, listOf(), 3)
        manager.set_event(key, listOf(1), test_event)
        manager.remove(key, listOf(1))
-
        manager.apply_undo()
        assertEquals(
            "Failed to undo remove",
            3,
            manager.get_tree(key, listOf()).size,
        )
+
        assertEquals(
            "Failed to undo remove with correct tree",
            test_event,
@@ -153,6 +65,7 @@ class HistoryCacheUnitTest {
         manager.new()
 
         try { manager.set_percussion_event(BeatKey(0,0,0), listOf()) } catch (e: Exception) {}
+
         assertEquals(
             "Appended to history stack on failure.",
             true,
@@ -174,7 +87,7 @@ class HistoryCacheUnitTest {
     @Test
     fun test_set_event() {
         var event = OpusEvent(12, 12, 0, false)
-        var event_b = OpusEvent(12, 12, 0, false)
+        var event_b = OpusEvent(5, 12, 0, false)
         var manager = OpusManager()
         manager.new()
 
@@ -193,12 +106,14 @@ class HistoryCacheUnitTest {
 
         assertEquals(
             "Failed to undo set_event()",
-            false,
-            manager.get_tree(BeatKey(0,0,0), listOf()).is_event()
+            null,
+            manager.get_tree(BeatKey(0,0,0), listOf()).get_event()
         )
 
         manager.set_event(BeatKey(0,0,0), listOf(), event_b)
         manager.set_event(BeatKey(0,0,0), listOf(), event)
+
+        manager.apply_undo()
 
         assertEquals(
             "Failed to undo set_event()",
@@ -253,10 +168,6 @@ class HistoryCacheUnitTest {
         //TODO("test_insert_beat")
     }
     @Test
-    fun test_new_line() {
-        //TODO("test_new_line")
-    }
-    @Test
     fun test_overwrite_beat() {
         //TODO("test_overwrite_beat")
     }
@@ -268,10 +179,21 @@ class HistoryCacheUnitTest {
     fun test_remove_channel() {
         //TODO("test_remove_channel")
     }
+
     @Test
-    fun test_remove_line() {
+    fun test_new_remove_line() {
+        var manager = OpusManager()
+        manager.new()
+        manager.new_line(0)
+        manager.new_line(0)
+        manager.remove_line(0, 1, 1)
+
+        manager.apply_undo()
+
+        //TODO("test_new_line")
         //TODO("test_remove_line")
     }
+
     @Test
     fun test_replace_beat() {
         //TODO("test_replace_beat")

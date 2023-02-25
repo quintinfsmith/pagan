@@ -149,7 +149,6 @@ class MainFragment : Fragment() {
             this.setContextMenu(ContextMenu.Leaf)
         } else {
             main.feedback_msg(getString(R.string.msg_undo_none))
-
         }
     }
 

@@ -468,14 +468,31 @@ class BaseLayerUnitTest {
         manager.new()
 
         val beatkey = BeatKey(0, 0, 0)
-        val tree = OpusTree<OpusEvent>()
-        tree.set_size(5)
-        manager.replace_tree(beatkey, listOf(), tree)
+        val top_tree = OpusTree<OpusEvent>()
+        top_tree.set_size(5)
+        manager.replace_tree(beatkey, listOf(), top_tree)
 
         assertEquals(
             "Failed to replace tree",
             manager.get_tree(beatkey, listOf()).size,
-            tree.size
+            top_tree.size
+        )
+
+        var position = listOf<Int>(0)
+        var new_tree = OpusTree<OpusEvent>()
+        manager.split_tree(beatkey, position, 2)
+        manager.replace_tree(beatkey, position, new_tree)
+        assertEquals(
+            "Failed to set replacement tree's parent correctly",
+            top_tree,
+            new_tree.parent
+        )
+
+        manager.replace_tree(beatkey, listOf(), new_tree)
+        assertEquals(
+            "Failed to remove replacement tree's parent when setting as beat tree",
+            null,
+            new_tree.parent
         )
     }
 
@@ -501,37 +518,6 @@ class BaseLayerUnitTest {
             }
         }
     }
-
-    @Test
-    fun test_get_midi() {
-        //TODO("test_get_midi")
-    }
-
-    @Test
-    fun test_to_json() {
-        //TODO("test_to_json")
-    }
-    @Test
-    fun test_save() {
-        //TODO("test_save")
-    }
-    @Test
-    fun test_load() {
-        //TODO("test_load")
-    }
-    @Test
-    fun test_import_midi() {
-        //TODO("test_import_midi")
-    }
-    @Test
-    fun test_purge_cache() {
-        //TODO("test_purge_cache")
-    }
-    @Test
-    fun test_reset_cache() {
-        //TODO("test_reset_cache")
-    }
-
 
     @Test
     fun test_insert_after() {
@@ -596,4 +582,35 @@ class BaseLayerUnitTest {
         val subtree = manager.get_tree(beat_key, position)
         assertEquals(subtree.size, split_count)
     }
+
+    @Test
+    fun test_get_midi() {
+        //TODO("test_get_midi")
+    }
+
+    @Test
+    fun test_to_json() {
+        //TODO("test_to_json")
+    }
+    @Test
+    fun test_save() {
+        //TODO("test_save")
+    }
+    @Test
+    fun test_load() {
+        //TODO("test_load")
+    }
+    @Test
+    fun test_import_midi() {
+        //TODO("test_import_midi")
+    }
+    @Test
+    fun test_purge_cache() {
+        //TODO("test_purge_cache")
+    }
+    @Test
+    fun test_reset_cache() {
+        //TODO("test_reset_cache")
+    }
+
 }

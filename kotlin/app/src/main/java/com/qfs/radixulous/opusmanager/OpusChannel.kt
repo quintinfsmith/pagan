@@ -83,7 +83,11 @@ class OpusChannel(var uuid: Int) {
 
     fun replace_tree(line: Int, beat: Int, position: List<Int>, tree: OpusTree<OpusEvent>) {
         var old_tree = this.get_tree(line, beat, position)
-        old_tree.replace_with(tree)
+        if (old_tree.parent != null) {
+            old_tree.replace_with(tree)
+        } else {
+            tree.parent = null
+        }
 
         if (position.isEmpty()) {
             this.lines[line][beat] = tree

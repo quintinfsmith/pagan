@@ -270,7 +270,6 @@ open class CursorLayer() : FlagLayer() {
         var position = this.get_cursor().get_position()
 
         this.remove(beat_key, position)
-
     }
 
     fun insert_beat_at_cursor() {
@@ -409,11 +408,12 @@ open class CursorLayer() : FlagLayer() {
 
         var cursor = this.get_cursor()
         if (position.isNotEmpty() && cursor.get_beatkey() == beat_key && cursor.get_position() == position) {
-            var parent_tree = this.get_tree(beat_key, position.subList(0, position.size - 1))
-            if (parent_tree != null && parent_tree.size > 1) {
-                if (position.isNotEmpty() && position.last() > 0)  {
-                    this.get_cursor().position[position.size - 1] = position.last() - 1
-                }
+            var parent_tree = this.get_tree(
+                beat_key,
+                position.subList(0, position.size - 1)
+            )
+            if (cursor.position.last() ==  parent_tree.size) {
+                cursor.position[cursor.position.size - 1] = cursor.position.last() - 1
             }
         }
 

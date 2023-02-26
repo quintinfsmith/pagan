@@ -57,19 +57,18 @@ class LoadFragment : Fragment() {
         rvProjectList.adapter = loadprojectAdapter
         rvProjectList.layoutManager = LinearLayoutManager(view.context)
 
-        // TODO: Find way to use relative path
-        var projects_dir = "/data/data/com.qfs.radixulous/projects"
-        var projects_list_file_path = "/data/data/com.qfs.radixulous/projects.json"
+        var main = this.getMain()
+        var project_manager = main.project_manager
 
         setFragmentResult("RETURNED", bundleOf())
-        val directory = File(projects_dir)
+        val directory = File(project_manager.projects_dir)
         if (!directory.isDirectory) {
             if (! directory.mkdirs()) {
                 throw Exception("Could not make directory")
             }
         }
 
-        var project_list_file = File(projects_list_file_path)
+        var project_list_file = File(project_manager.projects_list_file_path)
         if (project_list_file.isFile) {
             var content = project_list_file.readText(Charsets.UTF_8)
             var json_project_list: MutableList<ProjectDirPair> = Json.decodeFromString(content)
@@ -80,7 +79,7 @@ class LoadFragment : Fragment() {
                 loadprojectAdapter.addProject(
                     Pair(
                         obj.title,
-                        "$projects_dir/${obj.filename}"
+                        "${project_manager.projects_dir}/${obj.filename}"
                     )
                 )
             }
@@ -88,8 +87,8 @@ class LoadFragment : Fragment() {
     }
 
     fun load_project(path: String, title: String) {
+        this.getMain().loading_reticle()
         setFragmentResult("LOAD", bundleOf(Pair("PATH", path)))
-        this.getMain().set_current_project_title(title)
         this.getMain().navTo("main")
     }
 

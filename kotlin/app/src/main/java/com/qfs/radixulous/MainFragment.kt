@@ -82,6 +82,7 @@ class MainFragment : Fragment() {
             }
             main.update_menu_options()
             main.setup_config_drawer()
+            main.cancel_reticle()
         }
 
         setFragmentResultListener("NEW") { _, bundle: Bundle? ->

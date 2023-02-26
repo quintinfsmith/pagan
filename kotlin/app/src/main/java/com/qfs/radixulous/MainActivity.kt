@@ -9,15 +9,8 @@ import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.provider.DocumentsContract
-import android.text.Editable
-import android.text.TextWatcher
-import android.util.Log
 import android.view.*
-import android.view.inputmethod.InputMethodManager
-import android.widget.EditText
-import android.widget.NumberPicker
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
@@ -34,12 +27,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.qfs.radixulous.apres.*
 import com.qfs.radixulous.apres.riffreader.Riff
 import com.qfs.radixulous.databinding.ActivityMainBinding
-import com.qfs.radixulous.opusmanager.BeatKey
-import com.qfs.radixulous.opusmanager.FlagOperation
-import com.qfs.radixulous.opusmanager.UpdateFlag
 import java.io.File
 import java.io.FileOutputStream
-import java.lang.Integer.max
 import kotlin.concurrent.thread
 import com.qfs.radixulous.opusmanager.HistoryLayer as OpusManager
 
@@ -67,7 +56,8 @@ class MainActivity : AppCompatActivity() {
     private var in_play_back: Boolean = false
 
     private lateinit var optionsMenu: Menu
-    private lateinit var project_manager: ProjectManager
+    internal lateinit var project_manager: ProjectManager
+    var progressBar: ProgressBar? = null
 
     var export_midi_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
@@ -477,6 +467,7 @@ class MainActivity : AppCompatActivity() {
 
             }
             is MainFragment -> {
+                this.in_play_back = false
                 when (fragmentName) {
                     "load" -> {
                         navController.navigate(R.id.action_MainFragment_to_LoadFragment)
@@ -581,6 +572,21 @@ class MainActivity : AppCompatActivity() {
         opus_manager.tempo = value.toFloat()
         val tvTempo: TextView = this.findViewById(R.id.tvTempo)
         tvTempo.text = "${opus_manager.tempo.toInt()} BPM"
+    }
+
+    fun loading_reticle() {
+        this.progressBar = ProgressBar(this@MainActivity, null, android.R.attr.progressBarStyleLarge)
+        val params: RelativeLayout.LayoutParams = RelativeLayout.LayoutParams(50, 50)
+        params.addRule(RelativeLayout.CENTER_IN_PARENT)
+        var layout: DrawerLayout = findViewById(R.id.drawer_layout)
+        layout.addView(progressBar, params)
+    }
+
+    fun cancel_reticle() {
+        if (this.progressBar != null) {
+            this.progressBar!!.visibility = View.GONE
+            this.progressBar = null
+        }
     }
 }
 

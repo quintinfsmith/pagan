@@ -575,18 +575,18 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun loading_reticle() {
-        this.progressBar = ProgressBar(this@MainActivity, null, android.R.attr.progressBarStyleLarge)
+        if (this.progressBar == null) {
+            this.progressBar =
+                ProgressBar(this@MainActivity, null, android.R.attr.progressBarStyleLarge)
+        }
         val params: RelativeLayout.LayoutParams = RelativeLayout.LayoutParams(50, 50)
         params.addRule(RelativeLayout.CENTER_IN_PARENT)
-        var layout: DrawerLayout = findViewById(R.id.drawer_layout)
-        layout.addView(progressBar, params)
+        this.binding.root.addView(this.progressBar, params)
     }
 
     fun cancel_reticle() {
-        if (this.progressBar != null) {
-            this.progressBar!!.visibility = View.GONE
-            this.progressBar = null
-        }
+        var progressBar = this.progressBar ?: return
+        (progressBar.parent as ViewGroup).removeView(progressBar)
     }
 }
 

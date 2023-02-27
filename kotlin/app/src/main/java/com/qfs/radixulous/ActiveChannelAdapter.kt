@@ -61,6 +61,7 @@ class ChannelOptionAdapter(
         this.call_tick()
         notifyItemInserted(opus_manager.channels.size - 1)
     }
+
     fun call_tick() {
         var fragment = this.activity.getActiveFragment()
         when (fragment) {
@@ -78,10 +79,20 @@ class ChannelOptionAdapter(
         var opus_manager = this.activity.getOpusManager()
         var channels = opus_manager.channels
         val curChannel = channels[position]
-
-        val instrument = curChannel.midi_instrument
         var btnChooseInstrument: TextView = view.findViewById(R.id.btnChooseInstrument)
-        var prefix = if (instrument == 0) {
+        btnChooseInstrument.text = this.get_label(
+            if (opus_manager.is_percussion(position)) {
+                -1
+            } else {
+                curChannel.midi_instrument
+            }
+        )
+    }
+
+    private fun get_label(instrument: Int): String {
+        var instrument_array = this.activity.resources.getStringArray(R.array.midi_instruments)
+
+        var prefix = if (instrument == -1) {
             // TODO: I don't think this is 100% how percussion gets stored in a soundfont.
             //  but it'll work until I support imported soundfonts
             if (this.soundfont.presets[Pair(128,0)] != null) {
@@ -90,21 +101,23 @@ class ChannelOptionAdapter(
                 "\uD83D\uDD07"
             }
         } else {
-            if (instrument - 1 in this.supported_instruments) {
+            if (instrument in this.supported_instruments) {
                 ""
             } else {
                 "\uD83D\uDD07"
             }
         }
-        btnChooseInstrument.text = if (instrument == 0) {
-            "$position: $prefix Percussion"
+
+        return if (instrument == -1) {
+            "0: $prefix Percussion"
         } else {
-            "$position: $prefix ${view.resources.getStringArray(R.array.midi_instruments)[instrument - 1]}"
+            "${instrument + 1}: $prefix ${instrument_array[instrument]}"
         }
     }
 
     override fun onBindViewHolder(holder: ChannelOptionViewHolder, position: Int) {
         this.set_text(holder.itemView as ViewGroup, position)
+
         var btnChooseInstrument: TextView = holder.itemView.findViewById(R.id.btnChooseInstrument)
         btnChooseInstrument.setOnClickListener {
             this.interact_btnChooseInstrument(holder.itemView.context, it, position)
@@ -148,9 +161,7 @@ class ChannelOptionAdapter(
             this.call_tick()
             this.notifyItemRemoved(x)
         }
-
     }
-
 
     private fun interact_btnChooseInstrument(context: Context, view: View, index: Int) {
         var opus_manager = this.activity.getOpusManager()
@@ -158,31 +169,16 @@ class ChannelOptionAdapter(
         val popupMenu = PopupMenu(wrapper, view)
         var channel = this.get_view_channel(view)
 
-        val instruments = view.resources.getStringArray(R.array.midi_instruments)
-        var x = 0
-        if (opus_manager.percussion_channel == null) {
-            popupMenu.menu.add(0, 0, 0, "0: Percussion")
-            x += 1
-        }
-
-        instruments.forEachIndexed { i, string ->
-            var display_name = if (i in this.supported_instruments) {
-                "$string"
-            } else {
-                "\uD83D\uDD07 $string"
+        for (i in 0 until 128) {
+            if (i == 0 && opus_manager.percussion_channel != null) {
+                continue
             }
-            popupMenu.menu.add(0, i + 1, x, "${i + 1}: $display_name")
-            x += 1
+            popupMenu.menu.add(0, i - 1, i, this.get_label(i - 1))
         }
 
         popupMenu.setOnMenuItemClickListener {
-            if (it.itemId == 0) {
-                this.set_percussion_channel(channel)
-            } else {
-                this.set_channel_instrument(channel, it.itemId)
-            }
+            this.set_channel_instrument(channel, it.itemId)
             this.notifyItemChanged(index)
-
             true
         }
 
@@ -190,7 +186,7 @@ class ChannelOptionAdapter(
     }
 
     private fun set_channel_instrument(channel: Int, instrument: Int) {
-        if (instrument == 0) {
+        if (instrument == -1) {
             this.set_percussion_channel(channel)
             return
         }
@@ -201,9 +197,6 @@ class ChannelOptionAdapter(
 
     private fun set_percussion_channel(channel: Int) {
         var opus_manager = this.activity.getOpusManager()
-        if (opus_manager.percussion_channel != null) {
-            this.set_channel_instrument(opus_manager.percussion_channel!!, 1)
-        }
         opus_manager.set_percussion_channel(channel)
     }
 

@@ -13,7 +13,7 @@ data class BeatKey(var channel: Int, var line_offset: Int, var beat: Int)
 
 class OpusChannel(var uuid: Int) {
     var lines: MutableList<MutableList<OpusTree<OpusEvent>>> = mutableListOf()
-    var midi_instrument: Int = 1
+    var midi_instrument: Int = 0
     var midi_channel: Int = 0
     var beat_count: Int = 0
     var size: Int = 0

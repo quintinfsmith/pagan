@@ -104,10 +104,6 @@ class MainFragment : Fragment() {
             this.tick()
             main.update_menu_options()
         }
-
-        //binding.buttonFirst.setOnClickListener {
-        //    findNavController().navigate(R.id.action_FirstFragment_to_SecondFragment)
-        //}
     }
 
     override fun onStart() {

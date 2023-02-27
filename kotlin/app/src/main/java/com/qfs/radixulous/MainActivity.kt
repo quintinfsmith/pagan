@@ -83,6 +83,8 @@ class MainActivity : AppCompatActivity() {
         this.appBarConfiguration = AppBarConfiguration(navController.graph)
         setupActionBarWithNavController(navController, this.appBarConfiguration)
 
+
+
         var drawerlayout = findViewById<DrawerLayout>(R.id.drawer_layout)
         var that = this
         drawerlayout.addDrawerListener( object: DrawerLayout.DrawerListener {

@@ -125,7 +125,8 @@ class ActiveSample(var event: NoteOn, var instrument: Instrument, var soundFont:
     }
 
     fun apply_decay_shaper(): Long {
-        if (this.volumeShaper == null) {
+        var volumeShaper = this.volumeShaper
+        if (volumeShaper == null) {
             return 0
         }
 
@@ -145,16 +146,22 @@ class ActiveSample(var event: NoteOn, var instrument: Instrument, var soundFont:
         }
         var delay = (vol_env_release!! * 1000F).toLong()
 
-        val newConfig = VolumeShaper.Configuration.Builder()
-            .setDuration(delay)
-            .setCurve(floatArrayOf(0f, 1f), floatArrayOf(this.volume, 0f))
-            .setInterpolatorType(VolumeShaper.Configuration.INTERPOLATOR_TYPE_LINEAR)
-            .build()
+        try {
+            val newConfig = VolumeShaper.Configuration.Builder()
+                .setDuration(delay)
+                .setCurve(floatArrayOf(0f, 1f), floatArrayOf(this.volume, 0f))
+                .setInterpolatorType(VolumeShaper.Configuration.INTERPOLATOR_TYPE_LINEAR)
+                .build()
 
-        this.volumeShaper!!.replace(newConfig, VolumeShaper.Operation.PLAY, true)
-        thread {
-            Thread.sleep(delay)
-            this.really_stop()
+            volumeShaper!!.replace(newConfig, VolumeShaper.Operation.PLAY, true)
+
+            thread {
+                Thread.sleep(delay)
+                this.really_stop()
+            }
+        } catch (e: IllegalStateException) {
+            delay = 0
+            this.volumeShaper = null
         }
         return delay
 

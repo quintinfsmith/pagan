@@ -88,7 +88,7 @@ class LoadFragment : Fragment() {
 
     fun load_project(path: String, title: String) {
         this.getMain().loading_reticle()
-        setFragmentResult("LOAD", bundleOf(Pair("PATH", path)))
+        setFragmentResult("LOAD", bundleOf(Pair("PATH", path), Pair("TITLE", title)))
         this.getMain().navTo("main")
     }
 

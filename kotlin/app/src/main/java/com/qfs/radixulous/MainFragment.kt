@@ -75,11 +75,14 @@ class MainFragment : Fragment() {
                 this.takedownCurrent()
 
                 main.getOpusManager().load(path)
-                main.update_title_text()
 
                 this.setContextMenu(ContextMenu.Leaf)
                 this.tick()
             }
+            bundle!!.getString("TITLE")?.let { title: String ->
+                main.set_current_project_title( title )
+            }
+
             main.update_menu_options()
             main.setup_config_drawer()
             main.cancel_reticle()
@@ -89,6 +92,7 @@ class MainFragment : Fragment() {
             this.block_default_return = true
             this.newProject()
         }
+
         setFragmentResultListener("RETURNED") { _, bundle: Bundle? ->
             if (this.block_default_return) {
                 this.block_default_return = false

@@ -6,7 +6,7 @@
     android:id="@+id/clA"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="@dimen/normal_padding"
+    android:padding="@dimen/padding_config"
     android:background="?attr/drawer_bg" >
 
     <ImageView
@@ -73,39 +73,55 @@
     </LinearLayout>
 
     <LinearLayout
-        android:layout_marginTop="@dimen/normal_padding"
-        android:id="@+id/llProjectOptions"
+        android:paddingTop="@dimen/padding_config"
         android:orientation="vertical"
         android:gravity="bottom"
-
         android:layout_width="match_parent"
         android:layout_height="wrap_content" >
-        <TextView
-            android:id="@+id/btnCopyProject"
-            android:maxLines="1"
-            android:theme="@style/button"
+
+        <LinearLayout
+            android:layout_marginBottom="@dimen/normal_padding"
+            android:id="@+id/llProjectOptions"
+            android:orientation="horizontal"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/normal_padding"
-            android:text="Copy" />
+            android:layout_height="wrap_content" >
+
+            <TextView
+                android:id="@+id/btnCopyProject"
+                android:maxLines="1"
+                android:theme="@style/button"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginRight="@dimen/normal_padding"
+                android:text="Copy" />
+            <TextView
+                android:id="@+id/btnDeleteProject"
+                android:maxLines="1"
+                android:theme="@style/button"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginRight="@dimen/normal_padding"
+                android:text="Delete" />
+            <TextView
+                android:id="@+id/btnExportProject"
+                android:maxLines="1"
+                android:theme="@style/button"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Export" />
+        </LinearLayout>
+
         <TextView
-            android:id="@+id/btnDeleteProject"
+            android:id="@+id/btnSaveProject"
             android:maxLines="1"
             android:theme="@style/button"
-            android:layout_marginBottom="@dimen/normal_padding"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Delete" />
-        <TextView
-            android:id="@+id/btnExportProject"
-            android:maxLines="1"
-            android:theme="@style/button"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_marginBottom="@dimen/normal_padding"
-            android:text="Export" />
+            android:text="Save" />
     </LinearLayout>
 
 

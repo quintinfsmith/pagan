@@ -80,8 +80,7 @@
         app:layout_constraintTop_toBottomOf="@+id/llAbsolutePalette"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:paddingTop="5px"
-        android:paddingBottom="5px"
+        android:padding="@dimen/normal_padding"
         app:layout_constraintStart_toStartOf="parent">
 
         <TextView
@@ -92,8 +91,7 @@
             android:layout_weight="1"
             android:layout_height="match_parent"
             android:text="Split"
-            android:layout_marginStart="5px"
-            android:layout_marginEnd="5px"
+            android:layout_marginEnd="@dimen/normal_padding"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -105,8 +103,7 @@
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="match_parent"
-            android:layout_marginStart="5px"
-            android:layout_marginEnd="5px"
+            android:layout_marginEnd="@dimen/normal_padding"
             android:text="Unset"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/btnInsert"
@@ -121,8 +118,7 @@
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="match_parent"
-            android:layout_marginStart="5px"
-            android:layout_marginEnd="5px"
+            android:layout_marginEnd="@dimen/normal_padding"
             android:text="Remove"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/btnInsert"
@@ -135,8 +131,6 @@
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="match_parent"
-            android:layout_marginStart="5px"
-            android:layout_marginEnd="5px"
             android:text="Insert"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"

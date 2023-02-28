@@ -92,6 +92,7 @@ class LoadFragment : Fragment() {
         this.getMain().loading_reticle()
         setFragmentResult("LOAD", bundleOf(Pair("PATH", path), Pair("TITLE", title)))
         this.getMain().navTo("main")
+        this.getMain().set_title_text(title)
     }
 
     override fun onDestroyView() {

@@ -2,13 +2,13 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:padding="@dimen/normal_padding"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <TextView
         android:id="@+id/btnRemoveBeat"
         android:theme="@style/button"
-        android:layout_marginEnd="5px"
-        android:layout_marginStart="5px"
+        android:layout_marginEnd="@dimen/normal_padding"
         android:gravity="center"
         android:layout_width="0dp"
         android:layout_weight="1"
@@ -20,8 +20,6 @@
     <TextView
         android:id="@+id/btnInsertBeat"
         android:theme="@style/button"
-        android:layout_marginEnd="5px"
-        android:layout_marginStart="5px"
         android:gravity="center"
         android:layout_width="0dp"
         android:layout_weight="1"

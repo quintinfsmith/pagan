@@ -253,7 +253,7 @@ class MainActivity : AppCompatActivity() {
         input.setText(this.get_current_project_title() ?: "Untitled Project")
 
         val that = this
-        AlertDialog.Builder(main_fragment!!.context).apply {
+        AlertDialog.Builder(main_fragment!!.context, R.style.AlertDialog).apply {
             setTitle("Change Project Name")
             setView(viewInflated)
             setPositiveButton(android.R.string.ok) { dialog, _ ->
@@ -421,7 +421,7 @@ class MainActivity : AppCompatActivity() {
         var title = this.get_current_project_title() ?: "Untitled Project"
 
         val that = this
-        AlertDialog.Builder(main_fragment!!.context).apply {
+        AlertDialog.Builder(main_fragment!!.context, R.style.AlertDialog).apply {
             setTitle("Really delete $title?")
 
             setPositiveButton(android.R.string.ok) { dialog, _ ->
@@ -573,7 +573,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        AlertDialog.Builder(this)
+        AlertDialog.Builder(this, R.style.AlertDialog)
             .setTitle(title)
             .setView(viewInflated)
             .setPositiveButton(android.R.string.ok) { dialog, _ ->

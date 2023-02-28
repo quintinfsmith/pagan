@@ -94,7 +94,6 @@ class MainFragment : Fragment() {
         }
 
         setFragmentResultListener("NEW") { _, bundle: Bundle? ->
-            this.block_default_return = true
             this.newProject()
         }
 
@@ -103,7 +102,6 @@ class MainFragment : Fragment() {
                 this.block_default_return = false
                 return@setFragmentResultListener
             }
-
             val main = this.getMain()
             this.takedownCurrent()
             main.getOpusManager().reset_cache()
@@ -179,22 +177,14 @@ class MainFragment : Fragment() {
         val textView: TextView = headerCellView.findViewById(R.id.textView)
 
         val x = parent.childCount
-        //textView.setBackgroundColor(
-        //    ContextCompat.getColor(
-        //        textView.context,
-        //        if (x % 2 == 0) {
-        //            R.color.column_label_even
-        //        } else {
-        //            R.color.column_label_odd
-        //        }
-        //    )
-        //)
-        //textView.setTextColor(
-        //    ContextCompat.getColor(headerCellView.context, R.color.label_fg)
-        //)
         textView.text = "$x"
         headerCellView.setOnClickListener {
             this.interact_column_header(it)
+        }
+        headerCellView.setOnFocusChangeListener { view, is_focused: Boolean ->
+            if (is_focused) {
+                this.interact_column_header(view)
+            }
         }
         this.cache.addColumnLabel(headerCellView)
         parent.addView(headerCellView)
@@ -249,6 +239,11 @@ class MainFragment : Fragment() {
         rowLabel.setOnClickListener {
             this.interact_rowLabel(it)
         }
+        rowLabel.setOnFocusChangeListener { view, is_focused: Boolean ->
+            if (is_focused) {
+                this.interact_rowLabel(view)
+            }
+        }
 
         this.cache.addLineLabel(rowLabel)
         llLineLabels.addView(rowLabel)
@@ -266,6 +261,11 @@ class MainFragment : Fragment() {
 
             tvLeaf.setOnClickListener {
                 this.interact_leafView_click(it)
+            }
+            tvLeaf.setOnFocusChangeListener { view, is_focused: Boolean ->
+                if (is_focused) {
+                    this.interact_leafView_click(view)
+                }
             }
 
             tvLeaf.setOnLongClickListener {
@@ -941,14 +941,20 @@ class MainFragment : Fragment() {
         val main = this.getMain()
         val opus_manager = main.getOpusManager()
         if (isChecked) {
-            opus_manager.convert_event_at_cursor_to_relative()
+            try {
+                opus_manager.convert_event_at_cursor_to_relative()
+            } catch (e: Exception) {
+
+            }
         } else {
             try {
                 opus_manager.convert_event_at_cursor_to_absolute()
             } catch (e: Exception) {
-                main.feedback_msg("Can't convert event")
-                (view as ToggleButton).isChecked = true
-                return
+                if (opus_manager.get_tree_at_cursor().is_event()) {
+                    main.feedback_msg("Can't convert event")
+                    (view as ToggleButton).isChecked = true
+                    return
+                }
             }
         }
         this.relative_mode = isChecked
@@ -1047,7 +1053,6 @@ class MainFragment : Fragment() {
                 val label = this.cache.getLineLabel(y) ?: continue
                 val textView: TextView = label.findViewById(R.id.textView)
 
-                // TODO: fix naming to reflect changes to channel handling
                 if (!opus_manager.is_percussion(channel)) {
                     textView.text = "$channel:$i"
                 } else {

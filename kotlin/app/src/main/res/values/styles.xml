@@ -45,20 +45,35 @@
         <item name="android:paddingBottom">5dp</item>
         <item name="android:elevation">2dp</item>
         <item name="android:background">@drawable/numberselector</item>
-        <item name="android:textColor">@color/button_fg</item>
+        <item name="android:textColor">@color/numberselector_fg</item>
     </style>
 
     <style name="load_option" parent="@android:style/Widget.TextView">
         <item name="android:gravity">center_vertical|center_horizontal</item>
-        <item name="android:textColor">@color/leaf_fg</item>
+        <item name="android:textColor">?attr/colorOnPrimary</item>
+        <item name="android:background">?attr/colorPrimaryVariant</item>
         <item name="android:shadowColor">#FF000000</item>
-
         <item name="android:shadowDx">0</item>
         <item name="android:shadowDy">0</item>
         <item name="android:shadowRadius">0</item>
         <item name="android:textSize">18sp</item>
         <item name="android:textStyle">normal</item>
-        <item name="android:background">@drawable/leaf_button</item>
-        <item name="android:padding">0dp</item>
+        <item name="android:padding">8dp</item>
     </style>
-</resources>
+
+    <style name="AlertDialog" parent="@style/Theme.Kotlin.AlertDialog">
+        <item name="android:paddingStart">12dp</item>
+        <item name="android:paddingEnd">12dp</item>
+        <item name="android:textColor">?attr/colorOnPrimary</item>
+        <item name="android:textColorPrimary">?attr/colorPrimary</item>
+        <item name="android:colorAccent">?attr/colorSecondary</item>
+        <item name="android:background">?attr/colorPrimary</item>
+    </style>
+    <style name="PopupMenu" parent="@style/Theme.Kotlin.PopupMenu">
+        <item name="android:popupBackground">?attr/popup_bg</item>
+        <item name="android:colorBackground">?attr/popup_bg</item>
+        <item name="android:itemBackground">?attr/popup_bg</item>
+        <item name="android:textColor">?attr/popup_fg</item>
+        <item name="android:elevation">4dp</item>
+    </style>
+    </resources>

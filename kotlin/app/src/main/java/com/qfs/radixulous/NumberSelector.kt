@@ -19,7 +19,7 @@ class NumberSelector: LinearLayout {
     var active_button: NumberSelectorButton? = null
     var on_change_hook: ((NumberSelector) -> Unit)? = null
 
-    constructor(context: Context, attrs: AttributeSet) : super(context, attrs, R.style.numberSelector) {
+    constructor(context: Context, attrs: AttributeSet) : super(context, attrs) {
         context.theme.obtainStyledAttributes(attrs, R.styleable.NumberSelector, 0, 0).apply {
             try {
                 max = getInteger(R.styleable.NumberSelector_max, 2)

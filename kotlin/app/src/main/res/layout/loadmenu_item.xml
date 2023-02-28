@@ -10,6 +10,7 @@
         android:theme="@style/load_option"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:elevation="10dp"
         android:layout_weight="1"
         android:gravity="center"/>
 

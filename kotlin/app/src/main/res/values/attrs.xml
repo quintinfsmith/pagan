@@ -45,6 +45,9 @@
     </declare-styleable>
 
     <attr name="main_bg" format="color" />
+    <attr name="main_fg" format="color" />
+    <attr name="popup_bg" format="color" />
+    <attr name="popup_fg" format="color" />
     <attr name="drawer_bg" format="color" />
     <attr name="label_bg" format="color" />
     <attr name="label_fg" format="color" />

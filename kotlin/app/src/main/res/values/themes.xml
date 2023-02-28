@@ -18,8 +18,11 @@
 
         <item name="drawer_bg">#E0E0E0</item>
         <item name="main_bg">#E0E0E0</item>
+        <item name="main_fg">#2d2d2d</item>
         <item name="label_bg">?attr/colorOnPrimary</item>
         <item name="label_fg">?attr/colorPrimary</item>
+        <item name="popup_fg">?attr/colorPrimaryVariant</item>
+        <item name="popup_bg">?attr/colorOnPrimary</item>
 
         <item name="button_fg_default">@color/white</item>
         <item name="button_fg_pressed">#CCCCCC</item>
@@ -63,12 +66,8 @@
     </style>
 
     <style name="Theme.Kotlin.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+    <style name="Theme.Kotlin.AlertDialog" parent="Base.Theme.AppCompat.Light.Dialog"/>
 
     <style name="Theme.Kotlin.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
-    <style name="PopupMenu" parent="ThemeOverlay.AppCompat.Dark.ActionBar">
-        <item name="android:popupBackground">?attr/colorPrimary</item>
-        <item name="android:colorBackground">?attr/colorPrimary</item>
-        <item name="android:itemBackground">?attr/colorPrimary</item>
-        <item name="android:textColor">?attr/colorOnPrimary</item>
-    </style>
+    <style name="Theme.Kotlin.PopupMenu" parent="ThemeOverlay.AppCompat.Light" />
 </resources>

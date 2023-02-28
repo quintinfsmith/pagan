@@ -616,15 +616,6 @@ class MainActivity : AppCompatActivity() {
         this.binding.root.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)
     }
 
-    fun reset_start_destination_() {
-        val navController = findNavController(R.id.nav_host_fragment_content_main)
-        if (navController.graph.startDestinationId != R.id.MainFragment) {
-            navController.graph.setStartDestination(R.id.MainFragment)
-
-            this.appBarConfiguration = AppBarConfiguration(navController.graph)
-            setupActionBarWithNavController(navController, this.appBarConfiguration)
-        }
-    }
     fun reset_start_destination() {
         val navController = findNavController(R.id.nav_host_fragment_content_main)
         if (navController.graph.startDestinationId != R.id.MainFragment) {

@@ -6,6 +6,9 @@ import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.*
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResultListener
+import androidx.navigation.findNavController
+import androidx.navigation.ui.AppBarConfiguration
+import androidx.navigation.ui.setupActionBarWithNavController
 import com.qfs.radixulous.databinding.FragmentMainBinding
 import com.qfs.radixulous.opusmanager.BeatKey
 import com.qfs.radixulous.opusmanager.FlagOperation
@@ -42,6 +45,8 @@ class MainFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         _binding = FragmentMainBinding.inflate(inflater, container, false)
+        this.getMain().unlockDrawer()
+        this.getMain().update_menu_options()
         return binding.root
     }
 
@@ -71,6 +76,10 @@ class MainFragment : Fragment() {
             this.block_default_return = true
             val main = this.getMain()
 
+            bundle!!.getString("TITLE")?.let { title: String ->
+                main.set_current_project_title( title )
+            }
+
             bundle!!.getString("PATH")?.let { path: String ->
                 this.takedownCurrent()
 
@@ -79,10 +88,6 @@ class MainFragment : Fragment() {
                 this.setContextMenu(ContextMenu.Leaf)
                 this.tick()
             }
-            bundle!!.getString("TITLE")?.let { title: String ->
-                main.set_current_project_title( title )
-            }
-
             main.update_menu_options()
             main.setup_config_drawer()
             main.cancel_reticle()

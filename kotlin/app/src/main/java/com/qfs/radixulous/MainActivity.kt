@@ -77,7 +77,6 @@ class MainActivity : AppCompatActivity() {
         this.project_manager = ProjectManager(applicationInfo.dataDir)
         this.binding = ActivityMainBinding.inflate(this.layoutInflater)
         setContentView(this.binding.root)
-
         setSupportActionBar(this.binding.appBarMain.toolbar)
         val navController = findNavController(R.id.nav_host_fragment_content_main)
         this.appBarConfiguration = AppBarConfiguration(navController.graph)
@@ -117,6 +116,7 @@ class MainActivity : AppCompatActivity() {
             override fun onDrawerOpened(drawerView: View) { }
             override fun onDrawerStateChanged(newState: Int) { }
         })
+        this.lockDrawer()
         //////////////////////////////////////////
         // TODO: clean up the file -> riff -> soundfont -> midi playback device process
         this.soundfont = SoundFont(Riff(assets.open("freepats-general-midi.sf2")))
@@ -145,7 +145,9 @@ class MainActivity : AppCompatActivity() {
         // TODO: decide which menu based on active fragment?
         this.menuInflater.inflate(R.menu.main_options_menu, menu)
         this.optionsMenu = menu
-        return super.onCreateOptionsMenu(menu)
+        var output = super.onCreateOptionsMenu(menu)
+        this.update_menu_options()
+        return output
     }
 
     // methods to control the operations that will
@@ -463,6 +465,7 @@ class MainActivity : AppCompatActivity() {
                 when (fragmentName) {
                     "main" -> {
                         navController.navigate(R.id.action_LoadFragment_to_MainFragment)
+                        this.reset_start_destination()
                     }
                     else -> {}
                 }
@@ -473,6 +476,20 @@ class MainActivity : AppCompatActivity() {
                 when (fragmentName) {
                     "load" -> {
                         navController.navigate(R.id.action_MainFragment_to_LoadFragment)
+                    }
+                    else -> {}
+                }
+            }
+            is FrontFragment -> {
+                when (fragmentName) {
+                    "main" -> {
+                        fragment?.setFragmentResult("NEW", bundleOf())
+                        navController.navigate(R.id.action_FrontFragment_to_MainFragment)
+                        this.reset_start_destination()
+
+                    }
+                    "load" -> {
+                        navController.navigate(R.id.action_FrontFragment_to_LoadFragment)
                     }
                     else -> {}
                 }
@@ -589,6 +606,34 @@ class MainActivity : AppCompatActivity() {
     fun cancel_reticle() {
         var progressBar = this.progressBar ?: return
         (progressBar.parent as ViewGroup).removeView(progressBar)
+    }
+
+    fun lockDrawer() {
+        this.binding.root.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
+    }
+
+    fun unlockDrawer() {
+        this.binding.root.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)
+    }
+
+    fun reset_start_destination_() {
+        val navController = findNavController(R.id.nav_host_fragment_content_main)
+        if (navController.graph.startDestinationId != R.id.MainFragment) {
+            navController.graph.setStartDestination(R.id.MainFragment)
+
+            this.appBarConfiguration = AppBarConfiguration(navController.graph)
+            setupActionBarWithNavController(navController, this.appBarConfiguration)
+        }
+    }
+    fun reset_start_destination() {
+        val navController = findNavController(R.id.nav_host_fragment_content_main)
+        if (navController.graph.startDestinationId != R.id.MainFragment) {
+            var new_graph = navController.navInflater.inflate(R.navigation.nav_graph_b)
+            navController.graph = new_graph
+
+            this.appBarConfiguration = AppBarConfiguration(navController.graph)
+            setupActionBarWithNavController(navController, this.appBarConfiguration)
+        }
     }
 }
 

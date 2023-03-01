@@ -207,6 +207,10 @@ class MainActivity : AppCompatActivity() {
             this.export_midi()
         }
 
+        this.findViewById<View>(R.id.btnSaveProject).setOnClickListener {
+            this.save_current_project()
+        }
+
         var btnDeleteProject = this.findViewById<View>(R.id.btnDeleteProject)
         var btnCopyProject = this.findViewById<View>(R.id.btnCopyProject)
         if (opus_manager.path != null && File(opus_manager.path!!).isFile) {

@@ -12,20 +12,19 @@
         <!-- Status bar color. -->
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
         <!-- Customize your theme here. -->
-        <item name="android:popupMenuStyle">@style/PopupMenu</item>
 
         <item name="drawer_bg">#2D2D2D</item>
         <item name="main_bg">#2D2D2D</item>
         <item name="main_fg">#2d2d2d</item>
         <item name="label_bg">#424242</item>
         <item name="label_fg">#A7A7A7</item>
-        <item name="popup_fg">?attr/colorPrimaryVariant</item>
-        <item name="popup_bg">?attr/colorOnPrimary</item>
+        <item name="popup_bg">?attr/colorPrimaryVariant</item>
+        <item name="popup_fg">?attr/colorOnPrimary</item>
 
         <item name="button_fg_default">?attr/colorOnPrimary</item>
         <item name="button_fg_pressed">?attr/colorOnPrimary</item>
-        <item name="button_bg_default">?attr/colorPrimaryVariant</item>
-        <item name="button_bg_pressed">?attr/colorPrimary</item>
+        <item name="button_bg_default">?attr/colorPrimary</item>
+        <item name="button_bg_pressed">#433947</item>
 
         <!-- LEAF COLORS -->
         <item name="leaf_fg_active">?attr/colorOnSecondary</item>
@@ -56,6 +55,9 @@
         <item name="numberselector_fg_selected">?attr/colorOnSecondary</item>
         <item name="numberselector_bg_selected_pressed">?attr/leaf_bg_active_pressed</item>
         <item name="numberselector_fg_selected_pressed">?attr/leaf_fg_active_pressed</item>
+
+        <item name="icon_size">42dp</item>
+        <item name="colorIconFG">@attr/button_fg_default</item>
     </style>
 
     <style name="Theme.Kotlin.NoActionBar">
@@ -66,6 +68,4 @@
     <style name="Theme.Kotlin.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
     <style name="Theme.Kotlin.AlertDialog" parent="Base.Theme.AppCompat.Dialog"/>
 
-    <style name="Theme.Kotlin.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
-    <style name="Theme.Kotlin.PopupMenu" parent="ThemeOverlay.AppCompat.Light" />
 </resources>

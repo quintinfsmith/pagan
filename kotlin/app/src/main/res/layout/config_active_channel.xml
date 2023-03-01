@@ -2,6 +2,7 @@
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:theme="@style/recycler_option"
     android:orientation="horizontal"
     android:paddingTop="@dimen/normal_padding"
     android:layout_width="match_parent"
@@ -10,7 +11,6 @@
 
     <TextView
         android:id="@+id/btnChooseInstrument"
-        android:theme="@style/button"
         android:maxLines="1"
         android:gravity="start"
         android:paddingStart="8dp"
@@ -24,7 +24,6 @@
     <TextView
         android:id="@+id/btnRemoveChannel"
         android:text="X"
-        android:theme="@style/button"
         android:paddingStart="8dp"
         android:paddingEnd="8dp"
         android:gravity="end"

@@ -465,10 +465,10 @@ class MainFragment : Fragment() {
         val llAbsolutePalette: LinearLayout = view.findViewById(R.id.llAbsolutePalette)
         val llRelativePalette: LinearLayout = view.findViewById(R.id.llRelativePalette)
 
-        val btnUnset: TextView = view.findViewById(R.id.btnUnset)
-        val btnSplit: TextView = view.findViewById(R.id.btnSplit)
-        val btnRemove: TextView = view.findViewById(R.id.btnRemove)
-        val btnInsert: TextView = view.findViewById(R.id.btnInsert)
+        val btnUnset = view.findViewById<ImageView>(R.id.btnUnset)
+        val btnSplit = view.findViewById<View>(R.id.btnSplit)
+        val btnRemove = view.findViewById<View>(R.id.btnRemove)
+        val btnInsert = view.findViewById<View>(R.id.btnInsert)
         val nsOctave: NumberSelector = view.findViewById(R.id.nsOctave)
         val nsOffset: NumberSelector = view.findViewById(R.id.nsOffset)
         val nsRelativeValue: NumberSelector = view.findViewById(R.id.nsRelativeValue)
@@ -496,9 +496,9 @@ class MainFragment : Fragment() {
             llRelativePalette.visibility = View.GONE
             sRelative.visibility = View.GONE
 
-            if (!opus_manager.get_tree_at_cursor().is_event()) {
-                btnUnset.text = "Set"
-            }
+            //if (!opus_manager.get_tree_at_cursor().is_event()) {
+            //    btnUnset.text = "Set"
+            //}
 
             btnUnset.setOnClickListener {
                 this.interact_btnUnset(it)
@@ -970,8 +970,7 @@ class MainFragment : Fragment() {
         val main = this.getMain()
         val opus_manager = main.getOpusManager()
 
-        val wrapper = ContextThemeWrapper(this.activity?.window?.decorView?.rootView?.context, R.style.PopupMenu)
-        val popupMenu = PopupMenu(wrapper, view)
+        val popupMenu = PopupMenu(this.binding.root.context, view)
         val cursor = opus_manager.get_cursor()
         val drums = resources.getStringArray(R.array.midi_drums)
         drums.forEachIndexed { i, string ->

@@ -1,12 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="button" parent="@android:style/Widget.Button">
-        <item name="android:textSize">24sp</item>
+    <style name="recycler_option" parent="@android:style/Widget.TextView">
+        <item name="android:textSize">18sp</item>
         <item name="android:gravity">center</item>
-        <item name="android:background">@drawable/button</item>
         <item name="android:textColor">@color/button_fg</item>
         <item name="android:clickable">true</item>
+        <item name="android:padding">5sp</item>
+        <item name="android:background">@drawable/button</item>
+    </style>
+
+    <style name="button" parent="@android:style/Widget.TextView">
+        <item name="android:textSize">18sp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textColor">@color/button_fg</item>
+        <item name="android:background">@drawable/button</item>
+        <item name="android:clickable">true</item>
         <item name="android:padding">5dp</item>
+        <item name="android:colorControlHighlight">#88FFFFFF</item>
+
+    </style>
+
+    <style name="icon_button" parent="@style/button">
+        <item name="android:padding">10sp</item>
+    </style>
+
+    <style name="toggle_button" parent="@style/icon_button">
+        <item name="android:colorButtonNormal">?attr/button_bg_default</item>
+        <item name="android:colorControlHighlight">?attr/button_bg_pressed</item>
+        <item name="android:padding">5sp</item>
+        <item name="android:textSize">18sp</item>
     </style>
 
     <style name="edittext" parent="@android:style/Widget.EditText">
@@ -69,11 +91,5 @@
         <item name="android:colorAccent">?attr/colorSecondary</item>
         <item name="android:background">?attr/colorPrimary</item>
     </style>
-    <style name="PopupMenu" parent="@style/Theme.Kotlin.PopupMenu">
-        <item name="android:popupBackground">?attr/popup_bg</item>
-        <item name="android:colorBackground">?attr/popup_bg</item>
-        <item name="android:itemBackground">?attr/popup_bg</item>
-        <item name="android:textColor">?attr/popup_fg</item>
-        <item name="android:elevation">4dp</item>
-    </style>
+
     </resources>

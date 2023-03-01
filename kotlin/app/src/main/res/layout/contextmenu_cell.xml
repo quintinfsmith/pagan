@@ -1,17 +1,95 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <ToggleButton
-        android:id="@+id/sRelative"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:id="@+id/clButtons"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textOn="Relative"
-        android:textOff="Absolute"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"/>
+        android:layout_weight="1"
+        android:padding="@dimen/normal_padding"
+        android:gravity="center">
+
+        <ImageView
+            android:id="@+id/btnSplit"
+            android:theme="@style/icon_button"
+            android:gravity="center"
+            android:layout_gravity="center"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Split"
+            android:layout_marginEnd="@dimen/normal_padding"
+            app:srcCompat="@drawable/split"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            xmlns:android="http://schemas.android.com/apk/res/android"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1">
+            <ImageView
+                app:layout_constraintHorizontal_bias=".6666"
+                android:id="@+id/btnUnset"
+                android:theme="@style/icon_button"
+                android:gravity="center"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/normal_padding"
+                android:text="Unset"
+                app:srcCompat="@drawable/unset"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            xmlns:android="http://schemas.android.com/apk/res/android"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1">
+
+            <ImageView
+                app:layout_constraintHorizontal_bias=".3333"
+                android:id="@+id/btnRemove"
+                android:theme="@style/icon_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/normal_padding"
+                app:srcCompat="@drawable/remove"
+                android:text="Remove"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <ImageView
+            android:id="@+id/btnInsert"
+            android:theme="@style/icon_button"
+            android:gravity="center"
+            android:layout_gravity="center"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Insert"
+            app:srcCompat="@drawable/insert"/>
+
+        <ToggleButton
+            android:id="@+id/sRelative"
+            android:theme="@style/toggle_button"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:textOn="Rel"
+            android:textOff="Abs"/>
+
+    </LinearLayout>
 
 
     <LinearLayout
@@ -21,10 +99,7 @@
         android:layout_weight="1"
         android:paddingLeft="@dimen/normal_padding"
         android:paddingRight="@dimen/normal_padding"
-        android:orientation="vertical"
-        app:layout_constraintTop_toBottomOf="@+id/sRelative"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" >
+        android:orientation="vertical">
 
         <com.qfs.radixulous.RelativeOptionSelector xmlns:android="http://schemas.android.com/apk/res/android"
             xmlns:custom="http://schemas.android.com/apk/res-auto"
@@ -43,16 +118,14 @@
             custom:max="11"/>
     </LinearLayout>
 
+
     <LinearLayout
         android:orientation="vertical"
         android:id="@+id/llAbsolutePalette"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingLeft="@dimen/normal_padding"
-        android:paddingRight="@dimen/normal_padding"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/llRelativePalette" >
+        android:paddingRight="@dimen/normal_padding">
 
         <com.qfs.radixulous.NumberSelector xmlns:android="http://schemas.android.com/apk/res/android"
             xmlns:custom="http://schemas.android.com/apk/res-auto"
@@ -73,69 +146,5 @@
             custom:max="11"/>
     </LinearLayout>
 
-    <LinearLayout
-        android:id="@+id/clButtons"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@+id/llAbsolutePalette"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:padding="@dimen/normal_padding"
-        app:layout_constraintStart_toStartOf="parent">
 
-        <TextView
-            android:id="@+id/btnSplit"
-            android:theme="@style/button"
-            android:gravity="center"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="match_parent"
-            android:text="Split"
-            android:layout_marginEnd="@dimen/normal_padding"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <TextView
-            android:id="@+id/btnUnset"
-            android:theme="@style/button"
-            android:gravity="center"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="match_parent"
-            android:layout_marginEnd="@dimen/normal_padding"
-            android:text="Unset"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/btnInsert"
-            app:layout_constraintStart_toEndOf="@+id/btnSplit"
-            app:layout_constraintTop_toTopOf="parent" />
-
-
-        <TextView
-            android:id="@+id/btnRemove"
-            android:theme="@style/button"
-            android:gravity="center"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="match_parent"
-            android:layout_marginEnd="@dimen/normal_padding"
-            android:text="Remove"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/btnInsert"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <TextView
-            android:id="@+id/btnInsert"
-            android:theme="@style/button"
-            android:gravity="center"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="match_parent"
-            android:text="Insert"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/btnUnset"
-            app:layout_constraintTop_toTopOf="parent" />
-    </LinearLayout>
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+</LinearLayout>

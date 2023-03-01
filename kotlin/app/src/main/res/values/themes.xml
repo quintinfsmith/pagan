@@ -14,7 +14,6 @@
         <!-- Status bar color. -->
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
         <!-- Customize your theme here. -->
-        <item name="android:popupMenuStyle">@style/PopupMenu</item>
 
         <item name="drawer_bg">#E0E0E0</item>
         <item name="main_bg">#E0E0E0</item>
@@ -58,6 +57,10 @@
         <item name="numberselector_fg_selected">?attr/leaf_fg_active</item>
         <item name="numberselector_bg_selected_pressed">?attr/leaf_bg_active_pressed</item>
         <item name="numberselector_fg_selected_pressed">?attr/leaf_fg_active_pressed</item>
+
+        <item name="icon_size">42dp</item>
+
+        <item name="colorIconFG">@attr/button_fg_default</item>
     </style>
 
     <style name="Theme.Kotlin.NoActionBar">
@@ -68,6 +71,4 @@
     <style name="Theme.Kotlin.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
     <style name="Theme.Kotlin.AlertDialog" parent="Base.Theme.AppCompat.Light.Dialog"/>
 
-    <style name="Theme.Kotlin.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
-    <style name="Theme.Kotlin.PopupMenu" parent="ThemeOverlay.AppCompat.Light" />
 </resources>

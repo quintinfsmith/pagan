@@ -2,4 +2,5 @@
 <resources>
     <dimen name="normal_padding">2dp</dimen>
     <dimen name="padding_config">5dp</dimen>
+    <dimen name="icon_size">?attr/icon_size</dimen>
 </resources>

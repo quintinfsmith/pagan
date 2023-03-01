@@ -199,29 +199,16 @@ class MainActivity : AppCompatActivity() {
             this.popup_number_dialog("Set Tempo (BPM)", 1, 999, this::set_tempo, opus_manager.tempo.toInt())
         }
 
-        //tvTempo.setText(opus_manager.tempo.toString())
-        //tvTempo.addTextChangedListener(object: TextWatcher {
-        //    override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
-        //    override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
-        //    override fun afterTextChanged(editable: Editable?) {
-        //        try {
-        //            opus_manager.tempo = editable.toString().toFloat()
-        //        } catch (exception: Exception) { }
-        //    }
-        //})
-        //tvTempo.filters = arrayOf(RangeFilter(1F, 999F))
-
-
-        (this.findViewById(R.id.btnAddChannel) as TextView).setOnClickListener {
+        this.findViewById<View>(R.id.btnAddChannel).setOnClickListener {
             channelAdapter.addChannel()
         }
 
-        (this.findViewById(R.id.btnExportProject) as TextView).setOnClickListener {
+        this.findViewById<View>(R.id.btnExportProject).setOnClickListener {
             this.export_midi()
         }
 
-        var btnDeleteProject: TextView = this.findViewById(R.id.btnDeleteProject)
-        var btnCopyProject: TextView = this.findViewById(R.id.btnCopyProject)
+        var btnDeleteProject = this.findViewById<View>(R.id.btnDeleteProject)
+        var btnCopyProject = this.findViewById<View>(R.id.btnCopyProject)
         if (opus_manager.path != null && File(opus_manager.path!!).isFile) {
             btnDeleteProject.setOnClickListener {
                 this.delete_project_dialog()

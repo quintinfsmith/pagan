@@ -2,12 +2,10 @@
 
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item
-        android:elevation="0dp"
         android:state_pressed="true"
         android:drawable="@drawable/button_pressed" />
     <item
         android:state_enabled="true"
         android:state_pressed="false"
-        android:elevation="20dp"
         android:drawable="@drawable/button_default" />
 </selector>

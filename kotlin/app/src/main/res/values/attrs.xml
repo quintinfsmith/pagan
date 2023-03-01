@@ -57,4 +57,7 @@
     <attr name="button_bg_default" format="color" />
     <attr name="button_bg_pressed" format="color" />
 
+    <attr name="colorIconFG" format="color" />
+
+    <attr name="icon_size" format="dimension" />
 </resources>

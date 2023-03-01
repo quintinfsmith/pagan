@@ -165,7 +165,9 @@ class ChannelOptionAdapter(
 
     private fun interact_btnChooseInstrument(context: Context, view: View, index: Int) {
         var opus_manager = this.activity.getOpusManager()
-        val popupMenu = PopupMenu(context, view)
+
+        var wrapper = ContextThemeWrapper(this.activity, R.style.PopupMenu)
+        val popupMenu = PopupMenu(wrapper, view)
         var channel = this.get_view_channel(view)
 
         for (i in 0 until 128) {

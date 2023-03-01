@@ -13,7 +13,7 @@
         android:id="@+id/imageView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="?attr/colorPrimary"
+        app:tint="?attr/button_bg_default"
         app:srcCompat="@drawable/settings_50" />
 
     <LinearLayout

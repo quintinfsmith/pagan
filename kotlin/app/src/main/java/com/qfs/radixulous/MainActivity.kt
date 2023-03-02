@@ -119,7 +119,8 @@ class MainActivity : AppCompatActivity() {
         this.lockDrawer()
         //////////////////////////////////////////
         // TODO: clean up the file -> riff -> soundfont -> midi playback device process
-        this.soundfont = SoundFont(Riff(assets.open("freepats-general-midi.sf2")))
+        //this.soundfont = SoundFont(Riff(assets.open("freepats-general-midi.sf2")))
+        this.soundfont = SoundFont(Riff(assets.open("FluidR3_GM.sf2")))
         this.midi_playback_device = MIDIPlaybackDevice(this, this.soundfont)
 
         this.midi_controller = RadMidiController(window.decorView.rootView.context)
@@ -142,7 +143,6 @@ class MainActivity : AppCompatActivity() {
     // method to inflate the options menu when
     // the user opens the menu for the first time
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        // TODO: decide which menu based on active fragment?
         this.menuInflater.inflate(R.menu.main_options_menu, menu)
         this.optionsMenu = menu
         var output = super.onCreateOptionsMenu(menu)

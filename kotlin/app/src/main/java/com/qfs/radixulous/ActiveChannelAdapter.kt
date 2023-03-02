@@ -34,13 +34,7 @@ class ChannelOptionAdapter(
                 //override fun onChanged() { }
             }
         )
-
-        var supported_instruments: MutableSet<Int> = mutableSetOf()
-        for ((pair, preset) in this.soundfont.presets) {
-            if (pair.first != 128) {
-                supported_instruments.add(pair.second)
-            }
-        }
+        var supported_instruments = this.soundfont.get_available_presets(0)
         this.supported_instruments = supported_instruments
     }
 
@@ -93,9 +87,7 @@ class ChannelOptionAdapter(
         var instrument_array = this.activity.resources.getStringArray(R.array.midi_instruments)
 
         var prefix = if (instrument == -1) {
-            // TODO: I don't think this is 100% how percussion gets stored in a soundfont.
-            //  but it'll work until I support imported soundfonts
-            if (this.soundfont.presets[Pair(128,0)] != null) {
+            if (this.soundfont.get_available_presets(128).isNotEmpty()) {
                 ""
             } else {
                 "\uD83D\uDD07"

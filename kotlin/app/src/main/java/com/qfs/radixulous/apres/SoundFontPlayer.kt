@@ -15,7 +15,7 @@ val BASE_FREQ = 8.175798915643707
 var NEGBIT = 2F.pow(16).toInt()
 
 @RequiresApi(Build.VERSION_CODES.M)
-class ActiveSample(var event: NoteOn, var instrument: Instrument, var soundFont: SoundFont) {
+class ActiveSample(var event: NoteOn, var preset: Preset) {
     var current_frame = 0
     var buffer_size_in_frames: Int
     var buffer_size_in_bytes: Int
@@ -26,27 +26,69 @@ class ActiveSample(var event: NoteOn, var instrument: Instrument, var soundFont:
     var audioTrack: AudioTrack? = null
     var volumeShaper: VolumeShaper? = null
     var volume: Float = 1F
-    var sample: Sample
-    var sampleData: ByteArray
+    var samples: Set<Sample>
 
     init {
-        var isample: InstrumentSample? = this.instrument.get_sample(this.event.note, this.event.velocity)
-            ?: throw Exception("No Instrument available for event ${event.note}")
-
-        this.sample = this.soundFont.get_sample(isample!!.sampleIndex)
-        this.sampleData = this.soundFont.get_sample_data(this.sample.start, this.sample.end)!!
-
-        this.buffer_size_in_bytes = sample.sampleRate
+        var samples = this.get_samples()
+        var sample_rate = this.get_sample_rate()
+        var format = when (samples.size) {
+            1 -> {
+                AudioFormat.CHANNEL_OUT_MONO
+            }
+            else -> {
+                AudioFormat.CHANNEL_OUT_STEREO
+            }
+        }
+        //this.buffer_size_in_bytes = this.sample.sampleRate
+        this.buffer_size_in_bytes = AudioTrack.getMinBufferSize(
+            sample_rate,
+            AudioFormat.ENCODING_PCM_16BIT,
+            format
+        )
+        while (this.buffer_size_in_bytes < sample_rate) {
+            this.buffer_size_in_bytes *= 2
+        }
         this.buffer_size_in_frames = buffer_size_in_bytes / 4
 
         this.chunk_size_in_frames = this.buffer_size_in_frames / this.chunk_ratio
         this.chunk_size_in_bytes = this.buffer_size_in_bytes / this.chunk_ratio
 
         this.audioTrack = this.buildAudioTrack()
+    }
 
+    fun get_instrument(): Instrument {
+        return this.preset.instruments[0].instrument!!
+    }
+
+    fun get_instrument_samples(): Set<InstrumentSample> {
+        return this.get_instrument().get_samples(this.event.note, this.event.velocity)
+    }
+
+    fun get_samples(): Set<Sample> {
+        var output = mutableSetOf<Sample>()
+        for (sample in this.get_instrument_samples()) {
+            output.add(sample.sample!!)
+        }
+        return output
+    }
+
+    fun get_sample_rate(): Int {
+        var sample_rate: Int? = null
+        for (sample in samples) {
+            if (sample_rate != null) {
+                if (sample_rate != sample.sampleRate) {
+                    throw Exception("Incompatible instrument samples")
+                }
+            }
+            sample_rate = sample.sampleRate
+        }
+        return sample_rate!!
     }
 
     private fun buildAudioTrack(): AudioTrack {
+        var samples = this.get_samples()
+        var sample_rate = this.get_sample_rate()
+        println("### ${this.buffer_size_in_bytes}")
         var audioTrack = AudioTrack.Builder()
             .setAudioAttributes(
                 AudioAttributes.Builder()
@@ -56,15 +98,15 @@ class ActiveSample(var event: NoteOn, var instrument: Instrument, var soundFont:
             .setAudioFormat(
                 AudioFormat.Builder()
                     .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                    .setSampleRate(this.sample.sampleRate)
+                    .setSampleRate(sample_rate)
                     .setChannelMask(AudioFormat.CHANNEL_OUT_STEREO)
                     .build()
             )
             .setBufferSizeInBytes(this.buffer_size_in_bytes)
             .build()
 
-        if (this.sample.originalPitch != this.event.note) {
-            var samplePitch = BASE_FREQ * 2F.pow(this.sample.originalPitch!!.toFloat() / 12.toFloat())
+        if (sample.originalPitch != this.event.note) {
+            var samplePitch = BASE_FREQ * 2F.pow(sample.originalPitch!!.toFloat() / 12.toFloat())
             var requiredPitch = BASE_FREQ * 2F.pow(this.event.note.toFloat() / 12.toFloat())
             audioTrack.playbackParams =
                 PlaybackParams().setPitch((requiredPitch / samplePitch).toFloat())
@@ -74,20 +116,20 @@ class ActiveSample(var event: NoteOn, var instrument: Instrument, var soundFont:
 
         audioTrack.setPlaybackPositionUpdateListener( playbacklistener )
         audioTrack.positionNotificationPeriod = this.chunk_size_in_frames
-
         return audioTrack
     }
 
     fun write_next_chunk() {
-        var loop_start = this.sample.loopStart - this.sample.start
-        var loop_end = this.sample.loopEnd - this.sample.start
+        var sampleData = this.sample.data
+        var loop_start = this.sample.loopStart
+        var loop_end = this.sample.loopEnd
         var call_stop = false
 
         var use_bytes = ByteArray(this.chunk_size_in_bytes) { _ -> 0 }
         for (x in 0 until this.chunk_size_in_frames) {
             if (this.is_pressed && this.current_frame > loop_end) {
                 this.current_frame -= loop_start
-                this.current_frame %= loop_end  - loop_start
+                this.current_frame %= loop_end - loop_start
             }
 
             if (this.current_frame < sampleData.size / 2) {
@@ -100,6 +142,7 @@ class ActiveSample(var event: NoteOn, var instrument: Instrument, var soundFont:
 
                 use_bytes[(4 * x)] =     byte_pair.first
                 use_bytes[(4 * x) + 1] = byte_pair.second
+
                 use_bytes[(4 * x) + 2] = byte_pair.first
                 use_bytes[(4 * x) + 3] = byte_pair.second
 
@@ -125,20 +168,17 @@ class ActiveSample(var event: NoteOn, var instrument: Instrument, var soundFont:
     }
 
     fun apply_decay_shaper(): Long {
-        var volumeShaper = this.volumeShaper
-        if (volumeShaper == null) {
-            return 0
-        }
+        var volumeShaper: VolumeShaper? = this.volumeShaper ?: return 0
+        var instrument = this.get_instrument()
+        var instrument_sample = this.get_instrument_sample()
 
-        var isample: InstrumentSample = this.instrument.get_sample(this.event.note, this.event.velocity)!!
-
-        var vol_env_release = isample.vol_env_release
+        var vol_env_release = instrument_sample.vol_env_release
         if (vol_env_release == null) {
-            if (this.instrument.global_sample == null) {
+            if (instrument.global_sample == null) {
                 return 0
             }
 
-            vol_env_release = this.instrument.global_sample!!.vol_env_release
+            vol_env_release = instrument.global_sample!!.vol_env_release
 
             if (vol_env_release == null) {
                 return 0
@@ -222,6 +262,12 @@ class SFPlaybackListener(var active_sample: ActiveSample): AudioTrack.OnPlayback
 class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): VirtualMIDIDevice() {
     private val active_samples = HashMap<Pair<Int, Int>, ActiveSample>()
     private val preset_channel_map = HashMap<Int, Int>()
+    private val loaded_presets = HashMap<Pair<Int, Int>, Preset>()
+    init {
+        this.loaded_presets[Pair(0,0)] = this.soundFont.get_preset(31, 0)
+        this.loaded_presets[Pair(128,0)] = this.soundFont.get_preset(0,128)
+
+    }
 
     fun get_channel_preset(channel: Int): Int {
         return if (this.preset_channel_map.containsKey(channel)) {
@@ -242,27 +288,20 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
             0
         }
 
-        var preset = this.soundFont.get_preset(this.get_channel_preset(event.channel), bank) ?: return
-        var instrument = this.soundFont.get_instrument(preset.instruments[0]!!.instrumentIndex)
+        var preset = this.loaded_presets[Pair(bank, this.get_channel_preset(event.channel))]!!
 
-        try {
-            var active_sample = ActiveSample(event, instrument, this.soundFont)
+        //try {
+            var active_sample = ActiveSample(event, preset)
             this.active_samples[Pair(event.note, event.channel)] = active_sample
             active_sample.play(event.velocity)
-        } catch (e: Exception) {
-            println("FAIL, ${active_samples.size}")
-            Log.e("SoundFontPlayer", "$e")
-        }
+        //} catch (e: Exception) {
+        //    Log.e("SoundFontPlayer", "$e")
+        //}
     }
 
     override fun onNoteOff(event: NoteOff) {
         var sample = this.active_samples.remove(Pair(event.note, event.channel)) ?: return
         var ttl = sample.stop()
-        //thread {
-        //    Thread.sleep(ttl)
-        //    sample.really_stop()
-        //}
-
 
         //this.decaying_samples.add(sample)
     }
@@ -271,6 +310,11 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
         if (event.channel == 9) {
             return
         }
+        var key = Pair(0, event.program)
+        if (this.loaded_presets[key] == null) {
+            this.loaded_presets[key] = this.soundFont.get_preset(event.program, 0)
+        }
+
         this.preset_channel_map[event.channel] = event.program
     }
 }

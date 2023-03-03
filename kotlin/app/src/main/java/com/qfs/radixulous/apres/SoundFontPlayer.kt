@@ -22,32 +22,44 @@ class ActiveSample(var event: NoteOn, var preset: Preset) {
     var chunk_ratio: Int = 3
     var chunk_size_in_frames: Int
     var chunk_size_in_bytes: Int
-    var is_pressed: Boolean = false
+    var is_pressed: Boolean = true
     var audioTrack: AudioTrack? = null
     var volumeShaper: VolumeShaper? = null
     var volume: Float = 1F
-    var samples: Set<Sample>
+    var samples: List<Sample>
 
     init {
-        var samples = this.get_samples()
-        var sample_rate = this.get_sample_rate()
-        var format = when (samples.size) {
-            1 -> {
-                AudioFormat.CHANNEL_OUT_MONO
-            }
-            else -> {
-                AudioFormat.CHANNEL_OUT_STEREO
+        println("_________________________")
+        println("${preset.name}:")
+        for (instrument in this.preset.instruments) {
+            println("${instrument.instrument!!.name}, ${instrument.instrument!!.samples.size}")
+            for (sample in instrument.instrument!!.samples) {
             }
         }
+        println("_________________________")
+        this.samples = this.get_samples().toList()
+        if (this.samples.isEmpty()) {
+            throw Exception("Instrument has no samples")
+        }
+
+        //println("${this.samples.size} FACK")
+
+        for (sample in this.samples) {
+            println("${preset.name}: ${sample.name}")
+        }
+
+        var sample_rate = this.get_sample_rate()
         //this.buffer_size_in_bytes = this.sample.sampleRate
         this.buffer_size_in_bytes = AudioTrack.getMinBufferSize(
             sample_rate,
             AudioFormat.ENCODING_PCM_16BIT,
-            format
+            AudioFormat.CHANNEL_OUT_STEREO
         )
+
         while (this.buffer_size_in_bytes < sample_rate) {
             this.buffer_size_in_bytes *= 2
         }
+
         this.buffer_size_in_frames = buffer_size_in_bytes / 4
 
         this.chunk_size_in_frames = this.buffer_size_in_frames / this.chunk_ratio
@@ -85,10 +97,11 @@ class ActiveSample(var event: NoteOn, var preset: Preset) {
         return sample_rate!!
     }
 
+
     private fun buildAudioTrack(): AudioTrack {
         var samples = this.get_samples()
         var sample_rate = this.get_sample_rate()
-        println("### ${this.buffer_size_in_bytes}")
+
         var audioTrack = AudioTrack.Builder()
             .setAudioAttributes(
                 AudioAttributes.Builder()
@@ -105,8 +118,8 @@ class ActiveSample(var event: NoteOn, var preset: Preset) {
             .setBufferSizeInBytes(this.buffer_size_in_bytes)
             .build()
 
-        if (sample.originalPitch != this.event.note) {
-            var samplePitch = BASE_FREQ * 2F.pow(sample.originalPitch!!.toFloat() / 12.toFloat())
+        if (samples.first().originalPitch != this.event.note) {
+            var samplePitch = BASE_FREQ * 2F.pow(samples.first().originalPitch!!.toFloat() / 12.toFloat())
             var requiredPitch = BASE_FREQ * 2F.pow(this.event.note.toFloat() / 12.toFloat())
             audioTrack.playbackParams =
                 PlaybackParams().setPitch((requiredPitch / samplePitch).toFloat())
@@ -116,44 +129,49 @@ class ActiveSample(var event: NoteOn, var preset: Preset) {
 
         audioTrack.setPlaybackPositionUpdateListener( playbacklistener )
         audioTrack.positionNotificationPeriod = this.chunk_size_in_frames
+        println("### BUILT")
         return audioTrack
     }
 
     fun write_next_chunk() {
-        var sampleData = this.sample.data
-        var loop_start = this.sample.loopStart
-        var loop_end = this.sample.loopEnd
+        var loop_start = this.samples.first().loopStart
+        var loop_end = this.samples.first().loopEnd
         var call_stop = false
+        var sample_size = this.samples.first().data.size
+        var l_index = 0
+        var r_index = if (this.samples.size == 1) {
+            0
+        } else {
+            1
+        }
 
         var use_bytes = ByteArray(this.chunk_size_in_bytes) { _ -> 0 }
         for (x in 0 until this.chunk_size_in_frames) {
+
             if (this.is_pressed && this.current_frame > loop_end) {
                 this.current_frame -= loop_start
                 this.current_frame %= loop_end - loop_start
             }
 
-            if (this.current_frame < sampleData.size / 2) {
+            if (this.current_frame < sample_size / 2) {
                 var j = this.current_frame * 2
 
-                var byte_pair = Pair(
-                    toUInt(sampleData[j]).toByte(),
-                    toUInt(sampleData[j + 1]).toByte()
-                )
-
-                use_bytes[(4 * x)] =     byte_pair.first
-                use_bytes[(4 * x) + 1] = byte_pair.second
-
-                use_bytes[(4 * x) + 2] = byte_pair.first
-                use_bytes[(4 * x) + 3] = byte_pair.second
-
-            } else {
+                use_bytes[(4 * x)] = this.samples[l_index].data[j]
+                use_bytes[(4 * x) + 1] = this.samples[l_index].data[j + 1]
+                use_bytes[(4 * x) + 2] = this.samples[r_index].data[j]
+                use_bytes[(4 * x) + 3] = this.samples[r_index].data[j + 1]
+            } else if (!this.is_pressed) {
                 call_stop = true
                 break
+            } else {
+                break
             }
+
             this.current_frame += 1
         }
 
         var audioTrack = this.audioTrack
+
         if (audioTrack != null && audioTrack!!.state != AudioTrack.STATE_UNINITIALIZED) {
             try {
                 audioTrack!!.write( use_bytes, 0, use_bytes.size, AudioTrack.WRITE_BLOCKING )
@@ -170,7 +188,7 @@ class ActiveSample(var event: NoteOn, var preset: Preset) {
     fun apply_decay_shaper(): Long {
         var volumeShaper: VolumeShaper? = this.volumeShaper ?: return 0
         var instrument = this.get_instrument()
-        var instrument_sample = this.get_instrument_sample()
+        var instrument_sample = this.get_instrument_samples().first()
 
         var vol_env_release = instrument_sample.vol_env_release
         if (vol_env_release == null) {
@@ -227,6 +245,7 @@ class ActiveSample(var event: NoteOn, var preset: Preset) {
     }
 
     fun stop(): Long {
+        this.is_pressed = false
         return this.apply_decay_shaper()
     }
 
@@ -235,6 +254,7 @@ class ActiveSample(var event: NoteOn, var preset: Preset) {
             this.audioTrack!!.stop()
             this.audioTrack!!.release()
         } catch (e: Exception) { }
+        println("STOP!!!!!")
         this.audioTrack = null
         //if (this.audioTrack.state == AudioTrack.STATE_INITIALIZED) {
         //    if (this.audioTrack.getPlayState() != AudioTrack.PLAYSTATE_STOPPED) {
@@ -264,7 +284,7 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
     private val preset_channel_map = HashMap<Int, Int>()
     private val loaded_presets = HashMap<Pair<Int, Int>, Preset>()
     init {
-        this.loaded_presets[Pair(0,0)] = this.soundFont.get_preset(31, 0)
+        this.loaded_presets[Pair(0,0)] = this.soundFont.get_preset(0, 0)
         this.loaded_presets[Pair(128,0)] = this.soundFont.get_preset(0,128)
 
     }
@@ -289,7 +309,7 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
         }
 
         var preset = this.loaded_presets[Pair(bank, this.get_channel_preset(event.channel))]!!
-
+        println("${preset.name}")
         //try {
             var active_sample = ActiveSample(event, preset)
             this.active_samples[Pair(event.note, event.channel)] = active_sample
@@ -302,6 +322,7 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
     override fun onNoteOff(event: NoteOff) {
         var sample = this.active_samples.remove(Pair(event.note, event.channel)) ?: return
         var ttl = sample.stop()
+        println("STOPCALLED!!!!!!!!!")
 
         //this.decaying_samples.add(sample)
     }

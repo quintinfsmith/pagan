@@ -94,11 +94,10 @@ class SoundFont(var riff: Riff) {
             sample_name = "$sample_name${b.toChar()}"
         }
 
-        var start = toUInt(shdr_bytes[offset + 20]) + (toUInt(shdr_bytes[offset + 21]) * 256) + (toUInt(shdr_bytes[offset + 22]) * 65536) + (toUInt(shdr_bytes[offset + 23]) * 16777216)
-        var end = toUInt(shdr_bytes[offset + 24]) + (toUInt(shdr_bytes[offset + 25]) * 256) + (toUInt(shdr_bytes[offset + 26]) * 65536) + (toUInt(shdr_bytes[offset + 27]) * 16777216)
+        val start = toUInt(shdr_bytes[offset + 20]) + (toUInt(shdr_bytes[offset + 21]) * 256) + (toUInt(shdr_bytes[offset + 22]) * 65536) + (toUInt(shdr_bytes[offset + 23]) * 16777216)
+        val end = toUInt(shdr_bytes[offset + 24]) + (toUInt(shdr_bytes[offset + 25]) * 256) + (toUInt(shdr_bytes[offset + 26]) * 65536) + (toUInt(shdr_bytes[offset + 27]) * 16777216)
 
-
-        var sample_data = this.get_sample_data(start, end)!!
+        val sample_data = this.get_sample_data(start, end)!!
         return Sample(
             sample_name,
             toUInt(shdr_bytes[offset + 28])
@@ -124,7 +123,7 @@ class SoundFont(var riff: Riff) {
     }
 
     fun get_available_presets(bank: Int): Set<Int> {
-        var output = mutableSetOf<Int>()
+        val output = mutableSetOf<Int>()
         val phdr_index = this.pdta_indices["phdr"]!!
         val pbag_index = this.pdta_indices["pbag"]!!
         val phdr_bytes = riff.get_sub_chunk_data(2, phdr_index)
@@ -141,8 +140,8 @@ class SoundFont(var riff: Riff) {
                 phdr_name = "$phdr_name${b.toChar()}"
             }
 
-            var current_index = toUInt(phdr_bytes[offset + 20]) + (toUInt(phdr_bytes[offset + 21]) * 256)
-            var current_bank = toUInt(phdr_bytes[offset + 22]) + (toUInt(phdr_bytes[offset + 23]) * 256)
+            val current_index = toUInt(phdr_bytes[offset + 20]) + (toUInt(phdr_bytes[offset + 21]) * 256)
+            val current_bank = toUInt(phdr_bytes[offset + 22]) + (toUInt(phdr_bytes[offset + 23]) * 256)
 
             if (current_bank == bank) {
                 output.add(current_index)
@@ -170,8 +169,8 @@ class SoundFont(var riff: Riff) {
                 phdr_name = "$phdr_name${b.toChar()}"
             }
 
-            var current_index = toUInt(phdr_bytes[offset + 20]) + (toUInt(phdr_bytes[offset + 21]) * 256)
-            var current_bank = toUInt(phdr_bytes[offset + 22]) + (toUInt(phdr_bytes[offset + 23]) * 256)
+            val current_index = toUInt(phdr_bytes[offset + 20]) + (toUInt(phdr_bytes[offset + 21]) * 256)
+            val current_bank = toUInt(phdr_bytes[offset + 22]) + (toUInt(phdr_bytes[offset + 23]) * 256)
 
             // No need to process other preset information
             if (preset_index != current_index || preset_bank != current_bank) {
@@ -234,7 +233,7 @@ class SoundFont(var riff: Riff) {
         val next_first_ibag_index = toUInt(inst_bytes[22 + offset + 20]) + (toUInt(inst_bytes[22 + offset + 21]) * 256)
         val zone_count = next_first_ibag_index - first_ibag_index
 
-        var instrument = Instrument(inst_name)
+        val instrument = Instrument(inst_name)
         for (j in 0 until zone_count) {
             val ibag_bytes = riff.get_sub_chunk_data(
                 2,
@@ -639,7 +638,7 @@ class Generator(
         }
     }
     fun asTimecent(): Double {
-        var p = this.asIntSigned() / 1200
+        val p = this.asIntSigned() / 1200
         return (2.0).pow(p.toDouble())
     }
     fun asPair(): Pair<Int, Int> {
@@ -709,7 +708,7 @@ class Preset(
     var global_zone: PresetInstrument? = null
 
     fun add_instrument(pinstrument: PresetInstrument) {
-        if (global_zone == null) {
+        if (pinstrument.instrument == null && global_zone == null) {
             this.global_zone = pinstrument
         } else {
             this.instruments.add(pinstrument)
@@ -733,14 +732,15 @@ class Instrument(var name: String) {
     }
 
     fun get_samples(key: Int, velocity: Int): Set<InstrumentSample> {
-        var output = mutableSetOf<InstrumentSample>()
+        val output = mutableSetOf<InstrumentSample>()
         this.samples.forEachIndexed { i, sample ->
+            println("!! ${sample.key_range} - ${sample.velocity_range} // ${key}-$velocity")
             if ((sample.key_range == null || (sample.key_range!!.first <= key && sample.key_range!!.second >= key)) &&
-                (sample.velocity_range == null || (sample.velocity_range!!.first <= velocity && sample.velocity_range!!.second >= velocity))) {
-                    output.add(sample)
-                    if (sample.sample!!.sampleType == 1) {
-                        return output
-                    }
+            (sample.velocity_range == null || (sample.velocity_range!!.first <= velocity && sample.velocity_range!!.second >= velocity))) {
+                output.add(sample)
+                if (sample.sample!!.sampleType == 1) {
+                    return output
+                }
             }
         }
         return output

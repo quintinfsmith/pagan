@@ -652,7 +652,7 @@ data class Sample(
     var loopEnd: Int,
     var sampleRate: Int,
     var originalPitch: Int,
-    var pithCorrection: Int,
+    var pitchCorrection: Int,
     var linkIndex: Int,
     var sampleType: Int,
     var data: ByteArray
@@ -734,7 +734,6 @@ class Instrument(var name: String) {
     fun get_samples(key: Int, velocity: Int): Set<InstrumentSample> {
         val output = mutableSetOf<InstrumentSample>()
         this.samples.forEachIndexed { i, sample ->
-            println("!! ${sample.key_range} - ${sample.velocity_range} // ${key}-$velocity")
             if ((sample.key_range == null || (sample.key_range!!.first <= key && sample.key_range!!.second >= key)) &&
             (sample.velocity_range == null || (sample.velocity_range!!.first <= velocity && sample.velocity_range!!.second >= velocity))) {
                 output.add(sample)

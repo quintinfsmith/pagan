@@ -1,11 +1,10 @@
 package com.qfs.radixulous
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.*
-import android.widget.Button
-import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.setFragmentResult
 import com.qfs.radixulous.databinding.FragmentFrontBinding
 
 class FrontFragment : Fragment() {
@@ -27,8 +26,11 @@ class FrontFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        var btn_newProject = view.findViewById<Button>(R.id.btnFrontNew)
-        var btn_loadProject = view.findViewById<Button>(R.id.btnFrontLoad)
+        var btn_newProject = view.findViewById<View>(R.id.btnFrontNew)
+        var btn_loadProject = view.findViewById<View>(R.id.btnFrontLoad)
+        var linkSource = view.findViewById<View>(R.id.linkSource)
+        var linkSFLicense = view.findViewById<View>(R.id.linkSFLicense)
+        var linkLicense = view.findViewById<View>(R.id.linkSFLicense)
 
         btn_newProject.setOnClickListener {
             this.getMain().navTo("main")
@@ -37,6 +39,14 @@ class FrontFragment : Fragment() {
             this.getMain().navTo("load")
         }
 
+        linkSource.setOnClickListener {
+            val url = "https://burnsomni.net/git/radixulous"
+            val intent = Intent(Intent.ACTION_VIEW)
+            intent.data = Uri.parse(url)
+            startActivity(intent)
+        }
+
+        linkSFLicense.setOnClickListener { }
     }
 
     private fun getMain(): MainActivity {

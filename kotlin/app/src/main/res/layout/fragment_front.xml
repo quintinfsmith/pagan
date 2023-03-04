@@ -3,6 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto">
+
     <LinearLayout
         android:padding="10dp"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -12,7 +13,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <Button
+        <TextView
             android:id="@+id/btnFrontNew"
             android:layout_width="match_parent"
             android:layout_weight="1"
@@ -20,13 +21,40 @@
             android:theme="@style/button"
             android:text="New Project"/>
 
-        <Button
+        <TextView
             android:id="@+id/btnFrontLoad"
             android:layout_width="match_parent"
             android:layout_weight="1"
             android:layout_height="wrap_content"
             android:theme="@style/button"
             android:text="Load Project"/>
+
+        <TextView
+            android:gravity="center"
+            android:layout_width="match_parent"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:id="@+id/linkLicense"
+            android:theme="@style/front_text"
+            android:text="@string/license_brief"/>
+
+        <TextView
+            android:gravity="center"
+            android:layout_width="match_parent"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:id="@+id/linkSource"
+            android:theme="@style/front_text"
+            android:text="@string/source_code_location"/>
+
+        <TextView
+            android:gravity="center"
+            android:layout_width="match_parent"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:id="@+id/linkSFLicense"
+            android:theme="@style/front_text"
+            android:text="@string/soundfont_disclaimer"/>
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

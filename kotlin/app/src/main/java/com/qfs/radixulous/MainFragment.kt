@@ -262,6 +262,7 @@ class MainFragment : Fragment() {
             tvLeaf.setOnClickListener {
                 this.interact_leafView_click(it)
             }
+
             tvLeaf.setOnFocusChangeListener { view, is_focused: Boolean ->
                 if (is_focused) {
                     this.interact_leafView_click(view)
@@ -819,6 +820,7 @@ class MainFragment : Fragment() {
 
     private fun interact_leafView_click(view: View) {
         val main = this.getMain()
+        main.stop_playback()
         val opus_manager = main.getOpusManager()
         this.focus_column = false
         this.focus_row = false
@@ -844,6 +846,7 @@ class MainFragment : Fragment() {
 
     private fun interact_leafView_longclick(view: View) {
         val main = this.getMain()
+        main.stop_playback()
         val opus_manager = main.getOpusManager()
         val (beatkey, position) = this.cache.getTreeViewPosition(view) ?: return
         if (this.linking_beat == null) {
@@ -858,6 +861,7 @@ class MainFragment : Fragment() {
 
     private fun interact_nsOffset(view: NumberSelector) {
         val main = this.getMain()
+        main.stop_playback()
         val opus_manager = main.getOpusManager()
         val progress = view.getState()!!
         val current_tree = opus_manager.get_tree_at_cursor()
@@ -889,6 +893,7 @@ class MainFragment : Fragment() {
 
     private fun interact_nsOctave(view: NumberSelector) {
         val main = this.getMain()
+        main.stop_playback()
         val opus_manager = main.getOpusManager()
         val progress = view.getState() ?: return
 
@@ -918,6 +923,7 @@ class MainFragment : Fragment() {
 
     private fun interact_rowLabel(view: View) {
         val main = this.getMain()
+        main.stop_playback()
         this.focus_column = false
         this.focus_row = true
 
@@ -939,6 +945,7 @@ class MainFragment : Fragment() {
 
     private fun interact_sRelative_changed(view: View, isChecked: Boolean) {
         val main = this.getMain()
+        main.stop_playback()
         val opus_manager = main.getOpusManager()
         if (isChecked) {
             try {
@@ -968,6 +975,7 @@ class MainFragment : Fragment() {
 
     private fun interact_btnChoosePercussion(view: View) {
         val main = this.getMain()
+        main.stop_playback()
         val opus_manager = main.getOpusManager()
 
         val popupMenu = PopupMenu(this.binding.root.context, view)
@@ -1017,6 +1025,7 @@ class MainFragment : Fragment() {
 
     fun interact_column_header(view: View) {
         val main = this.getMain()
+        main.stop_playback()
         val x = (view.parent as ViewGroup).indexOfChild(view)
         val opus_manager = main.getOpusManager()
         this.focus_column = true
@@ -1130,6 +1139,8 @@ class MainFragment : Fragment() {
                     this.cache.addFocusedLeaf(linked_beat, leaf_pos)
                 }
             }
+
+            this.scrollTo(beatkey, position)
         }
 
         if (this.linking_beat_b != null) {
@@ -1449,5 +1460,9 @@ class MainFragment : Fragment() {
         this.takedownCurrent()
         this.setContextMenu(ContextMenu.Leaf)
         this.tick()
+    }
+
+    fun scrollTo(beatkey: BeatKey, position: List<Int>) {
+
     }
 }

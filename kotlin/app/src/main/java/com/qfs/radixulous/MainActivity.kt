@@ -182,6 +182,9 @@ class MainActivity : AppCompatActivity() {
         }
         return super.onOptionsItemSelected(item)
     }
+    fun stop_playback() {
+        this.in_play_back = false
+    }
 
     fun setup_config_drawer() {
         val opus_manager = this.getOpusManager()

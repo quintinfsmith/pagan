@@ -163,7 +163,7 @@ class ActiveSample(var event: NoteOn, var preset: Preset) {
 
         var use_bytes = ByteArray(this.chunk_size_in_bytes) { _ -> 0 }
         for (x in 0 until this.chunk_size_in_frames) {
-
+            // If sample is a looping sample AND note is being held
             if ((instrument_sample.sampleMode == null || instrument_sample.sampleMode!! and 1 != 1) && this.is_pressed && this.current_frame > loop_end) {
                 this.current_frame -= loop_start
                 this.current_frame %= loop_end - loop_start
@@ -188,9 +188,9 @@ class ActiveSample(var event: NoteOn, var preset: Preset) {
 
         var audioTrack = this.audioTrack
 
-        if (audioTrack != null && audioTrack!!.state != AudioTrack.STATE_UNINITIALIZED) {
+        if (audioTrack != null && audioTrack.state != AudioTrack.STATE_UNINITIALIZED) {
             try {
-                audioTrack!!.write( use_bytes, 0, use_bytes.size, AudioTrack.WRITE_BLOCKING )
+                audioTrack.write( use_bytes, 0, use_bytes.size, AudioTrack.WRITE_BLOCKING )
             } catch (e: IllegalStateException) {
                 // Shouldn't need to do anything. the audio track was released and this should stop on its own
             }

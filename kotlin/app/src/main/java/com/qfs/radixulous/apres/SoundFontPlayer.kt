@@ -92,15 +92,14 @@ class ActiveSample(var event: NoteOn, var preset: Preset) {
             sample_rate = sample.sampleRate
         }
 
+        //var ratio = log2(44100F / sample_rate!!.toFloat())
 
-        var ratio = log2(44100F / sample_rate!!.toFloat())
-
-        // Needs to be resampled
-        if (ratio.toInt().toFloat() != ratio) {
-            var target_rate = 22050
-            this.resample_ratio = sample_rate.toFloat() / (target_rate.toFloat())
-            sample_rate = target_rate
-        }
+        //// Needs to be resampled
+        //if (ratio.toInt().toFloat() != ratio) {
+        //    var target_rate = 22050
+        //    this.resample_ratio = sample_rate.toFloat() / (target_rate.toFloat())
+        //    sample_rate = target_rate
+        //}
 
         this.sample_rate = sample_rate
 
@@ -135,9 +134,9 @@ class ActiveSample(var event: NoteOn, var preset: Preset) {
             var samplePitch = 2F.pow(originalPitch / 12F)
             var requiredPitch = 2F.pow(this.event.note.toFloat() / 12F)
             var shift = (requiredPitch / samplePitch)
-            if (this.resample_ratio != 1F) {
-                shift *= this.resample_ratio
-            }
+            //if (this.resample_ratio != 1F) {
+            //    shift *= this.resample_ratio
+            //}
             audioTrack.playbackParams = PlaybackParams().setPitch(shift)
         }
 
@@ -149,6 +148,8 @@ class ActiveSample(var event: NoteOn, var preset: Preset) {
     }
 
     fun write_next_chunk() {
+        var instrument_sample = this.get_instrument_samples().first()
+
         var loop_start = this.samples.first().loopStart
         var loop_end = this.samples.first().loopEnd
         var call_stop = false
@@ -163,7 +164,7 @@ class ActiveSample(var event: NoteOn, var preset: Preset) {
         var use_bytes = ByteArray(this.chunk_size_in_bytes) { _ -> 0 }
         for (x in 0 until this.chunk_size_in_frames) {
 
-            if (this.is_pressed && this.current_frame > loop_end) {
+            if ((instrument_sample.sampleMode == null || instrument_sample.sampleMode!! and 1 != 1) && this.is_pressed && this.current_frame > loop_end) {
                 this.current_frame -= loop_start
                 this.current_frame %= loop_end - loop_start
             }
@@ -226,7 +227,7 @@ class ActiveSample(var event: NoteOn, var preset: Preset) {
                 .setInterpolatorType(VolumeShaper.Configuration.INTERPOLATOR_TYPE_LINEAR)
                 .build()
 
-            volumeShaper!!.replace(newConfig, VolumeShaper.Operation.PLAY, true)
+            //volumeShaper!!.replace(newConfig, VolumeShaper.Operation.PLAY, true)
 
             thread {
                 Thread.sleep(delay)
@@ -249,7 +250,7 @@ class ActiveSample(var event: NoteOn, var preset: Preset) {
         this.volume = velocity.toFloat() / 128F
 
         val config = VolumeShaper.Configuration.Builder()
-            .setDuration(10)
+            .setDuration(1)
             .setCurve(floatArrayOf(0f, 1f), floatArrayOf(0f, this.volume))
             .setInterpolatorType(VolumeShaper.Configuration.INTERPOLATOR_TYPE_LINEAR)
             .build()

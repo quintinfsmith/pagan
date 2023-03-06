@@ -18,26 +18,21 @@ class LeafButton: androidx.appcompat.widget.AppCompatTextView {
     private var state_invalid: Boolean = false
     private var event: OpusEvent?
     private var activity: MainActivity
-    private var opus_manager: OpusManager
 
-    constructor(context: Context, activity: MainActivity, event: OpusEvent?, opus_manager: OpusManager) : super(ContextThemeWrapper(context, R.style.leaf)) {
+    constructor(context: Context, activity: MainActivity, event: OpusEvent?, is_percussion: Boolean) : super(ContextThemeWrapper(context, R.style.leaf)) {
         this.activity = activity
         this.event = event
-        this.opus_manager = opus_manager
 
         if (event != null) {
             this.setActive(true)
         } else {
             this.setActive(false)
         }
+        this.set_text(is_percussion)
     }
 
-    override fun onLayout(is_changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
-        super.onLayout(is_changed, left, top, right, bottom)
-        this.set_text()
-    }
 
-    fun set_text() {
+    fun set_text(is_percussion: Boolean) {
         if (this.event == null) {
             this.text = ""
             return
@@ -46,7 +41,7 @@ class LeafButton: androidx.appcompat.widget.AppCompatTextView {
 
         var event = this.event!!
 
-        this.text = if (this.opus_manager.is_percussion(event.channel)) {
+        this.text = if (is_percussion) {
             ""
         } else if (event.relative) {
             if (event.note == 0 || event.note % event.radix != 0) {

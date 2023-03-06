@@ -266,7 +266,7 @@ class MainActivity : AppCompatActivity() {
 
                 if (main_fragment is MainFragment) {
                     this@MainActivity.runOnUiThread {
-                        main_fragment.scroll_to_beat(i, true)
+                        main_fragment.scroll_to_beat(i)
                     }
                 }
 
@@ -280,7 +280,7 @@ class MainActivity : AppCompatActivity() {
 
             if (this.in_play_back && main_fragment is MainFragment) {
                 this@MainActivity.runOnUiThread {
-                    main_fragment.scroll_to_beat(0, true)
+                    main_fragment.scroll_to_beat(0)
                 }
             }
 

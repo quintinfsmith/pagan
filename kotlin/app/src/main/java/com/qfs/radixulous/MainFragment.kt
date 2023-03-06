@@ -257,7 +257,7 @@ class MainFragment : Fragment() {
         val tree = opus_manager.get_tree(beatkey, position)
 
         if (tree.is_leaf()) {
-            val tvLeaf = LeafButton(parent.context, main, tree.get_event(), opus_manager)
+            val tvLeaf = LeafButton(parent.context, main, tree.get_event(), opus_manager.is_percussion(beatkey.channel))
 
             tvLeaf.setOnClickListener {
                 this.interact_leafView_click(it)
@@ -845,8 +845,14 @@ class MainFragment : Fragment() {
         }
         var tree = opus_manager.get_tree_at_cursor()
         if (tree.is_event()) {
-            var event = tree.get_event()!!
-            main.play_event(beatkey.channel, event.note)
+            main.play_event(
+                beatkey.channel,
+                if (opus_manager.is_percussion(beatkey.channel)) {
+                    opus_manager.get_percussion_instrument(beatkey.line_offset)
+                } else {
+                    opus_manager.get_absolute_value(beatkey, position)!!
+                }
+            )
         }
 
         this.tick()
@@ -1047,7 +1053,7 @@ class MainFragment : Fragment() {
         main.play_midi(midi)
     }
 
-    fun scroll_to_beat(beat: Int, select: Boolean = false) {
+    fun scroll_to_beat(beat: Int) {
         val main = this.getMain()
 
         val hsvTable: HorizontalScrollView = main.findViewById(R.id.hsvTable)
@@ -1056,9 +1062,6 @@ class MainFragment : Fragment() {
         val view = llColumnLabels.getChildAt(beat)
         if (view != null) {
             hsvTable.smoothScrollTo(view.left, hsvTable.scrollY)
-            if (select) {
-                this.interact_column_header(view)
-            }
         }
     }
 
@@ -1099,7 +1102,7 @@ class MainFragment : Fragment() {
                         if (view !is LeafButton) {
                             continue
                         }
-                        view.set_text()
+                        view.set_text(opus_manager.is_percussion(channel))
                     }
                 }
             }
@@ -1476,10 +1479,12 @@ class MainFragment : Fragment() {
 
             thread {
                 var cursor = opus_manager.get_cursor()
-                this.scrollTo(
-                    cursor.get_beatkey(),
-                    cursor.get_position()
-                )
+                try {
+                    this.scrollTo(
+                        cursor.get_beatkey(),
+                        cursor.get_position()
+                    )
+                } catch (e: Exception) { }
             }
             this.ticking = false
 

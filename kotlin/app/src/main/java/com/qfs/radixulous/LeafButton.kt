@@ -1,6 +1,7 @@
 package com.qfs.radixulous
 
 import android.content.Context
+import com.qfs.radixulous.opusmanager.HistoryLayer as OpusManager
 import androidx.appcompat.view.ContextThemeWrapper
 import com.qfs.radixulous.opusmanager.OpusEvent
 import kotlin.math.abs
@@ -17,38 +18,54 @@ class LeafButton: androidx.appcompat.widget.AppCompatTextView {
     private var state_invalid: Boolean = false
     private var event: OpusEvent?
     private var activity: MainActivity
+    private var opus_manager: OpusManager
 
-    constructor(context: Context, activity: MainActivity, event: OpusEvent?, is_percussion:Boolean = false) : super(ContextThemeWrapper(context, R.style.leaf)) {
+    constructor(context: Context, activity: MainActivity, event: OpusEvent?, opus_manager: OpusManager) : super(ContextThemeWrapper(context, R.style.leaf)) {
         this.activity = activity
         this.event = event
+        this.opus_manager = opus_manager
+
         if (event != null) {
             this.setActive(true)
-
-            var event = this.event!!
-            this.text = if (is_percussion) {
-                ""
-            } else if (event.relative) {
-                if (event.note == 0 || event.note % event.radix != 0) {
-                    val prefix = if (event.note < 0) {
-                        this.activity.getString(R.string.pfx_subtract)
-                    } else {
-                        this.activity.getString(R.string.pfx_add)
-                    }
-                    "$prefix${get_number_string(abs(event.note), event.radix, 1)}"
-                } else {
-                    val prefix = if (event.note < 0) {
-                        this.activity.getString(R.string.pfx_log)
-                    } else {
-                        this.activity.getString(R.string.pfx_pow)
-                    }
-                    "$prefix${get_number_string(abs(event.note) / event.radix, event.radix, 1)}"
-                }
-            } else {
-                get_number_string(event.note, event.radix, 2)
-            }
         } else {
             this.setActive(false)
-            this.text = this.activity.getString(R.string.empty_note)
+        }
+    }
+
+    override fun onLayout(is_changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
+        super.onLayout(is_changed, left, top, right, bottom)
+        this.set_text()
+    }
+
+    fun set_text() {
+        if (this.event == null) {
+            this.text = ""
+            return
+        }
+
+
+        var event = this.event!!
+
+        this.text = if (this.opus_manager.is_percussion(event.channel)) {
+            ""
+        } else if (event.relative) {
+            if (event.note == 0 || event.note % event.radix != 0) {
+                val prefix = if (event.note < 0) {
+                    this.activity.getString(R.string.pfx_subtract)
+                } else {
+                    this.activity.getString(R.string.pfx_add)
+                }
+                "$prefix${get_number_string(abs(event.note), event.radix, 1)}"
+            } else {
+                val prefix = if (event.note < 0) {
+                    this.activity.getString(R.string.pfx_log)
+                } else {
+                    this.activity.getString(R.string.pfx_pow)
+                }
+                "$prefix${get_number_string(abs(event.note) / event.radix, event.radix, 1)}"
+            }
+        } else {
+            get_number_string(event.note, event.radix, 2)
         }
     }
 

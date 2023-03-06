@@ -392,8 +392,8 @@ open class CursorLayer() : FlagLayer() {
     }
 
     ///////// OpusManagerBase methods
-    override fun insert_beat(index: Int?) {
-        super.insert_beat(index)
+    override fun insert_beat(index: Int, count: Int) {
+        super.insert_beat(index, count)
         this.get_cursor().settle()
     }
 

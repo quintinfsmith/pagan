@@ -29,8 +29,6 @@ class FrontFragment : Fragment() {
         var btn_newProject = view.findViewById<View>(R.id.btnFrontNew)
         var btn_loadProject = view.findViewById<View>(R.id.btnFrontLoad)
         var linkSource = view.findViewById<View>(R.id.linkSource)
-        var linkSFLicense = view.findViewById<View>(R.id.linkSFLicense)
-        var linkLicense = view.findViewById<View>(R.id.linkSFLicense)
 
         btn_newProject.setOnClickListener {
             this.getMain().navTo("main")
@@ -45,8 +43,6 @@ class FrontFragment : Fragment() {
             intent.data = Uri.parse(url)
             startActivity(intent)
         }
-
-        linkSFLicense.setOnClickListener { }
     }
 
     private fun getMain(): MainActivity {

@@ -734,8 +734,10 @@ class Instrument(var name: String) {
     fun get_samples(key: Int, velocity: Int): Set<InstrumentSample> {
         val output = mutableSetOf<InstrumentSample>()
         this.samples.forEachIndexed { i, sample ->
-            if ((sample.key_range == null || (sample.key_range!!.first <= key && sample.key_range!!.second >= key)) &&
-            (sample.velocity_range == null || (sample.velocity_range!!.first <= velocity && sample.velocity_range!!.second >= velocity))) {
+            if (
+                (sample.key_range == null || (sample.key_range!!.first <= key && sample.key_range!!.second >= key)) &&
+                (sample.velocity_range == null || (sample.velocity_range!!.first <= velocity && sample.velocity_range!!.second >= velocity))
+            ) {
                 output.add(sample)
                 if (sample.sample!!.sampleType == 1) {
                     return output

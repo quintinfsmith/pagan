@@ -386,7 +386,11 @@ open class OpusManagerBase {
                 new_position.add(0)
             }
 
-            this.set_event(beat_key, new_position, event!!)
+            if (this.is_percussion(beat_key.channel)) {
+                this.set_percussion_event(beat_key, new_position)
+            } else {
+                this.set_event(beat_key, new_position, event!!)
+            }
         } else {
             tree.set_size(splits)
         }
@@ -444,11 +448,17 @@ open class OpusManagerBase {
         this.channels[new_channel].insert_line(new_channel, line)
     }
 
-    open fun insert_beat(index: Int? = null) {
-        this.opus_beat_count += 1
-        for (channel in this.channels) {
-            channel.insert_beat(index)
-            channel.set_beat_count(this.opus_beat_count)
+    fun insert_beat() {
+        this.insert_beat(this.opus_beat_count, 1)
+    }
+
+    open fun insert_beat(index: Int, count: Int = 1) {
+        for (i in 0 until count) {
+            this.opus_beat_count += 1
+            for (channel in this.channels) {
+                channel.insert_beat(index)
+                channel.set_beat_count(this.opus_beat_count)
+            }
         }
     }
 
@@ -560,7 +570,7 @@ open class OpusManagerBase {
                         if (current.tree.is_event()) {
                             val event = current.tree.get_event()!!
                             val note = if (this.is_percussion(c)) { // Ignore the event data and use percussion map
-                                this.get_percussion_instrument(l) + 35
+                                this.get_percussion_instrument(l) + 27
                             } else if (event.relative) {
                                 event.note + prev_note
                             } else {

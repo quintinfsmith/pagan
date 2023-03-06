@@ -74,13 +74,14 @@ class ChannelOptionAdapter(
         var channels = opus_manager.channels
         val curChannel = channels[position]
         var btnChooseInstrument: TextView = view.findViewById(R.id.btnChooseInstrument)
-        btnChooseInstrument.text = this.get_label(
+        var label = this.get_label(
             if (opus_manager.is_percussion(position)) {
                 -1
             } else {
                 curChannel.midi_instrument
             }
         )
+        btnChooseInstrument.text = "$position: $label"
     }
 
     private fun get_label(instrument: Int): String {
@@ -101,9 +102,9 @@ class ChannelOptionAdapter(
         }
 
         return if (instrument == -1) {
-            "0: $prefix Percussion"
+            "$prefix Percussion"
         } else {
-            "${instrument + 1}: $prefix ${instrument_array[instrument]}"
+            "$prefix ${instrument_array[instrument]}"
         }
     }
 
@@ -166,7 +167,7 @@ class ChannelOptionAdapter(
             if (i == 0 && opus_manager.percussion_channel != null) {
                 continue
             }
-            popupMenu.menu.add(0, i - 1, i, this.get_label(i - 1))
+            popupMenu.menu.add(0, i - 1, i, "$i: ${this.get_label(i - 1)}")
         }
 
         popupMenu.setOnMenuItemClickListener {

@@ -1,20 +1,20 @@
 package com.qfs.radixulous
 
+import android.graphics.Rect
 import android.os.Bundle
+import android.util.DisplayMetrics
 import android.view.*
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.*
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResultListener
-import androidx.navigation.findNavController
-import androidx.navigation.ui.AppBarConfiguration
-import androidx.navigation.ui.setupActionBarWithNavController
 import com.qfs.radixulous.databinding.FragmentMainBinding
 import com.qfs.radixulous.opusmanager.BeatKey
 import com.qfs.radixulous.opusmanager.FlagOperation
 import com.qfs.radixulous.opusmanager.OpusEvent
 import com.qfs.radixulous.opusmanager.UpdateFlag
 import com.qfs.radixulous.opusmanager.HistoryLayer as OpusManager
+import kotlin.concurrent.thread
 
 /**
  * A simple [Fragment] subclass as the default destination in the navigation.
@@ -257,7 +257,7 @@ class MainFragment : Fragment() {
         val tree = opus_manager.get_tree(beatkey, position)
 
         if (tree.is_leaf()) {
-            val tvLeaf = LeafButton(parent.context, main, tree.get_event(), opus_manager.is_percussion(beatkey.channel))
+            val tvLeaf = LeafButton(parent.context, main, tree.get_event(), opus_manager)
 
             tvLeaf.setOnClickListener {
                 this.interact_leafView_click(it)
@@ -280,6 +280,7 @@ class MainFragment : Fragment() {
             param.height = MATCH_PARENT
             tvLeaf.layoutParams = param
             this.cache.cacheTree(tvLeaf, beatkey, position)
+
             return tvLeaf
         } else {
             val cellLayout: LinearLayout = LayoutInflater.from(parent.context).inflate(
@@ -340,19 +341,23 @@ class MainFragment : Fragment() {
                     btnChoosePercussion.text = "$instrument: ${drums[instrument]}"
                 }
 
-                btnRemoveLine.setOnClickListener {
-                    this.om_remove_line(1)
-                }
+                if (opus_manager.channels[channel].size == 1) {
+                    btnRemoveLine.visibility = View.GONE
+                } else {
+                    btnRemoveLine.setOnClickListener {
+                        this.om_remove_line(1)
+                    }
 
-                btnRemoveLine.setOnLongClickListener {
-                    val main = this.getMain()
-                    main.popup_number_dialog(
-                        "Remove Lines",
-                        1,
-                        kotlin.math.max(1, opus_manager.line_count() - 1),
-                        this::om_remove_line
-                    )
-                    true
+                    btnRemoveLine.setOnLongClickListener {
+                        val main = this.getMain()
+                        main.popup_number_dialog(
+                            "Remove Lines",
+                            1,
+                            kotlin.math.max(1, opus_manager.line_count() - 1),
+                            this::om_remove_line
+                        )
+                        true
+                    }
                 }
 
                 btnInsertLine.setOnClickListener {
@@ -771,7 +776,6 @@ class MainFragment : Fragment() {
         val main = this.getMain()
         val opus_manager = main.getOpusManager()
 
-        this.setContextMenu(ContextMenu.Leaf)
         val cursor = opus_manager.get_cursor()
         val channel = cursor.get_beatkey().channel
         if (!opus_manager.is_percussion(channel) || opus_manager.get_tree_at_cursor().is_event()) {
@@ -839,6 +843,11 @@ class MainFragment : Fragment() {
             this.linking_beat = null
             this.linking_beat_b = null
         }
+        var tree = opus_manager.get_tree_at_cursor()
+        if (tree.is_event()) {
+            var event = tree.get_event()!!
+            main.play_event(beatkey.channel, event.note)
+        }
 
         this.tick()
         this.setContextMenu(ContextMenu.Leaf)
@@ -848,7 +857,7 @@ class MainFragment : Fragment() {
         val main = this.getMain()
         main.stop_playback()
         val opus_manager = main.getOpusManager()
-        val (beatkey, position) = this.cache.getTreeViewPosition(view) ?: return
+        val (beatkey, _position) = this.cache.getTreeViewPosition(view) ?: return
         if (this.linking_beat == null) {
             this.linking_beat = beatkey
         } else {
@@ -981,14 +990,45 @@ class MainFragment : Fragment() {
         val popupMenu = PopupMenu(this.binding.root.context, view)
         val cursor = opus_manager.get_cursor()
         val drums = resources.getStringArray(R.array.midi_drums)
-        drums.forEachIndexed { i, string ->
-            popupMenu.menu.add(0, i, i, "$i: $string")
+        var preset = main.soundfont.get_preset(0, 128)
+        var available_drum_keys = mutableSetOf<Int>()
+
+        for (preset_instrument in preset.instruments) {
+            if (preset_instrument.instrument == null) {
+                continue
+            }
+
+            for (sample in preset_instrument.instrument!!.samples) {
+                if (sample.key_range == null) {
+
+                } else {
+                    for (j in sample.key_range!!.first .. sample.key_range!!.second) {
+                        available_drum_keys.add(j)
+                    }
+                }
+            }
         }
+
+        var line_map = opus_manager.channels[cursor.get_beatkey().channel].line_map
+        if (line_map != null) {
+            for ((offset, instrument) in line_map) {
+                if (instrument + 27 in available_drum_keys) {
+                    available_drum_keys.remove(instrument + 27)
+                }
+            }
+        }
+        drums.forEachIndexed { i, string ->
+            if ((i + 27) in available_drum_keys) {
+                popupMenu.menu.add(0, i, i, "$i: $string")
+            }
+        }
+
         popupMenu.setOnMenuItemClickListener {
             opus_manager.set_percussion_instrument(
                 cursor.get_beatkey().line_offset,
                 it.itemId
             )
+
             this.tick()
             val y = opus_manager.get_cursor().get_y()
             val textView: TextView = this.cache.getLineLabel(y)!!.findViewById(R.id.textView)
@@ -1025,7 +1065,6 @@ class MainFragment : Fragment() {
 
     fun interact_column_header(view: View) {
         val main = this.getMain()
-        main.stop_playback()
         val x = (view.parent as ViewGroup).indexOfChild(view)
         val opus_manager = main.getOpusManager()
         this.focus_column = true
@@ -1049,6 +1088,21 @@ class MainFragment : Fragment() {
                 BeatKey(channel, line_offset, x),
                 listOf()
             )
+        }
+    }
+
+    fun update_leaf_labels(opus_manager: OpusManager) {
+        for (channel in 0 until opus_manager.channels.size) {
+            for (y in 0 until opus_manager.channels[channel].size) {
+                for (x in 0 until opus_manager.opus_beat_count) {
+                    for ((view, position) in this.cache.get_all_leafs(BeatKey(channel, y, x), listOf())) {
+                        if (view !is LeafButton) {
+                            continue
+                        }
+                        view.set_text()
+                    }
+                }
+            }
         }
     }
 
@@ -1086,6 +1140,7 @@ class MainFragment : Fragment() {
                 ) as ViewGroup
 
                 rowView.addView(new_wrapper, index)
+
                 this.buildTreeView(new_wrapper, BeatKey(i, j, index), listOf())
             }
         }
@@ -1140,7 +1195,6 @@ class MainFragment : Fragment() {
                 }
             }
 
-            this.scrollTo(beatkey, position)
         }
 
         if (this.linking_beat_b != null) {
@@ -1153,6 +1207,7 @@ class MainFragment : Fragment() {
                         this.linking_beat!!.line_offset,
                         x + this.linking_beat!!.beat
                     )
+
                     for ((view, leaf_pos) in this.cache.get_all_leafs(working_beat, listOf())) {
                         if (view !is LeafButton) {
                             continue
@@ -1380,6 +1435,7 @@ class MainFragment : Fragment() {
                             updated_beats.add(linked_beatkey.beat)
                         }
 
+
                     }
                     UpdateFlag.Line -> {
                         var line_flag = opus_manager.fetch_flag_line() ?: break
@@ -1414,11 +1470,19 @@ class MainFragment : Fragment() {
                 val (beatkey, position) = opus_manager.fetch_flag_absolute_value() ?: break
                 var abs_value = opus_manager.get_absolute_value(beatkey, position) ?: continue
                 this.validate_leaf(beatkey, position, abs_value in 0..95)
-
             }
 
             this.tick_apply_focus()
+
+            thread {
+                var cursor = opus_manager.get_cursor()
+                this.scrollTo(
+                    cursor.get_beatkey(),
+                    cursor.get_position()
+                )
+            }
             this.ticking = false
+
         }
     }
 
@@ -1463,6 +1527,34 @@ class MainFragment : Fragment() {
     }
 
     fun scrollTo(beatkey: BeatKey, position: List<Int>) {
+        var leafView: View? = this.cache.getTreeView(beatkey, position) ?: return
+        if (leafView !is LeafButton) {
+            return
+        }
 
+        var tlOpusLines = this.getMain().findViewById<LinearLayout>(R.id.tlOpusLines)
+        var hsvTable = this.getMain().findViewById<HorizontalScrollView>(R.id.hsvTable)
+        var svTable = this.getMain().findViewById<ScrollView>(R.id.svTable)
+
+        val offsetViewBounds = Rect()
+        // TODO: FIX this KLUDGE. I don't know of a way to use a callback here offhand
+        while (true) {
+            leafView!!.getGlobalVisibleRect(offsetViewBounds);
+            if (offsetViewBounds.width() != 0) {
+                break
+            } else {
+                Thread.sleep(10)
+            }
+        }
+
+        var offset_left = offsetViewBounds.left
+        var offset_top = offsetViewBounds.top
+
+        if (offset_left < hsvTable.scrollX || offset_left > hsvTable.scrollX + svTable.width) {
+            hsvTable.smoothScrollTo(offset_left, 0)
+        }
+        if (offset_top < svTable.scrollY || offset_top > svTable.scrollY + svTable.width) {
+            svTable.smoothScrollTo(0, offset_top)
+        }
     }
 }

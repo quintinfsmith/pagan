@@ -179,10 +179,10 @@ open class AbsoluteValueLayer: OpusManagerBase() {
         this.shift_absolute_value_cache(beat_key, position, 1)
     }
 
-    override fun insert_beat(index: Int?) {
-        super.insert_beat(index)
-        if (index != null) {
-            this.shift_absolute_value_cache_beat(index, 1)
+    override fun insert_beat(index: Int, count: Int) {
+        super.insert_beat(index, count)
+        for (i in 0 until count) {
+            this.shift_absolute_value_cache_beat(index + i, 1)
         }
     }
 

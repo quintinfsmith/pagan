@@ -175,53 +175,66 @@
     </string-array>
 
     <string-array name="midi_drums">
-        <item>Acoustic Bass Drum</item>
-        <item>Bass Drum 1</item>
-        <item>Side Stick</item>
-        <item>Acoustic Snare</item>
-        <item>Hand Clap</item>
-        <item>Electric Snare</item>
-        <item>Low Floor Tom</item>
-        <item>Closed Hi-Hat</item>
-        <item>High Floor Tom</item>
-        <item>Pedal Hi-Hat</item>
-        <item>Low Tom</item>
-        <item>Open Hi-Hat</item>
-        <item>Low-Mid Tom</item>
-        <item>Hi-Mid Tom</item>
-        <item>Crash Cymbal 1</item>
-        <item>High Tom</item>
-        <item>Ride Cymbal 1</item>
-        <item>Chinese Cymbal</item>
-        <item>Ride Bell</item>
-        <item>Tambourine</item>
-        <item>Splash Cymbal</item>
-        <item>Cowbell</item>
-        <item>Crash Symbol 2</item>
-        <item>Vibraslap</item>
-        <item>Ride Cymbal 2</item>
-        <item>Hi Bongo</item>
-        <item>Low Bongo</item>
-        <item>Mute Hi Conga</item>
-        <item>Open Hi Conga</item>
-        <item>Low Conga</item>
-        <item>High Timbale</item>
-        <item>Low Timbale</item>
-        <item>High Agogo</item>
-        <item>Low Agogo</item>
-        <item>Cabasa</item>
-        <item>Maracas</item>
-        <item>Short Whistle</item>
-        <item>Long Whistle</item>
-        <item>Short Guiro</item>
-        <item>Long Guiro</item>
-        <item>Claves</item>
-        <item>Hi Wood Block</item>
-        <item>Low Wood Block</item>
-        <item>Mute Cuica</item>
-        <item>Open Cuica</item>
-        <item>Mute Triangle</item>
-        <item>Open Triangle</item>
-        <item>Shaker</item>
+       <item>High Q</item>
+       <item>Slap</item>
+       <item>Scratch Push</item>
+       <item>Scratch Pull</item>
+       <item>Sticks</item>
+       <item>Square Click</item>
+       <item>Metronome Click</item>
+       <item>Metronome Bell</item>
+       <item>Bass Drum 2</item>
+       <item>Bass Drum 1</item>
+       <item>Side Stick</item>
+       <item>Snare Drum 1</item>
+       <item>Hand Clap</item>
+       <item>Snare Drum 2</item>
+       <item>Low Tom 2</item>
+       <item>Closed Hi-hat</item>
+       <item>Low Tom 1</item>
+       <item>Pedal Hi-hat</item>
+       <item>Mid Tom 2</item>
+       <item>Open Hi-hat</item>
+       <item>Mid Tom 1</item>
+       <item>High Tom 2</item>
+       <item>Crash Cymbal 1</item>
+       <item>High Tom 1</item>
+       <item>Ride Cymbal 1</item>
+       <item>Chinese Cymbal</item>
+       <item>Ride Bell</item>
+       <item>Tambourine</item>
+       <item>Splash Cymbal</item>
+       <item>Cowbell</item>
+       <item>Crash Cymbal 2</item>
+       <item>Vibra Slap</item>
+       <item>Ride Cymbal 2</item>
+       <item>High Bongo</item>
+       <item>Low Bongo</item>
+       <item>Mute High Conga</item>
+       <item>Open High Conga</item>
+       <item>Low Conga</item>
+       <item>High Timbale</item>
+       <item>Low Timbale</item>
+       <item>High Agogo</item>
+       <item>Low Agogo</item>
+       <item>Cabasa</item>
+       <item>Maracas</item>
+       <item>Short Whistle</item>
+       <item>Long Whistle</item>
+       <item>Short Guiro</item>
+       <item>Long Guiro</item>
+       <item>Claves</item>
+       <item>High Wood Block</item>
+       <item>Low Wood Block</item>
+       <item>Mute Cuica</item>
+       <item>Open Cuica</item>
+       <item>Mute Triangle</item>
+       <item>Open Triangle</item>
+       <item>Shaker</item>
+       <item>Jingle Bell</item>
+       <item>Belltree</item>
+       <item>Castanets</item>
+       <item>Mute Surdo</item>
+       <item>Open Surdo</item>
     </string-array>
 </resources>

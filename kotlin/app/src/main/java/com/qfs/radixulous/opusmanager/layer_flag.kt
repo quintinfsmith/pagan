@@ -178,9 +178,11 @@ open class FlagLayer : LinksLayer() {
         this.cache.flag_beat_change(beat_key)
     }
 
-    override fun insert_beat(index: Int?) {
-        super.insert_beat(index)
-        this.cache.flag_beat_new(index ?: this.opus_beat_count - 1)
+    override fun insert_beat(index: Int, count: Int) {
+        super.insert_beat(index, count)
+        for (i in 0 until count) {
+            this.cache.flag_beat_new(index + i)
+        }
     }
 
     override fun new_line(channel: Int, index: Int?): List<OpusTree<OpusEvent>> {

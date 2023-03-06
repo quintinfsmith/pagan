@@ -92,25 +92,9 @@ class MainActivity : AppCompatActivity() {
                 fragment.tick()
 
                 var opus_manager = that.getOpusManager()
-                var y = 0
-                opus_manager.channels.forEachIndexed { i, channel ->
+                fragment.line_update_labels(opus_manager)
+                fragment.update_leaf_labels(opus_manager)
 
-                    // change instrument in midi playback device
-                    //that.midi_input_device.sendEvent(
-                    //    ProgramChange(channel.midi_channel, channel.midi_instrument)
-                    //)
-
-                    channel.lines.forEachIndexed { j, _ ->
-                        val textView: TextView = fragment.cache.getLineLabel(y)!!.findViewById(R.id.textView)
-                        if (i == opus_manager.percussion_channel) {
-                            textView.text = "P:$j"
-                        } else {
-                            textView.text = "$i:$j"
-                        }
-                        y += 1
-
-                    }
-                }
             }
             override fun onDrawerSlide(drawerView: View, slideOffset: Float) { }
             override fun onDrawerOpened(drawerView: View) { }
@@ -374,10 +358,11 @@ class MainActivity : AppCompatActivity() {
     fun play_event(channel: Int, event_value: Int) {
         val midi_channel = this.opus_manager.channels[channel].midi_channel
         val note = if (this.opus_manager.is_percussion(channel)) {
-            event_value + 35
+            event_value + 27
         } else {
             event_value + 21
         }
+
         this.midi_input_device.sendEvent(NoteOn(midi_channel, note, 64))
         thread {
             Thread.sleep(200)

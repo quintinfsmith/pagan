@@ -3,10 +3,10 @@
     android:id="@+id/layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingBottom="@dimen/normal_padding"
     android:paddingStart="@dimen/normal_padding"
     android:paddingEnd="@dimen/normal_padding"
     xmlns:app="http://schemas.android.com/apk/res-auto">
+
     <TextView
         android:id="@+id/btnChoosePercussion"
         android:theme="@style/button"

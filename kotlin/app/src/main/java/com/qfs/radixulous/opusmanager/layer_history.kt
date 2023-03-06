@@ -297,22 +297,19 @@ open class HistoryLayer() : CursorLayer() {
         super.remove(beat_key, position)
     }
 
-    fun insert_beat(index: Int, count: Int) {
+    override fun insert_beat(index: Int, count: Int) {
         val initial_beatkey = this.get_cursor().get_beatkey()
         val initial_position = this.get_cursor().get_position()
+
         this.history_cache.open_multi()
 
         for (i in 0 until count) {
-            this.insert_beat(index + i)
+            this.push_remove_beat(index)
         }
 
+        super.insert_beat(index, count)
+
         this.history_cache.close_multi(initial_beatkey, initial_position)
-    }
-
-    override fun insert_beat(index: Int?) {
-        this.push_remove_beat(index ?: (this.opus_beat_count - 1))
-
-        super.insert_beat(index)
     }
 
     fun remove_beat(index: Int, count: Int) {

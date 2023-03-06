@@ -17,7 +17,7 @@ class OpusChannel(var uuid: Int) {
     var midi_channel: Int = 0
     var beat_count: Int = 0
     var size: Int = 0
-    private var line_map: HashMap<Int, Int>? = null
+    internal var line_map: HashMap<Int, Int>? = null
 
     fun is_mapped(): Boolean {
         return this.line_map != null
@@ -70,15 +70,27 @@ class OpusChannel(var uuid: Int) {
     }
 
     fun remove_line(index: Int? = null): MutableList<OpusTree<OpusEvent>> {
+
         return if (index == null) {
             this.size -= 1
             lines.removeLast()
         } else if (index < lines.size) {
+            if (this.line_map != null) {
+                for (i in index until this.size - 1) {
+                    var next = this.line_map!![i + 1]
+                    if (next != null) {
+                        this.line_map!![i] = next
+                    } else {
+                        this.line_map!!.remove(i)
+                    }
+                }
+            }
             this.size -= 1
             lines.removeAt(index)
         } else {
             throw Exception("Index Error $index / ${lines.size}")
         }
+
     }
 
     fun replace_tree(line: Int, beat: Int, position: List<Int>, tree: OpusTree<OpusEvent>) {

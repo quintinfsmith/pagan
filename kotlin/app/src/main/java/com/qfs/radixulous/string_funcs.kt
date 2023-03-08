@@ -223,15 +223,19 @@ fun tree_from_midi(midi: MIDI): OpusTree<Set<OpusEvent>> {
             }
 
             var tree = beat_values[beat_index]
-            var eventset = if (tree.is_event()) {
-                tree.get_event()!!.toMutableSet()
+            var eventset = if (tree[inner_beat_offset].is_event()) {
+                tree[inner_beat_offset].get_event()!!.toMutableSet()
             } else {
                 mutableSetOf()
             }
 
             eventset.add(
                 OpusEvent(
-                    event.get_note() - 21,
+                    if (event.channel == 9) {
+                        event.get_note() - 27
+                    } else {
+                        event.get_note() - 21
+                    },
                     12,
                     event.channel,
                     false
@@ -263,14 +267,11 @@ fun tree_from_midi(midi: MIDI): OpusTree<Set<OpusEvent>> {
         }
         opus.set(i, beat_tree)
     }
-    opus.flatten()
-    println("-----------__!!!____${opus.size}")
-    opus.reduce(opus.size / 4)
+
     for ((k, beat) in opus.divisions) {
         beat.flatten()
-        beat.reduce(4)
+        beat.reduce()
     }
-    println("-----------__!!!____${opus.size}")
 
     return opus
 }

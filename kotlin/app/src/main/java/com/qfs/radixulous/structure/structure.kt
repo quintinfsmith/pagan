@@ -4,6 +4,9 @@ import kotlin.math.*
 import com.qfs.radixulous.apres.*
 
 fun greatest_common_denominator(first: Int, second: Int): Int {
+    if (first == 0 || second == 0) {
+        throw Exception("Can't gcd $first and $second")
+    }
     var tmp: Int;
     var a = max(first, second);
     var b = min(first, second);
@@ -105,9 +108,11 @@ public class OpusTree<T> {
         // TODO: Throw error
         return null
     }
+
     fun has_parent(): Boolean {
         return this.parent != null
     }
+
     fun set_size(new_size: Int, noclobber: Boolean = false) {
         if (! noclobber) {
             this.divisions.clear()
@@ -122,7 +127,6 @@ public class OpusTree<T> {
                 this.divisions.remove(key)
             }
         }
-
 
         this.size = new_size
     }
@@ -155,8 +159,13 @@ public class OpusTree<T> {
         indices.sortWith(compareBy { it.first })
 
         val place_holder: OpusTree<T> = this.copy()
-        val stack: MutableList<ReducerTuple<T>> = mutableListOf(
-            ReducerTuple(target_size, indices, this.size, place_holder)
+        val stack = mutableListOf<ReducerTuple<T>>(
+            ReducerTuple(
+                target_size,
+                indices,
+                this.size,
+                place_holder
+            )
         )
 
         while (stack.size > 0) {
@@ -165,7 +174,14 @@ public class OpusTree<T> {
             val original_size: Int = element.original_size
             val parent_node: OpusTree<T> = element.parent_node;
             val current_size = original_size / denominator
-            val split_indices: Array<MutableList<Pair<Int, OpusTree<T>>>> = Array(denominator) { _ -> mutableListOf() }
+
+            // Create separate lists to represent the new equal groupings
+            val split_indices = Array(denominator) { _ ->
+                mutableListOf<Pair<Int, OpusTree<T>>>()
+            }
+            parent_node.set_size(denominator)
+
+            // move the indices into their new lists
             for ((i, subtree) in element.indices) {
                 val split_index = i / current_size
                 split_indices[split_index].add(Pair(i % current_size, subtree.copy()))
@@ -179,8 +195,13 @@ public class OpusTree<T> {
 
                 val working_node = parent_node.get(i)
 
-                val minimum_divs: MutableSet<Int> = mutableSetOf()
+                // Get the most reduces version of each index
+                val minimum_divs = mutableSetOf<Int>()
                 for ((index, subtree) in working_indices) {
+                    if (index == 0) {
+                        continue
+                    }
+
                     val most_reduced: Int = current_size / greatest_common_denominator(current_size, index)
 
                     if (most_reduced > 1) {
@@ -206,9 +227,10 @@ public class OpusTree<T> {
                 }
             }
         }
+
         this.set_size(place_holder.size)
-        for (key in place_holder.divisions.keys) {
-            this.divisions[key] = place_holder.divisions[key] as OpusTree<T>
+        for ((key, value) in place_holder.divisions) {
+            this.divisions[key] = value
         }
     }
 
@@ -603,9 +625,9 @@ public class OpusTree<T> {
         other.flatten()
         this_multi.flatten()
         val new_size = lowest_common_multiple(listOf(max(1, this_multi.size), max(1, other.size)))
+
         val factor = new_size / max(1, other.size)
         this_multi.resize(new_size)
-
         for ((index, subtree) in other.divisions) {
             val new_index = index * factor
             val subtree_into = this_multi.get(new_index)
@@ -624,8 +646,6 @@ public class OpusTree<T> {
                 subtree_into.set_event(eventset)
             }
         }
-
-        this_multi.reduce(1)
 
         return this_multi
     }

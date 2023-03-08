@@ -755,25 +755,35 @@ open class OpusManagerBase {
         val channel_sizes = mutableListOf<Int>()
         var percussion_channel: Int? = null
 
-        for ((_, event_set) in mapped_events) {
-            event_set.forEachIndexed { line_offset: Int, event: OpusEvent ->
+        var percussion_map = HashMap<Int, Int>()
 
+        for ((_, event_set) in mapped_events) {
+            var tmp_channel_counts = HashMap<Int, Int>()
+            event_set.forEachIndexed { _: Int, event: OpusEvent ->
                 if (!midi_channel_map.contains(event.channel)) {
                     midi_channel_map[event.channel] = midi_channel_map.size
-                    if (event.channel == 9) {
-                        percussion_channel = midi_channel_map[9]
-                    }
                 }
-
                 val channel_index = midi_channel_map[event.channel]!!
 
-                while (channel_index >= channel_sizes.size) {
+                if (event.channel == 9) {
+                    if (!percussion_map.contains(event.note)) {
+                        percussion_map[event.note] = percussion_map.size
+                    }
+                    tmp_channel_counts[channel_index] = percussion_map.size
+                } else {
+                    if (!tmp_channel_counts.contains(channel_index)) {
+                        tmp_channel_counts[channel_index] = 1
+                    } else {
+                        tmp_channel_counts[channel_index] = tmp_channel_counts[channel_index]!! + 1
+                    }
+                }
+            }
+
+            for ((channel, size) in tmp_channel_counts) {
+                while (channel >= channel_sizes.size) {
                     channel_sizes.add(0)
                 }
-
-                while (line_offset >= channel_sizes[channel_index]) {
-                    channel_sizes[channel_index] += 1
-                }
+                channel_sizes[channel] = max(channel_sizes[channel], size)
             }
         }
 
@@ -790,10 +800,22 @@ open class OpusManagerBase {
 
         val events_to_set = mutableSetOf<Triple<BeatKey, List<Int>, OpusEvent>>()
         for ((position, event_set) in mapped_events) {
-            val event_list = event_set.toList()
-
-            event_list.forEachIndexed { line_offset: Int, event: OpusEvent ->
+            var tmp_channel_counts = HashMap<Int, Int>()
+            event_set.forEachIndexed { _: Int, event: OpusEvent ->
                 val channel_index = midi_channel_map[event.channel]!!
+                if (event.channel == 9) {
+                    percussion_channel = midi_channel_map[9]
+                }
+                if (!tmp_channel_counts.contains(channel_index)) {
+                    tmp_channel_counts[channel_index] = 0
+                }
+
+                var line_offset = if (event.channel == 9) {
+                    percussion_map[event.note]!!
+                } else {
+                    tmp_channel_counts[channel_index]!!
+                }
+                tmp_channel_counts[channel_index] = tmp_channel_counts[channel_index]!! + 1
 
                 val working_position = mutableListOf<Int>()
                 var working_beatkey: BeatKey? = null
@@ -817,6 +839,13 @@ open class OpusManagerBase {
 
         for ((beatkey, position, event) in events_to_set) {
             this.set_event(beatkey, position, event)
+        }
+
+        if (percussion_channel != null) {
+            this.set_percussion_channel(percussion_channel!!)
+            for ((note, index) in percussion_map) {
+                this.set_percussion_instrument(index, note)
+            }
         }
     }
 

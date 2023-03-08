@@ -221,22 +221,24 @@ fun tree_from_midi(midi: MIDI): OpusTree<Set<OpusEvent>> {
                 new_tree.set_size(beat_size)
                 beat_values.add(new_tree)
             }
+
             var tree = beat_values[beat_index]
             var eventset = if (tree.is_event()) {
                 tree.get_event()!!.toMutableSet()
             } else {
                 mutableSetOf()
             }
+
             eventset.add(
                 OpusEvent(
-                    event.get_note(),
+                    event.get_note() - 21,
                     12,
                     event.channel,
                     false
                 )
             )
 
-            tree.get(inner_beat_offset).set_event(eventset)
+            tree[inner_beat_offset].set_event(eventset)
             press_map[event.note] = Pair(beat_index, inner_beat_offset)
         } else if (event is TimeSignature) {
             total_beat_offset += (tick - last_ts_change) / beat_size
@@ -246,10 +248,13 @@ fun tree_from_midi(midi: MIDI): OpusTree<Set<OpusEvent>> {
             //pass TODO (maybe)
         }
     }
+
     total_beat_offset += (max_tick - last_ts_change) / beat_size
     total_beat_offset += 1
+
     var opus = OpusTree<Set<OpusEvent>>()
     opus.set_size(total_beat_offset)
+
     beat_values.forEachIndexed { i, beat_tree ->
         if (! beat_tree.is_leaf()) {
             for (subtree in beat_tree.divisions.values) {
@@ -258,11 +263,14 @@ fun tree_from_midi(midi: MIDI): OpusTree<Set<OpusEvent>> {
         }
         opus.set(i, beat_tree)
     }
-
-    for (beat in opus.divisions.values) {
+    opus.flatten()
+    println("-----------__!!!____${opus.size}")
+    opus.reduce(opus.size / 4)
+    for ((k, beat) in opus.divisions) {
         beat.flatten()
-        beat.reduce()
+        beat.reduce(4)
     }
+    println("-----------__!!!____${opus.size}")
 
     return opus
 }

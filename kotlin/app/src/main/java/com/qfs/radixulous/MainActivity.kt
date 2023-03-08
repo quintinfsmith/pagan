@@ -28,6 +28,7 @@ import com.qfs.radixulous.apres.*
 import com.qfs.radixulous.apres.riffreader.Riff
 import com.qfs.radixulous.databinding.ActivityMainBinding
 import java.io.File
+import java.io.FileInputStream
 import java.io.FileOutputStream
 import kotlin.concurrent.thread
 import com.qfs.radixulous.opusmanager.HistoryLayer as OpusManager
@@ -71,6 +72,18 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    var import_midi_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val opus_manager = this.getOpusManager()
+            result?.data?.data?.also { uri ->
+                // TODO: NAV TO MAIN FRAGMENT AND USE RESULT LISTENER
+                val fragment = this.getActiveFragment()
+                fragment?.setFragmentResult("IMPORT", bundleOf(Pair("URI", uri.toString())))
+                this.navTo("main")
+            }
+        }
+    }
+
     @RequiresApi(Build.VERSION_CODES.M)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -84,16 +97,18 @@ class MainActivity : AppCompatActivity() {
 
 
 
-        var drawerlayout = findViewById<DrawerLayout>(R.id.drawer_layout)
-        var that = this
+        val drawerlayout = findViewById<DrawerLayout>(R.id.drawer_layout)
+        val that = this
         drawerlayout.addDrawerListener( object: DrawerLayout.DrawerListener {
             override fun onDrawerClosed(drawerView: View) {
-                var fragment = that.getActiveFragment() as MainFragment
+                val fragment = that.getActiveFragment() as MainFragment
                 fragment.tick()
 
-                var opus_manager = that.getOpusManager()
+                val opus_manager = that.getOpusManager()
                 fragment.line_update_labels(opus_manager)
                 fragment.update_leaf_labels(opus_manager)
+
+                that.update_channel_instruments(opus_manager)
 
             }
             override fun onDrawerSlide(drawerView: View, slideOffset: Float) { }
@@ -114,6 +129,11 @@ class MainActivity : AppCompatActivity() {
         ///////////////////////////////////////////
     }
 
+    fun update_channel_instruments(opus_manager: OpusManager) {
+        for (channel in opus_manager.channels) {
+            this.midi_input_device.sendEvent(ProgramChange(channel.midi_channel, channel.midi_instrument))
+        }
+    }
 
     override fun onBackPressed() {
         super.onBackPressed()
@@ -129,7 +149,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         this.menuInflater.inflate(R.menu.main_options_menu, menu)
         this.optionsMenu = menu
-        var output = super.onCreateOptionsMenu(menu)
+        val output = super.onCreateOptionsMenu(menu)
         this.update_menu_options()
         return output
     }
@@ -147,8 +167,11 @@ class MainActivity : AppCompatActivity() {
             R.id.itmLoadProject -> {
                 this.navTo("load")
             }
-            R.id.itmSaveProject -> {
-                this.save_current_project()
+            R.id.itmImportMidi -> {
+                val intent = Intent()
+                    .setType("*/*")
+                    .setAction(Intent.ACTION_GET_CONTENT)
+                this.import_midi_intent_launcher.launch(intent)
             }
             R.id.itmUndo -> {
                 val main_fragment = this.getActiveFragment()
@@ -198,8 +221,8 @@ class MainActivity : AppCompatActivity() {
             this.save_current_project()
         }
 
-        var btnDeleteProject = this.findViewById<View>(R.id.btnDeleteProject)
-        var btnCopyProject = this.findViewById<View>(R.id.btnCopyProject)
+        val btnDeleteProject = this.findViewById<View>(R.id.btnDeleteProject)
+        val btnCopyProject = this.findViewById<View>(R.id.btnCopyProject)
         if (opus_manager.path != null && File(opus_manager.path!!).isFile) {
             btnDeleteProject.setOnClickListener {
                 this.delete_project_dialog()
@@ -231,7 +254,7 @@ class MainActivity : AppCompatActivity() {
         input.setText(this.get_current_project_title() ?: "Untitled Project")
 
         val that = this
-        AlertDialog.Builder(main_fragment!!.context, R.style.AlertDialog).apply {
+        AlertDialog.Builder(main_fragment.context, R.style.AlertDialog).apply {
             setTitle("Change Project Name")
             setView(viewInflated)
             setPositiveButton(android.R.string.ok) { dialog, _ ->
@@ -286,7 +309,6 @@ class MainActivity : AppCompatActivity() {
 
             this.in_play_back = false
             this@MainActivity.runOnUiThread {
-                val item = this.optionsMenu.findItem(R.id.itmPlay)
                 item.icon = ContextCompat.getDrawable(this, R.drawable.ic_baseline_play_arrow_24)
             }
 
@@ -322,18 +344,18 @@ class MainActivity : AppCompatActivity() {
         when (navHost?.childFragmentManager?.fragments?.get(0)) {
             is MainFragment -> {
                 this.optionsMenu.findItem(R.id.itmLoadProject).isVisible = true
-                this.optionsMenu.findItem(R.id.itmSaveProject).isVisible = true
                 this.optionsMenu.findItem(R.id.itmUndo).isVisible = true
                 this.optionsMenu.findItem(R.id.itmNewProject).isVisible = true
                 this.optionsMenu.findItem(R.id.itmPlay).isVisible = true
+                this.optionsMenu.findItem(R.id.itmImportMidi).isVisible = true
             }
             //is LoadFragment -> { }
             else -> {
                 this.optionsMenu.findItem(R.id.itmLoadProject).isVisible = false
-                this.optionsMenu.findItem(R.id.itmSaveProject).isVisible = false
                 this.optionsMenu.findItem(R.id.itmUndo).isVisible = false
                 this.optionsMenu.findItem(R.id.itmNewProject).isVisible = false
                 this.optionsMenu.findItem(R.id.itmPlay).isVisible = false
+                this.optionsMenu.findItem(R.id.itmImportMidi).isVisible = false
             }
         }
     }
@@ -341,7 +363,7 @@ class MainActivity : AppCompatActivity() {
     // Only called from MainFragment
     fun newProject() {
         this.opus_manager.new()
-        var new_path = this.project_manager.get_new_path()
+        val new_path = this.project_manager.get_new_path()
         this.set_current_project_title("New Opus")
         this.opus_manager.path = new_path
         this.setup_config_drawer()
@@ -352,7 +374,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun set_title_text(new_text: String) {
-        this.binding.appBarMain.toolbar!!.title = new_text
+        this.binding.appBarMain.toolbar.title = new_text
     }
 
     fun play_event(channel: Int, event_value: Int) {
@@ -397,7 +419,7 @@ class MainActivity : AppCompatActivity() {
     private fun delete_project_dialog() {
         val main_fragment = this.getActiveFragment()
 
-        var title = this.get_current_project_title() ?: "Untitled Project"
+        val title = this.get_current_project_title() ?: "Untitled Project"
 
         val that = this
         AlertDialog.Builder(main_fragment!!.context, R.style.AlertDialog).apply {
@@ -462,7 +484,7 @@ class MainActivity : AppCompatActivity() {
             is FrontFragment -> {
                 when (fragmentName) {
                     "main" -> {
-                        fragment?.setFragmentResult("NEW", bundleOf())
+                        fragment.setFragmentResult("NEW", bundleOf())
                         navController.navigate(R.id.action_FrontFragment_to_MainFragment)
                         this.reset_start_destination()
 
@@ -494,50 +516,50 @@ class MainActivity : AppCompatActivity() {
                 false
             )
 
-        var ones_min = if (min_value > 9 || max_value > 9) {
+        val ones_min = if (min_value > 9 || max_value > 9) {
             0
         } else {
             min_value
         }
 
-        var ones_max = if (max_value > 9) {
+        val ones_max = if (max_value > 9) {
             9
         } else {
             max_value % 10
         }
 
-        var npOnes = viewInflated.findViewById<NumberPicker>(R.id.npOnes)
+        val npOnes = viewInflated.findViewById<NumberPicker>(R.id.npOnes)
         npOnes.minValue = ones_min
         npOnes.maxValue = ones_max
 
-        var tens_min = if (min_value / 10 > 9 || max_value / 10 > 9) {
+        val tens_min = if (min_value / 10 > 9 || max_value / 10 > 9) {
             0
         } else {
             (min_value / 10) % 10
         }
 
-        var tens_max = if (max_value / 10 > 9) {
+        val tens_max = if (max_value / 10 > 9) {
             9
         } else {
             (max_value / 10)
         }
 
-        var npTens = viewInflated.findViewById<NumberPicker>(R.id.npTens)
+        val npTens = viewInflated.findViewById<NumberPicker>(R.id.npTens)
         npTens.minValue = tens_min
         npTens.maxValue = tens_max
 
-        var hundreds_min = if (min_value / 100 > 9 || max_value / 100 > 9) {
+        val hundreds_min = if (min_value / 100 > 9 || max_value / 100 > 9) {
             0
         } else {
             (min_value / 100) % 10
         }
 
-        var hundreds_max = if (max_value / 100 > 9) {
+        val hundreds_max = if (max_value / 100 > 9) {
             9
         } else {
             (max_value / 100)
         }
-        var npHundreds = viewInflated.findViewById<NumberPicker>(R.id.npHundreds)
+        val npHundreds = viewInflated.findViewById<NumberPicker>(R.id.npHundreds)
         npHundreds.maxValue = hundreds_max
         npHundreds.minValue = hundreds_min
 
@@ -556,7 +578,7 @@ class MainActivity : AppCompatActivity() {
             .setTitle(title)
             .setView(viewInflated)
             .setPositiveButton(android.R.string.ok) { dialog, _ ->
-                var value = (npHundreds.value * 100) + (npTens.value * 10) + npOnes.value
+                val value = (npHundreds.value * 100) + (npTens.value * 10) + npOnes.value
                 callback(value)
             }
             .setNegativeButton(android.R.string.cancel) { dialog, _ ->
@@ -583,7 +605,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun cancel_reticle() {
-        var progressBar = this.progressBar ?: return
+        val progressBar = this.progressBar ?: return
         (progressBar.parent as ViewGroup).removeView(progressBar)
     }
 
@@ -598,15 +620,21 @@ class MainActivity : AppCompatActivity() {
     fun reset_start_destination() {
         val navController = findNavController(R.id.nav_host_fragment_content_main)
         if (navController.graph.startDestinationId != R.id.MainFragment) {
-            var new_graph = navController.navInflater.inflate(R.navigation.nav_graph_b)
+            val new_graph = navController.navInflater.inflate(R.navigation.nav_graph_b)
             navController.graph = new_graph
 
             this.appBarConfiguration = AppBarConfiguration(navController.graph)
             setupActionBarWithNavController(navController, this.appBarConfiguration)
         }
     }
+
+    fun import_midi(midi: MIDI) {
+        this.opus_manager.import_midi(midi)
+        this.update_menu_options()
+        this.setup_config_drawer()
+        this.cancel_reticle()
+    }
 }
 
-class RadMidiController(context: Context): MIDIController(context) { }
-
-class MIDIInputDevice: VirtualMIDIDevice() {}
+class RadMidiController(context: Context): MIDIController(context)
+class MIDIInputDevice: VirtualMIDIDevice()

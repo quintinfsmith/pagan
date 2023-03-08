@@ -21,7 +21,7 @@
         android:title="Load Project"
         app:showAsAction="never"/>
     <item
-        android:id="@+id/itmSaveProject"
-        android:title="Save Project"
+        android:id="@+id/itmImportMidi"
+        android:title="Import MIDI"
         app:showAsAction="never"/>
 </menu>

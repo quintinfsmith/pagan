@@ -3,6 +3,7 @@ import com.qfs.radixulous.apres.*
 import com.qfs.radixulous.from_string
 import com.qfs.radixulous.structure.OpusTree
 import com.qfs.radixulous.to_string
+import com.qfs.radixulous.tree_from_midi
 import java.io.File
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.decodeFromString
@@ -424,7 +425,7 @@ open class OpusManagerBase {
     }
 
     private fun gen_channel_uuid(): Int {
-        var output = this.channel_uuid_generator
+        val output = this.channel_uuid_generator
         this.channel_uuid_generator += 1
         return output
     }
@@ -479,7 +480,7 @@ open class OpusManagerBase {
     }
 
     fun remove_channel_by_uuid(uuid: Int) {
-        var channel = this.channel_uuid_map[uuid] ?: throw Exception("Channel UUID $uuid Not found")
+        val channel = this.channel_uuid_map[uuid] ?: throw Exception("Channel UUID $uuid Not found")
         var channel_index: Int? = null
         for (i in 0 until this.channels.size) {
             if (this.channels[i] == channel) {
@@ -493,7 +494,7 @@ open class OpusManagerBase {
     }
 
     open fun remove_channel(channel: Int) {
-        var opus_channel = this.channels.removeAt(channel)
+        val opus_channel = this.channels.removeAt(channel)
         this.channel_uuid_map.remove(opus_channel.uuid)
 
         val free_midi_channel = opus_channel.midi_channel
@@ -733,7 +734,91 @@ open class OpusManagerBase {
         }
     }
 
-    fun import_midi(path: String) { }
+    fun import_midi(path: String) {
+        this.import_midi(MIDI.from_path(path))
+    }
+
+    fun import_midi(midi: MIDI) {
+        this.purge_cache()
+
+        this.opus_beat_count = 0
+        this.channels.clear()
+        this.path = null
+
+        this.RADIX = 12
+        this.tempo = 120F
+
+        val settree = tree_from_midi(midi)
+
+        val mapped_events = settree.get_events_mapped()
+        val midi_channel_map = HashMap<Int, Int>()
+        val channel_sizes = mutableListOf<Int>()
+        var percussion_channel: Int? = null
+
+        for ((_, event_set) in mapped_events) {
+            event_set.forEachIndexed { line_offset: Int, event: OpusEvent ->
+
+                if (!midi_channel_map.contains(event.channel)) {
+                    midi_channel_map[event.channel] = midi_channel_map.size
+                    if (event.channel == 9) {
+                        percussion_channel = midi_channel_map[9]
+                    }
+                }
+
+                val channel_index = midi_channel_map[event.channel]!!
+
+                while (channel_index >= channel_sizes.size) {
+                    channel_sizes.add(0)
+                }
+
+                while (line_offset >= channel_sizes[channel_index]) {
+                    channel_sizes[channel_index] += 1
+                }
+            }
+        }
+
+        channel_sizes.forEachIndexed { i: Int, line_count: Int ->
+            this.new_channel()
+            for (j in 0 until line_count) {
+                this.new_line(i)
+            }
+        }
+
+        for (i in 0 until settree.size) {
+            this.insert_beat()
+        }
+
+        val events_to_set = mutableSetOf<Triple<BeatKey, List<Int>, OpusEvent>>()
+        for ((position, event_set) in mapped_events) {
+            val event_list = event_set.toList()
+
+            event_list.forEachIndexed { line_offset: Int, event: OpusEvent ->
+                val channel_index = midi_channel_map[event.channel]!!
+
+                val working_position = mutableListOf<Int>()
+                var working_beatkey: BeatKey? = null
+
+                position.forEachIndexed { i: Int, (x, size): Pair<Int, Int> ->
+                    if (i == 0) {
+                        working_beatkey = BeatKey(channel_index, line_offset, x)
+                    } else {
+                        if (this.get_tree(working_beatkey!!, working_position).size != size) {
+                            this.split_tree(working_beatkey!!, working_position, size)
+                        }
+                        working_position.add(x)
+                    }
+                }
+
+                if (working_beatkey != null) {
+                    events_to_set.add(Triple(working_beatkey!!, working_position, event))
+                }
+            }
+        }
+
+        for ((beatkey, position, event) in events_to_set) {
+            this.set_event(beatkey, position, event)
+        }
+    }
 
     open fun purge_cache() {
         // Nothin should be in the base layer

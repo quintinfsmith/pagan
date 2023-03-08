@@ -1,6 +1,7 @@
 package com.qfs.radixulous
 
 import android.graphics.Rect
+import android.net.Uri
 import android.os.Bundle
 import android.util.DisplayMetrics
 import android.view.*
@@ -8,11 +9,13 @@ import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.*
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResultListener
+import com.qfs.radixulous.apres.MIDI
 import com.qfs.radixulous.databinding.FragmentMainBinding
 import com.qfs.radixulous.opusmanager.BeatKey
 import com.qfs.radixulous.opusmanager.FlagOperation
 import com.qfs.radixulous.opusmanager.OpusEvent
 import com.qfs.radixulous.opusmanager.UpdateFlag
+import java.io.FileInputStream
 import com.qfs.radixulous.opusmanager.HistoryLayer as OpusManager
 import kotlin.concurrent.thread
 
@@ -91,6 +94,22 @@ class MainFragment : Fragment() {
             main.update_menu_options()
             main.setup_config_drawer()
             main.cancel_reticle()
+        }
+        setFragmentResultListener("IMPORT") { _, bundle: Bundle? ->
+            this.block_default_return = true
+            val main = this.getMain()
+
+            bundle!!.getString("URI")?.let { path ->
+                main.applicationContext.contentResolver.openFileDescriptor(Uri.parse(path), "r")?.use {
+                    val bytes = FileInputStream(it.fileDescriptor).readBytes()
+                    val midi = MIDI.from_bytes(bytes)
+                    this.takedownCurrent()
+
+                    main.import_midi(midi)
+                }
+                this.setContextMenu(ContextMenu.Leaf)
+                this.tick()
+            }
         }
 
         setFragmentResultListener("NEW") { _, bundle: Bundle? ->
@@ -1407,6 +1426,7 @@ class MainFragment : Fragment() {
             val opus_manager = main.getOpusManager()
             this.tick_unapply_focus()
 
+            var updated_beatkeys = mutableSetOf<BeatKey>()
             val updated_beats: MutableSet<Int> = mutableSetOf()
             var min_changed_beat = opus_manager.opus_beat_count
             var validate_count = 0
@@ -1416,6 +1436,7 @@ class MainFragment : Fragment() {
                         //Validation has to happen after all beat updates
                         validate_count += 1
                     }
+
                     UpdateFlag.Beat -> {
                         val (index, operation) = opus_manager.fetch_flag_beat() ?: break
                         min_changed_beat = Integer.min(min_changed_beat, index)
@@ -1430,16 +1451,16 @@ class MainFragment : Fragment() {
                             }
                         }
                     }
+
                     UpdateFlag.BeatMod -> {
                         val beatkey = opus_manager.fetch_flag_change() ?: break
-                        this.beat_update(beatkey)
 
+                        updated_beatkeys.add(beatkey)
                         for (linked_beatkey in opus_manager.get_all_linked(beatkey)) {
                             updated_beats.add(linked_beatkey.beat)
                         }
-
-
                     }
+
                     UpdateFlag.Line -> {
                         var line_flag = opus_manager.fetch_flag_line() ?: break
                         when (line_flag.operation) {
@@ -1451,11 +1472,15 @@ class MainFragment : Fragment() {
                             }
                         }
                     }
+
                     null -> {
                         break
                     }
                 }
+            }
 
+            for (beatkey in updated_beatkeys) {
+                this.beat_update(beatkey)
             }
 
             this.line_update_labels(opus_manager)
@@ -1561,5 +1586,9 @@ class MainFragment : Fragment() {
         if (offset_top < svTable.scrollY || offset_top > svTable.scrollY + svTable.width) {
             svTable.smoothScrollTo(0, offset_top)
         }
+    }
+
+    fun set_key_range(channel: Int) {
+
     }
 }

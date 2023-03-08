@@ -1356,7 +1356,6 @@ class MIDI {
                         }
 
                         current_deltatime = 0
-                        println("$working_bytes")
                         track_length = dequeue_n(working_bytes, 4)
                         sub_bytes = mutableListOf()
 
@@ -1389,7 +1388,6 @@ class MIDI {
 
         return try {
             val event: MIDIEvent? = event_from_bytes(bytes, this._active_byte)
-            println("${event!!}")
             this.insert_event(track, current_deltatime, event!!)
         } catch (e: Exception) {
             -1

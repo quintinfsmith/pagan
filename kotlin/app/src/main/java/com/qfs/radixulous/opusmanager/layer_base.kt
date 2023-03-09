@@ -517,6 +517,11 @@ open class OpusManagerBase {
         }
 
     }
+    open fun move_leaf(beatkey_from: BeatKey, position_from: List<Int>, beatkey_to: BeatKey, position_to: List<Int>) {
+        var from_tree = this.get_tree(beatkey_from, position_from).copy()
+        this.replace_tree(beatkey_to, position_to, from_tree)
+        this.remove(beatkey_from, position_from)
+    }
 
     open fun remove_line(channel: Int, index: Int) {
         this.channels[channel].remove_line(index)
@@ -801,7 +806,9 @@ open class OpusManagerBase {
         val events_to_set = mutableSetOf<Triple<BeatKey, List<Int>, OpusEvent>>()
         for ((position, event_set) in mapped_events) {
             var tmp_channel_counts = HashMap<Int, Int>()
-            event_set.forEachIndexed { _: Int, event: OpusEvent ->
+            var event_list = event_set.toMutableList()
+            event_list.sortWith(compareBy {127 - it.note })
+            event_list.forEachIndexed { _: Int, event: OpusEvent ->
                 val channel_index = midi_channel_map[event.channel]!!
                 if (event.channel == 9) {
                     percussion_channel = midi_channel_map[9]
@@ -838,7 +845,9 @@ open class OpusManagerBase {
         }
 
         for ((beatkey, position, event) in events_to_set) {
-            this.set_event(beatkey, position, event)
+            if (event.note in 0..127) {
+                this.set_event(beatkey, position, event)
+            }
         }
 
         if (percussion_channel != null) {

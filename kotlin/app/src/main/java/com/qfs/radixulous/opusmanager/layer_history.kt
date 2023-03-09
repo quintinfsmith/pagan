@@ -332,6 +332,18 @@ open class HistoryLayer() : CursorLayer() {
         super.remove_beat(index)
     }
 
+    override fun replace_tree(beat_key: BeatKey, position: List<Int>, tree: OpusTree<OpusEvent>) {
+        this.push_replace_tree(beat_key, position, this.get_tree(beat_key, position).copy())
+        super.replace_tree(beat_key, position, tree)
+    }
+
+    override fun move_leaf(beatkey_from: BeatKey, position_from: List<Int>, beatkey_to: BeatKey, position_to: List<Int>) {
+        this.history_cache.open_multi()
+        super.move_leaf(beatkey_from, position_from, beatkey_to, position_to)
+        this.history_cache.close_multi()
+
+    }
+
     override fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEvent) {
         var tree = this.get_tree(beat_key, position).copy()
         try {

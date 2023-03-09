@@ -4,7 +4,9 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.view.*
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.setFragmentResult
 import com.qfs.radixulous.databinding.FragmentFrontBinding
 
 class FrontFragment : Fragment() {
@@ -28,13 +30,23 @@ class FrontFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         var btn_newProject = view.findViewById<View>(R.id.btnFrontNew)
         var btn_loadProject = view.findViewById<View>(R.id.btnFrontLoad)
+        var btn_importMidi = view.findViewById<View>(R.id.btnFrontImport)
         var linkSource = view.findViewById<View>(R.id.linkSource)
 
         btn_newProject.setOnClickListener {
+
+            this.setFragmentResult("NEW", bundleOf())
             this.getMain().navTo("main")
         }
         btn_loadProject.setOnClickListener {
             this.getMain().navTo("load")
+        }
+
+        btn_importMidi.setOnClickListener {
+            val intent = Intent()
+                .setType("*/*")
+                .setAction(Intent.ACTION_GET_CONTENT)
+            this.getMain().import_midi_intent_launcher.launch(intent)
         }
 
         linkSource.setOnClickListener {

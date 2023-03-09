@@ -75,7 +75,7 @@ class NumberSelector: LinearLayout {
 
     fun setState(new_state: Int, manual: Boolean = false, surpress_callback: Boolean = false) {
         if (new_state < this.min || new_state > this.max) {
-            throw Exception("OutOfBounds")
+            throw Exception("OutOfBounds ${new_state} in ${this.min} .. ${this.max}")
         }
 
         for ((button, value) in this.button_map) {

@@ -3,10 +3,10 @@ package com.qfs.radixulous
 import android.graphics.Rect
 import android.net.Uri
 import android.os.Bundle
-import android.util.DisplayMetrics
 import android.view.*
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.*
+import androidx.core.view.DragStartHelper
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResultListener
 import com.qfs.radixulous.apres.MIDI
@@ -17,7 +17,6 @@ import com.qfs.radixulous.opusmanager.OpusEvent
 import com.qfs.radixulous.opusmanager.UpdateFlag
 import java.io.FileInputStream
 import com.qfs.radixulous.opusmanager.HistoryLayer as OpusManager
-import kotlin.concurrent.thread
 
 /**
  * A simple [Fragment] subclass as the default destination in the navigation.
@@ -38,6 +37,9 @@ class MainFragment : Fragment() {
     // This property is only valid between onCreateView and
     // onDestroyView.
     private val binding get() = _binding!!
+
+    private var _longclicking_leaf: View? = null
+    private var _dragging_leaf: View? = null
 
     // TODO: Convert focus booleans to 1 enum SINGLE, ROW, COLUMN
     var focus_row: Boolean = false
@@ -134,10 +136,10 @@ class MainFragment : Fragment() {
 
     override fun onStart() {
         super.onStart()
-        val main = this.getMain()
-        if (main.get_current_project_title() == null) {
-            this.newProject()
-        }
+       // val main = this.getMain()
+       // if (main.get_current_project_title() == null) {
+       //     this.newProject()
+       // }
     }
 
     //override fun onResume() {
@@ -288,8 +290,49 @@ class MainFragment : Fragment() {
                 }
             }
 
-            tvLeaf.setOnLongClickListener {
-                this.interact_leafView_longclick(it)
+            tvLeaf.setOnLongClickListener { view: View ->
+                this._longclicking_leaf = view
+                false
+            }
+            tvLeaf.setOnTouchListener { view, touchEvent ->
+                if (this._longclicking_leaf != null) {
+                    if (touchEvent.action == MotionEvent.ACTION_MOVE) {
+                        if (this._dragging_leaf == null) {
+                            this._dragging_leaf = view
+                            view.startDragAndDrop(
+                                null,
+                                View.DragShadowBuilder(view),
+                                null,
+                                0
+                            )
+                        }
+                        this._longclicking_leaf = null
+                    } else if (touchEvent.action == MotionEvent.ACTION_UP) {
+                        this.interact_leafView_longclick(view)
+                        this._longclicking_leaf = null
+                        return@setOnTouchListener true
+                    }
+                }
+                false
+            }
+
+
+
+            tvLeaf.setOnDragListener { view: View, dragEvent: DragEvent ->
+                when (dragEvent.action) {
+                    //DragEvent.ACTION_DRAG_STARTED -> { }
+                    DragEvent.ACTION_DROP -> {
+                        if (this._dragging_leaf != view) {
+                            val (beatkey_to, position_to) = this.cache.getTreeViewPosition(view) ?: return@setOnDragListener true
+                            val (beatkey_from, position_from) = this.cache.getTreeViewPosition(this._dragging_leaf!!) ?: return@setOnDragListener true
+                            var opus_manager = this.getMain().getOpusManager()
+                            opus_manager.move_leaf(beatkey_from, position_from, beatkey_to, position_to)
+                            this.tick()
+                        }
+                        this._dragging_leaf = null
+                    }
+                    else -> { }
+                }
                 true
             }
 
@@ -1502,15 +1545,6 @@ class MainFragment : Fragment() {
 
             this.tick_apply_focus()
 
-            thread {
-                var cursor = opus_manager.get_cursor()
-                try {
-                    this.scrollTo(
-                        cursor.get_beatkey(),
-                        cursor.get_position()
-                    )
-                } catch (e: Exception) { }
-            }
             this.ticking = false
 
         }

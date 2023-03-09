@@ -484,7 +484,6 @@ class MainActivity : AppCompatActivity() {
             is FrontFragment -> {
                 when (fragmentName) {
                     "main" -> {
-                        fragment.setFragmentResult("NEW", bundleOf())
                         navController.navigate(R.id.action_FrontFragment_to_MainFragment)
                         this.reset_start_destination()
 

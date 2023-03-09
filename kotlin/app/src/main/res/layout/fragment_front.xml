@@ -30,6 +30,14 @@
             android:text="Load Project"/>
 
         <TextView
+            android:id="@+id/btnFrontImport"
+            android:layout_width="match_parent"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:theme="@style/button"
+            android:text="Import MIDI"/>
+
+        <TextView
             android:gravity="center"
             android:layout_width="match_parent"
             android:layout_weight="1"

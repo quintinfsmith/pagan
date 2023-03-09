@@ -6,6 +6,7 @@ import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.DocumentsContract
@@ -627,10 +628,23 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun import_midi(midi: MIDI) {
-        this.opus_manager.import_midi(midi)
-        this.update_menu_options()
-        this.setup_config_drawer()
+    fun import_midi(path: String) {
+        this.applicationContext.contentResolver.openFileDescriptor(Uri.parse(path), "r")?.use {
+            val bytes = FileInputStream(it.fileDescriptor).readBytes()
+            val midi = MIDI.from_bytes(bytes)
+
+            var filename = path.substring(path.lastIndexOf("/") + 1)
+            filename = filename.substring(0, filename.lastIndexOf("."))
+
+            this.opus_manager.import_midi(midi)
+            val new_path = this.project_manager.get_new_path()
+            this.opus_manager.path = new_path
+
+            this.set_current_project_title(filename)
+            this.update_menu_options()
+            this.setup_config_drawer()
+
+        }
         this.cancel_reticle()
     }
 }

@@ -102,13 +102,8 @@ class MainFragment : Fragment() {
             val main = this.getMain()
 
             bundle!!.getString("URI")?.let { path ->
-                main.applicationContext.contentResolver.openFileDescriptor(Uri.parse(path), "r")?.use {
-                    val bytes = FileInputStream(it.fileDescriptor).readBytes()
-                    val midi = MIDI.from_bytes(bytes)
-                    this.takedownCurrent()
-
-                    main.import_midi(midi)
-                }
+                this.takedownCurrent()
+                main.import_midi(path)
                 this.setContextMenu(ContextMenu.Leaf)
                 this.tick()
             }

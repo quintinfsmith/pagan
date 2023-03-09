@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">kotlin</string>
+    <string name="app_name">Radixulous</string>
     <string name="pfx_subtract">-</string>
     <string name="pfx_add">+</string>
     <string name="pfx_log">\u2193</string>

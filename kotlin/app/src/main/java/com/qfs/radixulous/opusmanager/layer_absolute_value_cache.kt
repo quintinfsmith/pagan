@@ -135,17 +135,6 @@ open class AbsoluteValueLayer: OpusManagerBase() {
     }
     // End Layer-Specific //
 
-    override fun change_line_channel(old_channel: Int, line_index: Int, new_channel: Int) {
-        //TODO: This needs a test. i'm not sure if iterating a hashmap's items is readonly or not
-        super.change_line_channel(old_channel, line_index, new_channel)
-        for ((pair, value) in this.absolute_values_cache) {
-            if (pair.first.channel == old_channel && pair.first.line_offset == line_index) {
-                pair.first.channel = new_channel
-                pair.first.line_offset = this.channels[new_channel].size - 1
-            }
-        }
-    }
-
     override fun new_line(channel: Int, index: Int?): List<OpusTree<OpusEvent>> {
         var output = super.new_line(channel, index)
 
@@ -210,9 +199,10 @@ open class AbsoluteValueLayer: OpusManagerBase() {
         this.cache_tree(beat_key, position, tree)
     }
 
-    override fun remove_line(channel: Int, index: Int) {
-        super.remove_line(channel, index)
+    override fun remove_line(channel: Int, index: Int): MutableList<OpusTree<OpusEvent>> {
+        val output = super.remove_line(channel, index)
         this.shift_absolute_value_cache_line(channel, index, -1)
+        return output
     }
 
     override fun set_beat_count(new_count: Int) {

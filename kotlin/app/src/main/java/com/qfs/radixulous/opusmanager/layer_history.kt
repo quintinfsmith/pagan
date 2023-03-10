@@ -1,4 +1,5 @@
 package com.qfs.radixulous.opusmanager
+import com.qfs.radixulous.apres.MIDI
 import com.qfs.radixulous.structure.OpusTree
 import java.lang.Integer.max
 
@@ -9,9 +10,9 @@ class HistoryNode(var func_name: String, var args: List<Any>) {
 
 class HistoryCache() {
     var history_locked = false
-    var multi_counter: Int = 0
     var history: MutableList<HistoryNode> = mutableListOf()
     var working_node: HistoryNode? = null
+    var _tmp_count = 0
 
     fun isLocked(): Boolean {
         return this.history_locked
@@ -40,7 +41,9 @@ class HistoryCache() {
         if (this.history_locked) {
             return
         }
-        var next_node = HistoryNode("multi${this.history.size}", listOf())
+
+        var next_node = HistoryNode("multi", listOf())
+
         if (this.working_node != null) {
             next_node.parent = this.working_node
             this.working_node!!.children.add(next_node)
@@ -64,11 +67,12 @@ class HistoryCache() {
         if (this.history_locked) {
             return
         }
+
         if (this.working_node != null) {
             if (this.working_node!!.parent == null) {
-                this.append_undoer("set_cursor", listOf(beat_key.copy(), position.toList()))
+                //this.append_undoer("set_cursor", listOf(beat_key.copy(), position.toList()))
             }
-            this.working_node = this.working_node!!.parent
+            this.close_multi()
         }
     }
 
@@ -85,7 +89,6 @@ class HistoryCache() {
     fun clear() {
         this.history.clear()
         this.history_locked = false
-        this.multi_counter = 0
     }
 
     fun lock(): Boolean {
@@ -97,10 +100,10 @@ class HistoryCache() {
         this.history_locked = false
     }
     fun pop(): HistoryNode? {
-        if (this.history.isEmpty()) {
-            return null
+        return if (this.history.isEmpty()) {
+            null
         } else {
-            return this.history.removeLast()
+            this.history.removeLast()
         }
     }
 }
@@ -145,7 +148,7 @@ open class HistoryLayer() : CursorLayer() {
                 var position = current_node.args[1] as List<Int>
                 var tree = current_node.args[2] as OpusTree<OpusEvent>
 
-                this.replace_tree( beatkey, position, tree )
+                this.replace_tree(beatkey, position, tree)
             }
 
             "remove_line" -> {
@@ -185,8 +188,11 @@ open class HistoryLayer() : CursorLayer() {
             }
             else -> {}
         }
-        for (child in current_node.children) {
-            this.apply_history_node(child, depth + 1)
+
+        if (current_node.children.isNotEmpty()) {
+            current_node.children.asReversed().forEach { child: HistoryNode ->
+                this.apply_history_node(child, depth + 1)
+            }
         }
     }
     open fun apply_undo() {
@@ -231,6 +237,11 @@ open class HistoryLayer() : CursorLayer() {
         return output
     }
 
+    override fun insert_line(channel: Int, line_index: Int, line: MutableList<OpusTree<OpusEvent>>) {
+        super.insert_line(channel, line_index, line)
+        this.push_remove_line(channel, line_index)
+    }
+
     fun remove_line(channel: Int, line_offset: Int, count: Int) {
         val initial_beatkey = this.get_cursor().get_beatkey()
         val initial_position = this.get_cursor().get_position()
@@ -246,11 +257,19 @@ open class HistoryLayer() : CursorLayer() {
         this.history_cache.close_multi(initial_beatkey, initial_position)
     }
 
-    override fun remove_line(channel: Int, line_offset: Int) {
+    override fun move_line(channel_old: Int, line_old: Int, channel_new: Int, line_new: Int) {
+        this.history_cache.open_multi()
+        super.move_line(channel_old, line_old, channel_new, line_new)
+        this.history_cache.close_multi()
+    }
+
+    override fun remove_line(channel: Int, line_offset: Int): MutableList<OpusTree<OpusEvent>> {
         this.history_cache.open_multi()
         this.push_new_line(channel, line_offset)
-        super.remove_line(channel, line_offset)
+        val output = super.remove_line(channel, line_offset)
+
         this.history_cache.close_multi()
+        return output
     }
 
     fun insert_after(beat_key: BeatKey, position: List<Int>, repeat: Int) {
@@ -399,6 +418,11 @@ open class HistoryLayer() : CursorLayer() {
         this.history_cache.clear()
     }
 
+    override fun import_midi(midi: MIDI) {
+        super.import_midi(midi)
+        this.history_cache.clear()
+    }
+
     fun push_replace_tree(beatkey: BeatKey, position: List<Int>, tree: OpusTree<OpusEvent>? = null) {
         if (!this.history_cache.isLocked()) {
             var use_tree = tree ?: this.get_tree(beatkey, position).copy()
@@ -410,12 +434,11 @@ open class HistoryLayer() : CursorLayer() {
         this.history_cache.open_multi()
 
 
-        this.history_cache.append_undoer("new_channel", listOf(channel))
-
         for (i in 0 until this.channels[channel].size) {
             this.push_new_line(channel, i)
         }
 
+        this.history_cache.append_undoer("new_channel", listOf(channel))
 
         this.history_cache.close_multi(
             this.get_cursor().get_beatkey(),
@@ -426,12 +449,12 @@ open class HistoryLayer() : CursorLayer() {
     fun push_new_line(channel: Int, line_offset: Int) {
         this.history_cache.open_multi()
 
-        this.history_cache.append_undoer("new_line", listOf(channel, line_offset))
-
         for (i in 0 until this.opus_beat_count) {
             val beat_key = BeatKey(channel, line_offset, i)
             this.push_replace_tree(beat_key, listOf())
         }
+
+        this.history_cache.append_undoer("new_line", listOf(channel, line_offset))
 
         this.history_cache.close_multi()
     }
@@ -450,7 +473,6 @@ open class HistoryLayer() : CursorLayer() {
     fun push_insert_beat(index: Int, channel_sizes: List<Int>) {
         this.history_cache.open_multi()
 
-        this.history_cache.append_undoer("insert_beat", listOf(index))
 
         for (channel in channel_sizes.indices) {
             val line_count = channel_sizes[channel]
@@ -458,6 +480,8 @@ open class HistoryLayer() : CursorLayer() {
                 this.push_replace_tree(BeatKey(channel, j, index), listOf())
             }
         }
+
+        this.history_cache.append_undoer("insert_beat", listOf(index))
 
 
         this.history_cache.close_multi(this.get_cursor().get_beatkey(), this.get_cursor().get_position())
@@ -494,8 +518,8 @@ open class HistoryLayer() : CursorLayer() {
     override fun link_beats(beat_key: BeatKey, target: BeatKey) {
         this.history_cache.open_multi()
 
-        this.history_cache.append_undoer("unlink_beats", listOf(beat_key.copy(), target.copy()))
         this.push_replace_tree(beat_key, listOf())
+        this.history_cache.append_undoer("unlink_beats", listOf(beat_key.copy(), target.copy()))
 
         this.history_cache.close_multi(
             this.get_cursor().get_beatkey(),
@@ -517,7 +541,6 @@ open class HistoryLayer() : CursorLayer() {
     }
 
     override fun remove_channel(channel: Int) {
-
         this.push_new_channel(channel)
         var was_locked = this.history_cache.lock()
         super.remove_channel(channel)

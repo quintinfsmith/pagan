@@ -208,9 +208,10 @@ open class FlagLayer : LinksLayer() {
         this.cache.flag_beat_pop(beat_index)
     }
 
-    override fun remove_line(channel: Int, index: Int) {
-        super.remove_line(channel, index)
+    override fun remove_line(channel: Int, index: Int): MutableList<OpusTree<OpusEvent>> {
+        var output = super.remove_line(channel, index)
         this.cache.flag_line_pop(channel, index)
+        return output
     }
 
     //override fun link_beats(beat_key: BeatKey, target: BeatKey) {
@@ -226,6 +227,16 @@ open class FlagLayer : LinksLayer() {
             this.cache.flag_beat_change(target_key!!)
         }
         super.unlink_beat(beat_key)
+    }
+
+    override fun insert_line(channel: Int, line_index: Int, line: MutableList<OpusTree<OpusEvent>>) {
+        super.insert_line(channel, line_index, line)
+        this.cache.flag_line_new(channel, line_index, this.opus_beat_count)
+
+        for (i in 0 until this.opus_beat_count)     {
+            this.cache.flag_beat_change(BeatKey(channel, line_index, i))
+        }
+
     }
 
     override fun cache_absolute_value(beat_key: BeatKey, position: List<Int>, event_value: Int) {

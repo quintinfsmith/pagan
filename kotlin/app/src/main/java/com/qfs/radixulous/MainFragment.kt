@@ -41,6 +41,8 @@ class MainFragment : Fragment() {
     private var _longclicking_leaf: View? = null
     private var _dragging_leaf: View? = null
 
+    private var _dragging_rowLabel: View? = null
+
     // TODO: Convert focus booleans to 1 enum SINGLE, ROW, COLUMN
     var focus_row: Boolean = false
     var focus_column: Boolean = false
@@ -252,6 +254,46 @@ class MainFragment : Fragment() {
             rowLabelText.text = "P:$instrument"
         }
 
+        rowLabel.setOnTouchListener { view: View, touchEvent: MotionEvent ->
+            if (this._dragging_rowLabel == null && touchEvent.action == MotionEvent.ACTION_MOVE) {
+                this._dragging_rowLabel = view
+                view.startDragAndDrop(
+                    null,
+                    View.DragShadowBuilder(view),
+                    null,
+                    0
+                )
+                return@setOnTouchListener true
+            }
+            false
+        }
+
+        rowLabel.setOnDragListener { view: View, dragEvent: DragEvent ->
+            when (dragEvent.action) {
+                //DragEvent.ACTION_DRAG_STARTED -> { }
+                DragEvent.ACTION_DROP -> {
+                    var from_label =  this._dragging_rowLabel
+                    if (from_label != null && from_label != view) {
+                        var opus_manager = this.getMain().getOpusManager()
+                        val y_from = (from_label.parent as ViewGroup).indexOfChild(from_label)
+                        val y_to = (view.parent as ViewGroup).indexOfChild(view)
+                        var (channel_from, line_from) = opus_manager.get_channel_index(y_from)
+                        var (channel_to, line_to) = opus_manager.get_channel_index(y_to)
+
+                        if (channel_to != channel_from) {
+                            line_to += 1
+                        }
+
+                        opus_manager.move_line(channel_from, line_from, channel_to, line_to)
+                        this.tick()
+                    }
+                    this._dragging_rowLabel = null
+                }
+                else -> { }
+            }
+            true
+        }
+
         rowLabel.setOnClickListener {
             this.interact_rowLabel(it)
         }
@@ -294,6 +336,7 @@ class MainFragment : Fragment() {
                     if (touchEvent.action == MotionEvent.ACTION_MOVE) {
                         if (this._dragging_leaf == null) {
                             this._dragging_leaf = view
+
                             view.startDragAndDrop(
                                 null,
                                 View.DragShadowBuilder(view),
@@ -322,6 +365,7 @@ class MainFragment : Fragment() {
                             val (beatkey_from, position_from) = this.cache.getTreeViewPosition(this._dragging_leaf!!) ?: return@setOnDragListener true
                             var opus_manager = this.getMain().getOpusManager()
                             opus_manager.move_leaf(beatkey_from, position_from, beatkey_to, position_to)
+                            opus_manager.set_cursor_position(beatkey_to, position_to)
                             this.tick()
                         }
                         this._dragging_leaf = null

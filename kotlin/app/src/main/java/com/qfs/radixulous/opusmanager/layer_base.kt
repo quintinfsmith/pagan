@@ -444,9 +444,12 @@ open class OpusManagerBase {
 
     }
 
-    open fun change_line_channel(old_channel: Int, line_index: Int, new_channel: Int) {
-        val line = this.channels[old_channel].remove_line(line_index)
-        this.channels[new_channel].insert_line(new_channel, line)
+    open fun move_line(channel_old: Int, line_old: Int, channel_new: Int, line_new: Int) {
+        var line = this.remove_line(channel_old, line_old)
+        this.insert_line(channel_new, line_new, line)
+        if (this.channels[channel_old].size == 0) {
+            this.remove_channel(channel_old)
+        }
     }
 
     fun insert_beat() {
@@ -461,6 +464,10 @@ open class OpusManagerBase {
                 channel.set_beat_count(this.opus_beat_count)
             }
         }
+    }
+
+    open fun insert_line(channel: Int, line_index: Int, line: MutableList<OpusTree<OpusEvent>>) {
+        this.channels[channel].insert_line(line_index, line)
     }
 
     open fun new_line(channel: Int, index: Int? = null): List<OpusTree<OpusEvent>> {
@@ -517,14 +524,15 @@ open class OpusManagerBase {
         }
 
     }
+
     open fun move_leaf(beatkey_from: BeatKey, position_from: List<Int>, beatkey_to: BeatKey, position_to: List<Int>) {
         var from_tree = this.get_tree(beatkey_from, position_from).copy()
         this.replace_tree(beatkey_to, position_to, from_tree)
-        this.remove(beatkey_from, position_from)
+        this.unset(beatkey_from, position_from)
     }
 
-    open fun remove_line(channel: Int, index: Int) {
-        this.channels[channel].remove_line(index)
+    open fun remove_line(channel: Int, index: Int): MutableList<OpusTree<OpusEvent>> {
+        return this.channels[channel].remove_line(index)
     }
 
     open fun replace_tree(beat_key: BeatKey, position: List<Int>, tree: OpusTree<OpusEvent>) {
@@ -743,7 +751,7 @@ open class OpusManagerBase {
         this.import_midi(MIDI.from_path(path))
     }
 
-    fun import_midi(midi: MIDI) {
+    open fun import_midi(midi: MIDI) {
         this.purge_cache()
 
         this.opus_beat_count = 0

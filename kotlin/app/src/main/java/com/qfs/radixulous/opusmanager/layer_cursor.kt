@@ -425,14 +425,16 @@ open class CursorLayer() : FlagLayer() {
         this.get_cursor().settle()
     }
 
-    override fun remove_line(channel: Int, index: Int) {
-        super.remove_line(channel, index)
+    override fun remove_line(channel: Int, index: Int): MutableList<OpusTree<OpusEvent>> {
+        val output = super.remove_line(channel, index)
 
         if (channel > this.channels.size - 1) {
             this.cursor_up()
         } else if (channel == this.channels.size - 1 && index >= this.channels[channel].size) {
              this.cursor_up()
         }
+
+        return output
     }
 
     override fun remove_channel(channel: Int) {
@@ -514,4 +516,5 @@ open class CursorLayer() : FlagLayer() {
             }
         }
     }
+
 }

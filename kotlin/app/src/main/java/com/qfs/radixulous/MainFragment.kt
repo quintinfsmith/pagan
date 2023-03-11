@@ -9,6 +9,7 @@ import android.widget.*
 import androidx.core.view.DragStartHelper
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResultListener
+import androidx.recyclerview.widget.RecyclerView
 import com.qfs.radixulous.apres.MIDI
 import com.qfs.radixulous.databinding.FragmentMainBinding
 import com.qfs.radixulous.opusmanager.BeatKey
@@ -16,6 +17,7 @@ import com.qfs.radixulous.opusmanager.FlagOperation
 import com.qfs.radixulous.opusmanager.OpusEvent
 import com.qfs.radixulous.opusmanager.UpdateFlag
 import java.io.FileInputStream
+import kotlin.concurrent.thread
 import com.qfs.radixulous.opusmanager.HistoryLayer as OpusManager
 
 /**
@@ -43,10 +45,6 @@ class MainFragment : Fragment() {
 
     private var _dragging_rowLabel: View? = null
 
-    // TODO: Convert focus booleans to 1 enum SINGLE, ROW, COLUMN
-    var focus_row: Boolean = false
-    var focus_column: Boolean = false
-
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -61,19 +59,19 @@ class MainFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val hsvTable: HorizontalScrollView = view.findViewById(R.id.hsvTable)
+        val rvBeatTable = view.findViewById<RecyclerView>(R.id.rvBeatTable)
         val svTable: ScrollView = view.findViewById(R.id.svTable)
         val hsvColumnLabels: HorizontalScrollView = view.findViewById(R.id.hsvColumnLabels)
         val svLineLabels: ScrollView = view.findViewById(R.id.svLineLabels)
 
-        hsvTable.viewTreeObserver.addOnScrollChangedListener {
-            hsvColumnLabels.scrollX = hsvTable.scrollX
+        rvBeatTable.viewTreeObserver.addOnScrollChangedListener {
+            hsvColumnLabels.scrollX = rvBeatTable.scrollX
         }
         svTable.viewTreeObserver.addOnScrollChangedListener {
             svLineLabels.scrollY = svTable.scrollY
         }
         hsvColumnLabels.viewTreeObserver.addOnScrollChangedListener {
-            hsvColumnLabels.scrollX = hsvTable.scrollX
+            hsvColumnLabels.scrollX = rvBeatTable.scrollX
         }
         svLineLabels.viewTreeObserver.addOnScrollChangedListener {
             svLineLabels.scrollY = svTable.scrollY
@@ -102,7 +100,7 @@ class MainFragment : Fragment() {
         setFragmentResultListener("IMPORT") { _, bundle: Bundle? ->
             this.block_default_return = true
             val main = this.getMain()
-
+            main.loading_reticle()
             bundle!!.getString("URI")?.let { path ->
                 this.takedownCurrent()
                 main.import_midi(path)
@@ -158,7 +156,7 @@ class MainFragment : Fragment() {
         _binding = null
     }
 
-    private fun getMain(): MainActivity {
+    internal fun getMain(): MainActivity {
         return this.activity!! as MainActivity
     }
 
@@ -177,9 +175,9 @@ class MainFragment : Fragment() {
     fun takedownCurrent() {
         this.setContextMenu(ContextMenu.None)
         if (this.activity != null) {
-            (this.activity!!.findViewById(R.id.tlOpusLines) as ViewGroup).removeAllViews()
-            (this.activity!!.findViewById(R.id.llLineLabels) as ViewGroup).removeAllViews()
-            (this.activity!!.findViewById(R.id.llColumnLabels) as ViewGroup).removeAllViews()
+            this.activity!!.findViewById<RecyclerView>(R.id.rvBeatTable).notifyItemRangeRemoved()
+            this.activity!!.findViewById<ViewGroup>(R.id.llLineLabels).removeAllViews()
+            this.activity!!.findViewById<ViewGroup>(R.id.llColumnLabels).removeAllViews()
         }
         this.cache = ViewCache()
     }
@@ -307,101 +305,6 @@ class MainFragment : Fragment() {
         llLineLabels.addView(rowLabel)
 
         return rowView
-    }
-
-    private fun buildTreeView(parent: ViewGroup, beatkey: BeatKey, position: List<Int>): View {
-        val main = this.getMain()
-        val opus_manager = main.getOpusManager()
-        val tree = opus_manager.get_tree(beatkey, position)
-
-        if (tree.is_leaf()) {
-            val tvLeaf = LeafButton(parent.context, main, tree.get_event(), opus_manager.is_percussion(beatkey.channel))
-
-            tvLeaf.setOnClickListener {
-                this.interact_leafView_click(it)
-            }
-
-            tvLeaf.setOnFocusChangeListener { view, is_focused: Boolean ->
-                if (is_focused) {
-                    this.interact_leafView_click(view)
-                }
-            }
-
-            tvLeaf.setOnLongClickListener { view: View ->
-                this._longclicking_leaf = view
-                false
-            }
-            tvLeaf.setOnTouchListener { view, touchEvent ->
-                if (this._longclicking_leaf != null) {
-                    if (touchEvent.action == MotionEvent.ACTION_MOVE) {
-                        if (this._dragging_leaf == null) {
-                            this._dragging_leaf = view
-
-                            view.startDragAndDrop(
-                                null,
-                                View.DragShadowBuilder(view),
-                                null,
-                                0
-                            )
-                        }
-                        this._longclicking_leaf = null
-                    } else if (touchEvent.action == MotionEvent.ACTION_UP) {
-                        this.interact_leafView_longclick(view)
-                        this._longclicking_leaf = null
-                        return@setOnTouchListener true
-                    }
-                }
-                false
-            }
-
-
-
-            tvLeaf.setOnDragListener { view: View, dragEvent: DragEvent ->
-                when (dragEvent.action) {
-                    //DragEvent.ACTION_DRAG_STARTED -> { }
-                    DragEvent.ACTION_DROP -> {
-                        if (this._dragging_leaf != view) {
-                            val (beatkey_to, position_to) = this.cache.getTreeViewPosition(view) ?: return@setOnDragListener true
-                            val (beatkey_from, position_from) = this.cache.getTreeViewPosition(this._dragging_leaf!!) ?: return@setOnDragListener true
-                            var opus_manager = this.getMain().getOpusManager()
-                            opus_manager.move_leaf(beatkey_from, position_from, beatkey_to, position_to)
-                            opus_manager.set_cursor_position(beatkey_to, position_to)
-                            this.tick()
-                        }
-                        this._dragging_leaf = null
-                    }
-                    else -> { }
-                }
-                true
-            }
-
-            parent.addView(tvLeaf)
-            val param = tvLeaf!!.layoutParams as LinearLayout.LayoutParams
-            param.gravity = Gravity.CENTER
-            param.height = MATCH_PARENT
-            tvLeaf.layoutParams = param
-            this.cache.cacheTree(tvLeaf, beatkey, position)
-
-            return tvLeaf
-        } else {
-            val cellLayout: LinearLayout = LayoutInflater.from(parent.context).inflate(
-                R.layout.tree_node,
-                parent,
-                false
-            ) as LinearLayout
-
-            this.cache.cacheTree(cellLayout, beatkey, position)
-
-            for (i in 0 until tree.size) {
-                val new_position = position.toMutableList()
-                new_position.add(i)
-                this.buildTreeView(cellLayout as ViewGroup, beatkey, new_position)
-            }
-
-            parent.addView(cellLayout)
-
-            return cellLayout
-        }
     }
 
     fun setContextMenu(menu_index: ContextMenu) {
@@ -785,26 +688,6 @@ class MainFragment : Fragment() {
         view.unset_active_button()
     }
 
-    private fun rebuildBeatView(main_beatkey: BeatKey) {
-        val main = this.getMain()
-        val opus_manager = main.getOpusManager()
-        for (beatkey in opus_manager.get_all_linked(main_beatkey)) {
-            this.cache.removeBeatView(beatkey)
-
-            val rowView = this.cache.getLine(main_beatkey.channel, main_beatkey.line_offset)
-
-            val new_wrapper = LayoutInflater.from(rowView.context).inflate(
-                R.layout.beat_node,
-                rowView,
-                false
-            )
-
-            rowView.addView(new_wrapper, beatkey.beat)
-            this.buildTreeView(new_wrapper as ViewGroup, beatkey, listOf())
-            new_wrapper.measure(0, 0)
-            this.cache.set_column_width(beatkey.beat, new_wrapper.measuredWidth)
-        }
-    }
 
     private fun interact_rosRelativeOption(view: RelativeOptionSelector) {
         val main = this.getMain()
@@ -923,58 +806,6 @@ class MainFragment : Fragment() {
         this.tick()
     }
 
-    private fun interact_leafView_click(view: View) {
-        val main = this.getMain()
-        main.stop_playback()
-        val opus_manager = main.getOpusManager()
-        this.focus_column = false
-        this.focus_row = false
-
-        val (beatkey, position) = this.cache.getTreeViewPosition(view) ?: return
-        opus_manager.set_cursor_position(beatkey, position)
-        val cursor_beatkey = opus_manager.get_cursor().get_beatkey()
-        if (this.linking_beat != null) {
-            // If a second link point hasn't been selected, assume just one beat is being linked
-            if (this.linking_beat_b == null) {
-                opus_manager.link_beats(cursor_beatkey, this.linking_beat!!)
-            } else {
-                opus_manager.link_beat_range(cursor_beatkey, this.linking_beat!!, this.linking_beat_b!!)
-            }
-
-            this.linking_beat = null
-            this.linking_beat_b = null
-        }
-        var tree = opus_manager.get_tree_at_cursor()
-        if (tree.is_event()) {
-            main.play_event(
-                beatkey.channel,
-                if (opus_manager.is_percussion(beatkey.channel)) {
-                    opus_manager.get_percussion_instrument(beatkey.line_offset)
-                } else {
-                    opus_manager.get_absolute_value(beatkey, position)!!
-                }
-            )
-        }
-
-        this.tick()
-        this.setContextMenu(ContextMenu.Leaf)
-    }
-
-    private fun interact_leafView_longclick(view: View) {
-        val main = this.getMain()
-        main.stop_playback()
-        val opus_manager = main.getOpusManager()
-        val (beatkey, _position) = this.cache.getTreeViewPosition(view) ?: return
-        if (this.linking_beat == null) {
-            this.linking_beat = beatkey
-        } else {
-            this.linking_beat_b = beatkey
-        }
-        opus_manager.set_cursor_position(beatkey, listOf())
-        this.setContextMenu(ContextMenu.Linking)
-        this.tick()
-    }
-
     private fun interact_nsOffset(view: NumberSelector) {
         val main = this.getMain()
         main.stop_playback()
@@ -1040,8 +871,8 @@ class MainFragment : Fragment() {
     private fun interact_rowLabel(view: View) {
         val main = this.getMain()
         main.stop_playback()
-        this.focus_column = false
-        this.focus_row = true
+        var rvBeatTable = main.findViewById<RecyclerView>(R.id.rvBeatTable)
+        (rvBeatTable.adapter as BeatAdapter).set_focus_type(FocusType.Row)
 
         var abs_y: Int = 0
         val label_column = view.parent!! as ViewGroup
@@ -1171,28 +1002,15 @@ class MainFragment : Fragment() {
         val main = this.getMain()
         val x = (view.parent as ViewGroup).indexOfChild(view)
         val opus_manager = main.getOpusManager()
-        this.focus_column = true
-        this.focus_row = false
+
+        var rvBeatTable = main.findViewById<RecyclerView>(R.id.rvBeatTable)
+        (rvBeatTable.adapter as BeatAdapter).set_focus_type(FocusType.Column)
+
         val cursor = opus_manager.get_cursor()
         opus_manager.set_cursor_position(cursor.y, x, listOf())
 
         this.setContextMenu(ContextMenu.Beat)
         this.tick()
-    }
-
-    fun line_remove(channel: Int, line_offset: Int) {
-        this.cache.detachLine(channel, line_offset)
-    }
-
-    fun line_new(channel: Int, line_offset: Int, beat_count: Int) {
-        val rowView = this.buildLineView(channel, line_offset)
-        for (x in 0 until beat_count) {
-            this.buildTreeView(
-                rowView.getChildAt(x) as ViewGroup,
-                BeatKey(channel, line_offset, x),
-                listOf()
-            )
-        }
     }
 
     fun update_leaf_labels(opus_manager: OpusManager) {
@@ -1284,67 +1102,6 @@ class MainFragment : Fragment() {
         label_row.removeView(label_view)
         label_view.layoutParams.width = width
         label_row.addView(label_view, beat)
-    }
-
-    fun apply_focus(focused: Set<Pair<BeatKey, List<Int>>>, opus_manager: OpusManager) {
-        for ((beatkey, position) in focused) {
-            val linked_beats = opus_manager.get_all_linked(beatkey)
-            for (linked_beat in linked_beats) {
-                for ((view, leaf_pos) in this.cache.get_all_leafs(linked_beat, position)) {
-                    if (view !is LeafButton) {
-                        continue
-                    }
-                    view.setFocused(true)
-                    this.cache.addFocusedLeaf(linked_beat, leaf_pos)
-                }
-            }
-
-        }
-
-        if (this.linking_beat_b != null) {
-            val cursor_diff = opus_manager.get_cursor_difference(this.linking_beat!!, this.linking_beat_b!!)
-
-            for (y in 0 .. cursor_diff.first) {
-                for (x in 0 .. cursor_diff.second) {
-                    var working_beat = BeatKey(
-                        this.linking_beat!!.channel,
-                        this.linking_beat!!.line_offset,
-                        x + this.linking_beat!!.beat
-                    )
-
-                    for ((view, leaf_pos) in this.cache.get_all_leafs(working_beat, listOf())) {
-                        if (view !is LeafButton) {
-                            continue
-                        }
-
-                        view.setFocused(true)
-                        this.cache.addFocusedLeaf(working_beat, leaf_pos)
-                    }
-                }
-            }
-        }
-    }
-
-    fun tick_unapply_focus() {
-        var opus_manager = this.getMain().getOpusManager()
-
-        while (true) {
-            val (cached_beatkey, cached_position) = this.cache.popFocusedLeaf() ?: break
-            val view = this.cache.getTreeView(cached_beatkey, cached_position) ?: continue
-            if (view !is LeafButton
-                || cached_beatkey.channel > opus_manager.channels.size - 1
-                || cached_beatkey.line_offset > opus_manager.channels[cached_beatkey.channel].size - 1
-            ) {
-                continue
-            }
-
-            try {
-                view.isFocused = false
-                //TODO: check if attached instead of catching
-            } catch (e: Exception) {
-                continue
-            }
-        }
     }
 
     fun validate_leaf(beatkey: BeatKey, position: List<Int>, valid: Boolean) {
@@ -1498,20 +1255,24 @@ class MainFragment : Fragment() {
     }
 
     fun tick() {
-        /*
-        TODO: break this function up. Only a monolith since changing to handle all flags in
+        /* TODO: break this function up. Only a monolith since changing to handle all flags in
             the exact order they were created
          */
         if (!this.ticking) {
             this.ticking = true
+
+            val beat_table = this.getMain().findViewById<RecyclerView>(R.id.rvBeatTable)
+            var beat_table_adapter = beat_table.adapter as BeatAdapter
+
             var main = this.getMain()
             val opus_manager = main.getOpusManager()
-            this.tick_unapply_focus()
 
             var updated_beatkeys = mutableSetOf<BeatKey>()
             val updated_beats: MutableSet<Int> = mutableSetOf()
             var min_changed_beat = opus_manager.opus_beat_count
             var validate_count = 0
+
+            beat_table_adapter.tick_unapply_cursor_focus()
             while (true) {
                 when (opus_manager.fetch_next_flag()) {
                     UpdateFlag.AbsVal -> {
@@ -1525,11 +1286,10 @@ class MainFragment : Fragment() {
 
                         when (operation) {
                             FlagOperation.New -> {
-                                this.beat_new(index)
-                                updated_beats.add(index)
+                                beat_table_adapter.notifyItemInserted(index)
                             }
                             FlagOperation.Pop -> {
-                                this.beat_remove(index)
+                                beat_table_adapter.notifyItemRemoved(index)
                             }
                         }
                     }
@@ -1547,10 +1307,10 @@ class MainFragment : Fragment() {
                         var line_flag = opus_manager.fetch_flag_line() ?: break
                         when (line_flag.operation) {
                             FlagOperation.Pop -> {
-                                this.line_remove(line_flag.channel, line_flag.line)
+                                beat_table_adapter.line_remove(line_flag.channel, line_flag.line)
                             }
                             FlagOperation.New -> {
-                                this.line_new(line_flag.channel, line_flag.line, line_flag.beat_count)
+                                beat_table_adapter.line_new(line_flag.channel, line_flag.line)
                             }
                         }
                     }
@@ -1582,42 +1342,11 @@ class MainFragment : Fragment() {
                 this.validate_leaf(beatkey, position, abs_value in 0..95)
             }
 
-            this.tick_apply_focus()
+            beat_table_adapter.tick_apply_cursor_focus()
 
             this.ticking = false
 
         }
-    }
-
-    private fun tick_apply_focus() {
-        val opus_manager = this.getMain().getOpusManager()
-        val cursor = opus_manager.get_cursor()
-        val focused: MutableSet<Pair<BeatKey, List<Int>>> = mutableSetOf()
-        if (this.focus_column) {
-            for (y in 0 until opus_manager.line_count()) {
-                val (channel, index) = opus_manager.get_channel_index(y)
-                focused.add(
-                    Pair(
-                        BeatKey(channel, index, cursor.get_beatkey().beat),
-                        listOf()
-                    )
-                )
-            }
-        } else if (this.focus_row) {
-            for (x in 0 until opus_manager.opus_beat_count) {
-                val beatkey = cursor.get_beatkey()
-                focused.add(
-                    Pair(
-                        BeatKey(beatkey.channel, beatkey.line_offset, x),
-                        listOf()
-                    )
-                )
-            }
-        } else {
-            focused.add(Pair(cursor.get_beatkey(), cursor.get_position()))
-        }
-
-        this.apply_focus(focused, opus_manager)
     }
 
     fun newProject() {
@@ -1635,8 +1364,7 @@ class MainFragment : Fragment() {
             return
         }
 
-        var tlOpusLines = this.getMain().findViewById<LinearLayout>(R.id.tlOpusLines)
-        var hsvTable = this.getMain().findViewById<HorizontalScrollView>(R.id.hsvTable)
+        var hsvTable = this.getMain().findViewById<RecyclerView>(R.id.rvBeatTable)
         var svTable = this.getMain().findViewById<ScrollView>(R.id.svTable)
 
         val offsetViewBounds = Rect()
@@ -1654,7 +1382,7 @@ class MainFragment : Fragment() {
         var offset_top = offsetViewBounds.top
 
         if (offset_left < hsvTable.scrollX || offset_left > hsvTable.scrollX + svTable.width) {
-            hsvTable.smoothScrollTo(offset_left, 0)
+            hsvTable.scrollTo(offset_left, 0)
         }
         if (offset_top < svTable.scrollY || offset_top > svTable.scrollY + svTable.width) {
             svTable.smoothScrollTo(0, offset_top)

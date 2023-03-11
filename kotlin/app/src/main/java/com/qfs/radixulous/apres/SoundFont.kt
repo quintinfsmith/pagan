@@ -2,10 +2,11 @@ package com.qfs.radixulous.apres
 
 import com.qfs.radixulous.apres.riffreader.Riff
 import com.qfs.radixulous.apres.riffreader.toUInt
+import java.io.InputStream
 import kotlin.math.max
 import kotlin.math.pow
 
-class SoundFont(var riff: Riff) {
+class SoundFont(input_stream: InputStream) {
     // Mandatory INFO
     private var ifil: Pair<Int, Int> = Pair(0,0)
     private var isng: String = "EMU8000"
@@ -21,9 +22,12 @@ class SoundFont(var riff: Riff) {
     private var icmt: String? = null
     private var isft: String? = null
 
+    private var riff: Riff
+
     var pdta_indices = HashMap<String, Int>()
 
     init {
+        this.riff = Riff(input_stream)
         // Make a hashmap for easier access
         for (index in 0 until riff.sub_chunks[2].size) {
             val sub_chunk_type = riff.get_sub_chunk_type(2, index)

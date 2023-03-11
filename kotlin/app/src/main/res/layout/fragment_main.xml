@@ -67,16 +67,11 @@ tools:context=".MainFragment">
             android:layout_width="wrap_content"
             android:layout_height="wrap_content">
 
-            <HorizontalScrollView
-                android:id="@+id/hsvTable"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-
-                <TableLayout
-                    android:id="@+id/tlOpusLines"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
-            </HorizontalScrollView>
+            <androidx.recyclerview.widget.RecyclerView
+                android:orientation="horizontal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/rvBeatTable"/>
         </ScrollView>
     </TableRow>
     <TableRow>

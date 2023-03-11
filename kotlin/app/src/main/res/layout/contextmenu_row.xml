@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/layout"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:paddingStart="@dimen/normal_padding"
@@ -12,40 +13,48 @@
         android:theme="@style/button"
         android:layout_marginTop="@dimen/normal_padding"
         android:gravity="center"
-        android:layout_width="0dp"
-        android:layout_weight="1"
-        android:layout_height="match_parent"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         android:text="Instrument..." />
 
-    <TextView
-        android:id="@+id/btnRemoveLine"
-        android:gravity="center"
-        android:theme="@style/button"
-        android:layout_marginTop="@dimen/normal_padding"
-        android:layout_marginEnd="@dimen/normal_padding"
-        android:layout_width="0dp"
-        android:layout_weight="1"
-        android:layout_height="match_parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btnChoosePercussion"
-        app:layout_constraintEnd_toStartOf="@+id/btnInsertLine"
-        android:text="Remove Line"/>
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
 
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content">
 
-    <TextView
-        android:id="@+id/btnInsertLine"
-        android:theme="@style/button"
-        android:layout_marginTop="@dimen/normal_padding"
-        android:gravity="center"
-        android:layout_width="0dp"
-        android:layout_weight="1"
-        android:layout_height="match_parent"
-        app:layout_constraintTop_toBottomOf="@+id/btnChoosePercussion"
-        app:layout_constraintStart_toEndOf="@+id/btnRemoveLine"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:text="Insert Line"/>
+            <TextView
+                android:id="@+id/btnRemoveLine"
+                android:gravity="center"
+                android:theme="@style/button"
+                android:layout_marginTop="@dimen/normal_padding"
+                android:layout_marginEnd="@dimen/normal_padding"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Remove Line"/>
+        </LinearLayout>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content">
+            <TextView
+                android:id="@+id/btnInsertLine"
+                android:theme="@style/button"
+                android:layout_marginTop="@dimen/normal_padding"
+                android:gravity="center"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Insert Line"/>
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

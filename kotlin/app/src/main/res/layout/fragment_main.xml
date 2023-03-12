@@ -43,20 +43,23 @@ tools:context=".MainFragment">
 
     <TableRow
         android:id="@+id/trMainB"
+        android:background="#FF0000"
         android:layout_weight="1"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
         <ScrollView
             android:id="@+id/svLineLabels"
+            android:background="#FF00FF"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:scrollbars="none">
 
             <LinearLayout
+                android:background="#00FFFF"
                 android:id="@+id/llLineLabels"
                 android:paddingRight="@dimen/normal_padding"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:orientation="vertical"/>
         </ScrollView>
@@ -64,12 +67,12 @@ tools:context=".MainFragment">
         <ScrollView
             android:id="@+id/svTable"
             android:layout_weight="1"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
             <androidx.recyclerview.widget.RecyclerView
-                android:orientation="horizontal"
-                android:layout_width="wrap_content"
+                android:background="#FF00FF"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:id="@+id/rvBeatTable"/>
         </ScrollView>

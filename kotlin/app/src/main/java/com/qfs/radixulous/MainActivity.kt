@@ -106,8 +106,7 @@ class MainActivity : AppCompatActivity() {
                 fragment.tick()
 
                 val opus_manager = that.getOpusManager()
-                fragment.line_update_labels(opus_manager)
-                fragment.update_leaf_labels(opus_manager)
+
 
                 that.update_channel_instruments(opus_manager)
 
@@ -558,6 +557,7 @@ class MainActivity : AppCompatActivity() {
         } else {
             (max_value / 100)
         }
+
         val npHundreds = viewInflated.findViewById<NumberPicker>(R.id.npHundreds)
         npHundreds.maxValue = hundreds_max
         npHundreds.minValue = hundreds_min

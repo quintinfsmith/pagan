@@ -671,8 +671,16 @@ open class OpusManagerBase {
         file_obj.writeText(json_string)
     }
 
-    open fun load(path: String) {
+    open fun clear() {
         this.purge_cache()
+
+        this.opus_beat_count = 0
+        this.channels.clear()
+        this.path = null
+    }
+
+    open fun load(path: String) {
+        this.clear()
 
         this.opus_beat_count = 0
         this.channels.clear()
@@ -682,11 +690,7 @@ open class OpusManagerBase {
     }
 
     open fun new() {
-        this.purge_cache()
-
-        this.opus_beat_count = 0
-        this.channels.clear()
-        this.path = null
+        this.clear()
 
         this.new_channel()
         this.new_line(0)
@@ -752,11 +756,7 @@ open class OpusManagerBase {
     }
 
     open fun import_midi(midi: MIDI) {
-        this.purge_cache()
-
-        this.opus_beat_count = 0
-        this.channels.clear()
-        this.path = null
+        this.clear()
 
         this.RADIX = 12
         this.tempo = 120F

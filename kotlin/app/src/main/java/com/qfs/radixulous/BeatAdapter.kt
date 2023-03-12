@@ -1,5 +1,6 @@
 package com.qfs.radixulous
 
+import android.content.Context
 import android.view.*
 import android.widget.LinearLayout
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -9,33 +10,51 @@ import com.qfs.radixulous.opusmanager.HistoryLayer as OpusManager
 
 class BeatAdapter(var parent_fragment: MainFragment, var recycler: RecyclerView) : RecyclerView.Adapter<BeatAdapter.BeatViewHolder>() {
     var _longclicking_leaf: View? = null
+
     var _dragging_leaf: View? = null
     var linking_beat: BeatKey? = null
     var linking_beat_b: BeatKey? = null
     private var focus_type: FocusType = FocusType.Cell
     private var focused_leafs = mutableSetOf<LeafButton>()
-    class BeatViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
+    // BackLink so I can get the x offset from a view in the view holder
+    class BackLinkView(context: Context): LinearLayout(context) {
+        var viewHolder: BeatViewHolder? = null
+        init {
+            this.orientation = LinearLayout.VERTICAL
+        }
+    }
+    class BeatViewHolder(itemView: BackLinkView) : RecyclerView.ViewHolder(itemView) {
+        init {
+            itemView.viewHolder = this
+        }
+    }
     init {
         this.recycler.adapter = this
-        this.recycler.layoutManager = LinearLayoutManager(this.getMainActivity())
+        this.recycler.layoutManager = LinearLayoutManager(
+            this.getMainActivity(),
+            LinearLayoutManager.HORIZONTAL,
+            false
+        )
 
         val that = this
 
         this.registerAdapterDataObserver(
             object: RecyclerView.AdapterDataObserver() {
                 override fun onItemRangeRemoved(start: Int, count: Int) {
-                    for (i in start until that.recycler.childCount) {
-                        that.notifyItemRemoved(i)
+                    println("??? $start $count")
+                    for (i in start until that.getItemCount()) {
                     }
                 }
                 override fun onItemRangeChanged(start: Int, count: Int) {
-                    for (i in start until that.recycler.childCount) {
-                        that.notifyItemChanged(i)
+                    for (i in start until that.getItemCount()) {
+                        var viewHolder = that.recycler.findViewHolderForAdapterPosition(i) ?: continue
+                        that.updateItem(viewHolder as BeatViewHolder, i)
+                        //that.parent_fragment.update_column_label_size(i)
                     }
                 }
                 override fun onItemRangeInserted(start: Int, count: Int) {
                     for (i in start until that.recycler.childCount) {
-                        that.notifyItemInserted(i)
+                        //that.notifyItemInserted(i)
                     }
                 }
                 //override fun onChanged() { }
@@ -124,6 +143,7 @@ class BeatAdapter(var parent_fragment: MainFragment, var recycler: RecyclerView)
             val param = tvLeaf.layoutParams as LinearLayout.LayoutParams
             param.gravity = Gravity.CENTER
             param.height = ViewGroup.LayoutParams.MATCH_PARENT
+            param.width = ViewGroup.LayoutParams.MATCH_PARENT
             tvLeaf.layoutParams = param
 
             return tvLeaf
@@ -151,16 +171,32 @@ class BeatAdapter(var parent_fragment: MainFragment, var recycler: RecyclerView)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BeatViewHolder {
-        val layoutstack = LinearLayout(parent.context)
-        layoutstack.orientation = LinearLayout.VERTICAL
+        val layoutstack = BackLinkView(parent.context)
         return BeatViewHolder(layoutstack)
     }
 
     override fun onBindViewHolder(holder: BeatViewHolder, position: Int) {
+        println("BINDING")
+        this.updateItem(holder, position)
+        //this.parent_fragment.update_column_label_size(position)
+    }
+
+    fun updateItem(holder: BeatViewHolder, index: Int) {
+        (holder.itemView as ViewGroup).removeAllViews()
         val opus_manager = this.get_opus_manager()
+
         for (channel in 0 until opus_manager.channels.size) {
             for (line_offset in 0 until opus_manager.channels[channel].size) {
-                this.buildTreeView(holder.itemView as ViewGroup, BeatKey(channel, line_offset, position))
+                var beat_wrapper = LayoutInflater.from(holder.itemView.context).inflate(
+                    R.layout.beat_node,
+                    holder.itemView as ViewGroup,
+                    false
+                )
+
+                (holder.itemView as ViewGroup).addView(beat_wrapper)
+
+                println("ADDING $index to $channel:$line_offset")
+                this.buildTreeView(beat_wrapper as ViewGroup, BeatKey(channel, line_offset, index))
             }
         }
     }
@@ -169,17 +205,21 @@ class BeatAdapter(var parent_fragment: MainFragment, var recycler: RecyclerView)
     private fun get_view_position(view: View): Pair<BeatKey, List<Int>> {
         val position = mutableListOf<Int>()
         var working_view = view
-        while (!(working_view.parent is LinearLayout && (working_view.parent as View).id != R.id.treenode)) {
+        while ((working_view.parent as View).id != R.id.beat_node) {
             position.add(0, (working_view.parent as ViewGroup).indexOfChild(working_view))
             working_view = working_view.parent as View
         }
 
         working_view = working_view.parent as View
+        println("XX $working_view")
+        println("YX ${working_view.parent}")
+
         val y = (working_view.parent as ViewGroup).indexOfChild(working_view)
         val (channel, line_offset) = this.get_opus_manager().get_channel_index(y)
-        working_view = working_view.parent as View
-        val beat = (working_view.parent as ViewGroup).indexOfChild(working_view)
 
+        var viewholder = (working_view.parent as BackLinkView).viewHolder!!
+        var beat = viewholder.getBindingAdapterPosition()
+        println("$channel, $line_offset, $beat, $position")
         return Pair(BeatKey(channel, line_offset, beat), position)
     }
 
@@ -300,11 +340,15 @@ class BeatAdapter(var parent_fragment: MainFragment, var recycler: RecyclerView)
         val opus_manager = this.get_opus_manager()
 
         // Get the full-beat view
-        var working_view = (this.recycler as ViewGroup).getChildAt(beatkey.beat)
+        var column_view_holder = this.recycler.findViewHolderForAdapterPosition(beatkey.beat)!!
+        var working_view = column_view_holder.itemView
 
         // Get the beat-cell view
         val y = opus_manager.get_y(beatkey.channel, beatkey.line_offset)
         working_view = (working_view as ViewGroup).getChildAt(y)
+
+        // dive past the beat_node wrapper
+        working_view = (working_view as ViewGroup).getChildAt(0)
 
         for (x in position) {
             working_view = (working_view as ViewGroup).getChildAt(x)
@@ -317,11 +361,15 @@ class BeatAdapter(var parent_fragment: MainFragment, var recycler: RecyclerView)
         val opus_manager = this.get_opus_manager()
 
         // Get the full-beat view
-        var working_view = (this.recycler as ViewGroup).getChildAt(beatkey.beat)
+        var column_view_holder = this.recycler.findViewHolderForAdapterPosition(beatkey.beat)!!
+        var working_view = column_view_holder.itemView
 
         // Get the beat-cell view
         val y = opus_manager.get_y(beatkey.channel, beatkey.line_offset)
         working_view = (working_view as ViewGroup).getChildAt(y)
+
+        // dive past the beat_node wrapper
+        working_view = (working_view as ViewGroup).getChildAt(0)
 
         val output = mutableListOf<LeafButton>()
         val stack = mutableListOf(working_view)
@@ -348,7 +396,11 @@ class BeatAdapter(var parent_fragment: MainFragment, var recycler: RecyclerView)
         for ((beatkey, position) in focused) {
             val linked_beats = opus_manager.get_all_linked(beatkey)
             for (linked_beat in linked_beats) {
-                this.focus_leaf(this.get_leaf_view(linked_beat, position))
+                try {
+                    this.focus_leaf(this.get_leaf_view(linked_beat, position))
+                } catch (e: Exception) {
+
+                }
             }
         }
 
@@ -369,6 +421,7 @@ class BeatAdapter(var parent_fragment: MainFragment, var recycler: RecyclerView)
                 }
             }
         }
+        println("FOCUS APPLIED")
     }
 
     fun line_remove(channel: Int, line_offset: Int) {
@@ -394,23 +447,33 @@ class BeatAdapter(var parent_fragment: MainFragment, var recycler: RecyclerView)
         }
     }
 
-    private fun rebuildBeatView(main_beatkey: BeatKey) {
+    fun rebuildBeatView(beatkey: BeatKey) {
         val main = this.getMainActivity()
         val opus_manager = main.getOpusManager()
-        for (beatkey in opus_manager.get_all_linked(main_beatkey)) {
-            this.cache.removeBeatView(beatkey)
-            val rowView = this.cache.getLine(main_beatkey.channel, main_beatkey.line_offset)
+        var column_view_holder = this.recycler.findViewHolderForAdapterPosition(beatkey.beat) ?: return
+        var column_view = column_view_holder.itemView
+        var y = opus_manager.get_y(beatkey.channel, beatkey.line_offset)
+        println("$column_view, ${(column_view as ViewGroup).childCount} / $y")
+        (column_view as ViewGroup).removeViewAt(y)
+        this.buildTreeView(column_view, beatkey, listOf(), y)
 
-            val new_wrapper = LayoutInflater.from(rowView.context).inflate(
-                R.layout.beat_node,
-                rowView,
-                false
-            )
+        println("BUILT")
+    }
 
-            rowView.addView(new_wrapper, beatkey.beat)
-            this.buildTreeView(new_wrapper as ViewGroup, beatkey, listOf())
-            new_wrapper.measure(0, 0)
-            this.cache.set_column_width(beatkey.beat, new_wrapper.measuredWidth)
+    fun validate_leaf(beatkey: BeatKey, position: List<Int>, valid: Boolean) {
+        this.get_leaf_view(beatkey, position).setInvalid(!valid)
+    }
+
+    fun update_leaf_labels() {
+        var opus_manager = this.get_opus_manager()
+        for (channel in 0 until opus_manager.channels.size) {
+            for (y in 0 until opus_manager.channels[channel].size) {
+                for (x in 0 until opus_manager.opus_beat_count) {
+                    for (leafbutton in this.get_all_leaf_views(BeatKey(channel, y, x))) {
+                        leafbutton.set_text(opus_manager.is_percussion(channel))
+                    }
+                }
+            }
         }
     }
 }

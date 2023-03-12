@@ -35,6 +35,7 @@ class UpdatesCache {
             this.line_flag.removeFirst()
         }
     }
+
     fun dequeue_beat(): Pair<Int, FlagOperation>? {
         return if (this.beat_flag.isEmpty()) {
             null
@@ -78,10 +79,12 @@ class UpdatesCache {
         this.order_queue.add(UpdateFlag.Line)
         this.line_flag.add(LineFlag(channel, line_offset, beat_count, FlagOperation.New))
     }
+
     fun flag_absolute_value(beatkey: BeatKey, position: List<Int>) {
         this.order_queue.add(UpdateFlag.AbsVal)
         this.absolute_value_flag.add(Pair(beatkey, position))
     }
+
     fun purge() {
         this.order_queue.clear()
         this.beat_flag.clear()
@@ -89,6 +92,7 @@ class UpdatesCache {
         this.line_flag.clear()
         this.absolute_value_flag.clear()
     }
+
 }
 
 open class FlagLayer : LinksLayer() {
@@ -243,4 +247,21 @@ open class FlagLayer : LinksLayer() {
         super.cache_absolute_value(beat_key, position, event_value)
         this.cache.flag_absolute_value(beat_key, position)
     }
+
+    override fun clear() {
+        var channel_counts = this.get_channel_line_counts()
+        var beat_count = this.opus_beat_count
+        super.clear()
+        for (b in 0 until beat_count) {
+            this.cache.flag_beat_pop(b)
+        }
+
+        channel_counts.forEachIndexed { channel, count ->
+            for (i in 0 until count) {
+                this.cache.flag_line_pop(channel, i)
+            }
+        }
+
+    }
+
 }

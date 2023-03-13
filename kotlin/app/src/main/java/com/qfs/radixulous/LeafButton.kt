@@ -34,7 +34,7 @@ class LeafButton: androidx.appcompat.widget.AppCompatTextView {
 
     fun set_text(is_percussion: Boolean) {
         if (this.event == null) {
-            this.text = "xx"
+            this.text = ""
             return
         }
 

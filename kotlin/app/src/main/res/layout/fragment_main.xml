@@ -17,7 +17,7 @@ tools:context=".MainFragment">
     <TableRow
         android:id="@+id/trMainA"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" >
+        android:layout_height="match_parent">
 
         <Space
             app:layout_constraintStart_toStartOf="parent"
@@ -25,38 +25,26 @@ tools:context=".MainFragment">
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
 
-        <HorizontalScrollView
-            android:id="@+id/hsvColumnLabels"
-            android:layout_width="wrap_content"
+        <androidx.recyclerview.widget.RecyclerView
+            android:background="#AA00FF"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:scrollbars="none">
-
-            <LinearLayout
-                android:id="@+id/llColumnLabels"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal" />
-
-        </HorizontalScrollView>
+            android:id="@+id/rvColumnLabels"/>
     </TableRow>
 
     <TableRow
         android:id="@+id/trMainB"
-        android:background="#FF0000"
         android:layout_weight="1"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
         <ScrollView
             android:id="@+id/svLineLabels"
-            android:background="#FF00FF"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:scrollbars="none">
 
             <LinearLayout
-                android:background="#00FFFF"
                 android:id="@+id/llLineLabels"
                 android:paddingRight="@dimen/normal_padding"
                 android:layout_width="wrap_content"
@@ -71,7 +59,6 @@ tools:context=".MainFragment">
             android:layout_height="wrap_content">
 
             <androidx.recyclerview.widget.RecyclerView
-                android:background="#FF00FF"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:id="@+id/rvBeatTable"/>

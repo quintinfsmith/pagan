@@ -26,8 +26,8 @@ tools:context=".MainFragment">
             android:layout_height="wrap_content" />
 
         <androidx.recyclerview.widget.RecyclerView
-            android:background="#AA00FF"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
+            android:layout_weight="1"
             android:layout_height="wrap_content"
             android:id="@+id/rvColumnLabels"/>
     </TableRow>
@@ -63,6 +63,7 @@ tools:context=".MainFragment">
                 android:layout_height="wrap_content"
                 android:id="@+id/rvBeatTable"/>
         </ScrollView>
+
     </TableRow>
     <TableRow>
         <LinearLayout

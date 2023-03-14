@@ -3,20 +3,34 @@ package com.qfs.radixulous
 import android.content.Context
 import android.view.*
 import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 
 class ColumnLabelAdapter(var main_fragment: MainFragment, var recycler: RecyclerView) : RecyclerView.Adapter<ColumnLabelAdapter.ColumnLabelViewHolder>() {
     // BackLink so I can get the x offset from a view in the view holder
-    private var column_count = 0
-    class LabelView(context: Context): androidx.appcompat.widget.AppCompatTextView(ContextThemeWrapper(context, R.style.column_label)) {
+    var column_widths = mutableListOf<Int>()
+    class LabelView(context: Context): LinearLayout(context) {
         var viewHolder: ColumnLabelViewHolder? = null
+        var textView: TextView = LayoutInflater.from(this.context).inflate(
+            R.layout.table_column_label,
+            this,
+            false
+        ) as TextView
+
+        init {
+            this.addView(textView)
+        }
+        fun set_text(text: String) {
+            this.textView.text = text
+        }
     }
     class ColumnLabelViewHolder(itemView: LabelView) : RecyclerView.ViewHolder(itemView) {
         init {
             itemView.viewHolder = this
         }
     }
+
     init {
         this.recycler.adapter = this
         this.recycler.layoutManager = LinearLayoutManager(
@@ -27,16 +41,20 @@ class ColumnLabelAdapter(var main_fragment: MainFragment, var recycler: Recycler
     }
 
     fun addColumnLabel() {
-        this.column_count += 1
-        this.notifyItemInserted(this.column_count - 1)
+        this.column_widths.add(1)
+        this.notifyItemInserted(this.column_widths.size - 1)
     }
-    fun removeColumnLabel() {
-        this.column_count -= 1
-        this.notifyItemRemoved(this.column_count)
+
+    fun removeColumnLabel(i: Int) {
+        if (i < this.column_widths.size) {
+            this.column_widths.removeAt(i)
+            this.notifyItemRemoved(i)
+        }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ColumnLabelViewHolder {
         val label = LabelView(parent.context)
+
         label.setOnClickListener {
             var holder = (it as LabelView).viewHolder ?: return@setOnClickListener
             var beat = holder.bindingAdapterPosition
@@ -55,18 +73,22 @@ class ColumnLabelAdapter(var main_fragment: MainFragment, var recycler: Recycler
     }
 
     override fun onBindViewHolder(holder: ColumnLabelViewHolder, position: Int) {
-        (holder.itemView as LabelView).text = position.toString()
-        println("SET LABEL: $position")
+        var item_view = holder.itemView as LabelView
+        item_view.set_text(position.toString())
+        item_view.textView.width = (120 * this.column_widths[position]) - 10
     }
 
     fun set_label_width(beat: Int, width: Int) {
-        var holder = this.recycler.findViewHolderForAdapterPosition(beat) ?: return
-        var item_view = holder.itemView
-        val param = item_view.layoutParams as ViewGroup.LayoutParams
-        param.width = width
+        this.column_widths[beat] = width
+        this.notifyItemChanged(beat)
     }
 
     override fun getItemCount(): Int {
-        return this.column_count
+        return this.column_widths.size
+    }
+
+    fun scrollToX(x: Int) {
+        var current_x = this.recycler.computeHorizontalScrollOffset()
+        this.recycler.scrollBy(x - current_x, 0)
     }
 }

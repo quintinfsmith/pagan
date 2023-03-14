@@ -43,7 +43,6 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
                 override fun onItemRangeRemoved(start: Int, count: Int) {
                     println("??? $start $count")
                     for (i in start until that.getItemCount()) {
-                        that.column_adapter.notifyItemRemoved(i)
                     }
                 }
                 override fun onItemRangeChanged(start: Int, count: Int) {
@@ -55,7 +54,6 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
                 }
                 override fun onItemRangeInserted(start: Int, count: Int) {
                     for (i in start until that.recycler.childCount) {
-                        that.column_adapter.notifyItemInserted(i)
                         //that.notifyItemInserted(i)
                     }
                 }
@@ -429,7 +427,6 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
                 }
             }
         }
-        println("FOCUS APPLIED")
     }
 
     fun rebuildBeatView(beatkey: BeatKey) {
@@ -441,7 +438,6 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
         println("$column_view, ${(column_view as ViewGroup).childCount} / $y")
         (column_view as ViewGroup).removeViewAt(y)
         this.buildTreeView(column_view, beatkey, listOf(), y)
-
         println("BUILT")
     }
 
@@ -480,6 +476,7 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
             }
         }
 
+        println("Adjusted beat $beat")
         this.column_adapter.set_label_width(beat, max_width)
     }
 
@@ -529,7 +526,6 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
             current_view.layoutParams = param
         }
     }
-
 }
 
 enum class FocusType {

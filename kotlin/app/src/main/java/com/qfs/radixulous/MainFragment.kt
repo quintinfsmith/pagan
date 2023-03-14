@@ -64,17 +64,18 @@ class MainFragment : Fragment() {
         OpusManagerAdapter(this, rvBeatTable, column_label_adapter)
 
         rvBeatTable.viewTreeObserver.addOnScrollChangedListener {
-            rvColumnLabels.scrollX = rvBeatTable.scrollX
+            println("${rvBeatTable.scrollX} -----")
+            (rvColumnLabels.adapter as ColumnLabelAdapter).scrollToX(rvBeatTable.computeHorizontalScrollOffset())
         }
-        svTable.viewTreeObserver.addOnScrollChangedListener {
-            svLineLabels.scrollY = svTable.scrollY
-        }
-        rvColumnLabels.viewTreeObserver.addOnScrollChangedListener {
-            rvColumnLabels.scrollX = rvBeatTable.scrollX
-        }
-        svLineLabels.viewTreeObserver.addOnScrollChangedListener {
-            svLineLabels.scrollY = svTable.scrollY
-        }
+        //svTable.viewTreeObserver.addOnScrollChangedListener {
+        //    svLineLabels.scrollY = svTable.scrollY
+        //}
+        //rvColumnLabels.viewTreeObserver.addOnScrollChangedListener {
+        //    rvColumnLabels.scrollX = rvBeatTable.scrollX
+        //}
+        //svLineLabels.viewTreeObserver.addOnScrollChangedListener {
+        //    svLineLabels.scrollY = svTable.scrollY
+        //}
 
         setFragmentResultListener("LOAD") { _, bundle: Bundle? ->
             this.block_default_return = true
@@ -707,28 +708,6 @@ class MainFragment : Fragment() {
         this.tick()
     }
 
-    private fun interact_rowLabel(view: View) {
-        val main = this.getMain()
-        main.stop_playback()
-        var rvBeatTable = main.findViewById<RecyclerView>(R.id.rvBeatTable)
-        (rvBeatTable.adapter as OpusManagerAdapter).set_focus_type(FocusType.Row)
-
-        var abs_y: Int = 0
-        val label_column = view.parent!! as ViewGroup
-        for (i in 0 until label_column.childCount) {
-            if (label_column.getChildAt(i) == view) {
-                abs_y = i
-                break
-            }
-        }
-
-        val opus_manager = main.getOpusManager()
-        val cursor = opus_manager.get_cursor()
-        opus_manager.set_cursor_position(abs_y, cursor.x, listOf())
-        this.tick()
-        this.setContextMenu(ContextMenu.Line)
-    }
-
     private fun interact_sRelative_changed(view: View, isChecked: Boolean) {
         val main = this.getMain()
         main.stop_playback()
@@ -994,19 +973,15 @@ class MainFragment : Fragment() {
                                 beat_table_adapter.notifyItemInserted(index)
                             }
                             FlagOperation.Pop -> {
-                                rvColumnLabels_adapter.removeColumnLabel()
                                 beat_table_adapter.notifyItemRemoved(index)
+                                rvColumnLabels_adapter.removeColumnLabel(index)
                             }
                         }
                     }
 
                     UpdateFlag.BeatMod -> {
                         val beatkey = opus_manager.fetch_flag_change() ?: break
-                        println("$beatkey CHANGING")
-
                         for (linked_beatkey in opus_manager.get_all_linked(beatkey)) {
-                            //beat_table_adapter.rebuildBeatView(linked_beatkey)
-
                             updated_beats.add(linked_beatkey.beat)
                         }
                     }
@@ -1016,14 +991,14 @@ class MainFragment : Fragment() {
                         for (i in 0 until opus_manager.opus_beat_count ) {
                             updated_beats.add(i)
                         }
-                        //when (line_flag.operation) {
-                        //    FlagOperation.Pop -> {
-                        //        beat_table_adapter.line_remove(line_flag.channel, line_flag.line)
-                        //    }
-                        //    FlagOperation.New -> {
-                        //        beat_table_adapter.line_new(line_flag.channel, line_flag.line)
-                        //    }
-                        //}
+                        when (line_flag.operation) {
+                            FlagOperation.Pop -> {
+                                this.remove_line_label(line_flag.line)
+                            }
+                            FlagOperation.New -> {
+                                this.insert_line_label(line_flag.line)
+                            }
+                        }
                     }
 
                     null -> {
@@ -1095,7 +1070,20 @@ class MainFragment : Fragment() {
         }
     }
 
-    fun set_key_range(channel: Int) {
+    fun set_active_row(y: Int) {
+        val main = this.getMain()
+        main.stop_playback()
 
+        var rvBeatTable = main.findViewById<RecyclerView>(R.id.rvBeatTable)
+        (rvBeatTable.adapter as OpusManagerAdapter).set_focus_type(FocusType.Row)
+
+
+        var opus_manager = main.getOpusManager()
+        val cursor = opus_manager.get_cursor()
+        opus_manager.set_cursor_position(y, cursor.x, listOf())
+
+        this.tick()
+        this.setContextMenu(ContextMenu.Line)
     }
+
 }

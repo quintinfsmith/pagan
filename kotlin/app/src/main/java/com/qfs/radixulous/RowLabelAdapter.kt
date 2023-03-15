@@ -9,7 +9,8 @@ import androidx.recyclerview.widget.RecyclerView
 
 class RowLabelAdapter(var main_fragment: MainFragment, var recycler: RecyclerView) : RecyclerView.Adapter<RowLabelAdapter.RowLabelViewHolder>() {
     // BackLink so I can get the x offset from a view in the view holder
-    var row_count = 0
+    private var row_count = 0
+
     class LabelView(context: Context): LinearLayout(context) {
         var viewHolder: RowLabelViewHolder? = null
 
@@ -68,37 +69,24 @@ class RowLabelAdapter(var main_fragment: MainFragment, var recycler: RecyclerVie
     }
 
     override fun onBindViewHolder(holder: RowLabelViewHolder, position: Int) {
-        var item_view = holder.itemView as LabelView
-    }
-
-    fun set_label_text() {
-        if (!opus_manager.is_percussion(channel)) {
-            if (line_offset == 0) {
-                rowLabelText.text = "$channel:$line_offset"
-            } else {
-                rowLabelText.text = "  :$line_offset"
-            }
-        } else {
-            val instrument = opus_manager.get_percussion_instrument(line_offset)
-            rowLabelText.text = "P:$instrument"
-        }
-    }
-
-    fun set_label_width(beat: Int, width: Int) {
-        this.column_widths[beat] = width
-        this.notifyItemChanged(beat)
+        var label = this.main_fragment.get_label_text(position)
+        (holder.itemView as LabelView).set_text(label)
     }
 
     override fun getItemCount(): Int {
-        return this.column_widths.size
+        return this.row_count
     }
 
-    fun scrollToX(x: Int) {
-        var current_x = this.recycler.computeHorizontalScrollOffset()
-        this.recycler.scrollBy(x - current_x, 0)
+    fun scrollToY(y: Int) {
+        var current_y = this.recycler.computeVerticalScrollOffset()
+        this.recycler.scrollBy(0, y - current_y)
     }
 
     private fun interact_rowLabel(view: View) {
+        this.main_fragment.set_active_row(this.get_y(view))
+    }
+
+    private fun get_y(view: View): Int {
         var abs_y: Int = 0
         val label_column = view.parent!! as ViewGroup
         for (i in 0 until label_column.childCount) {
@@ -107,50 +95,6 @@ class RowLabelAdapter(var main_fragment: MainFragment, var recycler: RecyclerVie
                 break
             }
         }
-
-        this.main_fragment.set_active_row(abs_y)
+        return abs_y
     }
-
-    // private fun buildLineView(channel: Int, line_offset: Int): TableRow {
-    //     val main = this.getMain()
-    //     val opus_manager = main.getOpusManager()
-
-    //     val tlOpusLines: TableLayout = this.activity!!.findViewById(R.id.tlOpusLines)
-    //     val llLineLabels: LinearLayout = this.activity!!.findViewById(R.id.llLineLabels)
-
-    //     val rowView: TableRow = LayoutInflater.from(tlOpusLines.context).inflate(
-    //         R.layout.table_row,
-    //         tlOpusLines,
-    //         false
-    //     ) as TableRow
-
-    //     var y = opus_manager.get_y(channel, line_offset)
-    //     tlOpusLines.addView(rowView, y)
-    //     this.cache.cacheLine(rowView, channel, line_offset)
-
-    //     for (i in 0 until opus_manager.opus_beat_count) {
-    //         val wrapper = LayoutInflater.from(rowView.context).inflate(
-    //             R.layout.beat_node,
-    //             rowView,
-    //             false
-    //         )
-    //         rowView.addView(wrapper)
-    //     }
-
-    //     /////////////////////////////////
-
-    //     val rowLabel = LayoutInflater.from(llLineLabels.context).inflate(
-    //         R.layout.table_line_label,
-    //         llLineLabels,
-    //         false
-    //     ) as LinearLayout
-
-    //     val rowLabelText = rowLabel.getChildAt(0) as TextView
-
-
-
-    //     llLineLabels.addView(rowLabel)
-
-    //     return rowView
-    // }
 }

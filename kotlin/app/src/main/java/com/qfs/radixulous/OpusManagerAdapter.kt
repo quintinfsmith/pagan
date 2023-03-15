@@ -8,7 +8,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.qfs.radixulous.opusmanager.BeatKey
 import com.qfs.radixulous.opusmanager.HistoryLayer as OpusManager
 
-class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: RecyclerView, var column_adapter: ColumnLabelAdapter) : RecyclerView.Adapter<OpusManagerAdapter.BeatViewHolder>() {
+class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: RecyclerView, var column_layout: ColumnLabelAdapter) : RecyclerView.Adapter<OpusManagerAdapter.BeatViewHolder>() {
     var _longclicking_leaf: View? = null
 
     var _dragging_leaf: View? = null
@@ -23,6 +23,7 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
             this.orientation = LinearLayout.VERTICAL
         }
     }
+
     class BeatViewHolder(itemView: BackLinkView) : RecyclerView.ViewHolder(itemView) {
         init {
             itemView.viewHolder = this
@@ -41,15 +42,13 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
         this.registerAdapterDataObserver(
             object: RecyclerView.AdapterDataObserver() {
                 override fun onItemRangeRemoved(start: Int, count: Int) {
-                    println("??? $start $count")
-                    for (i in start until that.getItemCount()) {
-                    }
+                    for (i in start until that.itemCount) { }
                 }
                 override fun onItemRangeChanged(start: Int, count: Int) {
-                    for (i in start until that.getItemCount()) {
+                    for (i in start until that.itemCount) {
                         var viewHolder = that.recycler.findViewHolderForAdapterPosition(i) ?: continue
                         that.updateItem(viewHolder as BeatViewHolder, i)
-                        //that.parent_fragment.update_column_label_size(i)
+                        that.column_layout.update_label_width(i)
                     }
                 }
                 override fun onItemRangeInserted(start: Int, count: Int) {
@@ -60,6 +59,21 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
                 //override fun onChanged() { }
             }
         )
+
+        //this.recycler.viewTreeObserver.addOnScrollChangedListener {
+        //    var x = this.recycler.computeHorizontalScrollOffset()
+        //    this.column_layout.scrollTo(x)
+        //    //(rvColumnLabels.adapter as ColumnLabelAdapter).scrollToP(p)
+        //}
+
+        this.recycler.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, x: Int, y: Int) {
+                super.onScrolled(recyclerView, x, y)
+                that.column_layout.scroll(x)
+            }
+
+        })
+
     }
 
     private fun getMainActivity(): MainActivity {
@@ -182,7 +196,6 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
 
     override fun onBindViewHolder(holder: BeatViewHolder, position: Int) {
         this.updateItem(holder, position)
-        //this.parent_fragment.update_column_label_size(position)
     }
 
     fun updateItem(holder: BeatViewHolder, index: Int) {
@@ -199,7 +212,6 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
 
                 (holder.itemView as ViewGroup).addView(beat_wrapper)
 
-                println("ADDING $index to $channel:$line_offset")
                 this.buildTreeView(beat_wrapper as ViewGroup, BeatKey(channel, line_offset, index))
             }
         }
@@ -216,15 +228,12 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
         }
 
         working_view = working_view.parent as View
-        println("XX $working_view")
-        println("YX ${working_view.parent}")
 
         val y = (working_view.parent as ViewGroup).indexOfChild(working_view)
         val (channel, line_offset) = this.get_opus_manager().get_channel_index(y)
 
         var viewholder = (working_view.parent as BackLinkView).viewHolder!!
         var beat = viewholder.getBindingAdapterPosition()
-        println("$channel, $line_offset, $beat, $position")
         return Pair(BeatKey(channel, line_offset, beat), position)
     }
 
@@ -435,10 +444,8 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
         var column_view_holder = this.recycler.findViewHolderForAdapterPosition(beatkey.beat) ?: return
         var column_view = column_view_holder.itemView
         var y = opus_manager.get_y(beatkey.channel, beatkey.line_offset)
-        println("$column_view, ${(column_view as ViewGroup).childCount} / $y")
         (column_view as ViewGroup).removeViewAt(y)
         this.buildTreeView(column_view, beatkey, listOf(), y)
-        println("BUILT")
     }
 
     fun validate_leaf(beatkey: BeatKey, position: List<Int>, valid: Boolean) {
@@ -476,8 +483,7 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
             }
         }
 
-        println("Adjusted beat $beat")
-        this.column_adapter.set_label_width(beat, max_width)
+        this.column_layout.set_label_width(beat, max_width)
     }
 
     fun __tick_resize_beat_cell(holder: BeatViewHolder, channel: Int, line_offset: Int, beat: Int, new_width: Int) {
@@ -533,21 +539,4 @@ enum class FocusType {
     Row,
     Column
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

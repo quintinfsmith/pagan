@@ -1,19 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
-    android:layout_height="45dp"
-    android:paddingTop="@dimen/normal_padding"
-    android:paddingBottom="@dimen/normal_padding"
+<TextView android:layout_marginTop="2dp"
+    android:layout_marginBottom="2dp"
+    android:layout_height="41dp"
     android:minWidth="32dp"
-    android:layout_width="wrap_content">
-
-    <TextView
-        android:gravity="center"
-        android:layout_width="match_parent"
-        android:background="?attr/label_bg"
-        android:textColor="?attr/label_fg"
-        android:id="@+id/textView"
-        android:text=""
-        android:layout_height="match_parent"/>
-</LinearLayout>
-
+    android:gravity="center"
+    android:layout_width="match_parent"
+    android:background="?attr/label_bg"
+    android:textColor="?attr/label_fg"
+    android:id="@+id/textView"
+    android:text=""
+    xmlns:android="http://schemas.android.com/apk/res/android" />

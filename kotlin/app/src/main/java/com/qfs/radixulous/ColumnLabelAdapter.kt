@@ -3,6 +3,7 @@ package com.qfs.radixulous
 import android.content.Context
 import android.view.*
 import android.widget.LinearLayout
+import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -10,7 +11,8 @@ import androidx.recyclerview.widget.RecyclerView
 class ColumnLabelAdapter(var main_fragment: MainFragment, var recycler: RecyclerView) : RecyclerView.Adapter<ColumnLabelAdapter.ColumnLabelViewHolder>() {
     // BackLink so I can get the x offset from a view in the view holder
     var column_widths = mutableListOf<Int>()
-    class LabelView(context: Context): LinearLayout(context) {
+
+    class LabelView(context: Context): RelativeLayout(context) {
         var viewHolder: ColumnLabelViewHolder? = null
         var textView: TextView = LayoutInflater.from(this.context).inflate(
             R.layout.table_column_label,
@@ -25,6 +27,7 @@ class ColumnLabelAdapter(var main_fragment: MainFragment, var recycler: Recycler
             this.textView.text = text
         }
     }
+
     class ColumnLabelViewHolder(itemView: LabelView) : RecyclerView.ViewHolder(itemView) {
         init {
             itemView.viewHolder = this
@@ -76,6 +79,7 @@ class ColumnLabelAdapter(var main_fragment: MainFragment, var recycler: Recycler
         var item_view = holder.itemView as LabelView
         item_view.set_text(position.toString())
         item_view.textView.width = (120 * this.column_widths[position]) - 10
+        println("$position ${this.column_widths[position]}")
     }
 
     fun set_label_width(beat: Int, width: Int) {
@@ -87,8 +91,7 @@ class ColumnLabelAdapter(var main_fragment: MainFragment, var recycler: Recycler
         return this.column_widths.size
     }
 
-    fun scrollToX(x: Int) {
-        var current_x = this.recycler.computeHorizontalScrollOffset()
-        this.recycler.scrollBy(x - current_x, 0)
+    fun scroll(x: Int) {
+        this.recycler.scrollBy(x, 0)
     }
 }

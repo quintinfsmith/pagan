@@ -1,24 +1,17 @@
 package com.qfs.radixulous
 
 import android.graphics.Rect
-import android.net.Uri
 import android.os.Bundle
 import android.view.*
-import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.*
-import androidx.core.view.DragStartHelper
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResultListener
 import androidx.recyclerview.widget.RecyclerView
-import androidx.recyclerview.widget.RecyclerView.SmoothScroller
-import com.qfs.radixulous.apres.MIDI
 import com.qfs.radixulous.databinding.FragmentMainBinding
 import com.qfs.radixulous.opusmanager.BeatKey
 import com.qfs.radixulous.opusmanager.FlagOperation
 import com.qfs.radixulous.opusmanager.OpusEvent
 import com.qfs.radixulous.opusmanager.UpdateFlag
-import java.io.FileInputStream
-import kotlin.concurrent.thread
 import com.qfs.radixulous.opusmanager.HistoryLayer as OpusManager
 
 /**
@@ -57,19 +50,17 @@ class MainFragment : Fragment() {
         val rvBeatTable = view.findViewById<RecyclerView>(R.id.rvBeatTable)
         val svTable: ScrollView = view.findViewById(R.id.svTable)
         val rvColumnLabels = view.findViewById<RecyclerView>(R.id.rvColumnLabels)
-        val svLineLabels: ScrollView = view.findViewById(R.id.svLineLabels)
+        val rvRowLabels = view.findViewById<RecyclerView>(R.id.rvRowLabels)
 
-        var column_label_adapter = ColumnLabelAdapter(this, rvColumnLabels)
+        RowLabelAdapter(this, rvRowLabels)
+
         // init OpusManagerAdapter
-        OpusManagerAdapter(this, rvBeatTable, column_label_adapter)
+        OpusManagerAdapter(this, rvBeatTable, ColumnLabelAdapter(this, rvColumnLabels))
 
-        rvBeatTable.viewTreeObserver.addOnScrollChangedListener {
-            println("${rvBeatTable.scrollX} -----")
-            (rvColumnLabels.adapter as ColumnLabelAdapter).scrollToX(rvBeatTable.computeHorizontalScrollOffset())
+        svTable.viewTreeObserver.addOnScrollChangedListener {
+            (rvRowLabels.adapter as RowLabelAdapter).scrollToY(svTable.scrollY)
         }
-        //svTable.viewTreeObserver.addOnScrollChangedListener {
-        //    svLineLabels.scrollY = svTable.scrollY
-        //}
+
         //rvColumnLabels.viewTreeObserver.addOnScrollChangedListener {
         //    rvColumnLabels.scrollX = rvBeatTable.scrollX
         //}
@@ -945,6 +936,7 @@ class MainFragment : Fragment() {
             val beat_table = this.getMain().findViewById<RecyclerView>(R.id.rvBeatTable)
             var beat_table_adapter = beat_table.adapter as OpusManagerAdapter
             var rvColumnLabels_adapter = this.getMain().findViewById<RecyclerView>(R.id.rvColumnLabels).adapter as ColumnLabelAdapter
+            var rvRowLabels_adapter = this.getMain().findViewById<RecyclerView>(R.id.rvRowLabels).adapter as RowLabelAdapter
 
             var main = this.getMain()
             val opus_manager = main.getOpusManager()
@@ -993,10 +985,10 @@ class MainFragment : Fragment() {
                         }
                         when (line_flag.operation) {
                             FlagOperation.Pop -> {
-                                this.remove_line_label(line_flag.line)
+                                rvRowLabels_adapter.removeRowLabel(line_flag.line)
                             }
                             FlagOperation.New -> {
-                                this.insert_line_label(line_flag.line)
+                                rvRowLabels_adapter.addRowLabel()
                             }
                         }
                     }
@@ -1011,7 +1003,6 @@ class MainFragment : Fragment() {
 
             //this.tick_resize_beats(updated_beats.toList())
             for (b in updated_beats) {
-                println("$b Beat Changed")
                 beat_table_adapter.notifyItemChanged(b)
             }
             //beat_table_adapter.notifyItemRangeChanged(
@@ -1084,6 +1075,21 @@ class MainFragment : Fragment() {
 
         this.tick()
         this.setContextMenu(ContextMenu.Line)
+    }
+
+    fun get_label_text(y: Int): String {
+        var opus_manager = this.getMain().getOpusManager()
+        var (channel, line_offset) = opus_manager.get_channel_index(y)
+        return if (!opus_manager.is_percussion(channel)) {
+            if (line_offset == 0) {
+                "$channel:$line_offset"
+            } else {
+                "  :$line_offset"
+            }
+        } else {
+            val instrument = opus_manager.get_percussion_instrument(line_offset)
+            "P:$instrument"
+        }
     }
 
 }

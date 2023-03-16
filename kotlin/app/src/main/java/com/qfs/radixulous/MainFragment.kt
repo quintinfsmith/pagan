@@ -6,6 +6,8 @@ import android.view.*
 import android.widget.*
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResultListener
+import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.radixulous.databinding.FragmentMainBinding
 import com.qfs.radixulous.opusmanager.BeatKey
@@ -817,10 +819,14 @@ class MainFragment : Fragment() {
         this.tick()
     }
 
-    fun update_leaf_labels(opus_manager: OpusManager) {
+    fun update_leaf_labels() {
         val beat_table = this.getMain().findViewById<RecyclerView>(R.id.rvBeatTable)
         val beat_table_adapter = beat_table.adapter as OpusManagerAdapter
-        for (i in 0 until opus_manager.opus_beat_count) {
+
+        var start = (beat_table.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
+        var end = (beat_table.layoutManager as LinearLayoutManager).findLastVisibleItemPosition()
+
+        for (i in start .. end) {
             beat_table_adapter.notifyItemChanged(i)
         }
     }

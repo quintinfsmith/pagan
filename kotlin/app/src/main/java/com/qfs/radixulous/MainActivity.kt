@@ -105,7 +105,7 @@ class MainActivity : AppCompatActivity() {
 
                 val opus_manager = that.getOpusManager()
 
-                //fragment.update_leaf_labels(opus_manager)
+                fragment.update_leaf_labels()
                 that.update_channel_instruments(opus_manager)
 
             }

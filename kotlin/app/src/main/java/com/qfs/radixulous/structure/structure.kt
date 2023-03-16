@@ -356,27 +356,26 @@ public class OpusTree<T> {
     }
 
     fun clear_singles() {
-        val stack: MutableList<OpusTree<T>> = mutableListOf()
-        for (k in this.divisions.keys) {
-            stack.add(this.divisions[k]!!)
+        if (this.is_leaf()) {
+            return
         }
 
-        while (stack.size > 0) {
-            val working_node = stack.removeAt(0)
-            if (working_node.is_leaf()) {
-                continue
-            }
-            if (working_node.size == 1) {
-                val subnode = working_node.divisions[0]!!
-                if (! subnode.is_leaf()) {
-                    working_node.replace_with(subnode)
-                    stack.add(subnode)
+        if (this.size == 1 && this.divisions.size == 1) {
+            var child = this.divisions.remove(0)!!
+            if (!child.is_event()) {
+                this.set_size(child.size)
+                for ((i, grandchild) in child.divisions) {
+                    this.divisions[i] = grandchild
+                    grandchild.parent = this
                 }
             } else {
-                for (child in working_node.divisions.values) {
-                    stack.add(child)
-                }
+                this.event = child.get_event()
+                return
             }
+        }
+
+        for (child in this.divisions.values) {
+            child.clear_singles()
         }
     }
 

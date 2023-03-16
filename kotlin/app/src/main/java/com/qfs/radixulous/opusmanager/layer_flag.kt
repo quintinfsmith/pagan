@@ -6,7 +6,8 @@ enum class UpdateFlag {
     Beat,
     BeatMod,
     Line,
-    AbsVal
+    AbsVal,
+    Clear
 }
 enum class FlagOperation {
     Pop,
@@ -19,6 +20,15 @@ class UpdatesCache {
     private var beat_change: MutableList<BeatKey> = mutableListOf()
     private var line_flag: MutableList<LineFlag> = mutableListOf()
     private var absolute_value_flag: MutableList<Pair<BeatKey, List<Int>>> = mutableListOf()
+    private var clear_flag = mutableListOf<Pair<List<Int>, Int>>()
+
+    fun dequeue_clear_flag(): Pair<List<Int>, Int>? {
+        return if (this.clear_flag.isEmpty()) {
+            null
+        } else {
+            this.clear_flag.removeFirst()
+        }
+    }
 
     fun dequeue_order_flag(): UpdateFlag? {
         return if (this.order_queue.isEmpty()) {
@@ -71,9 +81,9 @@ class UpdatesCache {
         this.order_queue.add(UpdateFlag.BeatMod)
         this.beat_change.add(beat_key)
     }
-    fun flag_line_pop(channel: Int, line_offset: Int) {
+    fun flag_line_pop(channel: Int, line_offset: Int, beat_count: Int) {
         this.order_queue.add(UpdateFlag.Line)
-        this.line_flag.add(LineFlag(channel, line_offset, 0, FlagOperation.Pop))
+        this.line_flag.add(LineFlag(channel, line_offset, beat_count, FlagOperation.Pop))
     }
     fun flag_line_new(channel: Int, line_offset: Int, beat_count: Int) {
         this.order_queue.add(UpdateFlag.Line)
@@ -85,12 +95,18 @@ class UpdatesCache {
         this.absolute_value_flag.add(Pair(beatkey, position))
     }
 
+    fun flag_clear(line_counts: List<Int>, beats: Int) {
+        this.order_queue.add(UpdateFlag.Clear)
+        this.clear_flag.add(Pair(line_counts, beats))
+    }
+
     fun purge() {
         this.order_queue.clear()
         this.beat_flag.clear()
         this.beat_change.clear()
         this.line_flag.clear()
         this.absolute_value_flag.clear()
+        this.clear_flag.clear()
     }
 
 }
@@ -105,6 +121,9 @@ open class FlagLayer : LinksLayer() {
         return this.cache.dequeue_line()
     }
 
+    fun fetch_flag_clear(): Pair<List<Int>, Int>? {
+        return this.cache.dequeue_clear_flag()
+    }
     fun fetch_flag_beat(): Pair<Int, FlagOperation>? {
         return this.cache.dequeue_beat()
     }
@@ -124,7 +143,7 @@ open class FlagLayer : LinksLayer() {
 
     override fun remove_channel(channel: Int) {
         for (i in 0 until this.channels[channel].size) {
-            this.cache.flag_line_pop(channel, 0)
+            this.cache.flag_line_pop(channel, 0, this.opus_beat_count)
         }
         super.remove_channel(channel)
     }
@@ -214,7 +233,7 @@ open class FlagLayer : LinksLayer() {
 
     override fun remove_line(channel: Int, index: Int): MutableList<OpusTree<OpusEvent>> {
         var output = super.remove_line(channel, index)
-        this.cache.flag_line_pop(channel, index)
+        this.cache.flag_line_pop(channel, index, this.opus_beat_count)
         return output
     }
 
@@ -252,16 +271,7 @@ open class FlagLayer : LinksLayer() {
         var channel_counts = this.get_channel_line_counts()
         var beat_count = this.opus_beat_count
         super.clear()
-        for (b in 0 until beat_count) {
-            this.cache.flag_beat_pop(b)
-        }
-
-        channel_counts.forEachIndexed { channel, count ->
-            for (i in 0 until count) {
-                this.cache.flag_line_pop(channel, i)
-            }
-        }
-
+        this.cache.flag_clear(channel_counts, beat_count)
     }
 
 }

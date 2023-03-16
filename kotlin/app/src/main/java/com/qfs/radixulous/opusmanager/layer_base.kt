@@ -682,8 +682,6 @@ open class OpusManagerBase {
     open fun load(path: String) {
         this.clear()
 
-        this.opus_beat_count = 0
-        this.channels.clear()
         this.path = path
 
         this.load_json_file(path)

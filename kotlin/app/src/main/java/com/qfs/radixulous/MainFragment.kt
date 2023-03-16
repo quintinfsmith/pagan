@@ -649,7 +649,7 @@ class MainFragment : Fragment() {
         val beatkey = cursor.get_beatkey()
 
 
-        var event = OpusEvent(
+        val event = OpusEvent(
             if (current_tree.is_event()) {
                 val event = current_tree.get_event()!!
                 val old_octave = event.note / event.radix
@@ -737,8 +737,8 @@ class MainFragment : Fragment() {
         val popupMenu = PopupMenu(this.binding.root.context, view)
         val cursor = opus_manager.get_cursor()
         val drums = resources.getStringArray(R.array.midi_drums)
-        var preset = main.soundfont.get_preset(0, 128)
-        var available_drum_keys = mutableSetOf<Int>()
+        val preset = main.soundfont.get_preset(0, 128)
+        val available_drum_keys = mutableSetOf<Int>()
 
         for (preset_instrument in preset.instruments) {
             if (preset_instrument.instrument == null) {
@@ -756,7 +756,7 @@ class MainFragment : Fragment() {
             }
         }
 
-        var line_map = opus_manager.channels[cursor.get_beatkey().channel].line_map
+        val line_map = opus_manager.channels[cursor.get_beatkey().channel].line_map
         if (line_map != null) {
             for ((offset, instrument) in line_map) {
                 if (instrument + 27 in available_drum_keys) {
@@ -807,7 +807,7 @@ class MainFragment : Fragment() {
         val main = this.getMain()
         val opus_manager = main.getOpusManager()
 
-        var rvBeatTable = main.findViewById<RecyclerView>(R.id.rvBeatTable)
+        val rvBeatTable = main.findViewById<RecyclerView>(R.id.rvBeatTable)
         (rvBeatTable.adapter as OpusManagerAdapter).set_focus_type(FocusType.Column)
 
         val cursor = opus_manager.get_cursor()
@@ -819,8 +819,10 @@ class MainFragment : Fragment() {
 
     fun update_leaf_labels(opus_manager: OpusManager) {
         val beat_table = this.getMain().findViewById<RecyclerView>(R.id.rvBeatTable)
-        var beat_table_adapter = beat_table.adapter as OpusManagerAdapter
-        beat_table_adapter.update_leaf_labels()
+        val beat_table_adapter = beat_table.adapter as OpusManagerAdapter
+        for (i in 0 until opus_manager.opus_beat_count) {
+            beat_table_adapter.notifyItemChanged(i)
+        }
     }
 
     fun line_update_labels(opus_manager: OpusManager) {
@@ -848,7 +850,7 @@ class MainFragment : Fragment() {
 
 
     private fun om_split(splits: Int) {
-        var main = this.getMain()
+        val main = this.getMain()
         val opus_manager = main.getOpusManager()
         opus_manager.split_tree_at_cursor(splits)
 
@@ -857,7 +859,7 @@ class MainFragment : Fragment() {
     }
 
     private fun om_insert(count: Int) {
-        var main = this.getMain()
+        val main = this.getMain()
         val opus_manager = main.getOpusManager()
 
         val beatkey = opus_manager.get_cursor().get_beatkey()
@@ -874,7 +876,7 @@ class MainFragment : Fragment() {
     }
 
     private fun om_remove(count: Int) {
-        var main = this.getMain()
+        val main = this.getMain()
         val opus_manager = main.getOpusManager()
 
         val cursor = opus_manager.get_cursor()
@@ -888,20 +890,20 @@ class MainFragment : Fragment() {
     }
 
     private fun om_insert_line(count: Int) {
-        var main = this.getMain()
+        val main = this.getMain()
         val opus_manager = main.getOpusManager()
-        var beatkey = opus_manager.get_cursor().get_beatkey()
+        val beatkey = opus_manager.get_cursor().get_beatkey()
         opus_manager.new_line(beatkey.channel, beatkey.line_offset + 1, count)
         this.setContextMenu(ContextMenu.Line) // TODO: overkill?
         this.tick()
     }
 
     private fun om_remove_line(count: Int) {
-        var main = this.getMain()
+        val main = this.getMain()
         val opus_manager = main.getOpusManager()
 
         if (opus_manager.line_count() > 1) {
-            var beatkey = opus_manager.get_cursor().get_beatkey()
+            val beatkey = opus_manager.get_cursor().get_beatkey()
             opus_manager.remove_line(beatkey.channel, beatkey.line_offset, count)
         }
 
@@ -910,18 +912,18 @@ class MainFragment : Fragment() {
     }
 
     private fun om_remove_beat(count: Int) {
-        var main = this.getMain()
+        val main = this.getMain()
         val opus_manager = main.getOpusManager()
 
-        var cursor = opus_manager.get_cursor()
+        val cursor = opus_manager.get_cursor()
         opus_manager.remove_beat(cursor.get_beatkey().beat, count)
         this.tick()
     }
 
     private fun om_insert_beat(count: Int) {
-        var main = this.getMain()
+        val main = this.getMain()
         val opus_manager = main.getOpusManager()
-        var cursor = opus_manager.get_cursor()
+        val cursor = opus_manager.get_cursor()
         opus_manager.insert_beat(cursor.get_beatkey().beat, count)
         this.tick()
     }
@@ -934,11 +936,11 @@ class MainFragment : Fragment() {
             this.ticking = true
 
             val beat_table = this.getMain().findViewById<RecyclerView>(R.id.rvBeatTable)
-            var beat_table_adapter = beat_table.adapter as OpusManagerAdapter
+            val beat_table_adapter = beat_table.adapter as OpusManagerAdapter
             var rvColumnLabels_adapter = this.getMain().findViewById<RecyclerView>(R.id.rvColumnLabels).adapter as ColumnLabelAdapter
-            var rvRowLabels_adapter = this.getMain().findViewById<RecyclerView>(R.id.rvRowLabels).adapter as RowLabelAdapter
+            val rvRowLabels_adapter = this.getMain().findViewById<RecyclerView>(R.id.rvRowLabels).adapter as RowLabelAdapter
 
-            var main = this.getMain()
+            val main = this.getMain()
             val opus_manager = main.getOpusManager()
 
             var updated_beatkeys = mutableSetOf<BeatKey>()
@@ -961,12 +963,10 @@ class MainFragment : Fragment() {
 
                         when (operation) {
                             FlagOperation.New -> {
-                                rvColumnLabels_adapter.addColumnLabel()
-                                beat_table_adapter.notifyItemInserted(index)
+                                beat_table_adapter.addBeatColumn(index)
                             }
                             FlagOperation.Pop -> {
-                                beat_table_adapter.notifyItemRemoved(index)
-                                rvColumnLabels_adapter.removeColumnLabel(index)
+                                beat_table_adapter.removeBeatColumn(index)
                             }
                         }
                     }
@@ -979,10 +979,11 @@ class MainFragment : Fragment() {
                     }
 
                     UpdateFlag.Line -> {
-                        var line_flag = opus_manager.fetch_flag_line() ?: break
-                        for (i in 0 until opus_manager.opus_beat_count ) {
+                        val line_flag = opus_manager.fetch_flag_line() ?: break
+                        for (i in 0 until line_flag.beat_count ) {
                             updated_beats.add(i)
                         }
+
                         when (line_flag.operation) {
                             FlagOperation.Pop -> {
                                 rvRowLabels_adapter.removeRowLabel(line_flag.line)
@@ -993,26 +994,39 @@ class MainFragment : Fragment() {
                         }
                     }
 
+                    UpdateFlag.Clear -> {
+                        var clear_flag = opus_manager.fetch_flag_clear() ?: break
+
+                        var channel_offset = 0
+                        clear_flag.first.forEachIndexed { _: Int, j: Int ->
+                            channel_offset += j
+                        }
+                        for (i in channel_offset - 1 downTo 0) {
+                            rvRowLabels_adapter.removeRowLabel(i)
+                        }
+
+                        for (i in 0 until clear_flag.second) {
+                            beat_table_adapter.removeBeatColumn((clear_flag.second - 1) - i)
+                        }
+
+                        updated_beats.clear()
+                    }
+
                     null -> {
                         break
                     }
                 }
             }
 
-            //this.line_update_labels(opus_manager)
+            this.line_update_labels(opus_manager)
 
             //this.tick_resize_beats(updated_beats.toList())
             for (b in updated_beats) {
                 beat_table_adapter.notifyItemChanged(b)
             }
-            //beat_table_adapter.notifyItemRangeChanged(
-            //    min_changed_beat,
-            //    opus_manager.opus_beat_count - min_changed_beat
-            //)
-
             for (i in 0 until validate_count) {
                 val (beatkey, position) = opus_manager.fetch_flag_absolute_value() ?: break
-                var abs_value = opus_manager.get_absolute_value(beatkey, position) ?: continue
+                val abs_value = opus_manager.get_absolute_value(beatkey, position) ?: continue
                 beat_table_adapter.validate_leaf(beatkey, position, abs_value in 0..95)
             }
 
@@ -1023,7 +1037,7 @@ class MainFragment : Fragment() {
     }
 
     fun newProject() {
-        var main = this.getMain()
+        val main = this.getMain()
         main.newProject()
 
         this.setContextMenu(ContextMenu.Leaf)
@@ -1031,13 +1045,13 @@ class MainFragment : Fragment() {
     }
 
     fun scrollTo(beatkey: BeatKey, position: List<Int>) {
-        var leafView: View? = this.cache.getTreeView(beatkey, position) ?: return
+        val leafView: View? = this.cache.getTreeView(beatkey, position) ?: return
         if (leafView !is LeafButton) {
             return
         }
 
-        var hsvTable = this.getMain().findViewById<RecyclerView>(R.id.rvBeatTable)
-        var svTable = this.getMain().findViewById<ScrollView>(R.id.svTable)
+        val hsvTable = this.getMain().findViewById<RecyclerView>(R.id.rvBeatTable)
+        val svTable = this.getMain().findViewById<ScrollView>(R.id.svTable)
 
         val offsetViewBounds = Rect()
         // TODO: FIX this KLUDGE. I don't know of a way to use a callback here offhand
@@ -1050,8 +1064,8 @@ class MainFragment : Fragment() {
             }
         }
 
-        var offset_left = offsetViewBounds.left
-        var offset_top = offsetViewBounds.top
+        val offset_left = offsetViewBounds.left
+        val offset_top = offsetViewBounds.top
 
         if (offset_left < hsvTable.scrollX || offset_left > hsvTable.scrollX + svTable.width) {
             hsvTable.scrollTo(offset_left, 0)
@@ -1065,11 +1079,11 @@ class MainFragment : Fragment() {
         val main = this.getMain()
         main.stop_playback()
 
-        var rvBeatTable = main.findViewById<RecyclerView>(R.id.rvBeatTable)
+        val rvBeatTable = main.findViewById<RecyclerView>(R.id.rvBeatTable)
         (rvBeatTable.adapter as OpusManagerAdapter).set_focus_type(FocusType.Row)
 
 
-        var opus_manager = main.getOpusManager()
+        val opus_manager = main.getOpusManager()
         val cursor = opus_manager.get_cursor()
         opus_manager.set_cursor_position(y, cursor.x, listOf())
 
@@ -1078,8 +1092,8 @@ class MainFragment : Fragment() {
     }
 
     fun get_label_text(y: Int): String {
-        var opus_manager = this.getMain().getOpusManager()
-        var (channel, line_offset) = opus_manager.get_channel_index(y)
+        val opus_manager = this.getMain().getOpusManager()
+        val (channel, line_offset) = opus_manager.get_channel_index(y)
         return if (!opus_manager.is_percussion(channel)) {
             if (line_offset == 0) {
                 "$channel:$line_offset"
@@ -1091,5 +1105,4 @@ class MainFragment : Fragment() {
             "P:$instrument"
         }
     }
-
 }

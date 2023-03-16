@@ -368,7 +368,7 @@ open class CursorLayer() : FlagLayer() {
                 counter += 1
             }
         }
-        throw Exception("IndexError")
+        throw Exception("IndexError $y / $counter")
     }
 
     fun get_y(channel: Int, rel_line_offset: Int): Int {
@@ -454,14 +454,14 @@ open class CursorLayer() : FlagLayer() {
     }
 
     override fun new() {
-        super.new()
         this.get_cursor().set(0,0, listOf(0))
+        super.new()
         this.get_cursor().settle()
     }
 
     override fun load(path: String) {
-        super.load(path)
         this.get_cursor().set(0,0, listOf(0))
+        super.load(path)
         this.get_cursor().settle()
     }
 

@@ -9,6 +9,7 @@ import com.qfs.radixulous.opusmanager.BeatKey
 import com.qfs.radixulous.opusmanager.HistoryLayer as OpusManager
 
 class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: RecyclerView, var column_layout: ColumnLabelAdapter) : RecyclerView.Adapter<OpusManagerAdapter.BeatViewHolder>() {
+    var beat_count = 0
     var _longclicking_leaf: View? = null
 
     var _dragging_leaf: View? = null
@@ -38,42 +39,33 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
         )
 
         val that = this
-
         this.registerAdapterDataObserver(
             object: RecyclerView.AdapterDataObserver() {
                 override fun onItemRangeRemoved(start: Int, count: Int) {
-                    for (i in start until that.itemCount) { }
+                    for (i in 0 until count) {
+                        that.column_layout.removeColumnLabel()
+                    }
                 }
                 override fun onItemRangeChanged(start: Int, count: Int) {
                     for (i in start until that.itemCount) {
                         var viewHolder = that.recycler.findViewHolderForAdapterPosition(i) ?: continue
                         that.updateItem(viewHolder as BeatViewHolder, i)
-                        that.column_layout.update_label_width(i)
                     }
                 }
                 override fun onItemRangeInserted(start: Int, count: Int) {
-                    for (i in start until that.recycler.childCount) {
-                        //that.notifyItemInserted(i)
+                    for (i in 0 until count) {
+                        that.column_layout.addColumnLabel()
                     }
                 }
-                //override fun onChanged() { }
             }
         )
-
-        //this.recycler.viewTreeObserver.addOnScrollChangedListener {
-        //    var x = this.recycler.computeHorizontalScrollOffset()
-        //    this.column_layout.scrollTo(x)
-        //    //(rvColumnLabels.adapter as ColumnLabelAdapter).scrollToP(p)
-        //}
 
         this.recycler.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, x: Int, y: Int) {
                 super.onScrolled(recyclerView, x, y)
                 that.column_layout.scroll(x)
             }
-
         })
-
     }
 
     private fun getMainActivity(): MainActivity {
@@ -233,12 +225,22 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
         val (channel, line_offset) = this.get_opus_manager().get_channel_index(y)
 
         var viewholder = (working_view.parent as BackLinkView).viewHolder!!
-        var beat = viewholder.getBindingAdapterPosition()
+        var beat = viewholder.bindingAdapterPosition
         return Pair(BeatKey(channel, line_offset, beat), position)
     }
 
     override fun getItemCount(): Int {
-        return this.get_opus_manager().opus_beat_count
+        return this.beat_count
+    }
+    fun addBeatColumn(index: Int) {
+        this.beat_count += 1
+        this.notifyItemInserted(index)
+    }
+    fun removeBeatColumn(index: Int) {
+        if (this.beat_count > 0) {
+            this.beat_count -= 1
+        }
+        this.notifyItemRemoved(index)
     }
 
     private fun get_opus_manager(): OpusManager {
@@ -310,7 +312,9 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
 
     fun tick_unapply_cursor_focus() {
         this.focused_leafs.removeAll { leafbutton: LeafButton ->
-            leafbutton.isFocused = false
+            try {
+                leafbutton.isFocused = false
+            } catch (e: Exception) { }
             true
         }
     }
@@ -430,6 +434,7 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
                         x + this.linking_beat!!.beat
                     )
 
+
                     for (leafbutton in this.get_all_leaf_views(working_beat)) {
                         this.focus_leaf(leafbutton)
                     }
@@ -438,31 +443,8 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
         }
     }
 
-    fun rebuildBeatView(beatkey: BeatKey) {
-        val main = this.getMainActivity()
-        val opus_manager = main.getOpusManager()
-        var column_view_holder = this.recycler.findViewHolderForAdapterPosition(beatkey.beat) ?: return
-        var column_view = column_view_holder.itemView
-        var y = opus_manager.get_y(beatkey.channel, beatkey.line_offset)
-        (column_view as ViewGroup).removeViewAt(y)
-        this.buildTreeView(column_view, beatkey, listOf(), y)
-    }
-
     fun validate_leaf(beatkey: BeatKey, position: List<Int>, valid: Boolean) {
         this.get_leaf_view(beatkey, position)?.setInvalid(!valid)
-    }
-
-    fun update_leaf_labels() {
-        var opus_manager = this.get_opus_manager()
-        for (channel in 0 until opus_manager.channels.size) {
-            for (y in 0 until opus_manager.channels[channel].size) {
-                for (x in 0 until opus_manager.opus_beat_count) {
-                    for (leafbutton in this.get_all_leaf_views(BeatKey(channel, y, x))) {
-                        leafbutton.set_text(opus_manager.is_percussion(channel))
-                    }
-                }
-            }
-        }
     }
 
     fun adjust_beat_width(holder: BeatViewHolder, beat: Int) {

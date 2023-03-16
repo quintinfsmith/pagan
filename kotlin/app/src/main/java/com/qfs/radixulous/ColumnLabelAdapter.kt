@@ -14,14 +14,15 @@ class ColumnLabelAdapter(var main_fragment: MainFragment, var recycler: Recycler
 
     class LabelView(context: Context): RelativeLayout(context) {
         var viewHolder: ColumnLabelViewHolder? = null
-        var textView: TextView = LayoutInflater.from(this.context).inflate(
+        var textView: TextView =LayoutInflater.from(this.context).inflate(
             R.layout.table_column_label,
             this,
             false
         ) as TextView
 
         init {
-            this.addView(textView)
+            this.addView(this.textView)
+            this.textView.layoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT
         }
         fun set_text(text: String) {
             this.textView.text = text
@@ -43,15 +44,15 @@ class ColumnLabelAdapter(var main_fragment: MainFragment, var recycler: Recycler
         )
     }
 
-    fun addColumnLabel() {
-        this.column_widths.add(1)
+    fun addColumnLabel(default_width: Int = 1) {
+        this.column_widths.add(default_width)
         this.notifyItemInserted(this.column_widths.size - 1)
     }
 
-    fun removeColumnLabel(i: Int) {
-        if (i < this.column_widths.size) {
-            this.column_widths.removeAt(i)
-            this.notifyItemRemoved(i)
+    fun removeColumnLabel() {
+        if (this.column_widths.isNotEmpty()) {
+            this.column_widths.removeLast()
+            this.notifyItemRemoved(this.column_widths.size)
         }
     }
 
@@ -75,11 +76,18 @@ class ColumnLabelAdapter(var main_fragment: MainFragment, var recycler: Recycler
         return ColumnLabelViewHolder(label)
     }
 
+    override fun onViewAttachedToWindow(holder: ColumnLabelViewHolder) {
+        super.onViewAttachedToWindow(holder)
+        var beat = holder.bindingAdapterPosition
+
+        var item_view = holder.itemView
+        item_view.layoutParams.width = (120 * this.column_widths[beat])
+        item_view.layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT
+    }
+
     override fun onBindViewHolder(holder: ColumnLabelViewHolder, position: Int) {
         var item_view = holder.itemView as LabelView
         item_view.set_text(position.toString())
-        item_view.textView.width = (120 * this.column_widths[position]) - 10
-        println("$position ${this.column_widths[position]}")
     }
 
     fun set_label_width(beat: Int, width: Int) {

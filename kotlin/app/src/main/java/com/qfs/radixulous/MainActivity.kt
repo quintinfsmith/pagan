@@ -96,8 +96,6 @@ class MainActivity : AppCompatActivity() {
         this.appBarConfiguration = AppBarConfiguration(navController.graph)
         setupActionBarWithNavController(navController, this.appBarConfiguration)
 
-
-
         val drawerlayout = findViewById<DrawerLayout>(R.id.drawer_layout)
         val that = this
         drawerlayout.addDrawerListener( object: DrawerLayout.DrawerListener {
@@ -107,7 +105,7 @@ class MainActivity : AppCompatActivity() {
 
                 val opus_manager = that.getOpusManager()
 
-
+                //fragment.update_leaf_labels(opus_manager)
                 that.update_channel_instruments(opus_manager)
 
             }
@@ -115,6 +113,7 @@ class MainActivity : AppCompatActivity() {
             override fun onDrawerOpened(drawerView: View) { }
             override fun onDrawerStateChanged(newState: Int) { }
         })
+
         this.lockDrawer()
         //////////////////////////////////////////
         // TODO: clean up the file -> riff -> soundfont -> midi playback device process

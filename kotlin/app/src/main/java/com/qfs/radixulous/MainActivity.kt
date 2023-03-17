@@ -105,7 +105,8 @@ class MainActivity : AppCompatActivity() {
 
                 val opus_manager = that.getOpusManager()
 
-                fragment.update_leaf_labels()
+                fragment.refresh_leaf_labels()
+                fragment.update_line_labels()
                 that.update_channel_instruments(opus_manager)
 
             }
@@ -131,6 +132,7 @@ class MainActivity : AppCompatActivity() {
         for (channel in opus_manager.channels) {
             this.midi_input_device.sendEvent(ProgramChange(channel.midi_channel, channel.midi_instrument))
         }
+        val rvRowLabels_adapter = this.findViewById<RecyclerView>(R.id.rvRowLabels).adapter as RowLabelAdapter
     }
 
     override fun onBackPressed() {
@@ -287,7 +289,7 @@ class MainActivity : AppCompatActivity() {
 
                 if (main_fragment is MainFragment) {
                     this@MainActivity.runOnUiThread {
-                        main_fragment.scroll_to_beat(i)
+                        main_fragment.scroll_to_beat(i, true)
                     }
                 }
 
@@ -301,7 +303,7 @@ class MainActivity : AppCompatActivity() {
 
             if (this.in_play_back && main_fragment is MainFragment) {
                 this@MainActivity.runOnUiThread {
-                    main_fragment.scroll_to_beat(0)
+                    main_fragment.scroll_to_beat(0, true)
                 }
             }
 

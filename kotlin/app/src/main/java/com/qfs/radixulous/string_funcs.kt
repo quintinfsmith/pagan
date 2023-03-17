@@ -208,6 +208,8 @@ fun tree_from_midi(midi: MIDI): OpusTree<Set<OpusEvent>> {
     var max_tick: Int = 0
     var press_map = HashMap<Int, Pair<Int, Int>>()
 
+    var did_ts_change = false
+    var denominator = 4
     for (pair in midi.get_all_events()) {
         var tick = pair.first
         var event = pair.second
@@ -248,6 +250,11 @@ fun tree_from_midi(midi: MIDI): OpusTree<Set<OpusEvent>> {
             total_beat_offset += (tick - last_ts_change) / beat_size
             last_ts_change = tick
             beat_size = midi.get_ppqn() / 2.toFloat().pow(event.get_denominator()).toInt()
+            if (tick != 0) {
+                did_ts_change = true
+            } else {
+                denominator = 2.toFloat().pow(event.get_denominator()).toInt()
+            }
         } else if (event is SetTempo) {
             //pass TODO (maybe)
         }
@@ -268,11 +275,15 @@ fun tree_from_midi(midi: MIDI): OpusTree<Set<OpusEvent>> {
         opus.set(i, beat_tree)
     }
 
+    if (!did_ts_change) {
+        opus.reduce(opus.size / denominator)
+    }
+
     for ((k, beat) in opus.divisions) {
         beat.flatten()
         beat.reduce()
+        beat.clear_singles()
     }
-
     return opus
 }
 

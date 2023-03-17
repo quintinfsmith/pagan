@@ -22,8 +22,6 @@ import com.qfs.radixulous.opusmanager.HistoryLayer as OpusManager
 class MainFragment : Fragment() {
     private var active_context_menu_index: ContextMenu = ContextMenu.None
 
-    var linking_beat: BeatKey? = null
-    var linking_beat_b: BeatKey? = null
     private var relative_mode: Boolean = false
 
     private var _binding: FragmentMainBinding? = null
@@ -611,8 +609,10 @@ class MainFragment : Fragment() {
         val cursor = opus_manager.get_cursor()
         opus_manager.remove_link_from_network(cursor.get_beatkey())
         cursor.settle()
-        this.linking_beat = null
-        this.linking_beat_b = null
+        val beat_table = this.getMain().findViewById<RecyclerView>(R.id.rvBeatTable)
+        val beat_table_adapter = beat_table.adapter as OpusManagerAdapter
+        beat_table_adapter.cancelLinking()
+
         this.setContextMenu(ContextMenu.Leaf)
         this.tick()
     }
@@ -620,21 +620,24 @@ class MainFragment : Fragment() {
     private fun interact_btnUnlinkAll(view: View) {
         val main = this.getMain()
         val opus_manager = main.getOpusManager()
+
+        val beat_table = this.getMain().findViewById<RecyclerView>(R.id.rvBeatTable)
+        val beat_table_adapter = beat_table.adapter as OpusManagerAdapter
+        beat_table_adapter.cancelLinking()
+
         val cursor = opus_manager.get_cursor()
         opus_manager.clear_links_in_network(cursor.get_beatkey())
         cursor.settle()
-        this.linking_beat = null
-        this.linking_beat_b = null
+
         this.setContextMenu(ContextMenu.Leaf)
         this.tick()
     }
 
     private fun interact_btnCancelLink(view: View) {
-        val main = this.getMain()
-        val opus_manager = main.getOpusManager()
-        opus_manager.get_cursor().settle()
-        this.linking_beat = null
-        this.linking_beat_b = null
+        val beat_table = this.getMain().findViewById<RecyclerView>(R.id.rvBeatTable)
+        val beat_table_adapter = beat_table.adapter as OpusManagerAdapter
+
+        beat_table_adapter.cancelLinking()
         this.setContextMenu(ContextMenu.Leaf)
         this.tick()
     }
@@ -779,12 +782,12 @@ class MainFragment : Fragment() {
             )
 
             this.tick()
-            val y = opus_manager.get_cursor().get_y()
-            val textView: TextView = this.cache.getLineLabel(y)!!.findViewById(R.id.textView)
-            textView.text = "P:${it.itemId}"
             this.setContextMenu(ContextMenu.Line) // TODO: overkill?
+
+            this.update_line_labels()
             true
         }
+
         popupMenu.show()
     }
 
@@ -796,12 +799,22 @@ class MainFragment : Fragment() {
         main.play_midi(midi)
     }
 
-    fun scroll_to_beat(beat: Int) {
+    fun scroll_to_beat(beat: Int, select: Boolean = false) {
         val main = this.getMain()
-
         val rvBeatTable = main.findViewById<RecyclerView>(R.id.rvBeatTable)
-        rvBeatTable.smoothScrollToPosition(beat)
-        //val rvColumnLabels = main.findViewById<LinearLayout>(R.id.rvColumnLabels)
+        val rvColumnLabels = main.findViewById<RecyclerView>(R.id.rvColumnLabels)
+
+
+        // TODO: Would love this to smooth scroll, but the two rv's desync
+        rvBeatTable.scrollToPosition(beat)
+        rvColumnLabels.scrollToPosition(beat)
+
+
+        if (select) {
+            val opus_manager = main.getOpusManager()
+            val cursor = opus_manager.get_cursor()
+            this.set_cursor_position(cursor.y, beat, listOf(), FocusType.Column)
+        }
     }
 
 
@@ -809,25 +822,26 @@ class MainFragment : Fragment() {
         val main = this.getMain()
         val opus_manager = main.getOpusManager()
 
-        val rvBeatTable = main.findViewById<RecyclerView>(R.id.rvBeatTable)
-        (rvBeatTable.adapter as OpusManagerAdapter).set_focus_type(FocusType.Column)
-
         val cursor = opus_manager.get_cursor()
-        opus_manager.set_cursor_position(cursor.y, x, listOf())
+        this.set_cursor_position(cursor.y, x, listOf(), FocusType.Column)
 
         this.setContextMenu(ContextMenu.Beat)
-        this.tick()
     }
 
-    fun update_leaf_labels() {
+    fun refresh_leaf_labels() {
         val beat_table = this.getMain().findViewById<RecyclerView>(R.id.rvBeatTable)
         val beat_table_adapter = beat_table.adapter as OpusManagerAdapter
+        beat_table_adapter.refresh_leaf_labels()
+    }
 
-        var start = (beat_table.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
-        var end = (beat_table.layoutManager as LinearLayoutManager).findLastVisibleItemPosition()
+    fun update_line_labels() {
+        val rvRowLabels = this.getMain().findViewById<RecyclerView>(R.id.rvRowLabels)
+        val rvRowLabels_adapter = rvRowLabels.adapter as RowLabelAdapter
+        var start = (rvRowLabels.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
+        var end = (rvRowLabels.layoutManager as LinearLayoutManager).findLastVisibleItemPosition()
 
         for (i in start .. end) {
-            beat_table_adapter.notifyItemChanged(i)
+            rvRowLabels_adapter.notifyItemChanged(i)
         }
     }
 
@@ -943,18 +957,15 @@ class MainFragment : Fragment() {
 
             val beat_table = this.getMain().findViewById<RecyclerView>(R.id.rvBeatTable)
             val beat_table_adapter = beat_table.adapter as OpusManagerAdapter
-            var rvColumnLabels_adapter = this.getMain().findViewById<RecyclerView>(R.id.rvColumnLabels).adapter as ColumnLabelAdapter
             val rvRowLabels_adapter = this.getMain().findViewById<RecyclerView>(R.id.rvRowLabels).adapter as RowLabelAdapter
 
             val main = this.getMain()
             val opus_manager = main.getOpusManager()
 
-            var updated_beatkeys = mutableSetOf<BeatKey>()
             val updated_beats: MutableSet<Int> = mutableSetOf()
             var min_changed_beat = opus_manager.opus_beat_count
             var validate_count = 0
 
-            beat_table_adapter.tick_unapply_cursor_focus()
 
             while (true) {
                 when (opus_manager.fetch_next_flag()) {
@@ -1026,17 +1037,9 @@ class MainFragment : Fragment() {
 
             this.line_update_labels(opus_manager)
 
-            //this.tick_resize_beats(updated_beats.toList())
             for (b in updated_beats) {
                 beat_table_adapter.notifyItemChanged(b)
             }
-            for (i in 0 until validate_count) {
-                val (beatkey, position) = opus_manager.fetch_flag_absolute_value() ?: break
-                val abs_value = opus_manager.get_absolute_value(beatkey, position) ?: continue
-                beat_table_adapter.validate_leaf(beatkey, position, abs_value in 0..95)
-            }
-
-            beat_table_adapter.tick_apply_cursor_focus()
 
             this.ticking = false
         }
@@ -1085,15 +1088,10 @@ class MainFragment : Fragment() {
         val main = this.getMain()
         main.stop_playback()
 
-        val rvBeatTable = main.findViewById<RecyclerView>(R.id.rvBeatTable)
-        (rvBeatTable.adapter as OpusManagerAdapter).set_focus_type(FocusType.Row)
-
-
         val opus_manager = main.getOpusManager()
         val cursor = opus_manager.get_cursor()
-        opus_manager.set_cursor_position(y, cursor.x, listOf())
+        this.set_cursor_position(y, cursor.x, listOf(), FocusType.Row)
 
-        this.tick()
         this.setContextMenu(ContextMenu.Line)
     }
 
@@ -1110,5 +1108,18 @@ class MainFragment : Fragment() {
             val instrument = opus_manager.get_percussion_instrument(line_offset)
             "P:$instrument"
         }
+    }
+
+    fun set_cursor_position(y: Int, x: Int, position: List<Int>, type: FocusType = FocusType.Cell) {
+        val main = this.getMain()
+        val rvBeatTable = main.findViewById<RecyclerView>(R.id.rvBeatTable)
+        var adapter = rvBeatTable.adapter as OpusManagerAdapter
+        val opus_manager = main.getOpusManager()
+
+        adapter.unset_cursor_position()
+
+        opus_manager.set_cursor_position(y, x, position)
+
+        adapter.set_cursor_position(y, x, position, type)
     }
 }

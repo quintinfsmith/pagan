@@ -6,6 +6,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.SimpleItemAnimator
 
 class RowLabelAdapter(var main_fragment: MainFragment, var recycler: RecyclerView) : RecyclerView.Adapter<RowLabelAdapter.RowLabelViewHolder>() {
     // BackLink so I can get the x offset from a view in the view holder
@@ -38,6 +39,7 @@ class RowLabelAdapter(var main_fragment: MainFragment, var recycler: RecyclerVie
     init {
         this.recycler.adapter = this
         this.recycler.layoutManager = LinearLayoutManager(this.recycler.context)
+        (this.recycler.itemAnimator as SimpleItemAnimator).supportsChangeAnimations = false
     }
 
     fun addRowLabel() {

@@ -311,6 +311,8 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
             this.linking_beat_b = null
         }
 
+        this.parent_fragment.setContextMenu(ContextMenu.Leaf)
+
         val tree = opus_manager.get_tree_at_cursor()
         if (tree.is_event()) {
             main.play_event(
@@ -322,9 +324,6 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
                 }
             )
         }
-
-        this.refresh_leaf_labels()
-        this.parent_fragment.setContextMenu(ContextMenu.Leaf)
     }
 
     private fun interact_leafView_longclick(view: View) {

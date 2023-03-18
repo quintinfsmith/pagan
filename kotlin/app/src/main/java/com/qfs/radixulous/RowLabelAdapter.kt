@@ -3,6 +3,8 @@ package com.qfs.radixulous
 import android.content.Context
 import android.view.*
 import android.widget.LinearLayout
+import android.widget.TableLayout
+import android.widget.TableRow
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -11,6 +13,7 @@ import androidx.recyclerview.widget.SimpleItemAnimator
 class RowLabelAdapter(var main_fragment: MainFragment, var recycler: RecyclerView) : RecyclerView.Adapter<RowLabelAdapter.RowLabelViewHolder>() {
     // BackLink so I can get the x offset from a view in the view holder
     private var row_count = 0
+    private var _dragging_rowLabel: View? = null
 
     class LabelView(context: Context): LinearLayout(context) {
         var viewHolder: RowLabelViewHolder? = null
@@ -67,6 +70,37 @@ class RowLabelAdapter(var main_fragment: MainFragment, var recycler: RecyclerVie
             }
         }
 
+        label.setOnTouchListener { view: View, touchEvent: MotionEvent ->
+            if (this._dragging_rowLabel == null && touchEvent.action == MotionEvent.ACTION_MOVE) {
+                this._dragging_rowLabel = view
+                view.startDragAndDrop(
+                    null,
+                    View.DragShadowBuilder(view),
+                    null,
+                    0
+                )
+                return@setOnTouchListener true
+            }
+            false
+        }
+
+        label.setOnDragListener { view: View, dragEvent: DragEvent ->
+            when (dragEvent.action) {
+                //DragEvent.ACTION_DRAG_STARTED -> { }
+                DragEvent.ACTION_DROP -> {
+                    var from_label =  this._dragging_rowLabel
+                    if (from_label != null && from_label != view) {
+                        val y_from = (from_label.parent as ViewGroup).indexOfChild(from_label)
+                        val y_to = (view.parent as ViewGroup).indexOfChild(view)
+                        this.main_fragment.swap_lines(y_from, y_to)
+                    }
+                    this._dragging_rowLabel = null
+                }
+                else -> { }
+            }
+            true
+        }
+
         return RowLabelViewHolder(label)
     }
 
@@ -98,5 +132,15 @@ class RowLabelAdapter(var main_fragment: MainFragment, var recycler: RecyclerVie
             }
         }
         return abs_y
+    }
+
+    fun refresh() {
+        val start = (this.recycler.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
+        val end = (this.recycler.layoutManager as LinearLayoutManager).findLastVisibleItemPosition()
+
+        // NOTE: padding the start/end since an item may be bound but not visible
+        for (i in Integer.max(0, start - 1)..Integer.min(this.itemCount, end + 1)) {
+            this.notifyItemChanged(i)
+        }
     }
 }

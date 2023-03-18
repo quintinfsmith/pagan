@@ -1110,6 +1110,26 @@ class MainFragment : Fragment() {
         }
     }
 
+    fun swap_lines(y_from: Int, y_to: Int) {
+        var opus_manager = this.getMain().getOpusManager()
+        var (channel_from, line_from) = opus_manager.get_channel_index(y_from)
+        var (channel_to, line_to) = opus_manager.get_channel_index(y_to)
+
+        if (channel_to != channel_from) {
+            line_to += 1
+        }
+
+        opus_manager.move_line(channel_from, line_from, channel_to, line_to)
+
+        var main = this.getMain()
+        val rvBeatTable = main.findViewById<RecyclerView>(R.id.rvBeatTable)
+        (rvBeatTable.adapter as OpusManagerAdapter).refresh_leaf_labels()
+
+        val rvRowLabels = main.findViewById<RecyclerView>(R.id.rvRowLabels)
+        (rvRowLabels.adapter as RowLabelAdapter).refresh()
+
+    }
+
     fun set_cursor_position(y: Int, x: Int, position: List<Int>, type: FocusType = FocusType.Cell) {
         val main = this.getMain()
         val rvBeatTable = main.findViewById<RecyclerView>(R.id.rvBeatTable)

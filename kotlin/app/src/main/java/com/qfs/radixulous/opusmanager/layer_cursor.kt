@@ -1,5 +1,6 @@
 package com.qfs.radixulous.opusmanager
 import android.util.Log
+import com.qfs.radixulous.apres.MIDI
 import com.qfs.radixulous.structure.OpusTree
 import com.qfs.radixulous.opusmanager.BeatKey
 import com.qfs.radixulous.opusmanager.OpusEvent
@@ -462,6 +463,12 @@ open class CursorLayer() : FlagLayer() {
     override fun load(path: String) {
         this.get_cursor().set(0,0, listOf(0))
         super.load(path)
+        this.get_cursor().settle()
+    }
+
+    override fun import_midi(midi: MIDI) {
+        this.get_cursor().set(0,0, listOf(0))
+        super.import_midi(midi)
         this.get_cursor().settle()
     }
 

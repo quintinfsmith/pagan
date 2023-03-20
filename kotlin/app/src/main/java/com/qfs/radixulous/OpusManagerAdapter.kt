@@ -319,9 +319,21 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
         if (this.linking_beat != null) {
             // If a second link point hasn't been selected, assume just one beat is being linked
             if (this.linking_beat_b == null) {
-                opus_manager.link_beats(beatkey, this.linking_beat!!)
+                try {
+                    opus_manager.link_beats(beatkey, this.linking_beat!!)
+                } catch (e: Exception) {
+                    main.feedback_msg("Can't link beat to self")
+                }
             } else {
-                opus_manager.link_beat_range(beatkey, this.linking_beat!!, this.linking_beat_b!!)
+                try {
+                    opus_manager.link_beat_range(
+                        beatkey,
+                        this.linking_beat!!,
+                        this.linking_beat_b!!
+                    )
+                } catch (e: Exception) {
+                    main.feedback_msg("Can't link beat to self")
+                }
             }
 
             var cursor = opus_manager.get_cursor()
@@ -589,19 +601,43 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
                         this.linking_beat_b!!
                     )
 
-                    val linking_y = opus_manager.get_y(
-                        this.linking_beat!!.channel,
-                        this.linking_beat!!.line_offset
-                    )
+                    var (y_diff, y_i) = if (cursor_diff.first >= 0) {
+                        Pair(
+                            cursor_diff.first,
+                            opus_manager.get_y(
+                                this.linking_beat!!.channel,
+                                this.linking_beat!!.line_offset
+                            )
+                        )
+                    } else {
+                        Pair(
+                            0 - cursor_diff.first,
+                            opus_manager.get_y(
+                                this.linking_beat_b!!.channel,
+                                this.linking_beat_b!!.line_offset
+                            )
+                        )
+                    }
 
-                    val linking_x = this.linking_beat!!.beat
-                    for (y in 0 .. cursor_diff.first) {
-                        for (x in 0 .. cursor_diff.second) {
-                            if (x + linking_x !in start .. end)  {
+                    var (x_diff, x_i) = if (cursor_diff.second >= 0) {
+                        Pair(
+                            cursor_diff.second,
+                            this.linking_beat!!.beat
+                        )
+                    } else {
+                        Pair(
+                            0 - cursor_diff.second,
+                            this.linking_beat_b!!.beat
+                        )
+                    }
+
+                    for (y in 0 .. y_diff) {
+                        for (x in 0 .. x_diff) {
+                            if (x + x_i !in start .. end)  {
                                 continue
                             }
-                            val (channel, index) = opus_manager.get_channel_index(y + linking_y)
-                            val new_x = linking_x + x
+                            val (channel, index) = opus_manager.get_channel_index(y + y_i)
+                            val new_x = x_i + x
                             val leafs = this.get_all_leaf_views(BeatKey(channel, index, new_x)) ?: continue
                             for (leaf in leafs) {
                                 output.add(leaf)

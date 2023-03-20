@@ -243,15 +243,6 @@ open class FlagLayer : LinksLayer() {
     //    this.cache.flag_beat_change(target)
     //}
 
-    override fun unlink_beat(beat_key: BeatKey) {
-        this.cache.flag_beat_change(beat_key)
-        var target_key = this.linked_beat_map[beat_key]
-        if (target_key != null) {
-            this.cache.flag_beat_change(target_key!!)
-        }
-        super.unlink_beat(beat_key)
-    }
-
     override fun insert_line(channel: Int, line_index: Int, line: MutableList<OpusTree<OpusEvent>>) {
         super.insert_line(channel, line_index, line)
         this.cache.flag_line_new(channel, line_index, this.opus_beat_count)

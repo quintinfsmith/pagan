@@ -609,7 +609,7 @@ class MainFragment : Fragment() {
         val cursor = opus_manager.get_cursor()
 
         this.unset_cursor_position()
-        opus_manager.remove_link_from_network(cursor.get_beatkey())
+        opus_manager.unlink_beat(cursor.get_beatkey())
         this.set_cursor_position(cursor.y, cursor.x, cursor.get_position(), FocusType.Cell)
         this.setContextMenu(ContextMenu.Leaf)
     }
@@ -619,7 +619,7 @@ class MainFragment : Fragment() {
         val opus_manager = main.getOpusManager()
 
         val cursor = opus_manager.get_cursor()
-        opus_manager.clear_links_in_network(cursor.get_beatkey())
+        opus_manager.clear_link_pool(cursor.get_beatkey())
         this.set_cursor_position(cursor.y, cursor.x, cursor.get_position(), FocusType.Cell)
 
         this.setContextMenu(ContextMenu.Leaf)

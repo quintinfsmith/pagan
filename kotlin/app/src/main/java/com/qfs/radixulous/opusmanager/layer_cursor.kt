@@ -498,25 +498,61 @@ open class CursorLayer() : FlagLayer() {
     open fun link_beat_range(beat: BeatKey, target_a: BeatKey, target_b: BeatKey) {
         var cursor_diff = this.get_cursor_difference(target_a, target_b)
 
-        for (y in 0 .. cursor_diff.first) {
-            var pair = this.get_channel_index(y + this.get_y(beat.channel, beat.line_offset))
-            var target_pair = this.get_channel_index(
-                y + this.get_y(
-                    target_a.channel,
-                    target_a.line_offset
-                )
+        var (y_diff, y_i) = if (cursor_diff.first >= 0) {
+            Pair(
+                cursor_diff.first,
+                this.get_y(target_a.channel, target_a.line_offset)
             )
-            for (x in 0 .. cursor_diff.second) {
+        } else {
+            Pair(
+                0 - cursor_diff.first,
+                this.get_y(target_b.channel, target_b.line_offset)
+            )
+        }
+
+        var (x_diff, x_i) = if (cursor_diff.second >= 0) {
+            Pair(
+                cursor_diff.second,
+                target_a.beat
+            )
+        } else {
+            Pair(
+                0 - cursor_diff.second,
+                target_b.beat
+            )
+        }
+        var y_new = this.get_y(beat.channel, beat.line_offset)
+        if (cursor_diff.first < 0) {
+            y_new -= y_diff
+        }
+        var x_new = beat.beat
+        if (cursor_diff.second < 0) {
+            x_new -= x_diff
+        }
+
+
+        if (y_new in (y_i .. y_diff + y_i) && x_new in (x_i .. x_diff + x_i)) {
+            throw Exception("Can't link a beat to its self")
+        }
+        if (y_i in (y_new .. y_diff + y_new) && x_i in (x_new .. x_diff + x_new)) {
+            throw Exception("Can't link a beat to its self")
+        }
+
+
+        for (y in 0 .. y_diff) {
+            var pair = this.get_channel_index(y + y_new)
+            var target_pair = this.get_channel_index(y + y_i)
+            for (x in 0 .. x_diff) {
                 var working_position = BeatKey(
                     pair.first,
                     pair.second,
-                    x + beat.beat
+                    x + x_new
                 )
 
                 var working_target = BeatKey(
                     target_pair.first,
                     target_pair.second,
-                    x + target_a.beat
+                    x + x_i
                 )
 
                 this.link_beats(working_position, working_target)

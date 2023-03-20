@@ -3,98 +3,51 @@ import com.qfs.radixulous.structure.OpusTree
 import java.io.File
 
 open class LinksLayer() : AbsoluteValueLayer() {
-    var linked_beat_map: HashMap<BeatKey, BeatKey> = HashMap<BeatKey, BeatKey>()
-    var inv_linked_beat_map: HashMap<BeatKey, MutableList<BeatKey>> = HashMap<BeatKey, MutableList<BeatKey>>()
+    var link_pools = mutableListOf<MutableSet<BeatKey>>()
+    var link_pool_map = HashMap<BeatKey, Int>()
     // Indicates that links are being calculated to prevent recursion
     var link_locker: Int = 0
 
     override fun purge_cache() {
         super.purge_cache()
-        this.linked_beat_map.clear()
-        this.inv_linked_beat_map.clear()
+        this.link_pools.clear()
+        this.link_pool_map.clear()
         this.link_locker = 0
     }
 
     open fun unlink_beat(beat_key: BeatKey) {
-        if (! this.linked_beat_map.containsKey(beat_key)) {
-           return
-        }
-
-        var target_key = this.linked_beat_map.get(beat_key)
-        var beats: MutableList<BeatKey> = this.inv_linked_beat_map.get(target_key)!!
-        beats.remove(beat_key)
-        if (beats.size == 0) {
-            this.inv_linked_beat_map.remove(target_key)
-        }
-        this.linked_beat_map.remove(beat_key)
+        var index = this.link_pool_map.remove(beat_key) ?: return
+        this.link_pools[index].remove(beat_key)
     }
 
-    fun clear_links_to_beat(beat_key: BeatKey) {
-        if (! this.inv_linked_beat_map.containsKey(beat_key)) {
-            return
+    fun clear_link_pool(beat_key: BeatKey) {
+        var index = this.link_pool_map.remove(beat_key) ?: return
+        for (key in this.link_pools[index]) {
+            this.unlink_beat(key)
         }
-        var links = this.inv_linked_beat_map[beat_key]!!
-        for (link_key in links) {
-            this.linked_beat_map.remove(link_key)
-        }
-        this.inv_linked_beat_map.remove(beat_key)
-    }
-
-    fun clear_links_in_network(beat_key: BeatKey) {
-        if (this.is_reflection(beat_key.channel, beat_key.line_offset, beat_key.beat)) {
-            this.clear_links_to_beat(this.linked_beat_map[beat_key]!!)
-        } else if (this.is_reflected(beat_key.channel, beat_key.line_offset, beat_key.beat)) {
-            this.clear_links_to_beat(beat_key)
-        }
-
-    }
-
-    // Remove a link from a network without destroying the remaining links
-    // this will arbitrarily pick another central beat to be reflected
-    // TODO: Remove the need for a central beat?
-    fun remove_link_from_network(beat_key: BeatKey) {
-        if (this.is_reflection(beat_key.channel, beat_key.line_offset, beat_key.beat)) {
-            // Nothing special, can just remove the link
-            this.unlink_beat(beat_key)
-        } else if (this.is_reflected(beat_key.channel, beat_key.line_offset, beat_key.beat)) {
-            if (this.inv_linked_beat_map[beat_key]!!.size > 1) {
-                // arbitrarily pick a new focal beat, and relink all beats to it
-                var new_center = this.inv_linked_beat_map[beat_key]!!.first()
-                this.unlink_beat(new_center)
-
-                for (to_relink in this.inv_linked_beat_map[beat_key]!!) {
-                    this.link_beats(to_relink, new_center)
-                }
-            } else {
-                // network isn't large enough to need re-focusing. just remove the 1 link
-                this.clear_links_to_beat(beat_key)
-            }
-        }
+        this.link_pools.removeAt(index)
     }
 
     open fun link_beats(beat_key: BeatKey, target: BeatKey) {
         if (beat_key == target) {
-            return
+            throw Exception("Can't link beat to self")
         }
-        // Don't chain links. if attempting to reflect a reflection, find the root beat
-        // and reflect that
-        if (this.linked_beat_map.containsKey(target)) {
-            this.link_beats(
-                beat_key,
-                this.linked_beat_map[target]!!
-            )
-            return
-        }
-
         // Remove any existing link
         this.unlink_beat(beat_key)
+
         // Replace existing tree with a copy of the target
         this.overwrite_beat(beat_key, target)
-        this.linked_beat_map[beat_key] = target
-        if (! this.inv_linked_beat_map.containsKey(target)) {
-            this.inv_linked_beat_map[target] = mutableListOf()
+
+        var pool_index = this.link_pool_map[beat_key] ?: this.link_pools.size
+
+        this.link_pool_map[beat_key] = pool_index
+        if (pool_index == this.link_pools.size) {
+            this.link_pools.add(mutableSetOf(beat_key, target))
+            this.link_pool_map[target] = pool_index
+        } else {
+            this.link_pools[pool_index].add(beat_key)
         }
-        this.inv_linked_beat_map[target]!!.add(beat_key)
+
     }
 
     fun get_all_linked(beat_key: BeatKey): Set<BeatKey> {
@@ -102,23 +55,8 @@ open class LinksLayer() : AbsoluteValueLayer() {
             return setOf(beat_key)
         }
 
-        var output: MutableSet<BeatKey> = mutableSetOf()
-        if (this.inv_linked_beat_map.containsKey(beat_key)) {
-            output.add(beat_key)
-            for (linked_key in this.inv_linked_beat_map[beat_key]!!) {
-                output.add(linked_key)
-            }
-        } else if (this.linked_beat_map.contains(beat_key)) {
-            var target_key = this.linked_beat_map[beat_key]!!
-            output.add(target_key)
-            for (linked_key in this.inv_linked_beat_map[target_key]!!) {
-                output.add(linked_key)
-            }
-        } else {
-            output.add(beat_key)
-        }
-
-        return output
+        var pool_index = this.link_pool_map[beat_key] ?: return setOf(beat_key)
+        return this.link_pools[pool_index]
     }
 
     override fun replace_tree(beat_key: BeatKey, position: List<Int>, tree: OpusTree<OpusEvent>) {
@@ -174,23 +112,19 @@ open class LinksLayer() : AbsoluteValueLayer() {
 
     /////////
     private fun remap_links(remap_hook: (beat_key: BeatKey, args: List<Int>) -> BeatKey?, args: List<Int>) {
-        var new_link_map = HashMap<BeatKey, BeatKey>()
-        this.inv_linked_beat_map.clear()
-        for (beat in this.linked_beat_map.keys) {
-            var target = this.linked_beat_map.get(beat)!!
-            var new_beat = remap_hook(beat, args)
-            var new_target = remap_hook(target, args)
-            if (new_beat == null || new_target == null) {
-                continue
+        var new_pool_map = HashMap<BeatKey, Int>()
+        var new_pools = mutableListOf<MutableSet<BeatKey>>()
+        for (pool in this.link_pools) {
+            var new_pool = mutableSetOf<BeatKey>()
+            for (beatkey in pool) {
+                var new_beatkey = remap_hook(beatkey, args) ?: continue
+                new_pool.add(new_beatkey)
+                new_pool_map[new_beatkey] = new_pools.size
             }
-            new_link_map[new_beat] = new_target
-
-            if (! this.inv_linked_beat_map.containsKey(new_target)) {
-                this.inv_linked_beat_map.put(new_target, mutableListOf())
-            }
-            this.inv_linked_beat_map.get(new_target)!!.add(new_beat)
+            new_pools.add(new_pool)
         }
-        this.linked_beat_map = new_link_map
+        this.link_pools = new_pools
+        this.link_pool_map = new_pool_map
     }
 
     private fun rh_change_line_channel(beat_key: BeatKey, args: List<Int>): BeatKey? {
@@ -249,22 +183,9 @@ open class LinksLayer() : AbsoluteValueLayer() {
         return new_beat
     }
 
-    fun get_reflected(channel: Int, line_offset: Int, beat: Int): BeatKey? {
-        return this.linked_beat_map[BeatKey(channel, line_offset, beat)]
-    }
-
-    fun is_reflection(channel: Int, line_offset: Int, beat: Int): Boolean {
-        return this.linked_beat_map.containsKey(BeatKey(channel, line_offset, beat))
-    }
-
-    fun is_reflected(channel: Int, line_offset: Int, beat: Int): Boolean {
-        return this.inv_linked_beat_map.containsKey(BeatKey(channel, line_offset, beat))
-    }
-
     fun is_networked(channel: Int, line_offset: Int, beat: Int): Boolean {
-        return this.linked_beat_map.containsKey(BeatKey(channel, line_offset, beat)) || this.inv_linked_beat_map.containsKey(BeatKey(channel, line_offset, beat))
+        return this.link_pool_map.contains(BeatKey(channel, line_offset, beat))
     }
-
 
     override fun load_json(json_data: LoadedJSONData) {
         super.load_json(json_data)
@@ -272,12 +193,10 @@ open class LinksLayer() : AbsoluteValueLayer() {
             return
         }
 
-        for (pool in json_data.reflections!!) {
-            var target = pool[0]
-            this.inv_linked_beat_map[target] = mutableListOf()
-            for (i in 1 until pool.size) {
-                this.linked_beat_map[pool[i]] = target
-                inv_linked_beat_map[target]!!.add(pool[i])
+        json_data.reflections!!.forEachIndexed { i: Int, pool: List<BeatKey> ->
+            this.link_pools.add(pool.toMutableSet())
+            for (beatkey in pool) {
+                this.link_pool_map[beatkey] = i
             }
         }
     }
@@ -285,13 +204,8 @@ open class LinksLayer() : AbsoluteValueLayer() {
     override fun to_json(): LoadedJSONData {
         var data = super.to_json()
         var reflections: MutableList<List<BeatKey>> = mutableListOf()
-        for ((target, others) in this.inv_linked_beat_map) {
-            var pool: MutableList<BeatKey> = mutableListOf()
-            pool.add(target)
-            for (other in others) {
-                pool.add(other)
-            }
-            reflections.add(pool)
+        for (pool in this.link_pools) {
+            reflections.add(pool.toList())
         }
         data.reflections = reflections
         return data

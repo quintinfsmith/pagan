@@ -43,6 +43,18 @@ class RowLabelAdapter(var main_fragment: MainFragment, var recycler: RecyclerVie
         this.recycler.adapter = this
         this.recycler.layoutManager = LinearLayoutManager(this.recycler.context)
         (this.recycler.itemAnimator as SimpleItemAnimator).supportsChangeAnimations = false
+
+        val that = this
+        this.registerAdapterDataObserver(
+            object: RecyclerView.AdapterDataObserver() {
+                override fun onItemRangeRemoved(start: Int, count: Int) {
+                    that.refresh()
+                }
+                override fun onItemRangeInserted(start: Int, count: Int) {
+                    that.refresh()
+                }
+            }
+        )
     }
 
     fun addRowLabel() {

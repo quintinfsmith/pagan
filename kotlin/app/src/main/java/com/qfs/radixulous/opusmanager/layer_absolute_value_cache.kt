@@ -58,7 +58,7 @@ open class AbsoluteValueLayer: OpusManagerBase() {
                 continue
             }
 
-            if (pair.second.subList(0, position.size) == position) {
+            if (pair.second.size >= position.size && pair.second.subList(0, position.size) == position) {
                 to_remove.add(pair)
             }
         }

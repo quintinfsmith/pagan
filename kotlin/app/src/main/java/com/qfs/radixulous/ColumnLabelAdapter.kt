@@ -46,17 +46,58 @@ class ColumnLabelAdapter(var main_fragment: MainFragment, var recycler: Recycler
             false
         )
         (this.recycler.itemAnimator as SimpleItemAnimator).supportsChangeAnimations = false
+
+        var that = this
+        this.registerAdapterDataObserver(
+            object: RecyclerView.AdapterDataObserver() {
+                override fun onItemRangeChanged(start: Int, count: Int) {
+                    for (i in start until that.itemCount) {
+                        val viewHolder = that.recycler.findViewHolderForAdapterPosition(i) ?: continue
+                        that.adjust_width(viewHolder as ColumnLabelViewHolder)
+                    }
+                }
+                override fun onItemRangeRemoved(start: Int, count: Int) {
+                    val end = (that.recycler.layoutManager as LinearLayoutManager).findLastVisibleItemPosition()
+                    for (i in start .. end) {
+                        val viewHolder = that.recycler.findViewHolderForAdapterPosition(i + count) ?: continue
+                        that.set_text(viewHolder as ColumnLabelViewHolder, i)
+                    }
+                }
+                override fun onItemRangeInserted(start: Int, count: Int) {
+                    val end = (that.recycler.layoutManager as LinearLayoutManager).findLastVisibleItemPosition()
+                    for (i in start .. end) {
+                        val viewHolder = that.recycler.findViewHolderForAdapterPosition(i) ?: continue
+                        that.set_text(viewHolder as ColumnLabelViewHolder, i + count)
+                    }
+                    val visible_start = (that.recycler.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
+                    if (visible_start >= start) {
+                        that.recycler.scrollToPosition(start)
+                    }
+                }
+            }
+        )
+
     }
 
-    fun addColumnLabel(default_width: Int = 1) {
-        this.column_widths.add(default_width)
-        this.notifyItemInserted(this.column_widths.size - 1)
+    fun refresh() {
+        val start = (this.recycler.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
+        val end = (this.recycler.layoutManager as LinearLayoutManager).findLastVisibleItemPosition()
+
+        // NOTE: padding the start/end since an item may be bound but not visible
+        for (i in Integer.max(0, start - 1)..Integer.min(this.itemCount, end + 1)) {
+            this.notifyItemChanged(i)
+        }
     }
 
-    fun removeColumnLabel() {
-        if (this.column_widths.isNotEmpty()) {
-            this.column_widths.removeLast()
-            this.notifyItemRemoved(this.column_widths.size)
+    fun addColumnLabel(position: Int) {
+        this.column_widths.add(position, 1)
+        this.notifyItemInserted(position)
+    }
+
+    fun removeColumnLabel(index: Int) {
+        if (index < this.column_widths.size) {
+            this.column_widths.removeAt(index)
+            this.notifyItemRemoved(index)
         }
     }
 
@@ -82,6 +123,10 @@ class ColumnLabelAdapter(var main_fragment: MainFragment, var recycler: Recycler
 
     override fun onViewAttachedToWindow(holder: ColumnLabelViewHolder) {
         super.onViewAttachedToWindow(holder)
+        this.adjust_width(holder)
+    }
+
+    fun adjust_width(holder: ColumnLabelViewHolder) {
         var beat = holder.bindingAdapterPosition
 
         var item_view = holder.itemView
@@ -90,6 +135,10 @@ class ColumnLabelAdapter(var main_fragment: MainFragment, var recycler: Recycler
     }
 
     override fun onBindViewHolder(holder: ColumnLabelViewHolder, position: Int) {
+        this.set_text(holder, position)
+    }
+
+    fun set_text(holder: ColumnLabelViewHolder, position: Int) {
         var item_view = holder.itemView as LabelView
         item_view.set_text(position.toString())
     }

@@ -1,10 +1,19 @@
 package com.qfs.radixulous.opusmanager
+import com.qfs.radixulous.structure.OpusTree
 import java.io.File
 
 open class LinksLayer() : AbsoluteValueLayer() {
     var linked_beat_map: HashMap<BeatKey, BeatKey> = HashMap<BeatKey, BeatKey>()
     var inv_linked_beat_map: HashMap<BeatKey, MutableList<BeatKey>> = HashMap<BeatKey, MutableList<BeatKey>>()
+    // Indicates that links are being calculated to prevent recursion
     var link_locker: Int = 0
+
+    override fun purge_cache() {
+        super.purge_cache()
+        this.linked_beat_map.clear()
+        this.inv_linked_beat_map.clear()
+        this.link_locker = 0
+    }
 
     open fun unlink_beat(beat_key: BeatKey) {
         if (! this.linked_beat_map.containsKey(beat_key)) {
@@ -112,6 +121,13 @@ open class LinksLayer() : AbsoluteValueLayer() {
         return output
     }
 
+    override fun replace_tree(beat_key: BeatKey, position: List<Int>, tree: OpusTree<OpusEvent>) {
+        this.link_locker += 1
+        for (linked_key in this.get_all_linked(beat_key)) {
+            super.replace_tree(linked_key, position, tree)
+        }
+        this.link_locker -= 1
+    }
 
     override fun insert_after(beat_key: BeatKey, position: List<Int>) {
         this.link_locker += 1

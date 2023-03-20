@@ -212,8 +212,10 @@ open class HistoryLayer() : CursorLayer() {
 
 
     override fun overwrite_beat(old_beat: BeatKey, new_beat: BeatKey) {
+        this.history_cache.open_multi()
         this.push_replace_tree(old_beat, listOf())
         super.overwrite_beat(old_beat, new_beat)
+        this.history_cache.close_multi()
     }
 
     fun new_line(channel: Int, index: Int, count: Int): List<List<OpusTree<OpusEvent>>> {
@@ -232,14 +234,18 @@ open class HistoryLayer() : CursorLayer() {
     }
 
     override fun new_line(channel: Int, index: Int?): List<OpusTree<OpusEvent>> {
+        this.history_cache.open_multi()
         val output = super.new_line(channel, index)
         this.push_remove_line(channel, index ?: (this.channels[channel].size - 1))
+        this.history_cache.close_multi()
         return output
     }
 
     override fun insert_line(channel: Int, line_index: Int, line: MutableList<OpusTree<OpusEvent>>) {
+        this.history_cache.open_multi()
         super.insert_line(channel, line_index, line)
         this.push_remove_line(channel, line_index)
+        this.history_cache.close_multi()
     }
 
     fun remove_line(channel: Int, line_offset: Int, count: Int) {
@@ -281,17 +287,17 @@ open class HistoryLayer() : CursorLayer() {
     }
 
     override fun insert_after(beat_key: BeatKey, position: List<Int>) {
+        this.history_cache.open_multi()
         this.push_remove(beat_key, position.toMutableList())
         super.insert_after(beat_key, position)
+        this.history_cache.close_multi(beat_key, position)
     }
 
     override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
+        this.history_cache.open_multi()
         this.push_replace_tree(beat_key, position)
-        var was_locked = this.history_cache.lock()
         super.split_tree(beat_key, position, splits)
-        if (!was_locked) {
-            this.history_cache.unlock()
-        }
+        this.history_cache.close_multi(beat_key, position)
     }
 
     fun remove(beat_key: BeatKey, position: List<Int>, count: Int) {
@@ -308,12 +314,14 @@ open class HistoryLayer() : CursorLayer() {
     }
 
     override fun remove(beat_key: BeatKey, position: List<Int>) {
+        this.history_cache.open_multi()
         var new_position = position.toMutableList()
         if (new_position.isNotEmpty()) {
             new_position.removeLast()
         }
         this.push_replace_tree(beat_key, new_position)
         super.remove(beat_key, position)
+        this.history_cache.close_multi(beat_key, position)
     }
 
     override fun insert_beat(index: Int, count: Int) {
@@ -347,13 +355,17 @@ open class HistoryLayer() : CursorLayer() {
         this.history_cache.close_multi(initial_beatkey, initial_position)
     }
     override fun remove_beat(index: Int) {
+        this.history_cache.open_multi()
         this.push_insert_beat(index, this.get_channel_line_counts())
         super.remove_beat(index)
+        this.history_cache.close_multi()
     }
 
     override fun replace_tree(beat_key: BeatKey, position: List<Int>, tree: OpusTree<OpusEvent>) {
+        this.history_cache.open_multi()
         this.push_replace_tree(beat_key, position, this.get_tree(beat_key, position).copy())
         super.replace_tree(beat_key, position, tree)
+        this.history_cache.close_multi()
     }
 
     override fun move_leaf(beatkey_from: BeatKey, position_from: List<Int>, beatkey_to: BeatKey, position_to: List<Int>) {
@@ -365,17 +377,19 @@ open class HistoryLayer() : CursorLayer() {
 
     override fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEvent) {
         var tree = this.get_tree(beat_key, position).copy()
+        this.history_cache.open_multi()
         try {
             super.set_event(beat_key, position, event)
             this.push_replace_tree(beat_key, position, tree)
         } catch (e: Exception) {
             throw e
         }
-
+        this.history_cache.close_multi()
     }
 
     override fun set_percussion_event(beat_key: BeatKey, position: List<Int>) {
         val tree = this.get_tree(beat_key, position)
+        this.history_cache.open_multi()
         if (tree.is_event()) {
             this.push_set_percussion_event(beat_key, position)
         } else {
@@ -385,13 +399,15 @@ open class HistoryLayer() : CursorLayer() {
         try {
             super.set_percussion_event(beat_key, position)
         } catch (e: Exception) {
-            this.history_cache.pop()
+            this.history_cache.cancel_multi()
             throw e
         }
+        this.history_cache.close_multi()
 
     }
 
     override fun unset(beat_key: BeatKey, position: List<Int>) {
+        this.history_cache.open_multi()
         val tree = this.get_tree(beat_key, position)
         if (tree.is_event()) {
             val original_event = tree.get_event()!!
@@ -406,6 +422,7 @@ open class HistoryLayer() : CursorLayer() {
             }
         }
         super.unset(beat_key, position)
+        this.history_cache.close_multi()
     }
 
     override fun load(path: String) {
@@ -521,12 +538,13 @@ open class HistoryLayer() : CursorLayer() {
         this.push_replace_tree(beat_key, listOf())
         this.history_cache.append_undoer("unlink_beats", listOf(beat_key.copy(), target.copy()))
 
+        super.link_beats(beat_key, target)
+
         this.history_cache.close_multi(
             this.get_cursor().get_beatkey(),
             this.get_cursor().get_position()
         )
 
-        super.link_beats(beat_key, target)
     }
 
     override fun link_beat_range(beat: BeatKey, target_a: BeatKey, target_b: BeatKey) {

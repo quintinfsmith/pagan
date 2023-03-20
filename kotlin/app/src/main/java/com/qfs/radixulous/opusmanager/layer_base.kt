@@ -375,23 +375,17 @@ open class OpusManagerBase {
     open fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
         var tree: OpusTree<OpusEvent> = this.get_tree(beat_key, position)
         if (tree.is_event()) {
-            val event = tree.get_event()
+            val event = tree.get_event()!!
 
-            this.unset(beat_key, position)
-
-            tree = this.get_tree(beat_key, position)
+            tree.unset_event()
             tree.set_size(splits)
 
             val new_position = position.toMutableList()
             if (splits > 1) {
-                new_position.add(0)
+                tree = tree.get(0)
             }
 
-            if (this.is_percussion(beat_key.channel)) {
-                this.set_percussion_event(beat_key, new_position)
-            } else {
-                this.set_event(beat_key, new_position, event!!)
-            }
+            tree.set_event(event)
         } else {
             tree.set_size(splits)
         }
@@ -536,6 +530,7 @@ open class OpusManagerBase {
     }
 
     open fun replace_tree(beat_key: BeatKey, position: List<Int>, tree: OpusTree<OpusEvent>) {
+
         this.channels[beat_key.channel].replace_tree(beat_key.line_offset, beat_key.beat, position, tree)
     }
 
@@ -671,6 +666,7 @@ open class OpusManagerBase {
         file_obj.writeText(json_string)
     }
 
+    // Clear function is used for new projects
     open fun clear() {
         this.purge_cache()
 

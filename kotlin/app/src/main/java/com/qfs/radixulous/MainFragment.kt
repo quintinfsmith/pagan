@@ -917,7 +917,6 @@ class MainFragment : Fragment() {
             opus_manager.remove_line(beatkey.channel, beatkey.line_offset, count)
         }
 
-        this.setContextMenu(ContextMenu.Line) // TODO: overkill?
         this.tick()
     }
 
@@ -1028,9 +1027,7 @@ class MainFragment : Fragment() {
                 this.line_update_labels(opus_manager)
             }
 
-            for (b in updated_beats) {
-                beat_table_adapter.notifyItemChanged(b)
-            }
+            beat_table_adapter.refresh_leaf_labels(updated_beats)
 
             this.ticking = false
         }

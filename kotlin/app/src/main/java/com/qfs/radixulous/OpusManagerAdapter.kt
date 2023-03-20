@@ -541,13 +541,15 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
         }
     }
 
-    fun refresh_leaf_labels() {
+    fun refresh_leaf_labels(beats: Set<Int>? = null) {
         val start = (this.recycler.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
         val end = (this.recycler.layoutManager as LinearLayoutManager).findLastVisibleItemPosition()
 
         // NOTE: padding the start/end since an item may be bound but not visible
         for (i in max(0, start - 1) .. min(this.itemCount, end + 1)) {
-            this.notifyItemChanged(i)
+            if (beats == null || i in beats) {
+                this.notifyItemChanged(i)
+            }
         }
     }
 

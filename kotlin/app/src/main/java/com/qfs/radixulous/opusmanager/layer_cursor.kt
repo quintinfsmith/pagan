@@ -122,7 +122,7 @@ class Cursor(var opus_manager: CursorLayer) {
 
     fun settle(right_align: Boolean = false) {
         if (this.opus_manager.opus_beat_count == 0) {
-            // TODO: This'll problem bite me in the ass...
+            // TODO: This'll problably bite me in the ass...
             return
         }
 
@@ -240,6 +240,14 @@ open class CursorLayer() : FlagLayer() {
         }
         this.cursor!!.settle()
         return output
+    }
+
+    override fun move_line(channel_old: Int, line_old: Int, channel_new: Int, line_new: Int) {
+        var original_line_count = this.line_count()
+        super.move_line(channel_old, line_old, channel_new, line_new)
+        if (this.line_count() == original_line_count - 1 && this.cursor?.y == original_line_count - 1) {
+            this.cursor_up()
+        }
     }
 
     fun remove_line_at_cursor() {

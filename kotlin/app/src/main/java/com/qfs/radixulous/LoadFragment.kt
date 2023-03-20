@@ -51,18 +51,18 @@ class LoadFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        setFragmentResult("RETURNED", bundleOf())
         super.onViewCreated(view, savedInstanceState)
 
         var loadprojectAdapter = ProjectToLoadAdapter(this)
-        var rvProjectList: RecyclerView = view.findViewById(R.id.rvProjectList)
 
+        var rvProjectList: RecyclerView = view.findViewById(R.id.rvProjectList)
         rvProjectList.adapter = loadprojectAdapter
         rvProjectList.layoutManager = LinearLayoutManager(view.context)
 
         var main = this.getMain()
         var project_manager = main.project_manager
 
-        setFragmentResult("RETURNED", bundleOf())
         val directory = File(project_manager.projects_dir)
         if (!directory.isDirectory) {
             if (! directory.mkdirs()) {
@@ -89,10 +89,14 @@ class LoadFragment : Fragment() {
     }
 
     fun load_project(path: String, title: String) {
-        this.getMain().loading_reticle()
         setFragmentResult("LOAD", bundleOf(Pair("PATH", path), Pair("TITLE", title)))
-        this.getMain().navTo("main")
-        this.getMain().set_title_text(title)
+
+        this.getMain().apply {
+            loading_reticle()
+            navTo("main")
+            set_title_text(title)
+        }
+
     }
 
     override fun onDestroyView() {

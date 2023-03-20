@@ -104,7 +104,7 @@ class RowLabelAdapter(var main_fragment: MainFragment, var recycler: RecyclerVie
                     if (from_label != null && from_label != view) {
                         val y_from = (from_label.parent as ViewGroup).indexOfChild(from_label)
                         val y_to = (view.parent as ViewGroup).indexOfChild(view)
-                        this.main_fragment.swap_lines(y_from, y_to)
+                        this.main_fragment.move_line(y_from, y_to)
                     }
                     this._dragging_rowLabel = null
                 }

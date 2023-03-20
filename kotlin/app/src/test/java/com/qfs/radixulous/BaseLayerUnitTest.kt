@@ -379,21 +379,6 @@ class BaseLayerUnitTest {
     }
 
     @Test
-    fun test_change_line_channel() {
-        val manager = OpusManager()
-        manager.new()
-
-        manager.new_channel()
-        manager.new_line(1)
-        manager.new_line(1)
-
-        manager.change_line_channel(1, 1, 0)
-
-        assertEquals(manager.channels[0].size, 2)
-        assertEquals(manager.channels[1].size, 1)
-    }
-
-    @Test
     fun test_insert_remove_beat() {
         val manager = OpusManager()
         manager.new()

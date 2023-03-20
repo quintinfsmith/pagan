@@ -186,7 +186,6 @@ open class FlagLayer : LinksLayer() {
     }
 
     override fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEvent) {
-
         super.set_event(beat_key, position, event)
         this.cache.flag_beat_change(beat_key)
     }

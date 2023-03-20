@@ -430,7 +430,6 @@ class MainFragment : Fragment() {
             }
             btnRemove.setOnLongClickListener {
                 val main = this.getMain()
-                // TODO: get max from tree
                 main.popup_number_dialog("Remove", 1, 99, this::om_remove)
                 true
             }
@@ -940,9 +939,6 @@ class MainFragment : Fragment() {
     }
 
     fun tick() {
-        /* TODO: break this function up. Only a monolith since changing to handle all flags in
-            the exact order they were created
-         */
         if (!this.ticking) {
             this.ticking = true
 
@@ -1105,7 +1101,7 @@ class MainFragment : Fragment() {
         }
     }
 
-    fun swap_lines(y_from: Int, y_to: Int) {
+    fun move_line(y_from: Int, y_to: Int) {
         var opus_manager = this.getMain().getOpusManager()
         var (channel_from, line_from) = opus_manager.get_channel_index(y_from)
         var (channel_to, line_to) = opus_manager.get_channel_index(y_to)
@@ -1116,12 +1112,13 @@ class MainFragment : Fragment() {
 
         opus_manager.move_line(channel_from, line_from, channel_to, line_to)
 
-        var main = this.getMain()
-        val rvBeatTable = main.findViewById<RecyclerView>(R.id.rvBeatTable)
-        (rvBeatTable.adapter as OpusManagerAdapter).refresh_leaf_labels()
+        this.tick()
+        //var main = this.getMain()
+        //val rvBeatTable = main.findViewById<RecyclerView>(R.id.rvBeatTable)
+        //(rvBeatTable.adapter as OpusManagerAdapter).refresh_leaf_labels()
 
-        val rvRowLabels = main.findViewById<RecyclerView>(R.id.rvRowLabels)
-        (rvRowLabels.adapter as RowLabelAdapter).refresh()
+        //val rvRowLabels = main.findViewById<RecyclerView>(R.id.rvRowLabels)
+        //(rvRowLabels.adapter as RowLabelAdapter).refresh()
 
     }
 

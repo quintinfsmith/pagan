@@ -182,4 +182,13 @@ class OpusChannel(var uuid: Int) {
         }
     }
 
+    fun line_is_empty(line_offset: Int): Boolean {
+        for (tree in this.get_line(line_offset)) {
+            if (!tree.is_leaf() || tree.is_event()) {
+                return false
+            }
+        }
+        return true
+    }
+
 }

@@ -1,16 +1,12 @@
 package com.qfs.radixulous
 
 import android.content.Context
-import android.os.Parcelable
 import android.view.*
 import android.widget.LinearLayout
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.SimpleItemAnimator
 import com.qfs.radixulous.opusmanager.BeatKey
-import com.qfs.radixulous.opusmanager.OpusChannel
-import com.qfs.radixulous.opusmanager.OpusEvent
-import com.qfs.radixulous.structure.OpusTree
 import java.lang.Integer.max
 import java.lang.Integer.min
 import com.qfs.radixulous.opusmanager.HistoryLayer as OpusManager
@@ -25,7 +21,8 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
     var _scroll_lock_this: Boolean = false
     var _scroll_lock_columns: Boolean = false
     private var focus_type: FocusType = FocusType.Cell
-    private var focused_leafs = mutableListOf<Pair<BeatKey, List<Int>>>()
+    private var attached_beats = mutableSetOf<Int>()
+
     // BackLink so I can get the x offset from a view in the view holder
     class BackLinkView(context: Context): LinearLayout(context) {
         var viewHolder: BeatViewHolder? = null
@@ -229,25 +226,29 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
         }
     }
 
+    override fun onViewAttachedToWindow(holder: BeatViewHolder) {
+        val beat = holder.bindingAdapterPosition
+        this.attached_beats.add(beat)
+    }
+    override fun onViewDetachedFromWindow(holder: BeatViewHolder) {
+        val beat = holder.bindingAdapterPosition
+        if (this.attached_beats.contains(beat)) {
+            this.attached_beats.remove(beat)
+        }
+    }
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BeatViewHolder {
         val layoutstack = BackLinkView(parent.context)
         return BeatViewHolder(layoutstack)
     }
 
-    override fun onViewAttachedToWindow(holder: BeatViewHolder) {
-        println("!!!")
-    }
-
     override fun onBindViewHolder(holder: BeatViewHolder, position: Int) {
-        println("CHANGI $position")
         this.updateItem(holder, position)
-        println("${holder.itemView.height}")
     }
 
     fun updateItem(holder: BeatViewHolder, index: Int) {
         (holder.itemView as ViewGroup).removeAllViews()
         val opus_manager = this.get_opus_manager()
-        println("UPDATING $index")
 
         for (channel in 0 until opus_manager.channels.size) {
             for (line_offset in 0 until opus_manager.channels[channel].size) {
@@ -264,8 +265,9 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
         }
         this.adjust_beat_width(holder, index)
     }
+
     // TODO: Needs checks
-    private fun get_view_position_abs(view: View): Triple<Int, Int, List<Int>> {4
+    private fun get_view_position_abs(view: View): Triple<Int, Int, List<Int>> {
         val position = mutableListOf<Int>()
         var working_view = view
         while ((working_view.parent as View).id != R.id.beat_node) {
@@ -549,11 +551,8 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
     }
 
     fun refresh_leaf_labels(beats: Set<Int>? = null) {
-        val start = (this.recycler.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
-        val end = (this.recycler.layoutManager as LinearLayoutManager).findLastVisibleItemPosition()
-
         // NOTE: padding the start/end since an item may be bound but not visible
-        for (i in max(0, start - 2) .. min(this.itemCount, end + 1)) {
+        for (i in this.attached_beats) {
             if (beats == null || i in beats) {
                 this.notifyItemChanged(i)
             }
@@ -678,6 +677,11 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
         if (this.focus_type != FocusType.Group && this.linking_beat != null) {
             this.cancelLinking()
         }
+    }
+
+    fun scrollToPosition(position: Int) {
+        this.recycler.scrollToPosition(position)
+        this.column_layout.recycler.scrollToPosition(position)
     }
 }
 

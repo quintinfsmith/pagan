@@ -69,8 +69,10 @@ class MainFragment : Fragment() {
             for (i in 0 until opus_manager.opus_beat_count) {
                 rvBeatTable_adapter.addBeatColumn(i)
             }
+            // TODO: Fix this kludge. A partially-visible first item will not render, so i'm just
+            // Scrolling back to the beginning for now
+            rvBeatTable_adapter.scrollToPosition(0)
         }
-
         super.onResume()
     }
 

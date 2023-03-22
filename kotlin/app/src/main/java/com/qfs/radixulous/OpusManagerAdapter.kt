@@ -21,6 +21,7 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
     var _scroll_lock_this: Boolean = false
     var _scroll_lock_columns: Boolean = false
     private var focus_type: FocusType = FocusType.Cell
+    private var bound_beats = mutableSetOf<Int>()
     private var attached_beats = mutableSetOf<Int>()
 
     // BackLink so I can get the x offset from a view in the view holder
@@ -226,14 +227,10 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
         }
     }
 
-    override fun onViewAttachedToWindow(holder: BeatViewHolder) {
+    override fun onViewRecycled(holder: BeatViewHolder) {
         val beat = holder.bindingAdapterPosition
-        this.attached_beats.add(beat)
-    }
-    override fun onViewDetachedFromWindow(holder: BeatViewHolder) {
-        val beat = holder.bindingAdapterPosition
-        if (this.attached_beats.contains(beat)) {
-            this.attached_beats.remove(beat)
+        if (this.bound_beats.contains(beat)) {
+            this.bound_beats.remove(beat)
         }
     }
 
@@ -244,6 +241,18 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
 
     override fun onBindViewHolder(holder: BeatViewHolder, position: Int) {
         this.updateItem(holder, position)
+        this.bound_beats.add(position)
+    }
+
+    override fun onViewAttachedToWindow(holder: BeatViewHolder) {
+        val beat = holder.bindingAdapterPosition
+        this.attached_beats.add(beat)
+    }
+    override fun onViewDetachedFromWindow(holder: BeatViewHolder) {
+        val beat = holder.bindingAdapterPosition
+        if (this.attached_beats.contains(beat)) {
+            this.attached_beats.remove(beat)
+        }
     }
 
     fun updateItem(holder: BeatViewHolder, index: Int) {
@@ -551,7 +560,7 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
 
     fun refresh_leaf_labels(beats: Set<Int>? = null) {
         // NOTE: padding the start/end since an item may be bound but not visible
-        for (i in this.attached_beats) {
+        for (i in this.bound_beats) {
             if (beats == null || i in beats) {
                 this.notifyItemChanged(i)
             }
@@ -560,8 +569,6 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
 
     fun get_visible_highlighted_leafs(): List<LeafButton> {
         var layout_manager = (this.recycler.layoutManager as LinearLayoutManager)
-        val start = max(0, layout_manager.findFirstVisibleItemPosition() - 1)
-        val end = min(this.itemCount, layout_manager.findLastVisibleItemPosition() + 1)
 
         var opus_manager = this.get_opus_manager()
         var cursor = opus_manager.get_cursor()
@@ -570,7 +577,7 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
         when (this.focus_type) {
             FocusType.Row -> {
                 // NOTE: padding the start/end since an item may be bound but not visible
-                for (i in start .. end) {
+                for (i in this.attached_beats) {
                     var leafs = this.get_all_leaf_views(BeatKey(beatkey.channel, beatkey.line_offset, i)) ?: continue
                     for (leaf in leafs) {
                         output.add(leaf)
@@ -578,7 +585,7 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
                 }
             }
             FocusType.Column -> {
-                if (beatkey.beat in start .. end) {
+                if (beatkey.beat in this.attached_beats) {
                     for (i in 0 until opus_manager.channels.size) {
                         for (j in 0 until opus_manager.channels[i].size) {
                             var leafs = this.get_all_leaf_views(BeatKey(i, j, beatkey.beat)) ?: continue
@@ -591,7 +598,7 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
             }
             FocusType.Cell -> {
                 for (linkedkey in opus_manager.get_all_linked(beatkey)) {
-                    if (linkedkey.beat !in start..end) {
+                    if (linkedkey.beat !in this.attached_beats) {
                         continue
                     }
                     for (leaf in this.get_all_leaf_views(linkedkey, cursor.get_position()) ?: continue) {
@@ -640,7 +647,7 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
 
                     for (y in 0 .. y_diff) {
                         for (x in 0 .. x_diff) {
-                            if (x + x_i !in start .. end)  {
+                            if (x + x_i !in this.attached_beats)  {
                                 continue
                             }
                             val (channel, index) = opus_manager.get_channel_index(y + y_i)
@@ -671,6 +678,12 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
 
         for (leaf in this.get_visible_highlighted_leafs()) {
             leaf.isFocused = true
+        }
+
+        // Kludge: (Due to RecyclerView Bug) Update the beats that are bound but not visible because the RecyclerView
+        // Wouldn't redraw them
+        for (b in this.bound_beats - this.attached_beats) {
+            this.notifyItemChanged(b)
         }
 
         if (this.focus_type != FocusType.Group && this.linking_beat != null) {

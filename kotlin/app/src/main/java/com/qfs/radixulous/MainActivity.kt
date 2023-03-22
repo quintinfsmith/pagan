@@ -97,19 +97,8 @@ class MainActivity : AppCompatActivity() {
         setupActionBarWithNavController(navController, this.appBarConfiguration)
 
         val drawerlayout = findViewById<DrawerLayout>(R.id.drawer_layout)
-        val that = this
         drawerlayout.addDrawerListener( object: DrawerLayout.DrawerListener {
-            override fun onDrawerClosed(drawerView: View) {
-                val fragment = that.getActiveFragment() as MainFragment
-                fragment.tick()
-
-                val opus_manager = that.getOpusManager()
-
-                fragment.refresh_leaf_labels()
-                fragment.update_line_labels()
-                that.update_channel_instruments(opus_manager)
-
-            }
+            override fun onDrawerClosed(drawerView: View) { }
             override fun onDrawerSlide(drawerView: View, slideOffset: Float) { }
             override fun onDrawerOpened(drawerView: View) { }
             override fun onDrawerStateChanged(newState: Int) { }

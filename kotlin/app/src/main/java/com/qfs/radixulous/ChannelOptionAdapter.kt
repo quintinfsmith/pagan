@@ -29,6 +29,23 @@ class ChannelOptionAdapter(
                         that.notifyItemChanged(i)
                     }
                 }
+                override fun onItemRangeChanged(start: Int, count: Int) {
+                    var fragment = that.activity.getActiveFragment()
+                    if (fragment is MainFragment) {
+                        fragment.tick()
+                        fragment.update_line_labels()
+                        fragment.refresh_leaf_labels()
+                    }
+                }
+                override fun onItemRangeInserted(start: Int, count: Int) {
+                    var fragment = that.activity.getActiveFragment()
+                    if (fragment is MainFragment) {
+                        fragment.tick()
+                        fragment.update_line_labels()
+                        fragment.refresh_leaf_labels()
+                    }
+
+                }
                 //override fun onChanged() { }
             }
         )
@@ -50,22 +67,9 @@ class ChannelOptionAdapter(
         var opus_manager = this.activity.getOpusManager()
         opus_manager.new_channel()
         opus_manager.new_line(opus_manager.channels.size - 1)
-        this.call_tick()
         notifyItemInserted(opus_manager.channels.size - 1)
     }
 
-    fun call_tick() {
-        var fragment = this.activity.getActiveFragment()
-        when (fragment) {
-            is MainFragment -> {
-                fragment.tick()
-            }
-            else -> {
-
-            }
-        }
-
-    }
 
     fun set_text(view: View, position: Int) {
         var opus_manager = this.activity.getOpusManager()
@@ -149,7 +153,6 @@ class ChannelOptionAdapter(
         if (opus_manager.channels.size > 1) {
             var x = this.get_view_channel(view)
             opus_manager.remove_channel(x)
-            this.call_tick()
             this.notifyItemRemoved(x)
         }
     }

@@ -28,9 +28,6 @@ class MainFragment : Fragment() {
     // This property is only valid between onCreateView and
     // onDestroyView.
     private val binding get() = _binding!!
-    init {
-        println("INIT MAIN FRAGMENT")
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,

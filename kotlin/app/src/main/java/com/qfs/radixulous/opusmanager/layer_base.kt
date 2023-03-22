@@ -435,7 +435,6 @@ open class OpusManagerBase {
         } else {
             this.channels.add(new_channel)
         }
-
     }
 
     open fun move_line(channel_old: Int, line_old: Int, channel_new: Int, line_new: Int) {

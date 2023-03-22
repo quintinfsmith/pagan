@@ -473,7 +473,7 @@ open class HistoryLayer() : CursorLayer() {
     fun push_new_line(channel: Int, line_offset: Int) {
         this.history_cache.open_multi()
 
-        for (i in 0 until this.opus_beat_count) {
+        for (i in this.opus_beat_count - 1 downTo 0) {
             val beat_key = BeatKey(channel, line_offset, i)
             this.push_replace_tree(beat_key, listOf())
         }

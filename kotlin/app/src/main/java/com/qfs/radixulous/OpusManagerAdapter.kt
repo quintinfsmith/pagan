@@ -499,7 +499,6 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
             }
         }
 
-        println("SETTING $beat to $max_width")
         this.column_layout.set_label_width(beat, max_width)
     }
 

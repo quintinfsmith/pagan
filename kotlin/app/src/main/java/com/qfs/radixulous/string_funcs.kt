@@ -79,7 +79,6 @@ fun from_string(input_string: String, radix: Int, channel: Int): OpusTree<OpusEv
     var opened_indeces: MutableList<Int> = mutableListOf()
     var relative_flag: Char? = null
     var repeat_queue: MutableList<OpusTree<OpusEvent>> = mutableListOf()
-    println("$repstring")
     for (i in repstring.indices) {
         var character = repstring[i]
         if (character == CH_CLOSE) {
@@ -98,7 +97,6 @@ fun from_string(input_string: String, radix: Int, channel: Int): OpusTree<OpusEv
         }
 
         if (character == CH_OPEN) {
-            println("INDEX: $i")
             var last = tree_stack.last()
             if (last.is_leaf()) {
                 last.set_size(1)

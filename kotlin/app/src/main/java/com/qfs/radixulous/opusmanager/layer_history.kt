@@ -497,7 +497,6 @@ open class HistoryLayer() : CursorLayer() {
     fun push_insert_beat(index: Int, channel_sizes: List<Int>) {
         this.history_cache.open_multi()
 
-
         for (channel in channel_sizes.indices) {
             val line_count = channel_sizes[channel]
             for (j in 0 until line_count) {
@@ -506,8 +505,6 @@ open class HistoryLayer() : CursorLayer() {
         }
 
         this.history_cache.append_undoer("insert_beat", listOf(index))
-
-
         this.history_cache.close_multi(this.get_cursor().get_beatkey(), this.get_cursor().get_position())
     }
 

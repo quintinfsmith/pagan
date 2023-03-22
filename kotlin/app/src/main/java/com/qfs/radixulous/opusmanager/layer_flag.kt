@@ -168,13 +168,8 @@ open class FlagLayer : LinksLayer() {
         this.cache.flag_beat_change(beat_key)
     }
 
-    override fun purge_cache() {
+    fun reset_cache() {
         this.cache.purge()
-        super.purge_cache()
-    }
-
-    override fun reset_cache() {
-        super.reset_cache()
         for (i in 0 until this.channels.size) {
             for (j in 0 until this.channels[i].size) {
                 this.cache.flag_line_new(i, j, 0)
@@ -260,6 +255,7 @@ open class FlagLayer : LinksLayer() {
     override fun clear() {
         var channel_counts = this.get_channel_line_counts()
         var beat_count = this.opus_beat_count
+        this.cache.purge()
         super.clear()
         this.cache.flag_clear(channel_counts, beat_count)
     }

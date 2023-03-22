@@ -8,8 +8,8 @@ open class LinksLayer() : AbsoluteValueLayer() {
     // Indicates that links are being calculated to prevent recursion
     var link_locker: Int = 0
 
-    override fun purge_cache() {
-        super.purge_cache()
+    override fun clear() {
+        super.clear()
         this.link_pools.clear()
         this.link_pool_map.clear()
         this.link_locker = 0

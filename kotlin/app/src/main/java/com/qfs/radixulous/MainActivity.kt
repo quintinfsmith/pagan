@@ -465,8 +465,11 @@ class MainActivity : AppCompatActivity() {
             is LoadFragment -> {
                 when (fragmentName) {
                     "main" -> {
-                        navController.navigate(R.id.action_LoadFragment_to_MainFragment)
-                        this.reset_start_destination()
+                        if (navController.graph.startDestinationId != R.id.MainFragment) {
+                            this.reset_start_destination()
+                        } else {
+                            navController.navigate(R.id.action_LoadFragment_to_MainFragment)
+                        }
                     }
                     else -> {}
                 }
@@ -484,9 +487,7 @@ class MainActivity : AppCompatActivity() {
             is FrontFragment -> {
                 when (fragmentName) {
                     "main" -> {
-                        navController.navigate(R.id.action_FrontFragment_to_MainFragment)
                         this.reset_start_destination()
-
                     }
                     "load" -> {
                         navController.navigate(R.id.action_FrontFragment_to_LoadFragment)

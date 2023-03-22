@@ -1,12 +1,16 @@
 package com.qfs.radixulous
 
 import android.content.Context
+import android.os.Parcelable
 import android.view.*
 import android.widget.LinearLayout
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.SimpleItemAnimator
 import com.qfs.radixulous.opusmanager.BeatKey
+import com.qfs.radixulous.opusmanager.OpusChannel
+import com.qfs.radixulous.opusmanager.OpusEvent
+import com.qfs.radixulous.structure.OpusTree
 import java.lang.Integer.max
 import java.lang.Integer.min
 import com.qfs.radixulous.opusmanager.HistoryLayer as OpusManager
@@ -26,25 +30,20 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
     class BackLinkView(context: Context): LinearLayout(context) {
         var viewHolder: BeatViewHolder? = null
         init {
-            this.orientation = LinearLayout.VERTICAL
+            this.orientation = VERTICAL
         }
     }
-
+    class OpusManagerLayoutManager(context: Context): LinearLayoutManager(context, HORIZONTAL, false) {
+    }
     class BeatViewHolder(itemView: BackLinkView) : RecyclerView.ViewHolder(itemView) {
         init {
             itemView.viewHolder = this
         }
     }
     init {
-
         this.recycler.adapter = this
-        this.recycler.layoutManager = LinearLayoutManager(
-            this.getMainActivity(),
-            LinearLayoutManager.HORIZONTAL,
-            false
-        )
+        this.recycler.layoutManager = OpusManagerLayoutManager(this.getMainActivity())
         (this.recycler.itemAnimator as SimpleItemAnimator).supportsChangeAnimations = false
-
         val that = this
         this.registerAdapterDataObserver(
             object: RecyclerView.AdapterDataObserver() {
@@ -235,13 +234,20 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
         return BeatViewHolder(layoutstack)
     }
 
+    override fun onViewAttachedToWindow(holder: BeatViewHolder) {
+        println("!!!")
+    }
+
     override fun onBindViewHolder(holder: BeatViewHolder, position: Int) {
+        println("CHANGI $position")
         this.updateItem(holder, position)
+        println("${holder.itemView.height}")
     }
 
     fun updateItem(holder: BeatViewHolder, index: Int) {
         (holder.itemView as ViewGroup).removeAllViews()
         val opus_manager = this.get_opus_manager()
+        println("UPDATING $index")
 
         for (channel in 0 until opus_manager.channels.size) {
             for (line_offset in 0 until opus_manager.channels[channel].size) {
@@ -491,6 +497,7 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
             }
         }
 
+        println("SETTING $beat to $max_width")
         this.column_layout.set_label_width(beat, max_width)
     }
 
@@ -546,7 +553,7 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
         val end = (this.recycler.layoutManager as LinearLayoutManager).findLastVisibleItemPosition()
 
         // NOTE: padding the start/end since an item may be bound but not visible
-        for (i in max(0, start - 1) .. min(this.itemCount, end + 1)) {
+        for (i in max(0, start - 2) .. min(this.itemCount, end + 1)) {
             if (beats == null || i in beats) {
                 this.notifyItemChanged(i)
             }
@@ -671,7 +678,6 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
         if (this.focus_type != FocusType.Group && this.linking_beat != null) {
             this.cancelLinking()
         }
-
     }
 }
 

@@ -88,7 +88,6 @@ class HistoryCache() {
 
     fun clear() {
         this.history.clear()
-        this.history_locked = false
     }
 
     fun lock(): Boolean {
@@ -426,18 +425,26 @@ open class HistoryLayer() : CursorLayer() {
     }
 
     override fun load(path: String) {
+        this.history_cache.lock()
         super.load(path)
-        this.history_cache.clear()
+        this.history_cache.unlock()
     }
 
     override fun new() {
+        this.history_cache.lock()
         super.new()
-        this.history_cache.clear()
+        this.history_cache.unlock()
     }
 
     override fun import_midi(midi: MIDI) {
+        this.history_cache.lock()
         super.import_midi(midi)
+        this.history_cache.unlock()
+    }
+
+    override fun clear() {
         this.history_cache.clear()
+        super.clear()
     }
 
     fun push_replace_tree(beatkey: BeatKey, position: List<Int>, tree: OpusTree<OpusEvent>? = null) {

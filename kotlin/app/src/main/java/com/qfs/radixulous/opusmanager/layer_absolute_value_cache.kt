@@ -226,47 +226,46 @@ open class AbsoluteValueLayer: OpusManagerBase() {
     }
 
 
-    override fun purge_cache() {
-        super.purge_cache()
+    override fun clear() {
         this.absolute_values_cache.clear()
+        super.clear()
     }
 
-    override fun reset_cache() {
-        super.reset_cache()
-        this.channels.forEachIndexed { i, channel ->
-            channel.lines.forEachIndexed { j, line ->
-                var key = BeatKey(i, j, 0)
-                var position: MutableList<Int> = mutableListOf()
-                var tree = line[0]
-                while (!tree.is_leaf()) {
-                    tree = tree.get(0)
-                    position.add(0)
-                }
+    //fun reset_abs_values() {
+    //    this.channels.forEachIndexed { i, channel ->
+    //        channel.lines.forEachIndexed { j, line ->
+    //            var key = BeatKey(i, j, 0)
+    //            var position: MutableList<Int> = mutableListOf()
+    //            var tree = line[0]
+    //            while (!tree.is_leaf()) {
+    //                tree = tree.get(0)
+    //                position.add(0)
+    //            }
 
-                var working_value: Int? = null
+    //            var working_value: Int? = null
 
-                var next: Pair<BeatKey, List<Int>>? = Pair(key, position)
-                while (next != null) {
-                    var working_leaf = this.get_tree(next.first, next.second)
+    //            var next: Pair<BeatKey, List<Int>>? = Pair(key, position)
+    //            while (next != null) {
+    //                var working_leaf = this.get_tree(next.first, next.second)
 
-                    if (working_leaf.is_event()) {
-                        var event = working_leaf.get_event()!!
-                        if (event.relative) {
-                            if (working_value == null) {
-                                throw Exception("Bad first value")
-                            } else {
-                                working_value += event.note
-                            }
-                        } else {
-                            working_value = event.note
-                        }
-                        this.decache_absolute_value(next.first, next.second)
-                        this.cache_absolute_value(next.first, next.second, working_value)
-                    }
-                    next = this.get_proceding_leaf_position(next.first, next.second)
-                }
-            }
-        }
-    }
+    //                if (working_leaf.is_event()) {
+    //                    var event = working_leaf.get_event()!!
+    //                    if (event.relative) {
+    //                        if (working_value == null) {
+    //                            throw Exception("Bad first value")
+    //                        } else {
+    //                            working_value += event.note
+    //                        }
+    //                    } else {
+    //                        working_value = event.note
+    //                    }
+    //                    this.decache_absolute_value(next.first, next.second)
+    //                    this.cache_absolute_value(next.first, next.second, working_value)
+    //                }
+    //                next = this.get_proceding_leaf_position(next.first, next.second)
+    //            }
+    //        }
+    //    }
+    //}
 }
 

@@ -13,7 +13,6 @@ class ProjectToLoadAdapter(
 
     class ProjectToLoadViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
     private val projects: MutableList<Pair<String, String>> = mutableListOf()
-
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ProjectToLoadViewHolder {
         return ProjectToLoadViewHolder(
             LayoutInflater.from(parent.context).inflate(

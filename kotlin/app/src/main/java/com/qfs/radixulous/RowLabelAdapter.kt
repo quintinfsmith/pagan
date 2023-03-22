@@ -9,6 +9,9 @@ import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.SimpleItemAnimator
+import com.qfs.radixulous.opusmanager.OpusChannel
+import com.qfs.radixulous.opusmanager.OpusEvent
+import com.qfs.radixulous.structure.OpusTree
 
 class RowLabelAdapter(var main_fragment: MainFragment, var recycler: RecyclerView) : RecyclerView.Adapter<RowLabelAdapter.RowLabelViewHolder>() {
     // BackLink so I can get the x offset from a view in the view holder

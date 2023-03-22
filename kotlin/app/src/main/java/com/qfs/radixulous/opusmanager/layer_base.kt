@@ -676,8 +676,6 @@ open class OpusManagerBase {
 
     // Clear function is used for new projects
     open fun clear() {
-        this.purge_cache()
-
         this.opus_beat_count = 0
         this.channels.clear()
         this.path = null
@@ -866,15 +864,5 @@ open class OpusManagerBase {
                 this.set_percussion_instrument(index, note)
             }
         }
-    }
-
-    open fun purge_cache() {
-        // Nothin should be in the base layer
-        // this is a function to call to clear any peripheral/cached information in higher layers
-    }
-    open fun reset_cache() {
-        this.purge_cache()
-        // Nothing should be in the base layer
-        // this is the base function to call to setup any caches or peripheral data needed for a layer to function
     }
 }

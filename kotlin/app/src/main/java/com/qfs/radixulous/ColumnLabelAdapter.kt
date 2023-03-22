@@ -90,8 +90,10 @@ class ColumnLabelAdapter(var main_fragment: MainFragment, var recycler: Recycler
     }
 
     fun addColumnLabel(position: Int) {
-        this.column_widths.add(position, 1)
-        this.notifyItemInserted(position)
+        while (this.column_widths.size <= position) {
+            this.column_widths.add(1)
+            this.notifyItemInserted(this.column_widths.size - 1)
+        }
     }
 
     fun removeColumnLabel(index: Int) {

@@ -1,6 +1,7 @@
 package com.qfs.radixulous
 
 import android.content.Context
+import android.util.AttributeSet
 import android.view.*
 import android.widget.LinearLayout
 import android.widget.TableLayout
@@ -13,6 +14,15 @@ import com.qfs.radixulous.opusmanager.OpusChannel
 import com.qfs.radixulous.opusmanager.OpusEvent
 import com.qfs.radixulous.structure.OpusTree
 
+class RowLabelRecyclerView: RecyclerView {
+    constructor(context: Context, attrs: AttributeSet) : super(context, attrs)
+
+    // Prevents this from intercepting rowlabel touch events (disables manual scrolling)
+    override fun onInterceptTouchEvent(touchEvent: MotionEvent): Boolean {
+        return false
+    }
+
+}
 class RowLabelAdapter(var main_fragment: MainFragment, var recycler: RecyclerView) : RecyclerView.Adapter<RowLabelAdapter.RowLabelViewHolder>() {
     // BackLink so I can get the x offset from a view in the view holder
     private var row_count = 0
@@ -29,6 +39,11 @@ class RowLabelAdapter(var main_fragment: MainFragment, var recycler: RecyclerVie
 
         init {
             this.addView(textView)
+        }
+
+        // Prevents the child labels from blocking the parent onTouchListener events
+        override fun onInterceptTouchEvent(touchEvent: MotionEvent): Boolean {
+            return true
         }
 
         fun set_text(text: String) {
@@ -86,8 +101,7 @@ class RowLabelAdapter(var main_fragment: MainFragment, var recycler: RecyclerVie
         }
 
         label.setOnTouchListener { view: View, touchEvent: MotionEvent ->
-            // TODO: Find out what '3' is
-            if (touchEvent.action == MotionEvent.ACTION_MOVE || touchEvent.action == 3) {
+            if (touchEvent.action == MotionEvent.ACTION_MOVE) {
                 if (this._dragging_rowLabel == null) {
                     this._dragging_rowLabel = view
                     view.startDragAndDrop(
@@ -103,7 +117,6 @@ class RowLabelAdapter(var main_fragment: MainFragment, var recycler: RecyclerVie
         }
 
         label.setOnDragListener { view: View, dragEvent: DragEvent ->
-            println("DRAG EVENT: ${dragEvent.action}")
             when (dragEvent.action) {
                 //DragEvent.ACTION_DRAG_STARTED -> { }
                 DragEvent.ACTION_DROP -> {
@@ -117,6 +130,9 @@ class RowLabelAdapter(var main_fragment: MainFragment, var recycler: RecyclerVie
                     this._dragging_rowLabel = null
                 }
                 // TODO: use DragEvent.ACTION_* constant
+                3 -> {
+                    this._dragging_rowLabel = null
+                }
                 4 -> {
                     this._dragging_rowLabel = null
                 }

@@ -60,7 +60,6 @@
         <item name="android:textStyle">normal</item>
         <item name="android:background">@null</item>
         <item name="android:maxLines">1</item>
-        <item name="android:clickable">true</item>
     </style>
 
     <style name="leaf_value" parent="@android:style/Widget.TextView">
@@ -74,7 +73,6 @@
         <item name="android:textSize">16sp</item>
         <item name="android:textStyle">normal</item>
         <item name="android:maxLines">1</item>
-        <item name="android:clickable">true</item>
     </style>
 
     <style name="numberSelector" parent="@android:style/Widget.TextView">

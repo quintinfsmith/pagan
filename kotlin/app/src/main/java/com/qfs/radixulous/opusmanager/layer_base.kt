@@ -438,6 +438,11 @@ open class OpusManagerBase {
     }
 
     open fun move_line(channel_old: Int, line_old: Int, channel_new: Int, line_new: Int) {
+        // Don't move empty lines
+        if (this.channels[channel_old].line_is_empty(line_old)) {
+            return
+        }
+
         var line = this.remove_line(channel_old, line_old)
 
         var new_channel = this.channels[channel_new]

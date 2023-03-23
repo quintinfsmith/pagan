@@ -32,12 +32,10 @@ class LoadFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-
         _binding = FragmentLoadBinding.inflate(inflater, container, false)
         this.getMain().unlockDrawer()
         this.getMain().update_menu_options()
         return binding.root
-
     }
 
     private fun getMain(): MainActivity {

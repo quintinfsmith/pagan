@@ -132,9 +132,7 @@ class Cursor(var opus_manager: CursorLayer) {
         var working_beat = this.opus_manager.get_beat_tree(this.get_beatkey())
         var working_tree = working_beat
 
-        if (working_tree.is_leaf()) {
-            this.position = mutableListOf()
-        }
+        var working_position = mutableListOf<Int>()
 
         // Then get the current_working_tree
         var index = 0
@@ -147,22 +145,20 @@ class Cursor(var opus_manager: CursorLayer) {
             } else {
                 working_tree.get(j)
             }
-            index += 1
-        }
-        while (index < this.position.size) {
-            this.position.removeLast()
+            working_position.add(j)
         }
 
         // Then find the leaf if not already found
         while (! working_tree.is_leaf()) {
             working_tree = if (right_align) {
-                this.position.add(working_tree.size - 1)
+                working_position.add(working_tree.size - 1)
                 working_tree.get(working_tree.size - 1)
             } else {
-                this.position.add(0)
+                working_position.add(0)
                 working_tree.get(0)
             }
         }
+        this.position = working_position
     }
 }
 

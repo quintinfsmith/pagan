@@ -1110,6 +1110,7 @@ class MainFragment : Fragment() {
             line_to += 1
         }
 
+
         opus_manager.move_line(channel_from, line_from, channel_to, line_to)
 
         this.tick()

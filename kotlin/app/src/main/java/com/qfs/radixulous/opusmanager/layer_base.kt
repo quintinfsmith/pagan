@@ -439,14 +439,14 @@ open class OpusManagerBase {
 
     open fun move_line(channel_old: Int, line_old: Int, channel_new: Int, line_new: Int) {
         var line = this.remove_line(channel_old, line_old)
+
         var new_channel = this.channels[channel_new]
         if (new_channel.size == 1 && new_channel.line_is_empty(0) && line_new == 1) {
-            this.remove_line(channel_new, 0)
             this.insert_line(channel_new, 0, line)
+            this.remove_line(channel_new, 1)
         } else {
             this.insert_line(channel_new, line_new, line)
         }
-
 
         if (this.channels[channel_old].size == 0) {
             this.new_line(channel_old)

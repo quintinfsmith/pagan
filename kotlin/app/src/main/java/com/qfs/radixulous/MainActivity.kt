@@ -125,10 +125,6 @@ class MainActivity : AppCompatActivity() {
         val rvRowLabels_adapter = this.findViewById<RecyclerView>(R.id.rvRowLabels).adapter as RowLabelAdapter
     }
 
-    override fun onBackPressed() {
-        super.onBackPressed()
-    }
-
     override fun onSupportNavigateUp(): Boolean {
         val navController = findNavController(R.id.nav_host_fragment_content_main)
         return navController.navigateUp(appBarConfiguration)

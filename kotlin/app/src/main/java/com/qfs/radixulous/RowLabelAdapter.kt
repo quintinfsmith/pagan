@@ -86,29 +86,38 @@ class RowLabelAdapter(var main_fragment: MainFragment, var recycler: RecyclerVie
         }
 
         label.setOnTouchListener { view: View, touchEvent: MotionEvent ->
-            if (this._dragging_rowLabel == null && touchEvent.action == MotionEvent.ACTION_MOVE) {
-                this._dragging_rowLabel = view
-                view.startDragAndDrop(
-                    null,
-                    View.DragShadowBuilder(view),
-                    null,
-                    0
-                )
-                return@setOnTouchListener true
+            // TODO: Find out what '3' is
+            if (touchEvent.action == MotionEvent.ACTION_MOVE || touchEvent.action == 3) {
+                if (this._dragging_rowLabel == null) {
+                    this._dragging_rowLabel = view
+                    view.startDragAndDrop(
+                        null,
+                        View.DragShadowBuilder(view),
+                        null,
+                        0
+                    )
+                    return@setOnTouchListener true
+                }
             }
             false
         }
 
         label.setOnDragListener { view: View, dragEvent: DragEvent ->
+            println("DRAG EVENT: ${dragEvent.action}")
             when (dragEvent.action) {
                 //DragEvent.ACTION_DRAG_STARTED -> { }
                 DragEvent.ACTION_DROP -> {
+                    println("DROPPED")
                     var from_label =  this._dragging_rowLabel
                     if (from_label != null && from_label != view) {
                         val y_from = (from_label.parent as ViewGroup).indexOfChild(from_label)
                         val y_to = (view.parent as ViewGroup).indexOfChild(view)
                         this.main_fragment.move_line(y_from, y_to)
                     }
+                    this._dragging_rowLabel = null
+                }
+                // TODO: use DragEvent.ACTION_* constant
+                4 -> {
                     this._dragging_rowLabel = null
                 }
                 else -> { }

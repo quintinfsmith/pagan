@@ -43,15 +43,38 @@
     <style name="leaf" parent="@android:style/Widget.Button">
         <item name="android:gravity">center_vertical|center_horizontal</item>
         <item name="android:textColor">@color/leaf_fg</item>
+        <item name="android:background">@drawable/leaf_button</item>
+        <item name="android:clickable">true</item>
+        <item name="android:maxLines">1</item>
+    </style>
+    <style name="leaf_prefix" parent="@android:style/Widget.TextView">
+        <item name="android:gravity">center_vertical|center_horizontal</item>
+        <item name="android:textColor">@color/leaf_fg</item>
         <item name="android:shadowColor">#FF000000</item>
         <item name="android:shadowDx">0</item>
         <item name="android:shadowDy">0</item>
         <item name="android:shadowRadius">0</item>
-        <item name="android:textSize">18sp</item>
+        <item name="android:textSize">20sp</item>
+        <item name="android:padding">0dp</item>
+        <item name="android:paddingLeft">1dp</item>
         <item name="android:textStyle">normal</item>
-        <item name="android:background">@drawable/leaf_button</item>
-        <item name="android:clickable">true</item>
+        <item name="android:background">@null</item>
         <item name="android:maxLines">1</item>
+        <item name="android:clickable">true</item>
+    </style>
+
+    <style name="leaf_value" parent="@android:style/Widget.TextView">
+        <item name="android:gravity">center_vertical|center_horizontal</item>
+        <item name="android:textColor">@color/leaf_fg</item>
+        <item name="android:background">@null</item>
+        <item name="android:shadowColor">#FF000000</item>
+        <item name="android:shadowDx">0</item>
+        <item name="android:shadowDy">0</item>
+        <item name="android:shadowRadius">0</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:clickable">true</item>
     </style>
 
     <style name="numberSelector" parent="@android:style/Widget.TextView">

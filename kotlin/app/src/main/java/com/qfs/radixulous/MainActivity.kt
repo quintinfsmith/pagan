@@ -56,6 +56,7 @@ class MainActivity : AppCompatActivity() {
     private var opus_manager = OpusManager()
 
     private var in_play_back: Boolean = false
+    private var midi_beats_to_play_back = mutableListOf<Pair<Int, MIDI>>()
 
     private lateinit var optionsMenu: Menu
     internal lateinit var project_manager: ProjectManager
@@ -271,7 +272,18 @@ class MainActivity : AppCompatActivity() {
         thread {
             val opus_manager = this.getOpusManager()
             val beat = opus_manager.get_cursor().x
+            var midi_beats_to_play_back = mutableListOf<Pair<Int, MIDI>>()
             for (i in beat until opus_manager.opus_beat_count) {
+                midi_beats_to_play_back.add(
+                    Pair(i, opus_manager.get_midi(i, i + 1))
+                )
+            }
+
+            var std_delay = ((60F / opus_manager.tempo) * 1000).toLong()
+            var ts_start = System.currentTimeMillis()
+            var ideal_time = ts_start
+            var drift = 0L
+            for ((i, midi_beat) in midi_beats_to_play_back) {
                 if (!this.in_play_back) {
                     break
                 }
@@ -283,11 +295,12 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 thread {
-                    this.play_beat(i)
+                    this.play_midi(midi_beat)
                 }
 
-                val delay = (60F / opus_manager.tempo) * 1000
-                Thread.sleep(delay.toLong())
+                Thread.sleep(std_delay + drift)
+                ideal_time += std_delay
+                drift = ideal_time - System.currentTimeMillis()
             }
 
             if (this.in_play_back && main_fragment is MainFragment) {

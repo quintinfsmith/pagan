@@ -45,7 +45,8 @@ class ColumnLabelAdapter(var main_fragment: MainFragment, var recycler: Recycler
             LinearLayoutManager.HORIZONTAL,
             false
         )
-        (this.recycler.itemAnimator as SimpleItemAnimator).supportsChangeAnimations = false
+        //(this.recycler.itemAnimator as SimpleItemAnimator).supportsChangeAnimations = false
+        this.recycler.setItemAnimator(null)
 
         var that = this
         this.registerAdapterDataObserver(

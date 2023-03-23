@@ -5,10 +5,8 @@ import android.view.*
 import android.widget.LinearLayout
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import androidx.recyclerview.widget.SimpleItemAnimator
 import com.qfs.radixulous.opusmanager.BeatKey
 import java.lang.Integer.max
-import java.lang.Integer.min
 import com.qfs.radixulous.opusmanager.HistoryLayer as OpusManager
 
 class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: RecyclerView, var column_layout: ColumnLabelAdapter) : RecyclerView.Adapter<OpusManagerAdapter.BeatViewHolder>() {
@@ -23,6 +21,8 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
     private var focus_type: FocusType = FocusType.Cell
     private var bound_beats = mutableSetOf<Int>()
     private var attached_beats = mutableSetOf<Int>()
+    lateinit var table_scroll_listener: TableOnScrollListener
+    lateinit var column_scroll_listener: ColumnLabelOnScrollListener
 
     // BackLink so I can get the x offset from a view in the view holder
     class BackLinkView(context: Context): LinearLayout(context) {
@@ -31,8 +31,30 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
             this.orientation = VERTICAL
         }
     }
-    class OpusManagerLayoutManager(context: Context): LinearLayoutManager(context, HORIZONTAL, false) {
+    class OpusManagerLayoutManager(context: Context): LinearLayoutManager(context, HORIZONTAL, false) { }
+
+    class TableOnScrollListener: RecyclerView.OnScrollListener() {
+        override fun onScrolled(recyclerView: RecyclerView, x: Int, y: Int) {
+            super.onScrolled(recyclerView, x, y)
+            var adapter = recyclerView.adapter as OpusManagerAdapter
+            if (!adapter._scroll_lock_this) {
+                adapter._scroll_lock_columns = true
+                adapter.column_layout.scroll(x)
+                adapter._scroll_lock_columns = false
+            }
+        }
     }
+    class ColumnLabelOnScrollListener(var omAdapter: OpusManagerAdapter): RecyclerView.OnScrollListener() {
+        override fun onScrolled(recyclerView: RecyclerView, x: Int, y: Int) {
+            super.onScrolled(recyclerView, x, y)
+            if (!omAdapter._scroll_lock_columns) {
+                omAdapter._scroll_lock_this = true
+                omAdapter.column_layout.scroll(x)
+                omAdapter._scroll_lock_this= false
+            }
+        }
+    }
+
     class BeatViewHolder(itemView: BackLinkView) : RecyclerView.ViewHolder(itemView) {
         init {
             itemView.viewHolder = this
@@ -41,7 +63,9 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
     init {
         this.recycler.adapter = this
         this.recycler.layoutManager = OpusManagerLayoutManager(this.getMainActivity())
-        (this.recycler.itemAnimator as SimpleItemAnimator).supportsChangeAnimations = false
+        //(this.recycler.itemAnimator as SimpleItemAnimator).supportsChangeAnimations = false
+        this.recycler.setItemAnimator(null)
+
         val that = this
         this.registerAdapterDataObserver(
             object: RecyclerView.AdapterDataObserver() {
@@ -70,27 +94,11 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
             }
         )
 
-        this.recycler.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-            override fun onScrolled(recyclerView: RecyclerView, x: Int, y: Int) {
-                super.onScrolled(recyclerView, x, y)
-                if (!that._scroll_lock_this) {
-                    that._scroll_lock_columns = true
-                    that.column_layout.scroll(x)
-                    that._scroll_lock_columns = false
-                }
-            }
-        })
+        this.table_scroll_listener = TableOnScrollListener()
+        this.column_scroll_listener = ColumnLabelOnScrollListener(this)
 
-        this.column_layout.recycler.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-            override fun onScrolled(recyclerView: RecyclerView, x: Int, y: Int) {
-                super.onScrolled(recyclerView, x, y)
-                if (!that._scroll_lock_columns) {
-                    that._scroll_lock_this = true
-                    that.recycler.scrollBy(x, y)
-                    that._scroll_lock_this = false
-                }
-            }
-        })
+        this.enableScrollSync()
+
     }
 
     private fun getMainActivity(): MainActivity {
@@ -691,9 +699,23 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
         }
     }
 
+    private fun enableScrollSync() {
+        this.recycler.addOnScrollListener( this.table_scroll_listener )
+        this.column_layout.recycler.addOnScrollListener( this.column_scroll_listener )
+    }
+
+    private fun disableScrollSync() {
+        this.recycler.removeOnScrollListener( this.table_scroll_listener )
+        this.column_layout.recycler.removeOnScrollListener( this.column_scroll_listener )
+    }
+
     fun scrollToPosition(position: Int) {
-        this.recycler.scrollToPosition(position)
-        this.column_layout.recycler.scrollToPosition(position)
+        this.disableScrollSync()
+        var item_width = this.column_layout.column_widths[position] * 120
+        val center = (this.recycler.getWidth() - item_width) / 2
+        (this.recycler.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(position, center)
+        (this.column_layout.recycler.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(position, center)
+        this.enableScrollSync()
     }
 }
 

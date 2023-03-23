@@ -784,14 +784,6 @@ class MainFragment : Fragment() {
         popupMenu.show()
     }
 
-    fun play_beat(beat: Int) {
-        val main = this.getMain()
-        val opus_manager = main.getOpusManager()
-
-        val midi = opus_manager.get_midi(beat, beat + 1)
-        main.play_midi(midi)
-    }
-
     fun scroll_to_beat(beat: Int, select: Boolean = false) {
         val main = this.getMain()
         val rvBeatTable = main.findViewById<RecyclerView>(R.id.rvBeatTable)
@@ -799,8 +791,7 @@ class MainFragment : Fragment() {
 
 
         // TODO: Would love this to smooth scroll, but the two rv's desync
-        rvBeatTable.scrollToPosition(beat)
-        rvColumnLabels.scrollToPosition(beat)
+        (rvBeatTable.adapter as OpusManagerAdapter).scrollToPosition(beat)
 
 
         if (select) {

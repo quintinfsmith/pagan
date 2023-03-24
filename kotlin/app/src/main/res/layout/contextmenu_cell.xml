@@ -82,44 +82,13 @@
             android:text="Insert"
             app:srcCompat="@drawable/insert"/>
 
-        <ToggleButton
-            android:id="@+id/sRelative"
-            android:theme="@style/toggle_button"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:textOn="Rel"
-            android:textOff="Abs"/>
-
-    </LinearLayout>
-
-
-    <LinearLayout
-        android:id="@+id/llRelativePalette"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:paddingLeft="@dimen/normal_padding"
-        android:paddingRight="@dimen/normal_padding"
-        android:orientation="vertical">
-
-        <com.qfs.radixulous.RelativeOptionSelector
-            xmlns:android="http://schemas.android.com/apk/res/android"
-            xmlns:custom="http://schemas.android.com/apk/res-auto"
+        <NumberPicker
+            android:orientation="vertical"
             android:id="@+id/rosRelativeOption"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent" />
 
-        <com.qfs.radixulous.NumberSelector xmlns:android="http://schemas.android.com/apk/res/android"
-            xmlns:custom="http://schemas.android.com/apk/res-auto"
-            android:id="@+id/nsRelativeValue"
-            android:layout_width="match_parent"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/normal_padding"
-            custom:min="0"
-            custom:max="11"/>
     </LinearLayout>
-
 
     <LinearLayout
         android:orientation="vertical"

@@ -18,7 +18,7 @@ import com.qfs.radixulous.opusmanager.HistoryLayer as OpusManager
  */
 class MainFragment : Fragment() {
     private var active_context_menu_index: ContextMenu = ContextMenu.None
-    private var relative_mode: Boolean = false
+    private var relative_mode: Int = 0
 
     private var _binding: FragmentMainBinding? = null
     internal var cache = ViewCache()
@@ -305,41 +305,54 @@ class MainFragment : Fragment() {
         llContextMenu.addView(view)
         this.cache.setActiveContextMenu(view)
 
-        val sRelative: ToggleButton = view.findViewById(R.id.sRelative)
+        val rosRelativeOption = view.findViewById<NumberPicker>(R.id.rosRelativeOption)
         val llAbsolutePalette: LinearLayout = view.findViewById(R.id.llAbsolutePalette)
-        val llRelativePalette: LinearLayout = view.findViewById(R.id.llRelativePalette)
+
 
         val btnUnset = view.findViewById<ImageView>(R.id.btnUnset)
         val btnSplit = view.findViewById<View>(R.id.btnSplit)
         val btnRemove = view.findViewById<View>(R.id.btnRemove)
         val btnInsert = view.findViewById<View>(R.id.btnInsert)
+
         val nsOctave: NumberSelector = view.findViewById(R.id.nsOctave)
         val nsOffset: NumberSelector = view.findViewById(R.id.nsOffset)
-        val nsRelativeValue: NumberSelector = view.findViewById(R.id.nsRelativeValue)
-        val rosRelativeOption: RelativeOptionSelector = view.findViewById(R.id.rosRelativeOption)
 
         val current_tree = opus_manager.get_tree_at_cursor()
+        // If event exists, change relative mode, other wise use active relative mode
         if (current_tree.is_event()) {
-            this.relative_mode = current_tree.get_event()!!.relative
+            var event = current_tree.get_event()!!
+            this.relative_mode = if (event.relative) {
+                if (event.note >= 0) {
+                    1
+                } else {
+                    2
+                }
+            } else {
+                0
+            }
         }
 
         val cursor = opus_manager.get_cursor()
-
         if (opus_manager.has_preceding_absolute_event(cursor.get_beatkey(), cursor.get_position())) {
-            sRelative.isChecked = this.relative_mode
-            sRelative.setOnCheckedChangeListener { it, isChecked ->
-                this.interact_sRelative_changed(it, isChecked)
-            }
+            //rosRelativeOption.setOnCheckedChangeListener { it, isChecked ->
+            //    this.interact_rosRelativeOption_changed(it, isChecked)
+            //}
+            rosRelativeOption.visibility = View.VISIBLE
         } else {
-            this.relative_mode = false
-            sRelative.visibility = View.GONE
+            this.relative_mode = 0
+            rosRelativeOption.visibility = View.GONE
         }
+
+        rosRelativeOption.minValue = 0
+        rosRelativeOption.maxValue = 2
+        rosRelativeOption.displayedValues = arrayOf("|n|", "+", "-")
+        rosRelativeOption.value = this.relative_mode
 
         if (opus_manager.is_percussion(cursor.get_beatkey().channel)) {
             llAbsolutePalette.visibility = View.GONE
-            llRelativePalette.visibility = View.GONE
-            sRelative.visibility = View.GONE
+            rosRelativeOption.visibility = View.GONE
 
+            // TODO: Toggle Image instead of text
             //if (!opus_manager.get_tree_at_cursor().is_event()) {
             //    btnUnset.text = "Set"
             //}
@@ -348,68 +361,29 @@ class MainFragment : Fragment() {
                 this.interact_btnUnset(it)
             }
 
-        } else if (!this.relative_mode) {
-            llRelativePalette.visibility = View.GONE
-
+        } else {
             if (current_tree.is_event()) {
                 val event = current_tree.get_event()!!
-                if (!event.relative) {
-                    nsOffset.setState(event.note % event.radix, true, true)
-                    nsOctave.setState(event.note / event.radix, true, true)
+                var value = if (event.note < 0) {
+                    0 - event.note
+                } else {
+                    event.note
                 }
+                nsOffset.setState(value % event.radix, true, true)
+                nsOctave.setState(value / event.radix, true, true)
             }
 
             nsOffset.setOnChange(this::interact_nsOffset)
             nsOctave.setOnChange(this::interact_nsOctave)
-        } else {
-            llAbsolutePalette.visibility = View.GONE
-            var selected_button = 0
-            val new_progress: Int? = if (current_tree.is_event()) {
-                val event = current_tree.get_event()!!
-                if (event.relative) {
-                    if (event.note > 0) {
-                        if (event.note >= event.radix) {
-                            selected_button = 2
-                            event.note / event.radix
-                        } else {
-                            event.note
-                        }
-                    } else if (event.note < 0) {
-                        if (event.note <= 0 - event.radix) {
-                            selected_button = 3
-                            event.note / (0 - event.radix)
-                        } else {
-                            selected_button = 1
-                            0 - event.note
-                        }
-                    } else {
-                        0
-                    }
-                } else {
-                    null
-                }
-            } else {
-                null
+            rosRelativeOption.setOnValueChangedListener { picker: NumberPicker, old: Int, new: Int ->
+                this.interact_rosRelativeOption(picker, old, new)
             }
-
-            rosRelativeOption.setState(selected_button)
-
-            this.resize_relative_value_selector()
-            if (new_progress != null) {
-                try {
-                    nsRelativeValue.setState(new_progress, true)
-                } catch (e: Exception) {
-                    nsRelativeValue.unset_active_button()
-                }
-            }
-
-            rosRelativeOption.setOnChange(this::interact_rosRelativeOption)
-            nsRelativeValue.setOnChange(this::interact_nsRelativeValue)
         }
 
         btnSplit.setOnClickListener {
             this.om_split(2)
         }
+
         btnSplit.setOnLongClickListener {
             val main = this.getMain()
             main.popup_number_dialog("Split", 2, 29, this::om_split)
@@ -419,6 +393,7 @@ class MainFragment : Fragment() {
         btnUnset.setOnClickListener {
             this.interact_btnUnset(it)
         }
+
         val channel = opus_manager.get_cursor().get_beatkey().channel
         if (!opus_manager.is_percussion(channel) && current_tree.is_leaf() && !current_tree.is_event()) {
             btnUnset.visibility = View.GONE
@@ -441,6 +416,7 @@ class MainFragment : Fragment() {
         btnInsert.setOnClickListener {
             this.om_insert(1)
         }
+
         btnInsert.setOnLongClickListener {
             val main = this.getMain()
             main.popup_number_dialog("Insert", 1, 29, this::om_insert)
@@ -448,136 +424,56 @@ class MainFragment : Fragment() {
         }
     }
 
-    private fun resize_relative_value_selector() {
-        val main = this.getMain()
-        val llContextMenu: LinearLayout = this.activity!!.findViewById(R.id.llContextMenu)
-        val opus_manager = main.getOpusManager()
-        val maximum_note = 95
-
-        val cursor = opus_manager.get_cursor()
-        var mainMax = maximum_note
-        var mainMin = 0
-        val options_to_hide: MutableSet<Int> = mutableSetOf()
-        val selector: RelativeOptionSelector = llContextMenu.findViewById(R.id.rosRelativeOption)
-        // Need to consider all linked values as preceding values may differ
-        for (linked_beat in opus_manager.get_all_linked(cursor.get_beatkey())) {
-            var preceding_leaf = opus_manager.get_preceding_leaf_position(linked_beat, cursor.get_position())!!
-            while (!opus_manager.get_tree(preceding_leaf.first, preceding_leaf.second).is_event()) {
-                preceding_leaf = opus_manager.get_preceding_leaf_position(preceding_leaf.first, preceding_leaf.second)!!
-            }
-            val preceding_value = opus_manager.get_absolute_value(preceding_leaf.first, preceding_leaf.second)!!
-
-            // Hide Relative options if they can't be used
-            if (preceding_value > maximum_note - opus_manager.RADIX) {
-                options_to_hide.add(2)
-            }
-
-            if (preceding_value < opus_manager.RADIX) {
-                options_to_hide.add(3)
-            }
-
-            if (preceding_value > maximum_note) {
-                options_to_hide.add(0)
-            }
-
-            if (preceding_value == 0) {
-                options_to_hide.add(1)
-            }
-
-            var relMin = 1
-            var relMax = maximum_note / opus_manager.RADIX
-            when (selector.getState()) {
-                0 -> {
-                    relMin = 0
-                    relMax =
-                        Integer.min(maximum_note - preceding_value, opus_manager.RADIX - 1)
-                }
-                1 -> {
-                    relMax = Integer.min(opus_manager.RADIX - 1, preceding_value)
-                    relMin = Integer.min(relMin, relMax)
-                }
-                2 -> {
-                    relMax = Integer.min(
-                        (maximum_note - preceding_value) / opus_manager.RADIX,
-                        relMax
-                    )
-                    relMin = Integer.min(relMin, relMax)
-                }
-                3 -> {
-                    relMax = Integer.min(preceding_value / opus_manager.RADIX, relMax)
-                    relMin = Integer.min(relMin, relMax)
-                }
-                else -> { }
-            }
-            mainMax = Integer.min(mainMax, relMax)
-            mainMin = Integer.max(mainMin, relMin)
-        }
-
-        for (option in options_to_hide) {
-            selector.hideOption(option)
-        }
-        val view: NumberSelector = llContextMenu.findViewById(R.id.nsRelativeValue)
-        view.setRange(mainMin, mainMax)
-        view.unset_active_button()
-    }
-
-
-    private fun interact_rosRelativeOption(view: RelativeOptionSelector) {
+    private fun interact_rosRelativeOption(view: NumberPicker, old_val: Int, new_val: Int) {
         val main = this.getMain()
         val opus_manager = main.getOpusManager()
-        this.resize_relative_value_selector()
         val current_tree = opus_manager.get_tree_at_cursor()
-        if (! current_tree.is_event() || ! current_tree.get_event()!!.relative) {
-            return
-        }
 
-        val event = current_tree.get_event()!!
-        val checkstate_and_value: Pair<Int, Int> = if (event.note >= event.radix) {
-            Pair(2, event.note / event.radix)
-        } else if (event.note > 0) {
-            Pair(0, event.note)
-        } else if (event.note <= 0 - event.radix) {
-            Pair(3, 0 - (event.note / event.radix))
-        } else if (event.note < 0) {
-            Pair(1, 0 - event.note)
-        } else {
-            Pair(0, 0)
-        }
+        this.relative_mode = new_val
 
-        val llContextMenu: LinearLayout = this.activity!!.findViewById(R.id.llContextMenu)
-        if (checkstate_and_value.first == view.getState()) {
-            val valueSelector: NumberSelector = llContextMenu.findViewById(R.id.nsRelativeValue)
-            try {
-                valueSelector.setState(checkstate_and_value.second, true, true)
-            } catch (e: Exception) {
-                valueSelector.unset_active_button()
+        var event = current_tree.get_event() ?: return
+        var cursor = opus_manager.get_cursor()
+
+        val nsOctave: NumberSelector = main.findViewById(R.id.nsOctave)
+        val nsOffset: NumberSelector = main.findViewById(R.id.nsOffset)
+
+        when (this.relative_mode) {
+            0 -> {
+                if (event.relative) {
+                    opus_manager.convert_event_at_cursor_to_absolute()
+                    event = current_tree.get_event()!!
+                }
+                nsOctave.setState(event.note / event.radix, true, true)
+                nsOffset.setState(event.note % event.radix, true, true)
+            }
+            1 -> {
+                if (!event.relative) {
+                    opus_manager.convert_event_at_cursor_to_relative()
+                    event = current_tree.get_event()!!
+                }
+                if (event.note < 0) {
+                    nsOctave.unset_active_button()
+                    nsOffset.unset_active_button()
+                } else {
+                    nsOctave.setState(event.note / event.radix, true, true)
+                    nsOffset.setState(event.note % event.radix, true, true)
+                }
+
+            }
+            2 -> {
+                if (!event.relative) {
+                    opus_manager.convert_event_at_cursor_to_relative()
+                    event = current_tree.get_event()!!
+                }
+                if (event.note > 0) {
+                    nsOctave.unset_active_button()
+                    nsOffset.unset_active_button()
+                } else {
+                    nsOctave.setState((0 - event.note) / event.radix, true, true)
+                    nsOffset.setState((0 - event.note) % event.radix, true, true)
+                }
             }
         }
-    }
-
-    private fun change_relative_value(progress: Int) {
-        val main = this.getMain()
-        val llContextMenu: LinearLayout = this.activity!!.findViewById(R.id.llContextMenu)
-        val opus_manager = main.getOpusManager()
-        val cursor = opus_manager.get_cursor()
-        val beat_key = cursor.get_beatkey()
-        val relativeOptionSelector: RelativeOptionSelector = llContextMenu.findViewById(R.id.rosRelativeOption)
-        val new_value = when (relativeOptionSelector.getState()) {
-            0 -> { progress }
-            1 -> { 0 - progress }
-            2 -> { opus_manager.RADIX * progress }
-            3 -> { 0 - (opus_manager.RADIX * progress) }
-            else -> { progress }
-        }
-
-        val event = OpusEvent(
-            new_value,
-            opus_manager.RADIX,
-            beat_key.channel,
-            true
-        )
-
-        this.set_event(beat_key, cursor.position, event)
 
         this.tick()
     }
@@ -646,16 +542,29 @@ class MainFragment : Fragment() {
         val position = cursor.position
         val beatkey = cursor.get_beatkey()
 
+        var value = if (current_tree.is_event()) {
+            var event = current_tree.get_event()!!
+            when (this.relative_mode) {
+                2 -> {
+                    0 - ((((0 - event.note) / event.radix) * event.radix) + progress)
+                }
+                else -> {
+                    ((event.note / event.radix) * event.radix) + progress
+                }
+            }
+        } else {
+            when (this.relative_mode) {
+                2 -> {
+                    0 - progress
+                }
+                else -> {
+                    progress
+                }
+            }
+        }
 
         val event = OpusEvent(
-            if (current_tree.is_event()) {
-                val event = current_tree.get_event()!!
-                val old_octave = event.note / event.radix
-
-                (old_octave * event.radix) + progress
-            } else {
-                progress
-            },
+            value,
             opus_manager.RADIX,
             beatkey.channel,
             false
@@ -663,7 +572,7 @@ class MainFragment : Fragment() {
 
         this.set_event(beatkey, position, event)
 
-        this.setContextMenu(ContextMenu.Leaf)
+        //this.setContextMenu(ContextMenu.Leaf)
         this.tick()
     }
 
@@ -678,53 +587,38 @@ class MainFragment : Fragment() {
         val position = cursor.position
         val beatkey = cursor.get_beatkey()
 
-        val event = if (current_tree.is_event()) {
-            val event = current_tree.get_event()!!
-            event.note = (progress * event.radix) + (event.note % event.radix)
-            event
-        } else {
-            OpusEvent(
-                progress * opus_manager.RADIX,
-                opus_manager.RADIX,
-                beatkey.channel,
-                false
-            )
-        }
-
-        this.set_event(beatkey, position, event)
-
-        this.setContextMenu(ContextMenu.Leaf)
-        this.tick()
-    }
-
-    private fun interact_sRelative_changed(view: View, isChecked: Boolean) {
-        val main = this.getMain()
-        main.stop_playback()
-        val opus_manager = main.getOpusManager()
-        if (isChecked) {
-            try {
-                opus_manager.convert_event_at_cursor_to_relative()
-            } catch (e: Exception) {
-
+        var value = if (current_tree.is_event()) {
+            var event = current_tree.get_event()!!
+            when (this.relative_mode) {
+                2 -> {
+                    0 - (((0 - event.note) % event.radix) + (progress * event.radix))
+                }
+                else -> {
+                    ((event.note % event.radix) + (progress * event.radix))
+                }
             }
         } else {
-            try {
-                opus_manager.convert_event_at_cursor_to_absolute()
-            } catch (e: Exception) {
-                if (opus_manager.get_tree_at_cursor().is_event()) {
-                    main.feedback_msg("Can't convert event")
-                    (view as ToggleButton).isChecked = true
-                    return
+            when (this.relative_mode) {
+                2 -> {
+                    (0 - progress) * opus_manager.RADIX
+                }
+                else -> {
+                    (progress * opus_manager.RADIX)
                 }
             }
         }
-        this.relative_mode = isChecked
-        this.setContextMenu(ContextMenu.Leaf)
-        this.tick()
-    }
 
-    private fun interact_nsRelativeValue(view: NumberSelector) {
-        this.change_relative_value(view.getState()!!)
+        val event = OpusEvent(
+            value,
+            opus_manager.RADIX,
+            beatkey.channel,
+            this.relative_mode != 0
+        )
+
+        this.set_event(beatkey, position, event)
+
+        //this.setContextMenu(ContextMenu.Leaf)
+        this.tick()
     }
 
     private fun interact_btnChoosePercussion(view: View) {

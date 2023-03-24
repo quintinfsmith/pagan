@@ -13,54 +13,15 @@ class RelativeOptionSelector: LinearLayout {
     var active_button: RelativeOptionSelectorButton? = null
     var button_map = HashMap<RelativeOptionSelectorButton, Int>()
     var itemList: List<Int> = listOf(
+        R.string.absolute_label,
         R.string.pfx_add,
-        R.string.pfx_subtract,
-        R.string.pfx_pow,
-        R.string.pfx_log
+        R.string.pfx_subtract
     )
     private var hidden_options: MutableSet<Int> = mutableSetOf()
     var on_change_hook: ((RelativeOptionSelector) -> Unit)? = null
 
     constructor(context: Context, attrs: AttributeSet) : super(context, attrs) {
         this.populate()
-    }
-    override fun onLayout(isChanged: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
-        super.onLayout(isChanged, left, top, right, bottom)
-
-        var visible_count = (this.childCount - this.hidden_options.size)
-        if (visible_count == 0) {
-            return
-        }
-
-        val scale = resources.displayMetrics.density
-        var margin = (2 * scale + 0.5f).toInt()
-
-        var available_space = ((right - left) - (this.paddingLeft + this.paddingRight))
-        available_space -= (visible_count - 1) * margin
-
-        var width = available_space / visible_count
-        var remainder = available_space % visible_count
-        var total_width = 0
-
-        for (i in 0 until this.childCount) {
-            var view = this.getChildAt(i)
-            var working_width = width
-
-            if (remainder > 0) {
-                working_width += 1
-                remainder -= 1
-            }
-
-            var offset = this.paddingLeft + (i * margin) + total_width
-            view.layout(
-                offset,
-                0,
-                offset + working_width,
-                bottom - top
-            )
-
-            total_width += working_width
-        }
     }
 
     fun getState(): Int? {
@@ -148,7 +109,7 @@ class RelativeOptionSelectorButton: androidx.appcompat.widget.AppCompatTextView 
     private var value: Int
     private val STATE_ACTIVE = intArrayOf(R.attr.state_active)
     var state_active: Boolean = false
-    constructor(roSelector: RelativeOptionSelector, position: Int, value: Int): super(ContextThemeWrapper(roSelector.context, R.style.numberSelector)) {
+    constructor(roSelector: RelativeOptionSelector, position: Int, value: Int): super(ContextThemeWrapper(roSelector.context, R.style.relativeSelector)) {
         // TODO: Handle any radix
         this.roSelector = roSelector
         this.value = value

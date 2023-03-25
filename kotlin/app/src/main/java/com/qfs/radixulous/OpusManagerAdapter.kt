@@ -200,7 +200,7 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
 
             if (tree.is_event()) {
                 val abs_value = opus_manager.get_absolute_value(beatkey, position)
-                tvLeaf.setInvalid(abs_value == null)
+                tvLeaf.setInvalid(abs_value == null || abs_value < 0)
             }
 
             this.apply_cursor_focus(tvLeaf, beatkey, position)

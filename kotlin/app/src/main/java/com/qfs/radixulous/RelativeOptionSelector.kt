@@ -111,6 +111,15 @@ class RelativeOptionSelector: LinearLayout {
             }
         }
     }
+    fun unhideOption(index: Int) {
+        this.hidden_options.remove(index)
+        for ((view, i) in this.button_map) {
+            if (i == index) {
+                view.visibility = View.VISIBLE
+            }
+        }
+
+    }
 }
 
 class RelativeOptionSelectorButton: androidx.appcompat.widget.AppCompatTextView {

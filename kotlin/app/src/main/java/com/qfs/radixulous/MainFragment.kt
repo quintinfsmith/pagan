@@ -338,6 +338,8 @@ class MainFragment : Fragment() {
             rosRelativeOption.visibility = View.GONE
         }
 
+        this.validate_rosRelativeOption()
+
         rosRelativeOption.setState(this.relative_mode, true)
 
         if (opus_manager.is_percussion(cursor.get_beatkey().channel)) {
@@ -413,6 +415,20 @@ class MainFragment : Fragment() {
             main.popup_number_dialog("Insert", 1, 29, this::om_insert)
             true
         }
+    }
+
+    private fun validate_rosRelativeOption() {
+        val main = this.getMain()
+        val opus_manager = main.getOpusManager()
+        val rosRelativeOption = main.findViewById<RelativeOptionSelector>(R.id.rosRelativeOption) ?: return
+        val cursor = opus_manager.get_cursor()
+        val abs_value = opus_manager.get_absolute_value(cursor.get_beatkey(), cursor.get_position())
+        if (abs_value == null || abs_value > 127 || abs_value < 0) {
+            rosRelativeOption.hideOption(0)
+        } else {
+            rosRelativeOption.unhideOption(0)
+        }
+
     }
 
     private fun interact_rosRelativeOption(view: RelativeOptionSelector) {
@@ -562,6 +578,7 @@ class MainFragment : Fragment() {
         )
 
         this.set_event(beatkey, position, event)
+        this.validate_rosRelativeOption()
 
         //this.setContextMenu(ContextMenu.Leaf)
         this.tick()
@@ -607,6 +624,7 @@ class MainFragment : Fragment() {
         )
 
         this.set_event(beatkey, position, event)
+        this.validate_rosRelativeOption()
 
         //this.setContextMenu(ContextMenu.Leaf)
         this.tick()

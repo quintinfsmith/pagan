@@ -5,6 +5,7 @@ import android.util.AttributeSet
 import android.view.Gravity.CENTER
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.LinearLayout
 import androidx.appcompat.view.ContextThemeWrapper
 
@@ -63,6 +64,15 @@ class RelativeOptionSelector: LinearLayout {
 
             val currentView = RelativeOptionSelectorButton(this, position, string_index)
             this.addView(currentView)
+            (currentView.layoutParams as LinearLayout.LayoutParams).apply {
+                height = 0
+                weight = 1f
+                width = MATCH_PARENT
+            }
+            if (i == 1) {
+                (currentView.layoutParams as MarginLayoutParams).setMargins(0, 5, 0, 5)
+            }
+
             this.button_map[currentView] = i
         }
     }

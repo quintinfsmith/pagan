@@ -6,116 +6,128 @@
     android:layout_height="match_parent">
 
     <LinearLayout
-        android:id="@+id/clButtons"
+        android:orientation="horizontal"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:padding="@dimen/normal_padding"
-        android:gravity="center">
+        android:layout_height="wrap_content" >
 
-        <ImageView
-            android:id="@+id/btnSplit"
-            android:theme="@style/icon_button"
-            android:gravity="center"
-            android:layout_gravity="center"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Split"
-            android:layout_marginStart="-3dp"
-            app:srcCompat="@drawable/split"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-
-        <androidx.constraintlayout.widget.ConstraintLayout
-            xmlns:android="http://schemas.android.com/apk/res/android"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1">
-            <ImageView
-                app:layout_constraintHorizontal_bias=".6666"
-                android:id="@+id/btnUnset"
-                android:theme="@style/icon_button"
-                android:gravity="center"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="@dimen/normal_padding"
-                android:text="Unset"
-                app:srcCompat="@drawable/unset"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-        <androidx.constraintlayout.widget.ConstraintLayout
-            xmlns:android="http://schemas.android.com/apk/res/android"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1">
-
-            <ImageView
-                app:layout_constraintHorizontal_bias=".3333"
-                android:id="@+id/btnRemove"
-                android:theme="@style/icon_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="@dimen/normal_padding"
-                app:srcCompat="@drawable/remove"
-                android:text="Remove"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-        <ImageView
-            android:id="@+id/btnInsert"
-            android:theme="@style/icon_button"
-            android:gravity="center"
-            android:layout_gravity="center"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="-3dp"
-            android:text="Insert"
-            app:srcCompat="@drawable/insert"/>
-
-        <NumberPicker
+        <com.qfs.radixulous.RelativeOptionSelector
             android:orientation="vertical"
             android:id="@+id/rosRelativeOption"
+            android:layout_marginEnd="@dimen/normal_padding"
+            android:layout_marginStart="@dimen/normal_padding"
+            android:layout_marginTop="5px"
             android:layout_width="wrap_content"
             android:layout_height="match_parent" />
 
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content" >
+            <LinearLayout
+                android:id="@+id/clButtons"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:padding="@dimen/normal_padding"
+                android:gravity="center">
+
+                <ImageView
+                    android:id="@+id/btnSplit"
+                    android:theme="@style/icon_button"
+                    android:gravity="center"
+                    android:layout_gravity="center"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Split"
+                    android:layout_marginStart="-3dp"
+                    app:srcCompat="@drawable/split"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    xmlns:android="http://schemas.android.com/apk/res/android"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1">
+                    <ImageView
+                        app:layout_constraintHorizontal_bias=".6666"
+                        android:id="@+id/btnUnset"
+                        android:theme="@style/icon_button"
+                        android:gravity="center"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="@dimen/normal_padding"
+                        android:text="Unset"
+                        app:srcCompat="@drawable/unset"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    xmlns:android="http://schemas.android.com/apk/res/android"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1">
+
+                    <ImageView
+                        app:layout_constraintHorizontal_bias=".3333"
+                        android:id="@+id/btnRemove"
+                        android:theme="@style/icon_button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="@dimen/normal_padding"
+                        app:srcCompat="@drawable/remove"
+                        android:text="Remove"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <ImageView
+                    android:id="@+id/btnInsert"
+                    android:theme="@style/icon_button"
+                    android:gravity="center"
+                    android:layout_gravity="center"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="-3dp"
+                    android:text="Insert"
+                    app:srcCompat="@drawable/insert"/>
+
+            </LinearLayout>
+
+            <com.qfs.radixulous.NumberSelector xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:custom="http://schemas.android.com/apk/res-auto"
+                android:id="@+id/nsOctave"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingLeft="@dimen/normal_padding"
+                android:paddingRight="@dimen/normal_padding"
+                custom:min="0"
+                custom:max="7"/>
+        </LinearLayout>
+
     </LinearLayout>
 
-    <LinearLayout
-        android:orientation="vertical"
-        android:id="@+id/llAbsolutePalette"
+
+    <com.qfs.radixulous.NumberSelector xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:custom="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/nsOffset"
+        android:layout_marginTop="@dimen/normal_padding"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_weight="1"
         android:paddingLeft="@dimen/normal_padding"
-        android:paddingRight="@dimen/normal_padding">
-
-        <com.qfs.radixulous.NumberSelector xmlns:android="http://schemas.android.com/apk/res/android"
-            xmlns:custom="http://schemas.android.com/apk/res-auto"
-            android:id="@+id/nsOctave"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            custom:min="0"
-            custom:max="7"/>
-
-        <com.qfs.radixulous.NumberSelector xmlns:android="http://schemas.android.com/apk/res/android"
-            xmlns:custom="http://schemas.android.com/apk/res-auto"
-            android:id="@+id/nsOffset"
-            android:layout_marginTop="@dimen/normal_padding"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            custom:min="0"
-            custom:max="11"/>
-    </LinearLayout>
+        android:paddingRight="@dimen/normal_padding"
+        custom:min="0"
+        custom:max="11"/>
 
 
 </LinearLayout>

@@ -305,9 +305,7 @@ class MainFragment : Fragment() {
         llContextMenu.addView(view)
         this.cache.setActiveContextMenu(view)
 
-        val rosRelativeOption = view.findViewById<NumberPicker>(R.id.rosRelativeOption)
-        val llAbsolutePalette: LinearLayout = view.findViewById(R.id.llAbsolutePalette)
-
+        val rosRelativeOption = view.findViewById<RelativeOptionSelector>(R.id.rosRelativeOption)
 
         val btnUnset = view.findViewById<ImageView>(R.id.btnUnset)
         val btnSplit = view.findViewById<View>(R.id.btnSplit)
@@ -334,22 +332,17 @@ class MainFragment : Fragment() {
 
         val cursor = opus_manager.get_cursor()
         if (opus_manager.has_preceding_absolute_event(cursor.get_beatkey(), cursor.get_position())) {
-            //rosRelativeOption.setOnCheckedChangeListener { it, isChecked ->
-            //    this.interact_rosRelativeOption_changed(it, isChecked)
-            //}
             rosRelativeOption.visibility = View.VISIBLE
         } else {
             this.relative_mode = 0
             rosRelativeOption.visibility = View.GONE
         }
 
-        rosRelativeOption.minValue = 0
-        rosRelativeOption.maxValue = 2
-        rosRelativeOption.displayedValues = arrayOf("|n|", "+", "-")
-        rosRelativeOption.value = this.relative_mode
+        rosRelativeOption.setState(this.relative_mode, true)
 
         if (opus_manager.is_percussion(cursor.get_beatkey().channel)) {
-            llAbsolutePalette.visibility = View.GONE
+            nsOctave.visibility = View.GONE
+            nsOffset.visibility = View.GONE
             rosRelativeOption.visibility = View.GONE
 
             // TODO: Toggle Image instead of text
@@ -375,9 +368,7 @@ class MainFragment : Fragment() {
 
             nsOffset.setOnChange(this::interact_nsOffset)
             nsOctave.setOnChange(this::interact_nsOctave)
-            rosRelativeOption.setOnValueChangedListener { picker: NumberPicker, old: Int, new: Int ->
-                this.interact_rosRelativeOption(picker, old, new)
-            }
+            rosRelativeOption.setOnChange(this::interact_rosRelativeOption)
         }
 
         btnSplit.setOnClickListener {
@@ -424,12 +415,12 @@ class MainFragment : Fragment() {
         }
     }
 
-    private fun interact_rosRelativeOption(view: NumberPicker, old_val: Int, new_val: Int) {
+    private fun interact_rosRelativeOption(view: RelativeOptionSelector) {
         val main = this.getMain()
         val opus_manager = main.getOpusManager()
         val current_tree = opus_manager.get_tree_at_cursor()
 
-        this.relative_mode = new_val
+        this.relative_mode = view.getState()!!
 
         var event = current_tree.get_event() ?: return
         var cursor = opus_manager.get_cursor()
@@ -567,7 +558,7 @@ class MainFragment : Fragment() {
             value,
             opus_manager.RADIX,
             beatkey.channel,
-            false
+            this.relative_mode != 0
         )
 
         this.set_event(beatkey, position, event)
@@ -683,10 +674,7 @@ class MainFragment : Fragment() {
         val rvBeatTable = main.findViewById<RecyclerView>(R.id.rvBeatTable)
         val rvColumnLabels = main.findViewById<RecyclerView>(R.id.rvColumnLabels)
 
-
-        // TODO: Would love this to smooth scroll, but the two rv's desync
         (rvBeatTable.adapter as OpusManagerAdapter).scrollToPosition(beat)
-
 
         if (select) {
             val opus_manager = main.getOpusManager()

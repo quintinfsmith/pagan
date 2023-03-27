@@ -13,33 +13,48 @@ class ActiveNoteHandle(var event: NoteOn, var preset: Preset) {
     var active_samples: Set<ActiveSample>
     init {
         this.active_samples = this.gen_active_samples()
-        println("E: $event")
-        println("SAMPLE COUNT: ${this.active_samples.size}")
     }
 
     fun gen_active_samples(): Set<ActiveSample> {
         var output = mutableSetOf<ActiveSample>()
-        for (p_instrument in this.preset.get_instruments(this.event.note, this.event.velocity)) {
+        var potential_instruments = this.preset.get_instruments(this.event.note, this.event.velocity)
+        for (p_instrument in potential_instruments) {
             val samples = p_instrument.instrument!!.get_samples(
                 this.event.note,
                 this.event.velocity
             ).toList()
 
-            if (samples.size == 2) {
-                if (samples[0].sample!!.sampleType == 2) {
-                    output.add(
-                        ActiveSample(
-                            samples[0],
-                            samples[1],
-                            p_instrument,
-                            this.preset,
-                            this.event
+            if (samples.isEmpty()) {
+                continue
+            } else {
+                println("${p_instrument.instrument!!.name}, ${samples.size}")
+                if (samples.size == 2) {
+                    println("${samples[0].sample!!.sampleType}")
+                    if (samples[0].sample!!.sampleType == 2) {
+                        output.add(
+                            ActiveSample(
+                                samples[0],
+                                samples[1],
+                                p_instrument,
+                                this.preset,
+                                this.event
+                            )
                         )
-                    )
+                    } else {
+                        output.add(
+                            ActiveSample(
+                                samples[1],
+                                samples[0],
+                                p_instrument,
+                                this.preset,
+                                this.event
+                            )
+                        )
+                    }
                 } else {
+                    println("${samples.size}")
                     output.add(
                         ActiveSample(
-                            samples[1],
                             samples[0],
                             p_instrument,
                             this.preset,
@@ -47,15 +62,6 @@ class ActiveNoteHandle(var event: NoteOn, var preset: Preset) {
                         )
                     )
                 }
-            } else {
-                output.add(
-                    ActiveSample(
-                        samples[0],
-                        p_instrument,
-                        this.preset,
-                        this.event
-                    )
-                )
             }
         }
         return output
@@ -68,6 +74,7 @@ class ActiveNoteHandle(var event: NoteOn, var preset: Preset) {
     }
 
     fun play() {
+        println("PLAYING: ${this.active_samples.size}")
         for (sample in this.active_samples) {
             sample.play(this.event.velocity)
 
@@ -138,14 +145,13 @@ class ActiveSample(
             .setBufferSizeInBytes(this.buffer_size_in_bytes)
             .build()
 
-        val original_note = this.instrument.instrument!!.global_sample!!.root_key ?: this.sample_right.sample!!.originalPitch
-
+        //val original_note = this.instrument.instrument!!.global_sample!!.root_key ?: this.sample_right.sample!!.originalPitch
+        val original_note = this.sample_right.root_key ?: this.sample_right.sample!!.originalPitch
         if (original_note != this.event.note) {
             val originalPitch = original_note.toFloat()
             val samplePitch = 2F.pow(originalPitch / 12F)
             val requiredPitch = 2F.pow(this.event.note.toFloat() / 12F)
             val shift = (requiredPitch / samplePitch)
-
             //if (this.resample_ratio != 1F) {
             //    shift *= this.resample_ratio
             //}
@@ -250,7 +256,6 @@ class ActiveSample(
         }
 
         this.volume = velocity.toFloat() / 128F
-
         val config = VolumeShaper.Configuration.Builder()
             .setDuration(1)
             .setCurve(floatArrayOf(0f, 1f), floatArrayOf(0f, this.volume))
@@ -259,7 +264,6 @@ class ActiveSample(
 
         this.volumeShaper = this.audioTrack!!.createVolumeShaper(config)
         this.volumeShaper!!.apply(VolumeShaper.Operation.PLAY)
-
         this.audioTrack!!.play()
     }
 
@@ -331,6 +335,7 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
             this.active_handles[Pair(event.note, event.channel)] = active_handle
             active_handle.play()
         } catch (e: Exception) {
+            println("ERROR  $e")
 
         }
     }

@@ -722,8 +722,7 @@ class Preset(
     fun get_instruments(key: Int, velocity: Int): Set<PresetInstrument> {
         val output = mutableSetOf<PresetInstrument>()
         this.instruments.forEachIndexed { _, instrument ->
-            if (
-                (instrument.key_range == null || (instrument.key_range!!.first <= key && instrument.key_range!!.second >= key)) &&
+            if ( (instrument.key_range == null || (instrument.key_range!!.first <= key && instrument.key_range!!.second >= key)) &&
                 (instrument.velocity_range == null || (instrument.velocity_range!!.first <= velocity && instrument.velocity_range!!.second >= velocity))
             ) {
                 output.add(instrument)

@@ -510,25 +510,9 @@ open class OpusManagerBase {
         val opus_channel = this.channels.removeAt(channel)
         this.channel_uuid_map.remove(opus_channel.uuid)
 
-        val free_midi_channel = opus_channel.midi_channel
         if (this.percussion_channel != null && this.percussion_channel!! > channel) {
             this.percussion_channel = this.percussion_channel!! - 1
         }
-        if (free_midi_channel == 9) {
-            return
-        }
-
-        // Auto adjust midi channels, skipping over 9 (reserved for percussion)
-        for (opus_channel in this.channels) {
-            if (opus_channel.midi_channel > free_midi_channel) {
-                if (opus_channel.midi_channel == 10) {
-                    opus_channel.midi_channel -= 2
-                } else {
-                    opus_channel.midi_channel -= 1
-                }
-            }
-        }
-
     }
 
     open fun move_leaf(beatkey_from: BeatKey, position_from: List<Int>, beatkey_to: BeatKey, position_to: List<Int>) {

@@ -718,6 +718,20 @@ class Preset(
             this.instruments.add(pinstrument)
         }
     }
+
+    fun get_instruments(key: Int, velocity: Int): Set<PresetInstrument> {
+        val output = mutableSetOf<PresetInstrument>()
+        this.instruments.forEachIndexed { _, instrument ->
+            if (
+                (instrument.key_range == null || (instrument.key_range!!.first <= key && instrument.key_range!!.second >= key)) &&
+                (instrument.velocity_range == null || (instrument.velocity_range!!.first <= velocity && instrument.velocity_range!!.second >= velocity))
+            ) {
+                output.add(instrument)
+            }
+        }
+        return output
+    }
+
 }
 
 class PresetInstrument: Generated() {
@@ -737,7 +751,7 @@ class Instrument(var name: String) {
 
     fun get_samples(key: Int, velocity: Int): Set<InstrumentSample> {
         val output = mutableSetOf<InstrumentSample>()
-        this.samples.forEachIndexed { i, sample ->
+        this.samples.forEachIndexed { _, sample ->
             if (
                 (sample.key_range == null || (sample.key_range!!.first <= key && sample.key_range!!.second >= key)) &&
                 (sample.velocity_range == null || (sample.velocity_range!!.first <= velocity && sample.velocity_range!!.second >= velocity))
@@ -763,4 +777,15 @@ class InstrumentSample: Generated() {
     var exclusive_class: Int? = null
     var keynum: Int? = null
     var velocity: Int? = null
+}
+
+enum class sfSampleType {
+    Mono,
+    Right,
+    Left,
+    Linked,
+    RomMono,
+    RomRight,
+    RomLeft,
+    RomLinked
 }

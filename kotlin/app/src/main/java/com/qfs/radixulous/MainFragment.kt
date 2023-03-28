@@ -347,10 +347,9 @@ class MainFragment : Fragment() {
             nsOffset.visibility = View.GONE
             rosRelativeOption.visibility = View.GONE
 
-            // TODO: Toggle Image instead of text
-            //if (!opus_manager.get_tree_at_cursor().is_event()) {
-            //    btnUnset.text = "Set"
-            //}
+            if (!opus_manager.get_tree_at_cursor().is_event()) {
+                btnUnset.setImageResource(R.drawable.set_percussion)
+            }
 
             btnUnset.setOnClickListener {
                 this.interact_btnUnset(it)

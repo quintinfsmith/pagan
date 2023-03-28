@@ -4,6 +4,7 @@
     <string name="pfx_add">+</string>
     <string name="pfx_log">\u2193</string>
     <string name="pfx_pow">\u2191</string>
+    <string name="repeat_note">\u25C7</string>
     <string name="empty_note">  </string>
     <string name="absolute_label">|n|</string>
     <string name="msg_undo_none">Nothing to be done</string>
@@ -13,6 +14,7 @@
     <string name="front_fragment_label">Radixulous</string>
     <string name="config_fragment_label">Config</string>
     <string name="license_brief">Licensed under GPLv2</string>
+    <string name="percussion_label">\u2716</string>
     <string name="source_code_location">
         Source code available at: https://burnsomni.net/git/radixulous.
     </string>

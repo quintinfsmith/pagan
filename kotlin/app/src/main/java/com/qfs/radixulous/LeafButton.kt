@@ -55,7 +55,7 @@ class LeafButton(
     }
 
     fun set_text(is_percussion: Boolean) {
-        if (this.event == null || is_percussion) {
+        if (this.event == null) {
             this.unset_text()
             return
         }
@@ -63,7 +63,7 @@ class LeafButton(
         var event = this.event!!
 
         var use_note = event.note
-        this.prefix_label.text = if (event.relative && event.note != 0) {
+        this.prefix_label.text = if (!is_percussion && (event.relative && event.note != 0)) {
             this.prefix_label.visibility = View.VISIBLE
             if (event.note < 0) {
                 use_note = 0 - event.note
@@ -76,8 +76,10 @@ class LeafButton(
             ""
         }
 
-        this.value_label.text = if (event.relative && event.note == 0) {
-            "="
+        this.value_label.text = if (is_percussion) {
+            this.activity.getString(R.string.percussion_label)
+        } else if (event.relative && event.note == 0) {
+            this.activity.getString(R.string.repeat_note)
         } else {
             get_number_string(use_note, event.radix, 2)
         }

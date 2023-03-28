@@ -423,7 +423,7 @@ class MainFragment : Fragment() {
         val rosRelativeOption = main.findViewById<RelativeOptionSelector>(R.id.rosRelativeOption) ?: return
         val cursor = opus_manager.get_cursor()
         val abs_value = opus_manager.get_absolute_value(cursor.get_beatkey(), cursor.get_position())
-        if (abs_value == null || abs_value > 127 || abs_value < 0) {
+        if (abs_value != null && (abs_value > 127 || abs_value < 0)) {
             rosRelativeOption.hideOption(0)
         } else {
             rosRelativeOption.unhideOption(0)

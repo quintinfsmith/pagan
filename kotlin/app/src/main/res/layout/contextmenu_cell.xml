@@ -16,6 +16,7 @@
             android:layout_marginEnd="@dimen/normal_padding"
             android:layout_marginStart="@dimen/normal_padding"
             android:layout_marginTop="5px"
+            android:minWidth="@dimen/relative_option_width"
             android:layout_width="wrap_content"
             android:layout_height="match_parent" />
 

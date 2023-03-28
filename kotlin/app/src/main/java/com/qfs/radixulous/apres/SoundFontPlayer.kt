@@ -27,9 +27,7 @@ class ActiveNoteHandle(var event: NoteOn, var preset: Preset) {
             if (samples.isEmpty()) {
                 continue
             } else {
-                println("${p_instrument.instrument!!.name}, ${samples.size}")
                 if (samples.size == 2) {
-                    println("${samples[0].sample!!.sampleType}")
                     if (samples[0].sample!!.sampleType == 2) {
                         output.add(
                             ActiveSample(
@@ -52,7 +50,6 @@ class ActiveNoteHandle(var event: NoteOn, var preset: Preset) {
                         )
                     }
                 } else {
-                    println("${samples.size}")
                     output.add(
                         ActiveSample(
                             samples[0],
@@ -74,7 +71,6 @@ class ActiveNoteHandle(var event: NoteOn, var preset: Preset) {
     }
 
     fun play() {
-        println("PLAYING: ${this.active_samples.size}")
         for (sample in this.active_samples) {
             sample.play(this.event.velocity)
 
@@ -168,7 +164,8 @@ class ActiveSample(
 
     fun write_next_chunk() {
         var sample_right = this.sample_right.sample!!
-        var sample_left = this.sample_left?.sample ?: sample_right
+        //var sample_left = this.sample_left?.sample ?: sample_right
+        var sample_left = sample_right
         val loop_start = sample_right.loopStart
         val loop_end = sample_right.loopEnd
         var call_stop = false
@@ -203,7 +200,7 @@ class ActiveSample(
 
         if (audioTrack != null && audioTrack.state != AudioTrack.STATE_UNINITIALIZED) {
             try {
-                audioTrack.write( use_bytes, 0, use_bytes.size, AudioTrack.WRITE_BLOCKING )
+                audioTrack.write(use_bytes, 0, use_bytes.size, AudioTrack.WRITE_BLOCKING)
             } catch (e: IllegalStateException) {
                 // Shouldn't need to do anything. the audio track was released and this should stop on its own
             }
@@ -258,7 +255,7 @@ class ActiveSample(
         this.volume = velocity.toFloat() / 128F
         val config = VolumeShaper.Configuration.Builder()
             .setDuration(1)
-            .setCurve(floatArrayOf(0f, 1f), floatArrayOf(0f, this.volume))
+            .setCurve(floatArrayOf(0f, 1f), floatArrayOf(this.volume, this.volume))
             .setInterpolatorType(VolumeShaper.Configuration.INTERPOLATOR_TYPE_LINEAR)
             .build()
 
@@ -335,7 +332,6 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
             this.active_handles[Pair(event.note, event.channel)] = active_handle
             active_handle.play()
         } catch (e: Exception) {
-            println("ERROR  $e")
 
         }
     }

@@ -1024,4 +1024,13 @@ class MainFragment : Fragment() {
         adapter.unset_cursor_position()
     }
 
+    fun set_channel_instrument(channel: Int, instrument: Int) {
+        var main = this.getMain()
+        var opus_manager = main.getOpusManager()
+        opus_manager.set_channel_instrument(channel, instrument)
+        main.update_channel_instruments(opus_manager)
+        //this.update_line_labels()
+        //this.refresh_leaf_labels()
+    }
+
 }

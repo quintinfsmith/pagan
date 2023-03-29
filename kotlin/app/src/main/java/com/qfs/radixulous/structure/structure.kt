@@ -1,7 +1,5 @@
 package com.qfs.radixulous.structure
-import android.util.Log
 import kotlin.math.*
-import com.qfs.radixulous.apres.*
 
 fun greatest_common_denominator(first: Int, second: Int): Int {
     if (first == 0 || second == 0) {

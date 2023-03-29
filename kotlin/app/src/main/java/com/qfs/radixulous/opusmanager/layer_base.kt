@@ -563,11 +563,13 @@ open class OpusManagerBase {
                     ProgramChange(channel.midi_channel, channel.midi_instrument)
                 )
             }
+
             for (l in 0 until channel.size) {
                 val line = channel.get_line(l)
                 var current_tick = 0
                 var prev_note = 0
                 line.forEachIndexed { b, beat ->
+                    midi.insert_event(0, current_tick, SongPositionPointer(b))
                     val stack: MutableList<StackItem> = mutableListOf(StackItem(beat, 1, current_tick, midi.ppqn))
                     while (stack.isNotEmpty()) {
                         val current = stack.removeFirst()

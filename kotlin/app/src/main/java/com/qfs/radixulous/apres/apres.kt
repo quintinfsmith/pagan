@@ -2099,17 +2099,23 @@ open class VirtualMIDIDevice {
 }
 
 class MIDIPlayer: VirtualMIDIDevice() {
+    var playing = true
     fun play_midi(midi: MIDI) {
         if (! this.is_registered()) {
             Log.w("apres", "Can't play without registering a midi controller first")
             return
         }
+        this.playing = true
         val ppqn = midi.get_ppqn()
         var ms_per_tick = 60000 / (ppqn * 120)
         var previous_tick = 0
         val start_time = System.currentTimeMillis()
         var delay_accum = 0
         for ((tick, event) in midi.get_all_events()) {
+            if (!this.playing) {
+                break
+            }
+
             if ((tick - previous_tick) > 0) {
                 val delay = (tick - previous_tick) * ms_per_tick
                 val drift = delay_accum - (System.currentTimeMillis() - start_time)
@@ -2125,6 +2131,9 @@ class MIDIPlayer: VirtualMIDIDevice() {
             }
             this.sendEvent(event)
         }
+    }
+    override fun onMIDIStop(event: MIDIStop) {
+        this.playing = false
     }
 }
 

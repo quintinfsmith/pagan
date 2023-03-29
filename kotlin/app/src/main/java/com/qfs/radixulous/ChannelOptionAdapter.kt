@@ -174,11 +174,8 @@ class ChannelOptionAdapter(
             this.set_percussion_channel(channel)
             return
         }
-
-        var opus_manager = this.activity.getOpusManager()
-        opus_manager.set_channel_instrument(channel, instrument)
-        this.update_fragment()
-
+        var fragment = this.activity.getActiveFragment()
+        (fragment as MainFragment).set_channel_instrument(channel, instrument)
     }
 
     private fun set_percussion_channel(channel: Int) {

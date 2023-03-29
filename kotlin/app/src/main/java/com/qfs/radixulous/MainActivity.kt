@@ -50,6 +50,7 @@ class MainActivity : AppCompatActivity() {
     lateinit var midi_playback_device: MIDIPlaybackDevice
     var midi_input_device = MIDIInputDevice()
     private var midi_player = MIDIPlayer()
+    private var midi_scroller = MIDIScroller(this)
     lateinit var soundfont: SoundFont
 
     private var current_project_title: String? = null
@@ -96,7 +97,6 @@ class MainActivity : AppCompatActivity() {
         val navController = findNavController(R.id.nav_host_fragment_content_main)
         this.appBarConfiguration = AppBarConfiguration(navController.graph)
         setupActionBarWithNavController(navController, this.appBarConfiguration)
-
         val drawerlayout = findViewById<DrawerLayout>(R.id.drawer_layout)
         drawerlayout.addDrawerListener( object: DrawerLayout.DrawerListener {
             override fun onDrawerClosed(drawerView: View) { }
@@ -115,6 +115,7 @@ class MainActivity : AppCompatActivity() {
         this.midi_controller.registerVirtualDevice(this.midi_playback_device)
         this.midi_controller.registerVirtualDevice(this.midi_input_device)
         this.midi_controller.registerVirtualDevice(this.midi_player)
+        this.midi_controller.registerVirtualDevice(this.midi_scroller)
         ///////////////////////////////////////////
     }
 
@@ -169,14 +170,14 @@ class MainActivity : AppCompatActivity() {
                 if (!this.in_play_back) {
                     this.playback()
                 } else {
-                    this.in_play_back = false
+                    this.stop_playback()
                 }
             }
         }
         return super.onOptionsItemSelected(item)
     }
     fun stop_playback() {
-        this.in_play_back = false
+        this.midi_input_device.sendEvent(MIDIStop())
     }
 
     fun setup_config_drawer() {
@@ -261,64 +262,33 @@ class MainActivity : AppCompatActivity() {
         if (this.in_play_back) {
             return
         }
+
         this.in_play_back = true
-        val main_fragment = this.getActiveFragment()
         val item = this.optionsMenu.findItem(R.id.itmPlay)
         item.icon = ContextCompat.getDrawable(this, R.drawable.ic_baseline_pause_24)
         thread {
             val opus_manager = this.getOpusManager()
             val beat = opus_manager.get_cursor().x
-            var midi_beats_to_play_back = mutableListOf<Pair<Int, MIDI>>()
-            for (i in beat until opus_manager.opus_beat_count) {
-                midi_beats_to_play_back.add(
-                    Pair(i, opus_manager.get_midi(i, i + 1))
-                )
-            }
+            var midi = opus_manager.get_midi(beat)
 
-            var std_delay = ((60F / opus_manager.tempo) * 1000).toLong()
-            var ts_start = System.currentTimeMillis()
-            var ideal_time = ts_start
-            var drift = 0L
-            for ((i, midi_beat) in midi_beats_to_play_back) {
-                if (!this.in_play_back) {
-                    break
-                }
-
-                if (main_fragment is MainFragment) {
-                    this@MainActivity.runOnUiThread {
-                        main_fragment.scroll_to_beat(i, true)
-                    }
-                }
-
-                thread {
-                    this.play_midi(midi_beat)
-                }
-
-                Thread.sleep(std_delay + drift)
-                ideal_time += std_delay
-                drift = ideal_time - System.currentTimeMillis()
-            }
-
-            if (this.in_play_back && main_fragment is MainFragment) {
-                this@MainActivity.runOnUiThread {
-                    main_fragment.scroll_to_beat(0, true)
-                }
-            }
+            this.play_midi(midi)
 
             this.in_play_back = false
+
             this@MainActivity.runOnUiThread {
                 item.icon = ContextCompat.getDrawable(this, R.drawable.ic_baseline_play_arrow_24)
             }
-
         }
     }
 
-    private fun play_beat(beat: Int) {
-        val opus_manager = this.getOpusManager()
-        val midi = opus_manager.get_midi(beat, beat + 1)
-        this.play_midi(midi)
+    public fun scroll_to_beat(beat: Int, select: Boolean = false) {
+        this@MainActivity.runOnUiThread {
+            var fragment = this.getActiveFragment()
+            if (fragment is MainFragment) {
+                fragment.scroll_to_beat(beat, select)
+            }
+        }
     }
-
 
     private fun save_current_project() {
         this.project_manager.save(this.current_project_title!!, this.opus_manager)
@@ -650,3 +620,8 @@ class MainActivity : AppCompatActivity() {
 
 class RadMidiController(context: Context): MIDIController(context)
 class MIDIInputDevice: VirtualMIDIDevice()
+class MIDIScroller(var activity: MainActivity): VirtualMIDIDevice() {
+    override fun onSongPositionPointer(event: SongPositionPointer) {
+        this.activity.scroll_to_beat(event.beat, true)
+    }
+}

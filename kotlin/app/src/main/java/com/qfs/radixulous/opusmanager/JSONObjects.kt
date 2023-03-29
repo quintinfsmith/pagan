@@ -13,6 +13,7 @@ data class LoadedJSONData(
     var tempo: Float,
     var radix: Int,
     var channels: List<ChannelJSONData>,
-    var reflections: List<List<BeatKey>>? = null
+    var reflections: List<List<BeatKey>>? = null,
+    var transpose: Int = 0
 )
 

@@ -33,7 +33,7 @@ class LoadFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         _binding = FragmentLoadBinding.inflate(inflater, container, false)
-        this.getMain().unlockDrawer()
+        this.getMain().lockDrawer()
         this.getMain().update_menu_options()
         return binding.root
     }

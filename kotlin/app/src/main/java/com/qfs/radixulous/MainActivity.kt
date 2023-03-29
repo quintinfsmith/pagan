@@ -196,6 +196,12 @@ class MainActivity : AppCompatActivity() {
             this.popup_number_dialog("Set Tempo (BPM)", 1, 999, this::set_tempo, opus_manager.tempo.toInt())
         }
 
+        val btnTranspose: TextView = this.findViewById(R.id.btnTranspose)
+        btnTranspose.text = "T: ${opus_manager.transpose}"
+        btnTranspose.setOnClickListener {
+            this.popup_transpose_dialog()
+        }
+
         this.findViewById<View>(R.id.btnAddChannel).setOnClickListener {
             channelAdapter.addChannel()
         }
@@ -476,6 +482,39 @@ class MainActivity : AppCompatActivity() {
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
     }
 
+    // Can't use the general popup_number_dialog. We want a picker using radix-N
+    private fun popup_transpose_dialog() {
+        val viewInflated: View = LayoutInflater.from(this)
+            .inflate(
+                R.layout.dialog_split,
+                window.decorView.rootView as ViewGroup,
+                false
+            )
+
+        val npOnes = viewInflated.findViewById<NumberPicker>(R.id.npOnes)
+        npOnes.minValue = 0
+        npOnes.maxValue = 11
+        npOnes.displayedValues = arrayOf("0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B")
+        npOnes.value = this.getOpusManager().transpose
+
+        val npTens = viewInflated.findViewById<NumberPicker>(R.id.npTens)
+        npTens.visibility = View.GONE
+        val npHundreds = viewInflated.findViewById<NumberPicker>(R.id.npHundreds)
+        npHundreds.visibility = View.GONE
+
+
+        AlertDialog.Builder(this, R.style.AlertDialog)
+            .setTitle("Transpose")
+            .setView(viewInflated)
+            .setPositiveButton(android.R.string.ok) { dialog, _ ->
+                val value = npOnes.value
+                this.set_transpose(value)
+            }
+            .setNegativeButton(android.R.string.cancel) { dialog, _ ->
+            }
+            .show()
+    }
+
     internal fun popup_number_dialog(title: String, min_value: Int, max_value: Int, callback: (value: Int) -> Unit, default: Int = min_value) {
         val viewInflated: View = LayoutInflater.from(this)
             .inflate(
@@ -561,6 +600,13 @@ class MainActivity : AppCompatActivity() {
         opus_manager.tempo = value.toFloat()
         val tvTempo: TextView = this.findViewById(R.id.tvTempo)
         tvTempo.text = "${opus_manager.tempo.toInt()} BPM"
+    }
+    private fun set_transpose(value: Int) {
+        val opus_manager = this.getOpusManager()
+
+        opus_manager.transpose = value
+        val btnTranspose: TextView = this.findViewById(R.id.btnTranspose)
+        btnTranspose.text = "T: ${get_number_string(value, opus_manager.RADIX, 2)}"
     }
 
     fun loading_reticle() {

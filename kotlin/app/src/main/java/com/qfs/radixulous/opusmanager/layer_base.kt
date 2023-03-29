@@ -20,6 +20,7 @@ open class OpusManagerBase {
     var path: String? = null
     var percussion_channel: Int? = null
     var tempo: Float = 120F
+    var transpose: Int = 0
 
     //// RO Functions ////
     fun get_channel_count(): Int {
@@ -582,7 +583,7 @@ open class OpusManagerBase {
                             } else if (event.relative) {
                                 event.note + prev_note
                             } else {
-                                event.note + 21
+                                event.note + 21 + transpose
                             }
 
                             if (!(b < start_beat || b >= end_beat)) {
@@ -655,6 +656,7 @@ open class OpusManagerBase {
             tempo = this.tempo,
             radix = this.RADIX,
             channels = channels,
+            transpose = this.transpose
         )
     }
 
@@ -706,6 +708,7 @@ open class OpusManagerBase {
     open fun load_json(json_data: LoadedJSONData) {
         this.RADIX = json_data.radix
         this.tempo = json_data.tempo
+        this.transpose = json_data.transpose
 
         var beat_count = 0
         json_data.channels.forEachIndexed { i, channel_data ->

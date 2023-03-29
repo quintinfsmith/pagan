@@ -19,27 +19,36 @@
     <LinearLayout
         android:id="@+id/llB"
         android:layout_height="wrap_content"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_weight="1"
         android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/tvChangeProjectName"
-            android:text="Change Project Name..."
-            android:theme="@style/button"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/tvChangeProjectName"
+                android:text="Change Project Name..."
+                android:maxLines="1"
+                android:theme="@style/button"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"/>
+        </LinearLayout>
 
         <LinearLayout
+            android:orientation="horizontal"
             android:paddingTop="@dimen/normal_padding"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
             <TextView
-                android:id="@+id/btnAddChannel"
+                android:id="@+id/btnTranspose"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Add Channel"
+                android:text="T:"
                 android:paddingStart="15dp"
                 android:paddingEnd="15dp"
                 android:theme="@style/button" />
@@ -59,6 +68,17 @@
                 android:theme="@style/button" />
 
         </LinearLayout>
+
+        <TextView
+            android:id="@+id/btnAddChannel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Add Channel"
+            android:paddingStart="15dp"
+            android:paddingTop="@dimen/normal_padding"
+            android:paddingEnd="15dp"
+            android:layout_gravity="right"
+            android:theme="@style/button" />
 
 
         <androidx.recyclerview.widget.RecyclerView

@@ -555,6 +555,7 @@ open class OpusManagerBase {
 
         midi.insert_event(0,0, SetTempo.from_bpm(tempo))
         data class StackItem(var tree: OpusTree<OpusEvent>, var divisions: Int, var offset: Int, var size: Int)
+        var position_pointer_ticks = mutableSetOf<Pair<Int, Int>>()
         this.channels.forEachIndexed { c, channel ->
             if (channel.midi_instrument != 9) {
                 midi.insert_event(
@@ -569,7 +570,7 @@ open class OpusManagerBase {
                 var current_tick = 0
                 var prev_note = 0
                 line.forEachIndexed { b, beat ->
-                    midi.insert_event(0, current_tick, SongPositionPointer(b))
+                    position_pointer_ticks.add(Pair(b, current_tick))
                     val stack: MutableList<StackItem> = mutableListOf(StackItem(beat, 1, current_tick, midi.ppqn))
                     while (stack.isNotEmpty()) {
                         val current = stack.removeFirst()
@@ -617,6 +618,13 @@ open class OpusManagerBase {
                     }
                 }
             }
+        }
+        for ((beat, tick) in position_pointer_ticks) {
+            midi.insert_event(
+                0,
+                tick,
+                SongPositionPointer(beat)
+            )
         }
         return midi
     }

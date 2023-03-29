@@ -1877,6 +1877,9 @@ open class VirtualMIDIDevice {
         // TODO: Throw error?
         if (is_registered()) {
             thread {
+                if (event is SongPositionPointer) {
+                    println("Sending ${event}")
+                }
                 this.midi_controller!!.receiveMessage(event, this)
             }
         }

@@ -19,6 +19,46 @@ class NumberSelector: LinearLayout {
     var active_button: NumberSelectorButton? = null
     var on_change_hook: ((NumberSelector) -> Unit)? = null
 
+    class NumberSelectorButton: androidx.appcompat.widget.AppCompatTextView {
+        var numberSelector: NumberSelector
+        var value: Int
+        var bkp_text: String
+        private val STATE_ACTIVE = intArrayOf(R.attr.state_active)
+        var state_active: Boolean = false
+        constructor(numberSelector: NumberSelector, value: Int): super(ContextThemeWrapper(numberSelector.context, R.style.numberSelector)) {
+            // TODO: Handle any radix
+            this.numberSelector = numberSelector
+            this.value = value
+            this.bkp_text = "${get_number_string(this.value, 12,2)}"
+            this.text = this.bkp_text
+
+            this.setOnClickListener {
+                this.numberSelector.set_active_button(this)
+                this.setActive(true)
+            }
+        }
+
+        override fun onCreateDrawableState(extraSpace: Int): IntArray? {
+            val drawableState = super.onCreateDrawableState(extraSpace + 1)
+            if (this.state_active) {
+                mergeDrawableStates(drawableState, STATE_ACTIVE)
+            }
+            return drawableState
+        }
+
+
+        override fun onLayout(isChanged: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
+            super.onLayout(isChanged, left, top, right, bottom)
+            this.text = this.bkp_text
+            this.gravity = CENTER
+        }
+
+        fun setActive(value: Boolean) {
+            this.state_active = value
+            refreshDrawableState()
+        }
+    }
+
     constructor(context: Context, attrs: AttributeSet) : super(context, attrs) {
         context.theme.obtainStyledAttributes(attrs, R.styleable.NumberSelector, 0, 0).apply {
             try {
@@ -157,46 +197,5 @@ class NumberSelector: LinearLayout {
         }
         this.active_button!!.setActive(false)
         this.active_button = null
-    }
-}
-
-//constructor(context: Context, activity: MainActivity, event: OpusEvent?, is_percussion:Boolean = false) : super(ContextThemeWrapper(context, R.style.leaf))
-class NumberSelectorButton: androidx.appcompat.widget.AppCompatTextView {
-    var numberSelector: NumberSelector
-    var value: Int
-    var bkp_text: String
-    private val STATE_ACTIVE = intArrayOf(R.attr.state_active)
-    var state_active: Boolean = false
-    constructor(numberSelector: NumberSelector, value: Int): super(ContextThemeWrapper(numberSelector.context, R.style.numberSelector)) {
-        // TODO: Handle any radix
-        this.numberSelector = numberSelector
-        this.value = value
-        this.bkp_text = "${get_number_string(this.value, 12,2)}"
-        this.text = this.bkp_text
-
-        this.setOnClickListener {
-            this.numberSelector.set_active_button(this)
-            this.setActive(true)
-        }
-    }
-
-    override fun onCreateDrawableState(extraSpace: Int): IntArray? {
-        val drawableState = super.onCreateDrawableState(extraSpace + 1)
-        if (this.state_active) {
-            mergeDrawableStates(drawableState, STATE_ACTIVE)
-        }
-        return drawableState
-    }
-
-
-    override fun onLayout(isChanged: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
-        super.onLayout(isChanged, left, top, right, bottom)
-        this.text = this.bkp_text
-        this.gravity = CENTER
-    }
-
-    fun setActive(value: Boolean) {
-        this.state_active = value
-        refreshDrawableState()
     }
 }

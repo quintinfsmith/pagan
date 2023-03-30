@@ -4,7 +4,6 @@ package com.qfs.radixulous
 
 import android.app.Activity
 import android.app.AlertDialog
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -26,7 +25,6 @@ import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.radixulous.apres.*
-import com.qfs.radixulous.apres.riffreader.Riff
 import com.qfs.radixulous.databinding.ActivityMainBinding
 import java.io.File
 import java.io.FileInputStream
@@ -34,21 +32,13 @@ import java.io.FileOutputStream
 import kotlin.concurrent.thread
 import com.qfs.radixulous.opusmanager.HistoryLayer as OpusManager
 
-enum class ContextMenu {
-    Leaf,
-    Line,
-    Beat,
-    Linking,
-    None
-}
-
 class MainActivity : AppCompatActivity() {
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
 
-    lateinit var midi_controller: MIDIController
-    lateinit var midi_playback_device: MIDIPlaybackDevice
-    var midi_input_device = MIDIInputDevice()
+    private lateinit var midi_controller: MIDIController
+    private lateinit var midi_playback_device: MIDIPlaybackDevice
+    private var midi_input_device = VirtualMIDIDevice()
     private var midi_player = MIDIPlayer()
     private var midi_scroller = MIDIScroller(this)
     lateinit var soundfont: SoundFont
@@ -57,15 +47,20 @@ class MainActivity : AppCompatActivity() {
     private var opus_manager = OpusManager()
 
     private var in_play_back: Boolean = false
-    private var midi_beats_to_play_back = mutableListOf<Pair<Int, MIDI>>()
 
     private lateinit var optionsMenu: Menu
     internal lateinit var project_manager: ProjectManager
-    var progressBar: ProgressBar? = null
+    private var progressBar: ProgressBar? = null
 
-    var export_midi_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+    class MIDIScroller(private var activity: MainActivity): VirtualMIDIDevice() {
+        override fun onSongPositionPointer(event: SongPositionPointer) {
+            this.activity.scroll_to_beat(event.beat, true)
+        }
+    }
+
+    private var export_midi_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
-            val opus_manager = this.getOpusManager()
+            val opus_manager = this.get_opus_manager()
             result?.data?.data?.also { uri ->
                 applicationContext.contentResolver.openFileDescriptor(uri, "w")?.use {
                     FileOutputStream(it.fileDescriptor).write(opus_manager.get_midi().as_bytes())
@@ -77,7 +72,6 @@ class MainActivity : AppCompatActivity() {
 
     var import_midi_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
-            val opus_manager = this.getOpusManager()
             result?.data?.data?.also { uri ->
                 // TODO: NAV TO MAIN FRAGMENT AND USE RESULT LISTENER
                 val fragment = this.getActiveFragment()
@@ -111,7 +105,7 @@ class MainActivity : AppCompatActivity() {
         this.soundfont = SoundFont(assets.open("FluidR3_GM.sf2"))
         this.midi_playback_device = MIDIPlaybackDevice(this, this.soundfont)
 
-        this.midi_controller = RadMidiController(window.decorView.rootView.context)
+        this.midi_controller = MIDIController(window.decorView.rootView.context)
         this.midi_controller.registerVirtualDevice(this.midi_playback_device)
         this.midi_controller.registerVirtualDevice(this.midi_input_device)
         this.midi_controller.registerVirtualDevice(this.midi_player)
@@ -123,7 +117,6 @@ class MainActivity : AppCompatActivity() {
         for (channel in opus_manager.channels) {
             this.midi_input_device.sendEvent(ProgramChange(channel.midi_channel, channel.midi_instrument))
         }
-        val rvRowLabels_adapter = this.findViewById<RecyclerView>(R.id.rvRowLabels).adapter as RowLabelAdapter
     }
 
     override fun onSupportNavigateUp(): Boolean {
@@ -131,8 +124,7 @@ class MainActivity : AppCompatActivity() {
         return navController.navigateUp(appBarConfiguration)
                 || super.onSupportNavigateUp()
     }
-    // method to inflate the options menu when
-    // the user opens the menu for the first time
+
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         this.menuInflater.inflate(R.menu.main_options_menu, menu)
         this.optionsMenu = menu
@@ -141,8 +133,6 @@ class MainActivity : AppCompatActivity() {
         return output
     }
 
-    // methods to control the operations that will
-    // happen when user clicks on the action buttons
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.itmNewProject -> {
@@ -176,12 +166,13 @@ class MainActivity : AppCompatActivity() {
         }
         return super.onOptionsItemSelected(item)
     }
+
     fun stop_playback() {
         this.midi_input_device.sendEvent(MIDIStop())
     }
 
     fun setup_config_drawer() {
-        val opus_manager = this.getOpusManager()
+        val opus_manager = this.get_opus_manager()
         val rvActiveChannels: RecyclerView = this.findViewById(R.id.rvActiveChannels)
         val channelAdapter = ChannelOptionAdapter(this, rvActiveChannels, this.soundfont)
 
@@ -264,7 +255,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun playback() {
+    private fun playback() {
         if (this.in_play_back) {
             return
         }
@@ -273,11 +264,12 @@ class MainActivity : AppCompatActivity() {
         val item = this.optionsMenu.findItem(R.id.itmPlay)
         item.icon = ContextCompat.getDrawable(this, R.drawable.ic_baseline_pause_24)
         thread {
-            val opus_manager = this.getOpusManager()
-            val beat = opus_manager.get_cursor().x
-            var midi = opus_manager.get_midi(beat)
-
-            this.play_midi(midi)
+            val opus_manager = this.get_opus_manager()
+            this.play_midi(
+                opus_manager.get_midi(
+                    opus_manager.get_cursor().x
+                )
+            )
 
             this.in_play_back = false
 
@@ -287,9 +279,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    public fun scroll_to_beat(beat: Int, select: Boolean = false) {
+    fun scroll_to_beat(beat: Int, select: Boolean = false) {
         this@MainActivity.runOnUiThread {
-            var fragment = this.getActiveFragment()
+            val fragment = this.getActiveFragment()
             if (fragment is MainFragment) {
                 fragment.scroll_to_beat(beat, select)
             }
@@ -305,11 +297,12 @@ class MainActivity : AppCompatActivity() {
         this.current_project_title = title
         this.update_title_text()
     }
-    fun get_current_project_title(): String? {
+
+    private fun get_current_project_title(): String? {
         return this.current_project_title
     }
 
-    fun getOpusManager(): OpusManager {
+    fun get_opus_manager(): OpusManager {
         return this.opus_manager
     }
 
@@ -323,7 +316,6 @@ class MainActivity : AppCompatActivity() {
                 this.optionsMenu.findItem(R.id.itmPlay).isVisible = true
                 this.optionsMenu.findItem(R.id.itmImportMidi).isVisible = true
             }
-            //is LoadFragment -> { }
             else -> {
                 this.optionsMenu.findItem(R.id.itmLoadProject).isVisible = false
                 this.optionsMenu.findItem(R.id.itmUndo).isVisible = false
@@ -343,7 +335,7 @@ class MainActivity : AppCompatActivity() {
         this.setup_config_drawer()
     }
 
-    fun update_title_text() {
+    private fun update_title_text() {
         this.set_title_text(this.get_current_project_title() ?: "Untitled Opus")
     }
 
@@ -367,12 +359,12 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    fun play_midi(midi: MIDI) {
+    private fun play_midi(midi: MIDI) {
         this.midi_player.play_midi(midi)
     }
 
-    fun export_midi() {
-        val opus_manager = this.getOpusManager()
+    private fun export_midi() {
+        val opus_manager = this.get_opus_manager()
 
         var name = opus_manager.path
         if (name != null) {
@@ -411,7 +403,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun delete_project() {
+    private fun delete_project() {
         this.project_manager.delete(this.opus_manager)
 
         val fragment = this.getActiveFragment()
@@ -421,13 +413,13 @@ class MainActivity : AppCompatActivity() {
         this.feedback_msg("Deleted \"$title\"")
     }
 
-    fun copy_project() {
+    private fun copy_project() {
         this.current_project_title = this.project_manager.copy(this.opus_manager)
         this.feedback_msg("Now working on copy")
         this.update_title_text()
     }
 
-    fun closeDrawer() {
+    private fun closeDrawer() {
         findViewById<DrawerLayout>(R.id.drawer_layout).closeDrawers()
     }
 
@@ -458,7 +450,7 @@ class MainActivity : AppCompatActivity() {
                     else -> {}
                 }
             }
-            is FrontFragment -> {
+            is LandingPageFragment -> {
                 when (fragmentName) {
                     "main" -> {
                         this.reset_start_destination()
@@ -495,7 +487,7 @@ class MainActivity : AppCompatActivity() {
         npOnes.minValue = 0
         npOnes.maxValue = 11
         npOnes.displayedValues = arrayOf("0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B")
-        npOnes.value = this.getOpusManager().transpose
+        npOnes.value = this.get_opus_manager().transpose
 
         val npTens = viewInflated.findViewById<NumberPicker>(R.id.npTens)
         npTens.visibility = View.GONE
@@ -506,11 +498,11 @@ class MainActivity : AppCompatActivity() {
         AlertDialog.Builder(this, R.style.AlertDialog)
             .setTitle("Transpose")
             .setView(viewInflated)
-            .setPositiveButton(android.R.string.ok) { dialog, _ ->
+            .setPositiveButton(android.R.string.ok) { _, _ ->
                 val value = npOnes.value
                 this.set_transpose(value)
             }
-            .setNegativeButton(android.R.string.cancel) { dialog, _ ->
+            .setNegativeButton(android.R.string.cancel) { _, _ ->
             }
             .show()
     }
@@ -585,24 +577,25 @@ class MainActivity : AppCompatActivity() {
         AlertDialog.Builder(this, R.style.AlertDialog)
             .setTitle(title)
             .setView(viewInflated)
-            .setPositiveButton(android.R.string.ok) { dialog, _ ->
+            .setPositiveButton(android.R.string.ok) { _, _ ->
                 val value = (npHundreds.value * 100) + (npTens.value * 10) + npOnes.value
                 callback(value)
             }
-            .setNegativeButton(android.R.string.cancel) { dialog, _ ->
+            .setNegativeButton(android.R.string.cancel) { _, _ ->
             }
             .show()
     }
 
     private fun set_tempo(value: Int) {
-        val opus_manager = this.getOpusManager()
+        val opus_manager = this.get_opus_manager()
 
         opus_manager.tempo = value.toFloat()
         val tvTempo: TextView = this.findViewById(R.id.tvTempo)
         tvTempo.text = "${opus_manager.tempo.toInt()} BPM"
     }
+
     private fun set_transpose(value: Int) {
-        val opus_manager = this.getOpusManager()
+        val opus_manager = this.get_opus_manager()
 
         opus_manager.transpose = value
         val btnTranspose: TextView = this.findViewById(R.id.btnTranspose)
@@ -632,7 +625,8 @@ class MainActivity : AppCompatActivity() {
         this.binding.root.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)
     }
 
-    fun reset_start_destination() {
+    // Change the navcontroller graph so the user can't return the the main menu screen
+    private fun reset_start_destination() {
         val navController = findNavController(R.id.nav_host_fragment_content_main)
         if (navController.graph.startDestinationId != R.id.MainFragment) {
             val new_graph = navController.navInflater.inflate(R.navigation.nav_graph_b)
@@ -661,13 +655,5 @@ class MainActivity : AppCompatActivity() {
 
         }
         this.cancel_reticle()
-    }
-}
-
-class RadMidiController(context: Context): MIDIController(context)
-class MIDIInputDevice: VirtualMIDIDevice()
-class MIDIScroller(var activity: MainActivity): VirtualMIDIDevice() {
-    override fun onSongPositionPointer(event: SongPositionPointer) {
-        this.activity.scroll_to_beat(event.beat, true)
     }
 }

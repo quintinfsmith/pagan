@@ -10,42 +10,40 @@ import androidx.fragment.app.setFragmentResult
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.radixulous.databinding.FragmentLoadBinding
+import com.qfs.radixulous.databinding.FragmentMainBinding
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.io.File
 
-@Serializable
-data class ProjectDirPair(var filename: String, var title: String)
-
 /**
  * A simple [Fragment] subclass as the second destination in the navigation.
  */
-class LoadFragment : Fragment() {
-    private var _binding: FragmentLoadBinding? = null
+class LoadFragment : TempNameFragment() {
+    @Serializable
+    data class ProjectDirPair(var filename: String, var title: String)
 
-    // This property is only valid between onCreateView and
-    // onDestroyView.
+    // Boiler Plate //
+    private var _binding: FragmentLoadBinding? = null
     private val binding get() = _binding!!
+    //////////////////
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         _binding = FragmentLoadBinding.inflate(inflater, container, false)
-        this.getMain().lockDrawer()
-        this.getMain().update_menu_options()
+        this.get_main().lockDrawer()
+        this.get_main().update_menu_options()
         return binding.root
     }
 
-    private fun getMain(): MainActivity {
-        return this.activity!! as MainActivity
-    }
 
     override fun onStart() {
         super.onStart()
-        this.getMain().update_menu_options()
-        this.getMain().set_title_text("Load Project")
+        this.get_main().update_menu_options()
+        this.get_main().set_title_text("Load Project")
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -58,7 +56,7 @@ class LoadFragment : Fragment() {
         rvProjectList.adapter = loadprojectAdapter
         rvProjectList.layoutManager = LinearLayoutManager(view.context)
 
-        var main = this.getMain()
+        var main = this.get_main()
         var project_manager = main.project_manager
 
         val directory = File(project_manager.projects_dir)
@@ -89,7 +87,7 @@ class LoadFragment : Fragment() {
     fun load_project(path: String, title: String) {
         setFragmentResult("LOAD", bundleOf(Pair("PATH", path), Pair("TITLE", title)))
 
-        this.getMain().apply {
+        this.get_main().apply {
             loading_reticle()
             navTo("main")
             set_title_text(title)

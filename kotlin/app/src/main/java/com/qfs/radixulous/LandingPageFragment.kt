@@ -5,25 +5,21 @@ import android.net.Uri
 import android.os.Bundle
 import android.view.*
 import androidx.core.os.bundleOf
-import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResult
-import com.qfs.radixulous.databinding.FragmentFrontBinding
+import com.qfs.radixulous.databinding.FragmentLandingBinding
 
-class FrontFragment : Fragment() {
-    private var _binding: FragmentFrontBinding? = null
-
-    // This property is only valid between onCreateView and
-    // onDestroyView.
+class LandingPageFragment : TempNameFragment() {
+    // Boiler Plate //
+    private var _binding: FragmentLandingBinding? = null
     private val binding get() = _binding!!
+    //////////////////
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-
-        _binding = FragmentFrontBinding.inflate(inflater, container, false)
+        _binding = FragmentLandingBinding.inflate(inflater, container, false)
         return binding.root
-
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -34,19 +30,18 @@ class FrontFragment : Fragment() {
         var linkSource = view.findViewById<View>(R.id.linkSource)
 
         btn_newProject.setOnClickListener {
-
             this.setFragmentResult("NEW", bundleOf())
-            this.getMain().navTo("main")
+            this.get_main().navTo("main")
         }
         btn_loadProject.setOnClickListener {
-            this.getMain().navTo("load")
+            this.get_main().navTo("load")
         }
 
         btn_importMidi.setOnClickListener {
             val intent = Intent()
                 .setType("*/*")
                 .setAction(Intent.ACTION_GET_CONTENT)
-            this.getMain().import_midi_intent_launcher.launch(intent)
+            this.get_main().import_midi_intent_launcher.launch(intent)
         }
 
         linkSource.setOnClickListener {
@@ -56,15 +51,6 @@ class FrontFragment : Fragment() {
             startActivity(intent)
         }
     }
-
-    private fun getMain(): MainActivity {
-        return this.activity!! as MainActivity
-    }
-
-    override fun onStart() {
-        super.onStart()
-    }
-
 
     override fun onDestroyView() {
         super.onDestroyView()

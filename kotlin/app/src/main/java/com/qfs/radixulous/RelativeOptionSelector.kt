@@ -4,24 +4,65 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.Gravity.CENTER
 import android.view.View
-import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.LinearLayout
 import androidx.appcompat.view.ContextThemeWrapper
 
 
-class RelativeOptionSelector: LinearLayout {
-    var active_button: RelativeOptionSelectorButton? = null
-    var button_map = HashMap<RelativeOptionSelectorButton, Int>()
-    var itemList: List<Int> = listOf(
+class RelativeOptionSelector(context: Context, attrs: AttributeSet) : LinearLayout(context, attrs) {
+    private var active_button: RelativeOptionSelectorButton? = null
+    private var button_map = HashMap<RelativeOptionSelectorButton, Int>()
+    private var itemList: List<Int> = listOf(
         R.string.absolute_label,
         R.string.pfx_add,
         R.string.pfx_subtract
     )
     private var hidden_options: MutableSet<Int> = mutableSetOf()
-    var on_change_hook: ((RelativeOptionSelector) -> Unit)? = null
+    private var on_change_hook: ((RelativeOptionSelector) -> Unit)? = null
 
-    constructor(context: Context, attrs: AttributeSet) : super(context, attrs) {
+    // TODO: Handle any radix
+    class RelativeOptionSelectorButton (
+        private var roSelector: RelativeOptionSelector,
+        private var value: Int
+    ) : androidx.appcompat.widget.AppCompatTextView(
+        ContextThemeWrapper(
+            roSelector.context,
+            R.style.relativeSelector
+        )
+    ) {
+        private val STATE_ACTIVE = intArrayOf(R.attr.state_active)
+        private var state_active: Boolean = false
+
+        init {
+            this.text = resources.getString(this.value)
+            this.gravity = CENTER
+            this.setOnClickListener {
+                this.roSelector.set_active_button(this)
+                this.setActive(true)
+            }
+        }
+
+        override fun onCreateDrawableState(extraSpace: Int): IntArray? {
+            val drawableState = super.onCreateDrawableState(extraSpace + 1)
+            if (this.state_active) {
+                mergeDrawableStates(drawableState, STATE_ACTIVE)
+            }
+            return drawableState
+        }
+
+        fun setActive(value: Boolean) {
+            this.state_active = value
+            refreshDrawableState()
+        }
+
+        override fun onLayout(isChanged: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
+            super.onLayout(isChanged, left, top, right, bottom)
+            this.text = resources.getString(this.value)
+            this.gravity = CENTER
+        }
+    }
+
+    init {
         this.populate()
     }
 
@@ -54,17 +95,11 @@ class RelativeOptionSelector: LinearLayout {
         this.removeAllViews()
     }
 
-    fun populate() {
+    private fun populate() {
         this.itemList.forEachIndexed { i, string_index ->
-            var position = when (i) {
-                0 -> { 0 }
-                this.itemList.size - 1 -> { 2 }
-                else -> { 1 }
-            }
-
-            val currentView = RelativeOptionSelectorButton(this, position, string_index)
+            val currentView = RelativeOptionSelectorButton(this, string_index)
             this.addView(currentView)
-            (currentView.layoutParams as LinearLayout.LayoutParams).apply {
+            (currentView.layoutParams as LayoutParams).apply {
                 height = 0
                 weight = 1f
                 width = MATCH_PARENT
@@ -94,7 +129,7 @@ class RelativeOptionSelector: LinearLayout {
         }
     }
 
-    fun unset_active_button() {
+    private fun unset_active_button() {
         if (this.active_button == null) {
             return
         }
@@ -122,42 +157,3 @@ class RelativeOptionSelector: LinearLayout {
     }
 }
 
-class RelativeOptionSelectorButton: androidx.appcompat.widget.AppCompatTextView {
-    private var roSelector: RelativeOptionSelector
-    private var position: Int
-    private var value: Int
-    private val STATE_ACTIVE = intArrayOf(R.attr.state_active)
-    var state_active: Boolean = false
-    constructor(roSelector: RelativeOptionSelector, position: Int, value: Int): super(ContextThemeWrapper(roSelector.context, R.style.relativeSelector)) {
-        // TODO: Handle any radix
-        this.roSelector = roSelector
-        this.value = value
-        this.position = position
-        this.text = resources.getString(this.value)
-        this.gravity = CENTER
-
-        this.setOnClickListener {
-            this.roSelector.set_active_button(this)
-            this.setActive(true)
-        }
-    }
-
-    override fun onCreateDrawableState(extraSpace: Int): IntArray? {
-        val drawableState = super.onCreateDrawableState(extraSpace + 1)
-        if (this.state_active) {
-            mergeDrawableStates(drawableState, STATE_ACTIVE)
-        }
-        return drawableState
-    }
-
-    fun setActive(value: Boolean) {
-        this.state_active = value
-        refreshDrawableState()
-    }
-
-    override fun onLayout(isChanged: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
-        super.onLayout(isChanged, left, top, right, bottom)
-        this.text = resources.getString(this.value)
-        this.gravity = CENTER
-    }
-}

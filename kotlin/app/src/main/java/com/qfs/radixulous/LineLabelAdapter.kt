@@ -4,32 +4,25 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.*
 import android.widget.LinearLayout
-import android.widget.TableLayout
-import android.widget.TableRow
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.SimpleItemAnimator
-import com.qfs.radixulous.opusmanager.OpusChannel
-import com.qfs.radixulous.opusmanager.OpusEvent
-import com.qfs.radixulous.structure.OpusTree
 
-class RowLabelRecyclerView: RecyclerView {
-    constructor(context: Context, attrs: AttributeSet) : super(context, attrs)
-
-    // Prevents this from intercepting rowlabel touch events (disables manual scrolling)
+class LineLabelRecyclerView(context: Context, attrs: AttributeSet) : RecyclerView(context, attrs) {
+    // Prevents this from intercepting linelabel touch events (disables manual scrolling)
     override fun onInterceptTouchEvent(touchEvent: MotionEvent): Boolean {
         return false
     }
-
 }
-class RowLabelAdapter(var main_fragment: MainFragment, var recycler: RecyclerView) : RecyclerView.Adapter<RowLabelAdapter.RowLabelViewHolder>() {
+
+class LineLabelAdapter(var main_fragment: MainFragment, var recycler: RecyclerView) : RecyclerView.Adapter<LineLabelAdapter.LineLabelViewHolder>() {
     // BackLink so I can get the x offset from a view in the view holder
     private var row_count = 0
-    private var _dragging_rowLabel: View? = null
+    private var _dragging_lineLabel: View? = null
 
     class LabelView(context: Context): LinearLayout(context) {
-        var viewHolder: RowLabelViewHolder? = null
+        var viewHolder: LineLabelViewHolder? = null
 
         var textView: TextView = LayoutInflater.from(this.context).inflate(
             R.layout.table_line_label,
@@ -51,7 +44,7 @@ class RowLabelAdapter(var main_fragment: MainFragment, var recycler: RecyclerVie
         }
     }
 
-    class RowLabelViewHolder(itemView: LabelView) : RecyclerView.ViewHolder(itemView) {
+    class LineLabelViewHolder(itemView: LabelView) : RecyclerView.ViewHolder(itemView) {
         init {
             itemView.viewHolder = this
         }
@@ -75,35 +68,35 @@ class RowLabelAdapter(var main_fragment: MainFragment, var recycler: RecyclerVie
         )
     }
 
-    fun addRowLabel() {
+    fun addLineLabel() {
         this.row_count += 1
         this.notifyItemInserted(this.row_count - 1)
     }
 
-    fun removeRowLabel(i: Int) {
+    fun removeLineLabel(i: Int) {
         if (this.row_count > 0) {
             this.row_count -= 1
             this.notifyItemRemoved(i)
         }
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RowLabelViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): LineLabelViewHolder {
         val label = LabelView(parent.context)
 
         label.setOnClickListener {
-             this.interact_rowLabel(it)
+             this.interact_lineLabel(it)
         }
 
         label.setOnFocusChangeListener { view, is_focused: Boolean ->
             if (is_focused) {
-                this.interact_rowLabel(view)
+                this.interact_lineLabel(view)
             }
         }
 
         label.setOnTouchListener { view: View, touchEvent: MotionEvent ->
             if (touchEvent.action == MotionEvent.ACTION_MOVE) {
-                if (this._dragging_rowLabel == null) {
-                    this._dragging_rowLabel = view
+                if (this._dragging_lineLabel == null) {
+                    this._dragging_lineLabel = view
                     view.startDragAndDrop(
                         null,
                         View.DragShadowBuilder(view),
@@ -118,34 +111,29 @@ class RowLabelAdapter(var main_fragment: MainFragment, var recycler: RecyclerVie
 
         label.setOnDragListener { view: View, dragEvent: DragEvent ->
             when (dragEvent.action) {
-                //DragEvent.ACTION_DRAG_STARTED -> { }
                 DragEvent.ACTION_DROP -> {
                     println("DROPPED")
-                    var from_label =  this._dragging_rowLabel
+                    val from_label =  this._dragging_lineLabel
                     if (from_label != null && from_label != view) {
                         val y_from = (from_label.parent as ViewGroup).indexOfChild(from_label)
                         val y_to = (view.parent as ViewGroup).indexOfChild(view)
                         this.main_fragment.move_line(y_from, y_to)
                     }
-                    this._dragging_rowLabel = null
+                    this._dragging_lineLabel = null
                 }
-                // TODO: use DragEvent.ACTION_* constant
-                3 -> {
-                    this._dragging_rowLabel = null
-                }
-                4 -> {
-                    this._dragging_rowLabel = null
+                DragEvent.ACTION_DRAG_ENDED -> {
+                    this._dragging_lineLabel = null
                 }
                 else -> { }
             }
             true
         }
 
-        return RowLabelViewHolder(label)
+        return LineLabelViewHolder(label)
     }
 
-    override fun onBindViewHolder(holder: RowLabelViewHolder, position: Int) {
-        var label = this.main_fragment.get_label_text(position)
+    override fun onBindViewHolder(holder: LineLabelViewHolder, position: Int) {
+        val label = this.main_fragment.get_label_text(position)
         (holder.itemView as LabelView).set_text(label)
     }
 
@@ -153,17 +141,17 @@ class RowLabelAdapter(var main_fragment: MainFragment, var recycler: RecyclerVie
         return this.row_count
     }
 
-    fun scrollToY(y: Int) {
-        var current_y = this.recycler.computeVerticalScrollOffset()
+    fun scrollToLine(y: Int) {
+        val current_y = this.recycler.computeVerticalScrollOffset()
         this.recycler.scrollBy(0, y - current_y)
     }
 
-    private fun interact_rowLabel(view: View) {
-        this.main_fragment.set_active_row(this.get_y(view))
+    private fun interact_lineLabel(view: View) {
+        this.main_fragment.set_active_line(this.get_y(view))
     }
 
     private fun get_y(view: View): Int {
-        var abs_y: Int = 0
+        var abs_y = 0
         val label_column = view.parent!! as ViewGroup
         for (i in 0 until label_column.childCount) {
             if (label_column.getChildAt(i) == view) {

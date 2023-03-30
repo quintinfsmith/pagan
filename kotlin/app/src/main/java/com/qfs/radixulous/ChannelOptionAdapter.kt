@@ -1,6 +1,5 @@
 package com.qfs.radixulous
 
-import android.content.Context
 import android.view.ContextThemeWrapper
 import android.view.LayoutInflater
 import android.view.View
@@ -16,12 +15,12 @@ class ChannelOptionAdapter(
     private val recycler: RecyclerView,
     private val soundfont: SoundFont
 ) : RecyclerView.Adapter<ChannelOptionAdapter.ChannelOptionViewHolder>() {
-    var supported_instruments: Set<Int>
+    private var supported_instruments: Set<Int>
     class ChannelOptionViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
     init {
         this.recycler.adapter = this
         this.recycler.layoutManager = LinearLayoutManager(this.activity)
-        var that = this
+        val that = this
         this.registerAdapterDataObserver(
             object: RecyclerView.AdapterDataObserver() {
                 override fun onItemRangeRemoved(start: Int, count: Int) {
@@ -36,7 +35,7 @@ class ChannelOptionAdapter(
                 //override fun onChanged() { }
             }
         )
-        var supported_instruments = this.soundfont.get_available_presets(0)
+        val supported_instruments = this.soundfont.get_available_presets(0)
         this.supported_instruments = supported_instruments
     }
 
@@ -51,7 +50,7 @@ class ChannelOptionAdapter(
     }
 
     fun addChannel() {
-        var opus_manager = this.activity.getOpusManager()
+        val opus_manager = this.activity.get_opus_manager()
         opus_manager.new_channel()
         opus_manager.new_line(opus_manager.channels.size - 1)
         notifyItemInserted(opus_manager.channels.size - 1)
@@ -59,12 +58,12 @@ class ChannelOptionAdapter(
     }
 
 
-    fun set_text(view: View, position: Int) {
-        var opus_manager = this.activity.getOpusManager()
-        var channels = opus_manager.channels
+    private fun set_text(view: View, position: Int) {
+        val opus_manager = this.activity.get_opus_manager()
+        val channels = opus_manager.channels
         val curChannel = channels[position]
-        var btnChooseInstrument: TextView = view.findViewById(R.id.btnChooseInstrument)
-        var label = this.get_label(
+        val btnChooseInstrument: TextView = view.findViewById(R.id.btnChooseInstrument)
+        val label = this.get_label(
             if (opus_manager.is_percussion(position)) {
                 -1
             } else {
@@ -75,9 +74,9 @@ class ChannelOptionAdapter(
     }
 
     private fun get_label(instrument: Int): String {
-        var instrument_array = this.activity.resources.getStringArray(R.array.midi_instruments)
+        val instrument_array = this.activity.resources.getStringArray(R.array.midi_instruments)
 
-        var prefix = if (instrument == -1) {
+        val prefix = if (instrument == -1) {
             if (this.soundfont.get_available_presets(128).isNotEmpty()) {
                 ""
             } else {
@@ -101,13 +100,11 @@ class ChannelOptionAdapter(
     override fun onBindViewHolder(holder: ChannelOptionViewHolder, position: Int) {
         this.set_text(holder.itemView as ViewGroup, position)
 
-        var btnChooseInstrument: TextView = holder.itemView.findViewById(R.id.btnChooseInstrument)
-        btnChooseInstrument.setOnClickListener {
-            this.interact_btnChooseInstrument(holder.itemView.context, it, position)
+        holder.itemView.findViewById<TextView>(R.id.btnChooseInstrument).setOnClickListener {
+            this.interact_btnChooseInstrument(it, position)
         }
 
-        var btnRemoveChannel: TextView = holder.itemView.findViewById(R.id.btnRemoveChannel)
-        btnRemoveChannel.setOnClickListener {
+        holder.itemView.findViewById<TextView>(R.id.btnRemoveChannel).setOnClickListener {
             this.interact_btnRemoveChannel(it)
         }
     }
@@ -121,8 +118,8 @@ class ChannelOptionAdapter(
         }
 
         var x: Int? = null
-        for (i in 0 until parent.childCount) {
-            if (parent.getChildAt(i) == check) {
+        for (i in 0 until this.recycler.childCount) {
+            if (this.recycler.getChildAt(i) == check) {
                 x = i
                 break
             }
@@ -136,22 +133,22 @@ class ChannelOptionAdapter(
     }
 
     private fun interact_btnRemoveChannel(view: View) {
-        var opus_manager = this.activity.getOpusManager()
+        val opus_manager = this.activity.get_opus_manager()
 
         if (opus_manager.channels.size > 1) {
-            var x = this.get_view_channel(view)
+            val x = this.get_view_channel(view)
             opus_manager.remove_channel(x)
             this.notifyItemRemoved(x)
             this.update_fragment()
         }
     }
 
-    private fun interact_btnChooseInstrument(context: Context, view: View, index: Int) {
-        var opus_manager = this.activity.getOpusManager()
+    private fun interact_btnChooseInstrument(view: View, index: Int) {
+        val opus_manager = this.activity.get_opus_manager()
 
-        var wrapper = ContextThemeWrapper(this.activity, R.style.PopupMenu)
+        val wrapper = ContextThemeWrapper(this.activity, R.style.PopupMenu)
         val popupMenu = PopupMenu(wrapper, view)
-        var channel = this.get_view_channel(view)
+        val channel = this.get_view_channel(view)
 
         for (i in 0 until 128) {
             if (i == 0 && opus_manager.percussion_channel != null) {
@@ -174,18 +171,18 @@ class ChannelOptionAdapter(
             this.set_percussion_channel(channel)
             return
         }
-        var fragment = this.activity.getActiveFragment()
+        val fragment = this.activity.getActiveFragment()
         (fragment as MainFragment).set_channel_instrument(channel, instrument)
     }
 
     private fun set_percussion_channel(channel: Int) {
-        var opus_manager = this.activity.getOpusManager()
+        val opus_manager = this.activity.get_opus_manager()
         opus_manager.set_percussion_channel(channel)
         this.update_fragment()
     }
 
     private fun update_fragment() {
-        var fragment = this.activity.getActiveFragment()
+        val fragment = this.activity.getActiveFragment()
         if (fragment is MainFragment) {
             fragment.tick()
             fragment.update_line_labels()
@@ -195,6 +192,6 @@ class ChannelOptionAdapter(
     }
 
     override fun getItemCount(): Int {
-        return this.activity.getOpusManager().channels.size
+        return this.activity.get_opus_manager().channels.size
     }
 }

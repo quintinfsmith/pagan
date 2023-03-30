@@ -34,9 +34,9 @@
 
     <fragment
         android:id="@+id/FrontFragment"
-        android:name="com.qfs.radixulous.FrontFragment"
+        android:name="com.qfs.radixulous.LandingPageFragment"
         android:label="@string/front_fragment_label"
-        tools:layout="@layout/fragment_front">
+        tools:layout="@layout/fragment_landing">
 
         <action
             android:id="@+id/action_FrontFragment_to_MainFragment"

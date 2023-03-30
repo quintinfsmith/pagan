@@ -40,11 +40,11 @@ tools:context=".MainFragment">
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <com.qfs.radixulous.RowLabelRecyclerView
+        <com.qfs.radixulous.LineLabelRecyclerView
             android:paddingRight="@dimen/normal_padding"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:id="@+id/rvRowLabels"/>
+            android:id="@+id/rvLineLabels"/>
 
         <ScrollView
             android:id="@+id/svTable"

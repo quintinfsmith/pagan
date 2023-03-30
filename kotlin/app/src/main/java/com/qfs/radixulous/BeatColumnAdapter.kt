@@ -9,20 +9,14 @@ import com.qfs.radixulous.opusmanager.BeatKey
 import java.lang.Integer.max
 import com.qfs.radixulous.opusmanager.HistoryLayer as OpusManager
 
-class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: RecyclerView, var column_layout: ColumnLabelAdapter) : RecyclerView.Adapter<OpusManagerAdapter.BeatViewHolder>() {
-    var beat_count = 0
-    var _longclicking_leaf: View? = null
+class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: RecyclerView, var column_layout: ColumnLabelAdapter) : RecyclerView.Adapter<BeatColumnAdapter.BeatViewHolder>() {
 
-    var _dragging_leaf: View? = null
-    var linking_beat: BeatKey? = null
-    var linking_beat_b: BeatKey? = null
-    var _scroll_lock_this: Boolean = false
-    var _scroll_lock_columns: Boolean = false
-    private var focus_type: FocusType = FocusType.Cell
-    private var bound_beats = mutableSetOf<Int>()
-    private var attached_beats = mutableSetOf<Int>()
-    lateinit var table_scroll_listener: TableOnScrollListener
-    lateinit var column_scroll_listener: ColumnLabelOnScrollListener
+    enum class FocusType {
+        Cell,
+        Row,
+        Column,
+        Group
+    }
 
     // BackLink so I can get the x offset from a view in the view holder
     class BackLinkView(context: Context): LinearLayout(context) {
@@ -36,7 +30,7 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
     class TableOnScrollListener: RecyclerView.OnScrollListener() {
         override fun onScrolled(recyclerView: RecyclerView, x: Int, y: Int) {
             super.onScrolled(recyclerView, x, y)
-            var adapter = recyclerView.adapter as OpusManagerAdapter
+            val adapter = recyclerView.adapter as BeatColumnAdapter
             if (!adapter._scroll_lock_this) {
                 adapter._scroll_lock_columns = true
                 adapter.column_layout.scroll(x)
@@ -44,7 +38,7 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
             }
         }
     }
-    class ColumnLabelOnScrollListener(var omAdapter: OpusManagerAdapter): RecyclerView.OnScrollListener() {
+    class ColumnLabelOnScrollListener(var omAdapter: BeatColumnAdapter): RecyclerView.OnScrollListener() {
         override fun onScrolled(recyclerView: RecyclerView, x: Int, y: Int) {
             super.onScrolled(recyclerView, x, y)
             if (!omAdapter._scroll_lock_columns) {
@@ -60,9 +54,24 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
             itemView.viewHolder = this
         }
     }
+
+    var beat_count = 0
+    var _longclicking_leaf: View? = null
+
+    var _dragging_leaf: View? = null
+    var linking_beat: BeatKey? = null
+    var linking_beat_b: BeatKey? = null
+    var _scroll_lock_this: Boolean = false
+    var _scroll_lock_columns: Boolean = false
+    private var focus_type: FocusType = FocusType.Cell
+    private var bound_beats = mutableSetOf<Int>()
+    private var attached_beats = mutableSetOf<Int>()
+    var table_scroll_listener: TableOnScrollListener
+    var column_scroll_listener: ColumnLabelOnScrollListener
+
     init {
         this.recycler.adapter = this
-        this.recycler.layoutManager = OpusManagerLayoutManager(this.getMainActivity())
+        this.recycler.layoutManager = OpusManagerLayoutManager(this.get_main_activity())
         //(this.recycler.itemAnimator as SimpleItemAnimator).supportsChangeAnimations = false
         this.recycler.setItemAnimator(null)
 
@@ -101,8 +110,8 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
 
     }
 
-    private fun getMainActivity(): MainActivity {
-        return this.parent_fragment.getMain()
+    private fun get_main_activity(): MainActivity {
+        return this.parent_fragment.get_main()
     }
 
     private fun buildTreeView(parent: ViewGroup, beatkey: BeatKey): View {
@@ -116,7 +125,7 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
         if (tree.is_leaf()) {
             val tvLeaf = LeafButton(
                 parent.context,
-                this.getMainActivity(),
+                this.get_main_activity(),
                 tree.get_event(),
                 opus_manager.is_percussion(beatkey.channel)
             )
@@ -133,9 +142,6 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
 
             tvLeaf.setOnLongClickListener { view: View ->
                 view.isPressed = false
-                //val (y, x, position) = this.get_view_position_abs(view)
-                //this.parent_fragment.set_cursor_position(y, x, position, FocusType.Cell)
-
                 this._longclicking_leaf = view
                 false
             }
@@ -165,7 +171,6 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
 
             tvLeaf.setOnDragListener { view: View, dragEvent: DragEvent ->
                 when (dragEvent.action) {
-                    //DragEvent.ACTION_DRAG_STARTED -> { }
                     DragEvent.ACTION_DROP -> {
                         if (this._dragging_leaf != view && this._dragging_leaf != null) {
                             val (beatkey_to, position_to) = this.get_view_position(view)
@@ -175,8 +180,8 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
 
                             val (y, x, _) = this.get_view_position_abs(view)
                             this.parent_fragment.set_cursor_position(y, x, position_to, FocusType.Cell)
-
                             this.parent_fragment.tick()
+
                         }
                         this._dragging_leaf = null
                     }
@@ -191,12 +196,13 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
                 parent.addView(tvLeaf, offset)
             }
 
-            val param = tvLeaf.layoutParams as LinearLayout.LayoutParams
-            param.gravity = Gravity.CENTER
-            param.height = ViewGroup.LayoutParams.MATCH_PARENT
-            param.width = 128
-            param.weight = 1F
-            (param as ViewGroup.MarginLayoutParams).setMargins(0,0,10,0)
+            (tvLeaf.layoutParams as ViewGroup.MarginLayoutParams).setMargins(0, 0, 10, 0)
+            (tvLeaf.layoutParams as LinearLayout.LayoutParams).apply {
+                gravity = Gravity.CENTER
+                height = ViewGroup.LayoutParams.MATCH_PARENT
+                width = 128
+                weight = 1F
+            }
 
             if (tree.is_event()) {
                 val abs_value = opus_manager.get_absolute_value(beatkey, position)
@@ -213,11 +219,12 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
                 false
             ) as LinearLayout
 
-            val param = cellLayout.layoutParams as LinearLayout.LayoutParams
-            param.gravity = Gravity.CENTER
-            param.height = ViewGroup.LayoutParams.MATCH_PARENT
-            param.width = 0
-            param.weight = 1F
+            (cellLayout.layoutParams as LinearLayout.LayoutParams).apply {
+                gravity = Gravity.CENTER
+                height = ViewGroup.LayoutParams.MATCH_PARENT
+                width = 0
+                weight = 1F
+            }
 
             for (i in 0 until tree.size) {
                 val new_position = position.toMutableList()
@@ -327,11 +334,11 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
     }
 
     private fun get_opus_manager(): OpusManager {
-        return this.getMainActivity().getOpusManager()
+        return this.get_main_activity().get_opus_manager()
     }
 
     private fun interact_leafView_click(view: View) {
-        val main = this.getMainActivity()
+        val main = this.get_main_activity()
         main.stop_playback()
 
         var (y, x, position) = this.get_view_position_abs(view)
@@ -361,7 +368,7 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
                 }
             }
 
-            var cursor = opus_manager.get_cursor()
+            val cursor = opus_manager.get_cursor()
             cursor.settle()
             y = cursor.y
             x = cursor.x
@@ -370,7 +377,7 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
             this.parent_fragment.tick()
         }
         this.parent_fragment.set_cursor_position(y, x, position, FocusType.Cell)
-        this.parent_fragment.setContextMenu(ContextMenu.Leaf)
+        this.parent_fragment.setContextMenu_leaf()
 
         val tree = opus_manager.get_tree_at_cursor()
         if (tree.is_event()) {
@@ -386,7 +393,7 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
     }
 
     private fun interact_leafView_longclick(view: View) {
-        val main = this.getMainActivity()
+        val main = this.get_main_activity()
         main.stop_playback()
 
         val (beatkey, _) = this.get_view_position(view)
@@ -399,11 +406,11 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
             this.parent_fragment.set_cursor_position(y, x, listOf(), FocusType.Group)
         }
 
-        this.parent_fragment.setContextMenu(ContextMenu.Linking)
+        this.parent_fragment.setContextMenu_linking()
     }
 
     // Called only from the buildTreeView()
-    fun apply_cursor_focus(leaf: LeafButton, beatkey: BeatKey, position: List<Int>) {
+    private fun apply_cursor_focus(leaf: LeafButton, beatkey: BeatKey, position: List<Int>) {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.get_cursor()
         val cursor_key = cursor.get_beatkey()
@@ -452,13 +459,13 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
         return working_view as LeafButton
     }
 
-    fun get_all_leaf_views(beatkey: BeatKey, position: List<Int>? = null): List<LeafButton>? {
+    private fun get_all_leaf_views(beatkey: BeatKey, position: List<Int>? = null): List<LeafButton>? {
         val opus_manager = this.get_opus_manager()
         val y = opus_manager.get_y(beatkey.channel, beatkey.line_offset)
         return this.get_all_leaf_views(y, beatkey.beat, position)
     }
 
-    fun get_all_leaf_views(y: Int, x: Int, position: List<Int>? = null): List<LeafButton>? {
+    private fun get_all_leaf_views(y: Int, x: Int, position: List<Int>? = null): List<LeafButton>? {
         // Get the full-beat view
         val column_view_holder = this.recycler.findViewHolderForAdapterPosition(x) ?: return null
         var working_view = column_view_holder.itemView
@@ -493,12 +500,12 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
     }
 
 
-    fun cancelLinking() {
+    private fun cancelLinking() {
         this.linking_beat_b = null
         this.linking_beat = null
     }
 
-    fun adjust_beat_width(holder: BeatViewHolder, beat: Int) {
+    private fun adjust_beat_width(holder: BeatViewHolder, beat: Int) {
         val opus_manager = this.get_opus_manager()
         // resize Columns
         var max_width = 0
@@ -519,7 +526,7 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
         this.column_layout.set_label_width(beat, max_width)
     }
 
-    fun __tick_resize_beat_cell(holder: BeatViewHolder, channel: Int, line_offset: Int, beat: Int, new_width: Int) {
+    private fun __tick_resize_beat_cell(holder: BeatViewHolder, channel: Int, line_offset: Int, beat: Int, new_width: Int) {
         val opus_manager = this.get_opus_manager()
 
         var working_view = holder.itemView
@@ -540,7 +547,7 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
             val (new_size, current_position, current_view) = stack.removeFirst()
             val current_tree = opus_manager.get_tree(key, current_position)
 
-            val param = current_view!!.layoutParams as ViewGroup.MarginLayoutParams
+            val param = current_view.layoutParams as ViewGroup.MarginLayoutParams
 
             if (!current_tree.is_leaf()) {
                 for (i in 0 until current_tree.size) {
@@ -575,18 +582,16 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
         }
     }
 
-    fun get_visible_highlighted_leafs(): List<LeafButton> {
-        var layout_manager = (this.recycler.layoutManager as LinearLayoutManager)
-
-        var opus_manager = this.get_opus_manager()
-        var cursor = opus_manager.get_cursor()
-        var output = mutableListOf<LeafButton>()
-        var beatkey = cursor.get_beatkey()
+    private fun get_visible_highlighted_leafs(): List<LeafButton> {
+        val opus_manager = this.get_opus_manager()
+        val cursor = opus_manager.get_cursor()
+        val output = mutableListOf<LeafButton>()
+        val beatkey = cursor.get_beatkey()
         when (this.focus_type) {
             FocusType.Row -> {
                 // NOTE: padding the start/end since an item may be bound but not visible
                 for (i in this.attached_beats) {
-                    var leafs = this.get_all_leaf_views(BeatKey(beatkey.channel, beatkey.line_offset, i)) ?: continue
+                    val leafs = this.get_all_leaf_views(BeatKey(beatkey.channel, beatkey.line_offset, i)) ?: continue
                     for (leaf in leafs) {
                         output.add(leaf)
                     }
@@ -596,7 +601,7 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
                 if (beatkey.beat in this.attached_beats) {
                     for (i in 0 until opus_manager.channels.size) {
                         for (j in 0 until opus_manager.channels[i].size) {
-                            var leafs = this.get_all_leaf_views(BeatKey(i, j, beatkey.beat)) ?: continue
+                            val leafs = this.get_all_leaf_views(BeatKey(i, j, beatkey.beat)) ?: continue
                             for (leaf in leafs) {
                                 output.add(leaf)
                             }
@@ -623,7 +628,7 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
                         this.linking_beat_b!!
                     )
 
-                    var (y_diff, y_i) = if (cursor_diff.first >= 0) {
+                    val (y_diff, y_i) = if (cursor_diff.first >= 0) {
                         Pair(
                             cursor_diff.first,
                             opus_manager.get_y(
@@ -641,7 +646,7 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
                         )
                     }
 
-                    var (x_diff, x_i) = if (cursor_diff.second >= 0) {
+                    val (x_diff, x_i) = if (cursor_diff.second >= 0) {
                         Pair(
                             cursor_diff.second,
                             this.linking_beat!!.beat
@@ -679,15 +684,16 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
         }
     }
 
-    fun set_cursor_position(y: Int, x: Int, position: List<Int>, type: FocusType) {
-        var original_type = this.focus_type
-
+    fun apply_focus_type(type: FocusType) {
         this.focus_type = type
 
         for (leaf in this.get_visible_highlighted_leafs()) {
             leaf.isFocused = true
         }
+        this.redraw_visible_leafs()
+    }
 
+    private fun redraw_visible_leafs() {
         // Kludge: (Due to RecyclerView Bug) Update the beats that are bound but not visible because the RecyclerView
         // Wouldn't redraw them
         for (b in this.bound_beats - this.attached_beats) {
@@ -711,18 +717,11 @@ class OpusManagerAdapter(var parent_fragment: MainFragment, var recycler: Recycl
 
     fun scrollToPosition(position: Int) {
         this.disableScrollSync()
-        var item_width = this.column_layout.column_widths[position] * 120
-        val center = (this.recycler.getWidth() - item_width) / 2
+        val item_width = this.column_layout.column_widths[position] * 120
+        val center = (this.recycler.width - item_width) / 2
         (this.recycler.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(position, center)
         (this.column_layout.recycler.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(position, center)
         this.enableScrollSync()
     }
-}
-
-enum class FocusType {
-    Cell,
-    Row,
-    Column,
-    Group
 }
 

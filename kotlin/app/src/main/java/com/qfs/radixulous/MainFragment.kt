@@ -830,7 +830,6 @@ class MainFragment : TempNameFragment() {
             val updated_beats: MutableSet<Int> = mutableSetOf()
             var min_changed_beat = opus_manager.opus_beat_count
             var validate_count = 0
-            var lines_need_update = false
 
             while (true) {
                 when (opus_manager.fetch_next_flag()) {
@@ -862,7 +861,6 @@ class MainFragment : TempNameFragment() {
 
                     UpdateFlag.Line -> {
                         val line_flag = opus_manager.fetch_flag_line() ?: break
-                        lines_need_update = true
                         for (i in 0 until line_flag.beat_count ) {
                             updated_beats.add(i)
                         }

@@ -112,7 +112,6 @@ class LineLabelAdapter(var main_fragment: MainFragment, var recycler: RecyclerVi
         label.setOnDragListener { view: View, dragEvent: DragEvent ->
             when (dragEvent.action) {
                 DragEvent.ACTION_DROP -> {
-                    println("DROPPED")
                     val from_label =  this._dragging_lineLabel
                     if (from_label != null && from_label != view) {
                         val y_from = (from_label.parent as ViewGroup).indexOfChild(from_label)

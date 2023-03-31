@@ -5,6 +5,7 @@ import android.media.*
 import android.os.Build
 import androidx.annotation.RequiresApi
 import kotlin.concurrent.thread
+import kotlin.math.max
 import kotlin.math.pow
 
 val BASE_FREQ = 8.175798915643707F
@@ -16,8 +17,8 @@ class ActiveNoteHandle(var event: NoteOn, var preset: Preset) {
     }
 
     fun gen_active_samples(): Set<ActiveSample> {
-        var output = mutableSetOf<ActiveSample>()
-        var potential_instruments = this.preset.get_instruments(this.event.note, this.event.velocity)
+        val output = mutableSetOf<ActiveSample>()
+        val potential_instruments = this.preset.get_instruments(this.event.note, this.event.velocity)
         for (p_instrument in potential_instruments) {
             val samples = p_instrument.instrument!!.get_samples(
                 this.event.note,
@@ -64,10 +65,17 @@ class ActiveNoteHandle(var event: NoteOn, var preset: Preset) {
         return output
     }
 
-    fun stop() {
+    // Stop and return ttl
+    fun stop(immediate: Boolean = false): Long {
+        var max_ttl: Long = 0
         for (sample in this.active_samples) {
-            sample.stop()
+            if (immediate) {
+                sample.really_stop()
+            } else {
+                max_ttl = max(max_ttl, sample.stop())
+            }
         }
+        return max_ttl
     }
 
     fun play() {
@@ -85,6 +93,19 @@ class ActiveSample(
         var preset: Preset,
         var event: NoteOn
     ) {
+
+    class SFPlaybackListener(var active_sample: ActiveSample): AudioTrack.OnPlaybackPositionUpdateListener {
+        override fun onMarkerReached(p0: AudioTrack?) {
+            //
+        }
+
+        override fun onPeriodicNotification(p0: AudioTrack?) {
+            if (p0 != null) {
+                this.active_sample.write_next_chunk()
+            }
+        }
+    }
+
     var current_frame = 0
     private var buffer_size_in_frames: Int
     private var buffer_size_in_bytes: Int
@@ -163,9 +184,9 @@ class ActiveSample(
     }
 
     fun write_next_chunk() {
-        var sample_right = this.sample_right.sample!!
+        val sample_right = this.sample_right.sample!!
         //var sample_left = this.sample_left?.sample ?: sample_right
-        var sample_left = sample_right
+        val sample_left = sample_right
         val loop_start = sample_right.loopStart
         val loop_end = sample_right.loopEnd
         var call_stop = false
@@ -283,24 +304,12 @@ class ActiveSample(
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.M)
-class SFPlaybackListener(var active_sample: ActiveSample): AudioTrack.OnPlaybackPositionUpdateListener {
-    override fun onMarkerReached(p0: AudioTrack?) {
-        //
-    }
-
-    override fun onPeriodicNotification(p0: AudioTrack?) {
-        if (p0 != null) {
-            this.active_sample.write_next_chunk()
-        }
-    }
-}
-
-@RequiresApi(Build.VERSION_CODES.M)
 class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): VirtualMIDIDevice() {
     private val active_handles = HashMap<Pair<Int, Int>, ActiveNoteHandle>()
     private val preset_channel_map = HashMap<Int, Int>()
     private val loaded_presets = HashMap<Pair<Int, Int>, Preset>()
+    private val decaying_handles = HashMap<Long, Pair<ActiveNoteHandle, Int>>()
+    private val channels_turning_off = mutableSetOf<Int>()
 
     init {
         this.loaded_presets[Pair(0, 0)] = this.soundFont.get_preset(0, 0)
@@ -319,7 +328,12 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
         val currently_active_sample: ActiveNoteHandle? = this.active_handles[Pair(event.note, event.channel)]
         currently_active_sample?.stop()
 
-        //TODO: Handle Bank
+        // TODO: Kinda kludgey. if AllSoundOff is being applied, dont add a new note
+        if (this.channels_turning_off.contains(event.channel)) {
+            return
+        }
+
+        // TODO: Handle Bank
         val bank = if (event.channel == 9) {
             128
         } else {
@@ -337,10 +351,20 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
     }
 
     override fun onNoteOff(event: NoteOff) {
-        val handle = this.active_handles.remove(Pair(event.note, event.channel)) ?: return
-        var ttl = handle.stop()
-
-        //this.decaying_samples.add(sample)
+        if (this.channels_turning_off.contains(event.channel)) {
+            val handle = this.active_handles.remove(Pair(event.note, event.channel)) ?: return
+            val ttl = handle.stop()
+            val ts = System.currentTimeMillis()
+            if (ttl > 0) {
+                this.decaying_handles[ts] = Pair(handle, event.channel)
+                thread {
+                    Thread.sleep(ttl)
+                    if (!this.channels_turning_off.contains(event.channel)) {
+                        this.decaying_handles.remove(ts)
+                    }
+                }
+            }
+        }
     }
 
     override fun onProgramChange(event: ProgramChange) {
@@ -353,6 +377,27 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
         }
 
         this.preset_channel_map[event.channel] = event.program
+    }
+
+    override fun onAllSoundOff(event: AllSoundOff) {
+        this.channels_turning_off.add(event.channel)
+        for ((key, handle) in this.active_handles.filterKeys { k -> event.channel == k.second }) {
+            handle.stop(true)
+            this.active_handles.remove(key)
+        }
+
+        // toList because these are volite and the handles may have been stopped already
+        val to_pop = mutableSetOf<Long>()
+        for ((ts, pair) in this.decaying_handles.filterValues { v -> v.second == event.channel }) {
+            pair.first.stop(true)
+            to_pop.add(ts)
+        }
+
+        for (ts in to_pop) {
+            this.decaying_handles.remove(ts)
+        }
+
+        this.channels_turning_off.remove(event.channel)
     }
 }
 

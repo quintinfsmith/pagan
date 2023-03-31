@@ -76,14 +76,14 @@ fun lowest_common_multiple(number_list: List<Int>): Int {
     return output
 }
 
-data class ReducerTuple<T>(
-    var denominator: Int,
-    var indices: MutableList<Pair<Int, OpusTree<T>>>,
-    var original_size: Int,
-    var parent_node: OpusTree<T>
-)
+class OpusTree<T> {
+    data class ReducerTuple<T>(
+        var denominator: Int,
+        var indices: MutableList<Pair<Int, OpusTree<T>>>,
+        var original_size: Int,
+        var parent_node: OpusTree<T>
+    )
 
-public class OpusTree<T> {
     var size: Int = 0
     var divisions: HashMap<Int, OpusTree<T>> = HashMap<Int, OpusTree<T>>()
     var event: T? = null
@@ -105,10 +105,6 @@ public class OpusTree<T> {
 
         // TODO: Throw error
         return null
-    }
-
-    fun has_parent(): Boolean {
-        return this.parent != null
     }
 
     fun set_size(new_size: Int, noclobber: Boolean = false) {

@@ -570,8 +570,8 @@ open class HistoryLayer() : CursorLayer() {
         } else {
 
         }
-        this.history_cache.append_undoer("unlink_beat", listOf(beat_key))
         super.link_beat_into_pool(beat_key, index, overwrite_pool)
+        this.history_cache.append_undoer("unlink_beat", listOf(beat_key))
         this.history_cache.close_multi()
     }
 

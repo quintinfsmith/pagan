@@ -813,6 +813,7 @@ class MainFragment : TempNameFragment() {
         val opus_manager = main.get_opus_manager()
         val cursor = opus_manager.get_cursor()
         opus_manager.insert_beat(cursor.get_beatkey().beat + 1, count)
+        opus_manager.cursor_right()
         this.tick()
     }
 

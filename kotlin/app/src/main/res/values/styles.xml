@@ -24,6 +24,11 @@
         <item name="android:tint">@color/button_fg</item>
     </style>
 
+    <style name="button_front" parent="@style/button">
+        <item name="android:textSize">24sp</item>
+        <item name="android:padding">10sp</item>
+    </style>
+
     <style name="toggle_button" parent="@style/icon_button">
         <item name="android:colorButtonNormal">?attr/button_bg_default</item>
         <item name="android:colorControlHighlight">?attr/button_bg_pressed</item>

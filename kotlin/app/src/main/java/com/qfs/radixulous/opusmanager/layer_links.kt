@@ -32,22 +32,61 @@ open class LinksLayer() : AbsoluteValueLayer() {
         if (beat_key == target) {
             throw Exception("Can't link beat to self")
         }
-        // Remove any existing link
-        this.unlink_beat(beat_key)
 
-        // Replace existing tree with a copy of the target
-        this.overwrite_beat(beat_key, target)
+        val beat_pool_index = this.link_pool_map[beat_key]
+        val target_pool_index = this.link_pool_map[target]
 
-        var pool_index = this.link_pool_map[beat_key] ?: this.link_pools.size
-
-        this.link_pool_map[beat_key] = pool_index
-        if (pool_index == this.link_pools.size) {
-            this.link_pools.add(mutableSetOf(beat_key, target))
-            this.link_pool_map[target] = pool_index
+        if (beat_pool_index != null && target_pool_index != null) {
+            this.overwrite_beat(beat_key, target)
+            this.merge_link_pools(beat_pool_index, target_pool_index)
+        } else if (beat_pool_index != null) {
+            this.link_beat_into_pool(target, beat_pool_index, true)
+        } else if (target_pool_index != null) {
+            this.link_beat_into_pool(beat_key, target_pool_index, false)
         } else {
-            this.link_pools[pool_index].add(beat_key)
+            this.overwrite_beat(beat_key, target)
+            this.create_link_pool(listOf(beat_key, target))
+        }
+    }
+
+
+    open fun create_link_pool(beat_keys: List<BeatKey>) {
+        val pool_index = this.link_pools.size
+        this.link_pools.add(beat_keys.toMutableSet())
+        for (beat_key in beat_keys) {
+            this.link_pool_map[beat_key] = pool_index
+        }
+    }
+
+
+    open fun link_beat_into_pool(beat_key: BeatKey, index: Int, overwrite_pool: Boolean = false) {
+        if (overwrite_pool) {
+            // Will overwrite all linked
+            this.overwrite_beat(this.link_pools[index].first(), beat_key)
+        } else {
+            this.overwrite_beat(beat_key, this.link_pools[index].first())
+        }
+        this.link_pool_map[beat_key] = index
+        this.link_pools[index].add(beat_key)
+    }
+
+    // Only call from link_beats_function
+    open fun merge_link_pools(old_pool: Int, new_pool: Int) {
+        // First merge the beat's pool into the targets
+        for (key in this.link_pools[old_pool]) {
+            this.link_pool_map[key] = new_pool
+            this.link_pools[new_pool].add(key)
         }
 
+        // then remove the old pool
+        this.link_pools.removeAt(old_pool)
+
+        // update the indices
+        for ((key, index) in this.link_pool_map) {
+            if (index >= old_pool) {
+                this.link_pool_map[key] = index - 1
+            }
+        }
     }
 
     fun get_all_linked(beat_key: BeatKey): Set<BeatKey> {

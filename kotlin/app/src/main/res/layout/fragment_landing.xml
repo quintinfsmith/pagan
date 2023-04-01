@@ -18,7 +18,7 @@
             android:layout_width="match_parent"
             android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:theme="@style/button"
+            android:theme="@style/button_front"
             android:text="New Project"/>
 
         <TextView
@@ -26,7 +26,7 @@
             android:layout_width="match_parent"
             android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:theme="@style/button"
+            android:theme="@style/button_front"
             android:text="Load Project"/>
 
         <TextView
@@ -34,7 +34,7 @@
             android:layout_width="match_parent"
             android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:theme="@style/button"
+            android:theme="@style/button_front"
             android:text="Import MIDI"/>
 
         <TextView

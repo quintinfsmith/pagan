@@ -111,6 +111,7 @@ open class HistoryLayer() : CursorLayer() {
     var history_cache = HistoryCache()
 
     private fun apply_history_node(current_node: HistoryNode, depth: Int = 0) {
+        println("APPLYING ${current_node.func_name}")
         when (current_node.func_name) {
             "split_tree" -> {
                 this.split_tree(
@@ -119,8 +120,11 @@ open class HistoryLayer() : CursorLayer() {
                     current_node.args[2] as Int
                 )
             }
-            "unlink_beats" -> {
+            "unlink_beat" -> {
                 this.unlink_beat(current_node.args[0] as BeatKey)
+            }
+            "create_link_pool" -> {
+                this.create_link_pool((current_node.args[0] as LinkedHashSet<BeatKey>).toList())
             }
             "set_event" -> {
                 this.set_event(
@@ -538,17 +542,37 @@ open class HistoryLayer() : CursorLayer() {
 
     override fun link_beats(beat_key: BeatKey, target: BeatKey) {
         this.history_cache.open_multi()
-
-        this.push_replace_tree(beat_key, listOf())
-        this.history_cache.append_undoer("unlink_beats", listOf(beat_key.copy(), target.copy()))
-
         super.link_beats(beat_key, target)
+        this.history_cache.close_multi()
+    }
 
-        this.history_cache.close_multi(
-            this.get_cursor().get_beatkey(),
-            this.get_cursor().get_position()
-        )
+    override fun merge_link_pools(index_first: Int, index_second: Int) {
+        this.history_cache.open_multi()
 
+        var old_link_pool = mutableSetOf<BeatKey>()
+        for (beat_key in this.link_pools[index_first]) {
+            old_link_pool.add(beat_key.copy())
+        }
+        this.history_cache.append_undoer("create_link_pool", listOf(old_link_pool))
+        for (beat_key in this.link_pools[index_first]) {
+            this.history_cache.append_undoer("unlink_beat", listOf(beat_key))
+        }
+
+        super.merge_link_pools(index_first, index_second)
+
+        this.history_cache.close_multi()
+    }
+
+    override fun link_beat_into_pool(beat_key: BeatKey, index: Int, overwrite_pool: Boolean) {
+        this.history_cache.open_multi()
+        if (overwrite_pool) {
+
+        } else {
+
+        }
+        this.history_cache.append_undoer("unlink_beat", listOf(beat_key))
+        super.link_beat_into_pool(beat_key, index, overwrite_pool)
+        this.history_cache.close_multi()
     }
 
     override fun link_beat_range(beat: BeatKey, target_a: BeatKey, target_b: BeatKey) {
@@ -560,6 +584,15 @@ open class HistoryLayer() : CursorLayer() {
             this.get_cursor().get_beatkey(),
             this.get_cursor().get_position()
         )
+    }
+
+    override fun create_link_pool(beat_keys: List<BeatKey>) {
+        this.history_cache.open_multi()
+        for (beat_key in beat_keys) {
+            this.history_cache.append_undoer("unlink_beat", listOf(beat_key))
+        }
+        super.create_link_pool(beat_keys)
+        this.history_cache.close_multi()
     }
 
     override fun remove_channel(channel: Int) {

@@ -2139,7 +2139,8 @@ class MIDIPlayer: VirtualMIDIDevice() {
     override fun onMIDIStop(event: MIDIStop) {
         this.stop()
     }
-    public fun stop() {
+
+    fun stop() {
         this.playing = false
     }
 }

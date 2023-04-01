@@ -81,7 +81,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.M)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         this.project_manager = ProjectManager(applicationInfo.dataDir)
@@ -353,7 +352,7 @@ class MainActivity : AppCompatActivity() {
 
         this.midi_input_device.sendEvent(NoteOn(midi_channel, note, 64))
         thread {
-            Thread.sleep(200)
+            Thread.sleep(100)
             this.midi_input_device.sendEvent(NoteOff(midi_channel, note, 64))
         }
     }
@@ -641,8 +640,8 @@ class MainActivity : AppCompatActivity() {
         this.applicationContext.contentResolver.openFileDescriptor(Uri.parse(path), "r")?.use {
             val bytes = FileInputStream(it.fileDescriptor).readBytes()
             val midi = MIDI.from_bytes(bytes)
-
-            var filename = path.substring(path.lastIndexOf("/") + 1)
+            var filename = java.net.URLDecoder.decode(path, "utf-8")
+            filename = filename.substring(filename.lastIndexOf("/") + 1)
             filename = filename.substring(0, filename.lastIndexOf("."))
 
             this.opus_manager.import_midi(midi)

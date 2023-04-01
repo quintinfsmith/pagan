@@ -185,8 +185,7 @@ class ActiveSample(
 
     fun write_next_chunk() {
         val sample_right = this.sample_right.sample!!
-        //var sample_left = this.sample_left?.sample ?: sample_right
-        val sample_left = sample_right
+        var sample_left = this.sample_left?.sample ?: sample_right
         val loop_start = sample_right.loopStart
         val loop_end = sample_right.loopEnd
         var call_stop = false
@@ -232,7 +231,7 @@ class ActiveSample(
         }
     }
 
-    fun apply_decay_shaper(): Long {
+    private fun apply_decay_shaper(): Long {
         val volumeShaper: VolumeShaper = this.volumeShaper ?: return 0
 
         var vol_env_release = this.sample_right.vol_env_release
@@ -245,7 +244,6 @@ class ActiveSample(
         }
 
         var delay = (vol_env_release * 1000F).toLong()
-
         try {
             val newConfig = VolumeShaper.Configuration.Builder()
                 .setDuration(delay)
@@ -254,7 +252,6 @@ class ActiveSample(
                 .build()
 
             volumeShaper.replace(newConfig, VolumeShaper.Operation.PLAY, true)
-
             thread {
                 Thread.sleep(delay)
                 this.really_stop()
@@ -275,7 +272,6 @@ class ActiveSample(
 
         this.volume = velocity.toFloat() / 128F
         val config = VolumeShaper.Configuration.Builder()
-            .setDuration(1)
             .setCurve(floatArrayOf(0f, 1f), floatArrayOf(this.volume, this.volume))
             .setInterpolatorType(VolumeShaper.Configuration.INTERPOLATOR_TYPE_LINEAR)
             .build()
@@ -351,7 +347,7 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
     }
 
     override fun onNoteOff(event: NoteOff) {
-        if (this.channels_turning_off.contains(event.channel)) {
+        if (!this.channels_turning_off.contains(event.channel)) {
             val handle = this.active_handles.remove(Pair(event.note, event.channel)) ?: return
             val ttl = handle.stop()
             val ts = System.currentTimeMillis()
@@ -381,20 +377,29 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
 
     override fun onAllSoundOff(event: AllSoundOff) {
         this.channels_turning_off.add(event.channel)
-        for ((key, handle) in this.active_handles.filterKeys { k -> event.channel == k.second }) {
-            handle.stop(true)
-            this.active_handles.remove(key)
-        }
+        // Keep trying to turn off until succeeds
+        while (true) {
+            val to_pop = mutableSetOf<Long>()
+            try {
+                for ((key, handle) in this.active_handles.filterKeys { k -> event.channel == k.second }) {
+                    handle.stop(true)
+                    this.active_handles.remove(key)
+                }
 
-        // toList because these are volite and the handles may have been stopped already
-        val to_pop = mutableSetOf<Long>()
-        for ((ts, pair) in this.decaying_handles.filterValues { v -> v.second == event.channel }) {
-            pair.first.stop(true)
-            to_pop.add(ts)
-        }
+                // toList because these are volite and the handles may have been stopped already
+                for ((ts, pair) in this.decaying_handles.filterValues { v -> v.second == event.channel }) {
+                    pair.first.stop(true)
+                    to_pop.add(ts)
+                }
+            } catch (e: java.util.ConcurrentModificationException) {
+                continue
+            }
 
-        for (ts in to_pop) {
-            this.decaying_handles.remove(ts)
+            for (ts in to_pop) {
+                this.decaying_handles.remove(ts)
+            }
+
+            break
         }
 
         this.channels_turning_off.remove(event.channel)

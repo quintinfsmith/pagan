@@ -22,7 +22,7 @@ open class LinksLayer() : AbsoluteValueLayer() {
 
     fun clear_link_pool(beat_key: BeatKey) {
         var index = this.link_pool_map.remove(beat_key) ?: return
-        for (key in this.link_pools[index]) {
+        for (key in this.link_pools[index].toList()) {
             this.unlink_beat(key)
         }
         this.link_pools.removeAt(index)

@@ -158,7 +158,7 @@ open class OpusManagerBase {
         var working_position = position.toList()
 
         while (true) {
-            val pair = this.get_preceding_leaf_position(working_beat_key, working_position) ?: return null
+            val pair = this.get_preceding_leaf_position(working_beat_key, working_position) ?: return abs_value
             working_beat_key = pair.first
             working_position = pair.second
 
@@ -172,7 +172,6 @@ open class OpusManagerBase {
                 }
             }
         }
-
         return abs_value
     }
 
@@ -213,7 +212,6 @@ open class OpusManagerBase {
     }
     //// END RO Functions ////
 
-
     fun convert_event_to_relative(beat_key: BeatKey, position: List<Int>) {
         val tree = this.get_tree(beat_key, position)
         if (!tree.is_event()) {
@@ -229,18 +227,31 @@ open class OpusManagerBase {
         var working_position: List<Int> = position
         var preceding_value: Int? = null
         while (preceding_value == null) {
-            val pair = this.get_preceding_leaf_position(working_beat_key, working_position) ?: throw Exception("No preceding value")
+            val pair = this.get_preceding_leaf_position(working_beat_key, working_position) ?: break
             preceding_value = this.get_absolute_value(pair.first, pair.second)
             working_beat_key = pair.first
             working_position = pair.second
         }
 
-        this.set_event(beat_key, position, OpusEvent(
-            event.note - preceding_value!!,
-            event.radix,
-            event.channel,
-            true
-        ))
+        if (preceding_value == null) {
+            this.set_event(
+                beat_key, position, OpusEvent(
+                    event.note,
+                    event.radix,
+                    event.channel,
+                    true
+                )
+            )
+        } else {
+            this.set_event(
+                beat_key, position, OpusEvent(
+                    event.note - preceding_value,
+                    event.radix,
+                    event.channel,
+                    true
+                )
+            )
+        }
     }
 
     fun convert_event_to_absolute(beat_key: BeatKey, position: List<Int>) {
@@ -254,7 +265,8 @@ open class OpusManagerBase {
             return
         }
 
-        val value = this.get_absolute_value(beat_key, position) ?: throw Exception("No Preceding value")
+        // The implied first value can be 0
+        val value = this.get_absolute_value(beat_key, position) ?: event.note
         if (value < 0 || value > 95) {
             throw Exception("Note out of bounds ($value)")
         }
@@ -483,6 +495,7 @@ open class OpusManagerBase {
 
     open fun overwrite_beat(old_beat: BeatKey, new_beat: BeatKey) {
         val new_tree = this.channels[new_beat.channel].get_line(new_beat.line_offset)[new_beat.beat].copy()
+
         this.replace_tree(old_beat, listOf(), new_tree)
     }
 
@@ -526,9 +539,17 @@ open class OpusManagerBase {
         return this.channels[channel].remove_line(index)
     }
 
-    open fun replace_tree(beat_key: BeatKey, position: List<Int>, tree: OpusTree<OpusEvent>) {
+    fun copy_func(tree: OpusTree<OpusEvent>): OpusEvent? {
+        return if (tree.event == null) {
+            null
+        } else {
+            tree.event!!.copy()
+        }
+    }
 
-        this.channels[beat_key.channel].replace_tree(beat_key.line_offset, beat_key.beat, position, tree)
+    open fun replace_tree(beat_key: BeatKey, position: List<Int>, tree: OpusTree<OpusEvent>) {
+        var tree_copy = tree.copy(this::copy_func)
+        this.channels[beat_key.channel].replace_tree(beat_key.line_offset, beat_key.beat, position, tree_copy)
     }
 
     open fun replace_beat_tree(beat_key: BeatKey, tree: OpusTree<OpusEvent>) {

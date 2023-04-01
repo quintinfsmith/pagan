@@ -337,12 +337,13 @@ class MainFragment : TempNameFragment() {
         }
 
         val cursor = opus_manager.get_cursor()
-        if (opus_manager.has_preceding_absolute_event(cursor.get_beatkey(), cursor.get_position())) {
-            rosRelativeOption.visibility = View.VISIBLE
-        } else {
-            this.relative_mode = 0
-            rosRelativeOption.visibility = View.GONE
-        }
+
+        //if (opus_manager.linked_have_preceding_absolute_event(cursor.get_beatkey(), cursor.get_position())) {
+        //    rosRelativeOption.visibility = View.VISIBLE
+        //} else {
+        //    this.relative_mode = 0
+        //    rosRelativeOption.visibility = View.GONE
+        //}
 
         this.validate_rosRelativeOption()
 
@@ -425,6 +426,7 @@ class MainFragment : TempNameFragment() {
     }
 
     private fun validate_rosRelativeOption() {
+        return
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
         val rosRelativeOption = main.findViewById<RelativeOptionSelector>(R.id.rosRelativeOption) ?: return
@@ -453,8 +455,15 @@ class MainFragment : TempNameFragment() {
         when (this.relative_mode) {
             0 -> {
                 if (event.relative) {
-                    opus_manager.convert_event_at_cursor_to_absolute()
-                    event = current_tree.get_event()!!
+                    try {
+                        opus_manager.convert_event_at_cursor_to_absolute()
+                        event = current_tree.get_event()!!
+                    } catch (e: Exception) {
+                        event.note = 0
+                        event.relative = false
+                        this.set_event_at_cursor(event.copy())
+                    }
+
                 }
                 nsOctave.setState(event.note / event.radix, true, true)
                 nsOffset.setState(event.note % event.radix, true, true)
@@ -464,6 +473,7 @@ class MainFragment : TempNameFragment() {
                     opus_manager.convert_event_at_cursor_to_relative()
                     event = current_tree.get_event()!!
                 }
+
                 if (event.note < 0) {
                     nsOctave.unset_active_button()
                     nsOffset.unset_active_button()
@@ -478,6 +488,7 @@ class MainFragment : TempNameFragment() {
                     opus_manager.convert_event_at_cursor_to_relative()
                     event = current_tree.get_event()!!
                 }
+
                 if (event.note > 0) {
                     nsOctave.unset_active_button()
                     nsOffset.unset_active_button()
@@ -504,6 +515,12 @@ class MainFragment : TempNameFragment() {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
         opus_manager.set_event(beat_key, position, event)
+    }
+
+    private fun set_event_at_cursor(event: OpusEvent) {
+        val main = this.get_main()
+        val opus_manager = main.get_opus_manager()
+        opus_manager.set_event_at_cursor(event)
     }
 
     private fun interact_btnUnset(view: View) {
@@ -565,6 +582,14 @@ class MainFragment : TempNameFragment() {
 
         val value = if (current_tree.is_event()) {
             val event = current_tree.get_event()!!
+            if (this.relative_mode != 0) {
+                var nsOctave  = this.get_main().findViewById<NumberSelector>(R.id.nsOctave)
+                if (nsOctave.getState() == null) {
+                    nsOctave.setState(0)
+                    event.note = 0
+                }
+            }
+
             when (this.relative_mode) {
                 2 -> {
                     0 - ((((0 - event.note) / event.radix) * event.radix) + progress)
@@ -611,6 +636,14 @@ class MainFragment : TempNameFragment() {
 
         val value = if (current_tree.is_event()) {
             val event = current_tree.get_event()!!
+            if (this.relative_mode != 0) {
+                var nsOffset  = this.get_main().findViewById<NumberSelector>(R.id.nsOffset)
+                if (nsOffset.getState() == null) {
+                    nsOffset.setState(0)
+                    event.note = 0
+                }
+            }
+
             when (this.relative_mode) {
                 2 -> {
                     0 - (((0 - event.note) % event.radix) + (progress * event.radix))
@@ -639,6 +672,7 @@ class MainFragment : TempNameFragment() {
 
         this.set_event(beatkey, position, event)
         this.validate_rosRelativeOption()
+
 
         //this.setContextMenu(ContextMenu.Leaf)
         this.tick()

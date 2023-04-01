@@ -229,6 +229,10 @@ class OpusTree<T> {
     }
 
     fun copy(): OpusTree<T> {
+        return this.copy(null)
+    }
+
+    fun copy(copy_func: ((tree: OpusTree<T>) -> T?)?): OpusTree<T> {
         val copied: OpusTree<T> = OpusTree<T>()
         copied.size = this.size
         for (key in this.divisions.keys) {
@@ -237,10 +241,19 @@ class OpusTree<T> {
             subcopy.set_parent(copied)
             copied.divisions[key] = subcopy
         }
-
-        copied.event = this.event
-
+        copied.event = this.get_event_copy(copy_func)
         return copied
+    }
+    fun get_event_copy(copy_func: ((tree: OpusTree<T>) -> T?)? = null): T? {
+        return if (copy_func == null) {
+            this.copy_event(this)
+        } else {
+            copy_func(this)
+        }
+    }
+
+    private fun copy_event(tree: OpusTree<T>): T? {
+        return tree.event
     }
 
     operator fun get(rel_index: Int): OpusTree<T> {
@@ -269,6 +282,14 @@ class OpusTree<T> {
 
 
         return output
+    }
+
+    fun get(path: List<Int>): OpusTree<T> {
+        var working_tree = this
+        for (p in path) {
+            working_tree = working_tree[p]
+        }
+        return working_tree
     }
 
     fun flatten() {
@@ -659,5 +680,28 @@ class OpusTree<T> {
             }
             "($output)"
         }
+    }
+
+    fun get_first_event_tree_position(): List<Int>? {
+        if (this.is_event()) {
+            return listOf<Int>()
+        } else if (this.is_leaf()) {
+            return null
+        }
+
+
+
+        val output = mutableListOf<Int>()
+        for ((i, child) in this.divisions) {
+            val result = child.get_first_event_tree_position() ?: continue
+
+            output.add(i)
+            for (j in result) {
+                output.add(j)
+            }
+            return output
+        }
+
+        return null
     }
 }

@@ -247,10 +247,10 @@ open class FlagLayer : LinksLayer() {
 
     }
 
-    override fun cache_absolute_value(beat_key: BeatKey, position: List<Int>, event_value: Int) {
-        super.cache_absolute_value(beat_key, position, event_value)
-        this.cache.flag_absolute_value(beat_key, position)
-    }
+    //override fun cache_absolute_value(beat_key: BeatKey, position: List<Int>, event_value: Int) {
+    //    super.cache_absolute_value(beat_key, position, event_value)
+    //    this.cache.flag_absolute_value(beat_key, position)
+    //}
 
     override fun clear() {
         var channel_counts = this.get_channel_line_counts()

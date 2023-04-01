@@ -81,7 +81,6 @@ class ProjectManager(data_dir: String) {
         }
 
         project_list_file.writeText( Json.encodeToString( project_list ) )
-
     }
 
     fun delete(opus_manager: OpusManager) {

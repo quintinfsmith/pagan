@@ -111,7 +111,6 @@ open class HistoryLayer() : CursorLayer() {
     var history_cache = HistoryCache()
 
     private fun apply_history_node(current_node: HistoryNode, depth: Int = 0) {
-        println("APPLYING ${current_node.func_name}")
         when (current_node.func_name) {
             "split_tree" -> {
                 this.split_tree(

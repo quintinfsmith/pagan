@@ -9,8 +9,7 @@ open class AbsoluteValueLayer: OpusManagerBase() {
     private fun cache_absolute_value(beat_key: BeatKey, position: List<Int>, event: OpusEvent) {
         this.decache_absolute_value(beat_key, position)
         var event_value = if (event.relative) {
-            this.get_absolute_value(beat_key, position)
-                ?: throw Exception("Can't cache relative value with no preceding absolute value")
+            this.get_absolute_value(beat_key, position) ?: return
         } else {
             event.note
         }
@@ -31,7 +30,7 @@ open class AbsoluteValueLayer: OpusManagerBase() {
 
     // Update proceding absolute values in cache
     private fun cascade_cache_proceding_values(beat_key: BeatKey, position: List<Int>, initial_value: Int? = null) {
-        var event_value = initial_value ?: (this.get_absolute_value(beat_key, position) ?: throw Exception("calling cascade without setting absolute value first"))
+        var event_value = initial_value ?: this.get_absolute_value(beat_key, position)
 
         var next: Pair<BeatKey, List<Int>> = Pair(beat_key, position)
         while (true) {
@@ -45,8 +44,12 @@ open class AbsoluteValueLayer: OpusManagerBase() {
                 break
             }
 
-            event_value += next_event.note
-            this.cache_absolute_value(next.first, next.second, event_value)
+            if (event_value != null) {
+                event_value += next_event.note
+                this.cache_absolute_value(next.first, next.second, event_value)
+            } else {
+                this.decache_absolute_value(next.first, next.second)
+            }
         }
     }
 

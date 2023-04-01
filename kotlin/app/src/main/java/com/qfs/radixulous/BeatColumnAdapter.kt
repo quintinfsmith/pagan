@@ -351,11 +351,7 @@ class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: Recycle
         if (this.linking_beat != null) {
             // If a second link point hasn't been selected, assume just one beat is being linked
             if (this.linking_beat_b == null) {
-                try {
-                    opus_manager.link_beats(beatkey, this.linking_beat!!)
-                } catch (e: Exception) {
-                    main.feedback_msg("Can't link beat to self")
-                }
+                opus_manager.link_beats(beatkey, this.linking_beat!!)
             } else {
                 try {
                     opus_manager.link_beat_range(
@@ -386,7 +382,7 @@ class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: Recycle
                 if (opus_manager.is_percussion(beatkey.channel)) {
                     opus_manager.get_percussion_instrument(beatkey.line_offset)
                 } else {
-                    opus_manager.get_absolute_value(beatkey, position)!!
+                    opus_manager.get_absolute_value(beatkey, position) ?: return
                 }
             )
         }

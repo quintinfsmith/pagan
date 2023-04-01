@@ -2,7 +2,7 @@ package com.qfs.radixulous.opusmanager
 import com.qfs.radixulous.structure.OpusTree
 import java.io.File
 
-open class LinksLayer() : AbsoluteValueLayer() {
+open class LinksLayer() : OpusManagerBase() {
     var link_pools = mutableListOf<MutableSet<BeatKey>>()
     var link_pool_map = HashMap<BeatKey, Int>()
     // Indicates that links are being calculated to prevent recursion
@@ -39,14 +39,26 @@ open class LinksLayer() : AbsoluteValueLayer() {
         if (beat_pool_index != null && target_pool_index != null) {
             this.overwrite_beat(beat_key, target)
             this.merge_link_pools(beat_pool_index, target_pool_index)
-        } else if (beat_pool_index != null) {
-            this.link_beat_into_pool(target, beat_pool_index, true)
-        } else if (target_pool_index != null) {
-            this.link_beat_into_pool(beat_key, target_pool_index, false)
         } else {
-            this.overwrite_beat(beat_key, target)
-            this.create_link_pool(listOf(beat_key, target))
+
+            if (beat_pool_index != null) {
+                this.link_beat_into_pool(target, beat_pool_index, true)
+            } else if (target_pool_index != null) {
+                this.link_beat_into_pool(beat_key, target_pool_index, false)
+            } else {
+                this.overwrite_beat(beat_key, target)
+                this.create_link_pool(listOf(beat_key, target))
+            }
         }
+    }
+
+    fun linked_have_preceding_absolute_event(beat_key: BeatKey, position: List<Int>): Boolean {
+        for (linked_key in this.get_all_linked(beat_key)) {
+            if (! this.has_preceding_absolute_event(linked_key, position)) {
+                return false
+            }
+        }
+        return true
     }
 
 
@@ -130,7 +142,7 @@ open class LinksLayer() : AbsoluteValueLayer() {
     override fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEvent) {
         this.link_locker += 1
         for (linked_key in this.get_all_linked(beat_key)) {
-            super.set_event(linked_key, position, event)
+            super.set_event(linked_key, position, event.copy())
         }
         this.link_locker -= 1
     }

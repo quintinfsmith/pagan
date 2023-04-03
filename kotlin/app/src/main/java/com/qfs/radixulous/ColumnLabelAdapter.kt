@@ -40,7 +40,7 @@ class ColumnLabelAdapter(var main_fragment: MainFragment, var recycler: Recycler
 
     init {
         this.recycler.adapter = this
-        this.recycler.layoutManager = LinearLayoutManager(
+        this.recycler.layoutManager = TimeableLayoutManager(
             this.recycler.context,
             LinearLayoutManager.HORIZONTAL,
             false

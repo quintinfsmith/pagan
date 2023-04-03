@@ -25,7 +25,7 @@ class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: Recycle
             this.orientation = VERTICAL
         }
     }
-    class OpusManagerLayoutManager(context: Context): LinearLayoutManager(context, HORIZONTAL, false) { }
+    class OpusManagerLayoutManager(context: Context): TimeableLayoutManager(context, HORIZONTAL, false) { }
 
     class TableOnScrollListener: RecyclerView.OnScrollListener() {
         override fun onScrolled(recyclerView: RecyclerView, x: Int, y: Int) {
@@ -715,8 +715,10 @@ class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: Recycle
         this.disableScrollSync()
         val item_width = this.column_layout.column_widths[position] * 120
         val center = (this.recycler.width - item_width) / 2
-        (this.recycler.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(position, center)
-        (this.column_layout.recycler.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(position, center)
+        //(this.recycler.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(position, center)
+        //(this.column_layout.recycler.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(position, center)
+        this.recycler.smoothScrollToPosition(position)
+        (this.column_layout.recycler.layoutManager as TimeableLayoutManager).scrollToPositionWithOffset(position, center)
         this.enableScrollSync()
     }
 }

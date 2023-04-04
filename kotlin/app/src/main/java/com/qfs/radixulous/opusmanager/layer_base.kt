@@ -592,11 +592,12 @@ open class OpusManagerBase {
                 var current_tick = 0
                 var prev_note = 0
                 line.forEachIndexed { b, beat ->
-                    position_pointer_ticks.add(Pair(b, current_tick))
+                    if (b in start_beat until end_beat) {
+                        position_pointer_ticks.add(Pair(b, current_tick))
+                    }
                     val stack: MutableList<StackItem> = mutableListOf(StackItem(beat, 1, current_tick, midi.ppqn))
                     while (stack.isNotEmpty()) {
                         val current = stack.removeFirst()
-
                         if (current.tree.is_event()) {
                             val event = current.tree.get_event()!!
                             val note = if (this.is_percussion(c)) { // Ignore the event data and use percussion map

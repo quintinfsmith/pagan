@@ -733,6 +733,7 @@ class MainFragment : TempNameFragment() {
     }
 
     fun scroll_to_beat(beat: Int, select: Boolean = false) {
+        println("SCROLLING TO $beat")
         val main = this.get_main()
         val rvBeatTable = main.findViewById<RecyclerView>(R.id.rvBeatTable)
         (rvBeatTable.adapter as BeatColumnAdapter).scrollToPosition(beat)

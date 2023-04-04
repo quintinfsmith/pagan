@@ -264,11 +264,8 @@ class MainActivity : AppCompatActivity() {
         item.icon = ContextCompat.getDrawable(this, R.drawable.ic_baseline_pause_24)
         thread {
             val opus_manager = this.get_opus_manager()
-            this.play_midi(
-                opus_manager.get_midi(
-                    opus_manager.get_cursor().x
-                )
-            )
+            val x = opus_manager.get_cursor().x
+            this.play_midi(opus_manager.get_midi(x))
 
             this.in_play_back = false
 

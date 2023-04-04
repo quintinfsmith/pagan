@@ -560,8 +560,10 @@ class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: Recycle
 
                 param.width = (new_size * 120.toFloat()).toInt()
             } else {
-                param.marginStart = 5
-                param.marginEnd = 5
+                val resources = this.get_main_activity().resources
+                val margin = resources.getDimension(R.dimen.normal_padding)
+                param.marginStart = margin.toInt()
+                param.marginEnd = margin.toInt()
                 param.width = (new_size * 120.toFloat()).toInt() - param.marginStart - param.marginEnd
             }
 
@@ -715,10 +717,9 @@ class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: Recycle
         this.disableScrollSync()
         val item_width = this.column_layout.column_widths[position] * 120
         val center = (this.recycler.width - item_width) / 2
-        //(this.recycler.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(position, center)
-        //(this.column_layout.recycler.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(position, center)
-        this.recycler.smoothScrollToPosition(position)
-        (this.column_layout.recycler.layoutManager as TimeableLayoutManager).scrollToPositionWithOffset(position, center)
+        (this.recycler.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(position, center)
+        (this.column_layout.recycler.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(position, center)
+
         this.enableScrollSync()
     }
 }

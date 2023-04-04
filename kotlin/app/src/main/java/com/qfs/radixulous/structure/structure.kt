@@ -177,7 +177,8 @@ class OpusTree<T> {
 
             // move the indices into their new lists
             for ((i, subtree) in element.indices) {
-                val split_index = i / current_size
+                val split_index = min(i / current_size, current_size)
+                //val split_index = i / current_size
                 split_indices[split_index].add(Pair(i % current_size, subtree.copy()))
             }
 

@@ -9,6 +9,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import java.lang.Integer.max
+import kotlin.math.pow
 
 open class OpusManagerBase {
     var RADIX: Int = 12
@@ -775,16 +776,103 @@ open class OpusManagerBase {
     }
 
     fun import_midi(path: String) {
-        this.import_midi(MIDI.from_path(path))
+        var midi = MIDI.from_path(path)
+        this.import_midi(midi)
+    }
+
+    fun tree_from_midi(midi: MIDI): Triple<OpusTree<Set<OpusEvent>>, Float, List<Pair<Int, Int>>> {
+        var beat_size = midi.get_ppqn()
+        var total_beat_offset = 0
+        var last_ts_change = 0
+        val beat_values: MutableList<OpusTree<Set<OpusEvent>>> = mutableListOf()
+        var max_tick = 0
+        val press_map = HashMap<Int, Pair<Int, Int>>()
+        var tempo = 120F
+        var instrument_map = mutableListOf<Pair<Int, Int>>()
+
+        var denominator = 4F
+        for (pair in midi.get_all_events()) {
+            val tick = pair.first
+            val event = pair.second
+
+            max_tick = kotlin.math.max(tick, max_tick)
+            val beat_index = ((tick - last_ts_change) / beat_size) + total_beat_offset
+            val inner_beat_offset = (tick - last_ts_change) % beat_size
+            if (event is NoteOn && event.get_velocity() > 0) {
+                while (beat_values.size <= beat_index) {
+                    val new_tree = OpusTree<Set<OpusEvent>>()
+                    new_tree.set_size(beat_size)
+                    beat_values.add(new_tree)
+                }
+
+                val tree = beat_values[beat_index]
+                val eventset = if (tree[inner_beat_offset].is_event()) {
+                    tree[inner_beat_offset].get_event()!!.toMutableSet()
+                } else {
+                    mutableSetOf()
+                }
+
+                eventset.add(
+                    OpusEvent(
+                        if (event.channel == 9) {
+                            event.get_note() - 27
+                        } else {
+                            event.get_note() - 21
+                        },
+                        12,
+                        event.channel,
+                        false
+                    )
+                )
+
+                tree[inner_beat_offset].set_event(eventset)
+                press_map[event.note] = Pair(beat_index, inner_beat_offset)
+            } else if (event is TimeSignature) {
+                total_beat_offset += (tick - last_ts_change) / beat_size
+                last_ts_change = tick
+                denominator = 2F.pow(event.get_denominator())
+
+                beat_size = (midi.get_ppqn().toFloat() * (4 / denominator)).toInt()
+            } else if (event is SetTempo) {
+                if (tick == 0) {
+                    tempo = event.get_bpm() * (denominator / 4)
+                }
+            } else if (event is ProgramChange) {
+                instrument_map.add(Pair(event.channel, event.program))
+            }
+        }
+
+        total_beat_offset += (max_tick - last_ts_change) / beat_size
+        total_beat_offset += 1
+
+        val opus = OpusTree<Set<OpusEvent>>()
+        opus.set_size(total_beat_offset)
+
+        beat_values.forEachIndexed { i, beat_tree ->
+            if (! beat_tree.is_leaf()) {
+                for (subtree in beat_tree.divisions.values) {
+                    subtree.clear_singles()
+                }
+            }
+            opus.set(i, beat_tree)
+        }
+
+        for ((_, beat) in opus.divisions) {
+            beat.flatten()
+            beat.reduce()
+            beat.clear_singles()
+        }
+
+        return Triple(opus, tempo, instrument_map)
     }
 
     open fun import_midi(midi: MIDI) {
         this.clear()
 
         this.RADIX = 12
-        this.tempo = 120F
 
-        val settree = tree_from_midi(midi)
+        val (settree, tempo, instrument_map) = tree_from_midi(midi)
+        this.tempo = tempo
 
         val mapped_events = settree.get_events_mapped()
         val midi_channel_map = HashMap<Int, Int>()
@@ -886,6 +974,12 @@ open class OpusManagerBase {
             for ((note, index) in percussion_map) {
                 this.set_percussion_instrument(index, note)
             }
+        }
+
+        for ((midi_channel, instrument) in instrument_map) {
+            // Midi may have contained programchange event for channel, but no music
+            var opus_channel = midi_channel_map[midi_channel] ?: continue
+            this.set_channel_instrument(opus_channel, instrument)
         }
     }
 }

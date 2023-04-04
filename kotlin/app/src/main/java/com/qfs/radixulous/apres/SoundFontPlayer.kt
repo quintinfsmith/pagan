@@ -2,15 +2,219 @@ package com.qfs.radixulous.apres
 
 import android.content.Context
 import android.media.*
-import android.os.Build
-import androidx.annotation.RequiresApi
 import kotlin.concurrent.thread
 import kotlin.math.max
 import kotlin.math.pow
 
-val BASE_FREQ = 8.175798915643707F
-
 class ActiveNoteHandle(var event: NoteOn, var preset: Preset) {
+    class ActiveSample(
+        var sample_right: InstrumentSample,
+        var sample_left: InstrumentSample?,
+        var instrument: PresetInstrument,
+        var preset: Preset,
+        var event: NoteOn
+    ) {
+
+        class SFPlaybackListener(private var active_sample: ActiveSample): AudioTrack.OnPlaybackPositionUpdateListener {
+            override fun onMarkerReached(p0: AudioTrack?) {
+                //
+            }
+
+            override fun onPeriodicNotification(p0: AudioTrack?) {
+                if (p0 != null) {
+                    this.active_sample.write_next_chunk()
+                }
+            }
+        }
+
+        var current_frame = 0
+        private var buffer_size_in_frames: Int
+        private var buffer_size_in_bytes: Int
+        var chunk_ratio: Int = 3
+        private var chunk_size_in_frames: Int
+        private var chunk_size_in_bytes: Int
+        var is_pressed: Boolean = false
+        private var audioTrack: AudioTrack? = null
+        var volumeShaper: VolumeShaper? = null
+        var volume: Float = 1F
+
+        constructor(sample: InstrumentSample, instrument: PresetInstrument, preset: Preset, event: NoteOn): this(sample, null, instrument, preset, event)
+
+        init {
+            val sample_rate = this.sample_right.sample!!.sampleRate
+
+            this.buffer_size_in_bytes = AudioTrack.getMinBufferSize(
+                sample_rate,
+                AudioFormat.ENCODING_PCM_16BIT,
+                AudioFormat.CHANNEL_OUT_STEREO
+            )
+
+            while (this.buffer_size_in_bytes < sample_rate) {
+                this.buffer_size_in_bytes *= 2
+            }
+
+            this.buffer_size_in_frames = buffer_size_in_bytes / 4
+
+            this.chunk_size_in_frames = this.buffer_size_in_frames / this.chunk_ratio
+            this.chunk_size_in_bytes = this.buffer_size_in_bytes / this.chunk_ratio
+
+            this.audioTrack = this.buildAudioTrack()
+        }
+
+        private fun buildAudioTrack(): AudioTrack {
+            val sample_rate = this.sample_right.sample!!.sampleRate
+
+            val audioTrack = AudioTrack.Builder()
+                .setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_MEDIA)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                        .build()
+                )
+                .setAudioFormat(
+                    AudioFormat.Builder()
+                        .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                        .setSampleRate(sample_rate)
+                        .setChannelMask(AudioFormat.CHANNEL_OUT_STEREO)
+                        .build()
+                )
+                .setBufferSizeInBytes(this.buffer_size_in_bytes)
+                .build()
+
+            //val original_note = this.instrument.instrument!!.global_sample!!.root_key ?: this.sample_right.sample!!.originalPitch
+            val original_note = this.sample_right.root_key ?: this.sample_right.sample!!.originalPitch
+            if (original_note != this.event.note) {
+                val originalPitch = original_note.toFloat()
+                val samplePitch = 2F.pow(originalPitch / 12F)
+                val requiredPitch = 2F.pow(this.event.note.toFloat() / 12F)
+                val shift = (requiredPitch / samplePitch)
+
+                audioTrack.playbackParams = PlaybackParams().setPitch(shift)
+            }
+
+            val playbacklistener = SFPlaybackListener(this)
+
+            audioTrack.setPlaybackPositionUpdateListener( playbacklistener )
+            audioTrack.positionNotificationPeriod = this.chunk_size_in_frames
+            return audioTrack
+        }
+
+        fun write_next_chunk() {
+            val sample_right = this.sample_right.sample!!
+            var sample_left = this.sample_left?.sample ?: sample_right
+            val loop_start = sample_right.loopStart
+            val loop_end = sample_right.loopEnd
+            var call_stop = false
+            val sample_size = sample_right.data.size
+
+            val use_bytes = ByteArray(this.chunk_size_in_bytes) { _ -> 0 }
+            for (x in 0 until this.chunk_size_in_frames) {
+                // If sample is a looping sample AND note is being held
+                if ((this.sample_right.sampleMode != null && this.sample_right.sampleMode!! and 1 != 1) && this.is_pressed && this.current_frame > loop_end) {
+                    this.current_frame -= loop_start
+                    this.current_frame %= loop_end - loop_start
+                }
+
+                if (this.current_frame < sample_size / 2) {
+                    val j = this.current_frame * 2
+
+                    use_bytes[(4 * x)] = sample_right.data[j]
+                    use_bytes[(4 * x) + 1] = sample_right.data[j + 1]
+                    use_bytes[(4 * x) + 2] = sample_left.data[j]
+                    use_bytes[(4 * x) + 3] = sample_left.data[j + 1]
+                } else if (!this.is_pressed) {
+                    call_stop = true
+                    break
+                } else {
+                    break
+                }
+
+                this.current_frame += 1
+            }
+
+            val audioTrack = this.audioTrack
+
+            if (audioTrack != null && audioTrack.state != AudioTrack.STATE_UNINITIALIZED) {
+                try {
+                    audioTrack.write(use_bytes, 0, use_bytes.size, AudioTrack.WRITE_BLOCKING)
+                } catch (e: IllegalStateException) {
+                    // Shouldn't need to do anything. the audio track was released and this should stop on its own
+                }
+            }
+
+            if (call_stop) {
+                this.really_stop()
+            }
+        }
+
+        private fun apply_decay_shaper(): Long {
+            val volumeShaper: VolumeShaper = this.volumeShaper ?: return 0
+
+            var vol_env_release = this.sample_right.vol_env_release
+            if (vol_env_release == null) {
+                if (instrument.instrument == null || instrument.instrument!!.global_sample == null) {
+                    return 0
+                }
+
+                vol_env_release = instrument.instrument!!.global_sample!!.vol_env_release ?: return 0
+            }
+
+            var delay = (vol_env_release * 1000F).toLong()
+            try {
+                val newConfig = VolumeShaper.Configuration.Builder()
+                    .setDuration(delay)
+                    .setCurve(floatArrayOf(0f, 1f), floatArrayOf(this.volume, 0f))
+                    .setInterpolatorType(VolumeShaper.Configuration.INTERPOLATOR_TYPE_LINEAR)
+                    .build()
+
+                volumeShaper.replace(newConfig, VolumeShaper.Operation.PLAY, true)
+                thread {
+                    Thread.sleep(delay)
+                    this.really_stop()
+                }
+            } catch (e: IllegalStateException) {
+                delay = 0
+                this.volumeShaper = null
+            }
+            return delay
+
+        }
+
+        fun play(velocity: Int) {
+            this.is_pressed = true
+            for (i in 0 until this.chunk_ratio) {
+                this.write_next_chunk()
+            }
+
+            this.volume = velocity.toFloat() / 128F
+            val config = VolumeShaper.Configuration.Builder()
+                .setCurve(floatArrayOf(0f, 1f), floatArrayOf(this.volume, this.volume))
+                .setInterpolatorType(VolumeShaper.Configuration.INTERPOLATOR_TYPE_LINEAR)
+                .build()
+
+            this.volumeShaper = this.audioTrack!!.createVolumeShaper(config)
+            this.volumeShaper!!.apply(VolumeShaper.Operation.PLAY)
+            this.audioTrack!!.play()
+        }
+
+        fun stop(): Long {
+            this.is_pressed = false
+            return this.apply_decay_shaper()
+        }
+
+        fun really_stop() {
+            try {
+                this.audioTrack!!.stop()
+                this.audioTrack!!.release()
+            } catch (e: Exception) { }
+            this.audioTrack = null
+            //if (this.audioTrack.state == AudioTrack.STATE_INITIALIZED) {
+            //    if (this.audioTrack.getPlayState() != AudioTrack.PLAYSTATE_STOPPED) {
+            //    }
+            //    this.audioTrack.release()
+            //}
+        }
+    }
     var active_samples: Set<ActiveSample>
     init {
         this.active_samples = this.gen_active_samples()
@@ -86,219 +290,6 @@ class ActiveNoteHandle(var event: NoteOn, var preset: Preset) {
     }
 }
 
-class ActiveSample(
-        var sample_right: InstrumentSample,
-        var sample_left: InstrumentSample?,
-        var instrument: PresetInstrument,
-        var preset: Preset,
-        var event: NoteOn
-    ) {
-
-    class SFPlaybackListener(var active_sample: ActiveSample): AudioTrack.OnPlaybackPositionUpdateListener {
-        override fun onMarkerReached(p0: AudioTrack?) {
-            //
-        }
-
-        override fun onPeriodicNotification(p0: AudioTrack?) {
-            if (p0 != null) {
-                this.active_sample.write_next_chunk()
-            }
-        }
-    }
-
-    var current_frame = 0
-    private var buffer_size_in_frames: Int
-    private var buffer_size_in_bytes: Int
-    var chunk_ratio: Int = 3
-    private var chunk_size_in_frames: Int
-    private var chunk_size_in_bytes: Int
-    var is_pressed: Boolean = false
-    private var audioTrack: AudioTrack? = null
-    var volumeShaper: VolumeShaper? = null
-    var volume: Float = 1F
-    var sample_rate: Int? = null
-    var resample_ratio = 1F
-
-    constructor(sample: InstrumentSample, instrument: PresetInstrument, preset: Preset, event: NoteOn): this(sample, null, instrument, preset, event)
-
-    init {
-        val sample_rate = this.sample_right.sample!!.sampleRate
-
-        //this.buffer_size_in_bytes = this.sample.sampleRate
-        this.buffer_size_in_bytes = AudioTrack.getMinBufferSize(
-            sample_rate,
-            AudioFormat.ENCODING_PCM_16BIT,
-            AudioFormat.CHANNEL_OUT_STEREO
-        )
-
-        while (this.buffer_size_in_bytes < sample_rate) {
-            this.buffer_size_in_bytes *= 2
-        }
-
-        this.buffer_size_in_frames = buffer_size_in_bytes / 4
-
-        this.chunk_size_in_frames = this.buffer_size_in_frames / this.chunk_ratio
-        this.chunk_size_in_bytes = this.buffer_size_in_bytes / this.chunk_ratio
-
-        this.audioTrack = this.buildAudioTrack()
-    }
-
-    private fun buildAudioTrack(): AudioTrack {
-        val sample_rate = this.sample_right.sample!!.sampleRate
-
-        val audioTrack = AudioTrack.Builder()
-            .setAudioAttributes(
-                AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_MEDIA)
-                    .build()
-            )
-            .setAudioFormat(
-                AudioFormat.Builder()
-                    .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                    .setSampleRate(sample_rate)
-                    .setChannelMask(AudioFormat.CHANNEL_OUT_STEREO)
-                    .build()
-            )
-            .setBufferSizeInBytes(this.buffer_size_in_bytes)
-            .build()
-
-        //val original_note = this.instrument.instrument!!.global_sample!!.root_key ?: this.sample_right.sample!!.originalPitch
-        val original_note = this.sample_right.root_key ?: this.sample_right.sample!!.originalPitch
-        if (original_note != this.event.note) {
-            val originalPitch = original_note.toFloat()
-            val samplePitch = 2F.pow(originalPitch / 12F)
-            val requiredPitch = 2F.pow(this.event.note.toFloat() / 12F)
-            val shift = (requiredPitch / samplePitch)
-            //if (this.resample_ratio != 1F) {
-            //    shift *= this.resample_ratio
-            //}
-
-            audioTrack.playbackParams = PlaybackParams().setPitch(shift)
-        }
-
-        val playbacklistener = SFPlaybackListener(this)
-
-        audioTrack.setPlaybackPositionUpdateListener( playbacklistener )
-        audioTrack.positionNotificationPeriod = this.chunk_size_in_frames
-        return audioTrack
-    }
-
-    fun write_next_chunk() {
-        val sample_right = this.sample_right.sample!!
-        var sample_left = this.sample_left?.sample ?: sample_right
-        val loop_start = sample_right.loopStart
-        val loop_end = sample_right.loopEnd
-        var call_stop = false
-        val sample_size = sample_right.data.size
-
-        val use_bytes = ByteArray(this.chunk_size_in_bytes) { _ -> 0 }
-        for (x in 0 until this.chunk_size_in_frames) {
-            // If sample is a looping sample AND note is being held
-            if ((this.sample_right.sampleMode != null && this.sample_right.sampleMode!! and 1 != 1) && this.is_pressed && this.current_frame > loop_end) {
-                this.current_frame -= loop_start
-                this.current_frame %= loop_end - loop_start
-            }
-
-            if (this.current_frame < sample_size / 2) {
-                val j = this.current_frame * 2
-
-                use_bytes[(4 * x)] = sample_right.data[j]
-                use_bytes[(4 * x) + 1] = sample_right.data[j + 1]
-                use_bytes[(4 * x) + 2] = sample_left.data[j]
-                use_bytes[(4 * x) + 3] = sample_left.data[j + 1]
-            } else if (!this.is_pressed) {
-                call_stop = true
-                break
-            } else {
-                break
-            }
-
-            this.current_frame += 1
-        }
-
-        val audioTrack = this.audioTrack
-
-        if (audioTrack != null && audioTrack.state != AudioTrack.STATE_UNINITIALIZED) {
-            try {
-                audioTrack.write(use_bytes, 0, use_bytes.size, AudioTrack.WRITE_BLOCKING)
-            } catch (e: IllegalStateException) {
-                // Shouldn't need to do anything. the audio track was released and this should stop on its own
-            }
-        }
-
-        if (call_stop) {
-            this.really_stop()
-        }
-    }
-
-    private fun apply_decay_shaper(): Long {
-        val volumeShaper: VolumeShaper = this.volumeShaper ?: return 0
-
-        var vol_env_release = this.sample_right.vol_env_release
-        if (vol_env_release == null) {
-            if (instrument.instrument == null || instrument.instrument!!.global_sample == null) {
-                return 0
-            }
-
-            vol_env_release = instrument.instrument!!.global_sample!!.vol_env_release ?: return 0
-        }
-
-        var delay = (vol_env_release * 1000F).toLong()
-        try {
-            val newConfig = VolumeShaper.Configuration.Builder()
-                .setDuration(delay)
-                .setCurve(floatArrayOf(0f, 1f), floatArrayOf(this.volume, 0f))
-                .setInterpolatorType(VolumeShaper.Configuration.INTERPOLATOR_TYPE_LINEAR)
-                .build()
-
-            volumeShaper.replace(newConfig, VolumeShaper.Operation.PLAY, true)
-            thread {
-                Thread.sleep(delay)
-                this.really_stop()
-            }
-        } catch (e: IllegalStateException) {
-            delay = 0
-            this.volumeShaper = null
-        }
-        return delay
-
-    }
-
-    fun play(velocity: Int) {
-        this.is_pressed = true
-        for (i in 0 until this.chunk_ratio) {
-            this.write_next_chunk()
-        }
-
-        this.volume = velocity.toFloat() / 128F
-        val config = VolumeShaper.Configuration.Builder()
-            .setCurve(floatArrayOf(0f, 1f), floatArrayOf(this.volume, this.volume))
-            .setInterpolatorType(VolumeShaper.Configuration.INTERPOLATOR_TYPE_LINEAR)
-            .build()
-
-        this.volumeShaper = this.audioTrack!!.createVolumeShaper(config)
-        this.volumeShaper!!.apply(VolumeShaper.Operation.PLAY)
-        this.audioTrack!!.play()
-    }
-
-    fun stop(): Long {
-        this.is_pressed = false
-        return this.apply_decay_shaper()
-    }
-
-    fun really_stop() {
-        try {
-            this.audioTrack!!.stop()
-            this.audioTrack!!.release()
-        } catch (e: Exception) { }
-        this.audioTrack = null
-        //if (this.audioTrack.state == AudioTrack.STATE_INITIALIZED) {
-        //    if (this.audioTrack.getPlayState() != AudioTrack.PLAYSTATE_STOPPED) {
-        //    }
-        //    this.audioTrack.release()
-        //}
-    }
-}
 
 class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): VirtualMIDIDevice() {
     private val active_handles = HashMap<Pair<Int, Int>, ActiveNoteHandle>()

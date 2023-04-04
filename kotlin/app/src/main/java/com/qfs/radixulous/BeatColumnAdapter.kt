@@ -339,7 +339,7 @@ class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: Recycle
 
     private fun interact_leafView_click(view: View) {
         val main = this.get_main_activity()
-        main.stop_playback()
+        //main.stop_playback()
 
         var (y, x, position) = this.get_view_position_abs(view)
 
@@ -390,7 +390,7 @@ class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: Recycle
 
     private fun interact_leafView_longclick(view: View) {
         val main = this.get_main_activity()
-        main.stop_playback()
+        //main.stop_playback()
 
         val (beatkey, _) = this.get_view_position(view)
         val (y, x, _) = this.get_view_position_abs(view)

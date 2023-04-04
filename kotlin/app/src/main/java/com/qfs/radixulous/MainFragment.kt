@@ -87,6 +87,7 @@ class MainFragment : TempNameFragment() {
 
         setFragmentResultListener("LOAD") { _, bundle: Bundle? ->
             val main = this.get_main()
+            main.stop_playback()
             if (bundle == null) {
                 return@setFragmentResultListener
             }
@@ -102,6 +103,11 @@ class MainFragment : TempNameFragment() {
                 this.setContextMenu_leaf()
                 this.tick()
             }
+            val rvBeatTable = this.binding.root.findViewById<RecyclerView>(R.id.rvBeatTable)
+            rvBeatTable.scrollToPosition(0)
+            val rvColumnLabels = this.binding.root.findViewById<RecyclerView>(R.id.rvColumnLabels)
+            rvColumnLabels.scrollToPosition(0)
+
             main.update_menu_options()
             main.setup_config_drawer()
             main.cancel_reticle()
@@ -115,6 +121,10 @@ class MainFragment : TempNameFragment() {
                 this.setContextMenu_leaf()
                 this.tick()
             }
+            val rvBeatTable = this.binding.root.findViewById<RecyclerView>(R.id.rvBeatTable)
+            rvBeatTable.scrollToPosition(0)
+            val rvColumnLabels = this.binding.root.findViewById<RecyclerView>(R.id.rvColumnLabels)
+            rvColumnLabels.scrollToPosition(0)
         }
 
         setFragmentResultListener("NEW") { _, _: Bundle? ->
@@ -945,6 +955,12 @@ class MainFragment : TempNameFragment() {
         val main = this.get_main()
         main.newProject()
 
+        val rvBeatTable = this.binding.root.findViewById<RecyclerView>(R.id.rvBeatTable)
+        rvBeatTable.scrollToPosition(0)
+        val rvColumnLabels = this.binding.root.findViewById<RecyclerView>(R.id.rvColumnLabels)
+        rvColumnLabels.scrollToPosition(0)
+
+
         this.setContextMenu_leaf()
         this.tick()
     }
@@ -983,7 +999,7 @@ class MainFragment : TempNameFragment() {
 
     fun set_active_line(y: Int) {
         val main = this.get_main()
-        main.stop_playback()
+        //main.stop_playback()
 
         val opus_manager = main.get_opus_manager()
         val cursor = opus_manager.get_cursor()

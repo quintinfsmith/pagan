@@ -544,15 +544,15 @@ data class ChannelPrefix(var channel: Int): MIDIEvent {
     }
 }
 
-data class SetTempo(var mspqn: Int): MIDIEvent {
+data class SetTempo(var uspqn: Int): MIDIEvent {
     override fun as_bytes(): ByteArray {
         return byteArrayOf(
             0xFF.toByte(),
             0x51.toByte(),
             0x03.toByte(),
-            ((this.mspqn shr 16) and 0xFF).toByte(),
-            ((this.mspqn shr 8) and 0xFF).toByte(),
-            (this.mspqn and 0xFF).toByte()
+            ((this.uspqn shr 16) and 0xFF).toByte(),
+            ((this.uspqn shr 8) and 0xFF).toByte(),
+            (this.uspqn and 0xFF).toByte()
         )
     }
     companion object {
@@ -562,27 +562,27 @@ data class SetTempo(var mspqn: Int): MIDIEvent {
     }
 
     fun get_bpm(): Float {
-        val mspqn = this.get_mspqn()
-        return if (mspqn > 0) {
-            60000000.toFloat() / mspqn
+        val uspqn = this.get_uspqn()
+        return if (uspqn > 0) {
+            60000000.toFloat() / uspqn
         } else {
             0.toFloat()
         }
     }
 
-    fun get_mspqn(): Int {
-        return this.mspqn
+    fun get_uspqn(): Int {
+        return this.uspqn
     }
 
-    fun set_mspqn(new_mspqn: Int) {
-        this.mspqn = new_mspqn
+    fun set_uspqn(new_uspqn: Int) {
+        this.uspqn = new_uspqn
     }
 
     fun set_bpm(new_bpm: Float) {
         if (new_bpm > 0) {
-            this.mspqn = (60000000.toFloat() / new_bpm) as Int
+            this.uspqn = (60000000.toFloat() / new_bpm) as Int
         } else {
-            this.mspqn = 0
+            this.uspqn = 0
         }
     }
 }
@@ -2107,7 +2107,7 @@ class MIDIPlayer: VirtualMIDIDevice() {
         }
         this.playing = true
         val ppqn = midi.get_ppqn()
-        var ms_per_tick = 60000 / (ppqn * 120)
+        var us_per_tick = 60000000 / (ppqn * 120)
         var previous_tick = 0
         val start_time = System.currentTimeMillis()
         var delay_accum = 0
@@ -2117,7 +2117,7 @@ class MIDIPlayer: VirtualMIDIDevice() {
             }
 
             if ((tick - previous_tick) > 0) {
-                val delay = (tick - previous_tick) * ms_per_tick
+                val delay = ((tick - previous_tick) * us_per_tick) / 1000
                 val drift = delay_accum - (System.currentTimeMillis() - start_time)
                 delay_accum += delay
 
@@ -2127,7 +2127,7 @@ class MIDIPlayer: VirtualMIDIDevice() {
                 previous_tick = tick
             }
             if (event is SetTempo) {
-                ms_per_tick = 60000 / (midi.ppqn * event.get_bpm()).toInt()
+                us_per_tick = event.get_uspqn() / ppqn
             }
             this.sendEvent(event)
         }

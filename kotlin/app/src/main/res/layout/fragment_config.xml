@@ -109,6 +109,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:minWidth="24dp"
             app:srcCompat="@drawable/ic_baseline_save_24"
             android:text="Save" />
 
@@ -120,6 +121,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             app:srcCompat="@drawable/ic_baseline_content_copy_24"
+            android:minWidth="24dp"
             android:text="Copy" />
 
         <ImageView
@@ -130,6 +132,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             app:srcCompat="@drawable/ic_baseline_delete_24"
+            android:minWidth="24dp"
             android:text="Delete" />
 
         <ImageView

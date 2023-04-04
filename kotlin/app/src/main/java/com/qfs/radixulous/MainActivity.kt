@@ -54,7 +54,7 @@ class MainActivity : AppCompatActivity() {
 
     class MIDIScroller(private var activity: MainActivity): VirtualMIDIDevice() {
         override fun onSongPositionPointer(event: SongPositionPointer) {
-            this.activity.scroll_to_beat(event.beat, true)
+            //this.activity.scroll_to_beat(event.beat, true)
         }
     }
 
@@ -90,13 +90,13 @@ class MainActivity : AppCompatActivity() {
         val navController = findNavController(R.id.nav_host_fragment_content_main)
         this.appBarConfiguration = AppBarConfiguration(navController.graph)
         setupActionBarWithNavController(navController, this.appBarConfiguration)
-        val drawerlayout = findViewById<DrawerLayout>(R.id.drawer_layout)
-        drawerlayout.addDrawerListener( object: DrawerLayout.DrawerListener {
-            override fun onDrawerClosed(drawerView: View) { }
-            override fun onDrawerSlide(drawerView: View, slideOffset: Float) { }
-            override fun onDrawerOpened(drawerView: View) { }
-            override fun onDrawerStateChanged(newState: Int) { }
-        })
+        //val drawerlayout = findViewById<DrawerLayout>(R.id.drawer_layout)
+        //drawerlayout.addDrawerListener( object: DrawerLayout.DrawerListener {
+        //    override fun onDrawerClosed(drawerView: View) { }
+        //    override fun onDrawerSlide(drawerView: View, slideOffset: Float) { }
+        //    override fun onDrawerOpened(drawerView: View) { }
+        //    override fun onDrawerStateChanged(newState: Int) { }
+        //})
 
         this.lockDrawer()
         //////////////////////////////////////////
@@ -324,6 +324,8 @@ class MainActivity : AppCompatActivity() {
 
     // Only called from MainFragment
     fun newProject() {
+        this.stop_playback()
+
         this.opus_manager.new()
         val new_path = this.project_manager.get_new_path()
         this.set_current_project_title("New Opus")
@@ -634,6 +636,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun import_midi(path: String) {
+        this.stop_playback()
         this.applicationContext.contentResolver.openFileDescriptor(Uri.parse(path), "r")?.use {
             val bytes = FileInputStream(it.fileDescriptor).readBytes()
             val midi = MIDI.from_bytes(bytes)

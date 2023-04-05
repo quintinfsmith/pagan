@@ -73,7 +73,7 @@ class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: Recycle
         this.recycler.adapter = this
         this.recycler.layoutManager = OpusManagerLayoutManager(this.get_main_activity())
         //(this.recycler.itemAnimator as SimpleItemAnimator).supportsChangeAnimations = false
-        this.recycler.setItemAnimator(null)
+        this.recycler.itemAnimator = null
 
         val that = this
         this.registerAdapterDataObserver(
@@ -82,6 +82,9 @@ class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: Recycle
                     for (i in 0 until count) {
                         that.column_layout.removeColumnLabel(start + i)
                     }
+                    var last_position = (that.recycler.layoutManager as LinearLayoutManager).findLastVisibleItemPosition()
+                    var beats_to_refresh: Set<Int> = (start + count .. last_position).toSet()
+                    that.refresh_leaf_labels(beats_to_refresh)
                 }
                 override fun onItemRangeChanged(start: Int, count: Int) {
                     for (i in start until that.itemCount) {

@@ -68,6 +68,7 @@ class MainFragment : TempNameFragment() {
             // Scrolling back to the beginning for now
             rvBeatTable_adapter.scrollToPosition(0)
         }
+        this.get_main().update_title_text()
         super.onResume()
     }
 
@@ -111,6 +112,7 @@ class MainFragment : TempNameFragment() {
             main.update_menu_options()
             main.setup_config_drawer()
             main.cancel_reticle()
+            println("BOOP")
         }
 
         setFragmentResultListener("IMPORT") { _, bundle: Bundle? ->

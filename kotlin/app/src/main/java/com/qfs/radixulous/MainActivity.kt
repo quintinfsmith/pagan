@@ -333,7 +333,7 @@ class MainActivity : AppCompatActivity() {
         this.setup_config_drawer()
     }
 
-    private fun update_title_text() {
+    fun update_title_text() {
         this.set_title_text(this.get_current_project_title() ?: "Untitled Opus")
     }
 

@@ -27,7 +27,8 @@ class ActiveNoteHandle(var event: NoteOn, var preset: Preset) {
             }
         }
 
-        var current_frame = 0
+        var current_frame_right = 0
+        var current_frame_left = 0
         private var buffer_size_in_frames: Int
         private var buffer_size_in_bytes: Int
         var chunk_ratio: Int = 3
@@ -37,6 +38,7 @@ class ActiveNoteHandle(var event: NoteOn, var preset: Preset) {
         private var audioTrack: AudioTrack? = null
         var volumeShaper: VolumeShaper? = null
         var volume: Float = 1F
+        var in_attack_hold_decay = false
 
         constructor(sample: InstrumentSample, instrument: PresetInstrument, preset: Preset, event: NoteOn): this(sample, null, instrument, preset, event)
 
@@ -83,12 +85,21 @@ class ActiveNoteHandle(var event: NoteOn, var preset: Preset) {
 
             //val original_note = this.instrument.instrument!!.global_sample!!.root_key ?: this.sample_right.sample!!.originalPitch
             val original_note = this.sample_right.root_key ?: this.sample_right.sample!!.originalPitch
+            var shift = 1F
             if (original_note != this.event.note) {
                 val originalPitch = original_note.toFloat()
                 val samplePitch = 2F.pow(originalPitch / 12F)
                 val requiredPitch = 2F.pow(this.event.note.toFloat() / 12F)
-                val shift = (requiredPitch / samplePitch)
+                shift = (requiredPitch / samplePitch)
+            }
 
+            var tuning_cent = (this.sample_right.tuning_cent ?: this.instrument.tuning_cent ?: this.preset.global_zone?.tuning_cent ?: 0).toFloat()
+            var tuning_semi = (this.sample_right.tuning_semi ?: this.instrument.tuning_semi ?: this.preset.global_zone?.tuning_semi ?: 0).toFloat()
+            if (tuning_cent != 0F || tuning_semi != 0F) {
+                shift *= 2F.pow((12 + (tuning_semi + (tuning_cent / 1200))) / 12)
+            }
+
+            if (shift != 1F) {
                 audioTrack.playbackParams = PlaybackParams().setPitch(shift)
             }
 
@@ -102,24 +113,29 @@ class ActiveNoteHandle(var event: NoteOn, var preset: Preset) {
         fun write_next_chunk() {
             val sample_right = this.sample_right.sample!!
             var sample_left = this.sample_left?.sample ?: sample_right
-            val loop_start = sample_right.loopStart
-            val loop_end = sample_right.loopEnd
             var call_stop = false
-            val sample_size = sample_right.data.size
 
             val use_bytes = ByteArray(this.chunk_size_in_bytes) { _ -> 0 }
             for (x in 0 until this.chunk_size_in_frames) {
                 // If sample is a looping sample AND note is being held
-                if ((this.sample_right.sampleMode != null && this.sample_right.sampleMode!! and 1 != 1) && this.is_pressed && this.current_frame > loop_end) {
-                    this.current_frame -= loop_start
-                    this.current_frame %= loop_end - loop_start
+                // TODO: Differentiate between sampleMode 1 and 3 here
+                if (this.is_pressed || this.in_attack_hold_decay) {
+                    if (this.sample_right.sampleMode != null && this.sample_right.sampleMode!! and 1 == 1) {
+                        if (this.current_frame_right > sample_right.loopEnd) {
+                            this.current_frame_right = sample_right.loopStart
+                        }
+                        if (this.current_frame_left > sample_left.loopEnd) {
+                            this.current_frame_left = sample_left.loopStart
+                        }
+                    }
                 }
 
-                if (this.current_frame < sample_size / 2) {
-                    val j = this.current_frame * 2
-
+                if (this.current_frame_right < sample_right.data.size / 2 && this.current_frame_left < sample_left.data.size / 2) {
+                    var j = this.current_frame_right * 2
                     use_bytes[(4 * x)] = sample_right.data[j]
                     use_bytes[(4 * x) + 1] = sample_right.data[j + 1]
+
+                    j = this.current_frame_left * 2
                     use_bytes[(4 * x) + 2] = sample_left.data[j]
                     use_bytes[(4 * x) + 3] = sample_left.data[j + 1]
                 } else if (!this.is_pressed) {
@@ -129,7 +145,8 @@ class ActiveNoteHandle(var event: NoteOn, var preset: Preset) {
                     break
                 }
 
-                this.current_frame += 1
+                this.current_frame_right += 1
+                this.current_frame_left += 1
             }
 
             val audioTrack = this.audioTrack
@@ -185,9 +202,41 @@ class ActiveNoteHandle(var event: NoteOn, var preset: Preset) {
             for (i in 0 until this.chunk_ratio) {
                 this.write_next_chunk()
             }
-
             this.volume = velocity.toFloat() / 128F
+
+            // TODO: Implement vol_env attack/hold/decay/sustain
+            // this.in_attack_hold_decay = true
+           // var curve = mutableListOf<Double>()
+           // curve.add(
+           //     this.sample_right.vol_env_delay ?: this.instrument.vol_env_delay ?: 0.toDouble()
+           // )
+           // curve.add(
+           //     this.sample_right.vol_env_attack ?: this.instrument.vol_env_attack ?: 0.toDouble()
+           // )
+           // curve.add(
+           //     this.sample_right.vol_env_hold ?: this.instrument.vol_env_hold ?: 0.toDouble()
+           // )
+           // var vol_env_sustain = this.sample_right.vol_env_sustain ?: this.instrument.vol_env_sustain
+           // if (vol_env_sustain != null && vol_env_sustain > 0) {
+           //     curve.add(
+           //         this.sample_right.vol_env_decay ?: this.instrument.vol_env_decay ?: 0.toDouble()
+           //     )
+           // }
+           // var volume_curve = mutableListOf<Float>(this.volume)
+           // var time_curve = mutableListOf<Float>(0F)
+           // var total = 0f
+           // for (v in curve) {
+           //     if (v == 0.toDouble()) {
+           //         continue
+           //     }
+           //     total += v.toFloat()
+           //     volume_curve.add(this.volume) // For now, don't actually attenuate
+           //     time_curve.add(total)
+           // }
+
+
             val config = VolumeShaper.Configuration.Builder()
+                //.setCurve(time_curve.toFloatArray(), volume_curve.toFloatArray())
                 .setCurve(floatArrayOf(0f, 1f), floatArrayOf(this.volume, this.volume))
                 .setInterpolatorType(VolumeShaper.Configuration.INTERPOLATOR_TYPE_LINEAR)
                 .build()

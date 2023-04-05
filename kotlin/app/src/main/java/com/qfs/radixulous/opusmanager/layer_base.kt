@@ -702,6 +702,7 @@ open class OpusManagerBase {
         this.opus_beat_count = 0
         this.channels.clear()
         this.path = null
+        this.percussion_channel = null
     }
 
     open fun load(path: String) {

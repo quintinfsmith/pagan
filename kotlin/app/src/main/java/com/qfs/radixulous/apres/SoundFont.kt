@@ -467,10 +467,10 @@ class SoundFont(input_stream: InputStream) {
             }
             0x31 -> {} //reserved 2
             0x33 -> {
-                working_generated.tuning_semi = generator.asInt()
+                working_generated.tuning_semi = generator.asIntSigned()
             }
             0x34 -> {
-                working_generated.tuning_cent = generator.asInt()
+                working_generated.tuning_cent = generator.asIntSigned()
             }
             0x37 -> {} // Reserved 3
             0x38 -> {

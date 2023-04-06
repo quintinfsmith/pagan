@@ -705,4 +705,22 @@ class OpusTree<T> {
 
         return null
     }
+
+    fun quantize() {
+        var factors = get_prime_factors(this.size)
+        var i = 0
+        var n = this.size
+        var weighted_factors = mutableListOf<Int>()
+        while (n > 1) {
+            if (n % factors[i] == 0) {
+                weighted_factors.add(factors[i])
+                n /= factors[i]
+            } else {
+                i += 1
+            }
+        }
+
+
+
+    }
 }

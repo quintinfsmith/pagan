@@ -9,6 +9,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import java.lang.Integer.max
+import java.lang.Integer.min
 import kotlin.math.pow
 
 open class OpusManagerBase {
@@ -793,18 +794,20 @@ open class OpusManagerBase {
 
         var denominator = 4F
         for (pair in midi.get_all_events()) {
-            val tick = pair.first
+            var tick = pair.first
             val event = pair.second
 
             max_tick = kotlin.math.max(tick, max_tick)
             val beat_index = ((tick - last_ts_change) / beat_size) + total_beat_offset
             val inner_beat_offset = (tick - last_ts_change) % beat_size
             if (event is NoteOn && event.get_velocity() > 0) {
+                // Add trees to list of trees
                 while (beat_values.size <= beat_index) {
                     val new_tree = OpusTree<Set<OpusEvent>>()
                     new_tree.set_size(beat_size)
                     beat_values.add(new_tree)
                 }
+                println("$beat_index:$inner_beat_offset/$beat_size -> $event")
 
                 val tree = beat_values[beat_index]
                 val eventset = if (tree[inner_beat_offset].is_event()) {
@@ -844,25 +847,18 @@ open class OpusManagerBase {
         }
 
         total_beat_offset += (max_tick - last_ts_change) / beat_size
-        total_beat_offset += 1
 
         val opus = OpusTree<Set<OpusEvent>>()
-        opus.set_size(total_beat_offset)
+        opus.set_size(beat_values.size)
 
         beat_values.forEachIndexed { i, beat_tree ->
-            if (! beat_tree.is_leaf()) {
-                for (subtree in beat_tree.divisions.values) {
-                    subtree.clear_singles()
-                }
-            }
+            beat_tree.quantize()
+            beat_tree.flatten()
+            beat_tree.reduce()
+            beat_tree.clear_singles()
             opus.set(i, beat_tree)
         }
 
-        for ((_, beat) in opus.divisions) {
-            beat.flatten()
-            beat.reduce()
-            beat.clear_singles()
-        }
 
         return Triple(opus, tempo, instrument_map)
     }

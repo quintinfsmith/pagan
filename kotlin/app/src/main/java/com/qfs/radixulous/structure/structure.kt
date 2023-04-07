@@ -706,21 +706,32 @@ class OpusTree<T> {
         return null
     }
 
-    fun quantize() {
-        var factors = get_prime_factors(this.size)
-        var i = 0
+    fun get_quantization_map(input_factors: List<Int>): HashMap<Int, MutableList<Int>> {
         var n = this.size
-        var weighted_factors = mutableListOf<Int>()
-        while (n > 1) {
-            if (n % factors[i] == 0) {
-                weighted_factors.add(factors[i])
-                n /= factors[i]
-            } else {
-                i += 1
+
+        var product = 1
+        // Get applicable product (ignore non-cofactors)
+        for (factor in input_factors) {
+            if (n % factor == 0) {
+                product *= factor
+                n /= factor
             }
         }
 
+        var quotient = this.size / product
 
 
+        var position_remap = HashMap<Int, MutableList<Int>>()
+        for ((position, _) in this.divisions) {
+            var ratio: Int = round(position.toFloat() / quotient.toFloat()).toInt()
+            var new_position = ratio * quotient
+
+            if (!position_remap.contains(new_position)) {
+                position_remap[new_position] = mutableListOf()
+            }
+            position_remap[new_position]!!.add(position)
+        }
+
+        return position_remap
     }
 }

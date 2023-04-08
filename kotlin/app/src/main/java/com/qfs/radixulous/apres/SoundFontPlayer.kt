@@ -2,6 +2,8 @@ package com.qfs.radixulous.apres
 
 import android.content.Context
 import android.media.*
+import android.util.Range
+import com.qfs.radixulous.apres.riffreader.toUInt
 import kotlin.concurrent.thread
 import kotlin.math.max
 import kotlin.math.pow
@@ -15,17 +17,6 @@ class ActiveNoteHandle(var event: NoteOn, var preset: Preset) {
         var event: NoteOn
     ) {
 
-        class SFPlaybackListener(private var active_sample: ActiveSample): AudioTrack.OnPlaybackPositionUpdateListener {
-            override fun onMarkerReached(p0: AudioTrack?) {
-                //
-            }
-
-            override fun onPeriodicNotification(p0: AudioTrack?) {
-                if (p0 != null) {
-                    this.active_sample.write_next_chunk()
-                }
-            }
-        }
 
         var current_frame_right = 0
         var current_frame_left = 0
@@ -45,11 +36,6 @@ class ActiveNoteHandle(var event: NoteOn, var preset: Preset) {
         init {
             val sample_rate = this.sample_right.sample!!.sampleRate
 
-            this.buffer_size_in_bytes = AudioTrack.getMinBufferSize(
-                sample_rate,
-                AudioFormat.ENCODING_PCM_16BIT,
-                AudioFormat.CHANNEL_OUT_STEREO
-            )
 
             while (this.buffer_size_in_bytes < sample_rate) {
                 this.buffer_size_in_bytes *= 2
@@ -65,23 +51,6 @@ class ActiveNoteHandle(var event: NoteOn, var preset: Preset) {
 
         private fun buildAudioTrack(): AudioTrack {
             val sample_rate = this.sample_right.sample!!.sampleRate
-
-            val audioTrack = AudioTrack.Builder()
-                .setAudioAttributes(
-                    AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_MEDIA)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                        .build()
-                )
-                .setAudioFormat(
-                    AudioFormat.Builder()
-                        .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                        .setSampleRate(sample_rate)
-                        .setChannelMask(AudioFormat.CHANNEL_OUT_STEREO)
-                        .build()
-                )
-                .setBufferSizeInBytes(this.buffer_size_in_bytes)
-                .build()
 
             //val original_note = this.instrument.instrument!!.global_sample!!.root_key ?: this.sample_right.sample!!.originalPitch
             val original_note = this.sample_right.root_key ?: this.sample_right.sample!!.originalPitch
@@ -110,59 +79,6 @@ class ActiveNoteHandle(var event: NoteOn, var preset: Preset) {
             return audioTrack
         }
 
-        fun write_next_chunk() {
-            val sample_right = this.sample_right.sample!!
-            var sample_left = this.sample_left?.sample ?: sample_right
-            var call_stop = false
-
-            val use_bytes = ByteArray(this.chunk_size_in_bytes) { _ -> 0 }
-            for (x in 0 until this.chunk_size_in_frames) {
-                // If sample is a looping sample AND note is being held
-                // TODO: Differentiate between sampleMode 1 and 3 here
-                if (this.is_pressed || this.in_attack_hold_decay) {
-                    if (this.sample_right.sampleMode != null && this.sample_right.sampleMode!! and 1 == 1) {
-                        if (this.current_frame_right > sample_right.loopEnd) {
-                            this.current_frame_right = sample_right.loopStart
-                        }
-                        if (this.current_frame_left > sample_left.loopEnd) {
-                            this.current_frame_left = sample_left.loopStart
-                        }
-                    }
-                }
-
-                if (this.current_frame_right < sample_right.data.size / 2 && this.current_frame_left < sample_left.data.size / 2) {
-                    var j = this.current_frame_right * 2
-                    use_bytes[(4 * x)] = sample_right.data[j]
-                    use_bytes[(4 * x) + 1] = sample_right.data[j + 1]
-
-                    j = this.current_frame_left * 2
-                    use_bytes[(4 * x) + 2] = sample_left.data[j]
-                    use_bytes[(4 * x) + 3] = sample_left.data[j + 1]
-                } else if (!this.is_pressed) {
-                    call_stop = true
-                    break
-                } else {
-                    break
-                }
-
-                this.current_frame_right += 1
-                this.current_frame_left += 1
-            }
-
-            val audioTrack = this.audioTrack
-
-            if (audioTrack != null && audioTrack.state != AudioTrack.STATE_UNINITIALIZED) {
-                try {
-                    audioTrack.write(use_bytes, 0, use_bytes.size, AudioTrack.WRITE_BLOCKING)
-                } catch (e: IllegalStateException) {
-                    // Shouldn't need to do anything. the audio track was released and this should stop on its own
-                }
-            }
-
-            if (call_stop) {
-                this.really_stop()
-            }
-        }
 
         private fun apply_decay_shaper(): Long {
             val volumeShaper: VolumeShaper = this.volumeShaper ?: return 0
@@ -269,54 +185,6 @@ class ActiveNoteHandle(var event: NoteOn, var preset: Preset) {
         this.active_samples = this.gen_active_samples()
     }
 
-    fun gen_active_samples(): Set<ActiveSample> {
-        val output = mutableSetOf<ActiveSample>()
-        val potential_instruments = this.preset.get_instruments(this.event.note, this.event.velocity)
-        for (p_instrument in potential_instruments) {
-            val samples = p_instrument.instrument!!.get_samples(
-                this.event.note,
-                this.event.velocity
-            ).toList()
-
-            if (samples.isEmpty()) {
-                continue
-            } else {
-                if (samples.size == 2) {
-                    if (samples[0].sample!!.sampleType == 2) {
-                        output.add(
-                            ActiveSample(
-                                samples[0],
-                                samples[1],
-                                p_instrument,
-                                this.preset,
-                                this.event
-                            )
-                        )
-                    } else {
-                        output.add(
-                            ActiveSample(
-                                samples[1],
-                                samples[0],
-                                p_instrument,
-                                this.preset,
-                                this.event
-                            )
-                        )
-                    }
-                } else {
-                    output.add(
-                        ActiveSample(
-                            samples[0],
-                            p_instrument,
-                            this.preset,
-                            this.event
-                        )
-                    )
-                }
-            }
-        }
-        return output
-    }
 
     // Stop and return ttl
     fun stop(immediate: Boolean = false): Long {
@@ -331,21 +199,276 @@ class ActiveNoteHandle(var event: NoteOn, var preset: Preset) {
         return max_ttl
     }
 
-    fun play() {
-        for (sample in this.active_samples) {
-            sample.play(this.event.velocity)
+}
 
+class AudioTrackHandle() {
+    class Listener(private var handle: AudioTrackHandle): AudioTrack.OnPlaybackPositionUpdateListener {
+        override fun onMarkerReached(p0: AudioTrack?) {
+            //
         }
+        override fun onPeriodicNotification(p0: AudioTrack?) {
+            if (p0 != null) {
+                this.handle.write_next_chunk()
+            }
+        }
+    }
+
+    private var sample_rate = 44100
+    private var buffer_size_in_bytes: Int
+    private var buffer_size_in_frames: Int
+    private var chunk_size_in_frames: Int
+    private var chunk_size_in_bytes: Int
+    private var chunk_ratio: Int = 3
+
+    private var audioTrack: AudioTrack
+    private var sample_handles = HashMap<Int, SampleHandle>()
+    private var keygen: Int = 0
+    private val maxkey = 0xFFFFFFFF
+
+    init {
+        this.buffer_size_in_bytes = AudioTrack.getMinBufferSize(
+            this.sample_rate,
+            AudioFormat.ENCODING_PCM_16BIT,
+            AudioFormat.CHANNEL_OUT_STEREO
+        )
+        this.buffer_size_in_frames = buffer_size_in_bytes / 4
+        this.chunk_size_in_frames = this.buffer_size_in_frames / this.chunk_ratio
+        this.chunk_size_in_bytes = this.buffer_size_in_bytes / this.chunk_ratio
+
+        this.audioTrack = AudioTrack.Builder()
+            .setAudioAttributes(
+                AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .build()
+            )
+            .setAudioFormat(
+                AudioFormat.Builder()
+                    .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                    .setSampleRate(sample_rate)
+                    .setChannelMask(AudioFormat.CHANNEL_OUT_STEREO)
+                    .build()
+            )
+            .setBufferSizeInBytes(this.buffer_size_in_bytes)
+            .build()
+
+        val playbacklistener = Listener(this)
+        this.audioTrack.setPlaybackPositionUpdateListener( playbacklistener )
+        this.audioTrack.positionNotificationPeriod = this.chunk_size_in_frames
+    }
+
+    private fun play() {
+        if (this.sample_handles.isEmpty()) {
+            return
+        }
+
+        for (i in 0 until this.chunk_ratio) {
+            this.write_next_chunk()
+        }
+
+        // TODO: Implement vol_env attack/hold/decay/sustain
+        // this.in_attack_hold_decay = true
+        // var curve = mutableListOf<Double>()
+        // curve.add(
+        //     this.sample_right.vol_env_delay ?: this.instrument.vol_env_delay ?: 0.toDouble()
+        // )
+        // curve.add(
+        //     this.sample_right.vol_env_attack ?: this.instrument.vol_env_attack ?: 0.toDouble()
+        // )
+        // curve.add(
+        //     this.sample_right.vol_env_hold ?: this.instrument.vol_env_hold ?: 0.toDouble()
+        // )
+        // var vol_env_sustain = this.sample_right.vol_env_sustain ?: this.instrument.vol_env_sustain
+        // if (vol_env_sustain != null && vol_env_sustain > 0) {
+        //     curve.add(
+        //         this.sample_right.vol_env_decay ?: this.instrument.vol_env_decay ?: 0.toDouble()
+        //     )
+        // }
+        // var volume_curve = mutableListOf<Float>(this.volume)
+        // var time_curve = mutableListOf<Float>(0F)
+        // var total = 0f
+        // for (v in curve) {
+        //     if (v == 0.toDouble()) {
+        //         continue
+        //     }
+        //     total += v.toFloat()
+        //     volume_curve.add(this.volume) // For now, don't actually attenuate
+        //     time_curve.add(total)
+        // }
+
+
+       //     val config = VolumeShaper.Configuration.Builder()
+       //         //.setCurve(time_curve.toFloatArray(), volume_curve.toFloatArray())
+       //         .setCurve(floatArrayOf(0f, 1f), floatArrayOf(this.volume, this.volume))
+       //         .setInterpolatorType(VolumeShaper.Configuration.INTERPOLATOR_TYPE_LINEAR)
+       //         .build()
+
+       //     this.volumeShaper = this.audioTrack!!.createVolumeShaper(config)
+       //     this.volumeShaper!!.apply(VolumeShaper.Operation.PLAY)
+
+
+        this.audioTrack.play()
+    }
+
+    private fun stop() {
+        this.audioTrack.stop()
+    }
+
+    private fun genkey(): Int {
+        val output = this.keygen
+
+        this.keygen += 1
+        if (this.maxkey <= this.keygen) {
+            this.keygen = 0
+        }
+
+        return output
+    }
+
+    fun add_sample_handle(handle: SampleHandle, autoplay: Boolean = true): Int {
+        var newkey = this.genkey()
+        this.sample_handles[newkey] = handle
+        if (autoplay) {
+            this.play()
+        }
+        return newkey
+    }
+
+    fun add_sample_handles(handles: Set<SampleHandle>, autoplay: Boolean = true): Set<Int> {
+        var output = mutableSetOf<Int>()
+        for (handle in handles) {
+            output.add(this.add_sample_handle(handle, false))
+        }
+
+        if (autoplay) {
+            this.play()
+        }
+
+        return output
+    }
+
+
+    fun remove_sample_handle(key: Int) {
+        this.sample_handles.remove(key)
+        if (this.sample_handles.isEmpty()) {
+            this.stop()
+        }
+    }
+
+    fun write_next_chunk() {
+        val use_bytes = ByteArray(this.chunk_size_in_bytes) { _ -> 0 }
+        for (x in 0 until this.chunk_size_in_frames) {
+            var left = 0
+            var right = 0
+            for ((_, sample_handle) in sample_handles) {
+                // TODO: *Maybe* detach handle if null is returned here?
+                val v = sample_handle.get_next_frame() ?: continue
+                // TODO: Implement ROM stereo modes
+                when (sample_handle.stereo_mode) {
+                    1 -> { // mono
+                        left += v
+                        right += v
+                    }
+                    2 -> { // right
+                        right += v
+                    }
+                    4 -> { // left
+                        left += v
+                    }
+                    else -> {
+
+                    }
+                }
+            }
+
+            use_bytes[(4 * x)] = (right % 256).toByte()
+            use_bytes[(4 * x) + 1] = (right / 256).toByte()
+            use_bytes[(4 * x) + 2] = (left % 256).toByte()
+            use_bytes[(4 * x) + 3] = (left / 256).toByte()
+        }
+
+        val audioTrack = this.audioTrack
+
+        if (audioTrack != null && audioTrack.state != AudioTrack.STATE_UNINITIALIZED) {
+            try {
+                audioTrack.write(use_bytes, 0, use_bytes.size, AudioTrack.WRITE_BLOCKING)
+            } catch (e: IllegalStateException) {
+                // Shouldn't need to do anything. the audio track was released and this should stop on its own
+            }
+        }
+
+    }
+}
+
+enum class SamplePhase {
+    Delay,
+    Attack,
+    Decay,
+    Sustain,
+    Release
+}
+
+class SampleHandle(var event: NoteOn, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset) {
+    var pitch_shift: Float = 1F
+    var current_position: Int = 0
+    val loop_points: Pair<Int, Int>?
+    var data: ByteArray
+    var phase_map = HashMap<SamplePhase, Pair<Int, Int>>()
+    var stereo_mode: Int
+
+    init {
+        val original_note = sample.root_key ?: sample.sample!!.originalPitch
+        if (original_note != 255) {
+            val original_pitch = 2F.pow(original_note.toFloat() / 12F)
+            val tuning_cent = (sample.tuning_cent ?: instrument.tuning_cent ?: preset.global_zone?.tuning_cent ?: 0).toFloat()
+            val tuning_semi = (sample.tuning_semi ?: instrument.tuning_semi ?: preset.global_zone?.tuning_semi ?: 0).toFloat()
+            val requiredPitch = 2F.pow((this.event.note.toFloat() + (tuning_semi + (tuning_cent / 1200))) / 12F)
+            this.pitch_shift = requiredPitch / original_pitch
+        }
+
+        data = this.resample(sample.sample!!.data)
+
+        this.stereo_mode = sample.sample!!.sampleType
+        this.loop_points = if (sample.sampleMode!! and 1 == 1) {
+            Pair(
+                (sample.sample!!.loopStart.toFloat() / this.pitch_shift).toInt(),
+                (sample.sample!!.loopEnd.toFloat() / this.pitch_shift).toInt()
+            )
+        } else {
+            null
+        }
+    }
+
+
+    // TODO: VVVVVVVVVVVVVVVVVVVVVVVVV
+    fun resample(sample_data: ByteArray): ByteArray {
+        return sample_data
+    }
+
+    fun get_next_frame(): Int? {
+        if (this.current_position >= this.data.size) {
+            return null
+        }
+
+        val a = toUInt(this.data[this.current_position])
+        val b = toUInt(this.data[this.current_position + 1])
+        this.current_position += 2
+        if (this.loop_points != null) {
+            if (this.current_position >= this.loop_points.second) {
+                this.current_position = this.loop_points.first
+            }
+        }
+
+        return ((b * 256) + a)
     }
 }
 
 
 class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): VirtualMIDIDevice() {
-    private val active_handles = HashMap<Pair<Int, Int>, ActiveNoteHandle>()
     private val preset_channel_map = HashMap<Int, Int>()
     private val loaded_presets = HashMap<Pair<Int, Int>, Preset>()
-    private val decaying_handles = HashMap<Long, Pair<ActiveNoteHandle, Int>>()
-    private val channels_turning_off = mutableSetOf<Int>()
+    private val audio_track_handle = AudioTrackHandle()
+    private val active_handle_keys = HashMap<Pair<Int, Int>, Set<Int>>()
 
     init {
         this.loaded_presets[Pair(0, 0)] = this.soundFont.get_preset(0, 0)
@@ -360,15 +483,18 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
         }
     }
 
-    override fun onNoteOn(event: NoteOn) {
-        val currently_active_sample: ActiveNoteHandle? = this.active_handles[Pair(event.note, event.channel)]
-        currently_active_sample?.stop()
+    private fun release_note(note: Int, channel: Int) {
+        this.kill_note(note, channel)
+    }
 
-        // TODO: Kinda kludgey. if AllSoundOff is being applied, dont add a new note
-        if (this.channels_turning_off.contains(event.channel)) {
-            return
+    private fun kill_note(note: Int, channel: Int) {
+        var keys = this.active_handle_keys.remove(Pair(note, channel)) ?: return
+        for (key in keys) {
+            this.audio_track_handle.remove_sample_handle(key)
         }
+    }
 
+    private fun press_note(event: NoteOn) {
         // TODO: Handle Bank
         val bank = if (event.channel == 9) {
             128
@@ -377,30 +503,17 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
         }
 
         val preset = this.loaded_presets[Pair(bank, this.get_channel_preset(event.channel))]!!
-        try {
-            val active_handle = ActiveNoteHandle(event, preset)
-            this.active_handles[Pair(event.note, event.channel)] = active_handle
-            active_handle.play()
-        } catch (e: Exception) {
+        var audio_track_keys = mutableSetOf<Int>()
+        this.active_handle_keys[Pair(event.note, event.channel)] = this.audio_track_handle.add_sample_handles(this.gen_sample_handles(event, preset))
+    }
 
-        }
+    override fun onNoteOn(event: NoteOn) {
+        this.kill_note(event.note, event.channel)
+        this.press_note(event)
     }
 
     override fun onNoteOff(event: NoteOff) {
-        if (!this.channels_turning_off.contains(event.channel)) {
-            val handle = this.active_handles.remove(Pair(event.note, event.channel)) ?: return
-            val ttl = handle.stop()
-            val ts = System.currentTimeMillis()
-            if (ttl > 0) {
-                this.decaying_handles[ts] = Pair(handle, event.channel)
-                thread {
-                    Thread.sleep(ttl)
-                    if (!this.channels_turning_off.contains(event.channel)) {
-                        this.decaying_handles.remove(ts)
-                    }
-                }
-            }
-        }
+        this.release_note(event.note, event.channel)
     }
 
     override fun onProgramChange(event: ProgramChange) {
@@ -415,34 +528,25 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
         this.preset_channel_map[event.channel] = event.program
     }
 
-    override fun onAllSoundOff(event: AllSoundOff) {
-        this.channels_turning_off.add(event.channel)
-        // Keep trying to turn off until succeeds
-        while (true) {
-            val to_pop = mutableSetOf<Long>()
-            try {
-                for ((key, handle) in this.active_handles.filterKeys { k -> event.channel == k.second }) {
-                    handle.stop(true)
-                    this.active_handles.remove(key)
-                }
+    override fun onAllSoundOff(event: AllSoundOff) { }
 
-                // toList because these are volite and the handles may have been stopped already
-                for ((ts, pair) in this.decaying_handles.filterValues { v -> v.second == event.channel }) {
-                    pair.first.stop(true)
-                    to_pop.add(ts)
-                }
-            } catch (e: java.util.ConcurrentModificationException) {
-                continue
+    fun gen_sample_handles(event: NoteOn, preset: Preset): Set<SampleHandle> {
+        val output = mutableSetOf<SampleHandle>()
+        val potential_instruments = preset.get_instruments(event.note, event.velocity)
+
+        for (p_instrument in potential_instruments) {
+            val samples = p_instrument.instrument!!.get_samples(
+                event.note,
+                event.velocity
+            ).toList()
+
+            for (sample in samples) {
+                output.add(
+                    SampleHandle(event, sample, p_instrument, preset)
+                )
             }
-
-            for (ts in to_pop) {
-                this.decaying_handles.remove(ts)
-            }
-
-            break
         }
-
-        this.channels_turning_off.remove(event.channel)
+        return output
     }
 }
 

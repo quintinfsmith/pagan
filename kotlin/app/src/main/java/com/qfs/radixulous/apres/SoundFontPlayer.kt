@@ -48,12 +48,12 @@ class AudioTrackHandle(var playback_device: MIDIPlaybackDevice) {
         }
     }
 
-    private var sample_rate = 44100
+    private var sample_rate = 22050
     private var buffer_size_in_bytes: Int
     private var buffer_size_in_frames: Int
     private var chunk_size_in_frames: Int
     private var chunk_size_in_bytes: Int
-    private var chunk_ratio: Int = 3
+    private var chunk_ratio: Int = 5
 
     private var audioTrack: AudioTrack
     private var sample_handles = HashMap<Int, SampleHandle>()
@@ -61,12 +61,19 @@ class AudioTrackHandle(var playback_device: MIDIPlaybackDevice) {
     private var keygen: Int = 0
     private val maxkey = 0xFFFFFFFF
 
+    private var is_playing = false
+
     init {
         this.buffer_size_in_bytes = AudioTrack.getMinBufferSize(
             this.sample_rate,
             AudioFormat.ENCODING_PCM_16BIT,
             AudioFormat.CHANNEL_OUT_STEREO
-        )
+        ) * 2
+
+        //while (this.buffer_size_in_bytes < this.sample_rate) {
+        //    this.buffer_size_in_bytes *= 2
+        //}
+
         this.buffer_size_in_frames = buffer_size_in_bytes / 4
         this.chunk_size_in_frames = this.buffer_size_in_frames / this.chunk_ratio
         this.chunk_size_in_bytes = this.buffer_size_in_bytes / this.chunk_ratio
@@ -90,18 +97,21 @@ class AudioTrackHandle(var playback_device: MIDIPlaybackDevice) {
 
         val playbacklistener = Listener(this)
         this.audioTrack.setPlaybackPositionUpdateListener( playbacklistener )
-        this.audioTrack.positionNotificationPeriod = this.chunk_size_in_frames
+
+        this.audioTrack.positionNotificationPeriod = this.buffer_size_in_frames
     }
 
     private fun play() {
-        if (this.sample_handles.isEmpty()) {
+        if (this.sample_handles.isEmpty() || this.is_playing) {
             return
         }
+        this.is_playing = true
         println("PLAYING")
 
         for (i in 0 until this.chunk_ratio) {
             this.write_next_chunk()
         }
+        println("WRITTEN")
 
         // TODO: Implement vol_env attack/hold/decay/sustain
         // this.in_attack_hold_decay = true
@@ -143,12 +153,11 @@ class AudioTrackHandle(var playback_device: MIDIPlaybackDevice) {
        //     this.volumeShaper = this.audioTrack!!.createVolumeShaper(config)
        //     this.volumeShaper!!.apply(VolumeShaper.Operation.PLAY)
 
-
         this.audioTrack.play()
     }
 
     private fun stop() {
-        println("STOPPING")
+        this.is_playing = false
         this.audioTrack.stop()
     }
 
@@ -191,7 +200,8 @@ class AudioTrackHandle(var playback_device: MIDIPlaybackDevice) {
 
     fun remove_sample_handle(key: Int) {
         this.sample_locker.enter_queue()
-        this.sample_handles.remove(key)
+        var handle = this.sample_handles.remove(key)
+        println("Removing ${handle?.event?.note}/${handle?.event?.channel}")
         this.sample_locker.release()
         if (this.sample_handles.isEmpty()) {
             this.stop()
@@ -205,56 +215,87 @@ class AudioTrackHandle(var playback_device: MIDIPlaybackDevice) {
     }
 
     fun write_next_chunk() {
-        val use_bytes = ByteArray(this.chunk_size_in_bytes) { _ -> 0 }
-        var kill_handles = mutableSetOf<Int>()
-        for (x in 0 until this.chunk_size_in_frames) {
-            var left = 0
-            var right = 0
+        if (this.sample_handles.isEmpty() && this.is_playing) {
+            this.stop()
+        }
+
+        var use_bytes = ByteArray(this.buffer_size_in_bytes) { _ -> 0 }
+        val kill_handles = mutableSetOf<Int>()
+        var cut_point: Int? = null
+        for (x in 0 until this.buffer_size_in_frames) {
+            var left: Short = 0
+            var right: Short = 0
             this.sample_locker.enter_queue()
             var sample_handles = this.sample_handles.toList()
             this.sample_locker.release()
-
+            // TODO: straight division of volume is too naive
+            var volume_left_d = 0
+            var volume_right_d = 0
             for ((key, sample_handle) in sample_handles) {
-                // TODO: *Maybe* detach handle if null is returned here?
-                val v = sample_handle.get_next_frame()
+                val v: Short? = sample_handle.get_next_frame()
                 if (v == null) {
                     kill_handles.add(key)
+                    if (kill_handles.size == sample_handles.size && cut_point == null) {
+                        cut_point = x
+                    }
                     continue
                 }
+
                 // TODO: Implement ROM stereo modes
                 when (sample_handle.stereo_mode) {
                     1 -> { // mono
-                        left += v
-                        right += v
+                        left = (left + v).toShort()
+                        right = (right + v).toShort()
+                        volume_left_d += 1
+                        volume_right_d += 1
                     }
                     2 -> { // right
-                        right += v
+                        right = (right + v).toShort()
+                        volume_right_d += 1
                     }
                     4 -> { // left
-                        left += v
+                        left = (left + v).toShort()
+                        volume_left_d += 1
                     }
                     else -> {
 
                     }
                 }
             }
+            if (volume_left_d > 0) {
+                left = (left.toFloat() / volume_left_d.toFloat()).toInt().toShort()
+            }
+            if (volume_right_d > 0) {
+                right = (right.toFloat() / volume_right_d.toFloat()).toInt().toShort()
+            }
 
-            use_bytes[(4 * x)] = (right and 0xFF).toByte()
-            use_bytes[(4 * x) + 1] = ((right shr 8) and 0xFF).toByte()
+            if (cut_point == null) {
+                use_bytes[(4 * x)] = (right and 0xFF).toByte()
+                use_bytes[(4 * x) + 1] = ((toUInt(right) and 0xFF00) shr 8).toByte()
 
-            use_bytes[(4 * x) + 2] = (left and 0xFF).toByte()
-            use_bytes[(4 * x) + 3] = ((left shr 8) and 0xFF).toByte()
+                use_bytes[(4 * x) + 2] = (left and 0xFF).toByte()
+                use_bytes[(4 * x) + 3] = ((toUInt(left) and 0xFF00) shr 8).toByte()
+            }
         }
 
         val audioTrack = this.audioTrack
+        //if (cut_point != null) {
+        //    use_bytes = ByteArray(cut_point) { i -> use_bytes[i] }
+        //}
 
+        audioTrack.write(use_bytes, 0, use_bytes.size, AudioTrack.WRITE_BLOCKING)
         if (audioTrack != null && audioTrack.state != AudioTrack.STATE_UNINITIALIZED) {
             try {
-                audioTrack.write(use_bytes, 0, use_bytes.size, AudioTrack.WRITE_BLOCKING)
             } catch (e: IllegalStateException) {
                 // Shouldn't need to do anything. the audio track was released and this should stop on its own
             }
         }
+
+        if (kill_handles.size >= this.sample_handles.size) {
+            println("SHORTED")
+            this.stop()
+        }
+
 
         for (key in kill_handles) {
             this.remove_sample_handle(key)
@@ -281,6 +322,7 @@ class SampleHandle(var event: NoteOn, sample: InstrumentSample, instrument: Pres
     var is_pressed = true
 
     init {
+        println("SAMPLE: ${sample.sample!!.name} R: ${sample.sample!!.sampleRate}")
         val original_note = sample.root_key ?: sample.sample!!.originalPitch
         if (original_note != 255) {
             val original_pitch = 2F.pow(original_note.toFloat() / 12F)
@@ -290,14 +332,15 @@ class SampleHandle(var event: NoteOn, sample: InstrumentSample, instrument: Pres
             this.pitch_shift = requiredPitch / original_pitch
         }
 
-        if (sample.sample!!.sampleRate != 44100) {
-            this.pitch_shift *= (44100F / sample.sample!!.sampleRate.toFloat())
+        if (sample.sample!!.sampleRate != 22050) {
+            this.pitch_shift *= (22050F / sample.sample!!.sampleRate.toFloat())
         }
 
-        data = this.resample(sample.sample!!.data)
+        this.data = this.resample(sample.sample!!.data)
+        println("DATA: ${this.data.size}")
 
         this.stereo_mode = sample.sample!!.sampleType
-        this.loop_points = if (sample.sampleMode != null && sample.sampleMode!! and 1 == 1) {
+        this.loop_points = if (sample.sampleMode == null || sample.sampleMode!! and 1 == 1) {
             Pair(
                 (sample.sample!!.loopStart.toFloat() / this.pitch_shift).toInt(),
                 (sample.sample!!.loopEnd.toFloat() / this.pitch_shift).toInt()
@@ -307,21 +350,35 @@ class SampleHandle(var event: NoteOn, sample: InstrumentSample, instrument: Pres
         }
     }
 
-
-    // TODO: VVVVVVVVVVVVVVVVVVVVVVVVV
     fun resample(sample_data: ByteArray): ByteArray {
-        return sample_data
+        // TODO: This is VERY Niave. Look into actual resampling algorithms
+        var new_size = (sample_data.size / this.pitch_shift).toInt()
+        if (new_size % 2 == 1) {
+            new_size -= 1
+        }
+
+        var new_sample = ByteArray(new_size) { _ -> 0 }
+
+        for (i in 0 until new_size / 2) {
+            var i_offset = ((i * 2).toFloat() * this.pitch_shift).toInt()
+            if (i_offset % 2 == 1) {
+                i_offset -= 1
+            }
+            new_sample[i * 2] = sample_data[i_offset]
+            new_sample[(i * 2) + 1] = sample_data[i_offset + 1]
+        }
+
+        return new_sample
     }
 
     fun get_next_frame(): Short? {
-        if (this.current_position >= this.data.size) {
+        if (this.current_position > this.data.size - 2) {
             return null
         }
 
         val a = toUInt(this.data[this.current_position])
-        val b = toUInt(this.data[this.current_position + 1])
-        var frame: Short = (a or (b shl 8)).toShort()
-        //var frame: Short = ((a shl 8) or b).toShort()
+        val b = toUInt(this.data[this.current_position + 1]) * 256
+        var frame: Short = (a + b).toShort()
 
         this.current_position += 2
         if (this.loop_points != null && this.is_pressed) {
@@ -381,6 +438,7 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
         }
 
         val preset = this.loaded_presets[Pair(bank, this.get_channel_preset(event.channel))]!!
+        println("PRESET: ${preset.name}")
         this.active_handle_keys[Pair(event.note, event.channel)] = this.audio_track_handle.add_sample_handles(this.gen_sample_handles(event, preset))
     }
 

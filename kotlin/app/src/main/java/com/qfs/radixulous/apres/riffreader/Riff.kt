@@ -108,3 +108,11 @@ fun toUInt(byte: Byte): Int {
     }
     return new_int
 }
+
+fun toUInt(number: Short): Int {
+    var new_int = (number and 0x7FFF.toShort()).toInt()
+    if (number.toInt() < 0) {
+        new_int += 0x8000
+    }
+    return new_int
+}

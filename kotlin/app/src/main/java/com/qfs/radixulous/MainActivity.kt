@@ -348,12 +348,9 @@ class MainActivity : AppCompatActivity() {
         } else {
             event_value + 21
         }
-
         this.midi_input_device.sendEvent(NoteOn(midi_channel, note, 64))
-        thread {
-            Thread.sleep(100)
-            this.midi_input_device.sendEvent(NoteOff(midi_channel, note, 64))
-        }
+        Thread.sleep(100)
+        this.midi_input_device.sendEvent(NoteOff(midi_channel, note, 64))
     }
 
 

@@ -2,8 +2,11 @@ package com.qfs.radixulous.apres
 
 import android.content.Context
 import android.media.*
+import android.util.Log
 import android.util.Range
 import com.qfs.radixulous.apres.riffreader.toUInt
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import kotlin.concurrent.thread
 import kotlin.experimental.and
 import kotlin.experimental.or
@@ -36,7 +39,7 @@ class Locker() {
     }
 }
 
-class AudioTrackHandle(var playback_device: MIDIPlaybackDevice) {
+class AudioTrackHandle() {
     class Listener(private var handle: AudioTrackHandle): AudioTrack.OnPlaybackPositionUpdateListener {
         override fun onMarkerReached(p0: AudioTrack?) {
             //
@@ -53,7 +56,7 @@ class AudioTrackHandle(var playback_device: MIDIPlaybackDevice) {
     private var buffer_size_in_frames: Int
     private var chunk_size_in_frames: Int
     private var chunk_size_in_bytes: Int
-    private var chunk_ratio: Int = 5
+    private var chunk_ratio: Int = 3
 
     private var audioTrack: AudioTrack
     private var sample_handles = HashMap<Int, SampleHandle>()
@@ -64,6 +67,7 @@ class AudioTrackHandle(var playback_device: MIDIPlaybackDevice) {
     private var is_playing = false
 
     init {
+        Log.d("AAA", "AudioTrackHandle Init() Start")
         this.buffer_size_in_bytes = AudioTrack.getMinBufferSize(
             this.sample_rate,
             AudioFormat.ENCODING_PCM_16BIT,
@@ -98,20 +102,21 @@ class AudioTrackHandle(var playback_device: MIDIPlaybackDevice) {
         val playbacklistener = Listener(this)
         this.audioTrack.setPlaybackPositionUpdateListener( playbacklistener )
 
-        this.audioTrack.positionNotificationPeriod = this.buffer_size_in_frames
+        this.audioTrack.positionNotificationPeriod = this.buffer_size_in_frames / 4
+        Log.d("AAA", "AudioTrackHandle Init() Complete")
     }
 
     private fun play() {
         if (this.sample_handles.isEmpty() || this.is_playing) {
+            Log.d("AAA", "Can't Play")
             return
         }
         this.is_playing = true
-        println("PLAYING")
+        Log.d("AAA", "Playing!")
 
         for (i in 0 until this.chunk_ratio) {
             this.write_next_chunk()
         }
-        println("WRITTEN")
 
         // TODO: Implement vol_env attack/hold/decay/sustain
         // this.in_attack_hold_decay = true
@@ -152,13 +157,14 @@ class AudioTrackHandle(var playback_device: MIDIPlaybackDevice) {
 
        //     this.volumeShaper = this.audioTrack!!.createVolumeShaper(config)
        //     this.volumeShaper!!.apply(VolumeShaper.Operation.PLAY)
-
         this.audioTrack.play()
+        Log.d("AAA", "Play Started")
     }
 
     private fun stop() {
         this.is_playing = false
         this.audioTrack.stop()
+        Log.d("AAA", "STOPPED")
     }
 
     // Generate a sample handle key
@@ -174,11 +180,12 @@ class AudioTrackHandle(var playback_device: MIDIPlaybackDevice) {
     }
 
     fun add_sample_handle(handle: SampleHandle, autoplay: Boolean = true): Int {
+        Log.d("AAA", "ADDing SampleHandle $handle")
         this.sample_locker.enter_queue()
         var newkey = this.genkey()
         this.sample_handles[newkey] = handle
         this.sample_locker.release()
-        if (autoplay) {
+        if (autoplay && ! this.is_playing) {
             this.play()
         }
         return newkey
@@ -190,7 +197,7 @@ class AudioTrackHandle(var playback_device: MIDIPlaybackDevice) {
             output.add(this.add_sample_handle(handle, false))
         }
 
-        if (autoplay) {
+        if (autoplay && ! this.is_playing) {
             this.play()
         }
 
@@ -201,39 +208,50 @@ class AudioTrackHandle(var playback_device: MIDIPlaybackDevice) {
     fun remove_sample_handle(key: Int) {
         this.sample_locker.enter_queue()
         var handle = this.sample_handles.remove(key)
-        println("Removing ${handle?.event?.note}/${handle?.event?.channel}")
+        Log.d("AAA", "Removing ${handle?.event?.note}/${handle?.event?.channel}")
+        Log.d("AAA", "Remaining handles: ${this.sample_handles.size}")
         this.sample_locker.release()
-        if (this.sample_handles.isEmpty()) {
+        if (this.sample_handles.isEmpty() && this.is_playing) {
             this.stop()
         }
     }
 
     fun release_sample_handle(key: Int) {
+        Log.d("AAA", "Releasing $key")
         this.sample_locker.enter_queue()
         this.sample_handles[key]?.release_note()
         this.sample_locker.release()
     }
 
     fun write_next_chunk() {
-        if (this.sample_handles.isEmpty() && this.is_playing) {
+        if (! this.is_playing) {
+            return
+        } else if (this.sample_handles.isEmpty() && this.is_playing) {
             this.stop()
+            return
         }
 
         var use_bytes = ByteArray(this.buffer_size_in_bytes) { _ -> 0 }
         val kill_handles = mutableSetOf<Int>()
         var cut_point: Int? = null
+
+        this.sample_locker.enter_queue()
+        var sample_handles = this.sample_handles.toList()
+        this.sample_locker.release()
+
         for (x in 0 until this.buffer_size_in_frames) {
             var left: Short = 0
             var right: Short = 0
-            this.sample_locker.enter_queue()
-            var sample_handles = this.sample_handles.toList()
-            this.sample_locker.release()
             // TODO: straight division of volume is too naive
             var volume_left_d = 0
             var volume_right_d = 0
             for ((key, sample_handle) in sample_handles) {
+                if (key in kill_handles) {
+                    continue
+                }
                 val v: Short? = sample_handle.get_next_frame()
                 if (v == null) {
+                    Log.d("AAA", "Killing $key")
                     kill_handles.add(key)
                     if (kill_handles.size == sample_handles.size && cut_point == null) {
                         cut_point = x
@@ -242,7 +260,7 @@ class AudioTrackHandle(var playback_device: MIDIPlaybackDevice) {
                 }
 
                 // TODO: Implement ROM stereo modes
-                when (sample_handle.stereo_mode) {
+                when (sample_handle.stereo_mode and 7) {
                     1 -> { // mono
                         left = (left + v).toShort()
                         right = (right + v).toShort()
@@ -284,15 +302,15 @@ class AudioTrackHandle(var playback_device: MIDIPlaybackDevice) {
         //}
 
         audioTrack.write(use_bytes, 0, use_bytes.size, AudioTrack.WRITE_BLOCKING)
-        if (audioTrack != null && audioTrack.state != AudioTrack.STATE_UNINITIALIZED) {
-            try {
-            } catch (e: IllegalStateException) {
-                // Shouldn't need to do anything. the audio track was released and this should stop on its own
-            }
-        }
+        //if (audioTrack != null && audioTrack.state != AudioTrack.STATE_UNINITIALIZED) {
+        //    try {
+        //    } catch (e: IllegalStateException) {
+        //        // Shouldn't need to do anything. the audio track was released and this should stop on its own
+        //    }
+        //}
 
         if (kill_handles.size >= this.sample_handles.size) {
-            println("SHORTED")
+            Log.d("AAA","SHORTED")
             this.stop()
         }
 
@@ -300,7 +318,6 @@ class AudioTrackHandle(var playback_device: MIDIPlaybackDevice) {
         for (key in kill_handles) {
             this.remove_sample_handle(key)
         }
-
     }
 }
 
@@ -399,7 +416,7 @@ class SampleHandle(var event: NoteOn, sample: InstrumentSample, instrument: Pres
 class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): VirtualMIDIDevice() {
     private val preset_channel_map = HashMap<Int, Int>()
     private val loaded_presets = HashMap<Pair<Int, Int>, Preset>()
-    private val audio_track_handle = AudioTrackHandle(this)
+    private val audio_track_handle = AudioTrackHandle()
     private val active_handle_keys = HashMap<Pair<Int, Int>, Set<Int>>()
 
     init {
@@ -438,7 +455,6 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
         }
 
         val preset = this.loaded_presets[Pair(bank, this.get_channel_preset(event.channel))]!!
-        println("PRESET: ${preset.name}")
         this.active_handle_keys[Pair(event.note, event.channel)] = this.audio_track_handle.add_sample_handles(this.gen_sample_handles(event, preset))
     }
 

@@ -262,9 +262,10 @@ class MainActivity : AppCompatActivity() {
         this.in_play_back = true
         val item = this.optionsMenu.findItem(R.id.itmPlay)
         item.icon = ContextCompat.getDrawable(this, R.drawable.ic_baseline_pause_24)
+        val opus_manager = this.get_opus_manager()
+        val x = opus_manager.get_cursor().x
+
         thread {
-            val opus_manager = this.get_opus_manager()
-            val x = opus_manager.get_cursor().x
             this.play_midi(opus_manager.get_midi(x))
 
             this.in_play_back = false
@@ -348,9 +349,12 @@ class MainActivity : AppCompatActivity() {
         } else {
             event_value + 21
         }
-        this.midi_input_device.sendEvent(NoteOn(midi_channel, note, 64))
-        Thread.sleep(100)
-        this.midi_input_device.sendEvent(NoteOff(midi_channel, note, 64))
+
+        this@MainActivity.runOnUiThread {
+            this.midi_input_device.sendEvent(NoteOn(midi_channel, note, 64))
+            Thread.sleep(100)
+            this.midi_input_device.sendEvent(NoteOff(midi_channel, note, 64))
+        }
     }
 
 

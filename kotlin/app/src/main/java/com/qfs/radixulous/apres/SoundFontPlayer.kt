@@ -3,14 +3,9 @@ package com.qfs.radixulous.apres
 import android.content.Context
 import android.media.*
 import android.util.Log
-import android.util.Range
 import com.qfs.radixulous.apres.riffreader.toUInt
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import kotlin.concurrent.thread
 import kotlin.experimental.and
-import kotlin.experimental.or
-import kotlin.math.max
 import kotlin.math.pow
 
 class Locker() {
@@ -44,8 +39,8 @@ class AudioTrackHandle() {
         override fun onMarkerReached(p0: AudioTrack?) {
             //
         }
-        override fun onPeriodicNotification(p0: AudioTrack?) {
-            if (p0 != null) {
+        override fun onPeriodicNotification(audioTrack: AudioTrack?) {
+            if (audioTrack != null) {
                 this.handle.write_next_chunk()
             }
         }
@@ -92,30 +87,25 @@ class AudioTrackHandle() {
             .setAudioFormat(
                 AudioFormat.Builder()
                     .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                    .setSampleRate(sample_rate)
+                    .setSampleRate(this.sample_rate)
                     .setChannelMask(AudioFormat.CHANNEL_OUT_STEREO)
                     .build()
             )
             .setBufferSizeInBytes(this.buffer_size_in_bytes)
             .build()
 
-        val playbacklistener = Listener(this)
-        this.audioTrack.setPlaybackPositionUpdateListener( playbacklistener )
+        //val playbacklistener = Listener(this)
+        //this.audioTrack.setPlaybackPositionUpdateListener( playbacklistener )
 
-        this.audioTrack.positionNotificationPeriod = this.buffer_size_in_frames / 4
-        Log.d("AAA", "AudioTrackHandle Init() Complete")
+        //this.audioTrack.positionNotificationPeriod = this.buffer_size_in_frames
     }
 
     private fun play() {
-        if (this.sample_handles.isEmpty() || this.is_playing) {
-            Log.d("AAA", "Can't Play")
+        if (this.is_playing) {
             return
         }
-        this.is_playing = true
-        Log.d("AAA", "Playing!")
-
-        for (i in 0 until this.chunk_ratio) {
-            this.write_next_chunk()
+        thread {
+            this.write_loop()
         }
 
         // TODO: Implement vol_env attack/hold/decay/sustain
@@ -157,14 +147,6 @@ class AudioTrackHandle() {
 
        //     this.volumeShaper = this.audioTrack!!.createVolumeShaper(config)
        //     this.volumeShaper!!.apply(VolumeShaper.Operation.PLAY)
-        this.audioTrack.play()
-        Log.d("AAA", "Play Started")
-    }
-
-    private fun stop() {
-        this.is_playing = false
-        this.audioTrack.stop()
-        Log.d("AAA", "STOPPED")
     }
 
     // Generate a sample handle key
@@ -179,25 +161,23 @@ class AudioTrackHandle() {
         return output
     }
 
-    fun add_sample_handle(handle: SampleHandle, autoplay: Boolean = true): Int {
+    fun add_sample_handle(handle: SampleHandle): Int {
         Log.d("AAA", "ADDing SampleHandle $handle")
         this.sample_locker.enter_queue()
         var newkey = this.genkey()
         this.sample_handles[newkey] = handle
         this.sample_locker.release()
-        if (autoplay && ! this.is_playing) {
-            this.play()
-        }
         return newkey
     }
 
-    fun add_sample_handles(handles: Set<SampleHandle>, autoplay: Boolean = true): Set<Int> {
+    fun add_sample_handles(handles: Set<SampleHandle>): Set<Int> {
+        var try_play = this.sample_handles.isEmpty()
         var output = mutableSetOf<Int>()
         for (handle in handles) {
-            output.add(this.add_sample_handle(handle, false))
+            output.add(this.add_sample_handle(handle))
         }
 
-        if (autoplay && ! this.is_playing) {
+        if (try_play) {
             this.play()
         }
 
@@ -211,9 +191,6 @@ class AudioTrackHandle() {
         Log.d("AAA", "Removing ${handle?.event?.note}/${handle?.event?.channel}")
         Log.d("AAA", "Remaining handles: ${this.sample_handles.size}")
         this.sample_locker.release()
-        if (this.sample_handles.isEmpty() && this.is_playing) {
-            this.stop()
-        }
     }
 
     fun release_sample_handle(key: Int) {
@@ -223,15 +200,13 @@ class AudioTrackHandle() {
         this.sample_locker.release()
     }
 
-    fun write_next_chunk() {
-        if (! this.is_playing) {
-            return
-        } else if (this.sample_handles.isEmpty() && this.is_playing) {
-            this.stop()
-            return
-        }
+    fun write_empty_chunk() {
+        val use_bytes = ByteArray(this.buffer_size_in_bytes) { _ -> 0 }
+        this.audioTrack.write(use_bytes, 0, use_bytes.size, AudioTrack.WRITE_BLOCKING)
+    }
 
-        var use_bytes = ByteArray(this.buffer_size_in_bytes) { _ -> 0 }
+    fun write_next_chunk() {
+        val use_bytes = ByteArray(this.buffer_size_in_bytes) { _ -> 0 }
         val kill_handles = mutableSetOf<Int>()
         var cut_point: Int? = null
 
@@ -280,6 +255,7 @@ class AudioTrackHandle() {
                     }
                 }
             }
+
             if (volume_left_d > 0) {
                 left = (left.toFloat() / volume_left_d.toFloat()).toInt().toShort()
             }
@@ -296,12 +272,15 @@ class AudioTrackHandle() {
             }
         }
 
-        val audioTrack = this.audioTrack
-        //if (cut_point != null) {
-        //    use_bytes = ByteArray(cut_point) { i -> use_bytes[i] }
-        //}
 
-        audioTrack.write(use_bytes, 0, use_bytes.size, AudioTrack.WRITE_BLOCKING)
+        val audioTrack = this.audioTrack
+
+       audioTrack.write(use_bytes, 0, use_bytes.size, AudioTrack.WRITE_BLOCKING)
+
+        if (cut_point != null) {
+            this.is_playing = false
+        }
+
         //if (audioTrack != null && audioTrack.state != AudioTrack.STATE_UNINITIALIZED) {
         //    try {
         //    } catch (e: IllegalStateException) {
@@ -309,15 +288,18 @@ class AudioTrackHandle() {
         //    }
         //}
 
-        if (kill_handles.size >= this.sample_handles.size) {
-            Log.d("AAA","SHORTED")
-            this.stop()
-        }
-
-
         for (key in kill_handles) {
             this.remove_sample_handle(key)
         }
+    }
+
+    fun write_loop() {
+        this.is_playing = true
+        this.audioTrack.play()
+        while (this.is_playing) {
+            this.write_next_chunk()
+        }
+        this.audioTrack.stop()
     }
 }
 
@@ -479,7 +461,11 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
         this.preset_channel_map[event.channel] = event.program
     }
 
-    override fun onAllSoundOff(event: AllSoundOff) { }
+    override fun onAllSoundOff(event: AllSoundOff) {
+        for ((key, handle) in this.active_handle_keys.filterKeys { k -> k.second == event.channel }) {
+            this.kill_note(key.first, key.second)
+        }
+    }
 
     fun gen_sample_handles(event: NoteOn, preset: Preset): Set<SampleHandle> {
         val output = mutableSetOf<SampleHandle>()

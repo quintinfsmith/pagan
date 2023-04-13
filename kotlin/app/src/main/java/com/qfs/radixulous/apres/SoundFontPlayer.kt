@@ -11,8 +11,15 @@ import kotlin.math.pow
 import kotlin.math.sqrt
 
 class Locker() {
+    companion object {
+        var locker_id_gen = 0 // Used for debug
+        fun new_locker_id(): Int {
+            return locker_id_gen++
+        }
+    }
     var gen_value = 0
     var lock_value = 0
+    var locker_id = Locker.new_locker_id()
     private val max_value = 0xFFFFFFFF
 
     fun pick_number(): Int {
@@ -33,6 +40,7 @@ class Locker() {
 
     fun release() {
         this.lock_value += 1
+
     }
 }
 
@@ -115,49 +123,11 @@ class AudioTrackHandle() {
         if (this.is_playing) {
             return
         }
+
         thread {
             this.write_loop()
         }
 
-        // TODO: Implement vol_env attack/hold/decay/sustain
-        // this.in_attack_hold_decay = true
-        // var curve = mutableListOf<Double>()
-        // curve.add(
-        //     this.sample_right.vol_env_delay ?: this.instrument.vol_env_delay ?: 0.toDouble()
-        // )
-        // curve.add(
-        //     this.sample_right.vol_env_attack ?: this.instrument.vol_env_attack ?: 0.toDouble()
-        // )
-        // curve.add(
-        //     this.sample_right.vol_env_hold ?: this.instrument.vol_env_hold ?: 0.toDouble()
-        // )
-        // var vol_env_sustain = this.sample_right.vol_env_sustain ?: this.instrument.vol_env_sustain
-        // if (vol_env_sustain != null && vol_env_sustain > 0) {
-        //     curve.add(
-        //         this.sample_right.vol_env_decay ?: this.instrument.vol_env_decay ?: 0.toDouble()
-        //     )
-        // }
-        // var volume_curve = mutableListOf<Float>(this.volume)
-        // var time_curve = mutableListOf<Float>(0F)
-        // var total = 0f
-        // for (v in curve) {
-        //     if (v == 0.toDouble()) {
-        //         continue
-        //     }
-        //     total += v.toFloat()
-        //     volume_curve.add(this.volume) // For now, don't actually attenuate
-        //     time_curve.add(total)
-        // }
-
-
-       //     val config = VolumeShaper.Configuration.Builder()
-       //         //.setCurve(time_curve.toFloatArray(), volume_curve.toFloatArray())
-       //         .setCurve(floatArrayOf(0f, 1f), floatArrayOf(this.volume, this.volume))
-       //         .setInterpolatorType(VolumeShaper.Configuration.INTERPOLATOR_TYPE_LINEAR)
-       //         .build()
-
-       //     this.volumeShaper = this.audioTrack!!.createVolumeShaper(config)
-       //     this.volumeShaper!!.apply(VolumeShaper.Operation.PLAY)
     }
 
     // Generate a sample handle key
@@ -182,15 +152,12 @@ class AudioTrackHandle() {
     }
 
     fun add_sample_handles(handles: Set<SampleHandle>): Set<Int> {
-        var try_play = this.sample_handles.isEmpty()
         var output = mutableSetOf<Int>()
         for (handle in handles) {
             output.add(this.add_sample_handle(handle))
         }
 
-        if (try_play) {
-            this.play()
-        }
+        this.play()
 
         return output
     }
@@ -540,7 +507,7 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
     }
 
     override fun onAllSoundOff(event: AllSoundOff) {
-        var to_kill = mutableListOf<Int>()
+        val to_kill = mutableListOf<Int>()
         this.handle_locker.enter_queue()
         for ((key, _) in this.active_handle_keys.filterKeys { k -> k.second == event.channel }) {
             to_kill.add(key.first)

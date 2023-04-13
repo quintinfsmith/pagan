@@ -6,7 +6,9 @@ import android.util.Log
 import com.qfs.radixulous.apres.riffreader.toUInt
 import kotlin.concurrent.thread
 import kotlin.experimental.and
+import kotlin.math.abs
 import kotlin.math.pow
+import kotlin.math.sqrt
 
 class Locker() {
     var gen_value = 0
@@ -35,6 +37,9 @@ class Locker() {
 }
 
 class AudioTrackHandle() {
+    companion object {
+        val sample_rate = 44100
+    }
     class Listener(private var handle: AudioTrackHandle): AudioTrack.OnPlaybackPositionUpdateListener {
         override fun onMarkerReached(p0: AudioTrack?) {
             //
@@ -46,7 +51,6 @@ class AudioTrackHandle() {
         }
     }
 
-    private var sample_rate = 22050
     private var buffer_size_in_bytes: Int
     private var buffer_size_in_frames: Int
     private var chunk_size_in_frames: Int
@@ -64,7 +68,7 @@ class AudioTrackHandle() {
     init {
         Log.d("AAA", "AudioTrackHandle Init() Start")
         this.buffer_size_in_bytes = AudioTrack.getMinBufferSize(
-            this.sample_rate,
+            AudioTrackHandle.sample_rate,
             AudioFormat.ENCODING_PCM_16BIT,
             AudioFormat.CHANNEL_OUT_STEREO
         ) * 2
@@ -87,7 +91,7 @@ class AudioTrackHandle() {
             .setAudioFormat(
                 AudioFormat.Builder()
                     .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                    .setSampleRate(this.sample_rate)
+                    .setSampleRate(AudioTrackHandle.sample_rate)
                     .setChannelMask(AudioFormat.CHANNEL_OUT_STEREO)
                     .build()
             )
@@ -215,11 +219,8 @@ class AudioTrackHandle() {
         this.sample_locker.release()
 
         for (x in 0 until this.buffer_size_in_frames) {
-            var left: Short = 0
-            var right: Short = 0
-            // TODO: straight division of volume is too naive
-            var volume_left_d = 0
-            var volume_right_d = 0
+            var left_values = mutableListOf<Short>()
+            var right_values = mutableListOf<Short>()
             for ((key, sample_handle) in sample_handles) {
                 if (key in kill_handles) {
                     continue
@@ -237,56 +238,72 @@ class AudioTrackHandle() {
                 // TODO: Implement ROM stereo modes
                 when (sample_handle.stereo_mode and 7) {
                     1 -> { // mono
-                        left = (left + v).toShort()
-                        right = (right + v).toShort()
-                        volume_left_d += 1
-                        volume_right_d += 1
+                        left_values.add(v)
+                        right_values.add(v)
                     }
                     2 -> { // right
-                        right = (right + v).toShort()
-                        volume_right_d += 1
+                        right_values.add(v)
                     }
                     4 -> { // left
-                        left = (left + v).toShort()
-                        volume_left_d += 1
+                        left_values.add(v)
                     }
-                    else -> {
-
-                    }
+                    else -> { }
                 }
             }
 
-            if (volume_left_d > 0) {
-                left = (left.toFloat() / volume_left_d.toFloat()).toInt().toShort()
-            }
-            if (volume_right_d > 0) {
-                right = (right.toFloat() / volume_right_d.toFloat()).toInt().toShort()
-            }
+            //if (volume_left_d > 1) {
+            //    //left = (sqrt((left.toDouble() / 32768.toDouble()) / volume_left_d.toDouble()) * 32768.toDouble()).toInt()
+
+
+            //    left = (sqrt(((left.toDouble() / 32768.toDouble()) - .5)/ (volume_left_d.toDouble() - .5)) * 32768.toDouble()).toInt()
+            //    left += if (left > 0) {
+            //        16384
+            //    } else {
+            //        -16384
+            //    }
+
+            //    // Naive
+            //    //left = (left.toFloat() / volume_left_d.toFloat()).toInt()
+            //}
+            //if (volume_right_d > 1) {
+            //    //right = (sqrt((right.toDouble() / 32768.toDouble()) / volume_right_d.toDouble()) * 32768.toDouble()).toInt()
+
+            //    right = (sqrt(((right.toDouble() / 32768.toDouble()) - .5)/ (volume_right_d.toDouble() - .5)) * 32768.toDouble()).toInt()
+            //    right += if (right > 0) {
+            //        16384
+            //    } else {
+            //        -16384
+            //    }
+
+            //    //Naive
+            //    //right = (right.toFloat() / volume_right_d.toFloat()).toInt()
+            //}
 
             if (cut_point == null) {
+                var right = right_values.average().toInt()
+                var left = left_values.average().toInt()
                 use_bytes[(4 * x)] = (right and 0xFF).toByte()
-                use_bytes[(4 * x) + 1] = ((toUInt(right) and 0xFF00) shr 8).toByte()
+                use_bytes[(4 * x) + 1] = ((right and 0xFF00) shr 8).toByte()
 
                 use_bytes[(4 * x) + 2] = (left and 0xFF).toByte()
-                use_bytes[(4 * x) + 3] = ((toUInt(left) and 0xFF00) shr 8).toByte()
+                use_bytes[(4 * x) + 3] = ((left and 0xFF00) shr 8).toByte()
             }
         }
 
 
-        val audioTrack = this.audioTrack
 
-       audioTrack.write(use_bytes, 0, use_bytes.size, AudioTrack.WRITE_BLOCKING)
+        if (this.audioTrack.state != AudioTrack.STATE_UNINITIALIZED) {
+            try {
+                this.audioTrack.write(use_bytes, 0, use_bytes.size, AudioTrack.WRITE_BLOCKING)
+            } catch (e: IllegalStateException) {
+                // Shouldn't need to do anything. the audio track was released and this should stop on its own
+            }
+        }
 
         if (cut_point != null) {
             this.is_playing = false
         }
 
-        //if (audioTrack != null && audioTrack.state != AudioTrack.STATE_UNINITIALIZED) {
-        //    try {
-        //    } catch (e: IllegalStateException) {
-        //        // Shouldn't need to do anything. the audio track was released and this should stop on its own
-        //    }
-        //}
 
         for (key in kill_handles) {
             this.remove_sample_handle(key)
@@ -312,6 +329,7 @@ enum class SamplePhase {
 }
 
 class SampleHandle(var event: NoteOn, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset) {
+
     var pitch_shift: Float = 1F
     var current_position: Int = 0
     val loop_points: Pair<Int, Int>?
@@ -331,8 +349,8 @@ class SampleHandle(var event: NoteOn, sample: InstrumentSample, instrument: Pres
             this.pitch_shift = requiredPitch / original_pitch
         }
 
-        if (sample.sample!!.sampleRate != 22050) {
-            this.pitch_shift *= (22050F / sample.sample!!.sampleRate.toFloat())
+        if (sample.sample!!.sampleRate != AudioTrackHandle.sample_rate) {
+            this.pitch_shift *= (sample.sample!!.sampleRate.toFloat() / AudioTrackHandle.sample_rate.toFloat())
         }
 
         this.data = this.resample(sample.sample!!.data)
@@ -400,7 +418,7 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
     private val loaded_presets = HashMap<Pair<Int, Int>, Preset>()
     private val audio_track_handle = AudioTrackHandle()
     private val active_handle_keys = HashMap<Pair<Int, Int>, Set<Int>>()
-
+    private val handle_locker = Locker()
     init {
         this.loaded_presets[Pair(0, 0)] = this.soundFont.get_preset(0, 0)
         this.loaded_presets[Pair(128, 0)] = this.soundFont.get_preset(0,128)
@@ -423,6 +441,7 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
 
     private fun kill_note(note: Int, channel: Int) {
         var keys = this.active_handle_keys.remove(Pair(note, channel)) ?: return
+
         for (key in keys) {
             this.audio_track_handle.remove_sample_handle(key)
         }
@@ -462,8 +481,13 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
     }
 
     override fun onAllSoundOff(event: AllSoundOff) {
+        var to_kill = mutableListOf<Int>()
         for ((key, handle) in this.active_handle_keys.filterKeys { k -> k.second == event.channel }) {
-            this.kill_note(key.first, key.second)
+            to_kill.add(key.first)
+        }
+
+        for (note in to_kill) {
+            this.kill_note(note, event.channel)
         }
     }
 

@@ -38,7 +38,7 @@ class Locker() {
 
 class AudioTrackHandle() {
     companion object {
-        val sample_rate = 44100
+        const val sample_rate = 44100
     }
     class Listener(private var handle: AudioTrackHandle): AudioTrack.OnPlaybackPositionUpdateListener {
         override fun onMarkerReached(p0: AudioTrack?) {
@@ -64,6 +64,8 @@ class AudioTrackHandle() {
     private val maxkey = 0xFFFFFFFF
 
     private var is_playing = false
+
+    private var volume_divisor = 3
 
     init {
         Log.d("AAA", "AudioTrackHandle Init() Start")
@@ -102,6 +104,11 @@ class AudioTrackHandle() {
         //this.audioTrack.setPlaybackPositionUpdateListener( playbacklistener )
 
         //this.audioTrack.positionNotificationPeriod = this.buffer_size_in_frames
+    }
+
+    fun set_volume_divisor(n: Int) {
+        this.volume_divisor = n
+        println("NEW DIVISOR = $n")
     }
 
     private fun play() {
@@ -218,6 +225,23 @@ class AudioTrackHandle() {
         var sample_handles = this.sample_handles.toList()
         this.sample_locker.release()
 
+        var left_sample_count = 0
+        var right_sample_count = 0
+        // count samples before to keep volume consistent
+        for ((key, sample_handle) in sample_handles) {
+            when (sample_handle.stereo_mode and 7) {
+                1 -> {
+                    left_sample_count += 1
+                    right_sample_count += 1
+                }
+                2 -> {
+                    right_sample_count += 1
+                }
+                4 -> {
+                    left_sample_count += 1
+                }
+            }
+        }
         for (x in 0 until this.buffer_size_in_frames) {
             var left_values = mutableListOf<Short>()
             var right_values = mutableListOf<Short>()
@@ -280,8 +304,9 @@ class AudioTrackHandle() {
             //}
 
             if (cut_point == null) {
-                var right = right_values.average().toInt()
-                var left = left_values.average().toInt()
+                var right = right_values.sum() / volume_divisor
+                var left = left_values.sum() / volume_divisor
+
                 use_bytes[(4 * x)] = (right and 0xFF).toByte()
                 use_bytes[(4 * x) + 1] = ((right and 0xFF00) shr 8).toByte()
 
@@ -419,6 +444,7 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
     private val audio_track_handle = AudioTrackHandle()
     private val active_handle_keys = HashMap<Pair<Int, Int>, Set<Int>>()
     private val handle_locker = Locker()
+
     init {
         this.loaded_presets[Pair(0, 0)] = this.soundFont.get_preset(0, 0)
         this.loaded_presets[Pair(128, 0)] = this.soundFont.get_preset(0,128)
@@ -482,7 +508,7 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
 
     override fun onAllSoundOff(event: AllSoundOff) {
         var to_kill = mutableListOf<Int>()
-        for ((key, handle) in this.active_handle_keys.filterKeys { k -> k.second == event.channel }) {
+        for ((key, _) in this.active_handle_keys.filterKeys { k -> k.second == event.channel }) {
             to_kill.add(key.first)
         }
 
@@ -508,6 +534,11 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
             }
         }
         return output
+    }
+
+    fun set_active_line_count(n: Int) {
+        Log.d("CCC", "$n DIVISORS")
+        this.audio_track_handle.set_volume_divisor(n)
     }
 }
 

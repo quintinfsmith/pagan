@@ -921,6 +921,7 @@ class MainFragment : TempNameFragment() {
                                 rvLineLabels_adapter.addLineLabel()
                             }
                         }
+                        main.midi_playback_device.set_active_line_count(opus_manager.line_count())
                     }
 
                     UpdateFlag.Clear -> {

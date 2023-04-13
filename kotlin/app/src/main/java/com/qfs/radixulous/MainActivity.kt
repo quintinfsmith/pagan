@@ -37,7 +37,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
 
     private lateinit var midi_controller: MIDIController
-    private lateinit var midi_playback_device: MIDIPlaybackDevice
+    lateinit var midi_playback_device: MIDIPlaybackDevice
     private var midi_input_device = VirtualMIDIDevice()
     private var midi_player = MIDIPlayer()
     private var midi_scroller = MIDIScroller(this)

@@ -352,7 +352,7 @@ class MainActivity : AppCompatActivity() {
 
         this@MainActivity.runOnUiThread {
             this.midi_input_device.sendEvent(NoteOn(midi_channel, note, 64))
-            Thread.sleep(100)
+            Thread.sleep(250)
             this.midi_input_device.sendEvent(NoteOff(midi_channel, note, 64))
         }
     }

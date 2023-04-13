@@ -195,7 +195,6 @@ class AudioTrackHandle() {
         return output
     }
 
-
     fun remove_sample_handle(key: Int) {
         this.sample_locker.enter_queue()
         var handle = this.sample_handles.remove(key)
@@ -222,14 +221,14 @@ class AudioTrackHandle() {
         var cut_point: Int? = null
 
         this.sample_locker.enter_queue()
-        var sample_handles = this.sample_handles.toList()
+        val sample_handles = this.sample_handles.toList()
         this.sample_locker.release()
 
         var left_sample_count = 0
         var right_sample_count = 0
         // count samples before to keep volume consistent
-        for ((key, sample_handle) in sample_handles) {
-            when (sample_handle.stereo_mode and 7) {
+        for ((_, sample_handle) in sample_handles) {
+            when (sample_handle.stereo_mode and 0b0111) {
                 1 -> {
                     left_sample_count += 1
                     right_sample_count += 1
@@ -242,16 +241,16 @@ class AudioTrackHandle() {
                 }
             }
         }
+
         for (x in 0 until this.buffer_size_in_frames) {
-            var left_values = mutableListOf<Short>()
-            var right_values = mutableListOf<Short>()
+            val left_values = mutableListOf<Short>()
+            val right_values = mutableListOf<Short>()
             for ((key, sample_handle) in sample_handles) {
                 if (key in kill_handles) {
                     continue
                 }
                 val v: Short? = sample_handle.get_next_frame()
                 if (v == null) {
-                    Log.d("AAA", "Killing $key")
                     kill_handles.add(key)
                     if (kill_handles.size == sample_handles.size && cut_point == null) {
                         cut_point = x
@@ -275,37 +274,9 @@ class AudioTrackHandle() {
                 }
             }
 
-            //if (volume_left_d > 1) {
-            //    //left = (sqrt((left.toDouble() / 32768.toDouble()) / volume_left_d.toDouble()) * 32768.toDouble()).toInt()
-
-
-            //    left = (sqrt(((left.toDouble() / 32768.toDouble()) - .5)/ (volume_left_d.toDouble() - .5)) * 32768.toDouble()).toInt()
-            //    left += if (left > 0) {
-            //        16384
-            //    } else {
-            //        -16384
-            //    }
-
-            //    // Naive
-            //    //left = (left.toFloat() / volume_left_d.toFloat()).toInt()
-            //}
-            //if (volume_right_d > 1) {
-            //    //right = (sqrt((right.toDouble() / 32768.toDouble()) / volume_right_d.toDouble()) * 32768.toDouble()).toInt()
-
-            //    right = (sqrt(((right.toDouble() / 32768.toDouble()) - .5)/ (volume_right_d.toDouble() - .5)) * 32768.toDouble()).toInt()
-            //    right += if (right > 0) {
-            //        16384
-            //    } else {
-            //        -16384
-            //    }
-
-            //    //Naive
-            //    //right = (right.toFloat() / volume_right_d.toFloat()).toInt()
-            //}
-
             if (cut_point == null) {
-                var right = right_values.sum() / volume_divisor
-                var left = left_values.sum() / volume_divisor
+                val right = right_values.sum() / volume_divisor
+                val left = left_values.sum() / volume_divisor
 
                 use_bytes[(4 * x)] = (right and 0xFF).toByte()
                 use_bytes[(4 * x) + 1] = ((right and 0xFF00) shr 8).toByte()
@@ -314,8 +285,6 @@ class AudioTrackHandle() {
                 use_bytes[(4 * x) + 3] = ((left and 0xFF00) shr 8).toByte()
             }
         }
-
-
 
         if (this.audioTrack.state != AudioTrack.STATE_UNINITIALIZED) {
             try {
@@ -328,7 +297,6 @@ class AudioTrackHandle() {
         if (cut_point != null) {
             this.is_playing = false
         }
-
 
         for (key in kill_handles) {
             this.remove_sample_handle(key)
@@ -357,14 +325,21 @@ class SampleHandle(var event: NoteOn, sample: InstrumentSample, instrument: Pres
 
     var pitch_shift: Float = 1F
     var current_position: Int = 0
+    var decay_position: Int? = null
     val loop_points: Pair<Int, Int>?
     var data: ByteArray
-    var phase_map = HashMap<SamplePhase, Pair<Int, Int>>()
+    var current_phase = SamplePhase.Delay
     var stereo_mode: Int
     var is_pressed = true
+    var delay_frames: Int = 0
+    var current_delay_position: Int = 0
+    var attack_frames: Int = 0
+    var decay_frames: Int = 0
+    var sustain_frames: Int = 0
+    var release_mask: Array<Double>
+    var current_release_position: Int = 0
 
     init {
-        println("SAMPLE: ${sample.sample!!.name} R: ${sample.sample!!.sampleRate}")
         val original_note = sample.root_key ?: sample.sample!!.originalPitch
         if (original_note != 255) {
             val original_pitch = 2F.pow(original_note.toFloat() / 12F)
@@ -379,7 +354,6 @@ class SampleHandle(var event: NoteOn, sample: InstrumentSample, instrument: Pres
         }
 
         this.data = this.resample(sample.sample!!.data)
-        println("DATA: ${this.data.size}")
 
         this.stereo_mode = sample.sample!!.sampleType
         this.loop_points = if (sample.sampleMode == null || sample.sampleMode!! and 1 == 1) {
@@ -390,6 +364,36 @@ class SampleHandle(var event: NoteOn, sample: InstrumentSample, instrument: Pres
         } else {
             null
         }
+
+        this.delay_frames = ((AudioTrackHandle.sample_rate.toDouble() * (sample.vol_env_delay ?: instrument.vol_env_delay ?: 0.0)) / 1000.0).toInt()
+        this.delay_frames /= 4
+        if (this.delay_frames == 0) {
+            this.current_phase = SamplePhase.Attack
+        }
+        this.attack_frames = ((AudioTrackHandle.sample_rate.toDouble() * (sample.vol_env_attack ?: instrument.vol_env_attack ?: 0.0)) / 1000.0).toInt()
+        this.attack_frames /= 4
+        if (this.current_phase == SamplePhase.Attack && this.attack_frames == 0) {
+            this.current_phase = SamplePhase.Decay
+        }
+
+        this.decay_frames = ((AudioTrackHandle.sample_rate.toDouble() * (sample.vol_env_decay ?: instrument.vol_env_decay ?: 0.0)) / 1000.0).toInt()
+        this.decay_frames /= 4
+        if (this.current_phase == SamplePhase.Decay && this.decay_frames == 0) {
+            this.current_phase = SamplePhase.Sustain
+        }
+
+        // TODO: Sustain may not work the way i'm thinking. doesn't seem to make sense, but I'll come back to it
+        this.sustain_frames = ((AudioTrackHandle.sample_rate.toDouble() * (sample.vol_env_sustain ?: instrument.vol_env_sustain ?: 0.0)) / 1000.0).toInt()
+        this.sustain_frames /= 4
+
+        var release_mask_size = ((AudioTrackHandle.sample_rate.toDouble() * (sample.vol_env_release ?: instrument.vol_env_release ?: 0.0)) / 1000.0).toInt()
+        release_mask_size /= 4
+        println("RELEASE MASK: $release_mask_size")
+        this.release_mask = Array(release_mask_size) {
+            i -> (release_mask_size - i - 1).toDouble() / release_mask_size.toDouble()
+        }
+
+        this.current_release_position = 0
     }
 
     fun resample(sample_data: ByteArray): ByteArray {
@@ -414,6 +418,12 @@ class SampleHandle(var event: NoteOn, sample: InstrumentSample, instrument: Pres
     }
 
     fun get_next_frame(): Short? {
+        if (this.current_delay_position < this.delay_frames) {
+            var output = 0.toShort()
+            this.current_delay_position += 1
+            return output
+        }
+
         if (this.current_position > this.data.size - 2) {
             return null
         }
@@ -423,7 +433,15 @@ class SampleHandle(var event: NoteOn, sample: InstrumentSample, instrument: Pres
         var frame: Short = (a + b).toShort()
 
         this.current_position += 2
-        if (this.loop_points != null && this.is_pressed) {
+
+        if (! this.is_pressed) {
+            if (this.current_release_position < this.release_mask.size) {
+                frame = (frame * this.release_mask[this.current_release_position]).toInt().toShort()
+                this.current_release_position += 1
+            } else {
+                return null
+            }
+        } else if (this.loop_points != null) {
             if (this.current_position >= this.loop_points.second) {
                 this.current_position = this.loop_points.first
             }
@@ -434,6 +452,7 @@ class SampleHandle(var event: NoteOn, sample: InstrumentSample, instrument: Pres
 
     fun release_note() {
         this.is_pressed = false
+        this.current_phase = SamplePhase.Release
     }
 }
 
@@ -459,14 +478,26 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
     }
 
     private fun release_note(note: Int, channel: Int) {
-        var keys = this.active_handle_keys[Pair(note, channel)] ?: return
+        this.handle_locker.enter_queue()
+        var keys = this.active_handle_keys[Pair(note, channel)]
+        this.handle_locker.release()
+
+        if (keys == null) {
+            return
+        }
+
         for (key in keys) {
             this.audio_track_handle.release_sample_handle(key)
         }
     }
 
     private fun kill_note(note: Int, channel: Int) {
-        var keys = this.active_handle_keys.remove(Pair(note, channel)) ?: return
+        this.handle_locker.enter_queue()
+        var keys = this.active_handle_keys.remove(Pair(note, channel))
+        this.handle_locker.release()
+        if (keys == null) {
+            return
+        }
 
         for (key in keys) {
             this.audio_track_handle.remove_sample_handle(key)
@@ -482,7 +513,9 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
         }
 
         val preset = this.loaded_presets[Pair(bank, this.get_channel_preset(event.channel))]!!
+        this.handle_locker.enter_queue()
         this.active_handle_keys[Pair(event.note, event.channel)] = this.audio_track_handle.add_sample_handles(this.gen_sample_handles(event, preset))
+        this.handle_locker.release()
     }
 
     override fun onNoteOn(event: NoteOn) {
@@ -508,9 +541,11 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
 
     override fun onAllSoundOff(event: AllSoundOff) {
         var to_kill = mutableListOf<Int>()
+        this.handle_locker.enter_queue()
         for ((key, _) in this.active_handle_keys.filterKeys { k -> k.second == event.channel }) {
             to_kill.add(key.first)
         }
+        this.handle_locker.release()
 
         for (note in to_kill) {
             this.kill_note(note, event.channel)
@@ -537,7 +572,6 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
     }
 
     fun set_active_line_count(n: Int) {
-        Log.d("CCC", "$n DIVISORS")
         this.audio_track_handle.set_volume_divisor(n)
     }
 }

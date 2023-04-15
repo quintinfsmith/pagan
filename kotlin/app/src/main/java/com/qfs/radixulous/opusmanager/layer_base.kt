@@ -850,11 +850,17 @@ open class OpusManagerBase {
         val opus = OpusTree<Set<OpusEvent>>()
         opus.set_size(beat_values.size)
 
+        var overflow_events = mutableSetOf<OpusEvent>()
         beat_values.forEachIndexed { i, beat_tree ->
 
             // Quantize the beat ////////////
             var quantized_tree = OpusTree<Set<OpusEvent>>()
             quantized_tree.set_size(beat_tree.size)
+
+            if (overflow_events.isNotEmpty()) {
+                quantized_tree.get(0).set_event(overflow_events.toSet())
+                overflow_events = mutableSetOf()
+            }
 
             // Can easily merge quantized positions since the beats are still flat
             var qmap = beat_tree.get_quantization_map(listOf(2,2,2,3,5,7))
@@ -866,7 +872,22 @@ open class OpusManagerBase {
                         new_event_set.add(e)
                     }
                 }
-                quantized_tree.get(new_position).set_event(new_event_set.toSet())
+
+                if (new_position == quantized_tree.size) {
+                    if (i < beat_values.size - 1) {
+                        for (e in new_event_set) {
+                            overflow_events.add(e)
+                        }
+                    }
+                } else {
+                    if (quantized_tree.get(new_position).is_event()) {
+                        for (e in quantized_tree.get(new_position).get_event()!!) {
+                            new_event_set.add(e)
+                        }
+                    }
+
+                    quantized_tree.get(new_position).set_event(new_event_set.toSet())
+                }
             }
             /////////////////////////////////////
 

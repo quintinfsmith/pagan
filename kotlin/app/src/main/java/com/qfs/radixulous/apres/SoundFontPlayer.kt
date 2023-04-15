@@ -2,13 +2,10 @@ package com.qfs.radixulous.apres
 
 import android.content.Context
 import android.media.*
-import android.util.Log
 import com.qfs.radixulous.apres.riffreader.toUInt
 import kotlin.concurrent.thread
-import kotlin.experimental.and
 import kotlin.math.abs
 import kotlin.math.pow
-import kotlin.math.sqrt
 
 class Locker() {
     companion object {
@@ -72,16 +69,16 @@ class AudioTrackHandle() {
     private val maxkey = 0xFFFFFFFF
 
     private var is_playing = false
+    private var stop_called_from_write = false // play *may*  be called between a write_next_chunk() finding an incomplete chunk and finishing the call
 
     private var volume_divisor = 3
 
     init {
-        Log.d("AAA", "AudioTrackHandle Init() Start")
         this.buffer_size_in_bytes = AudioTrack.getMinBufferSize(
             AudioTrackHandle.sample_rate,
             AudioFormat.ENCODING_PCM_16BIT,
             AudioFormat.CHANNEL_OUT_STEREO
-        ) * 2
+        )
 
         //while (this.buffer_size_in_bytes < this.sample_rate) {
         //    this.buffer_size_in_bytes *= 2
@@ -116,13 +113,14 @@ class AudioTrackHandle() {
 
     fun set_volume_divisor(n: Int) {
         this.volume_divisor = n
-        println("NEW DIVISOR = $n")
     }
 
-    private fun play() {
+    fun play() {
+        this.stop_called_from_write = false
         if (this.is_playing) {
             return
         }
+        this.is_playing = true
 
         thread {
             this.write_loop()
@@ -143,7 +141,6 @@ class AudioTrackHandle() {
     }
 
     fun add_sample_handle(handle: SampleHandle): Int {
-        Log.d("AAA", "ADDing SampleHandle $handle")
         this.sample_locker.enter_queue()
         var newkey = this.genkey()
         this.sample_handles[newkey] = handle
@@ -157,7 +154,6 @@ class AudioTrackHandle() {
             output.add(this.add_sample_handle(handle))
         }
 
-        this.play()
 
         return output
     }
@@ -165,13 +161,10 @@ class AudioTrackHandle() {
     fun remove_sample_handle(key: Int) {
         this.sample_locker.enter_queue()
         var handle = this.sample_handles.remove(key)
-        Log.d("AAA", "Removing ${handle?.event?.note}/${handle?.event?.channel}")
-        Log.d("AAA", "Remaining handles: ${this.sample_handles.size}")
         this.sample_locker.release()
     }
 
     fun release_sample_handle(key: Int) {
-        Log.d("AAA", "Releasing $key")
         this.sample_locker.enter_queue()
         this.sample_handles[key]?.release_note()
         this.sample_locker.release()
@@ -187,28 +180,10 @@ class AudioTrackHandle() {
         val kill_handles = mutableSetOf<Int>()
         var cut_point: Int? = null
 
+
         this.sample_locker.enter_queue()
-        val sample_handles = this.sample_handles.toList()
+        var sample_handles = this.sample_handles.toList()
         this.sample_locker.release()
-
-        var left_sample_count = 0
-        var right_sample_count = 0
-        // count samples before to keep volume consistent
-        for ((_, sample_handle) in sample_handles) {
-            when (sample_handle.stereo_mode and 0b0111) {
-                1 -> {
-                    left_sample_count += 1
-                    right_sample_count += 1
-                }
-                2 -> {
-                    right_sample_count += 1
-                }
-                4 -> {
-                    left_sample_count += 1
-                }
-            }
-        }
-
         for (x in 0 until this.buffer_size_in_frames) {
             val left_values = mutableListOf<Short>()
             val right_values = mutableListOf<Short>()
@@ -220,6 +195,7 @@ class AudioTrackHandle() {
                 if (v == null) {
                     kill_handles.add(key)
                     if (kill_handles.size == sample_handles.size && cut_point == null) {
+                        this.stop_called_from_write = true
                         cut_point = x
                     }
                     continue
@@ -261,17 +237,17 @@ class AudioTrackHandle() {
             }
         }
 
-        if (cut_point != null) {
-            this.is_playing = false
-        }
-
         for (key in kill_handles) {
             this.remove_sample_handle(key)
         }
+
+        if (this.stop_called_from_write) {
+            this.is_playing = false
+        }
+
     }
 
     fun write_loop() {
-        this.is_playing = true
         this.audioTrack.play()
         while (this.is_playing) {
             this.write_next_chunk()
@@ -289,7 +265,6 @@ enum class SamplePhase {
 }
 
 class SampleHandle(var event: NoteOn, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset) {
-
     var pitch_shift: Float = 1F
     var current_position: Int = 0
     var decay_position: Int? = null
@@ -305,6 +280,8 @@ class SampleHandle(var event: NoteOn, sample: InstrumentSample, instrument: Pres
     var sustain_frames: Int = 0
     var release_mask: Array<Double>
     var current_release_position: Int = 0
+
+    var chunk_volume_average: Int? = null
 
     init {
         val original_note = sample.root_key ?: sample.sample!!.originalPitch
@@ -354,8 +331,8 @@ class SampleHandle(var event: NoteOn, sample: InstrumentSample, instrument: Pres
         this.sustain_frames /= 4
 
         var release_mask_size = ((AudioTrackHandle.sample_rate.toDouble() * (sample.vol_env_release ?: instrument.vol_env_release ?: 0.0)) / 1000.0).toInt()
+        //var release_mask_size = ((AudioTrackHandle.sample_rate.toDouble() * 500.0) / 1000.0).toInt()
         release_mask_size /= 4
-        println("RELEASE MASK: $release_mask_size")
         this.release_mask = Array(release_mask_size) {
             i -> (release_mask_size - i - 1).toDouble() / release_mask_size.toDouble()
         }
@@ -430,6 +407,8 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
     private val audio_track_handle = AudioTrackHandle()
     private val active_handle_keys = HashMap<Pair<Int, Int>, Set<Int>>()
     private val handle_locker = Locker()
+    private var sample_handle_queue = mutableSetOf<Pair<NoteOn,Set<SampleHandle>>>()
+    private var enqueueing_sample_handles = false
 
     init {
         this.loaded_presets[Pair(0, 0)] = this.soundFont.get_preset(0, 0)
@@ -471,6 +450,29 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
         }
     }
 
+    private fun add_queued_sample_handles() {
+        this.handle_locker.enter_queue()
+        for ((event, sample_handles) in this.sample_handle_queue) {
+            this.active_handle_keys[Pair(event.note, event.channel)] = this.audio_track_handle.add_sample_handles(sample_handles)
+        }
+        this.sample_handle_queue.clear()
+        this.handle_locker.release()
+        this.audio_track_handle.play()
+    }
+
+    private fun enqueue_add_sample_handles(event: NoteOn, sample_handles: Set<SampleHandle>) {
+        this.enqueueing_sample_handles = true
+        this.handle_locker.enter_queue()
+        this.sample_handle_queue.add(Pair(event, sample_handles))
+        this.handle_locker.release()
+        this.enqueueing_sample_handles = false
+        Thread.sleep(5)
+
+        if (! this.enqueueing_sample_handles) {
+            this.add_queued_sample_handles()
+        }
+    }
+
     private fun press_note(event: NoteOn) {
         // TODO: Handle Bank
         val bank = if (event.channel == 9) {
@@ -480,9 +482,7 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
         }
 
         val preset = this.loaded_presets[Pair(bank, this.get_channel_preset(event.channel))]!!
-        this.handle_locker.enter_queue()
-        this.active_handle_keys[Pair(event.note, event.channel)] = this.audio_track_handle.add_sample_handles(this.gen_sample_handles(event, preset))
-        this.handle_locker.release()
+        this.enqueue_add_sample_handles(event, this.gen_sample_handles(event, preset))
     }
 
     override fun onNoteOn(event: NoteOn) {
@@ -498,6 +498,7 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
         if (event.channel == 9) {
             return
         }
+
         val key = Pair(0, event.program)
         if (this.loaded_presets[key] == null) {
             this.loaded_presets[key] = this.soundFont.get_preset(event.program, 0)

@@ -2,6 +2,7 @@ package com.qfs.radixulous.apres
 
 import android.content.Context
 import android.media.*
+import android.util.Log
 import com.qfs.radixulous.apres.riffreader.toUInt
 import kotlin.concurrent.thread
 import kotlin.math.abs
@@ -184,58 +185,65 @@ class AudioTrackHandle() {
         this.sample_locker.enter_queue()
         var sample_handles = this.sample_handles.toList()
         this.sample_locker.release()
-        for (x in 0 until this.buffer_size_in_frames) {
-            val left_values = mutableListOf<Short>()
-            val right_values = mutableListOf<Short>()
-            for ((key, sample_handle) in sample_handles) {
-                if (key in kill_handles) {
-                    continue
-                }
-                val v: Short? = sample_handle.get_next_frame()
-                if (v == null) {
-                    kill_handles.add(key)
-                    if (kill_handles.size == sample_handles.size && cut_point == null) {
-                        this.stop_called_from_write = true
-                        cut_point = x
+
+        if (this.sample_handles.isEmpty()) {
+            this.stop_called_from_write = true
+        } else {
+            for (x in 0 until this.buffer_size_in_frames) {
+                val left_values = mutableListOf<Short>()
+                val right_values = mutableListOf<Short>()
+                for ((key, sample_handle) in sample_handles) {
+                    if (key in kill_handles) {
+                        continue
                     }
-                    continue
+                    val v: Short? = sample_handle.get_next_frame()
+                    if (v == null) {
+                        kill_handles.add(key)
+                        if (kill_handles.size == sample_handles.size && cut_point == null) {
+                            this.stop_called_from_write = true
+                            cut_point = x
+                        }
+                        continue
+                    }
+
+                    // TODO: Implement ROM stereo modes
+                    when (sample_handle.stereo_mode and 7) {
+                        1 -> { // mono
+                            left_values.add(v)
+                            right_values.add(v)
+                        }
+                        2 -> { // right
+                            right_values.add(v)
+                        }
+                        4 -> { // left
+                            left_values.add(v)
+                        }
+                        else -> {}
+                    }
                 }
 
-                // TODO: Implement ROM stereo modes
-                when (sample_handle.stereo_mode and 7) {
-                    1 -> { // mono
-                        left_values.add(v)
-                        right_values.add(v)
-                    }
-                    2 -> { // right
-                        right_values.add(v)
-                    }
-                    4 -> { // left
-                        left_values.add(v)
-                    }
-                    else -> { }
+                if (cut_point == null) {
+                    val right = right_values.sum() / volume_divisor
+                    val left = left_values.sum() / volume_divisor
+                    use_bytes[(4 * x)] = (right and 0xFF).toByte()
+                    use_bytes[(4 * x) + 1] = ((right and 0xFF00) shr 8).toByte()
+
+                    use_bytes[(4 * x) + 2] = (left and 0xFF).toByte()
+                    use_bytes[(4 * x) + 3] = ((left and 0xFF00) shr 8).toByte()
+                } else {
+                    break
                 }
             }
 
-            if (cut_point == null) {
-                val right = right_values.sum() / volume_divisor
-                val left = left_values.sum() / volume_divisor
-
-                use_bytes[(4 * x)] = (right and 0xFF).toByte()
-                use_bytes[(4 * x) + 1] = ((right and 0xFF00) shr 8).toByte()
-
-                use_bytes[(4 * x) + 2] = (left and 0xFF).toByte()
-                use_bytes[(4 * x) + 3] = ((left and 0xFF00) shr 8).toByte()
+            if (this.audioTrack.state != AudioTrack.STATE_UNINITIALIZED) {
+                try {
+                    this.audioTrack.write(use_bytes, 0, use_bytes.size, AudioTrack.WRITE_BLOCKING)
+                } catch (e: IllegalStateException) {
+                    // Shouldn't need to do anything. the audio track was released and this should stop on its own
+                }
             }
         }
 
-        if (this.audioTrack.state != AudioTrack.STATE_UNINITIALIZED) {
-            try {
-                this.audioTrack.write(use_bytes, 0, use_bytes.size, AudioTrack.WRITE_BLOCKING)
-            } catch (e: IllegalStateException) {
-                // Shouldn't need to do anything. the audio track was released and this should stop on its own
-            }
-        }
 
         for (key in kill_handles) {
             this.remove_sample_handle(key)
@@ -249,6 +257,7 @@ class AudioTrackHandle() {
 
     fun write_loop() {
         this.audioTrack.play()
+        var i = 0
         while (this.is_playing) {
             this.write_next_chunk()
         }
@@ -300,11 +309,20 @@ class SampleHandle(var event: NoteOn, sample: InstrumentSample, instrument: Pres
         this.data = this.resample(sample.sample!!.data)
 
         this.stereo_mode = sample.sample!!.sampleType
-        this.loop_points = if (sample.sampleMode == null || sample.sampleMode!! and 1 == 1) {
-            Pair(
-                (sample.sample!!.loopStart.toFloat() / this.pitch_shift).toInt(),
-                (sample.sample!!.loopEnd.toFloat() / this.pitch_shift).toInt()
-            )
+        this.loop_points = if (sample.sampleMode != null && sample.sampleMode!! and 1 == 1) {
+            // Need to be even due to 2-byte words in sample
+            var new_start = (sample.sample!!.loopStart.toFloat() / this.pitch_shift).toInt()
+            if (new_start % 2 == 1) {
+                new_start -= 1
+            }
+
+            var new_end = (sample.sample!!.loopEnd.toFloat() / this.pitch_shift).toInt()
+            if (new_end % 2 == 1) {
+                new_end -= 1
+            }
+
+            Pair(new_start, new_end)
+
         } else {
             null
         }
@@ -331,11 +349,12 @@ class SampleHandle(var event: NoteOn, sample: InstrumentSample, instrument: Pres
         this.sustain_frames /= 4
 
         var release_mask_size = ((AudioTrackHandle.sample_rate.toDouble() * (sample.vol_env_release ?: instrument.vol_env_release ?: 0.0)) / 1000.0).toInt()
-        //var release_mask_size = ((AudioTrackHandle.sample_rate.toDouble() * 500.0) / 1000.0).toInt()
+        //var release_mask_size = ((AudioTrackHandle.sample_rate.toDouble() * 500) / 1000.0).toInt()
         release_mask_size /= 4
         this.release_mask = Array(release_mask_size) {
             i -> (release_mask_size - i - 1).toDouble() / release_mask_size.toDouble()
         }
+        //this.release_mask = Array(1) { i -> 0.toDouble() }
 
         this.current_release_position = 0
     }
@@ -491,6 +510,7 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
     }
 
     override fun onNoteOff(event: NoteOff) {
+        Log.d("XXX", "Note Off: $event")
         this.release_note(event.note, event.channel)
     }
 

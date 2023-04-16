@@ -510,7 +510,6 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
     }
 
     override fun onNoteOff(event: NoteOff) {
-        Log.d("XXX", "Note Off: $event")
         this.release_note(event.note, event.channel)
     }
 

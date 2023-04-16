@@ -265,13 +265,6 @@ class AudioTrackHandle() {
     }
 }
 
-enum class SamplePhase {
-    Delay,
-    Attack,
-    Decay,
-    Sustain,
-    Release
-}
 
 class SampleHandle(var event: NoteOn, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset) {
     var pitch_shift: Float = 1F
@@ -279,18 +272,16 @@ class SampleHandle(var event: NoteOn, sample: InstrumentSample, instrument: Pres
     var decay_position: Int? = null
     val loop_points: Pair<Int, Int>?
     var data: ByteArray
-    var current_phase = SamplePhase.Delay
     var stereo_mode: Int
     var is_pressed = true
     var delay_frames: Int = 0
     var current_delay_position: Int = 0
-    var attack_frames: Int = 0
-    var decay_frames: Int = 0
-    var sustain_frames: Int = 0
+    var attack_byte_count: Int = 0
+    var hold_byte_count: Int = 0
+    var decay_byte_count: Int = 0
+    var sustain_volume: Int = 0 // TODO
     var release_mask: Array<Double>
     var current_release_position: Int = 0
-
-    var chunk_volume_average: Int? = null
 
     init {
         val original_note = sample.root_key ?: sample.sample!!.originalPitch
@@ -327,34 +318,44 @@ class SampleHandle(var event: NoteOn, sample: InstrumentSample, instrument: Pres
             null
         }
 
-        this.delay_frames = ((AudioTrackHandle.sample_rate.toDouble() * (sample.vol_env_delay ?: instrument.vol_env_delay ?: 0.0)) / 1000.0).toInt()
-        this.delay_frames /= 4
-        if (this.delay_frames == 0) {
-            this.current_phase = SamplePhase.Attack
-        }
-        this.attack_frames = ((AudioTrackHandle.sample_rate.toDouble() * (sample.vol_env_attack ?: instrument.vol_env_attack ?: 0.0)) / 1000.0).toInt()
-        this.attack_frames /= 4
-        if (this.current_phase == SamplePhase.Attack && this.attack_frames == 0) {
-            this.current_phase = SamplePhase.Decay
-        }
+        var vol_env_delay: Double = preset.global_zone?.vol_env_delay
+            ?: instrument.instrument?.global_sample?.vol_env_delay
+            ?: instrument.vol_env_delay
+            ?: sample.vol_env_delay
+            ?: 0.0
+        this.delay_frames = ((AudioTrackHandle.sample_rate.toDouble() * vol_env_delay ) / 4.0).toInt()
 
-        this.decay_frames = ((AudioTrackHandle.sample_rate.toDouble() * (sample.vol_env_decay ?: instrument.vol_env_decay ?: 0.0)) / 1000.0).toInt()
-        this.decay_frames /= 4
-        if (this.current_phase == SamplePhase.Decay && this.decay_frames == 0) {
-            this.current_phase = SamplePhase.Sustain
-        }
+        this.attack_byte_count = ((AudioTrackHandle.sample_rate.toDouble() * (sample.vol_env_attack ?: instrument.vol_env_attack ?: 0.0)) / 2.0).toInt()
+        var vol_env_attack: Double = preset.global_zone?.vol_env_attack
+            ?: instrument.instrument?.global_sample?.vol_env_attack
+            ?: instrument.vol_env_attack
+            ?: sample.vol_env_attack
+            ?: 0.0
+        this.attack_byte_count = ((AudioTrackHandle.sample_rate.toDouble() * vol_env_attack ) / 2.0).toInt()
 
-        // TODO: Sustain may not work the way i'm thinking. doesn't seem to make sense, but I'll come back to it
-        this.sustain_frames = ((AudioTrackHandle.sample_rate.toDouble() * (sample.vol_env_sustain ?: instrument.vol_env_sustain ?: 0.0)) / 1000.0).toInt()
-        this.sustain_frames /= 4
+        var vol_env_hold: Double = preset.global_zone?.vol_env_hold
+            ?: instrument.instrument?.global_sample?.vol_env_hold
+            ?: instrument.vol_env_hold
+            ?: sample.vol_env_hold
+            ?: 0.0
+        this.hold_byte_count = ((AudioTrackHandle.sample_rate.toDouble() * vol_env_hold ) / 2.0).toInt()
 
-        var release_mask_size = ((AudioTrackHandle.sample_rate.toDouble() * (sample.vol_env_release ?: instrument.vol_env_release ?: 0.0)) / 1000.0).toInt()
-        //var release_mask_size = ((AudioTrackHandle.sample_rate.toDouble() * 500) / 1000.0).toInt()
-        release_mask_size /= 4
+        var vol_env_decay: Double = preset.global_zone?.vol_env_decay
+            ?: instrument.instrument?.global_sample?.vol_env_decay
+            ?: instrument.vol_env_decay
+            ?: sample.vol_env_decay
+            ?: 0.0
+        this.decay_byte_count = ((AudioTrackHandle.sample_rate.toDouble() * vol_env_decay ) / 2.0).toInt()
+
+        var vol_env_release: Double = preset.global_zone?.vol_env_release
+            ?: instrument.instrument?.global_sample?.vol_env_release
+            ?: instrument.vol_env_release
+            ?: sample.vol_env_release
+            ?: 0.0
+        var release_mask_size = ((AudioTrackHandle.sample_rate.toDouble() * vol_env_release) / 4.0).toInt()
         this.release_mask = Array(release_mask_size) {
             i -> (release_mask_size - i - 1).toDouble() / release_mask_size.toDouble()
         }
-        //this.release_mask = Array(1) { i -> 0.toDouble() }
 
         this.current_release_position = 0
     }
@@ -415,7 +416,6 @@ class SampleHandle(var event: NoteOn, sample: InstrumentSample, instrument: Pres
 
     fun release_note() {
         this.is_pressed = false
-        this.current_phase = SamplePhase.Release
     }
 }
 

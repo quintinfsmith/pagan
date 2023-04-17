@@ -1597,7 +1597,18 @@ class MIDI {
         var working_pair: Pair<Int, MutableList<MIDIEvent>>? = null
         for ((tick, event) in event_pairs) {
             if (working_pair != null && working_pair.first != tick) {
-                output.add(working_pair)
+                output.add(
+                    Pair(
+                        working_pair.first,
+                        working_pair.second.sortedBy {
+                            return@sortedBy when (it) {
+                                is NoteOn -> { 1 }
+                                is NoteOff -> { -1 }
+                                else -> { 0 }
+                            }
+                        }
+                    )
+                )
                 working_pair = Pair(tick, mutableListOf())
             } else if (working_pair == null) {
                 working_pair = Pair(tick, mutableListOf())
@@ -1607,9 +1618,19 @@ class MIDI {
         }
 
         if (working_pair != null) {
-            output.add(working_pair)
+            output.add(
+                Pair(
+                    working_pair.first,
+                    working_pair.second.sortedBy {
+                        return@sortedBy when (it) {
+                            is NoteOn -> { 1 }
+                            is NoteOff -> { -1 }
+                            else -> { 0 }
+                        }
+                    }
+                )
+            )
         }
-
         return output
     }
 }

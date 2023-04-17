@@ -469,29 +469,6 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
         }
     }
 
-    private fun add_queued_sample_handles() {
-        this.handle_locker.enter_queue()
-        for ((event, sample_handles) in this.sample_handle_queue) {
-            this.active_handle_keys[Pair(event.note, event.channel)] = this.audio_track_handle.add_sample_handles(sample_handles)
-        }
-        this.sample_handle_queue.clear()
-        this.handle_locker.release()
-        this.audio_track_handle.play()
-    }
-
-    private fun enqueue_add_sample_handles(event: NoteOn, sample_handles: Set<SampleHandle>) {
-        this.enqueueing_sample_handles = true
-        this.handle_locker.enter_queue()
-        this.sample_handle_queue.add(Pair(event, sample_handles))
-        this.handle_locker.release()
-        this.enqueueing_sample_handles = false
-        Thread.sleep(5)
-
-        if (! this.enqueueing_sample_handles) {
-            this.add_queued_sample_handles()
-        }
-    }
-
     private fun press_note(event: NoteOn) {
         // TODO: Handle Bank
         val bank = if (event.channel == 9) {
@@ -501,7 +478,10 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
         }
 
         val preset = this.loaded_presets[Pair(bank, this.get_channel_preset(event.channel))]!!
-        this.enqueue_add_sample_handles(event, this.gen_sample_handles(event, preset))
+        this.handle_locker.enter_queue()
+        this.active_handle_keys[Pair(event.note, event.channel)] = this.audio_track_handle.add_sample_handles(this.gen_sample_handles(event, preset))
+        this.handle_locker.release()
+        this.audio_track_handle.play()
     }
 
     override fun onNoteOn(event: NoteOn) {

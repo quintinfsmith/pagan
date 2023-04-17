@@ -5,6 +5,7 @@ import android.media.midi.*
 import android.media.midi.MidiManager.OnDeviceOpenedListener
 import android.util.Log
 import com.qfs.radixulous.apres.riffreader.toUInt
+import kotlinx.coroutines.*
 import java.io.File
 import kotlin.concurrent.thread
 import kotlin.experimental.and
@@ -1589,6 +1590,28 @@ class MIDI {
 
         return output.sortedBy { it.first }
     }
+
+    fun get_all_events_grouped(): List<Pair<Int, List<MIDIEvent>>> {
+        var event_pairs = this.get_all_events()
+        var output = mutableListOf<Pair<Int, List<MIDIEvent>>>()
+        var working_pair: Pair<Int, MutableList<MIDIEvent>>? = null
+        for ((tick, event) in event_pairs) {
+            if (working_pair != null && working_pair.first != tick) {
+                output.add(working_pair)
+                working_pair = Pair(tick, mutableListOf())
+            } else if (working_pair == null) {
+                working_pair = Pair(tick, mutableListOf())
+            }
+
+            working_pair.second.add(event)
+        }
+
+        if (working_pair != null) {
+            output.add(working_pair)
+        }
+
+        return output
+    }
 }
 
 fun dequeue_n(bytelist: MutableList<Byte>, n: Int): Int {
@@ -1879,113 +1902,111 @@ open class VirtualMIDIDevice {
     }
 
     fun receiveMessage(event: MIDIEvent) {
-        thread {
-            when (event) {
-                is SequenceNumber -> this.onSequenceNumber(event)
-                is Text -> this.onText(event)
-                is CopyRightNotice -> this.onCopyRightNotice(event)
-                is TrackName -> this.onTrackName(event)
-                is InstrumentName -> this.onInstrumentName(event)
-                is Lyric -> this.onLyric(event)
-                is Marker -> this.onMarker(event)
-                is CuePoint -> this.onCuePoint(event)
-                is EndOfTrack -> this.onEndOfTrack(event)
-                is ChannelPrefix -> this.onChannelPrefix(event)
-                is SetTempo -> this.onSetTempo(event)
-                is SMPTEOffset -> this.onSMPTEOffset(event)
-                is TimeSignature -> this.onTimeSignature(event)
-                is KeySignature -> this.onKeySignature(event)
-                is SequencerSpecific -> this.onSequencerSpecific(event)
-                is NoteOn -> this.onNoteOn(event)
-                is NoteOff -> this.onNoteOff(event)
-                is PolyphonicKeyPressure -> this.onPolyphonicKeyPressure(event)
-                is HoldPedal -> this.onHoldPedal(event)
-                is Portamento -> this.onPortamento(event)
-                is Sustenuto -> this.onSustenuto(event)
-                is SoftPedal -> this.onSoftPedal(event)
-                is Legato -> this.onLegato(event)
-                is Hold2Pedal -> this.onHold2Pedal(event)
-                is SoundVariation -> this.onSoundVariation(event)
-                is SoundTimbre -> this.onSoundTimbre(event)
-                is SoundReleaseTime -> this.onSoundReleaseTime(event)
-                is SoundAttack -> this.onSoundAttack(event)
-                is SoundBrightness -> this.onSoundBrightness(event)
-                is SoundControl1 -> this.onSoundControl1(event)
-                is SoundControl2 -> this.onSoundControl2(event)
-                is SoundControl3 -> this.onSoundControl3(event)
-                is SoundControl4 -> this.onSoundControl4(event)
-                is SoundControl5 -> this.onSoundControl5(event)
-                is EffectsLevel -> this.onEffectsLevel(event)
-                is TremuloLevel -> this.onTremuloLevel(event)
-                is ChorusLevel -> this.onChorusLevel(event)
-                is CelesteLevel -> this.onCelesteLevel(event)
-                is PhaserLevel -> this.onPhaserLevel(event)
-                is LocalControl -> this.onLocalControl(event)
-                is MonophonicOperation -> this.onMonophonicOperation(event)
-                is BankSelect -> this.onBankSelect(event)
-                is BankSelectLSB -> this.onBankSelectLSB(event)
-                is ModulationWheel -> this.onModulationWheel(event)
-                is ModulationWheelLSB -> this.onModulationWheelLSB(event)
-                is BreathController -> this.onBreathController(event)
-                is BreathControllerLSB -> this.onBreathControllerLSB(event)
-                is FootPedal -> this.onFootPedal(event)
-                is FootPedalLSB -> this.onFootPedalLSB(event)
-                is PortamentoTime -> this.onPortamentoTime(event)
-                is PortamentoTimeLSB -> this.onPortamentoTimeLSB(event)
-                is DataEntry -> this.onDataEntry(event)
-                is DataEntryLSB -> this.onDataEntryLSB(event)
-                is Volume -> this.onVolume(event)
-                is VolumeLSB -> this.onVolumeLSB(event)
-                is Balance -> this.onBalance(event)
-                is BalanceLSB -> this.onBalanceLSB(event)
-                is Pan -> this.onPan(event)
-                is PanLSB -> this.onPanLSB(event)
-                is Expression -> this.onExpression(event)
-                is ExpressionLSB -> this.onExpressionLSB(event)
-                is NonRegisteredParameterNumber -> this.onNonRegisteredParameterNumber(event)
-                is NonRegisteredParameterNumberLSB -> this.onNonRegisteredParameterNumberLSB(event)
-                is RegisteredParameterNumber -> this.onRegisteredParameterNumber(event)
-                is RegisteredParameterNumberLSB -> this.onRegisteredParameterNumberLSB(event)
-                is EffectControl1 -> this.onEffectControl1(event)
-                is EffectControl1LSB -> this.onEffectControl1LSB(event)
-                is EffectControl2 -> this.onEffectControl2(event)
-                is EffectControl2LSB -> this.onEffectControl2LSB(event)
-                is GeneralPurpose1 -> this.onGeneralPurpose1(event)
-                is GeneralPurpose1LSB -> this.onGeneralPurpose1LSB(event)
-                is GeneralPurpose2 -> this.onGeneralPurpose2(event)
-                is GeneralPurpose2LSB -> this.onGeneralPurpose2LSB(event)
-                is GeneralPurpose3 -> this.onGeneralPurpose3(event)
-                is GeneralPurpose3LSB -> this.onGeneralPurpose3LSB(event)
-                is GeneralPurpose4 -> this.onGeneralPurpose4(event)
-                is GeneralPurpose4LSB -> this.onGeneralPurpose4LSB(event)
-                is GeneralPurpose5 -> this.onGeneralPurpose5(event)
-                is GeneralPurpose6 -> this.onGeneralPurpose6(event)
-                is GeneralPurpose7 -> this.onGeneralPurpose7(event)
-                is GeneralPurpose8 -> this.onGeneralPurpose8(event)
-                is DataIncrement -> this.onDataIncrement(event)
-                is DataDecrement -> this.onDataDecrement(event)
-                is AllControllersOff -> this.onAllControllersOff(event)
-                is AllNotesOff -> this.onAllNotesOff(event)
-                is AllSoundOff -> this.onAllSoundOff(event)
-                is OmniOff -> this.onOmniOff(event)
-                is OmniOn -> this.onOmniOn(event)
-                is PolyphonicOperation -> this.onPolyphonicOperation(event)
-                is ProgramChange -> this.onProgramChange(event)
-                is ChannelPressure -> this.onChannelPressure(event)
-                is PitchWheelChange -> this.onPitchWheelChange(event)
-                is SystemExclusive -> this.onSystemExclusive(event)
-                is MTCQuarterFrame -> this.onMTCQuarterFrame(event)
-                is SongPositionPointer -> this.onSongPositionPointer(event)
-                is SongSelect -> this.onSongSelect(event)
-                is TuneRequest -> this.onTuneRequest(event)
-                is MIDIClock -> this.onMIDIClock(event)
-                is MIDIStart -> this.onMIDIStart(event)
-                is MIDIContinue -> this.onMIDIContinue(event)
-                is MIDIStop -> this.onMIDIStop(event)
-                is ActiveSense -> this.onActiveSense(event)
-                is Reset -> this.onReset(event)
-                is TimeCode -> this.onTimeCode(event)
-            }
+        when (event) {
+            is SequenceNumber -> this.onSequenceNumber(event)
+            is Text -> this.onText(event)
+            is CopyRightNotice -> this.onCopyRightNotice(event)
+            is TrackName -> this.onTrackName(event)
+            is InstrumentName -> this.onInstrumentName(event)
+            is Lyric -> this.onLyric(event)
+            is Marker -> this.onMarker(event)
+            is CuePoint -> this.onCuePoint(event)
+            is EndOfTrack -> this.onEndOfTrack(event)
+            is ChannelPrefix -> this.onChannelPrefix(event)
+            is SetTempo -> this.onSetTempo(event)
+            is SMPTEOffset -> this.onSMPTEOffset(event)
+            is TimeSignature -> this.onTimeSignature(event)
+            is KeySignature -> this.onKeySignature(event)
+            is SequencerSpecific -> this.onSequencerSpecific(event)
+            is NoteOn -> this.onNoteOn(event)
+            is NoteOff -> this.onNoteOff(event)
+            is PolyphonicKeyPressure -> this.onPolyphonicKeyPressure(event)
+            is HoldPedal -> this.onHoldPedal(event)
+            is Portamento -> this.onPortamento(event)
+            is Sustenuto -> this.onSustenuto(event)
+            is SoftPedal -> this.onSoftPedal(event)
+            is Legato -> this.onLegato(event)
+            is Hold2Pedal -> this.onHold2Pedal(event)
+            is SoundVariation -> this.onSoundVariation(event)
+            is SoundTimbre -> this.onSoundTimbre(event)
+            is SoundReleaseTime -> this.onSoundReleaseTime(event)
+            is SoundAttack -> this.onSoundAttack(event)
+            is SoundBrightness -> this.onSoundBrightness(event)
+            is SoundControl1 -> this.onSoundControl1(event)
+            is SoundControl2 -> this.onSoundControl2(event)
+            is SoundControl3 -> this.onSoundControl3(event)
+            is SoundControl4 -> this.onSoundControl4(event)
+            is SoundControl5 -> this.onSoundControl5(event)
+            is EffectsLevel -> this.onEffectsLevel(event)
+            is TremuloLevel -> this.onTremuloLevel(event)
+            is ChorusLevel -> this.onChorusLevel(event)
+            is CelesteLevel -> this.onCelesteLevel(event)
+            is PhaserLevel -> this.onPhaserLevel(event)
+            is LocalControl -> this.onLocalControl(event)
+            is MonophonicOperation -> this.onMonophonicOperation(event)
+            is BankSelect -> this.onBankSelect(event)
+            is BankSelectLSB -> this.onBankSelectLSB(event)
+            is ModulationWheel -> this.onModulationWheel(event)
+            is ModulationWheelLSB -> this.onModulationWheelLSB(event)
+            is BreathController -> this.onBreathController(event)
+            is BreathControllerLSB -> this.onBreathControllerLSB(event)
+            is FootPedal -> this.onFootPedal(event)
+            is FootPedalLSB -> this.onFootPedalLSB(event)
+            is PortamentoTime -> this.onPortamentoTime(event)
+            is PortamentoTimeLSB -> this.onPortamentoTimeLSB(event)
+            is DataEntry -> this.onDataEntry(event)
+            is DataEntryLSB -> this.onDataEntryLSB(event)
+            is Volume -> this.onVolume(event)
+            is VolumeLSB -> this.onVolumeLSB(event)
+            is Balance -> this.onBalance(event)
+            is BalanceLSB -> this.onBalanceLSB(event)
+            is Pan -> this.onPan(event)
+            is PanLSB -> this.onPanLSB(event)
+            is Expression -> this.onExpression(event)
+            is ExpressionLSB -> this.onExpressionLSB(event)
+            is NonRegisteredParameterNumber -> this.onNonRegisteredParameterNumber(event)
+            is NonRegisteredParameterNumberLSB -> this.onNonRegisteredParameterNumberLSB(event)
+            is RegisteredParameterNumber -> this.onRegisteredParameterNumber(event)
+            is RegisteredParameterNumberLSB -> this.onRegisteredParameterNumberLSB(event)
+            is EffectControl1 -> this.onEffectControl1(event)
+            is EffectControl1LSB -> this.onEffectControl1LSB(event)
+            is EffectControl2 -> this.onEffectControl2(event)
+            is EffectControl2LSB -> this.onEffectControl2LSB(event)
+            is GeneralPurpose1 -> this.onGeneralPurpose1(event)
+            is GeneralPurpose1LSB -> this.onGeneralPurpose1LSB(event)
+            is GeneralPurpose2 -> this.onGeneralPurpose2(event)
+            is GeneralPurpose2LSB -> this.onGeneralPurpose2LSB(event)
+            is GeneralPurpose3 -> this.onGeneralPurpose3(event)
+            is GeneralPurpose3LSB -> this.onGeneralPurpose3LSB(event)
+            is GeneralPurpose4 -> this.onGeneralPurpose4(event)
+            is GeneralPurpose4LSB -> this.onGeneralPurpose4LSB(event)
+            is GeneralPurpose5 -> this.onGeneralPurpose5(event)
+            is GeneralPurpose6 -> this.onGeneralPurpose6(event)
+            is GeneralPurpose7 -> this.onGeneralPurpose7(event)
+            is GeneralPurpose8 -> this.onGeneralPurpose8(event)
+            is DataIncrement -> this.onDataIncrement(event)
+            is DataDecrement -> this.onDataDecrement(event)
+            is AllControllersOff -> this.onAllControllersOff(event)
+            is AllNotesOff -> this.onAllNotesOff(event)
+            is AllSoundOff -> this.onAllSoundOff(event)
+            is OmniOff -> this.onOmniOff(event)
+            is OmniOn -> this.onOmniOn(event)
+            is PolyphonicOperation -> this.onPolyphonicOperation(event)
+            is ProgramChange -> this.onProgramChange(event)
+            is ChannelPressure -> this.onChannelPressure(event)
+            is PitchWheelChange -> this.onPitchWheelChange(event)
+            is SystemExclusive -> this.onSystemExclusive(event)
+            is MTCQuarterFrame -> this.onMTCQuarterFrame(event)
+            is SongPositionPointer -> this.onSongPositionPointer(event)
+            is SongSelect -> this.onSongSelect(event)
+            is TuneRequest -> this.onTuneRequest(event)
+            is MIDIClock -> this.onMIDIClock(event)
+            is MIDIStart -> this.onMIDIStart(event)
+            is MIDIContinue -> this.onMIDIContinue(event)
+            is MIDIStop -> this.onMIDIStop(event)
+            is ActiveSense -> this.onActiveSense(event)
+            is Reset -> this.onReset(event)
+            is TimeCode -> this.onTimeCode(event)
         }
     }
 
@@ -2109,7 +2130,8 @@ class MIDIPlayer: VirtualMIDIDevice() {
         var previous_tick = 0
         val start_time = System.currentTimeMillis()
         var delay_accum = 0
-        for ((tick, event) in midi.get_all_events()) {
+        var that = this
+        for ((tick, events) in midi.get_all_events_grouped()) {
             if (!this.playing) {
                 break
             }
@@ -2124,16 +2146,29 @@ class MIDIPlayer: VirtualMIDIDevice() {
                 }
                 previous_tick = tick
             }
-            if (event is SetTempo) {
-                us_per_tick = event.get_uspqn() / ppqn
+
+            runBlocking {
+                val deferred_events = mutableListOf<Deferred<Unit>>()
+                for (event in events) {
+                    if (event is SetTempo) {
+                        us_per_tick = event.get_uspqn() / ppqn
+                    }
+                    launch {
+                        that.sendEvent(event)
+                    }
+                }
+
+                //for (def_ev in deferred_events) {
+                //    def_ev.await()
+                //}
             }
-            this.sendEvent(event)
         }
 
         for (i in 0 until 16) {
             this.sendEvent(AllSoundOff(i))
         }
     }
+
     override fun onMIDIStop(event: MIDIStop) {
         this.stop()
     }

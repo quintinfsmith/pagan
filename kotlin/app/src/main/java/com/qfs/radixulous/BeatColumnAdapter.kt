@@ -7,7 +7,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.radixulous.opusmanager.BeatKey
 import java.lang.Integer.max
-import kotlin.concurrent.thread
 import com.qfs.radixulous.opusmanager.HistoryLayer as OpusManager
 
 class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: RecyclerView, var column_layout: ColumnLabelAdapter) : RecyclerView.Adapter<BeatColumnAdapter.BeatViewHolder>() {
@@ -44,7 +43,7 @@ class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: Recycle
             super.onScrolled(recyclerView, x, y)
             if (!omAdapter._scroll_lock_columns) {
                 omAdapter._scroll_lock_this = true
-                omAdapter.column_layout.scroll(x)
+                omAdapter.recycler.scrollBy(x, y)
                 omAdapter._scroll_lock_this= false
             }
         }
@@ -111,7 +110,6 @@ class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: Recycle
         this.column_scroll_listener = ColumnLabelOnScrollListener(this)
 
         this.enableScrollSync()
-
     }
 
     private fun get_main_activity(): MainActivity {

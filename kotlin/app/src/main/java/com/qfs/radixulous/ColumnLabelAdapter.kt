@@ -46,7 +46,7 @@ class ColumnLabelAdapter(var main_fragment: MainFragment, var recycler: Recycler
             false
         )
         //(this.recycler.itemAnimator as SimpleItemAnimator).supportsChangeAnimations = false
-        this.recycler.setItemAnimator(null)
+        this.recycler.itemAnimator = null
 
         var that = this
         this.registerAdapterDataObserver(
@@ -77,7 +77,6 @@ class ColumnLabelAdapter(var main_fragment: MainFragment, var recycler: Recycler
                 }
             }
         )
-
     }
 
     fun refresh() {
@@ -152,8 +151,10 @@ class ColumnLabelAdapter(var main_fragment: MainFragment, var recycler: Recycler
     }
 
     fun set_label_width(beat: Int, width: Int) {
-        this.column_widths[beat] = width
-        this.notifyItemChanged(beat)
+        if (this.column_widths[beat] != width) {
+            this.column_widths[beat] = width
+            this.notifyItemChanged(beat)
+        }
     }
 
     override fun getItemCount(): Int {

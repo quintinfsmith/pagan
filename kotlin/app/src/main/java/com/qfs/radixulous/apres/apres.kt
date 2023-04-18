@@ -7,7 +7,6 @@ import android.util.Log
 import com.qfs.radixulous.apres.riffreader.toUInt
 import kotlinx.coroutines.*
 import java.io.File
-import kotlin.concurrent.thread
 import kotlin.experimental.and
 
 
@@ -2169,7 +2168,6 @@ class MIDIPlayer: VirtualMIDIDevice() {
             }
 
             runBlocking {
-                val deferred_events = mutableListOf<Deferred<Unit>>()
                 for (event in events) {
                     if (event is SetTempo) {
                         us_per_tick = event.get_uspqn() / ppqn
@@ -2178,10 +2176,6 @@ class MIDIPlayer: VirtualMIDIDevice() {
                         that.sendEvent(event)
                     }
                 }
-
-                //for (def_ev in deferred_events) {
-                //    def_ev.await()
-                //}
             }
         }
 

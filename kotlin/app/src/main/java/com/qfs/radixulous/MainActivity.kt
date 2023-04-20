@@ -360,6 +360,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun play_midi(midi: MIDI) {
         this.midi_player.play_midi(midi)
+        this.midi_input_device.sendEvent(SongPositionPointer(0))
     }
 
     private fun export_midi() {

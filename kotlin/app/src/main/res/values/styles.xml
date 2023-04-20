@@ -24,6 +24,11 @@
         <item name="android:tint">@color/button_fg</item>
     </style>
 
+    <style name="config_button" parent="@style/icon_button">
+        <item name="android:padding">10sp</item>
+        <item name="android:tint">@color/button_fg</item>
+    </style>
+
     <style name="button_front" parent="@style/button">
         <item name="android:textSize">24sp</item>
         <item name="android:padding">10sp</item>

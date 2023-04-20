@@ -7,6 +7,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="@dimen/padding_config"
+    android:minWidth="300dp"
     android:background="?attr/drawer_bg" >
 
     <ImageView
@@ -19,13 +20,13 @@
     <LinearLayout
         android:id="@+id/llB"
         android:layout_height="wrap_content"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_weight="1"
         android:orientation="vertical">
 
         <LinearLayout
             android:orientation="horizontal"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
             <TextView
@@ -105,42 +106,39 @@
             android:layout_margin="-3dp"
             android:id="@+id/btnSaveProject"
             android:maxLines="1"
-            android:theme="@style/icon_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:theme="@style/config_button"
+            android:layout_width="52dp"
             android:layout_weight="1"
-            android:minWidth="24dp"
+            android:layout_height="wrap_content"
             app:srcCompat="@drawable/ic_baseline_save_24"
             android:text="Save" />
 
         <ImageView
             android:id="@+id/btnCopyProject"
             android:maxLines="1"
-            android:theme="@style/icon_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:theme="@style/config_button"
+            android:layout_width="52dp"
             android:layout_weight="1"
+            android:layout_height="wrap_content"
             app:srcCompat="@drawable/ic_baseline_content_copy_24"
-            android:minWidth="24dp"
             android:text="Copy" />
 
         <ImageView
             android:id="@+id/btnDeleteProject"
             android:maxLines="1"
-            android:theme="@style/icon_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:theme="@style/config_button"
+            android:layout_width="52dp"
             android:layout_weight="1"
+            android:layout_height="wrap_content"
             app:srcCompat="@drawable/ic_baseline_delete_24"
-            android:minWidth="24dp"
             android:text="Delete" />
 
         <ImageView
             android:id="@+id/btnExportProject"
             android:maxLines="1"
             android:theme="@style/icon_button"
-            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_width="64dp"
             android:layout_weight="1"
             app:srcCompat="@drawable/midi_logo"
             android:text="Export" />

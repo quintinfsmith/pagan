@@ -1603,6 +1603,7 @@ class MIDI {
                             return@sortedBy when (it) {
                                 is NoteOn -> { 1 }
                                 is NoteOff -> { -1 }
+                                is SongPositionPointer -> { -2 }
                                 else -> { 0 }
                             }
                         }

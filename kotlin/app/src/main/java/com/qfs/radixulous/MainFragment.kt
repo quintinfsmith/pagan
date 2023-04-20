@@ -1,7 +1,6 @@
 package com.qfs.radixulous
 
 import android.os.Bundle
-import android.util.Log
 import android.view.*
 import android.widget.*
 import androidx.fragment.app.Fragment
@@ -72,15 +71,13 @@ class MainFragment : TempNameFragment() {
                 }
             }
 
-            var table_parent = rvBeatTable.parent as ViewGroup
-            Log.d("XXA", "A ${table_parent.childCount}")
-
+            // Kludge AF. Using these 2 threads  is the only way i could get the first item
+            // Rendered when hitting back from load
             thread {
                 this.get_main().runOnUiThread {
                     for (i in 0 until opus_manager.opus_beat_count) {
                         rvBeatTable_adapter.addBeatColumn(i)
                     }
-                    Log.d("XXA", "SCROLLING TO ${this.table_offset_pause}")
                 }
             }
         }
@@ -129,7 +126,6 @@ class MainFragment : TempNameFragment() {
             main.update_menu_options()
             main.setup_config_drawer()
             main.cancel_reticle()
-            println("BOOP")
         }
 
         setFragmentResultListener("IMPORT") { _, bundle: Bundle? ->
@@ -140,7 +136,6 @@ class MainFragment : TempNameFragment() {
                 this.setContextMenu_leaf()
                 this.tick()
             }
-            Thread.sleep(1000)
             val rvBeatTable = this.binding.root.findViewById<RecyclerView>(R.id.rvBeatTable)
             rvBeatTable.scrollToPosition(0)
             val rvColumnLabels = this.binding.root.findViewById<RecyclerView>(R.id.rvColumnLabels)
@@ -763,7 +758,6 @@ class MainFragment : TempNameFragment() {
     }
 
     fun scroll_to_beat(beat: Int, select: Boolean = false) {
-        println("SCROLLING TO $beat")
         val main = this.get_main()
         val rvBeatTable = main.findViewById<RecyclerView>(R.id.rvBeatTable)
         (rvBeatTable.adapter as BeatColumnAdapter).scrollToPosition(beat)

@@ -54,7 +54,7 @@ class MainActivity : AppCompatActivity() {
 
     class MIDIScroller(private var activity: MainActivity): VirtualMIDIDevice() {
         override fun onSongPositionPointer(event: SongPositionPointer) {
-            //this.activity.scroll_to_beat(event.beat, true)
+            this.activity.scroll_to_beat(event.beat, true)
         }
     }
 

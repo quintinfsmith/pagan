@@ -1,6 +1,7 @@
 package com.qfs.radixulous
 
 import android.os.Bundle
+import android.util.Log
 import android.view.*
 import android.widget.*
 import androidx.fragment.app.Fragment
@@ -11,6 +12,7 @@ import com.qfs.radixulous.databinding.FragmentMainBinding
 import com.qfs.radixulous.opusmanager.*
 import com.qfs.radixulous.structure.OpusTree
 import com.qfs.radixulous.BeatColumnAdapter.FocusType
+import kotlin.concurrent.thread
 
 /**
  * A simple [Fragment] subclass as the default destination in the navigation.
@@ -25,6 +27,8 @@ class MainFragment : TempNameFragment() {
     private var relative_mode: Int = 0
 
     private var ticking: Boolean = false
+
+    private var table_offset_pause: Int = 0
 
     enum class ContextMenu {
         Leaf,
@@ -47,6 +51,13 @@ class MainFragment : TempNameFragment() {
         return binding.root
     }
 
+    override fun onPause() {
+        val rvBeatTable = this.binding.root.findViewById<RecyclerView>(R.id.rvBeatTable)
+        this.table_offset_pause = rvBeatTable.computeHorizontalScrollOffset()
+        super.onPause()
+    }
+
+
     override fun onResume() {
         val rvBeatTable = this.binding.root.findViewById<RecyclerView>(R.id.rvBeatTable)
         val rvBeatTable_adapter = rvBeatTable.adapter as BeatColumnAdapter
@@ -61,13 +72,19 @@ class MainFragment : TempNameFragment() {
                 }
             }
 
-            for (i in 0 until opus_manager.opus_beat_count) {
-                rvBeatTable_adapter.addBeatColumn(i)
+            var table_parent = rvBeatTable.parent as ViewGroup
+            Log.d("XXA", "A ${table_parent.childCount}")
+
+            thread {
+                this.get_main().runOnUiThread {
+                    for (i in 0 until opus_manager.opus_beat_count) {
+                        rvBeatTable_adapter.addBeatColumn(i)
+                    }
+                    Log.d("XXA", "SCROLLING TO ${this.table_offset_pause}")
+                }
             }
-            // TODO: Fix this kludge. A partially-visible first item will not render, so i'm just
-            // Scrolling back to the beginning for now
-            rvBeatTable_adapter.scrollToPosition(0)
         }
+
         this.get_main().update_title_text()
         super.onResume()
     }
@@ -123,6 +140,7 @@ class MainFragment : TempNameFragment() {
                 this.setContextMenu_leaf()
                 this.tick()
             }
+            Thread.sleep(1000)
             val rvBeatTable = this.binding.root.findViewById<RecyclerView>(R.id.rvBeatTable)
             rvBeatTable.scrollToPosition(0)
             val rvColumnLabels = this.binding.root.findViewById<RecyclerView>(R.id.rvColumnLabels)
@@ -1051,6 +1069,7 @@ class MainFragment : TempNameFragment() {
 
         adapter.apply_focus_type(type)
     }
+
     private fun unset_cursor_position() {
         val rvBeatTable = this.get_main().findViewById<RecyclerView>(R.id.rvBeatTable)
         val adapter = rvBeatTable.adapter as BeatColumnAdapter

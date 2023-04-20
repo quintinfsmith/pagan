@@ -132,22 +132,51 @@ class MainActivity : AppCompatActivity() {
         return output
     }
 
+    fun save_dialog(callback: () -> Unit) {
+        var that = this
+        AlertDialog.Builder(this, R.style.AlertDialog).apply {
+            setTitle("Save Current Project First?")
+            setCancelable(true)
+            setNeutralButton("Cancel") { dialog, _ ->
+                dialog.cancel()
+            }
+            setPositiveButton("Yes") { dialog, _ ->
+                that.save_current_project()
+                dialog.dismiss()
+                callback()
+            }
+            setNegativeButton("No") { dialog, _ ->
+                dialog.dismiss()
+                callback()
+            }
+            show()
+        }
+    }
+
+
+
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.itmNewProject -> {
                 // TODO: Save or discard popup dialog
-                val fragment = this.getActiveFragment()
-                fragment?.setFragmentResult("NEW", bundleOf())
-                this.navTo("main")
+                this.save_dialog {
+                    val fragment = this.getActiveFragment()
+                    fragment?.setFragmentResult("NEW", bundleOf())
+                    this.navTo("main")
+                }
             }
             R.id.itmLoadProject -> {
-                this.navTo("load")
+                this.save_dialog {
+                    this.navTo("load")
+                }
             }
             R.id.itmImportMidi -> {
-                val intent = Intent()
-                    .setType("*/*")
-                    .setAction(Intent.ACTION_GET_CONTENT)
-                this.import_midi_intent_launcher.launch(intent)
+                this.save_dialog {
+                    val intent = Intent()
+                        .setType("*/*")
+                        .setAction(Intent.ACTION_GET_CONTENT)
+                    this.import_midi_intent_launcher.launch(intent)
+                }
             }
             R.id.itmUndo -> {
                 val main_fragment = this.getActiveFragment()
@@ -285,7 +314,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun save_current_project() {
+    fun save_current_project() {
         this.project_manager.save(this.current_project_title!!, this.opus_manager)
         this.feedback_msg("Project Saved")
     }

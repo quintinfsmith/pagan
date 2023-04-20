@@ -1388,6 +1388,12 @@ class MIDI {
 
         return try {
             val event: MIDIEvent? = event_from_bytes(bytes, this._active_byte)
+            if (event != null) {
+                var first_byte = toUInt(event.as_bytes().first())
+                if (first_byte in 0x90..0xEF) {
+                    this._active_byte = event.as_bytes().first()
+                }
+            }
             this.insert_event(track, current_deltatime, event!!)
         } catch (e: Exception) {
             -1

@@ -27,15 +27,23 @@ class LeafButton(
     private var state_reflected: Boolean = false
     private var state_focused: Boolean = false
     private var state_invalid: Boolean = false
-    private var value_label: TextView
+    private var value_wrapper: LinearLayout
+    private var value_label_octave: TextView
+    private var value_label_offset: TextView
     private var prefix_label: TextView
 
     init {
         this.orientation = VERTICAL
-        this.value_label = TextView(ContextThemeWrapper(this.context, R.style.leaf_value))
+        this.value_wrapper = LinearLayout(ContextThemeWrapper(this.context, R.style.leaf_value))
+        this.value_wrapper.orientation = HORIZONTAL
+
+        this.value_label_octave = TextView(ContextThemeWrapper(this.context, R.style.leaf_value_octave))
+        this.value_label_offset = TextView(ContextThemeWrapper(this.context, R.style.leaf_value_offset))
         this.prefix_label = TextView(ContextThemeWrapper(this.context, R.style.leaf_prefix))
         this.addView(this.prefix_label)
-        this.addView(this.value_label)
+        this.addView(this.value_wrapper)
+        this.value_wrapper.addView(this.value_label_octave)
+        this.value_wrapper.addView(this.value_label_offset)
         if (event != null) {
             this.setActive(true)
         } else {
@@ -51,7 +59,8 @@ class LeafButton(
 
     fun unset_text() {
         this.prefix_label.visibility = View.GONE
-        this.value_label.visibility = View.GONE
+        this.value_label_octave.visibility = View.GONE
+        this.value_label_offset.visibility = View.GONE
     }
 
     fun set_text(is_percussion: Boolean) {
@@ -76,34 +85,38 @@ class LeafButton(
             ""
         }
 
-        this.value_label.text = if (is_percussion) {
-            this.activity.getString(R.string.percussion_label)
+
+        if (is_percussion) {
+            this.value_label_octave.visibility = View.GONE
+            this.value_label_offset.text = this.activity.getString(R.string.percussion_label)
         } else if (event.relative && event.note == 0) {
-            this.activity.getString(R.string.repeat_note)
+            this.value_label_octave.visibility = View.GONE
+            this.value_label_offset.text = this.activity.getString(R.string.repeat_note)
         } else {
-            get_number_string(use_note, event.radix, 2)
+            this.value_label_octave.visibility = View.VISIBLE
+            this.value_label_octave.text = get_number_string(use_note / event.radix, event.radix, 1)
+            this.value_label_offset.text = get_number_string(use_note % event.radix, event.radix, 1)
         }
 
-
         if (event.relative && event.note != 0) {
-            (this.prefix_label.layoutParams as LinearLayout.LayoutParams).apply {
+            (this.prefix_label.layoutParams as LayoutParams).apply {
                 height = WRAP_CONTENT
                 setMargins(0,-24,0,0)
                 gravity = CENTER
             }
-            (this.value_label.layoutParams as LinearLayout.LayoutParams).apply {
+            (this.value_wrapper.layoutParams as LayoutParams).apply {
                 weight = 1F
                 height = 0
                 gravity = CENTER
                 setMargins(0,-30,0,0)
             }
         } else {
-            (this.prefix_label.layoutParams as LinearLayout.LayoutParams).apply {
+            (this.prefix_label.layoutParams as LayoutParams).apply {
                 height = WRAP_CONTENT
                 setMargins(0,0,0,0)
                 gravity = CENTER
             }
-            (this.value_label.layoutParams as LinearLayout.LayoutParams).apply {
+            (this.value_wrapper.layoutParams as LayoutParams).apply {
                 weight = 1F
                 height = 0
                 gravity = CENTER

@@ -1029,14 +1029,10 @@ class MainFragment : TempNameFragment() {
         val opus_manager = this.get_main().get_opus_manager()
         val (channel, line_offset) = opus_manager.get_channel_index(y)
         return if (!opus_manager.is_percussion(channel)) {
-            if (line_offset == 0) {
-                "$channel:0"
-            } else {
-                "  :$line_offset"
-            }
+            "$channel::$line_offset"
         } else {
             val instrument = opus_manager.get_percussion_instrument(line_offset)
-            "P:$instrument"
+            "P::$instrument"
         }
     }
 

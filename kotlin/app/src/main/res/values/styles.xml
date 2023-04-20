@@ -84,6 +84,16 @@
         <item name="android:textStyle">normal</item>
         <item name="android:maxLines">1</item>
     </style>
+    <style name="leaf_value_octave" parent="@style/leaf_value">
+        <item name="android:textColor">@color/leaf_fg</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+    <style name="leaf_value_offset" parent="@style/leaf_value">
+        <item name="android:textColor">@color/leaf_fg</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
 
     <style name="numberSelector" parent="@android:style/Widget.TextView">
         <item name="android:gravity">center_vertical|center_horizontal</item>

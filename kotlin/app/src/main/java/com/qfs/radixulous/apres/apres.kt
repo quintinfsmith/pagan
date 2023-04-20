@@ -2179,6 +2179,10 @@ class MIDIPlayer: VirtualMIDIDevice() {
                 }
             }
         }
+        // if the song wasn't manually stopped, return to the start
+        if (this.playing) {
+            this.sendEvent(SongPositionPointer(0))
+        }
 
         for (i in 0 until 16) {
             this.sendEvent(AllSoundOff(i))

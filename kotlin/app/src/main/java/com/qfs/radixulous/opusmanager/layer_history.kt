@@ -12,7 +12,6 @@ class HistoryCache() {
     var history_locked = false
     var history: MutableList<HistoryNode> = mutableListOf()
     var working_node: HistoryNode? = null
-    var _tmp_count = 0
 
     fun isLocked(): Boolean {
         return this.history_locked
@@ -34,7 +33,6 @@ class HistoryCache() {
         } else {
             this.history.add(HistoryNode(func, args))
         }
-
     }
 
     fun open_multi() {
@@ -105,10 +103,19 @@ class HistoryCache() {
             this.history.removeLast()
         }
     }
+
+    fun peek(): HistoryNode? {
+        return if (this.history.isEmpty()) {
+            null
+        } else {
+            this.history.last()
+        }
+    }
 }
 
 open class HistoryLayer() : CursorLayer() {
     var history_cache = HistoryCache()
+    var save_point_popped = false
 
     private fun apply_history_node(current_node: HistoryNode, depth: Int = 0) {
         when (current_node.func_name) {
@@ -197,12 +204,21 @@ open class HistoryLayer() : CursorLayer() {
             }
         }
     }
+
     open fun apply_undo() {
         this.history_cache.lock()
 
         var node = this.history_cache.pop()
         if (node == null) {
             this.history_cache.unlock()
+            return
+        }
+
+        // Skip special case "save_point"
+        if (node.func_name == "save_point") {
+            this.save_point_popped = true
+            this.history_cache.unlock()
+            this.apply_undo()
             return
         }
 
@@ -447,6 +463,7 @@ open class HistoryLayer() : CursorLayer() {
 
     override fun clear() {
         this.history_cache.clear()
+        this.save_point_popped = false
         super.clear()
     }
 
@@ -612,5 +629,18 @@ open class HistoryLayer() : CursorLayer() {
             this.push_remove_channel(this.channels.size - 1)
         }
 
+    }
+
+    override fun save(path: String?) {
+        super.save(path)
+        this.save_point_popped = false
+        if (this.has_changed_since_save()) {
+            this.history_cache.append_undoer("save_point", listOf())
+        }
+    }
+
+    fun has_changed_since_save(): Boolean {
+        var node = this.history_cache.peek()
+        return (this.save_point_popped || (node != null && node.func_name != "save_point"))
     }
 }

@@ -118,20 +118,24 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun save_dialog(callback: () -> Unit) {
-        var that = this
-        AlertDialog.Builder(this, R.style.AlertDialog).apply {
-            setTitle("Save Current Project First?")
-            setCancelable(true)
-            setPositiveButton("Yes") { dialog, _ ->
-                that.save_current_project()
-                dialog.dismiss()
-                callback()
+        if (this.get_opus_manager().has_changed_since_save()) {
+            var that = this
+            AlertDialog.Builder(this, R.style.AlertDialog).apply {
+                setTitle("Save Current Project First?")
+                setCancelable(true)
+                setPositiveButton("Yes") { dialog, _ ->
+                    that.save_current_project()
+                    dialog.dismiss()
+                    callback()
+                }
+                setNegativeButton("No") { dialog, _ ->
+                    dialog.dismiss()
+                    callback()
+                }
+                show()
             }
-            setNegativeButton("No") { dialog, _ ->
-                dialog.dismiss()
-                callback()
-            }
-            show()
+        } else {
+            callback()
         }
     }
 

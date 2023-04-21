@@ -748,6 +748,7 @@ class MainFragment : TempNameFragment() {
 
             this.tick()
             this.update_line_labels()
+            this.setContextMenu_line()
 
             true
         }

@@ -1809,8 +1809,14 @@ open class MIDIController(var context: Context) {
     var virtualDevices: MutableList<VirtualMIDIDevice> = mutableListOf()
 
     fun registerVirtualDevice(device: VirtualMIDIDevice) {
-        virtualDevices.add(device)
+        this.virtualDevices.add(device)
         device.setMidiController(this)
+    }
+    fun unregisterVirtualDevice(device: VirtualMIDIDevice) {
+        var index = this.virtualDevices.indexOf(device)
+        if (index >= 0) {
+            this.virtualDevices.removeAt(index)
+        }
     }
 
     // TODO: Native midi support

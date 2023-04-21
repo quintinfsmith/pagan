@@ -104,7 +104,6 @@ class MainFragment : TempNameFragment() {
 
         setFragmentResultListener("LOAD") { _, bundle: Bundle? ->
             val main = this.get_main()
-            main.stop_playback()
             if (bundle == null) {
                 return@setFragmentResultListener
             }
@@ -598,7 +597,6 @@ class MainFragment : TempNameFragment() {
 
     private fun interact_nsOffset(view: NumberSelector) {
         val main = this.get_main()
-        main.stop_playback()
         val opus_manager = main.get_opus_manager()
         val progress = view.getState()!!
         val current_tree = opus_manager.get_tree_at_cursor()
@@ -652,7 +650,6 @@ class MainFragment : TempNameFragment() {
 
     private fun interact_nsOctave(view: NumberSelector) {
         val main = this.get_main()
-        main.stop_playback()
         val opus_manager = main.get_opus_manager()
         val progress = view.getState() ?: return
 
@@ -707,7 +704,6 @@ class MainFragment : TempNameFragment() {
 
     private fun interact_btnChoosePercussion(view: View) {
         val main = this.get_main()
-        main.stop_playback()
         val opus_manager = main.get_opus_manager()
 
         val popupMenu = PopupMenu(this.binding.root.context, view)
@@ -761,8 +757,10 @@ class MainFragment : TempNameFragment() {
 
     fun scroll_to_beat(beat: Int, select: Boolean = false) {
         val main = this.get_main()
-        val rvBeatTable = main.findViewById<RecyclerView>(R.id.rvBeatTable)
-        (rvBeatTable.adapter as BeatColumnAdapter).scrollToPosition(beat)
+        main.runOnUiThread {
+            val rvBeatTable = main.findViewById<RecyclerView>(R.id.rvBeatTable)
+            (rvBeatTable.adapter as BeatColumnAdapter).scrollToPosition(beat)
+        }
 
         if (select) {
             val opus_manager = main.get_opus_manager()
@@ -1016,7 +1014,6 @@ class MainFragment : TempNameFragment() {
 
     fun set_active_line(y: Int) {
         val main = this.get_main()
-        //main.stop_playback()
 
         val opus_manager = main.get_opus_manager()
         val cursor = opus_manager.get_cursor()
@@ -1032,7 +1029,7 @@ class MainFragment : TempNameFragment() {
             "$channel::$line_offset"
         } else {
             val instrument = opus_manager.get_percussion_instrument(line_offset)
-            "P::$instrument"
+            "!$instrument"
         }
     }
 
@@ -1051,15 +1048,17 @@ class MainFragment : TempNameFragment() {
 
     fun set_cursor_position(y: Int, x: Int, position: List<Int>, type: FocusType = FocusType.Cell) {
         val main = this.get_main()
-        val rvBeatTable = main.findViewById<RecyclerView>(R.id.rvBeatTable)
-        val adapter = rvBeatTable.adapter as BeatColumnAdapter
-        val opus_manager = main.get_opus_manager()
+        main.runOnUiThread {
+            val rvBeatTable = main.findViewById<RecyclerView>(R.id.rvBeatTable)
+            val adapter = rvBeatTable.adapter as BeatColumnAdapter
+            val opus_manager = main.get_opus_manager()
 
-        adapter.unset_cursor_position()
+            adapter.unset_cursor_position()
 
-        opus_manager.set_cursor_position(y, x, position)
+            opus_manager.set_cursor_position(y, x, position)
 
-        adapter.apply_focus_type(type)
+            adapter.apply_focus_type(type)
+        }
     }
 
     private fun unset_cursor_position() {

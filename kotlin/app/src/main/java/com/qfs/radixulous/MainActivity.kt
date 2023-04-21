@@ -40,7 +40,6 @@ class MainActivity : AppCompatActivity() {
     lateinit var midi_playback_device: MIDIPlaybackDevice
     private var midi_input_device = VirtualMIDIDevice()
     private var midi_player = MIDIPlayer()
-    private var midi_scroller = MIDIScroller(this)
     lateinit var soundfont: SoundFont
 
     private var current_project_title: String? = null
@@ -51,12 +50,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var optionsMenu: Menu
     internal lateinit var project_manager: ProjectManager
     private var progressBar: ProgressBar? = null
-
-    class MIDIScroller(private var activity: MainActivity): VirtualMIDIDevice() {
-        override fun onSongPositionPointer(event: SongPositionPointer) {
-            this.activity.scroll_to_beat(event.beat, true)
-        }
-    }
 
     private var export_midi_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
@@ -90,13 +83,6 @@ class MainActivity : AppCompatActivity() {
         val navController = findNavController(R.id.nav_host_fragment_content_main)
         this.appBarConfiguration = AppBarConfiguration(navController.graph)
         setupActionBarWithNavController(navController, this.appBarConfiguration)
-        //val drawerlayout = findViewById<DrawerLayout>(R.id.drawer_layout)
-        //drawerlayout.addDrawerListener( object: DrawerLayout.DrawerListener {
-        //    override fun onDrawerClosed(drawerView: View) { }
-        //    override fun onDrawerSlide(drawerView: View, slideOffset: Float) { }
-        //    override fun onDrawerOpened(drawerView: View) { }
-        //    override fun onDrawerStateChanged(newState: Int) { }
-        //})
 
         this.lockDrawer()
         //////////////////////////////////////////
@@ -108,7 +94,6 @@ class MainActivity : AppCompatActivity() {
         this.midi_controller.registerVirtualDevice(this.midi_playback_device)
         this.midi_controller.registerVirtualDevice(this.midi_input_device)
         this.midi_controller.registerVirtualDevice(this.midi_player)
-        this.midi_controller.registerVirtualDevice(this.midi_scroller)
         ///////////////////////////////////////////
     }
 
@@ -137,9 +122,6 @@ class MainActivity : AppCompatActivity() {
         AlertDialog.Builder(this, R.style.AlertDialog).apply {
             setTitle("Save Current Project First?")
             setCancelable(true)
-            setNeutralButton("Cancel") { dialog, _ ->
-                dialog.cancel()
-            }
             setPositiveButton("Yes") { dialog, _ ->
                 that.save_current_project()
                 dialog.dismiss()
@@ -185,18 +167,10 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             R.id.itmPlay -> {
-                if (!this.in_play_back) {
-                    this.playback()
-                } else {
-                    this.stop_playback()
-                }
+                this.playback_dialog()
             }
         }
         return super.onOptionsItemSelected(item)
-    }
-
-    fun stop_playback() {
-        this.midi_input_device.sendEvent(MIDIStop())
     }
 
     fun setup_config_drawer() {
@@ -288,29 +262,12 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        this.in_play_back = true
-        val item = this.optionsMenu.findItem(R.id.itmPlay)
-        item.icon = ContextCompat.getDrawable(this, R.drawable.ic_baseline_pause_24)
-        val opus_manager = this.get_opus_manager()
-        val x = opus_manager.get_cursor().x
-
-        thread {
-            this.play_midi(opus_manager.get_midi(x))
-
-            this.in_play_back = false
-
-            this@MainActivity.runOnUiThread {
-                item.icon = ContextCompat.getDrawable(this, R.drawable.ic_baseline_play_arrow_24)
-            }
-        }
     }
 
     fun scroll_to_beat(beat: Int, select: Boolean = false) {
-        this@MainActivity.runOnUiThread {
-            val fragment = this.getActiveFragment()
-            if (fragment is MainFragment) {
-                fragment.scroll_to_beat(beat, select)
-            }
+        val fragment = this.getActiveFragment()
+        if (fragment is MainFragment) {
+            fragment.scroll_to_beat(beat, select)
         }
     }
 
@@ -354,7 +311,6 @@ class MainActivity : AppCompatActivity() {
 
     // Only called from MainFragment
     fun newProject() {
-        this.stop_playback()
 
         this.opus_manager.new()
         val new_path = this.project_manager.get_new_path()
@@ -666,7 +622,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun import_midi(path: String) {
-        this.stop_playback()
         this.applicationContext.contentResolver.openFileDescriptor(Uri.parse(path), "r")?.use {
             val bytes = FileInputStream(it.fileDescriptor).readBytes()
             val midi = MIDI.from_bytes(bytes)
@@ -684,5 +639,72 @@ class MainActivity : AppCompatActivity() {
 
         }
         this.cancel_reticle()
+    }
+
+    fun playback_dialog() {
+        val viewInflated: View = LayoutInflater.from(this)
+            .inflate(
+                R.layout.playback_popup,
+                window.decorView.rootView as ViewGroup,
+                false
+            )
+
+        val opus_manager = this.get_opus_manager()
+        var playing = true
+        var sbPlaybackPosition = viewInflated.findViewById<SeekBar>(R.id.sbPlaybackPosition)
+        sbPlaybackPosition.max = opus_manager.opus_beat_count
+        sbPlaybackPosition.progress = opus_manager.get_cursor().x
+        var tvPlaybackPosition = viewInflated.findViewById<TextView>(R.id.tvPlaybackPosition)
+        tvPlaybackPosition.text = opus_manager.get_cursor().x.toString()
+        var ibPlayPause = viewInflated.findViewById<ImageView>(R.id.ibPlayPause)
+
+        var midi_scroller = MIDIScroller(this, sbPlaybackPosition)
+        this.midi_controller.registerVirtualDevice(midi_scroller)
+
+        fun start_playback(x: Int) {
+            playing = true
+            ibPlayPause.setImageResource(R.drawable.ic_baseline_pause_24)
+            thread {
+                this.play_midi(opus_manager.get_midi(x))
+                ibPlayPause.setImageResource(R.drawable.ic_baseline_play_arrow_24)
+                playing = false
+            }
+        }
+
+        fun pause_playback() {
+            this.midi_input_device.sendEvent(MIDIStop())
+        }
+
+
+        ibPlayPause.setOnClickListener {
+            if (playing) {
+                pause_playback()
+            } else {
+                start_playback(sbPlaybackPosition.progress)
+            }
+        }
+
+        sbPlaybackPosition.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
+                tvPlaybackPosition.text = p1.toString()
+            }
+
+            override fun onStartTrackingTouch(p0: SeekBar?) { }
+            override fun onStopTrackingTouch(seekbar: SeekBar?) { }
+        })
+
+
+        var dialog = AlertDialog.Builder(this, R.style.AlertDialog)
+            .setView(viewInflated)
+            .setOnCancelListener { dialog ->
+                this.midi_input_device.sendEvent(MIDIStop())
+                this.midi_controller.unregisterVirtualDevice(midi_scroller)
+            }
+            .show()
+
+        thread {
+            Thread.sleep(500)
+            start_playback(opus_manager.get_cursor().x)
+        }
     }
 }

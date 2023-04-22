@@ -309,7 +309,12 @@ class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: Recycle
         if (this.linking_beat != null) {
             // If a second link point hasn't been selected, assume just one beat is being linked
             if (this.linking_beat_b == null) {
-                opus_manager.link_beats(beatkey, this.linking_beat!!)
+                try {
+                    opus_manager.link_beats(beatkey, this.linking_beat!!)
+                } catch (e: Exception) {
+                    main.feedback_msg("Can't link beat to self")
+                    this.linking_beat = null
+                }
             } else {
                 try {
                     opus_manager.link_beat_range(
@@ -320,6 +325,8 @@ class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: Recycle
                 } catch (e: Exception) {
                     main.feedback_msg("Can't link beat to self")
                 }
+                this.linking_beat = null
+                this.linking_beat_b = null
             }
 
             val cursor = opus_manager.get_cursor()

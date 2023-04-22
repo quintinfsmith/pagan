@@ -91,9 +91,11 @@ class HistoryCache() {
         this.history_locked = true
         return was_locked
     }
+
     fun unlock() {
         this.history_locked = false
     }
+
     fun pop(): HistoryNode? {
         return if (this.history.isEmpty()) {
             null
@@ -585,12 +587,6 @@ open class HistoryLayer() : CursorLayer() {
 
     override fun link_beat_into_pool(beat_key: BeatKey, index: Int, overwrite_pool: Boolean) {
         this.history_cache.open_multi()
-        // TODO: I just forgot to finish this.
-        if (overwrite_pool) {
-
-        } else {
-
-        }
         super.link_beat_into_pool(beat_key, index, overwrite_pool)
         this.history_cache.append_undoer("unlink_beat", listOf(beat_key))
         this.history_cache.close_multi()

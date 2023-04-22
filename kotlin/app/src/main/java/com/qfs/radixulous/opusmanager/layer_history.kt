@@ -1,4 +1,5 @@
 package com.qfs.radixulous.opusmanager
+import android.util.Log
 import com.qfs.radixulous.apres.MIDI
 import com.qfs.radixulous.structure.OpusTree
 import java.lang.Integer.max
@@ -75,12 +76,9 @@ class HistoryCache() {
     }
 
     open fun cancel_multi() {
-        if (this.history_locked) {
-            return
-        }
-
+        this.close_multi()
         if (this.working_node != null) {
-            this.working_node = this.working_node!!.parent
+            this.working_node!!.children.removeLast()
         }
     }
 
@@ -372,6 +370,7 @@ open class HistoryLayer() : CursorLayer() {
 
         this.history_cache.close_multi(initial_beatkey, initial_position)
     }
+
     override fun remove_beat(index: Int) {
         this.history_cache.open_multi()
         this.push_insert_beat(index, this.get_channel_line_counts())
@@ -400,6 +399,7 @@ open class HistoryLayer() : CursorLayer() {
             super.set_event(beat_key, position, event)
             this.push_replace_tree(beat_key, position, tree)
         } catch (e: Exception) {
+            this.history_cache.cancel_multi()
             throw e
         }
         this.history_cache.close_multi()
@@ -421,7 +421,6 @@ open class HistoryLayer() : CursorLayer() {
             throw e
         }
         this.history_cache.close_multi()
-
     }
 
     override fun unset(beat_key: BeatKey, position: List<Int>) {
@@ -558,7 +557,12 @@ open class HistoryLayer() : CursorLayer() {
 
     override fun link_beats(beat_key: BeatKey, target: BeatKey) {
         this.history_cache.open_multi()
-        super.link_beats(beat_key, target)
+        try {
+            super.link_beats(beat_key, target)
+        } catch (e: Exception) {
+            this.history_cache.cancel_multi()
+            throw e
+        }
         this.history_cache.close_multi()
     }
 
@@ -581,6 +585,7 @@ open class HistoryLayer() : CursorLayer() {
 
     override fun link_beat_into_pool(beat_key: BeatKey, index: Int, overwrite_pool: Boolean) {
         this.history_cache.open_multi()
+        // TODO: I just forgot to finish this.
         if (overwrite_pool) {
 
         } else {

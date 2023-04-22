@@ -1,6 +1,7 @@
 package com.qfs.radixulous
 
 import android.content.Context
+import android.util.Log
 import android.view.*
 import android.widget.LinearLayout
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -56,9 +57,7 @@ class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: Recycle
     }
 
     var beat_count = 0
-    var _longclicking_leaf: View? = null
-
-    var _dragging_leaf: View? = null
+    var cut_leaf: Pair<BeatKey, List<Int>>? = null
     var linking_beat: BeatKey? = null
     var linking_beat_b: BeatKey? = null
     var _scroll_lock_this: Boolean = false
@@ -132,8 +131,9 @@ class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: Recycle
                 opus_manager.is_percussion(beatkey.channel)
             )
 
-            tvLeaf.setOnClickListener {
-                this.interact_leafView_click(it)
+            tvLeaf.setOnSingleTapListener { event: MotionEvent ->
+                this.interact_leafView_click(tvLeaf)
+                false
             }
 
             tvLeaf.setOnFocusChangeListener { view, is_focused: Boolean ->
@@ -142,54 +142,10 @@ class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: Recycle
                 }
             }
 
-            tvLeaf.setOnLongClickListener { view: View ->
-                view.isPressed = false
-                this._longclicking_leaf = view
+            tvLeaf.setOnDoubleTapListener { event: MotionEvent ->
+                this.interact_leafView_doubletap(tvLeaf)
+
                 false
-            }
-
-            tvLeaf.setOnTouchListener { view, touchEvent ->
-                if (this._longclicking_leaf != null) {
-                    if (touchEvent.action == MotionEvent.ACTION_MOVE) {
-                        if (this._dragging_leaf == null) {
-                            this._dragging_leaf = view
-
-                            view.startDragAndDrop(
-                                null,
-                                View.DragShadowBuilder(view),
-                                null,
-                                0
-                            )
-                        }
-                        this._longclicking_leaf = null
-                    } else if (touchEvent.action == MotionEvent.ACTION_UP) {
-                        this._longclicking_leaf = null
-                        this.interact_leafView_longclick(view)
-                        return@setOnTouchListener true
-                    }
-                }
-                false
-            }
-
-            tvLeaf.setOnDragListener { view: View, dragEvent: DragEvent ->
-                when (dragEvent.action) {
-                    DragEvent.ACTION_DROP -> {
-                        if (this._dragging_leaf != view && this._dragging_leaf != null) {
-                            val (beatkey_to, position_to) = this.get_view_position(view)
-                            val (beatkey_from, position_from) = this.get_view_position(this._dragging_leaf!!)
-
-                            opus_manager.move_leaf(beatkey_from, position_from, beatkey_to, position_to)
-
-                            val (y, x, _) = this.get_view_position_abs(view)
-                            this.parent_fragment.set_cursor_position(y, x, position_to, FocusType.Cell)
-                            this.parent_fragment.tick()
-
-                        }
-                        this._dragging_leaf = null
-                    }
-                    else -> { }
-                }
-                true
             }
 
             if (offset == null) {
@@ -390,10 +346,7 @@ class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: Recycle
         }
     }
 
-    private fun interact_leafView_longclick(view: View) {
-        val main = this.get_main_activity()
-        //main.stop_playback()
-
+    private fun interact_leafView_doubletap(view: View) {
         val (beatkey, _) = this.get_view_position(view)
         val (y, x, _) = this.get_view_position_abs(view)
         if (this.linking_beat == null) {

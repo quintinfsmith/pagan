@@ -10,6 +10,7 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.DocumentsContract
 import android.view.*
+import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
@@ -645,6 +646,22 @@ class MainActivity : AppCompatActivity() {
         this.cancel_reticle()
     }
 
+    fun get_timestring_at_beat(beat: Int): String {
+        val opus_manager = this.get_opus_manager()
+        val tempo = opus_manager.tempo
+        val milliseconds_per_beat = 60000F / tempo
+        var milliseconds = (beat * milliseconds_per_beat).toInt()
+        var seconds = milliseconds / 1000
+        val minutes = seconds / 60
+        seconds %= 60
+        milliseconds %= 1000
+        var centiseconds = milliseconds / 10
+        var minute_string = "${minutes.toString().padStart(2,'0')}"
+        var second_string = "${seconds.toString().padStart(2,'0')}"
+        var centi_string = "${centiseconds.toString().padStart(2, '0')}"
+        return "$minute_string:$second_string.$centi_string"
+    }
+
     fun playback_dialog() {
         val viewInflated: View = LayoutInflater.from(this)
             .inflate(
@@ -654,13 +671,17 @@ class MainActivity : AppCompatActivity() {
             )
 
         val opus_manager = this.get_opus_manager()
-        var playing = true
+        var playing = false
         var sbPlaybackPosition = viewInflated.findViewById<SeekBar>(R.id.sbPlaybackPosition)
-        sbPlaybackPosition.max = opus_manager.opus_beat_count
+        sbPlaybackPosition.max = opus_manager.opus_beat_count - 1
         sbPlaybackPosition.progress = opus_manager.get_cursor().x
         var tvPlaybackPosition = viewInflated.findViewById<TextView>(R.id.tvPlaybackPosition)
         tvPlaybackPosition.text = opus_manager.get_cursor().x.toString()
         var ibPlayPause = viewInflated.findViewById<ImageView>(R.id.ibPlayPause)
+        var btnJumpTo = viewInflated.findViewById<View>(R.id.btnJumpTo)
+        var tvPlaybackTime = viewInflated.findViewById<TextView>(R.id.tvPlaybackTime)
+        tvPlaybackTime.text = this.get_timestring_at_beat(opus_manager.get_cursor().x)
+
 
         var midi_scroller = MIDIScroller(this, sbPlaybackPosition)
         this.midi_controller.registerVirtualDevice(midi_scroller)
@@ -688,27 +709,39 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        var that = this
         sbPlaybackPosition.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener {
+            var was_playing = false
             override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
                 tvPlaybackPosition.text = p1.toString()
+                tvPlaybackTime.text = that.get_timestring_at_beat(p1)
             }
 
-            override fun onStartTrackingTouch(p0: SeekBar?) { }
-            override fun onStopTrackingTouch(seekbar: SeekBar?) { }
+            override fun onStartTrackingTouch(p0: SeekBar?) {
+                this.was_playing = playing
+                pause_playback()
+            }
+            override fun onStopTrackingTouch(seekbar: SeekBar?) {
+                if (this.was_playing && seekbar != null) {
+                    start_playback(seekbar.progress)
+                }
+            }
         })
 
 
         var dialog = AlertDialog.Builder(this, R.style.AlertDialog)
             .setView(viewInflated)
-            .setOnCancelListener { dialog ->
+            .setOnCancelListener { _ ->
                 this.midi_input_device.sendEvent(MIDIStop())
                 this.midi_controller.unregisterVirtualDevice(midi_scroller)
             }
             .show()
 
-        thread {
-            Thread.sleep(500)
-            start_playback(opus_manager.get_cursor().x)
+        btnJumpTo.setOnClickListener {
+            pause_playback()
+            this.scroll_to_beat(sbPlaybackPosition.progress, true)
+            dialog.dismiss()
         }
+
     }
 }

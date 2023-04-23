@@ -56,19 +56,12 @@ class AudioTrackHandle() {
     companion object {
         const val sample_rate = 44100
     }
-    class Listener(private var handle: AudioTrackHandle): AudioTrack.OnPlaybackPositionUpdateListener {
-        override fun onMarkerReached(p0: AudioTrack?) {
-            //
-        }
-        override fun onPeriodicNotification(audioTrack: AudioTrack?) {
-            if (audioTrack != null) {
-                this.handle.write_next_chunk()
-            }
-        }
-    }
-
-    private var buffer_size_in_bytes: Int
-    private var buffer_size_in_frames: Int
+    private var buffer_size_in_bytes: Int = AudioTrack.getMinBufferSize(
+        AudioTrackHandle.sample_rate,
+        AudioFormat.ENCODING_PCM_16BIT,
+        AudioFormat.CHANNEL_OUT_STEREO
+    )
+    private var buffer_size_in_frames: Int = buffer_size_in_bytes / 4
     private var chunk_size_in_frames: Int
     private var chunk_size_in_bytes: Int
     private var chunk_ratio: Int = 3
@@ -85,17 +78,10 @@ class AudioTrackHandle() {
     private var volume_divisor = 3
 
     init {
-        this.buffer_size_in_bytes = AudioTrack.getMinBufferSize(
-            AudioTrackHandle.sample_rate,
-            AudioFormat.ENCODING_PCM_16BIT,
-            AudioFormat.CHANNEL_OUT_STEREO
-        )
-
         //while (this.buffer_size_in_bytes < this.sample_rate) {
         //    this.buffer_size_in_bytes *= 2
         //}
 
-        this.buffer_size_in_frames = buffer_size_in_bytes / 4
         this.chunk_size_in_frames = this.buffer_size_in_frames / this.chunk_ratio
         this.chunk_size_in_bytes = this.buffer_size_in_bytes / this.chunk_ratio
 
@@ -115,11 +101,6 @@ class AudioTrackHandle() {
             )
             .setBufferSizeInBytes(this.buffer_size_in_bytes)
             .build()
-
-        //val playbacklistener = Listener(this)
-        //this.audioTrack.setPlaybackPositionUpdateListener( playbacklistener )
-
-        //this.audioTrack.positionNotificationPeriod = this.buffer_size_in_frames
     }
 
     fun set_volume_divisor(n: Int) {

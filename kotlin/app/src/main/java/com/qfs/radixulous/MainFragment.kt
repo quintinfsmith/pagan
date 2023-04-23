@@ -2,7 +2,6 @@ package com.qfs.radixulous
 
 import android.app.AlertDialog
 import android.os.Bundle
-import android.util.Log
 import android.view.*
 import android.widget.*
 import androidx.fragment.app.Fragment
@@ -157,11 +156,6 @@ class MainFragment : TempNameFragment() {
     fun undo() {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
-        Log.d("XXA", "___________________________________")
-        Log.d("XXA", "${opus_manager.history_cache.isLocked()}")
-        Log.d("XXA", "${opus_manager.history_cache.peek()}")
-        Log.d("XXA", "${opus_manager.history_cache.working_node}")
-        Log.d("XXA", "___________________________________")
         if (opus_manager.has_history()) {
             opus_manager.apply_undo()
             this.tick()

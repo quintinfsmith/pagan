@@ -5,10 +5,9 @@ import android.media.*
 import android.util.Log
 import com.qfs.radixulous.apres.riffreader.toUInt
 import kotlin.concurrent.thread
-import kotlin.math.abs
 import kotlin.math.pow
 
-class Locker() {
+class Mutex(var timeout: Int = 1000) {
     companion object {
         var locker_id_gen = 0 // Used for debug
         fun new_locker_id(): Int {
@@ -17,7 +16,7 @@ class Locker() {
     }
     var gen_value = 0
     var lock_value = 0
-    var locker_id = Locker.new_locker_id()
+    var locker_id = Mutex.new_locker_id()
     private val max_value = 0xFFFFFFFF
 
     fun pick_number(): Int {
@@ -31,17 +30,28 @@ class Locker() {
 
     fun enter_queue() {
         var waiting_number = this.pick_number()
-        while (waiting_number != this.lock_value) {
+        var wait = 0
+        while (waiting_number != this.lock_value && wait < this.timeout) {
             Thread.sleep(5)
+            wait += 5
+        }
+        if (wait >= this.timeout) {
+            Log.d("XXA", "QUEUE @ $waiting_number TIMEOUT")
         }
     }
 
     fun release() {
         this.lock_value += 1
+    }
 
+    fun <T> withLock(callback: () -> T): T {
+        this.enter_queue()
+        val output: T = callback()
+        this.release()
+
+        return output
     }
 }
-
 class AudioTrackHandle() {
     companion object {
         const val sample_rate = 44100
@@ -65,7 +75,7 @@ class AudioTrackHandle() {
 
     private var audioTrack: AudioTrack
     private var sample_handles = HashMap<Int, SampleHandle>()
-    private var sample_locker = Locker()
+    private var sample_handles_mutex = Mutex()
     private var keygen: Int = 0
     private val maxkey = 0xFFFFFFFF
 
@@ -142,11 +152,11 @@ class AudioTrackHandle() {
     }
 
     fun add_sample_handle(handle: SampleHandle): Int {
-        this.sample_locker.enter_queue()
-        var newkey = this.genkey()
-        this.sample_handles[newkey] = handle
-        this.sample_locker.release()
-        return newkey
+        return this.sample_handles_mutex.withLock {
+            var newkey = this.genkey()
+            this.sample_handles[newkey] = handle
+            newkey
+        }
     }
 
     fun add_sample_handles(handles: Set<SampleHandle>): Set<Int> {
@@ -159,16 +169,16 @@ class AudioTrackHandle() {
         return output
     }
 
-    fun remove_sample_handle(key: Int) {
-        this.sample_locker.enter_queue()
-        var handle = this.sample_handles.remove(key)
-        this.sample_locker.release()
+    fun remove_sample_handle(key: Int): SampleHandle? {
+        return this.sample_handles_mutex.withLock {
+            this.sample_handles.remove(key)
+        }
     }
 
     fun release_sample_handle(key: Int) {
-        this.sample_locker.enter_queue()
-        this.sample_handles[key]?.release_note()
-        this.sample_locker.release()
+        this.sample_handles_mutex.withLock {
+            this.sample_handles[key]?.release_note()
+        }
     }
 
     fun write_empty_chunk() {
@@ -181,10 +191,9 @@ class AudioTrackHandle() {
         val kill_handles = mutableSetOf<Int>()
         var cut_point: Int? = null
 
-
-        this.sample_locker.enter_queue()
-        var sample_handles = this.sample_handles.toList()
-        this.sample_locker.release()
+        val sample_handles = this.sample_handles_mutex.withLock {
+            this.sample_handles.toList()
+        }
 
         if (this.sample_handles.isEmpty()) {
             this.stop_called_from_write = true
@@ -244,7 +253,6 @@ class AudioTrackHandle() {
             }
         }
 
-
         for (key in kill_handles) {
             this.remove_sample_handle(key)
         }
@@ -252,8 +260,8 @@ class AudioTrackHandle() {
         if (this.stop_called_from_write) {
             this.is_playing = false
         }
-
     }
+
 
     fun write_loop() {
         this.audioTrack.play()
@@ -425,7 +433,7 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
     private val loaded_presets = HashMap<Pair<Int, Int>, Preset>()
     private val audio_track_handle = AudioTrackHandle()
     private val active_handle_keys = HashMap<Pair<Int, Int>, Set<Int>>()
-    private val handle_locker = Locker()
+    private val active_handle_mutex = Mutex()
     private var sample_handle_queue = mutableSetOf<Pair<NoteOn,Set<SampleHandle>>>()
     private var enqueueing_sample_handles = false
 
@@ -443,13 +451,9 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
     }
 
     private fun release_note(note: Int, channel: Int) {
-        this.handle_locker.enter_queue()
-        var keys = this.active_handle_keys[Pair(note, channel)]
-        this.handle_locker.release()
-
-        if (keys == null) {
-            return
-        }
+        val keys = this.active_handle_mutex.withLock {
+            this.active_handle_keys[Pair(note, channel)]
+        } ?: return
 
         for (key in keys) {
             this.audio_track_handle.release_sample_handle(key)
@@ -457,12 +461,9 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
     }
 
     private fun kill_note(note: Int, channel: Int) {
-        this.handle_locker.enter_queue()
-        var keys = this.active_handle_keys.remove(Pair(note, channel))
-        this.handle_locker.release()
-        if (keys == null) {
-            return
-        }
+        val keys = this.active_handle_mutex.withLock {
+            this.active_handle_keys.remove(Pair(note, channel))
+        } ?: return
 
         for (key in keys) {
             this.audio_track_handle.remove_sample_handle(key)
@@ -478,9 +479,9 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
         }
 
         val preset = this.loaded_presets[Pair(bank, this.get_channel_preset(event.channel))]!!
-        this.handle_locker.enter_queue()
-        this.active_handle_keys[Pair(event.note, event.channel)] = this.audio_track_handle.add_sample_handles(this.gen_sample_handles(event, preset))
-        this.handle_locker.release()
+        this.active_handle_mutex.withLock {
+            this.active_handle_keys[Pair(event.note, event.channel)] = this.audio_track_handle.add_sample_handles(this.gen_sample_handles(event, preset))
+        }
         this.audio_track_handle.play()
     }
 
@@ -508,11 +509,11 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
 
     override fun onAllSoundOff(event: AllSoundOff) {
         val to_kill = mutableListOf<Int>()
-        this.handle_locker.enter_queue()
-        for ((key, _) in this.active_handle_keys.filterKeys { k -> k.second == event.channel }) {
-            to_kill.add(key.first)
+        this.active_handle_mutex.withLock {
+            for ((key, _) in this.active_handle_keys.filterKeys { k -> k.second == event.channel }) {
+                to_kill.add(key.first)
+            }
         }
-        this.handle_locker.release()
 
         for (note in to_kill) {
             this.kill_note(note, event.channel)

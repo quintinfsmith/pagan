@@ -4,8 +4,11 @@ import android.content.Context
 import android.media.*
 import android.util.Log
 import com.qfs.radixulous.apres.riffreader.toUInt
+import java.lang.Math.abs
 import kotlin.concurrent.thread
+import kotlin.math.PI
 import kotlin.math.pow
+import kotlin.math.sin
 
 class Mutex(var timeout: Int = 1000) {
     companion object {
@@ -167,6 +170,16 @@ class AudioTrackHandle() {
         this.audioTrack.write(use_bytes, 0, use_bytes.size, AudioTrack.WRITE_BLOCKING)
     }
 
+    fun attenuate_value(signal_value: Int, sample_count: Int): Int {
+        return if (abs(signal_value) < Short.MAX_VALUE / sample_count) {
+            signal_value
+        } else {
+            var x = signal_value.toFloat() / Short.MAX_VALUE
+            (signal_value * (x.pow(1 / sample_count)).toInt())
+            //(((( x + 1).pow(1F / (sample_count).toFloat())) - 1) * 2 * Short.MAX_VALUE).toInt()
+        }
+    }
+
     fun write_next_chunk() {
         val use_bytes = ByteArray(this.buffer_size_in_bytes) { _ -> 0 }
         val kill_handles = mutableSetOf<Int>()
@@ -186,7 +199,7 @@ class AudioTrackHandle() {
                     if (key in kill_handles) {
                         continue
                     }
-                    val v: Short? = sample_handle.get_next_frame()
+                    var v: Short? = sample_handle.get_next_frame()
                     if (v == null) {
                         kill_handles.add(key)
                         if (kill_handles.size == sample_handles.size && cut_point == null) {
@@ -195,6 +208,7 @@ class AudioTrackHandle() {
                         }
                         continue
                     }
+                    v = this.attenuate_value(v.toInt(), sample_handles.size).toShort()
 
                     // TODO: Implement ROM stereo modes
                     when (sample_handle.stereo_mode and 7) {
@@ -213,8 +227,8 @@ class AudioTrackHandle() {
                 }
 
                 if (cut_point == null) {
-                    val right = right_values.sum() / volume_divisor
-                    val left = left_values.sum() / volume_divisor
+                    val right = right_values.sum()
+                    val left = left_values.sum()
                     use_bytes[(4 * x)] = (right and 0xFF).toByte()
                     use_bytes[(4 * x) + 1] = ((right and 0xFF00) shr 8).toByte()
 

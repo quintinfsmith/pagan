@@ -4,13 +4,14 @@ import android.content.Context
 import android.media.*
 import android.util.Log
 import com.qfs.radixulous.apres.riffreader.toUInt
-import java.lang.Math.abs
+import java.lang.Math.max
 import kotlin.concurrent.thread
-import kotlin.math.PI
+import kotlin.math.floor
 import kotlin.math.pow
-import kotlin.math.sin
+import kotlin.math.abs
+import kotlin.math.ceil
 
-class Mutex(var timeout: Int = 1000) {
+class Mutex(var timeout: Int = 100) {
     companion object {
         var locker_id_gen = 0 // Used for debug
         fun new_locker_id(): Int {
@@ -58,57 +59,37 @@ class Mutex(var timeout: Int = 1000) {
 class AudioTrackHandle() {
     companion object {
         const val sample_rate = 44100
+        val buffer_size_in_bytes: Int = AudioTrack.getMinBufferSize(
+            AudioTrackHandle.sample_rate,
+            AudioFormat.ENCODING_PCM_16BIT,
+            AudioFormat.CHANNEL_OUT_STEREO
+        )
+        val buffer_size_in_frames: Int = buffer_size_in_bytes / 4
+        private const val maxkey = 0xFFFFFFFF
     }
-    private var buffer_size_in_bytes: Int = AudioTrack.getMinBufferSize(
-        AudioTrackHandle.sample_rate,
-        AudioFormat.ENCODING_PCM_16BIT,
-        AudioFormat.CHANNEL_OUT_STEREO
-    )
-    private var buffer_size_in_frames: Int = buffer_size_in_bytes / 4
-    private var chunk_size_in_frames: Int
-    private var chunk_size_in_bytes: Int
-    private var chunk_ratio: Int = 3
 
-    private var audioTrack: AudioTrack
+    private var audioTrack: AudioTrack = AudioTrack.Builder()
+        .setAudioAttributes(
+            AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_MEDIA)
+                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                .build()
+        )
+        .setAudioFormat(
+            AudioFormat.Builder()
+                .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                .setSampleRate(AudioTrackHandle.sample_rate)
+                .setChannelMask(AudioFormat.CHANNEL_OUT_STEREO)
+                .build()
+        )
+        .setBufferSizeInBytes(AudioTrackHandle.buffer_size_in_bytes)
+        .build()
     private var sample_handles = HashMap<Int, SampleHandle>()
     private var sample_handles_mutex = Mutex()
     private var keygen: Int = 0
-    private val maxkey = 0xFFFFFFFF
 
     private var is_playing = false
     private var stop_called_from_write = false // play *may*  be called between a write_next_chunk() finding an incomplete chunk and finishing the call
-
-    private var volume_divisor = 3
-
-    init {
-        //while (this.buffer_size_in_bytes < this.sample_rate) {
-        //    this.buffer_size_in_bytes *= 2
-        //}
-
-        this.chunk_size_in_frames = this.buffer_size_in_frames / this.chunk_ratio
-        this.chunk_size_in_bytes = this.buffer_size_in_bytes / this.chunk_ratio
-
-        this.audioTrack = AudioTrack.Builder()
-            .setAudioAttributes(
-                AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_MEDIA)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                    .build()
-            )
-            .setAudioFormat(
-                AudioFormat.Builder()
-                    .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                    .setSampleRate(AudioTrackHandle.sample_rate)
-                    .setChannelMask(AudioFormat.CHANNEL_OUT_STEREO)
-                    .build()
-            )
-            .setBufferSizeInBytes(this.buffer_size_in_bytes)
-            .build()
-    }
-
-    fun set_volume_divisor(n: Int) {
-        this.volume_divisor = n
-    }
 
     fun play() {
         this.stop_called_from_write = false
@@ -128,7 +109,7 @@ class AudioTrackHandle() {
         val output = this.keygen
 
         this.keygen += 1
-        if (this.maxkey <= this.keygen) {
+        if (AudioTrackHandle.maxkey <= this.keygen) {
             this.keygen = 0
         }
 
@@ -166,22 +147,12 @@ class AudioTrackHandle() {
     }
 
     fun write_empty_chunk() {
-        val use_bytes = ByteArray(this.buffer_size_in_bytes) { _ -> 0 }
+        val use_bytes = ByteArray(AudioTrackHandle.buffer_size_in_bytes) { _ -> 0 }
         this.audioTrack.write(use_bytes, 0, use_bytes.size, AudioTrack.WRITE_BLOCKING)
     }
 
-    fun attenuate_value(signal_value: Int, sample_count: Int): Int {
-        return if (abs(signal_value) < Short.MAX_VALUE / sample_count) {
-            signal_value
-        } else {
-            var x = signal_value.toFloat() / Short.MAX_VALUE
-            (signal_value * (x.pow(1 / sample_count)).toInt())
-            //(((( x + 1).pow(1F / (sample_count).toFloat())) - 1) * 2 * Short.MAX_VALUE).toInt()
-        }
-    }
-
     fun write_next_chunk() {
-        val use_bytes = ByteArray(this.buffer_size_in_bytes) { _ -> 0 }
+        val use_bytes = ByteArray(AudioTrackHandle.buffer_size_in_bytes) { _ -> 0 }
         val kill_handles = mutableSetOf<Int>()
         var cut_point: Int? = null
 
@@ -189,12 +160,35 @@ class AudioTrackHandle() {
             this.sample_handles.toList()
         }
 
+        val short_max = Short.MAX_VALUE.toFloat()
+
         if (this.sample_handles.isEmpty()) {
             this.stop_called_from_write = true
         } else {
-            for (x in 0 until this.buffer_size_in_frames) {
-                val left_values = mutableListOf<Short>()
-                val right_values = mutableListOf<Short>()
+            var control_sample_left = IntArray(AudioTrackHandle.buffer_size_in_frames) { _ -> 0 }
+            var control_sample_right = IntArray(AudioTrackHandle.buffer_size_in_frames) { _ -> 0 }
+            var max_left = 0
+            var max_right = 0
+            for ((key, sample_handle) in sample_handles) {
+                when (sample_handle.stereo_mode and 7) {
+                    1 -> { // mono
+                        var next_max = sample_handle.get_next_max(AudioTrackHandle.buffer_size_in_frames) ?: continue
+                        max_left += next_max
+                        max_right += next_max
+                    }
+                    2 -> { // right
+                        max_right += sample_handle.get_next_max(AudioTrackHandle.buffer_size_in_frames) ?: continue
+                    }
+                    4 -> { // left
+                        max_left += sample_handle.get_next_max(AudioTrackHandle.buffer_size_in_frames) ?: continue
+                    }
+                    else -> {}
+                }
+            }
+
+            for (x in 0 until AudioTrackHandle.buffer_size_in_frames) {
+                var left = 0
+                var right = 0
                 for ((key, sample_handle) in sample_handles) {
                     if (key in kill_handles) {
                         continue
@@ -208,35 +202,48 @@ class AudioTrackHandle() {
                         }
                         continue
                     }
-                    v = this.attenuate_value(v.toInt(), sample_handles.size).toShort()
 
                     // TODO: Implement ROM stereo modes
                     when (sample_handle.stereo_mode and 7) {
                         1 -> { // mono
-                            left_values.add(v)
-                            right_values.add(v)
+                            left += v
+                            right += v
                         }
                         2 -> { // right
-                            right_values.add(v)
+                            right += v
                         }
                         4 -> { // left
-                            left_values.add(v)
+                            left += v
                         }
                         else -> {}
                     }
                 }
+                control_sample_left[x] = left
+                control_sample_right[x] = right
+            }
 
-                if (cut_point == null) {
-                    val right = right_values.sum()
-                    val left = left_values.sum()
-                    use_bytes[(4 * x)] = (right and 0xFF).toByte()
-                    use_bytes[(4 * x) + 1] = ((right and 0xFF00) shr 8).toByte()
 
-                    use_bytes[(4 * x) + 2] = (left and 0xFF).toByte()
-                    use_bytes[(4 * x) + 3] = ((left and 0xFF00) shr 8).toByte()
-                } else {
-                    break
-                }
+            var gain_factor_left = if (max_left > Short.MAX_VALUE) {
+                short_max / max_left.toFloat()
+            } else {
+                1F
+            }
+
+            var gain_factor_right = if (max_right > Short.MAX_VALUE) {
+                short_max / max_right.toFloat()
+            } else {
+                1F
+            }
+
+            for (x in 0 until control_sample_left.size) {
+                var right = (control_sample_right[x] * gain_factor_right).toInt()
+                var left = (control_sample_left[x] * gain_factor_left).toInt()
+
+                use_bytes[(4 * x)] = (right and 0xFF).toByte()
+                use_bytes[(4 * x) + 1] = ((right and 0xFF00) shr 8).toByte()
+
+                use_bytes[(4 * x) + 2] = (left and 0xFF).toByte()
+                use_bytes[(4 * x) + 3] = ((left and 0xFF00) shr 8).toByte()
             }
 
             if (this.audioTrack.state != AudioTrack.STATE_UNINITIALIZED) {
@@ -285,6 +292,7 @@ class SampleHandle(var event: NoteOn, sample: InstrumentSample, instrument: Pres
     var sustain_volume: Int = 0 // TODO
     var release_mask: Array<Double>
     var current_release_position: Int = 0
+    var maximum_map: Array<Int>
 
     init {
         val original_note = sample.root_key ?: sample.sample!!.originalPitch
@@ -361,7 +369,34 @@ class SampleHandle(var event: NoteOn, sample: InstrumentSample, instrument: Pres
         }
 
         this.current_release_position = 0
+
+        var divisions = ceil(this.data.size.toFloat() / (AudioTrackHandle.buffer_size_in_bytes.toFloat() / 2F)).toInt() * 2
+        this.maximum_map = Array<Int>(divisions) { _ -> 0 }
+        for (i in 0 until this.data.size / 2) {
+            val a = toUInt(this.data[(2 * i)])
+            val b = toUInt(this.data[(2 * i) + 1]) * 256
+            var frame = (a + b).toShort().toInt()
+            var mapped_position = (i * divisions / (this.data.size / 2)).toInt()
+            this.maximum_map[mapped_position] = max(abs(frame), this.maximum_map[mapped_position])
+        }
     }
+
+    fun get_max_in_range(x: Int, size: Int): Int {
+        var index = x * this.maximum_map.size / (this.data.size / 2)
+        var mapped_size =  size * this.maximum_map.size / (this.data.size / 2)
+        var output = 0
+        for (i in 0 until mapped_size) {
+            output = max(output, this.maximum_map[index])
+            index = (index + 1) % this.maximum_map.size
+        }
+        return output
+    }
+
+    fun get_next_max(buffer_size: Int): Int {
+        return this.get_max_in_range(this.current_position / 2, buffer_size)
+    }
+
+
 
     fun resample(sample_data: ByteArray): ByteArray {
         // TODO: This is VERY Niave. Look into actual resampling algorithms
@@ -385,11 +420,11 @@ class SampleHandle(var event: NoteOn, sample: InstrumentSample, instrument: Pres
     }
 
     fun get_next_frame(): Short? {
-        if (this.current_delay_position < this.delay_frames) {
-            var output = 0.toShort()
-            this.current_delay_position += 1
-            return output
-        }
+        //if (this.current_delay_position < this.delay_frames) {
+        //    var output = 0.toShort()
+        //    this.current_delay_position += 1
+        //    return output
+        //}
 
         if (this.current_position > this.data.size - 2) {
             return null
@@ -532,10 +567,6 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
             }
         }
         return output
-    }
-
-    fun set_active_line_count(n: Int) {
-        this.audio_track_handle.set_volume_divisor(n)
     }
 }
 

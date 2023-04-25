@@ -2164,6 +2164,7 @@ class MIDIPlayer: VirtualMIDIDevice() {
         val start_time = System.currentTimeMillis()
         var delay_accum = 0
         var that = this
+        var pp = System.currentTimeMillis()
         for ((tick, events) in midi.get_all_events_grouped()) {
             if (!this.playing) {
                 break
@@ -2182,6 +2183,11 @@ class MIDIPlayer: VirtualMIDIDevice() {
 
             runBlocking {
                 for (event in events) {
+                    if (event is SongPositionPointer) {
+                        var now = System.currentTimeMillis()
+                        Log.d("XXA", "NOTE ON $event ${now - pp}")
+                        pp = now
+                    }
                     if (event is SetTempo) {
                         us_per_tick = event.get_uspqn() / ppqn
                     }

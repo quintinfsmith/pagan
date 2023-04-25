@@ -9,6 +9,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.DocumentsContract
+import android.util.Log
 import android.view.*
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.*
@@ -346,7 +347,6 @@ class MainActivity : AppCompatActivity() {
             this.midi_input_device.sendEvent(NoteOff(midi_channel, note, 64))
         }
     }
-
 
     private fun play_midi(midi: MIDI) {
         this.midi_playback_device.precache_midi(midi)
@@ -714,6 +714,7 @@ class MainActivity : AppCompatActivity() {
         var that = this
         sbPlaybackPosition.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener {
             var was_playing = false
+            var is_stopping = false
             override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
                 tvPlaybackPosition.text = p1.toString()
                 tvPlaybackTime.text = that.get_timestring_at_beat(p1)
@@ -721,10 +722,16 @@ class MainActivity : AppCompatActivity() {
 
             override fun onStartTrackingTouch(p0: SeekBar?) {
                 this.was_playing = playing
+                this.is_stopping = true
                 pause_playback()
+                this.is_stopping = false
             }
             override fun onStopTrackingTouch(seekbar: SeekBar?) {
+
                 if (this.was_playing && seekbar != null) {
+                    // Kludge. need to give the midi play enough time to stop
+                    Thread.sleep(500)
+
                     start_playback(seekbar.progress)
                 }
             }

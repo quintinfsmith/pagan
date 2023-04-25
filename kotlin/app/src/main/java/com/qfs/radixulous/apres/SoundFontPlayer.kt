@@ -275,88 +275,72 @@ class AudioTrackHandle() {
     }
 }
 
+class SampleHandleGenerator {
+    // Hash ignores velocity since velocity isn't baked into sample data
+    data class MapKey(
+        var note: Int,
+        var sample: Int,
+        var instrument: Int,
+        var preset: Int
+    )
 
-class SampleHandle(var event: NoteOn, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset) {
-    var pitch_shift: Float = 1F
-    var current_position: Int = 0
-    var decay_position: Int? = null
-    val loop_points: Pair<Int, Int>?
-    var data: ByteArray
-    var stereo_mode: Int
-    var is_pressed = true
-    var delay_frames: Int = 0
-    var current_delay_position: Int = 0
-    var attack_byte_count: Int = 0
-    var hold_byte_count: Int = 0
-    var decay_byte_count: Int = 0
-    var sustain_volume: Int = 0 // TODO
-    var release_mask: Array<Double>
-    var current_release_position: Int = 0
-    var maximum_map: Array<Int>
+    var sample_data_map = HashMap<MapKey, SampleHandle>()
+    fun get(event: NoteOn, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset): SampleHandle {
+        var mapkey = MapKey(event.note, sample.hashCode(), instrument.hashCode(), preset.hashCode())
+        if (!sample_data_map.contains(mapkey)) {
+            this.sample_data_map[mapkey] = this.generate_new(event, sample, instrument, preset)
+        }
+        return SampleHandle(this.sample_data_map[mapkey]!!)
+    }
 
-    init {
+    fun cache_new(event: NoteOn, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset) {
+        var mapkey = MapKey(event.note, sample.hashCode(), instrument.hashCode(), preset.hashCode())
+        if (!sample_data_map.contains(mapkey)) {
+            this.sample_data_map[mapkey] = this.generate_new(event, sample, instrument, preset)
+        }
+    }
+
+    fun generate_new(event: NoteOn, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset): SampleHandle {
+        var pitch_shift = 1F
         val original_note = sample.root_key ?: sample.sample!!.originalPitch
         if (original_note != 255) {
             val original_pitch = 2F.pow(original_note.toFloat() / 12F)
             val tuning_cent = (sample.tuning_cent ?: instrument.tuning_cent ?: preset.global_zone?.tuning_cent ?: 0).toFloat()
             val tuning_semi = (sample.tuning_semi ?: instrument.tuning_semi ?: preset.global_zone?.tuning_semi ?: 0).toFloat()
-            val requiredPitch = 2F.pow((this.event.note.toFloat() + (tuning_semi + (tuning_cent / 1200))) / 12F)
-            this.pitch_shift = requiredPitch / original_pitch
+            val requiredPitch = 2F.pow((event.note.toFloat() + (tuning_semi + (tuning_cent / 1200))) / 12F)
+            pitch_shift = requiredPitch / original_pitch
         }
 
         if (sample.sample!!.sampleRate != AudioTrackHandle.sample_rate) {
-            this.pitch_shift *= (sample.sample!!.sampleRate.toFloat() / AudioTrackHandle.sample_rate.toFloat())
+            pitch_shift *= (sample.sample!!.sampleRate.toFloat() / AudioTrackHandle.sample_rate.toFloat())
         }
 
-        this.data = this.resample(sample.sample!!.data)
+        var data = this.resample(sample.sample!!.data, pitch_shift)
 
-        this.stereo_mode = sample.sample!!.sampleType
-        this.loop_points = if (sample.sampleMode != null && sample.sampleMode!! and 1 == 1) {
-            // Need to be even due to 2-byte words in sample
-            var new_start = (sample.sample!!.loopStart.toFloat() / this.pitch_shift).toInt()
-            if (new_start % 2 == 1) {
-                new_start -= 1
-            }
 
-            var new_end = (sample.sample!!.loopEnd.toFloat() / this.pitch_shift).toInt()
-            if (new_end % 2 == 1) {
-                new_end -= 1
-            }
-
-            Pair(new_start, new_end)
-
-        } else {
-            null
-        }
 
         var vol_env_delay: Double = preset.global_zone?.vol_env_delay
             ?: instrument.instrument?.global_sample?.vol_env_delay
             ?: instrument.vol_env_delay
             ?: sample.vol_env_delay
             ?: 0.0
-        this.delay_frames = ((AudioTrackHandle.sample_rate.toDouble() * vol_env_delay ) / 4.0).toInt()
-
-        this.attack_byte_count = ((AudioTrackHandle.sample_rate.toDouble() * (sample.vol_env_attack ?: instrument.vol_env_attack ?: 0.0)) / 2.0).toInt()
         var vol_env_attack: Double = preset.global_zone?.vol_env_attack
             ?: instrument.instrument?.global_sample?.vol_env_attack
             ?: instrument.vol_env_attack
             ?: sample.vol_env_attack
             ?: 0.0
-        this.attack_byte_count = ((AudioTrackHandle.sample_rate.toDouble() * vol_env_attack ) / 2.0).toInt()
 
         var vol_env_hold: Double = preset.global_zone?.vol_env_hold
             ?: instrument.instrument?.global_sample?.vol_env_hold
             ?: instrument.vol_env_hold
             ?: sample.vol_env_hold
             ?: 0.0
-        this.hold_byte_count = ((AudioTrackHandle.sample_rate.toDouble() * vol_env_hold ) / 2.0).toInt()
 
         var vol_env_decay: Double = preset.global_zone?.vol_env_decay
             ?: instrument.instrument?.global_sample?.vol_env_decay
             ?: instrument.vol_env_decay
             ?: sample.vol_env_decay
             ?: 0.0
-        this.decay_byte_count = ((AudioTrackHandle.sample_rate.toDouble() * vol_env_decay ) / 2.0).toInt()
 
         var vol_env_release: Double = preset.global_zone?.vol_env_release
             ?: instrument.instrument?.global_sample?.vol_env_release
@@ -364,22 +348,105 @@ class SampleHandle(var event: NoteOn, sample: InstrumentSample, instrument: Pres
             ?: sample.vol_env_release
             ?: 0.0
         var release_mask_size = ((AudioTrackHandle.sample_rate.toDouble() * vol_env_release) / 4.0).toInt()
-        this.release_mask = Array(release_mask_size) {
-            i -> (release_mask_size - i - 1).toDouble() / release_mask_size.toDouble()
-        }
 
-        this.current_release_position = 0
-
-        var divisions = ceil(this.data.size.toFloat() / (AudioTrackHandle.buffer_size_in_bytes.toFloat() / 2F)).toInt() * 2
-        this.maximum_map = Array<Int>(divisions) { _ -> 0 }
-        for (i in 0 until this.data.size / 2) {
-            val a = toUInt(this.data[(2 * i)])
-            val b = toUInt(this.data[(2 * i) + 1]) * 256
+        var divisions = ceil(data.size.toFloat() / (AudioTrackHandle.buffer_size_in_bytes.toFloat() / 2F)).toInt() * 2
+        var maximum_map = Array<Int>(divisions) { _ -> 0 }
+        for (i in 0 until data.size / 2) {
+            val a = toUInt(data[(2 * i)])
+            val b = toUInt(data[(2 * i) + 1]) * 256
             var frame = (a + b).toShort().toInt()
-            var mapped_position = (i * divisions / (this.data.size / 2)).toInt()
-            this.maximum_map[mapped_position] = max(abs(frame), this.maximum_map[mapped_position])
+            var mapped_position = (i * divisions / (data.size / 2)).toInt()
+            maximum_map[mapped_position] = max(abs(frame), maximum_map[mapped_position])
         }
+
+        return SampleHandle(
+            data = data,
+            stereo_mode = sample.sample!!.sampleType,
+            loop_points = if (sample.sampleMode != null && sample.sampleMode!! and 1 == 1) {
+                // Need to be even due to 2-byte words in sample
+                var new_start = (sample.sample!!.loopStart.toFloat() / pitch_shift).toInt()
+                if (new_start % 2 == 1) {
+                    new_start -= 1
+                }
+
+                var new_end = (sample.sample!!.loopEnd.toFloat() / pitch_shift).toInt()
+                if (new_end % 2 == 1) {
+                    new_end -= 1
+                }
+
+                Pair(new_start, new_end)
+
+            } else {
+                null
+            },
+            delay_frames = ((AudioTrackHandle.sample_rate.toDouble() * vol_env_delay ) / 4.0).toInt(),
+            attack_byte_count = ((AudioTrackHandle.sample_rate.toDouble() * vol_env_attack ) / 2.0).toInt(),
+            hold_byte_count = ((AudioTrackHandle.sample_rate.toDouble() * vol_env_hold ) / 2.0).toInt(),
+            decay_byte_count = ((AudioTrackHandle.sample_rate.toDouble() * vol_env_decay ) / 2.0).toInt(),
+            release_mask = Array(release_mask_size) {
+                    i -> (release_mask_size - i - 1).toDouble() / release_mask_size.toDouble()
+            },
+            maximum_map = maximum_map
+        )
     }
+
+    fun resample(sample_data: ByteArray, pitch_shift: Float): ByteArray {
+        // TODO: This is VERY Niave. Look into actual resampling algorithms
+        var new_size = (sample_data.size / pitch_shift).toInt()
+        if (new_size % 2 == 1) {
+            new_size -= 1
+        }
+
+        var new_sample = ByteArray(new_size) { _ -> 0 }
+
+        for (i in 0 until new_size / 2) {
+            var i_offset = ((i * 2).toFloat() * pitch_shift).toInt()
+            if (i_offset % 2 == 1) {
+                i_offset -= 1
+            }
+            new_sample[i * 2] = sample_data[i_offset]
+            new_sample[(i * 2) + 1] = sample_data[i_offset + 1]
+        }
+
+        return new_sample
+    }
+
+    fun clear_cache() {
+        this.sample_data_map.clear()
+    }
+}
+
+class SampleHandle(
+        var data: ByteArray,
+        val loop_points: Pair<Int, Int>?,
+        var stereo_mode: Int,
+        var delay_frames: Int = 0,
+        var attack_byte_count: Int = 0,
+        var hold_byte_count: Int = 0,
+        var decay_byte_count: Int = 0,
+        var release_mask: Array<Double>,
+        var maximum_map: Array<Int>
+    ) {
+
+    constructor(original: SampleHandle): this(
+        original.data,
+        original.loop_points,
+        original.stereo_mode,
+        original.delay_frames,
+        original.attack_byte_count,
+        original.hold_byte_count,
+        original.decay_byte_count,
+        original.release_mask,
+        original.maximum_map
+    )
+
+    var is_pressed = true
+    var current_position: Int = 0
+    var current_delay_position: Int = 0
+    var decay_position: Int? = null
+    var sustain_volume: Int = 0 // TODO
+    var current_release_position: Int = 0
+    var current_volume: Double = 0.5
 
     fun get_max_in_range(x: Int, size: Int): Int {
         var index = x * this.maximum_map.size / (this.data.size / 2)
@@ -393,30 +460,7 @@ class SampleHandle(var event: NoteOn, sample: InstrumentSample, instrument: Pres
     }
 
     fun get_next_max(buffer_size: Int): Int {
-        return this.get_max_in_range(this.current_position / 2, buffer_size)
-    }
-
-
-
-    fun resample(sample_data: ByteArray): ByteArray {
-        // TODO: This is VERY Niave. Look into actual resampling algorithms
-        var new_size = (sample_data.size / this.pitch_shift).toInt()
-        if (new_size % 2 == 1) {
-            new_size -= 1
-        }
-
-        var new_sample = ByteArray(new_size) { _ -> 0 }
-
-        for (i in 0 until new_size / 2) {
-            var i_offset = ((i * 2).toFloat() * this.pitch_shift).toInt()
-            if (i_offset % 2 == 1) {
-                i_offset -= 1
-            }
-            new_sample[i * 2] = sample_data[i_offset]
-            new_sample[(i * 2) + 1] = sample_data[i_offset + 1]
-        }
-
-        return new_sample
+        return (this.get_max_in_range(this.current_position / 2, buffer_size).toDouble() * this.current_volume).toInt()
     }
 
     fun get_next_frame(): Short? {
@@ -433,6 +477,8 @@ class SampleHandle(var event: NoteOn, sample: InstrumentSample, instrument: Pres
         val a = toUInt(this.data[this.current_position])
         val b = toUInt(this.data[this.current_position + 1]) * 256
         var frame: Short = (a + b).toShort()
+
+        frame = (frame.toDouble() * this.current_volume).toInt().toShort()
 
         this.current_position += 2
 
@@ -466,6 +512,7 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
     private val active_handle_mutex = Mutex()
     private var sample_handle_queue = mutableSetOf<Pair<NoteOn,Set<SampleHandle>>>()
     private var enqueueing_sample_handles = false
+    private val sample_handle_generator = SampleHandleGenerator()
 
     init {
         this.loaded_presets[Pair(0, 0)] = this.soundFont.get_preset(0, 0)
@@ -501,16 +548,11 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
     }
 
     private fun press_note(event: NoteOn) {
-        // TODO: Handle Bank
-        val bank = if (event.channel == 9) {
-            128
-        } else {
-            0
-        }
-
-        val preset = this.loaded_presets[Pair(bank, this.get_channel_preset(event.channel))]!!
+        var preset = this.get_preset(event)
         this.active_handle_mutex.withLock {
-            this.active_handle_keys[Pair(event.note, event.channel)] = this.audio_track_handle.add_sample_handles(this.gen_sample_handles(event, preset))
+            this.active_handle_keys[Pair(event.note, event.channel)] = this.audio_track_handle.add_sample_handles(
+                this.gen_sample_handles(event, preset)
+            )
         }
         this.audio_track_handle.play()
     }
@@ -561,12 +603,47 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
             ).toList()
 
             for (sample in samples) {
-                output.add(
-                    SampleHandle(event, sample, p_instrument, preset)
-                )
+                var new_handle = this.sample_handle_generator.get(event, sample, p_instrument, preset)
+                new_handle.current_volume = event.velocity.toDouble() / 128.toDouble()
+                output.add( new_handle )
             }
         }
         return output
+    }
+
+    fun get_preset(event: NoteOn): Preset {
+        // TODO: Handle Bank
+        val bank = if (event.channel == 9) {
+            128
+        } else {
+            0
+        }
+        return this.loaded_presets[Pair(bank, this.get_channel_preset(event.channel))]!!
+    }
+
+    fun precache_midi(midi: MIDI) {
+        for ((tick, events) in midi.get_all_events_grouped()) {
+            for (event in events) {
+                if (event is NoteOn) {
+                    var preset = this.get_preset(event)
+                    val potential_instruments = preset.get_instruments(event.note, event.velocity)
+                    for (p_instrument in potential_instruments) {
+                        val samples = p_instrument.instrument!!.get_samples(
+                            event.note,
+                            event.velocity
+                        ).toList()
+                        for (sample in samples) {
+                            this.sample_handle_generator.cache_new(event, sample, p_instrument, preset)
+                        }
+                    }
+                }
+            }
+
+        }
+    }
+
+    fun clear_sample_cache() {
+        this.sample_handle_generator.clear_cache()
     }
 }
 

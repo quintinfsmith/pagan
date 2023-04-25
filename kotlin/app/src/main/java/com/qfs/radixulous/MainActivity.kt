@@ -349,7 +349,9 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun play_midi(midi: MIDI) {
+        this.midi_playback_device.precache_midi(midi)
         this.midi_player.play_midi(midi)
+        this.midi_playback_device.clear_sample_cache()
     }
 
     private fun export_midi() {

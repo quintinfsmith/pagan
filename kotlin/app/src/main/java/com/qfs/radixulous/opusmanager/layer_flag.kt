@@ -1,5 +1,4 @@
 package com.qfs.radixulous.opusmanager
-import android.util.Log
 import com.qfs.radixulous.structure.OpusTree
 import java.lang.Integer.max
 enum class UpdateFlag {
@@ -7,7 +6,8 @@ enum class UpdateFlag {
     BeatMod,
     Line,
     AbsVal,
-    Clear
+    Clear,
+    Channel
 }
 enum class FlagOperation {
     Pop,
@@ -21,6 +21,7 @@ class UpdatesCache {
     private var line_flag: MutableList<LineFlag> = mutableListOf()
     private var absolute_value_flag: MutableList<Pair<BeatKey, List<Int>>> = mutableListOf()
     private var clear_flag = mutableListOf<Pair<List<Int>, Int>>()
+    private var channel_flag = mutableListOf<Pair<Int, FlagOperation>>()
 
     fun dequeue_clear_flag(): Pair<List<Int>, Int>? {
         return if (this.clear_flag.isEmpty()) {
@@ -46,6 +47,14 @@ class UpdatesCache {
         }
     }
 
+    fun dequeue_channel(): Pair<Int, FlagOperation>? {
+        return if (this.channel_flag.isEmpty()) {
+            null
+        } else {
+            this.channel_flag.removeFirst()
+        }
+    }
+
     fun dequeue_beat(): Pair<Int, FlagOperation>? {
         return if (this.beat_flag.isEmpty()) {
             null
@@ -67,6 +76,16 @@ class UpdatesCache {
         } else {
             this.absolute_value_flag.removeFirst()
         }
+    }
+
+    fun flag_channel_pop(index: Int) {
+        this.order_queue.add(UpdateFlag.Channel)
+        this.channel_flag.add(Pair(index, FlagOperation.Pop))
+    }
+
+    fun flag_channel_new(index: Int) {
+        this.order_queue.add(UpdateFlag.Channel)
+        this.channel_flag.add(Pair(index, FlagOperation.New))
     }
 
     fun flag_beat_pop(index: Int) {
@@ -121,6 +140,10 @@ open class FlagLayer : LinksLayer() {
         return this.cache.dequeue_line()
     }
 
+    fun fetch_flag_channel(): Pair<Int, FlagOperation>? {
+        return this.cache.dequeue_channel()
+    }
+
     fun fetch_flag_clear(): Pair<List<Int>, Int>? {
         return this.cache.dequeue_clear_flag()
     }
@@ -145,6 +168,7 @@ open class FlagLayer : LinksLayer() {
         for (i in 0 until this.channels[channel].size) {
             this.cache.flag_line_pop(channel, 0, this.opus_beat_count)
         }
+        this.cache.flag_channel_pop(channel)
         super.remove_channel(channel)
     }
 
@@ -260,4 +284,11 @@ open class FlagLayer : LinksLayer() {
         this.cache.flag_clear(channel_counts, beat_count)
     }
 
+    override fun new_channel(channel: Int?, lines: Int) {
+        super.new_channel(channel, lines)
+        this.cache.flag_channel_new(channel ?: this.channels.size - 1)
+        for (i in 0 until lines) {
+            this.cache.flag_line_new(channel ?: this.channels.size - 1, i, this.opus_beat_count)
+        }
+    }
 }

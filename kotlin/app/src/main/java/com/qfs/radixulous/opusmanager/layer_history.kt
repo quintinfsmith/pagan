@@ -1,5 +1,4 @@
 package com.qfs.radixulous.opusmanager
-import android.util.Log
 import com.qfs.radixulous.apres.MIDI
 import com.qfs.radixulous.structure.OpusTree
 import java.lang.Integer.max
@@ -632,15 +631,15 @@ open class HistoryLayer() : CursorLayer() {
         }
     }
 
-    override fun new_channel(channel: Int?) {
-
-        super.new_channel(channel)
+    override fun new_channel(channel: Int?, lines: Int) {
+        this.history_cache.open_multi()
+        super.new_channel(channel, lines)
         if (channel != null) {
             this.push_remove_channel(channel)
         } else {
             this.push_remove_channel(this.channels.size - 1)
         }
-
+        this.history_cache.close_multi()
     }
 
     override fun save(path: String?) {
@@ -660,4 +659,5 @@ open class HistoryLayer() : CursorLayer() {
         super.clear_parent_at_cursor()
         this.history_cache.close_multi()
     }
+
 }

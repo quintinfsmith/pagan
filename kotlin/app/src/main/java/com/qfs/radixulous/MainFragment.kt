@@ -937,6 +937,21 @@ class MainFragment : TempNameFragment() {
                         //main.midi_playback_device.set_active_line_count(opus_manager.line_count())
                     }
 
+                    UpdateFlag.Channel -> {
+                        val channel_flag = opus_manager.fetch_flag_channel() ?: break
+                        when (channel_flag.second) {
+                            FlagOperation.Pop -> {
+                                val rvActiveChannels: RecyclerView = this.get_main().findViewById(R.id.rvActiveChannels)
+                                val rvActiveChannels_adapter =
+                                    rvActiveChannels.adapter as ChannelOptionAdapter
+                                rvActiveChannels_adapter.notifyItemRemoved(channel_flag.first)
+                            }
+                            FlagOperation.New -> {
+                                // Not in use
+                            }
+                        }
+                    }
+
                     UpdateFlag.Clear -> {
                         val clear_flag = opus_manager.fetch_flag_clear() ?: break
 

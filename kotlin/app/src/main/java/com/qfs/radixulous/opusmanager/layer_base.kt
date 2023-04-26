@@ -439,11 +439,14 @@ open class OpusManagerBase {
         return output
     }
 
-    open fun new_channel(channel: Int? = null) {
+    open fun new_channel(channel: Int? = null, lines: Int = 1) {
         val new_channel = OpusChannel(this.gen_channel_uuid())
         new_channel.set_beat_count(this.opus_beat_count)
         new_channel.midi_channel = this.get_next_available_midi_channel()
         this.channel_uuid_map[new_channel.uuid] = new_channel
+        for (i in 0 until lines) {
+            new_channel.new_line(i)
+        }
 
         if (channel != null) {
             this.channels.add(channel, new_channel)
@@ -718,7 +721,6 @@ open class OpusManagerBase {
         this.clear()
 
         this.new_channel()
-        this.new_line(0)
 
         for (i in 0 until 4) {
             this.insert_beat()
@@ -737,9 +739,8 @@ open class OpusManagerBase {
 
         var beat_count = 0
         json_data.channels.forEachIndexed { i, channel_data ->
-            this.new_channel()
+            this.new_channel(lines = channel_data.lines.size)
             channel_data.lines.forEachIndexed { j, line_str ->
-                this.new_line(i)
                 val beatstrs = line_str.split("|")
                 beat_count = max(beat_count, beatstrs.size)
             }
@@ -947,10 +948,7 @@ open class OpusManagerBase {
         }
 
         channel_sizes.forEachIndexed { i: Int, line_count: Int ->
-            this.new_channel()
-            for (j in 0 until line_count) {
-                this.new_line(i)
-            }
+            this.new_channel(lines = line_count)
         }
 
         for (i in 0 until settree.size) {

@@ -52,7 +52,6 @@ class ChannelOptionAdapter(
     fun addChannel() {
         val opus_manager = this.activity.get_opus_manager()
         opus_manager.new_channel()
-        opus_manager.new_line(opus_manager.channels.size - 1)
         notifyItemInserted(opus_manager.channels.size - 1)
         this.update_fragment()
     }

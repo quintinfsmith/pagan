@@ -287,6 +287,16 @@ open class CursorLayer() : FlagLayer() {
         return this.get_tree(beat_key, position)
     }
 
+    open fun clear_parent_at_cursor() {
+        var beat_key = this.get_cursor().get_beatkey()
+        var position = this.get_cursor().get_position().toMutableList()
+        if (position.isNotEmpty()) {
+            position.removeLast()
+        }
+        this.set_cursor_position(beat_key, position)
+        this.unset_at_cursor()
+    }
+
     fun increment_event_at_cursor() {
         var tree = this.get_tree_at_cursor()
         if (! tree.is_event()) {

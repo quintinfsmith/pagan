@@ -432,8 +432,7 @@ class MainFragment : TempNameFragment() {
                 this.om_remove(1)
             }
             btnRemove.setOnLongClickListener {
-                val main = this.get_main()
-                main.popup_number_dialog("Remove", 1, 99, this::om_remove)
+                this.clear_parent_at_cursor()
                 true
             }
         }
@@ -834,6 +833,7 @@ class MainFragment : TempNameFragment() {
             val position = cursor.get_position()
             opus_manager.remove(beatkey, position, count)
         }
+
         this.setContextMenu_leaf()
         this.tick()
     }
@@ -1060,6 +1060,15 @@ class MainFragment : TempNameFragment() {
 
             adapter.apply_focus_type(type)
         }
+    }
+
+    private fun clear_parent_at_cursor() {
+        val main = this.get_main()
+        val opus_manager = main.get_opus_manager()
+        opus_manager.clear_parent_at_cursor()
+
+        this.setContextMenu_leaf()
+        this.tick()
     }
 
     private fun unset_cursor_position() {

@@ -320,15 +320,22 @@ open class HistoryLayer() : CursorLayer() {
 
     fun remove(beat_key: BeatKey, position: List<Int>, count: Int) {
         this.history_cache.open_multi()
+        var cancelled = false
+
         for (i in 0 until count) {
             // TODO: Try/catching may cause issues. check that the position is valid first
             try {
                 this.remove(beat_key, position)
             } catch (e: Exception) {
+                cancelled = i == 0
                 break
             }
         }
-        this.history_cache.close_multi(beat_key, position)
+        if (!cancelled) {
+            this.history_cache.close_multi(beat_key, position)
+        } else {
+            this.history_cache.cancel_multi()
+        }
     }
 
     override fun remove(beat_key: BeatKey, position: List<Int>) {
@@ -439,6 +446,8 @@ open class HistoryLayer() : CursorLayer() {
             } else {
                 this.push_set_percussion_event(beat_key, position)
             }
+        } else if (! tree.is_leaf() ) {
+            this.push_replace_tree(beat_key, position, tree.copy())
         }
         super.unset(beat_key, position)
         this.history_cache.close_multi()
@@ -643,5 +652,10 @@ open class HistoryLayer() : CursorLayer() {
     fun has_changed_since_save(): Boolean {
         var node = this.history_cache.peek()
         return (this.save_point_popped || (node != null && node.func_name != "save_point"))
+    }
+
+    override fun clear_parent_at_cursor() {
+        super.clear_parent_at_cursor()
+        this.history_cache.close_multi()
     }
 }

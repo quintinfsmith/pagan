@@ -8,6 +8,7 @@ import com.qfs.radixulous.apres.riffreader.toUInt
 import kotlinx.coroutines.*
 import java.io.File
 import kotlin.experimental.and
+import kotlin.experimental.or
 
 
 interface MIDIEvent {
@@ -1354,7 +1355,7 @@ class MIDI {
                         if (! found_header) {
                             throw Exception("MISSING MThd")
                         }
-
+                        Log.d("XXA", "NEW TRACK FOUND ($current_track)")
                         current_deltatime = 0
                         track_length = dequeue_n(working_bytes, 4)
                         sub_bytes = mutableListOf()
@@ -1388,10 +1389,15 @@ class MIDI {
 
         return try {
             val event: MIDIEvent? = event_from_bytes(bytes, this._active_byte)
+            if (track == 1) {
+                Log.d("XXA", "EVENT: $event")
+            }
             if (event != null) {
                 var first_byte = toUInt(event.as_bytes().first())
                 if (first_byte in 0x90..0xEF) {
                     this._active_byte = event.as_bytes().first()
+                } else if (event is NoteOff) {
+                    this._active_byte = 0x10.toByte() or event.as_bytes().first()
                 }
             }
             this.insert_event(track, current_deltatime, event!!)
@@ -2164,7 +2170,6 @@ class MIDIPlayer: VirtualMIDIDevice() {
         val start_time = System.currentTimeMillis()
         var delay_accum = 0
         var that = this
-        var pp = System.currentTimeMillis()
         for ((tick, events) in midi.get_all_events_grouped()) {
             if (!this.playing) {
                 break
@@ -2183,11 +2188,6 @@ class MIDIPlayer: VirtualMIDIDevice() {
 
             runBlocking {
                 for (event in events) {
-                    if (event is SongPositionPointer) {
-                        var now = System.currentTimeMillis()
-                        Log.d("XXA", "NOTE ON $event ${now - pp}")
-                        pp = now
-                    }
                     if (event is SetTempo) {
                         us_per_tick = event.get_uspqn() / ppqn
                     }

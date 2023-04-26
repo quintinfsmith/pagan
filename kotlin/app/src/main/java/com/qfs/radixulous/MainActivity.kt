@@ -53,6 +53,8 @@ class MainActivity : AppCompatActivity() {
     internal lateinit var project_manager: ProjectManager
     private var progressBar: ProgressBar? = null
 
+    private var number_selector_defaults = HashMap<String, Int>()
+
     private var export_midi_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             val opus_manager = this.get_opus_manager()
@@ -498,7 +500,9 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
-    internal fun popup_number_dialog(title: String, min_value: Int, max_value: Int, callback: (value: Int) -> Unit, default: Int = min_value) {
+    internal fun popup_number_dialog(title: String, min_value: Int, max_value: Int, callback: (value: Int) -> Unit, default: Int? = null) {
+        var coerced_default_value = default ?: (this.number_selector_defaults[title] ?: min_value)
+
         val viewInflated: View = LayoutInflater.from(this)
             .inflate(
                 R.layout.dialog_split,
@@ -554,9 +558,9 @@ class MainActivity : AppCompatActivity() {
         npHundreds.maxValue = hundreds_max
         npHundreds.minValue = hundreds_min
 
-        npHundreds.value = (default / 100) % 10
-        npTens.value = (default / 10) % 10
-        npOnes.value = default % 10
+        npHundreds.value = (coerced_default_value / 100) % 10
+        npTens.value = (coerced_default_value / 10) % 10
+        npOnes.value = coerced_default_value % 10
 
         if (hundreds_max == 0) {
             npHundreds.visibility = View.GONE
@@ -565,11 +569,13 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+
         AlertDialog.Builder(this, R.style.AlertDialog)
             .setTitle(title)
             .setView(viewInflated)
             .setPositiveButton(android.R.string.ok) { _, _ ->
                 val value = (npHundreds.value * 100) + (npTens.value * 10) + npOnes.value
+                this.number_selector_defaults[title] = value
                 callback(value)
             }
             .setNegativeButton(android.R.string.cancel) { _, _ ->

@@ -306,7 +306,9 @@ open class HistoryLayer() : CursorLayer() {
 
     override fun insert_after(beat_key: BeatKey, position: List<Int>) {
         this.history_cache.open_multi()
-        this.push_remove(beat_key, position.toMutableList())
+        var remove_position = position.toMutableList()
+        remove_position[remove_position.size - 1] += 1
+        this.push_remove(beat_key, remove_position)
         super.insert_after(beat_key, position)
         this.history_cache.close_multi(beat_key, position)
     }

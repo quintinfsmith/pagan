@@ -7,6 +7,23 @@
     android:paddingStart="@dimen/normal_padding"
     android:paddingEnd="@dimen/normal_padding"
     xmlns:app="http://schemas.android.com/apk/res-auto">
+    <LinearLayout
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:orientation="horizontal">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="@string/line_volume"/>
+        <SeekBar
+            android:id="@+id/sbLineVolume"
+            android:layout_weight="1"
+            android:max="127"
+            android:min="0"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
 
     <TextView
         android:id="@+id/btnChoosePercussion"
@@ -57,4 +74,5 @@
                 android:text="Insert Line"/>
         </LinearLayout>
     </LinearLayout>
+
 </LinearLayout>

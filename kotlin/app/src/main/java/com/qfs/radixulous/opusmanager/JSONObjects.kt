@@ -5,7 +5,8 @@ import kotlinx.serialization.Serializable
 data class ChannelJSONData(
     var midi_channel: Int,
     var midi_instrument: Int,
-    var lines: List<String>
+    var lines: List<String>,
+    var line_volumes: List<Int>
 )
 
 @Serializable

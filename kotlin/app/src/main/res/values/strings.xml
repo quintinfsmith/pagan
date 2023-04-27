@@ -15,6 +15,7 @@
     <string name="config_fragment_label">Config</string>
     <string name="license_brief">Licensed under GPLv2</string>
     <string name="percussion_label">\u2716</string>
+    <string name="line_volume">Line Volume:</string>
     <string name="source_code_location">
         Source code available at: https://burnsomni.net/git/radixulous.
     </string>
@@ -22,7 +23,7 @@
         Alternative downloads available at: https://burnsomni.net/software/radixulous.
     </string>
     <string name="soundfont_disclaimer">
-        Frank Wen\'s FluidR3_GM soundfont licensed the MIT license.
+        FluidR3_GM soundfont licensed the MIT license.
     </string>
     <string-array name="relative">
         <item>@string/pfx_add</item>

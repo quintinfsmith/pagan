@@ -494,7 +494,7 @@ open class OpusManagerBase {
     }
 
     open fun overwrite_beat(old_beat: BeatKey, new_beat: BeatKey) {
-        val new_tree = this.channels[new_beat.channel].get_line(new_beat.line_offset)[new_beat.beat].copy()
+        val new_tree = this.channels[new_beat.channel].get_line(new_beat.line_offset).beats[new_beat.beat].copy()
 
         this.replace_tree(old_beat, listOf(), new_tree)
     }
@@ -591,7 +591,7 @@ open class OpusManagerBase {
                 val line = channel.get_line(l)
                 var current_tick = 0
                 var prev_note = 0
-                line.forEachIndexed { b, beat ->
+                line.beats.forEachIndexed { b, beat ->
                     if (b in start_beat until end_beat) {
                         position_pointer_ticks.add(Pair(b, current_tick))
                     }
@@ -612,12 +612,12 @@ open class OpusManagerBase {
                                 midi.insert_event(
                                     0,
                                     current.offset,
-                                    NoteOn(channel.midi_channel, note, 64)
+                                    NoteOn(channel.midi_channel, note, line.volume)
                                 )
                                 midi.insert_event(
                                     0,
                                     current.offset + current.size,
-                                    NoteOff(channel.midi_channel, note, 64)
+                                    NoteOff(channel.midi_channel, note, line.volume)
                                 )
                             }
                             prev_note = note
@@ -656,21 +656,24 @@ open class OpusManagerBase {
         val channels: MutableList<ChannelJSONData> = mutableListOf()
         for (channel in this.channels) {
             val lines: MutableList<String> = mutableListOf()
+            val line_volumes: MutableList<Int> = mutableListOf()
             for (i in 0 until channel.size) {
                 val line = channel.get_line(i)
                 val beatstrs: MutableList<String> = mutableListOf()
-                for (beat in line) {
+                for (beat in line.beats) {
                     beatstrs.add(to_string(beat))
                 }
                 val str_line =  beatstrs.joinToString("|")
                 lines.add(str_line)
+                line_volumes.add(line.volume)
             }
 
             channels.add(
                 ChannelJSONData(
                     midi_channel = channel.midi_channel,
                     midi_instrument = channel.midi_instrument,
-                    lines = lines
+                    lines = lines,
+                    line_volumes = line_volumes
                 )
             )
         }
@@ -733,11 +736,14 @@ open class OpusManagerBase {
         this.transpose = json_data.transpose
 
         var beat_count = 0
-        json_data.channels.forEach { channel_data ->
+        json_data.channels.forEachIndexed { i: Int, channel_data ->
             this.new_channel(lines = channel_data.lines.size)
             channel_data.lines.forEach { line_str ->
                 val beatstrs = line_str.split("|")
                 beat_count = max(beat_count, beatstrs.size)
+            }
+            channel_data.line_volumes.forEachIndexed { j: Int, volume: Int ->
+                this.channels[i].lines[j].volume = volume
             }
         }
         for (i in 0 until beat_count) {
@@ -1009,5 +1015,12 @@ open class OpusManagerBase {
             val opus_channel = midi_channel_map[midi_channel] ?: continue
             this.set_channel_instrument(opus_channel, instrument)
         }
+    }
+
+    open fun set_line_volume(channel: Int, line_offset: Int, volume: Int) {
+        this.channels[channel].set_line_volume(line_offset, volume)
+    }
+    fun get_line_volume(channel: Int, line_offset: Int): Int {
+        return this.channels[channel].get_line_volume(line_offset)
     }
 }

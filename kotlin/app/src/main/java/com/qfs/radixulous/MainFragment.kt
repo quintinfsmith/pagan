@@ -67,8 +67,8 @@ class MainFragment : TempNameFragment() {
 
         val opus_manager = this.get_main().get_opus_manager()
         if (rvLineLabels_adapter.itemCount == 0) {
-            opus_manager.channels.forEachIndexed { i: Int, channel: OpusChannel ->
-                channel.lines.forEachIndexed { j: Int, line: List<OpusTree<OpusEvent>> ->
+            opus_manager.channels.forEach { channel: OpusChannel ->
+                channel.lines.forEach { _: OpusChannel.OpusLine ->
                     rvLineLabels_adapter.addLineLabel()
                 }
             }
@@ -159,9 +159,27 @@ class MainFragment : TempNameFragment() {
         if (opus_manager.has_history()) {
             opus_manager.apply_undo()
             this.tick()
-            this.setContextMenu_leaf()
+            this.reset_context_menu()
         } else {
             main.feedback_msg(getString(R.string.msg_undo_none))
+        }
+    }
+
+    fun reset_context_menu() {
+        when (this.active_context_menu_index) {
+            ContextMenu.Leaf -> {
+                this.setContextMenu_leaf()
+            }
+            ContextMenu.Line -> {
+                this.setContextMenu_line()
+            }
+            ContextMenu.Column -> {
+                this.setContextMenu_column()
+            }
+            ContextMenu.Linking -> {
+                this.setContextMenu_linking()
+            }
+            null -> { }
         }
     }
 
@@ -260,7 +278,7 @@ class MainFragment : TempNameFragment() {
             llContextMenu,
             false
         )
-
+        val sbLineVolume = view.findViewById<SeekBar>(R.id.sbLineVolume)
         val btnRemoveLine: TextView = view.findViewById(R.id.btnRemoveLine)
         val btnInsertLine: TextView = view.findViewById(R.id.btnInsertLine)
         val btnChoosePercussion: TextView = view.findViewById(R.id.btnChoosePercussion)
@@ -319,6 +337,14 @@ class MainFragment : TempNameFragment() {
             true
         }
 
+        sbLineVolume.progress = opus_manager.get_line_volume(beatkey.channel, beatkey.line_offset)
+        sbLineVolume.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(p0: SeekBar, p1: Int, p2: Boolean) { }
+            override fun onStartTrackingTouch(p0: SeekBar?) { }
+            override fun onStopTrackingTouch(seekbar: SeekBar) {
+                opus_manager.set_line_volume(beatkey.channel, beatkey.line_offset, seekbar.progress)
+            }
+        })
 
         llContextMenu.addView(view)
         this.active_context_menu_index = ContextMenu.Line
@@ -968,6 +994,17 @@ class MainFragment : TempNameFragment() {
                         }
 
                         updated_beats.clear()
+                    }
+                    UpdateFlag.LineVolume -> {
+                        var line_volume_flag = opus_manager.fetch_flag_line_volume() ?: break
+                        var cursor_beatkey = opus_manager.get_cursor().get_beatkey()
+                        if (cursor_beatkey.channel == line_volume_flag.first && cursor_beatkey.line_offset == line_volume_flag.second) {
+                            val sbLineVolume = this.get_main().findViewById<SeekBar>(R.id.sbLineVolume)
+                            if (sbLineVolume != null) {
+                                sbLineVolume.progress = line_volume_flag.third
+                            }
+                        }
+
                     }
 
                     null -> {

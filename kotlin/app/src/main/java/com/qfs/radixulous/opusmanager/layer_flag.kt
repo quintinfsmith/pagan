@@ -7,7 +7,8 @@ enum class UpdateFlag {
     Line,
     AbsVal,
     Clear,
-    Channel
+    Channel,
+    LineVolume
 }
 enum class FlagOperation {
     Pop,
@@ -22,6 +23,7 @@ class UpdatesCache {
     private var absolute_value_flag: MutableList<Pair<BeatKey, List<Int>>> = mutableListOf()
     private var clear_flag = mutableListOf<Pair<List<Int>, Int>>()
     private var channel_flag = mutableListOf<Pair<Int, FlagOperation>>()
+    private var line_volume_flag = mutableListOf<Triple<Int, Int, Int>>()
 
     fun dequeue_clear_flag(): Pair<List<Int>, Int>? {
         return if (this.clear_flag.isEmpty()) {
@@ -46,6 +48,15 @@ class UpdatesCache {
             this.line_flag.removeFirst()
         }
     }
+
+    fun dequeue_line_volume(): Triple<Int, Int, Int>? {
+        return if (this.line_volume_flag.isEmpty()) {
+            null
+        } else {
+            this.line_volume_flag.removeFirst()
+        }
+    }
+
 
     fun dequeue_channel(): Pair<Int, FlagOperation>? {
         return if (this.channel_flag.isEmpty()) {
@@ -76,6 +87,11 @@ class UpdatesCache {
         } else {
             this.absolute_value_flag.removeFirst()
         }
+    }
+
+    fun flag_line_volume_change(channel: Int, line_offset: Int, volume: Int) {
+        this.order_queue.add(UpdateFlag.LineVolume)
+        this.line_volume_flag.add(Triple(channel, line_offset, volume))
     }
 
     fun flag_channel_pop(index: Int) {
@@ -126,6 +142,7 @@ class UpdatesCache {
         this.line_flag.clear()
         this.absolute_value_flag.clear()
         this.clear_flag.clear()
+        this.line_volume_flag.clear()
     }
 
 }
@@ -157,6 +174,9 @@ open class FlagLayer : LinksLayer() {
 
     fun fetch_flag_absolute_value(): Pair<BeatKey, List<Int>>? {
         return this.cache.dequeue_absolute_value()
+    }
+    fun fetch_flag_line_volume(): Triple<Int, Int, Int>? {
+        return this.cache.dequeue_line_volume()
     }
 
     fun flag_beat_change(beat_key: BeatKey) {
@@ -290,5 +310,10 @@ open class FlagLayer : LinksLayer() {
         for (i in 0 until lines) {
             this.cache.flag_line_new(channel ?: this.channels.size - 1, i, this.opus_beat_count)
         }
+    }
+
+    override fun set_line_volume(channel: Int, line_offset: Int, volume: Int) {
+        super.set_line_volume(channel, line_offset, volume)
+        this.cache.flag_line_volume_change(channel, line_offset, volume)
     }
 }

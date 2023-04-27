@@ -347,15 +347,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun play_midi(midi: MIDI) {
-        this.runOnUiThread {
-            this.loading_reticle()
-        }
-        this.midi_playback_device.precache_midi(midi)
-        this.runOnUiThread {
-            this.cancel_reticle()
-        }
         this.midi_player.play_midi(midi)
-        this.midi_playback_device.clear_sample_cache()
     }
 
     private fun export_midi() {
@@ -748,12 +740,14 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
+        this.midi_playback_device.precache_midi(this.get_opus_manager().get_midi())
 
         var dialog = AlertDialog.Builder(this, R.style.AlertDialog)
             .setView(viewInflated)
             .setOnCancelListener { _ ->
                 this.midi_input_device.sendEvent(MIDIStop())
                 this.midi_controller.unregisterVirtualDevice(midi_scroller)
+                this.midi_playback_device.clear_sample_cache()
             }
             .show()
 

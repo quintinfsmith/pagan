@@ -443,11 +443,17 @@ class SampleHandle(
 
     var is_pressed = true
     var current_position: Int = 0
+    var current_attack_position: Int = 0
+    var current_hold_position: Int = 0
+    var current_decay_position: Int = 0
     var current_delay_position: Int = 0
     var decay_position: Int? = null
     var sustain_volume: Int = 0 // TODO
     var current_release_position: Int = 0
     var current_volume: Double = 0.5
+    var bytes_called: Int = 0 // Will not loop like current_position
+    // Kludge to handle high tempo songs
+    val minimum_duration: Int = (AudioTrackHandle.sample_rate * .2).toInt()
 
     fun get_max_in_range(x: Int, size: Int): Int {
         var index = x * this.maximum_map.size / (this.data.size / 2)
@@ -482,8 +488,17 @@ class SampleHandle(
         frame = (frame.toDouble() * this.current_volume).toInt().toShort()
 
         this.current_position += 2
+        this.bytes_called += 2
+        if (this.current_attack_position < this.attack_byte_count) {
+            this.current_attack_position += 2
+        } else if (this.current_hold_position < this.hold_byte_count) {
+            this.current_hold_position += 2
+        } else if (this.current_decay_position < this.decay_byte_count) {
+            this.current_decay_position += 2
+        }
 
-        if (! this.is_pressed) {
+        //if (! this.is_pressed && this.current_decay_position >= this.decay_byte_count) {
+        if (! this.is_pressed && this.bytes_called >= this.minimum_duration - this.release_mask.size) {
             if (this.current_release_position < this.release_mask.size) {
                 frame = (frame * this.release_mask[this.current_release_position]).toInt().toShort()
                 this.current_release_position += 1

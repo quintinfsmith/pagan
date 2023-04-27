@@ -1355,7 +1355,6 @@ class MIDI {
                         if (! found_header) {
                             throw Exception("MISSING MThd")
                         }
-                        Log.d("XXA", "NEW TRACK FOUND ($current_track)")
                         current_deltatime = 0
                         track_length = dequeue_n(working_bytes, 4)
                         sub_bytes = mutableListOf()
@@ -1389,9 +1388,6 @@ class MIDI {
 
         return try {
             val event: MIDIEvent? = event_from_bytes(bytes, this._active_byte)
-            if (track == 1) {
-                Log.d("XXA", "EVENT: $event")
-            }
             if (event != null) {
                 var first_byte = toUInt(event.as_bytes().first())
                 if (first_byte in 0x90..0xEF) {

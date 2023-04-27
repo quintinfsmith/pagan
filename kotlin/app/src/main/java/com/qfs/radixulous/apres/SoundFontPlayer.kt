@@ -285,6 +285,7 @@ class SampleHandleGenerator {
     )
 
     var sample_data_map = HashMap<MapKey, SampleHandle>()
+
     fun get(event: NoteOn, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset): SampleHandle {
         var mapkey = MapKey(event.note, sample.hashCode(), instrument.hashCode(), preset.hashCode())
         if (!sample_data_map.contains(mapkey)) {
@@ -315,7 +316,7 @@ class SampleHandleGenerator {
             pitch_shift *= (sample.sample!!.sampleRate.toFloat() / AudioTrackHandle.sample_rate.toFloat())
         }
 
-        var data = this.resample(sample.sample!!.data, pitch_shift)
+        var data = this.resample(sample.sample!!.data!!, pitch_shift)
 
 
 

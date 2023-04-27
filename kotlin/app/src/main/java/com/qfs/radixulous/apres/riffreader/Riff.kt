@@ -1,17 +1,32 @@
 package com.qfs.radixulous.apres.riffreader
 
+import android.content.res.AssetManager
 import java.io.InputStream
 import kotlin.experimental.and
 
-class Riff(input_stream: InputStream) {
-    var list_chunks: MutableList<Int> = mutableListOf()
-    var sub_chunks: MutableList<List<Int>> = mutableListOf()
-    var bytes: ByteArray
+
+
+class Riff(var assets: AssetManager, var file_name: String, init_callback: ((riff: Riff) -> Unit)? = null) {
+    data class ListChunkHeader(
+        val index: Int,
+        val tag: String,
+        val size: Int,
+        val type: String
+    )
+
+    data class SubChunkHeader(
+        val index: Int,
+        val tag: String,
+        val size: Int
+    )
+
+    var list_chunks: MutableList<ListChunkHeader> = mutableListOf()
+    var sub_chunks: MutableList<List<SubChunkHeader>> = mutableListOf()
+    var input_stream: InputStream? = null
+    var input_position: Int = 0
 
     init {
-        this.bytes = ByteArray(input_stream.available())
-        input_stream.read(this.bytes)
-        input_stream.close()
+        this.open_stream()
 
         var fourcc = this.get_string(0, 4)
         var riff_size = this.get_little_endian(4, 4)
@@ -19,7 +34,7 @@ class Riff(input_stream: InputStream) {
 
         var working_index = 12
         while (working_index < riff_size - 4) {
-            this.list_chunks.add(working_index)
+            var header_index = working_index - 12
             var tag = this.get_string(working_index, 4)
             working_index += 4
 
@@ -29,48 +44,72 @@ class Riff(input_stream: InputStream) {
             var type = this.get_string(working_index, 4)
             working_index += 4
 
-            var sub_chunk_list: MutableList<Int> = mutableListOf()
+            this.list_chunks.add(
+                ListChunkHeader(
+                    header_index,
+                    tag,
+                    chunk_size,
+                    type
+                )
+            )
+
+            var sub_chunk_list: MutableList<SubChunkHeader> = mutableListOf()
             var sub_index = 0
             while (sub_index < chunk_size - 4) {
-                sub_chunk_list.add(working_index + sub_index)
+                var subchunkheader = SubChunkHeader(
+                    index = sub_index + working_index - 12,
+                    tag = this.get_string(working_index + sub_index, 4),
+                    size = this.get_little_endian(working_index + sub_index + 4, 4)
+                )
+                sub_chunk_list.add(subchunkheader)
 
-                var sub_chunk_tag = this.get_string(working_index + sub_index, 4)
-                sub_index += 4
-
-                var sub_chunk_size = this.get_little_endian(working_index + sub_index, 4)
-                sub_index += 4
-
-                sub_index += sub_chunk_size
+                sub_index += 8 + subchunkheader.size
             }
 
             working_index += sub_index
             this.sub_chunks.add(sub_chunk_list)
         }
+        if (init_callback != null) {
+            init_callback(this)
+        }
+
+        this.close_stream()
     }
 
-    fun get_list_chunk_type(list_index: Int): String {
-        var offset = this.list_chunks[list_index]
-        return this.get_string(offset + 8, 4)
+    fun open_stream() {
+        this.input_stream = this.assets.open(this.file_name)
+        this.input_stream?.mark(input_stream?.available()!!)
     }
 
-    fun get_sub_chunk_type(list_index: Int, chunk_index: Int): String {
-        var start_time = System.currentTimeMillis()
-        var offset = this.sub_chunks[list_index][chunk_index]
-        return this.get_string(offset, 4)
+    fun close_stream() {
+        this.input_stream?.close()
+        this.input_position = 0
+        this.input_stream = null
     }
 
-    fun get_sub_chunk_size(list_index: Int, chunk_index: Int): Int {
-        var offset = this.sub_chunks[list_index][chunk_index]
-        return this.get_little_endian(offset + 4, 4)
+    fun with(callback: (Riff) -> Unit) {
+        this.open_stream()
+        try {
+            callback(this)
+        } finally {
+            this.close_stream()
+        }
     }
 
-    fun get_sub_chunk_data(list_index: Int, chunk_index: Int, inner_offset: Int? = null, cropped_size: Int? = null): ByteArray {
+    fun get_chunk_data(header: SubChunkHeader): ByteArray {
+        return this.get_bytes(header.index + 8 + 12, header.size)
+    }
+
+    fun get_chunk_data(header: ListChunkHeader): ByteArray {
+        return this.get_bytes(header.index + 12 + 12, header.size)
+    }
+
+    fun get_list_chunk_data(header: ListChunkHeader, inner_offset: Int? = null, cropped_size: Int? = null): ByteArray {
         // First get the offset of the sub chunk
-        var offset = this.sub_chunks[list_index][chunk_index]
+        var offset = header.index + 8
 
         // get the *actual* size of the sub chunk
-        var size = this.get_little_endian(offset + 4, 4)
-        offset += 8
+        var size = header.size
 
         if (inner_offset != null) {
             size -= inner_offset
@@ -80,11 +119,52 @@ class Riff(input_stream: InputStream) {
         if (cropped_size != null && cropped_size <= size) {
             size = cropped_size
         }
+
         return this.get_bytes(offset, size)
     }
 
+
+    fun get_sub_chunk_data(header: SubChunkHeader, inner_offset: Int? = null, cropped_size: Int? = null): ByteArray {
+        // First get the offset of the sub chunk
+        var offset = header.index + 8
+
+        // get the *actual* size of the sub chunk
+        var size = header.size
+        if (inner_offset != null) {
+            size -= inner_offset
+            offset += inner_offset
+        }
+
+        if (cropped_size != null && cropped_size <= size) {
+            size = cropped_size
+        }
+
+        return this.get_bytes(offset, size)
+    }
+
+    fun move_to_offset(offset: Long) {
+        var stream: InputStream? = this.input_stream ?: throw Exception("Input Stream Not Open")
+
+        if (this.input_position < offset) {
+            var start = System.currentTimeMillis()
+            stream?.skip(offset - this.input_position)
+        } else if (this.input_position > offset) {
+            var start = System.currentTimeMillis()
+            stream?.reset()
+            this.input_position = 0
+            stream?.skip(offset)
+        }
+        this.input_position = offset.toInt()
+    }
+
     fun get_bytes(offset: Int, size: Int): ByteArray {
-        return this.bytes.sliceArray(offset until offset + size)
+        var stream: InputStream? = this.input_stream ?: throw Exception("Input Stream Not Open")
+        this.move_to_offset(offset.toLong())
+        var output = ByteArray(size)
+        stream?.read(output)
+        this.input_position += size
+        return output
+
     }
 
     fun get_string(offset: Int, size: Int): String {
@@ -93,9 +173,10 @@ class Riff(input_stream: InputStream) {
 
     fun get_little_endian(offset: Int, size: Int): Int {
         var output = 0
+        var bytes = this.get_bytes(offset, size)
         for (i in 0 until size) {
             output *= 256
-            output += toUInt(this.bytes[offset + (size - 1 - i)])
+            output += toUInt(bytes[size - 1 - i])
         }
         return output
     }

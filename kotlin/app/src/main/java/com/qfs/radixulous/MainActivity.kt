@@ -6,17 +6,12 @@ import android.app.Activity
 import android.app.AlertDialog
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.provider.DocumentsContract
-import android.util.Log
 import android.view.*
-import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
@@ -91,7 +86,8 @@ class MainActivity : AppCompatActivity() {
         this.lockDrawer()
         //////////////////////////////////////////
         // TODO: clean up the file -> riff -> soundfont -> midi playback device process
-        this.soundfont = SoundFont(assets.open("FluidR3_GM.sf2"))
+
+        this.soundfont = SoundFont(assets, "FluidR3_GM.sf2")
         this.midi_playback_device = MIDIPlaybackDevice(this, this.soundfont)
 
         this.midi_controller = MIDIController(window.decorView.rootView.context)

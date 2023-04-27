@@ -717,6 +717,7 @@ class MainActivity : AppCompatActivity() {
         sbPlaybackPosition.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener {
             var was_playing = false
             var is_stopping = false
+            var in_grace_period = false
             override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
                 tvPlaybackPosition.text = p1.toString()
                 tvPlaybackTime.text = that.get_timestring_at_beat(p1)
@@ -729,12 +730,14 @@ class MainActivity : AppCompatActivity() {
                 this.is_stopping = false
             }
             override fun onStopTrackingTouch(seekbar: SeekBar?) {
-
-                if (this.was_playing && seekbar != null) {
+                if (!this.in_grace_period && this.was_playing && seekbar != null && !playing) {
+                    // 'grace' period prevents multi-clicking from calling this multiple times
+                    this.in_grace_period = true
                     // Kludge. need to give the midi play enough time to stop
                     Thread.sleep(500)
 
                     start_playback(seekbar.progress)
+                    this.in_grace_period = false
                 }
             }
         })

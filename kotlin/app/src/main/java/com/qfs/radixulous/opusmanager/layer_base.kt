@@ -3,13 +3,11 @@ import com.qfs.radixulous.apres.*
 import com.qfs.radixulous.from_string
 import com.qfs.radixulous.structure.OpusTree
 import com.qfs.radixulous.to_string
-import com.qfs.radixulous.tree_from_midi
 import java.io.File
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import java.lang.Integer.max
-import java.lang.Integer.min
 import kotlin.math.pow
 
 open class OpusManagerBase {
@@ -30,8 +28,7 @@ open class OpusManagerBase {
     }
 
     fun get_channel_instrument(channel: Int): Int {
-        val channel = this.channels[channel]
-        return channel.get_instrument()
+        return this.channels[channel].get_instrument()
     }
 
     open fun get_percussion_instrument(line_offset: Int): Int {
@@ -102,7 +99,7 @@ open class OpusManagerBase {
         // Move right/down to leaf
         while (!working_tree.is_leaf()) {
             working_position.add(working_tree.size - 1)
-            working_tree = working_tree.get(working_tree.size - 1)
+            working_tree = working_tree[working_tree.size - 1]
         }
 
         return Pair(working_beat_key, working_position)
@@ -136,7 +133,7 @@ open class OpusManagerBase {
         // Move left/down to leaf
         while (!working_tree.is_leaf()) {
             working_position.add(0)
-            working_tree = working_tree.get(0)
+            working_tree = working_tree[0]
         }
         return Pair(working_beat_key, working_position)
     }
@@ -144,7 +141,7 @@ open class OpusManagerBase {
     open fun get_absolute_value(beat_key: BeatKey, position: List<Int>): Int? {
         val tree = this.get_tree(beat_key, position)
 
-        var abs_value = 0
+        var abs_value: Int
         if (tree.is_event()) {
             val event = tree.get_event()!!
             if (!event.relative) {
@@ -315,7 +312,7 @@ open class OpusManagerBase {
                 tree.detach()
                 val prev_position = position.toMutableList()
                 prev_position.removeLast()
-                val to_replace = parent_tree.get(0)
+                val to_replace = parent_tree[0]
                 this.replace_tree(beat_key, prev_position, to_replace)
             }
             else -> {
@@ -357,8 +354,7 @@ open class OpusManagerBase {
             this.unset_percussion_channel()
         }
 
-        val channel = this.channels[channel]
-        channel.set_instrument(instrument)
+        this.channels[channel].set_instrument(instrument)
     }
 
     fun set_percussion_channel(channel: Int) {
@@ -395,9 +391,8 @@ open class OpusManagerBase {
             tree.unset_event()
             tree.set_size(splits)
 
-            val new_position = position.toMutableList()
             if (splits > 1) {
-                tree = tree.get(0)
+                tree = tree[0]
             }
 
             tree.set_event(event)
@@ -461,9 +456,9 @@ open class OpusManagerBase {
             return
         }
 
-        var line = this.remove_line(channel_old, line_old)
+        val line = this.remove_line(channel_old, line_old)
 
-        var new_channel = this.channels[channel_new]
+        val new_channel = this.channels[channel_new]
         if (new_channel.size == 1 && new_channel.line_is_empty(0) && line_new == 1) {
             this.insert_line(channel_new, 0, line)
             this.remove_line(channel_new, 1)
@@ -535,7 +530,7 @@ open class OpusManagerBase {
     }
 
     open fun move_leaf(beatkey_from: BeatKey, position_from: List<Int>, beatkey_to: BeatKey, position_to: List<Int>) {
-        var from_tree = this.get_tree(beatkey_from, position_from).copy()
+        val from_tree = this.get_tree(beatkey_from, position_from).copy()
         this.replace_tree(beatkey_to, position_to, from_tree)
         this.unset(beatkey_from, position_from)
     }
@@ -553,7 +548,7 @@ open class OpusManagerBase {
     }
 
     open fun replace_tree(beat_key: BeatKey, position: List<Int>, tree: OpusTree<OpusEvent>) {
-        var tree_copy = tree.copy(this::copy_func)
+        val tree_copy = tree.copy(this::copy_func)
         this.channels[beat_key.channel].replace_tree(beat_key.line_offset, beat_key.beat, position, tree_copy)
     }
 
@@ -582,7 +577,7 @@ open class OpusManagerBase {
 
         midi.insert_event(0,0, SetTempo.from_bpm(tempo))
         data class StackItem(var tree: OpusTree<OpusEvent>, var divisions: Int, var offset: Int, var size: Int)
-        var position_pointer_ticks = mutableSetOf<Pair<Int, Int>>()
+        val position_pointer_ticks = mutableSetOf<Pair<Int, Int>>()
         this.channels.forEachIndexed { c, channel ->
             if (channel.midi_instrument != 9) {
                 midi.insert_event(
@@ -696,7 +691,7 @@ open class OpusManagerBase {
             this.path = path
         }
 
-        val file_obj = File(this.path)
+        val file_obj = File(this.path!!)
         val json_string = Json.encodeToString(this.to_json())
         file_obj.writeText(json_string)
     }
@@ -738,9 +733,9 @@ open class OpusManagerBase {
         this.transpose = json_data.transpose
 
         var beat_count = 0
-        json_data.channels.forEachIndexed { i, channel_data ->
+        json_data.channels.forEach { channel_data ->
             this.new_channel(lines = channel_data.lines.size)
-            channel_data.lines.forEachIndexed { j, line_str ->
+            channel_data.lines.forEach { line_str ->
                 val beatstrs = line_str.split("|")
                 beat_count = max(beat_count, beatstrs.size)
             }
@@ -779,7 +774,7 @@ open class OpusManagerBase {
     }
 
     fun import_midi(path: String) {
-        var midi = MIDI.from_path(path)
+        val midi = MIDI.from_path(path)
         this.import_midi(midi)
     }
 
@@ -791,11 +786,11 @@ open class OpusManagerBase {
         var max_tick = 0
         val press_map = HashMap<Int, Pair<Int, Int>>()
         var tempo = 120F
-        var instrument_map = mutableListOf<Pair<Int, Int>>()
+        val instrument_map = mutableListOf<Pair<Int, Int>>()
 
         var denominator = 4F
         for (pair in midi.get_all_events()) {
-            var tick = pair.first
+            val tick = pair.first
             val event = pair.second
 
             max_tick = kotlin.math.max(tick, max_tick)
@@ -855,20 +850,20 @@ open class OpusManagerBase {
         beat_values.forEachIndexed { i, beat_tree ->
 
             // Quantize the beat ////////////
-            var quantized_tree = OpusTree<Set<OpusEvent>>()
+            val quantized_tree = OpusTree<Set<OpusEvent>>()
             quantized_tree.set_size(beat_tree.size)
 
             if (overflow_events.isNotEmpty()) {
-                quantized_tree.get(0).set_event(overflow_events.toSet())
+                quantized_tree[0].set_event(overflow_events.toSet())
                 overflow_events = mutableSetOf()
             }
 
             // Can easily merge quantized positions since the beats are still flat
-            var qmap = beat_tree.get_quantization_map(listOf(2,2,2,3,5,7))
+            val qmap = beat_tree.get_quantization_map(listOf(2,2,2,3,5,7))
             for ((new_position, old_positions) in qmap) {
-                var new_event_set = mutableSetOf<OpusEvent>()
+                val new_event_set = mutableSetOf<OpusEvent>()
                 for (old_position in old_positions) {
-                    var next_tree = beat_tree.get(old_position)
+                    val next_tree = beat_tree[old_position]
                     for (e in next_tree.get_event()!!) {
                         new_event_set.add(e)
                     }
@@ -881,13 +876,13 @@ open class OpusManagerBase {
                         }
                     }
                 } else {
-                    if (quantized_tree.get(new_position).is_event()) {
-                        for (e in quantized_tree.get(new_position).get_event()!!) {
+                    if (quantized_tree[new_position].is_event()) {
+                        for (e in quantized_tree[new_position].get_event()!!) {
                             new_event_set.add(e)
                         }
                     }
 
-                    quantized_tree.get(new_position).set_event(new_event_set.toSet())
+                    quantized_tree[new_position].set_event(new_event_set.toSet())
                 }
             }
             /////////////////////////////////////
@@ -915,10 +910,10 @@ open class OpusManagerBase {
         val channel_sizes = mutableListOf<Int>()
         var percussion_channel: Int? = null
 
-        var percussion_map = HashMap<Int, Int>()
+        val percussion_map = HashMap<Int, Int>()
 
         for ((_, event_set) in mapped_events) {
-            var tmp_channel_counts = HashMap<Int, Int>()
+            val tmp_channel_counts = HashMap<Int, Int>()
             event_set.forEachIndexed { _: Int, event: OpusEvent ->
                 if (!midi_channel_map.contains(event.channel)) {
                     midi_channel_map[event.channel] = midi_channel_map.size
@@ -947,7 +942,7 @@ open class OpusManagerBase {
             }
         }
 
-        channel_sizes.forEachIndexed { i: Int, line_count: Int ->
+        channel_sizes.forEach { line_count: Int ->
             this.new_channel(lines = line_count)
         }
 
@@ -957,8 +952,8 @@ open class OpusManagerBase {
 
         val events_to_set = mutableSetOf<Triple<BeatKey, List<Int>, OpusEvent>>()
         for ((position, event_set) in mapped_events) {
-            var tmp_channel_counts = HashMap<Int, Int>()
-            var event_list = event_set.toMutableList()
+            val tmp_channel_counts = HashMap<Int, Int>()
+            val event_list = event_set.toMutableList()
             event_list.sortWith(compareBy {127 - it.note })
             event_list.forEachIndexed { _: Int, event: OpusEvent ->
                 val channel_index = midi_channel_map[event.channel]!!
@@ -969,7 +964,7 @@ open class OpusManagerBase {
                     tmp_channel_counts[channel_index] = 0
                 }
 
-                var line_offset = if (event.channel == 9) {
+                val line_offset = if (event.channel == 9) {
                     percussion_map[event.note]!!
                 } else {
                     tmp_channel_counts[channel_index]!!
@@ -1011,7 +1006,7 @@ open class OpusManagerBase {
 
         for ((midi_channel, instrument) in instrument_map) {
             // Midi may have contained programchange event for channel, but no music
-            var opus_channel = midi_channel_map[midi_channel] ?: continue
+            val opus_channel = midi_channel_map[midi_channel] ?: continue
             this.set_channel_instrument(opus_channel, instrument)
         }
     }

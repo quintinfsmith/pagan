@@ -574,7 +574,6 @@ open class CursorLayer() : HistoryLayer() {
         this.batch_link_beats(new_pairs)
     }
 
-
     //-- History Layer --//
     override fun apply_undo() {
         super.apply_undo()

@@ -31,7 +31,7 @@ class HistoryCache() {
             return
         }
 
-        var new_node = HistoryNode(func, args)
+        val new_node = HistoryNode(func, args)
         if (location_stamp != null) {
             new_node.location_stamp = location_stamp
         }
@@ -44,6 +44,27 @@ class HistoryCache() {
         }
     }
 
+    // Keep track of all history as one group
+    fun <T> remember(callback: () -> T): T {
+        this.open_multi()
+        try {
+            val output = callback()
+            this.close_multi()
+            return output
+        } catch (e: Exception) {
+            this.cancel_multi()
+            throw e
+        }
+    }
+
+    // Run a callback with logging history
+    fun <T> forget(callback: () -> T): T {
+        this.lock()
+        val output = callback()
+        this.unlock()
+        return output
+    }
+
     fun open_multi(beatkey: BeatKey, position: List<Int>) {
         this.open_multi(Pair(beatkey, position))
     }
@@ -53,7 +74,7 @@ class HistoryCache() {
             return
         }
 
-        var next_node = HistoryNode("multi", listOf())
+        val next_node = HistoryNode("multi", listOf())
         if (location_stamp != null) {
             next_node.location_stamp = location_stamp
         }
@@ -91,7 +112,7 @@ class HistoryCache() {
     }
 
     fun lock(): Boolean {
-        var was_locked = this.history_locked
+        val was_locked = this.history_locked
         this.history_locked = true
         return was_locked
     }
@@ -164,9 +185,9 @@ open class HistoryLayer() : FlagLayer() {
             }
 
             "replace_tree" -> {
-                var beatkey = current_node.args[0] as BeatKey
-                var position = current_node.args[1] as List<Int>
-                var tree = current_node.args[2] as OpusTree<OpusEvent>
+                val beatkey = current_node.args[0] as BeatKey
+                val position = current_node.args[1] as List<Int>
+                val tree = current_node.args[2] as OpusTree<OpusEvent>
 
                 this.replace_tree(beatkey, position, tree)
             }
@@ -219,7 +240,7 @@ open class HistoryLayer() : FlagLayer() {
     open fun apply_undo() {
         this.history_cache.lock()
 
-        var node = this.history_cache.pop()
+        val node = this.history_cache.pop()
         if (node == null) {
             this.history_cache.unlock()
             return
@@ -240,66 +261,60 @@ open class HistoryLayer() : FlagLayer() {
 
 
     override fun overwrite_beat(old_beat: BeatKey, new_beat: BeatKey) {
-        this.history_cache.open_multi()
-        this.push_replace_tree(old_beat, listOf())
-        super.overwrite_beat(old_beat, new_beat)
-        this.history_cache.close_multi()
+        this.history_cache.remember {
+            this.push_replace_tree(old_beat, listOf())
+            super.overwrite_beat(old_beat, new_beat)
+        }
     }
 
     fun new_line(channel: Int, index: Int, count: Int): List<List<OpusTree<OpusEvent>>> {
-        this.history_cache.open_multi()
-
-        val output: MutableList<List<OpusTree<OpusEvent>>> = mutableListOf()
-        for (i in 0 until  count) {
-           output.add(this.new_line(channel, index))
+        return this.history_cache.remember {
+            val output: MutableList<List<OpusTree<OpusEvent>>> = mutableListOf()
+            for (i in 0 until count) {
+                output.add(this.new_line(channel, index))
+            }
+            output
         }
-
-        this.history_cache.close_multi()
-
-        return output
     }
 
     override fun new_line(channel: Int, index: Int?): List<OpusTree<OpusEvent>> {
-        this.history_cache.open_multi()
-        val output = super.new_line(channel, index)
-        this.push_remove_line(channel, index ?: (this.channels[channel].size - 1))
-        this.history_cache.close_multi()
-        return output
+        return this.history_cache.remember {
+            val output = super.new_line(channel, index)
+            this.push_remove_line(channel, index ?: (this.channels[channel].size - 1))
+            output
+        }
     }
 
     override fun insert_line(channel: Int, line_index: Int, line: MutableList<OpusTree<OpusEvent>>) {
-        this.history_cache.open_multi()
-        super.insert_line(channel, line_index, line)
-        this.push_remove_line(channel, line_index)
-        this.history_cache.close_multi()
+        this.history_cache.remember {
+            super.insert_line(channel, line_index, line)
+            this.push_remove_line(channel, line_index)
+        }
     }
 
     fun remove_line(channel: Int, line_offset: Int, count: Int) {
-        this.history_cache.open_multi()
-        for (i in 0 until count) {
-            if (this.channels[channel].size > 1) {
-                this.remove_line(channel, kotlin.math.min(line_offset, this.channels[channel].size - 1))
-            } else {
-                break
+        this.history_cache.remember {
+            for (i in 0 until count) {
+                if (this.channels[channel].size > 1) {
+                    this.remove_line(channel, kotlin.math.min(line_offset, this.channels[channel].size - 1))
+                } else {
+                    break
+                }
             }
         }
-
-        this.history_cache.close_multi()
     }
 
     override fun move_line(channel_old: Int, line_old: Int, channel_new: Int, line_new: Int) {
-        this.history_cache.open_multi()
-        super.move_line(channel_old, line_old, channel_new, line_new)
-        this.history_cache.close_multi()
+        this.history_cache.remember {
+            super.move_line(channel_old, line_old, channel_new, line_new)
+        }
     }
 
     override fun remove_line(channel: Int, line_offset: Int): MutableList<OpusTree<OpusEvent>> {
-        this.history_cache.open_multi()
-        this.push_new_line(channel, line_offset)
-        val output = super.remove_line(channel, line_offset)
-
-        this.history_cache.close_multi()
-        return output
+        return this.history_cache.remember {
+            this.push_new_line(channel, line_offset)
+            super.remove_line(channel, line_offset)
+        }
     }
 
     fun insert_after(beat_key: BeatKey, position: List<Int>, repeat: Int) {
@@ -312,7 +327,7 @@ open class HistoryLayer() : FlagLayer() {
 
     override fun insert_after(beat_key: BeatKey, position: List<Int>) {
         this.history_cache.open_multi(beat_key, position)
-        var remove_position = position.toMutableList()
+        val remove_position = position.toMutableList()
         remove_position[remove_position.size - 1] += 1
         this.push_remove(beat_key, remove_position)
         super.insert_after(beat_key, position)
@@ -348,7 +363,7 @@ open class HistoryLayer() : FlagLayer() {
 
     override fun remove(beat_key: BeatKey, position: List<Int>) {
         this.history_cache.open_multi(beat_key, position)
-        var new_position = position.toMutableList()
+        val new_position = position.toMutableList()
         if (new_position.isNotEmpty()) {
             new_position.removeLast()
         }
@@ -358,120 +373,104 @@ open class HistoryLayer() : FlagLayer() {
     }
 
     override fun insert_beat(index: Int, count: Int) {
-        this.history_cache.open_multi()
+        this.history_cache.remember {
+            for (i in 0 until count) {
+                this.push_remove_beat(index)
+            }
 
-        for (i in 0 until count) {
-            this.push_remove_beat(index)
+            super.insert_beat(index, count)
         }
-
-        super.insert_beat(index, count)
-
-        this.history_cache.close_multi()
     }
 
     fun remove_beat(index: Int, count: Int) {
-        this.history_cache.open_multi()
-
-        for (i in 0 until count) {
-            if (this.opus_beat_count > 1) {
-                this.remove_beat(index)
-            } else {
-                break
+        this.history_cache.remember {
+            for (i in 0 until count) {
+                if (this.opus_beat_count > 1) {
+                    this.remove_beat(index)
+                } else {
+                    break
+                }
             }
         }
-
-        this.history_cache.close_multi()
     }
 
     override fun remove_beat(index: Int) {
-        this.history_cache.open_multi()
-        this.push_insert_beat(index, this.get_channel_line_counts())
-        super.remove_beat(index)
-        this.history_cache.close_multi()
+        this.history_cache.remember {
+            this.push_insert_beat(index, this.get_channel_line_counts())
+            super.remove_beat(index)
+        }
     }
 
     override fun replace_tree(beat_key: BeatKey, position: List<Int>, tree: OpusTree<OpusEvent>) {
-        this.history_cache.open_multi()
-        this.push_replace_tree(beat_key, position, this.get_tree(beat_key, position).copy())
-        super.replace_tree(beat_key, position, tree)
-        this.history_cache.close_multi()
+        this.history_cache.remember {
+            this.push_replace_tree(beat_key, position, this.get_tree(beat_key, position).copy())
+            super.replace_tree(beat_key, position, tree)
+        }
     }
 
     override fun move_leaf(beatkey_from: BeatKey, position_from: List<Int>, beatkey_to: BeatKey, position_to: List<Int>) {
-        this.history_cache.open_multi()
-        super.move_leaf(beatkey_from, position_from, beatkey_to, position_to)
-        this.history_cache.close_multi()
-
+        this.history_cache.remember {
+            super.move_leaf(beatkey_from, position_from, beatkey_to, position_to)
+        }
     }
 
     override fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEvent) {
-        var tree = this.get_tree(beat_key, position).copy()
-        this.history_cache.open_multi()
-        try {
+        this.history_cache.remember {
+            val tree = this.get_tree(beat_key, position).copy()
             super.set_event(beat_key, position, event)
             this.push_replace_tree(beat_key, position, tree)
-        } catch (e: Exception) {
-            this.history_cache.cancel_multi()
-            throw e
         }
-        this.history_cache.close_multi()
     }
 
     override fun set_percussion_event(beat_key: BeatKey, position: List<Int>) {
-        val tree = this.get_tree(beat_key, position)
-        this.history_cache.open_multi()
-        if (tree.is_event()) {
-            this.push_set_percussion_event(beat_key, position)
-        } else {
-            this.push_unset(beat_key, position)
-        }
-
-        try {
+        this.history_cache.remember {
+            val tree = this.get_tree(beat_key, position)
+            if (tree.is_event()) {
+                this.push_set_percussion_event(beat_key, position)
+            } else {
+                this.push_unset(beat_key, position)
+            }
             super.set_percussion_event(beat_key, position)
-        } catch (e: Exception) {
-            this.history_cache.cancel_multi()
-            throw e
         }
-        this.history_cache.close_multi()
     }
 
     override fun unset(beat_key: BeatKey, position: List<Int>) {
-        this.history_cache.open_multi()
-        val tree = this.get_tree(beat_key, position)
-        if (tree.is_event()) {
-            val original_event = tree.get_event()!!
-            if (!this.is_percussion(beat_key.channel)) {
-                this.push_set_event(
-                    beat_key,
-                    position,
-                    original_event
-                )
-            } else {
-                this.push_set_percussion_event(beat_key, position)
+        this.history_cache.remember {
+            val tree = this.get_tree(beat_key, position)
+            if (tree.is_event()) {
+                val original_event = tree.get_event()!!
+                if (!this.is_percussion(beat_key.channel)) {
+                    this.push_set_event(
+                        beat_key,
+                        position,
+                        original_event
+                    )
+                } else {
+                    this.push_set_percussion_event(beat_key, position)
+                }
+            } else if (!tree.is_leaf()) {
+                this.push_replace_tree(beat_key, position, tree.copy())
             }
-        } else if (! tree.is_leaf() ) {
-            this.push_replace_tree(beat_key, position, tree.copy())
+            super.unset(beat_key, position)
         }
-        super.unset(beat_key, position)
-        this.history_cache.close_multi()
     }
 
     override fun load(path: String) {
-        this.history_cache.lock()
-        super.load(path)
-        this.history_cache.unlock()
+        this.history_cache.forget {
+            super.load(path)
+        }
     }
 
     override fun new() {
-        this.history_cache.lock()
-        super.new()
-        this.history_cache.unlock()
+        this.history_cache.forget {
+            super.new()
+        }
     }
 
     override fun import_midi(midi: MIDI) {
-        this.history_cache.lock()
-        super.import_midi(midi)
-        this.history_cache.unlock()
+        this.history_cache.forget {
+            super.import_midi(midi)
+        }
     }
 
     override fun clear() {
@@ -482,35 +481,32 @@ open class HistoryLayer() : FlagLayer() {
 
     fun push_replace_tree(beatkey: BeatKey, position: List<Int>, tree: OpusTree<OpusEvent>? = null) {
         if (!this.history_cache.isLocked()) {
-            var use_tree = tree ?: this.get_tree(beatkey, position).copy()
+            val use_tree = tree ?: this.get_tree(beatkey, position).copy()
             this.history_cache.append_undoer("replace_tree", listOf(beatkey.copy(), position.toList(), use_tree))
         }
     }
 
     fun push_new_channel(channel: Int) {
-        this.history_cache.open_multi()
+        this.history_cache.remember {
+            for (i in 0 until this.channels[channel].size) {
+                this.push_new_line(channel, i)
+            }
 
-
-        for (i in 0 until this.channels[channel].size) {
-            this.push_new_line(channel, i)
+            this.history_cache.append_undoer("new_channel", listOf(channel))
         }
 
-        this.history_cache.append_undoer("new_channel", listOf(channel))
-
-        this.history_cache.close_multi()
     }
 
     fun push_new_line(channel: Int, line_offset: Int) {
-        this.history_cache.open_multi()
+        this.history_cache.remember {
+            for (i in this.opus_beat_count - 1 downTo 0) {
+                val beat_key = BeatKey(channel, line_offset, i)
+                this.push_replace_tree(beat_key, listOf())
+            }
 
-        for (i in this.opus_beat_count - 1 downTo 0) {
-            val beat_key = BeatKey(channel, line_offset, i)
-            this.push_replace_tree(beat_key, listOf())
+            this.history_cache.append_undoer("new_line", listOf(channel, line_offset))
         }
 
-        this.history_cache.append_undoer("new_line", listOf(channel, line_offset))
-
-        this.history_cache.close_multi()
     }
 
     fun push_remove(beat_key: BeatKey, position: MutableList<Int>) {
@@ -525,17 +521,17 @@ open class HistoryLayer() : FlagLayer() {
     }
 
     fun push_insert_beat(index: Int, channel_sizes: List<Int>) {
-        this.history_cache.open_multi()
+        this.history_cache.remember {
 
-        for (channel in channel_sizes.indices) {
-            val line_count = channel_sizes[channel]
-            for (j in 0 until line_count) {
-                this.push_replace_tree(BeatKey(channel, j, index), listOf())
+            for (channel in channel_sizes.indices) {
+                val line_count = channel_sizes[channel]
+                for (j in 0 until line_count) {
+                    this.push_replace_tree(BeatKey(channel, j, index), listOf())
+                }
             }
-        }
 
-        this.history_cache.append_undoer("insert_beat", listOf(index))
-        this.history_cache.close_multi()
+            this.history_cache.append_undoer("insert_beat", listOf(index))
+        }
     }
 
     fun push_set_event(beat_key: BeatKey, position: List<Int>, event: OpusEvent) {
@@ -567,58 +563,52 @@ open class HistoryLayer() : FlagLayer() {
     }
 
     override fun link_beats(beat_key: BeatKey, target: BeatKey) {
-        this.history_cache.open_multi()
-        try {
+        this.history_cache.remember {
             super.link_beats(beat_key, target)
-        } catch (e: Exception) {
-            this.history_cache.cancel_multi()
-            throw e
         }
-        this.history_cache.close_multi()
     }
 
     override fun merge_link_pools(index_first: Int, index_second: Int) {
-        this.history_cache.open_multi()
+        this.history_cache.remember {
 
-        var old_link_pool = mutableSetOf<BeatKey>()
-        for (beat_key in this.link_pools[index_first]) {
-            old_link_pool.add(beat_key.copy())
+            val old_link_pool = mutableSetOf<BeatKey>()
+            for (beat_key in this.link_pools[index_first]) {
+                old_link_pool.add(beat_key.copy())
+            }
+            this.history_cache.append_undoer("create_link_pool", listOf(old_link_pool))
+            for (beat_key in this.link_pools[index_first]) {
+                this.history_cache.append_undoer("unlink_beat", listOf(beat_key))
+            }
+
+            super.merge_link_pools(index_first, index_second)
         }
-        this.history_cache.append_undoer("create_link_pool", listOf(old_link_pool))
-        for (beat_key in this.link_pools[index_first]) {
-            this.history_cache.append_undoer("unlink_beat", listOf(beat_key))
-        }
-
-        super.merge_link_pools(index_first, index_second)
-
-        this.history_cache.close_multi()
     }
 
     override fun link_beat_into_pool(beat_key: BeatKey, index: Int, overwrite_pool: Boolean) {
-        this.history_cache.open_multi()
-        super.link_beat_into_pool(beat_key, index, overwrite_pool)
-        this.history_cache.append_undoer("unlink_beat", listOf(beat_key))
-        this.history_cache.close_multi()
+        this.history_cache.remember {
+            super.link_beat_into_pool(beat_key, index, overwrite_pool)
+            this.history_cache.append_undoer("unlink_beat", listOf(beat_key))
+        }
     }
 
     override fun create_link_pool(beat_keys: List<BeatKey>) {
-        this.history_cache.open_multi()
-        for (beat_key in beat_keys) {
-            this.history_cache.append_undoer("unlink_beat", listOf(beat_key))
+        this.history_cache.remember {
+            for (beat_key in beat_keys) {
+                this.history_cache.append_undoer("unlink_beat", listOf(beat_key))
+            }
+            super.create_link_pool(beat_keys)
         }
-        super.create_link_pool(beat_keys)
-        this.history_cache.close_multi()
     }
 
     override fun batch_link_beats(beat_key_pairs: List<Pair<BeatKey, BeatKey>>) {
-        this.history_cache.open_multi()
-        super.batch_link_beats(beat_key_pairs)
-        this.history_cache.close_multi()
+        this.history_cache.remember {
+            super.batch_link_beats(beat_key_pairs)
+        }
     }
 
     override fun remove_channel(channel: Int) {
         this.push_new_channel(channel)
-        var was_locked = this.history_cache.lock()
+        val was_locked = this.history_cache.lock()
         super.remove_channel(channel)
         if (!was_locked) {
             this.history_cache.unlock()
@@ -626,14 +616,14 @@ open class HistoryLayer() : FlagLayer() {
     }
 
     override fun new_channel(channel: Int?, lines: Int) {
-        this.history_cache.open_multi()
-        super.new_channel(channel, lines)
-        if (channel != null) {
-            this.push_remove_channel(channel)
-        } else {
-            this.push_remove_channel(this.channels.size - 1)
+        this.history_cache.remember {
+            super.new_channel(channel, lines)
+            if (channel != null) {
+                this.push_remove_channel(channel)
+            } else {
+                this.push_remove_channel(this.channels.size - 1)
+            }
         }
-        this.history_cache.close_multi()
     }
 
     override fun save(path: String?) {
@@ -645,12 +635,12 @@ open class HistoryLayer() : FlagLayer() {
     }
 
     fun has_changed_since_save(): Boolean {
-        var node = this.history_cache.peek()
+        val node = this.history_cache.peek()
         return (this.save_point_popped || (node != null && node.func_name != "save_point"))
     }
 
     override fun set_line_volume(channel: Int, line_offset: Int, volume: Int) {
-        var current_volume = this.get_line_volume(channel, line_offset)
+        val current_volume = this.get_line_volume(channel, line_offset)
         this.history_cache.append_undoer("set_line_volume", listOf(channel, line_offset, current_volume))
         super.set_line_volume(channel, line_offset, volume)
     }

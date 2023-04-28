@@ -8,7 +8,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.radixulous.opusmanager.BeatKey
 import java.lang.Integer.max
-import com.qfs.radixulous.opusmanager.HistoryLayer as OpusManager
+import com.qfs.radixulous.opusmanager.CursorLayer as OpusManager
 
 class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: RecyclerView, var column_layout: ColumnLabelAdapter) : RecyclerView.Adapter<BeatColumnAdapter.BeatViewHolder>() {
 

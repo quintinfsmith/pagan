@@ -162,7 +162,7 @@ class Cursor(var opus_manager: CursorLayer) {
     }
 }
 
-open class CursorLayer() : FlagLayer() {
+open class CursorLayer() : HistoryLayer() {
     var cursor: Cursor? = null
 
     fun line_count(): Int {
@@ -293,8 +293,8 @@ open class CursorLayer() : FlagLayer() {
         if (position.isNotEmpty()) {
             position.removeLast()
         }
+        this.unset(beat_key, position)
         this.set_cursor_position(beat_key, position)
-        this.unset_at_cursor()
     }
 
     fun increment_event_at_cursor() {
@@ -552,7 +552,7 @@ open class CursorLayer() : FlagLayer() {
             throw Exception("Can't link a beat to its self")
         }
 
-
+        var new_pairs = mutableListOf<Pair<BeatKey, BeatKey>>()
         for (y in 0 .. y_diff) {
             var pair = this.get_channel_index(y + y_new)
             var target_pair = this.get_channel_index(y + y_i)
@@ -568,10 +568,17 @@ open class CursorLayer() : FlagLayer() {
                     target_pair.second,
                     x + x_i
                 )
-
-                this.link_beats(working_position, working_target)
+                new_pairs.add(Pair(working_position, working_target))
             }
         }
+        this.batch_link_beats(new_pairs)
     }
 
+
+    //-- History Layer --//
+    override fun apply_undo() {
+        super.apply_undo()
+        this.cursor?.settle()
+    }
+    // End History Layer //
 }

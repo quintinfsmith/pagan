@@ -6,6 +6,7 @@ import java.lang.Integer.max
 class HistoryNode(var func_name: String, var args: List<Any>) {
     var children: MutableList<HistoryNode> = mutableListOf()
     var parent: HistoryNode? = null
+    var location_stamp: Pair<BeatKey, List<Int>>? = null
 }
 
 class HistoryCache() {
@@ -21,26 +22,41 @@ class HistoryCache() {
         return this.history.isEmpty()
     }
 
-    fun append_undoer(func: String, args: List<Any>) {
+    fun append_undoer(func: String, args: List<Any>, beatkey: BeatKey, position: List<Int>) {
+        this.append_undoer(func, args, Pair(beatkey, position))
+    }
+
+    fun append_undoer(func: String, args: List<Any>, location_stamp: Pair<BeatKey, List<Int>>? = null) {
         if (this.history_locked) {
             return
         }
 
+        var new_node = HistoryNode(func, args)
+        if (location_stamp != null) {
+            new_node.location_stamp = location_stamp
+        }
+
         if (this.working_node != null) {
-            var new_node = HistoryNode(func, args)
             new_node.parent = this.working_node
             this.working_node!!.children.add(new_node)
         } else {
-            this.history.add(HistoryNode(func, args))
+            this.history.add(new_node)
         }
     }
 
-    fun open_multi() {
+    fun open_multi(beatkey: BeatKey, position: List<Int>) {
+        this.open_multi(Pair(beatkey, position))
+    }
+
+    fun open_multi(location_stamp: Pair<BeatKey, List<Int>>? = null) {
         if (this.history_locked) {
             return
         }
 
         var next_node = HistoryNode("multi", listOf())
+        if (location_stamp != null) {
+            next_node.location_stamp = location_stamp
+        }
 
         if (this.working_node != null) {
             next_node.parent = this.working_node
@@ -58,19 +74,6 @@ class HistoryCache() {
 
         if (this.working_node != null) {
             this.working_node = this.working_node!!.parent
-        }
-    }
-
-    open fun close_multi(beat_key: BeatKey, position: List<Int>) {
-        if (this.history_locked) {
-            return
-        }
-
-        if (this.working_node != null) {
-            if (this.working_node!!.parent == null) {
-                //this.append_undoer("set_cursor", listOf(beat_key.copy(), position.toList()))
-            }
-            this.close_multi()
         }
     }
 
@@ -114,7 +117,7 @@ class HistoryCache() {
     }
 }
 
-open class HistoryLayer() : CursorLayer() {
+open class HistoryLayer() : FlagLayer() {
     var history_cache = HistoryCache()
     var save_point_popped = false
 
@@ -198,11 +201,11 @@ open class HistoryLayer() : CursorLayer() {
             "insert_beat" -> {
                 this.insert_beat(current_node.args[0] as Int)
             }
-            "set_cursor" -> {
-                val beat_key = current_node.args[0] as BeatKey
-                val y = this.get_y(beat_key.channel, beat_key.line_offset)
-                this.get_cursor().set(y, beat_key.beat, current_node.args[1] as List<Int>)
-            }
+            //"set_cursor" -> {
+            //    val beat_key = current_node.args[0] as BeatKey
+            //    val y = this.get_y(beat_key.channel, beat_key.line_offset)
+            //    this.get_cursor().set(y, beat_key.beat, current_node.args[1] as List<Int>)
+            //}
             else -> {}
         }
 
@@ -233,7 +236,6 @@ open class HistoryLayer() : CursorLayer() {
         this.apply_history_node(node)
 
         this.history_cache.unlock()
-        this.get_cursor().settle()
     }
 
 
@@ -245,8 +247,6 @@ open class HistoryLayer() : CursorLayer() {
     }
 
     fun new_line(channel: Int, index: Int, count: Int): List<List<OpusTree<OpusEvent>>> {
-        val initial_beatkey = this.get_cursor().get_beatkey()
-        val initial_position = this.get_cursor().get_position()
         this.history_cache.open_multi()
 
         val output: MutableList<List<OpusTree<OpusEvent>>> = mutableListOf()
@@ -254,7 +254,7 @@ open class HistoryLayer() : CursorLayer() {
            output.add(this.new_line(channel, index))
         }
 
-        this.history_cache.close_multi(initial_beatkey, initial_position)
+        this.history_cache.close_multi()
 
         return output
     }
@@ -275,8 +275,6 @@ open class HistoryLayer() : CursorLayer() {
     }
 
     fun remove_line(channel: Int, line_offset: Int, count: Int) {
-        val initial_beatkey = this.get_cursor().get_beatkey()
-        val initial_position = this.get_cursor().get_position()
         this.history_cache.open_multi()
         for (i in 0 until count) {
             if (this.channels[channel].size > 1) {
@@ -286,7 +284,7 @@ open class HistoryLayer() : CursorLayer() {
             }
         }
 
-        this.history_cache.close_multi(initial_beatkey, initial_position)
+        this.history_cache.close_multi()
     }
 
     override fun move_line(channel_old: Int, line_old: Int, channel_new: Int, line_new: Int) {
@@ -305,31 +303,31 @@ open class HistoryLayer() : CursorLayer() {
     }
 
     fun insert_after(beat_key: BeatKey, position: List<Int>, repeat: Int) {
-        this.history_cache.open_multi()
+        this.history_cache.open_multi(beat_key, position)
         for (i in 0 until repeat) {
             this.insert_after(beat_key, position)
         }
-        this.history_cache.close_multi(beat_key, position)
+        this.history_cache.close_multi()
     }
 
     override fun insert_after(beat_key: BeatKey, position: List<Int>) {
-        this.history_cache.open_multi()
+        this.history_cache.open_multi(beat_key, position)
         var remove_position = position.toMutableList()
         remove_position[remove_position.size - 1] += 1
         this.push_remove(beat_key, remove_position)
         super.insert_after(beat_key, position)
-        this.history_cache.close_multi(beat_key, position)
+        this.history_cache.close_multi()
     }
 
     override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
-        this.history_cache.open_multi()
+        this.history_cache.open_multi(beat_key, position)
         this.push_replace_tree(beat_key, position)
         super.split_tree(beat_key, position, splits)
-        this.history_cache.close_multi(beat_key, position)
+        this.history_cache.close_multi()
     }
 
     fun remove(beat_key: BeatKey, position: List<Int>, count: Int) {
-        this.history_cache.open_multi()
+        this.history_cache.open_multi(beat_key, position)
         var cancelled = false
 
         for (i in 0 until count) {
@@ -342,27 +340,24 @@ open class HistoryLayer() : CursorLayer() {
             }
         }
         if (!cancelled) {
-            this.history_cache.close_multi(beat_key, position)
+            this.history_cache.close_multi()
         } else {
             this.history_cache.cancel_multi()
         }
     }
 
     override fun remove(beat_key: BeatKey, position: List<Int>) {
-        this.history_cache.open_multi()
+        this.history_cache.open_multi(beat_key, position)
         var new_position = position.toMutableList()
         if (new_position.isNotEmpty()) {
             new_position.removeLast()
         }
         this.push_replace_tree(beat_key, new_position)
         super.remove(beat_key, position)
-        this.history_cache.close_multi(beat_key, position)
+        this.history_cache.close_multi()
     }
 
     override fun insert_beat(index: Int, count: Int) {
-        val initial_beatkey = this.get_cursor().get_beatkey()
-        val initial_position = this.get_cursor().get_position()
-
         this.history_cache.open_multi()
 
         for (i in 0 until count) {
@@ -371,12 +366,10 @@ open class HistoryLayer() : CursorLayer() {
 
         super.insert_beat(index, count)
 
-        this.history_cache.close_multi(initial_beatkey, initial_position)
+        this.history_cache.close_multi()
     }
 
     fun remove_beat(index: Int, count: Int) {
-        val initial_beatkey = this.get_cursor().get_beatkey()
-        val initial_position = this.get_cursor().get_position()
         this.history_cache.open_multi()
 
         for (i in 0 until count) {
@@ -387,7 +380,7 @@ open class HistoryLayer() : CursorLayer() {
             }
         }
 
-        this.history_cache.close_multi(initial_beatkey, initial_position)
+        this.history_cache.close_multi()
     }
 
     override fun remove_beat(index: Int) {
@@ -504,10 +497,7 @@ open class HistoryLayer() : CursorLayer() {
 
         this.history_cache.append_undoer("new_channel", listOf(channel))
 
-        this.history_cache.close_multi(
-            this.get_cursor().get_beatkey(),
-            this.get_cursor().get_position()
-        )
+        this.history_cache.close_multi()
     }
 
     fun push_new_line(channel: Int, line_offset: Int) {
@@ -545,7 +535,7 @@ open class HistoryLayer() : CursorLayer() {
         }
 
         this.history_cache.append_undoer("insert_beat", listOf(index))
-        this.history_cache.close_multi(this.get_cursor().get_beatkey(), this.get_cursor().get_position())
+        this.history_cache.close_multi()
     }
 
     fun push_set_event(beat_key: BeatKey, position: List<Int>, event: OpusEvent) {
@@ -611,23 +601,18 @@ open class HistoryLayer() : CursorLayer() {
         this.history_cache.close_multi()
     }
 
-    override fun link_beat_range(beat: BeatKey, target_a: BeatKey, target_b: BeatKey) {
-        this.history_cache.open_multi()
-
-        super.link_beat_range(beat, target_a, target_b)
-
-        this.history_cache.close_multi(
-            this.get_cursor().get_beatkey(),
-            this.get_cursor().get_position()
-        )
-    }
-
     override fun create_link_pool(beat_keys: List<BeatKey>) {
         this.history_cache.open_multi()
         for (beat_key in beat_keys) {
             this.history_cache.append_undoer("unlink_beat", listOf(beat_key))
         }
         super.create_link_pool(beat_keys)
+        this.history_cache.close_multi()
+    }
+
+    override fun batch_link_beats(beat_key_pairs: List<Pair<BeatKey, BeatKey>>) {
+        this.history_cache.open_multi()
+        super.batch_link_beats(beat_key_pairs)
         this.history_cache.close_multi()
     }
 
@@ -662,11 +647,6 @@ open class HistoryLayer() : CursorLayer() {
     fun has_changed_since_save(): Boolean {
         var node = this.history_cache.peek()
         return (this.save_point_popped || (node != null && node.func_name != "save_point"))
-    }
-
-    override fun clear_parent_at_cursor() {
-        super.clear_parent_at_cursor()
-        this.history_cache.close_multi()
     }
 
     override fun set_line_volume(channel: Int, line_offset: Int, volume: Int) {

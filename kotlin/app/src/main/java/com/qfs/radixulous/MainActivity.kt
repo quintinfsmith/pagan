@@ -27,7 +27,7 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import kotlin.concurrent.thread
-import com.qfs.radixulous.opusmanager.HistoryLayer as OpusManager
+import com.qfs.radixulous.opusmanager.CursorLayer as OpusManager
 
 class MainActivity : AppCompatActivity() {
     private lateinit var appBarConfiguration: AppBarConfiguration

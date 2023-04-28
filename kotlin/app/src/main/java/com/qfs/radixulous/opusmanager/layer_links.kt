@@ -70,6 +70,11 @@ open class LinksLayer() : OpusManagerBase() {
         }
     }
 
+    open fun batch_link_beats(beat_key_pairs: List<Pair<BeatKey, BeatKey>>) {
+        for ((from_key, to_key) in beat_key_pairs) {
+            this.link_beats(from_key, to_key)
+        }
+    }
 
     open fun link_beat_into_pool(beat_key: BeatKey, index: Int, overwrite_pool: Boolean = false) {
         if (overwrite_pool) {

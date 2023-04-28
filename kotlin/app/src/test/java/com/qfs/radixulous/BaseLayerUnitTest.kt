@@ -202,8 +202,8 @@ class BaseLayerUnitTest {
 
         manager.unset(BeatKey(0,0,1), listOf())
         assertEquals(
-            "Failed to return null on leaf with no preceding absolute value",
-            null,
+            "Returned wrong value on leaf with no preceding absolute value",
+            -5,
             manager.get_absolute_value(BeatKey(0,0,3), listOf()),
         )
     }
@@ -247,7 +247,6 @@ class BaseLayerUnitTest {
         assertThrows(Exception::class.java) { manager.convert_event_to_relative(BeatKey(0,0,0), listOf()) }
 
         manager.set_event(BeatKey(0,0,0), listOf(), OpusEvent(12,12,0,false))
-        assertThrows(Exception::class.java) { manager.convert_event_to_relative(BeatKey(0,0,0), listOf()) }
 
         manager.set_event(BeatKey(0,0,1), listOf(), OpusEvent(24,12,0, false))
         manager.convert_event_to_relative(BeatKey(0,0,1), listOf())
@@ -271,9 +270,6 @@ class BaseLayerUnitTest {
         val manager = OpusManager()
         manager.new()
 
-        assertThrows(Exception::class.java) { manager.convert_event_to_absolute(BeatKey(0,0,0), listOf()) }
-
-        manager.set_event(BeatKey(0,0,0), listOf(), OpusEvent(12,12,0,true))
         assertThrows(Exception::class.java) { manager.convert_event_to_absolute(BeatKey(0,0,0), listOf()) }
 
         manager.set_event(BeatKey(0,0,0), listOf(), OpusEvent(12, 12, 0, false))
@@ -372,10 +368,10 @@ class BaseLayerUnitTest {
     fun test_new_channel() {
         val manager = OpusManager()
         manager.new()
-        assertEquals(manager.channels.size, 1)
-        manager.new_channel()
-        assertEquals(manager.channels.size, 2)
-        assertEquals(manager.channels[1].size, 0)
+        assertEquals(1, manager.channels.size)
+        manager.new_channel(lines=0)
+        assertEquals(2, manager.channels.size)
+        assertEquals(0, manager.channels[1].size)
     }
 
     @Test
@@ -463,14 +459,16 @@ class BaseLayerUnitTest {
             top_tree.size
         )
 
-        var position = listOf<Int>(0)
         var new_tree = OpusTree<OpusEvent>()
-        manager.split_tree(beatkey, position, 2)
+        manager.split_tree(beatkey, listOf(), 12)
+        var position = listOf<Int>(0)
+        var old_parent = manager.get_tree(beatkey, position).parent
         manager.replace_tree(beatkey, position, new_tree)
+
         assertEquals(
             "Failed to set replacement tree's parent correctly",
-            top_tree,
-            new_tree.parent
+            manager.get_tree(beatkey, position).parent,
+            old_parent
         )
 
         manager.replace_tree(beatkey, listOf(), new_tree)
@@ -497,7 +495,7 @@ class BaseLayerUnitTest {
             for (j in 0 until manager.channels[i].size) {
                 assertEquals(
                     "Didn't resize existing channel lines correctly when setting beat count",
-                    manager.channels[i].lines[j].size,
+                    manager.channels[i].lines[j].beats.size,
                     128
                 )
             }

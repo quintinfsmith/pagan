@@ -78,6 +78,8 @@ class HistoryCache() {
         this.close_multi()
         if (this.working_node != null) {
             this.working_node!!.children.removeLast()
+        } else {
+            this.history.removeLast()
         }
     }
 

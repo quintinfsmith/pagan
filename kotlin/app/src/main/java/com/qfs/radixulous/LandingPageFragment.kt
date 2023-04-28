@@ -33,8 +33,12 @@ class LandingPageFragment : TempNameFragment() {
             this.setFragmentResult("NEW", bundleOf())
             this.get_main().navTo("main")
         }
-        btn_loadProject.setOnClickListener {
-            this.get_main().navTo("load")
+        if (this.get_main().has_projects_saved()) {
+            btn_loadProject.setOnClickListener {
+                this.get_main().navTo("load")
+            }
+        } else {
+            btn_loadProject.visibility = View.GONE
         }
 
         btn_importMidi.setOnClickListener {

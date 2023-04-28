@@ -297,7 +297,7 @@ class MainActivity : AppCompatActivity() {
         val navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main)
         when (navHost?.childFragmentManager?.fragments?.get(0)) {
             is MainFragment -> {
-                this.optionsMenu.findItem(R.id.itmLoadProject).isVisible = true
+                this.optionsMenu.findItem(R.id.itmLoadProject).isVisible = this.has_projects_saved()
                 this.optionsMenu.findItem(R.id.itmUndo).isVisible = true
                 this.optionsMenu.findItem(R.id.itmNewProject).isVisible = true
                 this.optionsMenu.findItem(R.id.itmPlay).isVisible = true
@@ -757,5 +757,9 @@ class MainActivity : AppCompatActivity() {
             dialog.dismiss()
         }
 
+    }
+
+    fun has_projects_saved(): Boolean {
+        return this.project_manager.has_projects_saved()
     }
 }

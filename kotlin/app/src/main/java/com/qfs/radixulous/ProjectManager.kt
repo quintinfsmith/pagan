@@ -124,4 +124,21 @@ class ProjectManager(data_dir: String) {
         }
         return "${this.projects_dir}/opus_$i.json"
     }
+
+    fun has_projects_saved(): Boolean {
+        val directory = File(this.projects_dir)
+        if (!directory.isDirectory) {
+            return false
+        }
+        var project_list_file = File(this.projects_list_file_path)
+        if (project_list_file.isFile) {
+            var content = project_list_file.readText(Charsets.UTF_8)
+            var json_project_list: MutableList<LoadFragment.ProjectDirPair> =
+                Json.decodeFromString(content)
+            return json_project_list.isNotEmpty()
+        } else {
+            return false
+        }
+
+    }
 }

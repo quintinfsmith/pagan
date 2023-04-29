@@ -734,4 +734,27 @@ class OpusTree<T> {
 
         return position_remap
     }
+
+    // Relative Position and Size
+    fun get_flat_ratios(): Pair<Float, Float> {
+        var top = this
+        if (top.parent == null) {
+            return Pair(0F, 1F)
+        }
+
+        var ratio = top.getIndex()!!.toFloat() / top.parent!!.size.toFloat()
+        var total_divs = top.parent!!.size
+
+        while (true) {
+            top = top.parent!!
+            if (top.parent != null) {
+                ratio = (ratio / top.parent!!.size.toFloat()) + (top.getIndex()!!.toFloat() / top.parent!!.size.toFloat())
+                total_divs *= top.parent!!.size
+            } else {
+                break
+            }
+        }
+
+        return Pair(ratio, 1F / total_divs.toFloat())
+    }
 }

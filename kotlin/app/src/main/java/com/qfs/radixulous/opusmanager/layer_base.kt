@@ -1,4 +1,5 @@
 package com.qfs.radixulous.opusmanager
+import android.util.Log
 import com.qfs.radixulous.apres.*
 import com.qfs.radixulous.from_string
 import com.qfs.radixulous.structure.OpusTree
@@ -476,13 +477,17 @@ open class OpusManagerBase {
         this.insert_beat(this.opus_beat_count, 1)
     }
 
-    open fun insert_beat(index: Int, count: Int = 1) {
+    open fun insert_beat(index: Int, count: Int) {
         for (i in 0 until count) {
-            this.opus_beat_count += 1
-            for (channel in this.channels) {
-                channel.insert_beat(index)
-                channel.set_beat_count(this.opus_beat_count)
-            }
+            this.insert_beat(index + i)
+        }
+    }
+
+    open fun insert_beat(index: Int) {
+        this.opus_beat_count += 1
+        for (channel in this.channels) {
+            channel.insert_beat(index)
+            channel.set_beat_count(this.opus_beat_count)
         }
     }
 
@@ -782,7 +787,7 @@ open class OpusManagerBase {
         }
     }
 
-    fun import_midi(path: String) {
+    open fun import_midi(path: String) {
         val midi = MIDI.from_path(path)
         this.import_midi(midi)
     }

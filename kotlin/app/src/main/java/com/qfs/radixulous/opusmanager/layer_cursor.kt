@@ -407,8 +407,8 @@ open class CursorLayer() : HistoryLayer() {
     }
 
     ///////// OpusManagerBase methods
-    override fun insert_beat(index: Int, count: Int) {
-        super.insert_beat(index, count)
+    override fun insert_beat(index: Int) {
+        super.insert_beat(index)
         this.get_cursor().settle()
     }
 
@@ -580,4 +580,15 @@ open class CursorLayer() : HistoryLayer() {
         this.cursor?.settle()
     }
     // End History Layer //
+
+    fun move_line(y_from: Int, y_to: Int) {
+        val (channel_from, line_from) = this.get_channel_index(y_from)
+        var (channel_to, line_to) = this.get_channel_index(y_to)
+
+        if (channel_to != channel_from) {
+            line_to += 1
+        }
+
+        this.move_line(channel_from, line_from, channel_to, line_to)
+    }
 }

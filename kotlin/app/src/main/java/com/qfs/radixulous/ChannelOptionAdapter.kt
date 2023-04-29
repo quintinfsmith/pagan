@@ -53,7 +53,6 @@ class ChannelOptionAdapter(
         val opus_manager = this.activity.get_opus_manager()
         opus_manager.new_channel()
         notifyItemInserted(opus_manager.channels.size - 1)
-        this.update_fragment()
     }
 
 
@@ -138,7 +137,6 @@ class ChannelOptionAdapter(
             val x = this.get_view_channel(view)
             opus_manager.remove_channel(x)
             this.notifyItemRemoved(x)
-            this.update_fragment()
         }
     }
 
@@ -177,17 +175,6 @@ class ChannelOptionAdapter(
     private fun set_percussion_channel(channel: Int) {
         val opus_manager = this.activity.get_opus_manager()
         opus_manager.set_percussion_channel(channel)
-        this.update_fragment()
-    }
-
-    private fun update_fragment() {
-        val fragment = this.activity.getActiveFragment()
-        if (fragment is MainFragment) {
-            fragment.tick()
-            fragment.update_line_labels()
-            fragment.refresh_leaf_labels()
-        }
-
     }
 
     override fun getItemCount(): Int {

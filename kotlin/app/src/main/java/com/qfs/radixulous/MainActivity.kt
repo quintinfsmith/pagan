@@ -28,7 +28,7 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import kotlin.concurrent.thread
-import com.qfs.radixulous.opusmanager.CursorLayer as OpusManager
+import com.qfs.radixulous.InterfaceLayer as OpusManager
 
 class MainActivity : AppCompatActivity() {
     private lateinit var appBarConfiguration: AppBarConfiguration
@@ -40,7 +40,7 @@ class MainActivity : AppCompatActivity() {
     private var midi_player = MIDIPlayer()
     lateinit var soundfont: SoundFont
 
-    private var opus_manager = OpusManager()
+    private var opus_manager = OpusManager(this)
 
     private var in_play_back: Boolean = false
 
@@ -165,10 +165,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             R.id.itmUndo -> {
-                val main_fragment = this.getActiveFragment()
-                if (main_fragment is MainFragment) {
-                    main_fragment.undo()
-                }
+                this.get_opus_manager().apply_undo()
             }
             R.id.itmPlay -> {
                 this.playback_dialog()
@@ -249,9 +246,6 @@ class MainActivity : AppCompatActivity() {
             setView(viewInflated)
             setPositiveButton(android.R.string.ok) { dialog, _ ->
                 opus_manager.set_project_name(input.text.toString())
-                if (main_fragment is MainFragment) {
-                    main_fragment.tick()
-                }
                 dialog.dismiss()
             }
             setNegativeButton(android.R.string.cancel) { dialog, _ ->
@@ -296,15 +290,6 @@ class MainActivity : AppCompatActivity() {
                 this.optionsMenu.findItem(R.id.itmImportMidi).isVisible = false
             }
         }
-    }
-
-    // Only called from MainFragment
-    fun newProject() {
-        this.opus_manager.new()
-        val new_path = this.project_manager.get_new_path()
-        this.opus_manager.path = new_path
-        Log.d("XXA", this.opus_manager.project_name)
-        this.setup_config_drawer()
     }
 
     fun update_title_text() {
@@ -577,6 +562,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun loading_reticle() {
+        return
         if (this.progressBar == null) {
             this.progressBar =
                 ProgressBar(this@MainActivity, null, android.R.attr.progressBarStyleLarge)
@@ -622,10 +608,7 @@ class MainActivity : AppCompatActivity() {
             this.opus_manager.import_midi(midi)
             val new_path = this.project_manager.get_new_path()
             this.opus_manager.path = new_path
-
             this.opus_manager.set_project_name(filename)
-            this.update_menu_options()
-            this.setup_config_drawer()
 
         }
         this.cancel_reticle()

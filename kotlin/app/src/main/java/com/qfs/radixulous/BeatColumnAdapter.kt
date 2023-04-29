@@ -334,8 +334,6 @@ class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: Recycle
             y = cursor.y
             x = cursor.x
             position = cursor.get_position()
-
-            this.parent_fragment.tick()
         }
         this.parent_fragment.set_cursor_position(y, x, position, FocusType.Cell)
         this.parent_fragment.setContextMenu_leaf()
@@ -533,6 +531,9 @@ class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: Recycle
         }
     }
 
+    fun refresh_leaf_labels(beat: Int) {
+        this.refresh_leaf_labels(setOf(beat))
+    }
     fun refresh_leaf_labels(beats: Set<Int>? = null) {
         // NOTE: padding the start/end since an item may be bound but not visible
         for (i in this.bound_beats) {
@@ -681,6 +682,18 @@ class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: Recycle
         val center = (this.recycler.width - item_width) / 2
         (this.recycler.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(position, center)
         (this.column_layout.recycler.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(position, center)
+
+        this.enableScrollSync()
+    }
+
+    fun scrollToPosition(beatkey: BeatKey, position: List<Int>) {
+        this.disableScrollSync()
+        val item_width = this.column_layout.column_widths[beatkey.beat] * 120
+        val tree = this.get_opus_manager().get_tree(beatkey, position)
+        val (tree_position, tree_size) = tree.get_flat_ratios()
+        val offset = 0 - (item_width.toFloat() * tree_position).toInt()
+        (this.recycler.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(beatkey.beat, offset)
+        (this.column_layout.recycler.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(beatkey.beat, offset)
 
         this.enableScrollSync()
     }

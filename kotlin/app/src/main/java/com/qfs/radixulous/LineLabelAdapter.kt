@@ -116,7 +116,8 @@ class LineLabelAdapter(var main_fragment: MainFragment, var recycler: RecyclerVi
                     if (from_label != null && from_label != view) {
                         val y_from = (from_label.parent as ViewGroup).indexOfChild(from_label)
                         val y_to = (view.parent as ViewGroup).indexOfChild(view)
-                        this.main_fragment.move_line(y_from, y_to)
+                        // TODO: This is a bit shit
+                        this.main_fragment.get_main().get_opus_manager().move_line(y_from, y_to)
                     }
                     this._dragging_lineLabel = null
                 }

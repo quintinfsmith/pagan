@@ -1,4 +1,5 @@
 package com.qfs.radixulous.opusmanager
+import android.util.Log
 import com.qfs.radixulous.apres.MIDI
 import com.qfs.radixulous.structure.OpusTree
 import java.lang.Integer.max
@@ -138,7 +139,7 @@ class HistoryCache() {
     }
 }
 
-open class HistoryLayer() : FlagLayer() {
+open class HistoryLayer() : LinksLayer() {
     var history_cache = HistoryCache()
     var save_point_popped = false
 
@@ -377,12 +378,13 @@ open class HistoryLayer() : FlagLayer() {
 
     override fun insert_beat(index: Int, count: Int) {
         this.history_cache.remember {
-            for (i in 0 until count) {
-                this.push_remove_beat(index)
-            }
-
             super.insert_beat(index, count)
         }
+    }
+
+    override fun insert_beat(index: Int) {
+        this.push_remove_beat(index)
+        super.insert_beat(index)
     }
 
     fun remove_beat(index: Int, count: Int) {

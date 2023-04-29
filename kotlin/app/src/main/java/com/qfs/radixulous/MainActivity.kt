@@ -224,7 +224,6 @@ class MainActivity : AppCompatActivity() {
             btnDeleteProject.visibility = View.GONE
             btnCopyProject.visibility = View.GONE
         }
-
     }
 
     private fun change_name_dialog() {

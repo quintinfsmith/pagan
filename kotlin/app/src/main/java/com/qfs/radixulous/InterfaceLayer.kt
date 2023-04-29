@@ -178,6 +178,7 @@ class InterfaceLayer(var activity: MainActivity): CursorLayer() {
         var channel_counts = this.get_channel_line_counts()
         var beat_count = this.opus_beat_count
 
+        val rvActiveChannels: RecyclerView = this.activity.findViewById(R.id.rvActiveChannels)
         super.clear()
 
         val rvLineLabels = this.activity.findViewById<RecyclerView>(R.id.rvLineLabels)
@@ -187,6 +188,7 @@ class InterfaceLayer(var activity: MainActivity): CursorLayer() {
 
         var channel_offset = 0
         channel_counts.forEachIndexed { _: Int, j: Int ->
+            rvActiveChannels.adapter?.notifyItemRemoved(0)
             channel_offset += j
         }
         for (i in channel_offset - 1 downTo 0) {

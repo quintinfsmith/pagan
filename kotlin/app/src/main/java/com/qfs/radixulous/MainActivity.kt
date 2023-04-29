@@ -8,6 +8,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.provider.DocumentsContract
+import android.util.Log
 import android.view.*
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
@@ -39,7 +40,6 @@ class MainActivity : AppCompatActivity() {
     private var midi_player = MIDIPlayer()
     lateinit var soundfont: SoundFont
 
-    private var current_project_title: String? = null
     private var opus_manager = OpusManager()
 
     private var in_play_back: Boolean = false
@@ -241,16 +241,16 @@ class MainActivity : AppCompatActivity() {
             )
 
         val input: EditText = viewInflated.findViewById(R.id.etProjectName)
-        input.setText(this.get_current_project_title() ?: "Untitled Project")
+        input.setText(this.get_opus_manager().project_name)
 
-        val that = this
+        val opus_manager = this.get_opus_manager()
         AlertDialog.Builder(main_fragment.context, R.style.AlertDialog).apply {
             setTitle("Change Project Name")
             setView(viewInflated)
             setPositiveButton(android.R.string.ok) { dialog, _ ->
-                that.set_current_project_title(input.text.toString())
-                if (that.opus_manager.path != null && File(that.opus_manager.path!!).isFile) {
-                    that.project_manager.set_title(input.text.toString(), that.opus_manager)
+                opus_manager.set_project_name(input.text.toString())
+                if (main_fragment is MainFragment) {
+                    main_fragment.tick()
                 }
                 dialog.dismiss()
             }
@@ -261,13 +261,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun playback() {
-        if (this.in_play_back) {
-            return
-        }
-
-    }
-
     fun scroll_to_beat(beat: Int, select: Boolean = false) {
         val fragment = this.getActiveFragment()
         if (fragment is MainFragment) {
@@ -276,17 +269,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun save_current_project() {
-        this.project_manager.save(this.current_project_title!!, this.opus_manager)
+        this.project_manager.save(this.opus_manager)
         this.feedback_msg("Project Saved")
-    }
-
-    fun set_current_project_title(title: String) {
-        this.current_project_title = title
-        this.update_title_text()
-    }
-
-    private fun get_current_project_title(): String? {
-        return this.current_project_title
+        this.update_menu_options()
     }
 
     fun get_opus_manager(): OpusManager {
@@ -315,16 +300,15 @@ class MainActivity : AppCompatActivity() {
 
     // Only called from MainFragment
     fun newProject() {
-
         this.opus_manager.new()
         val new_path = this.project_manager.get_new_path()
-        this.set_current_project_title("New Opus")
         this.opus_manager.path = new_path
+        Log.d("XXA", this.opus_manager.project_name)
         this.setup_config_drawer()
     }
 
     fun update_title_text() {
-        this.set_title_text(this.get_current_project_title() ?: "Untitled Opus")
+        this.set_title_text(this.get_opus_manager().project_name)
     }
 
     fun set_title_text(new_text: String) {
@@ -372,7 +356,7 @@ class MainActivity : AppCompatActivity() {
     private fun delete_project_dialog() {
         val main_fragment = this.getActiveFragment()
 
-        val title = this.get_current_project_title() ?: "Untitled Project"
+        val title = this.get_opus_manager().project_name
 
         val that = this
         AlertDialog.Builder(main_fragment!!.context, R.style.AlertDialog).apply {
@@ -401,9 +385,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun copy_project() {
-        this.current_project_title = this.project_manager.copy(this.opus_manager)
+        this.project_manager.copy(this.opus_manager)
         this.feedback_msg("Now working on copy")
-        this.update_title_text()
     }
 
     private fun closeDrawer() {
@@ -640,7 +623,7 @@ class MainActivity : AppCompatActivity() {
             val new_path = this.project_manager.get_new_path()
             this.opus_manager.path = new_path
 
-            this.set_current_project_title(filename)
+            this.opus_manager.set_project_name(filename)
             this.update_menu_options()
             this.setup_config_drawer()
 

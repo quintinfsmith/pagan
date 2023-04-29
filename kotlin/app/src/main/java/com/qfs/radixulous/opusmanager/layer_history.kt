@@ -151,6 +151,9 @@ open class HistoryLayer() : FlagLayer() {
                     current_node.args[2] as Int
                 )
             }
+            "set_project_name" -> {
+                this.set_project_name(current_node.args[0] as String)
+            }
             "set_line_volume" -> {
                 this.set_line_volume(
                     current_node.args[0] as Int,
@@ -643,5 +646,10 @@ open class HistoryLayer() : FlagLayer() {
         val current_volume = this.get_line_volume(channel, line_offset)
         this.history_cache.append_undoer("set_line_volume", listOf(channel, line_offset, current_volume))
         super.set_line_volume(channel, line_offset, volume)
+    }
+
+    override fun set_project_name(new_name: String) {
+        this.history_cache.append_undoer("set_project_name", listOf(this.project_name))
+        super.set_project_name(new_name)
     }
 }

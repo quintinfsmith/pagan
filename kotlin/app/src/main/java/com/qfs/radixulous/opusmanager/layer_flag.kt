@@ -8,7 +8,8 @@ enum class UpdateFlag {
     AbsVal,
     Clear,
     Channel,
-    LineVolume
+    LineVolume,
+    NameChange
 }
 enum class FlagOperation {
     Pop,
@@ -87,6 +88,10 @@ class UpdatesCache {
         } else {
             this.absolute_value_flag.removeFirst()
         }
+    }
+
+    fun flag_name_changed() {
+        this.order_queue.add(UpdateFlag.NameChange)
     }
 
     fun flag_line_volume_change(channel: Int, line_offset: Int, volume: Int) {
@@ -315,5 +320,10 @@ open class FlagLayer : LinksLayer() {
     override fun set_line_volume(channel: Int, line_offset: Int, volume: Int) {
         super.set_line_volume(channel, line_offset, volume)
         this.cache.flag_line_volume_change(channel, line_offset, volume)
+    }
+
+    override fun set_project_name(new_name: String) {
+        this.cache.flag_name_changed()
+        super.set_project_name(new_name)
     }
 }

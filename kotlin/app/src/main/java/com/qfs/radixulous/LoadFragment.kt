@@ -1,19 +1,17 @@
 package com.qfs.radixulous
 
 import android.os.Bundle
-import android.util.Log
 import android.view.*
-import android.widget.Toast
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResult
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.radixulous.databinding.FragmentLoadBinding
-import com.qfs.radixulous.databinding.FragmentMainBinding
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import com.qfs.radixulous.opusmanager.LoadedJSONData
 import java.io.File
 
 /**
@@ -66,31 +64,24 @@ class LoadFragment : TempNameFragment() {
             }
         }
 
-        var project_list_file = File(project_manager.projects_list_file_path)
-        if (project_list_file.isFile) {
-            var content = project_list_file.readText(Charsets.UTF_8)
-            var json_project_list: MutableList<ProjectDirPair> = Json.decodeFromString(content)
-
-            json_project_list.sortBy { it.title }
-
-            for (obj in json_project_list) {
-                loadprojectAdapter.addProject(
-                    Pair(
-                        obj.title,
-                        "${project_manager.projects_dir}/${obj.filename}"
-                    )
+        for (json_file in directory.listFiles()!!) {
+            val content = json_file.readText(Charsets.UTF_8)
+            val json_obj: LoadedJSONData = Json.decodeFromString(content)
+            loadprojectAdapter.addProject(
+                Pair(
+                    json_obj.name,
+                    json_file.path
                 )
-            }
+            )
         }
     }
 
-    fun load_project(path: String, title: String) {
-        setFragmentResult("LOAD", bundleOf(Pair("PATH", path), Pair("TITLE", title)))
+    fun load_project(path: String) {
+        setFragmentResult("LOAD", bundleOf(Pair("PATH", path)))
 
         this.get_main().apply {
             loading_reticle()
             navTo("main")
-            set_title_text(title)
         }
 
     }

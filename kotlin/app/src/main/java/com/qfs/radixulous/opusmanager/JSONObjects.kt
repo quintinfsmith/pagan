@@ -15,6 +15,7 @@ data class LoadedJSONData(
     var radix: Int,
     var channels: List<ChannelJSONData>,
     var reflections: List<List<BeatKey>>? = null,
-    var transpose: Int = 0
+    var transpose: Int = 0,
+    var name: String = "New Opus"
 )
 

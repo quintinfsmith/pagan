@@ -108,12 +108,7 @@ class MainFragment : TempNameFragment() {
                 return@setFragmentResultListener
             }
 
-            bundle.getString("TITLE")?.let { title: String ->
-                main.set_current_project_title(title)
-            }
-
             bundle.getString("PATH")?.let { path: String ->
-
                 main.get_opus_manager().load(path)
 
                 this.setContextMenu_leaf()
@@ -995,6 +990,7 @@ class MainFragment : TempNameFragment() {
 
                         updated_beats.clear()
                     }
+
                     UpdateFlag.LineVolume -> {
                         var line_volume_flag = opus_manager.fetch_flag_line_volume() ?: break
                         var cursor_beatkey = opus_manager.get_cursor().get_beatkey()
@@ -1004,6 +1000,11 @@ class MainFragment : TempNameFragment() {
                                 sbLineVolume.progress = line_volume_flag.third
                             }
                         }
+
+                    }
+
+                    UpdateFlag.NameChange -> {
+                        this.get_main().update_title_text()
 
                     }
 

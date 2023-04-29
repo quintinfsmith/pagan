@@ -35,7 +35,7 @@ class ProjectToLoadAdapter(
         tvProjectLabel.text = title
 
         tvProjectLabel.setOnClickListener {
-            this.load_fragment.load_project(path, title)
+            this.load_fragment.load_project(path)
         }
     }
 

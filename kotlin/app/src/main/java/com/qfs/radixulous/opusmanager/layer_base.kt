@@ -21,6 +21,7 @@ open class OpusManagerBase {
     var percussion_channel: Int? = null
     var tempo: Float = 120F
     var transpose: Int = 0
+    var project_name: String = "New Opus"
 
     //// RO Functions ////
     fun get_channel_count(): Int {
@@ -678,6 +679,7 @@ open class OpusManagerBase {
             )
         }
         return LoadedJSONData(
+            name = this.project_name,
             tempo = this.tempo,
             radix = this.RADIX,
             channels = channels,
@@ -705,6 +707,7 @@ open class OpusManagerBase {
         this.channels.clear()
         this.path = null
         this.percussion_channel = null
+        this.project_name = "New Opus"
     }
 
     open fun load(path: String) {
@@ -717,12 +720,11 @@ open class OpusManagerBase {
 
     open fun new() {
         this.clear()
-
         this.new_channel()
-
         for (i in 0 until 4) {
             this.insert_beat()
         }
+        this.set_project_name(this.project_name)
     }
 
     open fun load_json_file(path: String) {
@@ -734,6 +736,7 @@ open class OpusManagerBase {
         this.RADIX = json_data.radix
         this.tempo = json_data.tempo
         this.transpose = json_data.transpose
+        this.set_project_name(json_data.name)
 
         var beat_count = 0
         json_data.channels.forEachIndexed { i: Int, channel_data ->
@@ -1022,5 +1025,9 @@ open class OpusManagerBase {
     }
     fun get_line_volume(channel: Int, line_offset: Int): Int {
         return this.channels[channel].get_line_volume(line_offset)
+    }
+
+    open fun set_project_name(new_name: String) {
+        this.project_name = new_name
     }
 }

@@ -49,12 +49,6 @@ class ChannelOptionAdapter(
         )
     }
 
-    fun addChannel() {
-        val opus_manager = this.activity.get_opus_manager()
-        opus_manager.new_channel()
-        notifyItemInserted(opus_manager.channels.size - 1)
-    }
-
 
     private fun set_text(view: View, position: Int) {
         val opus_manager = this.activity.get_opus_manager()
@@ -136,7 +130,6 @@ class ChannelOptionAdapter(
         if (opus_manager.channels.size > 1) {
             val x = this.get_view_channel(view)
             opus_manager.remove_channel(x)
-            this.notifyItemRemoved(x)
         }
     }
 

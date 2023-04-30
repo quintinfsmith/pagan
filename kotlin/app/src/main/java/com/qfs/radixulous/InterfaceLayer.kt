@@ -114,6 +114,7 @@ class InterfaceLayer(var activity: MainActivity): CursorLayer() {
 
     override fun new_line(channel: Int, line_offset: Int?): List<OpusTree<OpusEvent>> {
         var output = super.new_line(channel, line_offset)
+
         this.ui_add_line_label()
         this.ui_notify_visible_changes()
         //this.reset_context_menu()
@@ -133,6 +134,8 @@ class InterfaceLayer(var activity: MainActivity): CursorLayer() {
             this.ui_add_line_label()
         }
         this.ui_notify_visible_changes()
+        val rvActiveChannels: RecyclerView = this.activity.findViewById(R.id.rvActiveChannels)
+        rvActiveChannels.adapter?.notifyItemInserted(channel ?: this.channels.size - 1)
     }
 
     override fun remove_beat(beat: Int) {
@@ -202,6 +205,7 @@ class InterfaceLayer(var activity: MainActivity): CursorLayer() {
         val rvActiveChannels: RecyclerView = this.activity.findViewById(R.id.rvActiveChannels)
         val rvActiveChannels_adapter = rvActiveChannels.adapter as ChannelOptionAdapter
         rvActiveChannels_adapter.notifyItemRemoved(channel)
+
         this.ui_notify_visible_changes()
     }
 

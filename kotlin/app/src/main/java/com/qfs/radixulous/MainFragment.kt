@@ -500,6 +500,7 @@ class MainFragment : TempNameFragment() {
         } else {
             opus_manager.set_percussion_event_at_cursor()
         }
+        this.reset_context_menu()
     }
 
     private fun interact_btnUnlink(view: View) {
@@ -584,6 +585,7 @@ class MainFragment : TempNameFragment() {
         )
 
         opus_manager.set_event(beatkey, position, event)
+        this.reset_context_menu()
     }
 
     private fun interact_nsOctave(view: NumberSelector) {
@@ -637,6 +639,7 @@ class MainFragment : TempNameFragment() {
         )
 
         opus_manager.set_event(beatkey, position, event)
+        this.reset_context_menu()
     }
 
     private fun interact_btnChoosePercussion(view: View) {
@@ -716,6 +719,7 @@ class MainFragment : TempNameFragment() {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
         opus_manager.split_tree_at_cursor(splits)
+        this.reset_context_menu()
     }
 
     private fun om_insert(count: Int) {
@@ -730,6 +734,7 @@ class MainFragment : TempNameFragment() {
         } else {
             opus_manager.insert_after(beatkey, position, count)
         }
+        this.reset_context_menu()
     }
 
     private fun om_remove(count: Int) {
@@ -742,6 +747,7 @@ class MainFragment : TempNameFragment() {
             val position = cursor.get_position()
             opus_manager.remove(beatkey, position, count)
         }
+        this.reset_context_menu()
     }
 
     private fun om_insert_line(count: Int) {
@@ -749,6 +755,8 @@ class MainFragment : TempNameFragment() {
         val opus_manager = main.get_opus_manager()
         val beatkey = opus_manager.get_cursor().get_beatkey()
         opus_manager.new_line(beatkey.channel, beatkey.line_offset + 1, count)
+
+        this.reset_context_menu()
     }
 
     private fun om_remove_line(count: Int) {
@@ -759,6 +767,7 @@ class MainFragment : TempNameFragment() {
             val beatkey = opus_manager.get_cursor().get_beatkey()
             opus_manager.remove_line(beatkey.channel, beatkey.line_offset, count)
         }
+        this.reset_context_menu()
     }
 
     private fun om_remove_beat(count: Int) {

@@ -1,12 +1,14 @@
 package com.qfs.radixulous
 
 import android.content.Context
+import android.util.Log
 import android.view.*
 import android.widget.LinearLayout
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.radixulous.opusmanager.BeatKey
 import java.lang.Integer.max
+import kotlin.concurrent.thread
 import com.qfs.radixulous.opusmanager.CursorLayer as OpusManager
 
 class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: RecyclerView, var column_layout: ColumnLabelAdapter) : RecyclerView.Adapter<BeatColumnAdapter.BeatViewHolder>() {
@@ -130,9 +132,8 @@ class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: Recycle
                 opus_manager.is_percussion(beatkey.channel)
             )
 
-            tvLeaf.setOnSingleTapListener { event: MotionEvent ->
-                this.interact_leafView_click(tvLeaf)
-                false
+            tvLeaf.setOnClickListener {
+                this.interact_leafView_click(it)
             }
 
             tvLeaf.setOnFocusChangeListener { view, is_focused: Boolean ->
@@ -296,14 +297,11 @@ class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: Recycle
 
     private fun interact_leafView_click(view: View) {
         val main = this.get_main_activity()
-        //main.stop_playback()
-
         var (y, x, position) = this.get_view_position_abs(view)
 
         val opus_manager = this.get_opus_manager()
         val (channel, line_offset) = opus_manager.get_channel_index(y)
         val beatkey = BeatKey(channel, line_offset, x)
-
 
         if (this.linking_beat != null) {
             // If a second link point hasn't been selected, assume just one beat is being linked
@@ -338,15 +336,17 @@ class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: Recycle
         this.parent_fragment.setContextMenu_leaf()
 
         val tree = opus_manager.get_tree_at_cursor()
-        if (tree.is_event()) {
-            main.play_event(
-                beatkey.channel,
-                if (opus_manager.is_percussion(beatkey.channel)) {
-                    opus_manager.get_percussion_instrument(beatkey.line_offset)
-                } else {
-                    opus_manager.get_absolute_value(beatkey, position) ?: return
-                }
-            )
+        thread {
+            if (tree.is_event()) {
+                main.play_event(
+                    beatkey.channel,
+                    if (opus_manager.is_percussion(beatkey.channel)) {
+                        opus_manager.get_percussion_instrument(beatkey.line_offset)
+                    } else {
+                        opus_manager.get_absolute_value(beatkey, position) ?: return@thread
+                    }
+                )
+            }
         }
     }
 

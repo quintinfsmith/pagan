@@ -16,7 +16,7 @@ open class OpusManagerBase {
     var DEFAULT_PERCUSSION: Int = 0
     var channels: MutableList<OpusChannel> = mutableListOf()
     private var channel_uuid_generator: Int = 0xFF
-    internal var channel_uuid_map = HashMap<Int, OpusChannel>()
+    private var channel_uuid_map = HashMap<Int, OpusChannel>()
     var opus_beat_count: Int = 1
     var path: String? = null
     var percussion_channel: Int? = null
@@ -359,7 +359,7 @@ open class OpusManagerBase {
         this.channels[channel].set_instrument(instrument)
     }
 
-    fun set_percussion_channel(channel: Int) {
+    open fun set_percussion_channel(channel: Int) {
         this.unset_percussion_channel()
 
         this.percussion_channel = channel
@@ -368,7 +368,7 @@ open class OpusManagerBase {
         this.channels[channel].set_mapped()
     }
 
-    fun unset_percussion_channel() {
+    open fun unset_percussion_channel() {
         if (this.percussion_channel != null) {
             this.channels[this.percussion_channel!!].midi_channel = this.get_next_available_midi_channel()
             this.channels[this.percussion_channel!!].midi_instrument = 1

@@ -173,6 +173,12 @@ open class HistoryLayer() : LinksLayer() {
             "create_link_pool" -> {
                 this.create_link_pool((current_node.args[0] as LinkedHashSet<BeatKey>).toList())
             }
+            "set_percussion_channel" -> {
+                this.set_percussion_channel(current_node.args[0] as Int)
+            }
+            "unset_percussion_channel" -> {
+                this.unset_percussion_channel()
+            }
             "set_event" -> {
                 this.set_event(
                     current_node.args[0] as BeatKey,
@@ -432,6 +438,16 @@ open class HistoryLayer() : LinksLayer() {
         }
     }
 
+    override fun unset_percussion_channel() {
+        this.history_cache.remember {
+            if (this.percussion_channel != null) {
+                this.history_cache.append_undoer("set_percussion_channel",
+                    listOf(this.percussion_channel!!))
+            }
+            super.unset_percussion_channel()
+        }
+    }
+
     override fun set_percussion_event(beat_key: BeatKey, position: List<Int>) {
         this.history_cache.remember {
             val tree = this.get_tree(beat_key, position)
@@ -633,6 +649,18 @@ open class HistoryLayer() : LinksLayer() {
             } else {
                 this.push_remove_channel(this.channels.size - 1)
             }
+        }
+    }
+
+    override fun set_percussion_channel(channel: Int) {
+        this.history_cache.remember {
+            if (this.percussion_channel == null) {
+                this.history_cache.append_undoer("unset_percussion_channel", listOf())
+            } else {
+                this.history_cache.append_undoer("set_percussion_channel",
+                    listOf(this.percussion_channel!!))
+            }
+            super.set_percussion_channel(channel)
         }
     }
 

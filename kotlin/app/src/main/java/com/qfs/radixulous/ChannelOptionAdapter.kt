@@ -149,7 +149,6 @@ class ChannelOptionAdapter(
 
         popupMenu.setOnMenuItemClickListener {
             this.set_channel_instrument(channel, it.itemId)
-            this.notifyItemChanged(index)
             false
         }
 

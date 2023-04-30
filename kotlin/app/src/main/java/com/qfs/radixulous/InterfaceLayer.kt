@@ -15,6 +15,26 @@ class InterfaceLayer(var activity: MainActivity): CursorLayer() {
         return this.interface_lock == 0
     }
 
+    override fun set_channel_instrument(channel: Int, instrument: Int) {
+        super.set_channel_instrument(channel, instrument)
+        val rvActiveChannels: RecyclerView = this.activity.findViewById(R.id.rvActiveChannels)
+        rvActiveChannels.adapter?.notifyItemChanged(channel)
+    }
+
+    override fun set_percussion_channel(channel: Int) {
+        super.set_percussion_channel(channel)
+        val rvActiveChannels: RecyclerView = this.activity.findViewById(R.id.rvActiveChannels)
+        rvActiveChannels.adapter?.notifyItemChanged(channel)
+    }
+    override fun unset_percussion_channel() {
+        var old_channel = this.percussion_channel
+        super.unset_percussion_channel()
+        if (old_channel != null) {
+            val rvActiveChannels: RecyclerView = this.activity.findViewById(R.id.rvActiveChannels)
+            rvActiveChannels.adapter?.notifyItemChanged(old_channel)
+        }
+    }
+
     override fun set_project_name(new_name: String) {
         super.set_project_name(new_name)
         this.activity.update_title_text()

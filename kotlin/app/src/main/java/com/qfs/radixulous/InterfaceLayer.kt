@@ -10,17 +10,6 @@ import com.qfs.radixulous.structure.OpusTree
 class InterfaceLayer(var activity: MainActivity): CursorLayer() {
     var interface_lock = 0
     var relative_mode: Int = 0
-    fun <T> with_i_lock(callback: (opus_manager: InterfaceLayer) -> T): T {
-        //this.interface_lock += 1
-        try {
-            val output = callback(this)
-            //this.interface_lock -= 1
-            return output
-        } catch (e: Exception) {
-            //this.interface_lock -= 1
-            throw e
-        }
-    }
 
     fun is_interface_unlocked(): Boolean {
         return this.interface_lock == 0
@@ -34,12 +23,18 @@ class InterfaceLayer(var activity: MainActivity): CursorLayer() {
     override fun unset(beatkey: BeatKey, position: List<Int>) {
         super.unset(beatkey, position)
         this.ui_refresh_beat_labels(beatkey)
+        this.withFragment {
+            it.scrollTo(beatkey, position)
+        }
         //this.reset_context_menu()
     }
 
     override fun replace_tree(beatkey: BeatKey, position: List<Int>, tree: OpusTree<OpusEvent>) {
         super.replace_tree(beatkey, position, tree)
         this.ui_refresh_beat_labels(beatkey)
+        this.withFragment {
+            it.scrollTo(beatkey, position)
+        }
         //this.reset_context_menu()
     }
 
@@ -52,6 +47,9 @@ class InterfaceLayer(var activity: MainActivity): CursorLayer() {
         }
         //this.setContextMenu(ContextMenu.Leaf)
         this.ui_refresh_beat_labels(beatkey)
+        this.withFragment {
+            it.scrollTo(beatkey, position)
+        }
         //this.reset_context_menu()
     }
     fun set_relative_mode(event: OpusEvent) {
@@ -68,9 +66,7 @@ class InterfaceLayer(var activity: MainActivity): CursorLayer() {
 
     override fun apply_undo() {
         if (this.has_history()) {
-            this.with_i_lock {
-                super.apply_undo()
-            }
+            super.apply_undo()
             this.reset_context_menu()
         } else {
             this.activity.feedback_msg(this.activity.getString(R.string.msg_undo_none))
@@ -87,17 +83,30 @@ class InterfaceLayer(var activity: MainActivity): CursorLayer() {
     override fun split_tree(beatkey: BeatKey, position: List<Int>, splits: Int) {
         super.split_tree(beatkey, position, splits)
         this.ui_refresh_beat_labels(beatkey)
+        this.withFragment {
+            it.scrollTo(beatkey, position)
+        }
         //this.reset_context_menu()
     }
 
     override fun insert_after(beatkey: BeatKey, position: List<Int>) {
         super.insert_after(beatkey, position)
+        this.withFragment {
+            if (position.isNotEmpty()) {
+                var new_position = position.toMutableList()
+                new_position[new_position.size - 1] += 1
+            }
+            it.scrollTo(beatkey, position)
+        }
 
         this.ui_refresh_beat_labels(beatkey)
         //this.reset_context_menu()
     }
 
     override fun remove(beatkey: BeatKey, position: List<Int>) {
+        this.withFragment {
+            it.scrollTo(beatkey, position)
+        }
         super.remove(beatkey, position)
         this.ui_refresh_beat_labels(beatkey)
         //this.reset_context_menu()
@@ -106,8 +115,24 @@ class InterfaceLayer(var activity: MainActivity): CursorLayer() {
     override fun new_line(channel: Int, line_offset: Int?): List<OpusTree<OpusEvent>> {
         var output = super.new_line(channel, line_offset)
         this.ui_add_line_label()
+        this.ui_notify_visible_changes()
         //this.reset_context_menu()
         return output
+    }
+
+    override fun remove_line(channel: Int, line_offset: Int): MutableList<OpusTree<OpusEvent>> {
+        var output = super.remove_line(channel, line_offset)
+        this.ui_remove_line_label(channel, line_offset)
+        this.ui_notify_visible_changes()
+        return output
+    }
+
+    override fun new_channel(channel: Int?, lines: Int) {
+        super.new_channel(channel, lines)
+        for (i in 0 until lines) {
+            this.ui_add_line_label()
+        }
+        this.ui_notify_visible_changes()
     }
 
     override fun remove_beat(beat: Int) {
@@ -167,11 +192,17 @@ class InterfaceLayer(var activity: MainActivity): CursorLayer() {
     }
 
     override fun remove_channel(channel: Int) {
+        val lines = this.channels[channel].size
+        for (i in 0 until lines) {
+            this.ui_remove_line_label(channel, 0)
+        }
+
         super.remove_channel(channel)
 
         val rvActiveChannels: RecyclerView = this.activity.findViewById(R.id.rvActiveChannels)
         val rvActiveChannels_adapter = rvActiveChannels.adapter as ChannelOptionAdapter
         rvActiveChannels_adapter.notifyItemRemoved(channel)
+        this.ui_notify_visible_changes()
     }
 
     override fun clear() {
@@ -211,6 +242,16 @@ class InterfaceLayer(var activity: MainActivity): CursorLayer() {
         rvBeatTable_adapter.addBeatColumn(beat)
     }
 
+    fun ui_notify_visible_changes() {
+        val beat_table = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
+        val rvBeatTable_adapter = beat_table.adapter as BeatColumnAdapter
+        val first = (beat_table.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
+        val last = (beat_table.layoutManager as LinearLayoutManager).findLastVisibleItemPosition()
+        for (i in first - 5 .. last + 5) {
+            rvBeatTable_adapter.notifyItemChanged(i)
+        }
+    }
+
     fun ui_add_line_label() {
         val rvLineLabels = this.activity.findViewById<RecyclerView>(R.id.rvLineLabels)
         var rvLineLabels_adapter = rvLineLabels.adapter as LineLabelAdapter
@@ -241,10 +282,10 @@ class InterfaceLayer(var activity: MainActivity): CursorLayer() {
         }
     }
 
-    fun get_fragment(): MainFragment? {
-        val output = this.activity.getActiveFragment()
-        return if (output is MainFragment) {
-            output
+    fun <T> withFragment(callback: (MainFragment) -> T): T? {
+        val fragment = this.activity.getActiveFragment()
+        return if (fragment is MainFragment) {
+            callback(fragment)
         } else {
             null
         }
@@ -252,7 +293,9 @@ class InterfaceLayer(var activity: MainActivity): CursorLayer() {
 
     fun reset_context_menu() {
         if (this.is_interface_unlocked()) {
-            this.get_fragment()?.reset_context_menu()
+            this.withFragment {
+                it.reset_context_menu()
+            }
         }
     }
 

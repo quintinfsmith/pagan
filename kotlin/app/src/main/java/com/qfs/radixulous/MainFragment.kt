@@ -783,7 +783,7 @@ class MainFragment : TempNameFragment() {
         val rvBeatTable = main.findViewById<RecyclerView>(R.id.rvBeatTable)
         val rvBeatTable_adapter = rvBeatTable.adapter as BeatColumnAdapter
         val tree_view = rvBeatTable_adapter.get_leaf_view(beatkey, position)
-        return (rvBeatTable.layoutManager as LinearLayoutManager).isViewPartiallyVisible(tree_view as View, false, false)
+        return (tree_view != null)
     }
 
     // If the position isn't on screen, scroll to it

@@ -47,12 +47,14 @@ class HistoryCache() {
 
     // Keep track of all history as one group
     fun <T> remember(callback: () -> T): T {
+
         this.open_multi()
         try {
             val output = callback()
             this.close_multi()
             return output
         } catch (e: Exception) {
+            Log.e("XXA", e.toString())
             this.cancel_multi()
             throw e
         }
@@ -100,6 +102,9 @@ class HistoryCache() {
     }
 
     open fun cancel_multi() {
+        if (this.history_locked) {
+            return
+        }
         this.close_multi()
         if (this.working_node != null) {
             this.working_node!!.children.removeLast()
@@ -493,7 +498,7 @@ open class HistoryLayer() : LinksLayer() {
 
     fun push_new_channel(channel: Int) {
         this.history_cache.remember {
-            for (i in 0 until this.channels[channel].size) {
+            for (i in this.channels[channel].size - 1 downTo 0) {
                 this.push_new_line(channel, i)
             }
 

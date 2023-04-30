@@ -1,7 +1,6 @@
 package com.qfs.radixulous
 
 import android.content.Context
-import android.util.Log
 import android.view.*
 import android.widget.LinearLayout
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -394,7 +393,7 @@ class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: Recycle
         }
     }
 
-    fun get_leaf_view(beatkey: BeatKey, position: List<Int>): LeafButton? {
+    fun get_leaf_view(beatkey: BeatKey, position: List<Int>): View? {
         val opus_manager = this.get_opus_manager()
 
         // Get the full-beat view
@@ -412,7 +411,7 @@ class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: Recycle
             working_view = (working_view as ViewGroup).getChildAt(x)
         }
 
-        return working_view as LeafButton
+        return working_view
     }
 
     private fun get_all_leaf_views(beatkey: BeatKey, position: List<Int>? = null): List<LeafButton>? {
@@ -691,9 +690,16 @@ class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: Recycle
         val item_width = this.column_layout.column_widths[beatkey.beat] * 120
         val tree = this.get_opus_manager().get_tree(beatkey, position)
         val (tree_position, tree_size) = tree.get_flat_ratios()
-        val offset = 0 - (item_width.toFloat() * tree_position).toInt()
+        val first_visible = (this.recycler.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
+        val buffer = this.recycler.width / 4
+        val offset = if (first_visible > beatkey.beat) {
+            0 - (item_width.toFloat() * tree_position).toInt() + buffer
+        } else {
+            (this.recycler.width - item_width + (item_width.toFloat() * (1F - tree_position - tree_size)).toInt()) - buffer
+        }
         (this.recycler.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(beatkey.beat, offset)
         (this.column_layout.recycler.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(beatkey.beat, offset)
+
 
         this.enableScrollSync()
     }

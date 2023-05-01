@@ -162,6 +162,38 @@ class InterfaceLayer(var activity: MainActivity): CursorLayer() {
         return output
     }
 
+    override fun move_line(channel_old: Int, line_old: Int, channel_new: Int, line_new: Int) {
+        var initial_old_size = this.channels[channel_old].size
+        var initial_new_size = this.channels[channel_new].size
+        this.surpress_ui {
+            super.move_line(channel_old, line_old, channel_new, line_new)
+        }
+
+        var current_new_size = this.channels[channel_new].size
+        if (current_new_size > initial_new_size) {
+            for (i in initial_new_size until current_new_size) {
+                this.ui_add_line_label()
+            }
+        } else {
+            for (i in current_new_size until initial_new_size) {
+                this.ui_remove_line_label(channel_new, i)
+            }
+        }
+
+        var current_old_size = this.channels[channel_old].size
+        if (current_old_size > initial_old_size) {
+            for (i in initial_old_size until current_old_size) {
+                this.ui_add_line_label()
+            }
+        } else {
+            for (i in current_old_size until initial_old_size) {
+                this.ui_remove_line_label(channel_old, i)
+            }
+        }
+
+        this.ui_notify_visible_changes()
+    }
+
     override fun remove_line(channel: Int, line_offset: Int): MutableList<OpusTree<OpusEvent>> {
         var output = super.remove_line(channel, line_offset)
         this.ui_remove_line_label(channel, line_offset)

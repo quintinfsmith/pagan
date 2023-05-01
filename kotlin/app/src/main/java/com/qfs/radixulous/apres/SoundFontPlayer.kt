@@ -84,12 +84,14 @@ class AudioTrackHandle() {
         )
         .setBufferSizeInBytes(AudioTrackHandle.buffer_size_in_bytes)
         .build()
+    private var active_sample_handles = mutableSetOf<Int>()
     private var sample_handles = HashMap<Int, SampleHandle>()
     private var sample_handles_mutex = Mutex()
     private var keygen: Int = 0
 
     private var is_playing = false
     private var stop_called_from_write = false // play *may*  be called between a write_next_chunk() finding an incomplete chunk and finishing the call
+    private var play_start_ts: Long? = null
 
     fun play() {
         this.stop_called_from_write = false
@@ -97,11 +99,12 @@ class AudioTrackHandle() {
             return
         }
         this.is_playing = true
+        this.play_start_ts = System.currentTimeMillis()
 
         thread {
             this.write_loop()
         }
-
+        this.play_start_ts = null
     }
 
     // Generate a sample handle key
@@ -119,6 +122,7 @@ class AudioTrackHandle() {
     fun add_sample_handle(handle: SampleHandle): Int {
         return this.sample_handles_mutex.withLock {
             var newkey = this.genkey()
+            handle.set_join_delay(this.play_start_ts)
             this.sample_handles[newkey] = handle
             newkey
         }
@@ -129,7 +133,6 @@ class AudioTrackHandle() {
         for (handle in handles) {
             output.add(this.add_sample_handle(handle))
         }
-
 
         return output
     }
@@ -267,7 +270,9 @@ class AudioTrackHandle() {
 
     fun write_loop() {
         this.audioTrack.play()
-        var i = 0
+        // write an empty chunk to give a bit of a time buffer for finer
+        // control of when to start playing samples
+        this.write_empty_chunk()
         while (this.is_playing) {
             this.write_next_chunk()
         }
@@ -317,8 +322,6 @@ class SampleHandleGenerator {
         }
 
         var data = this.resample(sample.sample!!.data!!, pitch_shift)
-
-
 
         var vol_env_delay: Double = preset.global_zone?.vol_env_delay
             ?: instrument.instrument?.global_sample?.vol_env_delay
@@ -442,6 +445,11 @@ class SampleHandle(
     )
 
     var is_pressed = true
+    var is_dead = false
+    // Join_delay is the time (in frames) relative to the current chunk playing,
+    // that this sample was added.
+    var join_delay: Int = 0
+    var join_delay_position: Int = 0
     var current_position: Int = 0
     var current_attack_position: Int = 0
     var current_hold_position: Int = 0
@@ -471,6 +479,14 @@ class SampleHandle(
     }
 
     fun get_next_frame(): Short? {
+        if (this.is_dead) {
+            return null
+        }
+
+        if (this.join_delay_position < this.join_delay) {
+            this.join_delay_position += 1
+            return 0
+        }
         //if (this.current_delay_position < this.delay_frames) {
         //    var output = 0.toShort()
         //    this.current_delay_position += 1
@@ -478,6 +494,7 @@ class SampleHandle(
         //}
 
         if (this.current_position > this.data.size - 2) {
+            this.is_dead = true
             return null
         }
 
@@ -503,6 +520,7 @@ class SampleHandle(
                 frame = (frame * this.release_mask[this.current_release_position]).toInt().toShort()
                 this.current_release_position += 1
             } else {
+                this.is_dead = true
                 return null
             }
         } else if (this.loop_points != null) {
@@ -516,6 +534,15 @@ class SampleHandle(
 
     fun release_note() {
         this.is_pressed = false
+    }
+
+    fun set_join_delay(from_ts: Long?) {
+        if (from_ts == null) {
+            this.join_delay = 0
+            return
+        }
+        var time_delay = (System.currentTimeMillis() - from_ts).toInt()
+        this.join_delay = (AudioTrackHandle.sample_rate * time_delay / 4000) % AudioTrackHandle.buffer_size_in_frames
     }
 }
 

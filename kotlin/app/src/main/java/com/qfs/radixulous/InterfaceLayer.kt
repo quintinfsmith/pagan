@@ -81,6 +81,14 @@ class InterfaceLayer(var activity: MainActivity): CursorLayer() {
         this.ui_scroll_to_position(beatkey, position)
         //this.reset_context_menu()
     }
+
+    override fun set_percussion_event(beatkey: BeatKey, position: List<Int>) {
+        super.set_percussion_event(beatkey, position)
+
+        this.ui_refresh_beat_labels(beatkey)
+        this.ui_scroll_to_position(beatkey, position)
+
+    }
     fun set_relative_mode(event: OpusEvent) {
         this.relative_mode = if (event.relative) {
             if (event.note >= 0) {

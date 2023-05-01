@@ -709,7 +709,9 @@ open class OpusManagerBase {
     // Clear function is used for new projects
     open fun clear() {
         this.opus_beat_count = 0
-        this.channels.clear()
+        for (i in this.channels.size - 1 downTo 0) {
+            this.remove_channel(i)
+        }
         this.path = null
         this.percussion_channel = null
         this.project_name = "New Opus"

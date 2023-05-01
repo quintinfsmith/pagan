@@ -133,8 +133,8 @@ class InterfaceLayer(var activity: MainActivity): CursorLayer() {
     }
 
     override fun new_line(channel: Int, line_offset: Int?): List<OpusTree<OpusEvent>> {
+        Log.d("AAA", "New Line $channel:$line_offset")
         var output = super.new_line(channel, line_offset)
-
         this.ui_add_line_label()
         this.ui_notify_visible_changes()
         //this.reset_context_menu()
@@ -149,8 +149,10 @@ class InterfaceLayer(var activity: MainActivity): CursorLayer() {
     }
 
     override fun new_channel(channel: Int?, lines: Int) {
+        Log.d("AAA", "New Channel ${channel ?: this.channels.size} : $lines")
         super.new_channel(channel, lines)
         for (i in 0 until lines) {
+            Log.d("AAA", "ADDING LINE LABEL $i")
             this.ui_add_line_label()
         }
         this.ui_notify_visible_changes()
@@ -167,7 +169,7 @@ class InterfaceLayer(var activity: MainActivity): CursorLayer() {
     override fun insert_beat(beat: Int, count: Int) {
         super.insert_beat(beat, count)
         for (i in 0 until count) {
-            this.ui_add_beat(beat + i)
+            this.ui_add_beat(beat)
         }
     }
 
@@ -175,8 +177,6 @@ class InterfaceLayer(var activity: MainActivity): CursorLayer() {
         super.new()
         val new_path = this.activity.project_manager.get_new_path()
         this.path = new_path
-
-        this.ui_add_line_label()
 
         this.activity.update_menu_options()
         this.activity.setup_config_drawer()
@@ -190,28 +190,30 @@ class InterfaceLayer(var activity: MainActivity): CursorLayer() {
     override fun import_midi(path: String) {
         this.activity.loading_reticle()
         super.import_midi(path)
-        val rvBeatTable = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
-        rvBeatTable.scrollToPosition(0)
-        val rvColumnLabels = this.activity.findViewById<RecyclerView>(R.id.rvColumnLabels)
-        rvColumnLabels.scrollToPosition(0)
         this.activity.update_menu_options()
         this.activity.setup_config_drawer()
 
         this.activity.cancel_reticle()
+
+        val rvBeatTable = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
+        rvBeatTable.scrollToPosition(0)
+        val rvColumnLabels = this.activity.findViewById<RecyclerView>(R.id.rvColumnLabels)
+        rvColumnLabels.scrollToPosition(0)
     }
 
     override fun load(path: String) {
         this.activity.loading_reticle()
 
         super.load(path)
-        val rvBeatTable = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
-        rvBeatTable.scrollToPosition(0)
-        val rvColumnLabels = this.activity.findViewById<RecyclerView>(R.id.rvColumnLabels)
-        rvColumnLabels.scrollToPosition(0)
 
         this.activity.update_menu_options()
         this.activity.setup_config_drawer()
         this.activity.cancel_reticle()
+
+        val rvBeatTable = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
+        rvBeatTable.scrollToPosition(0)
+        val rvColumnLabels = this.activity.findViewById<RecyclerView>(R.id.rvColumnLabels)
+        rvColumnLabels.scrollToPosition(0)
     }
 
     override fun remove_channel(channel: Int) {
@@ -223,10 +225,12 @@ class InterfaceLayer(var activity: MainActivity): CursorLayer() {
         super.remove_channel(channel)
 
         val rvActiveChannels: RecyclerView = this.activity.findViewById(R.id.rvActiveChannels)
-        val rvActiveChannels_adapter = rvActiveChannels.adapter as ChannelOptionAdapter
-        rvActiveChannels_adapter.notifyItemRemoved(channel)
+        if (rvActiveChannels.adapter != null) {
+            val rvActiveChannels_adapter = rvActiveChannels.adapter as ChannelOptionAdapter
+            rvActiveChannels_adapter.notifyItemRemoved(channel)
 
-        this.ui_notify_visible_changes()
+            this.ui_notify_visible_changes()
+        }
     }
 
     override fun clear() {
@@ -249,10 +253,10 @@ class InterfaceLayer(var activity: MainActivity): CursorLayer() {
         for (i in channel_offset - 1 downTo 0) {
             rvLineLabels_adapter.removeLineLabel(i)
         }
-
-        for (i in 0 until beat_count) {
-            rvBeatTable_adapter.removeBeatColumn((beat_count - 1) - i)
+        for (i in beat_count downTo 0) {
+            rvBeatTable_adapter.removeBeatColumn(i)
         }
+
     }
 
     fun ui_remove_beat(beat: Int) {
@@ -267,6 +271,7 @@ class InterfaceLayer(var activity: MainActivity): CursorLayer() {
     }
 
     fun ui_notify_visible_changes() {
+        Log.d("AAA", "NOTIFYING VISIBLE CHANGES")
         val beat_table = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
         val rvBeatTable_adapter = beat_table.adapter as BeatColumnAdapter
         val first = (beat_table.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
@@ -274,6 +279,7 @@ class InterfaceLayer(var activity: MainActivity): CursorLayer() {
         for (i in first - 5 .. last + 5) {
             rvBeatTable_adapter.notifyItemChanged(i)
         }
+        Log.d("AAA", "DONE NOTIFYING VISIBLE CHANGES")
     }
 
     fun ui_add_line_label() {

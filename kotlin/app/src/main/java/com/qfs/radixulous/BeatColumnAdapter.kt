@@ -89,8 +89,13 @@ class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: Recycle
                 override fun onItemRangeChanged(start: Int, count: Int) {
                     for (i in start until that.itemCount) {
                         val viewHolder = that.recycler.findViewHolderForAdapterPosition(i) ?: continue
-                        that.updateItem(viewHolder as BeatViewHolder, i)
-                        that.column_layout.notifyItemChanged(i)
+                        // TODO: Remove the need for this catch
+                        try {
+                            that.updateItem(viewHolder as BeatViewHolder, i)
+                            that.column_layout.notifyItemChanged(i)
+                        } catch (e: Exception) {
+
+                        }
                     }
                 }
                 override fun onItemRangeInserted(start: Int, count: Int) {

@@ -1,5 +1,4 @@
 package com.qfs.radixulous.opusmanager
-import android.util.Log
 import com.qfs.radixulous.apres.MIDI
 import com.qfs.radixulous.structure.OpusTree
 import java.lang.Integer.max
@@ -11,12 +10,12 @@ class HistoryNode(var func_name: String, var args: List<Any>) {
 }
 
 class HistoryCache() {
-    var history_locked = false
+    var history_lock = 0
     var history: MutableList<HistoryNode> = mutableListOf()
     var working_node: HistoryNode? = null
 
     fun isLocked(): Boolean {
-        return this.history_locked
+        return this.history_lock != 0
     }
 
     fun isEmpty(): Boolean {
@@ -28,7 +27,7 @@ class HistoryCache() {
     }
 
     fun append_undoer(func: String, args: List<Any>, location_stamp: Pair<BeatKey, List<Int>>? = null) {
-        if (this.history_locked) {
+        if (this.isLocked()) {
             return
         }
 
@@ -54,7 +53,6 @@ class HistoryCache() {
             this.close_multi()
             return output
         } catch (e: Exception) {
-            Log.e("XXA", e.toString())
             this.cancel_multi()
             throw e
         }
@@ -73,7 +71,7 @@ class HistoryCache() {
     }
 
     fun open_multi(location_stamp: Pair<BeatKey, List<Int>>? = null) {
-        if (this.history_locked) {
+        if (this.isLocked()) {
             return
         }
 
@@ -92,7 +90,7 @@ class HistoryCache() {
     }
 
     open fun close_multi() {
-        if (this.history_locked) {
+        if (this.isLocked()) {
             return
         }
 
@@ -102,7 +100,7 @@ class HistoryCache() {
     }
 
     open fun cancel_multi() {
-        if (this.history_locked) {
+        if (this.isLocked()) {
             return
         }
         this.close_multi()
@@ -117,14 +115,12 @@ class HistoryCache() {
         this.history.clear()
     }
 
-    fun lock(): Boolean {
-        val was_locked = this.history_locked
-        this.history_locked = true
-        return was_locked
+    fun lock() {
+        this.history_lock += 1
     }
 
     fun unlock() {
-        this.history_locked = false
+        this.history_lock -= 1
     }
 
     fun pop(): HistoryNode? {
@@ -499,6 +495,14 @@ open class HistoryLayer() : LinksLayer() {
         }
     }
 
+    fun import_midi(midi: MIDI, path: String, title: String) {
+        this.history_cache.forget {
+            this.import_midi(midi)
+            this.path = path
+            this.set_project_name(title)
+        }
+    }
+
     override fun clear() {
         this.history_cache.clear()
         this.save_point_popped = false
@@ -634,11 +638,9 @@ open class HistoryLayer() : LinksLayer() {
 
     override fun remove_channel(channel: Int) {
         this.push_new_channel(channel)
-        val was_locked = this.history_cache.lock()
+        this.history_cache.lock()
         super.remove_channel(channel)
-        if (!was_locked) {
-            this.history_cache.unlock()
-        }
+        this.history_cache.unlock()
     }
 
     override fun new_channel(channel: Int?, lines: Int) {

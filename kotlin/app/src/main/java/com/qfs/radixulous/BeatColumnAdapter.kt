@@ -1,7 +1,6 @@
 package com.qfs.radixulous
 
 import android.content.Context
-import android.util.Log
 import android.view.*
 import android.widget.LinearLayout
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -9,7 +8,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.qfs.radixulous.opusmanager.BeatKey
 import java.lang.Integer.max
 import kotlin.concurrent.thread
-import com.qfs.radixulous.opusmanager.CursorLayer as OpusManager
+import com.qfs.radixulous.InterfaceLayer as OpusManager
 
 class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: RecyclerView, var column_layout: ColumnLabelAdapter) : RecyclerView.Adapter<BeatColumnAdapter.BeatViewHolder>() {
 
@@ -89,13 +88,8 @@ class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: Recycle
                 override fun onItemRangeChanged(start: Int, count: Int) {
                     for (i in start until that.itemCount) {
                         val viewHolder = that.recycler.findViewHolderForAdapterPosition(i) ?: continue
-                        // TODO: Remove the need for this catch
-                        try {
-                            that.updateItem(viewHolder as BeatViewHolder, i)
-                            that.column_layout.notifyItemChanged(i)
-                        } catch (e: Exception) {
-
-                        }
+                        that.updateItem(viewHolder as BeatViewHolder, i)
+                        that.column_layout.notifyItemChanged(i)
                     }
                 }
                 override fun onItemRangeInserted(start: Int, count: Int) {

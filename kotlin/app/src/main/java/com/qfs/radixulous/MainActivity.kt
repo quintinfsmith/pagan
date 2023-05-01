@@ -8,7 +8,6 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.provider.DocumentsContract
-import android.util.Log
 import android.view.*
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
@@ -604,10 +603,8 @@ class MainActivity : AppCompatActivity() {
             filename = filename.substring(filename.lastIndexOf("/") + 1)
             filename = filename.substring(0, filename.lastIndexOf("."))
 
-            this.opus_manager.import_midi(midi)
             val new_path = this.project_manager.get_new_path()
-            this.opus_manager.path = new_path
-            this.opus_manager.set_project_name(filename)
+            this.opus_manager.import_midi(midi, new_path, filename)
 
         }
         this.cancel_reticle()

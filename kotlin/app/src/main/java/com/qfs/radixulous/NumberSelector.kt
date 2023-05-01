@@ -2,14 +2,9 @@ package com.qfs.radixulous
 
 import android.content.Context
 import android.util.AttributeSet
-import android.util.Log
-import android.view.Gravity
 import android.view.Gravity.CENTER
-import android.view.ViewGroup
 import android.widget.LinearLayout
-import android.widget.TextView
 import androidx.appcompat.view.ContextThemeWrapper
-import com.qfs.radixulous.opusmanager.OpusEvent
 
 
 class NumberSelector: LinearLayout {

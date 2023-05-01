@@ -1,13 +1,9 @@
 package com.qfs.radixulous
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import java.io.File
 import com.qfs.radixulous.opusmanager.OpusManagerBase as OpusManager
 
 class ProjectManager(data_dir: String) {
     val projects_dir = "$data_dir/projects/"
-    val projects_list_file_path = "$data_dir/projects.json"
 
     fun delete(opus_manager: OpusManager) {
         val path = opus_manager.path!!

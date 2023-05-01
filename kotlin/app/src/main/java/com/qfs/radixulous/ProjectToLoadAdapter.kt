@@ -28,9 +28,8 @@ class ProjectToLoadAdapter(
     }
 
     override fun onBindViewHolder(holder: ProjectToLoadViewHolder, position: Int) {
-        var (title, path) = this.projects[position]
-
-        var tvProjectLabel: TextView = holder.itemView.findViewById(R.id.tvProjectLabel)
+        val (title, path) = this.projects[position]
+        val tvProjectLabel: TextView = holder.itemView.findViewById(R.id.tvProjectLabel)
         tvProjectLabel.text = title
 
         tvProjectLabel.setOnClickListener {

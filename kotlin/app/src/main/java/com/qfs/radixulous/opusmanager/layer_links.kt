@@ -1,4 +1,5 @@
 package com.qfs.radixulous.opusmanager
+import android.util.Log
 import com.qfs.radixulous.structure.OpusTree
 import java.io.File
 
@@ -13,6 +14,17 @@ open class LinksLayer() : OpusManagerBase() {
         this.link_pools.clear()
         this.link_pool_map.clear()
         this.link_locker = 0
+    }
+    fun <T> lock_links(callback: () -> T): T {
+        this.link_locker += 1
+        try {
+            val output = callback()
+            this.link_locker -= 1
+            return output
+        } catch (e: Exception) {
+            this.link_locker -= 1
+            throw e
+        }
     }
 
     open fun unlink_beat(beat_key: BeatKey) {
@@ -40,7 +52,6 @@ open class LinksLayer() : OpusManagerBase() {
             this.overwrite_beat(beat_key, target)
             this.merge_link_pools(beat_pool_index, target_pool_index)
         } else {
-
             if (beat_pool_index != null) {
                 this.link_beat_into_pool(target, beat_pool_index, true)
             } else if (target_pool_index != null) {
@@ -116,54 +127,55 @@ open class LinksLayer() : OpusManagerBase() {
     }
 
     override fun replace_tree(beat_key: BeatKey, position: List<Int>, tree: OpusTree<OpusEvent>) {
-        this.link_locker += 1
-        for (linked_key in this.get_all_linked(beat_key)) {
-            super.replace_tree(linked_key, position, tree)
+        this.lock_links {
+            for (linked_key in this.get_all_linked(beat_key)) {
+                super.replace_tree(linked_key, position, tree)
+            }
         }
-        this.link_locker -= 1
     }
 
     override fun insert_after(beat_key: BeatKey, position: List<Int>) {
-        this.link_locker += 1
-        for (linked_key in this.get_all_linked(beat_key)) {
-            super.insert_after(linked_key, position)
+        this.lock_links {
+            for (linked_key in this.get_all_linked(beat_key)) {
+                super.insert_after(linked_key, position)
+            }
         }
-        this.link_locker -= 1
     }
     override fun remove(beat_key: BeatKey, position: List<Int>) {
-        this.link_locker += 1
-        for (linked_key in this.get_all_linked(beat_key)) {
-            super.remove(linked_key, position)
+        this.lock_links {
+            for (linked_key in this.get_all_linked(beat_key)) {
+                super.remove(linked_key, position)
+            }
         }
-        this.link_locker -= 1
     }
     override fun set_percussion_event(beat_key: BeatKey, position: List<Int>) {
-        this.link_locker += 1
-        for (linked_key in this.get_all_linked(beat_key)) {
-            super.set_percussion_event(linked_key, position)
+        this.lock_links {
+            for (linked_key in this.get_all_linked(beat_key)) {
+                super.set_percussion_event(linked_key, position)
+            }
         }
-        this.link_locker -= 1
     }
     override fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEvent) {
-        this.link_locker += 1
-        for (linked_key in this.get_all_linked(beat_key)) {
-            super.set_event(linked_key, position, event.copy())
+        this.lock_links {
+            for (linked_key in this.get_all_linked(beat_key)) {
+                Log.d("AAA", "$linked_key")
+                super.set_event(linked_key, position, event.copy())
+            }
         }
-        this.link_locker -= 1
     }
     override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
-        this.link_locker += 1
-        for (linked_key in this.get_all_linked(beat_key)) {
-            super.split_tree(linked_key, position, splits)
+        this.lock_links {
+            for (linked_key in this.get_all_linked(beat_key)) {
+                super.split_tree(linked_key, position, splits)
+            }
         }
-        this.link_locker -= 1
     }
     override fun unset(beat_key: BeatKey, position: List<Int>) {
-        this.link_locker += 1
-        for (linked_key in this.get_all_linked(beat_key)) {
-            super.unset(linked_key, position)
+        this.lock_links {
+            for (linked_key in this.get_all_linked(beat_key)) {
+                super.unset(linked_key, position)
+            }
         }
-        this.link_locker -= 1
     }
 
     /////////
@@ -241,6 +253,30 @@ open class LinksLayer() : OpusManagerBase() {
 
     fun is_networked(channel: Int, line_offset: Int, beat: Int): Boolean {
         return this.link_pool_map.contains(BeatKey(channel, line_offset, beat))
+    }
+
+    override fun insert_beat(beat_index: Int) {
+        super.insert_beat(beat_index)
+        this.remap_links({ beat_key: BeatKey, args: List<Int> ->
+             if (beat_key.beat >= beat_index) {
+                BeatKey(beat_key.channel, beat_key.line_offset, beat_key.beat + 1)
+            } else {
+                beat_key
+            }
+        }, listOf())
+    }
+
+    override fun remove_beat(beat_index: Int) {
+        super.remove_beat(beat_index)
+        this.remap_links({ beat_key: BeatKey, args: List<Int> ->
+            if (beat_key.beat > beat_index) {
+                BeatKey(beat_key.channel, beat_key.line_offset, beat_key.beat - 1)
+            } else if (beat_key.beat < beat_index) {
+                beat_key
+            } else {
+                null
+            }
+        }, listOf())
     }
 
     override fun load_json(json_data: LoadedJSONData) {

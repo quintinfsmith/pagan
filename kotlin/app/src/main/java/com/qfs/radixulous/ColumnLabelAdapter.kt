@@ -2,14 +2,11 @@ package com.qfs.radixulous
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.util.Log
 import android.view.*
-import android.widget.LinearLayout
 import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import androidx.recyclerview.widget.SimpleItemAnimator
 
 @SuppressLint("ClickableViewAccessibility")
 class ColumnLabelAdapter(var main_fragment: MainFragment, var recycler: RecyclerView) : RecyclerView.Adapter<ColumnLabelAdapter.ColumnLabelViewHolder>() {
@@ -91,7 +88,6 @@ class ColumnLabelAdapter(var main_fragment: MainFragment, var recycler: Recycler
     }
 
     fun addColumnLabel(position: Int) {
-        Log.d("AAA", "ADDING Column $position / ${this.column_widths.size}")
         if (position < this.column_widths.size) {
             this.column_widths.add(1)
             this.notifyItemInserted(this.column_widths.size - 1)

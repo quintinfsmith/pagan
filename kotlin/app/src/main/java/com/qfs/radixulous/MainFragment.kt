@@ -509,6 +509,7 @@ class MainFragment : TempNameFragment() {
         this.unset_cursor_position()
         opus_manager.unlink_beat(cursor.get_beatkey())
         this.set_cursor_position(cursor.y, cursor.x, cursor.get_position(), FocusType.Cell)
+        this.setContextMenu_leaf()
     }
 
     private fun interact_btnUnlinkAll(view: View) {

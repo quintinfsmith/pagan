@@ -164,14 +164,16 @@ class InterfaceLayer(var activity: MainActivity): CursorLayer() {
             }
         }
 
-        val current_old_size = this.channels[channel_old].size
-        if (current_old_size > initial_old_size) {
-            for (i in initial_old_size until current_old_size) {
-                this.ui_add_line_label()
-            }
-        } else {
-            for (i in current_old_size until initial_old_size) {
-                this.ui_remove_line_label(channel_old, i)
+        if (channel_new != channel_old) {
+            val current_old_size = this.channels[channel_old].size
+            if (current_old_size > initial_old_size) {
+                for (i in initial_old_size until current_old_size) {
+                    this.ui_add_line_label()
+                }
+            } else {
+                for (i in current_old_size until initial_old_size) {
+                    this.ui_remove_line_label(channel_old, i)
+                }
             }
         }
 
@@ -197,14 +199,26 @@ class InterfaceLayer(var activity: MainActivity): CursorLayer() {
         }
     }
 
+    override fun set_cursor_position(beat_key: BeatKey, position: List<Int>) {
+        val previous_beat_key = this.get_cursor().get_beatkey()
+        var previous_position = this.get_cursor().get_position()
+        super.set_cursor_position(beat_key, position)
+        if (beat_key != previous_beat_key && position != previous_position) {
+            this.ui_refresh_beat_labels(beat_key)
+        }
+    }
+
     override fun remove_beat(beat_index: Int) {
         super.remove_beat(beat_index)
         this.ui_remove_beat(beat_index)
+        this.ui_refresh_beat_labels(this.get_cursor().get_beatkey())
     }
 
     override fun insert_beat(beat_index: Int) {
+        val original_beat = this.get_cursor().get_beatkey()
         super.insert_beat(beat_index)
         this.ui_add_beat(beat_index)
+        this.ui_refresh_beat_labels(original_beat)
     }
 
     override fun new() {
@@ -301,6 +315,17 @@ class InterfaceLayer(var activity: MainActivity): CursorLayer() {
 
     }
 
+    override fun unlink_beat(beat_key: BeatKey) {
+        var update_keys = this.get_all_linked(beat_key).toMutableList()
+        update_keys.remove(beat_key)
+        super.unlink_beat(beat_key)
+        // Need to run update on both the beat_key and *any* of its former link pool
+        this.ui_refresh_beat_labels(beat_key)
+        if (update_keys.isNotEmpty()) {
+            this.ui_refresh_beat_labels(update_keys.first())
+        }
+    }
+
     private fun ui_scroll_to_position(beat_key: BeatKey, position: List<Int>) {
         if (this.interface_locked()) {
             return
@@ -364,7 +389,13 @@ class InterfaceLayer(var activity: MainActivity): CursorLayer() {
         }
         val beat_table = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
         val rvBeatTable_adapter = beat_table.adapter as BeatColumnAdapter
-        rvBeatTable_adapter.refresh_leaf_labels(beat_key.beat)
+        val linked_beats = mutableSetOf<Int>()
+        for (linked_key in this.get_all_linked(beat_key)) {
+            linked_beats.add(linked_key.beat)
+        }
+        for (beat in linked_beats) {
+            rvBeatTable_adapter.refresh_leaf_labels(beat)
+        }
     }
 
     private fun update_line_labels() {

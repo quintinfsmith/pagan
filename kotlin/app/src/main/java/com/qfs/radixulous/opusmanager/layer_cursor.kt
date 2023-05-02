@@ -199,16 +199,27 @@ open class CursorLayer() : HistoryLayer() {
         this.set_percussion_event(beat_key, this.get_cursor().get_position())
     }
 
-    fun set_cursor_position(beatkey: BeatKey, position: List<Int>){
-        this.get_cursor().y = this.get_y(beatkey.channel, beatkey.line_offset)
-        this.get_cursor().x = beatkey.beat
-        this.get_cursor().position = position.toMutableList()
+    open fun set_cursor_position(beat_key: BeatKey, position: List<Int>){
+        val cursor = this.get_cursor()
+        if (cursor.get_beatkey() != beat_key || cursor.get_position() != position) {
+            cursor.y = this.get_y(beat_key.channel, beat_key.line_offset)
+            cursor.x = beat_key.beat
+            cursor.position = position.toMutableList()
+        }
+    }
+
+    override fun replace_tree(beat_key: BeatKey, position: List<Int>, tree: OpusTree<OpusEvent>) {
+        super.replace_tree(beat_key, position, tree)
+        this.set_cursor_position(beat_key, position)
     }
 
     fun set_cursor_position(y: Int, x: Int, position: List<Int>){
-        this.get_cursor().y = y
-        this.get_cursor().x = x
-        this.get_cursor().position = position.toMutableList()
+        val cursor = this.get_cursor()
+        if (cursor.y != y || cursor.x != x || cursor.get_position() != position) {
+            this.get_cursor().y = y
+            this.get_cursor().x = x
+            this.get_cursor().position = position.toMutableList()
+        }
     }
 
     fun new_line_at_cursor() {
@@ -568,6 +579,11 @@ open class CursorLayer() : HistoryLayer() {
             }
         }
         this.batch_link_beats(new_pairs)
+    }
+
+    override fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEvent) {
+        super.set_event(beat_key, position, event)
+        this.set_cursor_position(beat_key, position)
     }
 
     //-- History Layer --//

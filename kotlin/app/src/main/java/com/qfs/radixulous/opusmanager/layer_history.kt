@@ -233,6 +233,12 @@ open class HistoryLayer() : LinksLayer() {
             "insert_beat" -> {
                 this.insert_beat(current_node.args[0] as Int)
             }
+            "set_transpose" -> {
+                this.set_transpose(current_node.args[0] as Int)
+            }
+            "set_tempo" -> {
+                this.set_tempo(current_node.args[0] as Float)
+            }
             //"set_cursor" -> {
             //    val beat_key = current_node.args[0] as BeatKey
             //    val y = this.get_y(beat_key.channel, beat_key.line_offset)
@@ -278,20 +284,20 @@ open class HistoryLayer() : LinksLayer() {
         }
     }
 
-    fun new_line(channel: Int, index: Int, count: Int): List<List<OpusTree<OpusEvent>>> {
+    fun new_line(channel: Int, line_offset: Int, count: Int): List<List<OpusTree<OpusEvent>>> {
         return this.history_cache.remember {
             val output: MutableList<List<OpusTree<OpusEvent>>> = mutableListOf()
             for (i in 0 until count) {
-                output.add(this.new_line(channel, index))
+                output.add(this.new_line(channel, line_offset))
             }
             output
         }
     }
 
-    override fun new_line(channel: Int, index: Int?): List<OpusTree<OpusEvent>> {
+    override fun new_line(channel: Int, line_offset: Int?): List<OpusTree<OpusEvent>> {
         return this.history_cache.remember {
-            val output = super.new_line(channel, index)
-            this.push_remove_line(channel, index ?: (this.channels[channel].size - 1))
+            val output = super.new_line(channel, line_offset)
+            this.push_remove_line(channel, line_offset ?: (this.channels[channel].size - 1))
             output
         }
     }
@@ -389,16 +395,16 @@ open class HistoryLayer() : LinksLayer() {
         }
     }
 
-    override fun insert_beat(index: Int) {
-        this.push_remove_beat(index)
-        super.insert_beat(index)
+    override fun insert_beat(beat_index: Int) {
+        this.push_remove_beat(beat_index)
+        super.insert_beat(beat_index)
     }
 
-    fun remove_beat(index: Int, count: Int) {
+    fun remove_beat(beat_index: Int, count: Int) {
         this.history_cache.remember {
             for (i in 0 until count) {
                 if (this.opus_beat_count > 1) {
-                    this.remove_beat(index)
+                    this.remove_beat(beat_index)
                 } else {
                     break
                 }
@@ -406,10 +412,10 @@ open class HistoryLayer() : LinksLayer() {
         }
     }
 
-    override fun remove_beat(index: Int) {
+    override fun remove_beat(beat_index: Int) {
         this.history_cache.remember {
-            this.push_insert_beat(index, this.get_channel_line_counts())
-            super.remove_beat(index)
+            this.push_insert_beat(beat_index, this.get_channel_line_counts())
+            super.remove_beat(beat_index)
         }
     }
 
@@ -556,7 +562,8 @@ open class HistoryLayer() : LinksLayer() {
             for (channel in channel_sizes.indices) {
                 val line_count = channel_sizes[channel]
                 for (j in 0 until line_count) {
-                    this.push_replace_tree(BeatKey(channel, j, index), listOf())
+                    this.push_replace_tree( BeatKey(channel, j, index), listOf() )
+
                 }
             }
 
@@ -688,5 +695,15 @@ open class HistoryLayer() : LinksLayer() {
     override fun set_project_name(new_name: String) {
         this.history_cache.append_undoer("set_project_name", listOf(this.project_name))
         super.set_project_name(new_name)
+    }
+
+    override fun set_transpose(new_transpose: Int) {
+        this.history_cache.append_undoer("set_transpose", listOf(this.transpose))
+        super.set_transpose(new_transpose)
+    }
+
+    override fun set_tempo(new_tempo: Float) {
+        this.history_cache.append_undoer("set_tempo", listOf(this.tempo))
+        super.set_tempo(new_tempo)
     }
 }

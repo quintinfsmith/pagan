@@ -2,6 +2,7 @@ package com.qfs.radixulous
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.util.Log
 import android.view.*
 import android.widget.LinearLayout
 import android.widget.RelativeLayout
@@ -90,6 +91,7 @@ class ColumnLabelAdapter(var main_fragment: MainFragment, var recycler: Recycler
     }
 
     fun addColumnLabel(position: Int) {
+        Log.d("AAA", "ADDING Column $position / ${this.column_widths.size}")
         if (position < this.column_widths.size) {
             this.column_widths.add(1)
             this.notifyItemInserted(this.column_widths.size - 1)

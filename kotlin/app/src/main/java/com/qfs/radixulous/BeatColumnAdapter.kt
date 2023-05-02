@@ -1,6 +1,7 @@
 package com.qfs.radixulous
 
 import android.content.Context
+import android.util.Log
 import android.view.*
 import android.widget.LinearLayout
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -94,9 +95,6 @@ class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: Recycle
                 }
                 override fun onItemRangeInserted(start: Int, count: Int) {
                     that.unset_cursor_position()
-                    for (i in 0 until count) {
-                        that.column_layout.addColumnLabel(start + i)
-                    }
                     val visible_start = (that.recycler.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
                     if (visible_start >= start) {
                         that.recycler.scrollToPosition(start)
@@ -280,7 +278,9 @@ class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: Recycle
 
     fun addBeatColumn(index: Int) {
         this.beat_count += 1
+        this.column_layout.addColumnLabel(index)
         this.notifyItemInserted(index)
+        Log.d("AAA", "BEAT ADDED $index")
     }
 
     fun removeBeatColumn(index: Int) {

@@ -16,12 +16,12 @@ open class LinksLayer() : OpusManagerBase() {
     }
 
     open fun unlink_beat(beat_key: BeatKey) {
-        var index = this.link_pool_map.remove(beat_key) ?: return
+        val index = this.link_pool_map.remove(beat_key) ?: return
         this.link_pools[index].remove(beat_key)
     }
 
     fun clear_link_pool(beat_key: BeatKey) {
-        var index = this.link_pool_map.remove(beat_key) ?: return
+        val index = this.link_pool_map.remove(beat_key) ?: return
         for (key in this.link_pools[index].toList()) {
             this.unlink_beat(key)
         }
@@ -111,7 +111,7 @@ open class LinksLayer() : OpusManagerBase() {
             return setOf(beat_key)
         }
 
-        var pool_index = this.link_pool_map[beat_key] ?: return setOf(beat_key)
+        val pool_index = this.link_pool_map[beat_key] ?: return setOf(beat_key)
         return this.link_pools[pool_index]
     }
 
@@ -168,12 +168,12 @@ open class LinksLayer() : OpusManagerBase() {
 
     /////////
     private fun remap_links(remap_hook: (beat_key: BeatKey, args: List<Int>) -> BeatKey?, args: List<Int>) {
-        var new_pool_map = HashMap<BeatKey, Int>()
-        var new_pools = mutableListOf<MutableSet<BeatKey>>()
+        val new_pool_map = HashMap<BeatKey, Int>()
+        val new_pools = mutableListOf<MutableSet<BeatKey>>()
         for (pool in this.link_pools) {
-            var new_pool = mutableSetOf<BeatKey>()
+            val new_pool = mutableSetOf<BeatKey>()
             for (beatkey in pool) {
-                var new_beatkey = remap_hook(beatkey, args) ?: continue
+                val new_beatkey = remap_hook(beatkey, args) ?: continue
                 new_pool.add(new_beatkey)
                 new_pool_map[new_beatkey] = new_pools.size
             }
@@ -184,10 +184,10 @@ open class LinksLayer() : OpusManagerBase() {
     }
 
     private fun rh_change_line_channel(beat_key: BeatKey, args: List<Int>): BeatKey? {
-        var old_channel = args[0]
-        var line_offset = args[1]
-        var new_channel = args[2]
-        var new_offset = args[3]
+        val old_channel = args[0]
+        val line_offset = args[1]
+        val new_channel = args[2]
+        val new_offset = args[3]
 
         var new_beat = beat_key
         if (beat_key.channel == old_channel) {
@@ -202,8 +202,8 @@ open class LinksLayer() : OpusManagerBase() {
 
 
     private fun rh_remove_beat(beat: BeatKey, args: List<Int>): BeatKey? {
-        var index = args[0]
-        var new_beat = if (beat.beat >= index) {
+        val index = args[0]
+        val new_beat = if (beat.beat >= index) {
             BeatKey(beat.channel, beat.line_offset, beat.beat - 1)
         } else {
             beat
@@ -226,8 +226,8 @@ open class LinksLayer() : OpusManagerBase() {
     }
 
     private fun rh_remove_line(beat: BeatKey, args: List<Int>): BeatKey? {
-        var channel = args[0]
-        var line_offset = args[1]
+        val channel = args[0]
+        val line_offset = args[1]
         var new_beat: BeatKey? = beat
         if (beat.channel == channel) {
             if (beat.line_offset == line_offset) {
@@ -258,8 +258,8 @@ open class LinksLayer() : OpusManagerBase() {
     }
 
     override fun to_json(): LoadedJSONData {
-        var data = super.to_json()
-        var reflections: MutableList<List<BeatKey>> = mutableListOf()
+        val data = super.to_json()
+        val reflections: MutableList<List<BeatKey>> = mutableListOf()
         for (pool in this.link_pools) {
             reflections.add(pool.toList())
         }

@@ -303,7 +303,7 @@ class MainActivity : AppCompatActivity() {
         val note = if (this.opus_manager.is_percussion(channel)) {
             event_value + 27
         } else {
-            event_value + 21
+            event_value + 21 + this.opus_manager.transpose
         }
 
         this@MainActivity.runOnUiThread {
@@ -455,8 +455,7 @@ class MainActivity : AppCompatActivity() {
                 val value = npOnes.value
                 this.set_transpose(value)
             }
-            .setNegativeButton(android.R.string.cancel) { _, _ ->
-            }
+            .setNegativeButton(android.R.string.cancel) { _, _ -> }
             .show()
     }
 
@@ -545,18 +544,12 @@ class MainActivity : AppCompatActivity() {
 
     private fun set_tempo(value: Int) {
         val opus_manager = this.get_opus_manager()
-
-        opus_manager.tempo = value.toFloat()
-        val tvTempo: TextView = this.findViewById(R.id.tvTempo)
-        tvTempo.text = "${opus_manager.tempo.toInt()} BPM"
+        opus_manager.set_tempo(value.toFloat())
     }
 
     private fun set_transpose(value: Int) {
         val opus_manager = this.get_opus_manager()
-
-        opus_manager.transpose = value
-        val btnTranspose: TextView = this.findViewById(R.id.btnTranspose)
-        btnTranspose.text = "T: ${get_number_string(value, opus_manager.RADIX, 2)}"
+        opus_manager.set_transpose(value)
     }
 
     fun loading_reticle() {

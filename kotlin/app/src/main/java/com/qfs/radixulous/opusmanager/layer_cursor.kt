@@ -215,16 +215,16 @@ open class CursorLayer() : HistoryLayer() {
         this.new_line(this.get_cursor().get_beatkey().channel)
     }
 
-    override fun new_line(channel: Int, index: Int?): List<OpusTree<OpusEvent>> {
+    override fun new_line(channel: Int, line_offset: Int?): List<OpusTree<OpusEvent>> {
         var cursor = this.get_cursor()
-        var abs_index = if (index == null) {
+        var abs_line_offset = if (line_offset == null) {
             this.channels[channel].size - 1
-        } else if (index < 0) {
-            this.channels[channel].size + index
+        } else if (line_offset < 0) {
+            this.channels[channel].size + line_offset
         } else {
-            index
+            line_offset
         }
-        var output = super.new_line(channel, index)
+        var output = super.new_line(channel, line_offset)
         try {
             var beat_key = cursor.get_beatkey()
         } catch (e: Exception) {
@@ -403,13 +403,13 @@ open class CursorLayer() : HistoryLayer() {
     }
 
     ///////// OpusManagerBase methods
-    override fun insert_beat(index: Int) {
-        super.insert_beat(index)
+    override fun insert_beat(beat_index: Int) {
+        super.insert_beat(beat_index)
         this.get_cursor().settle()
     }
 
-    override fun remove_beat(index: Int) {
-        super.remove_beat(index)
+    override fun remove_beat(beat_index: Int) {
+        super.remove_beat(beat_index)
         this.get_cursor().settle()
     }
 
@@ -436,12 +436,12 @@ open class CursorLayer() : HistoryLayer() {
         this.get_cursor().settle()
     }
 
-    override fun remove_line(channel: Int, index: Int): MutableList<OpusTree<OpusEvent>> {
-        val output = super.remove_line(channel, index)
+    override fun remove_line(channel: Int, line_offset: Int): MutableList<OpusTree<OpusEvent>> {
+        val output = super.remove_line(channel, line_offset)
 
         if (channel > this.channels.size - 1) {
             this.cursor_up()
-        } else if (channel == this.channels.size - 1 && index >= this.channels[channel].size) {
+        } else if (channel == this.channels.size - 1 && line_offset >= this.channels[channel].size) {
              this.cursor_up()
         }
 

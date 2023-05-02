@@ -476,26 +476,27 @@ open class OpusManagerBase {
         this.insert_beat(this.opus_beat_count, 1)
     }
 
-    open fun insert_beat(index: Int, count: Int) {
+    open fun insert_beat(beat_index: Int, count: Int) {
         for (i in 0 until count) {
-            this.insert_beat(index + i)
+            this.insert_beat(beat_index + i)
         }
     }
 
-    open fun insert_beat(index: Int) {
+    open fun insert_beat(beat_index: Int) {
         this.opus_beat_count += 1
         for (channel in this.channels) {
-            channel.insert_beat(index)
+            channel.insert_beat(beat_index)
             channel.set_beat_count(this.opus_beat_count)
         }
     }
+
 
     open fun insert_line(channel: Int, line_index: Int, line: MutableList<OpusTree<OpusEvent>>) {
         this.channels[channel].insert_line(line_index, line)
     }
 
-    open fun new_line(channel: Int, index: Int? = null): List<OpusTree<OpusEvent>> {
-        return this.channels[channel].new_line(index)
+    open fun new_line(channel: Int, line_offset: Int? = null): List<OpusTree<OpusEvent>> {
+        return this.channels[channel].new_line(line_offset)
     }
 
     open fun overwrite_beat(old_beat: BeatKey, new_beat: BeatKey) {
@@ -540,8 +541,8 @@ open class OpusManagerBase {
         this.unset(beatkey_from, position_from)
     }
 
-    open fun remove_line(channel: Int, index: Int): MutableList<OpusTree<OpusEvent>> {
-        return this.channels[channel].remove_line(index)
+    open fun remove_line(channel: Int, line_offset: Int): MutableList<OpusTree<OpusEvent>> {
+        return this.channels[channel].remove_line(line_offset)
     }
 
     fun copy_func(tree: OpusTree<OpusEvent>): OpusEvent? {
@@ -610,7 +611,7 @@ open class OpusManagerBase {
                             } else if (event.relative) {
                                 event.note + prev_note
                             } else {
-                                event.note + 21 + transpose
+                                event.note + 21 + this.transpose
                             }
 
                             if (!(b < start_beat || b >= end_beat)) {
@@ -793,7 +794,7 @@ open class OpusManagerBase {
         this.import_midi(midi)
     }
 
-    fun tree_from_midi(midi: MIDI): Triple<OpusTree<Set<OpusEvent>>, Float, List<Pair<Int, Int>>> {
+    private fun tree_from_midi(midi: MIDI): Triple<OpusTree<Set<OpusEvent>>, Float, List<Pair<Int, Int>>> {
         var beat_size = midi.get_ppqn()
         var total_beat_offset = 0
         var last_ts_change = 0
@@ -969,7 +970,7 @@ open class OpusManagerBase {
         for ((position, event_set) in mapped_events) {
             val tmp_channel_counts = HashMap<Int, Int>()
             val event_list = event_set.toMutableList()
-            event_list.sortWith(compareBy {127 - it.note })
+            event_list.sortWith(compareBy { 127 - it.note })
             event_list.forEachIndexed { _: Int, event: OpusEvent ->
                 val channel_index = midi_channel_map[event.channel]!!
                 if (event.channel == 9) {
@@ -1035,5 +1036,13 @@ open class OpusManagerBase {
 
     open fun set_project_name(new_name: String) {
         this.project_name = new_name
+    }
+
+    open fun set_transpose(new_transpose: Int) {
+        this.transpose = new_transpose
+    }
+
+    open fun set_tempo(new_tempo: Float) {
+        this.tempo = new_tempo
     }
 }

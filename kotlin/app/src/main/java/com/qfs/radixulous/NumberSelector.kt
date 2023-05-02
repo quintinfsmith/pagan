@@ -24,7 +24,7 @@ class NumberSelector: LinearLayout {
             // TODO: Handle any radix
             this.numberSelector = numberSelector
             this.value = value
-            this.bkp_text = "${get_number_string(this.value, 12,2)}"
+            this.bkp_text = get_number_string(this.value, 12,1)
             this.text = this.bkp_text
 
             this.setOnClickListener {
@@ -70,17 +70,17 @@ class NumberSelector: LinearLayout {
         super.onLayout(isChanged, left, top, right, bottom)
         if (this.childCount > 0) {
             val scale = resources.displayMetrics.density
-            var margin = (2 * scale + 0.5f).toInt()
+            val margin = (2 * scale + 0.5f).toInt()
 
             var available_space = ((right - left) - (this.paddingLeft + this.paddingRight))
             available_space -= (this.childCount - 1) * margin
 
-            var width = available_space / this.childCount
+            val width = available_space / this.childCount
             var remainder = available_space % this.childCount
             var total_width = 0
 
             for (i in 0 until this.childCount) {
-                var view = this.getChildAt(i)
+                val view = this.getChildAt(i)
                 var working_width = width
 
                 if (remainder > 0) {
@@ -88,7 +88,7 @@ class NumberSelector: LinearLayout {
                     remainder -= 1
                 }
 
-                var offset = this.paddingLeft + (i * margin) + total_width
+                val offset = this.paddingLeft + (i * margin) + total_width
                 view.layout(
                     offset,
                     0,
@@ -137,7 +137,7 @@ class NumberSelector: LinearLayout {
     }
 
     fun setRange(new_min: Int, new_max: Int) {
-        var original_value = this.button_map[this.active_button]
+        val original_value = this.button_map[this.active_button]
 
         this.clear()
         this.min = new_min
@@ -145,7 +145,7 @@ class NumberSelector: LinearLayout {
         this.populate()
 
         if (original_value != null) {
-            var new_state = if (original_value >= this.min && original_value <= this.max) {
+            val new_state = if ((original_value >= this.min) && (original_value <= this.max)) {
                 original_value
             } else if (original_value < this.min) {
                 this.min

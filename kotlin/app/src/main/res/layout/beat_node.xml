@@ -3,6 +3,7 @@
     android:id="@+id/beat_node"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:background="?attr/table_lines"
     android:gravity="center"
     android:clipToPadding="false"
     android:paddingTop="@dimen/normal_padding"

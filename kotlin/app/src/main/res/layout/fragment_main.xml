@@ -18,12 +18,24 @@ tools:context=".MainFragment">
         android:id="@+id/trMainA"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
+        <LinearLayout
+            android:orientation="horizontal"
+            android:paddingTop="0dp"
+            android:paddingEnd="@dimen/normal_padding"
+            android:paddingBottom="@dimen/normal_padding"
+            android:paddingStart="0dp"
+            android:background="?attr/table_lines"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+            <TextView
+                android:layout_gravity="center"
+                android:layout_weight="1"
+                android:layout_width="0dp"
+                android:background="?attr/main_bg"
+                android:text=""
+                android:layout_height="match_parent" />
 
-        <Space
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+        </LinearLayout>
 
         <androidx.recyclerview.widget.RecyclerView
             xmlns:android="http://schemas.android.com/apk/res/android"
@@ -41,7 +53,6 @@ tools:context=".MainFragment">
         android:layout_height="match_parent">
 
         <com.qfs.radixulous.LineLabelRecyclerView
-            android:paddingRight="@dimen/normal_padding"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:id="@+id/rvLineLabels"/>

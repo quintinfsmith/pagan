@@ -7,7 +7,7 @@
         <item name="colorOnPrimary">#EFEFEF</item>
         <!-- Secondary brand color. -->
         <item name="colorSecondary">#765bd5</item>
-        <item name="colorSecondaryVariant">#967FE9</item>
+        <item name="colorSecondaryVariant">#5BA1D6</item>
         <item name="colorOnSecondary">#1A1a1a</item>
         <!-- Status bar color. -->
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
@@ -33,8 +33,8 @@
         <item name="leaf_fg_active_pressed">?attr/colorOnSecondary</item>
         <item name="leaf_fg_active_focused_pressed">?attr/colorOnSecondary</item>
 
-        <item name="leaf_bg_default">#373737</item>
-        <item name="leaf_bg_focused">#424242</item>
+        <item name="leaf_bg_default">?attr/main_bg</item>
+        <item name="leaf_bg_focused">?attr/colorSecondaryVariant</item>
         <!--_pressed are just 93% of the regular colors -->
         <item name="leaf_bg_pressed">#333333</item>
         <item name="leaf_bg_focused_pressed">#3D3D3D</item>
@@ -42,7 +42,7 @@
         <item name="leaf_bg_invalid">#aa4433</item>
         <!-- Active Leaf colors are same between dark/light -->
         <item name="leaf_bg_active">?attr/colorSecondary</item>
-        <item name="leaf_bg_active_focused">?attr/colorSecondaryVariant</item>
+        <item name="leaf_bg_active_focused">#43749A</item>
         <!--_pressed are just 93% of the regular colors -->
         <item name="leaf_bg_active_pressed">#6D54C6</item>
         <item name="leaf_bg_active_focused_pressed">#BDBDBD</item>
@@ -59,6 +59,7 @@
 
         <item name="icon_size">42dp</item>
         <item name="colorIconFG">@attr/button_fg_default</item>
+        <item name="table_lines">?attr/button_fg_default</item>
     </style>
 
     <style name="Theme.Radixulous.NoActionBar">

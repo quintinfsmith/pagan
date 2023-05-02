@@ -22,19 +22,14 @@ class LineLabelAdapter(var main_fragment: MainFragment, var recycler: RecyclerVi
     private var row_count = 0
     private var _dragging_lineLabel: View? = null
 
-    class LabelView(context: Context): LinearLayout(ContextThemeWrapper(context, R.style.line_label)) {
+    class LabelView(context: Context): LinearLayout(ContextThemeWrapper(context, R.style.line_label_outer)) {
         var viewHolder: LineLabelViewHolder? = null
 
-        var textView = TextView(this.context)
+        var textView = TextView(ContextThemeWrapper(this.context, R.style.line_label_inner))
 
         init {
             this.addView(textView)
-        }
-
-        override fun onAttachedToWindow() {
-            val margin = resources.getDimension(R.dimen.normal_padding).toInt()
-            (this.layoutParams as MarginLayoutParams).setMargins(0,margin,0,margin)
-            this.layoutParams.height = resources.getDimension(R.dimen.line_height).toInt()
+            textView.layoutParams.height = resources.getDimension(R.dimen.line_height).toInt()
         }
 
         // Prevents the child labels from blocking the parent onTouchListener events

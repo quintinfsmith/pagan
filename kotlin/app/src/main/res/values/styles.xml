@@ -163,17 +163,31 @@
         <item name="android:textSize">12dp</item>
     </style>
 
-    <style name="column_label">
+    <style name="column_label_inner">
         <item name="android:gravity">center</item>
         <item name="android:paddingTop">4dp</item>
         <item name="android:paddingBottom">4dp</item>
         <item name="android:background">?attr/label_bg</item>
         <item name="android:textColor">?attr/label_fg</item>
     </style>
-    <style name="line_label">
+    <style name="column_label_outer">
+        <item name="android:paddingStart">@dimen/normal_padding</item>
+        <item name="android:paddingEnd">@dimen/normal_padding</item>
+        <item name="android:paddingBottom">@dimen/normal_padding</item>
+        <item name="android:gravity">center</item>
+        <item name="android:background">?attr/table_lines</item>
+    </style>
+
+    <style name="line_label_inner">
         <item name="android:minWidth">32dp</item>
         <item name="android:gravity">center</item>
         <item name="android:background">?attr/label_bg</item>
         <item name="android:textColor">?attr/label_fg</item>
+    </style>
+    <style name="line_label_outer">
+        <item name="android:padding">@dimen/normal_padding</item>
+        <item name="android:paddingStart">0dp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:background">?attr/table_lines</item>
     </style>
 </resources>

@@ -58,6 +58,6 @@
     <attr name="button_bg_pressed" format="color" />
 
     <attr name="colorIconFG" format="color" />
-
     <attr name="icon_size" format="dimension" />
+    <attr name="table_lines" format="color" />
 </resources>

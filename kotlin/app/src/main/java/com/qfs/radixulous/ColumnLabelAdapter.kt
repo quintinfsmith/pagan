@@ -13,9 +13,9 @@ class ColumnLabelAdapter(var main_fragment: MainFragment, var recycler: Recycler
     // BackLink so I can get the x offset from a view in the view holder
     var column_widths = mutableListOf<Int>()
 
-    class LabelView(context: Context): RelativeLayout(ContextThemeWrapper(context, R.style.column_label)) {
+    class LabelView(context: Context): RelativeLayout(ContextThemeWrapper(context, R.style.column_label_outer)) {
         var viewHolder: ColumnLabelViewHolder? = null
-        var textView = TextView(this.context)
+        var textView = TextView(ContextThemeWrapper(this.context, R.style.column_label_inner))
         init {
             this.addView(this.textView)
             this.textView.layoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT
@@ -139,9 +139,7 @@ class ColumnLabelAdapter(var main_fragment: MainFragment, var recycler: Recycler
 
         var item_view = holder.itemView
         var resources = this.main_fragment.resources
-        val margin = resources.getDimension(R.dimen.normal_padding).toInt()
-        (item_view.layoutParams as ViewGroup.MarginLayoutParams).setMargins(margin,0,margin,0)
-        item_view.layoutParams.width = (resources.getDimension(R.dimen.base_leaf_width) * this.column_widths[beat].toFloat()).toInt() - (2 * margin)
+        item_view.layoutParams.width = (resources.getDimension(R.dimen.base_leaf_width) * this.column_widths[beat].toFloat()).toInt()
         item_view.layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT
 
     }

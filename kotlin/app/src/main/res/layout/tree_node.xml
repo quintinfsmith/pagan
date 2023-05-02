@@ -3,7 +3,7 @@
     android:id="@+id/treenode"
     android:layout_width="0dp"
     android:layout_weight="1"
-    android:layout_height="100px"
+    android:layout_height="wrap_content"
     android:clipToPadding="false"
     android:layout_gravity="center"
     android:gravity="center"

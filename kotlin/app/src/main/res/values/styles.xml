@@ -162,10 +162,17 @@
     <style name="front_text">
         <item name="android:textSize">12dp</item>
     </style>
+
     <style name="column_label">
         <item name="android:gravity">center</item>
         <item name="android:paddingTop">4dp</item>
         <item name="android:paddingBottom">4dp</item>
+        <item name="android:background">?attr/label_bg</item>
+        <item name="android:textColor">?attr/label_fg</item>
+    </style>
+    <style name="line_label">
+        <item name="android:minWidth">32dp</item>
+        <item name="android:gravity">center</item>
         <item name="android:background">?attr/label_bg</item>
         <item name="android:textColor">?attr/label_fg</item>
     </style>

@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <dimen name="normal_padding">2dp</dimen>
+    <dimen name="normal_padding">1dp</dimen>
     <dimen name="padding_config">5dp</dimen>
     <dimen name="icon_size">?attr/icon_size</dimen>
     <dimen name="relative_option_width">35dp</dimen>
+    <dimen name="line_height">41dp</dimen>
+    <dimen name="base_leaf_width">36dp</dimen>
 </resources>

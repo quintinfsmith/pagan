@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.*
 import android.widget.LinearLayout
+import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -21,17 +22,19 @@ class LineLabelAdapter(var main_fragment: MainFragment, var recycler: RecyclerVi
     private var row_count = 0
     private var _dragging_lineLabel: View? = null
 
-    class LabelView(context: Context): LinearLayout(context) {
+    class LabelView(context: Context): LinearLayout(ContextThemeWrapper(context, R.style.line_label)) {
         var viewHolder: LineLabelViewHolder? = null
 
-        var textView: TextView = LayoutInflater.from(this.context).inflate(
-            R.layout.table_line_label,
-            this,
-            false
-        ) as TextView
+        var textView = TextView(this.context)
 
         init {
             this.addView(textView)
+        }
+
+        override fun onAttachedToWindow() {
+            val margin = resources.getDimension(R.dimen.normal_padding).toInt()
+            (this.layoutParams as MarginLayoutParams).setMargins(0,margin,0,margin)
+            this.layoutParams.height = resources.getDimension(R.dimen.line_height).toInt()
         }
 
         // Prevents the child labels from blocking the parent onTouchListener events

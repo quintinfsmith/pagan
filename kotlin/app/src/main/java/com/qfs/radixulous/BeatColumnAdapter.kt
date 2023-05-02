@@ -175,7 +175,7 @@ class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: Recycle
 
             (cellLayout.layoutParams as LinearLayout.LayoutParams).apply {
                 gravity = Gravity.CENTER
-                height = ViewGroup.LayoutParams.MATCH_PARENT
+                height = ViewGroup.LayoutParams.WRAP_CONTENT
                 width = 0
                 weight = 1F
             }
@@ -236,9 +236,9 @@ class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: Recycle
                     false
                 )
 
-                (holder.itemView as ViewGroup).addView(beat_wrapper)
-
                 this.buildTreeView(beat_wrapper as ViewGroup, BeatKey(channel, line_offset, index))
+
+                (holder.itemView as ViewGroup).addView(beat_wrapper)
             }
         }
         this.adjust_beat_width(holder, index)
@@ -501,6 +501,7 @@ class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: Recycle
 
             val param = current_view.layoutParams as ViewGroup.MarginLayoutParams
 
+            var resources = this.get_main_activity().resources
             if (!current_tree.is_leaf()) {
                 for (i in 0 until current_tree.size) {
                     val next_pos = current_position.toMutableList()
@@ -514,13 +515,12 @@ class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: Recycle
                     )
                 }
 
-                param.width = (new_size * 120.toFloat()).toInt()
+                param.width = (new_size * resources.getDimension(R.dimen.base_leaf_width)).toInt()
             } else {
-                val resources = this.get_main_activity().resources
                 val margin = resources.getDimension(R.dimen.normal_padding)
                 param.marginStart = margin.toInt()
                 param.marginEnd = margin.toInt()
-                param.width = (new_size * 120.toFloat()).toInt() - param.marginStart - param.marginEnd
+                param.width = (new_size * resources.getDimension(R.dimen.base_leaf_width)).toInt() - param.marginStart - param.marginEnd
             }
 
             current_view.layoutParams = param
@@ -674,7 +674,8 @@ class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: Recycle
 
     fun scrollToPosition(position: Int) {
         this.disableScrollSync()
-        val item_width = this.column_layout.column_widths[position] * 120
+        val resources = this.get_main_activity().resources
+        val item_width = (this.column_layout.column_widths[position].toFloat() * resources.getDimension(R.dimen.base_leaf_width)).toInt()
         val center = (this.recycler.width - item_width) / 2
         (this.recycler.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(position, center)
         (this.column_layout.recycler.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(position, center)
@@ -684,7 +685,8 @@ class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: Recycle
 
     fun scrollToPosition(beatkey: BeatKey, position: List<Int>) {
         this.disableScrollSync()
-        val item_width = this.column_layout.column_widths[beatkey.beat] * 120
+        val resources = this.get_main_activity().resources
+        val item_width = (this.column_layout.column_widths[beatkey.beat].toFloat() * resources.getDimension(R.dimen.base_leaf_width)).toInt()
         val tree = this.get_opus_manager().get_tree(beatkey, position)
         val (tree_position, tree_size) = tree.get_flat_ratios()
         val first_visible = (this.recycler.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()

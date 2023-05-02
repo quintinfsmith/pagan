@@ -136,6 +136,10 @@ class LeafButton(
         }
     }
 
+    override fun onAttachedToWindow() {
+        var line_height = resources.getDimension(R.dimen.line_height)
+        this.layoutParams.height = line_height.toInt()
+    }
 
 
     override fun onCreateDrawableState(extraSpace: Int): IntArray? {

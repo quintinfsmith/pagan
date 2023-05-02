@@ -13,21 +13,24 @@ class ColumnLabelAdapter(var main_fragment: MainFragment, var recycler: Recycler
     // BackLink so I can get the x offset from a view in the view holder
     var column_widths = mutableListOf<Int>()
 
-    class LabelView(context: Context): RelativeLayout(context) {
+    class LabelView(context: Context): RelativeLayout(ContextThemeWrapper(context, R.style.column_label)) {
         var viewHolder: ColumnLabelViewHolder? = null
-        var textView: TextView =LayoutInflater.from(this.context).inflate(
-            R.layout.table_column_label,
-            this,
-            false
-        ) as TextView
-
+        var textView = TextView(this.context)
         init {
             this.addView(this.textView)
             this.textView.layoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT
         }
+
+        //override fun onAttachedToWindow() {
+        //    val margin = resources.getDimension(R.dimen.normal_padding).toInt()
+        //    (this.layoutParams as MarginLayoutParams).setMargins(margin,0,margin,0)
+        //    this.layoutParams.width = resources.getDimension(R.dimen.base_leaf_width).toInt()
+        //}
+
         fun set_text(text: String) {
             this.textView.text = text
         }
+
     }
 
     class ColumnLabelViewHolder(itemView: LabelView) : RecyclerView.ViewHolder(itemView) {
@@ -135,8 +138,12 @@ class ColumnLabelAdapter(var main_fragment: MainFragment, var recycler: Recycler
         var beat = holder.bindingAdapterPosition
 
         var item_view = holder.itemView
-        item_view.layoutParams.width = (120 * this.column_widths[beat])
+        var resources = this.main_fragment.resources
+        val margin = resources.getDimension(R.dimen.normal_padding).toInt()
+        (item_view.layoutParams as ViewGroup.MarginLayoutParams).setMargins(margin,0,margin,0)
+        item_view.layoutParams.width = (resources.getDimension(R.dimen.base_leaf_width) * this.column_widths[beat].toFloat()).toInt() - (2 * margin)
         item_view.layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT
+
     }
 
     override fun onBindViewHolder(holder: ColumnLabelViewHolder, position: Int) {

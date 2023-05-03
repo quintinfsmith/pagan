@@ -7,6 +7,8 @@
     android:gravity="center"
     android:clipToPadding="false"
     android:paddingTop="@dimen/normal_padding"
-    android:paddingBottom="@dimen/normal_padding"
+    android:paddingBottom="0dp"
+    android:paddingStart="0dp"
+    android:paddingEnd="0dp"
     android:layout_weight="1"
     android:orientation="horizontal"/>

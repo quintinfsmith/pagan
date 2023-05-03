@@ -519,7 +519,7 @@ class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: Recycle
             } else {
                 val margin = resources.getDimension(R.dimen.normal_padding)
                 param.marginStart = margin.toInt()
-                param.marginEnd = margin.toInt()
+                param.marginEnd = 0
                 param.width = (new_size * resources.getDimension(R.dimen.base_leaf_width)).toInt() - param.marginStart - param.marginEnd
             }
 

@@ -210,6 +210,17 @@ class InterfaceLayer(var activity: MainActivity): CursorLayer() {
 
     override fun remove_beat(beat_index: Int) {
         super.remove_beat(beat_index)
+        if (!this.interface_locked()) {
+            var adj_index = if (beat_index >= this.opus_beat_count) {
+                this.opus_beat_count - 1
+            } else {
+                beat_index
+            }
+            val rvBeatTable = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
+            rvBeatTable.scrollToPosition(adj_index)
+            val rvColumnLabels = this.activity.findViewById<RecyclerView>(R.id.rvColumnLabels)
+            rvColumnLabels.scrollToPosition(adj_index)
+        }
         this.ui_remove_beat(beat_index)
         this.ui_refresh_beat_labels(this.get_cursor().get_beatkey())
     }
@@ -217,6 +228,14 @@ class InterfaceLayer(var activity: MainActivity): CursorLayer() {
     override fun insert_beat(beat_index: Int) {
         val original_beat = this.get_cursor().get_beatkey()
         super.insert_beat(beat_index)
+
+        if (!this.interface_locked()) {
+            val rvBeatTable = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
+            rvBeatTable.scrollToPosition(beat_index)
+            val rvColumnLabels = this.activity.findViewById<RecyclerView>(R.id.rvColumnLabels)
+            rvColumnLabels.scrollToPosition(beat_index)
+        }
+
         this.ui_add_beat(beat_index)
         this.ui_refresh_beat_labels(original_beat)
     }

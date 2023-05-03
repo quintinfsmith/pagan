@@ -56,7 +56,6 @@ tools:context=".MainFragment">
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:id="@+id/rvLineLabels"/>
-
         <ScrollView
             android:id="@+id/svTable"
             android:layout_weight="1"
@@ -68,8 +67,8 @@ tools:context=".MainFragment">
                 android:layout_height="wrap_content"
                 android:id="@+id/rvBeatTable"/>
         </ScrollView>
-
     </TableRow>
+
     <TableRow>
         <LinearLayout
             android:layout_span="2"
@@ -78,9 +77,8 @@ tools:context=".MainFragment">
             android:id="@+id/llContextMenu"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent" />
+            android:orientation="vertical"/>
     </TableRow>
 </TableLayout>
+
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -3,6 +3,8 @@ package com.qfs.radixulous
 import android.content.Context
 import android.util.AttributeSet
 import android.view.*
+import android.view.ViewGroup.LayoutParams.MATCH_PARENT
+import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import android.widget.RelativeLayout
 import android.widget.TextView
@@ -29,9 +31,11 @@ class LineLabelAdapter(var main_fragment: MainFragment, var recycler: RecyclerVi
 
         init {
             this.addView(textView)
-            textView.layoutParams.height = resources.getDimension(R.dimen.line_height).toInt()
         }
-
+        override fun onAttachedToWindow() {
+            this.textView.layoutParams.height = resources.getDimension(R.dimen.line_height).toInt()
+            this.layoutParams.height = WRAP_CONTENT
+        }
         // Prevents the child labels from blocking the parent onTouchListener events
         override fun onInterceptTouchEvent(touchEvent: MotionEvent): Boolean {
             return true

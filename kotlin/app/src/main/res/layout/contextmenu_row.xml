@@ -48,15 +48,14 @@
             android:layout_weight="1"
             android:layout_height="wrap_content">
 
-            <TextView
+            <ImageView
                 android:id="@+id/btnRemoveLine"
+                android:theme="@style/icon_button"
                 android:gravity="center"
-                android:theme="@style/button"
-                android:layout_marginTop="@dimen/normal_padding"
-                android:layout_marginEnd="@dimen/normal_padding"
+                app:srcCompat="@drawable/remove_line"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Remove Line"/>
+                android:contentDescription="Remove Line"/>
         </LinearLayout>
 
         <LinearLayout
@@ -64,14 +63,14 @@
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content">
-            <TextView
+            <ImageView
                 android:id="@+id/btnInsertLine"
-                android:theme="@style/button"
-                android:layout_marginTop="@dimen/normal_padding"
+                android:theme="@style/icon_button"
                 android:gravity="center"
+                app:srcCompat="@drawable/insert_line"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Insert Line"/>
+                android:contentDescription="Insert Line"/>
         </LinearLayout>
     </LinearLayout>
 

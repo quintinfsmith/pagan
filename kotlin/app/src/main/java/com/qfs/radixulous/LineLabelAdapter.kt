@@ -19,15 +19,16 @@ class LineLabelRecyclerView(context: Context, attrs: AttributeSet) : RecyclerVie
     }
 }
 
-class LineLabelAdapter(var main_fragment: MainFragment, var recycler: RecyclerView) : RecyclerView.Adapter<LineLabelAdapter.LineLabelViewHolder>() {
+class LineLabelAdapter(var opus_manager: InterfaceLayer, var recycler: RecyclerView) : RecyclerView.Adapter<LineLabelAdapter.LineLabelViewHolder>() {
     // BackLink so I can get the x offset from a view in the view holder
     private var row_count = 0
     private var _dragging_lineLabel: View? = null
 
     class LabelView(context: Context): LinearLayout(ContextThemeWrapper(context, R.style.line_label_outer)) {
         var viewHolder: LineLabelViewHolder? = null
-
         var textView = TextView(ContextThemeWrapper(this.context, R.style.line_label_inner))
+        var channel = -1
+        var line_offset = -1
 
         init {
             this.addView(textView)
@@ -39,6 +40,11 @@ class LineLabelAdapter(var main_fragment: MainFragment, var recycler: RecyclerVi
         // Prevents the child labels from blocking the parent onTouchListener events
         override fun onInterceptTouchEvent(touchEvent: MotionEvent): Boolean {
             return true
+        }
+
+        fun set_row(channel: Int, line_offset: Int) {
+            this.channel = channel
+            this.line_offset = line_offset
         }
 
         fun set_text(text: String) {
@@ -86,12 +92,12 @@ class LineLabelAdapter(var main_fragment: MainFragment, var recycler: RecyclerVi
         val label = LabelView(parent.context)
 
         label.setOnClickListener {
-             this.interact_lineLabel(it)
+             this.interact_lineLabel(it as LabelView)
         }
 
         label.setOnFocusChangeListener { view, is_focused: Boolean ->
             if (is_focused) {
-                this.interact_lineLabel(view)
+                this.interact_lineLabel(view as LabelView)
             }
         }
 
@@ -116,10 +122,13 @@ class LineLabelAdapter(var main_fragment: MainFragment, var recycler: RecyclerVi
                 DragEvent.ACTION_DROP -> {
                     val from_label =  this._dragging_lineLabel
                     if (from_label != null && from_label != view) {
-                        val y_from = (from_label.parent as ViewGroup).indexOfChild(from_label)
-                        val y_to = (view.parent as ViewGroup).indexOfChild(view)
-                        // TODO: This is a bit shit
-                        this.main_fragment.get_main().get_opus_manager().move_line(y_from, y_to)
+                        this.opus_manager.move_line(
+                            (from_label as LabelView).channel,
+                            from_label.line_offset,
+                            (view as LabelView).channel,
+                            view.line_offset
+                        )
+                        this.opus_manager.cursor_select_row(view.channel, view.line_offset)
                     }
                     this._dragging_lineLabel = null
                 }
@@ -135,8 +144,19 @@ class LineLabelAdapter(var main_fragment: MainFragment, var recycler: RecyclerVi
     }
 
     override fun onBindViewHolder(holder: LineLabelViewHolder, position: Int) {
-        val label = this.main_fragment.get_label_text(position)
+        val (channel, line_offset) = this.opus_manager.get_std_offset(position)
+        val label = this.get_label_text(channel, line_offset)
         (holder.itemView as LabelView).set_text(label)
+        (holder.itemView as LabelView).set_row(channel, line_offset)
+    }
+
+    fun get_label_text(channel: Int, line_offset: Int): String {
+        return if (!this.opus_manager.is_percussion(channel)) {
+            "$channel::$line_offset"
+        } else {
+            val instrument = this.opus_manager.get_percussion_instrument(line_offset)
+            "!$instrument"
+        }
     }
 
     override fun getItemCount(): Int {
@@ -148,20 +168,11 @@ class LineLabelAdapter(var main_fragment: MainFragment, var recycler: RecyclerVi
         this.recycler.scrollBy(0, y - current_y)
     }
 
-    private fun interact_lineLabel(view: View) {
-        this.main_fragment.set_active_line(this.get_y(view))
-    }
-
-    private fun get_y(view: View): Int {
-        var abs_y = 0
-        val label_column = view.parent!! as ViewGroup
-        for (i in 0 until label_column.childCount) {
-            if (label_column.getChildAt(i) == view) {
-                abs_y = i
-                break
-            }
-        }
-        return abs_y
+    private fun interact_lineLabel(view: LabelView) {
+        this.opus_manager.cursor_select_row(
+            view.channel,
+            view.line_offset
+        )
     }
 
     fun refresh() {

@@ -196,4 +196,5 @@ class OpusChannel(var uuid: Int) {
     fun get_line_volume(line_offset: Int): Int {
         return this.lines[line_offset].volume
     }
+
 }

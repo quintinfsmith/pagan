@@ -9,6 +9,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.qfs.radixulous.databinding.FragmentMainBinding
 import com.qfs.radixulous.opusmanager.*
 import com.qfs.radixulous.BeatColumnAdapter.FocusType
+import java.lang.Integer.max
 import kotlin.concurrent.thread
 
 /**
@@ -90,8 +91,8 @@ class MainFragment : TempNameFragment() {
         val rvColumnLabels = view.findViewById<RecyclerView>(R.id.rvColumnLabels)
         val rvLineLabels = view.findViewById<RecyclerView>(R.id.rvLineLabels)
 
-        LineLabelAdapter(this, rvLineLabels)
-        BeatColumnAdapter(this, rvBeatTable, ColumnLabelAdapter(this, rvColumnLabels))
+        LineLabelAdapter(this.get_main().get_opus_manager(), rvLineLabels)
+        BeatColumnAdapter(this, rvBeatTable, ColumnLabelAdapter(this.get_main().get_opus_manager(), rvColumnLabels))
 
         svTable.viewTreeObserver.addOnScrollChangedListener {
             (rvLineLabels.adapter as LineLabelAdapter).scrollToLine(svTable.scrollY)
@@ -166,7 +167,7 @@ class MainFragment : TempNameFragment() {
         val btnUnLinkAll: TextView = view.findViewById(R.id.btnUnLinkAll)
         val btnCancelLink: TextView = view.findViewById(R.id.btnCancelLink)
 
-        val cursor_key = opus_manager.get_cursor().get_beatkey()
+        val cursor_key = opus_manager.cursor.get_beatkey()
         if (opus_manager.is_networked(cursor_key.channel, cursor_key.line_offset, cursor_key.beat)) {
             btnUnLink.setOnClickListener {
                 this.interact_btnUnlink(it)
@@ -192,7 +193,7 @@ class MainFragment : TempNameFragment() {
         this.active_context_menu_index = ContextMenu.Linking
     }
 
-    private fun setContextMenu_column() {
+    fun setContextMenu_column() {
         this.clearContextMenu()
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
@@ -203,25 +204,39 @@ class MainFragment : TempNameFragment() {
             llContextMenu,
             false
         )
-        val btnInsertBeat: TextView = view.findViewById(R.id.btnInsertBeat)
-        val btnRemoveBeat: TextView = view.findViewById(R.id.btnRemoveBeat)
+        val btnInsertBeat = view.findViewById<ImageView>(R.id.btnInsertBeat)
+        val btnRemoveBeat = view.findViewById<ImageView>(R.id.btnRemoveBeat)
 
         btnInsertBeat.setOnClickListener {
-            this.om_insert_beat(1)
+            val beat = opus_manager.cursor.beat
+            opus_manager.insert_beat_at_cursor(1)
+            opus_manager.cursor_select_column(beat + 1)
         }
         btnInsertBeat.setOnLongClickListener {
-            val main = this.get_main()
-            main.popup_number_dialog("Insert Beats", 1, 99, this::om_insert_beat)
+            main.popup_number_dialog( "Insert Beats", 1, 99) { count: Int ->
+                val beat = opus_manager.cursor.beat
+                opus_manager.insert_beat_at_cursor(count)
+                opus_manager.cursor_select_column(beat + count)
+            }
             true
         }
 
         btnRemoveBeat.setOnClickListener {
-            this.om_remove_beat(1)
+            val beat = opus_manager.cursor.beat
+            opus_manager.remove_beat_at_cursor(1)
+            if (beat >= opus_manager.opus_beat_count) {
+                opus_manager.cursor_select_column(opus_manager.opus_beat_count - 1)
+            }
         }
 
         btnRemoveBeat.setOnLongClickListener {
-            val main = this.get_main()
-            main.popup_number_dialog("Remove Beats", 1, opus_manager.opus_beat_count, this::om_remove_beat)
+            main.popup_number_dialog("Remove Beats", 1, opus_manager.opus_beat_count) { count: Int ->
+                val beat = opus_manager.cursor.beat
+                opus_manager.remove_beat_at_cursor(count)
+                if (beat >= opus_manager.opus_beat_count) {
+                    opus_manager.cursor_select_column(opus_manager.opus_beat_count - 1)
+                }
+            }
             true
         }
 
@@ -229,10 +244,13 @@ class MainFragment : TempNameFragment() {
         this.active_context_menu_index = ContextMenu.Column
     }
 
-    private fun setContextMenu_line() {
-        this.clearContextMenu()
+    fun setContextMenu_line() {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
+        if (opus_manager.cursor.mode != Cursor.CursorMode.Row) {
+            throw Exception("Can't View Line ContextMenu outside of CursorMode: Row")
+        }
+        this.clearContextMenu()
         val llContextMenu = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenu)
 
         val view = LayoutInflater.from(llContextMenu.context).inflate(
@@ -241,16 +259,16 @@ class MainFragment : TempNameFragment() {
             false
         )
         val sbLineVolume = view.findViewById<SeekBar>(R.id.sbLineVolume)
-        val btnRemoveLine: TextView = view.findViewById(R.id.btnRemoveLine)
-        val btnInsertLine: TextView = view.findViewById(R.id.btnInsertLine)
+        val btnRemoveLine = view.findViewById<ImageView>(R.id.btnRemoveLine)
+        val btnInsertLine = view.findViewById<ImageView>(R.id.btnInsertLine)
         val btnChoosePercussion: TextView = view.findViewById(R.id.btnChoosePercussion)
 
-        if (opus_manager.line_count() == 1) {
+        if (opus_manager.get_total_line_count() == 1) {
             btnRemoveLine.visibility = View.GONE
         }
-        val beatkey = opus_manager.get_cursor().get_beatkey()
-        val channel = beatkey.channel
-        val line_offset = beatkey.line_offset
+
+        val channel = opus_manager.cursor.channel
+        val line_offset = opus_manager.cursor.line_offset
 
         if (!opus_manager.is_percussion(channel)) {
             btnChoosePercussion.visibility = View.GONE
@@ -269,42 +287,46 @@ class MainFragment : TempNameFragment() {
             btnRemoveLine.visibility = View.GONE
         } else {
             btnRemoveLine.setOnClickListener {
-                this.om_remove_line(1)
+                opus_manager.remove_line(1)
+                opus_manager.cursor_select_row(channel, max(0, line_offset - 1))
             }
 
             btnRemoveLine.setOnLongClickListener {
-                val main = this.get_main()
                 main.popup_number_dialog(
                     "Remove Lines",
                     1,
-                    kotlin.math.max(1, opus_manager.line_count() - 1),
-                    this::om_remove_line
-                )
+                    kotlin.math.max(1, opus_manager.get_total_line_count() - 1)
+                ) { count: Int ->
+                    opus_manager.remove_line(count)
+                    opus_manager.cursor_select_row(channel, max(0, line_offset - 1))
+                }
                 true
             }
         }
 
         btnInsertLine.setOnClickListener {
-            this.om_insert_line(1)
+            opus_manager.insert_line(1)
+            opus_manager.cursor_select_row(channel, line_offset + 1)
         }
 
         btnInsertLine.setOnLongClickListener {
-            val main = this.get_main()
             main.popup_number_dialog(
                 "Insert Lines",
                 1,
                 9,
-                this::om_insert_line
-            )
+            ) { count: Int ->
+                opus_manager.insert_line(count)
+                opus_manager.cursor_select_row(channel, line_offset + count)
+            }
             true
         }
 
-        sbLineVolume.progress = opus_manager.get_line_volume(beatkey.channel, beatkey.line_offset)
+        sbLineVolume.progress = opus_manager.get_line_volume(channel, line_offset)
         sbLineVolume.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(p0: SeekBar, p1: Int, p2: Boolean) { }
             override fun onStartTrackingTouch(p0: SeekBar?) { }
             override fun onStopTrackingTouch(seekbar: SeekBar) {
-                opus_manager.set_line_volume(beatkey.channel, beatkey.line_offset, seekbar.progress)
+                opus_manager.set_line_volume(channel, line_offset, seekbar.progress)
             }
         })
 
@@ -335,23 +357,23 @@ class MainFragment : TempNameFragment() {
         val nsOctave: NumberSelector = view.findViewById(R.id.nsOctave)
         val nsOffset: NumberSelector = view.findViewById(R.id.nsOffset)
 
-        val current_tree = opus_manager.get_tree_at_cursor()
+        val current_tree = opus_manager.get_tree()
+
         // If event exists, change relative mode, other wise use active relative mode
         if (current_tree.is_event()) {
             val event = current_tree.get_event()!!
             opus_manager.set_relative_mode(event)
         }
 
-        val cursor = opus_manager.get_cursor()
 
         rosRelativeOption.setState(opus_manager.relative_mode, true)
 
-        if (opus_manager.is_percussion(cursor.get_beatkey().channel)) {
+        if (opus_manager.is_percussion(opus_manager.cursor.channel)) {
             nsOctave.visibility = View.GONE
             nsOffset.visibility = View.GONE
             rosRelativeOption.visibility = View.GONE
 
-            if (!opus_manager.get_tree_at_cursor().is_event()) {
+            if (!opus_manager.get_tree().is_event()) {
                 btnUnset.setImageResource(R.drawable.set_percussion)
             }
 
@@ -377,12 +399,25 @@ class MainFragment : TempNameFragment() {
         }
 
         btnSplit.setOnClickListener {
-            this.om_split(2)
+            val beatkey = opus_manager.cursor.get_beatkey()
+            val position = opus_manager.cursor.get_position().toMutableList()
+
+            opus_manager.split_tree(2)
+
+            position.add(0)
+            opus_manager.cursor_select(beatkey, position)
         }
 
         btnSplit.setOnLongClickListener {
-            val main = this.get_main()
-            main.popup_number_dialog("Split", 2, 29, this::om_split)
+            main.popup_number_dialog("Split", 2, 29) { splits: Int ->
+                val beatkey = opus_manager.cursor.get_beatkey()
+                val position = opus_manager.cursor.get_position().toMutableList()
+
+                opus_manager.split_tree(splits)
+
+                position.add(0)
+                opus_manager.cursor_select(beatkey, position)
+            }
             true
         }
 
@@ -390,31 +425,70 @@ class MainFragment : TempNameFragment() {
             this.interact_btnUnset(it)
         }
 
-        val channel = opus_manager.get_cursor().get_beatkey().channel
+        val channel = opus_manager.cursor.channel
         if (!opus_manager.is_percussion(channel) && current_tree.is_leaf() && !current_tree.is_event()) {
             btnUnset.visibility = View.GONE
         }
 
-        if (opus_manager.get_cursor().get_position().isEmpty()) {
+        if (opus_manager.cursor.get_position().isEmpty()) {
             btnRemove.visibility = View.GONE
         } else {
             btnRemove.visibility = View.VISIBLE
             btnRemove.setOnClickListener {
-                this.om_remove(1)
+                val beatkey = opus_manager.cursor.get_beatkey()
+                val position = opus_manager.cursor.get_position().toMutableList()
+                val original_size = current_tree.parent!!.size
+
+                opus_manager.remove(1)
+                if (original_size >= 2) {
+                    position.removeLast()
+                } else if (position.last() >= original_size) {
+                    position[position.size - 1] = max(original_size - 1, 0)
+                }
+                opus_manager.cursor_select(beatkey, position)
             }
             btnRemove.setOnLongClickListener {
-                opus_manager.clear_parent_at_cursor()
+                val position = opus_manager.cursor.get_position().toMutableList()
+                if (position.isNotEmpty()) {
+                    position.removeLast()
+
+                }
+                opus_manager.cursor_select(
+                    opus_manager.cursor.get_beatkey(),
+                    position
+                )
+
+                opus_manager.unset()
                 true
             }
         }
 
         btnInsert.setOnClickListener {
-            this.om_insert(1)
+            val beat_key = opus_manager.cursor.get_beatkey()
+            val position = opus_manager.cursor.get_position().toMutableList()
+            if (position.isEmpty()) {
+                opus_manager.split_tree(2)
+                position.add(0)
+            } else {
+                opus_manager.insert_after(1)
+                position[position.size - 1] += 1
+            }
+            opus_manager.cursor_select(beat_key, position)
         }
 
         btnInsert.setOnLongClickListener {
-            val main = this.get_main()
-            main.popup_number_dialog("Insert", 1, 29, this::om_insert)
+            main.popup_number_dialog("Insert", 1, 29) { count: Int ->
+                val beat_key = opus_manager.cursor.get_beatkey()
+                val position = opus_manager.cursor.get_position().toMutableList()
+                if (position.isEmpty()) {
+                    position.add(0)
+                    opus_manager.split_tree(count)
+                } else {
+                    opus_manager.insert_after(count)
+                    position[position.size - 1] += count
+                }
+                opus_manager.cursor_select(beat_key, position)
+            }
             true
         }
 
@@ -424,7 +498,7 @@ class MainFragment : TempNameFragment() {
     private fun interact_rosRelativeOption(view: RelativeOptionSelector) {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
-        val current_tree = opus_manager.get_tree_at_cursor()
+        val current_tree = opus_manager.get_tree()
 
         opus_manager.relative_mode = view.getState()!!
 
@@ -437,12 +511,12 @@ class MainFragment : TempNameFragment() {
             0 -> {
                 if (event.relative) {
                     try {
-                        opus_manager.convert_event_at_cursor_to_absolute()
+                        opus_manager.convert_event_to_absolute()
                         event = current_tree.get_event()!!
                     } catch (e: Exception) {
                         event.note = 0
                         event.relative = false
-                        opus_manager.set_event_at_cursor(event.copy())
+                        opus_manager.set_event(event.copy())
                     }
                 }
                 nsOctave.setState(event.note / event.radix, true, true)
@@ -450,7 +524,7 @@ class MainFragment : TempNameFragment() {
             }
             1 -> {
                 if (!event.relative) {
-                    opus_manager.convert_event_at_cursor_to_relative()
+                    opus_manager.convert_event_to_relative()
                     event = current_tree.get_event()!!
                 }
 
@@ -464,7 +538,7 @@ class MainFragment : TempNameFragment() {
             }
             2 -> {
                 if (!event.relative) {
-                    opus_manager.convert_event_at_cursor_to_relative()
+                    opus_manager.convert_event_to_relative()
                     event = current_tree.get_event()!!
                 }
 
@@ -491,12 +565,11 @@ class MainFragment : TempNameFragment() {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
 
-        val cursor = opus_manager.get_cursor()
-        val channel = cursor.get_beatkey().channel
-        if (!opus_manager.is_percussion(channel) || opus_manager.get_tree_at_cursor().is_event()) {
-            opus_manager.unset_at_cursor()
+        val channel = opus_manager.cursor.channel
+        if (!opus_manager.is_percussion(channel) || opus_manager.get_tree().is_event()) {
+            opus_manager.unset()
         } else {
-            opus_manager.set_percussion_event_at_cursor()
+            opus_manager.set_percussion_event()
         }
         this.reset_context_menu()
     }
@@ -504,42 +577,29 @@ class MainFragment : TempNameFragment() {
     private fun interact_btnUnlink(view: View) {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
-        val cursor = opus_manager.get_cursor()
-
-        this.unset_cursor_position()
-        opus_manager.unlink_beat(cursor.get_beatkey())
-        this.set_cursor_position(cursor.y, cursor.x, cursor.get_position(), FocusType.Cell)
-        this.setContextMenu_leaf()
+        opus_manager.unlink_beat()
     }
 
     private fun interact_btnUnlinkAll(view: View) {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
 
-        val cursor = opus_manager.get_cursor()
-        opus_manager.clear_link_pool(cursor.get_beatkey())
-        this.set_cursor_position(cursor.y, cursor.x, cursor.get_position(), FocusType.Cell)
-
-        this.setContextMenu_leaf()
+        opus_manager.clear_link_pool()
     }
 
     private fun interact_btnCancelLink(view: View) {
+        // TODO: I think linking needs to be looked at (shouldn't be long, but requires focus)
         val opus_manager = this.get_main().get_opus_manager()
-        val cursor = opus_manager.get_cursor()
         // Cancelling the linking is handled in set_cursor_position
-        this.set_cursor_position(cursor.y, cursor.x, cursor.get_position(), FocusType.Cell)
-        this.setContextMenu_leaf()
+        //this.set_cursor_position(cursor.y, cursor.x, cursor.get_position(), FocusType.Cell)
+        //this.setContextMenu_leaf()
     }
 
     private fun interact_nsOffset(view: NumberSelector) {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
         val progress = view.getState()!!
-        val current_tree = opus_manager.get_tree_at_cursor()
-
-        val cursor = opus_manager.get_cursor()
-        val position = cursor.position
-        val beatkey = cursor.get_beatkey()
+        val current_tree = opus_manager.get_tree()
 
         val value = if (current_tree.is_event()) {
             val event = current_tree.get_event()!!
@@ -579,11 +639,11 @@ class MainFragment : TempNameFragment() {
         val event = OpusEvent(
             value,
             opus_manager.RADIX,
-            beatkey.channel,
+            opus_manager.cursor.channel,
             opus_manager.relative_mode != 0
         )
 
-        opus_manager.set_event(beatkey, position, event)
+        opus_manager.set_event(event)
         this.reset_context_menu()
     }
 
@@ -592,14 +652,11 @@ class MainFragment : TempNameFragment() {
         val opus_manager = main.get_opus_manager()
         val progress = view.getState() ?: return
 
-        val current_tree = opus_manager.get_tree_at_cursor()
-        val cursor = opus_manager.get_cursor()
-        val position = cursor.position
-        val beatkey = cursor.get_beatkey()
+        val current_tree = opus_manager.get_tree()
 
         val value = if (current_tree.is_event()) {
             val event = current_tree.get_event()!!
-            var prev_note = if (opus_manager.relative_mode != 0) {
+            val prev_note = if (opus_manager.relative_mode != 0) {
                 val nsOffset  = this.get_main().findViewById<NumberSelector>(R.id.nsOffset)
                 if (nsOffset.getState() == null) {
                     nsOffset.setState(0, true, true)
@@ -633,11 +690,11 @@ class MainFragment : TempNameFragment() {
         val event = OpusEvent(
             value,
             opus_manager.RADIX,
-            beatkey.channel,
+            opus_manager.cursor.channel,
             opus_manager.relative_mode != 0
         )
 
-        opus_manager.set_event(beatkey, position, event)
+        opus_manager.set_event(event)
         this.reset_context_menu()
     }
 
@@ -646,7 +703,6 @@ class MainFragment : TempNameFragment() {
         val opus_manager = main.get_opus_manager()
 
         val popupMenu = PopupMenu(this.binding.root.context, view)
-        val cursor = opus_manager.get_cursor()
         val drums = resources.getStringArray(R.array.midi_drums)
         val preset = main.soundfont.get_preset(0, 128)
         val available_drum_keys = mutableSetOf<Int>()
@@ -665,7 +721,7 @@ class MainFragment : TempNameFragment() {
             }
         }
 
-        val line_map = opus_manager.channels[cursor.get_beatkey().channel].line_map
+        val line_map = opus_manager.channels[opus_manager.cursor.channel].line_map
         if (line_map != null) {
             for ((_, instrument) in line_map) {
                 if (instrument + 27 in available_drum_keys) {
@@ -680,10 +736,7 @@ class MainFragment : TempNameFragment() {
         }
 
         popupMenu.setOnMenuItemClickListener {
-            opus_manager.set_percussion_instrument(
-                cursor.get_beatkey().line_offset,
-                it.itemId
-            )
+            opus_manager.set_percussion_instrument( it.itemId )
             true
         }
 
@@ -699,91 +752,10 @@ class MainFragment : TempNameFragment() {
 
         if (select) {
             val opus_manager = main.get_opus_manager()
-            val cursor = opus_manager.get_cursor()
-            this.set_cursor_position(cursor.y, beat, listOf(), FocusType.Column)
+            opus_manager.cursor_select_column(beat)
         }
     }
 
-    fun select_column(x: Int) {
-        val main = this.get_main()
-        val opus_manager = main.get_opus_manager()
-
-        val cursor = opus_manager.get_cursor()
-        this.set_cursor_position(cursor.y, x, listOf(), FocusType.Column)
-
-        this.setContextMenu_column()
-    }
-
-    private fun om_split(splits: Int) {
-        val main = this.get_main()
-        val opus_manager = main.get_opus_manager()
-        opus_manager.split_tree_at_cursor(splits)
-        this.reset_context_menu()
-    }
-
-    private fun om_insert(count: Int) {
-        val main = this.get_main()
-        val opus_manager = main.get_opus_manager()
-
-        val beatkey = opus_manager.get_cursor().get_beatkey()
-        val position = opus_manager.get_cursor().get_position()
-
-        if (position.isEmpty()) {
-            opus_manager.split_tree_at_cursor(count + 1)
-        } else {
-            opus_manager.insert_after(beatkey, position, count)
-        }
-        this.reset_context_menu()
-    }
-
-    private fun om_remove(count: Int) {
-        val main = this.get_main()
-        val opus_manager = main.get_opus_manager()
-
-        val cursor = opus_manager.get_cursor()
-        if (cursor.get_position().isNotEmpty()) {
-            val beatkey = cursor.get_beatkey()
-            val position = cursor.get_position()
-            opus_manager.remove(beatkey, position, count)
-        }
-        this.reset_context_menu()
-    }
-
-    private fun om_insert_line(count: Int) {
-        val main = this.get_main()
-        val opus_manager = main.get_opus_manager()
-        val beatkey = opus_manager.get_cursor().get_beatkey()
-        opus_manager.new_line(beatkey.channel, beatkey.line_offset + 1, count)
-
-        this.reset_context_menu()
-    }
-
-    private fun om_remove_line(count: Int) {
-        val main = this.get_main()
-        val opus_manager = main.get_opus_manager()
-
-        if (opus_manager.line_count() > 1) {
-            val beatkey = opus_manager.get_cursor().get_beatkey()
-            opus_manager.remove_line(beatkey.channel, beatkey.line_offset, count)
-        }
-        this.reset_context_menu()
-    }
-
-    private fun om_remove_beat(count: Int) {
-        val main = this.get_main()
-        val opus_manager = main.get_opus_manager()
-
-        val cursor = opus_manager.get_cursor()
-        opus_manager.remove_beat(cursor.get_beatkey().beat, count)
-    }
-
-    private fun om_insert_beat(count: Int) {
-        val main = this.get_main()
-        val opus_manager = main.get_opus_manager()
-        val cursor = opus_manager.get_cursor()
-        opus_manager.insert_beat(cursor.get_beatkey().beat + 1, count)
-        opus_manager.cursor_right()
-    }
 
     // TODO: Consider Y
     fun is_leaf_visible(beatkey: BeatKey, position: List<Int>): Boolean {
@@ -805,53 +777,4 @@ class MainFragment : TempNameFragment() {
         rvBeatTable_adapter.scrollToPosition(beatkey, position)
     }
 
-    fun set_active_line(y: Int) {
-        val main = this.get_main()
-
-        val opus_manager = main.get_opus_manager()
-        val cursor = opus_manager.get_cursor()
-        this.set_cursor_position(y, cursor.x, listOf(), FocusType.Row)
-
-        this.setContextMenu_line()
-    }
-
-    fun get_label_text(y: Int): String {
-        val opus_manager = this.get_main().get_opus_manager()
-        val (channel, line_offset) = opus_manager.get_channel_index(y)
-        return if (!opus_manager.is_percussion(channel)) {
-            "$channel::$line_offset"
-        } else {
-            val instrument = opus_manager.get_percussion_instrument(line_offset)
-            "!$instrument"
-        }
-    }
-
-
-    fun set_cursor_position(y: Int, x: Int, position: List<Int>, type: FocusType = FocusType.Cell) {
-        val main = this.get_main()
-        main.runOnUiThread {
-            val rvBeatTable = main.findViewById<RecyclerView>(R.id.rvBeatTable)
-            val adapter = rvBeatTable.adapter as BeatColumnAdapter
-            val opus_manager = main.get_opus_manager()
-
-            adapter.unset_cursor_position()
-
-            opus_manager.set_cursor_position(y, x, position)
-
-            adapter.apply_focus_type(type)
-        }
-    }
-
-    private fun unset_cursor_position() {
-        val rvBeatTable = this.get_main().findViewById<RecyclerView>(R.id.rvBeatTable)
-        val adapter = rvBeatTable.adapter as BeatColumnAdapter
-        adapter.unset_cursor_position()
-    }
-
-    fun set_channel_instrument(channel: Int, instrument: Int) {
-        val main = this.get_main()
-        val opus_manager = main.get_opus_manager()
-        opus_manager.set_channel_instrument(channel, instrument)
-        main.update_channel_instruments(opus_manager)
-    }
 }

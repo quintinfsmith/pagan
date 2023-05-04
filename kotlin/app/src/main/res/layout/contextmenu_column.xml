@@ -1,30 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="@dimen/normal_padding"
     xmlns:app="http://schemas.android.com/apk/res-auto">
-
-    <TextView
-        android:id="@+id/btnRemoveBeat"
-        android:theme="@style/button"
-        android:layout_marginEnd="@dimen/normal_padding"
-        android:gravity="center"
-        android:layout_width="0dp"
+    <LinearLayout
         android:layout_weight="1"
-
-        android:layout_height="match_parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/btnInsertBeat"
-        android:text="Remove Beat"/>
-    <TextView
-        android:id="@+id/btnInsertBeat"
-        android:theme="@style/button"
-        android:gravity="center"
         android:layout_width="0dp"
+        android:layout_gravity="center"
+        android:layout_height="wrap_content">
+        <ImageView
+            android:id="@+id/btnRemoveBeat"
+            android:theme="@style/icon_button"
+            android:layout_gravity="center"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:srcCompat="@drawable/remove_beat"
+            android:contentDescription="Remove Beat" />
+    </LinearLayout>
+
+    <LinearLayout
         android:layout_weight="1"
-        android:layout_height="match_parent"
-        app:layout_constraintStart_toEndOf="@+id/btnRemoveBeat"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:text="Insert Beat"/>
-</androidx.constraintlayout.widget.ConstraintLayout>
+        android:layout_width="0dp"
+        android:layout_gravity="center"
+        android:layout_height="wrap_content">
+        <ImageView
+            android:id="@+id/btnInsertBeat"
+            android:theme="@style/icon_button"
+            android:layout_gravity="center"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:srcCompat="@drawable/insert_beat"
+            android:contentDescription="Insert Beat" />
+    </LinearLayout>
+</LinearLayout>

@@ -9,7 +9,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 
 @SuppressLint("ClickableViewAccessibility")
-class ColumnLabelAdapter(var main_fragment: MainFragment, var recycler: RecyclerView) : RecyclerView.Adapter<ColumnLabelAdapter.ColumnLabelViewHolder>() {
+class ColumnLabelAdapter(var opus_manager: InterfaceLayer, var recycler: RecyclerView) : RecyclerView.Adapter<ColumnLabelAdapter.ColumnLabelViewHolder>() {
     // BackLink so I can get the x offset from a view in the view holder
     var column_widths = mutableListOf<Int>()
 
@@ -115,14 +115,14 @@ class ColumnLabelAdapter(var main_fragment: MainFragment, var recycler: Recycler
         label.setOnClickListener {
             var holder = (it as LabelView).viewHolder ?: return@setOnClickListener
             var beat = holder.bindingAdapterPosition
-            this.main_fragment.select_column(beat)
+            this.opus_manager.cursor_select_column(beat)
         }
 
         label.setOnFocusChangeListener { view, is_focused: Boolean ->
             if (is_focused) {
                 var holder = (view as LabelView).viewHolder ?: return@setOnFocusChangeListener
                 var beat = holder.bindingAdapterPosition
-                this.main_fragment.select_column(beat)
+                this.opus_manager.cursor_select_column(beat)
             }
         }
 
@@ -138,7 +138,7 @@ class ColumnLabelAdapter(var main_fragment: MainFragment, var recycler: Recycler
         var beat = holder.bindingAdapterPosition
 
         var item_view = holder.itemView
-        var resources = this.main_fragment.resources
+        var resources = this.recycler.resources
         item_view.layoutParams.width = (resources.getDimension(R.dimen.base_leaf_width) * this.column_widths[beat].toFloat()).toInt()
         item_view.layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT
 

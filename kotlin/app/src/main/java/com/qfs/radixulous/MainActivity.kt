@@ -118,7 +118,7 @@ class MainActivity : AppCompatActivity() {
 
     fun save_dialog(callback: () -> Unit) {
         if (this.get_opus_manager().has_changed_since_save()) {
-            var that = this
+            val that = this
             AlertDialog.Builder(this, R.style.AlertDialog).apply {
                 setTitle("Save Current Project First?")
                 setCancelable(true)
@@ -137,8 +137,6 @@ class MainActivity : AppCompatActivity() {
             callback()
         }
     }
-
-
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
@@ -176,7 +174,7 @@ class MainActivity : AppCompatActivity() {
     fun setup_config_drawer() {
         val opus_manager = this.get_opus_manager()
         val rvActiveChannels: RecyclerView = this.findViewById(R.id.rvActiveChannels)
-        ChannelOptionAdapter(this, rvActiveChannels, this.soundfont)
+        ChannelOptionAdapter(this, opus_manager, rvActiveChannels, this.soundfont)
 
         val tvChangeProjectName: TextView = this.findViewById(R.id.tvChangeProjectName)
         tvChangeProjectName.setOnClickListener {
@@ -186,7 +184,9 @@ class MainActivity : AppCompatActivity() {
         val tvTempo: TextView = this.findViewById(R.id.tvTempo)
         tvTempo.text = "${opus_manager.tempo.toInt()} BPM"
         tvTempo.setOnClickListener {
-            this.popup_number_dialog("Set Tempo (BPM)", 1, 999, this::set_tempo, opus_manager.tempo.toInt())
+            this.popup_number_dialog("Set Tempo (BPM)", 1, 999, opus_manager.tempo.toInt()) { tempo: Int ->
+                opus_manager.set_tempo(tempo.toFloat())
+            }
         }
 
         val btnTranspose: TextView = this.findViewById(R.id.btnTranspose)
@@ -253,10 +253,10 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun scroll_to_beat(beat: Int, select: Boolean = false) {
+    fun scroll_to_beat(beat: Int) {
         val fragment = this.getActiveFragment()
         if (fragment is MainFragment) {
-            fragment.scroll_to_beat(beat, select)
+            fragment.scroll_to_beat(beat)
         }
     }
 
@@ -459,8 +459,8 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
-    internal fun popup_number_dialog(title: String, min_value: Int, max_value: Int, callback: (value: Int) -> Unit, default: Int? = null) {
-        var coerced_default_value = default ?: (this.number_selector_defaults[title] ?: min_value)
+    internal fun popup_number_dialog(title: String, min_value: Int, max_value: Int, default: Int? = null, callback: (value: Int) -> Unit) {
+        val coerced_default_value = default ?: (this.number_selector_defaults[title] ?: min_value)
 
         val viewInflated: View = LayoutInflater.from(this)
             .inflate(
@@ -612,10 +612,10 @@ class MainActivity : AppCompatActivity() {
         val minutes = seconds / 60
         seconds %= 60
         milliseconds %= 1000
-        var centiseconds = milliseconds / 10
-        var minute_string = "${minutes.toString().padStart(2,'0')}"
-        var second_string = "${seconds.toString().padStart(2,'0')}"
-        var centi_string = "${centiseconds.toString().padStart(2, '0')}"
+        val centiseconds = milliseconds / 10
+        val minute_string = "${minutes.toString().padStart(2,'0')}"
+        val second_string = "${seconds.toString().padStart(2,'0')}"
+        val centi_string = "${centiseconds.toString().padStart(2, '0')}"
         return "$minute_string:$second_string.$centi_string"
     }
 
@@ -626,21 +626,21 @@ class MainActivity : AppCompatActivity() {
                 window.decorView.rootView as ViewGroup,
                 false
             )
-
         val opus_manager = this.get_opus_manager()
+        val working_beat = opus_manager.cursor.beat
         var playing = false
-        var sbPlaybackPosition = viewInflated.findViewById<SeekBar>(R.id.sbPlaybackPosition)
+        val sbPlaybackPosition = viewInflated.findViewById<SeekBar>(R.id.sbPlaybackPosition)
         sbPlaybackPosition.max = opus_manager.opus_beat_count - 1
-        sbPlaybackPosition.progress = opus_manager.get_cursor().x
-        var tvPlaybackPosition = viewInflated.findViewById<TextView>(R.id.tvPlaybackPosition)
-        tvPlaybackPosition.text = opus_manager.get_cursor().x.toString()
-        var ibPlayPause = viewInflated.findViewById<ImageView>(R.id.ibPlayPause)
-        var btnJumpTo = viewInflated.findViewById<View>(R.id.btnJumpTo)
-        var tvPlaybackTime = viewInflated.findViewById<TextView>(R.id.tvPlaybackTime)
-        tvPlaybackTime.text = this.get_timestring_at_beat(opus_manager.get_cursor().x)
+        sbPlaybackPosition.progress = working_beat
+        val tvPlaybackPosition = viewInflated.findViewById<TextView>(R.id.tvPlaybackPosition)
+        tvPlaybackPosition.text = working_beat.toString()
+        val ibPlayPause = viewInflated.findViewById<ImageView>(R.id.ibPlayPause)
+        val btnJumpTo = viewInflated.findViewById<View>(R.id.btnJumpTo)
+        val tvPlaybackTime = viewInflated.findViewById<TextView>(R.id.tvPlaybackTime)
+        tvPlaybackTime.text = this.get_timestring_at_beat(working_beat)
 
 
-        var midi_scroller = MIDIScroller(this, sbPlaybackPosition)
+        val midi_scroller = MIDIScroller(this, sbPlaybackPosition)
         this.midi_controller.registerVirtualDevice(midi_scroller)
 
         fun start_playback(x: Int) {
@@ -666,7 +666,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        var that = this
+        val that = this
         sbPlaybackPosition.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener {
             var was_playing = false
             var is_stopping = false
@@ -697,7 +697,7 @@ class MainActivity : AppCompatActivity() {
 
         this.midi_playback_device.precache_midi(this.get_opus_manager().get_midi())
 
-        var dialog = AlertDialog.Builder(this, R.style.AlertDialog)
+        val dialog = AlertDialog.Builder(this, R.style.AlertDialog)
             .setView(viewInflated)
             .setOnCancelListener { _ ->
                 this.midi_input_device.sendEvent(MIDIStop())
@@ -708,7 +708,7 @@ class MainActivity : AppCompatActivity() {
 
         btnJumpTo.setOnClickListener {
             pause_playback()
-            this.scroll_to_beat(sbPlaybackPosition.progress, true)
+            this.scroll_to_beat(sbPlaybackPosition.progress)
             dialog.dismiss()
         }
 

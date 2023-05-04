@@ -2,6 +2,8 @@ package com.qfs.radixulous.opusmanager
 import android.util.Log
 import com.qfs.radixulous.structure.OpusTree
 import java.io.File
+import java.lang.Integer.max
+import java.lang.Integer.min
 
 open class LinksLayer() : OpusManagerBase() {
     var link_pools = mutableListOf<MutableSet<BeatKey>>()
@@ -301,5 +303,65 @@ open class LinksLayer() : OpusManagerBase() {
         }
         data.reflections = reflections
         return data
+    }
+
+    open fun link_beat_range(beat: BeatKey, target_a: BeatKey, target_b: BeatKey) {
+        var (from_key, to_key) = if (target_a.channel < target_b.channel) {
+            Pair(
+                BeatKey(target_a.channel, target_a.line_offset, -1),
+                BeatKey(target_b.channel, target_b.line_offset, -1)
+            )
+        } else if (target_a.channel == target_b.channel) {
+            if (target_a.line_offset < target_b.line_offset) {
+                Pair(
+                    BeatKey(target_a.channel, target_a.line_offset, -1),
+                    BeatKey(target_b.channel, target_b.line_offset, -1)
+                )
+            } else {
+                Pair(
+                    BeatKey(target_b.channel, target_b.line_offset, -1),
+                    BeatKey(target_a.channel, target_a.line_offset, -1)
+                )
+            }
+        } else {
+            Pair(
+                BeatKey(target_b.channel, target_b.line_offset, -1),
+                BeatKey(target_a.channel, target_a.line_offset, -1)
+            )
+        }
+        from_key.beat = min(target_a.beat, target_b.beat)
+        to_key.beat = max(target_a.beat, target_b.beat)
+        if (from_key == to_key) {
+            throw Exception("Can't self-link beats")
+        }
+        var working_beat = beat.copy()
+        val new_pairs = mutableListOf<Pair<BeatKey, BeatKey>>()
+        while (from_key.channel != to_key.channel || from_key.line_offset != to_key.line_offset) {
+            // INCLUSIVE
+            for (b in from_key.beat .. to_key.beat) {
+                new_pairs.add(Pair(from_key.copy(), working_beat.copy()))
+            }
+            if (this.channels[from_key.channel].size - 1 > from_key.line_offset) {
+                from_key.line_offset += 1
+            } else if (this.channels.size - 1 > from_key.channel) {
+                from_key.channel += 1
+                from_key.line_offset = 0
+            } else {
+                throw Exception("Bad BeatKey Range: $target_a .. $target_b")
+            }
+
+            if (this.channels[working_beat.channel].size - 1 > working_beat.line_offset) {
+                working_beat.line_offset += 1
+            } else if (this.channels.size - 1 > working_beat.channel) {
+                working_beat.channel += 1
+                working_beat.line_offset = 0
+            } else {
+                throw Exception("Bad BeatKey: $working_beat")
+            }
+        }
+        for (b in from_key.beat .. to_key.beat) {
+            new_pairs.add(Pair(from_key.copy(), working_beat.copy()))
+        }
+        this.batch_link_beats(new_pairs)
     }
 }

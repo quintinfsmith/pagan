@@ -1,30 +1,32 @@
 package com.qfs.radixulous
+import android.util.Log
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.radixulous.apres.MIDI
-import com.qfs.radixulous.opusmanager.BeatKey
-import com.qfs.radixulous.opusmanager.CursorLayer
-import com.qfs.radixulous.opusmanager.OpusChannel
-import com.qfs.radixulous.opusmanager.OpusEvent
+import com.qfs.radixulous.opusmanager.*
 import com.qfs.radixulous.structure.OpusTree
+import java.lang.Integer.max
+import java.lang.Integer.min
 
-class InterfaceLayer(var activity: MainActivity): CursorLayer() {
-    var interface_lock = 0
+class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
+    var simple_ui_lock = 0
     var relative_mode: Int = 0
+    var cursor = Cursor()
+    var queued_location_stamp: Pair<BeatKey, List<Int>?>? = null
 
-    private fun interface_locked(): Boolean {
-        return this.interface_lock != 0
+    private fun simple_ui_locked(): Boolean {
+        return this.simple_ui_lock != 0
     }
 
     private fun <T> surpress_ui(callback:(InterfaceLayer) -> T): T {
-        this.interface_lock += 1
+        this.simple_ui_lock += 1
         try {
             val output = callback(this)
-            this.interface_lock -= 1
+            this.simple_ui_lock -= 1
             return output
         } catch (e: Exception) {
-            this.interface_lock -= 1
+            this.simple_ui_lock -= 1
             throw e
         }
     }
@@ -32,20 +34,26 @@ class InterfaceLayer(var activity: MainActivity): CursorLayer() {
     override fun set_channel_instrument(channel: Int, instrument: Int) {
         super.set_channel_instrument(channel, instrument)
 
-        val rvActiveChannels: RecyclerView = this.activity.findViewById(R.id.rvActiveChannels)
-        rvActiveChannels.adapter?.notifyItemChanged(channel)
+        if (!this.simple_ui_locked()) {
+            val rvActiveChannels: RecyclerView = this.activity.findViewById(R.id.rvActiveChannels)
+            rvActiveChannels.adapter?.notifyItemChanged(channel)
+        }
+
+        this.activity.update_channel_instruments(this)
     }
 
     override fun set_percussion_channel(channel: Int) {
         super.set_percussion_channel(channel)
-        val rvActiveChannels: RecyclerView = this.activity.findViewById(R.id.rvActiveChannels)
-        rvActiveChannels.adapter?.notifyItemChanged(channel)
+        if (!this.simple_ui_locked()) {
+            val rvActiveChannels: RecyclerView = this.activity.findViewById(R.id.rvActiveChannels)
+            rvActiveChannels.adapter?.notifyItemChanged(channel)
+        }
     }
 
     override fun unset_percussion_channel() {
         val old_channel = this.percussion_channel
         super.unset_percussion_channel()
-        if (old_channel != null) {
+        if (!this.simple_ui_locked() && old_channel != null) {
             val rvActiveChannels: RecyclerView = this.activity.findViewById(R.id.rvActiveChannels)
             rvActiveChannels.adapter?.notifyItemChanged(old_channel)
         }
@@ -59,13 +67,11 @@ class InterfaceLayer(var activity: MainActivity): CursorLayer() {
     override fun unset(beat_key: BeatKey, position: List<Int>) {
         super.unset(beat_key, position)
         this.ui_refresh_beat_labels(beat_key)
-        this.ui_scroll_to_position(beat_key, position)
     }
 
     override fun replace_tree(beat_key: BeatKey, position: List<Int>, tree: OpusTree<OpusEvent>) {
         super.replace_tree(beat_key, position, tree)
         this.ui_refresh_beat_labels(beat_key)
-        this.ui_scroll_to_position(beat_key, position)
     }
 
     override fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEvent) {
@@ -77,14 +83,12 @@ class InterfaceLayer(var activity: MainActivity): CursorLayer() {
         }
 
         this.ui_refresh_beat_labels(beat_key)
-        this.ui_scroll_to_position(beat_key, position)
     }
 
     override fun set_percussion_event(beat_key: BeatKey, position: List<Int>) {
         super.set_percussion_event(beat_key, position)
 
         this.ui_refresh_beat_labels(beat_key)
-        this.ui_scroll_to_position(beat_key, position)
 
     }
     fun set_relative_mode(event: OpusEvent) {
@@ -99,15 +103,6 @@ class InterfaceLayer(var activity: MainActivity): CursorLayer() {
         }
     }
 
-    override fun apply_undo() {
-        if (this.has_history()) {
-            super.apply_undo()
-            this.reset_context_menu()
-        } else {
-            this.activity.feedback_msg(this.activity.getString(R.string.msg_undo_none))
-        }
-    }
-
     override fun set_percussion_instrument(line_offset: Int, instrument: Int) {
         super.set_percussion_instrument(line_offset, instrument)
 
@@ -117,72 +112,40 @@ class InterfaceLayer(var activity: MainActivity): CursorLayer() {
     override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
         super.split_tree(beat_key, position, splits)
         this.ui_refresh_beat_labels(beat_key)
-        this.ui_scroll_to_position(beat_key, position)
     }
 
     override fun insert_after(beat_key: BeatKey, position: List<Int>) {
         super.insert_after(beat_key, position)
-        this.withFragment {
-            if (position.isNotEmpty()) {
-                val new_position = position.toMutableList()
-                new_position[new_position.size - 1] += 1
-            }
-            this.ui_scroll_to_position(beat_key, position)
-        }
-
         this.ui_refresh_beat_labels(beat_key)
     }
 
     override fun remove(beat_key: BeatKey, position: List<Int>) {
-        this.ui_scroll_to_position(beat_key, position)
         super.remove(beat_key, position)
         this.ui_refresh_beat_labels(beat_key)
     }
 
     override fun new_line(channel: Int, line_offset: Int?): List<OpusTree<OpusEvent>> {
         val output = super.new_line(channel, line_offset)
+
         this.ui_add_line_label()
         this.ui_notify_visible_changes()
         return output
     }
 
-    override fun move_line(channel_old: Int, line_old: Int, channel_new: Int, line_new: Int) {
-        val initial_old_size = this.channels[channel_old].size
-        val initial_new_size = this.channels[channel_new].size
-        this.surpress_ui {
-            super.move_line(channel_old, line_old, channel_new, line_new)
-        }
-
-        val current_new_size = this.channels[channel_new].size
-        if (current_new_size > initial_new_size) {
-            for (i in initial_new_size until current_new_size) {
-                this.ui_add_line_label()
-            }
-        } else {
-            for (i in current_new_size until initial_new_size) {
-                this.ui_remove_line_label(channel_new, i)
-            }
-        }
-
-        if (channel_new != channel_old) {
-            val current_old_size = this.channels[channel_old].size
-            if (current_old_size > initial_old_size) {
-                for (i in initial_old_size until current_old_size) {
-                    this.ui_add_line_label()
-                }
-            } else {
-                for (i in current_old_size until initial_old_size) {
-                    this.ui_remove_line_label(channel_old, i)
-                }
-            }
-        }
-
+    override fun insert_line(channel: Int, line_offset: Int, line: MutableList<OpusTree<OpusEvent>>) {
+        super.insert_line(channel, line_offset, line)
+        this.ui_add_line_label()
         this.ui_notify_visible_changes()
     }
 
+    //override fun move_line(channel_old: Int, line_old: Int, channel_new: Int, line_new: Int) {
+    //    super.move_line(channel_old, line_old, channel_new, line_new)
+    //    this.ui_notify_visible_changes()
+    //}
+
     override fun remove_line(channel: Int, line_offset: Int): MutableList<OpusTree<OpusEvent>> {
-        val output = super.remove_line(channel, line_offset)
         this.ui_remove_line_label(channel, line_offset)
+        val output = super.remove_line(channel, line_offset)
         this.ui_notify_visible_changes()
         return output
     }
@@ -193,51 +156,20 @@ class InterfaceLayer(var activity: MainActivity): CursorLayer() {
             this.ui_add_line_label()
         }
         this.ui_notify_visible_changes()
-        if (! this.interface_locked()) {
-            val rvActiveChannels: RecyclerView = this.activity.findViewById(R.id.rvActiveChannels)
-            rvActiveChannels.adapter?.notifyItemInserted(channel ?: (this.channels.size - 1))
-        }
-    }
-
-    override fun set_cursor_position(beat_key: BeatKey, position: List<Int>) {
-        val previous_beat_key = this.get_cursor().get_beatkey()
-        var previous_position = this.get_cursor().get_position()
-        super.set_cursor_position(beat_key, position)
-        if (beat_key != previous_beat_key && position != previous_position) {
-            this.ui_refresh_beat_labels(beat_key)
-        }
+        val rvActiveChannels: RecyclerView = this.activity.findViewById(R.id.rvActiveChannels)
+        rvActiveChannels.adapter?.notifyItemInserted(channel ?: (this.channels.size - 1))
     }
 
     override fun remove_beat(beat_index: Int) {
         super.remove_beat(beat_index)
-        if (!this.interface_locked()) {
-            var adj_index = if (beat_index >= this.opus_beat_count) {
-                this.opus_beat_count - 1
-            } else {
-                beat_index
-            }
-            val rvBeatTable = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
-            rvBeatTable.scrollToPosition(adj_index)
-            val rvColumnLabels = this.activity.findViewById<RecyclerView>(R.id.rvColumnLabels)
-            rvColumnLabels.scrollToPosition(adj_index)
-        }
         this.ui_remove_beat(beat_index)
-        this.ui_refresh_beat_labels(this.get_cursor().get_beatkey())
+        //this.ui_refresh_beat_labels(this.get_cursor().get_beatkey())
     }
 
     override fun insert_beat(beat_index: Int) {
-        val original_beat = this.get_cursor().get_beatkey()
         super.insert_beat(beat_index)
-
-        if (!this.interface_locked()) {
-            val rvBeatTable = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
-            rvBeatTable.scrollToPosition(beat_index)
-            val rvColumnLabels = this.activity.findViewById<RecyclerView>(R.id.rvColumnLabels)
-            rvColumnLabels.scrollToPosition(beat_index)
-        }
-
         this.ui_add_beat(beat_index)
-        this.ui_refresh_beat_labels(original_beat)
+        //this.ui_refresh_beat_labels(original_beat)
     }
 
     override fun new() {
@@ -314,6 +246,7 @@ class InterfaceLayer(var activity: MainActivity): CursorLayer() {
 
         val rvActiveChannels: RecyclerView = this.activity.findViewById(R.id.rvActiveChannels)
         super.clear()
+        this.cursor.clear()
 
         val rvLineLabels = this.activity.findViewById<RecyclerView>(R.id.rvLineLabels)
         val rvLineLabels_adapter = rvLineLabels.adapter as LineLabelAdapter
@@ -346,9 +279,10 @@ class InterfaceLayer(var activity: MainActivity): CursorLayer() {
     }
 
     private fun ui_scroll_to_position(beat_key: BeatKey, position: List<Int>) {
-        if (this.interface_locked()) {
+        if (this.simple_ui_locked()) {
             return
         }
+
         this.withFragment {
             it.scrollTo(beat_key, position)
         }
@@ -356,26 +290,21 @@ class InterfaceLayer(var activity: MainActivity): CursorLayer() {
     }
 
     private fun ui_remove_beat(beat: Int) {
-        if (this.interface_locked()) {
-            return
-        }
         val beat_table = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
         val rvBeatTable_adapter = beat_table.adapter as BeatColumnAdapter
         rvBeatTable_adapter.removeBeatColumn(beat)
     }
     private fun ui_add_beat(beat: Int) {
-        if (this.interface_locked()) {
-            return
-        }
         val beat_table = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
         val rvBeatTable_adapter = beat_table.adapter as BeatColumnAdapter
         rvBeatTable_adapter.addBeatColumn(beat)
     }
 
     private fun ui_notify_visible_changes() {
-        if (this.interface_locked()) {
+        if (this.simple_ui_locked()) {
             return
         }
+
         val beat_table = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
         val rvBeatTable_adapter = beat_table.adapter as BeatColumnAdapter
         val first = (beat_table.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
@@ -386,24 +315,19 @@ class InterfaceLayer(var activity: MainActivity): CursorLayer() {
     }
 
     private fun ui_add_line_label() {
-        if (this.interface_locked()) {
-            return
-        }
         val rvLineLabels = this.activity.findViewById<RecyclerView>(R.id.rvLineLabels)
         val rvLineLabels_adapter = rvLineLabels.adapter as LineLabelAdapter
         rvLineLabels_adapter.addLineLabel()
     }
+
     private fun ui_remove_line_label(channel: Int, line_offset: Int) {
-        if (this.interface_locked()) {
-            return
-        }
         val rvLineLabels = this.activity.findViewById<RecyclerView>(R.id.rvLineLabels)
         val rvLineLabels_adapter = rvLineLabels.adapter as LineLabelAdapter
-        rvLineLabels_adapter.removeLineLabel(this.get_y(channel, line_offset))
+        rvLineLabels_adapter.removeLineLabel(this.get_abs_offset(channel, line_offset))
     }
 
     private fun ui_refresh_beat_labels(beat_key: BeatKey) {
-        if (this.interface_locked()) {
+        if (this.simple_ui_locked()) {
             return
         }
         val beat_table = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
@@ -418,7 +342,7 @@ class InterfaceLayer(var activity: MainActivity): CursorLayer() {
     }
 
     private fun update_line_labels() {
-        if (this.interface_locked()) {
+        if (this.simple_ui_locked()) {
             return
         }
         val rvLineLabels = this.activity.findViewById<RecyclerView>(R.id.rvLineLabels)
@@ -443,7 +367,7 @@ class InterfaceLayer(var activity: MainActivity): CursorLayer() {
     }
 
     private fun reset_context_menu() {
-        if (this.interface_locked()) {
+        if (this.simple_ui_locked()) {
             return
         }
         this.withFragment {
@@ -462,12 +386,12 @@ class InterfaceLayer(var activity: MainActivity): CursorLayer() {
             rvBeatTable_adapter.addBeatColumn(i)
         }
 
-        this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
-            repeat(channel.lines.size) {
-                rvLineLabels_adapter.addLineLabel()
-            }
-            rvActiveChannels.adapter?.notifyItemInserted(i)
-        }
+        //this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
+        //    repeat(channel.lines.size) {
+        //        rvLineLabels_adapter.addLineLabel()
+        //    }
+        //    rvActiveChannels.adapter?.notifyItemInserted(i)
+        //}
     }
 
     override fun set_transpose(new_transpose: Int)  {
@@ -482,4 +406,210 @@ class InterfaceLayer(var activity: MainActivity): CursorLayer() {
         val tvTempo = this.activity.findViewById<TextView>(R.id.tvTempo)
         tvTempo.text = "${this.tempo.toInt()} BPM"
     }
+
+    override fun apply_undo() {
+        if (this.has_history()) {
+            this.surpress_ui {
+                super.apply_undo()
+            }
+            this.ui_set_cursor_focus()
+            this.ui_notify_visible_changes()
+
+            val (beat_key, position) = this.queued_location_stamp ?: return
+            this.queued_location_stamp = null
+
+            if (beat_key.beat == -1) { // Row Select
+                this.cursor_select_row(beat_key.channel, beat_key.line_offset)
+            } else if (beat_key.channel == -1 || beat_key.line_offset == -1) { // Beat Select
+                this.cursor_select_column(beat_key.beat)
+            } else if (position == null) {
+                Log.w("AAA", "No position given")
+                return
+            } else {
+                this.cursor_select(beat_key, position)
+            }
+        } else {
+            this.activity.feedback_msg(this.activity.getString(R.string.msg_undo_none))
+        }
+    }
+
+    override fun apply_history_node(current_node: HistoryNode, depth: Int)  {
+        if (current_node.location_stamp != null) {
+           this.queued_location_stamp = current_node.location_stamp
+        }
+
+        super.apply_history_node(current_node, depth)
+
+    }
+
+    private fun ui_unset_cursor_focus() {
+        val rvBeatTable = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
+        val adapter = rvBeatTable.adapter as BeatColumnAdapter
+        adapter.unset_cursor_focus()
+    }
+
+    private fun ui_set_cursor_focus() {
+        if (this.simple_ui_locked()) {
+            return
+        }
+        val rvBeatTable = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
+        val adapter = rvBeatTable.adapter as BeatColumnAdapter
+        adapter.set_cursor_focus()
+    }
+
+
+    // Cursor Functions ////////////////////////////////////////////////////////////////////////////
+    fun cursor_clear() {
+        this.ui_unset_cursor_focus()
+        this.cursor.clear()
+        this.withFragment {
+            it.clearContextMenu()
+        }
+    }
+    fun cursor_select_row(channel: Int, line_offset: Int) {
+        this.ui_unset_cursor_focus()
+        this.cursor.select_row(channel, line_offset)
+        this.ui_set_cursor_focus()
+        this.withFragment {
+            it.setContextMenu_line()
+        }
+    }
+
+    fun cursor_select_column(beat: Int) {
+        this.ui_unset_cursor_focus()
+        this.cursor.select_column(beat)
+        this.ui_set_cursor_focus()
+
+        this.withFragment {
+            it.setContextMenu_column()
+        }
+    }
+
+    fun cursor_select(beat_key: BeatKey, position: List<Int>) {
+        this.ui_unset_cursor_focus()
+        this.cursor.select(beat_key, position)
+        this.ui_set_cursor_focus()
+
+        this.withFragment {
+            it.setContextMenu_leaf()
+        }
+    }
+
+    fun cursor_select_range(beat_key_a: BeatKey, beat_key_b: BeatKey) {
+        this.ui_unset_cursor_focus()
+        this.cursor.select_range(beat_key_a, beat_key_b)
+        this.ui_set_cursor_focus()
+    }
+
+    fun get_tree(): OpusTree<OpusEvent> {
+        return this.get_tree(
+            this.cursor.get_beatkey(),
+            this.cursor.get_position()
+        )
+    }
+
+    fun unset() {
+        this.unset(
+            this.cursor.get_beatkey(),
+            this.cursor.get_position()
+        )
+    }
+
+    fun convert_event_to_absolute() {
+        this.convert_event_to_absolute(
+            this.cursor.get_beatkey(),
+            this.cursor.get_position()
+        )
+    }
+
+    fun convert_event_to_relative() {
+        this.convert_event_to_relative(
+            this.cursor.get_beatkey(),
+            this.cursor.get_position()
+        )
+    }
+
+    fun set_event(event: OpusEvent) {
+        this.set_event(
+            this.cursor.get_beatkey(),
+            this.cursor.get_position(),
+            event
+        )
+    }
+
+    fun set_percussion_event() {
+        this.set_percussion_event(
+            this.cursor.get_beatkey(),
+            this.cursor.get_position()
+        )
+    }
+
+    fun unlink_beat() {
+        this.unlink_beat(this.cursor.get_beatkey())
+    }
+
+    fun clear_link_pool() {
+        this.clear_link_pool(
+            this.cursor.get_beatkey()
+        )
+    }
+
+    fun set_percussion_instrument(instrument: Int) {
+        this.set_percussion_instrument(
+            this.cursor.line_offset,
+            instrument
+        )
+    }
+
+    fun split_tree(splits: Int) {
+        this.split_tree(
+            this.cursor.get_beatkey(),
+            this.cursor.get_position(),
+            splits
+        )
+    }
+
+    fun insert_after(count: Int) {
+        this.insert_after(
+            this.cursor.get_beatkey(),
+            this.cursor.get_position(),
+            count
+        )
+    }
+
+    fun remove(count: Int) {
+        this.remove(
+            this.cursor.get_beatkey(),
+            this.cursor.get_position(),
+            count
+        )
+    }
+    fun insert_line(count: Int) {
+        this.new_line(
+            this.cursor.channel,
+            this.cursor.line_offset + 1,
+            count
+        )
+    }
+
+    fun remove_line(count: Int) {
+        this.remove_line(
+            this.cursor.channel,
+            this.cursor.line_offset,
+            count
+        )
+    }
+
+    fun remove_beat_at_cursor(count: Int) {
+        this.remove_beat(this.cursor.beat, count)
+    }
+
+    fun insert_beat_at_cursor(count: Int) {
+        this.insert_beat(
+            this.cursor.beat + 1,
+            count
+        )
+    }
+    // End Cursor Functions ////////////////////////////////////////////////////////////////////////
+
 }

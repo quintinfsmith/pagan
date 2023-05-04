@@ -12,6 +12,7 @@ import com.qfs.radixulous.apres.SoundFont
 
 class ChannelOptionAdapter(
     private val activity: MainActivity,
+    val opus_manager: InterfaceLayer,
     private val recycler: RecyclerView,
     private val soundfont: SoundFont
 ) : RecyclerView.Adapter<ChannelOptionAdapter.ChannelOptionViewHolder>() {
@@ -28,10 +29,8 @@ class ChannelOptionAdapter(
                         that.notifyItemChanged(i)
                     }
                 }
-                override fun onItemRangeChanged(start: Int, count: Int) {
-                }
-                override fun onItemRangeInserted(start: Int, count: Int) {
-                }
+                override fun onItemRangeChanged(start: Int, count: Int) { }
+                override fun onItemRangeInserted(start: Int, count: Int) { }
                 //override fun onChanged() { }
             }
         )
@@ -51,12 +50,11 @@ class ChannelOptionAdapter(
 
 
     private fun set_text(view: View, position: Int) {
-        val opus_manager = this.activity.get_opus_manager()
-        val channels = opus_manager.channels
+        val channels = this.opus_manager.channels
         val curChannel = channels[position]
         val btnChooseInstrument: TextView = view.findViewById(R.id.btnChooseInstrument)
         val label = this.get_label(
-            if (opus_manager.is_percussion(position)) {
+            if (this.opus_manager.is_percussion(position)) {
                 -1
             } else {
                 curChannel.midi_instrument
@@ -125,23 +123,19 @@ class ChannelOptionAdapter(
     }
 
     private fun interact_btnRemoveChannel(view: View) {
-        val opus_manager = this.activity.get_opus_manager()
-
-        if (opus_manager.channels.size > 1) {
+        if (this.opus_manager.channels.size > 1) {
             val x = this.get_view_channel(view)
-            opus_manager.remove_channel(x)
+            this.opus_manager.remove_channel(x)
         }
     }
 
     private fun interact_btnChooseInstrument(view: View, index: Int) {
-        val opus_manager = this.activity.get_opus_manager()
-
         val wrapper = ContextThemeWrapper(this.activity, R.style.PopupMenu)
         val popupMenu = PopupMenu(wrapper, view)
         val channel = this.get_view_channel(view)
 
         for (i in 0 until 128) {
-            if (i == 0 && opus_manager.percussion_channel != null) {
+            if (i == 0 && this.opus_manager.percussion_channel != null) {
                 continue
             }
             popupMenu.menu.add(0, i - 1, i, "$i: ${this.get_label(i - 1)}")
@@ -157,16 +151,10 @@ class ChannelOptionAdapter(
 
     private fun set_channel_instrument(channel: Int, instrument: Int) {
         if (instrument == -1) {
-            this.set_percussion_channel(channel)
+            this.opus_manager.set_percussion_channel(channel)
             return
         }
-        val fragment = this.activity.getActiveFragment()
-        (fragment as MainFragment).set_channel_instrument(channel, instrument)
-    }
-
-    private fun set_percussion_channel(channel: Int) {
-        val opus_manager = this.activity.get_opus_manager()
-        opus_manager.set_percussion_channel(channel)
+        this.opus_manager.set_channel_instrument(channel, instrument)
     }
 
     override fun getItemCount(): Int {

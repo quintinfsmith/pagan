@@ -28,6 +28,47 @@ open class OpusManagerBase {
         return this.channels.size
     }
 
+    fun get_total_line_count(): Int {
+        var output = 0
+        this.channels.forEach { channel: OpusChannel ->
+            output += channel.size
+        }
+        return output
+    }
+
+    fun get_abs_offset(channel_index: Int, line_offset: Int): Int {
+        var count = 0
+        this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
+            channel.lines.forEachIndexed { j: Int, line: OpusChannel.OpusLine ->
+                if (i == channel_index && j == line_offset) {
+                    return count
+                }
+                count += 1
+            }
+        }
+        throw IndexOutOfBoundsException()
+    }
+
+    open fun get_abs_difference(beata: BeatKey, beatb: BeatKey): Pair<Int, Int> {
+        val beata_y = this.get_abs_offset(beata.channel, beata.line_offset)
+        val beatb_y = this.get_abs_offset(beatb.channel, beatb.line_offset)
+
+        return Pair(beatb_y - beata_y, beatb.beat - beata.beat)
+    }
+
+    fun get_std_offset(absolute: Int): Pair<Int, Int> {
+        var count = 0
+        this.channels.forEachIndexed {i: Int, channel: OpusChannel ->
+            channel.lines.forEachIndexed { j: Int, lines: OpusChannel.OpusLine ->
+                if (count == absolute) {
+                    return Pair(i, j)
+                }
+                count += 1
+            }
+        }
+        throw IndexOutOfBoundsException()
+    }
+
     fun get_channel_instrument(channel: Int): Int {
         return this.channels[channel].get_instrument()
     }
@@ -457,18 +498,29 @@ open class OpusManagerBase {
             return
         }
 
-        val line = this.remove_line(channel_old, line_old)
+        val line = this.channels[channel_old].lines[line_old].beats
 
-        val new_channel = this.channels[channel_new]
-        if (new_channel.size == 1 && new_channel.line_is_empty(0) && line_new == 1) {
-            this.insert_line(channel_new, 0, line)
-            this.remove_line(channel_new, 1)
+        this.insert_line(channel_new, line_new + 1, line)
+
+        if (channel_old == channel_new) {
+            if (line_old < line_new) {
+                this.remove_line(channel_old, line_old)
+            } else {
+                this.remove_line(channel_old, line_old + 1)
+            }
         } else {
-            this.insert_line(channel_new, line_new, line)
-        }
+            val new_channel = this.channels[channel_new]
+            if (new_channel.size == 2 && new_channel.line_is_empty(0)) {
+                this.remove_line(channel_new, 0)
+            }
 
-        if (this.channels[channel_old].size == 0) {
-            this.new_line(channel_old)
+            val old_channel = this.channels[channel_old]
+            if (old_channel.size == 1) {
+                this.new_line(channel_old, 0)
+                this.remove_line(channel_old, 1)
+            } else {
+                this.remove_line(channel_old, line_old)
+            }
         }
     }
 
@@ -1045,4 +1097,5 @@ open class OpusManagerBase {
     open fun set_tempo(new_tempo: Float) {
         this.tempo = new_tempo
     }
+
 }

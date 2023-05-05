@@ -200,7 +200,12 @@ open class HistoryLayer() : LinksLayer() {
                 )
             }
             "move_line" -> {
-                // move_line is a compound action
+                this.move_line(
+                    current_node.args[0] as Int,
+                    current_node.args[1] as Int,
+                    current_node.args[2] as Int,
+                    current_node.args[3] as Int
+                )
             }
 
             "new_line" -> {
@@ -711,48 +716,45 @@ open class HistoryLayer() : LinksLayer() {
     }
 
     override fun move_line(channel_old: Int, line_old: Int, channel_new: Int, line_new: Int) {
-        //this.push_move_line_back(channel_old, line_old, channel_new, line_new)
-        this.history_cache.remember {
+        this.push_move_line_back(channel_old, line_old, channel_new, line_new)
+        this.history_cache.forget {
             super.move_line(channel_old, line_old, channel_new, line_new)
         }
     }
 
-    //fun push_move_line_back(channel_old: Int, line_old: Int, channel_new: Int, line_new: Int) {
-    //    var return_from_line = if (channel_old == channel_new) {
-    //        if (line_old < line_new) {
-    //            line_new - 1
-    //        } else {
-    //            line_new
-    //        }
-    //    } else {
-    //        if (this.channels[channel_new].size == 1 && this.channels[channel_new].line_is_empty(0)) {
-    //            0
-    //        } else {
-    //            line_new
-    //        }
-    //    }
+    fun push_move_line_back(channel_old: Int, line_old: Int, channel_new: Int, line_new: Int) {
+        if (this.history_cache.isLocked()) {
+            return
+        }
+        this.history_cache.remember {
+            var restore_old_line = false
+            var return_from_line = if (channel_old == channel_new) {
+                if (line_old < line_new) {
+                    line_new - 1
+                } else {
+                    line_new
+                }
+            } else {
+                line_new
+            }
 
-    //    var return_to_line = if (channel_old == channel_new) {
-    //        if (line_old < line_new) {
-    //            line_old - 1
-    //        } else {
-    //            line_old
-    //        }
-    //    } else {
-    //        if (this.channels[channel_old].size == 1) {
-    //            0
-    //        } else if (this.channels[channel_old].size == 2) {
-    //            if (line_old == 0 && this.channels[channel_old].line_is_empty(1)) {
-    //
-    //            } else if (line_old == 1 && this.channels[channel_old].line_is_empty(0)) {
-    //            } else {
+            var return_to_line = if (channel_old == channel_new) {
+                if (line_old < line_new) {
+                    line_old
+                } else {
+                    line_old + 1
+                }
+            } else if (this.channels[channel_old].size == 1) {
+                restore_old_line = true
+                0
+            } else {
+                line_old
+            }
 
-    //            }
-    //        } else {
-    //            line_new
-    //        }
-    //    }
-
-    //    this.history_cache.append_undoer("move_line", listOf(channel_new, return_from_line, channel_old, line_old))
-    //}
+            this.history_cache.append_undoer("move_line", listOf(channel_new, return_from_line, channel_old, return_to_line))
+            if (restore_old_line) {
+                this.history_cache.append_undoer("remove_line", listOf(channel_old, line_old))
+            }
+        }
+    }
 }

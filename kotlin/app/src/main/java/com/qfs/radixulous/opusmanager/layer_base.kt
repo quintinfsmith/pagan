@@ -498,28 +498,18 @@ open class OpusManagerBase {
             return
         }
 
-        val line = this.channels[channel_old].lines[line_old].beats
-
-        this.insert_line(channel_new, line_new, line)
+        val line = this.remove_line(channel_old, line_old)
 
         if (channel_old == channel_new) {
             if (line_old < line_new) {
-                this.remove_line(channel_old, line_old)
+                this.insert_line(channel_new, line_new - 1, line)
             } else {
-                this.remove_line(channel_old, line_old + 1)
+                this.insert_line(channel_new, line_new, line)
             }
         } else {
-            val new_channel = this.channels[channel_new]
-            if (new_channel.size == 2 && new_channel.line_is_empty(0)) {
-                this.remove_line(channel_new, 0)
-            }
-
-            val old_channel = this.channels[channel_old]
-            if (old_channel.size == 1) {
+            this.insert_line(channel_new, line_new, line)
+            if (this.channels[channel_old].size == 0) {
                 this.new_line(channel_old, 0)
-                this.remove_line(channel_old, 1)
-            } else {
-                this.remove_line(channel_old, line_old)
             }
         }
     }

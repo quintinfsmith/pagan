@@ -442,8 +442,10 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     override fun apply_history_node(current_node: HistoryNode, depth: Int)  {
+        super.apply_history_node(current_node, depth)
         this.queued_location_stamp = when (current_node.func_name) {
             "cursor_select_row" -> {
+                Log.d("AAA", "${BeatKey( current_node.args[0] as Int, current_node.args[1] as Int, -1 )}")
                 Pair(
                     BeatKey(
                         current_node.args[0] as Int,
@@ -499,7 +501,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                 this.queued_location_stamp
             }
         }
-        super.apply_history_node(current_node, depth)
     }
 
     override fun push_to_history_stack(func_name: String, args: List<Any>) {
@@ -507,7 +508,16 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             when (func_name) {
                 "insert_line" -> {
                     this.push_to_history_stack(
-                        "cursor_select_line",
+                        "cursor_select_row",
+                        listOf(
+                            args[0] as Int,
+                            args[1] as Int
+                        )
+                    )
+                }
+                "remove_line" -> {
+                    this.push_to_history_stack(
+                        "cursor_select_row",
                         listOf(
                             args[0] as Int,
                             args[1] as Int

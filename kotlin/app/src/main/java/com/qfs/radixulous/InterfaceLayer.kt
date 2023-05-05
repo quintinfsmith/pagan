@@ -1,5 +1,6 @@
 package com.qfs.radixulous
 import android.util.Log
+import android.view.View
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -40,19 +41,18 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     override fun set_channel_instrument(channel: Int, instrument: Int) {
         super.set_channel_instrument(channel, instrument)
 
-        if (!this.simple_ui_locked()) {
-            val rvActiveChannels: RecyclerView = this.activity.findViewById(R.id.rvActiveChannels)
-            rvActiveChannels.adapter?.notifyItemChanged(channel)
-        }
+        val rvActiveChannels: RecyclerView = this.activity.findViewById(R.id.rvActiveChannels)
+        rvActiveChannels.adapter?.notifyItemChanged(channel)
 
         this.activity.update_channel_instruments(this)
     }
 
     override fun set_percussion_channel(channel: Int) {
         super.set_percussion_channel(channel)
+        val rvActiveChannels: RecyclerView = this.activity.findViewById(R.id.rvActiveChannels)
+        rvActiveChannels.adapter?.notifyItemChanged(channel)
         if (!this.simple_ui_locked()) {
-            val rvActiveChannels: RecyclerView = this.activity.findViewById(R.id.rvActiveChannels)
-            rvActiveChannels.adapter?.notifyItemChanged(channel)
+            this.update_line_labels()
         }
     }
 
@@ -110,6 +110,13 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
     override fun set_percussion_instrument(line_offset: Int, instrument: Int) {
         super.set_percussion_instrument(line_offset, instrument)
+
+        val btnChoosePercussion: TextView = this.activity.findViewById(R.id.btnChoosePercussion)
+
+        val drums = this.activity.resources.getStringArray(R.array.midi_drums)
+        val drum_index = this.get_percussion_instrument(line_offset)
+        btnChoosePercussion.text = "$instrument: ${drums[drum_index]}"
+
         this.update_line_labels()
     }
 
@@ -170,8 +177,8 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         //this.ui_refresh_beat_labels(this.get_cursor().get_beatkey())
     }
 
-    override fun insert_beat(beat_index: Int) {
-        super.insert_beat(beat_index)
+    override fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<OpusEvent>>?) {
+        super.insert_beat(beat_index, beats_in_column)
         this.ui_add_beat(beat_index)
         //this.ui_refresh_beat_labels(original_beat)
     }
@@ -419,6 +426,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             this.ui_notify_visible_changes()
 
             if (this.queued_location_stamp != null) {
+                Log.d("AAA", "${this.queued_location_stamp}!!!!!!!!")
                 val (beat_key, position) = this.queued_location_stamp!!
                 this.queued_location_stamp = null
 
@@ -436,6 +444,8 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                 this.cursor_clear()
             }
 
+            this.update_line_labels()
+
         } else {
             this.activity.feedback_msg(this.activity.getString(R.string.msg_undo_none))
         }
@@ -443,6 +453,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
     override fun apply_history_node(current_node: HistoryNode, depth: Int)  {
         super.apply_history_node(current_node, depth)
+        Log.d("AAA", "Setting Stamp: ${current_node.func_name}")
         this.queued_location_stamp = when (current_node.func_name) {
             "cursor_select_row" -> {
                 Log.d("AAA", "${BeatKey( current_node.args[0] as Int, current_node.args[1] as Int, -1 )}")
@@ -461,42 +472,16 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                     current_node.args[1] as List<Int>
                 )
             }
-
-            //"new_line" -> {
-            //    this.new_line(
-            //        current_node.args[0] as Int,
-            //        current_node.args[1] as Int
-            //    )
-            //}
-            //"remove_channel" -> {
-            //    this.remove_channel_by_uuid(current_node.args[0] as Int)
-            //}
-            //"new_channel" -> {
-            //    this.new_channel(current_node.args[0] as Int)
-            //}
-            //"remove" -> {
-            //    this.remove(
-            //        current_node.args[0] as BeatKey,
-            //        current_node.args[1] as List<Int>
-            //    )
-            //}
-            //"remove_beat" -> {
-            //    this.remove_beat(current_node.args[0] as Int)
-            //}
-            //"insert_beat" -> {
-            //    this.insert_beat(current_node.args[0] as Int)
-            //}
-            //"set_transpose" -> {
-            //    this.set_transpose(current_node.args[0] as Int)
-            //}
-            //"set_tempo" -> {
-            //    this.set_tempo(current_node.args[0] as Float)
-            //}
-            //"set_cursor" -> {
-            //    val beat_key = current_node.args[0] as BeatKey
-            //    val y = this.get_y(beat_key.channel, beat_key.line_offset)
-            //    this.get_cursor().set(y, beat_key.beat, current_node.args[1] as List<Int>)
-            //}
+            "cursor_select_column" -> {
+                Pair(
+                    BeatKey(
+                        -1,
+                        -1,
+                        current_node.args[0] as Int
+                    ),
+                    null
+                )
+            }
             else -> {
                 this.queued_location_stamp
             }
@@ -504,10 +489,29 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     override fun push_to_history_stack(func_name: String, args: List<Any>) {
-        this.history_cache.remember {
+        if (this.history_cache.isLocked()) {
+            return
+        }
+
+        super.history_cache.remember {
             when (func_name) {
+                "move_line" -> {
+                    var to_line = args[3] as Int
+                    var from_line = args[1] as Int
+                    super.push_to_history_stack(
+                        "cursor_select_row",
+                        listOf(
+                            args[2] as Int,
+                            if (args[0] as Int == args[2] as Int && to_line >= from_line) {
+                                to_line - 1
+                            } else {
+                                to_line
+                            }
+                        )
+                    )
+                }
                 "insert_line" -> {
-                    this.push_to_history_stack(
+                    super.push_to_history_stack(
                         "cursor_select_row",
                         listOf(
                             args[0] as Int,
@@ -516,11 +520,17 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                     )
                 }
                 "remove_line" -> {
-                    this.push_to_history_stack(
+                    var channel = args[0] as Int
+                    var line_offset = args[1] as Int
+                    super.push_to_history_stack(
                         "cursor_select_row",
                         listOf(
-                            args[0] as Int,
-                            args[1] as Int
+                            channel,
+                            if (line_offset == this.channels[channel].size - 1) {
+                                line_offset - 1
+                            } else {
+                                line_offset
+                            }
                         )
                     )
                 }
@@ -532,12 +542,79 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                         tree = tree[0]
                     }
 
-                    this.push_to_history_stack(
+                    super.push_to_history_stack(
                         "cursor_select",
                         listOf(
                             args[0] as BeatKey,
                             new_position
                         )
+                    )
+                }
+                "set_percussion_instrument" ->{
+                    super.push_to_history_stack(
+                        "cursor_select_row",
+                        listOf(
+                            this.percussion_channel!!,
+                            args[0] as Int
+                        )
+                    )
+                }
+                "set_percussion_channel" -> {
+                    super.push_to_history_stack(
+                        "cursor_select_row",
+                        listOf(args[0], 0)
+                    )
+                }
+                "unset_percussion_channel" -> {
+                    super.push_to_history_stack(
+                        "cursor_select_row",
+                        listOf(this.percussion_channel!!, 0)
+                    )
+                }
+                "set_channel_instrument" -> {
+                    super.push_to_history_stack(
+                        "cursor_select_row",
+                        listOf(args[0], 0)
+                    )
+                }
+                "unset" -> {
+                    super.push_to_history_stack(
+                        "cursor_select",
+                        listOf(
+                            args[0] as BeatKey,
+                            args[1] as List<Int>
+                        )
+                    )
+                }
+                "set_event" -> {
+                    super.push_to_history_stack(
+                        "cursor_select",
+                        listOf(
+                            args[0] as BeatKey,
+                            args[1] as List<Int>
+                        )
+                    )
+                }
+                "set_percussion_event" -> {
+                    super.push_to_history_stack(
+                        "cursor_select",
+                        listOf(
+                            args[0] as BeatKey,
+                            args[1] as List<Int>
+                        )
+                    )
+                }
+                "insert_beat" -> {
+                    super.push_to_history_stack(
+                        "cursor_select_column",
+                        listOf(args[0] as Int)
+                    )
+                }
+                "remove_beat" -> {
+                    var x = min(args[0] as Int, this.opus_beat_count - 1)
+                    super.push_to_history_stack(
+                        "cursor_select_column",
+                        listOf(x)
                     )
                 }
                 else -> { }

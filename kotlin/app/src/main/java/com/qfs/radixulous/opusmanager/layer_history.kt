@@ -2,7 +2,6 @@ package com.qfs.radixulous.opusmanager
 import android.util.Log
 import com.qfs.radixulous.apres.MIDI
 import com.qfs.radixulous.structure.OpusTree
-import java.lang.Integer.max
 
 class HistoryNode(var func_name: String, var args: List<Any>) {
     var children: MutableList<HistoryNode> = mutableListOf()
@@ -101,11 +100,17 @@ class HistoryCache() {
     }
 
     fun lock() {
+        if (this.history_lock == 0) {
+            Log.d("AAA", "LOCLED!")
+        }
         this.history_lock += 1
     }
 
     fun unlock() {
         this.history_lock -= 1
+        if (this.history_lock == 0) {
+            Log.d("AAA", "UNLOCLED!")
+        }
     }
 
     fun pop(): HistoryNode? {
@@ -130,6 +135,7 @@ open class HistoryLayer() : LinksLayer() {
     var save_point_popped = false
 
     open fun push_to_history_stack(func_name: String, args: List<Any>) {
+        Log.d("AAA", "PUSHING $func_name ${this.history_cache.isLocked()}")
         this.history_cache.append_undoer(func_name, args)
     }
 
@@ -208,10 +214,11 @@ open class HistoryLayer() : LinksLayer() {
                 )
             }
 
-            "new_line" -> {
-                this.new_line(
+            "insert_line" -> {
+                this.insert_line(
                     current_node.args[0] as Int,
-                    current_node.args[1] as Int
+                    current_node.args[1] as Int,
+                    current_node.args[2] as MutableList<OpusTree<OpusEvent>>
                 )
             }
             "remove_channel" -> {
@@ -230,13 +237,28 @@ open class HistoryLayer() : LinksLayer() {
                 this.remove_beat(current_node.args[0] as Int)
             }
             "insert_beat" -> {
-                this.insert_beat(current_node.args[0] as Int)
+                this.insert_beat(
+                    current_node.args[0] as Int,
+                    current_node.args[1] as List<OpusTree<OpusEvent>>
+                )
             }
             "set_transpose" -> {
                 this.set_transpose(current_node.args[0] as Int)
             }
             "set_tempo" -> {
                 this.set_tempo(current_node.args[0] as Float)
+            }
+            "set_channel_instrument" -> {
+                this.set_channel_instrument(
+                    current_node.args[0] as Int,
+                    current_node.args[1] as Int
+                )
+            }
+            "set_percussion_instrument" -> {
+                this.set_percussion_instrument(
+                    current_node.args[0] as Int, // line
+                    current_node.args[1] as Int // Instrument
+                )
             }
 
             else -> {}
@@ -318,7 +340,7 @@ open class HistoryLayer() : LinksLayer() {
 
     override fun remove_line(channel: Int, line_offset: Int): MutableList<OpusTree<OpusEvent>> {
         return this.history_cache.remember {
-            this.push_new_line(channel, line_offset)
+            this.push_rebuild_line(channel, line_offset)
             super.remove_line(channel, line_offset)
         }
     }
@@ -371,8 +393,8 @@ open class HistoryLayer() : LinksLayer() {
         }
     }
 
-    override fun insert_beat(beat_index: Int) {
-        super.insert_beat(beat_index)
+    override fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<OpusEvent>>?) {
+        super.insert_beat(beat_index, beats_in_column)
         this.push_remove_beat(beat_index)
     }
 
@@ -514,7 +536,7 @@ open class HistoryLayer() : LinksLayer() {
     fun push_new_channel(channel: Int) {
         this.history_cache.remember {
             for (i in this.channels[channel].size - 1 downTo 0) {
-                this.push_new_line(channel, i)
+                this.push_rebuild_line(channel, i)
             }
 
             this.push_to_history_stack(
@@ -525,19 +547,15 @@ open class HistoryLayer() : LinksLayer() {
 
     }
 
-    fun push_new_line(channel: Int, line_offset: Int) {
+    fun push_rebuild_line(channel: Int, line_offset: Int) {
         this.history_cache.remember {
-            for (i in this.opus_beat_count - 1 downTo 0) {
-                val beat_key = BeatKey(channel, line_offset, i)
-                var tree = this.get_beat_tree(beat_key)
-                if (tree.is_event() || !tree.is_leaf()) {
-                    this.push_replace_tree(beat_key, listOf())
-                }
-            }
-
             this.push_to_history_stack(
-                "new_line",
-                listOf(channel, line_offset)
+                "insert_line",
+                listOf(
+                    channel,
+                    line_offset,
+                    this.channels[channel].lines[line_offset].beats.toMutableList()
+                )
             )
         }
     }
@@ -562,14 +580,15 @@ open class HistoryLayer() : LinksLayer() {
 
     fun push_insert_beat(index: Int, channel_sizes: List<Int>) {
         this.history_cache.remember {
+            var beat_cells = mutableListOf<OpusTree<OpusEvent>>()
             for (channel in channel_sizes.indices) {
                 val line_count = channel_sizes[channel]
                 for (j in 0 until line_count) {
-                    this.push_replace_tree(BeatKey(channel, j, index), listOf())
+                    beat_cells.add(this.get_beat_tree(BeatKey(channel, j, index)))
                 }
             }
 
-            this.push_to_history_stack( "insert_beat", listOf(index) )
+            this.push_to_history_stack( "insert_beat", listOf(index, beat_cells))
         }
     }
 
@@ -671,13 +690,14 @@ open class HistoryLayer() : LinksLayer() {
 
     override fun set_percussion_channel(channel: Int) {
         this.history_cache.remember {
-            if (this.percussion_channel == null) {
+            this.push_to_history_stack("set_channel_instrument", listOf(channel, this.channels[channel].get_instrument()))
+            var original_percussion_channel = this.percussion_channel
+            super.set_percussion_channel(channel)
+            if (original_percussion_channel == null) {
                 this.push_to_history_stack("unset_percussion_channel", listOf())
             } else {
-                this.push_to_history_stack("set_percussion_channel",
-                    listOf(this.percussion_channel!!))
+                this.push_to_history_stack("set_percussion_channel", listOf(original_percussion_channel!!))
             }
-            super.set_percussion_channel(channel)
         }
     }
 
@@ -751,10 +771,26 @@ open class HistoryLayer() : LinksLayer() {
                 line_old
             }
 
-            this.history_cache.append_undoer("move_line", listOf(channel_new, return_from_line, channel_old, return_to_line))
+            this.push_to_history_stack("move_line", listOf(channel_new, return_from_line, channel_old, return_to_line))
             if (restore_old_line) {
-                this.history_cache.append_undoer("remove_line", listOf(channel_old, line_old))
+                this.push_to_history_stack("remove_line", listOf(channel_old, line_old))
             }
+        }
+    }
+
+    override fun set_channel_instrument(channel: Int, instrument: Int) {
+        this.history_cache.remember {
+            this.push_to_history_stack("set_channel_instrument",
+                listOf(channel, this.channels[channel].get_instrument()))
+            super.set_channel_instrument(channel, instrument)
+        }
+    }
+
+    override fun set_percussion_instrument(line_offset: Int, instrument: Int) {
+        this.history_cache.remember {
+            var current = this.get_percussion_instrument(line_offset)
+            this.push_to_history_stack("set_percussion_instrument", listOf(line_offset, current))
+            super.set_percussion_instrument(line_offset, instrument)
         }
     }
 }

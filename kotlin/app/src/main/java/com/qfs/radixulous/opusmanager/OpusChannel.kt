@@ -46,6 +46,21 @@ class OpusChannel(var uuid: Int) {
         }
         return this.line_map!![line]
     }
+    private fun adjust_map_for_new_line(index: Int) {
+        if (! this.is_mapped()) {
+            return
+        }
+
+        var new_map = HashMap<Int, Int>()
+        for ((line, instrument) in this.line_map!!) {
+            if (line < index) {
+                new_map[line] = instrument
+            } else {
+                new_map[line + 1] = instrument
+            }
+        }
+        this.line_map = new_map
+    }
 
     fun new_line(index: Int? = null): List<OpusTree<OpusEvent>> {
         var new_line = OpusLine(this.beat_count)
@@ -53,6 +68,7 @@ class OpusChannel(var uuid: Int) {
             this.lines.add(new_line)
         }  else {
             this.lines.add(index, new_line)
+            this.adjust_map_for_new_line(index)
         }
         this.size += 1
 
@@ -65,11 +81,11 @@ class OpusChannel(var uuid: Int) {
         }
         var new_line = OpusLine(line)
         this.lines.add(index, new_line)
+        this.adjust_map_for_new_line(index)
         this.size += 1
     }
 
     fun remove_line(index: Int? = null): MutableList<OpusTree<OpusEvent>> {
-
         return if (index == null) {
             this.size -= 1
             lines.removeLast().beats

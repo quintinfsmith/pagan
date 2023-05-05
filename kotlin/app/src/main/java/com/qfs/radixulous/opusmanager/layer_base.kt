@@ -524,11 +524,21 @@ open class OpusManagerBase {
         }
     }
 
-    open fun insert_beat(beat_index: Int) {
+    open fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<OpusEvent>>? = null) {
         this.opus_beat_count += 1
         for (channel in this.channels) {
             channel.insert_beat(beat_index)
             channel.set_beat_count(this.opus_beat_count)
+        }
+        if (beats_in_column == null) {
+            return
+        }
+        var y = 0
+        this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
+            channel.lines.forEachIndexed { j: Int, line: OpusChannel.OpusLine ->
+                line.beats[beat_index] = beats_in_column[y]
+                y += 1
+            }
         }
     }
 

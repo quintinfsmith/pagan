@@ -257,8 +257,8 @@ open class LinksLayer() : OpusManagerBase() {
         return this.link_pool_map.contains(BeatKey(channel, line_offset, beat))
     }
 
-    override fun insert_beat(beat_index: Int) {
-        super.insert_beat(beat_index)
+    override fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<OpusEvent>>?) {
+        super.insert_beat(beat_index, beats_in_column)
         this.remap_links({ beat_key: BeatKey, args: List<Int> ->
              if (beat_key.beat >= beat_index) {
                 BeatKey(beat_key.channel, beat_key.line_offset, beat_key.beat + 1)

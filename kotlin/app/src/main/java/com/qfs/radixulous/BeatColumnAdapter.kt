@@ -419,7 +419,6 @@ class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: Recycle
     private fun get_all_leaf_views(beatkey: BeatKey, position: List<Int>? = null): List<LeafButton>? {
         val opus_manager = this.get_opus_manager()
         val y = opus_manager.get_abs_offset(beatkey.channel, beatkey.line_offset)
-        Log.d("AAA", "ABS OFF $y")
         return this.get_all_leaf_views(y, beatkey.beat, position)
     }
 

@@ -500,7 +500,7 @@ open class OpusManagerBase {
 
         val line = this.channels[channel_old].lines[line_old].beats
 
-        this.insert_line(channel_new, line_new + 1, line)
+        this.insert_line(channel_new, line_new, line)
 
         if (channel_old == channel_new) {
             if (line_old < line_new) {

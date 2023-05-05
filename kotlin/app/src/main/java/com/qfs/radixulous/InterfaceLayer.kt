@@ -10,6 +10,12 @@ import java.lang.Integer.max
 import java.lang.Integer.min
 
 class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
+    enum class LabelUpdate {
+        AddColumn,
+        PopColumn,
+        AddLine,
+        PopLine
+    }
     var simple_ui_lock = 0
     var relative_mode: Int = 0
     var cursor = Cursor()
@@ -87,10 +93,9 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
     override fun set_percussion_event(beat_key: BeatKey, position: List<Int>) {
         super.set_percussion_event(beat_key, position)
-
         this.ui_refresh_beat_labels(beat_key)
-
     }
+
     fun set_relative_mode(event: OpusEvent) {
         this.relative_mode = if (event.relative) {
             if (event.note >= 0) {
@@ -105,7 +110,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
     override fun set_percussion_instrument(line_offset: Int, instrument: Int) {
         super.set_percussion_instrument(line_offset, instrument)
-
         this.update_line_labels()
     }
 
@@ -179,7 +183,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         val new_path = this.activity.project_manager.get_new_path()
         this.path = new_path
 
-        this.init_ui()
+        //this.init_ui()
 
         this.activity.update_menu_options()
         this.activity.setup_config_drawer()
@@ -195,7 +199,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         this.surpress_ui {
             super.import_midi(midi)
         }
-        this.init_ui()
+        //this.init_ui()
         this.activity.update_menu_options()
         this.activity.setup_config_drawer()
 
@@ -212,7 +216,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         this.surpress_ui {
             super.load(path)
         }
-        this.init_ui()
+        //this.init_ui()
         this.activity.update_menu_options()
         this.activity.setup_config_drawer()
         this.activity.cancel_reticle()
@@ -264,13 +268,13 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         for (i in beat_count downTo 0) {
             rvBeatTable_adapter.removeBeatColumn(i)
         }
-
     }
 
     override fun unlink_beat(beat_key: BeatKey) {
         var update_keys = this.get_all_linked(beat_key).toMutableList()
         update_keys.remove(beat_key)
         super.unlink_beat(beat_key)
+
         // Need to run update on both the beat_key and *any* of its former link pool
         this.ui_refresh_beat_labels(beat_key)
         if (update_keys.isNotEmpty()) {
@@ -286,7 +290,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         this.withFragment {
             it.scrollTo(beat_key, position)
         }
-
     }
 
     private fun ui_remove_beat(beat: Int) {
@@ -309,7 +312,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         val rvBeatTable_adapter = beat_table.adapter as BeatColumnAdapter
         val first = (beat_table.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
         val last = (beat_table.layoutManager as LinearLayoutManager).findLastVisibleItemPosition()
-        for (i in first - 5 .. last + 5) {
+        for (i in max(0, first - 5) .. min(last + 5, this.opus_beat_count - 1)) {
             rvBeatTable_adapter.notifyItemChanged(i)
         }
     }
@@ -382,9 +385,10 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
         val beat_table = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
         val rvBeatTable_adapter = beat_table.adapter as BeatColumnAdapter
-        for (i in 0 until this.opus_beat_count) {
-            rvBeatTable_adapter.addBeatColumn(i)
-        }
+        Log.d("AAA", "XXXX -- ${rvBeatTable_adapter.itemCount}")
+        //for (i in 0 until this.opus_beat_count) {
+        //    rvBeatTable_adapter.addBeatColumn(i)
+        //}
 
         //this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
         //    repeat(channel.lines.size) {
@@ -412,35 +416,126 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             this.surpress_ui {
                 super.apply_undo()
             }
-            this.ui_set_cursor_focus()
             this.ui_notify_visible_changes()
 
-            val (beat_key, position) = this.queued_location_stamp ?: return
-            this.queued_location_stamp = null
+            if (this.queued_location_stamp != null) {
+                val (beat_key, position) = this.queued_location_stamp!!
+                this.queued_location_stamp = null
 
-            if (beat_key.beat == -1) { // Row Select
-                this.cursor_select_row(beat_key.channel, beat_key.line_offset)
-            } else if (beat_key.channel == -1 || beat_key.line_offset == -1) { // Beat Select
-                this.cursor_select_column(beat_key.beat)
-            } else if (position == null) {
-                Log.w("AAA", "No position given")
-                return
+                if (beat_key.beat == -1) { // Row Select
+                    this.cursor_select_row(beat_key.channel, beat_key.line_offset)
+                } else if (beat_key.channel == -1 || beat_key.line_offset == -1) { // Beat Select
+                    this.cursor_select_column(beat_key.beat)
+                } else if (position == null) {
+                    Log.w("AAA", "No position given")
+                    return
+                } else {
+                    this.cursor_select(beat_key, position)
+                }
             } else {
-                this.cursor_select(beat_key, position)
+                this.cursor_clear()
             }
+
         } else {
             this.activity.feedback_msg(this.activity.getString(R.string.msg_undo_none))
         }
     }
 
     override fun apply_history_node(current_node: HistoryNode, depth: Int)  {
-        if (current_node.location_stamp != null) {
-           this.queued_location_stamp = current_node.location_stamp
+        this.queued_location_stamp = when (current_node.func_name) {
+            "cursor_select_row" -> {
+                Pair(
+                    BeatKey(
+                        current_node.args[0] as Int,
+                        current_node.args[1] as Int,
+                        -1
+                    ),
+                    null
+                )
+            }
+            "cursor_select" -> {
+                Pair(
+                    current_node.args[0] as BeatKey,
+                    current_node.args[1] as List<Int>
+                )
+            }
+
+            //"new_line" -> {
+            //    this.new_line(
+            //        current_node.args[0] as Int,
+            //        current_node.args[1] as Int
+            //    )
+            //}
+            //"remove_channel" -> {
+            //    this.remove_channel_by_uuid(current_node.args[0] as Int)
+            //}
+            //"new_channel" -> {
+            //    this.new_channel(current_node.args[0] as Int)
+            //}
+            //"remove" -> {
+            //    this.remove(
+            //        current_node.args[0] as BeatKey,
+            //        current_node.args[1] as List<Int>
+            //    )
+            //}
+            //"remove_beat" -> {
+            //    this.remove_beat(current_node.args[0] as Int)
+            //}
+            //"insert_beat" -> {
+            //    this.insert_beat(current_node.args[0] as Int)
+            //}
+            //"set_transpose" -> {
+            //    this.set_transpose(current_node.args[0] as Int)
+            //}
+            //"set_tempo" -> {
+            //    this.set_tempo(current_node.args[0] as Float)
+            //}
+            //"set_cursor" -> {
+            //    val beat_key = current_node.args[0] as BeatKey
+            //    val y = this.get_y(beat_key.channel, beat_key.line_offset)
+            //    this.get_cursor().set(y, beat_key.beat, current_node.args[1] as List<Int>)
+            //}
+            else -> {
+                this.queued_location_stamp
+            }
         }
-
         super.apply_history_node(current_node, depth)
-
     }
+
+    override fun push_to_history_stack(func_name: String, args: List<Any>) {
+        this.history_cache.remember {
+            when (func_name) {
+                "insert_line" -> {
+                    this.push_to_history_stack(
+                        "cursor_select_line",
+                        listOf(
+                            args[0] as Int,
+                            args[1] as Int
+                        )
+                    )
+                }
+                "replace_tree" -> {
+                    var new_position = (args[1] as List<Int>).toMutableList()
+                    var tree = args[2] as OpusTree<OpusEvent>
+                    while (! tree.is_leaf()) {
+                        new_position.add(0)
+                        tree = tree[0]
+                    }
+
+                    this.push_to_history_stack(
+                        "cursor_select",
+                        listOf(
+                            args[0] as BeatKey,
+                            new_position
+                        )
+                    )
+                }
+                else -> { }
+            }
+            super.push_to_history_stack(func_name, args)
+        }
+    }
+
 
     private fun ui_unset_cursor_focus() {
         val rvBeatTable = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
@@ -611,5 +706,32 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         )
     }
     // End Cursor Functions ////////////////////////////////////////////////////////////////////////
+
+    //fun process_queued_label_updates() {
+    //    val rvLineLabels = this.activity.findViewById<RecyclerView>(R.id.rvLineLabels)
+    //    val rvLineLabels_adapter = rvLineLabels.adapter as LineLabelAdapter
+
+    //    val beat_table = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
+    //    val rvBeatTable_adapter = beat_table.adapter as BeatColumnAdapter
+
+    //    while (ui_label_queue.isNotEmpty()) {
+    //        var (action, index) = ui_label_queue.removeFirst()
+    //        when (action) {
+    //            LabelUpdate.AddColumn -> {
+    //                rvBeatTable_adapter.addBeatColumn(index)
+    //            }
+    //            LabelUpdate.AddLine -> {
+    //                rvLineLabels_adapter.addLineLabel()
+    //            }
+    //            LabelUpdate.PopColumn -> {
+    //                rvBeatTable_adapter.removeBeatColumn(index)
+    //            }
+    //            LabelUpdate.PopLine -> {
+    //                rvLineLabels_adapter.removeLineLabel(index)
+    //            }
+    //        }
+    //    }
+    //}
+
 
 }

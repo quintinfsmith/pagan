@@ -122,13 +122,31 @@ class LineLabelAdapter(var opus_manager: InterfaceLayer, var recycler: RecyclerV
                 DragEvent.ACTION_DROP -> {
                     val from_label =  this._dragging_lineLabel
                     if (from_label != null && from_label != view) {
+                        var from_channel = (from_label as LabelView).channel
+                        var from_line = from_label.line_offset
+                        var to_channel = (view as LabelView).channel
+                        var to_line = view.line_offset + 1
                         this.opus_manager.move_line(
-                            (from_label as LabelView).channel,
-                            from_label.line_offset,
-                            (view as LabelView).channel,
-                            view.line_offset
+                            from_channel,
+                            from_line,
+                            to_channel,
+                            to_line
                         )
-                        this.opus_manager.cursor_select_row(view.channel, view.line_offset)
+
+                        this.opus_manager.cursor_select_row(
+                            to_channel,
+                            if (from_channel == to_channel) {
+                                if (from_line < to_line) {
+                                    to_line - 1
+                                } else {
+                                    to_line
+                                }
+                            } else if (this.opus_manager.channels[to_channel].size == 1) {
+                                0
+                            } else {
+                                to_line
+                            }
+                        )
                     }
                     this._dragging_lineLabel = null
                 }

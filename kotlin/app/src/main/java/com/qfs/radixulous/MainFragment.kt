@@ -168,7 +168,7 @@ class MainFragment : TempNameFragment() {
         val btnUnLinkAll: TextView = view.findViewById(R.id.btnUnLinkAll)
         val btnCancelLink: TextView = view.findViewById(R.id.btnCancelLink)
 
-        var (is_networked, many_links) = if (opus_manager.cursor.mode == Cursor.CursorMode.Range) {
+        val (is_networked, many_links) = if (opus_manager.cursor.mode == Cursor.CursorMode.Range) {
             var output = false
             for (beat_key in opus_manager.get_beatkeys_in_range(opus_manager.cursor.range!!.first, opus_manager.cursor.range!!.second)) {
                 if (opus_manager.is_networked(beat_key.channel, beat_key.line_offset, beat_key.beat)) {
@@ -792,13 +792,13 @@ class MainFragment : TempNameFragment() {
         if (beatkey.beat == -1) {
             return
         }
-        var adj_beatkey = BeatKey(
+        val adj_beatkey = BeatKey(
             max(0, beatkey.channel),
             max(0, beatkey.line_offset),
             beatkey.beat
         )
         // Move to leaf
-        var new_position = position.toMutableList()
+        val new_position = position.toMutableList()
         var tree = this.get_main().get_opus_manager().get_tree(adj_beatkey, position)
         while (! tree.is_leaf()) {
             tree = tree[0]

@@ -340,8 +340,8 @@ open class LinksLayer() : OpusManagerBase() {
             for (b in 0 .. to_key.beat - from_key.beat) {
                 new_pairs.add(
                     Pair(
-                        BeatKey(from_key.channel, from_key.line_offset, from_key.beat + b),
-                        BeatKey(working_beat.channel, working_beat.line_offset, working_beat.beat + b)
+                        BeatKey(working_beat.channel, working_beat.line_offset, working_beat.beat + b),
+                        BeatKey(from_key.channel, from_key.line_offset, from_key.beat + b)
                     )
                 )
             }
@@ -366,8 +366,8 @@ open class LinksLayer() : OpusManagerBase() {
         for (b in 0 .. to_key.beat - from_key.beat) {
             new_pairs.add(
                 Pair(
-                    BeatKey(from_key.channel, from_key.line_offset, from_key.beat + b),
-                    BeatKey(working_beat.channel, working_beat.line_offset, working_beat.beat + b)
+                    BeatKey(working_beat.channel, working_beat.line_offset, working_beat.beat + b),
+                    BeatKey(from_key.channel, from_key.line_offset, from_key.beat + b)
                 )
             )
         }

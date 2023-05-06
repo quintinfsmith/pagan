@@ -100,17 +100,11 @@ class HistoryCache() {
     }
 
     fun lock() {
-        if (this.history_lock == 0) {
-            Log.d("AAA", "LOCLED!")
-        }
         this.history_lock += 1
     }
 
     fun unlock() {
         this.history_lock -= 1
-        if (this.history_lock == 0) {
-            Log.d("AAA", "UNLOCLED!")
-        }
     }
 
     fun pop(): HistoryNode? {
@@ -135,12 +129,10 @@ open class HistoryLayer() : LinksLayer() {
     var save_point_popped = false
 
     open fun push_to_history_stack(func_name: String, args: List<Any>) {
-        Log.d("AAA", "PUSHING $func_name ${this.history_cache.isLocked()}")
         this.history_cache.append_undoer(func_name, args)
     }
 
     open fun apply_history_node(current_node: HistoryNode, depth: Int = 0) {
-        Log.d("AAA", "applying ${current_node.func_name}")
         when (current_node.func_name) {
             "split_tree" -> {
                 this.split_tree(

@@ -1,6 +1,7 @@
 package com.qfs.radixulous
 
 import android.os.Bundle
+import android.util.Log
 import android.view.*
 import android.widget.*
 import androidx.fragment.app.Fragment
@@ -167,15 +168,35 @@ class MainFragment : TempNameFragment() {
         val btnUnLinkAll: TextView = view.findViewById(R.id.btnUnLinkAll)
         val btnCancelLink: TextView = view.findViewById(R.id.btnCancelLink)
 
-        val cursor_key = opus_manager.cursor.get_beatkey()
-        if (opus_manager.is_networked(cursor_key.channel, cursor_key.line_offset, cursor_key.beat)) {
+        var (is_networked, many_links) = if (opus_manager.cursor.mode == Cursor.CursorMode.Range) {
+            var output = false
+            for (beat_key in opus_manager.get_beatkeys_in_range(opus_manager.cursor.range!!.first, opus_manager.cursor.range!!.second)) {
+                if (opus_manager.is_networked(beat_key.channel, beat_key.line_offset, beat_key.beat)) {
+                    output = true
+                    break
+                }
+            }
+
+            Pair(
+                output,
+                true
+            )
+        } else if (opus_manager.cursor.mode == Cursor.CursorMode.Single) {
+            val cursor_key = opus_manager.cursor.get_beatkey()
+            Pair(
+                opus_manager.is_networked(cursor_key.channel, cursor_key.line_offset, cursor_key.beat),
+                opus_manager.get_all_linked(cursor_key).size == 2
+            )
+        } else {
+            return
+        }
+        if (is_networked) {
             btnUnLink.setOnClickListener {
                 this.interact_btnUnlink(it)
             }
-            if (opus_manager.get_all_linked(cursor_key).size == 2) {
+            if (many_links) {
                 btnUnLinkAll.visibility = View.GONE
             } else {
-
                 btnUnLinkAll.setOnClickListener {
                     this.interact_btnUnlinkAll(it)
                 }
@@ -768,13 +789,29 @@ class MainFragment : TempNameFragment() {
 
     // If the position isn't on screen, scroll to it
     fun scrollTo(beatkey: BeatKey, position: List<Int>) {
-        if (this.is_leaf_visible(beatkey, position)) {
+        if (beatkey.beat == -1) {
+            return
+        }
+        var adj_beatkey = BeatKey(
+            max(0, beatkey.channel),
+            max(0, beatkey.line_offset),
+            beatkey.beat
+        )
+        // Move to leaf
+        var new_position = position.toMutableList()
+        var tree = this.get_main().get_opus_manager().get_tree(adj_beatkey, position)
+        while (! tree.is_leaf()) {
+            tree = tree[0]
+            new_position.add(0)
+        }
+
+        if (this.is_leaf_visible(adj_beatkey, new_position)) {
             return
         }
         val main = this.get_main()
         val rvBeatTable = main.findViewById<RecyclerView>(R.id.rvBeatTable)
         val rvBeatTable_adapter = rvBeatTable.adapter as BeatColumnAdapter
-        rvBeatTable_adapter.scrollToPosition(beatkey, position)
+        rvBeatTable_adapter.scrollToPosition(adj_beatkey, new_position)
     }
 
 }

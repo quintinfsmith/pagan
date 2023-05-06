@@ -49,6 +49,34 @@ open class OpusManagerBase {
         throw IndexOutOfBoundsException()
     }
 
+    fun get_beatkeys_in_range(top_left_key: BeatKey, bottom_right_key: BeatKey): List<BeatKey> {
+        var output = mutableListOf<BeatKey>()
+        this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
+            if (i < top_left_key.channel || i > bottom_right_key.channel) {
+                return@forEachIndexed // Continues
+            }
+
+            var (start, end) = if (top_left_key.channel == bottom_right_key.channel) {
+                Pair(top_left_key.line_offset, bottom_right_key.line_offset)
+            } else {
+                if (i == top_left_key.channel) {
+                    Pair(top_left_key.line_offset, channel.size - 1)
+                } else if (i == bottom_right_key.channel) {
+                    Pair(0, bottom_right_key.line_offset)
+                } else {
+                    Pair(0, channel.size - 1)
+                }
+            }
+            for (j in start .. end) {
+                var line = channel.lines[j]
+                for (k in top_left_key.beat .. bottom_right_key.beat) {
+                    output.add(BeatKey(i,j,k))
+                }
+            }
+        }
+        return output
+    }
+
     open fun get_abs_difference(beata: BeatKey, beatb: BeatKey): Pair<Int, Int> {
         val beata_y = this.get_abs_offset(beata.channel, beata.line_offset)
         val beatb_y = this.get_abs_offset(beatb.channel, beatb.line_offset)

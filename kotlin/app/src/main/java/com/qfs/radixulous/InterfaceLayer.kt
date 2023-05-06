@@ -392,7 +392,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
         val beat_table = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
         val rvBeatTable_adapter = beat_table.adapter as BeatColumnAdapter
-        Log.d("AAA", "XXXX -- ${rvBeatTable_adapter.itemCount}")
         //for (i in 0 until this.opus_beat_count) {
         //    rvBeatTable_adapter.addBeatColumn(i)
         //}
@@ -426,19 +425,18 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             this.ui_notify_visible_changes()
 
             if (this.queued_location_stamp != null) {
-                Log.d("AAA", "${this.queued_location_stamp}!!!!!!!!")
                 val (beat_key, position) = this.queued_location_stamp!!
                 this.queued_location_stamp = null
 
                 if (beat_key.beat == -1) { // Row Select
-                    this.cursor_select_row(beat_key.channel, beat_key.line_offset)
+                    this.cursor_select_row(beat_key.channel, beat_key.line_offset, scroll=true)
                 } else if (beat_key.channel == -1 || beat_key.line_offset == -1) { // Beat Select
-                    this.cursor_select_column(beat_key.beat)
+                    this.cursor_select_column(beat_key.beat, scroll=true)
                 } else if (position == null) {
                     Log.w("AAA", "No position given")
                     return
                 } else {
-                    this.cursor_select(beat_key, position)
+                    this.cursor_select(beat_key, position, scroll=true)
                 }
             } else {
                 this.cursor_clear()
@@ -453,10 +451,8 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
     override fun apply_history_node(current_node: HistoryNode, depth: Int)  {
         super.apply_history_node(current_node, depth)
-        Log.d("AAA", "Setting Stamp: ${current_node.func_name}")
         this.queued_location_stamp = when (current_node.func_name) {
             "cursor_select_row" -> {
-                Log.d("AAA", "${BeatKey( current_node.args[0] as Int, current_node.args[1] as Int, -1 )}")
                 Pair(
                     BeatKey(
                         current_node.args[0] as Int,
@@ -648,16 +644,24 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             it.clearContextMenu()
         }
     }
-    fun cursor_select_row(channel: Int, line_offset: Int) {
+    fun cursor_select_row(channel: Int, line_offset: Int, scroll: Boolean = false) {
         this.ui_unset_cursor_focus()
         this.cursor.select_row(channel, line_offset)
         this.ui_set_cursor_focus()
+
         this.withFragment {
             it.setContextMenu_line()
         }
+
+        if (scroll) {
+            this.ui_scroll_to_position(
+                BeatKey(channel, line_offset, -1),
+                listOf()
+            )
+        }
     }
 
-    fun cursor_select_column(beat: Int) {
+    fun cursor_select_column(beat: Int, scroll: Boolean = false) {
         this.ui_unset_cursor_focus()
         this.cursor.select_column(beat)
         this.ui_set_cursor_focus()
@@ -665,15 +669,24 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         this.withFragment {
             it.setContextMenu_column()
         }
+        if (scroll) {
+            this.ui_scroll_to_position(
+                BeatKey(-1, -1, beat),
+                listOf()
+            )
+        }
     }
 
-    fun cursor_select(beat_key: BeatKey, position: List<Int>) {
+    fun cursor_select(beat_key: BeatKey, position: List<Int>, scroll: Boolean = false) {
         this.ui_unset_cursor_focus()
         this.cursor.select(beat_key, position)
         this.ui_set_cursor_focus()
 
         this.withFragment {
             it.setContextMenu_leaf()
+        }
+        if (scroll) {
+            this.ui_scroll_to_position(beat_key, position)
         }
     }
 
@@ -819,6 +832,5 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     //        }
     //    }
     //}
-
 
 }

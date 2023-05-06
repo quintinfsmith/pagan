@@ -160,7 +160,6 @@ open class LinksLayer() : OpusManagerBase() {
     override fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEvent) {
         this.lock_links {
             for (linked_key in this.get_all_linked(beat_key)) {
-                Log.d("AAA", "$linked_key")
                 super.set_event(linked_key, position, event.copy())
             }
         }
@@ -338,8 +337,13 @@ open class LinksLayer() : OpusManagerBase() {
         val new_pairs = mutableListOf<Pair<BeatKey, BeatKey>>()
         while (from_key.channel != to_key.channel || from_key.line_offset != to_key.line_offset) {
             // INCLUSIVE
-            for (b in from_key.beat .. to_key.beat) {
-                new_pairs.add(Pair(from_key.copy(), working_beat.copy()))
+            for (b in 0 .. to_key.beat - from_key.beat) {
+                new_pairs.add(
+                    Pair(
+                        BeatKey(from_key.channel, from_key.line_offset, from_key.beat + b),
+                        BeatKey(working_beat.channel, working_beat.line_offset, working_beat.beat + b)
+                    )
+                )
             }
             if (this.channels[from_key.channel].size - 1 > from_key.line_offset) {
                 from_key.line_offset += 1
@@ -359,8 +363,13 @@ open class LinksLayer() : OpusManagerBase() {
                 throw Exception("Bad BeatKey: $working_beat")
             }
         }
-        for (b in from_key.beat .. to_key.beat) {
-            new_pairs.add(Pair(from_key.copy(), working_beat.copy()))
+        for (b in 0 .. to_key.beat - from_key.beat) {
+            new_pairs.add(
+                Pair(
+                    BeatKey(from_key.channel, from_key.line_offset, from_key.beat + b),
+                    BeatKey(working_beat.channel, working_beat.line_offset, working_beat.beat + b)
+                )
+            )
         }
         this.batch_link_beats(new_pairs)
     }

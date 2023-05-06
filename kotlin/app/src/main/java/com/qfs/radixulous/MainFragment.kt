@@ -117,10 +117,27 @@ class MainFragment : TempNameFragment() {
             }
         }
 
+        setFragmentResultListener("IMPORTPROJECT") { _, bundle: Bundle? ->
+            try {
+                bundle!!.getString("URI")?.let { path ->
+                    val main = this.get_main()
+                    var opus_manager = main.import_project(path)
+                }
+            } catch (e: Exception) {
+                var opus_manager = this.get_main().get_opus_manager()
+                // if Not Loaded, just create new and throw a message up
+                if (!opus_manager.first_load_done) {
+                    opus_manager.new()
+                }
+                this.get_main().feedback_msg("Corrupt Project File")
+            }
+        }
+
         setFragmentResultListener("NEW") { _, _: Bundle? ->
             val main = this.get_main()
             main.get_opus_manager().new()
         }
+
     }
 
     override fun onDestroyView() {

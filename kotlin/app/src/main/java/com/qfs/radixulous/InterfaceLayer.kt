@@ -21,6 +21,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     var relative_mode: Int = 0
     var cursor = Cursor()
     var queued_location_stamp: Pair<BeatKey, List<Int>?>? = null
+    var first_load_done = false
 
     private fun simple_ui_locked(): Boolean {
         return this.simple_ui_lock != 0
@@ -174,39 +175,48 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     override fun remove_beat(beat_index: Int) {
         super.remove_beat(beat_index)
         this.ui_remove_beat(beat_index)
-        //this.ui_refresh_beat_labels(this.get_cursor().get_beatkey())
     }
 
     override fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<OpusEvent>>?) {
         super.insert_beat(beat_index, beats_in_column)
         this.ui_add_beat(beat_index)
-        //this.ui_refresh_beat_labels(original_beat)
     }
 
     override fun new() {
-        this.surpress_ui {
-            super.new()
+        this.activity.loading_reticle()
+        try {
+            this.surpress_ui {
+                super.new()
+            }
+        } catch (e: Exception) {
+            this.activity.cancel_reticle()
+            throw e
         }
+        this.first_load_done = true
         val new_path = this.activity.project_manager.get_new_path()
         this.path = new_path
 
-        //this.init_ui()
-
         this.activity.update_menu_options()
         this.activity.setup_config_drawer()
+        this.activity.cancel_reticle()
 
         val rvBeatTable = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
         rvBeatTable.scrollToPosition(0)
         val rvColumnLabels = this.activity.findViewById<RecyclerView>(R.id.rvColumnLabels)
         rvColumnLabels.scrollToPosition(0)
     }
-
     override fun import_midi(midi: MIDI) {
         this.activity.loading_reticle()
-        this.surpress_ui {
-            super.import_midi(midi)
+        try {
+            this.surpress_ui {
+                super.import_midi(midi)
+            }
+        } catch (e: Exception) {
+            this.activity.cancel_reticle()
+            throw e
         }
-        //this.init_ui()
+
+        this.first_load_done = true
         this.activity.update_menu_options()
         this.activity.setup_config_drawer()
 
@@ -218,12 +228,38 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         rvColumnLabels.scrollToPosition(0)
     }
 
+    override fun load(bytes: ByteArray) {
+        this.activity.loading_reticle()
+        try {
+            this.surpress_ui {
+                super.load(bytes)
+            }
+        } catch (e: Exception) {
+            this.activity.cancel_reticle()
+            throw e
+        }
+        this.first_load_done = true
+        this.activity.update_menu_options()
+        this.activity.setup_config_drawer()
+        this.activity.cancel_reticle()
+
+        val rvBeatTable = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
+        rvBeatTable.scrollToPosition(0)
+        val rvColumnLabels = this.activity.findViewById<RecyclerView>(R.id.rvColumnLabels)
+        rvColumnLabels.scrollToPosition(0)
+    }
+
     override fun load(path: String) {
         this.activity.loading_reticle()
-        this.surpress_ui {
-            super.load(path)
+        try {
+            this.surpress_ui {
+                super.load(path)
+            }
+        } catch (e: Exception) {
+            this.activity.cancel_reticle()
+            throw e
         }
-        //this.init_ui()
+        this.first_load_done = true
         this.activity.update_menu_options()
         this.activity.setup_config_drawer()
         this.activity.cancel_reticle()
@@ -376,33 +412,24 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         }
     }
 
-    private fun reset_context_menu() {
-        if (this.simple_ui_locked()) {
-            return
-        }
-        this.withFragment {
-            it.reset_context_menu()
-        }
-    }
+    //private fun init_ui() {
+    //    val rvLineLabels = this.activity.findViewById<RecyclerView>(R.id.rvLineLabels)
+    //    val rvLineLabels_adapter = rvLineLabels.adapter as LineLabelAdapter
+    //    val rvActiveChannels: RecyclerView = this.activity.findViewById(R.id.rvActiveChannels)
 
-    private fun init_ui() {
-        val rvLineLabels = this.activity.findViewById<RecyclerView>(R.id.rvLineLabels)
-        val rvLineLabels_adapter = rvLineLabels.adapter as LineLabelAdapter
-        val rvActiveChannels: RecyclerView = this.activity.findViewById(R.id.rvActiveChannels)
+    //    val beat_table = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
+    //    val rvBeatTable_adapter = beat_table.adapter as BeatColumnAdapter
+    //    //for (i in 0 until this.opus_beat_count) {
+    //    //    rvBeatTable_adapter.addBeatColumn(i)
+    //    //}
 
-        val beat_table = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
-        val rvBeatTable_adapter = beat_table.adapter as BeatColumnAdapter
-        //for (i in 0 until this.opus_beat_count) {
-        //    rvBeatTable_adapter.addBeatColumn(i)
-        //}
-
-        //this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
-        //    repeat(channel.lines.size) {
-        //        rvLineLabels_adapter.addLineLabel()
-        //    }
-        //    rvActiveChannels.adapter?.notifyItemInserted(i)
-        //}
-    }
+    //    //this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
+    //    //    repeat(channel.lines.size) {
+    //    //        rvLineLabels_adapter.addLineLabel()
+    //    //    }
+    //    //    rvActiveChannels.adapter?.notifyItemInserted(i)
+    //    //}
+    //}
 
     override fun set_transpose(new_transpose: Int)  {
         super.set_transpose(new_transpose)
@@ -488,7 +515,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         if (this.history_cache.isLocked()) {
             return
         }
-
+        var has_cursor_action = true
         super.history_cache.remember {
             when (func_name) {
                 "move_line" -> {
@@ -613,8 +640,16 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                         listOf(x)
                     )
                 }
-                else -> { }
+                else -> {
+                    has_cursor_action = false
+                }
             }
+            if (has_cursor_action) {
+                super.push_to_history_stack(func_name, args)
+            }
+        }
+        if (! has_cursor_action) {
+            this.history_cache.pop()
             super.push_to_history_stack(func_name, args)
         }
     }
@@ -832,5 +867,13 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     //        }
     //    }
     //}
+
+    override fun save(path: String?) {
+        super.save(path)
+        val btnDeleteProject = this.activity.findViewById<View>(R.id.btnDeleteProject)
+        val btnCopyProject = this.activity.findViewById<View>(R.id.btnCopyProject)
+        btnDeleteProject.visibility = View.VISIBLE
+        btnCopyProject.visibility = View.VISIBLE
+    }
 
 }

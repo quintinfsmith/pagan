@@ -23,6 +23,9 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.radixulous.apres.*
 import com.qfs.radixulous.databinding.ActivityMainBinding
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -49,6 +52,29 @@ class MainActivity : AppCompatActivity() {
 
     private var number_selector_defaults = HashMap<String, Int>()
 
+    private var export_project_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val opus_manager = this.get_opus_manager()
+            result?.data?.data?.also { uri ->
+                applicationContext.contentResolver.openFileDescriptor(uri, "w")?.use {
+                    val json_string = Json.encodeToString(opus_manager.to_json())
+                    FileOutputStream(it.fileDescriptor).write(json_string.toByteArray())
+                    this.feedback_msg("Exported")
+                }
+            }
+        }
+    }
+
+    var import_project_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            result?.data?.data?.also { uri ->
+                val fragment = this.getActiveFragment()
+                fragment?.setFragmentResult("IMPORTPROJECT", bundleOf(Pair("URI", uri.toString())))
+                this.navTo("main")
+            }
+        }
+    }
+
     private var export_midi_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             val opus_manager = this.get_opus_manager()
@@ -64,7 +90,6 @@ class MainActivity : AppCompatActivity() {
     var import_midi_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             result?.data?.data?.also { uri ->
-                // TODO: NAV TO MAIN FRAGMENT AND USE RESULT LISTENER
                 val fragment = this.getActiveFragment()
                 fragment?.setFragmentResult("IMPORT", bundleOf(Pair("URI", uri.toString())))
                 this.navTo("main")
@@ -167,6 +192,14 @@ class MainActivity : AppCompatActivity() {
             R.id.itmPlay -> {
                 this.playback_dialog()
             }
+            R.id.itmImportProject -> {
+                this.save_dialog {
+                    val intent = Intent()
+                        .setType("application/json")
+                        .setAction(Intent.ACTION_GET_CONTENT)
+                    this.import_project_intent_launcher.launch(intent)
+                }
+            }
         }
         return super.onOptionsItemSelected(item)
     }
@@ -206,22 +239,26 @@ class MainActivity : AppCompatActivity() {
         this.findViewById<View>(R.id.btnSaveProject).setOnClickListener {
             this.save_current_project()
         }
+        this.findViewById<View>(R.id.btnSaveProject).setOnLongClickListener {
+            this.export_current_project()
+            true
+        }
 
         val btnDeleteProject = this.findViewById<View>(R.id.btnDeleteProject)
         val btnCopyProject = this.findViewById<View>(R.id.btnCopyProject)
         if (opus_manager.path != null && File(opus_manager.path!!).isFile) {
-            btnDeleteProject.setOnClickListener {
-                this.delete_project_dialog()
-            }
-            btnCopyProject.setOnClickListener {
-                this.copy_project()
-                this.closeDrawer()
-            }
             btnDeleteProject.visibility = View.VISIBLE
             btnCopyProject.visibility = View.VISIBLE
         } else {
             btnDeleteProject.visibility = View.GONE
             btnCopyProject.visibility = View.GONE
+        }
+        btnDeleteProject.setOnClickListener {
+            this.delete_project_dialog()
+        }
+        btnCopyProject.setOnClickListener {
+            this.copy_project()
+            this.closeDrawer()
         }
     }
 
@@ -266,6 +303,24 @@ class MainActivity : AppCompatActivity() {
         this.update_menu_options()
     }
 
+    fun export_current_project() {
+        var name = opus_manager.path
+        if (name != null) {
+            name = name.substring(name.lastIndexOf("/") + 1)
+            name = name.substring(0, name.lastIndexOf("."))
+        }
+
+        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "application/midi"
+            putExtra(Intent.EXTRA_TITLE, "$name.json")
+            putExtra(DocumentsContract.EXTRA_INITIAL_URI, "")
+        }
+
+        this.export_project_intent_launcher.launch(intent)
+
+    }
+
     fun get_opus_manager(): OpusManager {
         return this.opus_manager
     }
@@ -279,6 +334,8 @@ class MainActivity : AppCompatActivity() {
                 this.optionsMenu.findItem(R.id.itmNewProject).isVisible = true
                 this.optionsMenu.findItem(R.id.itmPlay).isVisible = true
                 this.optionsMenu.findItem(R.id.itmImportMidi).isVisible = true
+                this.optionsMenu.findItem(R.id.itmImportProject).isVisible = true
+
             }
             else -> {
                 this.optionsMenu.findItem(R.id.itmLoadProject).isVisible = false
@@ -286,6 +343,7 @@ class MainActivity : AppCompatActivity() {
                 this.optionsMenu.findItem(R.id.itmNewProject).isVisible = false
                 this.optionsMenu.findItem(R.id.itmPlay).isVisible = false
                 this.optionsMenu.findItem(R.id.itmImportMidi).isVisible = false
+                this.optionsMenu.findItem(R.id.itmImportProject).isVisible = false
             }
         }
     }
@@ -553,19 +611,24 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun loading_reticle() {
-        return
         if (this.progressBar == null) {
             this.progressBar =
                 ProgressBar(this@MainActivity, null, android.R.attr.progressBarStyleLarge)
         }
         val params: RelativeLayout.LayoutParams = RelativeLayout.LayoutParams(50, 50)
         params.addRule(RelativeLayout.CENTER_IN_PARENT)
+        var parent = this.progressBar!!.parent
+        if (parent != null) {
+            (parent as ViewGroup).removeView(this.progressBar)
+        }
         this.binding.root.addView(this.progressBar, params)
     }
 
     fun cancel_reticle() {
         val progressBar = this.progressBar ?: return
-        (progressBar.parent as ViewGroup).removeView(progressBar)
+        if (progressBar.parent != null) {
+            (progressBar.parent as ViewGroup).removeView(progressBar)
+        }
     }
 
     fun lockDrawer() {
@@ -585,6 +648,15 @@ class MainActivity : AppCompatActivity() {
 
             this.appBarConfiguration = AppBarConfiguration(navController.graph)
             setupActionBarWithNavController(navController, this.appBarConfiguration)
+        }
+    }
+
+    fun import_project(path: String) {
+        this.applicationContext.contentResolver.openFileDescriptor(Uri.parse(path), "r")?.use {
+            val bytes = FileInputStream(it.fileDescriptor).readBytes()
+
+            this.opus_manager.load(bytes)
+            this.opus_manager.path = this.project_manager.get_new_path()
         }
     }
 

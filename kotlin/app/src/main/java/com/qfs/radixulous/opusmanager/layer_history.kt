@@ -52,9 +52,14 @@ class HistoryCache() {
     // Run a callback with logging history
     fun <T> forget(callback: () -> T): T {
         this.lock()
-        val output = callback()
-        this.unlock()
-        return output
+        try {
+            val output = callback()
+            this.unlock()
+            return output
+        } catch (exception: Exception) {
+            this.unlock()
+            throw exception
+        }
     }
 
     fun open_multi() {
@@ -478,6 +483,12 @@ open class HistoryLayer() : LinksLayer() {
     override fun load(path: String) {
         this.history_cache.forget {
             super.load(path)
+        }
+    }
+
+    override fun load(bytes: ByteArray) {
+        this.history_cache.forget {
+            super.load(bytes)
         }
     }
 

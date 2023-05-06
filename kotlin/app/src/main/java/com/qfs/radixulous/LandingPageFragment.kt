@@ -27,12 +27,21 @@ class LandingPageFragment : TempNameFragment() {
         var btn_newProject = view.findViewById<View>(R.id.btnFrontNew)
         var btn_loadProject = view.findViewById<View>(R.id.btnFrontLoad)
         var btn_importMidi = view.findViewById<View>(R.id.btnFrontImport)
+        var btn_importProject = view.findViewById<View>(R.id.btnFrontImportProject)
         var linkSource = view.findViewById<View>(R.id.linkSource)
+
+        btn_importProject.setOnClickListener {
+            val intent = Intent()
+                .setType("application/json")
+                .setAction(Intent.ACTION_GET_CONTENT)
+            this.get_main().import_project_intent_launcher.launch(intent)
+        }
 
         btn_newProject.setOnClickListener {
             this.setFragmentResult("NEW", bundleOf())
             this.get_main().navTo("main")
         }
+
         if (this.get_main().has_projects_saved()) {
             btn_loadProject.setOnClickListener {
                 this.get_main().navTo("load")

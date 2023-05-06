@@ -1,4 +1,5 @@
 package com.qfs.radixulous.opusmanager
+import android.util.Log
 import com.qfs.radixulous.apres.*
 import com.qfs.radixulous.from_string
 import com.qfs.radixulous.structure.OpusTree
@@ -798,11 +799,12 @@ open class OpusManagerBase {
     }
 
     open fun load(path: String) {
-        this.clear()
-
-        this.path = path
-
         this.load_json_file(path)
+    }
+
+    open fun load(bytes: ByteArray) {
+        val json_content = bytes.toString(Charsets.UTF_8)
+        this.load_json(Json.decodeFromString(json_content))
     }
 
     open fun new() {
@@ -814,12 +816,38 @@ open class OpusManagerBase {
         this.set_project_name(this.project_name)
     }
 
+
     open fun load_json_file(path: String) {
         val json_content = File(path).readText(Charsets.UTF_8)
         this.load_json(Json.decodeFromString(json_content))
+        this.path = path
+    }
+
+    fun parse_line_data(json_data: LoadedJSONData): List<List<List<OpusTree<OpusEvent>>>> {
+        var output = mutableListOf<MutableList<MutableList<OpusTree<OpusEvent>>>>()
+
+        json_data.channels.forEachIndexed { i, channel_data ->
+            var line_list = mutableListOf<MutableList<OpusTree<OpusEvent>>>()
+            channel_data.lines.forEachIndexed { j, line_str ->
+                var beat_list = mutableListOf<OpusTree<OpusEvent>>()
+                line_str.split("|").forEachIndexed { b, beat_str ->
+                    val beat_tree = from_string(beat_str, this.RADIX, channel_data.midi_channel)
+                    beat_tree.clear_singles()
+                    beat_list.add(beat_tree)
+                }
+                line_list.add(beat_list)
+            }
+            output.add(line_list)
+        }
+        return output
     }
 
     open fun load_json(json_data: LoadedJSONData) {
+        // Parse line_data first, if there's an error, it can be caught and ignored so the
+        // active project is unaffected
+        val parsed = this.parse_line_data(json_data)
+        this.clear()
+
         this.RADIX = json_data.radix
         this.tempo = json_data.tempo
         this.transpose = json_data.transpose
@@ -836,6 +864,7 @@ open class OpusManagerBase {
                 this.channels[i].lines[j].volume = volume
             }
         }
+
         for (i in 0 until beat_count) {
             this.insert_beat()
         }
@@ -850,9 +879,7 @@ open class OpusManagerBase {
 
             channel_data.lines.forEachIndexed { j, line_str ->
                 val note_set: MutableSet<Int> = mutableSetOf()
-                line_str.split("|").forEachIndexed { b, beat_str ->
-                    val beat_tree = from_string(beat_str, this.RADIX, channel_data.midi_channel)
-                    beat_tree.clear_singles()
+                parsed[i][j].forEachIndexed { b: Int, beat_tree: OpusTree<OpusEvent> ->
                     this.replace_tree(BeatKey(i, j, b), listOf(), beat_tree)
                     if (i == this.percussion_channel) {
                         for ((_, event) in beat_tree.get_events_mapped()) {

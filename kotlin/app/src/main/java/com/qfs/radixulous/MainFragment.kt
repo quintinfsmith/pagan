@@ -180,8 +180,8 @@ class MainFragment : TempNameFragment() {
             llContextMenu,
             false
         )
-        val btnUnLink: TextView = view.findViewById(R.id.btnUnLink)
-        val btnUnLinkAll: TextView = view.findViewById(R.id.btnUnLinkAll)
+        val btnUnLink = view.findViewById<ImageView>(R.id.btnUnLink)
+        val btnUnLinkAll = view.findViewById<ImageView>(R.id.btnUnLinkAll)
         val btnCancelLink: TextView = view.findViewById(R.id.btnCancelLink)
 
         val (is_networked, many_links) = if (opus_manager.cursor.mode == Cursor.CursorMode.Range) {

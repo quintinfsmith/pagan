@@ -7,6 +7,7 @@ import android.widget.LinearLayout
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.radixulous.opusmanager.BeatKey
+import com.qfs.radixulous.opusmanager.LinksLayer
 import java.lang.Integer.max
 import kotlin.concurrent.thread
 import com.qfs.radixulous.InterfaceLayer as OpusManager
@@ -304,7 +305,12 @@ class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: Recycle
                     opus_manager.link_beats(beatkey, this.linking_beat!!)
                     opus_manager.cursor_select(beatkey, position)
                 } catch (e: Exception) {
-                    main.feedback_msg("Can't link beat to self")
+                    when (e) {
+                        is LinksLayer.SelfLinkError -> { }
+                        else -> {
+                            throw e
+                        }
+                    }
                 }
             } else {
                 try {
@@ -315,7 +321,15 @@ class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: Recycle
                     )
                     opus_manager.cursor_select(beatkey, position)
                 } catch (e: Exception) {
-                    main.feedback_msg("Can't link beat to self")
+                    when (e) {
+                        is LinksLayer.SelfLinkError -> { }
+                        is LinksLayer.LinkRangeOverlap -> { }
+                        is LinksLayer.LinkRangeOverflow -> { }
+                        else -> {
+                            throw e
+                        }
+                    }
+
                 }
             }
             this.cancel_linking()

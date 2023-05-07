@@ -9,25 +9,30 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/textView2"
-        android:text="Tap a beat to reflect it"
+        android:text="Tap a beat to link it"
         app:layout_constraintBottom_toTopOf="@+id/btnUnLink"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <Button
+    <ImageButton
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/btnUnLink"
-        android:text="Remove Reflection"
+        android:background="@drawable/button"
+        android:src="@drawable/unlink"
         app:layout_constraintBottom_toTopOf="@+id/btnCancelLink"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
-    <Button
+        app:layout_constraintStart_toStartOf="parent"
+        android:contentDescription="Remove Link" />
+
+    <ImageButton
+        android:background="@drawable/button"
+        android:src="@drawable/unlinkall"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/btnUnLinkAll"
-        android:text="Remove All Reflections"
+        android:contentDescription="Remove All Links"
         app:layout_constraintBottom_toTopOf="@+id/btnUnLink"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />

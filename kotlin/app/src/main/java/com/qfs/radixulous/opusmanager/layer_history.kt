@@ -665,7 +665,11 @@ open class HistoryLayer() : LinksLayer() {
 
     override fun create_link_pool(beat_keys: List<BeatKey>) {
         this.history_cache.remember {
-            for (beat_key in beat_keys) {
+            // Do not unlink last. it is automatically unlinked by the penultimate
+            beat_keys.forEachIndexed { i: Int, beat_key ->
+                if (i == beat_keys.size - 1) {
+                    return@forEachIndexed
+                }
                 this.push_to_history_stack("unlink_beat", listOf(beat_key))
             }
             super.create_link_pool(beat_keys)

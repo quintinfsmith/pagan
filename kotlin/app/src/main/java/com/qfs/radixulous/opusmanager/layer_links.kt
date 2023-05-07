@@ -8,6 +8,7 @@ import java.lang.Integer.min
 open class LinksLayer() : OpusManagerBase() {
     class SelfLinkError(beat_key_a: BeatKey, beat_key_b: BeatKey): Exception("$beat_key_a is $beat_key_b")
     class LinkRangeOverlap(from_key: BeatKey, to_key: BeatKey, startkey: BeatKey): Exception("Range($from_key .. $to_key) Contains $startkey")
+    class LinkRangeOverflow(from_key: BeatKey, to_key: BeatKey, startkey: BeatKey): Exception("Range($from_key .. $to_key) @ $startkey overflows")
     class InvalidBeatKeyRange(a: BeatKey, b: BeatKey): Exception("$a .. $b")
 
     var link_pools = mutableListOf<MutableSet<BeatKey>>()
@@ -34,16 +35,18 @@ open class LinksLayer() : OpusManagerBase() {
     }
 
     open fun unlink_beat(beat_key: BeatKey) {
-        val index = this.link_pool_map.remove(beat_key) ?: return
-        this.link_pools[index].remove(beat_key)
+        val index = this.link_pool_map[beat_key] ?: return
+        if (this.link_pools[index].size > 2) {
+            this.link_pools[index].remove(beat_key)
+            this.link_pool_map.remove(beat_key)
+        } else {
+            this.remove_link_pool(index)
+        }
     }
 
     fun clear_link_pool(beat_key: BeatKey) {
-        val index = this.link_pool_map.remove(beat_key) ?: return
-        for (key in this.link_pools[index].toList()) {
-            this.unlink_beat(key)
-        }
-        this.link_pools.removeAt(index)
+        val index = this.link_pool_map[beat_key] ?: return
+        this.remove_link_pool(index)
     }
 
     open fun link_beats(beat_key: BeatKey, target: BeatKey) {
@@ -75,6 +78,19 @@ open class LinksLayer() : OpusManagerBase() {
         return true
     }
 
+    fun remove_link_pool(index: Int) {
+        var keys = this.link_pools.removeAt(index)
+        for (beat_key in keys) {
+            this.link_pool_map.remove(beat_key)
+        }
+
+        // Adjust link_pool_map
+        for ((beat_key, pool_index) in this.link_pool_map) {
+            if (pool_index > index) {
+                this.link_pool_map[beat_key] = pool_index - 1
+            }
+        }
+    }
     open fun create_link_pool(beat_keys: List<BeatKey>) {
         val pool_index = this.link_pools.size
         this.link_pools.add(beat_keys.toMutableSet())
@@ -349,10 +365,46 @@ open class LinksLayer() : OpusManagerBase() {
             false
         }
 
-
         if (overlap) {
             throw LinkRangeOverlap(from_key, to_key, beat)
         }
+        if (this.opus_beat_count <= beat.beat + (to_key.beat - from_key.beat)) {
+            throw LinkRangeOverflow(from_key, to_key, beat)
+        }
+
+        // Start OverFlow Check ////
+        var lines_in_range = 0
+        var lines_available = 0
+        this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
+            if (i < from_key.channel || i > to_key.channel) {
+                return@forEachIndexed
+            }
+            this.channels[i].lines.forEachIndexed { j: Int, line: OpusChannel.OpusLine ->
+                if (i == from_key.channel && j < from_key.line_offset) {
+                    return@forEachIndexed
+                } else if (i == to_key.channel && j > to_key.line_offset) {
+                    return@forEachIndexed
+                }
+                lines_in_range += 1
+            }
+        }
+
+        this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
+            if (i < beat.channel) {
+                return@forEachIndexed
+            }
+            this.channels[i].lines.forEachIndexed { j: Int, line: OpusChannel.OpusLine ->
+                if (i == beat.channel && j < beat.line_offset) {
+                    return@forEachIndexed
+                }
+                lines_available += 1
+            }
+        }
+        if (lines_available < lines_in_range) {
+            throw LinkRangeOverflow(from_key, to_key, beat)
+        }
+        // End Overflow Check ////
+
 
         val working_beat = beat.copy()
         val new_pairs = mutableListOf<Pair<BeatKey, BeatKey>>()

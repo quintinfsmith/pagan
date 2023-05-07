@@ -10,6 +10,7 @@ class Cursor() {
         Range,
         Unset
     }
+    class InvalidModeException(actual: CursorMode, expected: CursorMode): Exception("Incorrect Cursor Mode. expected $expected but got $actual")
 
     var mode = CursorMode.Unset
     var channel: Int = 0
@@ -24,7 +25,7 @@ class Cursor() {
 
     fun get_beatkey(): BeatKey {
         if (this.mode != CursorMode.Single) {
-            throw Exception("Can't Get BeatKey from Cursor in CursorMode: ${this.mode}")
+            throw InvalidModeException(this.mode, CursorMode.Single)
         }
 
         return BeatKey(
@@ -36,7 +37,7 @@ class Cursor() {
 
     fun get_position(): List<Int> {
         if (this.mode != CursorMode.Single) {
-            throw Exception("Can't Get Position from Cursor in CursorMode: ${this.mode}")
+            throw InvalidModeException(this.mode, CursorMode.Single)
         }
 
         return this.position.toList()

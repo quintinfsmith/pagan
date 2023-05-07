@@ -9,6 +9,8 @@ import kotlin.math.pow
 
 //class SoundFont(input_stream: InputStream) {
 class SoundFont(var assets: AssetManager, var file_name: String) {
+    class InvalidPresetIndex(index: Int, bank: Int): Exception("Preset Not Found $index:$bank")
+    class InvalidSampleIdPosition(): Exception("SampleId Generator is not at end of ibag")
     data class CachedData(var data: ByteArray, var count: Int = 1)
     // Mandatory INFO
     private var ifil: Pair<Int, Int> = Pair(0,0)
@@ -251,7 +253,7 @@ class SoundFont(var assets: AssetManager, var file_name: String) {
 
         // Order the samples then load them from the inputStream
 
-        return output ?: throw Exception("Preset Not Found $preset_index:$preset_bank")
+        return output ?: throw InvalidPresetIndex(preset_index,preset_bank)
     }
 
     fun get_instrument(instrument_index: Int): Instrument {
@@ -521,7 +523,7 @@ class SoundFont(var assets: AssetManager, var file_name: String) {
             when (generator.sfGenOper) {
                 0x35 -> {
                     if (i != generators.size - 1) {
-                        throw Exception("SampleId Generator Out of order ($i / ${generators.size})")
+                        throw InvalidSampleIdPosition()
                     }
                     working_sample.sample = this.get_sample(generator.asInt())
                 }

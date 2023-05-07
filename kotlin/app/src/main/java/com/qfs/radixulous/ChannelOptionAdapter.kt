@@ -16,8 +16,9 @@ class ChannelOptionAdapter(
     private val recycler: RecyclerView,
     private val soundfont: SoundFont
 ) : RecyclerView.Adapter<ChannelOptionAdapter.ChannelOptionViewHolder>() {
-    private var supported_instruments: Set<Int>
+    class OutOfSyncException(): Exception("Channel Option list out of sync with OpusManager")
     class ChannelOptionViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
+    private var supported_instruments: Set<Int>
     init {
         this.recycler.adapter = this
         this.recycler.layoutManager = LinearLayoutManager(this.activity)
@@ -116,7 +117,7 @@ class ChannelOptionAdapter(
         }
 
         if (x == null) {
-            throw Exception("View position in parent is higher than channel count")
+            throw OutOfSyncException()
         }
 
         return x

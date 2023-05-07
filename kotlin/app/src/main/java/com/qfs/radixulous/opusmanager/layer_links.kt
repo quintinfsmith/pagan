@@ -6,6 +6,10 @@ import java.lang.Integer.max
 import java.lang.Integer.min
 
 open class LinksLayer() : OpusManagerBase() {
+    class SelfLinkError(beat_key_a: BeatKey, beat_key_b: BeatKey): Exception("$beat_key_a is $beat_key_b")
+    class LinkRangeOverlap(from_key: BeatKey, to_key: BeatKey, startkey: BeatKey): Exception("Range($from_key .. $to_key) Contains $startkey")
+    class InvalidBeatKeyRange(a: BeatKey, b: BeatKey): Exception("$a .. $b")
+
     var link_pools = mutableListOf<MutableSet<BeatKey>>()
     var link_pool_map = HashMap<BeatKey, Int>()
     // Indicates that links are being calculated to prevent recursion
@@ -44,7 +48,7 @@ open class LinksLayer() : OpusManagerBase() {
 
     open fun link_beats(beat_key: BeatKey, target: BeatKey) {
         if (beat_key == target) {
-            throw Exception("Can't link beat to self")
+            throw SelfLinkError(beat_key, target)
         }
 
         val beat_pool_index = this.link_pool_map[beat_key]
@@ -326,9 +330,6 @@ open class LinksLayer() : OpusManagerBase() {
         }
         from_key.beat = min(target_a.beat, target_b.beat)
         to_key.beat = max(target_a.beat, target_b.beat)
-        Log.d("AAA", "-------------------")
-        Log.d("AAA", "FROM: $from_key")
-        Log.d("AAA", "TO: $to_key")
 
         var overlap = if (beat.beat in (from_key.beat .. to_key.beat)) {
             if (beat.channel in (from_key.channel..to_key.channel)) {
@@ -350,12 +351,10 @@ open class LinksLayer() : OpusManagerBase() {
 
 
         if (overlap) {
-            Log.d("AAA", "Bad Overlap")
-            throw Exception("Can't self-link beats")
+            throw LinkRangeOverlap(from_key, to_key, beat)
         }
-        Log.d("AAA", "NOT Bad Overlap")
 
-        var working_beat = beat.copy()
+        val working_beat = beat.copy()
         val new_pairs = mutableListOf<Pair<BeatKey, BeatKey>>()
         while (from_key.channel != to_key.channel || from_key.line_offset != to_key.line_offset) {
             // INCLUSIVE
@@ -373,8 +372,7 @@ open class LinksLayer() : OpusManagerBase() {
                 from_key.channel += 1
                 from_key.line_offset = 0
             } else {
-                Log.d("AAA", "A")
-                throw Exception("Bad BeatKey Range: $target_a .. $target_b")
+                throw InvalidBeatKeyRange(target_a, target_b)
             }
 
             if (this.channels[working_beat.channel].size - 1 > working_beat.line_offset) {
@@ -383,10 +381,10 @@ open class LinksLayer() : OpusManagerBase() {
                 working_beat.channel += 1
                 working_beat.line_offset = 0
             } else {
-                Log.d("AAA", "B")
-                throw Exception("Bad BeatKey: $working_beat")
+                throw BadBeatKey(working_beat)
             }
         }
+
         for (b in 0 .. to_key.beat - from_key.beat) {
             new_pairs.add(
                 Pair(
@@ -395,6 +393,7 @@ open class LinksLayer() : OpusManagerBase() {
                 )
             )
         }
+
         this.batch_link_beats(new_pairs)
     }
 }

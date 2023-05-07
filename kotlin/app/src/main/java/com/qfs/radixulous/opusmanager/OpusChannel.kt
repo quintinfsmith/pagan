@@ -9,6 +9,9 @@ data class OpusEvent(var note: Int, var radix: Int, var channel: Int, var relati
 data class BeatKey(var channel: Int, var line_offset: Int, var beat: Int)
 
 class OpusChannel(var uuid: Int) {
+    class InvalidChannelUUID(uuid: Int): Exception("No such channel uuid: $uuid")
+    class LineSizeMismatch(incoming_size: Int, required_size: Int): Exception("Line is $incoming_size beats but OpusManager is $required_size beats")
+
     class OpusLine(var beats: MutableList<OpusTree<OpusEvent>>) {
         constructor(beat_count: Int) : this(Array<OpusTree<OpusEvent>>(beat_count) { _ -> OpusTree() }.toMutableList())
         var volume = 64
@@ -77,7 +80,7 @@ class OpusChannel(var uuid: Int) {
 
     fun insert_line(index: Int, line: MutableList<OpusTree<OpusEvent>>) {
         if (line.size != this.beat_count) {
-            throw Exception("Line's beat count doesn't match Channel's")
+            throw LineSizeMismatch(line.size, this.beat_count)
         }
         var new_line = OpusLine(line)
         this.lines.add(index, new_line)
@@ -103,9 +106,8 @@ class OpusChannel(var uuid: Int) {
             this.size -= 1
             lines.removeAt(index).beats
         } else {
-            throw Exception("Index Error $index / ${lines.size}")
+            throw IndexOutOfBoundsException()
         }
-
     }
 
     fun replace_tree(line: Int, beat: Int, position: List<Int>, tree: OpusTree<OpusEvent>) {
@@ -163,10 +165,10 @@ class OpusChannel(var uuid: Int) {
         // when we pop() the old_index
 
         if (first_index < 0) {
-            throw Exception("INDEXERROR")
+            throw IndexOutOfBoundsException()
         }
         if (second_index >= this.lines.size) {
-            throw Exception("INDEXERROR")
+            throw IndexOutOfBoundsException()
         }
 
         var tmp = this.lines[first_index]

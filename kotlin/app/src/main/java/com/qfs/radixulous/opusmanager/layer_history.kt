@@ -55,9 +55,9 @@ class HistoryCache() {
             val output = callback()
             this.unlock()
             return output
-        } catch (exception: Exception) {
+        } catch (e: Exception) {
             this.unlock()
-            throw exception
+            throw e
         }
     }
 

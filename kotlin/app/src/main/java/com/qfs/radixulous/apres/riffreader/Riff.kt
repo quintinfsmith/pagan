@@ -4,9 +4,8 @@ import android.content.res.AssetManager
 import java.io.InputStream
 import kotlin.experimental.and
 
-
-
 class Riff(var assets: AssetManager, var file_name: String, init_callback: ((riff: Riff) -> Unit)? = null) {
+    class InputStreamClosed(): Exception("Input Stream is Closed")
     data class ListChunkHeader(
         val index: Int,
         val tag: String,
@@ -143,7 +142,7 @@ class Riff(var assets: AssetManager, var file_name: String, init_callback: ((rif
     }
 
     fun move_to_offset(offset: Long) {
-        var stream: InputStream? = this.input_stream ?: throw Exception("Input Stream Not Open")
+        var stream: InputStream? = this.input_stream ?: throw InputStreamClosed()
 
         if (this.input_position < offset) {
             var start = System.currentTimeMillis()
@@ -158,7 +157,7 @@ class Riff(var assets: AssetManager, var file_name: String, init_callback: ((rif
     }
 
     fun get_bytes(offset: Int, size: Int): ByteArray {
-        var stream: InputStream? = this.input_stream ?: throw Exception("Input Stream Not Open")
+        var stream: InputStream? = this.input_stream ?: throw InputStreamClosed()
         this.move_to_offset(offset.toLong())
         var output = ByteArray(size)
         stream?.read(output)

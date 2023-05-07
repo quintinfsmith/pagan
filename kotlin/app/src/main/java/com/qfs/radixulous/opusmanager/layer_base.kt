@@ -11,6 +11,14 @@ import java.lang.Integer.max
 import kotlin.math.pow
 
 open class OpusManagerBase {
+    class BadBeatKey(beat_key: BeatKey): Exception("BeatKey $beat_key doesn't exist")
+    class NonEventConversion(beat_key: BeatKey, position: List<Int>): Exception("Attempting to convert non-event @ $beat_key:$position")
+    class NoteOutOfRange(n: Int): Exception("Attempting to use unsupported note $n")
+    class NonPercussionEventSet(): Exception("Attempting to set normal event on percussion channel")
+    class PercussionEventSet(): Exception("Attempting to set percussion event on non-percussion channel")
+    class EmptyPath(): Exception("Path Required but not given")
+    class BadInsertPosition(): Exception("Can't insert tree at top level")
+
     var RADIX: Int = 12
     var DEFAULT_PERCUSSION: Int = 0
     var channels: MutableList<OpusChannel> = mutableListOf()
@@ -112,7 +120,7 @@ open class OpusManagerBase {
 
     fun get_beat_tree(beat_key: BeatKey): OpusTree<OpusEvent> {
         if (beat_key.channel >= this.channels.size) {
-            throw Exception("Invalid BeatKey $beat_key")
+            throw BadBeatKey(beat_key)
         }
 
         // TODO: Check if i ever use a negative line_offset. and change it if i do
@@ -123,7 +131,7 @@ open class OpusManagerBase {
         }
 
         if (line_offset > this.channels[beat_key.channel].size) {
-            throw Exception("Invalid BeatKey $beat_key")
+            throw BadBeatKey(beat_key)
         }
 
         return this.channels[beat_key.channel].get_tree(line_offset, beat_key.beat)
@@ -284,7 +292,7 @@ open class OpusManagerBase {
     fun convert_event_to_relative(beat_key: BeatKey, position: List<Int>) {
         val tree = this.get_tree(beat_key, position)
         if (!tree.is_event()) {
-            throw Exception("Can't Convert a non-event")
+            throw NonEventConversion(beat_key, position)
         }
 
         val event = tree.get_event()!!
@@ -326,7 +334,7 @@ open class OpusManagerBase {
     fun convert_event_to_absolute(beat_key: BeatKey, position: List<Int>) {
         val tree = this.get_tree(beat_key, position)
         if (!tree.is_event()) {
-            throw Exception("Can't Convert a non-event")
+            throw NonEventConversion(beat_key, position)
         }
 
         val event = tree.get_event()!!
@@ -337,7 +345,7 @@ open class OpusManagerBase {
         // The implied first value can be 0
         val value = this.get_absolute_value(beat_key, position) ?: event.note
         if (value < 0 || value > 95) {
-            throw Exception("Note out of bounds ($value)")
+            throw NoteOutOfRange(value)
         }
         this.set_event(beat_key, position, OpusEvent(
             value,
@@ -349,11 +357,11 @@ open class OpusManagerBase {
 
     open fun insert_after(beat_key: BeatKey, position: List<Int>) {
         if (position.isEmpty()) {
-            throw Exception("Invalid Position $position")
+            throw BadInsertPosition()
         }
 
         val tree = this.get_tree(beat_key, position)
-        val parent = tree.get_parent() ?: throw Exception("Invalid Position $position")
+        val parent = tree.get_parent()!!
 
         val index = position.last()
         parent.insert(index + 1, OpusTree())
@@ -393,7 +401,7 @@ open class OpusManagerBase {
 
     open fun set_percussion_event(beat_key: BeatKey, position: List<Int>) {
         if (!this.is_percussion(beat_key.channel)) {
-            throw Exception("Attempting to set non-percussion channel")
+            throw PercussionEventSet()
         }
 
         val tree = this.get_tree(beat_key, position)
@@ -447,7 +455,7 @@ open class OpusManagerBase {
 
     open fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEvent) {
         if (this.is_percussion(beat_key.channel)) {
-            throw Exception("Attempting to set percussion channel")
+            throw NonPercussionEventSet()
         }
         val tree = this.get_tree(beat_key, position)
         tree.set_event(event)
@@ -593,7 +601,7 @@ open class OpusManagerBase {
     }
 
     fun remove_channel_by_uuid(uuid: Int) {
-        val channel = this.channel_uuid_map[uuid] ?: throw Exception("Channel UUID $uuid Not found")
+        val channel = this.channel_uuid_map[uuid] ?: throw OpusChannel.InvalidChannelUUID(uuid)
         var channel_index: Int? = null
         for (i in 0 until this.channels.size) {
             if (this.channels[i] == channel) {
@@ -774,7 +782,7 @@ open class OpusManagerBase {
 
     open fun save(path: String? = null) {
         if (path == null && this.path == null) {
-            throw Exception("NoPathGiven")
+            throw EmptyPath()
         }
 
         if (path != null) {

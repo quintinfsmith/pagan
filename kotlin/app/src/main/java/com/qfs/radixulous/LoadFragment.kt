@@ -18,6 +18,7 @@ import java.io.File
  * A simple [Fragment] subclass as the second destination in the navigation.
  */
 class LoadFragment : TempNameFragment() {
+    class MKDirFailedException(dir: String): Exception("Failed to create directory $dir")
     @Serializable
     data class ProjectDirPair(var filename: String, var title: String)
 
@@ -60,7 +61,7 @@ class LoadFragment : TempNameFragment() {
         val directory = File(project_manager.projects_dir)
         if (!directory.isDirectory) {
             if (! directory.mkdirs()) {
-                throw Exception("Could not make directory")
+                throw MKDirFailedException(project_manager.projects_dir)
             }
         }
 

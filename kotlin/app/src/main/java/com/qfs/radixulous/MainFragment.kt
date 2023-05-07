@@ -285,7 +285,7 @@ class MainFragment : TempNameFragment() {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
         if (opus_manager.cursor.mode != Cursor.CursorMode.Row) {
-            throw Exception("Can't View Line ContextMenu outside of CursorMode: Row")
+            throw Cursor.InvalidModeException(opus_manager.cursor.mode, Cursor.CursorMode.Row)
         }
         this.clearContextMenu()
         val llContextMenu = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenu)

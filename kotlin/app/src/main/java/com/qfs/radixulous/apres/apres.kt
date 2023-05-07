@@ -1294,6 +1294,10 @@ data class MetaEvent(var byte: Byte, var bytes: ByteArray): MIDIEvent {
 }
 
 class MIDI {
+    class MissingMThd(): Exception("Missing MThd")
+    class InvalidChunkType(string: String): Exception("Invalid Chunk Type: $string")
+    class TrackOOB(index: Int): Exception("Track $index Out of Bounds")
+    class InvalidEventId(id: Int): Exception("No event mapped to id:$id")
     var ppqn: Int = 120
     var midi_format: Int = 1
     var events = HashMap<Int, MIDIEvent>()
@@ -1353,7 +1357,7 @@ class MIDI {
                     }
                     "MTrk" -> {
                         if (! found_header) {
-                            throw Exception("MISSING MThd")
+                            throw MissingMThd()
                         }
                         current_deltatime = 0
                         track_length = dequeue_n(working_bytes, 4)
@@ -1371,7 +1375,7 @@ class MIDI {
                         current_track += 1
                     }
                     else -> {
-                        throw Exception("Invalid Bytes $chunk_type")
+                        throw InvalidChunkType(chunk_type)
                     }
                 }
             }
@@ -1546,7 +1550,7 @@ class MIDI {
 
     fun insert_event(track: Int, tick: Int, event: MIDIEvent): Int {
         if (track > 15) {
-            throw Exception("TrackOutOfBounds")
+            throw TrackOOB(track)
         }
         val new_event_id = this.event_id_gen
         this.event_id_gen += 1
@@ -1563,7 +1567,7 @@ class MIDI {
 
     fun push_event(track: Int, wait: Int, event: MIDIEvent): Int {
         if (track > 15) {
-            throw Exception("TrackOutOfBounds")
+            throw TrackOOB(track)
         }
 
         val new_event_id = this.event_id_gen
@@ -1583,7 +1587,7 @@ class MIDI {
 
     fun replace_event(event_id: Int, new_midi_event: MIDIEvent) {
         if (!this.events.containsKey(event_id)) {
-            throw Exception("EventNotFound: $event_id")
+            throw InvalidEventId(event_id)
         }
         this.events[event_id] = new_midi_event
     }

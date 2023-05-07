@@ -10,6 +10,7 @@ import androidx.appcompat.view.ContextThemeWrapper
 
 
 class RelativeOptionSelector(context: Context, attrs: AttributeSet) : LinearLayout(context, attrs) {
+    class InvalidOptionException(option: Int): Exception("Invalid Option selected: $option")
     private var active_button: RelativeOptionSelectorButton? = null
     private var button_map = HashMap<RelativeOptionSelectorButton, Int>()
     private var itemList: List<Int> = listOf(
@@ -75,7 +76,7 @@ class RelativeOptionSelector(context: Context, attrs: AttributeSet) : LinearLayo
 
     fun setState(new_state: Int, manual: Boolean = false) {
         if (new_state >= this.itemList.size) {
-            throw Exception("Not an option")
+            throw InvalidOptionException(new_state)
         }
 
         for ((button, value) in this.button_map) {

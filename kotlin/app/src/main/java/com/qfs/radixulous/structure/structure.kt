@@ -77,6 +77,7 @@ fun lowest_common_multiple(number_list: List<Int>): Int {
 }
 
 class OpusTree<T> {
+    class InvalidGetCall(): Exception("Can't call get() on leaf")
     data class ReducerTuple<T>(
         var denominator: Int,
         var indices: MutableList<Pair<Int, OpusTree<T>>>,
@@ -259,7 +260,7 @@ class OpusTree<T> {
 
     operator fun get(rel_index: Int): OpusTree<T> {
         if (this.is_leaf()) {
-            throw Exception("Get() called on leaf")
+            throw InvalidGetCall()
         }
 
         val index = if (rel_index < 0) {
@@ -269,7 +270,7 @@ class OpusTree<T> {
         }
 
         if (index >= this.size) {
-            throw Exception ("Index out of bounds")
+            throw IndexOutOfBoundsException()
         }
 
         val output: OpusTree<T>

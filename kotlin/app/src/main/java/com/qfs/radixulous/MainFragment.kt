@@ -187,7 +187,7 @@ class MainFragment : TempNameFragment() {
         val (is_networked, many_links) = if (opus_manager.cursor.mode == Cursor.CursorMode.Range) {
             var output = false
             for (beat_key in opus_manager.get_beatkeys_in_range(opus_manager.cursor.range!!.first, opus_manager.cursor.range!!.second)) {
-                if (opus_manager.is_networked(beat_key.channel, beat_key.line_offset, beat_key.beat)) {
+                if (opus_manager.is_networked(beat_key)) {
                     output = true
                     break
                 }
@@ -200,7 +200,7 @@ class MainFragment : TempNameFragment() {
         } else if (opus_manager.cursor.mode == Cursor.CursorMode.Single) {
             val cursor_key = opus_manager.cursor.get_beatkey()
             Pair(
-                opus_manager.is_networked(cursor_key.channel, cursor_key.line_offset, cursor_key.beat),
+                opus_manager.is_networked(cursor_key),
                 opus_manager.get_all_linked(cursor_key).size == 2
             )
         } else {
@@ -615,6 +615,8 @@ class MainFragment : TempNameFragment() {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
         opus_manager.unlink_beat()
+        val rvBeatTable = main.findViewById<RecyclerView>(R.id.rvBeatTable)
+        (rvBeatTable.adapter as BeatColumnAdapter).cancel_linking()
     }
 
     private fun interact_btnUnlinkAll(view: View) {
@@ -626,10 +628,10 @@ class MainFragment : TempNameFragment() {
 
     private fun interact_btnCancelLink(view: View) {
         // TODO: I think linking needs to be looked at (shouldn't be long, but requires focus)
-        val opus_manager = this.get_main().get_opus_manager()
-        // Cancelling the linking is handled in set_cursor_position
-        //this.set_cursor_position(cursor.y, cursor.x, cursor.get_position(), FocusType.Cell)
-        //this.setContextMenu_leaf()
+        var main = this.get_main()
+        //main.get_opus_manager().cursor_select( )
+        val rvBeatTable = main.findViewById<RecyclerView>(R.id.rvBeatTable)
+        (rvBeatTable.adapter as BeatColumnAdapter).cancel_linking()
     }
 
     private fun interact_nsOffset(view: NumberSelector) {

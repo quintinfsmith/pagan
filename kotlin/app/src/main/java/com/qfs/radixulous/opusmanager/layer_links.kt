@@ -49,19 +49,16 @@ open class LinksLayer() : OpusManagerBase() {
 
         val beat_pool_index = this.link_pool_map[beat_key]
         val target_pool_index = this.link_pool_map[target]
-
         if (beat_pool_index != null && target_pool_index != null) {
             this.overwrite_beat(beat_key, target)
             this.merge_link_pools(beat_pool_index, target_pool_index)
+        } else if (beat_pool_index != null) {
+            this.link_beat_into_pool(target, beat_pool_index, true)
+        } else if (target_pool_index != null) {
+            this.link_beat_into_pool(beat_key, target_pool_index, false)
         } else {
-            if (beat_pool_index != null) {
-                this.link_beat_into_pool(target, beat_pool_index, true)
-            } else if (target_pool_index != null) {
-                this.link_beat_into_pool(beat_key, target_pool_index, false)
-            } else {
-                this.overwrite_beat(beat_key, target)
-                this.create_link_pool(listOf(beat_key, target))
-            }
+            this.overwrite_beat(beat_key, target)
+            this.create_link_pool(listOf(beat_key, target))
         }
     }
 
@@ -252,8 +249,8 @@ open class LinksLayer() : OpusManagerBase() {
         return new_beat
     }
 
-    fun is_networked(channel: Int, line_offset: Int, beat: Int): Boolean {
-        return this.link_pool_map.contains(BeatKey(channel, line_offset, beat))
+    fun is_networked(beat_key: BeatKey): Boolean {
+        return this.link_pool_map.contains(beat_key)
     }
 
     override fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<OpusEvent>>?) {
@@ -330,9 +327,19 @@ open class LinksLayer() : OpusManagerBase() {
         }
         from_key.beat = min(target_a.beat, target_b.beat)
         to_key.beat = max(target_a.beat, target_b.beat)
-        if (from_key == to_key) {
+
+        var overlap = beat.beat in (from_key.beat .. to_key.beat)
+            && (
+                ((to_key.channel == from_key.channel) && beat.line_offset in (from_key.line_offset .. to_key.line_offset))
+                || (beat.channel == from_key.channel && beat.line_offset in (from_key.line_offset until this.channels[from_key.channel].size))
+                || ((beat.channel == to_key.channel) && beat.line_offset in (0 until to_key.line_offset))
+                || beat.channel in (from_key.channel + 1 until to_key.channel)
+            )
+
+        if (overlap) {
             throw Exception("Can't self-link beats")
         }
+
         var working_beat = beat.copy()
         val new_pairs = mutableListOf<Pair<BeatKey, BeatKey>>()
         while (from_key.channel != to_key.channel || from_key.line_offset != to_key.line_offset) {

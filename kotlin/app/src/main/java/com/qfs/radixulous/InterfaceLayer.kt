@@ -314,7 +314,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     override fun unlink_beat(beat_key: BeatKey) {
-        var update_keys = this.get_all_linked(beat_key).toMutableList()
+        val update_keys = this.get_all_linked(beat_key).toMutableList()
         update_keys.remove(beat_key)
         super.unlink_beat(beat_key)
 
@@ -516,12 +516,12 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             return
         }
         var has_cursor_action = true
-        super.history_cache.remember {
+        this.history_cache.remember {
             when (func_name) {
                 "move_line" -> {
-                    var to_line = args[3] as Int
-                    var from_line = args[1] as Int
-                    super.push_to_history_stack(
+                    val to_line = args[3] as Int
+                    val from_line = args[1] as Int
+                    this.push_to_history_stack(
                         "cursor_select_row",
                         listOf(
                             args[2] as Int,
@@ -534,7 +534,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                     )
                 }
                 "insert_line" -> {
-                    super.push_to_history_stack(
+                    this.push_to_history_stack(
                         "cursor_select_row",
                         listOf(
                             args[0] as Int,
@@ -543,9 +543,9 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                     )
                 }
                 "remove_line" -> {
-                    var channel = args[0] as Int
-                    var line_offset = args[1] as Int
-                    super.push_to_history_stack(
+                    val channel = args[0] as Int
+                    val line_offset = args[1] as Int
+                    this.push_to_history_stack(
                         "cursor_select_row",
                         listOf(
                             channel,
@@ -558,14 +558,14 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                     )
                 }
                 "replace_tree" -> {
-                    var new_position = (args[1] as List<Int>).toMutableList()
+                    val new_position = (args[1] as List<Int>).toMutableList()
                     var tree = args[2] as OpusTree<OpusEvent>
                     while (! tree.is_leaf()) {
                         new_position.add(0)
                         tree = tree[0]
                     }
 
-                    super.push_to_history_stack(
+                    this.push_to_history_stack(
                         "cursor_select",
                         listOf(
                             args[0] as BeatKey,
@@ -574,7 +574,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                     )
                 }
                 "set_percussion_instrument" ->{
-                    super.push_to_history_stack(
+                    this.push_to_history_stack(
                         "cursor_select_row",
                         listOf(
                             this.percussion_channel!!,
@@ -583,25 +583,25 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                     )
                 }
                 "set_percussion_channel" -> {
-                    super.push_to_history_stack(
+                    this.push_to_history_stack(
                         "cursor_select_row",
                         listOf(args[0], 0)
                     )
                 }
                 "unset_percussion_channel" -> {
-                    super.push_to_history_stack(
+                    this.push_to_history_stack(
                         "cursor_select_row",
                         listOf(this.percussion_channel!!, 0)
                     )
                 }
                 "set_channel_instrument" -> {
-                    super.push_to_history_stack(
+                    this.push_to_history_stack(
                         "cursor_select_row",
                         listOf(args[0], 0)
                     )
                 }
                 "unset" -> {
-                    super.push_to_history_stack(
+                    this.push_to_history_stack(
                         "cursor_select",
                         listOf(
                             args[0] as BeatKey,
@@ -610,7 +610,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                     )
                 }
                 "set_event" -> {
-                    super.push_to_history_stack(
+                    this.push_to_history_stack(
                         "cursor_select",
                         listOf(
                             args[0] as BeatKey,
@@ -619,7 +619,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                     )
                 }
                 "set_percussion_event" -> {
-                    super.push_to_history_stack(
+                    this.push_to_history_stack(
                         "cursor_select",
                         listOf(
                             args[0] as BeatKey,
@@ -628,14 +628,14 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                     )
                 }
                 "insert_beat" -> {
-                    super.push_to_history_stack(
+                    this.push_to_history_stack(
                         "cursor_select_column",
                         listOf(args[0] as Int)
                     )
                 }
                 "remove_beat" -> {
-                    var x = min(args[0] as Int, this.opus_beat_count - 1)
-                    super.push_to_history_stack(
+                    val x = min(args[0] as Int, this.opus_beat_count - 1)
+                    this.push_to_history_stack(
                         "cursor_select_column",
                         listOf(x)
                     )
@@ -649,7 +649,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             }
         }
         if (! has_cursor_action) {
-            this.history_cache.pop()
+            //this.history_cache.pop()
             super.push_to_history_stack(func_name, args)
         }
     }

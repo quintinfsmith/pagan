@@ -1151,5 +1151,4 @@ open class OpusManagerBase {
     open fun set_tempo(new_tempo: Float) {
         this.tempo = new_tempo
     }
-
 }

@@ -681,7 +681,6 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
                     }
                 }
             }
-
         }
     }
 

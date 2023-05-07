@@ -1,6 +1,7 @@
 package com.qfs.radixulous
 
 import android.content.Context
+import android.util.Log
 import android.view.*
 import android.widget.LinearLayout
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -300,6 +301,7 @@ class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: Recycle
             // If a second link point hasn't been selected, assume just one beat is being linked
             if (opus_manager.cursor.mode != Cursor.CursorMode.Range) {
                 try {
+                    Log.d("AAA", "LINKING?")
                     opus_manager.link_beats(beatkey, this.linking_beat!!)
                 } catch (e: Exception) {
                     main.feedback_msg("Can't link beat to self")
@@ -316,8 +318,7 @@ class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: Recycle
                     main.feedback_msg("Can't link beat to self")
                 }
             }
-            this.linking_beat = null
-            this.linking_beat_b = null
+            this.cancel_linking()
         } else {
             opus_manager.cursor_select(beatkey, position)
         }
@@ -423,7 +424,6 @@ class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: Recycle
         val column_view_holder = this.recycler.findViewHolderForAdapterPosition(x) ?: return null
         var working_view = column_view_holder.itemView
 
-
         // Get the beat-cell view
         working_view = (working_view as ViewGroup).getChildAt(y)
 
@@ -453,7 +453,7 @@ class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: Recycle
     }
 
 
-    private fun cancelLinking() {
+    fun cancel_linking() {
         this.linking_beat = null
         this.linking_beat_b = null
     }

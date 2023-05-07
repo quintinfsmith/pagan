@@ -1,4 +1,5 @@
 package com.qfs.radixulous.opusmanager
+import android.util.Log
 import com.qfs.radixulous.apres.MIDI
 import com.qfs.radixulous.structure.OpusTree
 
@@ -24,7 +25,6 @@ class HistoryCache() {
         if (this.isLocked()) {
             return
         }
-
         val new_node = HistoryNode(func, args)
 
         if (this.working_node != null) {
@@ -795,4 +795,5 @@ open class HistoryLayer() : LinksLayer() {
             super.set_percussion_instrument(line_offset, instrument)
         }
     }
+
 }

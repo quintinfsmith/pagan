@@ -711,6 +711,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     fun cursor_select_column(beat: Int, scroll: Boolean = false) {
+
         this.ui_unset_cursor_focus()
         this.cursor.select_column(beat)
         this.ui_set_cursor_focus()
@@ -894,6 +895,12 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         val btnCopyProject = this.activity.findViewById<View>(R.id.btnCopyProject)
         btnDeleteProject.visibility = View.VISIBLE
         btnCopyProject.visibility = View.VISIBLE
+    }
+
+    override fun link_beats(beat_key: BeatKey, target: BeatKey) {
+        super.link_beats(beat_key, target)
+        this.ui_refresh_beat_labels(beat_key)
+        this.ui_refresh_beat_labels(target)
     }
 
 }

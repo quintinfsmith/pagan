@@ -527,13 +527,6 @@ open class HistoryLayer() : LinksLayer() {
         if (!this.history_cache.isLocked()) {
             val use_tree = tree ?: this.get_tree(beat_key, position).copy()
 
-            var stamp_position = position.toMutableList()
-            var tmp_tree = use_tree
-            while (! tmp_tree.is_leaf()) {
-                stamp_position.add(0)
-                tmp_tree = tmp_tree[0]
-            }
-
             this.push_to_history_stack(
                 "replace_tree",
                 listOf(beat_key.copy(), position.toList(), use_tree)
@@ -817,4 +810,15 @@ open class HistoryLayer() : LinksLayer() {
         super.unlink_beat(beat_key)
     }
 
+    override fun link_column(beat_key: BeatKey, column: Int) {
+        this.history_cache.remember {
+            super.link_column(beat_key, column)
+        }
+    }
+
+    override fun link_row(beat_key: BeatKey, channel: Int, line_offset: Int) {
+        this.history_cache.remember {
+            super.link_row(beat_key, channel, line_offset)
+        }
+    }
 }

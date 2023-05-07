@@ -9,7 +9,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 
 @SuppressLint("ClickableViewAccessibility")
-class ColumnLabelAdapter(var opus_manager: InterfaceLayer, var recycler: RecyclerView) : RecyclerView.Adapter<ColumnLabelAdapter.ColumnLabelViewHolder>() {
+class ColumnLabelAdapter(var opus_manager: InterfaceLayer, var recycler: RecyclerView, var activity: MainActivity) : RecyclerView.Adapter<ColumnLabelAdapter.ColumnLabelViewHolder>() {
     // BackLink so I can get the x offset from a view in the view holder
     var column_widths = mutableListOf<Int>()
 
@@ -115,7 +115,18 @@ class ColumnLabelAdapter(var opus_manager: InterfaceLayer, var recycler: Recycle
         label.setOnClickListener {
             var holder = (it as LabelView).viewHolder ?: return@setOnClickListener
             var beat = holder.bindingAdapterPosition
+
+            val rvBeatTable = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
+            val adapter = rvBeatTable.adapter as BeatColumnAdapter
+            if (adapter.linking_beat != null) {
+                if (adapter.linking_beat_b == null) {
+                    this.opus_manager.link_column(adapter.linking_beat!!, beat)
+                }
+                adapter.cancel_linking()
+            }
+
             this.opus_manager.cursor_select_column(beat)
+
         }
 
         label.setOnFocusChangeListener { view, is_focused: Boolean ->

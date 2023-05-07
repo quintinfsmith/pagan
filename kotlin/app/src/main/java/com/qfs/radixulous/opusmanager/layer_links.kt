@@ -448,4 +448,24 @@ open class LinksLayer() : OpusManagerBase() {
 
         this.batch_link_beats(new_pairs)
     }
+
+    open fun link_column(beat_key: BeatKey, column: Int) {
+        this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
+            channel.lines.forEachIndexed { j: Int, line: OpusChannel.OpusLine ->
+                var working_key = BeatKey(i, j, column)
+                if (working_key != beat_key) {
+                    this.link_beats(working_key, beat_key)
+                }
+            }
+        }
+    }
+    open fun link_row(beat_key: BeatKey, channel: Int, line_offset: Int) {
+        var working_key = BeatKey(channel, line_offset, 0)
+        for (x in 0 until this.opus_beat_count) {
+            working_key.beat = x
+            if (working_key != beat_key) {
+                this.link_beats(working_key, beat_key)
+            }
+        }
+    }
 }

@@ -36,6 +36,20 @@ open class OpusManagerBase {
         return this.channels.size
     }
 
+    fun get_first_position(beat_key: BeatKey, start_position: List<Int>? = null): List<Int> {
+        var output = if (start_position != null) {
+            start_position.toMutableList()
+        } else {
+            mutableListOf()
+        }
+        var tree = this.get_tree(beat_key, output)
+        while (! tree.is_leaf()) {
+            output.add(0)
+            tree = tree[0]
+        }
+        return output
+    }
+
     fun get_total_line_count(): Int {
         var output = 0
         this.channels.forEach { channel: OpusChannel ->

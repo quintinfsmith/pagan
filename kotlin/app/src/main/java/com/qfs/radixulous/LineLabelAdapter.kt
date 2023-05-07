@@ -19,7 +19,7 @@ class LineLabelRecyclerView(context: Context, attrs: AttributeSet) : RecyclerVie
     }
 }
 
-class LineLabelAdapter(var opus_manager: InterfaceLayer, var recycler: RecyclerView) : RecyclerView.Adapter<LineLabelAdapter.LineLabelViewHolder>() {
+class LineLabelAdapter(var opus_manager: InterfaceLayer, var recycler: RecyclerView, var activity: MainActivity) : RecyclerView.Adapter<LineLabelAdapter.LineLabelViewHolder>() {
     // BackLink so I can get the x offset from a view in the view holder
     private var row_count = 0
     private var _dragging_lineLabel: View? = null
@@ -187,6 +187,15 @@ class LineLabelAdapter(var opus_manager: InterfaceLayer, var recycler: RecyclerV
     }
 
     private fun interact_lineLabel(view: LabelView) {
+        val rvBeatTable = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
+        val adapter = rvBeatTable.adapter as BeatColumnAdapter
+
+        if (adapter.linking_beat != null) {
+            if (adapter.linking_beat_b == null) {
+                this.opus_manager.link_row(adapter.linking_beat!!, view.channel, view.line_offset)
+            }
+            adapter.cancel_linking()
+        }
         this.opus_manager.cursor_select_row(
             view.channel,
             view.line_offset

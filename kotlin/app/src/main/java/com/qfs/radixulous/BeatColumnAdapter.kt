@@ -303,7 +303,10 @@ class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: Recycle
             if (opus_manager.cursor.mode != Cursor.CursorMode.Range) {
                 try {
                     opus_manager.link_beats(beatkey, this.linking_beat!!)
-                    opus_manager.cursor_select(beatkey, position)
+                    opus_manager.cursor_select(
+                        beatkey,
+                        opus_manager.get_first_position(beatkey)
+                    )
                 } catch (e: Exception) {
                     when (e) {
                         is LinksLayer.SelfLinkError -> { }
@@ -464,7 +467,7 @@ class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: Recycle
     }
 
 
-    fun cancel_linking() {
+    fun cancel_linking(reset_cursor: Boolean = true) {
         val opus_manager = this.get_opus_manager()
         if (opus_manager.cursor.mode != Cursor.CursorMode.Single) {
             opus_manager.cursor_clear()

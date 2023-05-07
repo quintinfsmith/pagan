@@ -91,8 +91,8 @@ class MainFragment : TempNameFragment() {
         val rvColumnLabels = view.findViewById<RecyclerView>(R.id.rvColumnLabels)
         val rvLineLabels = view.findViewById<RecyclerView>(R.id.rvLineLabels)
 
-        LineLabelAdapter(this.get_main().get_opus_manager(), rvLineLabels)
-        BeatColumnAdapter(this, rvBeatTable, ColumnLabelAdapter(this.get_main().get_opus_manager(), rvColumnLabels))
+        LineLabelAdapter(this.get_main().get_opus_manager(), rvLineLabels, this.get_main())
+        BeatColumnAdapter(this, rvBeatTable, ColumnLabelAdapter(this.get_main().get_opus_manager(), rvColumnLabels, this.get_main()))
 
         svTable.viewTreeObserver.addOnScrollChangedListener {
             (rvLineLabels.adapter as LineLabelAdapter).scrollToLine(svTable.scrollY)

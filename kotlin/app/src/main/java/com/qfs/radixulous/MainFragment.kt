@@ -627,11 +627,11 @@ class MainFragment : TempNameFragment() {
     }
 
     private fun interact_btnCancelLink(view: View) {
-        // TODO: I think linking needs to be looked at (shouldn't be long, but requires focus)
         var main = this.get_main()
-        //main.get_opus_manager().cursor_select( )
+
         val rvBeatTable = main.findViewById<RecyclerView>(R.id.rvBeatTable)
         (rvBeatTable.adapter as BeatColumnAdapter).cancel_linking()
+
     }
 
     private fun interact_nsOffset(view: NumberSelector) {

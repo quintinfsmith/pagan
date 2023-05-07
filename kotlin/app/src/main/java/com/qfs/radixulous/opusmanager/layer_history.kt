@@ -158,6 +158,12 @@ open class HistoryLayer() : LinksLayer() {
             "unlink_beat" -> {
                 this.unlink_beat(current_node.args[0] as BeatKey)
             }
+            "link_beats" -> {
+                this.link_beats(
+                    current_node.args[0] as BeatKey,
+                    current_node.args[1] as BeatKey
+                )
+            }
             "create_link_pool" -> {
                 this.create_link_pool((current_node.args[0] as LinkedHashSet<BeatKey>).toList())
             }
@@ -794,6 +800,17 @@ open class HistoryLayer() : LinksLayer() {
             this.push_to_history_stack("set_percussion_instrument", listOf(line_offset, current))
             super.set_percussion_instrument(line_offset, instrument)
         }
+    }
+
+    override fun unlink_beat(beat_key: BeatKey) {
+        val pool = this.link_pools[this.link_pool_map[beat_key]!!]
+        for (linked_key in pool) {
+            if (beat_key != linked_key) {
+                this.push_to_history_stack("link_beats", listOf(beat_key, linked_key))
+                break
+            }
+        }
+        super.unlink_beat(beat_key)
     }
 
 }

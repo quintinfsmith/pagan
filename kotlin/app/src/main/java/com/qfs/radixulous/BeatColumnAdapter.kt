@@ -301,8 +301,8 @@ class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: Recycle
             // If a second link point hasn't been selected, assume just one beat is being linked
             if (opus_manager.cursor.mode != Cursor.CursorMode.Range) {
                 try {
-                    Log.d("AAA", "LINKING?")
                     opus_manager.link_beats(beatkey, this.linking_beat!!)
+                    opus_manager.cursor_select(beatkey, position)
                 } catch (e: Exception) {
                     main.feedback_msg("Can't link beat to self")
                 }
@@ -321,21 +321,18 @@ class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: Recycle
             this.cancel_linking()
         } else {
             opus_manager.cursor_select(beatkey, position)
-        }
-
-        this.parent_fragment.setContextMenu_leaf()
-
-        val tree = opus_manager.get_tree()
-        thread {
-            if (tree.is_event()) {
-                main.play_event(
-                    beatkey.channel,
-                    if (opus_manager.is_percussion(beatkey.channel)) {
-                        opus_manager.get_percussion_instrument(beatkey.line_offset)
-                    } else {
-                        opus_manager.get_absolute_value(beatkey, position) ?: return@thread
-                    }
-                )
+            val tree = opus_manager.get_tree()
+            thread {
+                if (tree.is_event()) {
+                    main.play_event(
+                        beatkey.channel,
+                        if (opus_manager.is_percussion(beatkey.channel)) {
+                            opus_manager.get_percussion_instrument(beatkey.line_offset)
+                        } else {
+                            opus_manager.get_absolute_value(beatkey, position) ?: return@thread
+                        }
+                    )
+                }
             }
         }
     }
@@ -454,6 +451,16 @@ class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: Recycle
 
 
     fun cancel_linking() {
+        val opus_manager = this.get_opus_manager()
+        if (opus_manager.cursor.mode != Cursor.CursorMode.Single) {
+            opus_manager.cursor_clear()
+        } else {
+            opus_manager.cursor_select(
+                opus_manager.cursor.get_beatkey(),
+                opus_manager.cursor.get_position()
+            )
+        }
+
         this.linking_beat = null
         this.linking_beat_b = null
     }

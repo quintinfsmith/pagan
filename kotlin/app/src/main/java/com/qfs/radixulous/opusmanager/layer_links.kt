@@ -71,7 +71,6 @@ open class LinksLayer() : OpusManagerBase() {
         return true
     }
 
-
     open fun create_link_pool(beat_keys: List<BeatKey>) {
         val pool_index = this.link_pools.size
         this.link_pools.add(beat_keys.toMutableSet())
@@ -327,18 +326,34 @@ open class LinksLayer() : OpusManagerBase() {
         }
         from_key.beat = min(target_a.beat, target_b.beat)
         to_key.beat = max(target_a.beat, target_b.beat)
+        Log.d("AAA", "-------------------")
+        Log.d("AAA", "FROM: $from_key")
+        Log.d("AAA", "TO: $to_key")
 
-        var overlap = beat.beat in (from_key.beat .. to_key.beat)
-            && (
-                ((to_key.channel == from_key.channel) && beat.line_offset in (from_key.line_offset .. to_key.line_offset))
-                || (beat.channel == from_key.channel && beat.line_offset in (from_key.line_offset until this.channels[from_key.channel].size))
-                || ((beat.channel == to_key.channel) && beat.line_offset in (0 until to_key.line_offset))
-                || beat.channel in (from_key.channel + 1 until to_key.channel)
-            )
+        var overlap = if (beat.beat in (from_key.beat .. to_key.beat)) {
+            if (beat.channel in (from_key.channel..to_key.channel)) {
+                if (to_key.channel == from_key.channel) {
+                    beat.line_offset in (from_key.line_offset..to_key.line_offset)
+                } else if (beat.channel == from_key.channel) {
+                    beat.line_offset in (from_key.line_offset until this.channels[from_key.channel].size)
+                } else if (beat.channel == to_key.channel) {
+                    beat.line_offset in (0 until to_key.line_offset)
+                } else {
+                    beat.channel in (from_key.channel + 1 until to_key.channel)
+                }
+            } else {
+                false
+            }
+        } else {
+            false
+        }
+
 
         if (overlap) {
+            Log.d("AAA", "Bad Overlap")
             throw Exception("Can't self-link beats")
         }
+        Log.d("AAA", "NOT Bad Overlap")
 
         var working_beat = beat.copy()
         val new_pairs = mutableListOf<Pair<BeatKey, BeatKey>>()
@@ -358,6 +373,7 @@ open class LinksLayer() : OpusManagerBase() {
                 from_key.channel += 1
                 from_key.line_offset = 0
             } else {
+                Log.d("AAA", "A")
                 throw Exception("Bad BeatKey Range: $target_a .. $target_b")
             }
 
@@ -367,6 +383,7 @@ open class LinksLayer() : OpusManagerBase() {
                 working_beat.channel += 1
                 working_beat.line_offset = 0
             } else {
+                Log.d("AAA", "B")
                 throw Exception("Bad BeatKey: $working_beat")
             }
         }

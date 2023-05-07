@@ -640,6 +640,19 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                         listOf(x)
                     )
                 }
+                "link_beats" -> {
+                    val beat_key = args[0] as BeatKey
+                    val position = mutableListOf<Int>()
+                    var tree = this.get_tree(beat_key,position)
+                    while (! tree.is_leaf()) {
+                        tree = tree[0]
+                        position.add(0)
+                    }
+                    this.push_to_history_stack(
+                        "cursor_select",
+                        listOf( beat_key, position )
+                    )
+                }
                 else -> {
                     has_cursor_action = false
                 }
@@ -775,7 +788,13 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     fun unlink_beat() {
-        this.unlink_beat(this.cursor.get_beatkey())
+        if (this.cursor.mode == Cursor.CursorMode.Single) {
+            this.unlink_beat(this.cursor.get_beatkey())
+        } else if (this.cursor.mode == Cursor.CursorMode.Range) {
+            for (beat_key in this.get_beatkeys_in_range(cursor.range!!.first, cursor.range!!.second)) {
+                this.unlink_beat(beat_key)
+            }
+        }
     }
 
     fun clear_link_pool() {

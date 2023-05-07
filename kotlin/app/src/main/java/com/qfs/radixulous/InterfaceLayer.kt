@@ -112,13 +112,14 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     override fun set_percussion_instrument(line_offset: Int, instrument: Int) {
         super.set_percussion_instrument(line_offset, instrument)
 
-        val btnChoosePercussion: TextView = this.activity.findViewById(R.id.btnChoosePercussion)
+        val btnChoosePercussion: TextView? = this.activity.findViewById(R.id.btnChoosePercussion)
+        if (btnChoosePercussion != null) {
+            val drums = this.activity.resources.getStringArray(R.array.midi_drums)
+            val drum_index = this.get_percussion_instrument(line_offset)
+            btnChoosePercussion.text = "$instrument: ${drums[drum_index]}"
 
-        val drums = this.activity.resources.getStringArray(R.array.midi_drums)
-        val drum_index = this.get_percussion_instrument(line_offset)
-        btnChoosePercussion.text = "$instrument: ${drums[drum_index]}"
-
-        this.update_line_labels()
+            this.update_line_labels()
+        }
     }
 
     override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {

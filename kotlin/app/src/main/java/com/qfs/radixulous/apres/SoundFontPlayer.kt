@@ -33,7 +33,7 @@ class Mutex(var timeout: Int = 100) {
     }
 
     fun enter_queue() {
-        var waiting_number = this.pick_number()
+        val waiting_number = this.pick_number()
         var wait = 0
         while (waiting_number != this.lock_value && wait < this.timeout) {
             Thread.sleep(5)
@@ -121,7 +121,7 @@ class AudioTrackHandle() {
 
     fun add_sample_handle(handle: SampleHandle): Int {
         return this.sample_handles_mutex.withLock {
-            var newkey = this.genkey()
+            val newkey = this.genkey()
             handle.set_join_delay(this.play_start_ts)
             this.sample_handles[newkey] = handle
             newkey
@@ -129,7 +129,7 @@ class AudioTrackHandle() {
     }
 
     fun add_sample_handles(handles: Set<SampleHandle>): Set<Int> {
-        var output = mutableSetOf<Int>()
+        val output = mutableSetOf<Int>()
         for (handle in handles) {
             output.add(this.add_sample_handle(handle))
         }
@@ -168,14 +168,14 @@ class AudioTrackHandle() {
         if (this.sample_handles.isEmpty()) {
             this.stop_called_from_write = true
         } else {
-            var control_sample_left = IntArray(AudioTrackHandle.buffer_size_in_frames) { _ -> 0 }
-            var control_sample_right = IntArray(AudioTrackHandle.buffer_size_in_frames) { _ -> 0 }
+            val control_sample_left = IntArray(AudioTrackHandle.buffer_size_in_frames) { _ -> 0 }
+            val control_sample_right = IntArray(AudioTrackHandle.buffer_size_in_frames) { _ -> 0 }
             var max_left = 0
             var max_right = 0
             for ((key, sample_handle) in sample_handles) {
                 when (sample_handle.stereo_mode and 7) {
                     1 -> { // mono
-                        var next_max = sample_handle.get_next_max(AudioTrackHandle.buffer_size_in_frames) ?: continue
+                        val next_max = sample_handle.get_next_max(AudioTrackHandle.buffer_size_in_frames) ?: continue
                         max_left += next_max
                         max_right += next_max
                     }
@@ -196,7 +196,7 @@ class AudioTrackHandle() {
                     if (key in kill_handles) {
                         continue
                     }
-                    var v: Short? = sample_handle.get_next_frame()
+                    val v: Short? = sample_handle.get_next_frame()
                     if (v == null) {
                         kill_handles.add(key)
                         if (kill_handles.size == sample_handles.size && cut_point == null) {
@@ -226,21 +226,21 @@ class AudioTrackHandle() {
             }
 
 
-            var gain_factor_left = if (max_left > Short.MAX_VALUE) {
+            val gain_factor_left = if (max_left > Short.MAX_VALUE) {
                 short_max / max_left.toFloat()
             } else {
                 1F
             }
 
-            var gain_factor_right = if (max_right > Short.MAX_VALUE) {
+            val gain_factor_right = if (max_right > Short.MAX_VALUE) {
                 short_max / max_right.toFloat()
             } else {
                 1F
             }
 
             for (x in 0 until control_sample_left.size) {
-                var right = (control_sample_right[x] * gain_factor_right).toInt()
-                var left = (control_sample_left[x] * gain_factor_left).toInt()
+                val right = (control_sample_right[x] * gain_factor_right).toInt()
+                val left = (control_sample_left[x] * gain_factor_left).toInt()
 
                 use_bytes[(4 * x)] = (right and 0xFF).toByte()
                 use_bytes[(4 * x) + 1] = ((right and 0xFF00) shr 8).toByte()
@@ -292,7 +292,7 @@ class SampleHandleGenerator {
     var sample_data_map = HashMap<MapKey, SampleHandle>()
 
     fun get(event: NoteOn, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset): SampleHandle {
-        var mapkey = MapKey(event.note, sample.hashCode(), instrument.hashCode(), preset.hashCode())
+        val mapkey = MapKey(event.note, sample.hashCode(), instrument.hashCode(), preset.hashCode())
         if (!sample_data_map.contains(mapkey)) {
             this.sample_data_map[mapkey] = this.generate_new(event, sample, instrument, preset)
         }
@@ -300,7 +300,7 @@ class SampleHandleGenerator {
     }
 
     fun cache_new(event: NoteOn, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset) {
-        var mapkey = MapKey(event.note, sample.hashCode(), instrument.hashCode(), preset.hashCode())
+        val mapkey = MapKey(event.note, sample.hashCode(), instrument.hashCode(), preset.hashCode())
         if (!sample_data_map.contains(mapkey)) {
             this.sample_data_map[mapkey] = this.generate_new(event, sample, instrument, preset)
         }
@@ -321,45 +321,45 @@ class SampleHandleGenerator {
             pitch_shift *= (sample.sample!!.sampleRate.toFloat() / AudioTrackHandle.sample_rate.toFloat())
         }
 
-        var data = this.resample(sample.sample!!.data!!, pitch_shift)
+        val data = this.resample(sample.sample!!.data!!, pitch_shift)
 
-        var vol_env_delay: Double = preset.global_zone?.vol_env_delay
+        val vol_env_delay: Double = preset.global_zone?.vol_env_delay
             ?: instrument.instrument?.global_sample?.vol_env_delay
             ?: instrument.vol_env_delay
             ?: sample.vol_env_delay
             ?: 0.0
-        var vol_env_attack: Double = preset.global_zone?.vol_env_attack
+        val vol_env_attack: Double = preset.global_zone?.vol_env_attack
             ?: instrument.instrument?.global_sample?.vol_env_attack
             ?: instrument.vol_env_attack
             ?: sample.vol_env_attack
             ?: 0.0
 
-        var vol_env_hold: Double = preset.global_zone?.vol_env_hold
+        val vol_env_hold: Double = preset.global_zone?.vol_env_hold
             ?: instrument.instrument?.global_sample?.vol_env_hold
             ?: instrument.vol_env_hold
             ?: sample.vol_env_hold
             ?: 0.0
 
-        var vol_env_decay: Double = preset.global_zone?.vol_env_decay
+        val vol_env_decay: Double = preset.global_zone?.vol_env_decay
             ?: instrument.instrument?.global_sample?.vol_env_decay
             ?: instrument.vol_env_decay
             ?: sample.vol_env_decay
             ?: 0.0
 
-        var vol_env_release: Double = preset.global_zone?.vol_env_release
+        val vol_env_release: Double = preset.global_zone?.vol_env_release
             ?: instrument.instrument?.global_sample?.vol_env_release
             ?: instrument.vol_env_release
             ?: sample.vol_env_release
             ?: 0.0
-        var release_mask_size = ((AudioTrackHandle.sample_rate.toDouble() * vol_env_release) / 4.0).toInt()
+        val release_mask_size = ((AudioTrackHandle.sample_rate.toDouble() * vol_env_release) / 4.0).toInt()
 
-        var divisions = ceil(data.size.toFloat() / (AudioTrackHandle.buffer_size_in_bytes.toFloat() / 2F)).toInt() * 2
-        var maximum_map = Array<Int>(divisions) { _ -> 0 }
+        val divisions = ceil(data.size.toFloat() / (AudioTrackHandle.buffer_size_in_bytes.toFloat() / 2F)).toInt() * 2
+        val maximum_map = Array<Int>(divisions) { _ -> 0 }
         for (i in 0 until data.size / 2) {
             val a = toUInt(data[(2 * i)])
             val b = toUInt(data[(2 * i) + 1]) * 256
-            var frame = (a + b).toShort().toInt()
-            var mapped_position = (i * divisions / (data.size / 2)).toInt()
+            val frame = (a + b).toShort().toInt()
+            val mapped_position = (i * divisions / (data.size / 2)).toInt()
             maximum_map[mapped_position] = max(abs(frame), maximum_map[mapped_position])
         }
 
@@ -401,7 +401,7 @@ class SampleHandleGenerator {
             new_size -= 1
         }
 
-        var new_sample = ByteArray(new_size) { _ -> 0 }
+        val new_sample = ByteArray(new_size) { _ -> 0 }
 
         for (i in 0 until new_size / 2) {
             var i_offset = ((i * 2).toFloat() * pitch_shift).toInt()
@@ -465,7 +465,7 @@ class SampleHandle(
 
     fun get_max_in_range(x: Int, size: Int): Int {
         var index = x * this.maximum_map.size / (this.data.size / 2)
-        var mapped_size =  size * this.maximum_map.size / (this.data.size / 2)
+        val mapped_size =  size * this.maximum_map.size / (this.data.size / 2)
         var output = 0
         for (i in 0 until mapped_size) {
             output = max(output, this.maximum_map[index])
@@ -541,7 +541,7 @@ class SampleHandle(
             this.join_delay = 0
             return
         }
-        var time_delay = (System.currentTimeMillis() - from_ts).toInt()
+        val time_delay = (System.currentTimeMillis() - from_ts).toInt()
         this.join_delay = (AudioTrackHandle.sample_rate * time_delay / 4000) % AudioTrackHandle.buffer_size_in_frames
     }
 }
@@ -556,48 +556,13 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
     private var sample_handle_queue = mutableSetOf<Pair<NoteOn,Set<SampleHandle>>>()
     private var enqueueing_sample_handles = false
     private val sample_handle_generator = SampleHandleGenerator()
+    companion object {
+        val FORCED_DELAY = 80.toLong()
+    }
 
     init {
         this.loaded_presets[Pair(0, 0)] = this.soundFont.get_preset(0, 0)
         this.loaded_presets[Pair(128, 0)] = this.soundFont.get_preset(0,128)
-    }
-
-    fun get_channel_preset(channel: Int): Int {
-        return if (this.preset_channel_map.containsKey(channel)) {
-            this.preset_channel_map[channel]!!
-        } else {
-            0
-        }
-    }
-
-    private fun release_note(note: Int, channel: Int) {
-        val keys = this.active_handle_mutex.withLock {
-            this.active_handle_keys[Pair(note, channel)]
-        } ?: return
-
-        for (key in keys) {
-            this.audio_track_handle.release_sample_handle(key)
-        }
-    }
-
-    private fun kill_note(note: Int, channel: Int) {
-        val keys = this.active_handle_mutex.withLock {
-            this.active_handle_keys.remove(Pair(note, channel))
-        } ?: return
-
-        for (key in keys) {
-            this.audio_track_handle.remove_sample_handle(key)
-        }
-    }
-
-    private fun press_note(event: NoteOn) {
-        var preset = this.get_preset(event)
-        this.active_handle_mutex.withLock {
-            this.active_handle_keys[Pair(event.note, event.channel)] = this.audio_track_handle.add_sample_handles(
-                this.gen_sample_handles(event, preset)
-            )
-        }
-        this.audio_track_handle.play()
     }
 
     override fun onNoteOn(event: NoteOn) {
@@ -635,6 +600,49 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
         }
     }
 
+    fun get_channel_preset(channel: Int): Int {
+        return if (this.preset_channel_map.containsKey(channel)) {
+            this.preset_channel_map[channel]!!
+        } else {
+            0
+        }
+    }
+
+    private fun release_note(note: Int, channel: Int) {
+        val keys = this.active_handle_mutex.withLock {
+            this.active_handle_keys[Pair(note, channel)]
+        } ?: return
+
+        for (key in keys) {
+            this.audio_track_handle.release_sample_handle(key)
+        }
+    }
+
+    private fun kill_note(note: Int, channel: Int) {
+        val keys = this.active_handle_mutex.withLock {
+            this.active_handle_keys.remove(Pair(note, channel))
+        } ?: return
+
+        for (key in keys) {
+            this.audio_track_handle.remove_sample_handle(key)
+        }
+    }
+
+    private fun press_note(event: NoteOn) {
+        val preset = this.get_preset(event)
+        var i = System.currentTimeMillis()
+        this.active_handle_mutex.withLock {
+            this.active_handle_keys[Pair(event.note, event.channel)] = this.audio_track_handle.add_sample_handles(
+                this.gen_sample_handles(event, preset)
+            )
+        }
+        var delta = System.currentTimeMillis()
+        if (delta < MIDIPlaybackDevice.FORCED_DELAY) {
+            Thread.sleep(MIDIPlaybackDevice.FORCED_DELAY - delta)
+        }
+        this.audio_track_handle.play()
+    }
+
     fun gen_sample_handles(event: NoteOn, preset: Preset): Set<SampleHandle> {
         val output = mutableSetOf<SampleHandle>()
         val potential_instruments = preset.get_instruments(event.note, event.velocity)
@@ -646,7 +654,7 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
             ).toList()
 
             for (sample in samples) {
-                var new_handle = this.sample_handle_generator.get(event, sample, p_instrument, preset)
+                val new_handle = this.sample_handle_generator.get(event, sample, p_instrument, preset)
                 new_handle.current_volume = event.velocity.toDouble() / 128.toDouble()
                 output.add( new_handle )
             }
@@ -668,7 +676,7 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
         for ((tick, events) in midi.get_all_events_grouped()) {
             for (event in events) {
                 if (event is NoteOn) {
-                    var preset = this.get_preset(event)
+                    val preset = this.get_preset(event)
                     val potential_instruments = preset.get_instruments(event.note, event.velocity)
                     for (p_instrument in potential_instruments) {
                         val samples = p_instrument.instrument!!.get_samples(

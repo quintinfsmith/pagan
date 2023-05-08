@@ -78,7 +78,7 @@ open class LinksLayer() : OpusManagerBase() {
         return true
     }
 
-    fun remove_link_pool(index: Int) {
+    open fun remove_link_pool(index: Int) {
         var keys = this.link_pools.removeAt(index)
         for (beat_key in keys) {
             this.link_pool_map.remove(beat_key)

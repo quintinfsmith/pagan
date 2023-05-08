@@ -903,4 +903,12 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         this.ui_refresh_beat_labels(target)
     }
 
+    override fun remove_link_pool(index: Int) {
+        var link_pool = this.link_pools[index].toList()
+        super.remove_link_pool(index)
+        for (beat_key in link_pool) {
+            this.ui_refresh_beat_labels(beat_key)
+        }
+    }
+
 }

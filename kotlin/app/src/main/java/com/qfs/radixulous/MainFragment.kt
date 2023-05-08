@@ -622,8 +622,10 @@ class MainFragment : TempNameFragment() {
     private fun interact_btnUnlinkAll(view: View) {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
-
         opus_manager.clear_link_pool()
+
+        val rvBeatTable = main.findViewById<RecyclerView>(R.id.rvBeatTable)
+        (rvBeatTable.adapter as BeatColumnAdapter).cancel_linking()
     }
 
     private fun interact_btnCancelLink(view: View) {
@@ -831,5 +833,4 @@ class MainFragment : TempNameFragment() {
         val rvBeatTable_adapter = rvBeatTable.adapter as BeatColumnAdapter
         rvBeatTable_adapter.scrollToPosition(adj_beatkey, new_position)
     }
-
 }

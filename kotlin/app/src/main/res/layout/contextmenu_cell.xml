@@ -10,7 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content" >
 
-        <com.qfs.radixulous.RelativeOptionSelector
+        <com.qfs.pagan.RelativeOptionSelector
             android:orientation="vertical"
             android:id="@+id/rosRelativeOption"
             android:layout_marginEnd="@dimen/normal_padding"
@@ -104,7 +104,7 @@
 
             </LinearLayout>
 
-            <com.qfs.radixulous.NumberSelector xmlns:android="http://schemas.android.com/apk/res/android"
+            <com.qfs.pagan.NumberSelector xmlns:android="http://schemas.android.com/apk/res/android"
                 xmlns:custom="http://schemas.android.com/apk/res-auto"
                 android:id="@+id/nsOctave"
                 android:layout_width="match_parent"
@@ -118,7 +118,7 @@
     </LinearLayout>
 
 
-    <com.qfs.radixulous.NumberSelector xmlns:android="http://schemas.android.com/apk/res/android"
+    <com.qfs.pagan.NumberSelector xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:custom="http://schemas.android.com/apk/res-auto"
         android:id="@+id/nsOffset"
         android:layout_marginTop="@dimen/normal_padding"

@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace 'com.qfs.radixulous'
+    namespace 'com.qfs.pagan'
     compileSdk 32
 
     defaultConfig {
-        applicationId "com.qfs.radixulous"
+        applicationId "com.qfs.pagan"
         minSdk 21
         targetSdk 31
         versionCode 1

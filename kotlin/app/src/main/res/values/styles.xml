@@ -140,7 +140,7 @@
         <item name="android:padding">8dp</item>
     </style>
 
-    <style name="AlertDialog" parent="@style/Theme.Radixulous.AlertDialog">
+    <style name="AlertDialog" parent="@style/Theme.Pagan.AlertDialog">
         <item name="android:paddingStart">12dp</item>
         <item name="android:paddingEnd">12dp</item>
         <item name="android:textColor">?attr/colorOnPrimary</item>

@@ -3,31 +3,31 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph_b"
-    app:startDestination="@id/MainFragment">
+    app:startDestination="@id/EditorFragment">
 
     <fragment
-        android:id="@+id/MainFragment"
-        android:name="com.qfs.radixulous.MainFragment"
+        android:id="@+id/EditorFragment"
+        android:name="com.qfs.pagan.EditorFragment"
         android:label="@string/main_fragment_label"
         tools:layout="@layout/fragment_main" >
 
         <action
-            android:id="@+id/action_MainFragment_to_LoadFragment"
+            android:id="@+id/action_EditorFragment_to_LoadFragment"
             app:destination="@id/LoadFragment"/>
 
     </fragment>
 
     <fragment
         android:id="@+id/LoadFragment"
-        android:name="com.qfs.radixulous.LoadFragment"
+        android:name="com.qfs.pagan.LoadFragment"
         android:label="@string/load_fragment_label"
         tools:layout="@layout/fragment_load">
 
         <action
-            android:id="@+id/action_LoadFragment_to_MainFragment"
-            app:popUpTo="@id/MainFragment"
+            android:id="@+id/action_LoadFragment_to_EditorFragment"
+            app:popUpTo="@id/EditorFragment"
             app:popUpToInclusive="true"
-            app:destination="@id/MainFragment" />
+            app:destination="@id/EditorFragment" />
     </fragment>
 
 </navigation>

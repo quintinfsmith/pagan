@@ -6,41 +6,41 @@
     app:startDestination="@id/FrontFragment">
 
     <fragment
-        android:id="@+id/MainFragment"
-        android:name="com.qfs.radixulous.MainFragment"
+        android:id="@+id/EditorFragment"
+        android:name="com.qfs.pagan.EditorFragment"
         android:label="@string/main_fragment_label"
         tools:layout="@layout/fragment_main" >
 
         <action
-            android:id="@+id/action_MainFragment_to_LoadFragment"
+            android:id="@+id/action_EditorFragment_to_LoadFragment"
             app:destination="@id/LoadFragment"
-            app:popUpTo="@id/MainFragment"
+            app:popUpTo="@id/EditorFragment"
             app:popUpToInclusive="true" />
 
     </fragment>
 
     <fragment
         android:id="@+id/LoadFragment"
-        android:name="com.qfs.radixulous.LoadFragment"
+        android:name="com.qfs.pagan.LoadFragment"
         android:label="@string/load_fragment_label"
         tools:layout="@layout/fragment_load">
 
         <action
-            android:id="@+id/action_LoadFragment_to_MainFragment"
+            android:id="@+id/action_LoadFragment_to_EditorFragment"
             app:popUpTo="@id/FrontFragment"
             app:popUpToInclusive="true"
-            app:destination="@id/MainFragment" />
+            app:destination="@id/EditorFragment" />
     </fragment>
 
     <fragment
         android:id="@+id/FrontFragment"
-        android:name="com.qfs.radixulous.LandingPageFragment"
+        android:name="com.qfs.pagan.LandingPageFragment"
         android:label="@string/front_fragment_label"
         tools:layout="@layout/fragment_landing">
 
         <action
-            android:id="@+id/action_FrontFragment_to_MainFragment"
-            app:destination="@id/MainFragment"
+            android:id="@+id/action_FrontFragment_to_EditorFragment"
+            app:destination="@id/EditorFragment"
             app:popUpTo="@id/FrontFragment"
             app:popUpToInclusive="true" />
 
@@ -54,7 +54,7 @@
 
     <fragment
         android:id="@+id/LicenseFragment"
-        android:name="com.qfs.radixulous.LicenseFragment"
+        android:name="com.qfs.pagan.LicenseFragment"
         android:label="@string/license_fragment_label"
         tools:layout="@layout/fragment_license">
     </fragment>

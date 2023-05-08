@@ -77,7 +77,7 @@ open class LinksLayer() : OpusManagerBase() {
     }
 
     open fun remove_link_pool(index: Int) {
-        var keys = this.link_pools.removeAt(index)
+        val keys = this.link_pools.removeAt(index)
         for (beat_key in keys) {
             this.link_pool_map.remove(beat_key)
         }
@@ -319,7 +319,7 @@ open class LinksLayer() : OpusManagerBase() {
     }
 
     open fun link_beat_range(beat: BeatKey, target_a: BeatKey, target_b: BeatKey) {
-        var (from_key, to_key) = if (target_a.channel < target_b.channel) {
+        val (from_key, to_key) = if (target_a.channel < target_b.channel) {
             Pair(
                 BeatKey(target_a.channel, target_a.line_offset, -1),
                 BeatKey(target_b.channel, target_b.line_offset, -1)
@@ -345,7 +345,7 @@ open class LinksLayer() : OpusManagerBase() {
         from_key.beat = min(target_a.beat, target_b.beat)
         to_key.beat = max(target_a.beat, target_b.beat)
 
-        var overlap = if (beat.beat in (from_key.beat .. to_key.beat)) {
+        val overlap = if (beat.beat in (from_key.beat .. to_key.beat)) {
             if (beat.channel in (from_key.channel..to_key.channel)) {
                 if (to_key.channel == from_key.channel) {
                     beat.line_offset in (from_key.line_offset..to_key.line_offset)
@@ -448,22 +448,28 @@ open class LinksLayer() : OpusManagerBase() {
     }
 
     open fun link_column(beat_key: BeatKey, column: Int) {
+        val new_pool = mutableListOf<BeatKey>()
         this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
             channel.lines.forEachIndexed { j: Int, line: OpusChannel.OpusLine ->
                 var working_key = BeatKey(i, j, column)
                 if (working_key != beat_key) {
-                    this.link_beats(working_key, beat_key)
+                    this.overwrite_beat(working_key, beat_key)
                 }
+                new_pool.add(working_key)
             }
         }
+        this.create_link_pool(new_pool)
     }
     open fun link_row(beat_key: BeatKey, channel: Int, line_offset: Int) {
-        var working_key = BeatKey(channel, line_offset, 0)
+        val working_key = BeatKey(channel, line_offset, 0)
+        val new_pool = mutableListOf<BeatKey>()
         for (x in 0 until this.opus_beat_count) {
             working_key.beat = x
             if (working_key != beat_key) {
-                this.link_beats(working_key, beat_key)
+                this.overwrite_beat(working_key, beat_key)
             }
+            new_pool.add(working_key.copy())
         }
+        this.create_link_pool(new_pool)
     }
 }

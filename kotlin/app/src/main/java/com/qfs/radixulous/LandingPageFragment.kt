@@ -24,11 +24,45 @@ class LandingPageFragment : TempNameFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        var btn_newProject = view.findViewById<View>(R.id.btnFrontNew)
-        var btn_loadProject = view.findViewById<View>(R.id.btnFrontLoad)
-        var btn_importMidi = view.findViewById<View>(R.id.btnFrontImport)
-        var btn_importProject = view.findViewById<View>(R.id.btnFrontImportProject)
-        var linkSource = view.findViewById<View>(R.id.linkSource)
+        val btn_newProject = view.findViewById<View>(R.id.btnFrontNew)
+        val btn_loadProject = view.findViewById<View>(R.id.btnFrontLoad)
+        val btn_importMidi = view.findViewById<View>(R.id.btnFrontImport)
+        val btn_importProject = view.findViewById<View>(R.id.btnFrontImportProject)
+        val linkSource = view.findViewById<View>(R.id.linkSource)
+        val btn_linkLicense = view.findViewById<View>(R.id.linkLicense)
+        val btn_linkSFLicense = view.findViewById<View>(R.id.linkSFLicense)
+
+        btn_linkLicense.setOnClickListener {
+            val stream = this.activity!!.assets.open("LICENSE")
+            val bytes = ByteArray(stream.available())
+            stream.read(bytes)
+            stream.close()
+            val text_body = bytes.toString(charset = Charsets.UTF_8)
+            this.setFragmentResult(
+                "LICENSE",
+                bundleOf(
+                    Pair("TEXT", text_body),
+                    Pair("TITLE", "GPLV2")
+                )
+            )
+            this.get_main().navTo("license")
+        }
+
+        btn_linkSFLicense.setOnClickListener {
+            val stream = this.activity!!.assets.open("SFLicense.txt")
+            val bytes = ByteArray(stream.available())
+            stream.read(bytes)
+            stream.close()
+            val text_body = bytes.toString(charset = Charsets.UTF_8)
+            this.setFragmentResult(
+                "LICENSE",
+                bundleOf(
+                    Pair("TEXT", text_body),
+                    Pair("TITLE", "FluidR3_GM License")
+                )
+            )
+            this.get_main().navTo("license")
+        }
 
         btn_importProject.setOnClickListener {
             val intent = Intent()

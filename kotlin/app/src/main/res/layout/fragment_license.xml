@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <ScrollView
+        android:layout_height="match_parent"
+        android:layout_width="match_parent" >
+        <TextView
+            android:id="@+id/tvLicenseText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="..."/>
+    </ScrollView>
+</androidx.constraintlayout.widget.ConstraintLayout>

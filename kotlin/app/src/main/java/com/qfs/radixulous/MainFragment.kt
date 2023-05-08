@@ -8,7 +8,6 @@ import androidx.fragment.app.setFragmentResultListener
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.radixulous.databinding.FragmentMainBinding
 import com.qfs.radixulous.opusmanager.*
-import com.qfs.radixulous.BeatColumnAdapter.FocusType
 import java.lang.Integer.max
 import kotlin.concurrent.thread
 

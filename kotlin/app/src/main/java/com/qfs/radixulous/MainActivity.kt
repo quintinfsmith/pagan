@@ -469,6 +469,9 @@ class MainActivity : AppCompatActivity() {
                     "load" -> {
                         navController.navigate(R.id.action_FrontFragment_to_LoadFragment)
                     }
+                    "license" -> {
+                        navController.navigate(R.id.action_FrontFragment_to_LicenseFragment)
+                    }
                     else -> {}
                 }
             }

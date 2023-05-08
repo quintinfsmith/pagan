@@ -14,13 +14,6 @@ import com.qfs.radixulous.InterfaceLayer as OpusManager
 
 class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: RecyclerView, var column_layout: ColumnLabelAdapter) : RecyclerView.Adapter<BeatColumnAdapter.BeatViewHolder>() {
 
-    enum class FocusType {
-        Cell,
-        Row,
-        Column,
-        Group
-    }
-
     // BackLink so I can get the x offset from a view in the view holder
     class BackLinkView(context: Context): LinearLayout(context) {
         var viewHolder: BeatViewHolder? = null
@@ -59,12 +52,10 @@ class BeatColumnAdapter(var parent_fragment: MainFragment, var recycler: Recycle
     }
 
     var beat_count = 0
-    var cut_leaf: Pair<BeatKey, List<Int>>? = null
     var linking_beat: BeatKey? = null
     var linking_beat_b: BeatKey? = null
     var _scroll_lock_this: Boolean = false
     var _scroll_lock_columns: Boolean = false
-    private var focus_type: FocusType = FocusType.Cell
     private var bound_beats = mutableSetOf<Int>()
     private var attached_beats = mutableSetOf<Int>()
     var table_scroll_listener: TableOnScrollListener

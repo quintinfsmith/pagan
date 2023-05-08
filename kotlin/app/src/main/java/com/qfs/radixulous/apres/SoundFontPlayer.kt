@@ -388,7 +388,7 @@ class SampleHandleGenerator {
             hold_byte_count = ((AudioTrackHandle.sample_rate.toDouble() * vol_env_hold ) / 2.0).toInt(),
             decay_byte_count = ((AudioTrackHandle.sample_rate.toDouble() * vol_env_decay ) / 2.0).toInt(),
             release_mask = Array(release_mask_size) {
-                    i -> (release_mask_size - i - 1).toDouble() / release_mask_size.toDouble()
+                i -> (release_mask_size - i - 1).toDouble() / release_mask_size.toDouble()
             },
             maximum_map = maximum_map
         )

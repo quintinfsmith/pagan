@@ -47,5 +47,15 @@
         <action
             android:id="@+id/action_FrontFragment_to_LoadFragment"
             app:destination="@id/LoadFragment" />
+        <action
+            android:id="@+id/action_FrontFragment_to_LicenseFragment"
+            app:destination="@id/LicenseFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/LicenseFragment"
+        android:name="com.qfs.radixulous.LicenseFragment"
+        android:label="@string/license_fragment_label"
+        tools:layout="@layout/fragment_license">
     </fragment>
 </navigation>

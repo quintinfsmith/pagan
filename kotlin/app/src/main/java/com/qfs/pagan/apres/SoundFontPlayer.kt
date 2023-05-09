@@ -2,7 +2,9 @@ package com.qfs.pagan.apres
 
 import android.content.Context
 import android.media.*
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import com.qfs.pagan.apres.riffreader.toUInt
 import java.lang.Math.max
 import kotlin.concurrent.thread

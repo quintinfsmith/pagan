@@ -25,6 +25,10 @@ class ProjectManager(data_dir: String) {
     }
 
     fun save(opus_manager: OpusManager) {
+        val directory = File(this.projects_dir)
+        if (!directory.isDirectory) {
+            directory.mkdir()
+        }
         opus_manager.save()
     }
 

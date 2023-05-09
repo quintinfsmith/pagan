@@ -460,7 +460,7 @@ class SampleHandle(
     var current_volume: Double = 0.5
     var bytes_called: Int = 0 // Will not loop like current_position
     // Kludge to handle high tempo songs
-    val minimum_duration: Int = (AudioTrackHandle.sample_rate * .2).toInt()
+    val minimum_duration: Int = (AudioTrackHandle.sample_rate * .3).toInt()
 
     fun get_max_in_range(x: Int, size: Int): Int {
         var index = x * this.maximum_map.size / (this.data.size / 2)
@@ -523,8 +523,8 @@ class SampleHandle(
                 return null
             }
         } else if (this.loop_points != null) {
-            if (this.current_position >= this.loop_points.second) {
-                this.current_position = this.loop_points.first
+            if (this.current_position >= this.loop_points.second * 2) {
+                this.current_position = this.loop_points.first * 2
             }
         }
 

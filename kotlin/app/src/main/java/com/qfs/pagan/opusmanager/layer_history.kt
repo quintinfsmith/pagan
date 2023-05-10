@@ -214,6 +214,15 @@ open class HistoryLayer() : LinksLayer() {
                     current_node.args[3] as Int
                 )
             }
+            "insert_tree" -> {
+                var beat_key = current_node.args[0] as BeatKey
+                var position = current_node.args[1] as List<Int>
+                var insert_tree = current_node.args[2] as OpusTree<OpusEvent>
+                var parent_position = position.toMutableList()
+                parent_position.removeLast()
+                var working_tree = this.get_tree( beat_key, parent_position )
+                working_tree.insert(position.last(), insert_tree)
+            }
 
             "insert_line" -> {
                 this.insert_line(
@@ -379,12 +388,19 @@ open class HistoryLayer() : LinksLayer() {
 
     override fun remove(beat_key: BeatKey, position: List<Int>) {
         this.history_cache.remember {
-            val new_position = position.toMutableList()
-            if (new_position.isNotEmpty()) {
-                new_position.removeLast()
-            }
-            this.push_replace_tree(beat_key, new_position)
+            var old_tree = this.get_tree(beat_key, position)
+
+            this.push_to_history_stack("insert_tree", listOf(beat_key, position, old_tree))
+            var parent_size = old_tree.parent!!.size
             super.remove(beat_key, position)
+
+            // Pushing the replace_tree AFTER the target has been removed allows for "insert_tree"
+            // to be called on apply-history
+            if (parent_size == 2) {
+                var parent_position = position.toMutableList()
+                parent_position.removeLast()
+                this.push_replace_tree(beat_key, parent_position)
+            }
         }
     }
 
@@ -818,6 +834,13 @@ open class HistoryLayer() : LinksLayer() {
     override fun link_row(beat_key: BeatKey, channel: Int, line_offset: Int) {
         this.history_cache.remember {
             super.link_row(beat_key, channel, line_offset)
+        }
+    }
+
+    override fun remove_link_pool(index: Int) {
+        this.history_cache.remember {
+            this.push_to_history_stack("create_link_pool", listOf(this.link_pools[index]))
+            super.remove_link_pool(index)
         }
     }
 }

@@ -665,6 +665,31 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                         listOf( beat_key, position )
                     )
                 }
+                "remove" -> {
+                    val beat_key = args[0] as BeatKey
+                    val position = args[1] as List<Int>
+
+                    val tree = this.get_tree(beat_key, position)
+                    val cursor_position = position.toMutableList()
+                    if (tree.parent!!.size <= 2) { // Will be pruned
+                        cursor_position.removeLast()
+                    } else if (position.last() == tree.parent!!.size - 1) {
+                        cursor_position[cursor_position.size - 1] -= 1
+                    }
+
+                    this.push_to_history_stack(
+                        "cursor_select",
+                        listOf(beat_key, cursor_position)
+                    )
+                }
+                "insert_tree" -> {
+                    val beat_key = args[0] as BeatKey
+                    val position = args[1] as List<Int>
+                    this.push_to_history_stack(
+                        "cursor_select",
+                        listOf(beat_key, position)
+                    )
+                }
                 else -> {
                     has_cursor_action = false
                 }

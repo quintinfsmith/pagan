@@ -470,17 +470,20 @@ class EditorFragment : PaganFragment() {
         } else {
             btnRemove.visibility = View.VISIBLE
             btnRemove.setOnClickListener {
-                val beatkey = opus_manager.cursor.get_beatkey()
+                val beat_key = opus_manager.cursor.get_beatkey()
                 val position = opus_manager.cursor.get_position().toMutableList()
-                val original_size = current_tree.parent!!.size
+
+                var tree = opus_manager.get_tree()
+                var cursor_position = position.toMutableList()
+                if (tree.parent!!.size <= 2) { // Will be pruned
+                    cursor_position.removeLast()
+                } else if (position.last() == tree.parent!!.size - 1) {
+                    cursor_position[cursor_position.size - 1] -= 1
+                }
 
                 opus_manager.remove(1)
-                if (original_size >= 2) {
-                    position.removeLast()
-                } else if (position.last() >= original_size) {
-                    position[position.size - 1] = max(original_size - 1, 0)
-                }
-                opus_manager.cursor_select(beatkey, position)
+
+                opus_manager.cursor_select(beat_key, cursor_position)
             }
             btnRemove.setOnLongClickListener {
                 val position = opus_manager.cursor.get_position().toMutableList()

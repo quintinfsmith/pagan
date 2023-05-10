@@ -54,6 +54,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         rvActiveChannels.adapter?.notifyItemChanged(channel)
         if (!this.simple_ui_locked()) {
             this.update_line_labels()
+            this.ui_notify_visible_changes()
         }
         this.withFragment {
             it.clearContextMenu()
@@ -66,6 +67,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         if (!this.simple_ui_locked() && old_channel != null) {
             val rvActiveChannels: RecyclerView = this.activity.findViewById(R.id.rvActiveChannels)
             rvActiveChannels.adapter?.notifyItemChanged(old_channel)
+            this.ui_notify_visible_changes()
         }
         if (!this.simple_ui_locked()) {
             this.update_line_labels()

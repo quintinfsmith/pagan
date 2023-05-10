@@ -135,7 +135,6 @@ class EditorFragment : PaganFragment() {
             val main = this.get_main()
             main.get_opus_manager().new()
         }
-
     }
 
     override fun onDestroyView() {
@@ -762,13 +761,14 @@ class EditorFragment : PaganFragment() {
         }
 
         val line_map = opus_manager.channels[opus_manager.cursor.channel].line_map
-        if (line_map != null) {
-            for ((_, instrument) in line_map) {
-                if (instrument + 27 in available_drum_keys) {
-                    available_drum_keys.remove(instrument + 27)
-                }
-            }
-        }
+        // Allowing repeat instruments. Commenting Out.
+        //if (line_map != null) {
+        //    for ((_, instrument) in line_map) {
+        //        if (instrument + 27 in available_drum_keys) {
+        //            available_drum_keys.remove(instrument + 27)
+        //        }
+        //    }
+        //}
         drums.forEachIndexed { i, string ->
             if ((i + 27) in available_drum_keys) {
                 popupMenu.menu.add(0, i, i, "$i: $string")

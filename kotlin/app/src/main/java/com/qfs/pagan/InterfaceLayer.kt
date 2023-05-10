@@ -55,6 +55,9 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         if (!this.simple_ui_locked()) {
             this.update_line_labels()
         }
+        this.withFragment {
+            it.clearContextMenu()
+        }
     }
 
     override fun unset_percussion_channel() {
@@ -66,6 +69,9 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         }
         if (!this.simple_ui_locked()) {
             this.update_line_labels()
+        }
+        this.withFragment {
+            it.clearContextMenu()
         }
     }
 

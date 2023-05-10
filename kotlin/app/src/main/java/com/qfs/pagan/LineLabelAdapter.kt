@@ -102,7 +102,6 @@ class LineLabelAdapter(var opus_manager: InterfaceLayer, var recycler: RecyclerV
         }
 
         label.setOnTouchListener { view: View, touchEvent: MotionEvent ->
-            Log.d("AAA", "B: ${touchEvent.action}")
             if (touchEvent.action == MotionEvent.ACTION_MOVE) {
                 if (this._dragging_lineLabel == null) {
                     this._dragging_lineLabel = view
@@ -114,12 +113,13 @@ class LineLabelAdapter(var opus_manager: InterfaceLayer, var recycler: RecyclerV
                     )
                     return@setOnTouchListener true
                 }
+            } else if (touchEvent.action == MotionEvent.ACTION_DOWN) {
+                this._dragging_lineLabel = null
             }
             false
         }
 
         label.setOnDragListener { view: View, dragEvent: DragEvent ->
-            Log.d("AAA", "AA: ${dragEvent.action}")
             when (dragEvent.action) {
                 DragEvent.ACTION_DROP -> {
                     val from_label =  this._dragging_lineLabel

@@ -64,6 +64,9 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             val rvActiveChannels: RecyclerView = this.activity.findViewById(R.id.rvActiveChannels)
             rvActiveChannels.adapter?.notifyItemChanged(old_channel)
         }
+        if (!this.simple_ui_locked()) {
+            this.update_line_labels()
+        }
     }
 
     override fun set_project_name(new_name: String) {

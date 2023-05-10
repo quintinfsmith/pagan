@@ -2,6 +2,7 @@ package com.qfs.pagan
 
 import android.content.Context
 import android.util.AttributeSet
+import android.util.Log
 import android.view.*
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
@@ -32,6 +33,7 @@ class LineLabelAdapter(var opus_manager: InterfaceLayer, var recycler: RecyclerV
             this.addView(textView)
         }
         override fun onAttachedToWindow() {
+            super.onAttachedToWindow()
             this.textView.layoutParams.height = resources.getDimension(R.dimen.line_height).toInt()
             this.layoutParams.height = WRAP_CONTENT
         }
@@ -100,6 +102,7 @@ class LineLabelAdapter(var opus_manager: InterfaceLayer, var recycler: RecyclerV
         }
 
         label.setOnTouchListener { view: View, touchEvent: MotionEvent ->
+            Log.d("AAA", "B: ${touchEvent.action}")
             if (touchEvent.action == MotionEvent.ACTION_MOVE) {
                 if (this._dragging_lineLabel == null) {
                     this._dragging_lineLabel = view
@@ -116,14 +119,15 @@ class LineLabelAdapter(var opus_manager: InterfaceLayer, var recycler: RecyclerV
         }
 
         label.setOnDragListener { view: View, dragEvent: DragEvent ->
+            Log.d("AAA", "AA: ${dragEvent.action}")
             when (dragEvent.action) {
                 DragEvent.ACTION_DROP -> {
                     val from_label =  this._dragging_lineLabel
                     if (from_label != null && from_label != view) {
-                        var from_channel = (from_label as LabelView).channel
-                        var from_line = from_label.line_offset
-                        var to_channel = (view as LabelView).channel
-                        var to_line = view.line_offset + 1
+                        val from_channel = (from_label as LabelView).channel
+                        val from_line = from_label.line_offset
+                        val to_channel = (view as LabelView).channel
+                        val to_line = view.line_offset + 1
                         this.opus_manager.move_line(
                             from_channel,
                             from_line,

@@ -7,6 +7,7 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import com.qfs.pagan.apres.riffreader.toUInt
 import java.lang.Math.max
+import java.lang.Math.min
 import kotlin.concurrent.thread
 import kotlin.math.pow
 import kotlin.math.abs
@@ -465,7 +466,7 @@ class SampleHandle(
     val minimum_duration: Int = (AudioTrackHandle.sample_rate * .3).toInt()
 
     fun get_max_in_range(x: Int, size: Int): Int {
-        var index = x * this.maximum_map.size / (this.data.size / 2)
+        var index = min(this.maximum_map.size - 1, x * this.maximum_map.size / (this.data.size / 2))
         val mapped_size =  size * this.maximum_map.size / (this.data.size / 2)
         var output = 0
         for (i in 0 until mapped_size) {

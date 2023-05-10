@@ -543,11 +543,12 @@ open class OpusManagerBase {
     }
 
     open fun move_line(channel_old: Int, line_old: Int, channel_new: Int, line_new: Int) {
-        // Don't move empty lines
-        if (this.channels[channel_old].line_is_empty(line_old)) {
-            return
+        // preserve line map
+        var line_map = if (channel_old == channel_new && channel_old == this.percussion_channel) {
+            this.channels[channel_old].line_map!!.toList()
+        } else {
+            null
         }
-
         val line = this.remove_line(channel_old, line_old)
 
         if (channel_old == channel_new) {
@@ -560,6 +561,14 @@ open class OpusManagerBase {
             this.insert_line(channel_new, line_new, line)
             if (this.channels[channel_old].size == 0) {
                 this.new_line(channel_old, 0)
+            }
+        }
+
+        // Reassign line map that was broken by the move
+        if (line_map != null) {
+            this.channels[channel_old].line_map!!.clear()
+            for ((k, v) in line_map) {
+                this.channels[channel_old].line_map!![k] = v
             }
         }
     }

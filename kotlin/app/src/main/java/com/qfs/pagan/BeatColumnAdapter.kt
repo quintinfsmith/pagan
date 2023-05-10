@@ -331,8 +331,8 @@ class BeatColumnAdapter(var parent_fragment: EditorFragment, var recycler: Recyc
             val tree = opus_manager.get_tree()
             thread {
                 if (tree.is_event()) {
-                    var abs_value = opus_manager.get_absolute_value(beatkey, position)
-                    if (abs_value != null && abs_value >= 0 && abs_value <= 90) {
+                    val abs_value = opus_manager.get_absolute_value(beatkey, position)
+                    if ((abs_value != null) && abs_value in (0 .. 90)) {
                         main.play_event(
                             beatkey.channel,
                             if (opus_manager.is_percussion(beatkey.channel)) {
@@ -341,7 +341,6 @@ class BeatColumnAdapter(var parent_fragment: EditorFragment, var recycler: Recyc
                                 opus_manager.get_absolute_value(beatkey, position) ?: return@thread
                             }
                         )
-
                     }
                 }
             }

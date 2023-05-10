@@ -14,7 +14,7 @@
 
     <LinearLayout
         android:id="@+id/config_drawer"
-        android:layout_gravity="start"
+        android:layout_gravity="end"
         android:fitsSystemWindows="true"
         android:layout_height="match_parent"
         android:layout_width="wrap_content">

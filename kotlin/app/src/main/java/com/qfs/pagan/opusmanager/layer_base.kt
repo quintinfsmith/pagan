@@ -18,6 +18,7 @@ open class OpusManagerBase {
     class PercussionEventSet(): Exception("Attempting to set percussion event on non-percussion channel")
     class EmptyPath(): Exception("Path Required but not given")
     class BadInsertPosition(): Exception("Can't insert tree at top level")
+    class RemovingLastBeatException(): Exception("OpusManager requires at least 1 beat")
 
     var RADIX: Int = 12
     var DEFAULT_PERCUSSION: Int = 0
@@ -617,6 +618,9 @@ open class OpusManagerBase {
     }
 
     open fun remove_beat(beat_index: Int) {
+        if (this.opus_beat_count == 1) {
+            throw RemovingLastBeatException()
+        }
         for (channel in this.channels) {
             channel.remove_beat(beat_index)
         }

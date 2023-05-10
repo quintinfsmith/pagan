@@ -646,7 +646,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                     )
                 }
                 "remove_beat" -> {
-                    val x = min(args[0] as Int, this.opus_beat_count - 1)
+                    val x = max(0, min(args[0] as Int, this.opus_beat_count - 2))
                     this.push_to_history_stack(
                         "cursor_select_column",
                         listOf(x)

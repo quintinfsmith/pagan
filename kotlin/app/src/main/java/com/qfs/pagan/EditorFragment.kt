@@ -258,9 +258,17 @@ class EditorFragment : PaganFragment() {
 
         btnRemoveBeat.setOnClickListener {
             val beat = opus_manager.cursor.beat
-            opus_manager.remove_beat_at_cursor(1)
-            if (beat >= opus_manager.opus_beat_count) {
-                opus_manager.cursor_select_column(opus_manager.opus_beat_count - 1)
+            try {
+                opus_manager.remove_beat_at_cursor(1)
+                if (beat >= opus_manager.opus_beat_count) {
+                    opus_manager.cursor_select_column(opus_manager.opus_beat_count - 1)
+                }
+            } catch (e: OpusManagerBase.RemovingLastBeatException) {
+                this.get_main().feedback_msg("Can't remove only beat")
+            }
+
+            if (opus_manager.opus_beat_count == 1) {
+                btnRemoveBeat.visibility = View.GONE
             }
         }
 
@@ -271,8 +279,16 @@ class EditorFragment : PaganFragment() {
                 if (beat >= opus_manager.opus_beat_count) {
                     opus_manager.cursor_select_column(opus_manager.opus_beat_count - 1)
                 }
+
+                if (opus_manager.opus_beat_count == 1) {
+                    btnRemoveBeat.visibility = View.GONE
+                }
             }
             true
+        }
+
+        if (opus_manager.opus_beat_count == 1) {
+            btnRemoveBeat.visibility = View.GONE
         }
 
         llContextMenu.addView(view)

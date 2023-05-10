@@ -1,4 +1,5 @@
 package com.qfs.pagan.opusmanager
+import android.util.Log
 import com.qfs.pagan.apres.MIDI
 import com.qfs.pagan.structure.OpusTree
 
@@ -296,6 +297,11 @@ open class HistoryLayer() : LinksLayer() {
             this.history_cache.unlock()
             this.apply_undo()
             return
+        } else if (node.func_name == "multi" && node.children.isEmpty()) {
+            // If the node was an empty 'multi'  node, try the next one
+            this.history_cache.unlock()
+            this.apply_undo()
+            return
         }
 
         this.apply_history_node(node)
@@ -412,7 +418,7 @@ open class HistoryLayer() : LinksLayer() {
 
     override fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<OpusEvent>>?) {
         super.insert_beat(beat_index, beats_in_column)
-        this.push_remove_beat(beat_index)
+        this.push_to_history_stack( "remove_beat", listOf(beat_index) )
     }
 
     fun remove_beat(beat_index: Int, count: Int) {
@@ -587,11 +593,6 @@ open class HistoryLayer() : LinksLayer() {
             }
             this.push_to_history_stack( "remove", listOf(beat_key.copy(), position) )
         }
-    }
-
-    // Assumes called AFTER beat has been inserted
-    fun push_remove_beat(index: Int) {
-        this.push_to_history_stack( "remove_beat", listOf(index) )
     }
 
     fun push_insert_beat(index: Int, channel_sizes: List<Int>) {

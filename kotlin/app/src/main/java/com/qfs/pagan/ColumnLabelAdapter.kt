@@ -119,9 +119,6 @@ class ColumnLabelAdapter(var opus_manager: InterfaceLayer, var recycler: Recycle
             val rvBeatTable = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
             val adapter = rvBeatTable.adapter as BeatColumnAdapter
             if (adapter.linking_beat != null) {
-                if (adapter.linking_beat_b == null) {
-                    this.opus_manager.link_column(beat, adapter.linking_beat!!)
-                }
                 adapter.cancel_linking()
             }
 

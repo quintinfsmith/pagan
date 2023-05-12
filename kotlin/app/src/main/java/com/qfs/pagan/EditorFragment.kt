@@ -199,7 +199,7 @@ class EditorFragment : PaganFragment() {
             val cursor_key = opus_manager.cursor.get_beatkey()
             Pair(
                 opus_manager.is_networked(cursor_key),
-                opus_manager.get_all_linked(cursor_key).size == 2
+                opus_manager.get_all_linked(cursor_key).size > 2
             )
         } else {
             return

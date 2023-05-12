@@ -831,6 +831,8 @@ open class OpusManagerBase {
         this.path = null
         this.percussion_channel = null
         this.project_name = "New Opus"
+        this.tempo = 120F
+        this.transpose = 0
     }
 
     open fun load(path: String) {

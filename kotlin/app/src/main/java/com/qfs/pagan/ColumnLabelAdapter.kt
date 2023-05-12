@@ -49,7 +49,7 @@ class ColumnLabelAdapter(var opus_manager: InterfaceLayer, var recycler: Recycle
         //(this.recycler.itemAnimator as SimpleItemAnimator).supportsChangeAnimations = false
         this.recycler.itemAnimator = null
 
-        var that = this
+        val that = this
         this.registerAdapterDataObserver(
             object: RecyclerView.AdapterDataObserver() {
                 override fun onItemRangeChanged(start: Int, count: Int) {
@@ -142,10 +142,10 @@ class ColumnLabelAdapter(var opus_manager: InterfaceLayer, var recycler: Recycle
     }
 
     fun adjust_width(holder: ColumnLabelViewHolder) {
-        var beat = holder.bindingAdapterPosition
+        val beat = holder.bindingAdapterPosition
 
-        var item_view = holder.itemView
-        var resources = this.recycler.resources
+        val item_view = holder.itemView
+        val resources = this.recycler.resources
         item_view.layoutParams.width = (resources.getDimension(R.dimen.base_leaf_width) * this.column_widths[beat].toFloat()).toInt()
         item_view.layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT
 
@@ -156,7 +156,7 @@ class ColumnLabelAdapter(var opus_manager: InterfaceLayer, var recycler: Recycle
     }
 
     fun set_text(holder: ColumnLabelViewHolder, position: Int) {
-        var item_view = holder.itemView as LabelView
+        val item_view = holder.itemView as LabelView
         item_view.set_text(position.toString())
     }
 

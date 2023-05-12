@@ -208,7 +208,7 @@ class EditorFragment : PaganFragment() {
             btnUnLink.setOnClickListener {
                 this.interact_btnUnlink(it)
             }
-            if (many_links) {
+            if (!many_links) {
                 btnUnLinkAll.visibility = View.GONE
             } else {
                 btnUnLinkAll.setOnClickListener {

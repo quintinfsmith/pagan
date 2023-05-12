@@ -857,4 +857,10 @@ open class HistoryLayer() : LinksLayer() {
         }
 
     }
+
+    override fun clear_link_pools_by_range(first_key: BeatKey, second_key: BeatKey) {
+        this.history_cache.remember {
+            super.clear_link_pools_by_range(first_key, second_key)
+        }
+    }
 }

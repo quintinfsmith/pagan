@@ -50,6 +50,26 @@ open class LinksLayer() : OpusManagerBase() {
         this.remove_link_pool(index)
     }
 
+    open fun clear_link_pools_by_range(first_key: BeatKey, second_key: BeatKey) {
+        var (from_key, to_key) = this.get_ordered_beat_key_pair(first_key, second_key)
+        this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
+            if (i < from_key.channel || i > to_key.channel) {
+                return@forEachIndexed
+            }
+            this.channels[i].lines.forEachIndexed { j: Int, line: OpusChannel.OpusLine ->
+                if (i == from_key.channel && j < from_key.line_offset) {
+                    return@forEachIndexed
+                } else if (i == to_key.channel && j > to_key.line_offset) {
+                    return@forEachIndexed
+                }
+                for (k in from_key.beat .. to_key.beat) {
+                    this.clear_link_pool(BeatKey(i, j, k))
+                }
+            }
+        }
+
+    }
+
     open fun link_beats(beat_key: BeatKey, target: BeatKey) {
         if (beat_key == target) {
             throw SelfLinkError(beat_key, target)
@@ -62,7 +82,9 @@ open class LinksLayer() : OpusManagerBase() {
         val target_pool_index = this.link_pool_map[target]
         if (beat_pool_index != null && target_pool_index != null) {
             this.overwrite_beat(beat_key, target)
-            this.merge_link_pools(beat_pool_index, target_pool_index)
+            if (beat_pool_index != target_pool_index) {
+                this.merge_link_pools(beat_pool_index, target_pool_index)
+            }
         } else if (beat_pool_index != null) {
             this.link_beat_into_pool(target, beat_pool_index, true)
         } else if (target_pool_index != null) {
@@ -106,6 +128,7 @@ open class LinksLayer() : OpusManagerBase() {
     open fun batch_link_beats(beat_key_pairs: List<Pair<BeatKey, BeatKey>>) {
         this.lock_links {
             for ((from_key, to_key) in beat_key_pairs) {
+                Log.d("AAA", "$from_key -> $to_key")
                 this.link_beats(from_key, to_key)
             }
         }
@@ -124,6 +147,9 @@ open class LinksLayer() : OpusManagerBase() {
 
     // Only call from link_beats_function
     open fun merge_link_pools(old_pool: Int, new_pool: Int) {
+        if (old_pool == new_pool) {
+            return
+        }
         // First merge the beat's pool into the targets
         for (key in this.link_pools[old_pool]) {
             this.link_pool_map[key] = new_pool
@@ -486,18 +512,7 @@ open class LinksLayer() : OpusManagerBase() {
 
         from_key.beat = 0
         to_key.beat = range_width - 1
-
         for (i in 1 until this.opus_beat_count / range_width) {
-            for (j in 0 until range_width) {
-                this.unlink_beat(
-                    BeatKey(
-                        channel,
-                        line_offset,
-                        (i * range_width) + j
-                    )
-                )
-
-            }
             this.link_beat_range(
                 BeatKey(channel, line_offset, i * range_width),
                 from_key,

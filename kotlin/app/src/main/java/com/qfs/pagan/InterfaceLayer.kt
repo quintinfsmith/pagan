@@ -838,9 +838,16 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     fun clear_link_pool() {
-        this.clear_link_pool(
-            this.cursor.get_beatkey()
-        )
+        if (this.cursor.mode == Cursor.CursorMode.Single) {
+            this.clear_link_pool(
+                this.cursor.get_beatkey()
+            )
+        } else if (this.cursor.mode == Cursor.CursorMode.Range) {
+            this.clear_link_pools_by_range(
+                this.cursor.range!!.first,
+                this.cursor.range!!.second
+            )
+        }
     }
 
     fun set_percussion_instrument(instrument: Int) {

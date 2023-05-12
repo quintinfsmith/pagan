@@ -113,26 +113,25 @@ class ColumnLabelAdapter(var opus_manager: InterfaceLayer, var recycler: Recycle
         val label = LabelView(parent.context)
 
         label.setOnClickListener {
-            var holder = (it as LabelView).viewHolder ?: return@setOnClickListener
-            var beat = holder.bindingAdapterPosition
+            val holder = (it as LabelView).viewHolder ?: return@setOnClickListener
+            val beat = holder.bindingAdapterPosition
 
             val rvBeatTable = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
             val adapter = rvBeatTable.adapter as BeatColumnAdapter
             if (adapter.linking_beat != null) {
                 if (adapter.linking_beat_b == null) {
-                    this.opus_manager.link_column(adapter.linking_beat!!, beat)
+                    this.opus_manager.link_column(beat, adapter.linking_beat!!)
                 }
                 adapter.cancel_linking()
             }
 
             this.opus_manager.cursor_select_column(beat)
-
         }
 
         label.setOnFocusChangeListener { view, is_focused: Boolean ->
             if (is_focused) {
-                var holder = (view as LabelView).viewHolder ?: return@setOnFocusChangeListener
-                var beat = holder.bindingAdapterPosition
+                val holder = (view as LabelView).viewHolder ?: return@setOnFocusChangeListener
+                val beat = holder.bindingAdapterPosition
                 this.opus_manager.cursor_select_column(beat)
             }
         }

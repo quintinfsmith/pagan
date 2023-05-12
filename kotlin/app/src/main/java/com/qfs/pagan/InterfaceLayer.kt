@@ -40,12 +40,14 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     override fun set_channel_instrument(channel: Int, instrument: Int) {
+        this.activity.loading_reticle()
         super.set_channel_instrument(channel, instrument)
 
         val rvActiveChannels: RecyclerView = this.activity.findViewById(R.id.rvActiveChannels)
         rvActiveChannels.adapter?.notifyItemChanged(channel)
 
         this.activity.update_channel_instruments(this)
+        this.activity.cancel_reticle()
     }
 
     override fun set_percussion_channel(channel: Int) {
@@ -935,8 +937,10 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
     override fun link_beats(beat_key: BeatKey, target: BeatKey) {
         super.link_beats(beat_key, target)
-        this.ui_refresh_beat_labels(beat_key)
-        this.ui_refresh_beat_labels(target)
+        if (! this.simple_ui_locked()) {
+            this.ui_refresh_beat_labels(beat_key)
+            this.ui_refresh_beat_labels(target)
+        }
     }
 
     override fun remove_link_pool(index: Int) {
@@ -947,4 +951,12 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         }
     }
 
+    override fun link_beat_range_horizontally(channel: Int, line_offset: Int, from_key: BeatKey, to_key: BeatKey) {
+        this.surpress_ui {
+            super.link_beat_range_horizontally(channel, line_offset, from_key, to_key)
+        }
+        if (! this.simple_ui_locked()) {
+            this.ui_notify_visible_changes()
+        }
+    }
 }

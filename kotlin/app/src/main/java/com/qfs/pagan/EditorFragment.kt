@@ -273,7 +273,7 @@ class EditorFragment : PaganFragment() {
         }
 
         btnRemoveBeat.setOnLongClickListener {
-            main.popup_number_dialog("Remove Beats", 1, opus_manager.opus_beat_count) { count: Int ->
+            main.popup_number_dialog("Remove Beats", 1, opus_manager.opus_beat_count - 1) { count: Int ->
                 val beat = opus_manager.cursor.beat
                 opus_manager.remove_beat_at_cursor(count)
                 if (beat >= opus_manager.opus_beat_count) {

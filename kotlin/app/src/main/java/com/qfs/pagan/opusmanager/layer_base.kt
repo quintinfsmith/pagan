@@ -8,6 +8,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import java.lang.Integer.max
+import java.lang.Integer.min
 import kotlin.math.pow
 
 open class OpusManagerBase {
@@ -1186,4 +1187,107 @@ open class OpusManagerBase {
     open fun set_tempo(new_tempo: Float) {
         this.tempo = new_tempo
     }
+
+    fun get_ordered_beat_key_pair(first: BeatKey, second: BeatKey): Pair<BeatKey, BeatKey> {
+        val (from_key, to_key) = if (first.channel < second.channel) {
+            Pair(
+                BeatKey(first.channel, first.line_offset, -1),
+                BeatKey(second.channel, second.line_offset, -1)
+            )
+        } else if (first.channel == second.channel) {
+            if (first.line_offset < second.line_offset) {
+                Pair(
+                    BeatKey(first.channel, first.line_offset, -1),
+                    BeatKey(second.channel, second.line_offset, -1)
+                )
+            } else {
+                Pair(
+                    BeatKey(second.channel, second.line_offset, -1),
+                    BeatKey(first.channel, first.line_offset, -1)
+                )
+            }
+        } else {
+            Pair(
+                BeatKey(second.channel, second.line_offset, -1),
+                BeatKey(first.channel, first.line_offset, -1)
+            )
+        }
+        from_key.beat = min(first.beat, second.beat)
+        to_key.beat = max(first.beat, second.beat)
+        return Pair(from_key, to_key)
+    }
+
+    open fun overwrite_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
+        var (from_key, to_key) = this.get_ordered_beat_key_pair(first_corner, second_corner)
+
+        // Start OverFlow Check ////
+        var lines_in_range = 0
+        var lines_available = 0
+        val percussion_map = mutableListOf<Boolean>()
+        this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
+            if (i < from_key.channel || i > to_key.channel) {
+                return@forEachIndexed
+            }
+            this.channels[i].lines.forEachIndexed { j: Int, line: OpusChannel.OpusLine ->
+                if (i == from_key.channel && j < from_key.line_offset) {
+                    return@forEachIndexed
+                } else if (i == to_key.channel && j > to_key.line_offset) {
+                    return@forEachIndexed
+                }
+                percussion_map.add(i == this.percussion_channel)
+                lines_in_range += 1
+            }
+        }
+        val target_percussion_map = mutableListOf<Boolean>()
+        this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
+            if (i < beat_key.channel) {
+                return@forEachIndexed
+            }
+            this.channels[i].lines.forEachIndexed { j: Int, line: OpusChannel.OpusLine ->
+                if (i == beat_key.channel && j < beat_key.line_offset) {
+                    return@forEachIndexed
+                }
+                target_percussion_map.add(i == this.percussion_channel)
+                lines_available += 1
+            }
+        }
+
+        val working_beat = beat_key.copy()
+        val new_pairs = mutableListOf<Pair<BeatKey, BeatKey>>()
+        while (from_key.channel != to_key.channel || from_key.line_offset != to_key.line_offset) {
+            // INCLUSIVE
+            for (b in 0 .. to_key.beat - from_key.beat) {
+                this.overwrite_beat(
+                    BeatKey(working_beat.channel, working_beat.line_offset, working_beat.beat + b),
+                    BeatKey(from_key.channel, from_key.line_offset, from_key.beat + b)
+                )
+            }
+            if (this.channels[from_key.channel].size - 1 > from_key.line_offset) {
+                from_key.line_offset += 1
+            } else if (this.channels.size - 1 > from_key.channel) {
+                from_key.channel += 1
+                from_key.line_offset = 0
+            } else {
+                break
+            }
+
+            if (this.channels[working_beat.channel].size - 1 > working_beat.line_offset) {
+                working_beat.line_offset += 1
+            } else if (this.channels.size - 1 > working_beat.channel) {
+                working_beat.channel += 1
+                working_beat.line_offset = 0
+            } else {
+                break
+            }
+        }
+
+        for (b in 0 .. to_key.beat - from_key.beat) {
+            this.overwrite_beat(
+                BeatKey(working_beat.channel, working_beat.line_offset, working_beat.beat + b),
+                BeatKey(from_key.channel, from_key.line_offset, from_key.beat + b)
+            )
+        }
+
+    }
+
 }

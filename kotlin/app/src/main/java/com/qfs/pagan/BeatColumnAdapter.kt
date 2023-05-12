@@ -300,6 +300,9 @@ class BeatColumnAdapter(var parent_fragment: EditorFragment, var recycler: Recyc
                 } catch (e: Exception) {
                     when (e) {
                         is LinksLayer.SelfLinkError -> { }
+                        is LinksLayer.MixedLinkException -> {
+                            this.get_main_activity().feedback_msg("Can't link percussion to non-percussion")
+                        }
                         else -> {
                             throw e
                         }
@@ -318,6 +321,11 @@ class BeatColumnAdapter(var parent_fragment: EditorFragment, var recycler: Recyc
                         is LinksLayer.SelfLinkError -> { }
                         is LinksLayer.LinkRangeOverlap -> { }
                         is LinksLayer.LinkRangeOverflow -> { }
+                        is LinksLayer.MixedLinkException -> {
+                            this.get_main_activity().feedback_msg(
+                                "Can't link percussion to non-percussion"
+                            )
+                        }
                         else -> {
                             throw e
                         }
@@ -350,13 +358,13 @@ class BeatColumnAdapter(var parent_fragment: EditorFragment, var recycler: Recyc
     private fun interact_leafView_doubletap(view: View) {
         val opus_manager = this.get_opus_manager()
         val (beatkey, position) = this.get_view_position(view)
-        if (this.linking_beat == null) {
-            opus_manager.cursor_select(beatkey, position)
-            this.linking_beat = beatkey
-        } else {
-            opus_manager.cursor_select_range(this.linking_beat!!, beatkey)
-            this.linking_beat_b = beatkey
-        }
+            if (this.linking_beat == null) {
+                opus_manager.cursor_select(beatkey, position)
+                this.linking_beat = beatkey
+            } else {
+                opus_manager.cursor_select_range(this.linking_beat!!, beatkey)
+                this.linking_beat_b = beatkey
+            }
 
         this.parent_fragment.setContextMenu_linking()
     }

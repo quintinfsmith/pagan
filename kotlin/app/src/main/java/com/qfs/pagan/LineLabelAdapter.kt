@@ -10,6 +10,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.SimpleItemAnimator
+import com.qfs.pagan.opusmanager.LinksLayer
 
 class LineLabelRecyclerView(context: Context, attrs: AttributeSet) : RecyclerView(context, attrs) {
     // Prevents this from intercepting linelabel touch events (disables manual scrolling)
@@ -193,8 +194,28 @@ class LineLabelAdapter(var opus_manager: InterfaceLayer, var recycler: RecyclerV
         val adapter = rvBeatTable.adapter as BeatColumnAdapter
 
         if (adapter.linking_beat != null) {
-            if (adapter.linking_beat_b == null) {
-                this.opus_manager.link_row(adapter.linking_beat!!, view.channel, view.line_offset)
+            try {
+                if (adapter.linking_beat_b == null) {
+                    this.opus_manager.link_row(
+                        view.channel,
+                        view.line_offset,
+                        adapter.linking_beat!!
+                    )
+                } else {
+
+                    this.opus_manager.link_beat_range_horizontally(
+                        view.channel,
+                        view.line_offset,
+                        adapter.linking_beat!!,
+                        adapter.linking_beat_b!!
+                    )
+                }
+            } catch (e: Exception) {
+                if (e is LinksLayer.MixedLinkException) {
+                    this.activity.feedback_msg("Can't Link percussion with non-percussion")
+                } else {
+                    throw e
+                }
             }
             adapter.cancel_linking()
         }

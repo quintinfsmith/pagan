@@ -1,4 +1,5 @@
 package com.qfs.pagan.opusmanager
+import android.util.Log
 import com.qfs.pagan.structure.OpusTree
 import java.lang.Integer.max
 import java.lang.Integer.min
@@ -8,6 +9,8 @@ open class LinksLayer() : OpusManagerBase() {
     class LinkRangeOverlap(from_key: BeatKey, to_key: BeatKey, startkey: BeatKey): Exception("Range($from_key .. $to_key) Contains $startkey")
     class LinkRangeOverflow(from_key: BeatKey, to_key: BeatKey, startkey: BeatKey): Exception("Range($from_key .. $to_key) @ $startkey overflows")
     class InvalidBeatKeyRange(a: BeatKey, b: BeatKey): Exception("$a .. $b")
+    class MixedLinkException(): Exception("Can't link percussion with non-percussion channels")
+    class BadRowLink(from_key: BeatKey, channel: Int, line_offset: Int): Exception("Can only link an entire row (or rows) to the first range of beats of its own row ($from_key != ${BeatKey(channel, line_offset, 0)})")
 
     var link_pools = mutableListOf<MutableSet<BeatKey>>()
     var link_pool_map = HashMap<BeatKey, Int>()
@@ -50,6 +53,9 @@ open class LinksLayer() : OpusManagerBase() {
     open fun link_beats(beat_key: BeatKey, target: BeatKey) {
         if (beat_key == target) {
             throw SelfLinkError(beat_key, target)
+        }
+        if ((beat_key.channel == this.percussion_channel || target.channel == this.percussion_channel) && target.channel != beat_key.channel) {
+            throw MixedLinkException()
         }
 
         val beat_pool_index = this.link_pool_map[beat_key]
@@ -98,8 +104,10 @@ open class LinksLayer() : OpusManagerBase() {
     }
 
     open fun batch_link_beats(beat_key_pairs: List<Pair<BeatKey, BeatKey>>) {
-        for ((from_key, to_key) in beat_key_pairs) {
-            this.link_beats(from_key, to_key)
+        this.lock_links {
+            for ((from_key, to_key) in beat_key_pairs) {
+                this.link_beats(from_key, to_key)
+            }
         }
     }
 
@@ -127,7 +135,7 @@ open class LinksLayer() : OpusManagerBase() {
 
         // update the indices
         for ((key, index) in this.link_pool_map) {
-            if (index >= old_pool) {
+            if (index > old_pool) {
                 this.link_pool_map[key] = index - 1
             }
         }
@@ -319,31 +327,7 @@ open class LinksLayer() : OpusManagerBase() {
     }
 
     open fun link_beat_range(beat: BeatKey, target_a: BeatKey, target_b: BeatKey) {
-        val (from_key, to_key) = if (target_a.channel < target_b.channel) {
-            Pair(
-                BeatKey(target_a.channel, target_a.line_offset, -1),
-                BeatKey(target_b.channel, target_b.line_offset, -1)
-            )
-        } else if (target_a.channel == target_b.channel) {
-            if (target_a.line_offset < target_b.line_offset) {
-                Pair(
-                    BeatKey(target_a.channel, target_a.line_offset, -1),
-                    BeatKey(target_b.channel, target_b.line_offset, -1)
-                )
-            } else {
-                Pair(
-                    BeatKey(target_b.channel, target_b.line_offset, -1),
-                    BeatKey(target_a.channel, target_a.line_offset, -1)
-                )
-            }
-        } else {
-            Pair(
-                BeatKey(target_b.channel, target_b.line_offset, -1),
-                BeatKey(target_a.channel, target_a.line_offset, -1)
-            )
-        }
-        from_key.beat = min(target_a.beat, target_b.beat)
-        to_key.beat = max(target_a.beat, target_b.beat)
+        var (from_key, to_key) = this.get_ordered_beat_key_pair(target_a, target_b)
 
         val overlap = if (beat.beat in (from_key.beat .. to_key.beat)) {
             if (beat.channel in (from_key.channel..to_key.channel)) {
@@ -373,6 +357,7 @@ open class LinksLayer() : OpusManagerBase() {
         // Start OverFlow Check ////
         var lines_in_range = 0
         var lines_available = 0
+        val percussion_map = mutableListOf<Boolean>()
         this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
             if (i < from_key.channel || i > to_key.channel) {
                 return@forEachIndexed
@@ -383,10 +368,11 @@ open class LinksLayer() : OpusManagerBase() {
                 } else if (i == to_key.channel && j > to_key.line_offset) {
                     return@forEachIndexed
                 }
+                percussion_map.add(i == this.percussion_channel)
                 lines_in_range += 1
             }
         }
-
+        val target_percussion_map = mutableListOf<Boolean>()
         this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
             if (i < beat.channel) {
                 return@forEachIndexed
@@ -395,13 +381,18 @@ open class LinksLayer() : OpusManagerBase() {
                 if (i == beat.channel && j < beat.line_offset) {
                     return@forEachIndexed
                 }
+                target_percussion_map.add(i == this.percussion_channel)
                 lines_available += 1
             }
         }
+
         if (lines_available < lines_in_range) {
             throw LinkRangeOverflow(from_key, to_key, beat)
         }
         // End Overflow Check ////
+        if (percussion_map != target_percussion_map.subList(0, percussion_map.size)) {
+            throw MixedLinkException()
+        }
 
 
         val working_beat = beat.copy()
@@ -447,11 +438,11 @@ open class LinksLayer() : OpusManagerBase() {
         this.batch_link_beats(new_pairs)
     }
 
-    open fun link_column(beat_key: BeatKey, column: Int) {
+    open fun link_column(column: Int, beat_key: BeatKey) {
         val new_pool = mutableListOf<BeatKey>()
         this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
             channel.lines.forEachIndexed { j: Int, line: OpusChannel.OpusLine ->
-                var working_key = BeatKey(i, j, column)
+                val working_key = BeatKey(i, j, column)
                 if (working_key != beat_key) {
                     this.overwrite_beat(working_key, beat_key)
                 }
@@ -460,7 +451,8 @@ open class LinksLayer() : OpusManagerBase() {
         }
         this.create_link_pool(new_pool)
     }
-    open fun link_row(beat_key: BeatKey, channel: Int, line_offset: Int) {
+
+    open fun link_row(channel: Int, line_offset: Int, beat_key: BeatKey) {
         val working_key = BeatKey(channel, line_offset, 0)
         val new_pool = mutableListOf<BeatKey>()
         for (x in 0 until this.opus_beat_count) {
@@ -471,5 +463,46 @@ open class LinksLayer() : OpusManagerBase() {
             new_pool.add(working_key.copy())
         }
         this.create_link_pool(new_pool)
+    }
+
+    open fun link_beat_range_horizontally(channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey) {
+        var (from_key, to_key) = this.get_ordered_beat_key_pair(first_key, second_key)
+        // from_key -> to_key need to be first beat. it's a bit arbitrary but from a ui perspective makes it cleaner
+        if (from_key.channel != channel || from_key.line_offset != line_offset) {
+            throw BadRowLink(from_key, channel, line_offset)
+        }
+
+        val from_beat = min(from_key.beat, to_key.beat)
+        val to_beat = max(from_key.beat, to_key.beat)
+        val range_width = (to_beat - from_beat) + 1
+
+        if (from_key.beat != 0) {
+            this.overwrite_beat_range(
+                BeatKey(channel, line_offset, 0),
+                first_key,
+                second_key
+            )
+        }
+
+        from_key.beat = 0
+        to_key.beat = range_width - 1
+
+        for (i in 1 until this.opus_beat_count / range_width) {
+            for (j in 0 until range_width) {
+                this.unlink_beat(
+                    BeatKey(
+                        channel,
+                        line_offset,
+                        (i * range_width) + j
+                    )
+                )
+
+            }
+            this.link_beat_range(
+                BeatKey(channel, line_offset, i * range_width),
+                from_key,
+                to_key
+            )
+        }
     }
 }

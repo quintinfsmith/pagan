@@ -826,15 +826,15 @@ open class HistoryLayer() : LinksLayer() {
         super.unlink_beat(beat_key)
     }
 
-    override fun link_column(beat_key: BeatKey, column: Int) {
+    override fun link_column(column: Int, beat_key: BeatKey) {
         this.history_cache.remember {
-            super.link_column(beat_key, column)
+            super.link_column(column, beat_key)
         }
     }
 
-    override fun link_row(beat_key: BeatKey, channel: Int, line_offset: Int) {
+    override fun link_row(channel: Int, line_offset: Int, beat_key: BeatKey) {
         this.history_cache.remember {
-            super.link_row(beat_key, channel, line_offset)
+            super.link_row(channel, line_offset, beat_key)
         }
     }
 
@@ -843,5 +843,18 @@ open class HistoryLayer() : LinksLayer() {
             this.push_to_history_stack("create_link_pool", listOf(this.link_pools[index]))
             super.remove_link_pool(index)
         }
+    }
+
+    override fun link_beat_range_horizontally(channel: Int, line_offset: Int, from_key: BeatKey, to_key: BeatKey) {
+        this.history_cache.remember {
+            super.link_beat_range_horizontally(channel, line_offset, from_key, to_key)
+        }
+    }
+
+    override fun overwrite_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
+        this.history_cache.remember {
+            super.overwrite_beat_range(beat_key, first_corner, second_corner)
+        }
+
     }
 }

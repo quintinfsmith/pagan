@@ -9,7 +9,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.pagan.databinding.FragmentLoadBinding
 import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import com.qfs.pagan.opusmanager.LoadedJSONData
 import java.io.File
@@ -19,8 +18,6 @@ import java.io.File
  */
 class LoadFragment : PaganFragment() {
     class MKDirFailedException(dir: String): Exception("Failed to create directory $dir")
-    @Serializable
-    data class ProjectDirPair(var filename: String, var title: String)
 
     // Boiler Plate //
     private var _binding: FragmentLoadBinding? = null
@@ -31,7 +28,7 @@ class LoadFragment : PaganFragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         _binding = FragmentLoadBinding.inflate(inflater, container, false)
         this.get_main().lockDrawer()
         this.get_main().update_menu_options()
@@ -49,14 +46,14 @@ class LoadFragment : PaganFragment() {
         setFragmentResult("RETURNED", bundleOf())
         super.onViewCreated(view, savedInstanceState)
 
-        var loadprojectAdapter = ProjectToLoadAdapter(this)
+        val loadprojectAdapter = ProjectToLoadAdapter(this)
 
-        var rvProjectList: RecyclerView = view.findViewById(R.id.rvProjectList)
+        val rvProjectList: RecyclerView = view.findViewById(R.id.rvProjectList)
         rvProjectList.adapter = loadprojectAdapter
         rvProjectList.layoutManager = LinearLayoutManager(view.context)
 
-        var main = this.get_main()
-        var project_manager = main.project_manager
+        val main = this.get_main()
+        val project_manager = main.project_manager
 
         val directory = File(project_manager.projects_dir)
         if (!directory.isDirectory) {

@@ -5,9 +5,9 @@ fun greatest_common_denominator(first: Int, second: Int): Int {
     if (first == 0 || second == 0) {
         throw Exception("Can't gcd $first and $second")
     }
-    var tmp: Int;
-    var a = max(first, second);
-    var b = min(first, second);
+    var tmp: Int
+    var a = max(first, second)
+    var b = min(first, second)
     return if (b > 0) {
         while ((a % b) > 0) {
             tmp = a % b
@@ -21,9 +21,9 @@ fun greatest_common_denominator(first: Int, second: Int): Int {
 }
 
 fun get_prime_factors(n: Int): List<Int> {
-    val primes: MutableList<Int> = mutableListOf();
+    val primes: MutableList<Int> = mutableListOf()
     for (i in 2 until (n / 2)) {
-        var is_prime = true;
+        var is_prime = true
         for (p in primes) {
             if (i % p == 0) {
                 is_prime = false
@@ -57,7 +57,7 @@ fun lowest_common_multiple(number_list: List<Int>): Int {
         get_prime_factors(number_list[i])
     }
 
-    val common_factor_map: HashMap<Int, Int> = HashMap<Int, Int>()
+    val common_factor_map: HashMap<Int, Int> = HashMap()
     for (factors in prime_factors) {
         for (factor in factors) {
             if (! common_factor_map.containsKey(factor)) {
@@ -68,7 +68,7 @@ fun lowest_common_multiple(number_list: List<Int>): Int {
         }
     }
 
-    var output = 1;
+    var output = 1
     for (key in common_factor_map.keys) {
         output *= key * common_factor_map[key]!!
     }
@@ -77,7 +77,7 @@ fun lowest_common_multiple(number_list: List<Int>): Int {
 }
 
 class OpusTree<T> {
-    class InvalidGetCall(): Exception("Can't call get() on leaf")
+    class InvalidGetCall : Exception("Can't call get() on leaf")
     data class ReducerTuple<T>(
         var denominator: Int,
         var indices: MutableList<Pair<Int, OpusTree<T>>>,
@@ -86,7 +86,7 @@ class OpusTree<T> {
     )
 
     var size: Int = 0
-    var divisions: HashMap<Int, OpusTree<T>> = HashMap<Int, OpusTree<T>>()
+    var divisions = HashMap<Int, OpusTree<T>>()
     var event: T? = null
     var parent: OpusTree<T>? = null
 
@@ -112,7 +112,7 @@ class OpusTree<T> {
         if (! noclobber) {
             this.divisions.clear()
         } else if (new_size < this.size) {
-            val to_delete: MutableList<Int> = mutableListOf();
+            val to_delete: MutableList<Int> = mutableListOf()
             for (key in this.divisions.keys) {
                 if (key >= new_size) {
                     to_delete.add(key)
@@ -129,7 +129,7 @@ class OpusTree<T> {
     fun resize(new_size: Int) {
         val factor: Double = new_size.toDouble() / this.size.toDouble()
 
-        val new_divisions: HashMap<Int, OpusTree<T>> = HashMap<Int, OpusTree<T>>()
+        val new_divisions = HashMap<Int, OpusTree<T>>()
         for (current_index in this.divisions.keys) {
             val value = this.divisions[current_index]
             val new_index = current_index * factor
@@ -154,7 +154,7 @@ class OpusTree<T> {
         indices.sortWith(compareBy { it.first })
 
         val place_holder: OpusTree<T> = this.copy()
-        val stack = mutableListOf<ReducerTuple<T>>(
+        val stack = mutableListOf(
             ReducerTuple(
                 target_size,
                 indices,
@@ -167,11 +167,11 @@ class OpusTree<T> {
             val element = stack.removeAt(0)
             val denominator: Int = element.denominator
             val original_size: Int = element.original_size
-            val parent_node: OpusTree<T> = element.parent_node;
+            val parent_node: OpusTree<T> = element.parent_node
             val current_size = original_size / denominator
 
             // Create separate lists to represent the new equal groupings
-            val split_indices = Array(denominator) { _ ->
+            val split_indices = Array(denominator) {
                 mutableListOf<Pair<Int, OpusTree<T>>>()
             }
             parent_node.set_size(denominator)
@@ -189,11 +189,11 @@ class OpusTree<T> {
                     continue
                 }
 
-                val working_node = parent_node.get(i)
+                val working_node = parent_node[i]
 
                 // Get the most reduces version of each index
                 val minimum_divs = mutableSetOf<Int>()
-                for ((index, subtree) in working_indices) {
+                for ((index, _) in working_indices) {
                     if (index == 0) {
                         continue
                     }
@@ -235,7 +235,7 @@ class OpusTree<T> {
     }
 
     fun copy(copy_func: ((tree: OpusTree<T>) -> T?)?): OpusTree<T> {
-        val copied: OpusTree<T> = OpusTree<T>()
+        val copied = OpusTree<T>()
         copied.size = this.size
         for (key in this.divisions.keys) {
             val subdivision: OpusTree<T> = this.divisions[key] as OpusTree<T>
@@ -333,7 +333,7 @@ class OpusTree<T> {
     }
 
     fun is_flat(): Boolean {
-        var noutput: Boolean = false;
+        var noutput = false
 
         for (key in this.divisions.keys) {
             val child = this.divisions[key]!!
@@ -378,7 +378,7 @@ class OpusTree<T> {
         }
 
         if (this.size == 1 && this.divisions.size == 1) {
-            var child = this.divisions.remove(0)!!
+            val child = this.divisions.remove(0)!!
             if (!child.is_event()) {
                 this.set_size(child.size)
                 for ((i, grandchild) in child.divisions) {
@@ -429,12 +429,12 @@ class OpusTree<T> {
         new_tree.set_parent(this)
     }
 
-    protected fun set_parent(new_parent: OpusTree<T>) {
+    private fun set_parent(new_parent: OpusTree<T>) {
         this.parent = new_parent
     }
 
     fun pop(x: Int?=null): OpusTree<T> {
-        val index = x ?: this.size - 1
+        val index = x ?: (this.size - 1)
 
         val output = this.divisions[index]!!
         val new_divisions = HashMap<Int, OpusTree<T>>()
@@ -469,8 +469,8 @@ class OpusTree<T> {
         this.parent = null
     }
 
-    public fun empty() {
-        this.divisions = HashMap<Int, OpusTree<T>>()
+    fun empty() {
+        this.divisions = HashMap()
         this.size = 0
     }
 
@@ -494,7 +494,7 @@ class OpusTree<T> {
             }
         }
         val tracks: MutableList<OpusTree<T>> = mutableListOf()
-        for ((key, events) in unstructured_splits) {
+        for ((_, events) in unstructured_splits) {
             val node = OpusTree<T>()
             for ((path, event) in events) {
                 var working_node = node
@@ -502,11 +502,11 @@ class OpusTree<T> {
                     if (working_node.size != size) {
                         working_node.set_size(size)
                     }
-                    working_node = working_node.get(x)
+                    working_node = working_node[x]
                 }
                 working_node = node
-                for ((x, size) in path) {
-                    working_node = working_node.get(x)
+                for ((x, _) in path) {
+                    working_node = working_node[x]
                 }
                 working_node.set_event(event)
             }
@@ -584,12 +584,12 @@ class OpusTree<T> {
         }
     }
 
-    fun __merge_structural_into_event(s_tree: OpusTree<Set<T>>): OpusTree<Set<T>> {
+    private fun __merge_structural_into_event(s_tree: OpusTree<Set<T>>): OpusTree<Set<T>> {
         val output = s_tree.copy()
 
         var working_tree = output
         while (!working_tree.is_leaf()) {
-            working_tree = working_tree.get(0)
+            working_tree = working_tree[0]
         }
 
         if (working_tree.is_event()) {
@@ -603,12 +603,12 @@ class OpusTree<T> {
         return output
     }
 
-    fun __merge_event_into_structural(e_tree: OpusTree<Set<T>>): OpusTree<Set<T>> {
+    private fun __merge_event_into_structural(e_tree: OpusTree<Set<T>>): OpusTree<Set<T>> {
         val output = this.get_set_tree()
 
         var working_tree = output
         while (!working_tree.is_leaf()) {
-            working_tree = working_tree.get(0)
+            working_tree = working_tree[0]
         }
 
         if (working_tree.is_event()) {
@@ -624,7 +624,7 @@ class OpusTree<T> {
         return output
     }
 
-    fun __merge_event(event_node: OpusTree<Set<T>>): OpusTree<Set<T>> {
+    private fun __merge_event(event_node: OpusTree<Set<T>>): OpusTree<Set<T>> {
         val output = OpusTree<Set<T>>()
         val eventset = event_node.get_event()!!.toMutableSet()
         eventset.add(this.get_event()!!)
@@ -634,7 +634,6 @@ class OpusTree<T> {
     }
 
     private fun __merge_structural(tree: OpusTree<Set<T>>): OpusTree<Set<T>> {
-        var original_size = this.size
         val other = tree.copy()
 
         val this_multi = this.get_set_tree()
@@ -646,7 +645,7 @@ class OpusTree<T> {
         this_multi.resize(new_size)
         for ((index, subtree) in other.divisions) {
             val new_index = index * factor
-            val subtree_into = this_multi.get(new_index)
+            val subtree_into = this_multi[new_index]
 
             if (subtree.is_event()) {
                 val eventset = if (subtree_into.is_event()) {
@@ -675,9 +674,9 @@ class OpusTree<T> {
             var output = ""
             for (i in 0 until this.size) {
                 output = if (i > 0) {
-                    "$output,${this.get(i).to_string()}"
+                    "$output,${this[i].to_string()}"
                 } else {
-                    "${this.get(i).to_string()}"
+                    this[i].to_string()
                 }
             }
             "($output)"
@@ -686,12 +685,10 @@ class OpusTree<T> {
 
     fun get_first_event_tree_position(): List<Int>? {
         if (this.is_event()) {
-            return listOf<Int>()
+            return listOf()
         } else if (this.is_leaf()) {
             return null
         }
-
-
 
         val output = mutableListOf<Int>()
         for ((i, child) in this.divisions) {
@@ -719,13 +716,13 @@ class OpusTree<T> {
             }
         }
 
-        var quotient = this.size / product
+        val quotient = this.size / product
 
 
-        var position_remap = HashMap<Int, MutableList<Int>>()
+        val position_remap = HashMap<Int, MutableList<Int>>()
         for ((position, _) in this.divisions) {
-            var ratio: Int = round(position.toFloat() / quotient.toFloat()).toInt()
-            var new_position = ratio * quotient
+            val ratio: Int = round(position.toFloat() / quotient.toFloat()).toInt()
+            val new_position = ratio * quotient
 
             if (!position_remap.contains(new_position)) {
                 position_remap[new_position] = mutableListOf()

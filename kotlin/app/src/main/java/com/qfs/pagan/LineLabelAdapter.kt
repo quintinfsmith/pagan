@@ -2,7 +2,6 @@ package com.qfs.pagan
 
 import android.content.Context
 import android.util.AttributeSet
-import android.util.Log
 import android.view.*
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
@@ -12,21 +11,25 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.SimpleItemAnimator
 import com.qfs.pagan.opusmanager.LinksLayer
 
-class LineLabelRecyclerView(context: Context, attrs: AttributeSet) : RecyclerView(context, attrs) {
-    // Prevents this from intercepting linelabel touch events (disables manual scrolling)
-    override fun onInterceptTouchEvent(touchEvent: MotionEvent): Boolean {
-        return false
+class LineLabelAdapter(
+    private var opus_manager: InterfaceLayer,
+    private var recycler: RecyclerView,
+    var activity: MainActivity
+    ): RecyclerView.Adapter<LineLabelAdapter.LineLabelViewHolder>() {
+    class LineLabelRecyclerView(context: Context, attrs: AttributeSet) : RecyclerView(context, attrs) {
+        // Prevents this from intercepting linelabel touch events (disables manual scrolling)
+        override fun onInterceptTouchEvent(touchEvent: MotionEvent): Boolean {
+            return false
+        }
     }
-}
 
-class LineLabelAdapter(var opus_manager: InterfaceLayer, var recycler: RecyclerView, var activity: MainActivity) : RecyclerView.Adapter<LineLabelAdapter.LineLabelViewHolder>() {
     // BackLink so I can get the x offset from a view in the view holder
     private var row_count = 0
     private var _dragging_lineLabel: View? = null
 
     class LabelView(context: Context): LinearLayout(ContextThemeWrapper(context, R.style.line_label_outer)) {
         var viewHolder: LineLabelViewHolder? = null
-        var textView = TextView(ContextThemeWrapper(this.context, R.style.line_label_inner))
+        private var textView = TextView(ContextThemeWrapper(this.context, R.style.line_label_inner))
         var channel = -1
         var line_offset = -1
 
@@ -171,7 +174,7 @@ class LineLabelAdapter(var opus_manager: InterfaceLayer, var recycler: RecyclerV
         (holder.itemView as LabelView).set_row(channel, line_offset)
     }
 
-    fun get_label_text(channel: Int, line_offset: Int): String {
+    private fun get_label_text(channel: Int, line_offset: Int): String {
         return if (!this.opus_manager.is_percussion(channel)) {
             "$channel::$line_offset"
         } else {

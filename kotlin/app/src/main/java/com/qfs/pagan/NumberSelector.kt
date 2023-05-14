@@ -7,26 +7,27 @@ import android.widget.LinearLayout
 import androidx.appcompat.view.ContextThemeWrapper
 
 
-class NumberSelector: LinearLayout {
+class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(context, attrs) {
     var min: Int = 0
     var max: Int = 1
-    var button_map = HashMap<NumberSelectorButton, Int>()
-    var active_button: NumberSelectorButton? = null
-    var on_change_hook: ((NumberSelector) -> Unit)? = null
+    private var button_map = HashMap<NumberSelectorButton, Int>()
+    private var active_button: NumberSelectorButton? = null
+    private var on_change_hook: ((NumberSelector) -> Unit)? = null
 
-    class NumberSelectorButton: androidx.appcompat.widget.AppCompatTextView {
-        var numberSelector: NumberSelector
-        var value: Int
-        var bkp_text: String
+    class NumberSelectorButton// TODO: Handle any radix
+        (private var numberSelector: NumberSelector, var value: Int) :
+        androidx.appcompat.widget.AppCompatTextView(
+            ContextThemeWrapper(
+                numberSelector.context,
+                R.style.numberSelector
+            )
+        ) {
+        private var bkp_text: String = get_number_string(this.value, 12,1)
         private val STATE_ACTIVE = intArrayOf(R.attr.state_active)
-        var state_active: Boolean = false
-        constructor(numberSelector: NumberSelector, value: Int): super(ContextThemeWrapper(numberSelector.context, R.style.numberSelector)) {
-            // TODO: Handle any radix
-            this.numberSelector = numberSelector
-            this.value = value
-            this.bkp_text = get_number_string(this.value, 12,1)
-            this.text = this.bkp_text
+        private var state_active: Boolean = false
 
+        init {
+            this.text = this.bkp_text
             this.setOnClickListener {
                 this.numberSelector.set_active_button(this)
                 this.setActive(true)
@@ -54,7 +55,7 @@ class NumberSelector: LinearLayout {
         }
     }
 
-    constructor(context: Context, attrs: AttributeSet) : super(context, attrs) {
+    init {
         context.theme.obtainStyledAttributes(attrs, R.styleable.NumberSelector, 0, 0).apply {
             try {
                 max = getInteger(R.styleable.NumberSelector_max, 2)
@@ -136,7 +137,7 @@ class NumberSelector: LinearLayout {
         this.populate()
     }
 
-    fun setRange(new_min: Int, new_max: Int) {
+    fun set_range(new_min: Int, new_max: Int) {
         val original_value = this.button_map[this.active_button]
 
         this.clear()
@@ -152,17 +153,17 @@ class NumberSelector: LinearLayout {
             } else {
                 this.max
             }
-            this.setState(new_state, true, true)
+            this.setState(new_state, manual = true, surpress_callback = true)
         }
     }
 
-    fun clear() {
+    private fun clear() {
         this.active_button = null
         this.button_map.clear()
         this.removeAllViews()
     }
 
-    fun populate() {
+    private fun populate() {
         for (i in this.min .. this.max) {
             val currentView = NumberSelectorButton(this, i)
             this.addView(currentView)

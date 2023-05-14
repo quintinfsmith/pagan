@@ -10,12 +10,12 @@ import kotlin.experimental.or
 
 
 interface MIDIEvent {
-    abstract fun as_bytes(): ByteArray
+    fun as_bytes(): ByteArray
 }
 
 fun event_from_bytes(bytes: MutableList<Byte>, default: Byte): MIDIEvent? {
     var output: MIDIEvent? = null
-    var leadbyte = toUInt(bytes.removeFirst())
+    val leadbyte = toUInt(bytes.removeFirst())
     val realtimes = listOf(0xF1, 0xF, 0xF8, 0xFC, 0xFE, 0xF7)
     val undefineds = listOf(0xF4, 0xF5, 0xF9, 0xFD)
 
@@ -579,7 +579,7 @@ data class SetTempo(var uspqn: Int): MIDIEvent {
 
     fun set_bpm(new_bpm: Float) {
         if (new_bpm > 0) {
-            this.uspqn = (60000000.toFloat() / new_bpm) as Int
+            this.uspqn = (60000000.toFloat() / new_bpm).toInt()
         } else {
             this.uspqn = 0
         }
@@ -1283,7 +1283,7 @@ data class TimeCode(var rate: Int, var hour: Int, var minute: Int, var second: I
 
 data class MetaEvent(var byte: Byte, var bytes: ByteArray): MIDIEvent {
     override fun as_bytes(): ByteArray {
-        var output = mutableListOf<Byte>(0xFF.toByte(), this.byte)
+        val output = mutableListOf(0xFF.toByte(), this.byte)
         for (b in this.bytes) {
             output.add(b)
         }
@@ -1292,16 +1292,16 @@ data class MetaEvent(var byte: Byte, var bytes: ByteArray): MIDIEvent {
 }
 
 class MIDI {
-    class MissingMThd(): Exception("Missing MThd")
+    class MissingMThd : Exception("Missing MThd")
     class InvalidChunkType(string: String): Exception("Invalid Chunk Type: $string")
     class TrackOOB(index: Int): Exception("Track $index Out of Bounds")
     class InvalidEventId(id: Int): Exception("No event mapped to id:$id")
     var ppqn: Int = 120
     var midi_format: Int = 1
-    var events = HashMap<Int, MIDIEvent>()
-    var event_id_gen: Int = 1
-    var event_positions = HashMap<Int, Pair<Int, Int>>()
-    var _active_byte: Byte = 0x90.toByte()
+    private var events = HashMap<Int, MIDIEvent>()
+    private var event_id_gen: Int = 1
+    private var event_positions = HashMap<Int, Pair<Int, Int>>()
+    private var _active_byte: Byte = 0x90.toByte()
 
     companion object {
         fun from_path(file_path: String): MIDI {
@@ -1382,8 +1382,8 @@ class MIDI {
     }
 
     fun process_mtrk_event(bytes: MutableList<Byte>, current_deltatime: Int, track: Int): Int {
-        if (bytes.first() != null && bytes.first() in 0x80..0xEF) {
-            this._active_byte = bytes.first()!!
+        if (bytes.first() in 0x80..0xEF) {
+            this._active_byte = bytes.first()
         }
 
 
@@ -1391,7 +1391,7 @@ class MIDI {
         return try {
             val event: MIDIEvent? = event_from_bytes(bytes, this._active_byte)
             if (event != null) {
-                var first_byte = toUInt(event.as_bytes().first())
+                val first_byte = toUInt(event.as_bytes().first())
                 if (first_byte in 0x90..0xEF) {
                     this._active_byte = event.as_bytes().first()
                 } else if (event is NoteOff) {
@@ -1404,7 +1404,7 @@ class MIDI {
         }
     }
 
-    public fun as_bytes(): ByteArray {
+    fun as_bytes(): ByteArray {
         val output: MutableList<Byte> = mutableListOf(
             'M'.code.toByte(),
             'T'.code.toByte(),
@@ -1579,8 +1579,7 @@ class MIDI {
     }
 
     fun get_event(event_id: Int): MIDIEvent? {
-        val output: MIDIEvent? = this.events[event_id]
-        return output
+        return events[event_id]
     }
 
     fun replace_event(event_id: Int, new_midi_event: MIDIEvent) {
@@ -1601,8 +1600,8 @@ class MIDI {
     }
 
     fun get_all_events_grouped(): List<Pair<Int, List<MIDIEvent>>> {
-        var event_pairs = this.get_all_events()
-        var output = mutableListOf<Pair<Int, List<MIDIEvent>>>()
+        val event_pairs = this.get_all_events()
+        val output = mutableListOf<Pair<Int, List<MIDIEvent>>>()
         var working_pair: Pair<Int, MutableList<MIDIEvent>>? = null
         for ((tick, event) in event_pairs) {
             if (working_pair != null && working_pair.first != tick) {
@@ -1817,7 +1816,7 @@ open class MIDIController(var context: Context) {
         device.setMidiController(this)
     }
     fun unregisterVirtualDevice(device: VirtualMIDIDevice) {
-        var index = this.virtualDevices.indexOf(device)
+        val index = this.virtualDevices.indexOf(device)
         if (index >= 0) {
             this.virtualDevices.removeAt(index)
         }
@@ -2167,7 +2166,7 @@ class MIDIPlayer: VirtualMIDIDevice() {
         var previous_tick = 0
         val start_time = System.currentTimeMillis()
         var delay_accum = 0
-        var that = this
+        val that = this
         for ((tick, events) in midi.get_all_events_grouped()) {
             if (!this.playing) {
                 break

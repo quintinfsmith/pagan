@@ -7,7 +7,6 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.provider.DocumentsContract
 import android.view.*
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
@@ -36,7 +35,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
 
     private lateinit var midi_controller: MIDIController
-    lateinit var midi_playback_device: MIDIPlaybackDevice
+    private lateinit var midi_playback_device: MIDIPlaybackDevice
     private var midi_input_device = VirtualMIDIDevice()
     private var midi_player = MIDIPlayer()
     lateinit var soundfont: SoundFont
@@ -140,7 +139,7 @@ class MainActivity : AppCompatActivity() {
         return output
     }
 
-    fun save_dialog(callback: () -> Unit) {
+    private fun save_dialog(callback: () -> Unit) {
         if (this.get_opus_manager().has_changed_since_save()) {
             val that = this
             AlertDialog.Builder(this, R.style.AlertDialog).apply {
@@ -214,7 +213,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         val tvTempo: TextView = this.findViewById(R.id.tvTempo)
-        tvTempo.text = "${opus_manager.tempo.toInt()} BPM"
+        tvTempo.text = this.getString(R.string.label_bpm, opus_manager.tempo.toInt())
         tvTempo.setOnClickListener {
             this.popup_number_dialog("Set Tempo (BPM)", 1, 999, opus_manager.tempo.toInt()) { tempo: Int ->
                 opus_manager.set_tempo(tempo.toFloat())
@@ -222,7 +221,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         val btnTranspose: TextView = this.findViewById(R.id.btnTranspose)
-        btnTranspose.text = "T: ${opus_manager.transpose}"
+        btnTranspose.text = this.getString(R.string.label_transpose, opus_manager.transpose)
         btnTranspose.setOnClickListener {
             this.popup_transpose_dialog()
         }
@@ -289,20 +288,20 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun scroll_to_beat(beat: Int) {
+    private fun scroll_to_beat(beat: Int) {
         val fragment = this.getActiveFragment()
         if (fragment is EditorFragment) {
             fragment.scroll_to_beat(beat)
         }
     }
 
-    fun save_current_project() {
+    private fun save_current_project() {
         this.project_manager.save(this.opus_manager)
         this.feedback_msg("Project Saved")
         this.update_menu_options()
     }
 
-    fun export_current_project() {
+    private fun export_current_project() {
         var name = opus_manager.path
         if (name != null) {
             name = name.substring(name.lastIndexOf("/") + 1)
@@ -313,7 +312,6 @@ class MainActivity : AppCompatActivity() {
             addCategory(Intent.CATEGORY_OPENABLE)
             type = "application/midi"
             putExtra(Intent.EXTRA_TITLE, "$name.json")
-            putExtra(DocumentsContract.EXTRA_INITIAL_URI, "")
         }
 
         this.export_project_intent_launcher.launch(intent)
@@ -387,7 +385,6 @@ class MainActivity : AppCompatActivity() {
             addCategory(Intent.CATEGORY_OPENABLE)
             type = "application/midi"
             putExtra(Intent.EXTRA_TITLE, "$name.mid")
-            putExtra(DocumentsContract.EXTRA_INITIAL_URI, "")
         }
 
         this.export_midi_intent_launcher.launch(intent)
@@ -513,7 +510,7 @@ class MainActivity : AppCompatActivity() {
             .setView(viewInflated)
             .setPositiveButton(android.R.string.ok) { _, _ ->
                 val value = npOnes.value
-                this.set_transpose(value)
+                this.opus_manager.set_transpose(value)
             }
             .setNegativeButton(android.R.string.cancel) { _, _ -> }
             .show()
@@ -602,16 +599,6 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun set_tempo(value: Int) {
-        val opus_manager = this.get_opus_manager()
-        opus_manager.set_tempo(value.toFloat())
-    }
-
-    private fun set_transpose(value: Int) {
-        val opus_manager = this.get_opus_manager()
-        opus_manager.set_transpose(value)
-    }
-
     fun loading_reticle() {
         if (this.progressBar == null) {
             this.progressBar =
@@ -619,7 +606,7 @@ class MainActivity : AppCompatActivity() {
         }
         val params: RelativeLayout.LayoutParams = RelativeLayout.LayoutParams(50, 50)
         params.addRule(RelativeLayout.CENTER_IN_PARENT)
-        var parent = this.progressBar!!.parent
+        val parent = this.progressBar!!.parent
         if (parent != null) {
             (parent as ViewGroup).removeView(this.progressBar)
         }
@@ -687,13 +674,13 @@ class MainActivity : AppCompatActivity() {
         seconds %= 60
         milliseconds %= 1000
         val centiseconds = milliseconds / 10
-        val minute_string = "${minutes.toString().padStart(2,'0')}"
-        val second_string = "${seconds.toString().padStart(2,'0')}"
-        val centi_string = "${centiseconds.toString().padStart(2, '0')}"
+        val minute_string = minutes.toString().padStart(2,'0')
+        val second_string = seconds.toString().padStart(2,'0')
+        val centi_string = centiseconds.toString().padStart(2, '0')
         return "$minute_string:$second_string.$centi_string"
     }
 
-    fun playback_dialog() {
+    private fun playback_dialog() {
         val viewInflated: View = LayoutInflater.from(this)
             .inflate(
                 R.layout.playback_popup,
@@ -714,8 +701,6 @@ class MainActivity : AppCompatActivity() {
         tvPlaybackTime.text = this.get_timestring_at_beat(working_beat)
 
 
-        val midi_scroller = MIDIScroller(this, sbPlaybackPosition)
-        this.midi_controller.registerVirtualDevice(midi_scroller)
 
         fun start_playback(x: Int) {
             playing = true
@@ -773,9 +758,8 @@ class MainActivity : AppCompatActivity() {
 
         val dialog = AlertDialog.Builder(this, R.style.AlertDialog)
             .setView(viewInflated)
-            .setOnCancelListener { _ ->
+            .setOnCancelListener {
                 this.midi_input_device.sendEvent(MIDIStop())
-                this.midi_controller.unregisterVirtualDevice(midi_scroller)
                 this.midi_playback_device.clear_sample_cache()
             }
             .show()

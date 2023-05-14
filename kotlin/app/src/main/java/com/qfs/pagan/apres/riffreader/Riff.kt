@@ -4,8 +4,8 @@ import android.content.res.AssetManager
 import java.io.InputStream
 import kotlin.experimental.and
 
-class Riff(var assets: AssetManager, var file_name: String, init_callback: ((riff: Riff) -> Unit)? = null) {
-    class InputStreamClosed(): Exception("Input Stream is Closed")
+class Riff(private var assets: AssetManager, private var file_name: String, init_callback: ((riff: Riff) -> Unit)? = null) {
+    class InputStreamClosed : Exception("Input Stream is Closed")
     data class ListChunkHeader(
         val index: Int,
         val tag: String,
@@ -21,26 +21,26 @@ class Riff(var assets: AssetManager, var file_name: String, init_callback: ((rif
 
     var list_chunks: MutableList<ListChunkHeader> = mutableListOf()
     var sub_chunks: MutableList<List<SubChunkHeader>> = mutableListOf()
-    var input_stream: InputStream? = null
-    var input_position: Int = 0
+    private var input_stream: InputStream? = null
+    private var input_position: Int = 0
 
     init {
         this.open_stream()
 
-        var fourcc = this.get_string(0, 4)
-        var riff_size = this.get_little_endian(4, 4)
-        var typecc = this.get_string(8, 4)
+        this.get_string(0, 4) // fourcc
+        val riff_size = this.get_little_endian(4, 4)
+        this.get_string(8, 4) // typecc
 
         var working_index = 12
         while (working_index < riff_size - 4) {
-            var header_index = working_index - 12
-            var tag = this.get_string(working_index, 4)
+            val header_index = working_index - 12
+            val tag = this.get_string(working_index, 4)
             working_index += 4
 
-            var chunk_size = this.get_little_endian(working_index, 4)
+            val chunk_size = this.get_little_endian(working_index, 4)
             working_index += 4
 
-            var type = this.get_string(working_index, 4)
+            val type = this.get_string(working_index, 4)
             working_index += 4
 
             this.list_chunks.add(
@@ -52,10 +52,10 @@ class Riff(var assets: AssetManager, var file_name: String, init_callback: ((rif
                 )
             )
 
-            var sub_chunk_list: MutableList<SubChunkHeader> = mutableListOf()
+            val sub_chunk_list: MutableList<SubChunkHeader> = mutableListOf()
             var sub_index = 0
             while (sub_index < chunk_size - 4) {
-                var subchunkheader = SubChunkHeader(
+                val subchunkheader = SubChunkHeader(
                     index = sub_index + working_index - 12,
                     tag = this.get_string(working_index + sub_index, 4),
                     size = this.get_little_endian(working_index + sub_index + 4, 4)
@@ -75,12 +75,12 @@ class Riff(var assets: AssetManager, var file_name: String, init_callback: ((rif
         this.close_stream()
     }
 
-    fun open_stream() {
+    private fun open_stream() {
         this.input_stream = this.assets.open(this.file_name)
         this.input_stream?.mark(input_stream?.available()!!)
     }
 
-    fun close_stream() {
+    private fun close_stream() {
         this.input_stream?.close()
         this.input_position = 0
         this.input_stream = null
@@ -141,38 +141,36 @@ class Riff(var assets: AssetManager, var file_name: String, init_callback: ((rif
         return this.get_bytes(offset, size)
     }
 
-    fun move_to_offset(offset: Long) {
-        var stream: InputStream? = this.input_stream ?: throw InputStreamClosed()
+    private fun move_to_offset(offset: Long) {
+        val stream: InputStream = this.input_stream ?: throw InputStreamClosed()
 
         if (this.input_position < offset) {
-            var start = System.currentTimeMillis()
-            stream?.skip(offset - this.input_position)
+            stream.skip(offset - this.input_position)
         } else if (this.input_position > offset) {
-            var start = System.currentTimeMillis()
-            stream?.reset()
+            stream.reset()
             this.input_position = 0
-            stream?.skip(offset)
+            stream.skip(offset)
         }
         this.input_position = offset.toInt()
     }
 
-    fun get_bytes(offset: Int, size: Int): ByteArray {
-        var stream: InputStream? = this.input_stream ?: throw InputStreamClosed()
+    private fun get_bytes(offset: Int, size: Int): ByteArray {
+        val stream: InputStream = this.input_stream ?: throw InputStreamClosed()
         this.move_to_offset(offset.toLong())
-        var output = ByteArray(size)
-        stream?.read(output)
+        val output = ByteArray(size)
+        stream.read(output)
         this.input_position += size
         return output
 
     }
 
-    fun get_string(offset: Int, size: Int): String {
+    private fun get_string(offset: Int, size: Int): String {
         return this.get_bytes(offset, size).toString(Charsets.UTF_8)
     }
 
-    fun get_little_endian(offset: Int, size: Int): Int {
+    private fun get_little_endian(offset: Int, size: Int): Int {
         var output = 0
-        var bytes = this.get_bytes(offset, size)
+        val bytes = this.get_bytes(offset, size)
         for (i in 0 until size) {
             output *= 256
             output += toUInt(bytes[size - 1 - i])
@@ -185,14 +183,6 @@ fun toUInt(byte: Byte): Int {
     var new_int = (byte and 0x7F.toByte()).toInt()
     if (byte.toInt() < 0) {
         new_int += 128
-    }
-    return new_int
-}
-
-fun toUInt(number: Short): Int {
-    var new_int = (number and 0x7FFF.toShort()).toInt()
-    if (number.toInt() < 0) {
-        new_int += 0x8000
     }
     return new_int
 }

@@ -12,11 +12,11 @@ import com.qfs.pagan.apres.SoundFont
 
 class ChannelOptionAdapter(
     private val activity: MainActivity,
-    val opus_manager: InterfaceLayer,
+    private val opus_manager: InterfaceLayer,
     private val recycler: RecyclerView,
     private val soundfont: SoundFont
 ) : RecyclerView.Adapter<ChannelOptionAdapter.ChannelOptionViewHolder>() {
-    class OutOfSyncException(): Exception("Channel Option list out of sync with OpusManager")
+    class OutOfSyncException : Exception("Channel Option list out of sync with OpusManager")
     class ChannelOptionViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
     private var supported_instruments: Set<Int>
     init {
@@ -61,7 +61,7 @@ class ChannelOptionAdapter(
                 curChannel.midi_instrument
             }
         )
-        btnChooseInstrument.text = "$position: $label"
+        btnChooseInstrument.text = this.activity.getString(R.string.label_choose_instrument, position, label)
     }
 
     private fun get_label(instrument: Int): String {
@@ -92,7 +92,7 @@ class ChannelOptionAdapter(
         this.set_text(holder.itemView as ViewGroup, position)
 
         holder.itemView.findViewById<TextView>(R.id.btnChooseInstrument).setOnClickListener {
-            this.interact_btnChooseInstrument(it, position)
+            this.interact_btnChooseInstrument(it)
         }
 
         holder.itemView.findViewById<TextView>(R.id.btnRemoveChannel).setOnClickListener {
@@ -130,7 +130,7 @@ class ChannelOptionAdapter(
         }
     }
 
-    private fun interact_btnChooseInstrument(view: View, index: Int) {
+    private fun interact_btnChooseInstrument(view: View) {
         val wrapper = ContextThemeWrapper(this.activity, R.style.PopupMenu)
         val popupMenu = PopupMenu(wrapper, view)
         val channel = this.get_view_channel(view)

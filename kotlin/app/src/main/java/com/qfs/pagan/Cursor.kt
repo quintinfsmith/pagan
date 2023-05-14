@@ -3,7 +3,7 @@ package com.qfs.pagan
 import android.util.Log
 import com.qfs.pagan.opusmanager.BeatKey
 
-class Cursor() {
+class Cursor {
     enum class CursorMode {
         Row,
         Column,

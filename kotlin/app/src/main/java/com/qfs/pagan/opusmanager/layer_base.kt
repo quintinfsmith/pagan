@@ -15,11 +15,11 @@ open class OpusManagerBase {
     class BadBeatKey(beat_key: BeatKey): Exception("BeatKey $beat_key doesn't exist")
     class NonEventConversion(beat_key: BeatKey, position: List<Int>): Exception("Attempting to convert non-event @ $beat_key:$position")
     class NoteOutOfRange(n: Int): Exception("Attempting to use unsupported note $n")
-    class NonPercussionEventSet(): Exception("Attempting to set normal event on percussion channel")
-    class PercussionEventSet(): Exception("Attempting to set percussion event on non-percussion channel")
-    class EmptyPath(): Exception("Path Required but not given")
-    class BadInsertPosition(): Exception("Can't insert tree at top level")
-    class RemovingLastBeatException(): Exception("OpusManager requires at least 1 beat")
+    class NonPercussionEventSet : Exception("Attempting to set normal event on percussion channel")
+    class PercussionEventSet : Exception("Attempting to set percussion event on non-percussion channel")
+    class EmptyPath : Exception("Path Required but not given")
+    class BadInsertPosition : Exception("Can't insert tree at top level")
+    class RemovingLastBeatException : Exception("OpusManager requires at least 1 beat")
 
     var RADIX: Int = 12
     var DEFAULT_PERCUSSION: Int = 0
@@ -39,11 +39,7 @@ open class OpusManagerBase {
     }
 
     fun get_first_position(beat_key: BeatKey, start_position: List<Int>? = null): List<Int> {
-        var output = if (start_position != null) {
-            start_position.toMutableList()
-        } else {
-            mutableListOf()
-        }
+        val output = start_position?.toMutableList() ?: mutableListOf()
         var tree = this.get_tree(beat_key, output)
         while (! tree.is_leaf()) {
             output.add(0)
@@ -63,7 +59,7 @@ open class OpusManagerBase {
     fun get_abs_offset(channel_index: Int, line_offset: Int): Int {
         var count = 0
         this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
-            channel.lines.forEachIndexed { j: Int, line: OpusChannel.OpusLine ->
+            for (j in 0 until channel.size) {
                 if (i == channel_index && j == line_offset) {
                     return count
                 }
@@ -74,25 +70,28 @@ open class OpusManagerBase {
     }
 
     fun get_beatkeys_in_range(top_left_key: BeatKey, bottom_right_key: BeatKey): List<BeatKey> {
-        var output = mutableListOf<BeatKey>()
+        val output = mutableListOf<BeatKey>()
         this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
             if (i < top_left_key.channel || i > bottom_right_key.channel) {
                 return@forEachIndexed // Continues
             }
 
-            var (start, end) = if (top_left_key.channel == bottom_right_key.channel) {
+            val (start, end) = if (top_left_key.channel == bottom_right_key.channel) {
                 Pair(top_left_key.line_offset, bottom_right_key.line_offset)
             } else {
-                if (i == top_left_key.channel) {
-                    Pair(top_left_key.line_offset, channel.size - 1)
-                } else if (i == bottom_right_key.channel) {
-                    Pair(0, bottom_right_key.line_offset)
-                } else {
-                    Pair(0, channel.size - 1)
+                when (i) {
+                    top_left_key.channel -> {
+                        Pair(top_left_key.line_offset, channel.size - 1)
+                    }
+                    bottom_right_key.channel -> {
+                        Pair(0, bottom_right_key.line_offset)
+                    }
+                    else -> {
+                        Pair(0, channel.size - 1)
+                    }
                 }
             }
             for (j in start .. end) {
-                var line = channel.lines[j]
                 for (k in top_left_key.beat .. bottom_right_key.beat) {
                     output.add(BeatKey(i,j,k))
                 }
@@ -111,7 +110,7 @@ open class OpusManagerBase {
     fun get_std_offset(absolute: Int): Pair<Int, Int> {
         var count = 0
         this.channels.forEachIndexed {i: Int, channel: OpusChannel ->
-            channel.lines.forEachIndexed { j: Int, lines: OpusChannel.OpusLine ->
+            for (j in 0 until channel.size) {
                 if (count == absolute) {
                     return Pair(i, j)
                 }
@@ -546,7 +545,7 @@ open class OpusManagerBase {
 
     open fun move_line(channel_old: Int, line_old: Int, channel_new: Int, line_new: Int) {
         // preserve line map
-        var line_map = if (channel_old == channel_new && channel_old == this.percussion_channel) {
+        val line_map = if (channel_old == channel_new && channel_old == this.percussion_channel) {
             this.channels[channel_old].line_map!!.toList()
         } else {
             null
@@ -575,7 +574,7 @@ open class OpusManagerBase {
         }
     }
 
-    fun insert_beat() {
+    private fun insert_beat() {
         this.insert_beat(this.opus_beat_count, 1)
     }
 
@@ -595,8 +594,8 @@ open class OpusManagerBase {
             return
         }
         var y = 0
-        this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
-            channel.lines.forEachIndexed { j: Int, line: OpusChannel.OpusLine ->
+        this.channels.forEach { channel: OpusChannel ->
+            channel.lines.forEach { line: OpusChannel.OpusLine ->
                 line.beats[beat_index] = beats_in_column[y]
                 y += 1
             }
@@ -604,8 +603,8 @@ open class OpusManagerBase {
     }
 
 
-    open fun insert_line(channel: Int, line_index: Int, line: MutableList<OpusTree<OpusEvent>>) {
-        this.channels[channel].insert_line(line_index, line)
+    open fun insert_line(channel: Int, line_offset: Int, line: MutableList<OpusTree<OpusEvent>>) {
+        this.channels[channel].insert_line(line_offset, line)
     }
 
     open fun new_line(channel: Int, line_offset: Int? = null): List<OpusTree<OpusEvent>> {
@@ -661,7 +660,7 @@ open class OpusManagerBase {
         return this.channels[channel].remove_line(line_offset)
     }
 
-    fun copy_func(tree: OpusTree<OpusEvent>): OpusEvent? {
+    private fun copy_func(tree: OpusTree<OpusEvent>): OpusEvent? {
         return if (tree.event == null) {
             null
         } else {
@@ -860,14 +859,14 @@ open class OpusManagerBase {
         this.path = path
     }
 
-    fun parse_line_data(json_data: LoadedJSONData): List<List<List<OpusTree<OpusEvent>>>> {
-        var output = mutableListOf<MutableList<MutableList<OpusTree<OpusEvent>>>>()
+    private fun parse_line_data(json_data: LoadedJSONData): List<List<List<OpusTree<OpusEvent>>>> {
+        val output = mutableListOf<MutableList<MutableList<OpusTree<OpusEvent>>>>()
 
-        json_data.channels.forEachIndexed { i, channel_data ->
-            var line_list = mutableListOf<MutableList<OpusTree<OpusEvent>>>()
-            channel_data.lines.forEachIndexed { j, line_str ->
-                var beat_list = mutableListOf<OpusTree<OpusEvent>>()
-                line_str.split("|").forEachIndexed { b, beat_str ->
+        json_data.channels.forEach { channel_data: ChannelJSONData ->
+            val line_list = mutableListOf<MutableList<OpusTree<OpusEvent>>>()
+            channel_data.lines.forEach { line_str: String ->
+                val beat_list = mutableListOf<OpusTree<OpusEvent>>()
+                line_str.split("|").forEach { beat_str: String ->
                     val beat_tree = from_string(beat_str, this.RADIX, channel_data.midi_channel)
                     beat_tree.clear_singles()
                     beat_list.add(beat_tree)
@@ -914,7 +913,7 @@ open class OpusManagerBase {
             this.channels[i].midi_channel = channel_data.midi_channel
             this.channels[i].midi_instrument = channel_data.midi_instrument
 
-            channel_data.lines.forEachIndexed { j, line_str ->
+            for (j in 0 until channel_data.lines.size) {
                 val note_set: MutableSet<Int> = mutableSetOf()
                 parsed[i][j].forEachIndexed { b: Int, beat_tree: OpusTree<OpusEvent> ->
                     this.replace_tree(BeatKey(i, j, b), listOf(), beat_tree)
@@ -1220,7 +1219,7 @@ open class OpusManagerBase {
     }
 
     open fun overwrite_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
-        var (from_key, to_key) = this.get_ordered_beat_key_pair(first_corner, second_corner)
+        val (from_key, to_key) = this.get_ordered_beat_key_pair(first_corner, second_corner)
 
         // Start OverFlow Check ////
         var lines_in_range = 0
@@ -1230,11 +1229,11 @@ open class OpusManagerBase {
             if (i < from_key.channel || i > to_key.channel) {
                 return@forEachIndexed
             }
-            this.channels[i].lines.forEachIndexed { j: Int, line: OpusChannel.OpusLine ->
+            for (j in 0 until channel.size) {
                 if (i == from_key.channel && j < from_key.line_offset) {
-                    return@forEachIndexed
+                    continue
                 } else if (i == to_key.channel && j > to_key.line_offset) {
-                    return@forEachIndexed
+                    continue
                 }
                 percussion_map.add(i == this.percussion_channel)
                 lines_in_range += 1
@@ -1245,9 +1244,9 @@ open class OpusManagerBase {
             if (i < beat_key.channel) {
                 return@forEachIndexed
             }
-            this.channels[i].lines.forEachIndexed { j: Int, line: OpusChannel.OpusLine ->
+            for (j in 0 until channel.size) {
                 if (i == beat_key.channel && j < beat_key.line_offset) {
-                    return@forEachIndexed
+                    continue
                 }
                 target_percussion_map.add(i == this.percussion_channel)
                 lines_available += 1
@@ -1255,7 +1254,6 @@ open class OpusManagerBase {
         }
 
         val working_beat = beat_key.copy()
-        val new_pairs = mutableListOf<Pair<BeatKey, BeatKey>>()
         while (from_key.channel != to_key.channel || from_key.line_offset != to_key.line_offset) {
             // INCLUSIVE
             for (b in 0 .. to_key.beat - from_key.beat) {

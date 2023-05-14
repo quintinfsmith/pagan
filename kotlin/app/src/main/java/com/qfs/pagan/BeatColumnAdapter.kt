@@ -11,7 +11,7 @@ import java.lang.Integer.max
 import kotlin.concurrent.thread
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
-class BeatColumnAdapter(var parent_fragment: EditorFragment, var recycler: RecyclerView, var column_layout: ColumnLabelAdapter) : RecyclerView.Adapter<BeatColumnAdapter.BeatViewHolder>() {
+class BeatColumnAdapter(private var parent_fragment: EditorFragment, var recycler: RecyclerView, var column_layout: ColumnLabelAdapter) : RecyclerView.Adapter<BeatColumnAdapter.BeatViewHolder>() {
 
     // BackLink so I can get the x offset from a view in the view holder
     class BackLinkView(context: Context): LinearLayout(context) {
@@ -20,7 +20,7 @@ class BeatColumnAdapter(var parent_fragment: EditorFragment, var recycler: Recyc
             this.orientation = VERTICAL
         }
     }
-    class OpusManagerLayoutManager(context: Context): LinearLayoutManager(context, HORIZONTAL, false) { }
+    class OpusManagerLayoutManager(context: Context): LinearLayoutManager(context, HORIZONTAL, false)
 
     class TableOnScrollListener: RecyclerView.OnScrollListener() {
         override fun onScrolled(recyclerView: RecyclerView, x: Int, y: Int) {
@@ -33,7 +33,7 @@ class BeatColumnAdapter(var parent_fragment: EditorFragment, var recycler: Recyc
             }
         }
     }
-    class ColumnLabelOnScrollListener(var omAdapter: BeatColumnAdapter): RecyclerView.OnScrollListener() {
+    class ColumnLabelOnScrollListener(private var omAdapter: BeatColumnAdapter): RecyclerView.OnScrollListener() {
         override fun onScrolled(recyclerView: RecyclerView, x: Int, y: Int) {
             super.onScrolled(recyclerView, x, y)
             if (!omAdapter._scroll_lock_columns) {
@@ -50,15 +50,15 @@ class BeatColumnAdapter(var parent_fragment: EditorFragment, var recycler: Recyc
         }
     }
 
-    var beat_count = 0
+    private var beat_count = 0
     var linking_beat: BeatKey? = null
     var linking_beat_b: BeatKey? = null
     var _scroll_lock_this: Boolean = false
     var _scroll_lock_columns: Boolean = false
     private var bound_beats = mutableSetOf<Int>()
     private var attached_beats = mutableSetOf<Int>()
-    var table_scroll_listener: TableOnScrollListener
-    var column_scroll_listener: ColumnLabelOnScrollListener
+    private var table_scroll_listener: TableOnScrollListener
+    private var column_scroll_listener: ColumnLabelOnScrollListener
 
     init {
         this.recycler.adapter = this
@@ -120,7 +120,7 @@ class BeatColumnAdapter(var parent_fragment: EditorFragment, var recycler: Recyc
                 opus_manager.is_percussion(beatkey.channel)
             )
 
-            tvLeaf.setOnSingleTapListener { event: MotionEvent ->
+            tvLeaf.setOnSingleTapListener {
                 this.interact_leafView_click(tvLeaf)
                 true
             }
@@ -131,7 +131,7 @@ class BeatColumnAdapter(var parent_fragment: EditorFragment, var recycler: Recyc
                 }
             }
 
-            tvLeaf.setOnDoubleTapListener { event: MotionEvent ->
+            tvLeaf.setOnDoubleTapListener {
                 this.interact_leafView_doubletap(tvLeaf)
                 true
             }
@@ -152,7 +152,7 @@ class BeatColumnAdapter(var parent_fragment: EditorFragment, var recycler: Recyc
 
             if (tree.is_event()) {
                 val abs_value = opus_manager.get_absolute_value(beatkey, position)
-                tvLeaf.setInvalid(abs_value == null || abs_value < 0)
+                tvLeaf.set_invalid(abs_value == null || abs_value < 0)
             }
 
             this.apply_cursor_focus(tvLeaf, beatkey, position)
@@ -358,13 +358,13 @@ class BeatColumnAdapter(var parent_fragment: EditorFragment, var recycler: Recyc
     private fun interact_leafView_doubletap(view: View) {
         val opus_manager = this.get_opus_manager()
         val (beatkey, position) = this.get_view_position(view)
-            if (this.linking_beat == null) {
-                opus_manager.cursor_select(beatkey, position)
-                this.linking_beat = beatkey
-            } else {
-                opus_manager.cursor_select_range(this.linking_beat!!, beatkey)
-                this.linking_beat_b = beatkey
-            }
+        if (this.linking_beat == null) {
+            opus_manager.cursor_select(beatkey, position)
+            this.linking_beat = beatkey
+        } else {
+            opus_manager.cursor_select_range(this.linking_beat!!, beatkey)
+            this.linking_beat_b = beatkey
+        }
 
         this.parent_fragment.setContextMenu_linking()
     }
@@ -375,18 +375,18 @@ class BeatColumnAdapter(var parent_fragment: EditorFragment, var recycler: Recyc
         when (opus_manager.cursor.mode) {
             Cursor.CursorMode.Row -> {
                 if (beatkey.channel == opus_manager.cursor.channel && beatkey.line_offset == opus_manager.cursor.line_offset) {
-                    leaf.isFocused = true
+                    leaf.set_focused(true)
                 }
             }
             Cursor.CursorMode.Column -> {
                 if (beatkey.beat == opus_manager.cursor.beat) {
-                    leaf.isFocused = true
+                    leaf.set_focused(true)
                 }
             }
             Cursor.CursorMode.Single -> {
                 val linked_beats = opus_manager.get_all_linked(beatkey)
                 if (linked_beats.contains(opus_manager.cursor.get_beatkey()) && position == opus_manager.cursor.get_position()) {
-                    leaf.isFocused = true
+                    leaf.set_focused(true)
                 }
             }
             Cursor.CursorMode.Range -> {
@@ -401,7 +401,7 @@ class BeatColumnAdapter(var parent_fragment: EditorFragment, var recycler: Recyc
                     false
                 }
 
-                leaf.isFocused = vert_ok && beatkey.beat in (from_key.beat .. to_key.beat)
+                leaf.set_focused(vert_ok && beatkey.beat in (from_key.beat .. to_key.beat))
             }
             else -> { }
         }
@@ -468,7 +468,7 @@ class BeatColumnAdapter(var parent_fragment: EditorFragment, var recycler: Recyc
     }
 
 
-    fun cancel_linking(reset_cursor: Boolean = true) {
+    fun cancel_linking() {
         val opus_manager = this.get_opus_manager()
         if (opus_manager.cursor.mode != Cursor.CursorMode.Single) {
             opus_manager.cursor_clear()
@@ -631,7 +631,7 @@ class BeatColumnAdapter(var parent_fragment: EditorFragment, var recycler: Recyc
     fun unset_cursor_focus() {
         try {
             for (leaf in this.get_visible_highlighted_leafs()) {
-                leaf.isFocused = false
+                leaf.set_focused(false)
             }
         } catch (e: Exception) {
             // Let it pass
@@ -640,7 +640,7 @@ class BeatColumnAdapter(var parent_fragment: EditorFragment, var recycler: Recyc
 
     fun set_cursor_focus() {
         for (leaf in this.get_visible_highlighted_leafs()) {
-            leaf.isFocused = true
+            leaf.set_focused(true)
         }
         this.redraw_visible_leafs()
     }

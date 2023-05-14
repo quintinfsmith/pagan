@@ -139,7 +139,7 @@ class RelativeOptionSelector(context: Context, attrs: AttributeSet) : LinearLayo
     }
 
 
-    fun hideOption(index: Int) {
+    fun hide_option(index: Int) {
         this.hidden_options.add(index)
         for ((view, i) in this.button_map) {
             if (i == index) {
@@ -147,7 +147,7 @@ class RelativeOptionSelector(context: Context, attrs: AttributeSet) : LinearLayo
             }
         }
     }
-    fun unhideOption(index: Int) {
+    fun unhide_option(index: Int) {
         this.hidden_options.remove(index)
         for ((view, i) in this.button_map) {
             if (i == index) {

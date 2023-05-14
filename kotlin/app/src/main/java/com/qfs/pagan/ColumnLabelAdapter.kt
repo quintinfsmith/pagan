@@ -9,13 +9,13 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 
 @SuppressLint("ClickableViewAccessibility")
-class ColumnLabelAdapter(var opus_manager: InterfaceLayer, var recycler: RecyclerView, var activity: MainActivity) : RecyclerView.Adapter<ColumnLabelAdapter.ColumnLabelViewHolder>() {
+class ColumnLabelAdapter(private var opus_manager: InterfaceLayer, var recycler: RecyclerView, var activity: MainActivity) : RecyclerView.Adapter<ColumnLabelAdapter.ColumnLabelViewHolder>() {
     // BackLink so I can get the x offset from a view in the view holder
     var column_widths = mutableListOf<Int>()
 
     class LabelView(context: Context): RelativeLayout(ContextThemeWrapper(context, R.style.column_label_outer)) {
         var viewHolder: ColumnLabelViewHolder? = null
-        var textView = TextView(ContextThemeWrapper(this.context, R.style.column_label_inner))
+        private var textView = TextView(ContextThemeWrapper(this.context, R.style.column_label_inner))
         init {
             this.addView(this.textView)
             this.textView.layoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT
@@ -78,16 +78,6 @@ class ColumnLabelAdapter(var opus_manager: InterfaceLayer, var recycler: Recycle
                 }
             }
         )
-    }
-
-    fun refresh() {
-        val start = (this.recycler.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
-        val end = (this.recycler.layoutManager as LinearLayoutManager).findLastVisibleItemPosition()
-
-        // NOTE: padding the start/end since an item may be bound but not visible
-        for (i in Integer.max(0, start - 1)..Integer.min(this.itemCount, end + 1)) {
-            this.notifyItemChanged(i)
-        }
     }
 
     fun addColumnLabel(position: Int) {

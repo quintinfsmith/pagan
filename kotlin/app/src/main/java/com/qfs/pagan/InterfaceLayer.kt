@@ -11,16 +11,10 @@ import java.lang.Integer.max
 import java.lang.Integer.min
 
 class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
-    enum class LabelUpdate {
-        AddColumn,
-        PopColumn,
-        AddLine,
-        PopLine
-    }
-    var simple_ui_lock = 0
+    private var simple_ui_lock = 0
     var relative_mode: Int = 0
     var cursor = Cursor()
-    var queued_location_stamp: Pair<BeatKey, List<Int>?>? = null
+    private var queued_location_stamp: Pair<BeatKey, List<Int>?>? = null
     var first_load_done = false
 
     private fun simple_ui_locked(): Boolean {
@@ -129,7 +123,11 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         if (btnChoosePercussion != null) {
             val drums = this.activity.resources.getStringArray(R.array.midi_drums)
             val drum_index = this.get_percussion_instrument(line_offset)
-            btnChoosePercussion.text = "$instrument: ${drums[drum_index]}"
+            btnChoosePercussion.text = this.activity.getString(
+                R.string.label_choose_percussion,
+                instrument,
+                drums[drum_index]
+            )
 
             this.update_line_labels()
         }
@@ -163,11 +161,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         this.ui_add_line_label()
         this.ui_notify_visible_changes()
     }
-
-    //override fun move_line(channel_old: Int, line_old: Int, channel_new: Int, line_new: Int) {
-    //    super.move_line(channel_old, line_old, channel_new, line_new)
-    //    this.ui_notify_visible_changes()
-    //}
 
     override fun remove_line(channel: Int, line_offset: Int): MutableList<OpusTree<OpusEvent>> {
         this.ui_remove_line_label(channel, line_offset)
@@ -448,14 +441,17 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     override fun set_transpose(new_transpose: Int)  {
         super.set_transpose(new_transpose)
         val btnTranspose: TextView = this.activity.findViewById(R.id.btnTranspose)
-        btnTranspose.text = "T: ${get_number_string(new_transpose, this.RADIX, 2)}"
+        btnTranspose.text = this.activity.getString(
+            R.string.label_transpose,
+            get_number_string(new_transpose, this.RADIX, 2)
+        )
     }
 
     override fun set_tempo(new_tempo: Float) {
         super.set_tempo(new_tempo)
 
         val tvTempo = this.activity.findViewById<TextView>(R.id.tvTempo)
-        tvTempo.text = "${this.tempo.toInt()} BPM"
+        tvTempo.text = this.activity.getString(R.string.label_bpm, this.tempo.toInt())
     }
 
     override fun apply_undo() {
@@ -490,7 +486,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         }
     }
 
-    override fun apply_history_node(current_node: HistoryNode, depth: Int)  {
+    override fun apply_history_node(current_node: HistoryCache.HistoryNode, depth: Int)  {
         super.apply_history_node(current_node, depth)
         this.queued_location_stamp = when (current_node.func_name) {
             "cursor_select_row" -> {
@@ -506,7 +502,11 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             "cursor_select" -> {
                 Pair(
                     current_node.args[0] as BeatKey,
-                    current_node.args[1] as List<Int>
+                    if (current_node.args[1] is List<*>) {
+                        current_node.args[1] as List<Int>
+                    } else {
+                        return
+                    }
                 )
             }
             "cursor_select_column" -> {
@@ -951,16 +951,16 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     override fun remove_link_pool(index: Int) {
-        var link_pool = this.link_pools[index].toList()
+        val link_pool = this.link_pools[index].toList()
         super.remove_link_pool(index)
         for (beat_key in link_pool) {
             this.ui_refresh_beat_labels(beat_key)
         }
     }
 
-    override fun link_beat_range_horizontally(channel: Int, line_offset: Int, from_key: BeatKey, to_key: BeatKey) {
+    override fun link_beat_range_horizontally(channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey) {
         this.surpress_ui {
-            super.link_beat_range_horizontally(channel, line_offset, from_key, to_key)
+            super.link_beat_range_horizontally(channel, line_offset, first_key, second_key)
         }
         if (! this.simple_ui_locked()) {
             this.ui_notify_visible_changes()

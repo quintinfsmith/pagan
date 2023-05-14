@@ -7,9 +7,9 @@ import kotlin.math.max
 import kotlin.math.pow
 
 //class SoundFont(input_stream: InputStream) {
-class SoundFont(var assets: AssetManager, var file_name: String) {
+class SoundFont(assets: AssetManager, file_name: String) {
     class InvalidPresetIndex(index: Int, bank: Int): Exception("Preset Not Found $index:$bank")
-    class InvalidSampleIdPosition(): Exception("SampleId Generator is not at end of ibag")
+    class InvalidSampleIdPosition : Exception("SampleId Generator is not at end of ibag")
     data class CachedData(var data: ByteArray, var count: Int = 1)
     // Mandatory INFO
     private var ifil: Pair<Int, Int> = Pair(0,0)
@@ -28,16 +28,16 @@ class SoundFont(var assets: AssetManager, var file_name: String) {
 
     private var riff: Riff
 
-    var pdta_chunks = HashMap<String, ByteArray>()
+    private var pdta_chunks = HashMap<String, ByteArray>()
 
     init {
         this.riff = Riff(assets, file_name) { riff: Riff ->
-            var info_chunk = riff.get_chunk_data(riff.list_chunks[0])
-            var pdta_chunk = riff.get_chunk_data(riff.list_chunks[2])
-            var info_offset = riff.list_chunks[0].index
+            val info_chunk = riff.get_chunk_data(riff.list_chunks[0])
+            val pdta_chunk = riff.get_chunk_data(riff.list_chunks[2])
+            val info_offset = riff.list_chunks[0].index
             riff.sub_chunks[0].forEach { header: Riff.SubChunkHeader ->
                 // '-12' since the sub chunk index is relative to the list chunk, but the list chunk index is absolute
-                var header_offset = header.index + 8 - info_offset - 12
+                val header_offset = header.index + 8 - info_offset - 12
                 when (header.tag) {
                     "ifil" -> {
                         this.ifil = Pair(
@@ -82,10 +82,10 @@ class SoundFont(var assets: AssetManager, var file_name: String) {
                 }
             }
 
-            var pdta_offset = riff.list_chunks[2].index
-            riff.sub_chunks[2].forEachIndexed { i: Int, header: Riff.SubChunkHeader ->
+            val pdta_offset = riff.list_chunks[2].index
+            riff.sub_chunks[2].forEach { header: Riff.SubChunkHeader ->
                 // '-12' since the sub chunk index is relative to the list chunk, but the list chunk index is absolute
-                var offset = header.index + 8 - pdta_offset - 12
+                val offset = header.index + 8 - pdta_offset - 12
                 this.pdta_chunks[header.tag] = ByteArray(header.size) { j ->
                     pdta_chunk[offset + j]
                 }
@@ -186,12 +186,12 @@ class SoundFont(var assets: AssetManager, var file_name: String) {
                     continue
                 }
 
-                var preset = Preset(phdr_name, current_index, current_bank)
+                val preset = Preset(phdr_name, current_index, current_bank)
 
                 val wPresetBagIndex = toUInt(phdr_bytes[offset + 24]) + (toUInt(phdr_bytes[offset + 25]) * 256)
                 val next_wPresetBagIndex = toUInt(phdr_bytes[38 + offset + 24]) + (toUInt(phdr_bytes[38 + offset + 25]) * 256)
                 val zone_count = next_wPresetBagIndex - wPresetBagIndex
-                var pbag_pairs = mutableListOf<Pair<Pair<Int, Int>, Pair<Int, Int>>>()
+                val pbag_pairs = mutableListOf<Pair<Pair<Int, Int>, Pair<Int, Int>>>()
                 for (j in 0 until zone_count) {
                     val pbag_bytes = ByteArray(pbag_entry_size * 2) { k: Int ->
                         pdta_chunks["pbag"]!![((j + wPresetBagIndex) * pbag_entry_size) + k]
@@ -212,7 +212,6 @@ class SoundFont(var assets: AssetManager, var file_name: String) {
                 }
                 for ((pbag, next_pbag) in pbag_pairs) {
                     val generators_to_use: List<Generator> = this.get_preset_generators(
-                        riff,
                         pbag.first,
                         next_pbag.first
                     )
@@ -227,17 +226,17 @@ class SoundFont(var assets: AssetManager, var file_name: String) {
             if (output != null) {
                 var ordered_samples = mutableListOf<Sample>()
                 for (preset_instrument in output!!.instruments) {
-                    var instrument = preset_instrument.instrument ?: continue
+                    val instrument = preset_instrument.instrument ?: continue
 
                     for (instrument_sample in instrument.samples) {
-                        var sample = instrument_sample.sample ?: continue
+                        val sample = instrument_sample.sample ?: continue
                         ordered_samples.add(sample)
                     }
                 }
                 ordered_samples = ordered_samples.sortedBy { sample: Sample ->
                     sample.data_placeholder.first
                 }.toMutableList()
-                var loaded_sample_data = HashMap<Pair<Int, Int>, ByteArray?>()
+                val loaded_sample_data = HashMap<Pair<Int, Int>, ByteArray?>()
                 for (sample in ordered_samples) {
                     if (! loaded_sample_data.containsKey(sample.data_placeholder)) {
                         loaded_sample_data[sample.data_placeholder] = this.get_sample_data(
@@ -293,7 +292,6 @@ class SoundFont(var assets: AssetManager, var file_name: String) {
             )
 
             val generators_to_use: List<Generator> = this.get_instrument_generators(
-                riff,
                 ibag.first,
                 next_ibag.first
             )
@@ -305,7 +303,7 @@ class SoundFont(var assets: AssetManager, var file_name: String) {
     }
 
 
-    private fun get_instrument_modulators(riff: Riff, from_index: Int, to_index: Int): List<Modulator> {
+    private fun get_instrument_modulators(from_index: Int, to_index: Int): List<Modulator> {
         val output: MutableList<Modulator> = mutableListOf()
         val bytes = ByteArray((to_index - from_index) * 10) { i ->
             this.pdta_chunks["imod"]!![(from_index * 10) + i]
@@ -327,7 +325,7 @@ class SoundFont(var assets: AssetManager, var file_name: String) {
         return output
     }
 
-    private fun get_preset_modulators(riff: Riff, from_index: Int, to_index: Int): List<Modulator> {
+    private fun get_preset_modulators(from_index: Int, to_index: Int): List<Modulator> {
         val output: MutableList<Modulator> = mutableListOf()
         val bytes = ByteArray((to_index - from_index) * 10) { i ->
             this.pdta_chunks["pmod"]!![(from_index * 10) + i]
@@ -349,7 +347,7 @@ class SoundFont(var assets: AssetManager, var file_name: String) {
         return output
     }
 
-    private fun get_preset_generators(riff: Riff, from_index: Int, to_index: Int): List<Generator> {
+    private fun get_preset_generators(from_index: Int, to_index: Int): List<Generator> {
         val output: MutableList<Generator> = mutableListOf()
         val bytes = ByteArray((to_index - from_index) * 4) { i ->
             this.pdta_chunks["pgen"]!![(from_index * 4) + i]
@@ -368,7 +366,7 @@ class SoundFont(var assets: AssetManager, var file_name: String) {
         return output
     }
 
-    private fun get_instrument_generators(riff: Riff, from_index: Int, to_index: Int): List<Generator> {
+    private fun get_instrument_generators(from_index: Int, to_index: Int): List<Generator> {
         val output: MutableList<Generator> = mutableListOf()
         val bytes = ByteArray((to_index - from_index) * 4) { i ->
             this.pdta_chunks["igen"]!![(from_index * 4) + i]
@@ -616,12 +614,10 @@ class SoundFont(var assets: AssetManager, var file_name: String) {
         preset.add_instrument(working_instrument)
     }
 
-    fun get_sample_data(start_index: Int, end_index: Int): ByteArray? {
+    fun get_sample_data(start_index: Int, end_index: Int): ByteArray {
 
         val smpl = this.riff.get_sub_chunk_data(this.riff.sub_chunks[1][0],  (start_index * 2), 2 * (end_index - start_index))
-        var wordsize = 2
         val sm24 = if (this.riff.sub_chunks[1].size == 2) {
-            wordsize = 3
             this.riff.get_sub_chunk_data(this.riff.sub_chunks[1][1], start_index, end_index - start_index)
         } else {
             null

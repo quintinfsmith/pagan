@@ -45,6 +45,6 @@ class ProjectManager(data_dir: String) {
         if (!directory.isDirectory) {
             return false
         }
-        return directory.listFiles().isNotEmpty()
+        return directory.listFiles()?.isNotEmpty() ?: false
     }
 }

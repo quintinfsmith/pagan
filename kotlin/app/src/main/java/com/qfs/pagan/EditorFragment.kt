@@ -119,10 +119,10 @@ class EditorFragment : PaganFragment() {
             try {
                 bundle!!.getString("URI")?.let { path ->
                     val main = this.get_main()
-                    var opus_manager = main.import_project(path)
+                    main.import_project(path)
                 }
             } catch (e: Exception) {
-                var opus_manager = this.get_main().get_opus_manager()
+                val opus_manager = this.get_main().get_opus_manager()
                 // if Not Loaded, just create new and throw a message up
                 if (!opus_manager.first_load_done) {
                     opus_manager.new()
@@ -142,8 +142,7 @@ class EditorFragment : PaganFragment() {
         _binding = null
     }
 
-
-    fun reset_context_menu() {
+    private fun reset_context_menu() {
         when (this.active_context_menu_index) {
             ContextMenu.Leaf -> {
                 this.setContextMenu_leaf()
@@ -206,13 +205,13 @@ class EditorFragment : PaganFragment() {
         }
         if (is_networked) {
             btnUnLink.setOnClickListener {
-                this.interact_btnUnlink(it)
+                this.interact_btnUnlink()
             }
             if (!many_links) {
                 btnUnLinkAll.visibility = View.GONE
             } else {
                 btnUnLinkAll.setOnClickListener {
-                    this.interact_btnUnlinkAll(it)
+                    this.interact_btnUnlinkAll()
                 }
             }
         } else {
@@ -221,7 +220,7 @@ class EditorFragment : PaganFragment() {
         }
 
         btnCancelLink.setOnClickListener {
-            this.interact_btnCancelLink(it)
+            this.interact_btnCancelLink()
         }
 
         llContextMenu.addView(view)
@@ -331,7 +330,11 @@ class EditorFragment : PaganFragment() {
             val drums = resources.getStringArray(R.array.midi_drums)
 
             val instrument = opus_manager.get_percussion_instrument(line_offset)
-            btnChoosePercussion.text = "$instrument: ${drums[instrument]}"
+            btnChoosePercussion.text = main.getString(
+                R.string.label_choose_percussion,
+                instrument,
+                drums[instrument]
+            )
         }
 
         if (opus_manager.channels[channel].size == 1) {
@@ -429,7 +432,7 @@ class EditorFragment : PaganFragment() {
             }
 
             btnUnset.setOnClickListener {
-                this.interact_btnUnset(it)
+                this.interact_btnUnset()
             }
 
         } else {
@@ -440,8 +443,8 @@ class EditorFragment : PaganFragment() {
                 } else {
                     event.note
                 }
-                nsOffset.setState(value % event.radix, true, true)
-                nsOctave.setState(value / event.radix, true, true)
+                nsOffset.setState(value % event.radix, manual = true, surpress_callback = true)
+                nsOctave.setState(value / event.radix, manual = true, surpress_callback = true)
             }
 
             nsOffset.setOnChange(this::interact_nsOffset)
@@ -473,7 +476,7 @@ class EditorFragment : PaganFragment() {
         }
 
         btnUnset.setOnClickListener {
-            this.interact_btnUnset(it)
+            this.interact_btnUnset()
         }
 
         val channel = opus_manager.cursor.channel
@@ -489,8 +492,8 @@ class EditorFragment : PaganFragment() {
                 val beat_key = opus_manager.cursor.get_beatkey()
                 val position = opus_manager.cursor.get_position().toMutableList()
 
-                var tree = opus_manager.get_tree()
-                var cursor_position = position.toMutableList()
+                val tree = opus_manager.get_tree()
+                val cursor_position = position.toMutableList()
                 if (tree.parent!!.size <= 2) { // Will be pruned
                     cursor_position.removeLast()
                 } else if (position.last() == tree.parent!!.size - 1) {
@@ -573,8 +576,8 @@ class EditorFragment : PaganFragment() {
                         opus_manager.set_event(event.copy())
                     }
                 }
-                nsOctave.setState(event.note / event.radix, true, true)
-                nsOffset.setState(event.note % event.radix, true, true)
+                nsOctave.setState(event.note / event.radix, manual = true, surpress_callback = true)
+                nsOffset.setState(event.note % event.radix, manual = true, surpress_callback = true)
             }
             1 -> {
                 if (!event.relative) {
@@ -586,8 +589,14 @@ class EditorFragment : PaganFragment() {
                     nsOctave.unset_active_button()
                     nsOffset.unset_active_button()
                 } else {
-                    nsOctave.setState(event.note / event.radix, true, true)
-                    nsOffset.setState(event.note % event.radix, true, true)
+                    nsOctave.setState(event.note / event.radix,
+                        manual = true,
+                        surpress_callback = true
+                    )
+                    nsOffset.setState(event.note % event.radix,
+                        manual = true,
+                        surpress_callback = true
+                    )
                 }
             }
             2 -> {
@@ -615,7 +624,7 @@ class EditorFragment : PaganFragment() {
         }
     }
 
-    private fun interact_btnUnset(view: View) {
+    private fun interact_btnUnset() {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
 
@@ -628,7 +637,7 @@ class EditorFragment : PaganFragment() {
         this.reset_context_menu()
     }
 
-    private fun interact_btnUnlink(view: View) {
+    private fun interact_btnUnlink() {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
         opus_manager.unlink_beat()
@@ -636,7 +645,7 @@ class EditorFragment : PaganFragment() {
         (rvBeatTable.adapter as BeatColumnAdapter).cancel_linking()
     }
 
-    private fun interact_btnUnlinkAll(view: View) {
+    private fun interact_btnUnlinkAll() {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
         opus_manager.clear_link_pool()
@@ -645,8 +654,8 @@ class EditorFragment : PaganFragment() {
         (rvBeatTable.adapter as BeatColumnAdapter).cancel_linking()
     }
 
-    private fun interact_btnCancelLink(view: View) {
-        var main = this.get_main()
+    private fun interact_btnCancelLink() {
+        val main = this.get_main()
 
         val rvBeatTable = main.findViewById<RecyclerView>(R.id.rvBeatTable)
         (rvBeatTable.adapter as BeatColumnAdapter).cancel_linking()
@@ -664,7 +673,7 @@ class EditorFragment : PaganFragment() {
             var prev_note = if (opus_manager.relative_mode != 0) {
                 val nsOctave = this.get_main().findViewById<NumberSelector>(R.id.nsOctave)
                 if (nsOctave.getState() == null) {
-                    nsOctave.setState(0, true, true)
+                    nsOctave.setState(0, manual = true, surpress_callback = true)
                     0
                 } else {
                     event.note
@@ -717,7 +726,7 @@ class EditorFragment : PaganFragment() {
             val prev_note = if (opus_manager.relative_mode != 0) {
                 val nsOffset  = this.get_main().findViewById<NumberSelector>(R.id.nsOffset)
                 if (nsOffset.getState() == null) {
-                    nsOffset.setState(0, true, true)
+                    nsOffset.setState(0, manual = true, surpress_callback = true)
                     0
                 } else {
                     event.note
@@ -779,15 +788,6 @@ class EditorFragment : PaganFragment() {
             }
         }
 
-        val line_map = opus_manager.channels[opus_manager.cursor.channel].line_map
-        // Allowing repeat instruments. Commenting Out.
-        //if (line_map != null) {
-        //    for ((_, instrument) in line_map) {
-        //        if (instrument + 27 in available_drum_keys) {
-        //            available_drum_keys.remove(instrument + 27)
-        //        }
-        //    }
-        //}
         drums.forEachIndexed { i, string ->
             if ((i + 27) in available_drum_keys) {
                 popupMenu.menu.add(0, i, i, "$i: $string")
@@ -817,7 +817,7 @@ class EditorFragment : PaganFragment() {
 
 
     // TODO: Consider Y
-    fun is_leaf_visible(beatkey: BeatKey, position: List<Int>): Boolean {
+    private fun is_leaf_visible(beatkey: BeatKey, position: List<Int>): Boolean {
         val main = this.get_main()
         val rvBeatTable = main.findViewById<RecyclerView>(R.id.rvBeatTable)
         val rvBeatTable_adapter = rvBeatTable.adapter as BeatColumnAdapter

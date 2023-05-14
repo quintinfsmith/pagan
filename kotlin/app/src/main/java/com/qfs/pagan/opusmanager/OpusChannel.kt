@@ -13,18 +13,18 @@ class OpusChannel(var uuid: Int) {
     class LineSizeMismatch(incoming_size: Int, required_size: Int): Exception("Line is $incoming_size beats but OpusManager is $required_size beats")
 
     class OpusLine(var beats: MutableList<OpusTree<OpusEvent>>) {
-        constructor(beat_count: Int) : this(Array<OpusTree<OpusEvent>>(beat_count) { _ -> OpusTree() }.toMutableList())
+        constructor(beat_count: Int) : this(Array<OpusTree<OpusEvent>>(beat_count) { OpusTree() }.toMutableList())
         var volume = 64
     }
 
     var lines: MutableList<OpusLine> = mutableListOf()
     var midi_instrument: Int = 0
     var midi_channel: Int = 0
-    var beat_count: Int = 0
+    private var beat_count: Int = 0
     var size: Int = 0
     internal var line_map: HashMap<Int, Int>? = null
 
-    fun is_mapped(): Boolean {
+    private fun is_mapped(): Boolean {
         return this.line_map != null
     }
 
@@ -40,7 +40,7 @@ class OpusChannel(var uuid: Int) {
     }
 
     fun set_mapped() {
-        this.line_map = HashMap<Int, Int>()
+        this.line_map = HashMap()
     }
 
     fun get_mapped_line_offset(line: Int): Int? {
@@ -54,7 +54,7 @@ class OpusChannel(var uuid: Int) {
             return
         }
 
-        var new_map = HashMap<Int, Int>()
+        val new_map = HashMap<Int, Int>()
         for ((line, instrument) in this.line_map!!) {
             if (line < index) {
                 new_map[line] = instrument
@@ -66,7 +66,7 @@ class OpusChannel(var uuid: Int) {
     }
 
     fun new_line(index: Int? = null): List<OpusTree<OpusEvent>> {
-        var new_line = OpusLine(this.beat_count)
+        val new_line = OpusLine(this.beat_count)
         if (index == null) {
             this.lines.add(new_line)
         }  else {
@@ -82,7 +82,7 @@ class OpusChannel(var uuid: Int) {
         if (line.size != this.beat_count) {
             throw LineSizeMismatch(line.size, this.beat_count)
         }
-        var new_line = OpusLine(line)
+        val new_line = OpusLine(line)
         this.lines.add(index, new_line)
         this.adjust_map_for_new_line(index)
         this.size += 1
@@ -95,7 +95,7 @@ class OpusChannel(var uuid: Int) {
         } else if (index < lines.size) {
             if (this.line_map != null) {
                 for (i in index until this.size - 1) {
-                    var next = this.line_map!![i + 1]
+                    val next = this.line_map!![i + 1]
                     if (next != null) {
                         this.line_map!![i] = next
                     } else {
@@ -111,7 +111,7 @@ class OpusChannel(var uuid: Int) {
     }
 
     fun replace_tree(line: Int, beat: Int, position: List<Int>, tree: OpusTree<OpusEvent>) {
-        var old_tree = this.get_tree(line, beat, position)
+        val old_tree = this.get_tree(line, beat, position)
         if (old_tree.parent != null) {
             old_tree.replace_with(tree)
         } else {
@@ -127,7 +127,7 @@ class OpusChannel(var uuid: Int) {
         var tree = this.lines[line].beats[beat]
         if (position != null) {
             for (i in position) {
-                tree = tree.get(i)
+                tree = tree[i]
             }
         }
 
@@ -138,7 +138,7 @@ class OpusChannel(var uuid: Int) {
         if (new_beat_count > this.beat_count) {
             for (line in this.lines) {
                 while (line.beats.size < new_beat_count) {
-                    line.beats.add(OpusTree<OpusEvent>())
+                    line.beats.add(OpusTree())
                 }
             }
         } else {
@@ -171,7 +171,7 @@ class OpusChannel(var uuid: Int) {
             throw IndexOutOfBoundsException()
         }
 
-        var tmp = this.lines[first_index]
+        val tmp = this.lines[first_index]
         this.lines[first_index] = this.lines[second_index]
         this.lines[second_index] = tmp
     }
@@ -195,7 +195,7 @@ class OpusChannel(var uuid: Int) {
 
         this.beat_count += 1
         for (line in this.lines) {
-            line.beats.add(index, OpusTree<OpusEvent>())
+            line.beats.add(index, OpusTree())
         }
     }
 

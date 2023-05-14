@@ -19,8 +19,8 @@ class LeafButton(
     is_percussion: Boolean
 ) : LinearLayout(ContextThemeWrapper(context, R.style.leaf)), GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener {
     private var mDetector: GestureDetectorCompat
-    var double_tap_callback: ((event: MotionEvent) -> Boolean)? = null
-    var single_tap_callback: ((event: MotionEvent) -> Boolean)? = null
+    private var double_tap_callback: ((event: MotionEvent) -> Boolean)? = null
+    private var single_tap_callback: ((event: MotionEvent) -> Boolean)? = null
 
 
     private val STATE_REFLECTED = intArrayOf(R.attr.state_reflected)
@@ -50,9 +50,9 @@ class LeafButton(
         this.value_wrapper.addView(this.value_label_octave)
         this.value_wrapper.addView(this.value_label_offset)
         if (event != null) {
-            this.setActive(true)
+            this.set_active(true)
         } else {
-            this.setActive(false)
+            this.set_active(false)
         }
         this.set_text(is_percussion)
 
@@ -66,19 +66,19 @@ class LeafButton(
         return true
     }
 
-    fun unset_text() {
+    private fun unset_text() {
         this.prefix_label.visibility = View.GONE
         this.value_label_octave.visibility = View.GONE
         this.value_label_offset.visibility = View.GONE
     }
 
-    fun set_text(is_percussion: Boolean) {
+    private fun set_text(is_percussion: Boolean) {
         if (this.event == null) {
             this.unset_text()
             return
         }
 
-        var event = this.event!!
+        val event = this.event!!
 
         var use_note = event.note
         this.prefix_label.text = if (!is_percussion && (event.relative && event.note != 0)) {
@@ -135,7 +135,8 @@ class LeafButton(
     }
 
     override fun onAttachedToWindow() {
-        var line_height = resources.getDimension(R.dimen.line_height)
+        super.onAttachedToWindow()
+        val line_height = resources.getDimension(R.dimen.line_height)
         this.layoutParams.height = line_height.toInt()
     }
 
@@ -157,22 +158,22 @@ class LeafButton(
         return drawableState
     }
 
-    fun setActive(value: Boolean) {
+    private fun set_active(value: Boolean) {
         this.state_active = value
         refreshDrawableState()
     }
 
-    fun setReflected(value: Boolean) {
+    fun set_reflected(value: Boolean) {
         this.state_reflected = value
         refreshDrawableState()
     }
 
-    fun setFocused(value: Boolean) {
+    fun set_focused(value: Boolean) {
         this.state_focused = value
         refreshDrawableState()
     }
 
-    fun setInvalid(value: Boolean) {
+    fun set_invalid(value: Boolean) {
         this.state_invalid = value
         refreshDrawableState()
     }

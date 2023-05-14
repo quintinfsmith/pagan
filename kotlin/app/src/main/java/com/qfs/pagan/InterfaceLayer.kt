@@ -303,7 +303,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         this.cursor.clear()
 
         val rvLineLabels = this.activity.findViewById<RecyclerView>(R.id.rvLineLabels)
-        val rvLineLabels_adapter = rvLineLabels.adapter as LineLabelAdapter
+        val rvLineLabels_adapter = rvLineLabels.adapter as LineLabelRecyclerView.LineLabelAdapter
         val beat_table = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
         val rvBeatTable_adapter = beat_table.adapter as BeatColumnAdapter
 
@@ -369,13 +369,13 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
     private fun ui_add_line_label() {
         val rvLineLabels = this.activity.findViewById<RecyclerView>(R.id.rvLineLabels)
-        val rvLineLabels_adapter = rvLineLabels.adapter as LineLabelAdapter
+        val rvLineLabels_adapter = rvLineLabels.adapter as LineLabelRecyclerView.LineLabelAdapter
         rvLineLabels_adapter.addLineLabel()
     }
 
     private fun ui_remove_line_label(channel: Int, line_offset: Int) {
         val rvLineLabels = this.activity.findViewById<RecyclerView>(R.id.rvLineLabels)
-        val rvLineLabels_adapter = rvLineLabels.adapter as LineLabelAdapter
+        val rvLineLabels_adapter = rvLineLabels.adapter as LineLabelRecyclerView.LineLabelAdapter
         rvLineLabels_adapter.removeLineLabel(this.get_abs_offset(channel, line_offset))
     }
 
@@ -399,7 +399,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             return
         }
         val rvLineLabels = this.activity.findViewById<RecyclerView>(R.id.rvLineLabels)
-        val rvLineLabels_adapter = rvLineLabels.adapter as LineLabelAdapter
+        val rvLineLabels_adapter = rvLineLabels.adapter as LineLabelRecyclerView.LineLabelAdapter
         val start =
             (rvLineLabels.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
         val end =
@@ -533,13 +533,16 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         this.history_cache.remember {
             when (func_name) {
                 "move_line" -> {
-                    val to_line = args[3] as Int
+                    val from_channel = args[0] as Int
                     val from_line = args[1] as Int
+                    val to_channel = args[2] as Int
+                    val to_line = args[3] as Int
                     this.push_to_history_stack(
                         "cursor_select_row",
                         listOf(
-                            args[2] as Int,
-                            if (args[0] as Int == args[2] as Int && to_line >= from_line) {
+                            to_channel,
+                            if (from_channel == to_channel && to_line >= from_line) {
+                                //if ((from_channel == to_channel || to_channel == this.channels.size - 1) && to_line >= from_line) {
                                 to_line - 1
                             } else {
                                 to_line

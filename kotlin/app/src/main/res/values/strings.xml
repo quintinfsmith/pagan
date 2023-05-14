@@ -3,7 +3,7 @@
     <string name="label_bpm">%1$d BPM</string>
     <string name="label_choose_percussion">%1$d: %2$s</string>
     <string name="label_choose_instrument">%1$d: %2$s</string>
-    <string name="label_transpose">T: %1$d</string>
+    <string name="label_transpose">T: %1$s</string>
     <string name="pfx_subtract">-</string>
     <string name="pfx_add">+</string>
     <string name="pfx_log">\u2193</string>

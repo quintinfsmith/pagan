@@ -56,7 +56,7 @@ class EditorFragment : PaganFragment() {
         val rvBeatTable = this.binding.root.findViewById<RecyclerView>(R.id.rvBeatTable)
         val rvBeatTable_adapter = rvBeatTable.adapter as BeatColumnAdapter
         val rvLineLabels = this.binding.root.findViewById<RecyclerView>(R.id.rvLineLabels)
-        val rvLineLabels_adapter = rvLineLabels.adapter as LineLabelAdapter
+        val rvLineLabels_adapter = rvLineLabels.adapter as LineLabelRecyclerView.LineLabelAdapter
 
         val opus_manager = this.get_main().get_opus_manager()
         if (rvLineLabels_adapter.itemCount == 0) {
@@ -90,11 +90,11 @@ class EditorFragment : PaganFragment() {
         val rvColumnLabels = view.findViewById<RecyclerView>(R.id.rvColumnLabels)
         val rvLineLabels = view.findViewById<RecyclerView>(R.id.rvLineLabels)
 
-        LineLabelAdapter(this.get_main().get_opus_manager(), rvLineLabels, this.get_main())
+        LineLabelRecyclerView.LineLabelAdapter(this.get_main().get_opus_manager(), rvLineLabels, this.get_main())
         BeatColumnAdapter(this, rvBeatTable, ColumnLabelAdapter(this.get_main().get_opus_manager(), rvColumnLabels, this.get_main()))
 
         svTable.viewTreeObserver.addOnScrollChangedListener {
-            (rvLineLabels.adapter as LineLabelAdapter).scrollToLine(svTable.scrollY)
+            (rvLineLabels.adapter as LineLabelRecyclerView.LineLabelAdapter).scrollToLine(svTable.scrollY)
         }
 
         setFragmentResultListener("LOAD") { _, bundle: Bundle? ->

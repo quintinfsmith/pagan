@@ -786,6 +786,10 @@ open class HistoryLayer : LinksLayer() {
                 line_old
             }
 
+            if (channel_old == this.percussion_channel && channel_old != channel_new) {
+                this.push_to_history_stack("set_percussion_instrument", listOf(return_to_line, this.get_percussion_instrument(return_to_line)))
+            }
+
             this.push_to_history_stack("move_line", listOf(channel_new, return_from_line, channel_old, return_to_line))
             if (restore_old_line) {
                 this.push_to_history_stack("remove_line", listOf(channel_old, line_old))

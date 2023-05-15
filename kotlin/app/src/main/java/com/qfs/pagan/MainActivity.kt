@@ -701,6 +701,8 @@ class MainActivity : AppCompatActivity() {
         tvPlaybackTime.text = this.get_timestring_at_beat(working_beat)
 
 
+        val midi_scroller = MIDIScroller(this, sbPlaybackPosition)
+        this.midi_controller.registerVirtualDevice(midi_scroller)
 
         fun start_playback(x: Int) {
             playing = true
@@ -760,6 +762,7 @@ class MainActivity : AppCompatActivity() {
             .setView(viewInflated)
             .setOnCancelListener {
                 this.midi_input_device.sendEvent(MIDIStop())
+                this.midi_controller.unregisterVirtualDevice(midi_scroller)
                 this.midi_playback_device.clear_sample_cache()
             }
             .show()

@@ -393,6 +393,8 @@ class BeatColumnAdapter(private var parent_fragment: EditorFragment, var recycle
                 val (from_key, to_key) = opus_manager.cursor.range!!
                 val vert_ok = if (beatkey.channel > from_key.channel && beatkey.channel < to_key.channel) {
                     true
+                } else if (from_key.channel == to_key.channel && beatkey.channel == from_key.channel) {
+                    beatkey.line_offset >= from_key.line_offset && beatkey.line_offset <= to_key.line_offset
                 } else if (beatkey.channel == from_key.channel) {
                     beatkey.line_offset >= from_key.line_offset
                 } else if (beatkey.channel == to_key.channel) {

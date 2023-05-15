@@ -221,7 +221,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         val btnTranspose: TextView = this.findViewById(R.id.btnTranspose)
-        btnTranspose.text = this.getString(R.string.label_transpose, opus_manager.transpose)
+        btnTranspose.text = this.getString(R.string.label_transpose, get_number_string(opus_manager.transpose, opus_manager.RADIX, 1))
         btnTranspose.setOnClickListener {
             this.popup_transpose_dialog()
         }

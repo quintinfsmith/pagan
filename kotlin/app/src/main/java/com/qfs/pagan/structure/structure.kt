@@ -755,4 +755,13 @@ class OpusTree<T> {
 
         return Pair(ratio, 1F / total_divs.toFloat())
     }
+
+    fun traverse(callback: (OpusTree<T>, T?) -> Unit) {
+        if (! this.is_leaf()) {
+            for (i in 0 until this.size) {
+                this[i].traverse(callback)
+            }
+        }
+        callback(this, this.event)
+    }
 }

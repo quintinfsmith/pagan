@@ -782,6 +782,13 @@ open class OpusManagerBase {
                 val line = channel.get_line(i)
                 val beatstrs: MutableList<String> = mutableListOf()
                 for (beat in line.beats) {
+                    if (channel.midi_channel == 9) {
+                        beat.traverse { tree: OpusTree<OpusEvent>, event: OpusEvent? ->
+                            if (event != null) {
+                                event.note = channel.get_mapped_line_offset(i) ?: this.DEFAULT_PERCUSSION
+                            }
+                        }
+                    }
                     beatstrs.add(to_string(beat))
                 }
                 val str_line =  beatstrs.joinToString("|")
@@ -892,9 +899,8 @@ open class OpusManagerBase {
         var beat_count = 0
         json_data.channels.forEachIndexed { i: Int, channel_data ->
             this.new_channel(lines = channel_data.lines.size)
-            channel_data.lines.forEach { line_str ->
-                val beatstrs = line_str.split("|")
-                beat_count = max(beat_count, beatstrs.size)
+            for (j in 0 until channel_data.lines.size) {
+                beat_count = max(beat_count, parsed[i][j].size)
             }
             channel_data.line_volumes.forEachIndexed { j: Int, volume: Int ->
                 this.channels[i].lines[j].volume = volume
@@ -914,19 +920,15 @@ open class OpusManagerBase {
             this.channels[i].midi_instrument = channel_data.midi_instrument
 
             for (j in 0 until channel_data.lines.size) {
-                val note_set: MutableSet<Int> = mutableSetOf()
                 parsed[i][j].forEachIndexed { b: Int, beat_tree: OpusTree<OpusEvent> ->
+                    val note_set: MutableSet<Int> = mutableSetOf()
                     this.replace_tree(BeatKey(i, j, b), listOf(), beat_tree)
                     if (i == this.percussion_channel) {
                         for ((_, event) in beat_tree.get_events_mapped()) {
-                            note_set.add(event.note)
+                            this.set_percussion_instrument(j, event.note)
+                            break
                         }
                     }
-                }
-
-                // TODO: Allow any channel to be line_mapped here. for now, staying with percussion only
-                if (i == this.percussion_channel) {
-                    this.set_percussion_instrument(j, note_set.first())
                 }
             }
         }

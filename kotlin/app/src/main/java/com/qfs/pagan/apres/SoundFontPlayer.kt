@@ -100,7 +100,7 @@ class AudioTrackHandle {
     }
 
     // Generate a sample handle key
-    private fun genkey(): Int {
+    fun genkey(): Int {
         val output = this.keygen
 
         this.keygen += 1
@@ -111,19 +111,29 @@ class AudioTrackHandle {
         return output
     }
 
-    private fun add_sample_handle(handle: SampleHandle): Int {
+    fun get_join_delay(): Int {
+        if (this.play_start_ts == null) {
+            return 0
+        }
+
+        val time_delay = (System.currentTimeMillis() - this.play_start_ts!!).toInt()
+        var join_delay = (AudioTrackHandle.sample_rate * time_delay / 4000) % AudioTrackHandle.buffer_size_in_frames
+        join_delay += AudioTrackHandle.buffer_size_in_frames * 2
+        return join_delay
+    }
+    private fun add_sample_handle(handle: SampleHandle, join_delay: Int): Int {
         return this.sample_handles_mutex.withLock {
-            val newkey = this.genkey()
-            handle.set_join_delay(this.play_start_ts)
-            this.sample_handles[newkey] = handle
-            newkey
+            val key = this.genkey()
+            this.sample_handles[key] = handle
+            handle.join_delay = join_delay
+            key
         }
     }
 
-    fun add_sample_handles(handles: Set<SampleHandle>): Set<Int> {
+    fun add_sample_handles(handles: Set<SampleHandle>, join_delay: Int): Set<Int> {
         val output = mutableSetOf<Int>()
         for (handle in handles) {
-            output.add(this.add_sample_handle(handle))
+            this.add_sample_handle(handle, join_delay)
         }
 
         return output
@@ -440,7 +450,7 @@ class SampleHandle(
     private var is_dead = false
     // Join_delay is the time (in frames) relative to the current chunk playing,
     // that this sample was added.
-    private var join_delay: Int = 0
+    var join_delay: Int = 0
     private var join_delay_position: Int = 0
     private var current_position: Int = 0
     private var current_attack_position: Int = 0
@@ -479,8 +489,12 @@ class SampleHandle(
         }
 
         if (this.join_delay_position < this.join_delay) {
-            this.join_delay_position += 1
-            return 0
+            if (this.is_pressed) {
+                this.join_delay_position += 1
+                return 0
+            } else {
+                return null
+            }
         }
         //if (this.current_delay_position < this.delay_frames) {
         //    var output = 0.toShort()
@@ -531,14 +545,6 @@ class SampleHandle(
         this.is_pressed = false
     }
 
-    fun set_join_delay(from_ts: Long?) {
-        if (from_ts == null) {
-            this.join_delay = 0
-            return
-        }
-        val time_delay = (System.currentTimeMillis() - from_ts).toInt()
-        this.join_delay = (AudioTrackHandle.sample_rate * time_delay / 4000) % AudioTrackHandle.buffer_size_in_frames
-    }
 }
 
 
@@ -624,8 +630,12 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
     private fun press_note(event: NoteOn) {
         val preset = this.get_preset(event)
         this.active_handle_mutex.withLock {
+            // Get Join delay BEFORE generating sample
+            var join_delay = this.audio_track_handle.get_join_delay()
+
             this.active_handle_keys[Pair(event.note, event.channel)] = this.audio_track_handle.add_sample_handles(
-                this.gen_sample_handles(event, preset)
+                this.gen_sample_handles(event, preset),
+                join_delay
             )
         }
         val delta = System.currentTimeMillis()

@@ -160,8 +160,21 @@ open class OpusManagerBase {
         val pair = this.get_proceding_leaf_position(beat_key, position) ?: return null
         return this.get_tree(pair.first, pair.second)
     }
+    
+    fun get_preceding_event(beat_key: BeatKey, position: List<Int>): OpusEvent? {
+        // Gets first preceding event. may skip empty leafs
+        var working_position = position.toList()
+        var working_beat_key = beat_key
+        while (!this.get_tree(working_beat_key, working_position).is_event()) {
+            val pair = this.get_preceding_leaf_position(working_beat_key, working_position) ?: return null
+            working_beat_key = pair.first
+            working_position = pair.second
+        }
+        return this.get_tree(working_beat_key, working_position).get_event()
+    }
 
     fun get_preceding_leaf(beat_key: BeatKey, position: List<Int>): OpusTree<OpusEvent>? {
+        // Gets first preceding leaf, event or not
         val pair = this.get_preceding_leaf_position(beat_key, position) ?: return null
         return this.get_tree(pair.first, pair.second)
     }

@@ -699,7 +699,14 @@ class EditorFragment : PaganFragment() {
                     0 - progress
                 }
                 else -> {
-                    progress
+                    val beat_key = opus_manager.cursor.get_beatkey()
+                    val position = opus_manager.cursor.get_position()
+                    val preceding_event = opus_manager.get_preceding_event(beat_key, position)
+                    if (preceding_event != null && !preceding_event.relative) {
+                        ((preceding_event.note / opus_manager.RADIX) * opus_manager.RADIX) + progress
+                    } else {
+                        progress
+                    }
                 }
             }
         }
@@ -749,7 +756,14 @@ class EditorFragment : PaganFragment() {
                     (0 - progress) * opus_manager.RADIX
                 }
                 else -> {
-                    (progress * opus_manager.RADIX)
+                    val beat_key = opus_manager.cursor.get_beatkey()
+                    val position = opus_manager.cursor.get_position()
+                    val preceding_event = opus_manager.get_preceding_event(beat_key, position)
+                    if (preceding_event != null && !preceding_event.relative) {
+                        (progress * opus_manager.RADIX) + (preceding_event.note % opus_manager.RADIX)
+                    } else {
+                        (progress * opus_manager.RADIX)
+                    }
                 }
             }
         }

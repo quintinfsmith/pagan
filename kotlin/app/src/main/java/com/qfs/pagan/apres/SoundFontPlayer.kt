@@ -29,7 +29,7 @@ class Mutex(private var timeout: Int = 100) {
         val waiting_number = this.pick_number()
         var wait = 0
         while (waiting_number != this.lock_value && wait < this.timeout) {
-            Thread.sleep(5)
+            Thread.sleep(0)
             wait += 5
         }
         if (wait >= this.timeout) {
@@ -118,7 +118,7 @@ class AudioTrackHandle {
 
         val time_delay = (System.currentTimeMillis() - this.play_start_ts!!).toInt()
         var join_delay = (AudioTrackHandle.sample_rate * time_delay / 4000) % AudioTrackHandle.buffer_size_in_frames
-        join_delay += AudioTrackHandle.buffer_size_in_frames * 2
+        join_delay += AudioTrackHandle.buffer_size_in_frames * 4
         return join_delay
     }
     private fun add_sample_handle(handle: SampleHandle, join_delay: Int): Int {
@@ -133,9 +133,8 @@ class AudioTrackHandle {
     fun add_sample_handles(handles: Set<SampleHandle>, join_delay: Int): Set<Int> {
         val output = mutableSetOf<Int>()
         for (handle in handles) {
-            this.add_sample_handle(handle, join_delay)
+            output.add(this.add_sample_handle(handle, join_delay))
         }
-
         return output
     }
 
@@ -144,10 +143,26 @@ class AudioTrackHandle {
             this.sample_handles.remove(key)
         }
     }
+    fun remove_sample_handles(keys: Set<Int>): Set<SampleHandle> {
+        return this.sample_handles_mutex.withLock {
+            val output = mutableSetOf<SampleHandle>()
+            for (key in keys) {
+                output.add(this.sample_handles.remove(key)?: continue)
+            }
+            output
+        }
+    }
 
     fun release_sample_handle(key: Int) {
         this.sample_handles_mutex.withLock {
             this.sample_handles[key]?.release_note()
+        }
+    }
+    fun release_sample_handles(keys: Set<Int>) {
+        this.sample_handles_mutex.withLock {
+            for (key in keys) {
+                this.sample_handles[key]?.release_note()
+            }
         }
     }
 
@@ -268,7 +283,6 @@ class AudioTrackHandle {
             this.is_playing = false
         }
     }
-
 
     private fun write_loop() {
         this.audioTrack.play()
@@ -496,6 +510,7 @@ class SampleHandle(
                 return null
             }
         }
+
         //if (this.current_delay_position < this.delay_frames) {
         //    var output = 0.toShort()
         //    this.current_delay_position += 1
@@ -523,7 +538,6 @@ class SampleHandle(
             this.current_decay_position += 2
         }
 
-        //if (! this.is_pressed && this.current_decay_position >= this.decay_byte_count) {
         if (! this.is_pressed && this.bytes_called >= this.minimum_duration - this.release_mask.size) {
             if (this.current_release_position < this.release_mask.size) {
                 frame = (frame * this.release_mask[this.current_release_position]).toInt().toShort()
@@ -544,7 +558,6 @@ class SampleHandle(
     fun release_note() {
         this.is_pressed = false
     }
-
 }
 
 
@@ -555,9 +568,6 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
     private val active_handle_keys = HashMap<Pair<Int, Int>, Set<Int>>()
     private val active_handle_mutex = Mutex()
     private val sample_handle_generator = SampleHandleGenerator()
-    companion object {
-        const val FORCED_DELAY = 80.toLong()
-    }
 
     init {
         this.loaded_presets[Pair(0, 0)] = this.soundFont.get_preset(0, 0)
@@ -565,7 +575,6 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
     }
 
     override fun onNoteOn(event: NoteOn) {
-        this.kill_note(event.note, event.channel)
         this.press_note(event)
     }
 
@@ -608,39 +617,27 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
     }
 
     private fun release_note(note: Int, channel: Int) {
-        val keys = this.active_handle_mutex.withLock {
-            this.active_handle_keys[Pair(note, channel)]
-        } ?: return
+        val keys = this.active_handle_keys[Pair(note, channel)] ?: return
 
-        for (key in keys) {
-            this.audio_track_handle.release_sample_handle(key)
-        }
+        this.audio_track_handle.release_sample_handles(keys)
     }
 
     private fun kill_note(note: Int, channel: Int) {
-        val keys = this.active_handle_mutex.withLock {
-            this.active_handle_keys.remove(Pair(note, channel))
-        } ?: return
-
-        for (key in keys) {
-            this.audio_track_handle.remove_sample_handle(key)
-        }
+        val keys = this.active_handle_keys[Pair(note, channel)] ?: return
+        this.audio_track_handle.remove_sample_handles(keys)
     }
 
     private fun press_note(event: NoteOn) {
         val preset = this.get_preset(event)
+        val join_delay = this.audio_track_handle.get_join_delay()
+        this.kill_note(event.note, event.channel)
         this.active_handle_mutex.withLock {
             // Get Join delay BEFORE generating sample
-            var join_delay = this.audio_track_handle.get_join_delay()
 
             this.active_handle_keys[Pair(event.note, event.channel)] = this.audio_track_handle.add_sample_handles(
                 this.gen_sample_handles(event, preset),
                 join_delay
             )
-        }
-        val delta = System.currentTimeMillis()
-        if (delta < MIDIPlaybackDevice.FORCED_DELAY) {
-            Thread.sleep(MIDIPlaybackDevice.FORCED_DELAY - delta)
         }
         this.audio_track_handle.play()
     }

@@ -30,10 +30,6 @@ class Mutex(private var timeout: Int = 100) {
         var wait = 0
         while (waiting_number != this.lock_value && wait < this.timeout) {
             Thread.sleep(0)
-            wait += 5
-        }
-        if (wait >= this.timeout) {
-            Log.d("XXA", "QUEUE @ $waiting_number TIMEOUT")
         }
     }
 
@@ -95,8 +91,8 @@ class AudioTrackHandle {
 
         thread {
             this.write_loop()
+            this.play_start_ts = null
         }
-        this.play_start_ts = null
     }
 
     // Generate a sample handle key
@@ -111,14 +107,18 @@ class AudioTrackHandle {
         return output
     }
 
-    fun get_join_delay(): Int {
-        if (this.play_start_ts == null) {
-            return 0
+    // join_delay exists to position the start of the note press when generating the wave.
+    // since it's not likely that notes will only be pressed exactly in between loops
+    fun get_join_delay(target: Long, calc_delay: Long): Int {
+        // target is this time at which the note was pressed
+        // calc_delay is the time at which all required calculations were completed
+        var join_delay = AudioTrackHandle.buffer_size_in_frames
+        if (this.play_start_ts != null) {
+            val time_delay = (target - this.play_start_ts!!).toInt()
+            join_delay +=
+                (AudioTrackHandle.sample_rate * time_delay / 4000) % AudioTrackHandle.buffer_size_in_frames
+            join_delay -= (AudioTrackHandle.sample_rate * (calc_delay - target).toInt() / 4000)
         }
-
-        val time_delay = (System.currentTimeMillis() - this.play_start_ts!!).toInt()
-        var join_delay = (AudioTrackHandle.sample_rate * time_delay / 4000) % AudioTrackHandle.buffer_size_in_frames
-        join_delay += AudioTrackHandle.buffer_size_in_frames * 4
         return join_delay
     }
     private fun add_sample_handle(handle: SampleHandle, join_delay: Int): Int {
@@ -629,14 +629,15 @@ class MIDIPlaybackDevice(var context: Context, var soundFont: SoundFont): Virtua
 
     private fun press_note(event: NoteOn) {
         val preset = this.get_preset(event)
-        val join_delay = this.audio_track_handle.get_join_delay()
+        val first_ts = System.currentTimeMillis()
         this.kill_note(event.note, event.channel)
         this.active_handle_mutex.withLock {
             // Get Join delay BEFORE generating sample
-
+            var sample_handles = this.gen_sample_handles(event, preset)
+            val second_ts = System.currentTimeMillis()
             this.active_handle_keys[Pair(event.note, event.channel)] = this.audio_track_handle.add_sample_handles(
-                this.gen_sample_handles(event, preset),
-                join_delay
+                sample_handles,
+                this.audio_track_handle.get_join_delay(first_ts, second_ts)
             )
         }
         this.audio_track_handle.play()

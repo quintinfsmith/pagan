@@ -42,7 +42,7 @@ class LandingPageFragment : PaganFragment() {
                 "LICENSE",
                 bundleOf(
                     Pair("TEXT", text_body),
-                    Pair("TITLE", "GPLV2")
+                    Pair("TITLE", "GPLv3")
                 )
             )
             this.get_main().navTo("license")

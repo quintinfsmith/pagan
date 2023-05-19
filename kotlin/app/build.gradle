@@ -2,8 +2,18 @@ plugins {
     id 'com.android.application'
     id "org.jetbrains.kotlin.android" version "1.8.0"
     id 'org.jetbrains.kotlin.plugin.serialization' version '1.8.0'
+    id "de.undercouch.download" version "5.4.0"
 }
 
+preBuild {
+    if (! file("src/main/assets/FluidR3_GM.sf2").exists()) {
+        println("Downloading SoundFont...")
+        download.run {
+            src 'https://burnsomni.net/content/FluidR3_GM.sf2'
+            dest "src/main/assets/"
+        }
+    }
+}
 android {
     namespace 'com.qfs.pagan'
     compileSdk 32

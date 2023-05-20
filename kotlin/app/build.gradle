@@ -6,11 +6,11 @@ plugins {
 }
 
 preBuild {
-    if (! file("src/main/assets/FluidR3_GM.sf2").exists()) {
+    if (! file("${projectDir}/src/main/assets/FluidR3_GM.sf2").exists()) {
         println("Downloading SoundFont...")
         download.run {
             src 'https://burnsomni.net/content/FluidR3_GM.sf2'
-            dest "src/main/assets/"
+            dest "${projectDir}/src/main/assets/"
         }
     }
 }
@@ -23,7 +23,7 @@ android {
         minSdk 24
         targetSdk 31
         versionCode 1
-        versionName "1.0"
+        versionName "1.0.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }

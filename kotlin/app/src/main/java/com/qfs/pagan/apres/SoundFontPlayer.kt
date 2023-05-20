@@ -27,9 +27,10 @@ class Mutex(private var timeout: Int = 100) {
 
     private fun enter_queue() {
         val waiting_number = this.pick_number()
-        var wait = 0
-        while (waiting_number != this.lock_value && wait < this.timeout) {
-            Thread.sleep(0)
+        var timeout = System.currentTimeMillis() + this.timeout
+        while (waiting_number != this.lock_value && System.currentTimeMillis() < timeout) { }
+        if (System.currentTimeMillis() > timeout) {
+            Log.d("AAA", "$waiting_number timeout")
         }
     }
 
@@ -466,6 +467,7 @@ class SampleHandle(
     // that this sample was added.
     var join_delay: Int = 0
     private var join_delay_position: Int = 0
+    private var join_decay_position: Int = 0
     private var current_position: Int = 0
     private var current_attack_position: Int = 0
     private var current_hold_position: Int = 0
@@ -502,13 +504,13 @@ class SampleHandle(
             return null
         }
 
-        if (this.join_delay_position < this.join_delay) {
-            if (this.is_pressed) {
-                this.join_delay_position += 1
-                return 0
-            } else {
-                return null
-            }
+        if (this.join_delay_position < this.join_delay && this.is_pressed) {
+            this.join_delay_position += 1
+            return 0
+        }
+
+        if (! this.is_pressed) {
+            this.join_decay_position += 1
         }
 
         //if (this.current_delay_position < this.delay_frames) {
@@ -538,7 +540,7 @@ class SampleHandle(
             this.current_decay_position += 2
         }
 
-        if (! this.is_pressed && this.bytes_called >= this.minimum_duration - this.release_mask.size) {
+        if (! (this.is_pressed || this.join_decay_position < this.join_delay) && this.bytes_called >= this.minimum_duration - this.release_mask.size) {
             if (this.current_release_position < this.release_mask.size) {
                 frame = (frame * this.release_mask[this.current_release_position]).toInt().toShort()
                 this.current_release_position += 1

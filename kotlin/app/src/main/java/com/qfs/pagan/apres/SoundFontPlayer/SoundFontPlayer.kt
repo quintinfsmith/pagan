@@ -35,7 +35,7 @@ class SoundFontPlayer(var sound_font: SoundFont) {
                     val second_ts = System.currentTimeMillis()
                     val join_delay = that.audio_track_handle.get_join_delay(first_ts, second_ts)
                     if (that.active_handle_keys.containsKey(key)) {
-                        that.audio_track_handle.queue_sample_handles_stop(
+                        that.audio_track_handle.queue_sample_handles_release(
                             that.active_handle_keys[key]!!,
                             join_delay
                         )

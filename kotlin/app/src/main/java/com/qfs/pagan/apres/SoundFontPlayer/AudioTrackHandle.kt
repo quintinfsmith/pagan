@@ -222,32 +222,34 @@ class AudioTrackHandle {
 
                     var v: Short? = null
                     if (key in this.join_delays) {
-                        val delay_position = this.join_delays[key]!!
+                        val delay_position = this.join_delays[key]
                         if (delay_position == 0) {
                             this.join_delays.remove(key)
-                        } else {
+                        } else if (delay_position != null) {
                             this.join_delays[key] = delay_position - 1
                             v = 0
                         }
                     }
                     if (v == null && key in this.release_delays) {
-                        val delay_position = this.release_delays[key]!!
+                        val delay_position = this.release_delays[key]
                         if (delay_position == 0) {
                             this.release_delays.remove(key)
                             sample_handle.release_note()
-                        } else {
+                        } else if (delay_position != null) {
                             this.release_delays[key] = delay_position - 1
                             v = 0
                         }
                     }
 
                     v = if (v == null && key in this.remove_delays) {
-                        val delay_position = this.remove_delays[key]!!
+                        val delay_position = this.remove_delays[key]
                         if (delay_position == 0) {
                             this.remove_delays.remove(key)
                             null
+                        } else if (delay_position != null) {
+                            this.remove_delays[key] = delay_position - 1
+                            sample_handle.get_next_frame()
                         } else {
-                            this.join_delays[key] = delay_position - 1
                             sample_handle.get_next_frame()
                         }
                     } else {

@@ -45,7 +45,7 @@ class MainActivity : AppCompatActivity() {
 
     private var in_play_back: Boolean = false
 
-    private lateinit var optionsMenu: Menu
+    private var optionsMenu: Menu? = null
     internal lateinit var project_manager: ProjectManager
     private var progressBar: ProgressBar? = null
 
@@ -324,24 +324,27 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun update_menu_options() {
+        while (this.optionsMenu == null) {
+            Thread.sleep(10)
+        }
         val navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main)
         when (navHost?.childFragmentManager?.fragments?.get(0)) {
             is EditorFragment -> {
-                this.optionsMenu.findItem(R.id.itmLoadProject).isVisible = this.has_projects_saved()
-                this.optionsMenu.findItem(R.id.itmUndo).isVisible = true
-                this.optionsMenu.findItem(R.id.itmNewProject).isVisible = true
-                this.optionsMenu.findItem(R.id.itmPlay).isVisible = true
-                this.optionsMenu.findItem(R.id.itmImportMidi).isVisible = true
-                this.optionsMenu.findItem(R.id.itmImportProject).isVisible = true
+                this.optionsMenu!!.findItem(R.id.itmLoadProject).isVisible = this.has_projects_saved()
+                this.optionsMenu!!.findItem(R.id.itmUndo).isVisible = true
+                this.optionsMenu!!.findItem(R.id.itmNewProject).isVisible = true
+                this.optionsMenu!!.findItem(R.id.itmPlay).isVisible = true
+                this.optionsMenu!!.findItem(R.id.itmImportMidi).isVisible = true
+                this.optionsMenu!!.findItem(R.id.itmImportProject).isVisible = true
 
             }
             else -> {
-                this.optionsMenu.findItem(R.id.itmLoadProject).isVisible = false
-                this.optionsMenu.findItem(R.id.itmUndo).isVisible = false
-                this.optionsMenu.findItem(R.id.itmNewProject).isVisible = false
-                this.optionsMenu.findItem(R.id.itmPlay).isVisible = false
-                this.optionsMenu.findItem(R.id.itmImportMidi).isVisible = false
-                this.optionsMenu.findItem(R.id.itmImportProject).isVisible = false
+                this.optionsMenu!!.findItem(R.id.itmLoadProject).isVisible = false
+                this.optionsMenu!!.findItem(R.id.itmUndo).isVisible = false
+                this.optionsMenu!!.findItem(R.id.itmNewProject).isVisible = false
+                this.optionsMenu!!.findItem(R.id.itmPlay).isVisible = false
+                this.optionsMenu!!.findItem(R.id.itmImportMidi).isVisible = false
+                this.optionsMenu!!.findItem(R.id.itmImportProject).isVisible = false
             }
         }
     }

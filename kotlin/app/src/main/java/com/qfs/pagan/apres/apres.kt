@@ -2155,6 +2155,7 @@ open class VirtualMIDIDevice {
 
 class MIDIPlayer: VirtualMIDIDevice() {
     var playing = true
+    var active_note_map = mutableSetOf<Pair<Int, Int>>()
     fun play_midi(midi: MIDI) {
         if (! this.is_registered()) {
             Log.w("apres", "Can't play without registering a midi controller first")
@@ -2183,8 +2184,21 @@ class MIDIPlayer: VirtualMIDIDevice() {
             }
 
             for (event in events) {
-                if (event is SetTempo) {
-                    us_per_tick = event.get_uspqn() / ppqn
+                when (event) {
+                    is NoteOn -> {
+                        this.active_note_map.add(Pair(event.channel, event.note))
+                    }
+                    is NoteOff -> {
+                        this.active_note_map.remove(Pair(event.channel, event.note))
+                    }
+                    is SetTempo -> {
+                        us_per_tick = event.get_uspqn() / ppqn
+                    }
+                    is AllSoundOff -> {
+                        this.active_note_map.removeAll { (a_channel, a_note) ->
+                            a_channel == event.channel
+                        }
+                    }
                 }
                 thread {
                     if (this.playing) {
@@ -2198,8 +2212,8 @@ class MIDIPlayer: VirtualMIDIDevice() {
             this.sendEvent(SongPositionPointer(0))
         }
 
-        for (i in 0 until 16) {
-            this.sendEvent(AllSoundOff(i))
+        for ((channel, note) in this.active_note_map) {
+            this.sendEvent(NoteOff(channel, note, 64))
         }
     }
 

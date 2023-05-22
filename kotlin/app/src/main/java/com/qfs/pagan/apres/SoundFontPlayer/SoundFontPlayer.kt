@@ -35,16 +35,19 @@ class SoundFontPlayer(var sound_font: SoundFont) {
                     val second_ts = System.currentTimeMillis()
                     val join_delay = that.audio_track_handle.get_join_delay(first_ts, second_ts)
                     if (that.active_handle_keys.containsKey(key)) {
-                        that.audio_track_handle.queue_sample_handles_release(
-                            that.active_handle_keys[key]!!,
+                        that.attempt {
+                            that.audio_track_handle.queue_sample_handles_release(
+                                that.active_handle_keys[key]!!,
+                                join_delay
+                            )
+                        }
+                    }
+                    that.attempt {
+                        that.active_handle_keys[key] = that.audio_track_handle.add_sample_handles(
+                            sample_handles,
                             join_delay
                         )
                     }
-
-                    that.active_handle_keys[key] = that.audio_track_handle.add_sample_handles(
-                        sample_handles,
-                        join_delay
-                    )
                 }
             }
         }
@@ -53,13 +56,20 @@ class SoundFontPlayer(var sound_font: SoundFont) {
 
     fun release_note(event: NoteOff) {
         val keys = this.active_handle_keys[Pair(event.note, event.channel)] ?: return
-        this.audio_track_handle.queue_sample_handles_release(keys, AudioTrackHandle.base_delay_in_frames)
-        this.active_handle_keys.remove(Pair(event.note, event.channel))
+        this.attempt {
+            this.audio_track_handle.queue_sample_handles_release(
+                keys,
+                AudioTrackHandle.base_delay_in_frames
+            )
+            this.active_handle_keys.remove(Pair(event.note, event.channel))
+        }
     }
 
     fun kill_note(note: Int, channel: Int) {
-        val keys = this.active_handle_keys[Pair(note, channel)] ?: return
-        this.audio_track_handle.remove_sample_handles(keys)
+        this.attempt {
+            val keys = this.active_handle_keys[Pair(note, channel)] ?: return@attempt
+            this.audio_track_handle.remove_sample_handles(keys)
+        }
     }
 
 
@@ -164,5 +174,13 @@ class SoundFontPlayer(var sound_font: SoundFont) {
     }
     fun enable_play() {
         this.audio_track_handle.enable_play()
+    }
+
+    fun <T> attempt(callback: () -> T): T? {
+        return try {
+            callback()
+        } catch (e: AudioTrackHandle.HandleStoppedException) {
+            null
+        }
     }
 }

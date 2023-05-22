@@ -3,13 +3,13 @@ package com.qfs.pagan.apres.SoundFontPlayer
 import android.media.AudioAttributes
 import android.media.AudioFormat
 import android.media.AudioTrack
-import android.util.Log
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.concurrent.thread
 
 class AudioTrackHandle {
+    class HandleStoppedException(): Exception()
     companion object {
         const val sample_rate = 44100
         val buffer_size_in_bytes: Int = AudioTrack.getMinBufferSize(
@@ -47,10 +47,10 @@ class AudioTrackHandle {
 
     private var is_playing = false
     private var stop_forced = false
-    private var stop_called_from_write = false // play *may*  be called between a write_next_chunk() finding an incomplete chunk and finishing the call
+    private var stop_called_from_write = false // play *may*  be called between a //write_next_chunk() finding an incomplete chunk and finishing the call
     private var play_start_ts: Long? = null
     val kill_mutex = Mutex()
-    val play_mutex = Mutex()
+    var play_lock = false
 
     fun play() {
         this.stop_called_from_write = false
@@ -94,7 +94,10 @@ class AudioTrackHandle {
         return join_delay
     }
 
-    private fun add_sample_handle(handle: SampleHandle, join_delay: Int): Int {
+    private fun add_sample_handle(handle: SampleHandle, join_delay: Int): Int? {
+        if (this.stop_forced) {
+            throw HandleStoppedException()
+        }
         val that = this
         return runBlocking {
             that.sample_handles_mutex.withLock {
@@ -107,18 +110,27 @@ class AudioTrackHandle {
     }
 
     fun add_sample_handles(handles: Set<SampleHandle>, join_delay: Int): Set<Int> {
+        if (this.stop_forced) {
+            throw HandleStoppedException()
+        }
         val output = mutableSetOf<Int>()
         for (handle in handles) {
-            output.add(this.add_sample_handle(handle, join_delay))
+            output.add(this.add_sample_handle(handle, join_delay) ?: continue)
         }
         return output
     }
 
     fun queue_sample_handle_stop(key: Int, remove_delay: Int) {
+        if (this.stop_forced) {
+            throw HandleStoppedException()
+        }
         this.remove_delays[key] = remove_delay
     }
 
     fun queue_sample_handles_stop(keys: Set<Int>, remove_delay: Int) {
+        if (this.stop_forced) {
+            throw HandleStoppedException()
+        }
         for (key in keys) {
             this.queue_sample_handle_stop(key, remove_delay)
         }
@@ -237,7 +249,6 @@ class AudioTrackHandle {
                             sample_handle.release_note()
                         } else if (delay_position != null) {
                             this.release_delays[key] = delay_position - 1
-                            v = 0
                         }
                     }
 
@@ -246,10 +257,10 @@ class AudioTrackHandle {
                         if (delay_position == 0) {
                             this.remove_delays.remove(key)
                             null
-                        } else if (delay_position != null) {
-                            this.remove_delays[key] = delay_position - 1
-                            sample_handle.get_next_frame()
                         } else {
+                            if (delay_position != null) {
+                                this.remove_delays[key] = delay_position - 1
+                            }
                             sample_handle.get_next_frame()
                         }
                     } else {
@@ -328,36 +339,39 @@ class AudioTrackHandle {
     }
 
     private fun write_loop() {
-        val that = this
-        runBlocking {
-            that.play_mutex.withLock {
-                that.audioTrack.play()
-                // write an empty chunk to give a bit of a time buffer for finer
-                // control of when to start playing samples
-                that.write_empty_chunk()
-                while (that.is_playing) {
-                    that.write_next_chunk()
-                }
-                that.audioTrack.stop()
+        if (!this.play_lock) {
+            this.play_lock = true
+            this.audioTrack.play()
+            // write an empty chunk to give a bit of a time buffer for finer
+            // control of when to start playing samples
+            this.write_empty_chunk()
+            while (this.is_playing) {
+                this.write_next_chunk()
             }
-        }
+            this.audioTrack.stop()
 
+            // Clearing these since an abrupt stop means that remove/release delays prevent the
+            // write loop from popping the handles when they finish
+            this.sample_handles.clear()
+            this.remove_delays.clear()
+            this.release_delays.clear()
+            this.join_delays.clear()
+
+            this.play_lock = false
+        }
     }
 
     fun stop() {
-        this.is_playing = false
         this.stop_forced = true
+        this.is_playing = false
         this.stop_called_from_write = false
         this.play_start_ts = null
         //this.audioTrack.stop()
-        //this.sample_handles.clear()
-        //this.remove_delays.clear()
-        //this.release_delays.clear()
-        //this.join_delays.clear()
     }
 
     fun enable_play() {
         this.stop_forced = false
     }
+
 }
 

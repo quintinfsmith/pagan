@@ -3,8 +3,8 @@ package com.qfs.pagan.apres
 import android.content.Context
 import android.util.Log
 import com.qfs.pagan.apres.riffreader.toUInt
-import kotlinx.coroutines.*
 import java.io.File
+import kotlin.concurrent.thread
 import kotlin.experimental.and
 import kotlin.experimental.or
 
@@ -2166,7 +2166,6 @@ class MIDIPlayer: VirtualMIDIDevice() {
         var previous_tick = 0
         val start_time = System.currentTimeMillis()
         var delay_accum = 0
-        val that = this
         for ((tick, events) in midi.get_all_events_grouped()) {
             if (!this.playing) {
                 break
@@ -2183,13 +2182,13 @@ class MIDIPlayer: VirtualMIDIDevice() {
                 previous_tick = tick
             }
 
-            runBlocking {
-                for (event in events) {
-                    if (event is SetTempo) {
-                        us_per_tick = event.get_uspqn() / ppqn
-                    }
-                    launch {
-                        that.sendEvent(event)
+            for (event in events) {
+                if (event is SetTempo) {
+                    us_per_tick = event.get_uspqn() / ppqn
+                }
+                thread {
+                    if (this.playing) {
+                        this.sendEvent(event)
                     }
                 }
             }

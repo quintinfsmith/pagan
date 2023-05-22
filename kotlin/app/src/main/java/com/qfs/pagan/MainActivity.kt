@@ -21,6 +21,7 @@ import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.pagan.apres.*
+import com.qfs.pagan.apres.SoundFontPlayer.MIDIPlaybackDevice
 import com.qfs.pagan.databinding.ActivityMainBinding
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -763,7 +764,7 @@ class MainActivity : AppCompatActivity() {
             .setOnCancelListener {
                 this.midi_input_device.sendEvent(MIDIStop())
                 this.midi_controller.unregisterVirtualDevice(midi_scroller)
-                this.midi_playback_device.clear_sample_cache()
+                //this.midi_playback_device.clear_sample_cache()
             }
             .show()
 

@@ -1,18 +1,16 @@
 package com.qfs.pagan.apres.SoundFontPlayer
 
 import android.content.Context
+import android.util.Log
 import com.qfs.pagan.apres.AllSoundOff
 import com.qfs.pagan.apres.MIDI
 import com.qfs.pagan.apres.MIDIStop
 import com.qfs.pagan.apres.NoteOff
 import com.qfs.pagan.apres.NoteOn
-import com.qfs.pagan.apres.Preset
 import com.qfs.pagan.apres.ProgramChange
+import com.qfs.pagan.apres.SongPositionPointer
 import com.qfs.pagan.apres.SoundFont
 import com.qfs.pagan.apres.VirtualMIDIDevice
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 
 
 class MIDIPlaybackDevice(var context: Context, var sound_font: SoundFont): VirtualMIDIDevice() {
@@ -45,5 +43,13 @@ class MIDIPlaybackDevice(var context: Context, var sound_font: SoundFont): Virtu
     fun clear_sample_cache() {
         this.soundfont_player.clear_sample_cache()
     }
+
+    //override fun onSongPositionPointer(event: SongPositionPointer) {
+    //    if (event.beat == 0) {
+    //        Thread.sleep(1000)
+    //        Log.d("AAA", "${this.soundfont_player.audio_track_handle.sample_handles.keys}")
+    //        Log.d("AAA", "${this.soundfont_player.active_note_map}")
+    //    }
+    //}
 }
 

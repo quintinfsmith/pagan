@@ -28,7 +28,7 @@ class SampleHandle(
         original.maximum_map
     )
 
-    private var is_pressed = true
+    var is_pressed = true
     private var is_dead = false
     private var current_position: Int = 0
     private var current_attack_position: Int = 0
@@ -93,6 +93,7 @@ class SampleHandle(
         }
 
         if (! this.is_pressed && this.bytes_called >= this.minimum_duration - this.release_mask.size) {
+        //if (! this.is_pressed) {
             if (this.current_release_position < this.release_mask.size) {
                 frame = (frame * this.release_mask[this.current_release_position]).toInt().toShort()
                 this.current_release_position += 1

@@ -18,7 +18,7 @@ class AudioTrackHandle {
             AudioFormat.CHANNEL_OUT_STEREO
         )
         val buffer_size_in_frames: Int = buffer_size_in_bytes / 4
-        const val base_delay_in_frames = sample_rate / 8
+        val base_delay_in_frames = buffer_size_in_frames * 2
         private const val maxkey = 0xFFFFFFFF
     }
 
@@ -38,31 +38,27 @@ class AudioTrackHandle {
         )
         .setBufferSizeInBytes(buffer_size_in_bytes)
         .build()
-    private var sample_handles = HashMap<Int, SampleHandle>()
+    var sample_handles = HashMap<Int, SampleHandle>()
     private var sample_handles_mutex = Mutex()
     private var keygen: Int = 0
     private val remove_delays = HashMap<Int, Int>()
     private val release_delays = HashMap<Int, Int>()
     private val join_delays = HashMap<Int, Int>()
 
-    private var is_playing = false
+    var is_playing = false
     private var stop_forced = false
     private var stop_called_from_write = false // play *may*  be called between a //write_next_chunk() finding an incomplete chunk and finishing the call
-    private var play_start_ts: Long? = null
-    val kill_mutex = Mutex()
-    var play_lock = false
+    var last_buffer_start_ts: Long? = null
 
     fun play() {
-        this.stop_called_from_write = false
         if (this.is_playing || this.stop_forced) {
             return
         }
+        this.stop_called_from_write = false
         this.is_playing = true
-        this.play_start_ts = System.currentTimeMillis()
 
         thread {
             this.write_loop()
-            this.play_start_ts = null
         }
     }
 
@@ -80,16 +76,17 @@ class AudioTrackHandle {
 
     // join_delay exists to position the start of the note press when generating the wave.
     // since it's not likely that notes will only be pressed exactly in between loops
-    fun get_join_delay(target: Long, calc_delay: Long): Int {
+    fun get_join_delay(buffer_ts: Long?, target_ts: Long, delay_ts: Long): Int {
         // target is this time at which the note was pressed
         // calc_delay is the time at which all required calculations were completed
-        //var join_delay = buffer_size_in_frames * 2
         var join_delay = AudioTrackHandle.base_delay_in_frames
-        if (this.play_start_ts != null) {
-            val time_delay = (target - this.play_start_ts!!).toInt()
-            join_delay +=
-                (sample_rate * time_delay / 4000) % buffer_size_in_frames
-            join_delay -= (sample_rate * (calc_delay - target).toInt() / 4000)
+        if (buffer_ts != null) {
+            val time_delay = (target_ts - buffer_ts).toInt()
+            join_delay += (sample_rate * time_delay / 4000)
+
+            // the remainder needs to be removed since the count down wont actually start
+            // until the *next* buffer is written
+            join_delay -= AudioTrackHandle.buffer_size_in_frames - ((sample_rate * (delay_ts - buffer_ts).toInt() / 4000) % AudioTrackHandle.buffer_size_in_frames)
         }
         return join_delay
     }
@@ -137,7 +134,9 @@ class AudioTrackHandle {
     }
 
     fun queue_sample_handle_release(key: Int, release_delay: Int) {
-        this.release_delays[key] = release_delay
+        if (this.sample_handles.containsKey(key)) {
+            this.release_delays[key] = release_delay
+        }
     }
 
     fun queue_sample_handles_release(keys: Set<Int>, release_delay: Int) {
@@ -169,13 +168,11 @@ class AudioTrackHandle {
     }
 
     fun kill_samples(keys: Set<Int>) {
-        var that = this
+        val that = this
         runBlocking {
-            that.kill_mutex.withLock {
-                that.sample_handles_mutex.withLock {
-                    for (key in keys) {
-                        that.sample_handles[key]?.kill_note()
-                    }
+            that.sample_handles_mutex.withLock {
+                for (key in keys) {
+                    that.sample_handles[key]?.kill_note()
                 }
             }
         }
@@ -231,43 +228,49 @@ class AudioTrackHandle {
                     if (key in kill_handles) {
                         continue
                     }
-
-                    var v: Short? = null
-                    if (key in this.join_delays) {
-                        val delay_position = this.join_delays[key]
-                        if (delay_position == 0) {
+                    var frame_value: Short? = null
+                    when (this.join_delays[key]) {
+                        null -> { }
+                        0 -> {
                             this.join_delays.remove(key)
-                        } else if (delay_position != null) {
-                            this.join_delays[key] = delay_position - 1
-                            v = 0
+                        }
+                        else -> {
+                            this.join_delays[key] = this.join_delays[key]!! - 1
+                            frame_value = 0
                         }
                     }
-                    if (v == null && key in this.release_delays) {
-                        val delay_position = this.release_delays[key]
-                        if (delay_position == 0) {
+
+                    when (this.release_delays[key]) {
+                        null -> { }
+                        0 -> {
                             this.release_delays.remove(key)
                             sample_handle.release_note()
-                        } else if (delay_position != null) {
-                            this.release_delays[key] = delay_position - 1
+                        }
+                        else -> {
+                            this.release_delays[key] = this.release_delays[key]!! - 1
                         }
                     }
 
-                    v = if (v == null && key in this.remove_delays) {
-                        val delay_position = this.remove_delays[key]
-                        if (delay_position == 0) {
+                    when (this.remove_delays[key]) {
+                        null -> { }
+                        0 -> {
                             this.remove_delays.remove(key)
-                            null
-                        } else {
-                            if (delay_position != null) {
-                                this.remove_delays[key] = delay_position - 1
+                            kill_handles.add(key)
+                            if (kill_handles.size == sample_handles.size && cut_point == null) {
+                                this.stop_called_from_write = true
+                                cut_point = x
                             }
+                            continue
+                        }
+                        else -> {
+                            this.remove_delays[key] = this.remove_delays[key]!! - 1
                             sample_handle.get_next_frame()
                         }
-                    } else {
-                        sample_handle.get_next_frame()
                     }
 
-                    if (v == null) {
+                    frame_value = frame_value ?: sample_handle.get_next_frame()
+
+                    if (frame_value == null) {
                         kill_handles.add(key)
                         if (kill_handles.size == sample_handles.size && cut_point == null) {
                             this.stop_called_from_write = true
@@ -279,14 +282,14 @@ class AudioTrackHandle {
                     // TODO: Implement ROM stereo modes
                     when (sample_handle.stereo_mode and 7) {
                         1 -> { // mono
-                            left += v
-                            right += v
+                            left += frame_value
+                            right += frame_value
                         }
                         2 -> { // right
-                            right += v
+                            right += frame_value
                         }
                         4 -> { // left
-                            left += v
+                            left += frame_value
                         }
                         else -> {}
                     }
@@ -295,7 +298,6 @@ class AudioTrackHandle {
                 control_sample_left[x] = left
                 control_sample_right[x] = right
             }
-
 
             val gain_factor_left = if (max_left > Short.MAX_VALUE) {
                 short_max / max_left.toFloat()
@@ -335,37 +337,37 @@ class AudioTrackHandle {
 
         if (this.stop_called_from_write) {
             this.is_playing = false
-        }
-    }
-
-    private fun write_loop() {
-        if (!this.play_lock) {
-            this.play_lock = true
-            this.audioTrack.play()
-            // write an empty chunk to give a bit of a time buffer for finer
-            // control of when to start playing samples
-            this.write_empty_chunk()
-            while (this.is_playing) {
-                this.write_next_chunk()
-            }
-            this.audioTrack.stop()
-
             // Clearing these since an abrupt stop means that remove/release delays prevent the
             // write loop from popping the handles when they finish
             this.sample_handles.clear()
             this.remove_delays.clear()
             this.release_delays.clear()
             this.join_delays.clear()
-
-            this.play_lock = false
         }
+    }
+
+    private fun write_loop() {
+        this.audioTrack.play()
+        // write an empty chunk to give a bit of a time buffer for finer
+        // control of when to start playing samples
+        //this.write_empty_chunk()
+        while (this.is_playing) {
+            this.last_buffer_start_ts = System.currentTimeMillis()
+            this.write_next_chunk()
+        }
+        this.last_buffer_start_ts = null
+        this.audioTrack.stop()
     }
 
     fun stop() {
         this.stop_forced = true
         this.is_playing = false
         this.stop_called_from_write = false
-        this.play_start_ts = null
+        this.last_buffer_start_ts = null
+        this.sample_handles.clear()
+        this.remove_delays.clear()
+        this.release_delays.clear()
+        this.join_delays.clear()
         //this.audioTrack.stop()
     }
 

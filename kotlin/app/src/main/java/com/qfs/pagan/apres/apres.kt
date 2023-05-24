@@ -3,6 +3,8 @@ package com.qfs.pagan.apres
 import android.content.Context
 import android.util.Log
 import com.qfs.pagan.apres.riffreader.toUInt
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.io.File
 import kotlin.concurrent.thread
 import kotlin.experimental.and
@@ -2154,9 +2156,13 @@ open class VirtualMIDIDevice {
 }
 
 class MIDIPlayer: VirtualMIDIDevice() {
-    var playing = true
+    var playing = false
     var active_note_map = mutableSetOf<Pair<Int, Int>>()
     fun play_midi(midi: MIDI) {
+        if (this.playing) {
+            return
+        }
+
         if (! this.is_registered()) {
             Log.w("apres", "Can't play without registering a midi controller first")
             return
@@ -2183,27 +2189,15 @@ class MIDIPlayer: VirtualMIDIDevice() {
                 previous_tick = tick
             }
 
+            val that = this
             for (event in events) {
                 when (event) {
-                    is NoteOn -> {
-                        this.active_note_map.add(Pair(event.channel, event.note))
-                    }
-                    is NoteOff -> {
-                        this.active_note_map.remove(Pair(event.channel, event.note))
-                    }
                     is SetTempo -> {
                         us_per_tick = event.get_uspqn() / ppqn
                     }
-                    is AllSoundOff -> {
-                        this.active_note_map.removeAll { (a_channel, a_note) ->
-                            a_channel == event.channel
-                        }
-                    }
                 }
-                thread {
-                    if (this.playing) {
-                        this.sendEvent(event)
-                    }
+                if (that.playing) {
+                    that.sendEvent(event)
                 }
             }
         }
@@ -2212,9 +2206,10 @@ class MIDIPlayer: VirtualMIDIDevice() {
             this.sendEvent(SongPositionPointer(0))
         }
 
-        for ((channel, note) in this.active_note_map) {
-            this.sendEvent(NoteOff(channel, note, 64))
+        for (i in 0 until 16) {
+            this.sendEvent(AllSoundOff(i))
         }
+        this.playing = false
     }
 
     override fun onMIDIStop(event: MIDIStop) {

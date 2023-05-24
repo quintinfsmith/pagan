@@ -162,6 +162,13 @@ open class HistoryLayer : LinksLayer() {
                     current_node.args[1] as BeatKey
                 )
             }
+            "link_beat_to_pool" -> {
+                // No need to overwrite in history
+                val beat_key = current_node.args[0] as BeatKey
+                val pool_index = current_node.args[1] as Int
+                this.link_pool_map[beat_key] = pool_index
+                this.link_pools[pool_index].add(beat_key)
+            }
             "create_link_pool" -> {
                 this.create_link_pool((current_node.args[0] as LinkedHashSet<BeatKey>).toList())
             }
@@ -859,6 +866,27 @@ open class HistoryLayer : LinksLayer() {
     override fun clear_link_pools_by_range(first_key: BeatKey, second_key: BeatKey) {
         this.history_cache.remember {
             super.clear_link_pools_by_range(first_key, second_key)
+        }
+    }
+
+    override fun link_pool_insert_line(channel: Int, line_offset: Int) {
+        this.history_cache.remember {
+            super.link_pool_insert_line(channel, line_offset)
+            this.push_to_history_stack("link_pool_remove_line", listOf(channel, line_offset))
+        }
+    }
+
+    override fun link_pool_remove_line(channel: Int, line_offset: Int) {
+        this.history_cache.remember {
+            this.link_pools.forEachIndexed { i: Int, pool: MutableSet<BeatKey> ->
+                for (beat_key in pool) {
+                    if (beat_key.channel == channel && beat_key.line_offset == line_offset) {
+                        this.push_to_history_stack("link_beat_into_pool", listOf(beat_key, i))
+                    }
+                }
+            }
+            this.push_to_history_stack("link_pool_insert_line", listOf(channel, line_offset))
+            super.link_pool_remove_line(channel, line_offset)
         }
     }
 }

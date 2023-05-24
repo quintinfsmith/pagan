@@ -1,5 +1,4 @@
 package com.qfs.pagan.opusmanager
-import android.util.Log
 import com.qfs.pagan.structure.OpusTree
 import java.lang.Integer.max
 import java.lang.Integer.min
@@ -128,7 +127,6 @@ open class LinksLayer : OpusManagerBase() {
     open fun batch_link_beats(beat_key_pairs: List<Pair<BeatKey, BeatKey>>) {
         this.lock_links {
             for ((from_key, to_key) in beat_key_pairs) {
-                Log.d("AAA", "$from_key -> $to_key")
                 this.link_beats(from_key, to_key)
             }
         }
@@ -520,4 +518,103 @@ open class LinksLayer : OpusManagerBase() {
             )
         }
     }
+
+    open fun link_pool_remove_line(channel: Int, line_offset: Int) {
+        val new_pools = mutableListOf<MutableSet<BeatKey>>()
+        val new_map = HashMap<BeatKey, Int>()
+        for (pool in this.link_pools) {
+            val new_pool = mutableSetOf<BeatKey>()
+            for (beat_key in pool) {
+                val new_beat_key = if (beat_key.channel == channel) {
+                    if (beat_key.line_offset > line_offset) {
+                        BeatKey(
+                            beat_key.channel,
+                            beat_key.line_offset - 1,
+                            beat_key.beat
+                        )
+                    } else if (beat_key.line_offset == line_offset) {
+                        continue // DO NOT retain beat keys from deleted line
+                    } else {
+                        beat_key
+                    }
+                } else {
+                    beat_key
+                }
+                new_map[new_beat_key] = new_pools.size
+                new_pool.add( new_beat_key )
+            }
+            new_pools.add(new_pool)
+        }
+
+        this.link_pools = new_pools
+        this.link_pool_map = new_map
+    }
+    open fun link_pool_insert_line(channel: Int, line_offset: Int) {
+        val new_pools = mutableListOf<MutableSet<BeatKey>>()
+        val new_map = HashMap<BeatKey, Int>()
+        for (pool in this.link_pools) {
+            val new_pool = mutableSetOf<BeatKey>()
+            for (beat_key in pool) {
+                val new_beat_key = if (beat_key.channel == channel && beat_key.line_offset >= line_offset) {
+                    BeatKey(
+                        beat_key.channel,
+                        beat_key.line_offset + 1,
+                        beat_key.beat
+                    )
+                } else {
+                    beat_key
+                }
+                new_map[new_beat_key] = new_pools.size
+                new_pool.add( new_beat_key )
+            }
+            new_pools.add(new_pool)
+        }
+        this.link_pools = new_pools
+        this.link_pool_map = new_map
+    }
+    override fun insert_line(channel: Int, line_offset: Int, line: MutableList<OpusTree<OpusEvent>>) {
+        this.link_pool_insert_line(channel, line_offset)
+        super.insert_line(channel, line_offset, line)
+    }
+
+    override fun new_line(channel: Int, line_offset: Int?): List<OpusTree<OpusEvent>> {
+        val output = super.new_line(channel, line_offset)
+        this.link_pool_insert_line(channel, line_offset ?: this.channels[channel].size)
+        return output
+    }
+
+    override fun remove_line(channel: Int, line_offset: Int): MutableList<OpusTree<OpusEvent>> {
+        val output = super.remove_line(channel, line_offset)
+        this.link_pool_remove_line(channel, line_offset)
+        return output
+    }
+
+   override fun move_line(channel_old: Int, line_old: Int, channel_new: Int, line_new: Int) {
+       var partial_pool_map = HashMap<BeatKey, Int>()
+       // Create a map of where the removed line was. no need to pop at this point since
+       // that is handled in remove_line() within move_line()
+       this.link_pools.forEachIndexed { i: Int, pool: MutableSet<BeatKey> ->
+           for (beat_key in pool) {
+               if (beat_key.channel == channel_old && beat_key.line_offset == line_old) {
+                   val new_beat_key = if (channel_old == channel_new) {
+                       if (line_old < line_new) {
+                           BeatKey(channel_new, line_new - 1, beat_key.beat)
+                       } else {
+                           BeatKey(channel_new, line_new, beat_key.beat)
+                       }
+                   } else {
+                       BeatKey(channel_new, line_new, beat_key.beat)
+                   }
+                   partial_pool_map[new_beat_key] = i
+               }
+           }
+       }
+       super.move_line(channel_old, line_old, channel_new, line_new)
+       // ReAdd the beatkeys to link pools
+       for ((beat_key, pool_index) in partial_pool_map) {
+           this.link_pools[pool_index].add(beat_key)
+           this.link_pool_map[beat_key] = pool_index
+       }
+
+   }
 }

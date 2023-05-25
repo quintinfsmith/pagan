@@ -806,8 +806,23 @@ open class HistoryLayer : LinksLayer() {
 
     override fun set_channel_instrument(channel: Int, instrument: Int) {
         this.history_cache.remember {
-            this.push_to_history_stack("set_channel_instrument",
-                listOf(channel, this.channels[channel].get_instrument()))
+            if (this.percussion_channel == channel) {
+                for (i in 0 until this.channels[channel].size) {
+                    this.push_to_history_stack(
+                        "set_percussion_instrument",
+                        listOf(i, this.get_percussion_instrument(i))
+                    )
+                }
+                this.push_to_history_stack(
+                    "set_percussion_channel",
+                    listOf(this.percussion_channel!!)
+                )
+            } else {
+                this.push_to_history_stack(
+                    "set_channel_instrument",
+                    listOf(channel, this.channels[channel].get_instrument())
+                )
+            }
             super.set_channel_instrument(channel, instrument)
         }
     }

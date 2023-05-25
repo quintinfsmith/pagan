@@ -167,7 +167,7 @@
         <item name="android:gravity">center</item>
         <item name="android:paddingTop">4dp</item>
         <item name="android:paddingBottom">4dp</item>
-        <item name="android:background">?attr/label_bg</item>
+        <item name="android:background">@drawable/label_button</item>
         <item name="android:textColor">?attr/label_fg</item>
     </style>
     <style name="column_label_outer">
@@ -181,7 +181,7 @@
     <style name="line_label_inner">
         <item name="android:minWidth">32dp</item>
         <item name="android:gravity">bottom|center_horizontal</item>
-        <item name="android:background">?attr/label_bg</item>
+        <item name="android:background">@drawable/label_button</item>
         <item name="android:textColor">?attr/label_fg</item>
     </style>
     <style name="line_label_outer">

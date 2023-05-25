@@ -3,56 +3,19 @@
 <selector xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
-        app:state_invalid="true"
-        android:drawable="@drawable/leaf_invalid" />
-    <item
-        app:state_invalid="false"
         android:state_pressed="true"
         app:state_focused="true"
-        app:state_active="true"
-        android:drawable="@drawable/leaf_active_focused_pressed" />
+        android:drawable="@drawable/label_focused_pressed" />
     <item
-        app:state_invalid="false"
         android:state_pressed="false"
         app:state_focused="true"
-        app:state_active="true"
-        android:drawable="@drawable/leaf_active_focused" />
+        android:drawable="@drawable/label_focused" />
     <item
-        app:state_invalid="false"
         android:state_pressed="true"
         app:state_focused="false"
-        app:state_active="true"
-        android:drawable="@drawable/leaf_active_pressed" />
-
+        android:drawable="@drawable/label_pressed" />
     <item
-        app:state_invalid="false"
         android:state_pressed="false"
         app:state_focused="false"
-        app:state_active="true"
-        android:drawable="@drawable/leaf_active" />
-
-    <item
-        app:state_invalid="false"
-        android:state_pressed="true"
-        app:state_focused="true"
-        app:state_active="false"
-        android:drawable="@drawable/leaf_focused_pressed" />
-    <item
-        app:state_invalid="false"
-        android:state_pressed="false"
-        app:state_focused="true"
-        app:state_active="false"
-        android:drawable="@drawable/leaf_focused" />
-    <item
-        app:state_invalid="false"
-        android:state_pressed="true"
-        app:state_focused="false"
-        app:state_active="false"
-        android:drawable="@drawable/leaf_pressed" />
-    <item
-        app:state_invalid="false"
-        android:state_pressed="false"
-        app:state_focused="false"
-        app:state_active="false"
-        android:drawable="@drawable/leaf_default" />
+        android:drawable="@drawable/label_default" />
 </selector>

@@ -731,6 +731,10 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         val rvBeatTable = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
         val adapter = rvBeatTable.adapter as BeatColumnAdapter
         adapter.set_cursor_focus()
+
+        val rvLineLabels = this.activity.findViewById<RecyclerView>(R.id.rvLineLabels)
+        (rvLineLabels.adapter as LineLabelRecyclerView.LineLabelAdapter).refresh()
+
     }
 
 
@@ -760,7 +764,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     fun cursor_select_column(beat: Int, scroll: Boolean = false) {
-
         this.ui_unset_cursor_focus()
         this.cursor.select_column(beat)
         this.ui_set_cursor_focus()

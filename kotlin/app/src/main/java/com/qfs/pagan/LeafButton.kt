@@ -142,7 +142,7 @@ class LeafButton(
 
 
     override fun onCreateDrawableState(extraSpace: Int): IntArray? {
-        val drawableState = super.onCreateDrawableState(extraSpace + 3)
+        val drawableState = super.onCreateDrawableState(extraSpace + 4)
         if (this.state_active) {
             mergeDrawableStates(drawableState, STATE_ACTIVE)
         }

@@ -2,6 +2,7 @@ package com.qfs.pagan
 
 import android.content.Context
 import android.util.AttributeSet
+import android.util.Log
 import android.view.*
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
@@ -26,8 +27,25 @@ class LineLabelRecyclerView(context: Context, attrs: AttributeSet) : RecyclerVie
         private var _dragging_lineLabel: View? = null
 
         class LabelView(context: Context): LinearLayout(ContextThemeWrapper(context, R.style.line_label_outer)) {
+            class InnerView(context: Context): androidx.appcompat.widget.AppCompatTextView(ContextThemeWrapper(context, R.style.line_label_inner)) {
+                private val STATE_FOCUSED = intArrayOf(R.attr.state_focused)
+                var state_focused: Boolean = false
+
+                override fun onCreateDrawableState(extraSpace: Int): IntArray? {
+                    val drawableState = super.onCreateDrawableState(extraSpace + 1)
+                    if (this.state_focused) {
+                        mergeDrawableStates(drawableState, STATE_FOCUSED)
+                    }
+                    return drawableState
+                }
+
+                fun set_focused(value: Boolean) {
+                    this.state_focused = value
+                    this.refreshDrawableState()
+                }
+            }
             var viewHolder: LineLabelViewHolder? = null
-            private var textView = TextView(ContextThemeWrapper(this.context, R.style.line_label_inner))
+            private var textView = InnerView(context)
             var channel = -1
             var line_offset = -1
 
@@ -47,6 +65,10 @@ class LineLabelRecyclerView(context: Context, attrs: AttributeSet) : RecyclerVie
             fun set_row(channel: Int, line_offset: Int) {
                 this.channel = channel
                 this.line_offset = line_offset
+            }
+            fun set_focused(value: Boolean) {
+                this.textView.set_focused(value)
+                this.refreshDrawableState()
             }
 
             fun set_text(text: String) {
@@ -168,8 +190,52 @@ class LineLabelRecyclerView(context: Context, attrs: AttributeSet) : RecyclerVie
         override fun onBindViewHolder(holder: LineLabelViewHolder, position: Int) {
             val (channel, line_offset) = this.opus_manager.get_std_offset(position)
             val label = this.get_label_text(channel, line_offset)
-            (holder.itemView as LabelView).set_text(label)
-            (holder.itemView as LabelView).set_row(channel, line_offset)
+            val label_view = (holder.itemView as LabelView)
+            label_view.set_text(label)
+            label_view.set_row(channel, line_offset)
+            this.update_label_focus(label_view)
+        }
+
+        fun update_label_focus(label_view: LabelView) {
+            val channel = label_view.channel
+            val line_offset = label_view.line_offset
+            val cursor = this.opus_manager.cursor
+            when (cursor.mode) {
+                Cursor.CursorMode.Row -> {
+                    if (cursor.channel == channel && cursor.line_offset == line_offset) {
+                        label_view.set_focused(true)
+                    } else {
+                        label_view.set_focused(false)
+                    }
+                }
+                Cursor.CursorMode.Single -> {
+                    if (cursor.channel == channel && cursor.line_offset == line_offset) {
+                        label_view.set_focused(true)
+                    } else {
+                        label_view.set_focused(false)
+                    }
+                }
+                Cursor.CursorMode.Range -> {
+                    val from_key = cursor.range!!.first
+                    val to_key = cursor.range!!.second
+
+                    val is_focused = if (from_key.channel != to_key.channel) {
+                        if (channel == from_key.channel) {
+                            line_offset >= from_key.line_offset
+                        } else if (channel == to_key.channel) {
+                            line_offset <= to_key.channel
+                        } else {
+                            (from_key.channel + 1 until to_key.channel).contains(channel)
+                        }
+                    } else {
+                        channel == from_key.channel && line_offset in (from_key.line_offset..to_key.line_offset)
+                    }
+                    label_view.set_focused(is_focused)
+                }
+                else -> {
+                    label_view.set_focused(false)
+                }
+            }
         }
 
         private fun get_label_text(channel: Int, line_offset: Int): String {
@@ -224,6 +290,7 @@ class LineLabelRecyclerView(context: Context, attrs: AttributeSet) : RecyclerVie
                 view.channel,
                 view.line_offset
             )
+            this.update_label_focus(view)
         }
 
         fun refresh() {
@@ -236,6 +303,7 @@ class LineLabelRecyclerView(context: Context, attrs: AttributeSet) : RecyclerVie
             }
         }
     }
+
 }
 
 

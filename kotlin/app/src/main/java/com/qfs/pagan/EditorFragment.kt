@@ -659,8 +659,11 @@ class EditorFragment : PaganFragment() {
 
         val rvBeatTable = main.findViewById<RecyclerView>(R.id.rvBeatTable)
         (rvBeatTable.adapter as BeatColumnAdapter).cancel_linking()
+
         val rvLineLabels = main.findViewById<RecyclerView>(R.id.rvLineLabels)
         (rvLineLabels.adapter as LineLabelRecyclerView.LineLabelAdapter).refresh()
+        val rvColumnLabels = main.findViewById<RecyclerView>(R.id.rvColumnLabels)
+        (rvColumnLabels.adapter as ColumnLabelAdapter).refresh()
 
     }
 

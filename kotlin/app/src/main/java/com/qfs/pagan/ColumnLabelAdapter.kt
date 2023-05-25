@@ -2,6 +2,7 @@ package com.qfs.pagan
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.util.Log
 import android.view.*
 import android.widget.RelativeLayout
 import android.widget.TextView
@@ -15,7 +16,7 @@ class ColumnLabelAdapter(private var opus_manager: InterfaceLayer, var recycler:
 
     class LabelView(context: Context): RelativeLayout(ContextThemeWrapper(context, R.style.column_label_outer)) {
         var viewHolder: ColumnLabelViewHolder? = null
-        private var textView = TextView(ContextThemeWrapper(this.context, R.style.column_label_inner))
+        private var textView = LineLabelRecyclerView.LineLabelAdapter.LabelView.InnerView(context)
         init {
             this.addView(this.textView)
             this.textView.layoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT
@@ -29,6 +30,11 @@ class ColumnLabelAdapter(private var opus_manager: InterfaceLayer, var recycler:
 
         fun set_text(text: String) {
             this.textView.text = text
+        }
+
+        fun set_focused(value: Boolean) {
+            this.textView.set_focused(value)
+            this.refreshDrawableState()
         }
 
     }
@@ -56,6 +62,7 @@ class ColumnLabelAdapter(private var opus_manager: InterfaceLayer, var recycler:
                     for (i in start until that.itemCount) {
                         val viewHolder = that.recycler.findViewHolderForAdapterPosition(i) ?: continue
                         that.adjust_width(viewHolder as ColumnLabelViewHolder)
+                        that.update_label_focus(viewHolder.itemView as LabelView)
                     }
                 }
                 override fun onItemRangeRemoved(start: Int, count: Int) {
@@ -63,6 +70,7 @@ class ColumnLabelAdapter(private var opus_manager: InterfaceLayer, var recycler:
                     for (i in start .. end) {
                         val viewHolder = that.recycler.findViewHolderForAdapterPosition(i + count) ?: continue
                         that.set_text(viewHolder as ColumnLabelViewHolder, i)
+                        that.update_label_focus(viewHolder.itemView as LabelView)
                     }
                 }
                 override fun onItemRangeInserted(start: Int, count: Int) {
@@ -70,11 +78,42 @@ class ColumnLabelAdapter(private var opus_manager: InterfaceLayer, var recycler:
                     for (i in start .. end) {
                         val viewHolder = that.recycler.findViewHolderForAdapterPosition(i) ?: continue
                         that.set_text(viewHolder as ColumnLabelViewHolder, i + count)
+                        that.update_label_focus(viewHolder.itemView as LabelView)
                     }
                     val visible_start = (that.recycler.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
                     if (visible_start >= start) {
                         that.recycler.scrollToPosition(start)
                     }
+                }
+            }
+        )
+    }
+
+    fun update_label_focus(label_view: LabelView) {
+        val holder  = label_view.viewHolder ?: return
+        val beat = holder.bindingAdapterPosition
+        Log.d("AAA", "UPDATED $beat")
+        val cursor = this.opus_manager.cursor
+        label_view.set_focused(
+            when (cursor.mode) {
+                Cursor.CursorMode.Column -> {
+                    cursor.beat == beat
+                }
+                Cursor.CursorMode.Single -> {
+                    cursor.beat == beat
+                }
+                Cursor.CursorMode.Range -> {
+                    val from_key = cursor.range!!.first
+                    val to_key = cursor.range!!.second
+
+                    if (from_key.beat != to_key.beat) {
+                        (from_key.beat .. to_key.beat).contains(beat)
+                    } else {
+                        beat == from_key.beat
+                    }
+                }
+                else -> {
+                    false
                 }
             }
         )
@@ -163,5 +202,14 @@ class ColumnLabelAdapter(private var opus_manager: InterfaceLayer, var recycler:
 
     fun scroll(x: Int) {
         this.recycler.scrollBy(x, 0)
+    }
+    fun refresh() {
+        val start = (this.recycler.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
+        val end = (this.recycler.layoutManager as LinearLayoutManager).findLastVisibleItemPosition()
+
+        // NOTE: padding the start/end since an item may be bound but not visible
+        for (i in Integer.max(0, start - 1)..Integer.min(this.itemCount, end + 1)) {
+            this.notifyItemChanged(i)
+        }
     }
 }

@@ -735,6 +735,8 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         val rvLineLabels = this.activity.findViewById<RecyclerView>(R.id.rvLineLabels)
         (rvLineLabels.adapter as LineLabelRecyclerView.LineLabelAdapter).refresh()
 
+        val rvColumnLabels = this.activity.findViewById<RecyclerView>(R.id.rvColumnLabels)
+        (rvColumnLabels.adapter as ColumnLabelAdapter).refresh()
     }
 
 

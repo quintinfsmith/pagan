@@ -27,7 +27,6 @@ class SoundFontPlayer(var sound_font: SoundFont) {
 
     fun press_note(event: NoteOn) {
         if (this.active_note_map.contains(Pair(event.channel, event.note))) {
-            Log.d("AAA", "DOUBLE ON $event")
             return
         }
         this.active_note_map.add(Pair(event.channel, event.note))
@@ -64,7 +63,6 @@ class SoundFontPlayer(var sound_font: SoundFont) {
 
     fun release_note(event: NoteOff) {
         if (!this.active_note_map.contains(Pair(event.channel, event.note))) {
-            Log.d("AAA", "DOUBLE OFF $event")
             return
         }
         this.active_note_map.remove(Pair(event.channel, event.note))

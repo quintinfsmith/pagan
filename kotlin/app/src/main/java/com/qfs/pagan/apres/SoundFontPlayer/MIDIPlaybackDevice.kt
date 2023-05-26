@@ -43,13 +43,5 @@ class MIDIPlaybackDevice(var context: Context, var sound_font: SoundFont): Virtu
     fun clear_sample_cache() {
         this.soundfont_player.clear_sample_cache()
     }
-
-    //override fun onSongPositionPointer(event: SongPositionPointer) {
-    //    if (event.beat == 0) {
-    //        Thread.sleep(1000)
-    //        Log.d("AAA", "${this.soundfont_player.audio_track_handle.sample_handles.keys}")
-    //        Log.d("AAA", "${this.soundfont_player.active_note_map}")
-    //    }
-    //}
 }
 

@@ -92,8 +92,6 @@ class Cursor {
 
         from_key.beat = Integer.min(beat_key_a.beat, beat_key_b.beat)
         to_key.beat = Integer.max(beat_key_a.beat, beat_key_b.beat)
-        Log.d("AAA", "A: $beat_key_a, B: $beat_key_b")
-        Log.d("AAA", "FROM: $from_key, TO: $to_key")
         this.range = Pair(from_key, to_key)
     }
 

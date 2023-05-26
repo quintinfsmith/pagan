@@ -1,15 +1,11 @@
 package com.qfs.pagan
 
-import android.annotation.SuppressLint
 import android.content.Context
-import android.util.Log
 import android.view.*
 import android.widget.RelativeLayout
-import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 
-@SuppressLint("ClickableViewAccessibility")
 class ColumnLabelAdapter(private var opus_manager: InterfaceLayer, var recycler: RecyclerView, var activity: MainActivity) : RecyclerView.Adapter<ColumnLabelAdapter.ColumnLabelViewHolder>() {
     // BackLink so I can get the x offset from a view in the view holder
     var column_widths = mutableListOf<Int>()
@@ -92,7 +88,6 @@ class ColumnLabelAdapter(private var opus_manager: InterfaceLayer, var recycler:
     fun update_label_focus(label_view: LabelView) {
         val holder  = label_view.viewHolder ?: return
         val beat = holder.bindingAdapterPosition
-        Log.d("AAA", "UPDATED $beat")
         val cursor = this.opus_manager.cursor
         label_view.set_focused(
             when (cursor.mode) {

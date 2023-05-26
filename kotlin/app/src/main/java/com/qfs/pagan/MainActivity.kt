@@ -767,7 +767,7 @@ class MainActivity : AppCompatActivity() {
             .setOnCancelListener {
                 this.midi_input_device.sendEvent(MIDIStop())
                 this.midi_controller.unregisterVirtualDevice(midi_scroller)
-                //this.midi_playback_device.clear_sample_cache()
+                this.midi_playback_device.clear_sample_cache()
             }
             .show()
 

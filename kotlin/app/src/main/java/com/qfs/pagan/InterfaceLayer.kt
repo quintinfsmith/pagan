@@ -213,6 +213,9 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         rvColumnLabels.scrollToPosition(0)
 
         this.activity.update_channel_instruments(this)
+        this.withFragment {
+            it.clearContextMenu()
+        }
     }
     override fun import_midi(midi: MIDI) {
         this.activity.loading_reticle()
@@ -237,6 +240,9 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         rvColumnLabels.scrollToPosition(0)
 
         this.activity.update_channel_instruments(this)
+        this.withFragment {
+            it.clearContextMenu()
+        }
     }
 
     override fun load(bytes: ByteArray) {
@@ -258,8 +264,11 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         rvBeatTable.scrollToPosition(0)
         val rvColumnLabels = this.activity.findViewById<RecyclerView>(R.id.rvColumnLabels)
         rvColumnLabels.scrollToPosition(0)
-
         this.activity.update_channel_instruments(this)
+
+        this.withFragment {
+            it.clearContextMenu()
+        }
     }
 
     override fun load(path: String) {
@@ -283,6 +292,9 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         rvColumnLabels.scrollToPosition(0)
 
         this.activity.update_channel_instruments(this)
+        this.withFragment {
+            it.clearContextMenu()
+        }
     }
 
     override fun remove_channel(channel: Int) {

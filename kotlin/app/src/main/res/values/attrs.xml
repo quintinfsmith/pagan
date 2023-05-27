@@ -51,6 +51,8 @@
     <attr name="drawer_bg" format="color" />
     <attr name="label_bg" format="color" />
     <attr name="label_fg" format="color" />
+    <attr name="label_fg_focused" format="color" />
+    <attr name="alert_fg" format="color" />
 
     <attr name="button_fg_default" format="color" />
     <attr name="button_fg_pressed" format="color" />

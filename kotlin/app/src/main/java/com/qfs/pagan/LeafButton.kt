@@ -18,10 +18,37 @@ class LeafButton(
     private var event: OpusEvent?,
     is_percussion: Boolean
 ) : LinearLayout(ContextThemeWrapper(context, R.style.leaf)), GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener {
+
+    // LeafText exists to make the text consider the state of the LeafButton
+    class LeafText(context: Context): androidx.appcompat.widget.AppCompatTextView(context) {
+        override fun onCreateDrawableState(extraSpace: Int): IntArray? {
+            val drawableState = super.onCreateDrawableState(extraSpace + 4)
+            var parent = this.parent
+            if (parent == null) {
+                return drawableState
+            }
+            while (parent !is LeafButton) {
+                parent = parent.parent
+            }
+            if (parent.state_active) {
+                mergeDrawableStates(drawableState, parent.STATE_ACTIVE)
+            }
+            if (parent.state_reflected) {
+                mergeDrawableStates(drawableState, parent.STATE_REFLECTED)
+            }
+            if (parent.state_focused) {
+                mergeDrawableStates(drawableState, parent.STATE_FOCUSED)
+            }
+            if (parent.state_invalid) {
+                mergeDrawableStates(drawableState, parent.STATE_INVALID)
+            }
+            return drawableState
+        }
+
+    }
     private var mDetector: GestureDetectorCompat
     private var double_tap_callback: ((event: MotionEvent) -> Boolean)? = null
     private var single_tap_callback: ((event: MotionEvent) -> Boolean)? = null
-
 
     private val STATE_REFLECTED = intArrayOf(R.attr.state_reflected)
     private val STATE_ACTIVE = intArrayOf(R.attr.state_active)
@@ -42,9 +69,9 @@ class LeafButton(
         this.value_wrapper = LinearLayout(ContextThemeWrapper(this.context, R.style.leaf_value))
         this.value_wrapper.orientation = HORIZONTAL
 
-        this.value_label_octave = TextView(ContextThemeWrapper(this.context, R.style.leaf_value_octave))
-        this.value_label_offset = TextView(ContextThemeWrapper(this.context, R.style.leaf_value_offset))
-        this.prefix_label = TextView(ContextThemeWrapper(this.context, R.style.leaf_prefix))
+        this.value_label_octave = LeafText(ContextThemeWrapper(this.context, R.style.leaf_value_octave))
+        this.value_label_offset = LeafText(ContextThemeWrapper(this.context, R.style.leaf_value_offset))
+        this.prefix_label = LeafText(ContextThemeWrapper(this.context, R.style.leaf_prefix))
         this.addView(this.prefix_label)
         this.addView(this.value_wrapper)
         this.value_wrapper.addView(this.value_label_octave)
@@ -160,21 +187,33 @@ class LeafButton(
 
     private fun set_active(value: Boolean) {
         this.state_active = value
+        this.value_label_octave.refreshDrawableState()
+        this.value_label_offset.refreshDrawableState()
+        this.prefix_label.refreshDrawableState()
         refreshDrawableState()
     }
 
     fun set_reflected(value: Boolean) {
         this.state_reflected = value
+        this.value_label_octave.refreshDrawableState()
+        this.value_label_offset.refreshDrawableState()
+        this.prefix_label.refreshDrawableState()
         refreshDrawableState()
     }
 
     fun set_focused(value: Boolean) {
         this.state_focused = value
+        this.value_label_octave.refreshDrawableState()
+        this.value_label_offset.refreshDrawableState()
+        this.prefix_label.refreshDrawableState()
         refreshDrawableState()
     }
 
     fun set_invalid(value: Boolean) {
         this.state_invalid = value
+        this.value_label_octave.refreshDrawableState()
+        this.value_label_offset.refreshDrawableState()
+        this.prefix_label.refreshDrawableState()
         refreshDrawableState()
     }
 

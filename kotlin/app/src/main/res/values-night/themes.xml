@@ -1,26 +1,24 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
     <style name="Theme.Pagan" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
-        <!-- Primary brand color. -->
         <item name="colorPrimary">#171717</item>
         <item name="colorPrimaryVariant">#171717</item>
         <item name="colorOnPrimary">#EFEFEF</item>
-        <!-- Secondary brand color. -->
-        <item name="colorSecondary">#765bd5</item>
-        <item name="colorSecondaryVariant">#5BA1D6</item>
+        <item name="colorSecondary">@color/blue_sky</item>
+        <item name="colorSecondaryVariant">@color/blue_dark</item>
         <item name="colorOnSecondary">#1A1a1a</item>
-        <!-- Status bar color. -->
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
         <!-- Customize your theme here. -->
         <item name="android:popupMenuStyle">@style/PopupMenu</item>
 
+        <item name="alert_fg">@color/white</item>
         <item name="drawer_bg">#2D2D2D</item>
         <item name="main_bg">#2D2D2D</item>
         <item name="main_fg">#2d2d2d</item>
-        <item name="label_bg">#424242</item>
-        <item name="label_fg">#A7A7A7</item>
-        <item name="popup_bg">?attr/colorPrimaryVariant</item>
+        <item name="label_fg">@color/white</item>
+        <item name="label_fg_focused">#000000</item>
         <item name="popup_fg">?attr/colorOnPrimary</item>
+        <item name="popup_bg">?attr/colorPrimaryVariant</item>
 
         <item name="button_fg_default">?attr/colorOnPrimary</item>
         <item name="button_fg_pressed">?attr/colorOnPrimary</item>
@@ -29,22 +27,22 @@
 
         <!-- LEAF COLORS -->
         <item name="leaf_fg_active">?attr/colorOnSecondary</item>
-        <item name="leaf_fg_active_focused">?attr/colorOnSecondary</item>
-        <item name="leaf_fg_active_pressed">?attr/colorOnSecondary</item>
+        <item name="leaf_fg_active_focused">@color/white</item>
+        <item name="leaf_fg_active_pressed">@color/white</item>
         <item name="leaf_fg_active_focused_pressed">?attr/colorOnSecondary</item>
 
         <item name="leaf_bg_default">?attr/main_bg</item>
-        <item name="leaf_bg_focused">?attr/colorSecondaryVariant</item>
+        <item name="leaf_bg_focused">@color/blue_sky</item>
         <!--_pressed are just 93% of the regular colors -->
         <item name="leaf_bg_pressed">#333333</item>
         <item name="leaf_bg_focused_pressed">#3D3D3D</item>
 
         <item name="leaf_bg_invalid">#aa4433</item>
         <!-- Active Leaf colors are same between dark/light -->
-        <item name="leaf_bg_active">?attr/colorSecondary</item>
-        <item name="leaf_bg_active_focused">#43749A</item>
+        <item name="leaf_bg_active">@color/purple</item>
+        <item name="leaf_bg_active_focused">@color/purple_plum</item>
         <!--_pressed are just 93% of the regular colors -->
-        <item name="leaf_bg_active_pressed">#6D54C6</item>
+        <item name="leaf_bg_active_pressed">@color/purple_dark</item>
         <item name="leaf_bg_active_focused_pressed">#BDBDBD</item>
         <!-- END OF LEAF COLORS -->
 
@@ -52,12 +50,11 @@
         <item name="numberselector_fg_default">?attr/button_fg_default</item>
         <item name="numberselector_bg_pressed">?attr/button_bg_pressed</item>
         <item name="numberselector_fg_pressed">?attr/button_fg_pressed</item>
-        <item name="numberselector_bg_selected">?attr/colorSecondary</item>
-        <item name="numberselector_fg_selected">?attr/colorOnSecondary</item>
+        <item name="numberselector_bg_selected">?attr/leaf_bg_active</item>
+        <item name="numberselector_fg_selected">?attr/leaf_fg_active</item>
         <item name="numberselector_bg_selected_pressed">?attr/leaf_bg_active_pressed</item>
         <item name="numberselector_fg_selected_pressed">?attr/leaf_fg_active_pressed</item>
 
-        <item name="icon_size">42dp</item>
         <item name="colorIconFG">@attr/button_fg_default</item>
         <item name="table_lines">?attr/button_fg_default</item>
     </style>
@@ -68,6 +65,6 @@
     </style>
 
     <style name="Theme.Pagan.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
-    <style name="Theme.Pagan.AlertDialog" parent="Base.Theme.AppCompat.Dialog"/>
+    <style name="Theme.Pagan.AlertDialog" parent="@style/AlertDialog" />
 
 </resources>

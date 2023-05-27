@@ -1,5 +1,4 @@
 package com.qfs.pagan
-import android.util.Log
 import android.view.View
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -157,15 +156,19 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     override fun insert_line(channel: Int, line_offset: Int, line: MutableList<OpusTree<OpusEvent>>) {
+        this.ui_unset_cursor_focus()
         super.insert_line(channel, line_offset, line)
         this.ui_add_line_label()
         this.ui_notify_visible_changes()
+        this.ui_set_cursor_focus()
     }
 
     override fun remove_line(channel: Int, line_offset: Int): MutableList<OpusTree<OpusEvent>> {
+        this.ui_unset_cursor_focus()
         this.ui_remove_line_label(channel, line_offset)
         val output = super.remove_line(channel, line_offset)
         this.ui_notify_visible_changes()
+        this.ui_set_cursor_focus()
         return output
     }
 
@@ -180,13 +183,17 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     override fun remove_beat(beat_index: Int) {
+        this.ui_unset_cursor_focus()
         super.remove_beat(beat_index)
         this.ui_remove_beat(beat_index)
+        this.ui_set_cursor_focus()
     }
 
     override fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<OpusEvent>>?) {
+        this.ui_unset_cursor_focus()
         super.insert_beat(beat_index, beats_in_column)
         this.ui_add_beat(beat_index)
+        this.ui_set_cursor_focus()
     }
 
     override fun new() {
@@ -366,11 +373,17 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         val beat_table = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
         val rvBeatTable_adapter = beat_table.adapter as BeatColumnAdapter
         rvBeatTable_adapter.removeBeatColumn(beat)
+
+        val rvColumnLabels = this.activity.findViewById<RecyclerView>(R.id.rvColumnLabels)
+        (rvColumnLabels.adapter as ColumnLabelAdapter).refresh()
     }
     private fun ui_add_beat(beat: Int) {
         val beat_table = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
         val rvBeatTable_adapter = beat_table.adapter as BeatColumnAdapter
         rvBeatTable_adapter.addBeatColumn(beat)
+
+        //val rvColumnLabels = this.activity.findViewById<RecyclerView>(R.id.rvColumnLabels)
+        //(rvColumnLabels.adapter as ColumnLabelAdapter).refresh()
     }
 
     private fun ui_notify_visible_changes() {
@@ -490,7 +503,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                 } else if (beat_key.channel == -1 || beat_key.line_offset == -1) { // Beat Select
                     this.cursor_select_column(beat_key.beat, scroll=true)
                 } else if (position == null) {
-                    Log.w("AAA", "No position given")
                     return
                 } else {
                     this.cursor_select(beat_key, position, scroll=true)
@@ -734,6 +746,13 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         val rvBeatTable = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
         val adapter = rvBeatTable.adapter as BeatColumnAdapter
         adapter.unset_cursor_focus()
+
+        val rvLineLabels = this.activity.findViewById<RecyclerView>(R.id.rvLineLabels)
+        (rvLineLabels.adapter as LineLabelRecyclerView.LineLabelAdapter).set_cursor_focus(false)
+
+        val rvColumnLabels = this.activity.findViewById<RecyclerView>(R.id.rvColumnLabels)
+        (rvColumnLabels.adapter as ColumnLabelAdapter).set_cursor_focus(false)
+
     }
 
     private fun ui_set_cursor_focus() {
@@ -745,10 +764,10 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         adapter.set_cursor_focus()
 
         val rvLineLabels = this.activity.findViewById<RecyclerView>(R.id.rvLineLabels)
-        (rvLineLabels.adapter as LineLabelRecyclerView.LineLabelAdapter).refresh()
+        (rvLineLabels.adapter as LineLabelRecyclerView.LineLabelAdapter).set_cursor_focus(true)
 
         val rvColumnLabels = this.activity.findViewById<RecyclerView>(R.id.rvColumnLabels)
-        (rvColumnLabels.adapter as ColumnLabelAdapter).refresh()
+        (rvColumnLabels.adapter as ColumnLabelAdapter).set_cursor_focus(true)
     }
 
 
@@ -785,6 +804,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         this.withFragment {
             it.setContextMenu_column()
         }
+
         if (scroll) {
             this.ui_scroll_to_position(
                 BeatKey(-1, -1, beat),

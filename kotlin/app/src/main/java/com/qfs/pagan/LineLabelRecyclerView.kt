@@ -290,7 +290,6 @@ class LineLabelRecyclerView(context: Context, attrs: AttributeSet) : RecyclerVie
                 view.channel,
                 view.line_offset
             )
-            this.update_label_focus(view)
         }
 
         fun refresh() {
@@ -300,6 +299,33 @@ class LineLabelRecyclerView(context: Context, attrs: AttributeSet) : RecyclerVie
             // NOTE: padding the start/end since an item may be bound but not visible
             for (i in Integer.max(0, start - 1)..Integer.min(this.itemCount, end + 1)) {
                 this.notifyItemChanged(i)
+            }
+        }
+
+        fun set_cursor_focus(show: Boolean = true) {
+            val cursor = this.opus_manager.cursor
+            when (cursor.mode) {
+                Cursor.CursorMode.Range -> {
+                    val (from_key, to_key) = cursor.range!!
+                    val offset_y = this.opus_manager.get_abs_offset(from_key.channel, from_key.line_offset)
+                    val (diff_y, diff_x) = this.opus_manager.get_abs_difference(from_key, to_key)
+                    for (i in offset_y .. offset_y + diff_y) {
+                        val viewHolder = this.recycler.findViewHolderForAdapterPosition(i) ?: return
+                        val label = viewHolder.itemView as LabelView
+                        label.set_focused(show)
+                        label.invalidate()
+                    }
+                }
+                Cursor.CursorMode.Single,
+                Cursor.CursorMode.Row -> {
+                    val y_offset = this.opus_manager.get_abs_offset(cursor.channel, cursor.line_offset)
+                    val viewHolder = this.recycler.findViewHolderForAdapterPosition(y_offset) ?: return
+                    val label = viewHolder.itemView as LabelView
+                    label.set_focused(show)
+                    label.invalidate()
+                }
+                Cursor.CursorMode.Column,
+                Cursor.CursorMode.Unset -> { }
             }
         }
     }

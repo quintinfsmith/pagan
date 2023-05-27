@@ -1,6 +1,7 @@
 package com.qfs.pagan
 
 import android.content.Context
+import android.util.Log
 import android.view.*
 import android.widget.LinearLayout
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -120,9 +121,8 @@ class BeatColumnAdapter(private var parent_fragment: EditorFragment, var recycle
                 opus_manager.is_percussion(beatkey.channel)
             )
 
-            tvLeaf.setOnSingleTapListener {
+            tvLeaf.setOnClickListener {
                 this.interact_leafView_click(tvLeaf)
-                true
             }
 
             tvLeaf.setOnFocusChangeListener { view, is_focused: Boolean ->

@@ -58,28 +58,30 @@ class ColumnLabelAdapter(private var opus_manager: InterfaceLayer, var recycler:
                     for (i in start until that.itemCount) {
                         val viewHolder = that.recycler.findViewHolderForAdapterPosition(i) ?: continue
                         that.adjust_width(viewHolder as ColumnLabelViewHolder)
-                        that.update_label_focus(viewHolder.itemView as LabelView)
+                        //that.update_label_focus(viewHolder.itemView as LabelView)
                     }
                 }
                 override fun onItemRangeRemoved(start: Int, count: Int) {
                     val end = (that.recycler.layoutManager as LinearLayoutManager).findLastVisibleItemPosition()
                     for (i in start .. end) {
-                        val viewHolder = that.recycler.findViewHolderForAdapterPosition(i + count) ?: continue
+                        val viewHolder = that.recycler.findViewHolderForAdapterPosition(i) ?: continue
                         that.set_text(viewHolder as ColumnLabelViewHolder, i)
-                        that.update_label_focus(viewHolder.itemView as LabelView)
+                        //that.update_label_focus(viewHolder.itemView as LabelView)
                     }
                 }
                 override fun onItemRangeInserted(start: Int, count: Int) {
-                    val end = (that.recycler.layoutManager as LinearLayoutManager).findLastVisibleItemPosition()
-                    for (i in start .. end) {
-                        val viewHolder = that.recycler.findViewHolderForAdapterPosition(i) ?: continue
-                        that.set_text(viewHolder as ColumnLabelViewHolder, i + count)
-                        that.update_label_focus(viewHolder.itemView as LabelView)
-                    }
-                    val visible_start = (that.recycler.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
-                    if (visible_start >= start) {
-                        that.recycler.scrollToPosition(start)
-                    }
+
+                    //val end = (that.recycler.layoutManager as LinearLayoutManager).findLastVisibleItemPosition()
+                    //for (i in start .. count) {
+                    //    val viewHolder = that.recycler.findViewHolderForAdapterPosition(i) ?: continue
+                    //    that.update_label_focus(viewHolder.itemView as LabelView)
+                    //    that.set_text(viewHolder as ColumnLabelViewHolder, i)
+                    //    that.update_label_focus(viewHolder.itemView as LabelView)
+                    //}
+                    //val visible_start = (that.recycler.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
+                    //if (visible_start >= start) {
+                    //    that.recycler.scrollToPosition(start)
+                    //}
                 }
             }
         )
@@ -118,6 +120,7 @@ class ColumnLabelAdapter(private var opus_manager: InterfaceLayer, var recycler:
         if (position < this.column_widths.size) {
             this.column_widths.add(1)
             this.notifyItemInserted(this.column_widths.size - 1)
+            this.notifyItemChanged(position)
         } else {
             while (this.column_widths.size <= position) {
                 this.column_widths.add(1)
@@ -205,6 +208,30 @@ class ColumnLabelAdapter(private var opus_manager: InterfaceLayer, var recycler:
         // NOTE: padding the start/end since an item may be bound but not visible
         for (i in Integer.max(0, start - 1)..Integer.min(this.itemCount, end + 1)) {
             this.notifyItemChanged(i)
+        }
+    }
+
+    fun set_cursor_focus(show: Boolean = true) {
+        val cursor = this.opus_manager.cursor
+        when (cursor.mode) {
+            Cursor.CursorMode.Range -> {
+                val (from_key, to_key) = cursor.range!!
+                for (i in from_key.beat .. to_key.beat) {
+                    val viewHolder = this.recycler.findViewHolderForAdapterPosition(i) ?: return
+                    val label = viewHolder.itemView as LabelView
+                    label.set_focused(show)
+                    label.invalidate()
+                }
+            }
+            Cursor.CursorMode.Single,
+            Cursor.CursorMode.Column -> {
+                val viewHolder = this.recycler.findViewHolderForAdapterPosition(cursor.beat) ?: return
+                val label = viewHolder.itemView as LabelView
+                label.set_focused(show)
+                label.invalidate()
+            }
+            Cursor.CursorMode.Row,
+            Cursor.CursorMode.Unset -> { }
         }
     }
 }

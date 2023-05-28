@@ -465,7 +465,6 @@ class BeatColumnAdapter(private var parent_fragment: EditorFragment, var recycle
         }
 
         val stack = mutableListOf(working_view)
-
         while (stack.isNotEmpty()) {
             working_view = stack.removeFirst()
             if (working_view is LeafButton) {

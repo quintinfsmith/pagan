@@ -41,6 +41,7 @@ class SoundFontPlayer(var sound_font: SoundFont) {
                 val sample_handles = that.gen_sample_handles(event, preset)
                 val delay_ts = System.currentTimeMillis()
                 val join_delay = that.audio_track_handle.get_join_delay(buffer_ts, target_ts, delay_ts)
+
                 val existing_keys = that.active_handle_keys[key]?.toSet()
                 if (existing_keys != null) {
                     that.attempt {

@@ -40,8 +40,6 @@ class SampleHandle(
     private var current_release_position: Int = 0
     var current_volume: Double = 0.5
     private var bytes_called: Int = 0 // Will not loop like current_position
-    // Kludge to handle high tempo songs
-    private val minimum_duration: Int = (AudioTrackHandle.sample_rate * .3).toInt()
 
     private fun get_max_in_range(x: Int, size: Int): Int {
         var index = min(
@@ -92,8 +90,7 @@ class SampleHandle(
             this.current_decay_position += 2
         }
 
-        if (! this.is_pressed && this.bytes_called >= this.minimum_duration - this.release_mask.size) {
-        //if (! this.is_pressed) {
+        if (! this.is_pressed) {
             if (this.current_release_position < this.release_mask.size) {
                 frame = (frame * this.release_mask[this.current_release_position]).toInt().toShort()
                 this.current_release_position += 1

@@ -156,6 +156,17 @@ open class HistoryLayer : LinksLayer() {
             "unlink_beat" -> {
                 this.unlink_beat(current_node.args[0] as BeatKey)
             }
+            "restore_link_pools" -> {
+                var pools = current_node.args[0] as List<Set<BeatKey>>
+                this.link_pools.clear()
+                this.link_pool_map.clear()
+                pools.forEachIndexed { i: Int, pool: Set<BeatKey> ->
+                    for (beat_key in pool) {
+                        this.link_pool_map[beat_key] = i
+                    }
+                    this.link_pools.add(pool.toMutableSet())
+                }
+            }
             "link_beats" -> {
                 this.link_beats(
                     current_node.args[0] as BeatKey,
@@ -440,8 +451,24 @@ open class HistoryLayer : LinksLayer() {
 
     override fun remove_beat(beat_index: Int) {
         this.history_cache.remember {
-            this.push_insert_beat(beat_index, this.get_channel_line_counts())
+            val beat_cells = mutableListOf<OpusTree<OpusEvent>>()
+            for (channel in 0 until this.channels.size) {
+                val line_count = this.channels[channel].size
+                for (j in 0 until line_count) {
+                    beat_cells.add(
+                        this.get_beat_tree(
+                            BeatKey(channel, j, beat_index)
+                        )
+                    )
+                }
+            }
+
             super.remove_beat(beat_index)
+
+            this.push_to_history_stack(
+                "insert_beat",
+                listOf(beat_index, beat_cells)
+            )
         }
     }
 
@@ -600,19 +627,6 @@ open class HistoryLayer : LinksLayer() {
         }
     }
 
-    private fun push_insert_beat(index: Int, channel_sizes: List<Int>) {
-        this.history_cache.remember {
-            val beat_cells = mutableListOf<OpusTree<OpusEvent>>()
-            for (channel in channel_sizes.indices) {
-                val line_count = channel_sizes[channel]
-                for (j in 0 until line_count) {
-                    beat_cells.add(this.get_beat_tree(BeatKey(channel, j, index)))
-                }
-            }
-
-            this.push_to_history_stack( "insert_beat", listOf(index, beat_cells))
-        }
-    }
 
     private fun push_set_event(beat_key: BeatKey, position: List<Int>, event: OpusEvent) {
         this.push_to_history_stack( "set_event", listOf(beat_key.copy(), position, event.copy()) )
@@ -884,24 +898,8 @@ open class HistoryLayer : LinksLayer() {
         }
     }
 
-    override fun link_pool_insert_line(channel: Int, line_offset: Int) {
-        this.history_cache.remember {
-            super.link_pool_insert_line(channel, line_offset)
-            this.push_to_history_stack("link_pool_remove_line", listOf(channel, line_offset))
-        }
-    }
-
-    override fun link_pool_remove_line(channel: Int, line_offset: Int) {
-        this.history_cache.remember {
-            this.link_pools.forEachIndexed { i: Int, pool: MutableSet<BeatKey> ->
-                for (beat_key in pool) {
-                    if (beat_key.channel == channel && beat_key.line_offset == line_offset) {
-                        this.push_to_history_stack("link_beat_into_pool", listOf(beat_key, i))
-                    }
-                }
-            }
-            this.push_to_history_stack("link_pool_insert_line", listOf(channel, line_offset))
-            super.link_pool_remove_line(channel, line_offset)
-        }
+    override fun remap_links(remap_hook: (beat_key: BeatKey) -> BeatKey?) {
+        this.push_to_history_stack("restore_link_pools", listOf(this.link_pools.toList()))
+        super.remap_links(remap_hook)
     }
 }

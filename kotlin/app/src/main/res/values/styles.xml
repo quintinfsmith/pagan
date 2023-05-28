@@ -53,7 +53,7 @@
     <style name="leaf" parent="@android:style/Widget.Button">
         <item name="android:gravity">center_vertical|center_horizontal</item>
         <item name="android:textColor">@color/leaf_fg</item>
-        <item name="android:background">@drawable/leaf_button</item>
+        <item name="android:background">@color/leaf_bg</item>
         <item name="android:clickable">true</item>
         <item name="android:maxLines">1</item>
     </style>
@@ -95,7 +95,7 @@
         <item name="android:paddingTop">5dp</item>
         <item name="android:paddingBottom">5dp</item>
         <item name="android:elevation">2dp</item>
-        <item name="android:background">@drawable/numberselector</item>
+        <item name="android:background">@color/numberselector_bg</item>
         <item name="android:textColor">@color/numberselector_fg</item>
     </style>
 
@@ -111,7 +111,7 @@
         <item name="android:paddingLeft">5dp</item>
         <item name="android:paddingRight">5dp</item>
 
-        <item name="android:background">@drawable/numberselector</item>
+        <item name="android:background">@color/numberselector_bg</item>
         <item name="android:textColor">@color/numberselector_fg</item>
     </style>
 
@@ -162,7 +162,7 @@
         <item name="android:gravity">center</item>
         <item name="android:paddingTop">4dp</item>
         <item name="android:paddingBottom">4dp</item>
-        <item name="android:background">@drawable/label_button</item>
+        <item name="android:background">@color/label_bg</item>
         <item name="android:textColor">@color/label_fg</item>
     </style>
 
@@ -177,7 +177,7 @@
     <style name="line_label_inner">
         <item name="android:minWidth">32dp</item>
         <item name="android:gravity">bottom|center_horizontal</item>
-        <item name="android:background">@drawable/label_button</item>
+        <item name="android:background">@color/label_bg</item>
         <item name="android:textColor">@color/label_fg</item>
     </style>
 

@@ -86,7 +86,7 @@ class BeatColumnAdapter(private var parent_fragment: EditorFragment, var recycle
                     }
                 }
                 override fun onItemRangeInserted(start: Int, count: Int) {
-                    that.unset_cursor_focus()
+                    that.set_cursor_focus(false)
                     val visible_start = (that.recycler.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
                     if (visible_start >= start) {
                         that.recycler.scrollToPosition(start)
@@ -131,7 +131,7 @@ class BeatColumnAdapter(private var parent_fragment: EditorFragment, var recycle
                 }
             }
 
-            tvLeaf.setOnDoubleTapListener {
+            tvLeaf.setOnLongClickListener {
                 this.interact_leafView_doubletap(tvLeaf)
                 true
             }
@@ -153,6 +153,9 @@ class BeatColumnAdapter(private var parent_fragment: EditorFragment, var recycle
             if (tree.is_event()) {
                 val abs_value = opus_manager.get_absolute_value(beatkey, position)
                 tvLeaf.set_invalid(abs_value == null || abs_value < 0)
+            }
+            if (opus_manager.is_networked(beatkey)) {
+                tvLeaf.set_linked(true)
             }
 
             this.apply_cursor_focus(tvLeaf, beatkey, position)
@@ -630,21 +633,12 @@ class BeatColumnAdapter(private var parent_fragment: EditorFragment, var recycle
         return output
     }
 
-    fun unset_cursor_focus() {
-        try {
-            for (leaf in this.get_visible_highlighted_leafs()) {
-                leaf.set_focused(false)
-            }
-        } catch (e: Exception) {
-            // Let it pass
-        }
-    }
 
-    fun set_cursor_focus() {
+    fun set_cursor_focus(show: Boolean = true) {
         for (leaf in this.get_visible_highlighted_leafs()) {
-            leaf.set_focused(true)
+            leaf.set_focused(show)
+            leaf.invalidate()
         }
-        this.redraw_visible_leafs()
     }
 
     private fun redraw_visible_leafs() {

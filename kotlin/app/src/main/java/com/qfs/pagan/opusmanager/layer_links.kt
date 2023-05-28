@@ -226,96 +226,82 @@ open class LinksLayer : OpusManagerBase() {
     }
 
     /////////
-    private fun remap_links(remap_hook: (beat_key: BeatKey, args: List<Int>) -> BeatKey?, args: List<Int>) {
+    // NOTE: Remap_links always needs to be called BEFORE the super call
+    // This puts it in the correct order on the history stack
+    // Since remap_links is only needed on line/channel/beat operations, there's no need to
+    // consider links in the base layer operations so it's ok to remap before
+    open fun remap_links(remap_hook: (beat_key: BeatKey) -> BeatKey?) {
         val new_pool_map = HashMap<BeatKey, Int>()
         val new_pools = mutableListOf<MutableSet<BeatKey>>()
         for (pool in this.link_pools) {
             val new_pool = mutableSetOf<BeatKey>()
             for (beatkey in pool) {
-                val new_beatkey = remap_hook(beatkey, args) ?: continue
+                val new_beatkey = remap_hook(beatkey) ?: continue
                 new_pool.add(new_beatkey)
                 new_pool_map[new_beatkey] = new_pools.size
             }
-            new_pools.add(new_pool)
+            // Don't keep pools if there is only one entry left
+            if (new_pool.size == 1) {
+                new_pool_map.remove(new_pool.first())
+            }  else {
+                new_pools.add(new_pool)
+            }
         }
         this.link_pools = new_pools
         this.link_pool_map = new_pool_map
     }
 
-    private fun rh_change_line_channel(beat_key: BeatKey, args: List<Int>): BeatKey {
-        val old_channel = args[0]
-        val line_offset = args[1]
-        val new_channel = args[2]
-        val new_offset = args[3]
+    //private fun rh_change_line_channel(beat_key: BeatKey, args: List<Int>): BeatKey {
+    //    val old_channel = args[0]
+    //    val line_offset = args[1]
+    //    val new_channel = args[2]
+    //    val new_offset = args[3]
 
-        var new_beat = beat_key
-        if (beat_key.channel == old_channel) {
-            if (beat_key.line_offset == line_offset) {
-                new_beat = BeatKey(new_channel, new_offset, beat_key.beat)
-            } else if (beat_key.line_offset > line_offset) {
-                new_beat = BeatKey(beat_key.channel, beat_key.line_offset - 1, beat_key.beat)
-            }
-        }
-        return new_beat
-    }
+    //    var new_beat = beat_key
+    //    if (beat_key.channel == old_channel) {
+    //        if (beat_key.line_offset == line_offset) {
+    //            new_beat = BeatKey(new_channel, new_offset, beat_key.beat)
+    //        } else if (beat_key.line_offset > line_offset) {
+    //            new_beat = BeatKey(beat_key.channel, beat_key.line_offset - 1, beat_key.beat)
+    //        }
+    //    }
+    //    return new_beat
+    //}
 
-
-    private fun rh_remove_beat(beat: BeatKey, args: List<Int>): BeatKey {
-        val index = args[0]
-        val new_beat = if (beat.beat >= index) {
-            BeatKey(beat.channel, beat.line_offset, beat.beat - 1)
-        } else {
-            beat
-        }
-
-        return new_beat
-    }
 
     override fun remove_channel(channel: Int) {
-        super.remove_channel(channel)
-        this.remap_links(this::rh_remove_channel, listOf(channel))
-    }
-
-    private fun rh_remove_channel(beat: BeatKey, args: List<Int>): BeatKey? {
-        return if (beat.channel == args[0]) {
-            null
-        } else {
-            beat
-        }
-    }
-
-    private fun rh_remove_line(beat: BeatKey, args: List<Int>): BeatKey? {
-        val channel = args[0]
-        val line_offset = args[1]
-        var new_beat: BeatKey? = beat
-        if (beat.channel == channel) {
-            if (beat.line_offset == line_offset) {
-                new_beat = null
-            } else if (beat.line_offset > line_offset) {
-                new_beat = BeatKey(channel, line_offset - 1, beat.beat)
+        this.remap_links { beat: BeatKey  ->
+            if (beat.channel == channel) {
+                null
+            } else {
+                beat
             }
         }
-        return new_beat
+
+        super.remove_channel(channel)
     }
+
+
 
     fun is_networked(beat_key: BeatKey): Boolean {
         return this.link_pool_map.contains(beat_key)
     }
 
     override fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<OpusEvent>>?) {
-        super.insert_beat(beat_index, beats_in_column)
-        this.remap_links({ beat_key: BeatKey, _: List<Int> ->
+        this.remap_links { beat_key: BeatKey ->
              if (beat_key.beat >= beat_index) {
                 BeatKey(beat_key.channel, beat_key.line_offset, beat_key.beat + 1)
             } else {
                 beat_key
             }
-        }, listOf())
+        }
+
+        super.insert_beat(beat_index, beats_in_column)
     }
 
     override fun remove_beat(beat_index: Int) {
         super.remove_beat(beat_index)
-        this.remap_links({ beat_key: BeatKey, _: List<Int> ->
+        this.remap_links { beat_key: BeatKey ->
             if (beat_key.beat > beat_index) {
                 BeatKey(beat_key.channel, beat_key.line_offset, beat_key.beat - 1)
             } else if (beat_key.beat < beat_index) {
@@ -323,7 +309,8 @@ open class LinksLayer : OpusManagerBase() {
             } else {
                 null
             }
-        }, listOf())
+        }
+
     }
 
     override fun load_json(json_data: LoadedJSONData) {
@@ -519,43 +506,25 @@ open class LinksLayer : OpusManagerBase() {
         }
     }
 
-    open fun link_pool_remove_line(channel: Int, line_offset: Int) {
-        val new_pools = mutableListOf<MutableSet<BeatKey>>()
-        val new_map = HashMap<BeatKey, Int>()
-        for (pool in this.link_pools) {
-            val new_pool = mutableSetOf<BeatKey>()
-            for (beat_key in pool) {
-                val new_beat_key = if (beat_key.channel == channel) {
-                    if (beat_key.line_offset > line_offset) {
-                        BeatKey(
-                            beat_key.channel,
-                            beat_key.line_offset - 1,
-                            beat_key.beat
-                        )
-                    } else if (beat_key.line_offset == line_offset) {
-                        continue // DO NOT retain beat keys from deleted line
-                    } else {
-                        beat_key
-                    }
-                } else {
-                    beat_key
-                }
-                new_map[new_beat_key] = new_pools.size
-                new_pool.add( new_beat_key )
+    override fun insert_line(channel: Int, line_offset: Int, line: MutableList<OpusTree<OpusEvent>>) {
+        this.remap_links { beat_key: BeatKey ->
+            if (beat_key.channel == channel && beat_key.line_offset >= line_offset) {
+                BeatKey(
+                    beat_key.channel,
+                    beat_key.line_offset + 1,
+                    beat_key.beat
+                )
+            } else {
+                beat_key
             }
-            new_pools.add(new_pool)
         }
-
-        this.link_pools = new_pools
-        this.link_pool_map = new_map
+        super.insert_line(channel, line_offset, line)
     }
-    open fun link_pool_insert_line(channel: Int, line_offset: Int) {
-        val new_pools = mutableListOf<MutableSet<BeatKey>>()
-        val new_map = HashMap<BeatKey, Int>()
-        for (pool in this.link_pools) {
-            val new_pool = mutableSetOf<BeatKey>()
-            for (beat_key in pool) {
-                val new_beat_key = if (beat_key.channel == channel && beat_key.line_offset >= line_offset) {
+
+    override fun new_line(channel: Int, line_offset: Int?): List<OpusTree<OpusEvent>> {
+        if (line_offset != null) {
+            this.remap_links { beat_key: BeatKey ->
+                if (beat_key.channel == channel && beat_key.line_offset >= line_offset) {
                     BeatKey(
                         beat_key.channel,
                         beat_key.line_offset + 1,
@@ -564,29 +533,30 @@ open class LinksLayer : OpusManagerBase() {
                 } else {
                     beat_key
                 }
-                new_map[new_beat_key] = new_pools.size
-                new_pool.add( new_beat_key )
             }
-            new_pools.add(new_pool)
         }
-        this.link_pools = new_pools
-        this.link_pool_map = new_map
-    }
-    override fun insert_line(channel: Int, line_offset: Int, line: MutableList<OpusTree<OpusEvent>>) {
-        this.link_pool_insert_line(channel, line_offset)
-        super.insert_line(channel, line_offset, line)
-    }
-
-    override fun new_line(channel: Int, line_offset: Int?): List<OpusTree<OpusEvent>> {
-        val output = super.new_line(channel, line_offset)
-        this.link_pool_insert_line(channel, line_offset ?: this.channels[channel].size)
-        return output
+        return super.new_line(channel, line_offset)
     }
 
     override fun remove_line(channel: Int, line_offset: Int): MutableList<OpusTree<OpusEvent>> {
-        val output = super.remove_line(channel, line_offset)
-        this.link_pool_remove_line(channel, line_offset)
-        return output
+        this.remap_links { beat_key: BeatKey ->
+            if (beat_key.channel == channel) {
+                if (beat_key.line_offset > line_offset) {
+                    BeatKey(
+                        beat_key.channel,
+                        beat_key.line_offset - 1,
+                        beat_key.beat
+                    )
+                } else if (beat_key.line_offset == line_offset) {
+                    null // DO NOT retain beat keys from deleted line
+                } else {
+                    beat_key
+                }
+            } else {
+                beat_key
+            }
+        }
+        return super.remove_line(channel, line_offset)
     }
 
    override fun move_line(channel_old: Int, line_old: Int, channel_new: Int, line_new: Int) {
@@ -615,6 +585,5 @@ open class LinksLayer : OpusManagerBase() {
            this.link_pools[pool_index].add(beat_key)
            this.link_pool_map[beat_key] = pool_index
        }
-
    }
 }

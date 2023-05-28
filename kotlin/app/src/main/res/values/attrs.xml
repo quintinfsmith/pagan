@@ -18,7 +18,7 @@
 
     <declare-styleable name="leaf">
         <attr name="state_focused" format="boolean" />
-        <attr name="state_reflected" format="boolean" />
+        <attr name="state_linked" format="boolean" />
         <attr name="state_invalid" format="boolean" />
 
         <!-- No foreground to color on inactive leafs
@@ -37,11 +37,11 @@
         <attr name="leaf_bg_default" format="color" />
         <attr name="leaf_bg_active" format="color" />
         <attr name="leaf_bg_focused" format="color" />
-        <attr name="leaf_bg_pressed" format="color" />
+        <attr name="leaf_bg_linked" format="color" />
         <attr name="leaf_bg_active_focused" format="color" />
-        <attr name="leaf_bg_active_pressed" format="color" />
-        <attr name="leaf_bg_focused_pressed" format="color" />
-        <attr name="leaf_bg_active_focused_pressed" format="color" />
+        <attr name="leaf_bg_active_linked" format="color" />
+        <attr name="leaf_bg_focused_linked" format="color" />
+        <attr name="leaf_bg_active_focused_linked" format="color" />
     </declare-styleable>
 
     <attr name="main_bg" format="color" />
@@ -50,6 +50,7 @@
     <attr name="popup_fg" format="color" />
     <attr name="drawer_bg" format="color" />
     <attr name="label_bg" format="color" />
+    <attr name="label_bg_focused" format="color" />
     <attr name="label_fg" format="color" />
     <attr name="label_fg_focused" format="color" />
     <attr name="alert_fg" format="color" />

@@ -3,9 +3,9 @@
 <item
     android:state_pressed="false"
     app:state_active="false"
-    android:color="?attr/numberselector_fg_default"/>
+    android:color="?attr/numberselector_bg_default"/>
 <item
     android:state_pressed="false"
     app:state_active="true"
-    android:color="?attr/numberselector_fg_selected"/>
+    android:color="?attr/numberselector_bg_selected"/>
 </selector>

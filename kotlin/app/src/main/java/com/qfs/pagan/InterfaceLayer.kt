@@ -745,7 +745,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     private fun ui_unset_cursor_focus() {
         val rvBeatTable = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
         val adapter = rvBeatTable.adapter as BeatColumnAdapter
-        adapter.unset_cursor_focus()
+        adapter.set_cursor_focus(false)
 
         val rvLineLabels = this.activity.findViewById<RecyclerView>(R.id.rvLineLabels)
         (rvLineLabels.adapter as LineLabelRecyclerView.LineLabelAdapter).set_cursor_focus(false)

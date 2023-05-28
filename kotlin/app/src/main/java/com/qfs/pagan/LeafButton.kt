@@ -17,7 +17,7 @@ class LeafButton(
     private var activity: MainActivity,
     private var event: OpusEvent?,
     is_percussion: Boolean
-) : LinearLayout(ContextThemeWrapper(context, R.style.leaf)), GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener {
+) : LinearLayout(ContextThemeWrapper(context, R.style.leaf)) {
 
     // LeafText exists to make the text consider the state of the LeafButton
     class LeafText(context: Context): androidx.appcompat.widget.AppCompatTextView(context) {
@@ -33,8 +33,8 @@ class LeafButton(
             if (parent.state_active) {
                 mergeDrawableStates(drawableState, parent.STATE_ACTIVE)
             }
-            if (parent.state_reflected) {
-                mergeDrawableStates(drawableState, parent.STATE_REFLECTED)
+            if (parent.state_linked) {
+                mergeDrawableStates(drawableState, parent.STATE_LINKED)
             }
             if (parent.state_focused) {
                 mergeDrawableStates(drawableState, parent.STATE_FOCUSED)
@@ -46,17 +46,14 @@ class LeafButton(
         }
 
     }
-    private var mDetector: GestureDetectorCompat
-    private var double_tap_callback: ((event: MotionEvent) -> Boolean)? = null
-    private var single_tap_callback: ((event: MotionEvent) -> Boolean)? = null
 
-    private val STATE_REFLECTED = intArrayOf(R.attr.state_reflected)
+    private val STATE_LINKED = intArrayOf(R.attr.state_linked)
     private val STATE_ACTIVE = intArrayOf(R.attr.state_active)
     private val STATE_FOCUSED = intArrayOf(R.attr.state_focused)
     private val STATE_INVALID = intArrayOf(R.attr.state_invalid)
 
     private var state_active: Boolean = false
-    private var state_reflected: Boolean = false
+    private var state_linked: Boolean = false
     private var state_focused: Boolean = false
     private var state_invalid: Boolean = false
     private var value_wrapper: LinearLayout
@@ -82,10 +79,6 @@ class LeafButton(
             this.set_active(false)
         }
         this.set_text(is_percussion)
-
-        this.mDetector = GestureDetectorCompat(this.context, this)
-        this.mDetector.setOnDoubleTapListener(this)
-
     }
 
     // Prevents the child labels from blocking the parent onTouchListener events
@@ -167,14 +160,13 @@ class LeafButton(
         this.layoutParams.height = line_height.toInt()
     }
 
-
     override fun onCreateDrawableState(extraSpace: Int): IntArray? {
         val drawableState = super.onCreateDrawableState(extraSpace + 4)
         if (this.state_active) {
             mergeDrawableStates(drawableState, STATE_ACTIVE)
         }
-        if (this.state_reflected) {
-            mergeDrawableStates(drawableState, STATE_REFLECTED)
+        if (this.state_linked) {
+            mergeDrawableStates(drawableState, STATE_LINKED)
         }
         if (this.state_focused) {
             mergeDrawableStates(drawableState, STATE_FOCUSED)
@@ -193,8 +185,8 @@ class LeafButton(
         refreshDrawableState()
     }
 
-    fun set_reflected(value: Boolean) {
-        this.state_reflected = value
+    fun set_linked(value: Boolean) {
+        this.state_linked = value
         this.value_label_octave.refreshDrawableState()
         this.value_label_offset.refreshDrawableState()
         this.prefix_label.refreshDrawableState()
@@ -215,68 +207,5 @@ class LeafButton(
         this.value_label_offset.refreshDrawableState()
         this.prefix_label.refreshDrawableState()
         refreshDrawableState()
-    }
-
-    override fun onTouchEvent(event: MotionEvent): Boolean {
-        return if (this.mDetector.onTouchEvent(event)) {
-            true
-        } else {
-            super.onTouchEvent(event)
-        }
-    }
-
-    override fun onDown(p0: MotionEvent?): Boolean {
-        //TODO("Not yet implemented")
-        return false
-    }
-
-    override fun onShowPress(p0: MotionEvent?) {
-        //TODO("Not yet implemented")
-    }
-
-    override fun onSingleTapUp(p0: MotionEvent): Boolean {
-        return false
-    }
-
-    override fun onScroll(p0: MotionEvent?, p1: MotionEvent?, p2: Float, p3: Float): Boolean {
-        //TODO("Not yet implemented")
-        return false
-    }
-
-    override fun onLongPress(p0: MotionEvent?) {
-        //TODO("Not yet implemented")
-    }
-
-    override fun onFling(p0: MotionEvent?, p1: MotionEvent?, p2: Float, p3: Float): Boolean {
-        //TODO("Not yet implemented")
-        return false
-    }
-
-    override fun onSingleTapConfirmed(p0: MotionEvent): Boolean {
-        return if (this.single_tap_callback != null) {
-            this.single_tap_callback!!(p0)
-        } else {
-            false
-        }
-    }
-
-    override fun onDoubleTap(p0: MotionEvent): Boolean {
-        return if (this.double_tap_callback != null) {
-            this.double_tap_callback!!(p0)
-        } else {
-            false
-        }
-    }
-
-    override fun onDoubleTapEvent(p0: MotionEvent?): Boolean {
-        //TODO("Not yet implemented")
-        return false
-    }
-
-    fun setOnDoubleTapListener(callback: (event: MotionEvent) -> Boolean) {
-        this.double_tap_callback = callback
-    }
-    fun setOnSingleTapListener(callback: (event: MotionEvent) -> Boolean) {
-        this.single_tap_callback = callback
     }
 }

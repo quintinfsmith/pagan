@@ -351,7 +351,8 @@ class BeatColumnAdapter(private var parent_fragment: EditorFragment, var recycle
                                 opus_manager.get_percussion_instrument(beatkey.line_offset)
                             } else {
                                 opus_manager.get_absolute_value(beatkey, position) ?: return@thread
-                            }
+                            },
+                            opus_manager.get_line_volume(beatkey.channel, beatkey.line_offset)
                         )
                     }
                 }

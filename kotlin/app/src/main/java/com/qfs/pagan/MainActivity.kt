@@ -357,7 +357,7 @@ class MainActivity : AppCompatActivity() {
         this.binding.appBarMain.toolbar.title = new_text
     }
 
-    fun play_event(channel: Int, event_value: Int) {
+    fun play_event(channel: Int, event_value: Int, velocity: Int=64) {
         val midi_channel = this.opus_manager.channels[channel].midi_channel
         val note = if (this.opus_manager.is_percussion(channel)) {
             event_value + 27
@@ -366,9 +366,9 @@ class MainActivity : AppCompatActivity() {
         }
 
         this@MainActivity.runOnUiThread {
-            this.midi_input_device.sendEvent(NoteOn(midi_channel, note, 64))
+            this.midi_input_device.sendEvent(NoteOn(midi_channel, note, velocity))
             Thread.sleep(250)
-            this.midi_input_device.sendEvent(NoteOff(midi_channel, note, 64))
+            this.midi_input_device.sendEvent(NoteOff(midi_channel, note, velocity))
         }
     }
 

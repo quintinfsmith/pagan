@@ -1,4 +1,5 @@
 package com.qfs.pagan
+import android.util.Log
 import android.view.View
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -922,11 +923,21 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     fun remove(count: Int) {
-        this.remove(
-            this.cursor.get_beatkey(),
-            this.cursor.get_position(),
-            count
-        )
+        val cursor = this.cursor
+        val beat_key = cursor.get_beatkey()
+        val position = cursor.get_position().toMutableList()
+
+        val tree = this.get_tree()
+        val cursor_position = position.toMutableList()
+        if (tree.parent!!.size <= 2) { // Will be pruned
+            cursor_position.removeLast()
+        } else if (position.last() == tree.parent!!.size - 1) {
+            cursor_position[cursor_position.size - 1] -= 1
+        }
+
+        this.remove( beat_key, position, count )
+        Log.d("AAA", "C: $cursor_position")
+        this.cursor_select(beat_key, cursor_position)
     }
     fun insert_line(count: Int) {
         this.new_line(

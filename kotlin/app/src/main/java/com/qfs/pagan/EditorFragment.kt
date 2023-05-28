@@ -1,6 +1,7 @@
 package com.qfs.pagan
 
 import android.os.Bundle
+import android.util.Log
 import android.view.*
 import android.widget.*
 import androidx.fragment.app.Fragment
@@ -489,21 +490,10 @@ class EditorFragment : PaganFragment() {
         } else {
             btnRemove.visibility = View.VISIBLE
             btnRemove.setOnClickListener {
-                val beat_key = opus_manager.cursor.get_beatkey()
-                val position = opus_manager.cursor.get_position().toMutableList()
-
-                val tree = opus_manager.get_tree()
-                val cursor_position = position.toMutableList()
-                if (tree.parent!!.size <= 2) { // Will be pruned
-                    cursor_position.removeLast()
-                } else if (position.last() == tree.parent!!.size - 1) {
-                    cursor_position[cursor_position.size - 1] -= 1
-                }
 
                 opus_manager.remove(1)
-
-                opus_manager.cursor_select(beat_key, cursor_position)
             }
+
             btnRemove.setOnLongClickListener {
                 val position = opus_manager.cursor.get_position().toMutableList()
                 if (position.isNotEmpty()) {

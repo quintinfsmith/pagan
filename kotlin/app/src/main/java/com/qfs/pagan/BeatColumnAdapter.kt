@@ -234,6 +234,7 @@ class BeatColumnAdapter(private var parent_fragment: EditorFragment, var recycle
                 this.buildTreeView(beat_wrapper as ViewGroup, BeatKey(channel, line_offset, index))
 
                 (holder.itemView as ViewGroup).addView(beat_wrapper)
+                Log.d("AAA", "Rebuilt $channel, $line_offset, $index")
             }
         }
         this.adjust_beat_width(holder, index)
@@ -440,6 +441,9 @@ class BeatColumnAdapter(private var parent_fragment: EditorFragment, var recycle
     }
 
     private fun get_all_leaf_views(y: Int, x: Int, position: List<Int>? = null): List<LeafButton>? {
+        // NOTE: A Bad position MAY be passed. eg, if the cursor doesn't reflect that a node was removed
+        // Those should be treated as if they just don't exist here
+
         // Get the full-beat view
         val column_view_holder = this.recycler.findViewHolderForAdapterPosition(x) ?: return null
         var working_view = column_view_holder.itemView
@@ -453,6 +457,10 @@ class BeatColumnAdapter(private var parent_fragment: EditorFragment, var recycle
         val output = mutableListOf<LeafButton>()
 
         for (i in position ?: listOf()) {
+            // Attempting to get leaf that doesn't exist
+            if (working_view is LeafButton) {
+                break
+            }
             working_view = (working_view as ViewGroup).getChildAt(i)
         }
 
@@ -464,6 +472,7 @@ class BeatColumnAdapter(private var parent_fragment: EditorFragment, var recycle
                 output.add(working_view)
                 continue
             }
+
             for (i in 0 until (working_view as ViewGroup).childCount) {
                 stack.add(working_view.getChildAt(i))
             }

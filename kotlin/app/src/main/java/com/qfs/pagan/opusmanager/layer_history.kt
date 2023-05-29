@@ -183,12 +183,6 @@ open class HistoryLayer : LinksLayer() {
             "create_link_pool" -> {
                 this.create_link_pool((current_node.args[0] as LinkedHashSet<BeatKey>).toList())
             }
-            "set_percussion_channel" -> {
-                this.set_percussion_channel(current_node.args[0] as Int)
-            }
-            "unset_percussion_channel" -> {
-                this.unset_percussion_channel()
-            }
             "set_event" -> {
                 this.set_event(
                     current_node.args[0] as BeatKey,
@@ -493,18 +487,6 @@ open class HistoryLayer : LinksLayer() {
         }
     }
 
-    override fun unset_percussion_channel() {
-        this.history_cache.remember {
-            if (this.percussion_channel != null) {
-                this.push_to_history_stack(
-                    "set_percussion_channel",
-                    listOf(this.percussion_channel!!)
-                )
-            }
-            super.unset_percussion_channel()
-        }
-    }
-
     override fun set_percussion_event(beat_key: BeatKey, position: List<Int>) {
         this.history_cache.remember {
             val tree = this.get_tree(beat_key, position)
@@ -724,19 +706,6 @@ open class HistoryLayer : LinksLayer() {
         }
     }
 
-    override fun set_percussion_channel(channel: Int, program: Int) {
-        this.history_cache.remember {
-            this.push_to_history_stack("set_channel_instrument", listOf(channel, this.channels[channel].get_instrument()))
-            val original_percussion_channel = this.percussion_channel
-            super.set_percussion_channel(channel, program)
-            if (original_percussion_channel == null) {
-                this.push_to_history_stack("unset_percussion_channel", listOf())
-            } else {
-                this.push_to_history_stack("set_percussion_channel", listOf(original_percussion_channel))
-            }
-        }
-    }
-
     override fun save(path: String?) {
         super.save(path)
         this.save_point_popped = false
@@ -807,9 +776,6 @@ open class HistoryLayer : LinksLayer() {
                 line_old
             }
 
-            if (channel_old == this.percussion_channel && channel_old != channel_new) {
-                this.push_to_history_stack("set_percussion_instrument", listOf(return_to_line, this.get_percussion_instrument(return_to_line)))
-            }
 
             this.push_to_history_stack("move_line", listOf(channel_new, return_from_line, channel_old, return_to_line))
             if (restore_old_line) {
@@ -820,23 +786,10 @@ open class HistoryLayer : LinksLayer() {
 
     override fun set_channel_instrument(channel: Int, instrument: Pair<Int, Int>) {
         this.history_cache.remember {
-            if (this.percussion_channel == channel) {
-                for (i in 0 until this.channels[channel].size) {
-                    this.push_to_history_stack(
-                        "set_percussion_instrument",
-                        listOf(i, this.get_percussion_instrument(i))
-                    )
-                }
-                this.push_to_history_stack(
-                    "set_percussion_channel",
-                    listOf(this.percussion_channel!!)
-                )
-            } else {
-                this.push_to_history_stack(
-                    "set_channel_instrument",
-                    listOf(channel, this.channels[channel].get_instrument())
-                )
-            }
+            this.push_to_history_stack(
+                "set_channel_instrument",
+                listOf(channel, this.channels[channel].get_instrument())
+            )
             super.set_channel_instrument(channel, instrument)
         }
     }

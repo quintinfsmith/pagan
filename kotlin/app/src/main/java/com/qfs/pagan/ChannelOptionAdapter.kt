@@ -1,5 +1,6 @@
 package com.qfs.pagan
 
+import android.util.Log
 import android.view.ContextThemeWrapper
 import android.view.LayoutInflater
 import android.view.View
@@ -109,17 +110,17 @@ class ChannelOptionAdapter(
         val popupMenu = PopupMenu(wrapper, view)
         val channel = this.get_view_channel(view)
 
-        var sorted_keys = this.supported_instruments.keys.toList().sortedBy {
+        val sorted_keys = this.supported_instruments.keys.toList().sortedBy {
             (it.first * 128) + it.second
         }
         var x = 0
         sorted_keys.forEachIndexed { i: Int, key: Pair<Int, Int> ->
             val name = this.supported_instruments[key]
             if ((this.opus_manager.is_percussion(channel) && key.first == 128)) {
-                popupMenu.menu.add(0, x, i, "$x: $name")
+                popupMenu.menu.add(0, i, x, "$x: $name")
                 x += 1
             } else if (!(key.first == 128 || this.opus_manager.is_percussion(channel))) {
-                popupMenu.menu.add(0, x, i, "$x: $name")
+                popupMenu.menu.add(0, i, x, "$x: $name")
                 x += 1
             }
         }
@@ -134,10 +135,6 @@ class ChannelOptionAdapter(
     }
 
     private fun set_channel_instrument(channel: Int, bank: Int, program: Int) {
-        if (bank == 128) {
-            this.opus_manager.set_percussion_channel(channel, program)
-            return
-        }
         this.opus_manager.set_channel_instrument(channel, Pair(bank, program))
     }
 

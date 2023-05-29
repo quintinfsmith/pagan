@@ -73,7 +73,7 @@ open class LinksLayer : OpusManagerBase() {
         if (beat_key == target) {
             throw SelfLinkError(beat_key, target)
         }
-        if ((beat_key.channel == this.percussion_channel || target.channel == this.percussion_channel) && target.channel != beat_key.channel) {
+        if ((beat_key.channel == this.channels.size - 1 || target.channel == this.channels.size - 1) && target.channel != beat_key.channel) {
             throw MixedLinkException()
         }
 
@@ -369,6 +369,7 @@ open class LinksLayer : OpusManagerBase() {
         var lines_in_range = 0
         var lines_available = 0
         val percussion_map = mutableListOf<Boolean>()
+        val percussion_channel = this.channels.size - 1
         this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
             if (i < from_key.channel || i > to_key.channel) {
                 return@forEachIndexed
@@ -379,7 +380,7 @@ open class LinksLayer : OpusManagerBase() {
                 } else if (i == to_key.channel && j > to_key.line_offset) {
                     continue
                 }
-                percussion_map.add(i == this.percussion_channel)
+                percussion_map.add(i == percussion_channel)
                 lines_in_range += 1
             }
         }
@@ -392,7 +393,7 @@ open class LinksLayer : OpusManagerBase() {
                 if (i == beat.channel && j < beat.line_offset) {
                     continue
                 }
-                target_percussion_map.add(i == this.percussion_channel)
+                target_percussion_map.add(i == percussion_channel)
                 lines_available += 1
             }
         }

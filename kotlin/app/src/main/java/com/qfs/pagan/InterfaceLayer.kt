@@ -40,37 +40,14 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         val rvActiveChannels: RecyclerView = this.activity.findViewById(R.id.rvActiveChannels)
         rvActiveChannels.adapter?.notifyItemChanged(channel)
 
+        if (this.is_percussion(channel)) {
+            withFragment {
+                it.populate_active_percussion_names()
+            }
+        }
+
         this.activity.update_channel_instruments(this)
         this.activity.cancel_reticle()
-    }
-
-    override fun set_percussion_channel(channel: Int, program: Int) {
-        super.set_percussion_channel(channel, program)
-        val rvActiveChannels: RecyclerView = this.activity.findViewById(R.id.rvActiveChannels)
-        rvActiveChannels.adapter?.notifyItemChanged(channel)
-        if (!this.simple_ui_locked()) {
-            this.update_line_labels()
-            this.ui_notify_visible_changes()
-        }
-        this.withFragment {
-            it.clearContextMenu()
-        }
-    }
-
-    override fun unset_percussion_channel() {
-        val old_channel = this.percussion_channel
-        super.unset_percussion_channel()
-        if (!this.simple_ui_locked() && old_channel != null) {
-            val rvActiveChannels: RecyclerView = this.activity.findViewById(R.id.rvActiveChannels)
-            rvActiveChannels.adapter?.notifyItemChanged(old_channel)
-            this.ui_notify_visible_changes()
-        }
-        if (!this.simple_ui_locked()) {
-            this.update_line_labels()
-        }
-        this.withFragment {
-            it.clearContextMenu()
-        }
     }
 
     override fun set_project_name(new_name: String) {
@@ -121,13 +98,13 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
         val btnChoosePercussion: TextView? = this.activity.findViewById(R.id.btnChoosePercussion)
         if (btnChoosePercussion != null) {
-            val drums = this.activity.resources.getStringArray(R.array.midi_drums)
-            val drum_index = this.get_percussion_instrument(line_offset)
-            btnChoosePercussion.text = this.activity.getString(
-                R.string.label_choose_percussion,
-                instrument,
-                drums[drum_index]
-            )
+            this.withFragment {
+                btnChoosePercussion.text = this.activity.getString(
+                    R.string.label_choose_percussion,
+                    instrument,
+                    it.get_drum_name(instrument)
+                )
+            }
 
             this.update_line_labels()
         }
@@ -627,21 +604,9 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                     this.push_to_history_stack(
                         "cursor_select_row",
                         listOf(
-                            this.percussion_channel!!,
+                            this.channels.size - 1,
                             args[0] as Int
                         )
-                    )
-                }
-                "set_percussion_channel" -> {
-                    this.push_to_history_stack(
-                        "cursor_select_row",
-                        listOf(args[0], 0)
-                    )
-                }
-                "unset_percussion_channel" -> {
-                    this.push_to_history_stack(
-                        "cursor_select_row",
-                        listOf(this.percussion_channel!!, 0)
                     )
                 }
                 "set_channel_instrument" -> {

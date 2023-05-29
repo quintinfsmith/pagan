@@ -24,6 +24,7 @@ class EditorFragment : PaganFragment() {
     private var active_context_menu_index: ContextMenu? = null
 
     private var table_offset_pause: Int = 0
+    private var active_percussion_names = HashMap<Int, String>()
 
     enum class ContextMenu {
         Leaf,
@@ -774,37 +775,28 @@ class EditorFragment : PaganFragment() {
         this.reset_context_menu()
     }
 
+
+    fun get_drum_name(index: Int): String? {
+        return this.active_percussion_names[index + 27]
+    }
+
     private fun interact_btnChoosePercussion(view: View) {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
 
         val popupMenu = PopupMenu(this.binding.root.context, view)
-        val drums = resources.getStringArray(R.array.midi_drums)
-        val preset = main.soundfont.get_preset(0, 128)
-        val available_drum_keys = mutableSetOf<Int>()
-
-        for (preset_instrument in preset.instruments) {
-            if (preset_instrument.instrument == null) {
-                continue
-            }
-
-            for (sample in preset_instrument.instrument!!.samples) {
-                if (sample.key_range != null) {
-                    for (j in sample.key_range!!.first .. sample.key_range!!.second) {
-                        available_drum_keys.add(j)
-                    }
-                }
-            }
+        if (this.active_percussion_names.isEmpty()) {
+            this.populate_active_percussion_names()
         }
 
-        drums.forEachIndexed { i, string ->
-            if ((i + 27) in available_drum_keys) {
-                popupMenu.menu.add(0, i, i, "$i: $string")
-            }
+        var i = 0
+        for ((note, name) in this.active_percussion_names) {
+            popupMenu.menu.add(0, note - 27, i, "${note - 27}: $name")
+            i += 1
         }
 
         popupMenu.setOnMenuItemClickListener {
-            opus_manager.set_percussion_instrument( it.itemId )
+            opus_manager.set_percussion_instrument( it.itemId)
             true
         }
 
@@ -859,5 +851,39 @@ class EditorFragment : PaganFragment() {
         val rvBeatTable = main.findViewById<RecyclerView>(R.id.rvBeatTable)
         val rvBeatTable_adapter = rvBeatTable.adapter as BeatColumnAdapter
         rvBeatTable_adapter.scrollToPosition(adj_beatkey, new_position)
+    }
+
+    fun populate_active_percussion_names() {
+        this.active_percussion_names.clear()
+        for ((name, note) in this.get_drum_options()) {
+            this.active_percussion_names[note] = name
+        }
+    }
+    fun get_drum_options(): List<Pair<String, Int>> {
+        val main = this.get_main()
+        val opus_manager = main.get_opus_manager()
+        val (bank, program) = opus_manager.get_channel_instrument(opus_manager.channels.size - 1)
+        val preset = main.soundfont.get_preset(program, bank)
+        val available_drum_keys = mutableSetOf<Pair<String,Int>>()
+
+        for (preset_instrument in preset.instruments) {
+            if (preset_instrument.instrument == null) {
+                continue
+            }
+
+            for (sample in preset_instrument.instrument!!.samples) {
+                if (sample.key_range != null) {
+                    var name = sample.sample!!.name
+                    if (name.contains("(")) {
+                        name = name.substring(0, name.indexOf("("))
+                    }
+                    available_drum_keys.add(Pair(name, sample.key_range!!.first))
+                }
+            }
+        }
+
+        return available_drum_keys.sortedBy {
+            it.second
+        }
     }
 }

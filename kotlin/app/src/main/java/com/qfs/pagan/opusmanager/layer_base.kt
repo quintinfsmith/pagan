@@ -1,5 +1,4 @@
 package com.qfs.pagan.opusmanager
-import android.util.Log
 import com.qfs.apres.BankSelect
 import com.qfs.apres.MIDI
 import com.qfs.apres.NoteOff
@@ -1144,41 +1143,40 @@ open class OpusManagerBase {
                 channel_sizes[channel] = max(channel_sizes[channel], size)
             }
         }
-        Log.d("AAA", "${midi_channel_map}")
         // Move Percussion to Last Opus Manager Channel
         if (midi_channel_map.containsKey(9)) {
-            var channel = midi_channel_map[9]!!
+            val channel = midi_channel_map[9]!!
             var new_channel = channel
             for ((mchannel, ochannel) in midi_channel_map) {
                 if (mchannel == 9) continue
-                if (mchannel > channel) {
+                if (ochannel > channel) {
                     new_channel = max(new_channel, ochannel)
                     midi_channel_map[mchannel] = ochannel - 1
                 }
             }
-            var percussion_line_count = channel_sizes.removeAt(channel)
+            val percussion_line_count = channel_sizes.removeAt(channel)
             channel_sizes.add(percussion_line_count)
             midi_channel_map[9] = new_channel
-        }
-        Log.d("AAA", "${midi_channel_map}, $channel_sizes")
-
-        if (midi_channel_map.containsKey(9)) {
-            this.new_channel(lines = channel_sizes[midi_channel_map[9]!!])
         } else {
-            this.new_channel(lines = 1)
+            // If no percussion is found, add an empty percussion track
+            midi_channel_map[9] = channel_sizes.size
+            channel_sizes.add(1)
         }
 
-        for ((mchannel, ochannel) in midi_channel_map) {
-            if (mchannel == 9) {
-                continue
+
+        this.new_channel(lines = channel_sizes[midi_channel_map[9]!!])
+
+        var sorted_channels = midi_channel_map.values.sortedBy { it }
+        sorted_channels.forEachIndexed { i: Int, channel: Int ->
+            if (i == sorted_channels.size - 1) {
+                return@forEachIndexed
             }
-            this.new_channel(lines = channel_sizes[ochannel])
+            this.new_channel(lines = channel_sizes[channel])
         }
 
         for (i in 0 until settree.size) {
             this.insert_beat()
         }
-
 
         val events_to_set = mutableSetOf<Triple<BeatKey, List<Int>, OpusEvent>>()
         for ((position, event_set) in mapped_events) {
@@ -1190,16 +1188,9 @@ open class OpusManagerBase {
                 if (event.channel == 9) {
                     percussion_channel = midi_channel_map[9]
                 }
-                if (!tmp_channel_counts.contains(channel_index)) {
-                    tmp_channel_counts[channel_index] = 0
-                }
 
-                val line_offset = if (event.channel == 9) {
-                    percussion_map[event.note]!!
-                } else {
-                    tmp_channel_counts[channel_index]!!
-                }
-                tmp_channel_counts[channel_index] = tmp_channel_counts[channel_index]!! + 1
+                val line_offset = tmp_channel_counts[channel_index] ?: 0
+                tmp_channel_counts[channel_index] = line_offset + 1
 
                 val working_position = mutableListOf<Int>()
                 var working_beatkey: BeatKey? = null

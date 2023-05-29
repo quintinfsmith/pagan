@@ -70,7 +70,14 @@ class ChannelOptionAdapter(
             this.interact_btnChooseInstrument(it)
         }
 
-        holder.itemView.findViewById<TextView>(R.id.btnRemoveChannel).setOnClickListener {
+        var remove_button = holder.itemView.findViewById<TextView>(R.id.btnRemoveChannel)
+        remove_button.visibility = if (this.opus_manager.is_percussion(position)) {
+             View.GONE
+        } else {
+            View.VISIBLE
+        }
+
+        remove_button.setOnClickListener {
             this.interact_btnRemoveChannel(it)
         }
     }

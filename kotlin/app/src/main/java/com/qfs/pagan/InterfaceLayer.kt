@@ -151,13 +151,21 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     override fun new_channel(channel: Int?, lines: Int) {
+        var notify_index = if (channel == null) {
+            this.channels.size
+        } else {
+            min(channel, this.channels.size)
+        }
+
         super.new_channel(channel, lines)
         for (i in 0 until lines) {
             this.ui_add_line_label()
         }
         this.ui_notify_visible_changes()
         val rvActiveChannels: RecyclerView = this.activity.findViewById(R.id.rvActiveChannels)
-        rvActiveChannels.adapter?.notifyItemInserted(channel ?: (this.channels.size - 1))
+
+        rvActiveChannels.adapter?.notifyItemChanged(notify_index - 1)
+        rvActiveChannels.adapter?.notifyItemInserted(notify_index)
     }
 
     override fun remove_beat(beat_index: Int) {

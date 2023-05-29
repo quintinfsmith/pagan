@@ -1,10 +1,10 @@
-package com.qfs.pagan.apres.SoundFontPlayer
+package com.qfs.apres.SoundFontPlayer
 
-import com.qfs.pagan.apres.InstrumentSample
-import com.qfs.pagan.apres.NoteOn
-import com.qfs.pagan.apres.Preset
-import com.qfs.pagan.apres.PresetInstrument
-import com.qfs.pagan.apres.riffreader.toUInt
+import com.qfs.apres.InstrumentSample
+import com.qfs.apres.NoteOn
+import com.qfs.apres.Preset
+import com.qfs.apres.PresetInstrument
+import com.qfs.apres.riffreader.toUInt
 import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.max

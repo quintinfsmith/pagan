@@ -1,4 +1,4 @@
-package com.qfs.pagan.apres
+package com.qfs.apres
 
 import kotlin.math.*
 

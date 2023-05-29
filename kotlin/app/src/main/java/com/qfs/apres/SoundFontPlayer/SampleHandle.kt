@@ -1,6 +1,6 @@
-package com.qfs.pagan.apres.SoundFontPlayer
+package com.qfs.apres.SoundFontPlayer
 
-import com.qfs.pagan.apres.riffreader.toUInt
+import com.qfs.apres.riffreader.toUInt
 import kotlin.math.max
 import kotlin.math.min
 

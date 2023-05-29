@@ -4,7 +4,7 @@ import android.view.View
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.qfs.pagan.apres.MIDI
+import com.qfs.apres.MIDI
 import com.qfs.pagan.opusmanager.*
 import com.qfs.pagan.structure.OpusTree
 import java.lang.Integer.max
@@ -33,7 +33,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         }
     }
 
-    override fun set_channel_instrument(channel: Int, instrument: Int) {
+    override fun set_channel_instrument(channel: Int, instrument: Pair<Int, Int>) {
         this.activity.loading_reticle()
         super.set_channel_instrument(channel, instrument)
 
@@ -44,8 +44,8 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         this.activity.cancel_reticle()
     }
 
-    override fun set_percussion_channel(channel: Int) {
-        super.set_percussion_channel(channel)
+    override fun set_percussion_channel(channel: Int, program: Int) {
+        super.set_percussion_channel(channel, program)
         val rvActiveChannels: RecyclerView = this.activity.findViewById(R.id.rvActiveChannels)
         rvActiveChannels.adapter?.notifyItemChanged(channel)
         if (!this.simple_ui_locked()) {

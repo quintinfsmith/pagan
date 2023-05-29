@@ -8,7 +8,7 @@ import android.widget.PopupMenu
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.qfs.pagan.apres.SoundFont
+import com.qfs.apres.SoundFont
 
 class ChannelOptionAdapter(
     private val activity: MainActivity,
@@ -18,7 +18,7 @@ class ChannelOptionAdapter(
 ) : RecyclerView.Adapter<ChannelOptionAdapter.ChannelOptionViewHolder>() {
     class OutOfSyncException : Exception("Channel Option list out of sync with OpusManager")
     class ChannelOptionViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
-    private var supported_instruments: Set<Int>
+    private var supported_instruments = HashMap<Pair<Int, Int>, String>()
     init {
         this.recycler.adapter = this
         this.recycler.layoutManager = LinearLayoutManager(this.activity)
@@ -35,8 +35,9 @@ class ChannelOptionAdapter(
                 //override fun onChanged() { }
             }
         )
-        val supported_instruments = this.soundfont.get_available_presets(0)
-        this.supported_instruments = supported_instruments
+        for ((name, program, bank) in this.soundfont.get_available_presets()) {
+            this.supported_instruments[Pair(bank, program)] = name
+        }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChannelOptionViewHolder {
@@ -54,38 +55,11 @@ class ChannelOptionAdapter(
         val channels = this.opus_manager.channels
         val curChannel = channels[position]
         val btnChooseInstrument: TextView = view.findViewById(R.id.btnChooseInstrument)
-        val label = this.get_label(
-            if (this.opus_manager.is_percussion(position)) {
-                -1
-            } else {
-                curChannel.midi_instrument
-            }
-        )
+        val label = this.supported_instruments[Pair(
+            curChannel.midi_bank,
+            curChannel.midi_program
+        )]
         btnChooseInstrument.text = this.activity.getString(R.string.label_choose_instrument, position, label)
-    }
-
-    private fun get_label(instrument: Int): String {
-        val instrument_array = this.activity.resources.getStringArray(R.array.midi_instruments)
-
-        val prefix = if (instrument == -1) {
-            if (this.soundfont.get_available_presets(128).isNotEmpty()) {
-                ""
-            } else {
-                "\uD83D\uDD07"
-            }
-        } else {
-            if (instrument in this.supported_instruments) {
-                ""
-            } else {
-                "\uD83D\uDD07"
-            }
-        }
-
-        return if (instrument == -1) {
-            "$prefix Percussion"
-        } else {
-            "$prefix ${instrument_array[instrument]}"
-        }
     }
 
     override fun onBindViewHolder(holder: ChannelOptionViewHolder, position: Int) {
@@ -135,27 +109,36 @@ class ChannelOptionAdapter(
         val popupMenu = PopupMenu(wrapper, view)
         val channel = this.get_view_channel(view)
 
-        for (i in 0 until 128) {
-            if (i == 0 && this.opus_manager.percussion_channel != null) {
-                continue
+        var sorted_keys = this.supported_instruments.keys.toList().sortedBy {
+            (it.first * 128) + it.second
+        }
+        var x = 0
+        sorted_keys.forEachIndexed { i: Int, key: Pair<Int, Int> ->
+            val name = this.supported_instruments[key]
+            if ((this.opus_manager.is_percussion(channel) && key.first == 128)) {
+                popupMenu.menu.add(0, x, i, "$x: $name")
+                x += 1
+            } else if (!(key.first == 128 || this.opus_manager.is_percussion(channel))) {
+                popupMenu.menu.add(0, x, i, "$x: $name")
+                x += 1
             }
-            popupMenu.menu.add(0, i - 1, i, "$i: ${this.get_label(i - 1)}")
         }
 
         popupMenu.setOnMenuItemClickListener {
-            this.set_channel_instrument(channel, it.itemId)
+            val (bank, program) = sorted_keys[it.itemId]
+            this.set_channel_instrument(channel, bank, program)
             false
         }
 
         popupMenu.show()
     }
 
-    private fun set_channel_instrument(channel: Int, instrument: Int) {
-        if (instrument == -1) {
-            this.opus_manager.set_percussion_channel(channel)
+    private fun set_channel_instrument(channel: Int, bank: Int, program: Int) {
+        if (bank == 128) {
+            this.opus_manager.set_percussion_channel(channel, program)
             return
         }
-        this.opus_manager.set_channel_instrument(channel, instrument)
+        this.opus_manager.set_channel_instrument(channel, Pair(bank, program))
     }
 
     override fun getItemCount(): Int {

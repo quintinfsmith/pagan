@@ -20,8 +20,17 @@ import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.recyclerview.widget.RecyclerView
-import com.qfs.pagan.apres.*
-import com.qfs.pagan.apres.SoundFontPlayer.MIDIPlaybackDevice
+import com.qfs.apres.BankSelect
+import com.qfs.apres.MIDI
+import com.qfs.apres.MIDIController
+import com.qfs.apres.MIDIPlayer
+import com.qfs.apres.MIDIStop
+import com.qfs.apres.NoteOff
+import com.qfs.apres.NoteOn
+import com.qfs.apres.ProgramChange
+import com.qfs.apres.SoundFont
+import com.qfs.apres.VirtualMIDIDevice
+import com.qfs.apres.SoundFontPlayer.MIDIPlaybackDevice
 import com.qfs.pagan.databinding.ActivityMainBinding
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -122,7 +131,8 @@ class MainActivity : AppCompatActivity() {
 
     fun update_channel_instruments(opus_manager: OpusManager) {
         for (channel in opus_manager.channels) {
-            this.midi_input_device.sendEvent(ProgramChange(channel.midi_channel, channel.midi_instrument))
+            this.midi_input_device.sendEvent(BankSelect(channel.midi_channel, channel.midi_bank))
+            this.midi_input_device.sendEvent(ProgramChange(channel.midi_channel, channel.midi_program))
         }
     }
 

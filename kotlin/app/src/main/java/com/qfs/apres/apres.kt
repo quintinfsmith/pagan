@@ -1,12 +1,9 @@
-package com.qfs.pagan.apres
+package com.qfs.apres
 
 import android.content.Context
 import android.util.Log
-import com.qfs.pagan.apres.riffreader.toUInt
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import com.qfs.apres.riffreader.toUInt
 import java.io.File
-import kotlin.concurrent.thread
 import kotlin.experimental.and
 import kotlin.experimental.or
 
@@ -588,7 +585,8 @@ data class SetTempo(var uspqn: Int): MIDIEvent {
     }
 }
 
-data class SMPTEOffset(var hour: Int, var minute: Int, var second: Int, var ff: Int, var fr: Int): MIDIEvent {
+data class SMPTEOffset(var hour: Int, var minute: Int, var second: Int, var ff: Int, var fr: Int):
+    MIDIEvent {
     override fun as_bytes(): ByteArray {
         return byteArrayOf(
             0xFF.toByte(),
@@ -634,7 +632,8 @@ data class SMPTEOffset(var hour: Int, var minute: Int, var second: Int, var ff: 
     }
 }
 
-data class TimeSignature(var numerator: Int, var denominator: Int, var clocks_per_metronome: Int, var thirtysecondths_per_quarter: Int): MIDIEvent {
+data class TimeSignature(var numerator: Int, var denominator: Int, var clocks_per_metronome: Int, var thirtysecondths_per_quarter: Int):
+    MIDIEvent {
     override fun as_bytes(): ByteArray {
         return byteArrayOf(
             0xFF.toByte(),
@@ -852,12 +851,9 @@ abstract class VariableControlChange(var channel: Int, var value: Int): MIDIEven
     override fun as_bytes(): ByteArray {
         return byteArrayOf(
             (0xB0 or this.get_channel()).toByte(),
-            this.get_controller().toByte(),
+            this.controller.toByte(),
             this.get_value().toByte()
         )
-    }
-    fun get_controller(): Int {
-        return this.controller
     }
     fun get_channel(): Int {
         return this.channel
@@ -944,110 +940,188 @@ class MonophonicOperation(channel: Int, value: Int): VariableControlChange(chann
     override val controller = 0xFE
 }
 
+abstract class CompoundEvent(var channel: Int, var value: Int): MIDIEvent {
+    abstract val controller: Int
+    open val controller_lsb: Int? = null// NRN/RN are the only events that arent 0x20 apart. So assume 0x20 unless specified
+    override fun as_bytes(): ByteArray {
+        val controller_lsb: Int = if (this.controller_lsb == null) {
+            this.controller + 0x20
+        } else {
+            this.controller_lsb!!
+        }
+        val value_msb = 0xFF00 and this.value
+        val value_lsb = 0x00FF and this.value
+        return byteArrayOf(
+            (0xB0 or this.channel).toByte(),
+            this.controller.toByte(),
+            value_msb.toByte(),
+            (0xB0 or this.channel).toByte(),
+            controller_lsb.toByte(),
+            value_lsb.toByte()
+        )
+    }
 
-class BankSelect(channel: Int, value: Int): VariableControlChange(channel, value) {
+}
+class BankSelect(channel: Int, value: Int): CompoundEvent(channel, value) {
+    override val controller = 0x00
+}
+class BankSelectMSB(channel: Int, value: Int): VariableControlChange(channel, value) {
     override val controller = 0x00
 }
 class BankSelectLSB(channel: Int, value: Int): VariableControlChange(channel, value) {
     override val controller = 0x20
 }
-class ModulationWheel(channel: Int, value: Int): VariableControlChange(channel, value) {
+class ModulationWheel(channel: Int, value: Int): CompoundEvent(channel, value) {
+    override val controller = 0x01
+}
+class ModulationWheelMSB(channel: Int, value: Int): VariableControlChange(channel, value) {
     override val controller = 0x01
 }
 class ModulationWheelLSB(channel: Int, value: Int): VariableControlChange(channel, value) {
     override val controller = 0x21
 }
-class BreathController(channel: Int, value: Int): VariableControlChange(channel, value) {
+class BreathController(channel: Int, value: Int): CompoundEvent(channel, value) {
+    override val controller = 0x02
+}
+class BreathControllerMSB(channel: Int, value: Int): VariableControlChange(channel, value) {
     override val controller = 0x02
 }
 class BreathControllerLSB(channel: Int, value: Int): VariableControlChange(channel, value) {
     override val controller = 0x22
 }
-class FootPedal(channel: Int, value: Int): VariableControlChange(channel, value) {
+class FootPedal(channel: Int, value: Int): CompoundEvent(channel, value) {
+    override val controller = 0x04
+}
+class FootPedalMSB(channel: Int, value: Int): VariableControlChange(channel, value) {
     override val controller = 0x04
 }
 class FootPedalLSB(channel: Int, value: Int): VariableControlChange(channel, value) {
     override val controller = 0x24
 }
-class PortamentoTime(channel: Int, value: Int): VariableControlChange(channel, value) {
+class PortamentoTime(channel: Int, value: Int): CompoundEvent(channel, value) {
+    override val controller = 0x05
+}
+class PortamentoTimeMSB(channel: Int, value: Int): VariableControlChange(channel, value) {
     override val controller = 0x05
 }
 class PortamentoTimeLSB(channel: Int, value: Int): VariableControlChange(channel, value) {
     override val controller = 0x25
 }
-class DataEntry(channel: Int, value: Int): VariableControlChange(channel, value) {
+class DataEntry(channel: Int, value: Int): CompoundEvent(channel, value) {
+    override val controller = 0x06
+}
+class DataEntryMSB(channel: Int, value: Int): VariableControlChange(channel, value) {
     override val controller = 0x06
 }
 class DataEntryLSB(channel: Int, value: Int): VariableControlChange(channel, value) {
     override val controller = 0x26
 }
-class Volume(channel: Int, value: Int): VariableControlChange(channel, value) {
+class Volume(channel: Int, value: Int): CompoundEvent(channel, value) {
+    override val controller = 0x07
+}
+class VolumeMSB(channel: Int, value: Int): VariableControlChange(channel, value) {
     override val controller = 0x07
 }
 class VolumeLSB(channel: Int, value: Int): VariableControlChange(channel, value) {
     override val controller = 0x27
 }
-class Balance(channel: Int, value: Int): VariableControlChange(channel, value) {
+class Balance(channel: Int, value: Int): CompoundEvent(channel, value) {
+    override val controller = 0x08
+}
+class BalanceMSB(channel: Int, value: Int): VariableControlChange(channel, value) {
     override val controller = 0x08
 }
 class BalanceLSB(channel: Int, value: Int): VariableControlChange(channel, value) {
     override val controller = 0x28
 }
-class Pan(channel: Int, value: Int): VariableControlChange(channel, value) {
+class Pan(channel: Int, value: Int): CompoundEvent(channel, value) {
+    override val controller = 0x0A
+}
+class PanMSB(channel: Int, value: Int): VariableControlChange(channel, value) {
     override val controller = 0x0A
 }
 class PanLSB(channel: Int, value: Int): VariableControlChange(channel, value) {
     override val controller = 0x2A
 }
-class Expression(channel: Int, value: Int): VariableControlChange(channel, value) {
+class Expression(channel: Int, value: Int): CompoundEvent(channel, value) {
+    override val controller = 0x0B
+}
+class ExpressionMSB(channel: Int, value: Int): VariableControlChange(channel, value) {
     override val controller = 0x0B
 }
 class ExpressionLSB(channel: Int, value: Int): VariableControlChange(channel, value) {
     override val controller = 0x2B
 }
-class NonRegisteredParameterNumber(channel: Int, value: Int): VariableControlChange(channel, value) {
+class NonRegisteredParameterNumber(channel: Int, value: Int): CompoundEvent(channel, value) {
+    override val controller = 0x63
+    override val controller_lsb = 0x62
+}
+class NonRegisteredParameterNumberMSB(channel: Int, value: Int): VariableControlChange(channel, value) {
     override val controller = 0x63
 }
 class NonRegisteredParameterNumberLSB(channel: Int, value: Int): VariableControlChange(channel, value) {
     override val controller = 0x62
 }
-class RegisteredParameterNumber(channel: Int, value: Int): VariableControlChange(channel, value) {
+class RegisteredParameterNumber(channel: Int, value: Int): CompoundEvent(channel, value) {
+    override val controller = 0x65
+    override val controller_lsb = 0x64
+}
+class RegisteredParameterNumberMSB(channel: Int, value: Int): VariableControlChange(channel, value) {
     override val controller = 0x65
 }
 class RegisteredParameterNumberLSB(channel: Int, value: Int): VariableControlChange(channel, value) {
     override val controller = 0x64
 }
-class EffectControl1(channel: Int, value: Int): VariableControlChange(channel, value) {
+class EffectControl1(channel: Int, value: Int): CompoundEvent(channel, value) {
+    override val controller = 0x64
+}
+class EffectControl1MSB(channel: Int, value: Int): VariableControlChange(channel, value) {
     override val controller = 0x0C
 }
 class EffectControl1LSB(channel: Int, value: Int): VariableControlChange(channel, value) {
     override val controller = 0x2C
 }
-class EffectControl2(channel: Int, value: Int): VariableControlChange(channel, value) {
+class EffectControl2(channel: Int, value: Int): CompoundEvent(channel, value) {
+    override val controller = 0x0D
+}
+class EffectControl2MSB(channel: Int, value: Int): VariableControlChange(channel, value) {
     override val controller = 0x0D
 }
 class EffectControl2LSB(channel: Int, value: Int): VariableControlChange(channel, value) {
     override val controller = 0x2D
 }
-class GeneralPurpose1(channel: Int, value: Int): VariableControlChange(channel, value) {
+class GeneralPurpose1(channel: Int, value: Int): CompoundEvent(channel, value) {
+    override val controller = 0x10
+}
+class GeneralPurpose1MSB(channel: Int, value: Int): VariableControlChange(channel, value) {
     override val controller = 0x10
 }
 class GeneralPurpose1LSB(channel: Int, value: Int): VariableControlChange(channel, value) {
     override val controller = 0x30
 }
-class GeneralPurpose2(channel: Int, value: Int): VariableControlChange(channel, value) {
+class GeneralPurpose2(channel: Int, value: Int): CompoundEvent(channel, value) {
+    override val controller = 0x11
+
+}
+class GeneralPurpose2MSB(channel: Int, value: Int): VariableControlChange(channel, value) {
     override val controller = 0x11
 }
 class GeneralPurpose2LSB(channel: Int, value: Int): VariableControlChange(channel, value) {
     override val controller = 0x31
 }
-class GeneralPurpose3(channel: Int, value: Int): VariableControlChange(channel, value) {
+class GeneralPurpose3(channel: Int, value: Int): CompoundEvent(channel, value) {
+    override val controller = 0x12
+}
+class GeneralPurpose3MSB(channel: Int, value: Int): VariableControlChange(channel, value) {
     override val controller = 0x12
 }
 class GeneralPurpose3LSB(channel: Int, value: Int): VariableControlChange(channel, value) {
     override val controller = 0x32
 }
-class GeneralPurpose4(channel: Int, value: Int): VariableControlChange(channel, value) {
+class GeneralPurpose4(channel: Int, value: Int): CompoundEvent(channel, value) {
+    override val controller = 0x13
+}
+class GeneralPurpose4MSB(channel: Int, value: Int): VariableControlChange(channel, value) {
     override val controller = 0x13
 }
 class GeneralPurpose4LSB(channel: Int, value: Int): VariableControlChange(channel, value) {
@@ -1272,7 +1346,8 @@ class Reset: MIDIEvent {
     }
 }
 
-data class TimeCode(var rate: Int, var hour: Int, var minute: Int, var second: Int, var frame: Int): MIDIEvent {
+data class TimeCode(var rate: Int, var hour: Int, var minute: Int, var second: Int, var frame: Int):
+    MIDIEvent {
     override fun as_bytes(): ByteArray {
         return byteArrayOf(
             ((this.rate shl 5) + this.hour).toByte(),
@@ -1308,7 +1383,7 @@ class MIDI {
     companion object {
         fun from_path(file_path: String): MIDI {
             val midibytes = File(file_path).readBytes()
-            return MIDI.from_bytes(midibytes)
+            return from_bytes(midibytes)
         }
 
         fun from_bytes(file_bytes: ByteArray): MIDI {
@@ -1984,40 +2059,58 @@ open class VirtualMIDIDevice {
             is MonophonicOperation -> this.onMonophonicOperation(event)
             is BankSelect -> this.onBankSelect(event)
             is BankSelectLSB -> this.onBankSelectLSB(event)
+            is BankSelectMSB -> this.onBankSelectMSB(event)
             is ModulationWheel -> this.onModulationWheel(event)
             is ModulationWheelLSB -> this.onModulationWheelLSB(event)
+            is ModulationWheelMSB -> this.onModulationWheelMSB(event)
             is BreathController -> this.onBreathController(event)
             is BreathControllerLSB -> this.onBreathControllerLSB(event)
+            is BreathControllerMSB -> this.onBreathControllerMSB(event)
             is FootPedal -> this.onFootPedal(event)
             is FootPedalLSB -> this.onFootPedalLSB(event)
+            is FootPedalMSB -> this.onFootPedalMSB(event)
             is PortamentoTime -> this.onPortamentoTime(event)
             is PortamentoTimeLSB -> this.onPortamentoTimeLSB(event)
+            is PortamentoTimeMSB -> this.onPortamentoTimeMSB(event)
             is DataEntry -> this.onDataEntry(event)
             is DataEntryLSB -> this.onDataEntryLSB(event)
+            is DataEntryMSB -> this.onDataEntryMSB(event)
             is Volume -> this.onVolume(event)
             is VolumeLSB -> this.onVolumeLSB(event)
+            is VolumeMSB -> this.onVolumeMSB(event)
             is Balance -> this.onBalance(event)
             is BalanceLSB -> this.onBalanceLSB(event)
+            is BalanceMSB -> this.onBalanceMSB(event)
             is Pan -> this.onPan(event)
             is PanLSB -> this.onPanLSB(event)
+            is PanMSB -> this.onPanMSB(event)
             is Expression -> this.onExpression(event)
             is ExpressionLSB -> this.onExpressionLSB(event)
+            is ExpressionMSB -> this.onExpressionMSB(event)
             is NonRegisteredParameterNumber -> this.onNonRegisteredParameterNumber(event)
             is NonRegisteredParameterNumberLSB -> this.onNonRegisteredParameterNumberLSB(event)
+            is NonRegisteredParameterNumberMSB -> this.onNonRegisteredParameterNumberMSB(event)
             is RegisteredParameterNumber -> this.onRegisteredParameterNumber(event)
             is RegisteredParameterNumberLSB -> this.onRegisteredParameterNumberLSB(event)
+            is RegisteredParameterNumberMSB -> this.onRegisteredParameterNumberMSB(event)
             is EffectControl1 -> this.onEffectControl1(event)
             is EffectControl1LSB -> this.onEffectControl1LSB(event)
+            is EffectControl1MSB -> this.onEffectControl1MSB(event)
             is EffectControl2 -> this.onEffectControl2(event)
             is EffectControl2LSB -> this.onEffectControl2LSB(event)
+            is EffectControl2MSB -> this.onEffectControl2MSB(event)
             is GeneralPurpose1 -> this.onGeneralPurpose1(event)
             is GeneralPurpose1LSB -> this.onGeneralPurpose1LSB(event)
+            is GeneralPurpose1MSB -> this.onGeneralPurpose1MSB(event)
             is GeneralPurpose2 -> this.onGeneralPurpose2(event)
             is GeneralPurpose2LSB -> this.onGeneralPurpose2LSB(event)
+            is GeneralPurpose2MSB -> this.onGeneralPurpose2MSB(event)
             is GeneralPurpose3 -> this.onGeneralPurpose3(event)
             is GeneralPurpose3LSB -> this.onGeneralPurpose3LSB(event)
+            is GeneralPurpose3MSB -> this.onGeneralPurpose3MSB(event)
             is GeneralPurpose4 -> this.onGeneralPurpose4(event)
             is GeneralPurpose4LSB -> this.onGeneralPurpose4LSB(event)
+            is GeneralPurpose4MSB -> this.onGeneralPurpose4MSB(event)
             is GeneralPurpose5 -> this.onGeneralPurpose5(event)
             is GeneralPurpose6 -> this.onGeneralPurpose6(event)
             is GeneralPurpose7 -> this.onGeneralPurpose7(event)
@@ -2092,40 +2185,58 @@ open class VirtualMIDIDevice {
     open fun onMonophonicOperation(event: MonophonicOperation) { }
     open fun onBankSelect(event: BankSelect) { }
     open fun onBankSelectLSB(event: BankSelectLSB) { }
+    open fun onBankSelectMSB(event: BankSelectMSB) { }
     open fun onModulationWheel(event: ModulationWheel) { }
     open fun onModulationWheelLSB(event: ModulationWheelLSB) { }
+    open fun onModulationWheelMSB(event: ModulationWheelMSB) { }
     open fun onBreathController(event: BreathController) { }
     open fun onBreathControllerLSB(event: BreathControllerLSB) { }
+    open fun onBreathControllerMSB(event: BreathControllerMSB) { }
     open fun onFootPedal(event: FootPedal) { }
     open fun onFootPedalLSB(event: FootPedalLSB) { }
+    open fun onFootPedalMSB(event: FootPedalMSB) { }
     open fun onPortamentoTime(event: PortamentoTime) { }
     open fun onPortamentoTimeLSB(event: PortamentoTimeLSB) { }
+    open fun onPortamentoTimeMSB(event: PortamentoTimeMSB) { }
     open fun onDataEntry(event: DataEntry) { }
     open fun onDataEntryLSB(event: DataEntryLSB) { }
+    open fun onDataEntryMSB(event: DataEntryMSB) { }
     open fun onVolume(event: Volume) { }
     open fun onVolumeLSB(event: VolumeLSB) { }
+    open fun onVolumeMSB(event: VolumeMSB) { }
     open fun onBalance(event: Balance) { }
     open fun onBalanceLSB(event: BalanceLSB) { }
+    open fun onBalanceMSB(event: BalanceMSB) { }
     open fun onPan(event: Pan) { }
     open fun onPanLSB(event: PanLSB) { }
+    open fun onPanMSB(event: PanMSB) { }
     open fun onExpression(event: Expression) { }
     open fun onExpressionLSB(event: ExpressionLSB) { }
+    open fun onExpressionMSB(event: ExpressionMSB) { }
     open fun onNonRegisteredParameterNumber(event: NonRegisteredParameterNumber) { }
     open fun onNonRegisteredParameterNumberLSB(event: NonRegisteredParameterNumberLSB) { }
+    open fun onNonRegisteredParameterNumberMSB(event: NonRegisteredParameterNumberMSB) { }
     open fun onRegisteredParameterNumber(event: RegisteredParameterNumber) { }
     open fun onRegisteredParameterNumberLSB(event: RegisteredParameterNumberLSB) { }
+    open fun onRegisteredParameterNumberMSB(event: RegisteredParameterNumberMSB) { }
     open fun onEffectControl1(event: EffectControl1) { }
     open fun onEffectControl1LSB(event: EffectControl1LSB) { }
+    open fun onEffectControl1MSB(event: EffectControl1MSB) { }
     open fun onEffectControl2(event: EffectControl2) { }
     open fun onEffectControl2LSB(event: EffectControl2LSB) { }
+    open fun onEffectControl2MSB(event: EffectControl2MSB) { }
     open fun onGeneralPurpose1(event: GeneralPurpose1) { }
     open fun onGeneralPurpose1LSB(event: GeneralPurpose1LSB) { }
+    open fun onGeneralPurpose1MSB(event: GeneralPurpose1MSB) { }
     open fun onGeneralPurpose2(event: GeneralPurpose2) { }
     open fun onGeneralPurpose2LSB(event: GeneralPurpose2LSB) { }
+    open fun onGeneralPurpose2MSB(event: GeneralPurpose2MSB) { }
     open fun onGeneralPurpose3(event: GeneralPurpose3) { }
     open fun onGeneralPurpose3LSB(event: GeneralPurpose3LSB) { }
+    open fun onGeneralPurpose3MSB(event: GeneralPurpose3MSB) { }
     open fun onGeneralPurpose4(event: GeneralPurpose4) { }
     open fun onGeneralPurpose4LSB(event: GeneralPurpose4LSB) { }
+    open fun onGeneralPurpose4MSB(event: GeneralPurpose4MSB) { }
     open fun onGeneralPurpose5(event: GeneralPurpose5) { }
     open fun onGeneralPurpose6(event: GeneralPurpose6) { }
     open fun onGeneralPurpose7(event: GeneralPurpose7) { }

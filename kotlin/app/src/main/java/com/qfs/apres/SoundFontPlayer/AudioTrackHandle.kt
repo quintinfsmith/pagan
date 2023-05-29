@@ -1,4 +1,4 @@
-package com.qfs.pagan.apres.SoundFontPlayer
+package com.qfs.apres.SoundFontPlayer
 
 import android.media.AudioAttributes
 import android.media.AudioFormat
@@ -76,17 +76,13 @@ class AudioTrackHandle {
 
     // join_delay exists to position the start of the note press when generating the wave.
     // since it's not likely that notes will only be pressed exactly in between loops
-    fun get_join_delay(buffer_ts: Long?, target_ts: Long, delay_ts: Long): Int {
+    fun get_join_delay(buffer_ts: Long?, target_ts: Long): Int {
         // target is this time at which the note was pressed
         // calc_delay is the time at which all required calculations were completed
-        var join_delay = AudioTrackHandle.base_delay_in_frames
+        var join_delay = base_delay_in_frames
         if (buffer_ts != null) {
             val time_delay = (target_ts - buffer_ts).toInt()
             join_delay += (sample_rate * time_delay / 4000)
-
-            // the remainder needs to be removed since the count down wont actually start
-            // until the *next* buffer is written
-            join_delay -= AudioTrackHandle.buffer_size_in_frames - ((sample_rate * (delay_ts - buffer_ts).toInt() / 4000) % AudioTrackHandle.buffer_size_in_frames)
         }
         return join_delay
     }

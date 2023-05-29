@@ -22,6 +22,11 @@ class Cursor {
 
     fun clear() {
         this.mode = CursorMode.Unset
+        this.channel = 0
+        this.line_offset = 0
+        this.beat = 0
+        this.position = listOf()
+        this.range = null
     }
 
     fun get_beatkey(): BeatKey {

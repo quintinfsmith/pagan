@@ -1,5 +1,12 @@
 package com.qfs.pagan.opusmanager
-import com.qfs.pagan.apres.*
+import com.qfs.apres.BankSelect
+import com.qfs.apres.MIDI
+import com.qfs.apres.NoteOff
+import com.qfs.apres.NoteOn
+import com.qfs.apres.ProgramChange
+import com.qfs.apres.SetTempo
+import com.qfs.apres.SongPositionPointer
+import com.qfs.apres.TimeSignature
 import com.qfs.pagan.from_string
 import com.qfs.pagan.structure.OpusTree
 import com.qfs.pagan.to_string
@@ -120,7 +127,7 @@ open class OpusManagerBase {
         throw IndexOutOfBoundsException()
     }
 
-    fun get_channel_instrument(channel: Int): Int {
+    fun get_channel_instrument(channel: Int): Pair<Int, Int> {
         return this.channels[channel].get_instrument()
     }
 
@@ -455,19 +462,26 @@ open class OpusManagerBase {
         channel.map_line(line_offset, instrument)
     }
 
-    open fun set_channel_instrument(channel: Int, instrument: Int) {
+    open fun set_channel_instrument(channel: Int, instrument: Pair<Int, Int>) {
         if (channel == this.percussion_channel) {
             this.unset_percussion_channel()
         }
 
         this.channels[channel].set_instrument(instrument)
     }
+    open fun set_channel_program(channel: Int, program: Int) {
+        this.channels[channel].midi_program = program
+    }
+    open fun set_channel_bank(channel: Int, bank: Int) {
+        this.channels[channel].midi_bank = bank
+    }
 
-    open fun set_percussion_channel(channel: Int) {
+    open fun set_percussion_channel(channel: Int, program: Int = 0) {
         this.unset_percussion_channel()
 
         this.percussion_channel = channel
-        this.channels[channel].midi_instrument = 0
+        this.channels[channel].midi_program = program
+        this.channels[channel].midi_bank = 128
         this.channels[channel].midi_channel = 9
         this.channels[channel].set_mapped()
     }
@@ -475,7 +489,8 @@ open class OpusManagerBase {
     open fun unset_percussion_channel() {
         if (this.percussion_channel != null) {
             this.channels[this.percussion_channel!!].midi_channel = this.get_next_available_midi_channel()
-            this.channels[this.percussion_channel!!].midi_instrument = 1
+            this.channels[this.percussion_channel!!].midi_bank = 0
+            this.channels[this.percussion_channel!!].midi_program = 0
             this.channels[this.percussion_channel!!].unmap()
             this.percussion_channel = null
         }
@@ -713,13 +728,16 @@ open class OpusManagerBase {
         data class StackItem(var tree: OpusTree<OpusEvent>, var divisions: Int, var offset: Int, var size: Int)
         val position_pointer_ticks = mutableSetOf<Pair<Int, Int>>()
         this.channels.forEachIndexed { c, channel ->
-            if (channel.midi_instrument != 9) {
-                midi.insert_event(
-                    0,
-                    0,
-                    ProgramChange(channel.midi_channel, channel.midi_instrument)
-                )
-            }
+            midi.insert_event(
+                0,
+                0,
+                BankSelect(channel.midi_channel, channel.midi_bank)
+            )
+            midi.insert_event(
+                0,
+                0,
+                ProgramChange(channel.midi_channel, channel.midi_program)
+            )
 
             for (l in 0 until channel.size) {
                 val line = channel.get_line(l)
@@ -812,7 +830,8 @@ open class OpusManagerBase {
             channels.add(
                 ChannelJSONData(
                     midi_channel = channel.midi_channel,
-                    midi_instrument = channel.midi_instrument,
+                    midi_bank = channel.midi_bank,
+                    midi_program = channel.midi_program,
                     lines = lines,
                     line_volumes = line_volumes
                 )
@@ -930,7 +949,8 @@ open class OpusManagerBase {
             }
 
             this.channels[i].midi_channel = channel_data.midi_channel
-            this.channels[i].midi_instrument = channel_data.midi_instrument
+            this.channels[i].midi_bank = channel_data.midi_bank
+            this.channels[i].midi_program = channel_data.midi_program
 
             for (j in 0 until channel_data.lines.size) {
                 parsed[i][j].forEachIndexed { b: Int, beat_tree: OpusTree<OpusEvent> ->
@@ -952,7 +972,7 @@ open class OpusManagerBase {
         this.import_midi(midi)
     }
 
-    private fun tree_from_midi(midi: MIDI): Triple<OpusTree<Set<OpusEvent>>, Float, List<Pair<Int, Int>>> {
+    private fun tree_from_midi(midi: MIDI): Triple<OpusTree<Set<OpusEvent>>, Float, List<Triple<Int, Int?, Int?>>> {
         var beat_size = midi.get_ppqn()
         var total_beat_offset = 0
         var last_ts_change = 0
@@ -960,7 +980,7 @@ open class OpusManagerBase {
         var max_tick = 0
         val press_map = HashMap<Int, Pair<Int, Int>>()
         var tempo = 120F
-        val instrument_map = mutableListOf<Pair<Int, Int>>()
+        val instrument_map = mutableListOf<Triple<Int, Int?, Int?>>()
 
         var denominator = 4F
         for (pair in midi.get_all_events()) {
@@ -1011,7 +1031,9 @@ open class OpusManagerBase {
                     tempo = event.get_bpm() * (denominator / 4)
                 }
             } else if (event is ProgramChange) {
-                instrument_map.add(Pair(event.channel, event.program))
+                instrument_map.add(Triple(event.channel, null, event.program))
+            } else if (event is BankSelect) {
+                instrument_map.add(Triple(event.channel, null, event.value))
             }
         }
 
@@ -1178,10 +1200,15 @@ open class OpusManagerBase {
             }
         }
 
-        for ((midi_channel, instrument) in instrument_map) {
+        for ((midi_channel, bank, program) in instrument_map) {
             // Midi may have contained programchange event for channel, but no music
             val opus_channel = midi_channel_map[midi_channel] ?: continue
-            this.set_channel_instrument(opus_channel, instrument)
+            if (bank != null) {
+                this.set_channel_bank(opus_channel, bank)
+            }
+            if (program != null) {
+                this.set_channel_program(opus_channel, program)
+            }
         }
     }
 

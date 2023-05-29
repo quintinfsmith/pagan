@@ -1,8 +1,11 @@
 package com.qfs.pagan
 
+import com.qfs.apres.MIDI
+import com.qfs.apres.NoteOn
+import com.qfs.apres.SetTempo
+import com.qfs.apres.TimeSignature
 import com.qfs.pagan.opusmanager.OpusEvent
 import com.qfs.pagan.structure.OpusTree
-import com.qfs.pagan.apres.*
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.pow

@@ -1,9 +1,9 @@
 package com.qfs.pagan
 
 import android.widget.SeekBar
-import com.qfs.pagan.apres.SongPositionPointer
-import com.qfs.pagan.apres.SoundFontPlayer.AudioTrackHandle
-import com.qfs.pagan.apres.VirtualMIDIDevice
+import com.qfs.apres.SongPositionPointer
+import com.qfs.apres.SoundFontPlayer.AudioTrackHandle
+import com.qfs.apres.VirtualMIDIDevice
 
 class MIDIScroller(var main_activity: MainActivity, var seekbar: SeekBar): VirtualMIDIDevice() {
     override fun onSongPositionPointer(event: SongPositionPointer) {

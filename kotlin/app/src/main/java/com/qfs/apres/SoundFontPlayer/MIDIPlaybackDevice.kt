@@ -1,16 +1,15 @@
-package com.qfs.pagan.apres.SoundFontPlayer
+package com.qfs.apres.SoundFontPlayer
 
 import android.content.Context
-import android.util.Log
-import com.qfs.pagan.apres.AllSoundOff
-import com.qfs.pagan.apres.MIDI
-import com.qfs.pagan.apres.MIDIStop
-import com.qfs.pagan.apres.NoteOff
-import com.qfs.pagan.apres.NoteOn
-import com.qfs.pagan.apres.ProgramChange
-import com.qfs.pagan.apres.SongPositionPointer
-import com.qfs.pagan.apres.SoundFont
-import com.qfs.pagan.apres.VirtualMIDIDevice
+import com.qfs.apres.AllSoundOff
+import com.qfs.apres.BankSelect
+import com.qfs.apres.MIDI
+import com.qfs.apres.MIDIStop
+import com.qfs.apres.NoteOff
+import com.qfs.apres.NoteOn
+import com.qfs.apres.ProgramChange
+import com.qfs.apres.SoundFont
+import com.qfs.apres.VirtualMIDIDevice
 
 
 class MIDIPlaybackDevice(var context: Context, var sound_font: SoundFont): VirtualMIDIDevice() {
@@ -30,6 +29,9 @@ class MIDIPlaybackDevice(var context: Context, var sound_font: SoundFont): Virtu
 
     override fun onProgramChange(event: ProgramChange) {
         this.soundfont_player.change_program(event.channel, event.program)
+    }
+    override fun onBankSelect(event: BankSelect) {
+        this.soundfont_player.select_bank(event.channel, event.value)
     }
 
     override fun onAllSoundOff(event: AllSoundOff) {

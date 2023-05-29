@@ -18,7 +18,8 @@ class OpusChannel(var uuid: Int) {
     }
 
     var lines: MutableList<OpusLine> = mutableListOf()
-    var midi_instrument: Int = 0
+    var midi_bank = 0
+    var midi_program = 0
     var midi_channel: Int = 0
     private var beat_count: Int = 0
     var size: Int = 0
@@ -152,12 +153,13 @@ class OpusChannel(var uuid: Int) {
         this.beat_count = new_beat_count
     }
 
-    fun set_instrument(instrument: Int) {
-        this.midi_instrument = instrument
+    fun set_instrument(instrument: Pair<Int, Int>) {
+        this.midi_bank = instrument.first
+        this.midi_program = instrument.second
     }
 
-    fun get_instrument(): Int {
-        return this.midi_instrument
+    fun get_instrument(): Pair<Int, Int> {
+        return Pair(this.midi_bank, this.midi_program)
     }
 
     fun swap_lines(first_index: Int, second_index: Int) {

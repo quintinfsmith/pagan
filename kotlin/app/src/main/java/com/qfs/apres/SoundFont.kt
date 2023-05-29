@@ -1,8 +1,8 @@
-package com.qfs.pagan.apres
+package com.qfs.apres
 
 import android.content.res.AssetManager
-import com.qfs.pagan.apres.riffreader.Riff
-import com.qfs.pagan.apres.riffreader.toUInt
+import com.qfs.apres.riffreader.Riff
+import com.qfs.apres.riffreader.toUInt
 import kotlin.math.max
 import kotlin.math.pow
 
@@ -135,8 +135,8 @@ class SoundFont(assets: AssetManager, file_name: String) {
         )
     }
 
-    fun get_available_presets(bank: Int): Set<Int> {
-        val output = mutableSetOf<Int>()
+    fun get_available_presets(): Set<Triple<String, Int, Int>> {
+        val output = mutableSetOf<Triple<String, Int, Int>>()
         val phdr_bytes = this.pdta_chunks["phdr"]!!
 
         for (index in 0 until (phdr_bytes.size / 38) - 1) {
@@ -150,12 +150,10 @@ class SoundFont(assets: AssetManager, file_name: String) {
                 phdr_name = "$phdr_name${b.toChar()}"
             }
 
-            val current_index = toUInt(phdr_bytes[offset + 20]) + (toUInt(phdr_bytes[offset + 21]) * 256)
+            val current_program = toUInt(phdr_bytes[offset + 20]) + (toUInt(phdr_bytes[offset + 21]) * 256)
             val current_bank = toUInt(phdr_bytes[offset + 22]) + (toUInt(phdr_bytes[offset + 23]) * 256)
 
-            if (current_bank == bank) {
-                output.add(current_index)
-            }
+            output.add(Triple(phdr_name, current_program, current_bank))
         }
         return output
     }

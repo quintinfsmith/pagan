@@ -1,5 +1,5 @@
 package com.qfs.pagan.opusmanager
-import com.qfs.pagan.apres.MIDI
+import com.qfs.apres.MIDI
 import com.qfs.pagan.structure.OpusTree
 
 open class HistoryLayer : LinksLayer() {
@@ -278,7 +278,7 @@ open class HistoryLayer : LinksLayer() {
             "set_channel_instrument" -> {
                 this.set_channel_instrument(
                     current_node.args[0] as Int,
-                    current_node.args[1] as Int
+                    current_node.args[1] as Pair<Int, Int>
                 )
             }
             "set_percussion_instrument" -> {
@@ -724,11 +724,11 @@ open class HistoryLayer : LinksLayer() {
         }
     }
 
-    override fun set_percussion_channel(channel: Int) {
+    override fun set_percussion_channel(channel: Int, program: Int) {
         this.history_cache.remember {
             this.push_to_history_stack("set_channel_instrument", listOf(channel, this.channels[channel].get_instrument()))
             val original_percussion_channel = this.percussion_channel
-            super.set_percussion_channel(channel)
+            super.set_percussion_channel(channel, program)
             if (original_percussion_channel == null) {
                 this.push_to_history_stack("unset_percussion_channel", listOf())
             } else {
@@ -818,7 +818,7 @@ open class HistoryLayer : LinksLayer() {
         }
     }
 
-    override fun set_channel_instrument(channel: Int, instrument: Int) {
+    override fun set_channel_instrument(channel: Int, instrument: Pair<Int, Int>) {
         this.history_cache.remember {
             if (this.percussion_channel == channel) {
                 for (i in 0 until this.channels[channel].size) {

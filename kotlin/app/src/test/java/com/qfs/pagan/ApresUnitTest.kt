@@ -1,8 +1,104 @@
 package com.qfs.pagan
 
+import com.qfs.apres.AllControllersOff
+import com.qfs.apres.AllNotesOff
+import com.qfs.apres.AllSoundOff
+import com.qfs.apres.Balance
+import com.qfs.apres.BalanceLSB
+import com.qfs.apres.BankSelect
+import com.qfs.apres.BankSelectLSB
+import com.qfs.apres.BreathController
+import com.qfs.apres.BreathControllerLSB
+import com.qfs.apres.CelesteLevel
+import com.qfs.apres.ChannelPrefix
+import com.qfs.apres.ChannelPressure
+import com.qfs.apres.ChorusLevel
+import com.qfs.apres.ControlChange
+import com.qfs.apres.CopyRightNotice
+import com.qfs.apres.CuePoint
+import com.qfs.apres.DataDecrement
+import com.qfs.apres.DataEntry
+import com.qfs.apres.DataEntryLSB
+import com.qfs.apres.DataIncrement
+import com.qfs.apres.EffectControl1
+import com.qfs.apres.EffectControl1LSB
+import com.qfs.apres.EffectControl2
+import com.qfs.apres.EffectControl2LSB
+import com.qfs.apres.EffectsLevel
+import com.qfs.apres.EndOfTrack
+import com.qfs.apres.Expression
+import com.qfs.apres.ExpressionLSB
+import com.qfs.apres.FootPedal
+import com.qfs.apres.FootPedalLSB
+import com.qfs.apres.GeneralPurpose1
+import com.qfs.apres.GeneralPurpose1LSB
+import com.qfs.apres.GeneralPurpose2
+import com.qfs.apres.GeneralPurpose2LSB
+import com.qfs.apres.GeneralPurpose3
+import com.qfs.apres.GeneralPurpose3LSB
+import com.qfs.apres.GeneralPurpose4
+import com.qfs.apres.GeneralPurpose4LSB
+import com.qfs.apres.GeneralPurpose5
+import com.qfs.apres.GeneralPurpose6
+import com.qfs.apres.GeneralPurpose7
+import com.qfs.apres.GeneralPurpose8
+import com.qfs.apres.Hold2Pedal
+import com.qfs.apres.HoldPedal
+import com.qfs.apres.InstrumentName
+import com.qfs.apres.KeySignature
+import com.qfs.apres.Legato
+import com.qfs.apres.LocalControl
+import com.qfs.apres.Lyric
+import com.qfs.apres.MIDI
+import com.qfs.apres.Marker
+import com.qfs.apres.ModulationWheel
+import com.qfs.apres.ModulationWheelLSB
+import com.qfs.apres.MonophonicOperation
+import com.qfs.apres.NonRegisteredParameterNumber
+import com.qfs.apres.NonRegisteredParameterNumberLSB
+import com.qfs.apres.NoteOff
+import com.qfs.apres.NoteOn
+import com.qfs.apres.OmniOff
+import com.qfs.apres.OmniOn
+import com.qfs.apres.Pan
+import com.qfs.apres.PanLSB
+import com.qfs.apres.PhaserLevel
+import com.qfs.apres.PitchWheelChange
+import com.qfs.apres.PolyphonicKeyPressure
+import com.qfs.apres.PolyphonicOperation
+import com.qfs.apres.Portamento
+import com.qfs.apres.PortamentoTime
+import com.qfs.apres.PortamentoTimeLSB
+import com.qfs.apres.ProgramChange
+import com.qfs.apres.RegisteredParameterNumber
+import com.qfs.apres.RegisteredParameterNumberLSB
+import com.qfs.apres.SMPTEOffset
+import com.qfs.apres.SequenceNumber
+import com.qfs.apres.SetTempo
+import com.qfs.apres.SoftPedal
+import com.qfs.apres.SoundAttack
+import com.qfs.apres.SoundBrightness
+import com.qfs.apres.SoundControl1
+import com.qfs.apres.SoundControl2
+import com.qfs.apres.SoundControl3
+import com.qfs.apres.SoundControl4
+import com.qfs.apres.SoundControl5
+import com.qfs.apres.SoundReleaseTime
+import com.qfs.apres.SoundTimbre
+import com.qfs.apres.SoundVariation
+import com.qfs.apres.Sustenuto
+import com.qfs.apres.SystemExclusive
+import com.qfs.apres.Text
+import com.qfs.apres.TimeSignature
+import com.qfs.apres.TrackName
+import com.qfs.apres.TremuloLevel
+import com.qfs.apres.Volume
+import com.qfs.apres.VolumeLSB
+import com.qfs.apres.get_chord_name_from_mi_sf
+import com.qfs.apres.get_variable_length_number
+import com.qfs.apres.to_variable_length_bytes
 import org.junit.Test
 import org.junit.Assert.*
-import com.qfs.pagan.apres.*
 
 fun intlist_to_bytearray(input: List<Int>): ByteArray {
     var output: MutableList<Byte> = mutableListOf()
@@ -78,7 +174,7 @@ class ApresUnitTest {
     @Test
     fun test_add_event() {
         val midi = MIDI()
-        val on_event = midi.push_event(0,0,NoteOn(0, 64, 100))
+        val on_event = midi.push_event(0,0, NoteOn(0, 64, 100))
         var off_event = midi.push_event(0, 119, NoteOff(0,64,0))
         assertEquals(1, on_event)
         assertEquals(2, off_event)

@@ -1,4 +1,4 @@
-package com.qfs.pagan.apres.riffreader
+package com.qfs.apres.riffreader
 
 import android.content.res.AssetManager
 import java.io.InputStream

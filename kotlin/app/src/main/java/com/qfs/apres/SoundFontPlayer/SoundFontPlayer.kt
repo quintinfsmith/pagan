@@ -1,17 +1,16 @@
-package com.qfs.pagan.apres.SoundFontPlayer
+package com.qfs.apres.SoundFontPlayer
 
-import android.util.Log
-import com.qfs.pagan.apres.MIDI
-import com.qfs.pagan.apres.NoteOff
-import com.qfs.pagan.apres.NoteOn
-import com.qfs.pagan.apres.Preset
-import com.qfs.pagan.apres.SoundFont
+import com.qfs.apres.MIDI
+import com.qfs.apres.NoteOff
+import com.qfs.apres.NoteOn
+import com.qfs.apres.Preset
+import com.qfs.apres.SoundFont
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 class SoundFontPlayer(var sound_font: SoundFont) {
-    private val preset_channel_map = HashMap<Int, Int>()
+    private val preset_channel_map = HashMap<Int, Pair<Int, Int>>()
     private val loaded_presets = HashMap<Pair<Int, Int>, Preset>()
     val audio_track_handle = AudioTrackHandle()
     private val active_handle_keys = HashMap<Pair<Int, Int>, Set<Int>>()
@@ -39,8 +38,7 @@ class SoundFontPlayer(var sound_font: SoundFont) {
                 // Get Join delay BEFORE generating sample
                 val key = Pair(event.note, event.channel)
                 val sample_handles = that.gen_sample_handles(event, preset)
-                val delay_ts = System.currentTimeMillis()
-                val join_delay = that.audio_track_handle.get_join_delay(buffer_ts, target_ts, delay_ts)
+                val join_delay = that.audio_track_handle.get_join_delay(buffer_ts, target_ts)
 
                 val existing_keys = that.active_handle_keys[key]?.toSet()
                 if (existing_keys != null) {
@@ -89,17 +87,31 @@ class SoundFontPlayer(var sound_font: SoundFont) {
         }
     }
 
+    fun select_bank(channel: Int, bank: Int) {
+        // NOTE: Changing the bank doesn't trigger a preset change
+        // That occurs in change_program()
+        var program = if (this.preset_channel_map.containsKey(channel)) {
+            this.preset_channel_map[channel]!!.second
+        } else {
+            0
+        }
+        this.preset_channel_map[channel] = Pair(bank, program)
+    }
+
     fun change_program(channel: Int, program: Int) {
-        if (channel == 9) {
-            return
-        }
 
-        val key = Pair(0, program)
+        var bank = if (this.preset_channel_map.containsKey(channel)) {
+            this.preset_channel_map[channel]!!.first
+        } else {
+            0
+        }
+        val key = Pair(bank, program)
         if (this.loaded_presets[key] == null) {
-            this.loaded_presets[key] = this.sound_font.get_preset(program, 0)
+            this.loaded_presets[key] = this.sound_font.get_preset(program, bank)
         }
 
-        this.preset_channel_map[channel] = program
+
+        this.preset_channel_map[channel] = key
     }
 
     fun kill_channel_sound(channel: Int) {
@@ -117,11 +129,13 @@ class SoundFontPlayer(var sound_font: SoundFont) {
     }
 
     //Private Functions//////////////////////
-    private fun get_channel_preset(channel: Int): Int {
+    private fun get_channel_preset(channel: Int): Pair<Int, Int> {
         return if (this.preset_channel_map.containsKey(channel)) {
             this.preset_channel_map[channel]!!
+        } else if (channel == 9) {
+            Pair(128, 0)
         } else {
-            0
+            Pair(0,0)
         }
     }
 
@@ -145,13 +159,7 @@ class SoundFontPlayer(var sound_font: SoundFont) {
     }
 
     private fun get_preset(channel: Int): Preset {
-        // TODO: Handle Bank
-        val bank = if (channel == 9) {
-            128
-        } else {
-            0
-        }
-        return this.loaded_presets[Pair(bank, this.get_channel_preset(channel))]!!
+        return this.loaded_presets[this.get_channel_preset(channel)]!!
     }
 
     fun precache_midi(midi: MIDI) {

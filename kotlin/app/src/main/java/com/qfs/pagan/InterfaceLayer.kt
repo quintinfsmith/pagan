@@ -1,5 +1,4 @@
 package com.qfs.pagan
-import android.util.Log
 import android.view.View
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -910,7 +909,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         }
 
         this.remove( beat_key, position, count )
-        Log.d("AAA", "C: $cursor_position")
         this.cursor_select(beat_key, cursor_position)
     }
     fun insert_line(count: Int) {

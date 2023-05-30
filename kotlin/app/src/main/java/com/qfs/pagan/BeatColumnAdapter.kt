@@ -234,7 +234,6 @@ class BeatColumnAdapter(private var parent_fragment: EditorFragment, var recycle
                 this.buildTreeView(beat_wrapper as ViewGroup, BeatKey(channel, line_offset, index))
 
                 (holder.itemView as ViewGroup).addView(beat_wrapper)
-                Log.d("AAA", "Rebuilt $channel, $line_offset, $index")
             }
         }
         this.adjust_beat_width(holder, index)

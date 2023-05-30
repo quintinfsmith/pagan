@@ -500,7 +500,8 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             this.update_line_labels()
 
         } else {
-            this.activity.feedback_msg(this.activity.getString(R.string.msg_undo_none))
+            // It's just irritating
+            //this.activity.feedback_msg(this.activity.getString(R.string.msg_undo_none))
         }
     }
 

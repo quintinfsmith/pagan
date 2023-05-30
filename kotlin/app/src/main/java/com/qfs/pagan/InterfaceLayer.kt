@@ -140,12 +140,56 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         this.ui_set_cursor_focus()
     }
 
+    override fun move_line(channel_old: Int, line_old: Int, channel_new: Int, line_new: Int) {
+        try {
+            this.surpress_ui {
+                super.move_line(channel_old, line_old, channel_new, line_new)
+            }
+            this.ui_notify_visible_changes()
+
+            this.cursor_select_row(
+                channel_new,
+                if (channel_old == channel_new) {
+                    if (line_old < line_new) {
+                        line_new - 1
+                    } else {
+                        line_new
+                    }
+                } else if (this.channels[channel_new].size == 1) {
+                    0
+                } else {
+                    line_new
+                }
+            )
+        } catch (exception: IncompatibleChannelException) {
+            // pass
+        }
+    }
+
     override fun remove_line(channel: Int, line_offset: Int): MutableList<OpusTree<OpusEvent>> {
         this.ui_unset_cursor_focus()
         this.ui_remove_line_label(channel, line_offset)
+
         val output = super.remove_line(channel, line_offset)
+
+        val cursor = this.cursor
+        if (cursor.line_offset == this.channels[cursor.channel].size) {
+            when (cursor.mode) {
+
+                Cursor.CursorMode.Row -> {
+                    cursor.line_offset -= 1
+                }
+                Cursor.CursorMode.Single -> {
+                    cursor.line_offset -= 1
+                    cursor.position = this.get_first_position(this.cursor.get_beatkey(), listOf())
+                }
+                else -> {}
+            }
+        }
+
         this.ui_notify_visible_changes()
         this.ui_set_cursor_focus()
+
         return output
     }
 
@@ -717,6 +761,9 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
 
     private fun ui_unset_cursor_focus() {
+        if (this.simple_ui_locked()) {
+            return
+        }
         val rvBeatTable = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
         val adapter = rvBeatTable.adapter as BeatColumnAdapter
         adapter.set_cursor_focus(false)

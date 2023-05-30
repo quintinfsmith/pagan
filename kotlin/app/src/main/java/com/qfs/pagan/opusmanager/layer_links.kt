@@ -1,4 +1,5 @@
 package com.qfs.pagan.opusmanager
+import android.util.Log
 import com.qfs.pagan.structure.OpusTree
 import java.lang.Integer.max
 import java.lang.Integer.min
@@ -580,6 +581,7 @@ open class LinksLayer : OpusManagerBase() {
                }
            }
        }
+       Log.d("AAA", "!!!!!!!!!!${channel_old}")
        super.move_line(channel_old, line_old, channel_new, line_new)
        // ReAdd the beatkeys to link pools
        for ((beat_key, pool_index) in partial_pool_map) {

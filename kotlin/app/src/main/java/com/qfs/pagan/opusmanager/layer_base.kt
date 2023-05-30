@@ -1,4 +1,5 @@
 package com.qfs.pagan.opusmanager
+import android.util.Log
 import com.qfs.apres.BankSelect
 import com.qfs.apres.MIDI
 import com.qfs.apres.NoteOff
@@ -553,16 +554,18 @@ open class OpusManagerBase {
         } else {
             new_channel.midi_bank = 128
             new_channel.midi_program = 0
+            new_channel.set_mapped()
             this.channels.add(new_channel) // Will be the percussion channel
         }
     }
 
     open fun move_line(channel_old: Int, line_old: Int, channel_new: Int, line_new: Int) {
-        if ((channel_old == this.channels.size - 1) != (channel_new == this.channels.size - 1)) {
+        if (this.is_percussion(channel_old) != this.is_percussion(channel_new)) {
             throw IncompatibleChannelException(channel_old, channel_new)
         }
+        Log.d("AAA", "$channel_old")
         // preserve line map
-        val line_map = if (channel_old == channel_new && channel_old == this.channels.size - 1) {
+        val line_map = if (channel_old == channel_new && this.is_percussion(channel_old)) {
             this.channels[channel_old].line_map!!.toList()
         } else {
             null

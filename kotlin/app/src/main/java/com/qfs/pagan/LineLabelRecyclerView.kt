@@ -152,6 +152,7 @@ class LineLabelRecyclerView(context: Context, attrs: AttributeSet) : RecyclerVie
                             val from_line = from_label.line_offset
                             val to_channel = (view as LabelView).channel
                             val to_line = view.line_offset + 1
+
                             this.opus_manager.move_line(
                                 from_channel,
                                 from_line,
@@ -159,20 +160,6 @@ class LineLabelRecyclerView(context: Context, attrs: AttributeSet) : RecyclerVie
                                 to_line
                             )
 
-                            this.opus_manager.cursor_select_row(
-                                to_channel,
-                                if (from_channel == to_channel) {
-                                    if (from_line < to_line) {
-                                        to_line - 1
-                                    } else {
-                                        to_line
-                                    }
-                                } else if (this.opus_manager.channels[to_channel].size == 1) {
-                                    0
-                                } else {
-                                    to_line
-                                }
-                            )
                         }
                         this._dragging_lineLabel = null
                     }

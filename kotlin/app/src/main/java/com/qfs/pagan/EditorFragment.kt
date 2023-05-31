@@ -329,13 +329,11 @@ class EditorFragment : PaganFragment() {
                 this.interact_btnChoosePercussion(it)
             }
 
-            val drums = resources.getStringArray(R.array.midi_drums)
-
             val instrument = opus_manager.get_percussion_instrument(line_offset)
             btnChoosePercussion.text = main.getString(
                 R.string.label_choose_percussion,
                 instrument,
-                drums[instrument]
+                this.get_drum_name(instrument)
             )
         }
 
@@ -777,6 +775,9 @@ class EditorFragment : PaganFragment() {
 
 
     fun get_drum_name(index: Int): String? {
+        if (this.active_percussion_names.isEmpty()) {
+            this.populate_active_percussion_names()
+        }
         return this.active_percussion_names[index + 27]
     }
 

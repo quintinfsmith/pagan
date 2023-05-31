@@ -64,34 +64,12 @@ class ColumnLabelAdapter(private var opus_manager: InterfaceLayer, var recycler:
         val that = this
         this.registerAdapterDataObserver(
             object: RecyclerView.AdapterDataObserver() {
-                override fun onItemRangeChanged(start: Int, count: Int) {
-                    for (i in start until that.itemCount) {
-                        val viewHolder = that.recycler.findViewHolderForAdapterPosition(i) ?: continue
-                        that.adjust_width(viewHolder as ColumnLabelViewHolder)
-                        //that.update_label_focus(viewHolder.itemView as LabelView)
-                    }
-                }
+                override fun onItemRangeChanged(start: Int, count: Int) { }
                 override fun onItemRangeRemoved(start: Int, count: Int) {
-                    val end = (that.recycler.layoutManager as LinearLayoutManager).findLastVisibleItemPosition()
-                    for (i in start .. end) {
-                        val viewHolder = that.recycler.findViewHolderForAdapterPosition(i) ?: continue
-                        that.set_text(viewHolder as ColumnLabelViewHolder, i)
-                        //that.update_label_focus(viewHolder.itemView as LabelView)
-                    }
+                    notifyItemRangeChanged(start, that.column_widths.size - start)
                 }
                 override fun onItemRangeInserted(start: Int, count: Int) {
-
-                    //val end = (that.recycler.layoutManager as LinearLayoutManager).findLastVisibleItemPosition()
-                    //for (i in start .. count) {
-                    //    val viewHolder = that.recycler.findViewHolderForAdapterPosition(i) ?: continue
-                    //    that.update_label_focus(viewHolder.itemView as LabelView)
-                    //    that.set_text(viewHolder as ColumnLabelViewHolder, i)
-                    //    that.update_label_focus(viewHolder.itemView as LabelView)
-                    //}
-                    //val visible_start = (that.recycler.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
-                    //if (visible_start >= start) {
-                    //    that.recycler.scrollToPosition(start)
-                    //}
+                    notifyItemRangeChanged(start, that.column_widths.size - start)
                 }
             }
         )
@@ -128,9 +106,8 @@ class ColumnLabelAdapter(private var opus_manager: InterfaceLayer, var recycler:
 
     fun addColumnLabel(position: Int) {
         if (position < this.column_widths.size) {
-            this.column_widths.add(1)
-            this.notifyItemInserted(this.column_widths.size - 1)
-            this.notifyItemChanged(position)
+            this.column_widths.add(position, 1)
+            this.notifyItemInserted(position)
         } else {
             while (this.column_widths.size <= position) {
                 this.column_widths.add(1)
@@ -196,6 +173,11 @@ class ColumnLabelAdapter(private var opus_manager: InterfaceLayer, var recycler:
     override fun onBindViewHolder(holder: ColumnLabelViewHolder, position: Int) {
         this.set_text(holder, position)
         this.update_label_focus(holder.itemView as LabelView)
+        try {
+            this.adjust_width(holder)
+        } catch (e: NullPointerException) {
+            // Not Attached Yet
+        }
     }
 
     fun set_text(holder: ColumnLabelViewHolder, position: Int) {

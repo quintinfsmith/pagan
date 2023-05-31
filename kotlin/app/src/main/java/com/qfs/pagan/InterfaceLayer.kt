@@ -959,19 +959,25 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         this.cursor_select(beat_key, cursor_position)
     }
     fun insert_line(count: Int) {
-        this.new_line(
-            this.cursor.channel,
-            this.cursor.line_offset + 1,
-            count
-        )
+        this.surpress_ui {
+            this.new_line(
+                this.cursor.channel,
+                this.cursor.line_offset + 1,
+                count
+            )
+        }
+        this.ui_notify_visible_changes()
     }
 
     fun remove_line(count: Int) {
-        this.remove_line(
-            this.cursor.channel,
-            this.cursor.line_offset,
-            count
-        )
+        this.surpress_ui {
+            this.remove_line(
+                this.cursor.channel,
+                this.cursor.line_offset,
+                count
+            )
+        }
+        this.ui_notify_visible_changes()
     }
 
     fun remove_beat_at_cursor(count: Int) {

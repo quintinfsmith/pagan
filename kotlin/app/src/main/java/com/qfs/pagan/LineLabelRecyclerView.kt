@@ -46,6 +46,11 @@ class LineLabelRecyclerView(context: Context, attrs: AttributeSet) : RecyclerVie
             }
             var viewHolder: LineLabelViewHolder? = null
             private var textView = InnerView(context)
+            /*
+             * update_queued exists to handle the liminal state between being detached and being destroyed
+             * If the cursor is pointed to a location in this space, but changed, then the recycler view doesn't handle it normally
+             */
+            var update_queued = false
             var channel = -1
             var line_offset = -1
 
@@ -56,6 +61,10 @@ class LineLabelRecyclerView(context: Context, attrs: AttributeSet) : RecyclerVie
                 super.onAttachedToWindow()
                 this.textView.layoutParams.height = resources.getDimension(R.dimen.line_height).toInt()
                 this.layoutParams.height = WRAP_CONTENT
+            }
+            override fun onDetachedFromWindow() {
+                super.onDetachedFromWindow()
+                this.update_queued = true
             }
             // Prevents the child labels from blocking the parent onTouchListener events
             override fun onInterceptTouchEvent(touchEvent: MotionEvent): Boolean {
@@ -172,6 +181,17 @@ class LineLabelRecyclerView(context: Context, attrs: AttributeSet) : RecyclerVie
             }
 
             return LineLabelViewHolder(label)
+        }
+
+        override fun onViewAttachedToWindow(holder: LineLabelViewHolder) {
+            val label_view = (holder.itemView as LabelView)
+            val beat_index = holder.bindingAdapterPosition
+
+            // Redraw Items that were detached but not destroyed
+            if (label_view.update_queued) {
+                this.update_label_focus(label_view)
+                label_view.update_queued = false
+            }
         }
 
         override fun onBindViewHolder(holder: LineLabelViewHolder, position: Int) {

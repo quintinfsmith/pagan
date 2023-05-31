@@ -13,6 +13,10 @@ class ColumnLabelAdapter(private var opus_manager: InterfaceLayer, var recycler:
     class LabelView(context: Context): RelativeLayout(ContextThemeWrapper(context, R.style.column_label_outer)) {
         var viewHolder: ColumnLabelViewHolder? = null
         private var textView = LineLabelRecyclerView.LineLabelAdapter.LabelView.InnerView(context)
+        /*
+         * update_queued exists to handle the liminal state between being detached and being destroyed
+         * If the cursor is pointed to a location in this space, but changed, then the recycler view doesn't handle it normally
+         */
         var update_queued = false
         init {
             this.addView(this.textView)
@@ -176,7 +180,7 @@ class ColumnLabelAdapter(private var opus_manager: InterfaceLayer, var recycler:
         val item_view = holder.itemView as LabelView
         if (item_view.update_queued) {
             this.update_label_focus(item_view)
-
+            item_view.update_queued = false
         }
     }
 

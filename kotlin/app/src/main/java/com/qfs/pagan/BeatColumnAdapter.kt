@@ -16,6 +16,10 @@ class BeatColumnAdapter(private var parent_fragment: EditorFragment, var recycle
     // BackLink so I can get the x offset from a view in the view holder
     class BackLinkView(context: Context): LinearLayout(context) {
         var viewHolder: BeatViewHolder? = null
+        /*
+         * update_queued exists to handle the liminal state between being detached and being destroyed
+         * If the cursor is pointed to a location in this space, but changed, then the recycler view doesn't handle it normally
+         */
         var update_queued = false
         // Used to keep track of columns in limbo
         init {
@@ -114,6 +118,7 @@ class BeatColumnAdapter(private var parent_fragment: EditorFragment, var recycle
         // Redraw Items that were detached but not destroyed
         if (item_view.update_queued) {
             this.updateItem(holder, beat_index)
+            item_view.update_queued = false
         }
     }
 

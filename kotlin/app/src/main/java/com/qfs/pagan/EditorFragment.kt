@@ -692,6 +692,9 @@ class EditorFragment : PaganFragment() {
                 2 -> {
                     0 - progress
                 }
+                1 -> {
+                    progress
+                }
                 else -> {
                     val beat_key = opus_manager.cursor.get_beatkey()
                     val position = opus_manager.cursor.get_position()
@@ -748,6 +751,9 @@ class EditorFragment : PaganFragment() {
             when (opus_manager.relative_mode) {
                 2 -> {
                     (0 - progress) * opus_manager.RADIX
+                }
+                1 -> {
+                    progress * opus_manager.RADIX
                 }
                 else -> {
                     val beat_key = opus_manager.cursor.get_beatkey()

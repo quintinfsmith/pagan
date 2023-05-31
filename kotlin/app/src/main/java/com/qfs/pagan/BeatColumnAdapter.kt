@@ -13,12 +13,17 @@ import kotlin.concurrent.thread
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
 class BeatColumnAdapter(private var parent_fragment: EditorFragment, var recycler: RecyclerView, var column_layout: ColumnLabelAdapter) : RecyclerView.Adapter<BeatColumnAdapter.BeatViewHolder>() {
-
     // BackLink so I can get the x offset from a view in the view holder
     class BackLinkView(context: Context): LinearLayout(context) {
         var viewHolder: BeatViewHolder? = null
+        var update_queued = false
+        // Used to keep track of columns in limbo
         init {
             this.orientation = VERTICAL
+        }
+        override fun onDetachedFromWindow() {
+            this.update_queued = true
+            super.onDetachedFromWindow()
         }
     }
     class OpusManagerLayoutManager(context: Context): LinearLayoutManager(context, HORIZONTAL, false)
@@ -56,15 +61,12 @@ class BeatColumnAdapter(private var parent_fragment: EditorFragment, var recycle
     var linking_beat_b: BeatKey? = null
     var _scroll_lock_this: Boolean = false
     var _scroll_lock_columns: Boolean = false
-    private var bound_beats = mutableSetOf<Int>()
-    private var attached_beats = mutableSetOf<Int>()
     private var table_scroll_listener: TableOnScrollListener
     private var column_scroll_listener: ColumnLabelOnScrollListener
 
     init {
         this.recycler.adapter = this
         this.recycler.layoutManager = OpusManagerLayoutManager(this.get_main_activity())
-        //(this.recycler.itemAnimator as SimpleItemAnimator).supportsChangeAnimations = false
         this.recycler.itemAnimator = null
 
         val that = this
@@ -100,6 +102,25 @@ class BeatColumnAdapter(private var parent_fragment: EditorFragment, var recycle
 
         this.enableScrollSync()
     }
+    override fun onViewDetachedFromWindow(holder: BeatViewHolder) {
+        val item_view = holder.itemView as BackLinkView
+        val beat_index = holder.bindingAdapterPosition
+    }
+
+    override fun onViewAttachedToWindow(holder: BeatViewHolder) {
+        val item_view = holder.itemView as BackLinkView
+        val beat_index = holder.bindingAdapterPosition
+
+        // Redraw Items that were detached but not destroyed
+        if (item_view.update_queued) {
+            this.updateItem(holder, beat_index)
+        }
+    }
+
+    override fun onBindViewHolder(holder: BeatViewHolder, position: Int) {
+        this.updateItem(holder, position)
+    }
+
 
     private fun get_main_activity(): MainActivity {
         return this.parent_fragment.get_main()
@@ -191,32 +212,9 @@ class BeatColumnAdapter(private var parent_fragment: EditorFragment, var recycle
         }
     }
 
-    override fun onViewRecycled(holder: BeatViewHolder) {
-        val beat = holder.bindingAdapterPosition
-        if (this.bound_beats.contains(beat)) {
-            this.bound_beats.remove(beat)
-        }
-    }
-
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BeatViewHolder {
         val layoutstack = BackLinkView(parent.context)
         return BeatViewHolder(layoutstack)
-    }
-
-    override fun onBindViewHolder(holder: BeatViewHolder, position: Int) {
-        this.updateItem(holder, position)
-        this.bound_beats.add(position)
-    }
-
-    override fun onViewAttachedToWindow(holder: BeatViewHolder) {
-        val beat = holder.bindingAdapterPosition
-        this.attached_beats.add(beat)
-    }
-    override fun onViewDetachedFromWindow(holder: BeatViewHolder) {
-        val beat = holder.bindingAdapterPosition
-        if (this.attached_beats.contains(beat)) {
-            this.attached_beats.remove(beat)
-        }
     }
 
     fun updateItem(holder: BeatViewHolder, index: Int) {
@@ -576,7 +574,9 @@ class BeatColumnAdapter(private var parent_fragment: EditorFragment, var recycle
     }
     fun refresh_leaf_labels(beats: Set<Int>? = null) {
         // NOTE: padding the start/end since an item may be bound but not visible
-        for (i in this.bound_beats) {
+        val start = (this.recycler.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
+        val end = (this.recycler.layoutManager as LinearLayoutManager).findLastVisibleItemPosition()
+        for (i in start .. end) {
             if (beats == null || i in beats) {
                 this.notifyItemChanged(i)
             }
@@ -589,7 +589,9 @@ class BeatColumnAdapter(private var parent_fragment: EditorFragment, var recycle
         when (opus_manager.cursor.mode) {
             Cursor.CursorMode.Row -> {
                 // NOTE: padding the start/end since an item may be bound but not visible
-                for (i in this.attached_beats) {
+                val start = (this.recycler.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
+                val end = (this.recycler.layoutManager as LinearLayoutManager).findLastVisibleItemPosition()
+                for (i in start .. end) {
                     val leafs = this.get_all_leaf_views(
                         BeatKey(
                             opus_manager.cursor.channel,
@@ -604,21 +606,23 @@ class BeatColumnAdapter(private var parent_fragment: EditorFragment, var recycle
                 }
             }
             Cursor.CursorMode.Column -> {
-                if (opus_manager.cursor.beat in this.attached_beats) {
-                    for (i in 0 until opus_manager.channels.size) {
-                        for (j in 0 until opus_manager.channels[i].size) {
-                            val leafs = this.get_all_leaf_views(BeatKey(i, j, opus_manager.cursor.beat)) ?: continue
-                            for (leaf in leafs) {
-                                output.add(leaf)
-                            }
+                val start = (this.recycler.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
+                val end = (this.recycler.layoutManager as LinearLayoutManager).findLastVisibleItemPosition()
+                for (i in 0 until opus_manager.channels.size) {
+                    for (j in 0 until opus_manager.channels[i].size) {
+                        val leafs = this.get_all_leaf_views(BeatKey(i, j, opus_manager.cursor.beat)) ?: continue
+                        for (leaf in leafs) {
+                            output.add(leaf)
                         }
                     }
                 }
             }
             Cursor.CursorMode.Single -> {
+                val start = (this.recycler.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
+                val end = (this.recycler.layoutManager as LinearLayoutManager).findLastVisibleItemPosition()
                 val beatkey = opus_manager.cursor.get_beatkey()
                 for (linkedkey in opus_manager.get_all_linked(beatkey)) {
-                    if (linkedkey.beat !in this.attached_beats) {
+                    if (!(start .. end).contains(linkedkey.beat)) {
                         continue
                     }
                     for (leaf in this.get_all_leaf_views(linkedkey, opus_manager.cursor.get_position()) ?: continue) {
@@ -628,16 +632,17 @@ class BeatColumnAdapter(private var parent_fragment: EditorFragment, var recycle
             }
 
             Cursor.CursorMode.Range -> {
+                val start = (this.recycler.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
+                val end = (this.recycler.layoutManager as LinearLayoutManager).findLastVisibleItemPosition()
                 val from_key = opus_manager.cursor.range!!.first
                 val to_key = opus_manager.cursor.range!!.second
                 for (beatkey in opus_manager.get_beatkeys_in_range(from_key, to_key)) {
-                    if (beatkey.beat !in this.attached_beats) {
+                    if (!(start .. end).contains(beatkey.beat)) {
                         continue
                     }
                     for (leaf in this.get_all_leaf_views(beatkey, listOf()) ?: continue) {
                         output.add(leaf)
                     }
-
                 }
             }
             else -> {}
@@ -650,14 +655,6 @@ class BeatColumnAdapter(private var parent_fragment: EditorFragment, var recycle
         for (leaf in this.get_visible_highlighted_leafs()) {
             leaf.set_focused(show)
             leaf.invalidate()
-        }
-    }
-
-    private fun redraw_visible_leafs() {
-        // Kludge: (Due to RecyclerView Bug) Update the beats that are bound but not visible because the RecyclerView
-        // Wouldn't redraw them
-        for (b in this.bound_beats - this.attached_beats) {
-            this.notifyItemChanged(b)
         }
     }
 

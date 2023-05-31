@@ -85,7 +85,7 @@ class LineLabelRecyclerView(context: Context, attrs: AttributeSet) : RecyclerVie
         init {
             this.recycler.adapter = this
             this.recycler.layoutManager = LinearLayoutManager(this.recycler.context)
-            (this.recycler.itemAnimator as SimpleItemAnimator).supportsChangeAnimations = false
+            this.recycler.itemAnimator = null
 
             val that = this
             this.registerAdapterDataObserver(
@@ -316,7 +316,6 @@ class LineLabelRecyclerView(context: Context, attrs: AttributeSet) : RecyclerVie
             }
         }
     }
-
 }
 
 

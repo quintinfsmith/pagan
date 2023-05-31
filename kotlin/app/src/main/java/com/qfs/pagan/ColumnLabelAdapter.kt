@@ -13,9 +13,15 @@ class ColumnLabelAdapter(private var opus_manager: InterfaceLayer, var recycler:
     class LabelView(context: Context): RelativeLayout(ContextThemeWrapper(context, R.style.column_label_outer)) {
         var viewHolder: ColumnLabelViewHolder? = null
         private var textView = LineLabelRecyclerView.LineLabelAdapter.LabelView.InnerView(context)
+        var update_queued = false
         init {
             this.addView(this.textView)
             this.textView.layoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT
+        }
+
+        override fun onDetachedFromWindow() {
+            this.update_queued = true
+            super.onDetachedFromWindow()
         }
 
         //override fun onAttachedToWindow() {
@@ -166,6 +172,12 @@ class ColumnLabelAdapter(private var opus_manager: InterfaceLayer, var recycler:
     override fun onViewAttachedToWindow(holder: ColumnLabelViewHolder) {
         super.onViewAttachedToWindow(holder)
         this.adjust_width(holder)
+
+        val item_view = holder.itemView as LabelView
+        if (item_view.update_queued) {
+            this.update_label_focus(item_view)
+
+        }
     }
 
     fun adjust_width(holder: ColumnLabelViewHolder) {
@@ -175,11 +187,11 @@ class ColumnLabelAdapter(private var opus_manager: InterfaceLayer, var recycler:
         val resources = this.recycler.resources
         item_view.layoutParams.width = (resources.getDimension(R.dimen.base_leaf_width) * this.column_widths[beat].toFloat()).toInt()
         item_view.layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT
-
     }
 
     override fun onBindViewHolder(holder: ColumnLabelViewHolder, position: Int) {
         this.set_text(holder, position)
+        this.update_label_focus(holder.itemView as LabelView)
     }
 
     fun set_text(holder: ColumnLabelViewHolder, position: Int) {

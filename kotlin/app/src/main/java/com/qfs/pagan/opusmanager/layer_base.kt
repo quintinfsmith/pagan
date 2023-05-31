@@ -917,23 +917,35 @@ open class OpusManagerBase {
         this.transpose = json_data.transpose
         this.set_project_name(json_data.name)
 
+        var percussion_channel: Int? = null
         var beat_count = 0
+        var y = 0
+
+        // Insert Drum Channel
+        this.new_channel()
+
         json_data.channels.forEachIndexed { i: Int, channel_data ->
-            this.new_channel(lines = channel_data.lines.size)
-            for (j in 0 until channel_data.lines.size) {
-                beat_count = max(beat_count, parsed[i][j].size)
+            if (channel_data.midi_channel == 9) {
+                percussion_channel = i
+                for (j in 0 until channel_data.lines.size - 1) {
+                    this.new_line(this.channels.size - 1)
+                }
+            } else {
+                this.new_channel(lines = channel_data.lines.size)
+                for (j in 0 until channel_data.lines.size) {
+                    beat_count = max(beat_count, parsed[i][j].size)
+                }
+                y += 1
             }
         }
 
         for (i in 0 until beat_count) {
             this.insert_beat()
         }
-        var percussion_channel: Int? = null
-        var y = 0
+        y = 0
         json_data.channels.forEachIndexed { i, channel_data ->
             // Separate out percussion channel, just in case it isn't at the end of the channels
             if (channel_data.midi_channel == 9) {
-                percussion_channel = i
                 return@forEachIndexed
             }
 

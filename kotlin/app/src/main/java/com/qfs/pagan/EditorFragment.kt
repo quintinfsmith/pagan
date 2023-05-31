@@ -13,7 +13,7 @@ import java.lang.Integer.max
 import kotlin.concurrent.thread
 
 /**
- * A simple [Fragment] subclass as the default destination in the navigation.
+ *
  */
 class EditorFragment : PaganFragment() {
     // Boiler Plate //

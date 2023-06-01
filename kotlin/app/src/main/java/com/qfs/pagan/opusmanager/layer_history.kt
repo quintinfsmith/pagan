@@ -229,10 +229,8 @@ open class HistoryLayer : LinksLayer() {
                 val beat_key = current_node.args[0] as BeatKey
                 val position = current_node.args[1] as List<Int>
                 val insert_tree = current_node.args[2] as OpusTree<OpusEvent>
-                val parent_position = position.toMutableList()
-                parent_position.removeLast()
-                val working_tree = this.get_tree( beat_key, parent_position )
-                working_tree.insert(position.last(), insert_tree)
+                this.insert(beat_key, position)
+                this.replace_tree(beat_key, position, insert_tree)
             }
 
             "insert_line" -> {
@@ -386,6 +384,12 @@ open class HistoryLayer : LinksLayer() {
             remove_position[remove_position.size - 1] += 1
             super.insert_after(beat_key, position)
             this.push_remove(beat_key, remove_position)
+        }
+    }
+    override fun insert(beat_key: BeatKey, position: List<Int>) {
+        this.history_cache.remember {
+            super.insert(beat_key, position)
+            this.push_remove(beat_key, position)
         }
     }
 

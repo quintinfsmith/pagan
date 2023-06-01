@@ -118,6 +118,10 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         super.insert_after(beat_key, position)
         this.ui_refresh_beat_labels(beat_key)
     }
+    override fun insert(beat_key: BeatKey, position: List<Int>) {
+        super.insert(beat_key, position)
+        this.ui_refresh_beat_labels(beat_key)
+    }
 
     override fun remove(beat_key: BeatKey, position: List<Int>) {
         super.remove(beat_key, position)

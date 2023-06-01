@@ -387,6 +387,16 @@ open class OpusManagerBase {
         ))
     }
 
+    open fun insert(beat_key: BeatKey, position: List<Int>) {
+        if (position.isEmpty()) {
+            throw BadInsertPosition()
+        }
+        val parent_position = position.subList(0, position.size - 1)
+        val tree = this.get_tree(beat_key, parent_position)
+
+        val index = position.last()
+        tree.insert(index, OpusTree())
+    }
     open fun insert_after(beat_key: BeatKey, position: List<Int>) {
         if (position.isEmpty()) {
             throw BadInsertPosition()

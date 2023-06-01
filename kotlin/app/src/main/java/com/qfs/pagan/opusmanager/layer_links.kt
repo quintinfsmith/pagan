@@ -183,6 +183,13 @@ open class LinksLayer : OpusManagerBase() {
         }
     }
 
+    override fun insert(beat_key: BeatKey, position: List<Int>) {
+        this.lock_links {
+            for (linked_key in this.get_all_linked(beat_key)) {
+                super.insert(linked_key, position)
+            }
+        }
+    }
     override fun insert_after(beat_key: BeatKey, position: List<Int>) {
         this.lock_links {
             for (linked_key in this.get_all_linked(beat_key)) {

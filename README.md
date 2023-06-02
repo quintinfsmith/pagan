@@ -1,58 +1,20 @@
-# Radixulous
-A Radix-notation based MIDI editor<br/>
-[![PyPI - Downloads](https://img.shields.io/pypi/dm/radixulous?style=flat-square)](https://pypi.org/project/radixulous/)
-[![PyPI](https://img.shields.io/pypi/v/radixulous?style=flat-square)](https://pypi.org/project/radixulous/)
-[![PyPI - License](https://img.shields.io/pypi/l/radixulous?style=flat-square)](https://burnsomni.net/git/radixulous/?branch=master&path=LICENSE)
+# Pagan Opus Editor
+An experimental Radix-notation based MIDI editor
+
+[Manual](/manuals/pagan)
+
+<img src="https://burnsomni.net/content/screenshots/pagan/2.png"/>
+<img src="https://burnsomni.net/content/screenshots/pagan/3.png"/>
+<img src="https://burnsomni.net/content/screenshots/pagan/4.png"/>
+
+## What is it?
+Pagan is an opus editor that can read/write midi files. It exists because I wanted to be able to write music in a way that represents how I look at music rather than try to translate musical ideas to and from a different structure, like a game of broken telephone.
+It may be for you, it may not. You do you.
+
+## Building the APK
+At the moment, no releases are available though v0.1.0 will be available in the coming day or two (as of 2023-06-02). If you can't wait until then, the source builds correctly with gradle.
 
 
-### Notes
-Keep in mind this project is still in early days.
-Some planned features are:
-1) Loading a midi file into the editor
-2) Linked beats/sections
-3) Export
-    1) specified sections
-    2) with dynamics
-    3) to notation editor compatible files (eg, .mscz)
-4) Playback & general audio
-5) Variable Radix (use base N instead of exclusively 12)
-
-
-## Installation
-```bash
-pip install radixulous
-```
-
-To start an empty file:
-
-```bash
-radixulous
-```
-
-To Load an existing project
-
-```bash
-radixulous path/to/project/
-```
-
-## Controls
-### Default Mode
-- `hjlk`: Left, Up, Down, Right
-- `0123456789ab`: Set active note (absolute) value
-- `+-v^`: Set active note (relative) value
-- `/`: Divide note/rest
-- `i`: Insert rest
-- `x`: Remove note
-- `.`: Unset note / Set 'Rest'
-- `:`: open command line
-- `u`: undo
-
-
-## Commands
-- `swap channel_a channel_b`: Swap channels
-- `c+ channel`: Add line to channel
-- `c- channel`: remove line from channel
-- `w [path]`: save
-- `q`: quit
-- `export [path] [--tempo N] [--transpose N]`: Export to midi file
-
+## Licensing
+- Pagan Licenced under the GNU GPLv3 [(Read Here)](https://burnsomni.net/git/pagan?branch=master&path=LICENSE)
+- FluidR3_GM.sf2 Licenced under MIT License [(Read Here)](https://burnsomni.net/content/SFLicense.txt)

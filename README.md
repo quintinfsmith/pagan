@@ -2,6 +2,7 @@
 An experimental Radix-notation based MIDI editor
 
 [Manual](/manual/pagan)
+
 <img src="https://burnsomni.net/content/screenshots/pagan/2.png"/>
 <img src="https://burnsomni.net/content/screenshots/pagan/3.png"/>
 <img src="https://burnsomni.net/content/screenshots/pagan/4.png"/>

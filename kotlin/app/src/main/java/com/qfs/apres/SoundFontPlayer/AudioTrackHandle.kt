@@ -41,9 +41,6 @@ class AudioTrackHandle {
     var sample_handles = HashMap<Int, SampleHandle>()
     private var sample_handles_mutex = Mutex()
     private var keygen: Int = 0
-    private val remove_delays = HashMap<Int, Int>()
-    private val release_delays = HashMap<Int, Int>()
-    private val join_delays = HashMap<Int, Int>()
 
     var is_playing = false
     private var stop_forced = false
@@ -96,7 +93,7 @@ class AudioTrackHandle {
             that.sample_handles_mutex.withLock {
                 val key = that.genkey()
                 that.sample_handles[key] = handle
-                that.join_delays[key] = join_delay
+                handle.join_delay = join_delay
                 key
             }
         }
@@ -117,7 +114,12 @@ class AudioTrackHandle {
         if (this.stop_forced) {
             throw HandleStoppedException()
         }
-        this.remove_delays[key] = remove_delay
+        val that = this
+        return runBlocking {
+            that.sample_handles_mutex.withLock {
+                that.sample_handles[key]?.remove_delay = remove_delay
+            }
+        }
     }
 
     fun queue_sample_handles_stop(keys: Set<Int>, remove_delay: Int) {
@@ -130,8 +132,11 @@ class AudioTrackHandle {
     }
 
     fun queue_sample_handle_release(key: Int, release_delay: Int) {
-        if (this.sample_handles.containsKey(key)) {
-            this.release_delays[key] = release_delay
+        val that = this
+        runBlocking {
+            that.sample_handles_mutex.withLock {
+                that.sample_handles[key]?.release_delay = release_delay
+            }
         }
     }
 
@@ -224,47 +229,7 @@ class AudioTrackHandle {
                     if (key in kill_handles) {
                         continue
                     }
-                    var frame_value: Short? = null
-                    when (this.join_delays[key]) {
-                        null -> { }
-                        0 -> {
-                            this.join_delays.remove(key)
-                        }
-                        else -> {
-                            this.join_delays[key] = this.join_delays[key]!! - 1
-                            frame_value = 0
-                        }
-                    }
-
-                    when (this.release_delays[key]) {
-                        null -> { }
-                        0 -> {
-                            this.release_delays.remove(key)
-                            sample_handle.release_note()
-                        }
-                        else -> {
-                            this.release_delays[key] = this.release_delays[key]!! - 1
-                        }
-                    }
-
-                    when (this.remove_delays[key]) {
-                        null -> { }
-                        0 -> {
-                            this.remove_delays.remove(key)
-                            kill_handles.add(key)
-                            if (kill_handles.size == sample_handles.size && cut_point == null) {
-                                this.stop_called_from_write = true
-                                cut_point = x
-                            }
-                            continue
-                        }
-                        else -> {
-                            this.remove_delays[key] = this.remove_delays[key]!! - 1
-                            sample_handle.get_next_frame()
-                        }
-                    }
-
-                    frame_value = frame_value ?: sample_handle.get_next_frame()
+                    var frame_value = sample_handle.get_next_frame()
 
                     if (frame_value == null) {
                         kill_handles.add(key)
@@ -336,9 +301,6 @@ class AudioTrackHandle {
             // Clearing these since an abrupt stop means that remove/release delays prevent the
             // write loop from popping the handles when they finish
             this.sample_handles.clear()
-            this.remove_delays.clear()
-            this.release_delays.clear()
-            this.join_delays.clear()
         }
     }
 
@@ -361,9 +323,6 @@ class AudioTrackHandle {
         this.stop_called_from_write = false
         this.last_buffer_start_ts = null
         this.sample_handles.clear()
-        this.remove_delays.clear()
-        this.release_delays.clear()
-        this.join_delays.clear()
         //this.audioTrack.stop()
     }
 

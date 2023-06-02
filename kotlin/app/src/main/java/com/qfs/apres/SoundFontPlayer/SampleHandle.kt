@@ -34,12 +34,16 @@ class SampleHandle(
     private var current_attack_position: Int = 0
     private var current_hold_position: Int = 0
     private var current_decay_position: Int = 0
+
     var current_delay_position: Int = 0
     var decay_position: Int? = null
     var sustain_volume: Int = 0 // TODO
     private var current_release_position: Int = 0
     var current_volume: Double = 0.5
     private var bytes_called: Int = 0 // Will not loop like current_position
+    var join_delay: Int? = null
+    var release_delay: Int? = null
+    var remove_delay: Int? = null
 
     private fun get_max_in_range(x: Int, size: Int): Int {
         var index = min(
@@ -68,6 +72,37 @@ class SampleHandle(
         //    this.current_delay_position += 1
         //    return output
         //}
+        val join_delay = this.join_delay
+        if (join_delay != null) {
+            if (join_delay == 0) {
+                this.join_delay = null
+            } else {
+                this.join_delay = join_delay - 1
+                return 0
+            }
+        }
+
+        val release_delay = this.release_delay
+        if (release_delay != null) {
+            if (release_delay == 0) {
+                this.release_delay = null
+                this.release_note()
+            } else {
+                this.release_delay = release_delay - 1
+            }
+        }
+
+        val remove_delay = this.remove_delay
+        if (remove_delay != null) {
+            if (remove_delay == 0) {
+                this.remove_delay = null
+                this.is_dead = true
+                return null
+            } else {
+              this.remove_delay = remove_delay - 1
+            }
+        }
+
 
         if (this.current_position > this.data.size - 2) {
             this.is_dead = true

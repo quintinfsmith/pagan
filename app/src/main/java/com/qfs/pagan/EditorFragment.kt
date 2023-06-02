@@ -118,6 +118,7 @@ class EditorFragment : PaganFragment() {
                     main.import_midi(path)
                 } catch (e: InvalidMIDIFile) {
                     main.get_opus_manager().new()
+                    main.feedback_msg("Invalid MIDI")
                 }
             }
         }
@@ -141,7 +142,6 @@ class EditorFragment : PaganFragment() {
         setFragmentResultListener("NEW") { _, _: Bundle? ->
             val main = this.get_main()
             main.get_opus_manager().new()
-            main.feedback_msg("Invalid MIDI")
         }
     }
 

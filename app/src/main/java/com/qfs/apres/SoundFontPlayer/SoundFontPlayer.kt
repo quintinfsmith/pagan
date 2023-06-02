@@ -119,7 +119,7 @@ class SoundFontPlayer(var sound_font: SoundFont) {
         val keys = runBlocking {
             that.active_handle_mutex.withLock {
                 val output = mutableSetOf<Int>()
-                for ((input_key, output_keys) in that.active_handle_keys.filterKeys { k -> k.second == channel }) {
+                for ((_, output_keys) in that.active_handle_keys.filterKeys { k -> k.second == channel }) {
                     output.union(output_keys)
                 }
                 output

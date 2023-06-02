@@ -213,7 +213,6 @@ fun tree_from_midi(midi: MIDI): OpusTree<Set<OpusEvent>> {
     var max_tick = 0
     val press_map = HashMap<Int, Pair<Int, Int>>()
 
-    var denominator = 4
     for (pair in midi.get_all_events()) {
         val tick = pair.first
         val event = pair.second

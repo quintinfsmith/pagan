@@ -106,10 +106,6 @@ class BeatColumnAdapter(private var parent_fragment: EditorFragment, var recycle
 
         this.enableScrollSync()
     }
-    override fun onViewDetachedFromWindow(holder: BeatViewHolder) {
-        val item_view = holder.itemView as BackLinkView
-        val beat_index = holder.bindingAdapterPosition
-    }
 
     override fun onViewAttachedToWindow(holder: BeatViewHolder) {
         val item_view = holder.itemView as BackLinkView
@@ -611,8 +607,6 @@ class BeatColumnAdapter(private var parent_fragment: EditorFragment, var recycle
                 }
             }
             Cursor.CursorMode.Column -> {
-                val start = (this.recycler.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
-                val end = (this.recycler.layoutManager as LinearLayoutManager).findLastVisibleItemPosition()
                 for (i in 0 until opus_manager.channels.size) {
                     for (j in 0 until opus_manager.channels[i].size) {
                         val leafs = this.get_all_leaf_views(BeatKey(i, j, opus_manager.cursor.beat)) ?: continue

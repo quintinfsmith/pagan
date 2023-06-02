@@ -2,6 +2,7 @@ package com.qfs.pagan.opusmanager
 import com.qfs.apres.MIDI
 import com.qfs.pagan.structure.OpusTree
 
+
 open class HistoryLayer : LinksLayer() {
     class HistoryCache {
         class HistoryNode(var func_name: String, var args: List<Any>) {
@@ -130,157 +131,190 @@ open class HistoryLayer : LinksLayer() {
     var history_cache = HistoryCache()
     private var save_point_popped = false
 
+    inline fun <reified T> checked_cast(value: Any): T {
+        if (value is T) {
+            return value
+        }  else {
+            throw ClassCastException()
+        }
+    }
+
     open fun push_to_history_stack(func_name: String, args: List<Any>) {
         this.history_cache.append_undoer(func_name, args)
     }
 
     open fun apply_history_node(current_node: HistoryCache.HistoryNode, depth: Int = 0) {
-        when (current_node.func_name) {
-            "split_tree" -> {
-                this.split_tree(
-                    current_node.args[0] as BeatKey,
-                    current_node.args[1] as List<Int>,
-                    current_node.args[2] as Int
-                )
-            }
-            "set_project_name" -> {
-                this.set_project_name(current_node.args[0] as String)
-            }
-            "set_line_volume" -> {
-                this.set_line_volume(
-                    current_node.args[0] as Int,
-                    current_node.args[1] as Int,
-                    current_node.args[2] as Int
-                )
-            }
-            "unlink_beat" -> {
-                this.unlink_beat(current_node.args[0] as BeatKey)
-            }
-            "restore_link_pools" -> {
-                var pools = current_node.args[0] as List<Set<BeatKey>>
-                this.link_pools.clear()
-                this.link_pool_map.clear()
-                pools.forEachIndexed { i: Int, pool: Set<BeatKey> ->
-                    for (beat_key in pool) {
-                        this.link_pool_map[beat_key] = i
-                    }
-                    this.link_pools.add(pool.toMutableSet())
+        try {
+            when (current_node.func_name) {
+                "split_tree" -> {
+                    this.split_tree(
+                        current_node.args[0] as BeatKey,
+                        this.checked_cast<List<Int>>(current_node.args[1]),
+                        current_node.args[2] as Int
+                    )
                 }
-            }
-            "link_beats" -> {
-                this.link_beats(
-                    current_node.args[0] as BeatKey,
-                    current_node.args[1] as BeatKey
-                )
-            }
-            "link_beat_to_pool" -> {
-                // No need to overwrite in history
-                val beat_key = current_node.args[0] as BeatKey
-                val pool_index = current_node.args[1] as Int
-                this.link_pool_map[beat_key] = pool_index
-                this.link_pools[pool_index].add(beat_key)
-            }
-            "create_link_pool" -> {
-                this.create_link_pool((current_node.args[0] as LinkedHashSet<BeatKey>).toList())
-            }
-            "set_event" -> {
-                this.set_event(
-                    current_node.args[0] as BeatKey,
-                    current_node.args[1] as List<Int>,
-                    current_node.args[2] as OpusEvent
-                )
-            }
-            "set_percussion_event" -> {
-                this.set_percussion_event(
-                    current_node.args[0] as BeatKey,
-                    current_node.args[1] as List<Int>
-                )
-            }
-            "unset" -> {
-                this.unset(
-                    current_node.args[0] as BeatKey,
-                    current_node.args[1] as List<Int>
-                )
-            }
 
-            "replace_tree" -> {
-                val beatkey = current_node.args[0] as BeatKey
-                val position = current_node.args[1] as List<Int>
-                val tree = current_node.args[2] as OpusTree<OpusEvent>
+                "set_project_name" -> {
+                    this.set_project_name(current_node.args[0] as String)
+                }
 
-                this.replace_tree(beatkey, position, tree)
-            }
+                "set_line_volume" -> {
+                    this.set_line_volume(
+                        current_node.args[0] as Int,
+                        current_node.args[1] as Int,
+                        current_node.args[2] as Int
+                    )
+                }
 
-            "remove_line" -> {
-                this.remove_line(
-                    current_node.args[0] as Int,
-                    current_node.args[1] as Int
-                )
-            }
-            "move_line" -> {
-                this.move_line(
-                    current_node.args[0] as Int,
-                    current_node.args[1] as Int,
-                    current_node.args[2] as Int,
-                    current_node.args[3] as Int
-                )
-            }
-            "insert_tree" -> {
-                val beat_key = current_node.args[0] as BeatKey
-                val position = current_node.args[1] as List<Int>
-                val insert_tree = current_node.args[2] as OpusTree<OpusEvent>
-                this.insert(beat_key, position)
-                this.replace_tree(beat_key, position, insert_tree)
-            }
+                "unlink_beat" -> {
+                    this.unlink_beat(current_node.args[0] as BeatKey)
+                }
 
-            "insert_line" -> {
-                this.insert_line(
-                    current_node.args[0] as Int,
-                    current_node.args[1] as Int,
-                    current_node.args[2] as MutableList<OpusTree<OpusEvent>>
-                )
-            }
-            "remove_channel" -> {
-                this.remove_channel_by_uuid(current_node.args[0] as Int)
-            }
-            "new_channel" -> {
-                this.new_channel(current_node.args[0] as Int)
-            }
-            "remove" -> {
-                this.remove(
-                    current_node.args[0] as BeatKey,
-                    current_node.args[1] as List<Int>
-                )
-            }
-            "remove_beat" -> {
-                this.remove_beat(current_node.args[0] as Int)
-            }
-            "insert_beat" -> {
-                this.insert_beat(
-                    current_node.args[0] as Int,
-                    current_node.args[1] as List<OpusTree<OpusEvent>>
-                )
-            }
-            "set_transpose" -> {
-                this.set_transpose(current_node.args[0] as Int)
-            }
-            "set_tempo" -> {
-                this.set_tempo(current_node.args[0] as Float)
-            }
-            "set_channel_instrument" -> {
-                this.set_channel_instrument(
-                    current_node.args[0] as Int,
-                    current_node.args[1] as Pair<Int, Int>
-                )
-            }
-            "set_percussion_instrument" -> {
-                this.set_percussion_instrument(
-                    current_node.args[0] as Int, // line
-                    current_node.args[1] as Int // Instrument
-                )
-            }
+                "restore_link_pools" -> {
+                    var pools = this.checked_cast<List<Set<BeatKey>>>(current_node.args[0])
+                    this.link_pools.clear()
+                    this.link_pool_map.clear()
+                    pools.forEachIndexed { i: Int, pool: Set<BeatKey> ->
+                        for (beat_key in pool) {
+                            this.link_pool_map[beat_key] = i
+                        }
+                        this.link_pools.add(pool.toMutableSet())
+                    }
+                }
 
-            else -> {}
+                "link_beats" -> {
+                    this.link_beats(
+                        current_node.args[0] as BeatKey,
+                        current_node.args[1] as BeatKey
+                    )
+                }
+
+                "link_beat_to_pool" -> {
+                    // No need to overwrite in history
+                    val beat_key = current_node.args[0] as BeatKey
+                    val pool_index = current_node.args[1] as Int
+                    this.link_pool_map[beat_key] = pool_index
+                    this.link_pools[pool_index].add(beat_key)
+                }
+
+                "create_link_pool" -> {
+                    this.create_link_pool(this.checked_cast<LinkedHashSet<BeatKey>>(current_node.args[0]).toList())
+                }
+
+                "set_event" -> {
+                    this.set_event(
+                        current_node.args[0] as BeatKey,
+                        this.checked_cast<List<Int>>(current_node.args[1]),
+                        current_node.args[2] as OpusEvent
+                    )
+                }
+
+                "set_percussion_event" -> {
+                    this.set_percussion_event(
+                        current_node.args[0] as BeatKey,
+                        this.checked_cast<List<Int>>(current_node.args[1])
+                    )
+                }
+
+                "unset" -> {
+                    this.unset(
+                        current_node.args[0] as BeatKey,
+                        this.checked_cast<List<Int>>(current_node.args[1])
+                    )
+                }
+
+                "replace_tree" -> {
+                    val beatkey = current_node.args[0] as BeatKey
+                    val position = this.checked_cast<List<Int>>(current_node.args[1])
+                    val tree = this.checked_cast<OpusTree<OpusEvent>>(current_node.args[2])
+
+                    this.replace_tree(beatkey, position, tree)
+                }
+
+                "remove_line" -> {
+                    this.remove_line(
+                        current_node.args[0] as Int,
+                        current_node.args[1] as Int
+                    )
+                }
+
+                "move_line" -> {
+                    this.move_line(
+                        current_node.args[0] as Int,
+                        current_node.args[1] as Int,
+                        current_node.args[2] as Int,
+                        current_node.args[3] as Int
+                    )
+                }
+
+                "insert_tree" -> {
+                    val beat_key = current_node.args[0] as BeatKey
+                    val position = this.checked_cast<List<Int>>(current_node.args[1])
+                    val insert_tree = this.checked_cast<OpusTree<OpusEvent>>(current_node.args[2])
+                    this.insert(beat_key, position)
+                    this.replace_tree(beat_key, position, insert_tree)
+                }
+
+                "insert_line" -> {
+                    this.insert_line(
+                        current_node.args[0] as Int,
+                        current_node.args[1] as Int,
+                        this.checked_cast<MutableList<OpusTree<OpusEvent>>>(current_node.args[2])
+                    )
+                }
+
+                "remove_channel" -> {
+                    this.remove_channel_by_uuid(current_node.args[0] as Int)
+                }
+
+                "new_channel" -> {
+                    this.new_channel(current_node.args[0] as Int)
+                }
+
+                "remove" -> {
+                    this.remove(
+                        current_node.args[0] as BeatKey,
+                        this.checked_cast<List<Int>>(current_node.args[1])
+                    )
+                }
+
+                "remove_beat" -> {
+                    this.remove_beat(current_node.args[0] as Int)
+                }
+
+                "insert_beat" -> {
+                    this.insert_beat(
+                        current_node.args[0] as Int,
+                        this.checked_cast<List<OpusTree<OpusEvent>>>(current_node.args[1])
+                    )
+                }
+
+                "set_transpose" -> {
+                    this.set_transpose(current_node.args[0] as Int)
+                }
+
+                "set_tempo" -> {
+                    this.set_tempo(current_node.args[0] as Float)
+                }
+
+                "set_channel_instrument" -> {
+                    this.set_channel_instrument(
+                        current_node.args[0] as Int,
+                        this.checked_cast<Pair<Int, Int>>(current_node.args[1])
+                    )
+                }
+
+                "set_percussion_instrument" -> {
+                    this.set_percussion_instrument(
+                        current_node.args[0] as Int, // line
+                        current_node.args[1] as Int // Instrument
+                    )
+                }
+
+                else -> {}
+            }
+        } catch (e: ClassCastException) {
+            // pass
         }
 
         if (current_node.children.isNotEmpty()) {

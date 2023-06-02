@@ -162,7 +162,7 @@ class SoundFont(assets: AssetManager, file_name: String) {
         var output: Preset? = null
         val pbag_entry_size = 4
 
-        this.riff.with { riff: Riff ->
+        this.riff.with {
             val phdr_bytes = this.pdta_chunks["phdr"]!!
             // Loop throught PHDR until we find the correct index/bank
             for (index in 0 until (phdr_bytes.size / 38) - 1) {

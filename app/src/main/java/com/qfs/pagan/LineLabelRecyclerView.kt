@@ -185,7 +185,6 @@ class LineLabelRecyclerView(context: Context, attrs: AttributeSet) : RecyclerVie
 
         override fun onViewAttachedToWindow(holder: LineLabelViewHolder) {
             val label_view = (holder.itemView as LabelView)
-            val beat_index = holder.bindingAdapterPosition
 
             // Redraw Items that were detached but not destroyed
             if (label_view.update_queued) {
@@ -315,7 +314,7 @@ class LineLabelRecyclerView(context: Context, attrs: AttributeSet) : RecyclerVie
                 Cursor.CursorMode.Range -> {
                     val (from_key, to_key) = cursor.range!!
                     val offset_y = this.opus_manager.get_abs_offset(from_key.channel, from_key.line_offset)
-                    val (diff_y, diff_x) = this.opus_manager.get_abs_difference(from_key, to_key)
+                    val (diff_y, _) = this.opus_manager.get_abs_difference(from_key, to_key)
                     for (i in offset_y .. offset_y + diff_y) {
                         val viewHolder = this.recycler.findViewHolderForAdapterPosition(i) ?: return
                         val label = viewHolder.itemView as LabelView

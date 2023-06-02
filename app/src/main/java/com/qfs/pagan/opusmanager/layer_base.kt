@@ -813,7 +813,7 @@ open class OpusManagerBase {
                 val beatstrs: MutableList<String> = mutableListOf()
                 for (beat in line.beats) {
                     if (channel.midi_channel == 9) {
-                        beat.traverse { tree: OpusTree<OpusEvent>, event: OpusEvent? ->
+                        beat.traverse { _: OpusTree<OpusEvent>, event: OpusEvent? ->
                             if (event != null) {
                                 event.note = channel.get_mapped_line_offset(i) ?: this.DEFAULT_PERCUSSION
                             }

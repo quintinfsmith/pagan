@@ -1394,15 +1394,15 @@ class MIDI {
         fun from_bytes(file_bytes: ByteArray): MIDI {
             val working_bytes = file_bytes.toMutableList()
             val mlo = MIDI()
-            var sub_bytes: MutableList<Byte> = mutableListOf()
+            var sub_bytes: MutableList<Byte>
             val chunkcount = HashMap<String, Int>()
-            var current_track: Int = 0
-            var current_deltatime: Int = 0
-            var chunk_type: String = ""
+            var current_track = 0
+            var current_deltatime: Int
+            var chunk_type: String
 
-            var divword = 0
-            var midi_format = 0
-            var track_length = 0
+            var divword: Int
+            var midi_format: Int
+            var track_length: Int
             var found_header = false
             var ppqn = 120
             while (working_bytes.isNotEmpty()) {
@@ -1511,7 +1511,7 @@ class MIDI {
         output.add((ppqn % 256).toByte())
 
         var track_event_bytes: MutableList<Byte>
-        var track_byte_length: Int = 0
+        var track_byte_length: Int
         val tracks = this.get_tracks()
 
         for (ticks in tracks) {

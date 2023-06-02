@@ -569,7 +569,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                 Pair(
                     current_node.args[0] as BeatKey,
                     if (current_node.args[1] is List<*>) {
-                        current_node.args[1] as List<Int>
+                        this.checked_cast<List<Int>>(current_node.args[1])
                     } else {
                         return
                     }
@@ -641,8 +641,8 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                     )
                 }
                 "replace_tree" -> {
-                    val new_position = (args[1] as List<Int>).toMutableList()
-                    var tree = args[2] as OpusTree<OpusEvent>
+                    val new_position = this.checked_cast<List<Int>>(args[1]).toMutableList()
+                    var tree = this.checked_cast<OpusTree<OpusEvent>>(args[2])
                     while (! tree.is_leaf()) {
                         new_position.add(0)
                         tree = tree[0]
@@ -676,7 +676,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                         "cursor_select",
                         listOf(
                             args[0] as BeatKey,
-                            args[1] as List<Int>
+                            this.checked_cast<List<Int>>(args[1])
                         )
                     )
                 }
@@ -685,7 +685,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                         "cursor_select",
                         listOf(
                             args[0] as BeatKey,
-                            args[1] as List<Int>
+                            this.checked_cast<List<Int>>(args[1])
                         )
                     )
                 }
@@ -694,7 +694,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                         "cursor_select",
                         listOf(
                             args[0] as BeatKey,
-                            args[1] as List<Int>
+                            this.checked_cast<List<Int>>(args[1])
                         )
                     )
                 }
@@ -726,7 +726,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                 }
                 "remove" -> {
                     val beat_key = args[0] as BeatKey
-                    val position = args[1] as List<Int>
+                    val position = this.checked_cast<List<Int>>(args[1])
 
                     val tree = this.get_tree(beat_key, position)
                     val cursor_position = position.toMutableList()
@@ -743,7 +743,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                 }
                 "insert_tree" -> {
                     val beat_key = args[0] as BeatKey
-                    val position = args[1] as List<Int>
+                    val position = this.checked_cast<List<Int>>(args[1])
                     this.push_to_history_stack(
                         "cursor_select",
                         listOf(beat_key, position)

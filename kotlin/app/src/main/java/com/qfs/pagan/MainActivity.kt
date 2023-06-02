@@ -21,6 +21,7 @@ import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.apres.BankSelect
+import com.qfs.apres.InvalidMIDIFile
 import com.qfs.apres.MIDI
 import com.qfs.apres.MIDIController
 import com.qfs.apres.MIDIPlayer
@@ -666,7 +667,11 @@ class MainActivity : AppCompatActivity() {
     fun import_midi(path: String) {
         this.applicationContext.contentResolver.openFileDescriptor(Uri.parse(path), "r")?.use {
             val bytes = FileInputStream(it.fileDescriptor).readBytes()
-            val midi = MIDI.from_bytes(bytes)
+            val midi = try {
+                MIDI.from_bytes(bytes)
+            } catch (e: MIDI.InvalidChunkType) {
+                throw InvalidMIDIFile(path)
+            }
             var filename = java.net.URLDecoder.decode(path, "utf-8")
             filename = filename.substring(filename.lastIndexOf("/") + 1)
             filename = filename.substring(0, filename.lastIndexOf("."))

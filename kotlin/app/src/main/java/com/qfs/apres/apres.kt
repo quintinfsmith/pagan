@@ -7,6 +7,7 @@ import java.io.File
 import kotlin.experimental.and
 import kotlin.experimental.or
 
+class InvalidMIDIFile(var path: String): Exception("$path is not a valid midi file")
 
 interface MIDIEvent {
     fun as_bytes(): ByteArray
@@ -1383,7 +1384,11 @@ class MIDI {
     companion object {
         fun from_path(file_path: String): MIDI {
             val midibytes = File(file_path).readBytes()
-            return from_bytes(midibytes)
+            try {
+                return from_bytes(midibytes)
+            } catch (e: InvalidChunkType) {
+                throw InvalidMIDIFile(file_path)
+            }
         }
 
         fun from_bytes(file_bytes: ByteArray): MIDI {

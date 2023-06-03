@@ -2,6 +2,7 @@
 An experimental Radix-notation based MIDI editor
 
 [Manual](/manual/pagan)
+[Donate to Project](https://www.buymeacoffee.com/qfsmith)
 
 <img src="https://burnsomni.net/content/screenshots/pagan/2.png"/>
 <img src="https://burnsomni.net/content/screenshots/pagan/3.png"/>

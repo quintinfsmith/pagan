@@ -1,5 +1,4 @@
 package com.qfs.pagan.opusmanager
-import android.util.Log
 import com.qfs.apres.BankSelect
 import com.qfs.apres.MIDI
 import com.qfs.apres.NoteOff
@@ -107,7 +106,6 @@ open class OpusManagerBase {
         }
         return output
     }
-
     open fun get_abs_difference(beata: BeatKey, beatb: BeatKey): Pair<Int, Int> {
         val beata_y = this.get_abs_offset(beata.channel, beata.line_offset)
         val beatb_y = this.get_abs_offset(beatb.channel, beatb.line_offset)
@@ -142,7 +140,6 @@ open class OpusManagerBase {
             throw BadBeatKey(beat_key)
         }
 
-        // TODO: Check if i ever use a negative line_offset. and change it if i do
         val line_offset: Int = if (beat_key.line_offset < 0) {
             this.channels[beat_key.channel].size - beat_key.line_offset
         } else {
@@ -164,7 +161,7 @@ open class OpusManagerBase {
         val pair = this.get_proceding_leaf_position(beat_key, position) ?: return null
         return this.get_tree(pair.first, pair.second)
     }
-    
+
     fun get_preceding_event(beat_key: BeatKey, position: List<Int>): OpusEvent? {
         // Gets first preceding event. may skip empty leafs
         var working_position = position.toList()
@@ -573,7 +570,6 @@ open class OpusManagerBase {
         if (this.is_percussion(channel_old) != this.is_percussion(channel_new)) {
             throw IncompatibleChannelException(channel_old, channel_new)
         }
-        Log.d("AAA", "$channel_old")
         // preserve line map
         val line_map = if (channel_old == channel_new && this.is_percussion(channel_old)) {
             this.channels[channel_old].line_map!!.toList()
@@ -1064,7 +1060,7 @@ open class OpusManagerBase {
             } else if (event is ProgramChange) {
                 instrument_map.add(Triple(event.channel, null, event.program))
             } else if (event is BankSelect) {
-                instrument_map.add(Triple(event.channel, null, event.value))
+                instrument_map.add(Triple(event.channel, event.value, null))
             }
         }
 
@@ -1126,8 +1122,6 @@ open class OpusManagerBase {
 
     open fun import_midi(midi: MIDI) {
         this.clear()
-
-        this.RADIX = 12
 
         val (settree, tempo, instrument_map) = this.tree_from_midi(midi)
         this.tempo = tempo

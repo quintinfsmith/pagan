@@ -2,7 +2,7 @@
 An experimental Radix-notation based MIDI editor
 
 [Manual](/manual/pagan)
-[Donate to Project Maintainer](https://www.buymeacoffee.com/qfsmith)
+[Download the Apk](/content/release/pagan/pagan-latest.apk)
 
 <img src="https://burnsomni.net/content/screenshots/pagan/2.png"/>
 <img src="https://burnsomni.net/content/screenshots/pagan/3.png"/>
@@ -13,7 +13,7 @@ Pagan is an opus editor that can read/write midi files. It exists because I want
 It may be for you, it may not. You do you.
 
 ## Building the APK
-At the moment, no releases are available though v0.1.0 will be available in the coming day or two (as of 2023-06-02). If you can't wait until then, the source builds correctly with gradle.
+At the moment, no release are available through any app store though v0.1.0 should be available in the coming few days (as of 2023-06-09). If you can't wait until then and you don't trust the .apk, the source builds correctly with gradle.
 
 
 ## Licensing

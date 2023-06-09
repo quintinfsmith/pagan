@@ -1202,7 +1202,7 @@ open class OpusManagerBase {
             val tmp_channel_counts = HashMap<Int, Int>()
             val event_list = event_set.toMutableList()
             event_list.sortWith(compareBy { 127 - it.note })
-            event_list.forEachIndexed { _: Int, event: OpusEvent ->
+            event_list.forEach { event: OpusEvent ->
                 val channel_index = midi_channel_map[event.channel]!!
                 if (event.channel == 9) {
                     percussion_channel = midi_channel_map[9]
@@ -1264,6 +1264,7 @@ open class OpusManagerBase {
     open fun set_line_volume(channel: Int, line_offset: Int, volume: Int) {
         this.channels[channel].set_line_volume(line_offset, volume)
     }
+
     fun get_line_volume(channel: Int, line_offset: Int): Int {
         return this.channels[channel].get_line_volume(line_offset)
     }

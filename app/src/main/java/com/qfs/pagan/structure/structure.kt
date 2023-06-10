@@ -689,9 +689,9 @@ class OpusTree<T> {
         } else if (this.is_leaf()) {
             return null
         }
-
         val output = mutableListOf<Int>()
-        for ((i, child) in this.divisions) {
+        for (i in this.divisions.keys.toList().sorted()) {
+            val child = this.divisions[i]!!
             val result = child.get_first_event_tree_position() ?: continue
 
             output.add(i)

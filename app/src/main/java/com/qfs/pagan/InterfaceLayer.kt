@@ -554,8 +554,8 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
     override fun apply_history_node(current_node: HistoryCache.HistoryNode, depth: Int)  {
         super.apply_history_node(current_node, depth)
-        this.queued_location_stamp = when (current_node.func_name) {
-            "cursor_select_row" -> {
+        this.queued_location_stamp = when (current_node.token) {
+            HistoryToken.CURSOR_SELECT_ROW -> {
                 Pair(
                     BeatKey(
                         current_node.args[0] as Int,
@@ -565,7 +565,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                     null
                 )
             }
-            "cursor_select" -> {
+            HistoryToken.CURSOR_SELECT -> {
                 Pair(
                     current_node.args[0] as BeatKey,
                     if (current_node.args[1] is List<*>) {
@@ -575,7 +575,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                     }
                 )
             }
-            "cursor_select_column" -> {
+            HistoryToken.CURSOR_SELECT_COLUMN -> {
                 Pair(
                     BeatKey(
                         -1,
@@ -591,20 +591,20 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         }
     }
 
-    override fun push_to_history_stack(func_name: String, args: List<Any>) {
+    override fun push_to_history_stack(token: HistoryToken, args: List<Any>) {
         if (this.history_cache.isLocked()) {
             return
         }
         var has_cursor_action = true
         this.history_cache.remember {
-            when (func_name) {
-                "move_line" -> {
+            when (token) {
+                HistoryToken.MOVE_LINE -> {
                     val from_channel = args[0] as Int
                     val from_line = args[1] as Int
                     val to_channel = args[2] as Int
                     val to_line = args[3] as Int
                     this.push_to_history_stack(
-                        "cursor_select_row",
+                        HistoryToken.CURSOR_SELECT_ROW,
                         listOf(
                             to_channel,
                             if (from_channel == to_channel && to_line >= from_line) {
@@ -616,20 +616,20 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                         )
                     )
                 }
-                "insert_line" -> {
+                HistoryToken.INSERT_LINE -> {
                     this.push_to_history_stack(
-                        "cursor_select_row",
+                        HistoryToken.CURSOR_SELECT_ROW,
                         listOf(
                             args[0] as Int,
                             args[1] as Int
                         )
                     )
                 }
-                "remove_line" -> {
+                HistoryToken.REMOVE_LINE -> {
                     val channel = args[0] as Int
                     val line_offset = args[1] as Int
                     this.push_to_history_stack(
-                        "cursor_select_row",
+                        HistoryToken.CURSOR_SELECT_ROW,
                         listOf(
                             channel,
                             if (line_offset == this.channels[channel].size - 1) {
@@ -640,7 +640,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                         )
                     )
                 }
-                "replace_tree" -> {
+                HistoryToken.REPLACE_TREE -> {
                     val new_position = this.checked_cast<List<Int>>(args[1]).toMutableList()
                     var tree = this.checked_cast<OpusTree<OpusEvent>>(args[2])
                     while (! tree.is_leaf()) {
@@ -649,69 +649,69 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                     }
 
                     this.push_to_history_stack(
-                        "cursor_select",
+                        HistoryToken.CURSOR_SELECT,
                         listOf(
                             args[0] as BeatKey,
                             new_position
                         )
                     )
                 }
-                "set_percussion_instrument" ->{
+                HistoryToken.SET_PERCUSSION_INSTRUMENT ->{
                     this.push_to_history_stack(
-                        "cursor_select_row",
+                        HistoryToken.CURSOR_SELECT_ROW,
                         listOf(
                             this.channels.size - 1,
                             args[0] as Int
                         )
                     )
                 }
-                "set_channel_instrument" -> {
+                HistoryToken.SET_CHANNEL_INSTRUMENT -> {
                     this.push_to_history_stack(
-                        "cursor_select_row",
+                        HistoryToken.CURSOR_SELECT_ROW,
                         listOf(args[0], 0)
                     )
                 }
-                "unset" -> {
+                HistoryToken.UNSET -> {
                     this.push_to_history_stack(
-                        "cursor_select",
+                        HistoryToken.CURSOR_SELECT,
                         listOf(
                             args[0] as BeatKey,
                             this.checked_cast<List<Int>>(args[1])
                         )
                     )
                 }
-                "set_event" -> {
+                HistoryToken.SET_EVENT -> {
                     this.push_to_history_stack(
-                        "cursor_select",
+                        HistoryToken.CURSOR_SELECT,
                         listOf(
                             args[0] as BeatKey,
                             this.checked_cast<List<Int>>(args[1])
                         )
                     )
                 }
-                "set_percussion_event" -> {
+                HistoryToken.SET_PERCUSSION_EVENT -> {
                     this.push_to_history_stack(
-                        "cursor_select",
+                        HistoryToken.CURSOR_SELECT,
                         listOf(
                             args[0] as BeatKey,
                             this.checked_cast<List<Int>>(args[1])
                         )
                     )
                 }
-                "insert_beat" -> {
+                HistoryToken.INSERT_BEAT -> {
                     this.push_to_history_stack(
-                        "cursor_select_column",
+                        HistoryToken.CURSOR_SELECT_COLUMN,
                         listOf(args[0] as Int)
                     )
                 }
-                "remove_beat" -> {
+                HistoryToken.REMOVE_BEAT -> {
                     val x = max(0, min(args[0] as Int, this.opus_beat_count - 2))
                     this.push_to_history_stack(
-                        "cursor_select_column",
+                        HistoryToken.CURSOR_SELECT_COLUMN,
                         listOf(x)
                     )
                 }
-                "link_beats" -> {
+                HistoryToken.LINK_BEATS -> {
                     val beat_key = args[0] as BeatKey
                     val position = mutableListOf<Int>()
                     var tree = this.get_tree(beat_key,position)
@@ -720,11 +720,11 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                         position.add(0)
                     }
                     this.push_to_history_stack(
-                        "cursor_select",
+                        HistoryToken.CURSOR_SELECT,
                         listOf( beat_key, position )
                     )
                 }
-                "remove" -> {
+                HistoryToken.REMOVE -> {
                     val beat_key = args[0] as BeatKey
                     val position = this.checked_cast<List<Int>>(args[1])
 
@@ -737,15 +737,15 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                     }
 
                     this.push_to_history_stack(
-                        "cursor_select",
+                        HistoryToken.CURSOR_SELECT,
                         listOf(beat_key, cursor_position)
                     )
                 }
-                "insert_tree" -> {
+                HistoryToken.INSERT_TREE -> {
                     val beat_key = args[0] as BeatKey
                     val position = this.checked_cast<List<Int>>(args[1])
                     this.push_to_history_stack(
-                        "cursor_select",
+                        HistoryToken.CURSOR_SELECT,
                         listOf(beat_key, position)
                     )
                 }
@@ -754,12 +754,12 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                 }
             }
             if (has_cursor_action) {
-                super.push_to_history_stack(func_name, args)
+                super.push_to_history_stack(token, args)
             }
         }
         if (! has_cursor_action) {
             //this.history_cache.pop()
-            super.push_to_history_stack(func_name, args)
+            super.push_to_history_stack(token, args)
         }
     }
 

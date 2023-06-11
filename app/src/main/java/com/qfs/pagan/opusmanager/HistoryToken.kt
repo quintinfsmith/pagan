@@ -1,0 +1,38 @@
+package com.qfs.pagan.opusmanager
+
+enum class HistoryToken {
+    // Meta
+    MULTI,
+    SAVE_POINT,
+    // Base
+    INSERT_BEAT,
+    INSERT_LINE,
+    INSERT_TREE,
+    MOVE_LINE,
+    NEW_CHANNEL,
+    REMOVE,
+    REMOVE_BEAT,
+    REMOVE_CHANNEL,
+    REMOVE_LINE,
+    REPLACE_TREE,
+    SET_CHANNEL_INSTRUMENT,
+    SET_EVENT,
+    SET_LINE_VOLUME,
+    SET_PERCUSSION_EVENT,
+    SET_PERCUSSION_INSTRUMENT,
+    SET_PROJECT_NAME,
+    SET_TEMPO,
+    SET_TRANSPOSE,
+    SPLIT_TREE,
+    UNSET,
+    // Links
+    CREATE_LINK_POOL,
+    LINK_BEATS,
+    LINK_BEAT_TO_POOL,
+    RESTORE_LINK_POOLS,
+    UNLINK_BEAT,
+    // Interface
+    CURSOR_SELECT,
+    CURSOR_SELECT_COLUMN,
+    CURSOR_SELECT_ROW
+}

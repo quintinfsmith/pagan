@@ -120,7 +120,7 @@ class MainActivity : AppCompatActivity() {
         //////////////////////////////////////////
         // TODO: clean up the file -> riff -> soundfont -> midi playback device process
 
-        this.soundfont = SoundFont(assets, "FluidR3_GM.sf2")
+        this.soundfont = SoundFont(assets.open("FluidR3_GM.sf2"))
         this.midi_playback_device = MIDIPlaybackDevice(this, this.soundfont)
 
         this.midi_controller = MIDIController(window.decorView.rootView.context)

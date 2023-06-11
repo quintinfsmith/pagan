@@ -3,14 +3,15 @@ package com.qfs.apres
 import android.content.res.AssetManager
 import com.qfs.apres.riffreader.Riff
 import com.qfs.apres.riffreader.toUInt
+import java.io.InputStream
 import kotlin.math.max
 import kotlin.math.pow
 
 //class SoundFont(input_stream: InputStream) {
-class SoundFont(assets: AssetManager, file_name: String) {
+class SoundFont(input_stream: InputStream) {
     class InvalidPresetIndex(index: Int, bank: Int): Exception("Preset Not Found $index:$bank")
     class InvalidSampleIdPosition : Exception("SampleId Generator is not at end of ibag")
-    data class CachedData(var data: ByteArray, var count: Int = 1)
+    data class CachedSampleData(var data: ByteArray, var count: Int = 1)
     // Mandatory INFO
     private var ifil: Pair<Int, Int> = Pair(0,0)
     private var isng: String = "EMU8000"
@@ -29,66 +30,66 @@ class SoundFont(assets: AssetManager, file_name: String) {
     private var riff: Riff
 
     private var pdta_chunks = HashMap<String, ByteArray>()
+    private var sample_data_cache =  HashMap<Pair<Int, Int>, CachedSampleData>()
 
     init {
-        this.riff = Riff(assets, file_name) { riff: Riff ->
-            val info_chunk = riff.get_chunk_data(riff.list_chunks[0])
-            val pdta_chunk = riff.get_chunk_data(riff.list_chunks[2])
-            val info_offset = riff.list_chunks[0].index
-            riff.sub_chunks[0].forEach { header: Riff.SubChunkHeader ->
-                // '-12' since the sub chunk index is relative to the list chunk, but the list chunk index is absolute
-                val header_offset = header.index + 8 - info_offset - 12
-                when (header.tag) {
-                    "ifil" -> {
-                        this.ifil = Pair(
-                            toUInt(info_chunk[header_offset + 0]) + (toUInt(info_chunk[header_offset + 1]) * 256),
-                            toUInt(info_chunk[header_offset + 2]) + (toUInt(info_chunk[header_offset + 3]) * 256)
-                        )
-                    }
-                    "isng" -> {
-                        this.isng = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
-                    }
-                    "INAM" -> {
-                        this.inam = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
-                    }
-                    "irom" -> {
-                        this.irom = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
-                    }
-                    "iver" -> {
-                        this.iver = Pair(
-                            toUInt(info_chunk[header_offset + 0]) + (toUInt(info_chunk[header_offset + 1]) * 256),
-                            toUInt(info_chunk[header_offset + 2]) + (toUInt(info_chunk[header_offset + 3]) * 256)
-                        )
-                    }
-                    "ICRD" -> {
-                        this.icrd = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
-                    }
-                    "IENG" -> {
-                        this.ieng = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
-                    }
-                    "IPRD" -> {
-                        this.iprd = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
-                    }
-                    "ICOP" -> {
-                        this.icop = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
-                    }
-                    "ICMT" -> {
-                        this.icmt = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
-                    }
-                    "ISFT" -> {
-                        this.isft = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
-                    }
-                    else -> {}
+        this.riff = Riff(input_stream)
+        val info_chunk = this.riff.get_chunk_data(this.riff.list_chunks[0])
+        val pdta_chunk = this.riff.get_chunk_data(this.riff.list_chunks[2])
+        val info_offset = this.riff.list_chunks[0].index
+        this.riff.sub_chunks[0].forEach { header: Riff.SubChunkHeader ->
+            // '-12' since the sub chunk index is relative to the list chunk, but the list chunk index is absolute
+            val header_offset = header.index + 8 - info_offset - 12
+            when (header.tag) {
+                "ifil" -> {
+                    this.ifil = Pair(
+                        toUInt(info_chunk[header_offset + 0]) + (toUInt(info_chunk[header_offset + 1]) * 256),
+                        toUInt(info_chunk[header_offset + 2]) + (toUInt(info_chunk[header_offset + 3]) * 256)
+                    )
                 }
+                "isng" -> {
+                    this.isng = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
+                }
+                "INAM" -> {
+                    this.inam = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
+                }
+                "irom" -> {
+                    this.irom = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
+                }
+                "iver" -> {
+                    this.iver = Pair(
+                        toUInt(info_chunk[header_offset + 0]) + (toUInt(info_chunk[header_offset + 1]) * 256),
+                        toUInt(info_chunk[header_offset + 2]) + (toUInt(info_chunk[header_offset + 3]) * 256)
+                    )
+                }
+                "ICRD" -> {
+                    this.icrd = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
+                }
+                "IENG" -> {
+                    this.ieng = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
+                }
+                "IPRD" -> {
+                    this.iprd = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
+                }
+                "ICOP" -> {
+                    this.icop = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
+                }
+                "ICMT" -> {
+                    this.icmt = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
+                }
+                "ISFT" -> {
+                    this.isft = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
+                }
+                else -> {}
             }
+        }
 
-            val pdta_offset = riff.list_chunks[2].index
-            riff.sub_chunks[2].forEach { header: Riff.SubChunkHeader ->
-                // '-12' since the sub chunk index is relative to the list chunk, but the list chunk index is absolute
-                val offset = header.index + 8 - pdta_offset - 12
-                this.pdta_chunks[header.tag] = ByteArray(header.size) { j ->
-                    pdta_chunk[offset + j]
-                }
+        val pdta_offset = this.riff.list_chunks[2].index
+        this.riff.sub_chunks[2].forEach { header: Riff.SubChunkHeader ->
+            // '-12' since the sub chunk index is relative to the list chunk, but the list chunk index is absolute
+            val offset = header.index + 8 - pdta_offset - 12
+            this.pdta_chunks[header.tag] = ByteArray(header.size) { j ->
+                pdta_chunk[offset + j]
             }
         }
     }
@@ -162,92 +163,85 @@ class SoundFont(assets: AssetManager, file_name: String) {
         var output: Preset? = null
         val pbag_entry_size = 4
 
-        this.riff.with {
-            val phdr_bytes = this.pdta_chunks["phdr"]!!
-            // Loop throught PHDR until we find the correct index/bank
-            for (index in 0 until (phdr_bytes.size / 38) - 1) {
-                val offset = index * 38
-                var phdr_name = ""
-                for (j in 0 until 20) {
-                    val b = toUInt(phdr_bytes[j + offset])
-                    if (b == 0) {
-                        break
-                    }
-                    phdr_name = "$phdr_name${b.toChar()}"
+        val phdr_bytes= this.pdta_chunks["phdr"]!!
+        // Loop through PHDR until we find the correct index/bank
+        for (index in 0 until (phdr_bytes.size / 38) - 1) {
+            val offset = index * 38
+            var phdr_name = ""
+            for (j in 0 until 20) {
+                val b = toUInt(phdr_bytes[j + offset])
+                if (b == 0) {
+                    break
+                }
+                phdr_name = "$phdr_name${b.toChar()}"
+            }
+
+            val current_index = toUInt(phdr_bytes[offset + 20]) + (toUInt(phdr_bytes[offset + 21]) * 256)
+            val current_bank = toUInt(phdr_bytes[offset + 22]) + (toUInt(phdr_bytes[offset + 23]) * 256)
+
+            // No need to process other preset information
+            if (preset_index != current_index || preset_bank != current_bank) {
+                continue
+            }
+
+            val preset = Preset(phdr_name, current_index, current_bank)
+
+            val wPresetBagIndex = toUInt(phdr_bytes[offset + 24]) + (toUInt(phdr_bytes[offset + 25]) * 256)
+            val next_wPresetBagIndex = toUInt(phdr_bytes[38 + offset + 24]) + (toUInt(phdr_bytes[38 + offset + 25]) * 256)
+            val zone_count = next_wPresetBagIndex - wPresetBagIndex
+            val pbag_pairs = mutableListOf<Pair<Pair<Int, Int>, Pair<Int, Int>>>()
+            for (j in 0 until zone_count) {
+                val pbag_bytes = ByteArray(pbag_entry_size * 2) { k: Int ->
+                    pdta_chunks["pbag"]!![((j + wPresetBagIndex) * pbag_entry_size) + k]
                 }
 
-                val current_index = toUInt(phdr_bytes[offset + 20]) + (toUInt(phdr_bytes[offset + 21]) * 256)
-                val current_bank = toUInt(phdr_bytes[offset + 22]) + (toUInt(phdr_bytes[offset + 23]) * 256)
-
-                // No need to process other preset information
-                if (preset_index != current_index || preset_bank != current_bank) {
-                    continue
-                }
-
-                val preset = Preset(phdr_name, current_index, current_bank)
-
-                val wPresetBagIndex = toUInt(phdr_bytes[offset + 24]) + (toUInt(phdr_bytes[offset + 25]) * 256)
-                val next_wPresetBagIndex = toUInt(phdr_bytes[38 + offset + 24]) + (toUInt(phdr_bytes[38 + offset + 25]) * 256)
-                val zone_count = next_wPresetBagIndex - wPresetBagIndex
-                val pbag_pairs = mutableListOf<Pair<Pair<Int, Int>, Pair<Int, Int>>>()
-                for (j in 0 until zone_count) {
-                    val pbag_bytes = ByteArray(pbag_entry_size * 2) { k: Int ->
-                        pdta_chunks["pbag"]!![((j + wPresetBagIndex) * pbag_entry_size) + k]
-                    }
-
-                    pbag_pairs.add(
+                pbag_pairs.add(
+                    Pair(
                         Pair(
-                            Pair(
-                                toUInt(pbag_bytes[0]) + (toUInt(pbag_bytes[1]) * 256),
-                                toUInt(pbag_bytes[2]) + (toUInt(pbag_bytes[3]) * 256)
-                            ),
-                            Pair(
-                                toUInt(pbag_bytes[4]) + (toUInt(pbag_bytes[5]) * 256),
-                                toUInt(pbag_bytes[6]) + (toUInt(pbag_bytes[7]) * 256)
-                            )
+                            toUInt(pbag_bytes[0]) + (toUInt(pbag_bytes[1]) * 256),
+                            toUInt(pbag_bytes[2]) + (toUInt(pbag_bytes[3]) * 256)
+                        ),
+                        Pair(
+                            toUInt(pbag_bytes[4]) + (toUInt(pbag_bytes[5]) * 256),
+                            toUInt(pbag_bytes[6]) + (toUInt(pbag_bytes[7]) * 256)
                         )
                     )
-                }
-                for ((pbag, next_pbag) in pbag_pairs) {
-                    val generators_to_use: List<Generator> = this.get_preset_generators(
-                        pbag.first,
-                        next_pbag.first
-                    )
-
-                    this.generate_preset(preset, generators_to_use, current_index)
-                }
-                output = preset
-                break
+                )
             }
+            for ((pbag, next_pbag) in pbag_pairs) {
+                val generators_to_use: List<Generator> = this.get_preset_generators(
+                    pbag.first,
+                    next_pbag.first
+                )
 
-            // NOW we can load all the sample data
-            if (output != null) {
-                var ordered_samples = mutableListOf<Sample>()
-                for (preset_instrument in output!!.instruments) {
-                    val instrument = preset_instrument.instrument ?: continue
-
-                    for (instrument_sample in instrument.samples) {
-                        val sample = instrument_sample.sample ?: continue
-                        ordered_samples.add(sample)
-                    }
-                }
-                ordered_samples = ordered_samples.sortedBy { sample: Sample ->
-                    sample.data_placeholder.first
-                }.toMutableList()
-                val loaded_sample_data = HashMap<Pair<Int, Int>, ByteArray?>()
-                for (sample in ordered_samples) {
-                    if (! loaded_sample_data.containsKey(sample.data_placeholder)) {
-                        loaded_sample_data[sample.data_placeholder] = this.get_sample_data(
-                            sample.data_placeholder.first,
-                            sample.data_placeholder.second
-                        )
-                    }
-                    sample.data = loaded_sample_data[sample.data_placeholder]!!
-                }
+                this.generate_preset(preset, generators_to_use, current_index)
             }
+            output = preset
+            break
         }
 
-        // Order the samples then load them from the inputStream
+        // NOW we can load all the sample data
+        if (output != null) {
+            var ordered_samples = mutableListOf<Sample>()
+            for (preset_instrument in output!!.instruments) {
+                val instrument = preset_instrument.instrument ?: continue
+
+                for (instrument_sample in instrument.samples) {
+                    val sample = instrument_sample.sample ?: continue
+                    ordered_samples.add(sample)
+                }
+            }
+            ordered_samples = ordered_samples.sortedBy { sample: Sample ->
+                sample.data_placeholder.first
+            }.toMutableList()
+
+            for (sample in ordered_samples) {
+                sample.data = this.get_sample_data(
+                    sample.data_placeholder.first,
+                    sample.data_placeholder.second
+                )
+            }
+        }
 
         return output ?: throw InvalidPresetIndex(preset_index,preset_bank)
     }
@@ -613,6 +607,12 @@ class SoundFont(assets: AssetManager, file_name: String) {
     }
 
     fun get_sample_data(start_index: Int, end_index: Int): ByteArray {
+        val cache_key = Pair(start_index, end_index)
+
+        if (this.sample_data_cache.containsKey(cache_key)) {
+            this.sample_data_cache[cache_key]!!.count += 1
+            return this.sample_data_cache[cache_key]!!.data
+        }
 
         val smpl = this.riff.get_sub_chunk_data(this.riff.sub_chunks[1][0],  (start_index * 2), 2 * (end_index - start_index))
         val sm24 = if (this.riff.sub_chunks[1].size == 2) {
@@ -639,6 +639,14 @@ class SoundFont(assets: AssetManager, file_name: String) {
                 output[(i * 2) + 1] = smpl[(i * 2) + 1]
             }
         }
+
+        if (!this.sample_data_cache.containsKey(cache_key)) {
+            this.sample_data_cache[cache_key] = CachedSampleData(
+                data = output,
+                count = 1
+            )
+        }
+
 
         return output
     }
@@ -760,7 +768,6 @@ class Preset(
         }
         return output
     }
-
 }
 
 class PresetInstrument: Generated() {

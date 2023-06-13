@@ -428,10 +428,10 @@ open class HistoryLayer : LinksLayer() {
     }
 
     override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
-        this.history_cache.open_multi()
-        this.push_replace_tree(beat_key, position)
-        super.split_tree(beat_key, position, splits)
-        this.history_cache.close_multi()
+        this.history_cache.remember {
+            this.push_replace_tree(beat_key, position)
+            super.split_tree(beat_key, position, splits)
+        }
     }
 
     fun remove(beat_key: BeatKey, position: List<Int>, count: Int) {
@@ -622,16 +622,14 @@ open class HistoryLayer : LinksLayer() {
     }
 
     private fun push_rebuild_line(channel: Int, line_offset: Int) {
-        this.history_cache.remember {
-            this.push_to_history_stack(
-                HistoryToken.INSERT_LINE,
-                listOf(
-                    channel,
-                    line_offset,
-                    this.channels[channel].lines[line_offset].beats.toMutableList()
-                )
+        this.push_to_history_stack(
+            HistoryToken.INSERT_LINE,
+            listOf(
+                channel,
+                line_offset,
+                this.channels[channel].lines[line_offset].beats.toMutableList()
             )
-        }
+        )
     }
 
     private fun push_remove(beat_key: BeatKey, position: List<Int>) {

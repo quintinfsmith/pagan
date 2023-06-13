@@ -259,24 +259,6 @@ open class LinksLayer : OpusManagerBase() {
         this.link_pool_map = new_pool_map
     }
 
-    //private fun rh_change_line_channel(beat_key: BeatKey, args: List<Int>): BeatKey {
-    //    val old_channel = args[0]
-    //    val line_offset = args[1]
-    //    val new_channel = args[2]
-    //    val new_offset = args[3]
-
-    //    var new_beat = beat_key
-    //    if (beat_key.channel == old_channel) {
-    //        if (beat_key.line_offset == line_offset) {
-    //            new_beat = BeatKey(new_channel, new_offset, beat_key.beat)
-    //        } else if (beat_key.line_offset > line_offset) {
-    //            new_beat = BeatKey(beat_key.channel, beat_key.line_offset - 1, beat_key.beat)
-    //        }
-    //    }
-    //    return new_beat
-    //}
-
-
     override fun remove_channel(channel: Int) {
         this.remap_links { beat: BeatKey  ->
             if (beat.channel == channel) {

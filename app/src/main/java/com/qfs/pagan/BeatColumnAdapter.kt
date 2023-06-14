@@ -464,7 +464,11 @@ class BeatColumnAdapter(private var parent_fragment: EditorFragment, var recycle
             if (working_view is LeafButton) {
                 break
             }
-            working_view = (working_view as ViewGroup).getChildAt(i)
+            try {
+                working_view = (working_view as ViewGroup).getChildAt(i)
+            } catch (e: NullPointerException) {
+                 return null
+            }
         }
 
         val stack = mutableListOf(working_view)

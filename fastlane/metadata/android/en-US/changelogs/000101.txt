@@ -1,0 +1,4 @@
+Bugfix:
+    - Removing a division may have caused a crash
+    - large delay was occuring at beginning of exported .mid
+    - playback timing was terrible

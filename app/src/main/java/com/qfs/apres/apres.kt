@@ -956,6 +956,7 @@ abstract class CompoundEvent(var channel: Int, var value: Int): MIDIEvent {
             (0xB0 or this.channel).toByte(),
             this.controller.toByte(),
             value_msb.toByte(),
+            0x00.toByte(),
             (0xB0 or this.channel).toByte(),
             controller_lsb.toByte(),
             value_lsb.toByte()

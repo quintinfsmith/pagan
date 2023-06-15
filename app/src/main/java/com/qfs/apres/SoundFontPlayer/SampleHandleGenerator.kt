@@ -1,7 +1,6 @@
 package com.qfs.apres.SoundFontPlayer
 
 import com.qfs.apres.InstrumentSample
-import com.qfs.apres.NoteOn
 import com.qfs.apres.Preset
 import com.qfs.apres.PresetInstrument
 import com.qfs.apres.riffreader.toUInt
@@ -21,22 +20,22 @@ class SampleHandleGenerator {
 
     private var sample_data_map = HashMap<MapKey, SampleHandle>()
 
-    fun get(event: NoteOn, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset): SampleHandle {
+    fun get(event: SoundFontPlayer.TSNoteOn, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset): SampleHandle {
         val mapkey = MapKey(event.note, sample.hashCode(), instrument.hashCode(), preset.hashCode())
         if (!sample_data_map.contains(mapkey)) {
             this.sample_data_map[mapkey] = this.generate_new(event, sample, instrument, preset)
         }
-        return SampleHandle(this.sample_data_map[mapkey]!!)
+        return SampleHandle(event, this.sample_data_map[mapkey]!!)
     }
 
-    fun cache_new(event: NoteOn, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset) {
+    fun cache_new(event: SoundFontPlayer.TSNoteOn, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset) {
         val mapkey = MapKey(event.note, sample.hashCode(), instrument.hashCode(), preset.hashCode())
         if (!sample_data_map.contains(mapkey)) {
             this.sample_data_map[mapkey] = this.generate_new(event, sample, instrument, preset)
         }
     }
 
-    private fun generate_new(event: NoteOn, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset): SampleHandle {
+    private fun generate_new(event: SoundFontPlayer.TSNoteOn, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset): SampleHandle {
         var pitch_shift = 1F
         val original_note = sample.root_key ?: sample.sample!!.originalPitch
         if (original_note != 255) {
@@ -94,6 +93,7 @@ class SampleHandleGenerator {
         }
 
         return SampleHandle(
+            event.timestamp,
             data = data,
             stereo_mode = sample.sample!!.sampleType,
             loop_points = if (sample.sampleMode != null && sample.sampleMode!! and 1 == 1) {

@@ -5,6 +5,7 @@ import kotlin.math.max
 import kotlin.math.min
 
 class SampleHandle(
+    var timestamp: Long,
     var data: ByteArray,
     val loop_points: Pair<Int, Int>?,
     var stereo_mode: Int,
@@ -16,7 +17,8 @@ class SampleHandle(
     var maximum_map: Array<Int>
 ) {
 
-    constructor(original: SampleHandle): this(
+    constructor(event: SoundFontPlayer.TSNoteOn, original: SampleHandle): this(
+        event.timestamp,
         original.data,
         original.loop_points,
         original.stereo_mode,
@@ -28,6 +30,8 @@ class SampleHandle(
         original.maximum_map
     )
 
+    var got_first_frame = false
+
     var is_pressed = true
     private var is_dead = false
     private var current_position: Int = 0
@@ -35,7 +39,7 @@ class SampleHandle(
     private var current_hold_position: Int = 0
     private var current_decay_position: Int = 0
 
-    var current_delay_position: Int = 0
+//    var current_delay_position: Int = 0
     var decay_position: Int? = null
     var sustain_volume: Int = 0 // TODO
     private var current_release_position: Int = 0
@@ -63,7 +67,15 @@ class SampleHandle(
         return (this.get_max_in_range(this.current_position / 2, buffer_size).toDouble() * this.current_volume).toInt()
     }
 
-    fun get_next_frame(): Short? {
+    fun get_next_frame(initial_ts: Long): Short? {
+        if (!this.got_first_frame) {
+            val delta = initial_ts - this.timestamp
+            val delta_in_frames = delta * (AudioTrackHandle.sample_rate / 4000)
+            var join_delay = AudioTrackHandle.base_delay_in_frames - delta_in_frames
+            this.join_delay = join_delay.toInt()
+        }
+
+        this.got_first_frame = true
         if (this.is_dead) {
             return null
         }
@@ -72,6 +84,7 @@ class SampleHandle(
         //    this.current_delay_position += 1
         //    return output
         //}
+
         val join_delay = this.join_delay
         if (join_delay != null) {
             if (join_delay == 0) {
@@ -147,6 +160,12 @@ class SampleHandle(
     }
     fun kill_note() {
         this.is_dead = true
+    }
+
+    fun set_release_delay(initial_ts: Long) {
+        val delta = initial_ts - System.currentTimeMillis()
+        val delta_in_frames = delta * (AudioTrackHandle.sample_rate / 4000)
+        this.release_delay = (AudioTrackHandle.base_delay_in_frames - delta_in_frames).toInt()
     }
 }
 

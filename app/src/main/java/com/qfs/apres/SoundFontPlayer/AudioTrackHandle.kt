@@ -38,6 +38,7 @@ class AudioTrackHandle {
         )
         .setBufferSizeInBytes(buffer_size_in_bytes)
         .build()
+
     var sample_handles = HashMap<Int, SampleHandle>()
     private var sample_handles_mutex = Mutex()
     private var keygen: Int = 0
@@ -73,18 +74,8 @@ class AudioTrackHandle {
 
     // join_delay exists to position the start of the note press when generating the wave.
     // since it's not likely that notes will only be pressed exactly in between loops
-    fun get_join_delay(buffer_ts: Long?, target_ts: Long): Int {
-        // target is this time at which the note was pressed
-        // calc_delay is the time at which all required calculations were completed
-        var join_delay = base_delay_in_frames
-        if (buffer_ts != null) {
-            val time_delay = (target_ts - buffer_ts).toInt()
-            join_delay += (sample_rate * time_delay / 4000)
-        }
-        return join_delay
-    }
 
-    private fun add_sample_handle(handle: SampleHandle, join_delay: Int): Int? {
+    private fun add_sample_handle(handle: SampleHandle): Int? {
         if (this.stop_forced) {
             throw HandleStoppedException()
         }
@@ -93,56 +84,55 @@ class AudioTrackHandle {
             that.sample_handles_mutex.withLock {
                 val key = that.genkey()
                 that.sample_handles[key] = handle
-                handle.join_delay = join_delay
                 key
             }
         }
     }
 
-    fun add_sample_handles(handles: Set<SampleHandle>, join_delay: Int): Set<Int> {
+    fun add_sample_handles(handles: Set<SampleHandle>): Set<Int> {
         if (this.stop_forced) {
             throw HandleStoppedException()
         }
         val output = mutableSetOf<Int>()
         for (handle in handles) {
-            output.add(this.add_sample_handle(handle, join_delay) ?: continue)
+            output.add(this.add_sample_handle(handle) ?: continue)
         }
         return output
     }
 
-    fun queue_sample_handle_stop(key: Int, remove_delay: Int) {
-        if (this.stop_forced) {
-            throw HandleStoppedException()
-        }
-        val that = this
-        return runBlocking {
-            that.sample_handles_mutex.withLock {
-                that.sample_handles[key]?.remove_delay = remove_delay
-            }
-        }
-    }
+    //fun queue_sample_handle_stop(key: Int, remove_delay: Int) {
+    //    if (this.stop_forced) {
+    //        throw HandleStoppedException()
+    //    }
+    //    val that = this
+    //    return runBlocking {
+    //        that.sample_handles_mutex.withLock {
+    //            that.sample_handles[key]?.remove_delay = remove_delay
+    //        }
+    //    }
+    //}
 
-    fun queue_sample_handles_stop(keys: Set<Int>, remove_delay: Int) {
-        if (this.stop_forced) {
-            throw HandleStoppedException()
-        }
-        for (key in keys) {
-            this.queue_sample_handle_stop(key, remove_delay)
-        }
-    }
+    //fun queue_sample_handles_stop(keys: Set<Int>, remove_delay: Int) {
+    //    if (this.stop_forced) {
+    //        throw HandleStoppedException()
+    //    }
+    //    for (key in keys) {
+    //        this.queue_sample_handle_stop(key, remove_delay)
+    //    }
+    //}
 
-    fun queue_sample_handle_release(key: Int, release_delay: Int) {
+    fun queue_sample_handle_release(key: Int) {
         val that = this
         runBlocking {
             that.sample_handles_mutex.withLock {
-                that.sample_handles[key]?.release_delay = release_delay
+                that.sample_handles[key]?.set_release_delay(that.last_buffer_start_ts ?: System.currentTimeMillis())
             }
         }
     }
 
-    fun queue_sample_handles_release(keys: Set<Int>, release_delay: Int) {
+    fun queue_sample_handles_release(keys: Set<Int>) {
         for (key in keys) {
-            this.queue_sample_handle_release(key, release_delay)
+            this.queue_sample_handle_release(key)
         }
     }
 
@@ -222,6 +212,7 @@ class AudioTrackHandle {
 
             val control_sample_left = IntArray(buffer_size_in_frames) { 0 }
             val control_sample_right = IntArray(buffer_size_in_frames) { 0 }
+            var initial_ts = that.last_buffer_start_ts!!
             for (x in 0 until buffer_size_in_frames) {
                 var left = 0
                 var right = 0
@@ -229,7 +220,7 @@ class AudioTrackHandle {
                     if (key in kill_handles) {
                         continue
                     }
-                    var frame_value = sample_handle.get_next_frame()
+                    var frame_value = sample_handle.get_next_frame(initial_ts)
 
                     if (frame_value == null) {
                         kill_handles.add(key)

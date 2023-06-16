@@ -139,6 +139,7 @@ open class HistoryLayer : LinksLayer() {
         }
     }
 
+
     open fun push_to_history_stack(token: HistoryToken, args: List<Any>) {
         this.history_cache.append_undoer(token, args)
     }
@@ -387,11 +388,13 @@ open class HistoryLayer : LinksLayer() {
     open fun remove_line(channel: Int, line_offset: Int, count: Int) {
         this.history_cache.remember {
             for (i in 0 until count) {
-                if (this.channels[channel].size > 1) {
-                    this.remove_line(channel, kotlin.math.min(line_offset, this.channels[channel].size - 1))
-                } else {
+                if (this.channels[channel].size <= 1) {
                     break
                 }
+                this.remove_line(
+                    channel,
+                    kotlin.math.min(line_offset, this.channels[channel].size - 1)
+                )
             }
         }
     }
@@ -582,18 +585,14 @@ open class HistoryLayer : LinksLayer() {
         }
     }
 
-    fun import_midi(midi: MIDI, path: String, title: String) {
-        this.history_cache.forget {
-            this.import_midi(midi)
-            this.path = path
-            this.set_project_name(title)
-        }
+    override fun clear() {
+        this.clear_history()
+        super.clear()
     }
 
-    override fun clear() {
+    fun clear_history() {
         this.history_cache.clear()
         this.save_point_popped = false
-        super.clear()
     }
 
     private fun push_replace_tree(beat_key: BeatKey, position: List<Int>, tree: OpusTree<OpusEvent>? = null) {

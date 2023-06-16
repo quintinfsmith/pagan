@@ -677,7 +677,10 @@ class MainActivity : AppCompatActivity() {
             filename = filename.substring(0, filename.lastIndexOf("."))
 
             val new_path = this.project_manager.get_new_path()
-            this.opus_manager.import_midi(midi, new_path, filename)
+            this.opus_manager.import_midi(midi)
+            this.opus_manager.path = new_path
+            this.opus_manager.set_project_name(filename)
+            this.opus_manager.clear_history()
 
         }
         this.cancel_reticle()

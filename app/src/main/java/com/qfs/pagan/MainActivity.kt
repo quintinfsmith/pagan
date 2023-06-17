@@ -681,7 +681,6 @@ class MainActivity : AppCompatActivity() {
             this.opus_manager.path = new_path
             this.opus_manager.set_project_name(filename)
             this.opus_manager.clear_history()
-
         }
         this.cancel_reticle()
     }

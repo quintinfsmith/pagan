@@ -12,13 +12,14 @@ class AudioTrackHandle {
     class HandleStoppedException(): Exception()
     companion object {
         const val sample_rate = 44100
-        val buffer_size_in_bytes: Int = AudioTrack.getMinBufferSize(
+        val buffer_size: Int = AudioTrack.getMinBufferSize(
             sample_rate,
             AudioFormat.ENCODING_PCM_16BIT,
             AudioFormat.CHANNEL_OUT_STEREO
         )
-        val buffer_size_in_frames: Int = buffer_size_in_bytes / 4
-        val base_delay_in_frames = buffer_size_in_frames * 2
+        //val buffer_size_in_bytes = sample_rate * 4
+        val buffer_size_in_bytes: Int = buffer_size * 4
+        val base_delay_in_frames = buffer_size * 2
         private const val maxkey = 0xFFFFFFFF
     }
 
@@ -196,24 +197,24 @@ class AudioTrackHandle {
             for ((_, sample_handle) in sample_handles) {
                 when (sample_handle.stereo_mode and 7) {
                     1 -> { // mono
-                        val next_max = sample_handle.get_next_max(buffer_size_in_frames)
+                        val next_max = sample_handle.get_next_max(buffer_size)
                         max_left += next_max
                         max_right += next_max
                     }
                     2 -> { // right
-                        max_right += sample_handle.get_next_max(buffer_size_in_frames)
+                        max_right += sample_handle.get_next_max(buffer_size)
                     }
                     4 -> { // left
-                        max_left += sample_handle.get_next_max(buffer_size_in_frames)
+                        max_left += sample_handle.get_next_max(buffer_size)
                     }
                     else -> {}
                 }
             }
 
-            val control_sample_left = IntArray(buffer_size_in_frames) { 0 }
-            val control_sample_right = IntArray(buffer_size_in_frames) { 0 }
+            val control_sample_left = IntArray(buffer_size) { 0 }
+            val control_sample_right = IntArray(buffer_size) { 0 }
             var initial_ts = that.last_buffer_start_ts!!
-            for (x in 0 until buffer_size_in_frames) {
+            for (x in 0 until buffer_size) {
                 var left = 0
                 var right = 0
                 for ((key, sample_handle) in sample_handles) {

@@ -80,7 +80,7 @@ class SampleHandleGenerator {
             ?: instrument.vol_env_release
             ?: sample.vol_env_release
             ?: 0.0
-        val release_mask_size = ((AudioTrackHandle.sample_rate.toDouble() * vol_env_release) / 4.0).toInt()
+        val release_mask_size = ((AudioTrackHandle.sample_rate.toDouble() * vol_env_release)).toInt()
 
         val divisions = ceil(data.size.toFloat() / (AudioTrackHandle.buffer_size_in_bytes.toFloat() / 2F)).toInt() * 2
         val maximum_map = Array(divisions) { 0 }
@@ -113,10 +113,10 @@ class SampleHandleGenerator {
             } else {
                 null
             },
-            delay_frames = ((AudioTrackHandle.sample_rate.toDouble() * vol_env_delay ) / 4.0).toInt(),
-            attack_byte_count = ((AudioTrackHandle.sample_rate.toDouble() * vol_env_attack ) / 2.0).toInt(),
-            hold_byte_count = ((AudioTrackHandle.sample_rate.toDouble() * vol_env_hold ) / 2.0).toInt(),
-            decay_byte_count = ((AudioTrackHandle.sample_rate.toDouble() * vol_env_decay ) / 2.0).toInt(),
+            delay_frames = ((AudioTrackHandle.sample_rate.toDouble() * vol_env_delay)).toInt(),
+            attack_byte_count = ((AudioTrackHandle.sample_rate.toDouble() * vol_env_attack ) * 2.0).toInt(),
+            hold_byte_count = ((AudioTrackHandle.sample_rate.toDouble() * vol_env_hold ) * 2.0).toInt(),
+            decay_byte_count = ((AudioTrackHandle.sample_rate.toDouble() * vol_env_decay ) * 2.0).toInt(),
             release_mask = Array(release_mask_size) {
                     i -> (release_mask_size - i - 1).toDouble() / release_mask_size.toDouble()
             },

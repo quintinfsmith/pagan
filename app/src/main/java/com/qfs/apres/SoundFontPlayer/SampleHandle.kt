@@ -1,5 +1,6 @@
 package com.qfs.apres.SoundFontPlayer
 
+import android.util.Log
 import com.qfs.apres.riffreader.toUInt
 import kotlin.math.max
 import kotlin.math.min
@@ -16,6 +17,9 @@ class SampleHandle(
     var release_mask: Array<Double>,
     var maximum_map: Array<Int>
 ) {
+    companion object {
+        val MAXIMUM_VOLUME = .7F
+    }
 
     constructor(event: SoundFontPlayer.TSNoteOn, original: SampleHandle): this(
         event.timestamp,
@@ -29,8 +33,6 @@ class SampleHandle(
         original.release_mask,
         original.maximum_map
     )
-
-    var got_first_frame = false
 
     var is_pressed = true
     private var is_dead = false
@@ -67,15 +69,7 @@ class SampleHandle(
         return (this.get_max_in_range(this.current_position / 2, buffer_size).toDouble() * this.current_volume).toInt()
     }
 
-    fun get_next_frame(initial_ts: Long): Short? {
-        if (!this.got_first_frame) {
-            val delta = initial_ts - this.timestamp
-            val delta_in_frames = delta * (AudioTrackHandle.sample_rate / 1000)
-            var join_delay = AudioTrackHandle.base_delay_in_frames - delta_in_frames
-            this.join_delay = join_delay.toInt()
-        }
-
-        this.got_first_frame = true
+    fun get_next_frame(): Short? {
         if (this.is_dead) {
             return null
         }
@@ -100,21 +94,22 @@ class SampleHandle(
             if (release_delay == 0) {
                 this.release_delay = null
                 this.release_note()
+                Log.d("AAA", "RELEASED")
             } else {
                 this.release_delay = release_delay - 1
             }
         }
 
-        val remove_delay = this.remove_delay
-        if (remove_delay != null) {
-            if (remove_delay == 0) {
-                this.remove_delay = null
-                this.is_dead = true
-                return null
-            } else {
-              this.remove_delay = remove_delay - 1
-            }
-        }
+        //val remove_delay = this.remove_delay
+        //if (remove_delay != null) {
+        //    if (remove_delay == 0) {
+        //        this.remove_delay = null
+        //        this.is_dead = true
+        //        return null
+        //    } else {
+        //      this.remove_delay = remove_delay - 1
+        //    }
+        //}
 
 
         if (this.current_position > this.data.size - 2) {
@@ -163,9 +158,10 @@ class SampleHandle(
     }
 
     fun set_release_delay(initial_ts: Long) {
-        val delta = initial_ts - System.currentTimeMillis()
-        val delta_in_frames = delta * (AudioTrackHandle.sample_rate / 1000)
-        this.release_delay = (AudioTrackHandle.base_delay_in_frames - delta_in_frames).toInt()
+        this.release_delay = 0
+        //val delta = initial_ts - System.currentTimeMillis()
+        //val delta_in_frames = delta * (AudioTrackHandle.sample_rate / 1000)
+        //this.release_delay = (AudioTrackHandle.base_delay_in_frames - delta_in_frames).toInt()
     }
 }
 

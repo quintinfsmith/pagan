@@ -80,6 +80,7 @@ class SampleHandleGenerator {
             ?: instrument.vol_env_release
             ?: sample.vol_env_release
             ?: 0.0
+
         val release_mask_size = ((AudioTrackHandle.sample_rate.toDouble() * vol_env_release)).toInt()
 
         val divisions = ceil(data.size.toFloat() / (AudioTrackHandle.buffer_size_in_bytes.toFloat() / 2F)).toInt() * 2

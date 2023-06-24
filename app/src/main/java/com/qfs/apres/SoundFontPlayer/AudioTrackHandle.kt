@@ -3,6 +3,7 @@ package com.qfs.apres.SoundFontPlayer
 import android.media.AudioAttributes
 import android.media.AudioFormat
 import android.media.AudioTrack
+import android.util.Log
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -12,12 +13,12 @@ class AudioTrackHandle {
     class HandleStoppedException(): Exception()
     companion object {
         const val sample_rate = 44100
-        val buffer_size: Int = AudioTrack.getMinBufferSize(
-            sample_rate,
-            AudioFormat.ENCODING_PCM_16BIT,
-            AudioFormat.CHANNEL_OUT_STEREO
-        )
-        //val buffer_size_in_bytes = sample_rate * 4
+        //val buffer_size: Int = AudioTrack.getMinBufferSize(
+        //    sample_rate,
+        //    AudioFormat.ENCODING_PCM_16BIT,
+        //    AudioFormat.CHANNEL_OUT_STEREO
+        //) * 4
+        val buffer_size = sample_rate
         val buffer_size_in_bytes: Int = buffer_size * 4
         val base_delay_in_frames = buffer_size * 2
         private const val maxkey = 0xFFFFFFFF
@@ -40,6 +41,8 @@ class AudioTrackHandle {
         .setBufferSizeInBytes(buffer_size_in_bytes)
         .build()
 
+    var incoming_sample_handles_mutex = Mutex()
+    var incoming_sample_handles = mutableListOf<Pair<Int, SampleHandle>>()
     var sample_handles = HashMap<Int, SampleHandle>()
     private var sample_handles_mutex = Mutex()
     private var keygen: Int = 0
@@ -47,7 +50,8 @@ class AudioTrackHandle {
     var is_playing = false
     private var stop_forced = false
     private var stop_called_from_write = false // play *may*  be called between a //write_next_chunk() finding an incomplete chunk and finishing the call
-    var last_buffer_start_ts: Long? = null
+    var write_loop_ts: Long? = null
+    var current_frame: Long? = null
 
     fun play() {
         if (this.is_playing || this.stop_forced) {
@@ -80,11 +84,28 @@ class AudioTrackHandle {
         if (this.stop_forced) {
             throw HandleStoppedException()
         }
+
         val that = this
         return runBlocking {
-            that.sample_handles_mutex.withLock {
+            that.incoming_sample_handles_mutex.withLock {
                 val key = that.genkey()
-                that.sample_handles[key] = handle
+
+                //////////////////////////////////
+                var current_frame = that.current_frame ?: 0
+                val delta = if (that.write_loop_ts == null) {
+                    // handle.timestamp - System.currentTimeMillis()
+                    0
+                } else {
+                    handle.timestamp - that.write_loop_ts!!
+                }
+
+                val delta_in_frames = delta * (AudioTrackHandle.sample_rate / 1000)
+                val delay_in_frames = (delta_in_frames - current_frame) + (AudioTrackHandle.base_delay_in_frames * 2)
+                handle.join_delay = delay_in_frames.toInt()
+                /////////////////////////////////////
+
+                that.incoming_sample_handles.add(Pair(key, handle))
+
                 key
             }
         }
@@ -126,7 +147,7 @@ class AudioTrackHandle {
         val that = this
         runBlocking {
             that.sample_handles_mutex.withLock {
-                that.sample_handles[key]?.set_release_delay(that.last_buffer_start_ts ?: System.currentTimeMillis())
+                that.sample_handles[key]?.set_release_delay(System.currentTimeMillis())
             }
         }
     }
@@ -175,98 +196,70 @@ class AudioTrackHandle {
         this.audioTrack.write(use_bytes, 0, use_bytes.size, AudioTrack.WRITE_BLOCKING)
     }
 
-    private fun write_next_chunk() {
-        val use_bytes = ByteArray(buffer_size_in_bytes) { 0 }
+    private fun write_next_chunk(): ByteArray {
+        var use_bytes = ByteArray(buffer_size_in_bytes) { 0 }
         val kill_handles = mutableSetOf<Int>()
         var cut_point: Int? = null
 
         val that = this
-        val sample_handles = runBlocking {
-            that.sample_handles_mutex.withLock {
-                that.sample_handles.toList()
+        val control_sample_left = IntArray(AudioTrackHandle.buffer_size) { 0 }
+        val control_sample_right = IntArray(AudioTrackHandle.buffer_size) { 0 }
+        var has_sample = false
+        for (x in 0 until AudioTrackHandle.buffer_size) {
+            runBlocking {
+                that.incoming_sample_handles_mutex.withLock {
+                    if (that.incoming_sample_handles.isNotEmpty()) {
+                        for ((key, handle) in that.incoming_sample_handles) {
+                            that.sample_handles[key] = handle
+                        }
+                        that.incoming_sample_handles.clear()
+                    }
+                }
             }
-        }
+            var left = 0
+            var right = 0
+            for ((key, sample_handle) in this.sample_handles) {
+                if (key in kill_handles) {
+                    continue
+                }
+                has_sample = true
+                val frame_value = sample_handle.get_next_frame()
 
-        val short_max = Short.MAX_VALUE.toFloat()
+                if (frame_value == null) {
+                    kill_handles.add(key)
+                    if (kill_handles.size == sample_handles.size && cut_point == null) {
+                        this.stop_called_from_write = true
+                        cut_point = x
+                    }
+                    continue
+                }
 
-        if (this.sample_handles.isEmpty()) {
-            this.stop_called_from_write = true
-        } else {
-            var max_left = 0
-            var max_right = 0
-            for ((_, sample_handle) in sample_handles) {
+                // TODO: Implement ROM stereo modes
                 when (sample_handle.stereo_mode and 7) {
                     1 -> { // mono
-                        val next_max = sample_handle.get_next_max(buffer_size)
-                        max_left += next_max
-                        max_right += next_max
+                        left += frame_value
+                        right += frame_value
                     }
                     2 -> { // right
-                        max_right += sample_handle.get_next_max(buffer_size)
+                        right += frame_value
                     }
                     4 -> { // left
-                        max_left += sample_handle.get_next_max(buffer_size)
+                        left += frame_value
                     }
                     else -> {}
                 }
             }
 
-            val control_sample_left = IntArray(buffer_size) { 0 }
-            val control_sample_right = IntArray(buffer_size) { 0 }
-            var initial_ts = that.last_buffer_start_ts!!
-            for (x in 0 until buffer_size) {
-                var left = 0
-                var right = 0
-                for ((key, sample_handle) in sample_handles) {
-                    if (key in kill_handles) {
-                        continue
-                    }
-                    var frame_value = sample_handle.get_next_frame(initial_ts)
+            control_sample_left[x] = left
+            control_sample_right[x] = right
 
-                    if (frame_value == null) {
-                        kill_handles.add(key)
-                        if (kill_handles.size == sample_handles.size && cut_point == null) {
-                            this.stop_called_from_write = true
-                            cut_point = x
-                        }
-                        continue
-                    }
+            this.current_frame = (this.current_frame ?: 0) + 1
+        }
 
-                    // TODO: Implement ROM stereo modes
-                    when (sample_handle.stereo_mode and 7) {
-                        1 -> { // mono
-                            left += frame_value
-                            right += frame_value
-                        }
-                        2 -> { // right
-                            right += frame_value
-                        }
-                        4 -> { // left
-                            left += frame_value
-                        }
-                        else -> {}
-                    }
-                }
-
-                control_sample_left[x] = left
-                control_sample_right[x] = right
-            }
-
-            val gain_factor_left = if (max_left > Short.MAX_VALUE) {
-                short_max / max_left.toFloat()
-            } else {
-                1F
-            }
-
-            val gain_factor_right = if (max_right > Short.MAX_VALUE) {
-                short_max / max_right.toFloat()
-            } else {
-                1F
-            }
-
+        if (has_sample) {
             for (x in control_sample_left.indices) {
-                val right = (control_sample_right[x] * gain_factor_right).toInt()
-                val left = (control_sample_left[x] * gain_factor_left).toInt()
+                val left = (control_sample_left[x] * .8F).toInt()
+                val right = (control_sample_right[x] * .8F).toInt()
 
                 use_bytes[(4 * x)] = (right and 0xFF).toByte()
                 use_bytes[(4 * x) + 1] = ((right and 0xFF00) shr 8).toByte()
@@ -274,14 +267,8 @@ class AudioTrackHandle {
                 use_bytes[(4 * x) + 2] = (left and 0xFF).toByte()
                 use_bytes[(4 * x) + 3] = ((left and 0xFF00) shr 8).toByte()
             }
-
-            if (this.audioTrack.state != AudioTrack.STATE_UNINITIALIZED) {
-                try {
-                    this.audioTrack.write(use_bytes, 0, use_bytes.size, AudioTrack.WRITE_BLOCKING)
-                } catch (e: IllegalStateException) {
-                    // Shouldn't need to do anything. the audio track was released and this should stop on its own
-                }
-            }
+        } else {
+            this.stop_called_from_write = true
         }
 
         for (key in kill_handles) {
@@ -294,6 +281,8 @@ class AudioTrackHandle {
             // write loop from popping the handles when they finish
             this.sample_handles.clear()
         }
+
+        return use_bytes
     }
 
     private fun write_loop() {
@@ -301,11 +290,28 @@ class AudioTrackHandle {
         // write an empty chunk to give a bit of a time buffer for finer
         // control of when to start playing samples
         //this.write_empty_chunk()
+        this.write_loop_ts = System.currentTimeMillis()
+        this.current_frame = 0
         while (this.is_playing) {
-            this.last_buffer_start_ts = System.currentTimeMillis()
-            this.write_next_chunk()
+            var a = System.nanoTime()
+            val use_bytes = this.write_next_chunk()
+            var b = System.nanoTime()
+            Log.d("AAA", "${(b - a) / 1000000} to build buffer")
+            if (this.audioTrack.state != AudioTrack.STATE_UNINITIALIZED) {
+                try {
+                    this.audioTrack.write(
+                        use_bytes,
+                        0,
+                        use_bytes.size,
+                        AudioTrack.WRITE_BLOCKING
+                    )
+                } catch (e: IllegalStateException) {
+                    // Shouldn't need to do anything. the audio track was released and this should stop on its own
+                }
+            }
         }
-        this.last_buffer_start_ts = null
+        this.write_loop_ts = null
+        this.current_frame = null
         this.audioTrack.stop()
     }
 
@@ -313,7 +319,8 @@ class AudioTrackHandle {
         this.stop_forced = true
         this.is_playing = false
         this.stop_called_from_write = false
-        this.last_buffer_start_ts = null
+        this.write_loop_ts = null
+        this.current_frame = null
         this.sample_handles.clear()
         //this.audioTrack.stop()
     }

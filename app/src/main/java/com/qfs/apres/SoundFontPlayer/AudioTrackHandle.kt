@@ -3,6 +3,7 @@ package com.qfs.apres.SoundFontPlayer
 import android.media.AudioAttributes
 import android.media.AudioFormat
 import android.media.AudioTrack
+import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -277,19 +278,30 @@ class AudioTrackHandle {
         //this.write_empty_chunk()
         this.write_loop_ts = System.currentTimeMillis()
         this.current_frame = 0
+        var chunks = mutableListOf<ByteArray>()
+        chunks.add(this.write_next_chunk())
+        var that = this
         while (this.is_playing) {
-            val use_bytes = this.write_next_chunk()
-            if (this.audioTrack.state != AudioTrack.STATE_UNINITIALIZED) {
-                try {
-                    this.audioTrack.write(
-                        use_bytes,
-                        0,
-                        use_bytes.size,
-                        AudioTrack.WRITE_BLOCKING
-                    )
-                } catch (e: IllegalStateException) {
-                    // Shouldn't need to do anything. the audio track was released and this should stop on its own
+            runBlocking {
+                var build_process = async {
+                    chunks.add(that.write_next_chunk())
                 }
+                val use_bytes = chunks.removeFirst()
+
+                if (that.audioTrack.state != AudioTrack.STATE_UNINITIALIZED) {
+                    try {
+                        that.audioTrack.write(
+                            use_bytes,
+                            0,
+                            use_bytes.size,
+                            AudioTrack.WRITE_BLOCKING
+                        )
+                    } catch (e: IllegalStateException) {
+                        // Shouldn't need to do anything. the audio track was released and that should stop on its own
+                    }
+                }
+
+                build_process.await()
             }
         }
         this.write_loop_ts = null

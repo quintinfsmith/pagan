@@ -1,6 +1,5 @@
 package com.qfs.apres.SoundFontPlayer
 
-import android.util.Log
 import com.qfs.apres.riffreader.toUInt
 import kotlin.math.max
 import kotlin.math.min
@@ -73,6 +72,7 @@ class SampleHandle(
         if (this.is_dead) {
             return null
         }
+
         //if (this.current_delay_position < this.delay_frames) {
         //    var output = 0.toShort()
         //    this.current_delay_position += 1
@@ -94,7 +94,6 @@ class SampleHandle(
             if (release_delay == 0) {
                 this.release_delay = null
                 this.release_note()
-                Log.d("AAA", "RELEASED")
             } else {
                 this.release_delay = release_delay - 1
             }

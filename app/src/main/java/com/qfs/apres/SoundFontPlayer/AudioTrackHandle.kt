@@ -3,7 +3,6 @@ package com.qfs.apres.SoundFontPlayer
 import android.media.AudioAttributes
 import android.media.AudioFormat
 import android.media.AudioTrack
-import android.util.Log
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -13,12 +12,12 @@ class AudioTrackHandle {
     class HandleStoppedException(): Exception()
     companion object {
         const val sample_rate = 44100
-        //val buffer_size: Int = AudioTrack.getMinBufferSize(
-        //    sample_rate,
-        //    AudioFormat.ENCODING_PCM_16BIT,
-        //    AudioFormat.CHANNEL_OUT_STEREO
-        //) * 4
-        val buffer_size = sample_rate
+        val buffer_size: Int = AudioTrack.getMinBufferSize(
+            sample_rate,
+            AudioFormat.ENCODING_PCM_16BIT,
+            AudioFormat.CHANNEL_OUT_STEREO
+        ) * 4
+        //val buffer_size = sample_rate
         val buffer_size_in_bytes: Int = buffer_size * 4
         val base_delay_in_frames = buffer_size * 2
         private const val maxkey = 0xFFFFFFFF
@@ -41,17 +40,15 @@ class AudioTrackHandle {
         .setBufferSizeInBytes(buffer_size_in_bytes)
         .build()
 
-    var incoming_sample_handles_mutex = Mutex()
-    var incoming_sample_handles = mutableListOf<Pair<Int, SampleHandle>>()
-    var sample_handles = HashMap<Int, SampleHandle>()
+    var sample_handles = HashMap<Long, SampleHandle>()
     private var sample_handles_mutex = Mutex()
-    private var keygen: Int = 0
 
     var is_playing = false
     private var stop_forced = false
     private var stop_called_from_write = false // play *may*  be called between a //write_next_chunk() finding an incomplete chunk and finishing the call
     var write_loop_ts: Long? = null
     var current_frame: Long? = null
+
 
     fun play() {
         if (this.is_playing || this.stop_forced) {
@@ -66,32 +63,25 @@ class AudioTrackHandle {
     }
 
     // Generate a sample handle key
-    fun genkey(): Int {
-        val output = this.keygen
-
-        this.keygen += 1
-        if (maxkey <= this.keygen) {
-            this.keygen = 0
-        }
-
-        return output
+    fun genkey(): Long {
+        return System.nanoTime()
     }
 
     // join_delay exists to position the start of the note press when generating the wave.
     // since it's not likely that notes will only be pressed exactly in between loops
 
-    private fun add_sample_handle(handle: SampleHandle): Int? {
+    private fun add_sample_handle(handle: SampleHandle): Long {
         if (this.stop_forced) {
             throw HandleStoppedException()
         }
 
         val that = this
         return runBlocking {
-            that.incoming_sample_handles_mutex.withLock {
+            that.sample_handles_mutex.withLock {
                 val key = that.genkey()
 
                 //////////////////////////////////
-                var current_frame = that.current_frame ?: 0
+                val current_frame = that.current_frame ?: 0
                 val delta = if (that.write_loop_ts == null) {
                     // handle.timestamp - System.currentTimeMillis()
                     0
@@ -103,19 +93,18 @@ class AudioTrackHandle {
                 val delay_in_frames = (delta_in_frames - current_frame) + (AudioTrackHandle.base_delay_in_frames * 2)
                 handle.join_delay = delay_in_frames.toInt()
                 /////////////////////////////////////
-
-                that.incoming_sample_handles.add(Pair(key, handle))
+                that.sample_handles[key] = handle
 
                 key
             }
         }
     }
 
-    fun add_sample_handles(handles: Set<SampleHandle>): Set<Int> {
+    fun add_sample_handles(handles: Set<SampleHandle>): Set<Long> {
         if (this.stop_forced) {
             throw HandleStoppedException()
         }
-        val output = mutableSetOf<Int>()
+        val output = mutableSetOf<Long>()
         for (handle in handles) {
             output.add(this.add_sample_handle(handle) ?: continue)
         }
@@ -143,31 +132,33 @@ class AudioTrackHandle {
     //    }
     //}
 
-    fun queue_sample_handle_release(key: Int) {
+    fun queue_sample_handle_release(key: Long) {
         val that = this
         runBlocking {
             that.sample_handles_mutex.withLock {
-                that.sample_handles[key]?.set_release_delay(System.currentTimeMillis())
+                val handle= that.sample_handles[key]?: return@withLock
+                handle.set_release_delay(System.currentTimeMillis())
             }
         }
     }
 
-    fun queue_sample_handles_release(keys: Set<Int>) {
+    fun queue_sample_handles_release(keys: Set<Long>) {
         for (key in keys) {
             this.queue_sample_handle_release(key)
         }
     }
 
-    fun remove_sample_handle(key: Int): SampleHandle? {
+    fun remove_sample_handle(key: Long): SampleHandle? {
         val that = this
         return runBlocking {
             that.sample_handles_mutex.withLock {
-                that.sample_handles.remove(key)
+                var output = that.sample_handles.remove(key)
+                output
             }
         }
     }
 
-    fun remove_sample_handles(keys: Set<Int>): Set<SampleHandle> {
+    fun remove_sample_handles(keys: Set<Long>): Set<SampleHandle> {
         val that = this
         return runBlocking {
             that.sample_handles_mutex.withLock {
@@ -180,7 +171,7 @@ class AudioTrackHandle {
         }
     }
 
-    fun kill_samples(keys: Set<Int>) {
+    fun kill_samples(keys: Set<Long>) {
         val that = this
         runBlocking {
             that.sample_handles_mutex.withLock {
@@ -198,7 +189,7 @@ class AudioTrackHandle {
 
     private fun write_next_chunk(): ByteArray {
         var use_bytes = ByteArray(buffer_size_in_bytes) { 0 }
-        val kill_handles = mutableSetOf<Int>()
+        val kill_handles = mutableSetOf<Long>()
         var cut_point: Int? = null
 
         val that = this
@@ -206,47 +197,44 @@ class AudioTrackHandle {
         val control_sample_right = IntArray(AudioTrackHandle.buffer_size) { 0 }
         var has_sample = false
         for (x in 0 until AudioTrackHandle.buffer_size) {
-            runBlocking {
-                that.incoming_sample_handles_mutex.withLock {
-                    if (that.incoming_sample_handles.isNotEmpty()) {
-                        for ((key, handle) in that.incoming_sample_handles) {
-                            that.sample_handles[key] = handle
-                        }
-                        that.incoming_sample_handles.clear()
-                    }
-                }
-            }
             var left = 0
             var right = 0
-            for ((key, sample_handle) in this.sample_handles) {
-                if (key in kill_handles) {
-                    continue
-                }
-                has_sample = true
-                val frame_value = sample_handle.get_next_frame()
+            runBlocking {
+                that.sample_handles_mutex.withLock {
+                    for ((key, sample_handle) in that.sample_handles) {
+                        if (key in kill_handles) {
+                            continue
+                        }
+                        has_sample = true
+                        val frame_value = sample_handle.get_next_frame()
 
-                if (frame_value == null) {
-                    kill_handles.add(key)
-                    if (kill_handles.size == sample_handles.size && cut_point == null) {
-                        this.stop_called_from_write = true
-                        cut_point = x
-                    }
-                    continue
-                }
+                        if (frame_value == null) {
+                            kill_handles.add(key)
+                            if (kill_handles.size == sample_handles.size && cut_point == null) {
+                                that.stop_called_from_write = true
+                                cut_point = x
+                            }
+                            continue
+                        }
 
-                // TODO: Implement ROM stereo modes
-                when (sample_handle.stereo_mode and 7) {
-                    1 -> { // mono
-                        left += frame_value
-                        right += frame_value
+                        // TODO: Implement ROM stereo modes
+                        when (sample_handle.stereo_mode and 7) {
+                            1 -> { // mono
+                                left += frame_value
+                                right += frame_value
+                            }
+
+                            2 -> { // right
+                                right += frame_value
+                            }
+
+                            4 -> { // left
+                                left += frame_value
+                            }
+
+                            else -> {}
+                        }
                     }
-                    2 -> { // right
-                        right += frame_value
-                    }
-                    4 -> { // left
-                        left += frame_value
-                    }
-                    else -> {}
                 }
             }
 
@@ -271,10 +259,7 @@ class AudioTrackHandle {
             this.stop_called_from_write = true
         }
 
-        for (key in kill_handles) {
-            this.remove_sample_handle(key)
-        }
-
+        this.remove_sample_handles(kill_handles)
         if (this.stop_called_from_write) {
             this.is_playing = false
             // Clearing these since an abrupt stop means that remove/release delays prevent the
@@ -293,10 +278,7 @@ class AudioTrackHandle {
         this.write_loop_ts = System.currentTimeMillis()
         this.current_frame = 0
         while (this.is_playing) {
-            var a = System.nanoTime()
             val use_bytes = this.write_next_chunk()
-            var b = System.nanoTime()
-            Log.d("AAA", "${(b - a) / 1000000} to build buffer")
             if (this.audioTrack.state != AudioTrack.STATE_UNINITIALIZED) {
                 try {
                     this.audioTrack.write(

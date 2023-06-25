@@ -1,6 +1,5 @@
 package com.qfs.apres.SoundFontPlayer
 
-import android.util.Log
 import com.qfs.apres.MIDI
 import com.qfs.apres.NoteOff
 import com.qfs.apres.NoteOn
@@ -22,7 +21,7 @@ class SoundFontPlayer(var sound_font: SoundFont) {
     private val preset_channel_map = HashMap<Int, Pair<Int, Int>>()
     private val loaded_presets = HashMap<Pair<Int, Int>, Preset>()
     val audio_track_handle = AudioTrackHandle()
-    private val active_handle_keys = HashMap<Pair<Int, Int>, Set<Int>>()
+    private val active_handle_keys = HashMap<Pair<Int, Int>, Set<Long>>()
     private val active_handle_mutex = Mutex()
     private val sample_handle_generator = SampleHandleGenerator()
 
@@ -50,19 +49,22 @@ class SoundFontPlayer(var sound_font: SoundFont) {
 
                 // Get Join delay BEFORE generating sample
                 val sample_handles = that.gen_sample_handles(ts_event, preset)
-
                 val existing_keys = that.active_handle_keys[key]?.toSet()
                 if (existing_keys != null) {
                     that.attempt {
-                        Log.d("AAA", "A release $existing_keys")
-                        that.audio_track_handle.queue_sample_handles_release(existing_keys)
+                        that.audio_track_handle.queue_sample_handles_release(
+                            existing_keys
+                        )
                     }
                 }
+
                 that.attempt {
-                    that.active_handle_keys[key] = that.audio_track_handle.add_sample_handles( sample_handles )
+                    var keys = that.audio_track_handle.add_sample_handles( sample_handles )
+                    that.active_handle_keys[key] = keys
                 }
             }
         }
+
     }
 
     fun release_note(event: NoteOff) {
@@ -75,9 +77,9 @@ class SoundFontPlayer(var sound_font: SoundFont) {
         runBlocking {
             that.active_handle_mutex.withLock {
                 val keys = that.active_handle_keys[key] ?: return@withLock
+                that.active_handle_keys.remove(key)
                 that.attempt {
                     that.audio_track_handle.queue_sample_handles_release( keys.toSet() )
-                    that.active_handle_keys.remove(key)
                 }
             }
         }
@@ -85,7 +87,7 @@ class SoundFontPlayer(var sound_font: SoundFont) {
 
     fun kill_note(note: Int, channel: Int) {
         this.attempt {
-            val keys = this.active_handle_keys[Pair(note, channel)] ?: return@attempt
+            val keys = this.active_handle_keys[Pair(channel, note)] ?: return@attempt
             this.audio_track_handle.remove_sample_handles(keys.toSet())
         }
     }
@@ -120,7 +122,7 @@ class SoundFontPlayer(var sound_font: SoundFont) {
         val that = this
         val keys = runBlocking {
             that.active_handle_mutex.withLock {
-                val output = mutableSetOf<Int>()
+                val output = mutableSetOf<Long>()
                 for ((_, output_keys) in that.active_handle_keys.filterKeys { k -> k.second == channel }) {
                     output.union(output_keys)
                 }

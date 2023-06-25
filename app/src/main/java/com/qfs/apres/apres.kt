@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import com.qfs.apres.riffreader.toUInt
 import java.io.File
+import kotlin.concurrent.thread
 import kotlin.experimental.and
 import kotlin.experimental.or
 
@@ -1947,7 +1948,9 @@ open class MIDIController(var context: Context) {
             if (device == source) {
                 continue
             }
-            device.receiveMessage(event)
+            thread {
+                device.receiveMessage(event)
+            }
         }
     }
 

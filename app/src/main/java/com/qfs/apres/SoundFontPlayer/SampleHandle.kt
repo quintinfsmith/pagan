@@ -157,7 +157,7 @@ class SampleHandle(
     }
 
     fun set_release_delay() {
-        this.release_delay = (AudioTrackHandle.base_delay_in_frames).toInt()
+        this.release_delay = AudioTrackHandle.base_delay_in_frames
     }
 }
 

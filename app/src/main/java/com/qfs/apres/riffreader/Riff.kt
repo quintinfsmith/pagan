@@ -119,7 +119,7 @@ class Riff(var input_stream: InputStream) {
     }
 
     private fun move_to_offset(offset: Long) {
-        val stream: InputStream = this.input_stream ?: throw InputStreamClosed()
+        val stream: InputStream = this.input_stream
 
         if (this.input_position < offset) {
             stream.skip(offset - this.input_position)
@@ -132,7 +132,7 @@ class Riff(var input_stream: InputStream) {
     }
 
     private fun get_bytes(offset: Int, size: Int): ByteArray {
-        val stream: InputStream = this.input_stream ?: throw InputStreamClosed()
+        val stream: InputStream = this.input_stream
         this.move_to_offset(offset.toLong())
         val output = ByteArray(size)
         stream.read(output)

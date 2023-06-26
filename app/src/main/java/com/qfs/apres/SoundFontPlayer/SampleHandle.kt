@@ -156,11 +156,8 @@ class SampleHandle(
         this.is_dead = true
     }
 
-    fun set_release_delay(initial_ts: Long) {
-        this.release_delay = 0
-        //val delta = initial_ts - System.currentTimeMillis()
-        //val delta_in_frames = delta * (AudioTrackHandle.sample_rate / 1000)
-        //this.release_delay = (AudioTrackHandle.base_delay_in_frames - delta_in_frames).toInt()
+    fun set_release_delay() {
+        this.release_delay = (AudioTrackHandle.base_delay_in_frames).toInt()
     }
 }
 

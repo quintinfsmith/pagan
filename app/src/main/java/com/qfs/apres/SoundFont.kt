@@ -223,7 +223,7 @@ class SoundFont(input_stream: InputStream) {
         // NOW we can load all the sample data
         if (output != null) {
             var ordered_samples = mutableListOf<Sample>()
-            for (preset_instrument in output!!.instruments) {
+            for (preset_instrument in output.instruments) {
                 val instrument = preset_instrument.instrument ?: continue
 
                 for (instrument_sample in instrument.samples) {

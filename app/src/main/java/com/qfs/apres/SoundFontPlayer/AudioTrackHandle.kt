@@ -107,7 +107,7 @@ class AudioTrackHandle {
         }
         val output = mutableSetOf<Long>()
         for (handle in handles) {
-            output.add(this.add_sample_handle(handle) ?: continue)
+            output.add(this.add_sample_handle(handle))
         }
         return output
     }
@@ -138,7 +138,7 @@ class AudioTrackHandle {
         runBlocking {
             that.sample_handles_mutex.withLock {
                 val handle= that.sample_handles[key]?: return@withLock
-                handle.set_release_delay(System.currentTimeMillis())
+                handle.set_release_delay()
             }
         }
     }

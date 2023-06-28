@@ -387,7 +387,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun play_midi(midi: MIDI) {
         //this.midi_player.play_midi(midi)
-        this.midi_playback_device.play(midi)
+        this.midi_playback_device.play(midi) {
+
+        }
     }
 
     private fun export_midi() {
@@ -739,7 +741,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         fun pause_playback() {
-            this.midi_input_device.sendEvent(MIDIStop())
+            this.midi_playback_device.pause_playback()
+            //this.midi_input_device.sendEvent(MIDIStop())
         }
 
 

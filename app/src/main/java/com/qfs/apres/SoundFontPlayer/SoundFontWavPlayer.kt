@@ -1,11 +1,13 @@
 package com.qfs.apres.SoundFontPlayer
 
 import android.util.Log
+import com.qfs.apres.BankSelect
 import com.qfs.apres.MIDI
 import com.qfs.apres.MIDIEvent
 import com.qfs.apres.NoteOff
 import com.qfs.apres.NoteOn
 import com.qfs.apres.Preset
+import com.qfs.apres.ProgramChange
 import com.qfs.apres.SetTempo
 import com.qfs.apres.SoundFont
 import kotlinx.coroutines.Dispatchers
@@ -19,6 +21,8 @@ import java.nio.ShortBuffer
 import kotlin.math.max
 
 class SoundFontWavPlayer(var sound_font: SoundFont) {
+    var playing = false
+    var stop_forced = false
     class WaveGenerator(var midi: MIDI, var sound_font: SoundFont) {
         private val loaded_presets = HashMap<Pair<Int, Int>, Preset>()
         private val preset_channel_map = HashMap<Int, Pair<Int, Int>>()
@@ -29,8 +33,6 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
 
         var midi_events_by_frame = HashMap<Int, List<MIDIEvent>>()
         var max_frame = 0
-        var max_overlap = 0
-        var sample_cache = HashMap<NoteOn, MutableList<MutableSet<SampleHandle>>>()
 
         init {
             this.loaded_presets[Pair(0, 0)] = this.sound_font.get_preset(0, 0)
@@ -49,22 +51,46 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
                         is SetTempo -> {
                             frames_per_tick = ((event.get_uspqn() / this.midi.get_ppqn()) * AudioTrackHandle.sample_rate) / 1000000
                         }
-                        is NoteOn -> {
-
+                        is BankSelect -> {
+                            this.select_bank(event.channel, event.value)
+                        }
+                        is ProgramChange -> {
+                            this.change_program(event.channel, event.program)
                         }
                     }
                 }
                 this.max_frame = max(tick_frame, this.max_frame)
             }
         }
+        fun select_bank(channel: Int, bank: Int) {
+            // NOTE: Changing the bank doesn't trigger a preset change
+            // That occurs in change_program()
+            var program = if (this.preset_channel_map.containsKey(channel)) {
+                this.preset_channel_map[channel]!!.second
+            } else {
+                0
+            }
+            this.preset_channel_map[channel] = Pair(bank, program)
+        }
+
+        fun change_program(channel: Int, program: Int) {
+            var bank = if (this.preset_channel_map.containsKey(channel)) {
+                this.preset_channel_map[channel]!!.first
+            } else {
+                0
+            }
+            val key = Pair(bank, program)
+            if (this.loaded_presets[key] == null) {
+                this.loaded_presets[key] = this.sound_font.get_preset(program, bank)
+            }
+
+
+            this.preset_channel_map[channel] = key
+        }
 
         fun generate(): ShortArray {
-            var start_ts = System.currentTimeMillis()
             var buffer_array = ShortArray(AudioTrackHandle.buffer_size * 2)
             var buffer = ShortBuffer.wrap(buffer_array)
-
-            var max_overlap = 0
-            var frames_processed: Long = 0
 
             for (i in 0 until AudioTrackHandle.buffer_size) {
                 var left_frame = 0
@@ -120,7 +146,6 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
 
                             else -> {}
                         }
-                        frames_processed += 1
                     }
                     for (sample_handle in to_kill) {
                         this.active_sample_handles[key]!!.remove(sample_handle)
@@ -130,7 +155,6 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
                     }
                 }
 
-                max_overlap = max(overlap, max_overlap)
                 for (key in keys_to_pop) {
                     this.active_sample_handles.remove(key)
                 }
@@ -139,11 +163,6 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
             }
 
             this.frame += AudioTrackHandle.buffer_size
-
-            var end_ts = System.currentTimeMillis()
-            var duration = end_ts - start_ts
-            var frame_rate = frames_processed / duration
-            Log.d("AAA", "Max Overlap: $max_overlap | frames processed : $frames_processed | frame/ms: $frame_rate")
 
             return buffer_array
         }
@@ -182,24 +201,36 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
         }
     }
 
+    fun pause_playback() {
+        this.stop_forced = true
+    }
+
     fun play(midi: MIDI) {
+        this.play(midi) {}
+    }
+
+    fun play(midi: MIDI, callback: (position: Float) -> Unit) {
         var audiotrackhandle = AudioTrackHandle()
         var wave_generator = WaveGenerator(midi, this.sound_font)
-        var buffer_dur = AudioTrackHandle.buffer_size.toLong() * 1000.toLong() / AudioTrackHandle.sample_rate.toLong()
+        var buffer_duration = AudioTrackHandle.buffer_size.toLong() * 1000.toLong() / AudioTrackHandle.sample_rate.toLong()
         var chunks = mutableListOf<ShortArray>()
         var chunk_limit = 10
+
         for (i in 0 until chunk_limit) {
             chunks.add(wave_generator.generate())
         }
+
         audiotrackhandle.play()
         var mutex = Mutex()
+        var that = this
+        this.playing = true
         runBlocking {
             var next_chunk = chunks.removeFirst()
-            var done = false
+            var done_building_chunks = false
 
             launch(newSingleThreadContext("A")) {
-                while (!done) {
-                    var a = System.currentTimeMillis()
+                while ((chunks.isNotEmpty() || !done_building_chunks) && !that.stop_forced) {
+                    var write_start_ts = System.currentTimeMillis()
                     audiotrackhandle.write(next_chunk)
 
                     try {
@@ -207,20 +238,20 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
                             chunks.removeFirst()
                         }
                     } catch (e: NoSuchElementException) {
-                        Log.d("AAA", "buffering...")
+                        if (done_building_chunks) {
+                            break
+                        }
                         audiotrackhandle.pause()
                         withContext(Dispatchers.IO) {
-                            while (!done && chunks.size < chunk_limit) {
+                            while (that.playing && chunks.size < chunk_limit) {
                                 Thread.sleep(10)
                             }
                         }
                         audiotrackhandle.play()
                     }
 
-                    var b = System.currentTimeMillis()
-
-                    var delta = b - a
-                    var sleep = buffer_dur - 10 - delta
+                    var delta = System.currentTimeMillis() - write_start_ts
+                    var sleep = buffer_duration - 10 - delta
                     if (sleep > 0) {
                         Thread.sleep(sleep)
                     }
@@ -228,21 +259,22 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
             }
 
             launch(newSingleThreadContext("B")) {
-                while (wave_generator.max_frame > wave_generator.frame) {
+                while (that.playing && wave_generator.max_frame > wave_generator.frame && !that.stop_forced) {
                     if (chunks.size > chunk_limit) {
                         continue
                     }
-                    var a = System.currentTimeMillis()
+
                     var chunk = wave_generator.generate()
-                    var b = System.currentTimeMillis()
-                    Log.d("AAA", "Adding Chunk (${chunks.size}) (${b - a})")
+
                     mutex.withLock {
                         chunks.add(chunk)
                     }
                 }
-                done = true
+                done_building_chunks = true
             }
         }
+        this.stop_forced = false
+        this.playing = false
 
         audiotrackhandle.stop()
         Log.d("AAA", "stopped")

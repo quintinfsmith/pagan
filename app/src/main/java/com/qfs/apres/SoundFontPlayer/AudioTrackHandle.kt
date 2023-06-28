@@ -15,6 +15,7 @@ import kotlin.concurrent.thread
 class AudioTrackHandle {
     class HandleStoppedException() : Exception()
     companion object {
+        //const val sample_rate = 11025
         const val sample_rate = 44100
 
         //val buffer_size: Int = AudioTrack.getMinBufferSize(
@@ -44,6 +45,9 @@ class AudioTrackHandle {
         .setBufferSizeInBytes(buffer_size_in_bytes)
         .build()
 
+    fun pause() {
+        this.audioTrack.pause()
+    }
 
     fun play() {
         this.audioTrack.play()

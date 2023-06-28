@@ -9,7 +9,6 @@ import com.qfs.apres.Preset
 import com.qfs.apres.SetTempo
 import com.qfs.apres.SoundFont
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.newSingleThreadContext
 import kotlinx.coroutines.runBlocking
@@ -17,7 +16,6 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.nio.ShortBuffer
-import kotlin.concurrent.thread
 import kotlin.math.max
 
 class SoundFontWavPlayer(var sound_font: SoundFont) {
@@ -189,14 +187,14 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
         var wave_generator = WaveGenerator(midi, this.sound_font)
         var buffer_dur = AudioTrackHandle.buffer_size.toLong() * 1000.toLong() / AudioTrackHandle.sample_rate.toLong()
         var chunks = mutableListOf<ShortArray>()
-        for (i in 0 until 10) {
+        var chunk_limit = 10
+        for (i in 0 until chunk_limit) {
             chunks.add(wave_generator.generate())
         }
         audiotrackhandle.play()
         var mutex = Mutex()
         runBlocking {
             var next_chunk = chunks.removeFirst()
-            var chunk_limit = 15
             var done = false
 
             launch(newSingleThreadContext("A")) {
@@ -204,17 +202,21 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
                     var a = System.currentTimeMillis()
                     audiotrackhandle.write(next_chunk)
 
-                    var chunk_set = false
-                    while (!chunk_set) {
-                        mutex.withLock {
-                            try {
-                                next_chunk = chunks.removeFirst()
-                                chunk_set = true
-                            } catch (e: NoSuchElementException) {
+                    try {
+                        next_chunk = mutex.withLock {
+                            chunks.removeFirst()
+                        }
+                    } catch (e: NoSuchElementException) {
+                        Log.d("AAA", "buffering...")
+                        audiotrackhandle.pause()
+                        withContext(Dispatchers.IO) {
+                            while (!done && chunks.size < chunk_limit) {
                                 Thread.sleep(10)
                             }
                         }
+                        audiotrackhandle.play()
                     }
+
                     var b = System.currentTimeMillis()
 
                     var delta = b - a
@@ -224,6 +226,7 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
                     }
                 }
             }
+
             launch(newSingleThreadContext("B")) {
                 while (wave_generator.max_frame > wave_generator.frame) {
                     if (chunks.size > chunk_limit) {
@@ -237,6 +240,7 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
                         chunks.add(chunk)
                     }
                 }
+                done = true
             }
         }
 

@@ -19,7 +19,7 @@ class SampleHandle(
     var maximum_map: Array<Int>
 ) {
     companion object {
-        val MAXIMUM_VOLUME = .7F
+        val MAXIMUM_VOLUME = .6F
     }
 
     constructor(original: SampleHandle): this(

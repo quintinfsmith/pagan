@@ -109,6 +109,7 @@ class SampleHandleGenerator {
                 Pair(new_start, new_end)
 
             } else {
+
                 null
             },
             delay_frames = ((AudioTrackHandle.sample_rate.toDouble() * vol_env_delay)).toInt(),

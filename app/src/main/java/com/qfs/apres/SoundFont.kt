@@ -4,6 +4,9 @@ import android.content.res.AssetManager
 import com.qfs.apres.riffreader.Riff
 import com.qfs.apres.riffreader.toUInt
 import java.io.InputStream
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
+import java.nio.ShortBuffer
 import kotlin.math.max
 import kotlin.math.pow
 
@@ -11,7 +14,7 @@ import kotlin.math.pow
 class SoundFont(input_stream: InputStream) {
     class InvalidPresetIndex(index: Int, bank: Int): Exception("Preset Not Found $index:$bank")
     class InvalidSampleIdPosition : Exception("SampleId Generator is not at end of ibag")
-    data class CachedSampleData(var data: ByteArray, var count: Int = 1)
+    data class CachedSampleData(var data: ShortArray, var count: Int = 1)
     // Mandatory INFO
     private var ifil: Pair<Int, Int> = Pair(0,0)
     private var isng: String = "EMU8000"
@@ -606,7 +609,7 @@ class SoundFont(input_stream: InputStream) {
         preset.add_instrument(working_instrument)
     }
 
-    fun get_sample_data(start_index: Int, end_index: Int): ByteArray {
+    fun get_sample_data(start_index: Int, end_index: Int): ShortArray {
         val cache_key = Pair(start_index, end_index)
 
         if (this.sample_data_cache.containsKey(cache_key)) {
@@ -621,22 +624,24 @@ class SoundFont(input_stream: InputStream) {
             null
         }
 
-        val output: ByteArray
+        val output: ShortArray
         if (sm24 != null) {
-            output = ByteArray(smpl.size + sm24.size)
-            for (i in 0 until (smpl.size / 2)) {
-                output[i + (i * 2)] = smpl[(i * 2) + 1]
-                output[i + ((i * 2) + 1)] = smpl[i * 2]
-            }
-            for (i in sm24.indices) {
-                output[(i * 3) + 2] = sm24[i]
-            }
+            throw Exception("SM24 Unsupported")
+            //output = ShortArray((smpl.size + sm24.size) / 2)
+            //var inbuffer = ByteBuffer.wrap(smpl)
+            //inbuffer.order(ByteOrder.LITTLE_ENDIAN)
+            //for (i in 0 until (smpl.size / 2)) {
+            //    output[i + (i * 2)] = smpl[(i * 2) + 1]
+            //    output[i + ((i * 2) + 1)] = smpl[i * 2]
+            //}
+            //for (i in sm24.indices) {
+            //    output[(i * 3) + 2] = sm24[i]
+            //}
         } else {
-            // TODO: May need to handle smpl.size % 2 == 1
-            output = ByteArray(smpl.size)
-            for (i in 0 until (smpl.size / 2)) {
-                output[i * 2] = smpl[(i * 2)]
-                output[(i * 2) + 1] = smpl[(i * 2) + 1]
+            val inbuffer = ByteBuffer.wrap(smpl)
+            inbuffer.order(ByteOrder.LITTLE_ENDIAN)
+            output = ShortArray(smpl.size / 2) {
+                inbuffer.getShort()
             }
         }
 
@@ -646,8 +651,6 @@ class SoundFont(input_stream: InputStream) {
                 count = 1
             )
         }
-
-
         return output
     }
 }
@@ -697,7 +700,7 @@ data class Sample(
     var linkIndex: Int,
     var sampleType: Int,
     var data_placeholder: Pair<Int, Int>,
-    var data: ByteArray? = null
+    var data: ShortArray? = null
 )
 
 open class Generated {

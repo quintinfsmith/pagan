@@ -32,6 +32,7 @@ import com.qfs.apres.ProgramChange
 import com.qfs.apres.SoundFont
 import com.qfs.apres.VirtualMIDIDevice
 import com.qfs.apres.SoundFontPlayer.MIDIPlaybackDevice
+import com.qfs.apres.SoundFontPlayer.SoundFontWavPlayer
 import com.qfs.pagan.databinding.ActivityMainBinding
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -46,7 +47,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
 
     private lateinit var midi_controller: MIDIController
-    private lateinit var midi_playback_device: MIDIPlaybackDevice
+    private lateinit var midi_playback_device: SoundFontWavPlayer
     private var midi_input_device = VirtualMIDIDevice()
     private var midi_player = MIDIPlayer()
     lateinit var soundfont: SoundFont
@@ -121,10 +122,11 @@ class MainActivity : AppCompatActivity() {
         // TODO: clean up the file -> riff -> soundfont -> midi playback device process
 
         this.soundfont = SoundFont(assets.open("FluidR3_GM.sf2"))
-        this.midi_playback_device = MIDIPlaybackDevice(this, this.soundfont)
+        //this.midi_playback_device = MIDIPlaybackDevice(this, this.soundfont)
+        this.midi_playback_device = SoundFontWavPlayer(this.soundfont)
 
         this.midi_controller = MIDIController(window.decorView.rootView.context)
-        this.midi_controller.registerVirtualDevice(this.midi_playback_device)
+        //this.midi_controller.registerVirtualDevice(this.midi_playback_device)
         this.midi_controller.registerVirtualDevice(this.midi_input_device)
         this.midi_controller.registerVirtualDevice(this.midi_player)
         ///////////////////////////////////////////
@@ -384,7 +386,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun play_midi(midi: MIDI) {
-        this.midi_player.play_midi(midi)
+        //this.midi_player.play_midi(midi)
+        this.midi_playback_device.play(midi)
     }
 
     private fun export_midi() {
@@ -777,14 +780,14 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
-        this.midi_playback_device.precache_midi(this.get_opus_manager().get_midi())
+        //this.midi_playback_device.precache_midi(this.get_opus_manager().get_midi())
 
         val dialog = AlertDialog.Builder(this, R.style.AlertDialog)
             .setView(viewInflated)
             .setOnCancelListener {
-                this.midi_input_device.sendEvent(MIDIStop())
-                this.midi_controller.unregisterVirtualDevice(midi_scroller)
-                this.midi_playback_device.clear_sample_cache()
+                //this.midi_input_device.sendEvent(MIDIStop())
+                //this.midi_controller.unregisterVirtualDevice(midi_scroller)
+                //this.midi_playback_device.clear_sample_cache()
             }
             .show()
 

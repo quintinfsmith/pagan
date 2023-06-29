@@ -3,27 +3,21 @@ package com.qfs.apres.SoundFontPlayer
 import android.media.AudioAttributes
 import android.media.AudioFormat
 import android.media.AudioTrack
-import android.util.Log
-import kotlinx.coroutines.async
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
-import kotlin.concurrent.thread
+import kotlin.math.max
 
 class AudioTrackHandle {
     class HandleStoppedException() : Exception()
     companion object {
-        const val sample_rate = 11025
-        //const val sample_rate = 44100
+        const val sample_rate = 44100
 
-        //val buffer_size: Int = AudioTrack.getMinBufferSize(
-        //    sample_rate,
-        //    AudioFormat.ENCODING_PCM_16BIT,
-        //    AudioFormat.CHANNEL_OUT_STEREO
-        //) * 4
-        val buffer_size = sample_rate
+        val buffer_size = max(
+            sample_rate / 4, // .25 seconds. arbitrary but feels good enough
+            AudioTrack.getMinBufferSize(
+                sample_rate,
+                AudioFormat.ENCODING_PCM_16BIT,
+                AudioFormat.CHANNEL_OUT_STEREO
+            ) * 4
+        )
         val buffer_size_in_bytes: Int = buffer_size * 4
         private const val maxkey = 0xFFFFFFFF
     }

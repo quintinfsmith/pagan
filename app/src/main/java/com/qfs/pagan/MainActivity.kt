@@ -1,7 +1,5 @@
 package com.qfs.pagan
 
-//import com.qfs.radixulous.MIDIPlaybackDevice
-
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.Intent
@@ -385,11 +383,8 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun play_midi(midi: MIDI) {
-        //this.midi_player.play_midi(midi)
-        this.midi_playback_device.play(midi) {
-
-        }
+    private fun play_midi(midi: MIDI, callback: (position: Float) -> Unit) {
+        this.midi_playback_device.play(midi, callback)
     }
 
     private fun export_midi() {
@@ -734,7 +729,12 @@ class MainActivity : AppCompatActivity() {
             playing = true
             ibPlayPause.setImageResource(R.drawable.ic_baseline_pause_24)
             thread {
-                this.play_midi(opus_manager.get_midi(x))
+                var size_a = x.toFloat() / opus_manager.opus_beat_count.toFloat()
+                this.play_midi(opus_manager.get_midi(x)) {
+                    var size_b = (1F - size_a) * it
+                    var progress = (sbPlaybackPosition.max * (size_a + size_b)).toInt()
+                    sbPlaybackPosition.progress = progress
+                }
                 ibPlayPause.setImageResource(R.drawable.ic_baseline_play_arrow_24)
                 playing = false
             }
@@ -788,6 +788,7 @@ class MainActivity : AppCompatActivity() {
         val dialog = AlertDialog.Builder(this, R.style.AlertDialog)
             .setView(viewInflated)
             .setOnCancelListener {
+                this.midi_playback_device.pause_playback()
                 //this.midi_input_device.sendEvent(MIDIStop())
                 //this.midi_controller.unregisterVirtualDevice(midi_scroller)
                 //this.midi_playback_device.clear_sample_cache()

@@ -5,6 +5,7 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.*
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
@@ -23,13 +24,11 @@ import com.qfs.apres.InvalidMIDIFile
 import com.qfs.apres.MIDI
 import com.qfs.apres.MIDIController
 import com.qfs.apres.MIDIPlayer
-import com.qfs.apres.MIDIStop
 import com.qfs.apres.NoteOff
 import com.qfs.apres.NoteOn
 import com.qfs.apres.ProgramChange
 import com.qfs.apres.SoundFont
 import com.qfs.apres.VirtualMIDIDevice
-import com.qfs.apres.SoundFontPlayer.MIDIPlaybackDevice
 import com.qfs.apres.SoundFontPlayer.SoundFontWavPlayer
 import com.qfs.pagan.databinding.ActivityMainBinding
 import kotlinx.serialization.encodeToString
@@ -124,7 +123,7 @@ class MainActivity : AppCompatActivity() {
         this.midi_playback_device = SoundFontWavPlayer(this.soundfont)
 
         this.midi_controller = MIDIController(window.decorView.rootView.context)
-        //this.midi_controller.registerVirtualDevice(this.midi_playback_device)
+        this.midi_controller.registerVirtualDevice(this.midi_playback_device)
         this.midi_controller.registerVirtualDevice(this.midi_input_device)
         this.midi_controller.registerVirtualDevice(this.midi_player)
         ///////////////////////////////////////////
@@ -378,13 +377,13 @@ class MainActivity : AppCompatActivity() {
 
         this@MainActivity.runOnUiThread {
             this.midi_input_device.sendEvent(NoteOn(midi_channel, note, velocity))
-            Thread.sleep(250)
+            Thread.sleep(50)
             this.midi_input_device.sendEvent(NoteOff(midi_channel, note, velocity))
         }
     }
 
-    private fun play_midi(midi: MIDI, callback: (position: Float) -> Unit) {
-        this.midi_playback_device.play(midi, callback)
+    private fun play_midi(midi: MIDI, callback: (position: Float) -> Unit): SoundFontWavPlayer.PlaybackInterface {
+        return this.midi_playback_device.play(midi, callback)
     }
 
     private fun export_midi() {
@@ -710,7 +709,6 @@ class MainActivity : AppCompatActivity() {
             )
         val opus_manager = this.get_opus_manager()
         val working_beat = opus_manager.cursor.beat
-        var playing = false
         val sbPlaybackPosition = viewInflated.findViewById<SeekBar>(R.id.sbPlaybackPosition)
         sbPlaybackPosition.max = opus_manager.opus_beat_count - 1
         sbPlaybackPosition.progress = working_beat
@@ -724,30 +722,33 @@ class MainActivity : AppCompatActivity() {
 
         val midi_scroller = MIDIScroller(this, sbPlaybackPosition)
         this.midi_controller.registerVirtualDevice(midi_scroller)
+        var playback_handle: SoundFontWavPlayer.PlaybackInterface? = null
 
         fun start_playback(x: Int) {
-            playing = true
-            ibPlayPause.setImageResource(R.drawable.ic_baseline_pause_24)
             thread {
                 var size_a = x.toFloat() / opus_manager.opus_beat_count.toFloat()
-                this.play_midi(opus_manager.get_midi(x)) {
+                ibPlayPause.setImageResource(R.drawable.ic_baseline_pause_24)
+                playback_handle = this.play_midi(opus_manager.get_midi(x)) {
                     var size_b = (1F - size_a) * it
                     var progress = (sbPlaybackPosition.max * (size_a + size_b)).toInt()
                     sbPlaybackPosition.progress = progress
                 }
                 ibPlayPause.setImageResource(R.drawable.ic_baseline_play_arrow_24)
-                playing = false
             }
         }
 
         fun pause_playback() {
-            this.midi_playback_device.pause_playback()
-            //this.midi_input_device.sendEvent(MIDIStop())
+            Log.d("AAA", "$playback_handle!!!")
+            if (playback_handle != null && playback_handle!!.playing) {
+                playback_handle?.stop()
+                ibPlayPause.setImageResource(R.drawable.ic_baseline_play_arrow_24)
+            }
         }
 
 
         ibPlayPause.setOnClickListener {
-            if (playing) {
+            Log.d("AAA", "$playback_handle")
+            if (playback_handle != null && playback_handle!!.playing) {
                 pause_playback()
             } else {
                 start_playback(sbPlaybackPosition.progress)
@@ -765,13 +766,14 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onStartTrackingTouch(p0: SeekBar?) {
-                this.was_playing = playing
+                this.was_playing = (playback_handle != null && playback_handle!!.playing)
                 this.is_stopping = true
                 pause_playback()
                 this.is_stopping = false
             }
             override fun onStopTrackingTouch(seekbar: SeekBar?) {
-                if (!this.in_grace_period && this.was_playing && seekbar != null && !playing) {
+                val is_playing = (playback_handle != null && playback_handle!!.playing)
+                if (!this.in_grace_period && this.was_playing && seekbar != null && !is_playing) {
                     // 'grace' period prevents multi-clicking from calling this multiple times
                     this.in_grace_period = true
                     // Kludge. need to give the midi play enough time to stop
@@ -788,10 +790,7 @@ class MainActivity : AppCompatActivity() {
         val dialog = AlertDialog.Builder(this, R.style.AlertDialog)
             .setView(viewInflated)
             .setOnCancelListener {
-                this.midi_playback_device.pause_playback()
-                //this.midi_input_device.sendEvent(MIDIStop())
-                //this.midi_controller.unregisterVirtualDevice(midi_scroller)
-                //this.midi_playback_device.clear_sample_cache()
+                pause_playback()
             }
             .show()
 

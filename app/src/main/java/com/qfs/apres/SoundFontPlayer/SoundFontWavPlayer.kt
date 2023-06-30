@@ -243,7 +243,11 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
         }
         val key = Pair(bank, program)
         if (this.loaded_presets[key] == null) {
-            this.loaded_presets[key] = this.sound_font.get_preset(program, bank)
+            this.loaded_presets[key] = try {
+                this.sound_font.get_preset(program, bank)
+            } catch (e: SoundFont.InvalidPresetIndex) {
+                this.loaded_presets[Pair(0,0)]!!
+            }
         }
 
 

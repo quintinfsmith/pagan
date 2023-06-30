@@ -709,11 +709,16 @@ class MainActivity : AppCompatActivity() {
                 var size_a = x.toFloat() / opus_manager.opus_beat_count.toFloat()
                 ibPlayPause.setImageResource(R.drawable.ic_baseline_pause_24)
                 playback_handle = this.play_midi(opus_manager.get_midi(x)) {
-                    var size_b = (1F - size_a) * it
-                    var progress = (sbPlaybackPosition.max * (size_a + size_b)).toInt()
-                    sbPlaybackPosition.progress = progress
+
+                    if (it == 1F) { // Song is over, return to start state
+                        ibPlayPause.setImageResource(R.drawable.ic_baseline_play_arrow_24)
+                        sbPlaybackPosition.progress = 0
+                    } else {
+                        var size_b = (1F - size_a) * it
+                        var progress = (sbPlaybackPosition.max * (size_a + size_b)).toInt()
+                        sbPlaybackPosition.progress = progress
+                    }
                 }
-                ibPlayPause.setImageResource(R.drawable.ic_baseline_play_arrow_24)
             }
         }
 

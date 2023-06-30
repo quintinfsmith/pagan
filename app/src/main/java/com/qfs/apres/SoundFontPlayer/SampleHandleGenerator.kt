@@ -1,5 +1,6 @@
 package com.qfs.apres.SoundFontPlayer
 
+import android.util.Log
 import com.qfs.apres.InstrumentSample
 import com.qfs.apres.NoteOn
 import com.qfs.apres.Preset
@@ -95,19 +96,10 @@ class SampleHandleGenerator {
             data = data,
             stereo_mode = sample.sample!!.sampleType,
             loop_points = if (sample.sampleMode != null && sample.sampleMode!! and 1 == 1) {
-                // Need to be even due to 2-byte words in sample
-                var new_start = (sample.sample!!.loopStart.toFloat() / pitch_shift).toInt()
-                if (new_start % 2 == 1) {
-                    new_start -= 1
-                }
-
-                var new_end = (sample.sample!!.loopEnd.toFloat() / pitch_shift).toInt()
-                if (new_end % 2 == 1) {
-                    new_end -= 1
-                }
-
-                Pair(new_start, new_end)
-
+                Pair(
+                    (sample.sample!!.loopStart.toFloat() / pitch_shift).toInt(),
+                    (sample.sample!!.loopEnd.toFloat() / pitch_shift).toInt()
+                )
             } else {
 
                 null

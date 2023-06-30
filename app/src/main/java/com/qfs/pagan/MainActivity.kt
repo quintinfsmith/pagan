@@ -5,7 +5,6 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.view.*
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
@@ -19,16 +18,9 @@ import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.recyclerview.widget.RecyclerView
-import com.qfs.apres.BankSelect
 import com.qfs.apres.InvalidMIDIFile
 import com.qfs.apres.MIDI
-import com.qfs.apres.MIDIController
-import com.qfs.apres.MIDIPlayer
-import com.qfs.apres.NoteOff
-import com.qfs.apres.NoteOn
-import com.qfs.apres.ProgramChange
 import com.qfs.apres.SoundFont
-import com.qfs.apres.VirtualMIDIDevice
 import com.qfs.apres.SoundFontPlayer.SoundFontWavPlayer
 import com.qfs.pagan.databinding.ActivityMainBinding
 import kotlinx.serialization.encodeToString
@@ -43,10 +35,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
 
-    private lateinit var midi_controller: MIDIController
     private lateinit var midi_playback_device: SoundFontWavPlayer
-    private var midi_input_device = VirtualMIDIDevice()
-    private var midi_player = MIDIPlayer()
     lateinit var soundfont: SoundFont
 
     private var opus_manager = OpusManager(this)
@@ -119,20 +108,15 @@ class MainActivity : AppCompatActivity() {
         // TODO: clean up the file -> riff -> soundfont -> midi playback device process
 
         this.soundfont = SoundFont(assets.open("FluidR3_GM.sf2"))
-        //this.midi_playback_device = MIDIPlaybackDevice(this, this.soundfont)
         this.midi_playback_device = SoundFontWavPlayer(this.soundfont)
 
-        this.midi_controller = MIDIController(window.decorView.rootView.context)
-        this.midi_controller.registerVirtualDevice(this.midi_playback_device)
-        this.midi_controller.registerVirtualDevice(this.midi_input_device)
-        this.midi_controller.registerVirtualDevice(this.midi_player)
         ///////////////////////////////////////////
     }
 
     fun update_channel_instruments(opus_manager: OpusManager) {
         for (channel in opus_manager.channels) {
-            this.midi_input_device.sendEvent(BankSelect(channel.midi_channel, channel.midi_bank))
-            this.midi_input_device.sendEvent(ProgramChange(channel.midi_channel, channel.midi_program))
+            this.midi_playback_device.select_bank(channel.midi_channel, channel.midi_bank)
+            this.midi_playback_device.change_program(channel.midi_channel, channel.midi_program)
         }
     }
 
@@ -375,10 +359,9 @@ class MainActivity : AppCompatActivity() {
             event_value + 21 + this.opus_manager.transpose
         }
 
+
         this@MainActivity.runOnUiThread {
-            this.midi_input_device.sendEvent(NoteOn(midi_channel, note, velocity))
-            Thread.sleep(50)
-            this.midi_input_device.sendEvent(NoteOff(midi_channel, note, velocity))
+            this.midi_playback_device.play_note(midi_channel, note, velocity, 100)
         }
     }
 
@@ -719,9 +702,6 @@ class MainActivity : AppCompatActivity() {
         val tvPlaybackTime = viewInflated.findViewById<TextView>(R.id.tvPlaybackTime)
         tvPlaybackTime.text = this.get_timestring_at_beat(working_beat)
 
-
-        val midi_scroller = MIDIScroller(this, sbPlaybackPosition)
-        this.midi_controller.registerVirtualDevice(midi_scroller)
         var playback_handle: SoundFontWavPlayer.PlaybackInterface? = null
 
         fun start_playback(x: Int) {
@@ -738,7 +718,6 @@ class MainActivity : AppCompatActivity() {
         }
 
         fun pause_playback() {
-            Log.d("AAA", "$playback_handle!!!")
             if (playback_handle != null && playback_handle!!.playing) {
                 playback_handle?.stop()
                 ibPlayPause.setImageResource(R.drawable.ic_baseline_play_arrow_24)
@@ -747,7 +726,6 @@ class MainActivity : AppCompatActivity() {
 
 
         ibPlayPause.setOnClickListener {
-            Log.d("AAA", "$playback_handle")
             if (playback_handle != null && playback_handle!!.playing) {
                 pause_playback()
             } else {
@@ -785,7 +763,6 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
-        //this.midi_playback_device.precache_midi(this.get_opus_manager().get_midi())
 
         val dialog = AlertDialog.Builder(this, R.style.AlertDialog)
             .setView(viewInflated)

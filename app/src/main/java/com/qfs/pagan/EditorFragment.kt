@@ -619,6 +619,23 @@ class EditorFragment : PaganFragment() {
         }
     }
 
+    fun play_event(beat_key: BeatKey, position: List<Int>) {
+        val main = this.get_main()
+        val opus_manager = main.get_opus_manager()
+        val current_tree = opus_manager.get_tree()
+        var event_note = opus_manager.get_absolute_value(beat_key, position) ?: return
+        if (event_note < 0) {
+            return
+        }
+        var volume = opus_manager.channels[beat_key.channel].get_line_volume(beat_key.line_offset)
+        main.play_event(
+            beat_key.channel,
+            event_note,
+            volume
+        )
+
+    }
+
     private fun interact_btnUnset() {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
@@ -721,6 +738,7 @@ class EditorFragment : PaganFragment() {
         )
 
         opus_manager.set_event(event)
+        this.play_event(opus_manager.cursor.get_beatkey(), opus_manager.cursor.get_position())
         this.reset_context_menu()
     }
 
@@ -782,6 +800,7 @@ class EditorFragment : PaganFragment() {
         )
 
         opus_manager.set_event(event)
+        this.play_event(opus_manager.cursor.get_beatkey(), opus_manager.cursor.get_position())
         this.reset_context_menu()
     }
 

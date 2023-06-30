@@ -1,6 +1,5 @@
 package com.qfs.apres.SoundFontPlayer
 
-import android.util.Log
 import com.qfs.apres.BankSelect
 import com.qfs.apres.MIDI
 import com.qfs.apres.MIDIEvent
@@ -21,8 +20,9 @@ import kotlinx.coroutines.withContext
 import java.nio.ShortBuffer
 import kotlin.concurrent.thread
 import kotlin.math.max
+import kotlin.math.min
 
-class SoundFontWavPlayer(var sound_font: SoundFont): VirtualMIDIDevice() {
+class SoundFontWavPlayer(var sound_font: SoundFont) {
     class PlaybackInterface() {
         var playing = true
         var stop_forced = false
@@ -58,7 +58,8 @@ class SoundFontWavPlayer(var sound_font: SoundFont): VirtualMIDIDevice() {
                         }
                     }
                 }
-                this.max_frame = max(tick_frame + AudioTrackHandle.sample_rate, this.max_frame)
+                //this.max_frame = max(tick_frame + AudioTrackHandle.sample_rate, this.max_frame)
+                this.max_frame = max(tick_frame , this.max_frame)
             }
         }
 
@@ -76,13 +77,11 @@ class SoundFontWavPlayer(var sound_font: SoundFont): VirtualMIDIDevice() {
                     for (event in this.midi_events_by_frame[f]!!) {
                         when (event) {
                             is NoteOn -> {
-                                Log.d("AAA", "$f $event")
                                 val preset = this.get_preset(event.channel)
                                 this.active_sample_handles[Pair(event.channel, event.note)] = this.player.gen_sample_handles(event, preset).toMutableSet()
                             }
 
                             is NoteOff -> {
-                                Log.d("AAA", "$f $event")
                                 for (handle in this.active_sample_handles[Pair(
                                     event.channel,
                                     event.note
@@ -155,64 +154,16 @@ class SoundFontWavPlayer(var sound_font: SoundFont): VirtualMIDIDevice() {
         private fun get_preset(channel: Int): Preset {
             return this.player.get_preset(channel)
         }
-
-        fun add_event(event: MIDIEvent) {
-            var f = this.frame
-            val start_ts = this.generate_ts
-            f += if (start_ts != null) {
-                val delta = (System.currentTimeMillis() - start_ts)
-                (delta * AudioTrackHandle.sample_rate / 1000).toInt()
-            } else {
-                AudioTrackHandle.buffer_size
-            }
-
-            if (!midi_events_by_frame.containsKey(f)) {
-                this.midi_events_by_frame[f] = mutableListOf()
-            }
-            this.midi_events_by_frame[f]!!.add(event)
-            if (event is NoteOff) {
-                this.max_frame = f
-            } else if (event is NoteOn) {
-                this.max_frame = 0
-            }
-        }
     }
 
     private var active_audio_track_handle: AudioTrackHandle? = null
     private val loaded_presets = HashMap<Pair<Int, Int>, Preset>()
     private val preset_channel_map = HashMap<Int, Pair<Int, Int>>()
     private val sample_handle_generator = SampleHandleGenerator()
-    private var background_wave_generator = WaveGenerator(this)
-    private var background_playback_handle: PlaybackInterface? = null
 
     init {
         this.loaded_presets[Pair(0, 0)] = this.sound_font.get_preset(0, 0)
         this.loaded_presets[Pair(128, 0)] = this.sound_font.get_preset(0, 128)
-    }
-
-    override fun onNoteOn(event: NoteOn) {
-        if (this.background_playback_handle == null || !this.background_playback_handle!!.playing) {
-            this.background_playback_handle = PlaybackInterface()
-            this.background_wave_generator.frame = 0
-            thread {
-                this.controllable_play(
-                    this.background_playback_handle!!,
-                    AudioTrackHandle(),
-                    this.background_wave_generator
-                ) {}
-            }
-        }
-        this.background_wave_generator.add_event(event)
-    }
-
-    override fun onNoteOff(event:NoteOff) {
-        this.background_wave_generator.add_event(event)
-    }
-    override fun onProgramChange(event: ProgramChange) {
-        this.change_program(event.channel, event.program)
-    }
-    override fun onBankSelect(event: BankSelect) {
-        this.select_bank(event.channel, event.value)
     }
 
     private fun gen_sample_handles(event: NoteOn, preset: Preset): Set<SampleHandle> {
@@ -299,15 +250,18 @@ class SoundFontWavPlayer(var sound_font: SoundFont): VirtualMIDIDevice() {
         val buffer_duration = AudioTrackHandle.buffer_size.toLong() * 1000.toLong() / AudioTrackHandle.sample_rate.toLong()
         val chunks = mutableListOf<Pair<ShortArray, Float>>()
 
-        val position = wave_generator.frame.toFloat() / wave_generator.max_frame.toFloat()
-        chunks.add(Pair(wave_generator.generate(), position))
+        chunks.add(
+            Pair(
+                wave_generator.generate(),
+                wave_generator.frame.toFloat() / wave_generator.max_frame.toFloat()
+            )
+        )
 
         audio_track_handle.play()
         val mutex = Mutex()
         val that = this
         runBlocking {
             var done_building_chunks = false
-            Log.d("AAA", "Playing...")
             launch(newSingleThreadContext("A")) {
                 while ((chunks.isNotEmpty() || !done_building_chunks) && !playback_interface.stop_forced) {
                     val write_start_ts = System.currentTimeMillis()
@@ -351,8 +305,10 @@ class SoundFontWavPlayer(var sound_font: SoundFont): VirtualMIDIDevice() {
                         continue
                     }
 
-                    var generator_position = wave_generator.frame.toFloat() / wave_generator.max_frame.toFloat()
                     val chunk = wave_generator.generate()
+
+                    // TODO: This won't be 100% accurate due to samples' vol_env_release
+                    var generator_position = min(1F, wave_generator.frame.toFloat() / wave_generator.max_frame.toFloat())
 
                     mutex.withLock {
                         chunks.add(Pair(chunk, generator_position))
@@ -367,6 +323,14 @@ class SoundFontWavPlayer(var sound_font: SoundFont): VirtualMIDIDevice() {
 
         audio_track_handle.stop()
         wave_generator.is_alive = true
+    }
+
+    fun play_note(channel: Int, note: Int, velocity: Int, duration: Int) {
+        var midi = MIDI()
+        var ticks = max(1, (duration * 1000) / (500000 / midi.get_ppqn()))
+        midi.insert_event(0, 0, NoteOn(channel, note, velocity))
+        midi.insert_event(0, ticks, NoteOff(channel, note, 64))
+        this.play(midi) {}
     }
 }
 

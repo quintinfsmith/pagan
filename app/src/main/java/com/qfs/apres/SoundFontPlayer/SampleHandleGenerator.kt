@@ -1,11 +1,9 @@
 package com.qfs.apres.SoundFontPlayer
 
-import android.util.Log
 import com.qfs.apres.InstrumentSample
 import com.qfs.apres.NoteOn
 import com.qfs.apres.Preset
 import com.qfs.apres.PresetInstrument
-import com.qfs.apres.riffreader.toUInt
 import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.max
@@ -86,10 +84,12 @@ class SampleHandleGenerator {
         val release_mask_size = ((AudioTrackHandle.sample_rate.toDouble() * vol_env_release)).toInt()
 
         val divisions = ceil(data.size.toFloat() / (AudioTrackHandle.buffer_size_in_bytes.toFloat() / 2F)).toInt() * 2
-        val maximum_map = Array<Int>(divisions) { 0 }
+        var max_value: Int = 0
         data.forEachIndexed { i: Int, frame: Short ->
-            val mapped_position = (i * divisions / data.size)
-            maximum_map[mapped_position] = max(abs(frame.toInt()), maximum_map[mapped_position])
+            var abs_frame = abs(frame.toInt())
+            if (abs_frame > max_value) {
+                max_value = abs_frame
+            }
         }
 
         return SampleHandle(
@@ -111,7 +111,7 @@ class SampleHandleGenerator {
             release_mask = Array(release_mask_size) {
                     i -> (release_mask_size - i - 1).toDouble() / release_mask_size.toDouble()
             },
-            maximum_map = maximum_map
+            max_value = max_value.toFloat() / Short.MAX_VALUE.toFloat()
         )
     }
 

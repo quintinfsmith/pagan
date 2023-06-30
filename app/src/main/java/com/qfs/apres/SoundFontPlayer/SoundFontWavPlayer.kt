@@ -1,5 +1,6 @@
 package com.qfs.apres.SoundFontPlayer
 
+import android.util.Log
 import com.qfs.apres.BankSelect
 import com.qfs.apres.MIDI
 import com.qfs.apres.MIDIEvent
@@ -36,7 +37,26 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
         var midi_events_by_frame = HashMap<Int, MutableList<MIDIEvent>>()
         var max_frame = 0
         var is_alive = true
+        var volume_limit = 0F
         private var generate_ts: Long? = null
+
+        /*
+            Get the max volume of the quietest active sample
+         */
+        fun update_active_sample_attenuations() {
+            var min_value: Float = 1F
+            for ((key, handles) in this.active_sample_handles) {
+                for (handle in handles) {
+                    min_value = min(handle.max_value, min_value)
+                }
+            }
+
+            for ((key, handles) in this.active_sample_handles) {
+                for (handle in handles) {
+                    handle.current_attenuation = min_value / handle.max_value
+                }
+            }
+        }
 
          fun parse_midi(midi: MIDI) {
             var frames_per_tick = ((500000 / midi.get_ppqn()) * AudioTrackHandle.sample_rate) / 1000000
@@ -91,6 +111,7 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
                             }
                         }
                     }
+                    this.update_active_sample_attenuations()
                 }
                 this.midi_events_by_frame.remove(f)
 
@@ -101,11 +122,13 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
                     val to_kill = mutableSetOf<SampleHandle>()
                     for (sample_handle in sample_handles) {
                         // TODO: remove from active_sample_handles
-                        val frame_value = sample_handle.get_next_frame()
+                        var frame_value = sample_handle.get_next_frame()
                         if (frame_value == null) {
                             to_kill.add(sample_handle)
                             continue
                         }
+
+                        frame_value = (frame_value.toFloat() * sample_handle.current_attenuation).toInt().toShort()
 
                         // TODO: Implement ROM stereo modes
                         when (sample_handle.stereo_mode and 7) {
@@ -125,6 +148,8 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
                             else -> {}
                         }
                     }
+
+
                     for (sample_handle in to_kill) {
                         this.active_sample_handles[key]!!.remove(sample_handle)
                     }

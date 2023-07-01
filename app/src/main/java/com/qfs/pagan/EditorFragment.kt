@@ -10,6 +10,9 @@ import androidx.recyclerview.widget.RecyclerView
 import com.qfs.apres.InvalidMIDIFile
 import com.qfs.pagan.databinding.FragmentMainBinding
 import com.qfs.pagan.opusmanager.*
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.newSingleThreadContext
+import kotlinx.coroutines.runBlocking
 import java.lang.Integer.max
 import kotlin.concurrent.thread
 
@@ -112,13 +115,23 @@ class EditorFragment : PaganFragment() {
         }
 
         setFragmentResultListener("IMPORT") { _, bundle: Bundle? ->
-            bundle!!.getString("URI")?.let { path ->
-                val main = this.get_main()
-                try {
-                    main.import_midi(path)
-                } catch (e: InvalidMIDIFile) {
-                    main.get_opus_manager().new()
-                    main.feedback_msg("Invalid MIDI")
+            val main = this.get_main()
+
+            thread {
+                main.loading_reticle()
+            }
+
+            thread {
+                main.runOnUiThread {
+                    bundle!!.getString("URI")?.let { path ->
+                        try {
+                            main.import_midi(path)
+                        } catch (e: InvalidMIDIFile) {
+                            main.get_opus_manager().new()
+                            main.feedback_msg("Invalid MIDI")
+                        }
+                    }
+                    main.cancel_reticle()
                 }
             }
         }
@@ -141,7 +154,9 @@ class EditorFragment : PaganFragment() {
 
         setFragmentResultListener("NEW") { _, _: Bundle? ->
             val main = this.get_main()
+            main.loading_reticle()
             main.get_opus_manager().new()
+            main.cancel_reticle()
         }
     }
 

@@ -47,7 +47,7 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
             var min_value: Float = 1F
             for ((key, handles) in this.active_sample_handles) {
                 for (handle in handles) {
-                    min_value = min(handle.max_value, min_value)
+                    min_value = min(handle.max_value * handle.current_volume.toFloat(), min_value)
                 }
             }
 

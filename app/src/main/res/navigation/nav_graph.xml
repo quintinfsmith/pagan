@@ -30,6 +30,12 @@
             app:popUpTo="@id/FrontFragment"
             app:popUpToInclusive="true"
             app:destination="@id/EditorFragment" />
+
+        <action
+            android:id="@+id/action_LoadFragment_to_EditorFragment2"
+            app:popUpTo="@id/EditorFragment"
+            app:popUpToInclusive="true"
+            app:destination="@id/EditorFragment" />
     </fragment>
 
     <fragment

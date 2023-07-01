@@ -68,7 +68,7 @@ class SampleHandle(
             return null
         }
 
-        var frame = (this.data_buffer.get().toDouble() * this.current_attenuation * this.current_volume).toInt().toShort()
+        var frame = (this.data_buffer.get().toDouble() * this.current_attenuation).toInt().toShort()
 
         this.shorts_called += 1
         if (this.current_attack_position < this.attack_frame_count) {

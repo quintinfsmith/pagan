@@ -5,6 +5,7 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.*
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
@@ -13,6 +14,7 @@ import androidx.core.os.bundleOf
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResult
+import androidx.navigation.NavOptions
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
@@ -23,6 +25,7 @@ import com.qfs.apres.MIDI
 import com.qfs.apres.SoundFont
 import com.qfs.apres.SoundFontPlayer.SoundFontWavPlayer
 import com.qfs.pagan.databinding.ActivityMainBinding
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
@@ -47,6 +50,8 @@ class MainActivity : AppCompatActivity() {
     private var progressBar: ProgressBar? = null
 
     private var number_selector_defaults = HashMap<String, Int>()
+    // flag to indicate that the landing page has been navigated away from for navigation management
+    private var has_seen_front_page = false
 
     private var export_project_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
@@ -96,11 +101,17 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         this.project_manager = ProjectManager(applicationInfo.dataDir)
+
         this.binding = ActivityMainBinding.inflate(this.layoutInflater)
         setContentView(this.binding.root)
         setSupportActionBar(this.binding.appBarMain.toolbar)
         val navController = findNavController(R.id.nav_host_fragment_content_main)
-        this.appBarConfiguration = AppBarConfiguration(navController.graph)
+        this.appBarConfiguration = AppBarConfiguration(
+            setOf(
+                R.id.FrontFragment,
+                R.id.EditorFragment
+            )
+        )
         setupActionBarWithNavController(navController, this.appBarConfiguration)
 
         this.lockDrawer()
@@ -415,6 +426,7 @@ class MainActivity : AppCompatActivity() {
         fragment?.setFragmentResult("NEW", bundleOf())
         this.navTo("main")
 
+
         this.feedback_msg("Deleted \"$title\"")
     }
 
@@ -431,18 +443,20 @@ class MainActivity : AppCompatActivity() {
         val navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main)
         val fragment = navHost?.childFragmentManager?.fragments?.get(0)
         val navController = findNavController(R.id.nav_host_fragment_content_main)
+
         when (fragment) {
             is LoadFragment -> {
                 when (fragmentName) {
                     "main" -> {
-                        if (navController.graph.startDestinationId != R.id.EditorFragment) {
-                            this.reset_start_destination()
+                        if (this.has_seen_front_page) {
+                            navController.navigate(R.id.action_LoadFragment_to_EditorFragment2)
                         } else {
                             navController.navigate(R.id.action_LoadFragment_to_EditorFragment)
                         }
                     }
                     else -> {}
                 }
+                this.has_seen_front_page = true
 
             }
             is EditorFragment -> {
@@ -455,18 +469,22 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             is LandingPageFragment -> {
-                when (fragmentName) {
-                    "main" -> {
-                        this.reset_start_destination()
+                navController.navigate(
+                    when (fragmentName) {
+                        "main" -> {
+                            this.has_seen_front_page = true
+                            R.id.action_FrontFragment_to_EditorFragment
+                        }
+                        "load" -> {
+                            R.id.action_FrontFragment_to_LoadFragment
+                        }
+                        "license" -> {
+                            R.id.action_FrontFragment_to_LicenseFragment
+                        }
+                        else -> { return }
                     }
-                    "load" -> {
-                        navController.navigate(R.id.action_FrontFragment_to_LoadFragment)
-                    }
-                    "license" -> {
-                        navController.navigate(R.id.action_FrontFragment_to_LicenseFragment)
-                    }
-                    else -> {}
-                }
+                )
+
             }
             else -> {}
         }
@@ -597,23 +615,30 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun loading_reticle() {
-        if (this.progressBar == null) {
-            this.progressBar =
-                ProgressBar(this@MainActivity, null, android.R.attr.progressBarStyleLarge)
+        var that = this
+        runBlocking {
+            that.runOnUiThread {
+                if (that.progressBar == null) {
+                    that.progressBar =
+                        ProgressBar(that, null, android.R.attr.progressBarStyleLarge)
+                }
+                val params: RelativeLayout.LayoutParams = RelativeLayout.LayoutParams(50, 50)
+                params.addRule(RelativeLayout.CENTER_IN_PARENT)
+                val parent = that.progressBar!!.parent
+                if (parent != null) {
+                    (parent as ViewGroup).removeView(that.progressBar)
+                }
+                that.binding.root.addView(that.progressBar, params)
+            }
         }
-        val params: RelativeLayout.LayoutParams = RelativeLayout.LayoutParams(50, 50)
-        params.addRule(RelativeLayout.CENTER_IN_PARENT)
-        val parent = this.progressBar!!.parent
-        if (parent != null) {
-            (parent as ViewGroup).removeView(this.progressBar)
-        }
-        this.binding.root.addView(this.progressBar, params)
     }
 
     fun cancel_reticle() {
-        val progressBar = this.progressBar ?: return
-        if (progressBar.parent != null) {
-            (progressBar.parent as ViewGroup).removeView(progressBar)
+        this.runOnUiThread {
+            val progressBar = this.progressBar ?: return@runOnUiThread
+            if (progressBar.parent != null) {
+                (progressBar.parent as ViewGroup).removeView(progressBar)
+            }
         }
     }
 
@@ -623,18 +648,6 @@ class MainActivity : AppCompatActivity() {
 
     fun unlockDrawer() {
         this.binding.root.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)
-    }
-
-    // Change the navcontroller graph so the user can't return the the main menu screen
-    private fun reset_start_destination() {
-        val navController = findNavController(R.id.nav_host_fragment_content_main)
-        if (navController.graph.startDestinationId != R.id.EditorFragment) {
-            val new_graph = navController.navInflater.inflate(R.navigation.nav_graph_b)
-            navController.graph = new_graph
-
-            this.appBarConfiguration = AppBarConfiguration(navController.graph)
-            setupActionBarWithNavController(navController, this.appBarConfiguration)
-        }
     }
 
     fun import_project(path: String) {

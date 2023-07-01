@@ -6,7 +6,6 @@ import com.qfs.apres.Preset
 import com.qfs.apres.PresetInstrument
 import kotlin.math.abs
 import kotlin.math.ceil
-import kotlin.math.max
 import kotlin.math.pow
 
 class SampleHandleGenerator {

@@ -211,6 +211,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         }
         this.ui_notify_visible_changes()
         val rvActiveChannels: RecyclerView = this.activity.findViewById(R.id.rvActiveChannels)
+        this.activity.update_channel_instruments(notify_index)
 
         rvActiveChannels.adapter?.notifyItemChanged(notify_index - 1)
         rvActiveChannels.adapter?.notifyItemInserted(notify_index)

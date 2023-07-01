@@ -13,8 +13,8 @@
     <string name="absolute_label">|n|</string>
     <string name="msg_undo_none">Nothing to be done</string>
     <string name="label_channels_button">Chn</string>
-    <string name="main_fragment_label">Main Fragment</string>
-    <string name="load_fragment_label">Load Fragment</string>
+    <string name="main_fragment_label"></string>
+    <string name="load_fragment_label"></string>
     <string name="front_fragment_label">@string/app_name</string>
     <string name="config_fragment_label">Config</string>
     <string name="license_fragment_label">License</string>

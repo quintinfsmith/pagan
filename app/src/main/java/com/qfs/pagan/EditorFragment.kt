@@ -115,23 +115,13 @@ class EditorFragment : PaganFragment() {
         }
 
         setFragmentResultListener("IMPORT") { _, bundle: Bundle? ->
-            val main = this.get_main()
-
-            thread {
-                main.loading_reticle()
-            }
-
-            thread {
-                main.runOnUiThread {
-                    bundle!!.getString("URI")?.let { path ->
-                        try {
-                            main.import_midi(path)
-                        } catch (e: InvalidMIDIFile) {
-                            main.get_opus_manager().new()
-                            main.feedback_msg("Invalid MIDI")
-                        }
-                    }
-                    main.cancel_reticle()
+            bundle!!.getString("URI")?.let { path ->
+                val main = this.get_main()
+                try {
+                    main.import_midi(path)
+                } catch (e: InvalidMIDIFile) {
+                    main.get_opus_manager().new()
+                    main.feedback_msg("Invalid MIDI")
                 }
             }
         }

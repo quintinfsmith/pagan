@@ -12,10 +12,13 @@ class OpusChannel(var uuid: Int) {
     class InvalidChannelUUID(uuid: Int): Exception("No such channel uuid: $uuid")
     class LineSizeMismatch(incoming_size: Int, required_size: Int): Exception("Line is $incoming_size beats but OpusManager is $required_size beats")
 
+
     class OpusLine(var beats: MutableList<OpusTree<OpusEvent>>) {
         constructor(beat_count: Int) : this(Array<OpusTree<OpusEvent>>(beat_count) { OpusTree() }.toMutableList())
         var volume = 64
     }
+
+    class LastLineException: Exception("Can't remove final line in channel")
 
     var lines: MutableList<OpusLine> = mutableListOf()
     var midi_bank = 0
@@ -90,10 +93,13 @@ class OpusChannel(var uuid: Int) {
     }
 
     fun remove_line(index: Int? = null): MutableList<OpusTree<OpusEvent>> {
+        if (this.lines.size == 1) {
+            throw LastLineException()
+        }
         return if (index == null) {
             this.size -= 1
-            lines.removeLast().beats
-        } else if (index < lines.size) {
+            this.lines.removeLast().beats
+        } else if (index < this.lines.size) {
             if (this.line_map != null) {
                 for (i in index until this.size - 1) {
                     val next = this.line_map!![i + 1]

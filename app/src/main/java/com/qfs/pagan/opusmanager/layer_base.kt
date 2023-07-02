@@ -681,6 +681,7 @@ open class OpusManagerBase {
 
     open fun remove_line(channel: Int, line_offset: Int): MutableList<OpusTree<OpusEvent>> {
         return this.channels[channel].remove_line(line_offset)
+
     }
 
     private fun copy_func(tree: OpusTree<OpusEvent>): OpusEvent? {

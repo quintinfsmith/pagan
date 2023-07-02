@@ -14,6 +14,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.newSingleThreadContext
 import kotlinx.coroutines.runBlocking
 import java.lang.Integer.max
+import java.lang.Integer.min
 import kotlin.concurrent.thread
 
 /**
@@ -357,13 +358,14 @@ class EditorFragment : PaganFragment() {
             }
 
             btnRemoveLine.setOnLongClickListener {
+                var lines = opus_manager.channels[opus_manager.cursor.channel].size
+                var max_lines = min(lines - 1, lines - opus_manager.cursor.line_offset)
                 main.popup_number_dialog(
                     "Remove Lines",
                     1,
-                    kotlin.math.max(1, opus_manager.get_total_line_count() - 1)
+                    max_lines
                 ) { count: Int ->
                     opus_manager.remove_line(count)
-                    opus_manager.cursor_select_row(channel, max(0, line_offset - 1))
                 }
                 true
             }

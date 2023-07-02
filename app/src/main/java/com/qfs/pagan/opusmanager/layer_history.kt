@@ -388,13 +388,17 @@ open class HistoryLayer : LinksLayer() {
     open fun remove_line(channel: Int, line_offset: Int, count: Int) {
         this.history_cache.remember {
             for (i in 0 until count) {
-                if (this.channels[channel].size <= 1) {
+                if (this.channels[channel].size == 0) {
                     break
                 }
-                this.remove_line(
-                    channel,
-                    kotlin.math.min(line_offset, this.channels[channel].size - 1)
-                )
+                try {
+                    this.remove_line(
+                        channel,
+                        kotlin.math.min(line_offset, this.channels[channel].size - 1)
+                    )
+                } catch (e: OpusChannel.LastLineException) {
+                    break
+                }
             }
         }
     }

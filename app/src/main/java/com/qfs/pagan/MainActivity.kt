@@ -129,7 +129,7 @@ class MainActivity : AppCompatActivity() {
         this.midi_playback_device.change_program(opus_channel.midi_channel, opus_channel.midi_program)
     }
 
-    fun update_channel_instruments(opus_manager: OpusManager) {
+    fun update_channel_instruments() {
         for (channel in opus_manager.channels) {
             this.midi_playback_device.select_bank(channel.midi_channel, channel.midi_bank)
             this.midi_playback_device.change_program(channel.midi_channel, channel.midi_program)

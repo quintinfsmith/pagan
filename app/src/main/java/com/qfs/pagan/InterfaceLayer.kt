@@ -46,7 +46,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             }
         }
 
-        this.activity.update_channel_instruments(this)
+        this.activity.update_channel_instruments()
         this.activity.cancel_reticle()
     }
 
@@ -178,9 +178,8 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         val output = super.remove_line(channel, line_offset)
 
         val cursor = this.cursor
-        if (cursor.line_offset == this.channels[cursor.channel].size) {
+        if (cursor.line_offset != 0 && cursor.line_offset == this.channels[cursor.channel].size) {
             when (cursor.mode) {
-
                 Cursor.CursorMode.Row -> {
                     cursor.line_offset -= 1
                 }
@@ -194,6 +193,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
         this.ui_notify_visible_changes()
         this.ui_set_cursor_focus()
+        this.activity.update_channel_instruments()
 
         return output
     }
@@ -254,7 +254,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         val rvColumnLabels = this.activity.findViewById<RecyclerView>(R.id.rvColumnLabels)
         rvColumnLabels.scrollToPosition(0)
 
-        this.activity.update_channel_instruments(this)
+        this.activity.update_channel_instruments()
         this.withFragment {
             it.clearContextMenu()
         }
@@ -281,7 +281,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         val rvColumnLabels = this.activity.findViewById<RecyclerView>(R.id.rvColumnLabels)
         rvColumnLabels.scrollToPosition(0)
 
-        this.activity.update_channel_instruments(this)
+        this.activity.update_channel_instruments()
         this.withFragment {
             it.clearContextMenu()
         }
@@ -306,7 +306,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         rvBeatTable.scrollToPosition(0)
         val rvColumnLabels = this.activity.findViewById<RecyclerView>(R.id.rvColumnLabels)
         rvColumnLabels.scrollToPosition(0)
-        this.activity.update_channel_instruments(this)
+        this.activity.update_channel_instruments()
 
         this.withFragment {
             it.clearContextMenu()
@@ -333,7 +333,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         val rvColumnLabels = this.activity.findViewById<RecyclerView>(R.id.rvColumnLabels)
         rvColumnLabels.scrollToPosition(0)
 
-        this.activity.update_channel_instruments(this)
+        this.activity.update_channel_instruments()
         this.withFragment {
             it.clearContextMenu()
         }
@@ -985,6 +985,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         }
         this.ui_notify_visible_changes()
     }
+
 
     fun remove_beat_at_cursor(count: Int) {
         this.remove_beat(this.cursor.beat, count)

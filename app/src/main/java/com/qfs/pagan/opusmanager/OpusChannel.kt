@@ -69,7 +69,7 @@ class OpusChannel(var uuid: Int) {
         this.line_map = new_map
     }
 
-    fun new_line(index: Int? = null): List<OpusTree<OpusEvent>> {
+    fun new_line(index: Int? = null): OpusLine {
         val new_line = OpusLine(this.beat_count)
         if (index == null) {
             this.lines.add(new_line)
@@ -79,26 +79,26 @@ class OpusChannel(var uuid: Int) {
         }
         this.size += 1
 
-        return new_line.beats
+        return new_line
     }
 
-    fun insert_line(index: Int, line: MutableList<OpusTree<OpusEvent>>) {
-        if (line.size != this.beat_count) {
-            throw LineSizeMismatch(line.size, this.beat_count)
+    fun insert_line(index: Int, line: OpusLine) {
+        if (line.beats.size != this.beat_count) {
+            throw LineSizeMismatch(line.beats.size, this.beat_count)
         }
-        val new_line = OpusLine(line)
-        this.lines.add(index, new_line)
+
+        this.lines.add(index, line)
         this.adjust_map_for_new_line(index)
         this.size += 1
     }
 
-    fun remove_line(index: Int? = null): MutableList<OpusTree<OpusEvent>> {
+    fun remove_line(index: Int? = null): OpusLine {
         if (this.lines.size == 1) {
             throw LastLineException()
         }
         return if (index == null) {
             this.size -= 1
-            this.lines.removeLast().beats
+            this.lines.removeLast()
         } else if (index < this.lines.size) {
             if (this.line_map != null) {
                 for (i in index until this.size - 1) {
@@ -111,7 +111,7 @@ class OpusChannel(var uuid: Int) {
                 }
             }
             this.size -= 1
-            lines.removeAt(index).beats
+            lines.removeAt(index)
         } else {
             throw IndexOutOfBoundsException()
         }

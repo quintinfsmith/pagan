@@ -32,7 +32,7 @@ open class OpusManagerBase {
     var RADIX: Int = 12
     var DEFAULT_PERCUSSION: Int = 0
     var channels: MutableList<OpusChannel> = mutableListOf()
-    private var channel_uuid_generator: Int = 0xFF
+    private var channel_uuid_generator: Int = 0x00
     private var channel_uuid_map = HashMap<Int, OpusChannel>()
     var opus_beat_count: Int = 1
     var path: String? = null
@@ -538,8 +538,8 @@ open class OpusManagerBase {
         return output
     }
 
-    open fun new_channel(channel: Int? = null, lines: Int = 1) {
-        val new_channel = OpusChannel(this.gen_channel_uuid())
+    open fun new_channel(channel: Int? = null, lines: Int = 1, uuid: Int? = null) {
+        val new_channel = OpusChannel(uuid ?: this.gen_channel_uuid())
         new_channel.set_beat_count(this.opus_beat_count)
         new_channel.midi_channel = if (this.channels.isNotEmpty()) {
             this.get_next_available_midi_channel()
@@ -576,7 +576,13 @@ open class OpusManagerBase {
         } else {
             null
         }
-        val line = this.remove_line(channel_old, line_old)
+
+        val line = try {
+            this.remove_line(channel_old, line_old)
+        } catch (_: OpusChannel.LastLineException) {
+            this.new_line(channel_old, 1)
+            this.remove_line(channel_old, line_old)
+        }
 
         if (channel_old == channel_new) {
             if (line_old < line_new) {
@@ -586,9 +592,6 @@ open class OpusManagerBase {
             }
         } else {
             this.insert_line(channel_new, line_new, line)
-            if (this.channels[channel_old].size == 0) {
-                this.new_line(channel_old, 0)
-            }
         }
 
         // Reassign line map that was broken by the move
@@ -630,11 +633,11 @@ open class OpusManagerBase {
     }
 
 
-    open fun insert_line(channel: Int, line_offset: Int, line: MutableList<OpusTree<OpusEvent>>) {
+    open fun insert_line(channel: Int, line_offset: Int, line: OpusChannel.OpusLine) {
         this.channels[channel].insert_line(line_offset, line)
     }
 
-    open fun new_line(channel: Int, line_offset: Int? = null): List<OpusTree<OpusEvent>> {
+    open fun new_line(channel: Int, line_offset: Int? = null): OpusChannel.OpusLine {
         return this.channels[channel].new_line(line_offset)
     }
 
@@ -679,7 +682,7 @@ open class OpusManagerBase {
         this.unset(beatkey_from, position_from)
     }
 
-    open fun remove_line(channel: Int, line_offset: Int): MutableList<OpusTree<OpusEvent>> {
+    open fun remove_line(channel: Int, line_offset: Int): OpusChannel.OpusLine {
         return this.channels[channel].remove_line(line_offset)
 
     }

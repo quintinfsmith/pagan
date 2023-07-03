@@ -1,5 +1,4 @@
 package com.qfs.pagan.opusmanager
-import android.util.Log
 import com.qfs.pagan.structure.OpusTree
 import java.lang.Integer.max
 import java.lang.Integer.min
@@ -497,7 +496,7 @@ open class LinksLayer : OpusManagerBase() {
         }
     }
 
-    override fun insert_line(channel: Int, line_offset: Int, line: MutableList<OpusTree<OpusEvent>>) {
+    override fun insert_line(channel: Int, line_offset: Int, line: OpusChannel.OpusLine) {
         this.remap_links { beat_key: BeatKey ->
             if (beat_key.channel == channel && beat_key.line_offset >= line_offset) {
                 BeatKey(
@@ -512,7 +511,7 @@ open class LinksLayer : OpusManagerBase() {
         super.insert_line(channel, line_offset, line)
     }
 
-    override fun new_line(channel: Int, line_offset: Int?): List<OpusTree<OpusEvent>> {
+    override fun new_line(channel: Int, line_offset: Int?): OpusChannel.OpusLine {
         if (line_offset != null) {
             this.remap_links { beat_key: BeatKey ->
                 if (beat_key.channel == channel && beat_key.line_offset >= line_offset) {
@@ -529,7 +528,7 @@ open class LinksLayer : OpusManagerBase() {
         return super.new_line(channel, line_offset)
     }
 
-    override fun remove_line(channel: Int, line_offset: Int): MutableList<OpusTree<OpusEvent>> {
+    override fun remove_line(channel: Int, line_offset: Int): OpusChannel.OpusLine {
         this.remap_links { beat_key: BeatKey ->
             if (beat_key.channel == channel) {
                 if (beat_key.line_offset > line_offset) {

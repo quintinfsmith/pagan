@@ -2,7 +2,6 @@ package com.qfs.pagan
 
 import android.content.Context
 import android.util.AttributeSet
-import android.util.Log
 import android.view.*
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
@@ -324,7 +323,20 @@ class LineLabelRecyclerView(context: Context, attrs: AttributeSet) : RecyclerVie
                 }
                 Cursor.CursorMode.Single,
                 Cursor.CursorMode.Row -> {
-                    val y_offset = this.opus_manager.get_abs_offset(cursor.channel, cursor.line_offset)
+                    val y_offset = try {
+                        this.opus_manager.get_abs_offset(
+                            cursor.channel,
+                            cursor.line_offset
+                        )
+                    } catch (e: IndexOutOfBoundsException) {
+                        // If the abs_offset can't be found, presumably the label no longer exists
+                        // if we are trying to unhighlight that label, mission accomplished implicitly
+                        if (show) {
+                            throw e
+                        } else {
+                            return
+                        }
+                    }
                     val viewHolder = this.recycler.findViewHolderForAdapterPosition(y_offset) ?: return
                     val label = viewHolder.itemView as LabelView
                     label.set_focused(show)

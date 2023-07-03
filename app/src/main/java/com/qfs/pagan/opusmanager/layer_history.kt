@@ -260,16 +260,21 @@ open class HistoryLayer : LinksLayer() {
                     this.insert_line(
                         current_node.args[0] as Int,
                         current_node.args[1] as Int,
-                        this.checked_cast<MutableList<OpusTree<OpusEvent>>>(current_node.args[2])
+                        this.checked_cast<OpusChannel.OpusLine>(current_node.args[2])
                     )
                 }
 
                 HistoryToken.REMOVE_CHANNEL -> {
-                    this.remove_channel_by_uuid(current_node.args[0] as Int)
+                    var uuid = current_node.args[0] as Int
+                    this.remove_channel_by_uuid(uuid)
                 }
 
                 HistoryToken.NEW_CHANNEL -> {
-                    this.new_channel(current_node.args[0] as Int)
+                    var channel = current_node.args[0] as Int
+                    this.new_channel(
+                        channel = channel,
+                        uuid = current_node.args[1] as Int
+                    )
                 }
 
                 HistoryToken.REMOVE -> {
@@ -360,9 +365,9 @@ open class HistoryLayer : LinksLayer() {
         }
     }
 
-    fun new_line(channel: Int, line_offset: Int, count: Int): List<List<OpusTree<OpusEvent>>> {
+    fun new_line(channel: Int, line_offset: Int, count: Int): List<OpusChannel.OpusLine> {
         return this.history_cache.remember {
-            val output: MutableList<List<OpusTree<OpusEvent>>> = mutableListOf()
+            val output: MutableList<OpusChannel.OpusLine> = mutableListOf()
             for (i in 0 until count) {
                 output.add(this.new_line(channel, line_offset))
             }
@@ -370,18 +375,17 @@ open class HistoryLayer : LinksLayer() {
         }
     }
 
-    override fun new_line(channel: Int, line_offset: Int?): List<OpusTree<OpusEvent>> {
+    override fun new_line(channel: Int, line_offset: Int?): OpusChannel.OpusLine {
         return this.history_cache.remember {
-            val output = super.new_line(channel, line_offset)
             this.push_remove_line(channel, line_offset ?: (this.channels[channel].size - 1))
-            output
+            super.new_line(channel, line_offset)
         }
     }
 
-    override fun insert_line(channel: Int, line_offset: Int, line: MutableList<OpusTree<OpusEvent>>) {
+    override fun insert_line(channel: Int, line_offset: Int, line: OpusChannel.OpusLine) {
         this.history_cache.remember {
-            super.insert_line(channel, line_offset, line)
             this.push_remove_line(channel, line_offset)
+            super.insert_line(channel, line_offset, line)
         }
     }
 
@@ -403,7 +407,7 @@ open class HistoryLayer : LinksLayer() {
         }
     }
 
-    override fun remove_line(channel: Int, line_offset: Int): MutableList<OpusTree<OpusEvent>> {
+    override fun remove_line(channel: Int, line_offset: Int): OpusChannel.OpusLine {
         return this.history_cache.remember {
             this.push_rebuild_line(channel, line_offset)
             super.remove_line(channel, line_offset)
@@ -610,15 +614,21 @@ open class HistoryLayer : LinksLayer() {
         }
     }
 
-    private fun push_new_channel(channel: Int) {
+    private fun push_rebuild_channel(channel: Int) {
         this.history_cache.remember {
-            for (i in this.channels[channel].size - 1 downTo 0) {
+            var line_count = this.channels[channel].lines.size
+            // Will be an extra empty line that needs to be removed
+            this.push_remove_line(channel, line_count)
+            for (i in line_count - 1 downTo 0) {
                 this.push_rebuild_line(channel, i)
             }
 
             this.push_to_history_stack(
                 HistoryToken.NEW_CHANNEL,
-                listOf(channel)
+                listOf(
+                    channel,
+                    this.channels[channel].uuid
+                )
             )
         }
 
@@ -630,7 +640,7 @@ open class HistoryLayer : LinksLayer() {
             listOf(
                 channel,
                 line_offset,
-                this.channels[channel].lines[line_offset].beats.toMutableList()
+                this.channels[channel].lines[line_offset]
             )
         )
     }
@@ -728,20 +738,24 @@ open class HistoryLayer : LinksLayer() {
     }
 
     override fun remove_channel(channel: Int) {
-        this.push_new_channel(channel)
+        this.history_cache.remember {
+            this.push_rebuild_channel(channel)
+        }
         this.history_cache.lock()
         super.remove_channel(channel)
         this.history_cache.unlock()
     }
 
-    override fun new_channel(channel: Int?, lines: Int) {
+    override fun new_channel(channel: Int?, lines: Int, uuid: Int?) {
         this.history_cache.remember {
-            super.new_channel(channel, lines)
-            if (channel != null) {
-                this.push_remove_channel(channel)
+            super.new_channel(channel, lines, uuid)
+            val channel_to_remove = channel ?: if (this.channels.size > 1) {
+                this.channels.size - 2
             } else {
-                this.push_remove_channel(this.channels.size - 1)
+                this.channels.size - 1
             }
+
+            this.push_remove_channel(channel_to_remove)
         }
     }
 
@@ -790,6 +804,7 @@ open class HistoryLayer : LinksLayer() {
         if (this.history_cache.isLocked()) {
             return
         }
+
         this.history_cache.remember {
             var restore_old_line = false
             val return_from_line = if (channel_old == channel_new) {
@@ -815,11 +830,10 @@ open class HistoryLayer : LinksLayer() {
                 line_old
             }
 
-
-            this.push_to_history_stack(HistoryToken.MOVE_LINE, listOf(channel_new, return_from_line, channel_old, return_to_line))
             if (restore_old_line) {
-                this.push_to_history_stack(HistoryToken.REMOVE_LINE, listOf(channel_old, line_old))
+                this.push_to_history_stack(HistoryToken.REMOVE_LINE, listOf(channel_old, line_old + 1))
             }
+            this.push_to_history_stack(HistoryToken.MOVE_LINE, listOf(channel_new, return_from_line, channel_old, return_to_line))
         }
     }
 

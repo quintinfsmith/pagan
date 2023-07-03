@@ -129,7 +129,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         this.ui_refresh_beat_labels(beat_key)
     }
 
-    override fun new_line(channel: Int, line_offset: Int?): List<OpusTree<OpusEvent>> {
+    override fun new_line(channel: Int, line_offset: Int?): OpusChannel.OpusLine {
         val output = super.new_line(channel, line_offset)
 
         this.ui_add_line_label()
@@ -137,7 +137,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         return output
     }
 
-    override fun insert_line(channel: Int, line_offset: Int, line: MutableList<OpusTree<OpusEvent>>) {
+    override fun insert_line(channel: Int, line_offset: Int, line: OpusChannel.OpusLine) {
         this.ui_unset_cursor_focus()
         super.insert_line(channel, line_offset, line)
         this.ui_add_line_label()
@@ -171,7 +171,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         }
     }
 
-    override fun remove_line(channel: Int, line_offset: Int): MutableList<OpusTree<OpusEvent>> {
+    override fun remove_line(channel: Int, line_offset: Int): OpusChannel.OpusLine {
         this.ui_unset_cursor_focus()
         this.ui_remove_line_label(channel, line_offset)
 
@@ -198,14 +198,14 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         return output
     }
 
-    override fun new_channel(channel: Int?, lines: Int) {
+    override fun new_channel(channel: Int?, lines: Int, uuid: Int?) {
         var notify_index = if (channel == null) {
             this.channels.size
         } else {
             min(channel, this.channels.size)
         }
 
-        super.new_channel(channel, lines)
+        super.new_channel(channel, lines, uuid)
         for (i in 0 until lines) {
             this.ui_add_line_label()
         }
@@ -629,16 +629,13 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                 }
                 HistoryToken.REMOVE_LINE -> {
                     val channel = args[0] as Int
-                    val line_offset = args[1] as Int
+                    val line_offset = min(args[1] as Int, this.channels[channel].size - 1)
+
                     this.push_to_history_stack(
                         HistoryToken.CURSOR_SELECT_ROW,
                         listOf(
                             channel,
-                            if (line_offset == this.channels[channel].size - 1) {
-                                line_offset - 1
-                            } else {
-                                line_offset
-                            }
+                            line_offset
                         )
                     )
                 }

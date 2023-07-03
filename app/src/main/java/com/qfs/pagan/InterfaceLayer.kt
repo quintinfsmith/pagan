@@ -1,4 +1,5 @@
 package com.qfs.pagan
+import android.util.Log
 import android.view.View
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -172,10 +173,19 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     override fun remove_line(channel: Int, line_offset: Int): OpusChannel.OpusLine {
+
         this.ui_unset_cursor_focus()
         this.ui_remove_line_label(channel, line_offset)
 
-        val output = super.remove_line(channel, line_offset)
+        val output = try {
+            super.remove_line(channel, line_offset)
+        } catch (e: OpusChannel.LastLineException) {
+            this.ui_add_line_label()
+            this.ui_notify_visible_changes()
+            this.ui_set_cursor_focus()
+
+            throw e
+        }
 
         val cursor = this.cursor
         if (cursor.line_offset != 0 && cursor.line_offset == this.channels[cursor.channel].size) {
@@ -428,10 +438,18 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
         val beat_table = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
         val rvBeatTable_adapter = beat_table.adapter as BeatColumnAdapter
-        val first = (beat_table.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
-        val last = (beat_table.layoutManager as LinearLayoutManager).findLastVisibleItemPosition()
+        var first = (beat_table.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
+        var last = (beat_table.layoutManager as LinearLayoutManager).findLastVisibleItemPosition()
         for (i in max(0, first - 5) .. min(last + 5, this.opus_beat_count - 1)) {
             rvBeatTable_adapter.notifyItemChanged(i)
+        }
+
+        val line_labels = this.activity.findViewById<RecyclerView>(R.id.rvLineLabels)
+        val rvLineLabel_adapter = line_labels.adapter as LineLabelRecyclerView.LineLabelAdapter
+        first = (line_labels.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
+        last = (line_labels.layoutManager as LinearLayoutManager).findLastVisibleItemPosition()
+        for (i in max(0, first - 5) .. min(last + 5, this.opus_beat_count - 1)) {
+            rvLineLabel_adapter.notifyItemChanged(i)
         }
     }
 
@@ -439,12 +457,19 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         val rvLineLabels = this.activity.findViewById<RecyclerView>(R.id.rvLineLabels)
         val rvLineLabels_adapter = rvLineLabels.adapter as LineLabelRecyclerView.LineLabelAdapter
         rvLineLabels_adapter.addLineLabel()
+        Log.d("AAA", "LINE LABEL ADDED")
     }
 
     private fun ui_remove_line_label(channel: Int, line_offset: Int) {
         val rvLineLabels = this.activity.findViewById<RecyclerView>(R.id.rvLineLabels)
         val rvLineLabels_adapter = rvLineLabels.adapter as LineLabelRecyclerView.LineLabelAdapter
-        rvLineLabels_adapter.removeLineLabel(this.get_abs_offset(channel, line_offset))
+        rvLineLabels_adapter.removeLineLabel(
+            try {
+                this.get_abs_offset(channel, line_offset)
+            } catch (e: IndexOutOfBoundsException) {
+                return // no need to remove the label, it doesn't exist
+            }
+        )
     }
 
     private fun ui_refresh_beat_labels(beat_key: BeatKey) {

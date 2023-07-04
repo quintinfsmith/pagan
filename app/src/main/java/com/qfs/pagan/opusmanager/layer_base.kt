@@ -942,12 +942,14 @@ open class OpusManagerBase {
                 }
             } else {
                 this.new_channel(lines = channel_data.lines.size)
-                for (j in 0 until channel_data.lines.size) {
-                    beat_count = max(beat_count, parsed[i][j].size)
-                }
                 y += 1
             }
+
+            for (j in 0 until channel_data.lines.size) {
+                beat_count = max(beat_count, parsed[i][j].size)
+            }
         }
+
 
         for (i in 0 until beat_count) {
             this.insert_beat()

@@ -1,6 +1,5 @@
 package com.qfs.apres.SoundFontPlayer
 
-import android.util.Log
 import com.qfs.apres.BankSelect
 import com.qfs.apres.MIDI
 import com.qfs.apres.MIDIEvent
@@ -10,7 +9,6 @@ import com.qfs.apres.Preset
 import com.qfs.apres.ProgramChange
 import com.qfs.apres.SetTempo
 import com.qfs.apres.SoundFont
-import com.qfs.apres.VirtualMIDIDevice
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.newSingleThreadContext
@@ -18,7 +16,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import java.nio.ShortBuffer
+import java.nio.IntBuffer
 import kotlin.concurrent.thread
 import kotlin.math.max
 import kotlin.math.min
@@ -43,20 +41,6 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
         /*
             Get the max volume of the quietest active sample
          */
-        fun update_active_sample_attenuations() {
-            var min_value: Float = 1F
-            for ((key, handles) in this.active_sample_handles) {
-                for (handle in handles) {
-                    min_value = min(handle.max_value * handle.current_volume.toFloat(), min_value)
-                }
-            }
-
-            for ((key, handles) in this.active_sample_handles) {
-                for (handle in handles) {
-                    handle.current_attenuation = min_value / handle.max_value
-                }
-            }
-        }
 
          fun parse_midi(midi: MIDI) {
             var frames_per_tick = ((500000 / midi.get_ppqn()) * AudioTrackHandle.sample_rate) / 1000000
@@ -84,11 +68,12 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
         }
 
         fun generate(): ShortArray {
-            val buffer_array = ShortArray(AudioTrackHandle.buffer_size * 2)
-            val buffer = ShortBuffer.wrap(buffer_array)
+            val initial_array = IntArray(AudioTrackHandle.buffer_size * 2)
+            val buffer = IntBuffer.wrap(initial_array)
             this.generate_ts = System.currentTimeMillis()
 
 
+            var max_frame_value: Int = 0
             for (i in 0 until AudioTrackHandle.buffer_size) {
                 var left_frame = 0
                 var right_frame = 0
@@ -111,7 +96,6 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
                             }
                         }
                     }
-                    this.update_active_sample_attenuations()
                 }
                 this.midi_events_by_frame.remove(f)
 
@@ -122,13 +106,11 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
                     val to_kill = mutableSetOf<SampleHandle>()
                     for (sample_handle in sample_handles) {
                         // TODO: remove from active_sample_handles
-                        var frame_value = sample_handle.get_next_frame()
+                        val frame_value = sample_handle.get_next_frame()
                         if (frame_value == null) {
                             to_kill.add(sample_handle)
                             continue
                         }
-
-                        frame_value = (frame_value.toFloat() * sample_handle.current_attenuation).toInt().toShort()
 
                         // TODO: Implement ROM stereo modes
                         when (sample_handle.stereo_mode and 7) {
@@ -161,9 +143,39 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
                 for (key in keys_to_pop) {
                     this.active_sample_handles.remove(key)
                 }
-                buffer.put(right_frame.toShort())
-                buffer.put(left_frame.toShort())
+
+                max_frame_value = max(
+                    max_frame_value,
+                    kotlin.math.abs(right_frame)
+                )
+                max_frame_value = max(
+                    max_frame_value,
+                    kotlin.math.abs(left_frame)
+                )
+
+                buffer.put(right_frame)
+                buffer.put(left_frame)
             }
+
+            val mid = Short.MAX_VALUE / 2
+            val compression_ratio = if (max_frame_value <= Short.MAX_VALUE) {
+                1F
+            } else {
+                (Short.MAX_VALUE - mid).toFloat() / (max_frame_value - mid).toFloat()
+            }
+
+            val compressed_array = ShortArray(initial_array.size) { i: Int ->
+                val v = initial_array[i]
+                if (compression_ratio >= 1F || (0 - mid .. mid).contains(v)) {
+                    v.toShort()
+                } else if (v > mid) {
+                    (mid + ((v - mid).toFloat() * compression_ratio).toInt()).toShort()
+                } else {
+                    (((v + mid).toFloat() * compression_ratio).toInt() - mid).toShort()
+                }
+            }
+
+
 
             this.frame +=  AudioTrackHandle.buffer_size
             this.generate_ts = null
@@ -172,7 +184,7 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
                 this.is_alive = false
             }
 
-            return buffer_array
+            return compressed_array
         }
 
 
@@ -203,7 +215,7 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
 
             for (sample in samples) {
                 val new_handle = this.sample_handle_generator.get(event, sample, p_instrument, preset)
-                new_handle.current_volume = event.velocity.toDouble() * SampleHandle.MAXIMUM_VOLUME / 128.toDouble()
+                new_handle.current_volume = (event.velocity.toDouble() / 128.toDouble()) * SampleHandle.MAXIMUM_VOLUME
                 output.add( new_handle )
             }
         }

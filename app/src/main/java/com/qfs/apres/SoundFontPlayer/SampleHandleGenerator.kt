@@ -82,13 +82,20 @@ class SampleHandleGenerator {
 
         val release_mask_size = ((AudioTrackHandle.sample_rate.toDouble() * vol_env_release)).toInt()
 
-        val divisions = ceil(data.size.toFloat() / (AudioTrackHandle.buffer_size_in_bytes.toFloat() / 2F)).toInt() * 2
-        var max_value: Int = 0
+        val max_values = mutableListOf<Short>()
         data.forEachIndexed { i: Int, frame: Short ->
-            var abs_frame = abs(frame.toInt())
-            if (abs_frame > max_value) {
-                max_value = abs_frame
+            var d = i / (AudioTrackHandle.buffer_size / 3)
+            while (max_values.size <= d) {
+                max_values.add(0)
             }
+
+            var abs_frame = abs(frame.toInt())
+            if (abs_frame > max_values[d]) {
+                max_values[d] = abs_frame.toShort()
+            }
+        }
+        val max_values_floats = Array(max_values.size) {
+            max_values[it].toFloat() / Short.MAX_VALUE.toFloat()
         }
 
         return SampleHandle(
@@ -100,17 +107,16 @@ class SampleHandleGenerator {
                     (sample.sample!!.loopEnd.toFloat() / pitch_shift).toInt()
                 )
             } else {
-
                 null
             },
             delay_frames = ((AudioTrackHandle.sample_rate.toDouble() * vol_env_delay)).toInt(),
             attack_frame_count = ((AudioTrackHandle.sample_rate.toDouble() * vol_env_attack )).toInt(),
             hold_frame_count = ((AudioTrackHandle.sample_rate.toDouble() * vol_env_hold )).toInt(),
             decay_frame_count = ((AudioTrackHandle.sample_rate.toDouble() * vol_env_decay )).toInt(),
-            release_mask = Array(release_mask_size) {
-                    i -> (release_mask_size - i - 1).toDouble() / release_mask_size.toDouble()
+            release_mask = Array(release_mask_size) { i ->
+                (release_mask_size - i - 1).toDouble() / release_mask_size.toDouble()
             },
-            max_value = max_value.toFloat() / Short.MAX_VALUE.toFloat()
+            max_values = max_values_floats
         )
     }
 

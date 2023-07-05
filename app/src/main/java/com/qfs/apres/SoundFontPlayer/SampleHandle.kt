@@ -16,7 +16,7 @@ class SampleHandle(
     var hold_frame_count: Int = 0,
     var decay_frame_count: Int = 0,
     var release_mask: Array<Double>,
-    var max_value: Float = 0F
+    var max_values: Array<Float> = Array<Float>(0) { 0F }
 ) {
     companion object {
         val MAXIMUM_VOLUME = .8F
@@ -31,7 +31,7 @@ class SampleHandle(
         original.hold_frame_count,
         original.decay_frame_count,
         original.release_mask,
-        original.max_value
+        original.max_values
     )
 
     var is_pressed = true
@@ -49,9 +49,11 @@ class SampleHandle(
     var release_delay: Int? = null
     var remove_delay: Int? = null
     var data_buffer = ShortBuffer.wrap(data)
-    var current_attenuation = 1F
 
-
+    fun get_max_value(): Float {
+        var i = this.data_buffer.position() * this.max_values.size / this.data.size
+        return this.max_values[i] * this.current_volume.toFloat()
+    }
     fun get_next_frame(): Short? {
         if (this.is_dead) {
             return null
@@ -68,7 +70,7 @@ class SampleHandle(
             return null
         }
 
-        var frame = (this.data_buffer.get().toDouble() * this.current_attenuation).toInt().toShort()
+        var frame = (this.data_buffer.get().toDouble() * this.current_volume).toInt().toShort()
 
         this.shorts_called += 1
         if (this.current_attack_position < this.attack_frame_count) {

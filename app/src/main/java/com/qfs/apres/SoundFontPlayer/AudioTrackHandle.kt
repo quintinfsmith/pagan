@@ -62,5 +62,6 @@ class AudioTrackHandle {
     }
     fun stop() {
         this.audioTrack.stop()
+        this.audioTrack.release()
     }
 }

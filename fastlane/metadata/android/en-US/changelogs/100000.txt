@@ -1,0 +1,7 @@
+bugfixes:
+    rebuilt audio playback system to fix timing and volume warbling
+    fixed move_line and remove_line crashing sometimes
+    fixed crash on undoing a move from the last line of a channel
+    fixed line labels not updating on refresh
+    fixed percussion-only projects not loading
+    presets not found in the fluid soundfont will default to piano

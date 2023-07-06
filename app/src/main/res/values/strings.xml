@@ -20,6 +20,11 @@
     <string name="license_fragment_label">License</string>
     <string name="license_brief">Licensed under GPLv3</string>
     <string name="percussion_label">\u2716</string>
+    <string name="cd_insert">Insert subdivision</string>
+    <string name="cd_split">Split this beat or subdivision</string>
+    <string name="cd_remove">Remove this subdivision</string>
+    <string name="cd_unset">Unset this subdivision</string>
+
 
     <string name="line_volume">Line Volume:</string>
     <string name="source_code_location">

@@ -41,6 +41,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Split"
+                    android:contentDescription="@string/cd_split"
                     android:layout_marginStart="-3dp"
                     app:srcCompat="@drawable/split"
                     app:layout_constraintBottom_toBottomOf="parent"
@@ -62,6 +63,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="@dimen/normal_padding"
                         android:text="Unset"
+                        android:contentDescription="@string/cd_unset"
                         app:srcCompat="@drawable/unset"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintEnd_toEndOf="parent"
@@ -84,6 +86,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="@dimen/normal_padding"
                         app:srcCompat="@drawable/remove"
+                        android:contentDescription="@string/cd_remove"
                         android:text="Remove"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintEnd_toEndOf="parent"
@@ -99,6 +102,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="-3dp"
+                    android:contentDescription="@string/cd_insert"
                     android:text="Insert"
                     app:srcCompat="@drawable/insert"/>
 

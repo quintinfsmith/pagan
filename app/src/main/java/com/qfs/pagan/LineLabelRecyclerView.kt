@@ -73,6 +73,7 @@ class LineLabelRecyclerView(context: Context, attrs: AttributeSet) : RecyclerVie
             fun set_row(channel: Int, line_offset: Int) {
                 this.channel = channel
                 this.line_offset = line_offset
+                this.contentDescription = "Channel: ${this.channel} Line: ${this.line_offset}"
             }
             fun set_focused(value: Boolean) {
                 this.textView.set_focused(value)

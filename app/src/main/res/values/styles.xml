@@ -160,7 +160,7 @@
     </style>
 
     <style name="front_text">
-        <item name="android:textSize">12dp</item>
+        <item name="android:textSize">12sp</item>
     </style>
 
     <style name="column_label_inner">

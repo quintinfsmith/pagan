@@ -36,6 +36,7 @@ class ColumnLabelAdapter(private var opus_manager: InterfaceLayer, var recycler:
 
         fun set_text(text: String) {
             this.textView.text = text
+            this.contentDescription = "Column $text"
         }
 
         fun set_focused(value: Boolean) {

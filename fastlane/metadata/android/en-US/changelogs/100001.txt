@@ -1,0 +1,6 @@
+bugfixes:
+    - popups no longer potentially causing crash
+    - inserting inserts correct number of subdivisions
+    - inserting 1 at top-level no longer causes crash
+accessibility:
+    - main buttons, line & row labels got contentDescriptions

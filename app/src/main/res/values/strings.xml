@@ -29,7 +29,7 @@
         Alternative downloads available at: https://burnsomni.net/software/pagan.
     </string>
     <string name="soundfont_disclaimer">
-        FluidR3_GM soundfont licensed the MIT license.
+        FluidR3_GM soundfont licensed under the MIT license.
     </string>
     <string-array name="relative">
         <item>@string/pfx_add</item>

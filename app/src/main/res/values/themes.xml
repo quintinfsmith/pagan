@@ -65,7 +65,9 @@
     <style name="Theme.Pagan.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
 
     <style name="Theme.Pagan.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
-    <style name="Theme.Pagan.AlertDialog" parent="@style/AlertDialog" />
+    <style name="Theme.Pagan.AlertDialog" parent="@style/AlertDialog">
+    </style>
+
     <style name="Theme.Pagan.PopupMenu" parent="ThemeOverlay.AppCompat.Light">
         <item name="android:textColor">@color/purple_plum</item>
     </style>

@@ -1,5 +1,4 @@
 package com.qfs.pagan
-import android.util.Log
 import android.view.View
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -457,7 +456,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         val rvLineLabels = this.activity.findViewById<RecyclerView>(R.id.rvLineLabels)
         val rvLineLabels_adapter = rvLineLabels.adapter as LineLabelRecyclerView.LineLabelAdapter
         rvLineLabels_adapter.addLineLabel()
-        Log.d("AAA", "LINE LABEL ADDED")
     }
 
     private fun ui_remove_line_label(channel: Int, line_offset: Int) {

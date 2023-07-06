@@ -8,7 +8,6 @@ import com.qfs.pagan.opusmanager.*
 import com.qfs.pagan.structure.OpusTree
 import java.lang.Integer.max
 import java.lang.Integer.min
-import kotlin.concurrent.thread
 
 class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     private var simple_ui_lock = 0

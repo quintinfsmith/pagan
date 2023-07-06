@@ -1,18 +1,13 @@
 package com.qfs.pagan
 
 import android.os.Bundle
-import android.util.Log
 import android.view.*
 import android.widget.*
-import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResultListener
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.apres.InvalidMIDIFile
 import com.qfs.pagan.databinding.FragmentMainBinding
 import com.qfs.pagan.opusmanager.*
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.newSingleThreadContext
-import kotlinx.coroutines.runBlocking
 import java.lang.Integer.max
 import java.lang.Integer.min
 import kotlin.concurrent.thread
@@ -541,7 +536,7 @@ class EditorFragment : PaganFragment() {
                 val position = opus_manager.cursor.get_position().toMutableList()
                 if (position.isEmpty()) {
                     position.add(0)
-                    opus_manager.split_tree(count)
+                    opus_manager.split_tree(count + 1)
                 } else {
                     opus_manager.insert_after(count)
                     position[position.size - 1] += count

@@ -652,7 +652,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun unlockDrawer() {
-        this.binding.root.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)
+        try {
+            this.binding.root.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)
+        } catch (e: UninitializedPropertyAccessException) {
+            // pass, if it's not initialized, it's not locked
+        }
     }
 
     fun import_project(path: String) {

@@ -4,7 +4,7 @@ import android.content.res.AssetManager
 import java.io.InputStream
 import kotlin.experimental.and
 
-class Riff(var input_stream: InputStream) {
+class Riff(private var assets: AssetManager, private var file_name: String, init_callback: ((riff: Riff) -> Unit)? = null) {
     class InputStreamClosed : Exception("Input Stream is Closed")
     data class ListChunkHeader(
         val index: Int,
@@ -21,9 +21,12 @@ class Riff(var input_stream: InputStream) {
 
     var list_chunks: MutableList<ListChunkHeader> = mutableListOf()
     var sub_chunks: MutableList<List<SubChunkHeader>> = mutableListOf()
+    private var input_stream: InputStream? = null
     private var input_position: Int = 0
 
     init {
+        this.open_stream()
+
         this.get_string(0, 4) // fourcc
         val riff_size = this.get_little_endian(4, 4)
         this.get_string(8, 4) // typecc
@@ -65,11 +68,31 @@ class Riff(var input_stream: InputStream) {
             working_index += sub_index
             this.sub_chunks.add(sub_chunk_list)
         }
+        if (init_callback != null) {
+            init_callback(this)
+        }
+
+        this.close_stream()
     }
 
-    private fun close() {
-        this.input_stream.close()
+    fun open_stream() {
+        this.input_stream = this.assets.open(this.file_name)
+        this.input_stream?.mark(input_stream?.available()!!)
+    }
+
+    fun close_stream() {
+        this.input_stream?.close()
         this.input_position = 0
+        this.input_stream = null
+    }
+
+    fun with(callback: (Riff) -> Unit) {
+        this.open_stream()
+        try {
+            callback(this)
+        } finally {
+            this.close_stream()
+        }
     }
 
     fun get_chunk_data(header: SubChunkHeader): ByteArray {
@@ -119,10 +142,11 @@ class Riff(var input_stream: InputStream) {
     }
 
     private fun move_to_offset(offset: Long) {
-        val stream: InputStream = this.input_stream
+        val stream: InputStream = this.input_stream ?: throw InputStreamClosed()
 
         if (this.input_position < offset) {
             stream.skip(offset - this.input_position)
+
         } else if (this.input_position > offset) {
             stream.reset()
             this.input_position = 0
@@ -132,7 +156,7 @@ class Riff(var input_stream: InputStream) {
     }
 
     private fun get_bytes(offset: Int, size: Int): ByteArray {
-        val stream: InputStream = this.input_stream
+        val stream: InputStream = this.input_stream ?: throw InputStreamClosed()
         this.move_to_offset(offset.toLong())
         val output = ByteArray(size)
         stream.read(output)

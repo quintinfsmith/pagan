@@ -3,15 +3,13 @@ package com.qfs.apres
 import android.content.res.AssetManager
 import com.qfs.apres.riffreader.Riff
 import com.qfs.apres.riffreader.toUInt
-import java.io.InputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
-import java.nio.ShortBuffer
 import kotlin.math.max
 import kotlin.math.pow
 
 //class SoundFont(input_stream: InputStream) {
-class SoundFont(input_stream: InputStream) {
+class SoundFont(assets: AssetManager, file_name: String) {
     class InvalidPresetIndex(index: Int, bank: Int): Exception("Preset Not Found $index:$bank")
     class InvalidSampleIdPosition : Exception("SampleId Generator is not at end of ibag")
     data class CachedSampleData(var data: ShortArray, var count: Int = 1)
@@ -36,63 +34,102 @@ class SoundFont(input_stream: InputStream) {
     private var sample_data_cache =  HashMap<Pair<Int, Int>, CachedSampleData>()
 
     init {
-        this.riff = Riff(input_stream)
-        val info_chunk = this.riff.get_chunk_data(this.riff.list_chunks[0])
-        val pdta_chunk = this.riff.get_chunk_data(this.riff.list_chunks[2])
-        val info_offset = this.riff.list_chunks[0].index
-        this.riff.sub_chunks[0].forEach { header: Riff.SubChunkHeader ->
-            // '-12' since the sub chunk index is relative to the list chunk, but the list chunk index is absolute
-            val header_offset = header.index + 8 - info_offset - 12
-            when (header.tag) {
-                "ifil" -> {
-                    this.ifil = Pair(
-                        toUInt(info_chunk[header_offset + 0]) + (toUInt(info_chunk[header_offset + 1]) * 256),
-                        toUInt(info_chunk[header_offset + 2]) + (toUInt(info_chunk[header_offset + 3]) * 256)
-                    )
-                }
-                "isng" -> {
-                    this.isng = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
-                }
-                "INAM" -> {
-                    this.inam = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
-                }
-                "irom" -> {
-                    this.irom = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
-                }
-                "iver" -> {
-                    this.iver = Pair(
-                        toUInt(info_chunk[header_offset + 0]) + (toUInt(info_chunk[header_offset + 1]) * 256),
-                        toUInt(info_chunk[header_offset + 2]) + (toUInt(info_chunk[header_offset + 3]) * 256)
-                    )
-                }
-                "ICRD" -> {
-                    this.icrd = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
-                }
-                "IENG" -> {
-                    this.ieng = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
-                }
-                "IPRD" -> {
-                    this.iprd = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
-                }
-                "ICOP" -> {
-                    this.icop = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
-                }
-                "ICMT" -> {
-                    this.icmt = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
-                }
-                "ISFT" -> {
-                    this.isft = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
-                }
-                else -> {}
-            }
-        }
+        this.riff = Riff(assets, file_name) { riff: Riff ->
+            val info_chunk = riff.get_chunk_data(riff.list_chunks[0])
+            val pdta_chunk = riff.get_chunk_data(riff.list_chunks[2])
+            val info_offset = riff.list_chunks[0].index
+            riff.sub_chunks[0].forEach { header: Riff.SubChunkHeader ->
+                // '-12' since the sub chunk index is relative to the list chunk, but the list chunk index is absolute
+                val header_offset = header.index + 8 - info_offset - 12
+                when (header.tag) {
+                    "ifil" -> {
+                        this.ifil = Pair(
+                            toUInt(info_chunk[header_offset + 0]) + (toUInt(info_chunk[header_offset + 1]) * 256),
+                            toUInt(info_chunk[header_offset + 2]) + (toUInt(info_chunk[header_offset + 3]) * 256)
+                        )
+                    }
 
-        val pdta_offset = this.riff.list_chunks[2].index
-        this.riff.sub_chunks[2].forEach { header: Riff.SubChunkHeader ->
-            // '-12' since the sub chunk index is relative to the list chunk, but the list chunk index is absolute
-            val offset = header.index + 8 - pdta_offset - 12
-            this.pdta_chunks[header.tag] = ByteArray(header.size) { j ->
-                pdta_chunk[offset + j]
+                    "isng" -> {
+                        this.isng =
+                            ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(
+                                Charsets.UTF_8
+                            )
+                    }
+
+                    "INAM" -> {
+                        this.inam =
+                            ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(
+                                Charsets.UTF_8
+                            )
+                    }
+
+                    "irom" -> {
+                        this.irom =
+                            ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(
+                                Charsets.UTF_8
+                            )
+                    }
+
+                    "iver" -> {
+                        this.iver = Pair(
+                            toUInt(info_chunk[header_offset + 0]) + (toUInt(info_chunk[header_offset + 1]) * 256),
+                            toUInt(info_chunk[header_offset + 2]) + (toUInt(info_chunk[header_offset + 3]) * 256)
+                        )
+                    }
+
+                    "ICRD" -> {
+                        this.icrd =
+                            ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(
+                                Charsets.UTF_8
+                            )
+                    }
+
+                    "IENG" -> {
+                        this.ieng =
+                            ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(
+                                Charsets.UTF_8
+                            )
+                    }
+
+                    "IPRD" -> {
+                        this.iprd =
+                            ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(
+                                Charsets.UTF_8
+                            )
+                    }
+
+                    "ICOP" -> {
+                        this.icop =
+                            ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(
+                                Charsets.UTF_8
+                            )
+                    }
+
+                    "ICMT" -> {
+                        this.icmt =
+                            ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(
+                                Charsets.UTF_8
+                            )
+                    }
+
+                    "ISFT" -> {
+                        this.isft =
+                            ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(
+                                Charsets.UTF_8
+                            )
+                    }
+
+                    else -> {}
+                }
+            }
+
+            val pdta_offset = riff.list_chunks[2].index
+            riff.sub_chunks[2].forEach { header: Riff.SubChunkHeader ->
+                // '-12' since the sub chunk index is relative to the list chunk, but the list chunk index is absolute
+                val offset = header.index + 8 - pdta_offset - 12
+                this.pdta_chunks[header.tag] = ByteArray(header.size) { j ->
+                    pdta_chunk[offset + j]
+                }
             }
         }
     }
@@ -238,12 +275,15 @@ class SoundFont(input_stream: InputStream) {
                 sample.data_placeholder.first
             }.toMutableList()
 
+
+            this.riff.open_stream()
             for (sample in ordered_samples) {
                 sample.data = this.get_sample_data(
                     sample.data_placeholder.first,
                     sample.data_placeholder.second
                 )
             }
+            this.riff.close_stream()
         }
 
         return output ?: throw InvalidPresetIndex(preset_index,preset_bank)
@@ -616,7 +656,6 @@ class SoundFont(input_stream: InputStream) {
             this.sample_data_cache[cache_key]!!.count += 1
             return this.sample_data_cache[cache_key]!!.data
         }
-
         val smpl = this.riff.get_sub_chunk_data(this.riff.sub_chunks[1][0],  (start_index * 2), 2 * (end_index - start_index))
         val sm24 = if (this.riff.sub_chunks[1].size == 2) {
             this.riff.get_sub_chunk_data(this.riff.sub_chunks[1][1], start_index, end_index - start_index)

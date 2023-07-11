@@ -123,7 +123,6 @@ class SampleHandleGenerator {
     fun resample(sample_data: ShortArray, pitch_shift: Float): ShortArray {
         // TODO: This is VERY Niave. Look into actual resampling algorithms
         var new_size = (sample_data.size / pitch_shift).toInt()
-
         return ShortArray(new_size) { i: Int ->
             var i_offset = (i.toFloat() * pitch_shift).toInt()
             sample_data[i_offset]

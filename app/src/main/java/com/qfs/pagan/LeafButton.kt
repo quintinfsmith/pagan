@@ -16,6 +16,7 @@ class LeafButton(
     context: Context,
     private var activity: MainActivity,
     private var event: OpusEvent?,
+    var position_node: PositionNode,
     is_percussion: Boolean
 ) : LinearLayout(ContextThemeWrapper(context, R.style.leaf)) {
 
@@ -23,10 +24,7 @@ class LeafButton(
     class LeafText(context: Context): androidx.appcompat.widget.AppCompatTextView(context) {
         override fun onCreateDrawableState(extraSpace: Int): IntArray? {
             val drawableState = super.onCreateDrawableState(extraSpace + 4)
-            var parent = this.parent
-            if (parent == null) {
-                return drawableState
-            }
+            var parent = this.parent ?: return drawableState
             while (parent !is LeafButton) {
                 parent = parent.parent
             }

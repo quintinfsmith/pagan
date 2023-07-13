@@ -1,7 +1,6 @@
 package com.qfs.pagan
 
 import android.content.Context
-import android.util.Log
 import android.view.*
 import android.widget.LinearLayout
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -127,20 +126,32 @@ class BeatColumnAdapter(private var parent_fragment: EditorFragment, var recycle
         return this.parent_fragment.get_main()
     }
 
-    private fun buildTreeView(parent: ViewGroup, beatkey: BeatKey): View {
-        return this.buildTreeView(parent, beatkey, listOf())
+    private fun buildTreeTopView(parent: ViewGroup, beat_key: BeatKey) {
+        val tree = this.get_opus_manager().get_beat_tree(beat_key)
+        var top_node = PositionNode()
+        if (!tree.is_leaf()) {
+            for (i in 0 until tree.size) {
+                var next_node = PositionNode(i)
+                next_node.previous = top_node
+                this.buildTreeView(parent, beat_key, next_node)
+            }
+        } else {
+            this.buildTreeView(parent, beat_key, top_node)
+        }
     }
 
-    private fun buildTreeView(parent: ViewGroup, beatkey: BeatKey, position: List<Int>, offset: Int? = null): View {
+    private fun buildTreeView(parent: ViewGroup, beat_key: BeatKey, position_node: PositionNode) {
         val opus_manager = this.get_opus_manager()
-        val tree = opus_manager.get_tree(beatkey, position)
+        val position = position_node.to_list()
+        val tree = opus_manager.get_tree(beat_key, position)
 
         if (tree.is_leaf()) {
             val tvLeaf = LeafButton(
                 parent.context,
                 this.get_main_activity(),
                 tree.get_event(),
-                opus_manager.is_percussion(beatkey.channel)
+                position_node,
+                opus_manager.is_percussion(beat_key.channel)
             )
 
             tvLeaf.setOnClickListener {
@@ -158,13 +169,8 @@ class BeatColumnAdapter(private var parent_fragment: EditorFragment, var recycle
                 true
             }
 
-            if (offset == null) {
-                parent.addView(tvLeaf)
-            } else {
-                parent.addView(tvLeaf, offset)
-            }
+            parent.addView(tvLeaf)
 
-            (tvLeaf.layoutParams as ViewGroup.MarginLayoutParams).setMargins(0, 0, 10, 0)
             (tvLeaf.layoutParams as LinearLayout.LayoutParams).apply {
                 gravity = Gravity.CENTER
                 height = ViewGroup.LayoutParams.MATCH_PARENT
@@ -173,43 +179,20 @@ class BeatColumnAdapter(private var parent_fragment: EditorFragment, var recycle
             }
 
             if (tree.is_event()) {
-                val abs_value = opus_manager.get_absolute_value(beatkey, position)
+                val abs_value = opus_manager.get_absolute_value(beat_key, position)
                 tvLeaf.set_invalid(abs_value == null || abs_value < 0)
             }
-            if (opus_manager.is_networked(beatkey)) {
+            if (opus_manager.is_networked(beat_key)) {
                 tvLeaf.set_linked(true)
             }
 
-            this.apply_cursor_focus(tvLeaf, beatkey, position)
-
-            return tvLeaf
+            this.apply_cursor_focus(tvLeaf, beat_key, position)
         } else {
-            val cellLayout: LinearLayout = LayoutInflater.from(parent.context).inflate(
-                R.layout.tree_node,
-                parent,
-                false
-            ) as LinearLayout
-
-            (cellLayout.layoutParams as LinearLayout.LayoutParams).apply {
-                gravity = Gravity.CENTER
-                height = ViewGroup.LayoutParams.WRAP_CONTENT
-                width = 0
-                weight = 1F
-            }
-
             for (i in 0 until tree.size) {
-                val new_position = position.toMutableList()
-                new_position.add(i)
-                this.buildTreeView(cellLayout as ViewGroup, beatkey, new_position)
+                var new_node = PositionNode(i)
+                new_node.previous = position_node
+                this.buildTreeView(parent, beat_key, new_node)
             }
-
-            if (offset == null) {
-                parent.addView(cellLayout)
-            } else {
-                parent.addView(cellLayout, offset)
-            }
-
-            return cellLayout
         }
     }
 
@@ -230,7 +213,7 @@ class BeatColumnAdapter(private var parent_fragment: EditorFragment, var recycle
                     false
                 )
 
-                this.buildTreeView(beat_wrapper as ViewGroup, BeatKey(channel, line_offset, index))
+                this.buildTreeTopView(beat_wrapper as ViewGroup, BeatKey(channel, line_offset, index))
 
                 (holder.itemView as ViewGroup).addView(beat_wrapper)
             }
@@ -242,10 +225,6 @@ class BeatColumnAdapter(private var parent_fragment: EditorFragment, var recycle
     private fun get_view_position_abs(view: View): Triple<Int, Int, List<Int>> {
         val position = mutableListOf<Int>()
         var working_view = view
-        while ((working_view.parent as View).id != R.id.beat_node) {
-            position.add(0, (working_view.parent as ViewGroup).indexOfChild(working_view))
-            working_view = working_view.parent as View
-        }
 
         working_view = working_view.parent as View
 
@@ -254,7 +233,7 @@ class BeatColumnAdapter(private var parent_fragment: EditorFragment, var recycle
         val viewholder = (working_view.parent as BackLinkView).viewHolder!!
         val beat = viewholder.bindingAdapterPosition
 
-        return Triple(y, beat, position)
+        return Triple(y, beat, (view as LeafButton).position_node.to_list())
     }
 
     // TODO: Needs checks
@@ -413,31 +392,24 @@ class BeatColumnAdapter(private var parent_fragment: EditorFragment, var recycle
     }
 
     fun get_leaf_view(beatkey: BeatKey, position: List<Int>): View? {
-        val opus_manager = this.get_opus_manager()
-
         // Get the full-beat view
         val column_view_holder = this.recycler.findViewHolderForAdapterPosition(beatkey.beat) ?: return null
-        var working_view = column_view_holder.itemView
-
-        // Get the beat-cell view
-        val y = opus_manager.get_abs_offset(beatkey.channel, beatkey.line_offset)
-        working_view = (working_view as ViewGroup).getChildAt(y)
-
-        // dive past the beat_node wrapper
-        working_view = (working_view as ViewGroup).getChildAt(0)
-
-        for (i in position) {
-            working_view = (working_view as ViewGroup).getChildAt(i)
+        var working_view = column_view_holder.itemView as ViewGroup
+        working_view = working_view.getChildAt(0) as ViewGroup
+        for (i in 0 until working_view.childCount) {
+            val leaf_button = working_view.getChildAt(i) as LeafButton
+            if (leaf_button.position_node.to_list() == position) {
+                return leaf_button
+            }
         }
-
-        return working_view
+        return null
     }
 
-    private fun get_all_leaf_views(beatkey: BeatKey, position: List<Int>? = null): List<LeafButton>? {
+    private fun get_all_leaf_views(beat_key: BeatKey, position: List<Int>? = null): List<LeafButton>? {
         val opus_manager = this.get_opus_manager()
         return try {
-            val y = opus_manager.get_abs_offset(beatkey.channel, beatkey.line_offset)
-            this.get_all_leaf_views(y, beatkey.beat, position)
+            val y = opus_manager.get_abs_offset(beat_key.channel, beat_key.line_offset)
+            this.get_all_leaf_views(y, beat_key.beat, position)
         } catch (e: IndexOutOfBoundsException) {
             listOf()
         }
@@ -450,40 +422,19 @@ class BeatColumnAdapter(private var parent_fragment: EditorFragment, var recycle
         // Get the full-beat view
         val column_view_holder = this.recycler.findViewHolderForAdapterPosition(x) ?: return null
         var working_view = column_view_holder.itemView
+        val target_position = position ?: listOf()
 
         // Get the beat-cell view
-        working_view = (working_view as ViewGroup).getChildAt(y)
-
-        // dive past the beat_node wrapper
-        working_view = (working_view as ViewGroup).getChildAt(0)
-
+        working_view = (working_view as ViewGroup).getChildAt(y) as ViewGroup
         val output = mutableListOf<LeafButton>()
+        for (i in 0 until working_view.childCount) {
+            val leaf_button = (working_view.getChildAt(i) as LeafButton)
+            val test_position = leaf_button.position_node.to_list()
 
-        for (i in position ?: listOf()) {
-            // Attempting to get leaf that doesn't exist
-            if (working_view is LeafButton) {
-                break
-            }
-            try {
-                working_view = (working_view as ViewGroup).getChildAt(i)
-            } catch (e: NullPointerException) {
-                 return null
+            if (target_position.size <= test_position.size && test_position.subList(0, target_position.size) == target_position) {
+                output.add(leaf_button)
             }
         }
-
-        val stack = mutableListOf(working_view)
-        while (stack.isNotEmpty()) {
-            working_view = stack.removeFirst()
-            if (working_view is LeafButton) {
-                output.add(working_view)
-                continue
-            }
-
-            for (i in 0 until (working_view as ViewGroup).childCount) {
-                stack.add(working_view.getChildAt(i))
-            }
-        }
-
         return output
     }
 
@@ -531,46 +482,29 @@ class BeatColumnAdapter(private var parent_fragment: EditorFragment, var recycle
         var working_view = holder.itemView
         val y = opus_manager.get_abs_offset(channel, line_offset)
         working_view = (working_view as ViewGroup).getChildAt(y)
-        working_view = (working_view as ViewGroup).getChildAt(0)
 
-        val stack = mutableListOf<Triple<Float, List<Int>, View>>(
-            Triple(
-                new_width.toFloat(),
-                listOf(),
-                working_view
-            )
-        )
+        var beat_key = BeatKey(channel, line_offset, beat)
+        val resources = this.get_main_activity().resources
+        val param = working_view.layoutParams as ViewGroup.MarginLayoutParams
+        param.width = (new_width.toFloat() * resources.getDimension(R.dimen.base_leaf_width)).toInt()
+        val beat_tree = opus_manager.get_beat_tree(BeatKey(channel, line_offset, beat))
+        for (i in 0 until (working_view as ViewGroup).childCount) {
+            var leaf_button = working_view.getChildAt(i) as LeafButton
+            var position = leaf_button.position_node.to_list()
+            var working_tree = beat_tree
+            var leaf_width = new_width
 
-        val key = BeatKey(channel, line_offset, beat)
-        while (stack.isNotEmpty()) {
-            val (new_size, current_position, current_view) = stack.removeFirst()
-            val current_tree = opus_manager.get_tree(key, current_position)
-
-            val param = current_view.layoutParams as ViewGroup.MarginLayoutParams
-
-            val resources = this.get_main_activity().resources
-            if (!current_tree.is_leaf()) {
-                for (i in 0 until current_tree.size) {
-                    val next_pos = current_position.toMutableList()
-                    next_pos.add(i)
-                    stack.add(
-                        Triple(
-                            new_size / current_tree.size.toFloat(),
-                            next_pos,
-                            (current_view as ViewGroup).getChildAt(i)
-                        )
-                    )
-                }
-
-                param.width = (new_size * resources.getDimension(R.dimen.base_leaf_width)).toInt()
-            } else {
-                val margin = resources.getDimension(R.dimen.normal_padding)
-                param.marginStart = margin.toInt()
-                param.marginEnd = 0
-                param.width = (new_size * resources.getDimension(R.dimen.base_leaf_width)).toInt() - param.marginStart - param.marginEnd
+            for (x in position) {
+                leaf_width /= working_tree.size
+                working_tree = working_tree[x]
             }
 
-            current_view.layoutParams = param
+            val param = leaf_button.layoutParams as ViewGroup.MarginLayoutParams
+            val margin = resources.getDimension(R.dimen.line_padding)
+
+            param.marginEnd = margin.toInt()
+            param.marginStart = 0
+            param.width = (leaf_width * resources.getDimension(R.dimen.base_leaf_width)).toInt() - param.marginStart - param.marginEnd
         }
     }
 

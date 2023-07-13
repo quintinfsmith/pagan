@@ -409,8 +409,9 @@ open class HistoryLayer : LinksLayer() {
 
     override fun remove_line(channel: Int, line_offset: Int): OpusChannel.OpusLine {
         return this.history_cache.remember {
-            this.push_rebuild_line(channel, line_offset)
-            super.remove_line(channel, line_offset)
+            var line = super.remove_line(channel, line_offset)
+            this.push_rebuild_line(channel, line_offset, line)
+            line
         }
     }
 
@@ -620,7 +621,7 @@ open class HistoryLayer : LinksLayer() {
             // Will be an extra empty line that needs to be removed
             this.push_remove_line(channel, line_count)
             for (i in line_count - 1 downTo 0) {
-                this.push_rebuild_line(channel, i)
+                this.push_rebuild_line(channel, i, this.channels[channel].lines[i])
             }
 
             this.push_to_history_stack(
@@ -634,13 +635,13 @@ open class HistoryLayer : LinksLayer() {
 
     }
 
-    private fun push_rebuild_line(channel: Int, line_offset: Int) {
+    private fun push_rebuild_line(channel: Int, line_offset: Int, line: OpusChannel.OpusLine) {
         this.push_to_history_stack(
             HistoryToken.INSERT_LINE,
             listOf(
                 channel,
                 line_offset,
-                this.channels[channel].lines[line_offset]
+                line
             )
         )
     }

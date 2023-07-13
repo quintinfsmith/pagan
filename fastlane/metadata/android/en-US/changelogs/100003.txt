@@ -1,1 +1,5 @@
 Releasing .sf2 from memory when not in use
+Adjusted outlines
+bugfixes:
+    No longer crashes when moving a line with a link in it
+    Removing a line and undoing now correctly restores links

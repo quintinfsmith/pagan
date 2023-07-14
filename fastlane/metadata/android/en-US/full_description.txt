@@ -1,12 +1,12 @@
 It's esoteric and it's *probably* not for you, but give it a try if you have ever thought:
     1. Notation should be expressed in numerals, specifically in radix-12 numerals
     2. Sharps and flats are arbitrary
-    3. Rhythms that aren't divisble by 2 should be more legible
+    3. Rhythms that aren't divisible by 2 should be more legible
     4. You'd just prefer to work in spreadsheets wherever possible
 
 Export to MIDI or import and reorchestrate an existing midi file.
 Absolute & Relative notes, input a difference up or down from the previous note.
-Easy polyrythms.
+Easy polyrhythms.
 Link repeated sections for efficiency's sake.
-It's a song editor. use it to make songs. what do you want from me?
+It's a song editor. Use it to make songs.
 

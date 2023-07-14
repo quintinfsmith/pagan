@@ -15,7 +15,7 @@
             android:id="@+id/action_EditorFragment_to_LoadFragment"
             app:destination="@id/LoadFragment"
             app:popUpTo="@id/EditorFragment"
-            app:popUpToInclusive="true" />
+            app:popUpToInclusive="false" />
 
     </fragment>
 

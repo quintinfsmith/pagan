@@ -1,0 +1,2 @@
+Bug Fixes:
+    - Tapping 'back' in the 'Load Project' menu returns to the correct screen

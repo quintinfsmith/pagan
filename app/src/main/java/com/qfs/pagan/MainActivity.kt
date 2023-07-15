@@ -725,7 +725,7 @@ class MainActivity : AppCompatActivity() {
         var playback_handle: SoundFontWavPlayer.PlaybackInterface? = null
 
         fun start_playback(x: Int) {
-            this.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            this.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             thread {
                 var size_a = x.toFloat() / opus_manager.opus_beat_count.toFloat()
                 ibPlayPause.setImageResource(R.drawable.ic_baseline_pause_24)
@@ -748,7 +748,7 @@ class MainActivity : AppCompatActivity() {
                 playback_handle?.stop()
                 ibPlayPause.setImageResource(R.drawable.ic_baseline_play_arrow_24)
             }
-            this.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            this.window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         }
 
 

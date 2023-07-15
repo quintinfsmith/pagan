@@ -5,7 +5,6 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.view.*
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
@@ -14,7 +13,6 @@ import androidx.core.os.bundleOf
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResult
-import androidx.navigation.NavOptions
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
@@ -727,6 +725,7 @@ class MainActivity : AppCompatActivity() {
         var playback_handle: SoundFontWavPlayer.PlaybackInterface? = null
 
         fun start_playback(x: Int) {
+            this.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             thread {
                 var size_a = x.toFloat() / opus_manager.opus_beat_count.toFloat()
                 ibPlayPause.setImageResource(R.drawable.ic_baseline_pause_24)
@@ -749,6 +748,7 @@ class MainActivity : AppCompatActivity() {
                 playback_handle?.stop()
                 ibPlayPause.setImageResource(R.drawable.ic_baseline_play_arrow_24)
             }
+            this.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         }
 
 

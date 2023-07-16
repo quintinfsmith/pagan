@@ -1,2 +1,3 @@
 Bug Fixes:
     - Tapping 'back' in the 'Load Project' menu returns to the correct screen
+    - Pause|Play button on playback dialog  pauses correctly instead of playing a second time when playback is close to end.

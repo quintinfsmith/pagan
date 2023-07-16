@@ -735,8 +735,8 @@ class MainActivity : AppCompatActivity() {
                         ibPlayPause.setImageResource(R.drawable.ic_baseline_play_arrow_24)
                         sbPlaybackPosition.progress = 0
                     } else {
-                        var size_b = (1F - size_a) * it
-                        var progress = (sbPlaybackPosition.max * (size_a + size_b)).toInt()
+                        val size_b = (1F - size_a) * it
+                        val progress = (sbPlaybackPosition.max * (size_a + size_b)).toInt()
                         sbPlaybackPosition.progress = progress
                     }
                 }

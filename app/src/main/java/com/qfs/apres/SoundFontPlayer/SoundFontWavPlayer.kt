@@ -35,7 +35,6 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
         var midi_events_by_frame = HashMap<Int, MutableList<MIDIEvent>>()
         var max_frame = 0
         var is_alive = true
-        var volume_limit = 0F
         private var generate_ts: Long? = null
 
         /*
@@ -335,6 +334,7 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
                         Thread.sleep(sleep)
                     }
                 }
+                playback_interface.playing = false
             }
 
             launch(newSingleThreadContext("B")) {
@@ -356,7 +356,6 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
                     }
                 }
                 wave_generator.frame = 0
-                playback_interface.playing = false
 
                 done_building_chunks = true
             }

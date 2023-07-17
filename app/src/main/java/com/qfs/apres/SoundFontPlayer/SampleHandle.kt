@@ -9,6 +9,7 @@ import kotlin.math.min
 
 class SampleHandle(
     var data: ShortArray,
+    var attenuation: Float = 0.0F,
     val loop_points: Pair<Int, Int>?,
     var stereo_mode: Int,
     var delay_frames: Int = 0,
@@ -24,6 +25,7 @@ class SampleHandle(
 
     constructor(original: SampleHandle): this(
         original.data,
+        original.attenuation,
         original.loop_points,
         original.stereo_mode,
         original.delay_frames,
@@ -70,7 +72,7 @@ class SampleHandle(
             return null
         }
 
-        var frame = (this.data_buffer.get().toDouble() * this.current_volume).toInt().toShort()
+        var frame = (this.data_buffer.get().toDouble() * this.attenuation * this.current_volume).toInt().toShort()
 
         this.shorts_called += 1
         if (this.current_attack_position < this.attack_frame_count) {

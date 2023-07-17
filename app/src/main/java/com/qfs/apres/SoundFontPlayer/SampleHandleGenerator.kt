@@ -51,6 +51,12 @@ class SampleHandleGenerator {
 
         val data = this.resample(sample.sample!!.data!!, pitch_shift)
 
+        var attenuation: Double = preset.global_zone?.attenuation
+            ?: instrument.instrument?.global_sample?.attenuation
+            ?: instrument.attenuation
+            ?: sample.attenuation
+            ?: 0.0
+
         val vol_env_delay: Double = preset.global_zone?.vol_env_delay
             ?: instrument.instrument?.global_sample?.vol_env_delay
             ?: instrument.vol_env_delay
@@ -100,6 +106,7 @@ class SampleHandleGenerator {
 
         return SampleHandle(
             data = data,
+            attenuation = (10.0).pow(attenuation / -20.0).toFloat(),
             stereo_mode = sample.sample!!.sampleType,
             loop_points = if (sample.sampleMode != null && sample.sampleMode!! and 1 == 1) {
                 Pair(

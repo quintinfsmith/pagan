@@ -197,11 +197,6 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
     private val preset_channel_map = HashMap<Int, Pair<Int, Int>>()
     private val sample_handle_generator = SampleHandleGenerator()
 
-    init {
-        this.loaded_presets[Pair(0, 0)] = this.sound_font.get_preset(0, 0)
-        this.loaded_presets[Pair(128, 0)] = this.sound_font.get_preset(0, 128)
-    }
-
     private fun gen_sample_handles(event: NoteOn, preset: Preset): Set<SampleHandle> {
         val output = mutableSetOf<SampleHandle>()
         val potential_instruments = preset.get_instruments(event.note, event.velocity)

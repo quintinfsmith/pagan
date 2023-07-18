@@ -1,4 +1,4 @@
-package com.qfs.apres.SoundFontPlayer
+package com.qfs.apres.soundfontplayer
 
 import android.media.AudioAttributes
 import android.media.AudioFormat

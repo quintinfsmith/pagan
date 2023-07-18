@@ -1,12 +1,12 @@
 package com.qfs.pagan.opusmanager
-import com.qfs.apres.BankSelect
-import com.qfs.apres.MIDI
-import com.qfs.apres.NoteOff
-import com.qfs.apres.NoteOn
-import com.qfs.apres.ProgramChange
-import com.qfs.apres.SetTempo
-import com.qfs.apres.SongPositionPointer
-import com.qfs.apres.TimeSignature
+import com.qfs.apres.event.BankSelect
+import com.qfs.apres.Midi
+import com.qfs.apres.event.NoteOff
+import com.qfs.apres.event.NoteOn
+import com.qfs.apres.event.ProgramChange
+import com.qfs.apres.event.SetTempo
+import com.qfs.apres.event.SongPositionPointer
+import com.qfs.apres.event.TimeSignature
 import com.qfs.pagan.from_string
 import com.qfs.pagan.structure.OpusTree
 import com.qfs.pagan.to_string
@@ -711,7 +711,7 @@ open class OpusManagerBase {
         }
     }
 
-    open fun get_midi(start_beat: Int = 0, end_beat_rel: Int? = null): MIDI {
+    open fun get_midi(start_beat: Int = 0, end_beat_rel: Int? = null): Midi {
         val end_beat = if (end_beat_rel == null) {
             this.opus_beat_count
         } else if (end_beat_rel < 0) {
@@ -721,7 +721,7 @@ open class OpusManagerBase {
         }
         val tempo = this.tempo
 
-        val midi = MIDI()
+        val midi = Midi()
 
         midi.insert_event(0,0, SetTempo.from_bpm(tempo))
         data class StackItem(var tree: OpusTree<OpusEvent>, var divisions: Int, var offset: Int, var size: Int)
@@ -1001,11 +1001,11 @@ open class OpusManagerBase {
     }
 
     open fun import_midi(path: String) {
-        val midi = MIDI.from_path(path)
+        val midi = Midi.from_path(path)
         this.import_midi(midi)
     }
 
-    private fun tree_from_midi(midi: MIDI): Triple<OpusTree<Set<OpusEvent>>, Float, List<Triple<Int, Int?, Int?>>> {
+    private fun tree_from_midi(midi: Midi): Triple<OpusTree<Set<OpusEvent>>, Float, List<Triple<Int, Int?, Int?>>> {
         var beat_size = midi.get_ppqn()
         var total_beat_offset = 0
         var last_ts_change = 0
@@ -1126,7 +1126,7 @@ open class OpusManagerBase {
         return Triple(opus, tempo, instrument_map)
     }
 
-    open fun import_midi(midi: MIDI) {
+    open fun import_midi(midi: Midi) {
         this.clear()
 
         val (settree, tempo, instrument_map) = this.tree_from_midi(midi)

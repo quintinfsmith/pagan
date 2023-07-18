@@ -1,7 +1,7 @@
-package com.qfs.apres.SoundFontPlayer
+package com.qfs.apres.soundfontplayer
 
 import com.qfs.apres.InstrumentSample
-import com.qfs.apres.NoteOn
+import com.qfs.apres.event.NoteOn
 import com.qfs.apres.Preset
 import com.qfs.apres.PresetInstrument
 import kotlin.math.abs
@@ -19,11 +19,11 @@ class SampleHandleGenerator {
     private var sample_data_map = HashMap<MapKey, SampleHandle>()
 
     fun get(event: NoteOn, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset): SampleHandle {
-        val mapkey = MapKey(event.note, sample.hashCode(), instrument.hashCode(), preset.hashCode())
-        if (!sample_data_map.contains(mapkey)) {
-            this.sample_data_map[mapkey] = this.generate_new(event, sample, instrument, preset)
+        val map_key = MapKey(event.note, sample.hashCode(), instrument.hashCode(), preset.hashCode())
+        if (!sample_data_map.contains(map_key)) {
+            this.sample_data_map[map_key] = this.generate_new(event, sample, instrument, preset)
         }
-        return SampleHandle(this.sample_data_map[mapkey]!!)
+        return SampleHandle(this.sample_data_map[map_key]!!)
     }
 
     fun cache_new(event: NoteOn, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset) {
@@ -50,7 +50,7 @@ class SampleHandleGenerator {
 
         val data = this.resample(sample.sample!!.data!!, pitch_shift)
 
-        var attenuation: Double = preset.global_zone?.attenuation
+        val attenuation: Double = preset.global_zone?.attenuation
             ?: instrument.instrument?.global_sample?.attenuation
             ?: instrument.attenuation
             ?: sample.attenuation
@@ -89,12 +89,12 @@ class SampleHandleGenerator {
 
         val max_values = mutableListOf<Short>()
         data.forEachIndexed { i: Int, frame: Short ->
-            var d = i / (AudioTrackHandle.buffer_size / 3)
+            val d = i / (AudioTrackHandle.buffer_size / 3)
             while (max_values.size <= d) {
                 max_values.add(0)
             }
 
-            var abs_frame = abs(frame.toInt())
+            val abs_frame = abs(frame.toInt())
             if (abs_frame > max_values[d]) {
                 max_values[d] = abs_frame.toShort()
             }
@@ -128,16 +128,16 @@ class SampleHandleGenerator {
 
     fun resample(sample_data: ShortArray, pitch_shift: Float): ShortArray {
         // TODO: This is VERY Niave. Look into actual resampling algorithms
-        var new_size = (sample_data.size / pitch_shift).toInt()
+        val new_size = (sample_data.size / pitch_shift).toInt()
         return ShortArray(new_size) { i: Int ->
-            var i_offset = (i.toFloat() * pitch_shift).toInt()
+            val i_offset = (i.toFloat() * pitch_shift).toInt()
             sample_data[i_offset]
         }
     }
 
     fun decache_sample_data(preset: Preset) {
-        var to_remove = mutableListOf<MapKey>()
-        for ((mapkey, data) in this.sample_data_map) {
+        val to_remove = mutableListOf<MapKey>()
+        for ((mapkey, _) in this.sample_data_map) {
             if (mapkey.preset == preset.hashCode()) {
                 to_remove.add(mapkey)
             }

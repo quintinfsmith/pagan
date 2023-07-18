@@ -1,9 +1,9 @@
 package com.qfs.pagan
 
-import com.qfs.apres.MIDI
-import com.qfs.apres.NoteOn
-import com.qfs.apres.SetTempo
-import com.qfs.apres.TimeSignature
+import com.qfs.apres.Midi
+import com.qfs.apres.event.NoteOn
+import com.qfs.apres.event.SetTempo
+import com.qfs.apres.event.TimeSignature
 import com.qfs.pagan.opusmanager.OpusEvent
 import com.qfs.pagan.structure.OpusTree
 import kotlin.math.abs
@@ -205,7 +205,7 @@ fun str_to_int(number: String, radix: Int): Int {
     return output
 }
 
-fun tree_from_midi(midi: MIDI): OpusTree<Set<OpusEvent>> {
+fun tree_from_midi(midi: Midi): OpusTree<Set<OpusEvent>> {
     var beat_size = midi.get_ppqn()
     var total_beat_offset = 0
     var last_ts_change = 0

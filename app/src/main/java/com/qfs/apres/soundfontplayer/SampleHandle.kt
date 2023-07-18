@@ -1,11 +1,6 @@
-package com.qfs.apres.SoundFontPlayer
+package com.qfs.apres.soundfontplayer
 
-import com.qfs.apres.riffreader.toUInt
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
 import java.nio.ShortBuffer
-import kotlin.math.max
-import kotlin.math.min
 
 class SampleHandle(
     var data: ShortArray,

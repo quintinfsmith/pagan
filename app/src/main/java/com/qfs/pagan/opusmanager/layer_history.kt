@@ -1,5 +1,5 @@
 package com.qfs.pagan.opusmanager
-import com.qfs.apres.MIDI
+import com.qfs.apres.Midi
 import com.qfs.pagan.structure.OpusTree
 
 
@@ -588,7 +588,7 @@ open class HistoryLayer : LinksLayer() {
         }
     }
 
-    override fun import_midi(midi: MIDI) {
+    override fun import_midi(midi: Midi) {
         this.history_cache.forget {
             super.import_midi(midi)
         }

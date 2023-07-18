@@ -19,9 +19,9 @@ import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.apres.InvalidMIDIFile
-import com.qfs.apres.MIDI
+import com.qfs.apres.Midi
 import com.qfs.apres.SoundFont
-import com.qfs.apres.SoundFontPlayer.SoundFontWavPlayer
+import com.qfs.apres.soundfontplayer.SoundFontWavPlayer
 import com.qfs.pagan.databinding.ActivityMainBinding
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.encodeToString
@@ -379,7 +379,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun play_midi(midi: MIDI, callback: (position: Float) -> Unit): SoundFontWavPlayer.PlaybackInterface {
+    private fun play_midi(midi: Midi, callback: (position: Float) -> Unit): SoundFontWavPlayer.PlaybackInterface {
         return this.midi_playback_device.play(midi, callback)
     }
 
@@ -670,8 +670,8 @@ class MainActivity : AppCompatActivity() {
         this.applicationContext.contentResolver.openFileDescriptor(Uri.parse(path), "r")?.use {
             val bytes = FileInputStream(it.fileDescriptor).readBytes()
             val midi = try {
-                MIDI.from_bytes(bytes)
-            } catch (e: MIDI.InvalidChunkType) {
+                Midi.from_bytes(bytes)
+            } catch (e: Midi.InvalidChunkType) {
                 throw InvalidMIDIFile(path)
             }
             var filename = java.net.URLDecoder.decode(path, "utf-8")

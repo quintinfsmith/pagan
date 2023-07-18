@@ -3,7 +3,7 @@ import android.view.View
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.qfs.apres.MIDI
+import com.qfs.apres.Midi
 import com.qfs.pagan.opusmanager.*
 import com.qfs.pagan.structure.OpusTree
 import java.lang.Integer.max
@@ -267,7 +267,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             it.clearContextMenu()
         }
     }
-    override fun import_midi(midi: MIDI) {
+    override fun import_midi(midi: Midi) {
         this.activity.loading_reticle()
         try {
             this.surpress_ui {

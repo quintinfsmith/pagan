@@ -1,13 +1,13 @@
-package com.qfs.apres.SoundFontPlayer
+package com.qfs.apres.soundfontplayer
 
-import com.qfs.apres.BankSelect
-import com.qfs.apres.MIDI
-import com.qfs.apres.MIDIEvent
-import com.qfs.apres.NoteOff
-import com.qfs.apres.NoteOn
+import com.qfs.apres.event.BankSelect
+import com.qfs.apres.Midi
+import com.qfs.apres.event.MIDIEvent
+import com.qfs.apres.event.NoteOff
+import com.qfs.apres.event.NoteOn
 import com.qfs.apres.Preset
-import com.qfs.apres.ProgramChange
-import com.qfs.apres.SetTempo
+import com.qfs.apres.event.ProgramChange
+import com.qfs.apres.event.SetTempo
 import com.qfs.apres.SoundFont
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -41,7 +41,7 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
             Get the max volume of the quietest active sample
          */
 
-         fun parse_midi(midi: MIDI) {
+         fun parse_midi(midi: Midi) {
             var frames_per_tick = ((500000 / midi.get_ppqn()) * AudioTrackHandle.sample_rate) / 1000000
             for ((tick, events) in midi.get_all_events_grouped()) {
                 val tick_frame = (tick * frames_per_tick)
@@ -277,7 +277,7 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
     }
 
 
-    fun play(midi: MIDI, callback: (position: Float) -> Unit): PlaybackInterface {
+    fun play(midi: Midi, callback: (position: Float) -> Unit): PlaybackInterface {
         val audio_track_handle = AudioTrackHandle()
         this.active_audio_track_handle = audio_track_handle
 
@@ -378,7 +378,7 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
     }
 
     fun play_note(channel: Int, note: Int, velocity: Int, duration: Int) {
-        var midi = MIDI()
+        var midi = Midi()
         var ticks = max(1, (duration * 1000) / (500000 / midi.get_ppqn()))
         midi.insert_event(0, 0, NoteOn(channel, note, velocity))
         midi.insert_event(0, ticks, NoteOff(channel, note, 64))

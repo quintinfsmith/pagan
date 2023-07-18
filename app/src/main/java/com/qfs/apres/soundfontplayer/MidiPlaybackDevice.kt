@@ -1,18 +1,11 @@
-package com.qfs.apres.SoundFontPlayer
+package com.qfs.apres.soundfontplayer
 
 import android.content.Context
-import com.qfs.apres.AllSoundOff
-import com.qfs.apres.BankSelect
-import com.qfs.apres.MIDI
-import com.qfs.apres.MIDIStop
-import com.qfs.apres.NoteOff
-import com.qfs.apres.NoteOn
-import com.qfs.apres.ProgramChange
 import com.qfs.apres.SoundFont
-import com.qfs.apres.VirtualMIDIDevice
+import com.qfs.apres.VirtualMidiDevice
 
 
-class MIDIPlaybackDevice(var context: Context, var sound_font: SoundFont): VirtualMIDIDevice() {
+class MidiPlaybackDevice(var context: Context, var sound_font: SoundFont): VirtualMidiDevice() {
     private val soundfont_player = SoundFontPlayer(this.sound_font)
 //    override fun onMIDIStop(event: MIDIStop) {
 //        this.soundfont_player.stop()

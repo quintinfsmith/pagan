@@ -258,7 +258,24 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
 
 
         this.preset_channel_map[channel] = key
+        this.decache_unused_presets()
     }
+
+    fun decache_unused_presets() {
+        var loaded_preset_keys = this.loaded_presets.keys.toMutableSet()
+        for ((channel, key) in this.preset_channel_map) {
+            if (loaded_preset_keys.contains(key)) {
+                loaded_preset_keys.remove(key)
+            }
+        }
+
+        for (key in loaded_preset_keys) {
+            var preset = this.loaded_presets[key]!!
+            this.sample_handle_generator.decache_sample_data(preset)
+            this.loaded_presets.remove(key)
+        }
+    }
+
 
     fun play(midi: MIDI, callback: (position: Float) -> Unit): PlaybackInterface {
         val audio_track_handle = AudioTrackHandle()

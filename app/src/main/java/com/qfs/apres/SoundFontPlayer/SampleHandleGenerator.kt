@@ -5,7 +5,6 @@ import com.qfs.apres.NoteOn
 import com.qfs.apres.Preset
 import com.qfs.apres.PresetInstrument
 import kotlin.math.abs
-import kotlin.math.ceil
 import kotlin.math.pow
 
 class SampleHandleGenerator {
@@ -134,8 +133,21 @@ class SampleHandleGenerator {
             var i_offset = (i.toFloat() * pitch_shift).toInt()
             sample_data[i_offset]
         }
+    }
+
+    fun decache_sample_data(preset: Preset) {
+        var to_remove = mutableListOf<MapKey>()
+        for ((mapkey, data) in this.sample_data_map) {
+            if (mapkey.preset == preset.hashCode()) {
+                to_remove.add(mapkey)
+            }
+        }
+        for (mapkey in to_remove) {
+            this.sample_data_map.remove(mapkey)
+        }
 
     }
+
 
     fun clear_cache() {
         this.sample_data_map.clear()

@@ -1,9 +1,9 @@
 package com.qfs.apres.soundfontplayer
 
-import com.qfs.apres.InstrumentSample
+import com.qfs.apres.soundfont.InstrumentSample
 import com.qfs.apres.event.NoteOn
-import com.qfs.apres.Preset
-import com.qfs.apres.PresetInstrument
+import com.qfs.apres.soundfont.Preset
+import com.qfs.apres.soundfont.PresetInstrument
 import kotlin.math.abs
 import kotlin.math.pow
 

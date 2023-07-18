@@ -98,7 +98,6 @@ import com.qfs.apres.event.TrackName
 import com.qfs.apres.event.TremuloLevel
 import com.qfs.apres.event.Volume
 import com.qfs.apres.event.VolumeLSB
-import com.qfs.apres.riffreader.toUInt
 import kotlin.experimental.and
 
 class InvalidMIDIFile(var path: String): Exception("$path is not a valid midi file")
@@ -648,3 +647,10 @@ fun get_chord_name_from_mi_sf(mi: Byte, sf: Byte): String {
     return map[mi_int][sf_int + 7]
 }
 
+fun toUInt(byte: Byte): Int {
+    var new_int = (byte and 0x7F.toByte()).toInt()
+    if (byte.toInt() < 0) {
+        new_int += 128
+    }
+    return new_int
+}

@@ -1,8 +1,8 @@
-package com.qfs.apres.riffreader
+package com.qfs.apres.soundfont
 
 import android.content.res.AssetManager
+import com.qfs.apres.toUInt
 import java.io.InputStream
-import kotlin.experimental.and
 
 class Riff(private var assets: AssetManager, private var file_name: String, init_callback: ((riff: Riff) -> Unit)? = null) {
     class InputStreamClosed : Exception("Input Stream is Closed")
@@ -178,12 +178,4 @@ class Riff(private var assets: AssetManager, private var file_name: String, init
         }
         return output
     }
-}
-
-fun toUInt(byte: Byte): Int {
-    var new_int = (byte and 0x7F.toByte()).toInt()
-    if (byte.toInt() < 0) {
-        new_int += 128
-    }
-    return new_int
 }

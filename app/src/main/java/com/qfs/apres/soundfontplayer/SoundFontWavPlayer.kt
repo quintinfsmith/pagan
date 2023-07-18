@@ -5,10 +5,10 @@ import com.qfs.apres.Midi
 import com.qfs.apres.event.MIDIEvent
 import com.qfs.apres.event.NoteOff
 import com.qfs.apres.event.NoteOn
-import com.qfs.apres.Preset
+import com.qfs.apres.soundfont.Preset
 import com.qfs.apres.event.ProgramChange
 import com.qfs.apres.event.SetTempo
-import com.qfs.apres.SoundFont
+import com.qfs.apres.soundfont.SoundFont
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.newSingleThreadContext

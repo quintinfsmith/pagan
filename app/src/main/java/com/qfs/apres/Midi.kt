@@ -5,7 +5,6 @@ import com.qfs.apres.event.MIDIEvent
 import com.qfs.apres.event.NoteOff
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event.SongPositionPointer
-import com.qfs.apres.riffreader.toUInt
 import java.io.File
 import kotlin.experimental.or
 

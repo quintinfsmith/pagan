@@ -40,10 +40,10 @@ import com.qfs.pagan.InterfaceLayer as OpusManager
 class MainActivity : AppCompatActivity() {
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
-
+    private lateinit var config_path: String
+    lateinit var configuration: Configuration
     private var midi_playback_device: SoundFontWavPlayer? = null
     private var soundfont: SoundFont? = null
-    private var soundfont_filename: String? = null
 
     private var opus_manager = OpusManager(this)
 
@@ -56,31 +56,6 @@ class MainActivity : AppCompatActivity() {
     private var number_selector_defaults = HashMap<String, Int>()
     // flag to indicate that the landing page has been navigated away from for navigation management
     private var has_seen_front_page = false
-
-    var import_soundfont_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            result?.data?.data?.also { uri ->
-                if (uri.path != null) {
-                    // Check that it's a valid soundfont
-                    try {
-                        SoundFont(uri.path!!)
-                    } catch (e: Exception) {
-                        this.feedback_msg("Invalid sf2 File")
-                        return@registerForActivityResult
-                    }
-
-                    val soundfont_dir = this.get_soundfont_directory()
-
-                    val soundfont_file = File(uri.path!!)
-                    soundfont_file.copyTo( soundfont_dir )
-                    soundfont_file.delete()
-                    this.set_soundfont(soundfont_file.name)
-                } else {
-                    // TODO
-                }
-            }
-        }
-    }
 
     private var export_project_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
@@ -130,6 +105,8 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         this.project_manager = ProjectManager(applicationInfo.dataDir)
+        this.config_path =  "${applicationInfo.dataDir}/pagan.cfg"
+        this.configuration = Configuration.from_path(this.config_path)
 
         this.binding = ActivityMainBinding.inflate(this.layoutInflater)
         setContentView(this.binding.root)
@@ -147,10 +124,13 @@ class MainActivity : AppCompatActivity() {
         //////////////////////////////////////////
         // TODO: clean up the file -> riff -> soundfont -> midi playback device process
 
-        if (this.has_soundfont()) {
-            val path = "${this.getExternalFilesDir(null)}/SoundFonts/FluidR3_GM_GS.sf2"
-            this.soundfont = SoundFont(path)
-            this.midi_playback_device = SoundFontWavPlayer( this.soundfont!! )
+        if (this.configuration.soundfont != null) {
+            val path = "${this.getExternalFilesDir(null)}/SoundFonts/${this.configuration.soundfont}"
+            var sf_file = File(path)
+            if (sf_file.exists()) {
+                this.soundfont = SoundFont(path)
+                this.midi_playback_device = SoundFontWavPlayer(this.soundfont!!)
+            }
         }
 
         ///////////////////////////////////////////
@@ -940,19 +920,13 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun import_soundfont_browse() {
-        val intent = Intent()
-            .setType("*/*")
-            .setAction(Intent.ACTION_GET_CONTENT)
-        this.import_soundfont_launcher.launch(intent)
-    }
-
     fun set_soundfont(filename: String?) {
         if (filename == null) {
             this.disable_soundfont()
             return
         }
 
+        this.configuration.soundfont = filename
         val path = "${this.getExternalFilesDir(null)}/SoundFonts/$filename"
         this.soundfont = SoundFont(path)
         this.midi_playback_device = SoundFontWavPlayer(this.soundfont!!)
@@ -963,12 +937,19 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    fun get_soundfont(): SoundFont? {
+        return this.soundfont
+    }
+
     fun disable_soundfont() {
         val rvActiveChannels: RecyclerView = this.findViewById(R.id.rvActiveChannels)
         if (rvActiveChannels.adapter != null) {
             (rvActiveChannels.adapter as ChannelOptionAdapter).unset_soundfont()
         }
         this.update_channel_instruments()
+        this.soundfont = null
+        this.configuration.soundfont = null
+        this.midi_playback_device = null
     }
 
     fun get_soundfont_directory(): File {
@@ -978,5 +959,9 @@ class MainActivity : AppCompatActivity() {
         }
 
         return soundfont_dir
+    }
+
+    fun save_configuration() {
+        this.configuration.save(this.config_path)
     }
 }

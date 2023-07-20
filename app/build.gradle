@@ -5,15 +5,6 @@ plugins {
     id "de.undercouch.download" version "5.4.0"
 }
 
-//preBuild {
-//    if (! file("${projectDir}/src/main/assets/FluidR3_GM.sf2").exists()) {
-//        println("Downloading SoundFont...")
-//        download.run {
-//            src 'https://burnsomni.net/content/FluidR3_GM.sf2'
-//            dest "${projectDir}/src/main/assets/"
-//        }
-//    }
-//}
 android {
     namespace 'com.qfs.pagan'
     compileSdk 32

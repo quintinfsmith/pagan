@@ -84,7 +84,7 @@ class LandingPageFragment : PaganFragment() {
         }
 
         var main = this.get_main()
-        if (!main.has_soundfont()) {
+        if (main.configuration.soundfont == null && !main.has_soundfont()) {
             AlertDialog.Builder(this.context, R.style.AlertDialog).apply {
                 setTitle("You may want a soundfont")
                 setMessage(R.string.download_fluidr3)

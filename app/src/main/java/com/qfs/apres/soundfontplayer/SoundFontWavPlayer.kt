@@ -252,7 +252,13 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
             this.loaded_presets[key] = try {
                 this.sound_font.get_preset(program, bank)
             } catch (e: SoundFont.InvalidPresetIndex) {
-                this.loaded_presets[Pair(0,0)]!!
+                if (Pair(0, program) in this.loaded_presets) {
+                    this.loaded_presets[Pair(0,program)]!!
+                } else if (Pair(0, 0) in this.loaded_presets) {
+                    this.loaded_presets[Pair(0,0)]!!
+                } else {
+                    return
+                }
             }
         }
 

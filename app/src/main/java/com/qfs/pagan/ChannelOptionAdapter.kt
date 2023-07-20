@@ -14,7 +14,7 @@ class ChannelOptionAdapter(
     private val activity: MainActivity,
     private val opus_manager: InterfaceLayer,
     private val recycler: RecyclerView,
-    private val soundfont: SoundFont
+    private var soundfont: SoundFont?
 ) : RecyclerView.Adapter<ChannelOptionAdapter.ChannelOptionViewHolder>() {
     class OutOfSyncException : Exception("Channel Option list out of sync with OpusManager")
     class ChannelOptionViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
@@ -35,8 +35,11 @@ class ChannelOptionAdapter(
                 //override fun onChanged() { }
             }
         )
-        for ((name, program, bank) in this.soundfont.get_available_presets()) {
-            this.supported_instruments[Pair(bank, program)] = name
+
+        if (this.soundfont != null) {
+            for ((name, program, bank) in this.soundfont!!.get_available_presets()) {
+                this.supported_instruments[Pair(bank, program)] = name
+            }
         }
     }
 
@@ -49,7 +52,6 @@ class ChannelOptionAdapter(
             )
         )
     }
-
 
     private fun set_text(view: View, position: Int) {
         val channels = this.opus_manager.channels
@@ -146,5 +148,20 @@ class ChannelOptionAdapter(
 
     override fun getItemCount(): Int {
         return this.activity.get_opus_manager().channels.size
+    }
+
+    fun set_soundfont(soundfont: SoundFont) {
+        this.soundfont = soundfont
+        this.supported_instruments.clear()
+        for ((name, program, bank) in this.soundfont!!.get_available_presets()) {
+            this.supported_instruments[Pair(bank, program)] = name
+        }
+        this.notifyItemRangeChanged(0, this.opus_manager.channels.size)
+    }
+
+    fun unset_soundfont() {
+        this.supported_instruments.clear()
+        this.soundfont = null
+        this.notifyItemRangeChanged(0, this.opus_manager.channels.size)
     }
 }

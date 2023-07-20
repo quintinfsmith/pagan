@@ -1,5 +1,6 @@
 package com.qfs.pagan
 
+import android.app.AlertDialog
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -48,22 +49,6 @@ class LandingPageFragment : PaganFragment() {
             this.get_main().navTo("license")
         }
 
-        btn_linkSFLicense.setOnClickListener {
-            val stream = this.activity!!.assets.open("SFLicense.txt")
-            val bytes = ByteArray(stream.available())
-            stream.read(bytes)
-            stream.close()
-            val text_body = bytes.toString(charset = Charsets.UTF_8)
-            this.setFragmentResult(
-                "LICENSE",
-                bundleOf(
-                    Pair("TEXT", text_body),
-                    Pair("TITLE", "FluidR3_GM License")
-                )
-            )
-            this.get_main().navTo("license")
-        }
-
         btn_importProject.setOnClickListener {
             val intent = Intent()
                 .setType("application/json")
@@ -97,6 +82,46 @@ class LandingPageFragment : PaganFragment() {
             intent.data = Uri.parse(url)
             startActivity(intent)
         }
+
+        var main = this.get_main()
+        if (!main.has_soundfont()) {
+            AlertDialog.Builder(this.context, R.style.AlertDialog).apply {
+                setTitle("You may want a soundfont")
+                setMessage(R.string.download_fluidr3)
+                setPositiveButton(R.string.download_fluidr3_download) { dialog, _ ->
+                    main.download_fluid()
+                    dialog.dismiss()
+                }
+                setNegativeButton(R.string.download_fluidr3_import) { dialog, _ ->
+                    dialog.dismiss()
+                }
+                setNeutralButton(R.string.download_fluidr3_mute) { dialog, _ ->
+                    dialog.cancel()
+                }
+                show()
+            }
+        }
+        if (!main.has_fluid_soundfont()) {
+            btn_linkSFLicense.visibility = View.GONE
+        } else {
+            btn_linkSFLicense.setOnClickListener {
+                val stream = this.activity!!.assets.open("SFLicense.txt")
+                val bytes = ByteArray(stream.available())
+                stream.read(bytes)
+                stream.close()
+                val text_body = bytes.toString(charset = Charsets.UTF_8)
+                this.setFragmentResult(
+                    "LICENSE",
+                    bundleOf(
+                        Pair("TEXT", text_body),
+                        Pair("TITLE", "FluidR3_GM License")
+                    )
+                )
+                this.get_main().navTo("license")
+            }
+
+        }
+
     }
 
     override fun onDestroyView() {

@@ -2,9 +2,14 @@ package com.qfs.pagan
 
 import android.app.Activity
 import android.app.AlertDialog
+import android.app.DownloadManager
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
+import android.provider.ContactsContract
+import android.util.Log
 import android.view.*
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
@@ -36,8 +41,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
 
-    private lateinit var midi_playback_device: SoundFontWavPlayer
-    lateinit var soundfont: SoundFont
+    private var midi_playback_device: SoundFontWavPlayer? = null
+    private var soundfont: SoundFont? = null
+    private var soundfont_filename: String? = null
 
     private var opus_manager = OpusManager(this)
 
@@ -50,6 +56,31 @@ class MainActivity : AppCompatActivity() {
     private var number_selector_defaults = HashMap<String, Int>()
     // flag to indicate that the landing page has been navigated away from for navigation management
     private var has_seen_front_page = false
+
+    var import_soundfont_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            result?.data?.data?.also { uri ->
+                if (uri.path != null) {
+                    // Check that it's a valid soundfont
+                    try {
+                        SoundFont(uri.path!!)
+                    } catch (e: Exception) {
+                        this.feedback_msg("Invalid sf2 File")
+                        return@registerForActivityResult
+                    }
+
+                    val soundfont_dir = this.get_soundfont_directory()
+
+                    val soundfont_file = File(uri.path!!)
+                    soundfont_file.copyTo( soundfont_dir )
+                    soundfont_file.delete()
+                    this.set_soundfont(soundfont_file.name)
+                } else {
+                    // TODO
+                }
+            }
+        }
+    }
 
     private var export_project_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
@@ -116,21 +147,24 @@ class MainActivity : AppCompatActivity() {
         //////////////////////////////////////////
         // TODO: clean up the file -> riff -> soundfont -> midi playback device process
 
-        this.soundfont = SoundFont(assets, "FluidR3_GM.sf2")
-        this.midi_playback_device = SoundFontWavPlayer(this.soundfont)
+        if (this.has_soundfont()) {
+            val path = "${this.getExternalFilesDir(null)}/SoundFonts/FluidR3_GM_GS.sf2"
+            this.soundfont = SoundFont(path)
+            this.midi_playback_device = SoundFontWavPlayer( this.soundfont!! )
+        }
 
         ///////////////////////////////////////////
     }
     fun update_channel_instruments(channel: Int) {
         var opus_channel = this.get_opus_manager().channels[channel]
-        this.midi_playback_device.select_bank(opus_channel.midi_channel, opus_channel.midi_bank)
-        this.midi_playback_device.change_program(opus_channel.midi_channel, opus_channel.midi_program)
+        this.midi_playback_device?.select_bank(opus_channel.midi_channel, opus_channel.midi_bank)
+        this.midi_playback_device?.change_program(opus_channel.midi_channel, opus_channel.midi_program)
     }
 
     fun update_channel_instruments() {
         for (channel in opus_manager.channels) {
-            this.midi_playback_device.select_bank(channel.midi_channel, channel.midi_bank)
-            this.midi_playback_device.change_program(channel.midi_channel, channel.midi_program)
+            this.midi_playback_device?.select_bank(channel.midi_channel, channel.midi_bank)
+            this.midi_playback_device?.change_program(channel.midi_channel, channel.midi_program)
         }
     }
 
@@ -206,6 +240,9 @@ class MainActivity : AppCompatActivity() {
                         .setAction(Intent.ACTION_GET_CONTENT)
                     this.import_project_intent_launcher.launch(intent)
                 }
+            }
+            R.id.itmSettings -> {
+                this.navTo("settings")
             }
         }
         return super.onOptionsItemSelected(item)
@@ -319,7 +356,7 @@ class MainActivity : AppCompatActivity() {
 
         val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
-            type = "application/midi"
+            type = "application/json"
             putExtra(Intent.EXTRA_TITLE, "$name.json")
         }
 
@@ -336,14 +373,16 @@ class MainActivity : AppCompatActivity() {
             Thread.sleep(10)
         }
         val navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main)
+        this.optionsMenu!!.setGroupDividerEnabled(true)
         when (navHost?.childFragmentManager?.fragments?.get(0)) {
             is EditorFragment -> {
                 this.optionsMenu!!.findItem(R.id.itmLoadProject).isVisible = this.has_projects_saved()
                 this.optionsMenu!!.findItem(R.id.itmUndo).isVisible = true
                 this.optionsMenu!!.findItem(R.id.itmNewProject).isVisible = true
-                this.optionsMenu!!.findItem(R.id.itmPlay).isVisible = true
+                this.optionsMenu!!.findItem(R.id.itmPlay).isVisible = this.has_soundfont()
                 this.optionsMenu!!.findItem(R.id.itmImportMidi).isVisible = true
                 this.optionsMenu!!.findItem(R.id.itmImportProject).isVisible = true
+                this.optionsMenu!!.findItem(R.id.itmSettings).isVisible = true
 
             }
             else -> {
@@ -353,6 +392,7 @@ class MainActivity : AppCompatActivity() {
                 this.optionsMenu!!.findItem(R.id.itmPlay).isVisible = false
                 this.optionsMenu!!.findItem(R.id.itmImportMidi).isVisible = false
                 this.optionsMenu!!.findItem(R.id.itmImportProject).isVisible = false
+                this.optionsMenu!!.findItem(R.id.itmSettings).isVisible = false
             }
         }
     }
@@ -375,12 +415,12 @@ class MainActivity : AppCompatActivity() {
 
 
         this@MainActivity.runOnUiThread {
-            this.midi_playback_device.play_note(midi_channel, note, velocity, 100)
+            this.midi_playback_device?.play_note(midi_channel, note, velocity, 100)
         }
     }
 
-    private fun play_midi(midi: Midi, callback: (position: Float) -> Unit): SoundFontWavPlayer.PlaybackInterface {
-        return this.midi_playback_device.play(midi, callback)
+    private fun play_midi(midi: Midi, callback: (position: Float) -> Unit): SoundFontWavPlayer.PlaybackInterface? {
+        return this.midi_playback_device?.play(midi, callback)
     }
 
     private fun export_midi() {
@@ -467,6 +507,9 @@ class MainActivity : AppCompatActivity() {
                 when (fragmentName) {
                     "load" -> {
                         navController.navigate(R.id.action_EditorFragment_to_LoadFragment)
+                    }
+                    "settings" -> {
+                        navController.navigate(R.id.action_EditorFragment_to_SettingsFragment)
                     }
                     else -> {}
                 }
@@ -807,5 +850,133 @@ class MainActivity : AppCompatActivity() {
 
     fun has_projects_saved(): Boolean {
         return this.project_manager.has_projects_saved()
+    }
+
+    fun download_fluid(): Long? {
+        var filename = "FluidR3_GM_GS.sf2"
+        val url = "https://archive.org/download/fluidr3-gm-gs/$filename"
+
+        val path = "${this.getExternalFilesDir(null)}/SoundFonts"
+        val fluid_file = File("$path/$filename")
+        if (fluid_file.exists()) {
+            return null
+        }
+
+        val location = File(path)
+        if (!location.exists()) {
+            location.mkdirs()
+        }
+
+        val downloadReference: Long
+        val dm: DownloadManager = this.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+        val uri = Uri.parse(url)
+        val that = this
+        val request = DownloadManager.Request(uri).apply {
+            setDestinationInExternalFilesDir(that, null, "SoundFonts/$filename")
+            setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+            setTitle(title)
+        }
+
+        AlertDialog.Builder(this, R.style.AlertDialog).apply {
+            setTitle("Downloading Fluid Soundfont")
+            setMessage("Sound will be enabled once the download is complete")
+            setPositiveButton(android.R.string.ok) { dialog, _ ->
+                dialog.dismiss()
+            }
+            show()
+        }
+
+        downloadReference = dm.enqueue(request)
+        thread {
+            while (dm.getUriForDownloadedFile(downloadReference) == null) {
+                Thread.sleep(5)
+            }
+            this.runOnUiThread {
+                this.set_soundfont(filename)
+            }
+        }
+        return downloadReference
+    }
+
+    fun has_fluid_soundfont(): Boolean {
+        val filename = "FluidR3_GM_GS.sf2"
+        val soundfont_dir = this.get_soundfont_directory()
+        val fluid_file = File("${soundfont_dir.path}/$filename")
+        return fluid_file.exists()
+    }
+
+    fun has_soundfont(): Boolean {
+        val soundfont_dir = this.get_soundfont_directory()
+        return soundfont_dir.listFiles().isNotEmpty()
+    }
+
+    fun get_drum_options(): List<Pair<String, Int>> {
+        if (this.soundfont == null) {
+            return listOf()
+        }
+        val opus_manager = this.get_opus_manager()
+        val (bank, program) = opus_manager.get_channel_instrument(opus_manager.channels.size - 1)
+        val preset = this.soundfont!!.get_preset(program, bank)
+        val available_drum_keys = mutableSetOf<Pair<String,Int>>()
+
+        for (preset_instrument in preset.instruments) {
+            if (preset_instrument.instrument == null) {
+                continue
+            }
+
+            for (sample in preset_instrument.instrument!!.samples) {
+                if (sample.key_range != null) {
+                    var name = sample.sample!!.name
+                    if (name.contains("(")) {
+                        name = name.substring(0, name.indexOf("("))
+                    }
+                    available_drum_keys.add(Pair(name, sample.key_range!!.first))
+                }
+            }
+        }
+
+        return available_drum_keys.sortedBy {
+            it.second
+        }
+    }
+
+    fun import_soundfont_browse() {
+        val intent = Intent()
+            .setType("*/*")
+            .setAction(Intent.ACTION_GET_CONTENT)
+        this.import_soundfont_launcher.launch(intent)
+    }
+
+    fun set_soundfont(filename: String?) {
+        if (filename == null) {
+            this.disable_soundfont()
+            return
+        }
+
+        val path = "${this.getExternalFilesDir(null)}/SoundFonts/$filename"
+        this.soundfont = SoundFont(path)
+        this.midi_playback_device = SoundFontWavPlayer(this.soundfont!!)
+        this.update_channel_instruments()
+        val rvActiveChannels: RecyclerView = this.findViewById(R.id.rvActiveChannels)
+        if (rvActiveChannels.adapter != null) {
+            (rvActiveChannels.adapter as ChannelOptionAdapter).set_soundfont(this.soundfont!!)
+        }
+    }
+
+    fun disable_soundfont() {
+        val rvActiveChannels: RecyclerView = this.findViewById(R.id.rvActiveChannels)
+        if (rvActiveChannels.adapter != null) {
+            (rvActiveChannels.adapter as ChannelOptionAdapter).unset_soundfont()
+        }
+        this.update_channel_instruments()
+    }
+
+    fun get_soundfont_directory(): File {
+        val soundfont_dir = File("${this.getExternalFilesDir(null)}/SoundFonts")
+        if (!soundfont_dir.exists()) {
+            soundfont_dir.mkdirs()
+        }
+
+        return soundfont_dir
     }
 }

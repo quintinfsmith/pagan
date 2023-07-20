@@ -15,6 +15,7 @@
     <string name="label_channels_button">Chn</string>
     <string name="main_fragment_label"></string>
     <string name="load_fragment_label"></string>
+    <string name="settings_fragment_label">Pagan Settings</string>
     <string name="front_fragment_label">@string/app_name</string>
     <string name="config_fragment_label">Config</string>
     <string name="license_fragment_label">License</string>
@@ -24,7 +25,10 @@
     <string name="cd_split">Split this beat or subdivision</string>
     <string name="cd_remove">Remove this subdivision</string>
     <string name="cd_unset">Unset this subdivision</string>
-
+    <string name="download_fluidr3">Pagan will not have any audio feedback or playback without a soundfont. You can use one of your choice or download the Fluidr3 Soundfont.</string>
+    <string name="download_fluidr3_download">Download Fluid Soundfont</string>
+    <string name="download_fluidr3_import">Import Custom Soundfont</string>
+    <string name="download_fluidr3_mute">Use without sound</string>
 
     <string name="line_volume">Line Volume:</string>
     <string name="source_code_location">

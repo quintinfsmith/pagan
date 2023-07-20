@@ -28,4 +28,9 @@
         android:id="@+id/itmImportMidi"
         android:title="Import MIDI"
         app:showAsAction="never"/>
+    <item
+        android:menuCategory="secondary"
+        android:id="@+id/itmSettings"
+        android:title="Settings..."
+        app:showAsAction="never"/>
 </menu>

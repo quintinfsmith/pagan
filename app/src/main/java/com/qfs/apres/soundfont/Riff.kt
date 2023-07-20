@@ -2,9 +2,11 @@ package com.qfs.apres.soundfont
 
 import android.content.res.AssetManager
 import com.qfs.apres.toUInt
+import java.io.BufferedInputStream
+import java.io.FileInputStream
 import java.io.InputStream
 
-class Riff(private var assets: AssetManager, private var file_name: String, init_callback: ((riff: Riff) -> Unit)? = null) {
+class Riff(private var file_path: String, init_callback: ((riff: Riff) -> Unit)? = null) {
     class InputStreamClosed : Exception("Input Stream is Closed")
     data class ListChunkHeader(
         val index: Int,
@@ -76,8 +78,8 @@ class Riff(private var assets: AssetManager, private var file_name: String, init
     }
 
     fun open_stream() {
-        this.input_stream = this.assets.open(this.file_name)
-        this.input_stream?.mark(input_stream?.available()!!)
+        this.input_stream = FileInputStream(this.file_path)
+        //this.input_stream?.mark(input_stream?.available()!!)
     }
 
     fun close_stream() {
@@ -148,9 +150,9 @@ class Riff(private var assets: AssetManager, private var file_name: String, init
             stream.skip(offset - this.input_position)
 
         } else if (this.input_position > offset) {
-            stream.reset()
-            this.input_position = 0
-            stream.skip(offset)
+            this.close_stream()
+            this.open_stream()
+            this.input_stream?.skip(offset)
         }
         this.input_position = offset.toInt()
     }
@@ -159,10 +161,9 @@ class Riff(private var assets: AssetManager, private var file_name: String, init
         val stream: InputStream = this.input_stream ?: throw InputStreamClosed()
         this.move_to_offset(offset.toLong())
         val output = ByteArray(size)
-        stream.read(output)
+        this.input_stream?.read(output)
         this.input_position += size
         return output
-
     }
 
     private fun get_string(offset: Int, size: Int): String {

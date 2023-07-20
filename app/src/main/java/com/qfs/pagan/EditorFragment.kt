@@ -889,35 +889,8 @@ class EditorFragment : PaganFragment() {
 
     fun populate_active_percussion_names() {
         this.active_percussion_names.clear()
-        for ((name, note) in this.get_drum_options()) {
+        for ((name, note) in this.get_main().get_drum_options()) {
             this.active_percussion_names[note] = name
-        }
-    }
-    fun get_drum_options(): List<Pair<String, Int>> {
-        val main = this.get_main()
-        val opus_manager = main.get_opus_manager()
-        val (bank, program) = opus_manager.get_channel_instrument(opus_manager.channels.size - 1)
-        val preset = main.soundfont.get_preset(program, bank)
-        val available_drum_keys = mutableSetOf<Pair<String,Int>>()
-
-        for (preset_instrument in preset.instruments) {
-            if (preset_instrument.instrument == null) {
-                continue
-            }
-
-            for (sample in preset_instrument.instrument!!.samples) {
-                if (sample.key_range != null) {
-                    var name = sample.sample!!.name
-                    if (name.contains("(")) {
-                        name = name.substring(0, name.indexOf("("))
-                    }
-                    available_drum_keys.add(Pair(name, sample.key_range!!.first))
-                }
-            }
-        }
-
-        return available_drum_keys.sortedBy {
-            it.second
         }
     }
 }

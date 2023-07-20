@@ -7,7 +7,7 @@ import java.nio.ByteOrder
 import kotlin.math.max
 
 //class SoundFont(input_stream: InputStream) {
-class SoundFont(assets: AssetManager, file_name: String) {
+class SoundFont(file_path: String) {
     class InvalidPresetIndex(index: Int, bank: Int): Exception("Preset Not Found $index:$bank")
     class InvalidSampleIdPosition : Exception("SampleId Generator is not at end of ibag")
     data class CachedSampleData(var data: ShortArray, var count: Int = 1)
@@ -32,7 +32,7 @@ class SoundFont(assets: AssetManager, file_name: String) {
     private var sample_data_cache =  HashMap<Pair<Int, Int>, CachedSampleData>()
 
     init {
-        this.riff = Riff(assets, file_name) { riff: Riff ->
+        this.riff = Riff(file_path) { riff: Riff ->
             val info_chunk = riff.get_chunk_data(riff.list_chunks[0])
             val pdta_chunk = riff.get_chunk_data(riff.list_chunks[2])
             val info_offset = riff.list_chunks[0].index

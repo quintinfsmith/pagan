@@ -17,6 +17,11 @@
             app:popUpTo="@id/EditorFragment"
             app:popUpToInclusive="false" />
 
+        <action
+            android:id="@+id/action_EditorFragment_to_SettingsFragment"
+            app:destination="@id/SettingsFragment"
+            app:popUpTo="@id/EditorFragment"
+            app:popUpToInclusive="false" />
     </fragment>
 
     <fragment
@@ -64,4 +69,12 @@
         android:label="@string/license_fragment_label"
         tools:layout="@layout/fragment_license">
     </fragment>
+
+    <fragment
+        android:id="@+id/SettingsFragment"
+        android:name="com.qfs.pagan.SettingsFragment"
+        android:label="@string/settings_fragment_label"
+        tools:layout="@layout/fragment_settings">
+    </fragment>
+
 </navigation>

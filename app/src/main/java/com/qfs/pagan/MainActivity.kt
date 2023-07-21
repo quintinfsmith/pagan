@@ -873,6 +873,7 @@ class MainActivity : AppCompatActivity() {
             }
             this.runOnUiThread {
                 this.set_soundfont(filename)
+                this.save_configuration()
             }
         }
         return downloadReference

@@ -1,0 +1,2 @@
+- Fluidr3 no longer packaged as asset, but option to download is included
+- import sf2 support

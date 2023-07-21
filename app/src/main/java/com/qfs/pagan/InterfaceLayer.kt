@@ -41,7 +41,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
         if (this.is_percussion(channel)) {
             withFragment {
-                it.populate_active_percussion_names()
+                it.get_main().populate_active_percussion_names()
             }
         }
 
@@ -97,13 +97,11 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
         val btnChoosePercussion: TextView? = this.activity.findViewById(R.id.btnChoosePercussion)
         if (btnChoosePercussion != null) {
-            this.withFragment {
-                btnChoosePercussion.text = this.activity.getString(
-                    R.string.label_choose_percussion,
-                    instrument,
-                    it.get_drum_name(instrument)
-                )
-            }
+            btnChoosePercussion.text = this.activity.getString(
+                R.string.label_choose_percussion,
+                instrument,
+                this.activity.get_drum_name(instrument)
+            )
 
             this.update_line_labels()
         }
@@ -207,7 +205,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     override fun new_channel(channel: Int?, lines: Int, uuid: Int?) {
-        var notify_index = if (channel == null) {
+        val notify_index = if (channel == null) {
             this.channels.size
         } else {
             min(channel, this.channels.size)

@@ -44,6 +44,7 @@ class MainActivity : AppCompatActivity() {
     lateinit var configuration: Configuration
     private var midi_playback_device: SoundFontWavPlayer? = null
     private var soundfont: SoundFont? = null
+    var active_percussion_names = HashMap<Int, String>()
 
     private var opus_manager = OpusManager(this)
 
@@ -131,6 +132,7 @@ class MainActivity : AppCompatActivity() {
                 this.soundfont = SoundFont(path)
                 this.midi_playback_device = SoundFontWavPlayer(this.soundfont!!)
             }
+            this.update_channel_instruments()
         }
 
         ///////////////////////////////////////////
@@ -897,7 +899,11 @@ class MainActivity : AppCompatActivity() {
         }
         val opus_manager = this.get_opus_manager()
         val (bank, program) = opus_manager.get_channel_instrument(opus_manager.channels.size - 1)
-        val preset = this.soundfont!!.get_preset(program, bank)
+        val preset = try {
+            this.soundfont!!.get_preset(program, bank)
+        } catch (e: SoundFont.InvalidPresetIndex) {
+            return listOf()
+        }
         val available_drum_keys = mutableSetOf<Pair<String,Int>>()
 
         for (preset_instrument in preset.instruments) {
@@ -936,6 +942,7 @@ class MainActivity : AppCompatActivity() {
         if (rvActiveChannels.adapter != null) {
             (rvActiveChannels.adapter as ChannelOptionAdapter).set_soundfont(this.soundfont!!)
         }
+        this.populate_active_percussion_names()
     }
 
     fun get_soundfont(): SoundFont? {
@@ -951,6 +958,7 @@ class MainActivity : AppCompatActivity() {
         this.soundfont = null
         this.configuration.soundfont = null
         this.midi_playback_device = null
+        this.populate_active_percussion_names()
     }
 
     fun get_soundfont_directory(): File {
@@ -965,4 +973,22 @@ class MainActivity : AppCompatActivity() {
     fun save_configuration() {
         this.configuration.save(this.config_path)
     }
+
+    fun get_drum_name(index: Int): String? {
+        if (this.active_percussion_names.isEmpty()) {
+            this.populate_active_percussion_names()
+        }
+        return this.active_percussion_names[index + 27]
+    }
+    fun populate_active_percussion_names() {
+        this.active_percussion_names.clear()
+        for ((name, note) in this.get_drum_options()) {
+            // TODO: *Maybe* Allow drum instruments below 27? not sure what the standard is.
+            //  I thought 27 was the lowest, but i'll come up with something later
+            if (note >= 27) {
+                this.active_percussion_names[note] = name
+            }
+        }
+    }
+
 }

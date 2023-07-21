@@ -24,7 +24,6 @@ class EditorFragment : PaganFragment() {
     private var active_context_menu_index: ContextMenu? = null
 
     private var table_offset_pause: Int = 0
-    private var active_percussion_names = HashMap<Int, String>()
 
     enum class ContextMenu {
         Leaf,
@@ -340,7 +339,7 @@ class EditorFragment : PaganFragment() {
             btnChoosePercussion.text = main.getString(
                 R.string.label_choose_percussion,
                 instrument,
-                this.get_drum_name(instrument)
+                main.get_drum_name(instrument) ?: "Drum Not Found"
             )
         }
 
@@ -807,24 +806,17 @@ class EditorFragment : PaganFragment() {
     }
 
 
-    fun get_drum_name(index: Int): String? {
-        if (this.active_percussion_names.isEmpty()) {
-            this.populate_active_percussion_names()
-        }
-        return this.active_percussion_names[index + 27]
-    }
-
     private fun interact_btnChoosePercussion(view: View) {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
 
         val popupMenu = PopupMenu(this.binding.root.context, view)
-        if (this.active_percussion_names.isEmpty()) {
-            this.populate_active_percussion_names()
-        }
 
         var i = 0
-        for ((note, name) in this.active_percussion_names) {
+        val sorted_keys = main.active_percussion_names.keys.toMutableList()
+        sorted_keys.sort()
+        for (note in sorted_keys) {
+            val name = main.active_percussion_names[note]
             popupMenu.menu.add(0, note - 27, i, "${note - 27}: $name")
             i += 1
         }
@@ -885,12 +877,5 @@ class EditorFragment : PaganFragment() {
         val rvBeatTable = main.findViewById<RecyclerView>(R.id.rvBeatTable)
         val rvBeatTable_adapter = rvBeatTable.adapter as BeatColumnAdapter
         rvBeatTable_adapter.scrollToPosition(adj_beatkey, new_position)
-    }
-
-    fun populate_active_percussion_names() {
-        this.active_percussion_names.clear()
-        for ((name, note) in this.get_main().get_drum_options()) {
-            this.active_percussion_names[note] = name
-        }
     }
 }

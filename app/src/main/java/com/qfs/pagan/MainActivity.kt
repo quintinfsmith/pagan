@@ -776,7 +776,6 @@ class MainActivity : AppCompatActivity() {
             this.window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         }
 
-
         ibPlayPause.setOnClickListener {
             if (playback_handle != null && playback_handle!!.playing) {
                 pause_playback()
@@ -789,28 +788,28 @@ class MainActivity : AppCompatActivity() {
         sbPlaybackPosition.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener {
             var was_playing = false
             var is_stopping = false
-            var in_grace_period = false
             override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
                 tvPlaybackPosition.text = p1.toString()
                 tvPlaybackTime.text = that.get_timestring_at_beat(p1)
             }
 
             override fun onStartTrackingTouch(p0: SeekBar?) {
+                // Ignore touches that occur while playback is stopping (shouldn't be humanly possible)
+                if (this.is_stopping) {
+                    return
+                }
                 this.was_playing = (playback_handle != null && playback_handle!!.playing)
                 this.is_stopping = true
                 pause_playback()
                 this.is_stopping = false
             }
             override fun onStopTrackingTouch(seekbar: SeekBar?) {
-                val is_playing = (playback_handle != null && playback_handle!!.playing)
-                if (!this.in_grace_period && this.was_playing && seekbar != null && !is_playing) {
-                    // 'grace' period prevents multi-clicking from calling this multiple times
-                    this.in_grace_period = true
-                    // Kludge. need to give the midi play enough time to stop
-                    Thread.sleep(500)
-
+                // Wait until playback has been paused
+                if (this.was_playing && seekbar != null) {
+                    while (this.is_stopping) {
+                        Thread.sleep(10)
+                    }
                     start_playback(seekbar.progress)
-                    this.in_grace_period = false
                 }
             }
         })

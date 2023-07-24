@@ -1,5 +1,6 @@
 package com.qfs.pagan
 
+import android.util.Log
 import com.qfs.apres.Midi
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event.SetTempo
@@ -280,4 +281,10 @@ fun tree_from_midi(midi: Midi): OpusTree<Set<OpusEvent>> {
         beat.clear_singles()
     }
     return opus
+}
+
+fun tlog(label: String, callback: () -> Unit) {
+    val a = System.currentTimeMillis()
+    callback()
+    Log.d("TLOG", "$label: ${System.currentTimeMillis() - a}")
 }

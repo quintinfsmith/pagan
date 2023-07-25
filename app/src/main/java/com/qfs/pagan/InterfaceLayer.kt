@@ -1,4 +1,5 @@
 package com.qfs.pagan
+import android.util.Log
 import android.view.View
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -15,6 +16,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     var cursor = Cursor()
     private var queued_location_stamp: Pair<BeatKey, List<Int>?>? = null
     var first_load_done = false
+    var ui_lines_to_remove = mutableListOf<Int>()
 
     private fun simple_ui_locked(): Boolean {
         return this.simple_ui_lock != 0
@@ -172,6 +174,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
         this.ui_unset_cursor_focus()
         this.ui_remove_line_label(channel, line_offset)
+        this.ui_remove_line(channel, line_offset)
 
         val output = try {
             super.remove_line(channel, line_offset)
@@ -467,6 +470,17 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         )
     }
 
+    private fun ui_remove_line(channel: Int, line_offset: Int) {
+        val y = this.get_abs_offset(channel, line_offset)
+        if (this.simple_ui_locked()) {
+            this.ui_lines_to_remove.add(y)
+        } else {
+            val beat_table = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
+            val rvBeatTable_adapter = beat_table.adapter as BeatColumnAdapter
+            rvBeatTable_adapter.remove_line(y)
+        }
+    }
+
     private fun ui_refresh_beat_labels(beat_key: BeatKey) {
         if (this.simple_ui_locked()) {
             return
@@ -547,26 +561,40 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             this.surpress_ui {
                 super.apply_undo()
             }
-            this.ui_notify_visible_changes()
+            tlog("NOTIFY UI") {
+                this.ui_notify_visible_changes()
+            }
 
+
+            var need_line_update = true
             if (this.queued_location_stamp != null) {
-                val (beat_key, position) = this.queued_location_stamp!!
-                this.queued_location_stamp = null
+                tlog("SET CURSOR") {
+                    val (beat_key, position) = this.queued_location_stamp!!
+                    this.queued_location_stamp = null
 
-                if (beat_key.beat == -1) { // Row Select
-                    this.cursor_select_row(beat_key.channel, beat_key.line_offset, scroll=true)
-                } else if (beat_key.channel == -1 || beat_key.line_offset == -1) { // Beat Select
-                    this.cursor_select_column(beat_key.beat, scroll=true)
-                } else if (position == null) {
-                    return
-                } else {
-                    this.cursor_select(beat_key, position, scroll=true)
+                    if (beat_key.beat == -1) { // Row Select
+                        this.cursor_select_row(
+                            beat_key.channel,
+                            beat_key.line_offset,
+                            scroll = true
+                        )
+                    } else if (beat_key.channel == -1 || beat_key.line_offset == -1) { // Beat Select
+                        this.cursor_select_column(beat_key.beat, scroll = true)
+                    } else if (position == null) {
+                        need_line_update = false
+                    } else {
+                        this.cursor_select(beat_key, position, scroll = true)
+                    }
                 }
             } else {
                 this.cursor_clear()
             }
 
-            this.update_line_labels()
+            if (need_line_update) {
+                tlog("UPDATE LINES") {
+                    this.update_line_labels()
+                }
+            }
 
         } else {
             // It's just irritating

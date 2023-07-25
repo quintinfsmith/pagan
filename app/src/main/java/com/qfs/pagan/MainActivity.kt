@@ -752,10 +752,9 @@ class MainActivity : AppCompatActivity() {
         fun start_playback(x: Int) {
             this.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             thread {
-                var size_a = x.toFloat() / opus_manager.opus_beat_count.toFloat()
+                val size_a = x.toFloat() / opus_manager.opus_beat_count.toFloat()
                 ibPlayPause.setImageResource(R.drawable.ic_baseline_pause_24)
                 playback_handle = this.play_midi(opus_manager.get_midi(x)) {
-
                     if (it == 1F) { // Song is over, return to start state
                         ibPlayPause.setImageResource(R.drawable.ic_baseline_play_arrow_24)
                         sbPlaybackPosition.progress = 0

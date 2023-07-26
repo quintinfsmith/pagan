@@ -7,8 +7,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 
 class ColumnLabelAdapter(private var opus_manager: InterfaceLayer, var recycler: RecyclerView, var activity: MainActivity) : RecyclerView.Adapter<ColumnLabelAdapter.ColumnLabelViewHolder>() {
-    // BackLink so I can get the x offset from a view in the view holder
-    var column_widths = mutableListOf<Int>()
 
     class LabelView(context: Context): RelativeLayout(ContextThemeWrapper(context, R.style.column_label_outer)) {
         var viewHolder: ColumnLabelViewHolder? = null
@@ -52,6 +50,8 @@ class ColumnLabelAdapter(private var opus_manager: InterfaceLayer, var recycler:
         }
     }
 
+    var column_widths = mutableListOf<Int>()
+
     init {
         this.recycler.adapter = this
         this.recycler.layoutManager = LinearLayoutManager(
@@ -67,10 +67,10 @@ class ColumnLabelAdapter(private var opus_manager: InterfaceLayer, var recycler:
             object: RecyclerView.AdapterDataObserver() {
                 override fun onItemRangeChanged(start: Int, count: Int) { }
                 override fun onItemRangeRemoved(start: Int, count: Int) {
-                    notifyItemRangeChanged(start, that.column_widths.size - start)
+                    //notifyItemRangeChanged(start, that.column_widths.size - start)
                 }
                 override fun onItemRangeInserted(start: Int, count: Int) {
-                    notifyItemRangeChanged(start, that.column_widths.size - start)
+                    //notifyItemRangeChanged(start, that.column_widths.size - start)
                 }
             }
         )
@@ -107,19 +107,19 @@ class ColumnLabelAdapter(private var opus_manager: InterfaceLayer, var recycler:
 
     fun addColumnLabel(position: Int) {
         if (position < this.column_widths.size) {
-            this.column_widths.add(position, 1)
             this.notifyItemInserted(position)
+            this.column_widths.add(position, 0)
         } else {
             while (this.column_widths.size <= position) {
-                this.column_widths.add(1)
-                this.notifyItemInserted(this.column_widths.size - 1)
+                this.notifyItemInserted(this.column_widths.size)
+                this.column_widths.add(0)
             }
         }
     }
 
     fun removeColumnLabel(index: Int) {
         if (index < this.column_widths.size) {
-            this.column_widths.removeAt(index)
+            this.column_widths.remove(index)
             this.notifyItemRemoved(index)
         }
     }
@@ -166,9 +166,15 @@ class ColumnLabelAdapter(private var opus_manager: InterfaceLayer, var recycler:
         val beat = holder.bindingAdapterPosition
 
         val item_view = holder.itemView
-        val resources = this.recycler.resources
-        item_view.layoutParams.width = (resources.getDimension(R.dimen.base_leaf_width) * this.column_widths[beat].toFloat()).toInt()
+        this.column_widths[beat] = this.get_column_width(beat) ?: 0
+        item_view.layoutParams.width = this.column_widths[beat]
         item_view.layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT
+    }
+
+    fun get_column_width(beat: Int): Int? {
+        val recycler = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
+        val column = recycler.findViewHolderForAdapterPosition(beat)?.itemView
+        return column?.measuredWidth
     }
 
     override fun onBindViewHolder(holder: ColumnLabelViewHolder, position: Int) {
@@ -186,13 +192,6 @@ class ColumnLabelAdapter(private var opus_manager: InterfaceLayer, var recycler:
         item_view.set_text(position.toString())
     }
 
-    fun set_label_width(beat: Int, width: Int) {
-        if (this.column_widths[beat] != width) {
-            this.column_widths[beat] = width
-            this.notifyItemChanged(beat)
-        }
-    }
-
     override fun getItemCount(): Int {
         return this.column_widths.size
     }
@@ -200,6 +199,7 @@ class ColumnLabelAdapter(private var opus_manager: InterfaceLayer, var recycler:
     fun scroll(x: Int) {
         this.recycler.scrollBy(x, 0)
     }
+
     fun refresh() {
         val start = (this.recycler.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
         val end = (this.recycler.layoutManager as LinearLayoutManager).findLastVisibleItemPosition()

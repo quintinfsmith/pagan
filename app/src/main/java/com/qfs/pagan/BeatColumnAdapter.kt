@@ -368,9 +368,8 @@ class BeatColumnAdapter(var parent_fragment: EditorFragment, var recycler: Recyc
 
     fun scrollToPosition(position: Int) {
         this.disableScrollSync()
-        val resources = this.get_main_activity().resources
-        val item_width = (this.column_label_layout.column_widths[position].toFloat() * resources.getDimension(R.dimen.base_leaf_width)).toInt()
-        val center = (this.recycler.width - item_width) / 2
+        var column_width = this.column_label_layout.column_widths[position]
+        val center = (this.recycler.width - column_width) / 2
         (this.recycler.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(position, center)
         (this.column_label_layout.recycler.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(position, center)
 
@@ -379,16 +378,15 @@ class BeatColumnAdapter(var parent_fragment: EditorFragment, var recycler: Recyc
 
     fun scrollToPosition(beat_key: BeatKey, position: List<Int>) {
         this.disableScrollSync()
-        val resources = this.get_main_activity().resources
-        val item_width = (this.column_label_layout.column_widths[beat_key.beat].toFloat() * resources.getDimension(R.dimen.base_leaf_width)).toInt()
+        var column_width = this.column_label_layout.column_widths[beat_key.beat]
         val tree = this.get_opus_manager().get_tree(beat_key, position)
         val (tree_position, tree_size) = tree.get_flat_ratios()
         val first_visible = (this.recycler.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
         val buffer = this.recycler.width / 4
         val offset = if (first_visible > beat_key.beat) {
-            0 - (item_width.toFloat() * tree_position).toInt() + buffer
+            0 - (column_width.toFloat() * tree_position).toInt() + buffer
         } else {
-            (this.recycler.width - item_width + (item_width.toFloat() * (1F - tree_position - tree_size)).toInt()) - buffer
+            (this.recycler.width - column_width + (column_width.toFloat() * (1F - tree_position - tree_size)).toInt()) - buffer
         }
         (this.recycler.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(beat_key.beat, offset)
         (this.column_label_layout.recycler.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(beat_key.beat, offset)

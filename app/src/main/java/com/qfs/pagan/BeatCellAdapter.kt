@@ -45,7 +45,7 @@ class BeatCellAdapter(var recycler: BeatColumnAdapter.BeatCellRecycler): Recycle
                 override fun onItemRangeRemoved(start: Int, count: Int) {
                 }
                 override fun onItemRangeChanged(start: Int, count: Int) {
-                    that.get_beat_column_adapter().column_label_layout.set_label_width(that.get_beat(), that.cell_width_map.max())
+                    that.get_beat_column_adapter().column_label_layout.notifyItemChanged(that.get_beat())
                 }
                 override fun onItemRangeInserted(start: Int, count: Int) {
                 }
@@ -97,21 +97,28 @@ class BeatCellAdapter(var recycler: BeatColumnAdapter.BeatCellRecycler): Recycle
     override fun onBindViewHolder(holder: BCViewHolder, position: Int) {
         (holder.itemView as ViewGroup).removeAllViews()
 
-        val (channel, line_offset) = this.get_opus_manager().get_std_offset(position)
+        val opus_manager = this.get_opus_manager()
+        val (channel, line_offset) = opus_manager.get_std_offset(position)
+        val beat_key = BeatKey(channel, line_offset, this.get_beat())
         val beat_wrapper: LinearLayout = LayoutInflater.from(holder.itemView.context).inflate(
             R.layout.beat_node,
             holder.itemView as ViewGroup,
             false
         ) as LinearLayout
 
+
+        val beat_tree = opus_manager.get_beat_tree(beat_key)
+        val weight = beat_tree.size * beat_tree.get_max_child_weight()
+        val resources = this.recycler.resources
+        beat_wrapper.minimumWidth = ((weight * resources.getDimension(R.dimen.base_leaf_width)) + ((weight - 1) * resources.getDimension(R.dimen.normal_padding))).toInt()
         (holder.itemView as ViewGroup).addView(beat_wrapper)
 
         this.buildTreeTopView(
             beat_wrapper,
-            BeatKey(channel, line_offset, this.get_beat())
+            beat_key
         )
 
-        //this.adjust_beat_width(holder)
+        this.get_beat_column_adapter().column_label_layout.notifyItemChanged(this.get_beat())
     }
 
     private fun buildTreeTopView(parent: LinearLayout, beat_key: BeatKey) {
@@ -165,7 +172,7 @@ class BeatCellAdapter(var recycler: BeatColumnAdapter.BeatCellRecycler): Recycle
             tvLeaf.minimumWidth = resources.getDimension(R.dimen.base_leaf_width).toInt()
             (tvLeaf.layoutParams as LinearLayout.LayoutParams).apply {
                 gravity = Gravity.CENTER
-                height = ViewGroup.LayoutParams.MATCH_PARENT
+                height = resources.getDimension(R.dimen.line_height).toInt()
                 width = 0
                 this.weight = weight.toFloat()
             }

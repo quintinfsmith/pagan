@@ -1,15 +1,17 @@
 package com.qfs.pagan
 
 import android.content.Context
+import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
-import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.LinksLayer
 import kotlin.concurrent.thread
+import kotlin.math.max
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
 class BeatCellAdapter(var recycler: BeatColumnAdapter.BeatCellRecycler): RecyclerView.Adapter<BeatCellAdapter.BCViewHolder>() {
@@ -32,6 +34,26 @@ class BeatCellAdapter(var recycler: BeatColumnAdapter.BeatCellRecycler): Recycle
         }
     }
 
+    val cell_width_map = mutableListOf<Int>()
+    var resize_lock = false
+    var channel_size_map = mutableListOf<Int>()
+
+    init {
+        val that = this
+        this.registerAdapterDataObserver(
+            object: RecyclerView.AdapterDataObserver() {
+                override fun onItemRangeRemoved(start: Int, count: Int) {
+                }
+                override fun onItemRangeChanged(start: Int, count: Int) {
+                    that.get_beat_column_adapter().column_label_layout.set_label_width(that.get_beat(), that.cell_width_map.max())
+                }
+                override fun onItemRangeInserted(start: Int, count: Int) {
+                }
+            }
+        )
+        this.recycler.itemAnimator = null
+    }
+
 
     fun get_beat_column_adapter(): BeatColumnAdapter {
         return this.recycler.viewHolder!!.parent_adapter
@@ -46,7 +68,7 @@ class BeatCellAdapter(var recycler: BeatColumnAdapter.BeatCellRecycler): Recycle
     }
 
     fun get_beat(): Int {
-        return this.recycler.viewHolder!!.bindingAdapterPosition
+        return this.recycler.viewHolder!!.absoluteAdapterPosition
     }
 
     override fun onCreateViewHolder(
@@ -63,6 +85,7 @@ class BeatCellAdapter(var recycler: BeatColumnAdapter.BeatCellRecycler): Recycle
     override fun onViewAttachedToWindow(holder: BCViewHolder) {
         val item_view = holder.itemView as BackLinkView
         val beat_index = holder.bindingAdapterPosition
+        item_view.layoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT
 
         // Redraw Items that were detached but not destroyed
         if (item_view.update_queued) {
@@ -72,6 +95,8 @@ class BeatCellAdapter(var recycler: BeatColumnAdapter.BeatCellRecycler): Recycle
     }
 
     override fun onBindViewHolder(holder: BCViewHolder, position: Int) {
+        (holder.itemView as ViewGroup).removeAllViews()
+
         val (channel, line_offset) = this.get_opus_manager().get_std_offset(position)
         val beat_wrapper: LinearLayout = LayoutInflater.from(holder.itemView.context).inflate(
             R.layout.beat_node,
@@ -92,18 +117,20 @@ class BeatCellAdapter(var recycler: BeatColumnAdapter.BeatCellRecycler): Recycle
     private fun buildTreeTopView(parent: LinearLayout, beat_key: BeatKey) {
         val tree = this.get_opus_manager().get_beat_tree(beat_key)
         val top_node = PositionNode()
+        val max_weight = tree.get_max_child_weight()
         if (!tree.is_leaf()) {
             for (i in 0 until tree.size) {
                 val next_node = PositionNode(i)
                 next_node.previous = top_node
-                this.buildTreeView(parent, beat_key, next_node)
+                this.buildTreeView(parent, beat_key, next_node, max_weight)
             }
         } else {
-            this.buildTreeView(parent, beat_key, top_node)
+            this.buildTreeView(parent, beat_key, top_node, max_weight)
         }
     }
 
-    private fun buildTreeView(parent: ViewGroup, beat_key: BeatKey, position_node: PositionNode) {
+    // Returns width in nodes
+    private fun buildTreeView(parent: ViewGroup, beat_key: BeatKey, position_node: PositionNode, weight: Int) {
         val opus_manager = this.get_opus_manager()
         val position = position_node.to_list()
         val tree = opus_manager.get_tree(beat_key, position)
@@ -134,11 +161,19 @@ class BeatCellAdapter(var recycler: BeatColumnAdapter.BeatCellRecycler): Recycle
 
             parent.addView(tvLeaf)
 
+            val resources = this.recycler.resources
+            tvLeaf.minimumWidth = resources.getDimension(R.dimen.base_leaf_width).toInt()
             (tvLeaf.layoutParams as LinearLayout.LayoutParams).apply {
                 gravity = Gravity.CENTER
                 height = ViewGroup.LayoutParams.MATCH_PARENT
-                width = 128
-                weight = 1F
+                width = 0
+                this.weight = weight.toFloat()
+            }
+            (tvLeaf.layoutParams as ViewGroup.MarginLayoutParams).apply {
+                val margin = resources.getDimension(R.dimen.line_padding)
+                marginEnd = margin.toInt()
+                marginStart = 0
+
             }
 
             if (tree.is_event()) {
@@ -150,10 +185,11 @@ class BeatCellAdapter(var recycler: BeatColumnAdapter.BeatCellRecycler): Recycle
             }
             this.apply_cursor_focus(tvLeaf, position)
         } else {
+            val new_weight = weight / tree.size
             for (i in 0 until tree.size) {
                 val new_node = PositionNode(i)
                 new_node.previous = position_node
-                this.buildTreeView(parent, beat_key, new_node)
+                this.buildTreeView(parent, beat_key, new_node, new_weight)
             }
         }
     }
@@ -308,32 +344,62 @@ class BeatCellAdapter(var recycler: BeatColumnAdapter.BeatCellRecycler): Recycle
         }
     }
 
+    fun apply_to_visible_cells(callback: (BCViewHolder) -> Unit) {
+        // TODO: May not apply to visible ONLY
+        for (i in 0 until this.itemCount) {
+            val viewHolder = this.recycler.findViewHolderForAdapterPosition(i) ?: continue
+            callback(viewHolder as BCViewHolder)
+        }
+    }
+
+    fun resize_all() {
+        if (this.resize_lock || this.cell_width_map.isEmpty()) {
+            return
+        }
+
+        var new_width = 1
+        val opus_manager = this.get_opus_manager()
+        val x = this.get_beat()
+        this.channel_size_map.forEachIndexed {i: Int, line_count: Int ->
+            for (j in 0 until line_count) {
+                val tree = opus_manager.get_beat_tree(BeatKey(i, j, x))
+                new_width = max(tree.get_max_child_weight(), new_width)
+            }
+        }
+
+        this.apply_to_visible_cells {
+            this.resize(it, new_width)
+        }
+
+    }
+
     private fun resize(holder: BCViewHolder, new_width: Int) {
+        val beat = this.get_beat()
         val opus_manager = this.get_opus_manager()
 
-        var working_view = holder.itemView
-        val (channel, line_offset) = opus_manager.get_std_offset(holder.bindingAdapterPosition)
-        val y = opus_manager.get_abs_offset(channel, line_offset)
-        working_view = (working_view as ViewGroup).getChildAt(y)
+        val (channel, line_offset) = this.get_std_offset(holder.bindingAdapterPosition)
+        val beat_wrapper = (holder.itemView as ViewGroup).getChildAt(0)
 
-        val beat = this.get_beat()
         val beat_key = BeatKey(channel, line_offset, beat)
         val resources = this.get_main_activity().resources
-        val param = working_view.layoutParams as ViewGroup.MarginLayoutParams
+        var param = beat_wrapper.layoutParams as ViewGroup.MarginLayoutParams
         param.width = (new_width.toFloat() * resources.getDimension(R.dimen.base_leaf_width)).toInt()
+
         val beat_tree = opus_manager.get_beat_tree(beat_key)
-        for (i in 0 until (working_view as ViewGroup).childCount) {
-            val leaf_button = working_view.getChildAt(i) as LeafButton
+        for (i in 0 until (beat_wrapper as ViewGroup).childCount) {
+            val leaf_button = beat_wrapper.getChildAt(i) as LeafButton
             val position = leaf_button.position_node.to_list()
             var working_tree = beat_tree
             var leaf_width = new_width
 
-            for (x in position) {
-                leaf_width /= working_tree.size
-                working_tree = working_tree[x]
+            if (position.isNotEmpty()) {
+                for (x in position.subList(0, position.size - 1)) {
+                    leaf_width /= working_tree.size
+                    working_tree = working_tree[x]
+                }
             }
 
-            val param = leaf_button.layoutParams as ViewGroup.MarginLayoutParams
+            param = leaf_button.layoutParams as ViewGroup.MarginLayoutParams
             val margin = resources.getDimension(R.dimen.line_padding)
 
             param.marginEnd = margin.toInt()
@@ -342,11 +408,62 @@ class BeatCellAdapter(var recycler: BeatColumnAdapter.BeatCellRecycler): Recycle
         }
     }
 
-    fun remove_line(y: Int) {
+    fun remove_line(channel: Int, line_offset: Int) {
+        val y = this.get_abs_offset(channel, line_offset)
+        this.channel_size_map[channel] -= 1
+        if (this.channel_size_map[channel] == 0) {
+            this.channel_size_map.remove(channel)
+        }
+        this.cell_width_map.remove(y)
         this.notifyItemRemoved(y)
     }
 
-    fun insert_line(y: Int) {
+    fun insert_line(channel: Int, line_offset: Int) {
+        while (this.channel_size_map.size <= channel) {
+            this.channel_size_map.add(0)
+        }
+
+        while (this.channel_size_map[channel] <= line_offset) {
+            this.channel_size_map[channel] += 1
+        }
+
+        val opus_manager = this.get_opus_manager()
+        val tree = opus_manager.get_beat_tree(BeatKey(channel, line_offset, this.get_beat()))
+        val width = tree.get_max_child_weight()
+
+        val y = this.get_abs_offset(channel, line_offset)
+
+        while (this.cell_width_map.size <= y) {
+            this.cell_width_map.add(0)
+        }
+        this.cell_width_map.add(y, width)
+
         this.notifyItemInserted(y)
+    }
+
+    fun get_abs_offset(channel: Int, line_offset: Int): Int {
+        var output = 0
+        this.channel_size_map.forEachIndexed { c: Int, line_count: Int ->
+            if (c < channel) {
+                output += line_count
+            } else if (c == channel) {
+                output += line_offset
+                return@forEachIndexed
+            } else {
+                output += 1
+                return@forEachIndexed
+            }
+        }
+        return output
+    }
+
+    fun get_std_offset(y: Int): Pair<Int, Int> {
+        var counter = 0
+        var channel = 0
+        while (this.channel_size_map.size > channel && y > counter + this.channel_size_map[channel]) {
+            counter += this.channel_size_map[channel]
+            channel += 1
+        }
+        return Pair(channel, y - counter)
     }
 }

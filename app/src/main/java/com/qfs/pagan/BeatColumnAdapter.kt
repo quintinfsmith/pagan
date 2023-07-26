@@ -1,13 +1,16 @@
 package com.qfs.pagan
 
 import android.content.Context
+import android.util.Log
 import android.view.*
 import androidx.core.view.children
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.pagan.opusmanager.BeatKey
+import com.qfs.pagan.opusmanager.OpusChannel
 import java.lang.Integer.max
 import java.lang.Integer.min
+import kotlin.concurrent.thread
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
 class BeatColumnAdapter(var parent_fragment: EditorFragment, var recycler: RecyclerView, var column_label_layout: ColumnLabelAdapter) : RecyclerView.Adapter<BeatColumnAdapter.ColumnViewHolder>() {
@@ -92,8 +95,6 @@ class BeatColumnAdapter(var parent_fragment: EditorFragment, var recycler: Recyc
                         // TODO: Limit to visible and needing change
                         val adapter = (viewHolder.itemView as BeatCellRecycler)!!.adapter!!
                         adapter.notifyItemRangeChanged(0, adapter.itemCount)
-
-                        that.column_label_layout.notifyItemChanged(i)
                     }
                 }
                 override fun onItemRangeInserted(start: Int, count: Int) {
@@ -112,40 +113,25 @@ class BeatColumnAdapter(var parent_fragment: EditorFragment, var recycler: Recyc
         this.enableScrollSync()
     }
 
-    //private fun adjust_beat_width(holder: BCViewHolder) {
-    //    val opus_manager = this.get_opus_manager()
-    //    // resize Columns
-    //    var max_width = 0
-    //    val beat = this.get_beat()
-    //    for (channel in 0 until opus_manager.channels.size) {
-    //        for (line_offset in 0 until opus_manager.channels[channel].size) {
-    //            val tree = opus_manager.get_beat_tree(BeatKey(channel, line_offset, beat))
-    //            val size = max(1, tree.size) * tree.get_max_child_weight()
-    //            max_width = max(max_width, size)
-    //        }
-    //    }
-
-    //    for (channel in 0 until opus_manager.channels.size) {
-    //        for (line_offset in 0 until opus_manager.channels[channel].size) {
-    //            this.__tick_resize_beat_cell(holder, channel, line_offset, beat, max_width)
-    //        }
-    //    }
-    //}
-
     override fun onViewAttachedToWindow(holder: ColumnViewHolder) {
         val item_view = holder.itemView as BeatCellRecycler
         val beat_index = holder.bindingAdapterPosition
 
         // Redraw Items that were detached but not destroyed
         if (item_view.update_queued) {
-            //this.updateItem(holder, beat_index)
             item_view.update_queued = false
         }
     }
 
     override fun onBindViewHolder(holder: ColumnViewHolder, position: Int) {
         // TODO: Limit to visible
-        (holder.itemView as BeatCellRecycler).adapter!!.notifyItemRangeChanged(0, this.get_opus_manager().get_channel_line_counts().sum())
+        val adapter = ((holder.itemView as BeatCellRecycler).adapter ?: return) as BeatCellAdapter
+        val opus_manager = this.get_opus_manager()
+        opus_manager.channels.forEachIndexed { i: Int, channel: OpusChannel ->
+            for (j in 0 until channel.size) {
+                adapter.insert_line(i, j)
+            }
+        }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ColumnViewHolder {
@@ -170,25 +156,23 @@ class BeatColumnAdapter(var parent_fragment: EditorFragment, var recycler: Recyc
     }
 
     private fun apply_to_visible_columns(callback: (adapter: BeatCellAdapter) -> Unit) {
-        val first = (this.recycler.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
-        val last = (this.recycler.layoutManager as LinearLayoutManager).findLastVisibleItemPosition()
-        for (i in max(0, first - 5) .. min(last + 5, this.get_opus_manager().opus_beat_count - 1)) {
+        for (i in 0 until this.itemCount) {
             val viewHolder = this.recycler.findViewHolderForAdapterPosition(i) ?: continue
-            var column_recycler = (viewHolder.itemView as BeatCellRecycler)
-            var adapter = column_recycler.adapter!! as BeatCellAdapter
+            val column_recycler = (viewHolder.itemView as BeatCellRecycler)
+            val adapter = column_recycler.adapter!! as BeatCellAdapter
             callback(adapter)
         }
     }
 
-    fun remove_line(y: Int) {
+    fun remove_line(channel: Int, line_offset: Int) {
         this.apply_to_visible_columns {
-            it.remove_line(y)
+            it.remove_line(channel, line_offset)
         }
     }
 
-    fun insert_line(y: Int) {
+    fun insert_line(channel: Int, line_offset: Int) {
         this.apply_to_visible_columns {
-            it.insert_line(y)
+            it.insert_line(channel, line_offset)
         }
     }
 
@@ -201,12 +185,16 @@ class BeatColumnAdapter(var parent_fragment: EditorFragment, var recycler: Recyc
     }
 
     fun get_leaf_view(beat_key: BeatKey, position: List<Int>): LeafButton? {
+        val opus_manager = this.get_opus_manager()
+        val y = opus_manager.get_abs_offset(beat_key.channel, beat_key.line_offset)
         // Get the full-beat view
         val column_view_holder = this.recycler.findViewHolderForAdapterPosition(beat_key.beat) ?: return null
-        var working_view = column_view_holder.itemView as ViewGroup
-        working_view = working_view.getChildAt(0) as ViewGroup
-        for (i in 0 until working_view.childCount) {
-            val leaf_button = working_view.getChildAt(i) as LeafButton
+        val column_recycler = (column_view_holder.itemView as BeatCellRecycler)
+
+        // Get the beat-cell view
+        val beat_cell_holder = column_recycler.findViewHolderForAdapterPosition(y) ?: return null
+        for (leaf_wrapper in (beat_cell_holder.itemView as ViewGroup).children) {
+            val leaf_button = (leaf_wrapper as ViewGroup).getChildAt(0) as LeafButton
             if (leaf_button.position_node.to_list() == position) {
                 return leaf_button
             }
@@ -232,17 +220,17 @@ class BeatColumnAdapter(var parent_fragment: EditorFragment, var recycler: Recyc
         val column_view_holder = this.recycler.findViewHolderForAdapterPosition(x) ?: return null
         val target_position = position ?: listOf()
         var column_recycler = (column_view_holder.itemView as BeatCellRecycler)
-        var beat_cell_adapter = column_recycler.adapter
 
         // Get the beat-cell view
         var beat_cell_holder = column_recycler.findViewHolderForAdapterPosition(y) ?: return null
         val output = mutableListOf<LeafButton>()
-        for (leaf_wrapper in (beat_cell_holder.itemView as ViewGroup).children) {
-            val leaf_button = (leaf_wrapper as ViewGroup).getChildAt(0) as LeafButton
-            val test_position = leaf_button.position_node.to_list()
+        val beat_wrapper = (beat_cell_holder.itemView as ViewGroup).getChildAt(0)
+        for (leaf_view in (beat_wrapper as ViewGroup).children) {
+
+            val test_position = (leaf_view as LeafButton).position_node.to_list()
 
             if (target_position.size <= test_position.size && test_position.subList(0, target_position.size) == target_position) {
-                output.add(leaf_button)
+                output.add(leaf_view)
             }
         }
         return output
@@ -331,12 +319,12 @@ class BeatColumnAdapter(var parent_fragment: EditorFragment, var recycler: Recyc
             Cursor.CursorMode.Single -> {
                 val start = (this.recycler.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
                 val end = (this.recycler.layoutManager as LinearLayoutManager).findLastVisibleItemPosition()
-                val beatkey = opus_manager.cursor.get_beatkey()
-                for (linkedkey in opus_manager.get_all_linked(beatkey)) {
-                    if (!(start .. end).contains(linkedkey.beat)) {
+                val beat_key = opus_manager.cursor.get_beatkey()
+                for (linked_key in opus_manager.get_all_linked(beat_key)) {
+                    if (!(start .. end).contains(linked_key.beat)) {
                         continue
                     }
-                    for (leaf in this.get_all_leaf_views(linkedkey, opus_manager.cursor.get_position()) ?: continue) {
+                    for (leaf in this.get_all_leaf_views(linked_key, opus_manager.cursor.get_position()) ?: continue) {
                         output.add(leaf)
                     }
                 }

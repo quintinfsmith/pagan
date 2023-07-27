@@ -68,7 +68,7 @@ class BeatCellAdapter(var recycler: BeatColumnAdapter.BeatCellRecycler): Recycle
     }
 
     fun get_beat(): Int {
-        return this.recycler.viewHolder!!.absoluteAdapterPosition
+        return this.recycler.get_position()
     }
 
     override fun onCreateViewHolder(
@@ -87,20 +87,27 @@ class BeatCellAdapter(var recycler: BeatColumnAdapter.BeatCellRecycler): Recycle
         val beat_index = holder.bindingAdapterPosition
         item_view.layoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT
 
+        this.populate_item(holder, beat_index)
         // Redraw Items that were detached but not destroyed
         if (item_view.update_queued) {
-            //this.updateItem(holder, beat_index)
             item_view.update_queued = false
         }
     }
 
     override fun onBindViewHolder(holder: BCViewHolder, position: Int) {
-        (holder.itemView as ViewGroup).removeAllViews()
+        if (holder.itemView != null) {
+            this.populate_item(holder, position)
+        }
+    }
+
+    private fun populate_item(holder: BCViewHolder, position: Int) {
+        val item_view = holder.itemView
+        (item_view as ViewGroup).removeAllViews()
 
         val opus_manager = this.get_opus_manager()
         val (channel, line_offset) = opus_manager.get_std_offset(position)
         val beat_key = BeatKey(channel, line_offset, this.get_beat())
-        val beat_wrapper: LinearLayout = LayoutInflater.from(holder.itemView.context).inflate(
+        val beat_wrapper: LinearLayout = LayoutInflater.from(item_view.context).inflate(
             R.layout.beat_node,
             holder.itemView as ViewGroup,
             false
@@ -111,7 +118,7 @@ class BeatCellAdapter(var recycler: BeatColumnAdapter.BeatCellRecycler): Recycle
         val weight = beat_tree.size * beat_tree.get_max_child_weight()
         val resources = this.recycler.resources
         beat_wrapper.minimumWidth = ((weight * resources.getDimension(R.dimen.base_leaf_width)) + ((weight - 1) * 2 * resources.getDimension(R.dimen.line_padding))).toInt()
-        (holder.itemView as ViewGroup).addView(beat_wrapper)
+        (item_view as ViewGroup).addView(beat_wrapper)
 
         this.buildTreeTopView(
             beat_wrapper,
@@ -231,7 +238,6 @@ class BeatCellAdapter(var recycler: BeatColumnAdapter.BeatCellRecycler): Recycle
 
     private fun interact_leafView_click(leaf_button: LeafButton) {
         val (beatkey, position) = this.get_view_position(leaf_button)
-
         val opus_manager = this.get_opus_manager()
         val beat_column_adapter = this.get_beat_column_adapter()
         if (beat_column_adapter.is_linking()) {

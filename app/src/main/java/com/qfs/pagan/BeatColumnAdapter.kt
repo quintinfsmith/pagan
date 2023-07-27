@@ -26,6 +26,9 @@ class BeatColumnAdapter(var parent_fragment: EditorFragment, var recycler: Recyc
             this.adapter = BeatCellAdapter(this)
             this.layoutManager = BCLayoutManager(this.context)
         }
+        fun get_position(): Int {
+            return this.viewHolder!!.bindingAdapterPosition
+        }
 
         override fun onDetachedFromWindow() {
             this.update_queued = true
@@ -119,14 +122,19 @@ class BeatColumnAdapter(var parent_fragment: EditorFragment, var recycler: Recyc
 
         // Redraw Items that were detached but not destroyed
         if (item_view.update_queued) {
+            val opus_manager = this.get_opus_manager()
+            var total_lines = opus_manager.get_total_line_count()
+            val adapter = ((holder.itemView as BeatCellRecycler).adapter ?: return) as BeatCellAdapter
+            if (adapter.itemCount == total_lines) {
+                adapter.notifyItemRangeChanged(0, total_lines)
+            }
             item_view.update_queued = false
         }
     }
 
     override fun onBindViewHolder(holder: ColumnViewHolder, position: Int) {
-        // TODO: Limit to visible
-        val adapter = ((holder.itemView as BeatCellRecycler).adapter ?: return) as BeatCellAdapter
         val opus_manager = this.get_opus_manager()
+        val adapter = ((holder.itemView as BeatCellRecycler).adapter ?: return) as BeatCellAdapter
         opus_manager.channels.forEachIndexed { i: Int, channel: OpusChannel ->
             for (j in 0 until channel.size) {
                 adapter.insert_line(i, j)

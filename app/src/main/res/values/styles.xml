@@ -50,13 +50,20 @@
         <item name="android:background">@null</item>
     </style>
 
-    <style name="leaf" parent="@android:style/Widget.Button">
+    <style name="leaf">
+        <item name="android:gravity">center_vertical|center_horizontal</item>
+        <item name="android:paddingEnd">@dimen/line_padding</item>
+        <item name="android:paddingStart">@dimen/line_padding</item>
+        <item name="android:textColor">@color/leaf_fg</item>
+        <item name="android:background">@null</item>
+    </style>
+    <style name="leaf_inner" parent="@android:style/Widget.Button">
         <item name="android:gravity">center_vertical|center_horizontal</item>
         <item name="android:textColor">@color/leaf_fg</item>
-        <item name="android:background">@color/leaf_bg</item>
         <item name="android:clickable">true</item>
-        <item name="android:maxLines">1</item>
+        <item name="android:background">@color/leaf_bg</item>
     </style>
+
     <style name="leaf_prefix" parent="@android:style/Widget.TextView">
         <item name="android:gravity">center_vertical|center_horizontal</item>
         <item name="android:textSize">20sp</item>
@@ -68,6 +75,7 @@
     </style>
 
     <style name="leaf_value" parent="@android:style/Widget.TextView">
+        <item name="android:textColor">@color/leaf_fg</item>
         <item name="android:gravity">center_vertical|center_horizontal</item>
         <item name="android:background">@null</item>
         <item name="android:textSize">16sp</item>
@@ -173,7 +181,7 @@
 
     <style name="column_label_outer">
         <item name="android:paddingEnd">@dimen/line_padding</item>
-        <item name="android:paddingStart">0dp</item>
+        <item name="android:paddingStart">@dimen/line_padding</item>
         <item name="android:paddingBottom">@dimen/normal_padding</item>
         <item name="android:gravity">center</item>
         <item name="android:background">?attr/table_lines</item>

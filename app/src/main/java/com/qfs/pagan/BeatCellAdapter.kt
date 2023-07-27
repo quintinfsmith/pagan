@@ -110,7 +110,7 @@ class BeatCellAdapter(var recycler: BeatColumnAdapter.BeatCellRecycler): Recycle
         val beat_tree = opus_manager.get_beat_tree(beat_key)
         val weight = beat_tree.size * beat_tree.get_max_child_weight()
         val resources = this.recycler.resources
-        beat_wrapper.minimumWidth = ((weight * resources.getDimension(R.dimen.base_leaf_width)) + ((weight - 1) * resources.getDimension(R.dimen.normal_padding))).toInt()
+        beat_wrapper.minimumWidth = ((weight * resources.getDimension(R.dimen.base_leaf_width)) + ((weight - 1) * 2 * resources.getDimension(R.dimen.line_padding))).toInt()
         (holder.itemView as ViewGroup).addView(beat_wrapper)
 
         this.buildTreeTopView(
@@ -176,11 +176,11 @@ class BeatCellAdapter(var recycler: BeatColumnAdapter.BeatCellRecycler): Recycle
                 width = 0
                 this.weight = weight.toFloat()
             }
+
             (tvLeaf.layoutParams as ViewGroup.MarginLayoutParams).apply {
                 val margin = resources.getDimension(R.dimen.line_padding)
-                marginEnd = margin.toInt()
-                marginStart = 0
-
+                //marginEnd = margin.toInt()
+                //marginStart = margin.toInt()
             }
 
             if (tree.is_event()) {

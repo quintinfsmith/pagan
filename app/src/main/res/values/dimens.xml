@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <dimen name="normal_padding">1dp</dimen>
-    <dimen name="line_padding">2dp</dimen>
+    <dimen name="line_padding">1dp</dimen>
     <dimen name="padding_config">5dp</dimen>
     <dimen name="icon_size">42dp</dimen>
     <dimen name="relative_option_width">35dp</dimen>

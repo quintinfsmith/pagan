@@ -5,7 +5,9 @@ import android.view.GestureDetector
 import android.view.Gravity.CENTER
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.view.ContextThemeWrapper
@@ -21,6 +23,14 @@ class LeafButton(
 ) : LinearLayout(ContextThemeWrapper(context, R.style.leaf)) {
 
     // LeafText exists to make the text consider the state of the LeafButton
+    class InnerWrapper(context: Context): LinearLayout(context) {
+        override fun onCreateDrawableState(extraSpace: Int): IntArray? {
+            val drawableState = super.onCreateDrawableState(extraSpace + 4)
+            val parent = this.parent ?: return drawableState
+            return (parent as LeafButton).build_drawable_state(drawableState)
+        }
+    }
+
     class LeafText(context: Context): androidx.appcompat.widget.AppCompatTextView(context) {
         override fun onCreateDrawableState(extraSpace: Int): IntArray? {
             val drawableState = super.onCreateDrawableState(extraSpace + 4)
@@ -28,21 +38,8 @@ class LeafButton(
             while (parent !is LeafButton) {
                 parent = parent.parent
             }
-            if (parent.state_active) {
-                mergeDrawableStates(drawableState, parent.STATE_ACTIVE)
-            }
-            if (parent.state_linked) {
-                mergeDrawableStates(drawableState, parent.STATE_LINKED)
-            }
-            if (parent.state_focused) {
-                mergeDrawableStates(drawableState, parent.STATE_FOCUSED)
-            }
-            if (parent.state_invalid) {
-                mergeDrawableStates(drawableState, parent.STATE_INVALID)
-            }
-            return drawableState
+            return (parent as LeafButton).build_drawable_state(drawableState)
         }
-
     }
 
     private val STATE_LINKED = intArrayOf(R.attr.state_linked)
@@ -58,19 +55,27 @@ class LeafButton(
     private var value_label_octave: TextView
     private var value_label_offset: TextView
     private var prefix_label: TextView
+    private var inner_wrapper: InnerWrapper = InnerWrapper(ContextThemeWrapper(this.context, R.style.leaf_inner))
 
     init {
-        this.orientation = VERTICAL
+        this.inner_wrapper.orientation = VERTICAL
         this.value_wrapper = LinearLayout(ContextThemeWrapper(this.context, R.style.leaf_value))
         this.value_wrapper.orientation = HORIZONTAL
 
         this.value_label_octave = LeafText(ContextThemeWrapper(this.context, R.style.leaf_value_octave))
         this.value_label_offset = LeafText(ContextThemeWrapper(this.context, R.style.leaf_value_offset))
         this.prefix_label = LeafText(ContextThemeWrapper(this.context, R.style.leaf_prefix))
-        this.addView(this.prefix_label)
-        this.addView(this.value_wrapper)
+        (this.inner_wrapper as LinearLayout).addView(this.prefix_label)
+        (this.inner_wrapper as LinearLayout).addView(this.value_wrapper)
         this.value_wrapper.addView(this.value_label_octave)
         this.value_wrapper.addView(this.value_label_offset)
+
+        this.addView(this.inner_wrapper)
+        this.inner_wrapper.layoutParams.apply {
+            width = MATCH_PARENT
+            height = MATCH_PARENT
+        }
+
         if (event != null) {
             this.set_active(true)
         } else {
@@ -158,8 +163,7 @@ class LeafButton(
         this.layoutParams.height = line_height.toInt()
     }
 
-    override fun onCreateDrawableState(extraSpace: Int): IntArray? {
-        val drawableState = super.onCreateDrawableState(extraSpace + 4)
+    fun build_drawable_state(drawableState: IntArray?): IntArray? {
         if (this.state_active) {
             mergeDrawableStates(drawableState, STATE_ACTIVE)
         }
@@ -175,35 +179,36 @@ class LeafButton(
         return drawableState
     }
 
-    private fun set_active(value: Boolean) {
-        this.state_active = value
+    override fun onCreateDrawableState(extraSpace: Int): IntArray? {
+        val drawableState = super.onCreateDrawableState(extraSpace + 4)
+        return this.build_drawable_state(drawableState)
+    }
+
+    override fun refreshDrawableState() {
         this.value_label_octave.refreshDrawableState()
         this.value_label_offset.refreshDrawableState()
         this.prefix_label.refreshDrawableState()
-        refreshDrawableState()
+        this.inner_wrapper.refreshDrawableState()
+        super.refreshDrawableState()
+    }
+
+    private fun set_active(value: Boolean) {
+        this.state_active = value
+        this.refreshDrawableState()
     }
 
     fun set_linked(value: Boolean) {
         this.state_linked = value
-        this.value_label_octave.refreshDrawableState()
-        this.value_label_offset.refreshDrawableState()
-        this.prefix_label.refreshDrawableState()
-        refreshDrawableState()
+        this.refreshDrawableState()
     }
 
     fun set_focused(value: Boolean) {
         this.state_focused = value
-        this.value_label_octave.refreshDrawableState()
-        this.value_label_offset.refreshDrawableState()
-        this.prefix_label.refreshDrawableState()
-        refreshDrawableState()
+        this.refreshDrawableState()
     }
 
     fun set_invalid(value: Boolean) {
         this.state_invalid = value
-        this.value_label_octave.refreshDrawableState()
-        this.value_label_offset.refreshDrawableState()
-        this.prefix_label.refreshDrawableState()
-        refreshDrawableState()
+        this.refreshDrawableState()
     }
 }

@@ -1,5 +1,4 @@
 package com.qfs.pagan
-import android.util.Log
 import android.view.View
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -16,8 +15,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     var cursor = Cursor()
     private var queued_location_stamp: Pair<BeatKey, List<Int>?>? = null
     var first_load_done = false
-    var ui_lines_to_remove = mutableListOf<Pair<Int, Int>>()
-    var ui_lines_to_add = mutableListOf<Pair<Int, Int>>()
 
     private fun simple_ui_locked(): Boolean {
         return this.simple_ui_lock != 0
@@ -131,27 +128,23 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
     override fun new_line(channel: Int, line_offset: Int?): OpusChannel.OpusLine {
         val output = super.new_line(channel, line_offset)
-
-        this.ui_add_line_label()
-        this.ui_add_line(channel, line_offset ?: this.channels[channel].size)
-        //this.ui_notify_visible_changes()
+        val abs_offset = this.get_abs_offset(
+            channel,
+            line_offset ?: this.channels.last().size
+        )
+        this.get_column_recycler_adapter().notifyItemInserted(abs_offset)
         return output
     }
 
     override fun insert_line(channel: Int, line_offset: Int, line: OpusChannel.OpusLine) {
-        this.ui_unset_cursor_focus()
         super.insert_line(channel, line_offset, line)
-        this.ui_add_line_label()
-        this.ui_notify_visible_changes()
-        this.ui_set_cursor_focus()
+        val abs_offset = this.get_abs_offset( channel, line_offset )
+        this.get_column_recycler_adapter().notifyItemInserted(abs_offset)
     }
 
     override fun move_line(channel_old: Int, line_old: Int, channel_new: Int, line_new: Int) {
         try {
-            this.surpress_ui {
-                super.move_line(channel_old, line_old, channel_new, line_new)
-            }
-            this.ui_notify_visible_changes()
+            super.move_line(channel_old, line_old, channel_new, line_new)
 
             this.cursor_select_row(
                 channel_new,
@@ -172,21 +165,25 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         }
     }
 
-    override fun remove_line(channel: Int, line_offset: Int): OpusChannel.OpusLine {
+    fun get_column_recycler(): ColumnRecycler {
+        return this.activity.findViewById<RecyclerView>(R.id.rvTable) as ColumnRecycler
+    }
 
-        this.ui_unset_cursor_focus()
-        this.ui_remove_line_label(channel, line_offset)
-        this.ui_remove_line(channel, line_offset)
+    fun get_column_recycler_adapter(): ColumnRecyclerAdapter {
+        return this.get_column_recycler().adapter as ColumnRecyclerAdapter
+    }
+
+    override fun remove_line(channel: Int, line_offset: Int): OpusChannel.OpusLine {
+        val abs_line = this.get_abs_offset(channel, line_offset)
 
         val output = try {
             super.remove_line(channel, line_offset)
         } catch (e: OpusChannel.LastLineException) {
             this.ui_add_line_label()
-            //this.ui_notify_visible_changes()
             this.ui_set_cursor_focus()
-
             throw e
         }
+
 
         val cursor = this.cursor
         if (cursor.line_offset != 0 && cursor.line_offset == this.channels[cursor.channel].size) {
@@ -202,8 +199,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             }
         }
 
-        this.ui_notify_visible_changes()
-        this.ui_set_cursor_focus()
+        this.get_column_recycler_adapter().notifyItemRemoved(abs_line)
         this.activity.update_channel_instruments()
 
         return output
@@ -220,7 +216,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         for (i in 0 until lines) {
             this.ui_add_line_label()
         }
-        this.ui_notify_visible_changes()
+
         val rvActiveChannels: RecyclerView = this.activity.findViewById(R.id.rvActiveChannels)
         this.activity.update_channel_instruments(notify_index)
 
@@ -260,10 +256,8 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         this.activity.setup_config_drawer()
         this.activity.cancel_reticle()
 
-        val rvBeatTable = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
-        rvBeatTable.scrollToPosition(0)
-        val rvColumnLabels = this.activity.findViewById<RecyclerView>(R.id.rvColumnLabels)
-        rvColumnLabels.scrollToPosition(0)
+        this.get_column_recycler_adapter().notifyItemRangeChanged(0, this.opus_beat_count)
+        this.get_column_recycler().scrollToPosition(0)
 
         this.activity.update_channel_instruments()
         this.withFragment {
@@ -287,10 +281,8 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
         this.activity.cancel_reticle()
 
-        val rvBeatTable = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
-        rvBeatTable.scrollToPosition(0)
-        val rvColumnLabels = this.activity.findViewById<RecyclerView>(R.id.rvColumnLabels)
-        rvColumnLabels.scrollToPosition(0)
+        this.get_column_recycler_adapter().notifyItemRangeChanged(0, this.opus_beat_count)
+        this.get_column_recycler().scrollToPosition(0)
 
         this.activity.update_channel_instruments()
         this.withFragment {
@@ -313,10 +305,9 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         this.activity.setup_config_drawer()
         this.activity.cancel_reticle()
 
-        val rvBeatTable = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
-        rvBeatTable.scrollToPosition(0)
-        val rvColumnLabels = this.activity.findViewById<RecyclerView>(R.id.rvColumnLabels)
-        rvColumnLabels.scrollToPosition(0)
+        this.get_column_recycler_adapter().notifyItemRangeChanged(0, this.opus_beat_count)
+        this.get_column_recycler().scrollToPosition(0)
+
         this.activity.update_channel_instruments()
 
         this.withFragment {
@@ -339,10 +330,8 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         this.activity.setup_config_drawer()
         this.activity.cancel_reticle()
 
-        val rvBeatTable = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
-        rvBeatTable.scrollToPosition(0)
-        val rvColumnLabels = this.activity.findViewById<RecyclerView>(R.id.rvColumnLabels)
-        rvColumnLabels.scrollToPosition(0)
+        this.get_column_recycler_adapter().notifyItemRangeChanged(0, this.opus_beat_count)
+        this.get_column_recycler().scrollToPosition(0)
 
         this.activity.update_channel_instruments()
         this.withFragment {
@@ -362,34 +351,23 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         if (rvActiveChannels.adapter != null) {
             val rvActiveChannels_adapter = rvActiveChannels.adapter as ChannelOptionAdapter
             rvActiveChannels_adapter.notifyItemRemoved(channel)
-
-            this.ui_notify_visible_changes()
         }
     }
 
     override fun clear() {
         val channel_counts = this.get_channel_line_counts()
-        val beat_count = this.opus_beat_count
+        val original_beat_count = this.opus_beat_count
 
-        val rvActiveChannels: RecyclerView = this.activity.findViewById(R.id.rvActiveChannels)
         super.clear()
         this.cursor.clear()
 
-        val rvLineLabels = this.activity.findViewById<RecyclerView>(R.id.rvLineLabels)
-        val rvLineLabels_adapter = rvLineLabels.adapter as LineLabelRecyclerView.LineLabelAdapter
-        val beat_table = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
-        val rvBeatTable_adapter = beat_table.adapter as BeatColumnAdapter
+        val rvTable_adapter = this.get_column_recycler_adapter()
+        rvTable_adapter.notifyItemRangeRemoved(this.opus_beat_count, original_beat_count)
+        rvTable_adapter.notifyItemRangeChanged(0, this.opus_beat_count)
 
-        var channel_offset = 0
+        val rvActiveChannels: RecyclerView = this.activity.findViewById(R.id.rvActiveChannels)
         channel_counts.forEachIndexed { _: Int, j: Int ->
             rvActiveChannels.adapter?.notifyItemRemoved(0)
-            channel_offset += j
-        }
-        for (i in channel_offset - 1 downTo 0) {
-            rvLineLabels_adapter.removeLineLabel(i)
-        }
-        for (i in beat_count downTo 0) {
-            rvBeatTable_adapter.removeBeatColumn(i)
         }
     }
 
@@ -416,42 +394,20 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     private fun ui_remove_beat(beat: Int) {
-        val beat_table = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
-        val rvBeatTable_adapter = beat_table.adapter as BeatColumnAdapter
-        rvBeatTable_adapter.removeBeatColumn(beat)
+        val beat_table = this.activity.findViewById<RecyclerView>(R.id.rvTable)
+        val rvTable_adapter = beat_table.adapter as BeatColumnAdapter
+        rvTable_adapter.removeBeatColumn(beat)
 
         val rvColumnLabels = this.activity.findViewById<RecyclerView>(R.id.rvColumnLabels)
         (rvColumnLabels.adapter as ColumnLabelAdapter).refresh()
     }
     private fun ui_add_beat(beat: Int) {
-        val beat_table = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
-        val rvBeatTable_adapter = beat_table.adapter as BeatColumnAdapter
-        rvBeatTable_adapter.addBeatColumn(beat)
+        val beat_table = this.activity.findViewById<RecyclerView>(R.id.rvTable)
+        val rvTable_adapter = beat_table.adapter as BeatColumnAdapter
+        rvTable_adapter.addBeatColumn(beat)
 
         //val rvColumnLabels = this.activity.findViewById<RecyclerView>(R.id.rvColumnLabels)
         //(rvColumnLabels.adapter as ColumnLabelAdapter).refresh()
-    }
-
-    private fun ui_notify_visible_changes() {
-        if (this.simple_ui_locked()) {
-            return
-        }
-
-        val beat_table = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
-        val rvBeatTable_adapter = beat_table.adapter as BeatColumnAdapter
-        var first = (beat_table.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
-        var last = (beat_table.layoutManager as LinearLayoutManager).findLastVisibleItemPosition()
-        for (i in max(0, first - 5) .. min(last + 5, this.opus_beat_count - 1)) {
-            rvBeatTable_adapter.notifyItemChanged(i)
-        }
-
-        val line_labels = this.activity.findViewById<RecyclerView>(R.id.rvLineLabels)
-        val rvLineLabel_adapter = line_labels.adapter as LineLabelRecyclerView.LineLabelAdapter
-        first = (line_labels.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
-        last = (line_labels.layoutManager as LinearLayoutManager).findLastVisibleItemPosition()
-        for (i in max(0, first - 5) .. min(last + 5, this.opus_beat_count - 1)) {
-            rvLineLabel_adapter.notifyItemChanged(i)
-        }
     }
 
     private fun ui_add_line_label() {
@@ -461,14 +417,12 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     private fun ui_add_line(channel: Int, line_offset: Int) {
-        val beat_table = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
-        val rvBeatTable_adapter = beat_table.adapter as BeatColumnAdapter
-        rvBeatTable_adapter.insert_line(channel, line_offset)
     }
 
     private fun ui_remove_line_label(channel: Int, line_offset: Int) {
         val rvLineLabels = this.activity.findViewById<RecyclerView>(R.id.rvLineLabels)
         val rvLineLabels_adapter = rvLineLabels.adapter as LineLabelRecyclerView.LineLabelAdapter
+
         rvLineLabels_adapter.removeLineLabel(
             try {
                 this.get_abs_offset(channel, line_offset)
@@ -478,25 +432,19 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         )
     }
 
-    private fun ui_remove_line(channel: Int, line_offset: Int) {
-        val beat_table = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
-        val rvBeatTable_adapter = beat_table.adapter as BeatColumnAdapter
-        rvBeatTable_adapter.remove_line(channel, line_offset)
-    }
-
     private fun ui_refresh_beat_labels(beat_key: BeatKey) {
         if (this.simple_ui_locked()) {
             return
         }
-        val beat_table = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
-        val rvBeatTable_adapter = beat_table.adapter as BeatColumnAdapter
+        val beat_table = this.activity.findViewById<RecyclerView>(R.id.rvTable)
+        val rvTable_adapter = beat_table.adapter as BeatColumnAdapter
         val linked_beats = mutableSetOf<Int>()
         for (linked_key in this.get_all_linked(beat_key)) {
             linked_beats.add(linked_key.beat)
         }
 
         for (beat in linked_beats) {
-            rvBeatTable_adapter.refresh_leaf_labels(beat)
+            rvTable_adapter.refresh_leaf_labels(beat)
         }
     }
 
@@ -530,10 +478,10 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     //    val rvLineLabels_adapter = rvLineLabels.adapter as LineLabelAdapter
     //    val rvActiveChannels: RecyclerView = this.activity.findViewById(R.id.rvActiveChannels)
 
-    //    val beat_table = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
-    //    val rvBeatTable_adapter = beat_table.adapter as BeatColumnAdapter
+    //    val beat_table = this.activity.findViewById<RecyclerView>(R.id.rvTable)
+    //    val rvTable_adapter = beat_table.adapter as BeatColumnAdapter
     //    //for (i in 0 until this.opus_beat_count) {
-    //    //    rvBeatTable_adapter.addBeatColumn(i)
+    //    //    rvTable_adapter.addBeatColumn(i)
     //    //}
 
     //    //this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
@@ -565,10 +513,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             this.surpress_ui {
                 super.apply_undo()
             }
-            tlog("NOTIFY UI") {
-                this.ui_notify_visible_changes()
-            }
-
 
             var need_line_update = true
             if (this.queued_location_stamp != null) {
@@ -819,8 +763,8 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         if (this.simple_ui_locked()) {
             return
         }
-        val rvBeatTable = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
-        val adapter = rvBeatTable.adapter as BeatColumnAdapter
+        val rvTable = this.activity.findViewById<RecyclerView>(R.id.rvTable)
+        val adapter = rvTable.adapter as BeatColumnAdapter
         adapter.set_cursor_focus(false)
 
         val rvLineLabels = this.activity.findViewById<RecyclerView>(R.id.rvLineLabels)
@@ -835,8 +779,8 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         if (this.simple_ui_locked()) {
             return
         }
-        val rvBeatTable = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
-        val adapter = rvBeatTable.adapter as BeatColumnAdapter
+        val rvTable = this.activity.findViewById<RecyclerView>(R.id.rvTable)
+        val adapter = rvTable.adapter as BeatColumnAdapter
         adapter.set_cursor_focus()
 
         val rvLineLabels = this.activity.findViewById<RecyclerView>(R.id.rvLineLabels)
@@ -1013,26 +957,21 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         this.remove( beat_key, position, count )
         this.cursor_select(beat_key, cursor_position)
     }
+
     fun insert_line(count: Int) {
-        this.surpress_ui {
-            this.new_line(
-                this.cursor.channel,
-                this.cursor.line_offset + 1,
-                count
-            )
-        }
-        this.ui_notify_visible_changes()
+        this.new_line(
+            this.cursor.channel,
+            this.cursor.line_offset + 1,
+            count
+        )
     }
 
     fun remove_line(count: Int) {
-        this.surpress_ui {
-            this.remove_line(
-                this.cursor.channel,
-                this.cursor.line_offset,
-                count
-            )
-        }
-        this.ui_notify_visible_changes()
+        this.remove_line(
+            this.cursor.channel,
+            this.cursor.line_offset,
+            count
+        )
     }
 
 
@@ -1041,38 +980,9 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     fun insert_beat_at_cursor(count: Int) {
-        this.insert_beat(
-            this.cursor.beat + 1,
-            count
-        )
+        this.insert_beat(this.cursor.beat + 1, count)
     }
     // End Cursor Functions ////////////////////////////////////////////////////////////////////////
-
-    //fun process_queued_label_updates() {
-    //    val rvLineLabels = this.activity.findViewById<RecyclerView>(R.id.rvLineLabels)
-    //    val rvLineLabels_adapter = rvLineLabels.adapter as LineLabelAdapter
-
-    //    val beat_table = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
-    //    val rvBeatTable_adapter = beat_table.adapter as BeatColumnAdapter
-
-    //    while (ui_label_queue.isNotEmpty()) {
-    //        var (action, index) = ui_label_queue.removeFirst()
-    //        when (action) {
-    //            LabelUpdate.AddColumn -> {
-    //                rvBeatTable_adapter.addBeatColumn(index)
-    //            }
-    //            LabelUpdate.AddLine -> {
-    //                rvLineLabels_adapter.addLineLabel()
-    //            }
-    //            LabelUpdate.PopColumn -> {
-    //                rvBeatTable_adapter.removeBeatColumn(index)
-    //            }
-    //            LabelUpdate.PopLine -> {
-    //                rvLineLabels_adapter.removeLineLabel(index)
-    //            }
-    //        }
-    //    }
-    //}
 
     override fun save(path: String?) {
         super.save(path)
@@ -1084,10 +994,8 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
     override fun link_beats(beat_key: BeatKey, target: BeatKey) {
         super.link_beats(beat_key, target)
-        if (! this.simple_ui_locked()) {
-            this.ui_refresh_beat_labels(beat_key)
-            this.ui_refresh_beat_labels(target)
-        }
+        this.ui_refresh_beat_labels(beat_key)
+        this.ui_refresh_beat_labels(target)
     }
 
     override fun remove_link_pool(index: Int) {
@@ -1101,9 +1009,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     override fun link_beat_range_horizontally(channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey) {
         this.surpress_ui {
             super.link_beat_range_horizontally(channel, line_offset, first_key, second_key)
-        }
-        if (! this.simple_ui_locked()) {
-            this.ui_notify_visible_changes()
         }
     }
 }

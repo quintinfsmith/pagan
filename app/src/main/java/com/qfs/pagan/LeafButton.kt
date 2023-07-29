@@ -58,6 +58,7 @@ class LeafButton(
     private var inner_wrapper: InnerWrapper = InnerWrapper(ContextThemeWrapper(this.context, R.style.leaf_inner))
 
     init {
+        this.minimumWidth = resources.getDimension(R.dimen.base_leaf_width).toInt()
         this.inner_wrapper.orientation = VERTICAL
         this.value_wrapper = LinearLayout(ContextThemeWrapper(this.context, R.style.leaf_value))
         this.value_wrapper.orientation = HORIZONTAL
@@ -164,6 +165,7 @@ class LeafButton(
     }
 
     fun build_drawable_state(drawableState: IntArray?): IntArray? {
+        // TODO: Stop using state_* and just use the opus_manager to check states
         if (this.state_active) {
             mergeDrawableStates(drawableState, STATE_ACTIVE)
         }

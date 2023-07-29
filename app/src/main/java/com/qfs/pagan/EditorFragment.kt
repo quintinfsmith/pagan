@@ -47,15 +47,16 @@ class EditorFragment : PaganFragment() {
     }
 
     override fun onPause() {
-        val rvBeatTable = this.binding.root.findViewById<RecyclerView>(R.id.rvBeatTable)
-        this.table_offset_pause = rvBeatTable.computeHorizontalScrollOffset()
+        val rvTable = this.binding.root.findViewById<RecyclerView>(R.id.rvTable)
+        this.table_offset_pause = rvTable.computeHorizontalScrollOffset()
         super.onPause()
     }
 
 
     override fun onResume() {
-        val rvBeatTable = this.binding.root.findViewById<RecyclerView>(R.id.rvBeatTable)
-        val rvBeatTable_adapter = rvBeatTable.adapter as BeatColumnAdapter
+        val rvTable = this.binding.root.findViewById<RecyclerView>(R.id.rvTable)
+        val rvTable_adapter = rvTable.adapter as BeatColumnAdapter
+
         val rvLineLabels = this.binding.root.findViewById<RecyclerView>(R.id.rvLineLabels)
         val rvLineLabels_adapter = rvLineLabels.adapter as LineLabelRecyclerView.LineLabelAdapter
 
@@ -67,13 +68,15 @@ class EditorFragment : PaganFragment() {
                 }
             }
         }
-        if (rvBeatTable_adapter.itemCount == 0) {
+
+        rvTable_adapter.notifyItemRangeInserted(0, opus_manager.opus_beat_count)
+        if (rvTable_adapter.itemCount == 0) {
             // Kludge AF. Using these 2 threads  is the only way i could get the first item
             // Rendered when hitting back from load
             thread {
                 this.get_main().runOnUiThread {
                     for (i in 0 until opus_manager.opus_beat_count) {
-                        rvBeatTable_adapter.addBeatColumn(i)
+                        rvTable_adapter.addBeatColumn(i)
                     }
                 }
             }
@@ -86,17 +89,27 @@ class EditorFragment : PaganFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val rvBeatTable = view.findViewById<RecyclerView>(R.id.rvBeatTable)
-        val svTable: ScrollView = view.findViewById(R.id.svTable)
+        val rvTable = view.findViewById<RecyclerView>(R.id.rvTable)
         val rvColumnLabels = view.findViewById<RecyclerView>(R.id.rvColumnLabels)
         val rvLineLabels = view.findViewById<RecyclerView>(R.id.rvLineLabels)
 
-        LineLabelRecyclerView.LineLabelAdapter(this.get_main().get_opus_manager(), rvLineLabels, this.get_main())
-        BeatColumnAdapter(this, rvBeatTable, ColumnLabelAdapter(this.get_main().get_opus_manager(), rvColumnLabels, this.get_main()))
+        rvTable.adapter = ColumnRecyclerAdapter(this.get_main())
 
-        svTable.viewTreeObserver.addOnScrollChangedListener {
-            (rvLineLabels.adapter as LineLabelRecyclerView.LineLabelAdapter).scrollToLine(svTable.scrollY)
-        }
+         LineLabelRecyclerView.LineLabelAdapter(
+             this.get_main().get_opus_manager(),
+             rvLineLabels,
+             this.get_main()
+         )
+        //BeatColumnAdapter(
+        //    this,
+        //    rvTable,
+        //    ColumnLabelAdapter(
+        //        opus_manager,
+        //        rvColumnLabels,
+        //        main
+        //    ),
+        //)
+
 
         setFragmentResultListener("LOAD") { _, bundle: Bundle? ->
             if (bundle == null) {
@@ -166,6 +179,8 @@ class EditorFragment : PaganFragment() {
             }
             null -> { }
         }
+        //val rvTable = this.get_main().findViewById<RecyclerView>(R.id.rvTable)
+        //(rvTable.adapter as BeatColumnAdapter).refresh_visible()
     }
 
     fun clearContextMenu() {
@@ -654,8 +669,8 @@ class EditorFragment : PaganFragment() {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
         opus_manager.unlink_beat()
-        val rvBeatTable = main.findViewById<RecyclerView>(R.id.rvBeatTable)
-        (rvBeatTable.adapter as BeatColumnAdapter).cancel_linking()
+        val rvTable = main.findViewById<RecyclerView>(R.id.rvTable)
+        (rvTable.adapter as BeatColumnAdapter).cancel_linking()
     }
 
     private fun interact_btnUnlinkAll() {
@@ -663,15 +678,15 @@ class EditorFragment : PaganFragment() {
         val opus_manager = main.get_opus_manager()
         opus_manager.clear_link_pool()
 
-        val rvBeatTable = main.findViewById<RecyclerView>(R.id.rvBeatTable)
-        (rvBeatTable.adapter as BeatColumnAdapter).cancel_linking()
+        val rvTable = main.findViewById<RecyclerView>(R.id.rvTable)
+        (rvTable.adapter as BeatColumnAdapter).cancel_linking()
     }
 
     private fun interact_btnCancelLink() {
         val main = this.get_main()
 
-        val rvBeatTable = main.findViewById<RecyclerView>(R.id.rvBeatTable)
-        (rvBeatTable.adapter as BeatColumnAdapter).cancel_linking()
+        val rvTable = main.findViewById<RecyclerView>(R.id.rvTable)
+        (rvTable.adapter as BeatColumnAdapter).cancel_linking()
 
         val rvLineLabels = main.findViewById<RecyclerView>(R.id.rvLineLabels)
         (rvLineLabels.adapter as LineLabelRecyclerView.LineLabelAdapter).refresh()
@@ -832,8 +847,8 @@ class EditorFragment : PaganFragment() {
     fun scroll_to_beat(beat: Int, select: Boolean = false) {
         val main = this.get_main()
         main.runOnUiThread {
-            val rvBeatTable = main.findViewById<RecyclerView>(R.id.rvBeatTable)
-            (rvBeatTable.adapter as BeatColumnAdapter).scrollToPosition(beat)
+            val rvTable = main.findViewById<RecyclerView>(R.id.rvTable)
+            (rvTable.adapter as BeatColumnAdapter).scrollToPosition(beat)
         }
 
         if (select) {
@@ -846,9 +861,9 @@ class EditorFragment : PaganFragment() {
     // TODO: Consider Y
     private fun is_leaf_visible(beatkey: BeatKey, position: List<Int>): Boolean {
         val main = this.get_main()
-        val rvBeatTable = main.findViewById<RecyclerView>(R.id.rvBeatTable)
-        val rvBeatTable_adapter = rvBeatTable.adapter as BeatColumnAdapter
-        val tree_view = rvBeatTable_adapter.get_leaf_view(beatkey, position)
+        val rvTable = main.findViewById<RecyclerView>(R.id.rvTable)
+        val rvTable_adapter = rvTable.adapter as BeatColumnAdapter
+        val tree_view = rvTable_adapter.get_leaf_view(beatkey, position)
         return (tree_view != null)
     }
 
@@ -874,8 +889,8 @@ class EditorFragment : PaganFragment() {
             return
         }
         val main = this.get_main()
-        val rvBeatTable = main.findViewById<RecyclerView>(R.id.rvBeatTable)
-        val rvBeatTable_adapter = rvBeatTable.adapter as BeatColumnAdapter
-        rvBeatTable_adapter.scrollToPosition(adj_beatkey, new_position)
+        val rvTable = main.findViewById<RecyclerView>(R.id.rvTable)
+        val rvTable_adapter = rvTable.adapter as BeatColumnAdapter
+        rvTable_adapter.scrollToPosition(adj_beatkey, new_position)
     }
 }

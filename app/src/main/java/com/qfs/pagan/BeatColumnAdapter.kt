@@ -1,8 +1,11 @@
 package com.qfs.pagan
 
 import android.content.Context
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.util.Log
 import android.view.*
+import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import androidx.core.view.children
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -13,7 +16,7 @@ import java.lang.Integer.min
 import kotlin.concurrent.thread
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
-class BeatColumnAdapter(var parent_fragment: EditorFragment, var recycler: RecyclerView, var column_label_layout: ColumnLabelAdapter) : RecyclerView.Adapter<BeatColumnAdapter.ColumnViewHolder>() {
+class BeatColumnAdapter(var parent_fragment: EditorFragment, var recycler: RecyclerView, var column_label_layout: ColumnLabelAdapter, var line_label_layout: LineLabelRecyclerView.LineLabelAdapter) : RecyclerView.Adapter<BeatColumnAdapter.ColumnViewHolder>() {
     class BeatCellRecycler(beat_column_adapter: BeatColumnAdapter): RecyclerView(beat_column_adapter.recycler.context) {
         class BCLayoutManager(context: Context): LinearLayoutManager(context, VERTICAL, false)
         var viewHolder: ColumnViewHolder? = null
@@ -25,6 +28,7 @@ class BeatColumnAdapter(var parent_fragment: EditorFragment, var recycler: Recyc
         init {
             this.adapter = BeatCellAdapter(this)
             this.layoutManager = BCLayoutManager(this.context)
+            this.addOnScrollListener(ColumnVerticalScrollListener(this.adapter!! as BeatCellAdapter))
         }
         fun get_position(): Int {
             return this.viewHolder!!.bindingAdapterPosition
@@ -60,6 +64,30 @@ class BeatColumnAdapter(var parent_fragment: EditorFragment, var recycler: Recyc
         }
     }
 
+    class ColumnVerticalScrollListener(var beat_cell_adapter: BeatCellAdapter): RecyclerView.OnScrollListener() {
+        override fun onScrolled(recyclerView: RecyclerView, x: Int, y: Int) {
+            super.onScrolled(recyclerView, x, y)
+            if (this.beat_cell_adapter.scroll_propagation_locked) {
+                return
+            }
+
+            val main_adapter = this.beat_cell_adapter.get_beat_column_adapter()
+            main_adapter.apply_to_visible_columns {
+                if (this.beat_cell_adapter == it) {
+                    return@apply_to_visible_columns
+                }
+                main_adapter.get_main_activity().runOnUiThread {
+                    it.scroll_propagation_locked = true
+                    it.recycler.scrollBy(x, y)
+                    it.scroll_propagation_locked = false
+                }
+            }
+
+            val line_label_adapter = main_adapter.line_label_layout
+            line_label_adapter.recycler.scrollBy(x, y)
+        }
+    }
+
     class OpusManagerLayoutManager(context: Context): LinearLayoutManager(context, HORIZONTAL, false)
     class ColumnViewHolder(var parent_adapter: BeatColumnAdapter, itemView: BeatCellRecycler) : RecyclerView.ViewHolder(itemView) {
         init {
@@ -79,7 +107,6 @@ class BeatColumnAdapter(var parent_fragment: EditorFragment, var recycler: Recyc
         this.recycler.adapter = this
         this.recycler.layoutManager = OpusManagerLayoutManager(this.recycler.context)
         this.recycler.itemAnimator = null
-
         val that = this
         this.registerAdapterDataObserver(
             object: RecyclerView.AdapterDataObserver() {
@@ -119,31 +146,44 @@ class BeatColumnAdapter(var parent_fragment: EditorFragment, var recycler: Recyc
     override fun onViewAttachedToWindow(holder: ColumnViewHolder) {
         val item_view = holder.itemView as BeatCellRecycler
         val beat_index = holder.bindingAdapterPosition
+        item_view.layoutParams.height = MATCH_PARENT
 
+        val adapter = (item_view.adapter ?: return) as BeatCellAdapter
         // Redraw Items that were detached but not destroyed
         if (item_view.update_queued) {
             val opus_manager = this.get_opus_manager()
-            var total_lines = opus_manager.get_total_line_count()
-            val adapter = ((holder.itemView as BeatCellRecycler).adapter ?: return) as BeatCellAdapter
+            val total_lines = opus_manager.get_total_line_count()
             if (adapter.itemCount == total_lines) {
                 adapter.notifyItemRangeChanged(0, total_lines)
             }
             item_view.update_queued = false
+        }
+
+        if (! adapter.scroll_propagation_locked) {
+            adapter.scroll_propagation_locked = true
+            val position = this.line_label_layout.recycler.computeVerticalScrollOffset()
+            val delta = position - item_view.computeVerticalScrollOffset()
+
+            adapter.recycler.scrollBy(0, delta)
+            adapter.scroll_propagation_locked = false
         }
     }
 
     override fun onBindViewHolder(holder: ColumnViewHolder, position: Int) {
         val opus_manager = this.get_opus_manager()
         val adapter = ((holder.itemView as BeatCellRecycler).adapter ?: return) as BeatCellAdapter
+        adapter.initialize_cell_widths()
         opus_manager.channels.forEachIndexed { i: Int, channel: OpusChannel ->
             for (j in 0 until channel.size) {
-                adapter.insert_line(i, j)
+                adapter.insert_line(i, j, true)
             }
         }
+
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ColumnViewHolder {
-        return ColumnViewHolder(this, BeatCellRecycler(this))
+        var beat_cell_recycler = BeatCellRecycler(this)
+        return ColumnViewHolder(this, beat_cell_recycler)
     }
 
     override fun getItemCount(): Int {
@@ -234,7 +274,6 @@ class BeatColumnAdapter(var parent_fragment: EditorFragment, var recycler: Recyc
         val output = mutableListOf<LeafButton>()
         val beat_wrapper = (beat_cell_holder.itemView as ViewGroup).getChildAt(0)
         for (leaf_view in (beat_wrapper as ViewGroup).children) {
-
             val test_position = (leaf_view as LeafButton).position_node.to_list()
 
             if (target_position.size <= test_position.size && test_position.subList(0, target_position.size) == target_position) {
@@ -408,6 +447,12 @@ class BeatColumnAdapter(var parent_fragment: EditorFragment, var recycler: Recyc
 
     fun is_linking_range(): Boolean {
         return this.linking_beat_b != null
+    }
+
+    fun refresh_visible(){
+        val start = (this.recycler.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
+        val end = (this.recycler.layoutManager as LinearLayoutManager).findLastVisibleItemPosition()
+        this.notifyItemRangeChanged(start, end)
     }
 }
 

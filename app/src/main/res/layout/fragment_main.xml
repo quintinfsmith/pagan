@@ -51,17 +51,13 @@ tools:context=".EditorFragment">
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:id="@+id/rvLineLabels"/>
-        <ScrollView
-            android:id="@+id/svTable"
-            android:layout_weight="1"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/rvBeatTable"/>
-        </ScrollView>
+        <com.qfs.pagan.ColumnRecycler
+            android:id="@+id/rvTable"
+            android:background="#FF0000"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1" />
     </TableRow>
 
     <TableRow>

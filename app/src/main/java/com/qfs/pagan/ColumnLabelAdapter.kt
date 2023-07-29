@@ -131,8 +131,8 @@ class ColumnLabelAdapter(private var opus_manager: InterfaceLayer, var recycler:
             val holder = (it as LabelView).viewHolder ?: return@setOnClickListener
             val beat = holder.bindingAdapterPosition
 
-            val rvBeatTable = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
-            val adapter = rvBeatTable.adapter as BeatColumnAdapter
+            val rvTable = this.activity.findViewById<RecyclerView>(R.id.rvTable)
+            val adapter = rvTable.adapter as BeatColumnAdapter
             if (adapter.linking_beat != null) {
                 adapter.cancel_linking()
             }
@@ -172,7 +172,7 @@ class ColumnLabelAdapter(private var opus_manager: InterfaceLayer, var recycler:
     }
 
     fun get_column_width(beat: Int): Int? {
-        val recycler = this.activity.findViewById<RecyclerView>(R.id.rvBeatTable)
+        val recycler = this.activity.findViewById<RecyclerView>(R.id.rvTable)
         val column = recycler.findViewHolderForAdapterPosition(beat)?.itemView
         return column?.measuredWidth
     }

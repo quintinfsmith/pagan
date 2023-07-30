@@ -1,6 +1,8 @@
 package com.qfs.pagan
 
+import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import android.view.*
 import android.widget.*
 import androidx.fragment.app.setFragmentResultListener
@@ -55,7 +57,7 @@ class EditorFragment : PaganFragment() {
 
     override fun onResume() {
         val rvTable = this.binding.root.findViewById<RecyclerView>(R.id.rvTable)
-        val rvTable_adapter = rvTable.adapter as BeatColumnAdapter
+        val rvTable_adapter = rvTable.adapter as ColumnRecyclerAdapter
 
         val rvLineLabels = this.binding.root.findViewById<RecyclerView>(R.id.rvLineLabels)
         val rvLineLabels_adapter = rvLineLabels.adapter as LineLabelRecyclerView.LineLabelAdapter
@@ -69,19 +71,9 @@ class EditorFragment : PaganFragment() {
             }
         }
 
-        rvTable_adapter.notifyItemRangeInserted(0, opus_manager.opus_beat_count)
-        if (rvTable_adapter.itemCount == 0) {
-            // Kludge AF. Using these 2 threads  is the only way i could get the first item
-            // Rendered when hitting back from load
-            thread {
-                this.get_main().runOnUiThread {
-                    for (i in 0 until opus_manager.opus_beat_count) {
-                        rvTable_adapter.addBeatColumn(i)
-                    }
-                }
-            }
-        }
-
+        //rvTable_adapter.notifyItemRangeInserted(0, opus_manager.opus_beat_count)
+        rvTable_adapter.notifyItemRangeChanged(0, opus_manager.opus_beat_count)
+        Log.d("AAA", "resume? ${opus_manager.opus_beat_count}")
 
         this.get_main().update_title_text()
         super.onResume()
@@ -90,16 +82,21 @@ class EditorFragment : PaganFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val rvTable = view.findViewById<RecyclerView>(R.id.rvTable)
-        val rvColumnLabels = view.findViewById<RecyclerView>(R.id.rvColumnLabels)
         val rvLineLabels = view.findViewById<RecyclerView>(R.id.rvLineLabels)
 
-        rvTable.adapter = ColumnRecyclerAdapter(this.get_main())
+        val main = this.get_main()
+        val opus_manager = main.get_opus_manager()
+        val new_adapter = ColumnRecyclerAdapter(main)
+        rvTable.adapter = new_adapter
+        rvTable.adapter?.notifyItemRangeInserted(0, opus_manager.opus_beat_count)
+
 
          LineLabelRecyclerView.LineLabelAdapter(
-             this.get_main().get_opus_manager(),
+             opus_manager,
              rvLineLabels,
-             this.get_main()
+             main
          )
+
         //BeatColumnAdapter(
         //    this,
         //    rvTable,

@@ -153,7 +153,7 @@ class BeatCellAdapter(var recycler: BeatColumnAdapter.BeatCellRecycler): Recycle
         val viewholder = (leaf_button.parent.parent as BackLinkView).viewHolder!!
         val y = viewholder.bindingAdapterPosition
 
-        return Triple(y, this.get_beat(), leaf_button.position_node.to_list())
+        return Triple(y, this.get_beat(), leaf_button.position)
     }
 
     // TODO: Needs checks
@@ -256,47 +256,6 @@ class BeatCellAdapter(var recycler: BeatColumnAdapter.BeatCellRecycler): Recycle
         beat_column_adapter.parent_fragment.setContextMenu_linking()
     }
 
-    // Called only from the buildTreeView()
-    private fun apply_cursor_focus(leaf_button: LeafButton, position: List<Int>) {
-        val opus_manager = this.get_opus_manager()
-        val beat_key = this.get_beat_key(leaf_button)
-        when (opus_manager.cursor.mode) {
-            Cursor.CursorMode.Row -> {
-                if (beat_key.channel == opus_manager.cursor.channel && beat_key.line_offset == opus_manager.cursor.line_offset) {
-                    leaf_button.set_focused(true)
-                }
-            }
-            Cursor.CursorMode.Column -> {
-                if (beat_key.beat == opus_manager.cursor.beat) {
-                    leaf_button.set_focused(true)
-                }
-            }
-            Cursor.CursorMode.Single -> {
-                val linked_beats = opus_manager.get_all_linked(beat_key)
-                if (linked_beats.contains(opus_manager.cursor.get_beatkey()) && position == opus_manager.cursor.get_position()) {
-                    leaf_button.set_focused(true)
-                }
-            }
-            Cursor.CursorMode.Range -> {
-                val (from_key, to_key) = opus_manager.cursor.range!!
-                val vert_ok = if (beat_key.channel > from_key.channel && beat_key.channel < to_key.channel) {
-                    true
-                } else if (from_key.channel == to_key.channel && beat_key.channel == from_key.channel) {
-                    beat_key.line_offset >= from_key.line_offset && beat_key.line_offset <= to_key.line_offset
-                } else if (beat_key.channel == from_key.channel) {
-                    beat_key.line_offset >= from_key.line_offset
-                } else if (beat_key.channel == to_key.channel) {
-                    beat_key.line_offset <= to_key.line_offset
-                } else {
-                    false
-                }
-
-                leaf_button.set_focused(vert_ok && beat_key.beat in (from_key.beat .. to_key.beat))
-            }
-            else -> { }
-        }
-    }
-
     fun apply_to_visible_cells(callback: (BCViewHolder) -> Unit) {
         // TODO: May not apply to visible ONLY
         for (i in 0 until this.itemCount) {
@@ -341,7 +300,7 @@ class BeatCellAdapter(var recycler: BeatColumnAdapter.BeatCellRecycler): Recycle
         val beat_tree = opus_manager.get_beat_tree(beat_key)
         for (i in 0 until (beat_wrapper as ViewGroup).childCount) {
             val leaf_button = beat_wrapper.getChildAt(i) as LeafButton
-            val position = leaf_button.position_node.to_list()
+            val position = leaf_button.position
             var working_tree = beat_tree
             var leaf_width = new_width
 

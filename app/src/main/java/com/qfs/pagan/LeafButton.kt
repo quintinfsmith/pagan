@@ -1,24 +1,26 @@
 package com.qfs.pagan
 
 import android.content.Context
-import android.view.GestureDetector
+import android.util.Log
 import android.view.Gravity.CENTER
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
-import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.view.ContextThemeWrapper
-import androidx.core.view.GestureDetectorCompat
+import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.OpusEvent
+import com.qfs.pagan.structure.OpusTree
+import com.qfs.pagan.InterfaceLayer as OpusManager
 
 class LeafButton(
     context: Context,
     private var activity: MainActivity,
     private var event: OpusEvent?,
-    var position_node: PositionNode,
+    var position: List<Int>,
     is_percussion: Boolean
 ) : LinearLayout(ContextThemeWrapper(context, R.style.leaf)) {
 
@@ -27,7 +29,7 @@ class LeafButton(
         override fun onCreateDrawableState(extraSpace: Int): IntArray? {
             val drawableState = super.onCreateDrawableState(extraSpace + 4)
             val parent = this.parent ?: return drawableState
-            return (parent as LeafButton).build_drawable_state(drawableState)
+            return (parent as LeafButton).drawableState
         }
     }
 
@@ -38,7 +40,7 @@ class LeafButton(
             while (parent !is LeafButton) {
                 parent = parent.parent
             }
-            return (parent as LeafButton).build_drawable_state(drawableState)
+            return parent.drawableState
         }
     }
 
@@ -47,15 +49,12 @@ class LeafButton(
     private val STATE_FOCUSED = intArrayOf(R.attr.state_focused)
     private val STATE_INVALID = intArrayOf(R.attr.state_invalid)
 
-    private var state_active: Boolean = false
-    private var state_linked: Boolean = false
-    private var state_focused: Boolean = false
-    private var state_invalid: Boolean = false
     private var value_wrapper: LinearLayout
     private var value_label_octave: TextView
     private var value_label_offset: TextView
     private var prefix_label: TextView
     private var inner_wrapper: InnerWrapper = InnerWrapper(ContextThemeWrapper(this.context, R.style.leaf_inner))
+    //var position: List<Int> = listOf()
 
     init {
         this.minimumWidth = resources.getDimension(R.dimen.base_leaf_width).toInt()
@@ -77,11 +76,6 @@ class LeafButton(
             height = MATCH_PARENT
         }
 
-        if (event != null) {
-            this.set_active(true)
-        } else {
-            this.set_active(false)
-        }
         this.set_text(is_percussion)
     }
 
@@ -165,19 +159,27 @@ class LeafButton(
     }
 
     fun build_drawable_state(drawableState: IntArray?): IntArray? {
-        // TODO: Stop using state_* and just use the opus_manager to check states
-        if (this.state_active) {
+        val opus_manager = this.get_opus_manager()
+        val beat_key = this.get_beat_key()
+        var position = this.position
+
+        val tree = opus_manager.get_tree(beat_key, position)
+
+        if (tree.is_event()) {
             mergeDrawableStates(drawableState, STATE_ACTIVE)
         }
-        if (this.state_linked) {
+        if (opus_manager.is_networked(beat_key)) {
             mergeDrawableStates(drawableState, STATE_LINKED)
         }
-        if (this.state_focused) {
+        if (opus_manager.is_selected(beat_key, position)) {
             mergeDrawableStates(drawableState, STATE_FOCUSED)
         }
-        if (this.state_invalid) {
+        var abs_value = opus_manager.get_absolute_value(beat_key, position)
+        if (abs_value == null || abs_value < 0) {
             mergeDrawableStates(drawableState, STATE_INVALID)
         }
+
+
         return drawableState
     }
 
@@ -194,23 +196,14 @@ class LeafButton(
         super.refreshDrawableState()
     }
 
-    private fun set_active(value: Boolean) {
-        this.state_active = value
-        this.refreshDrawableState()
+    fun get_opus_manager(): OpusManager {
+        return (this.parent as CellLayout).get_opus_manager()
+    }
+    fun get_beat_key(): BeatKey {
+        return (this.parent as CellLayout).get_beat_key()
+    }
+    fun get_beat_tree(): OpusTree<OpusEvent> {
+        return (this.parent as CellLayout).get_beat_tree()
     }
 
-    fun set_linked(value: Boolean) {
-        this.state_linked = value
-        this.refreshDrawableState()
-    }
-
-    fun set_focused(value: Boolean) {
-        this.state_focused = value
-        this.refreshDrawableState()
-    }
-
-    fun set_invalid(value: Boolean) {
-        this.state_invalid = value
-        this.refreshDrawableState()
-    }
 }

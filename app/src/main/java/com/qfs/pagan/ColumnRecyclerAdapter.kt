@@ -6,8 +6,7 @@ import com.qfs.pagan.InterfaceLayer as OpusManager
 
 class ColumnRecyclerAdapter(var activity: MainActivity): RecyclerView.Adapter<ColumnViewHolder>() {
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ColumnViewHolder {
-        val beat_cell_recycler = CellRecycler(parent.context)
-        return ColumnViewHolder(beat_cell_recycler)
+        return ColumnViewHolder(parent.context)
     }
 
     override fun getItemCount(): Int {
@@ -15,7 +14,15 @@ class ColumnRecyclerAdapter(var activity: MainActivity): RecyclerView.Adapter<Co
     }
 
     override fun onBindViewHolder(holder: ColumnViewHolder, position: Int) {
-        (holder.itemView as CellRecycler).build()
+        // Looks like this isn't needed and causes problems
+        (holder.itemView as ViewGroup).removeAllViews()
+        (holder.itemView as ViewGroup).addView(CellRecycler(holder.itemView.context, holder))
+
+
+
+    }
+
+    override fun onViewAttachedToWindow(holder:ColumnViewHolder) {
     }
 
     //-------------------------------------------------------//

@@ -130,7 +130,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         val output = super.new_line(channel, line_offset)
         val abs_offset = this.get_abs_offset(
             channel,
-            line_offset ?: this.channels.last().size
+            line_offset ?: this.channels[channel].lines.size - 1
         )
         this.get_column_recycler_adapter().notifyItemInserted(abs_offset)
         return output
@@ -395,16 +395,16 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
     private fun ui_remove_beat(beat: Int) {
         val beat_table = this.activity.findViewById<RecyclerView>(R.id.rvTable)
-        val rvTable_adapter = beat_table.adapter as BeatColumnAdapter
-        rvTable_adapter.removeBeatColumn(beat)
+        val rvTable_adapter = beat_table.adapter as ColumnRecyclerAdapter
+        rvTable_adapter.notifyItemRemoved(beat)
 
-        val rvColumnLabels = this.activity.findViewById<RecyclerView>(R.id.rvColumnLabels)
-        (rvColumnLabels.adapter as ColumnLabelAdapter).refresh()
+        //val rvColumnLabels = this.activity.findViewById<RecyclerView>(R.id.rvColumnLabels)
+        //(rvColumnLabels.adapter as ColumnLabelAdapter).refresh()
     }
     private fun ui_add_beat(beat: Int) {
         val beat_table = this.activity.findViewById<RecyclerView>(R.id.rvTable)
-        val rvTable_adapter = beat_table.adapter as BeatColumnAdapter
-        rvTable_adapter.addBeatColumn(beat)
+        val rvTable_adapter = beat_table.adapter as ColumnRecyclerAdapter
+        rvTable_adapter.notifyItemInserted(beat)
 
         //val rvColumnLabels = this.activity.findViewById<RecyclerView>(R.id.rvColumnLabels)
         //(rvColumnLabels.adapter as ColumnLabelAdapter).refresh()
@@ -765,7 +765,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         }
         val rvTable = this.activity.findViewById<RecyclerView>(R.id.rvTable)
         val adapter = rvTable.adapter as BeatColumnAdapter
-        adapter.set_cursor_focus(false)
 
         val rvLineLabels = this.activity.findViewById<RecyclerView>(R.id.rvLineLabels)
         (rvLineLabels.adapter as LineLabelRecyclerView.LineLabelAdapter).set_cursor_focus(false)
@@ -781,7 +780,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         }
         val rvTable = this.activity.findViewById<RecyclerView>(R.id.rvTable)
         val adapter = rvTable.adapter as BeatColumnAdapter
-        adapter.set_cursor_focus()
 
         val rvLineLabels = this.activity.findViewById<RecyclerView>(R.id.rvLineLabels)
         (rvLineLabels.adapter as LineLabelRecyclerView.LineLabelAdapter).set_cursor_focus(true)
@@ -1009,6 +1007,26 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     override fun link_beat_range_horizontally(channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey) {
         this.surpress_ui {
             super.link_beat_range_horizontally(channel, line_offset, first_key, second_key)
+        }
+    }
+
+    fun is_selected(beat_key: BeatKey, position: List<Int>): Boolean {
+        return when (this.cursor.mode) {
+            Cursor.CursorMode.Column -> {
+                cursor.beat == beat_key.beat
+            }
+            Cursor.CursorMode.Row -> {
+                cursor.channel == beat_key.channel && cursor.line_offset == beat_key.line_offset
+            }
+            Cursor.CursorMode.Range -> {
+                beat_key in this.get_beatkeys_in_range(cursor.range!!.first, cursor.range!!.second)
+            }
+            Cursor.CursorMode.Single -> {
+                cursor.get_beatkey() == beat_key && cursor.get_position() == position
+            }
+            Cursor.CursorMode.Unset -> {
+                false
+            }
         }
     }
 }

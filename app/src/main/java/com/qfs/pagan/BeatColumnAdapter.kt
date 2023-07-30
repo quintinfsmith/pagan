@@ -128,7 +128,6 @@ class BeatColumnAdapter(var parent_fragment: EditorFragment, var recycler: Recyc
                     }
                 }
                 override fun onItemRangeInserted(start: Int, count: Int) {
-                    that.set_cursor_focus(false)
                     val visible_start = (that.recycler.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
                     if (visible_start >= start) {
                         that.recycler.scrollToPosition(start)
@@ -243,7 +242,7 @@ class BeatColumnAdapter(var parent_fragment: EditorFragment, var recycler: Recyc
         val beat_cell_holder = column_recycler.findViewHolderForAdapterPosition(y) ?: return null
         for (leaf_wrapper in (beat_cell_holder.itemView as ViewGroup).children) {
             val leaf_button = (leaf_wrapper as ViewGroup).getChildAt(0) as LeafButton
-            if (leaf_button.position_node.to_list() == position) {
+            if (leaf_button.position == position) {
                 return leaf_button
             }
         }
@@ -274,7 +273,7 @@ class BeatColumnAdapter(var parent_fragment: EditorFragment, var recycler: Recyc
         val output = mutableListOf<LeafButton>()
         val beat_wrapper = (beat_cell_holder.itemView as ViewGroup).getChildAt(0)
         for (leaf_view in (beat_wrapper as ViewGroup).children) {
-            val test_position = (leaf_view as LeafButton).position_node.to_list()
+            val test_position = (leaf_view as LeafButton).position
 
             if (target_position.size <= test_position.size && test_position.subList(0, target_position.size) == target_position) {
                 output.add(leaf_view)
@@ -394,13 +393,6 @@ class BeatColumnAdapter(var parent_fragment: EditorFragment, var recycler: Recyc
             else -> {}
         }
         return output
-    }
-
-    fun set_cursor_focus(show: Boolean = true) {
-        for (leaf in this.get_visible_highlighted_leafs()) {
-            leaf.set_focused(show)
-            leaf.invalidate()
-        }
     }
 
     private fun enableScrollSync() {

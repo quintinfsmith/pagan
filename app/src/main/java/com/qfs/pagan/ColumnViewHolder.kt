@@ -1,9 +1,7 @@
 package com.qfs.pagan
 
+import android.content.Context
+import android.widget.LinearLayout
 import androidx.recyclerview.widget.RecyclerView
 
-class ColumnViewHolder(itemView: CellRecycler): RecyclerView.ViewHolder(itemView) {
-    init {
-        itemView.viewHolder = this
-    }
-}
+class ColumnViewHolder(context: Context): RecyclerView.ViewHolder(LinearLayout(context)) { }

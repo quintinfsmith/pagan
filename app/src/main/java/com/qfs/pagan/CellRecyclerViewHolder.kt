@@ -1,22 +1,19 @@
 package com.qfs.pagan
 
+import android.content.Context
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.OpusEvent
 import com.qfs.pagan.structure.OpusTree
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
-class CellViewHolder(itemView: CellLayout): RecyclerView.ViewHolder(itemView) {
-    init {
-        itemView.viewHolder = this
-    }
-
+class CellRecyclerViewHolder(context: Context): RecyclerView.ViewHolder(CellLayout(context)) {
     fun get_adapter(): CellRecyclerAdapter {
         return this.bindingAdapter as CellRecyclerAdapter
     }
 
     fun get_activity(): MainActivity {
-        return this.get_adapter().get_column_adapter().activity
+        return this.get_adapter().get_column_adapter().get_activity()
     }
 
     fun get_opus_manager(): OpusManager {

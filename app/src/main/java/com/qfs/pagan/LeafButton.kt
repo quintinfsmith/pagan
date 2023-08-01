@@ -54,7 +54,6 @@ class LeafButton(
     private var value_label_offset: TextView
     private var prefix_label: TextView
     private var inner_wrapper: InnerWrapper = InnerWrapper(ContextThemeWrapper(this.context, R.style.leaf_inner))
-    //var position: List<Int> = listOf()
 
     init {
         this.minimumWidth = resources.getDimension(R.dimen.base_leaf_width).toInt()
@@ -161,22 +160,25 @@ class LeafButton(
     fun build_drawable_state(drawableState: IntArray?): IntArray? {
         val opus_manager = this.get_opus_manager()
         val beat_key = this.get_beat_key()
-        var position = this.position
+        if (beat_key.beat == -1) {
+            return drawableState
+        }
 
+        val position = this.position
         val tree = opus_manager.get_tree(beat_key, position)
 
         if (tree.is_event()) {
             mergeDrawableStates(drawableState, STATE_ACTIVE)
+            val abs_value = opus_manager.get_absolute_value(beat_key, position)
+            if (abs_value == null || abs_value < 0) {
+                mergeDrawableStates(drawableState, STATE_INVALID)
+            }
         }
         if (opus_manager.is_networked(beat_key)) {
             mergeDrawableStates(drawableState, STATE_LINKED)
         }
         if (opus_manager.is_selected(beat_key, position)) {
             mergeDrawableStates(drawableState, STATE_FOCUSED)
-        }
-        var abs_value = opus_manager.get_absolute_value(beat_key, position)
-        if (abs_value == null || abs_value < 0) {
-            mergeDrawableStates(drawableState, STATE_INVALID)
         }
 
 

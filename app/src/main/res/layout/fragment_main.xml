@@ -6,70 +6,22 @@ android:layout_width="match_parent"
 android:layout_height="match_parent"
 tools:context=".EditorFragment">
 
-<TableLayout
-    android:id="@+id/tlMain"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    app:layout_constraintTop_toTopOf="parent"
-    app:layout_constraintEnd_toEndOf="parent"
-    app:layout_constraintStart_toStartOf="parent">
-
-    <TableRow
-        android:id="@+id/trMainA"
+    <com.qfs.pagan.EditorTable
+        android:id="@+id/etEditorTable"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
-        <LinearLayout
-            android:orientation="horizontal"
-            android:background="?attr/table_lines"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-            <TextView
-                android:layout_gravity="center"
-                android:layout_width="match_parent"
-                android:background="?attr/table_lines"
-                android:text=""
-                android:layout_height="match_parent" />
-
-        </LinearLayout>
-
-        <androidx.recyclerview.widget.RecyclerView
-            xmlns:android="http://schemas.android.com/apk/res/android"
-            android:id="@+id/rvColumnLabels"
-            android:layout_weight="1"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content" />
-
-    </TableRow>
-
-    <TableRow
-        android:id="@+id/trMainB"
+        android:layout_height="0dp"
         android:layout_weight="1"
+        tools:context=".MainActivity"
+        app:layout_constraintBottom_toTopOf="@+id/llContextMenu"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <LinearLayout
+        android:id="@+id/llContextMenu"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
-        <com.qfs.pagan.LineLabelRecyclerView
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:id="@+id/rvLineLabels"/>
-
-        <com.qfs.pagan.ColumnRecycler
-            android:id="@+id/rvTable"
-            android:background="#FF0000"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1" />
-    </TableRow>
-
-    <TableRow>
-        <LinearLayout
-            android:layout_span="2"
-            android:layout_weight="1"
-            android:paddingTop="@dimen/normal_padding"
-            android:id="@+id/llContextMenu"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"/>
-    </TableRow>
-</TableLayout>
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingTop="@dimen/normal_padding"
+        app:layout_constraintTop_toBottomOf="@+id/etEditorTable"
+        app:layout_constraintBottom_toBottomOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,6 +1,5 @@
 package com.qfs.pagan
 
-import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.view.*
@@ -12,7 +11,6 @@ import com.qfs.pagan.databinding.FragmentMainBinding
 import com.qfs.pagan.opusmanager.*
 import java.lang.Integer.max
 import java.lang.Integer.min
-import kotlin.concurrent.thread
 
 /**
  *
@@ -49,31 +47,30 @@ class EditorFragment : PaganFragment() {
     }
 
     override fun onPause() {
-        val rvTable = this.binding.root.findViewById<RecyclerView>(R.id.rvTable)
-        this.table_offset_pause = rvTable.computeHorizontalScrollOffset()
+        //val rvTable = this.binding.root.findViewById<RecyclerView>(R.id.rvTable)
+        //this.table_offset_pause = rvTable.computeHorizontalScrollOffset()
         super.onPause()
     }
 
 
     override fun onResume() {
-        val rvTable = this.binding.root.findViewById<RecyclerView>(R.id.rvTable)
-        val rvTable_adapter = rvTable.adapter as ColumnRecyclerAdapter
+        //val rvTable = this.binding.root.findViewById<RecyclerView>(R.id.rvTable)
+        //val rvTable_adapter = rvTable.adapter as ColumnRecyclerAdapter
 
-        val rvLineLabels = this.binding.root.findViewById<RecyclerView>(R.id.rvLineLabels)
-        val rvLineLabels_adapter = rvLineLabels.adapter as LineLabelRecyclerView.LineLabelAdapter
+        //val rvLineLabels = this.binding.root.findViewById<RecyclerView>(R.id.rvLineLabels)
+        //val rvLineLabels_adapter = rvLineLabels.adapter as LineLabelRecyclerView.LineLabelAdapter
 
-        val opus_manager = this.get_main().get_opus_manager()
-        if (rvLineLabels_adapter.itemCount == 0) {
-            opus_manager.channels.forEach { channel: OpusChannel ->
-                channel.lines.forEach { _: OpusChannel.OpusLine ->
-                    rvLineLabels_adapter.addLineLabel()
-                }
-            }
-        }
+        //val opus_manager = this.get_main().get_opus_manager()
+        //if (rvLineLabels_adapter.itemCount == 0) {
+        //    opus_manager.channels.forEach { channel: OpusChannel ->
+        //        channel.lines.forEach { _: OpusChannel.OpusLine ->
+        //            rvLineLabels_adapter.addLineLabel()
+        //        }
+        //    }
+        //}
 
-        //rvTable_adapter.notifyItemRangeInserted(0, opus_manager.opus_beat_count)
-        rvTable_adapter.notifyItemRangeChanged(0, opus_manager.opus_beat_count)
-        Log.d("AAA", "resume? ${opus_manager.opus_beat_count}")
+        ////rvTable_adapter.notifyItemRangeInserted(0, opus_manager.opus_beat_count)
+        //rvTable_adapter.notifyItemRangeChanged(0, opus_manager.opus_beat_count)
 
         this.get_main().update_title_text()
         super.onResume()
@@ -81,21 +78,20 @@ class EditorFragment : PaganFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val rvTable = view.findViewById<RecyclerView>(R.id.rvTable)
-        val rvLineLabels = view.findViewById<RecyclerView>(R.id.rvLineLabels)
+        //val rvTable = view.findViewById<RecyclerView>(R.id.rvTable)
+        //val rvLineLabels = view.findViewById<RecyclerView>(R.id.rvLineLabels)
 
-        val main = this.get_main()
-        val opus_manager = main.get_opus_manager()
-        val new_adapter = ColumnRecyclerAdapter(main)
-        rvTable.adapter = new_adapter
-        rvTable.adapter?.notifyItemRangeInserted(0, opus_manager.opus_beat_count)
+        //val main = this.get_main()
+        //val opus_manager = main.get_opus_manager()
+        //val new_adapter = ColumnRecyclerAdapter(rvTable as ColumnRecycler, main)
+        //rvTable.adapter = new_adapter
+        //rvTable.adapter?.notifyItemRangeInserted(0, opus_manager.opus_beat_count)
 
-
-         LineLabelRecyclerView.LineLabelAdapter(
-             opus_manager,
-             rvLineLabels,
-             main
-         )
+        // LineLabelRecyclerView.LineLabelAdapter(
+        //     opus_manager,
+        //     rvLineLabels,
+        //     main
+        // )
 
         //BeatColumnAdapter(
         //    this,
@@ -666,8 +662,8 @@ class EditorFragment : PaganFragment() {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
         opus_manager.unlink_beat()
-        val rvTable = main.findViewById<RecyclerView>(R.id.rvTable)
-        (rvTable.adapter as BeatColumnAdapter).cancel_linking()
+        //val rvTable = main.findViewById<RecyclerView>(R.id.rvTable)
+        //(rvTable.adapter as BeatColumnAdapter).cancel_linking()
     }
 
     private fun interact_btnUnlinkAll() {
@@ -675,20 +671,20 @@ class EditorFragment : PaganFragment() {
         val opus_manager = main.get_opus_manager()
         opus_manager.clear_link_pool()
 
-        val rvTable = main.findViewById<RecyclerView>(R.id.rvTable)
-        (rvTable.adapter as BeatColumnAdapter).cancel_linking()
+        //val rvTable = main.findViewById<RecyclerView>(R.id.rvTable)
+        //(rvTable.adapter as BeatColumnAdapter).cancel_linking()
     }
 
     private fun interact_btnCancelLink() {
         val main = this.get_main()
 
-        val rvTable = main.findViewById<RecyclerView>(R.id.rvTable)
-        (rvTable.adapter as BeatColumnAdapter).cancel_linking()
+        //val rvTable = main.findViewById<RecyclerView>(R.id.rvTable)
+        //(rvTable.adapter as BeatColumnAdapter).cancel_linking()
 
-        val rvLineLabels = main.findViewById<RecyclerView>(R.id.rvLineLabels)
-        (rvLineLabels.adapter as LineLabelRecyclerView.LineLabelAdapter).refresh()
-        val rvColumnLabels = main.findViewById<RecyclerView>(R.id.rvColumnLabels)
-        (rvColumnLabels.adapter as ColumnLabelAdapter).refresh()
+        //val rvLineLabels = main.findViewById<RecyclerView>(R.id.rvLineLabels)
+        //(rvLineLabels.adapter as LineLabelRecyclerView.LineLabelAdapter).refresh()
+        //val rvColumnLabels = main.findViewById<RecyclerView>(R.id.rvColumnLabels)
+        //(rvColumnLabels.adapter as ColumnLabelAdapter).refresh()
 
     }
 
@@ -843,10 +839,10 @@ class EditorFragment : PaganFragment() {
 
     fun scroll_to_beat(beat: Int, select: Boolean = false) {
         val main = this.get_main()
-        main.runOnUiThread {
-            val rvTable = main.findViewById<RecyclerView>(R.id.rvTable)
-            (rvTable.adapter as BeatColumnAdapter).scrollToPosition(beat)
-        }
+        //main.runOnUiThread {
+        //    val rvTable = main.findViewById<RecyclerView>(R.id.rvTable)
+        //    (rvTable.adapter as ColumnRecyclerAdapter).scroll_to_position(beat)
+        //}
 
         if (select) {
             val opus_manager = main.get_opus_manager()
@@ -857,11 +853,12 @@ class EditorFragment : PaganFragment() {
 
     // TODO: Consider Y
     private fun is_leaf_visible(beatkey: BeatKey, position: List<Int>): Boolean {
-        val main = this.get_main()
-        val rvTable = main.findViewById<RecyclerView>(R.id.rvTable)
-        val rvTable_adapter = rvTable.adapter as BeatColumnAdapter
-        val tree_view = rvTable_adapter.get_leaf_view(beatkey, position)
-        return (tree_view != null)
+        return false
+        //val main = this.get_main()
+        //val rvTable = main.findViewById<RecyclerView>(R.id.rvTable)
+        //val rvTable_adapter = rvTable.adapter as ColumnRecyclerAdapter
+        //val tree_view = rvTable_adapter.get_leaf_view(beatkey, position)
+        //return (tree_view != null)
     }
 
     // If the position isn't on screen, scroll to it
@@ -886,8 +883,8 @@ class EditorFragment : PaganFragment() {
             return
         }
         val main = this.get_main()
-        val rvTable = main.findViewById<RecyclerView>(R.id.rvTable)
-        val rvTable_adapter = rvTable.adapter as BeatColumnAdapter
-        rvTable_adapter.scrollToPosition(adj_beatkey, new_position)
+        //val rvTable = main.findViewById<RecyclerView>(R.id.rvTable)
+        //val rvTable_adapter = rvTable.adapter as ColumnRecyclerAdapter
+        //rvTable_adapter.scroll_to_position(adj_beatkey, new_position)
     }
 }

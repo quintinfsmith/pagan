@@ -130,7 +130,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         val output = super.new_line(channel, line_offset)
         val abs_offset = this.get_abs_offset(
             channel,
-            line_offset ?: this.channels[channel].lines.size - 1
+            line_offset ?: (this.channels[channel].lines.size - 1)
         )
         this.get_column_recycler_adapter().notifyItemInserted(abs_offset)
         return output
@@ -166,7 +166,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     fun get_column_recycler(): ColumnRecycler {
-        return this.activity.findViewById<RecyclerView>(R.id.rvTable) as ColumnRecycler
+        return (this.activity.findViewById<RecyclerView>(R.id.etEditorTable) as EditorTable).main_recycler
     }
 
     fun get_column_recycler_adapter(): ColumnRecyclerAdapter {
@@ -361,14 +361,14 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         super.clear()
         this.cursor.clear()
 
-        val rvTable_adapter = this.get_column_recycler_adapter()
-        rvTable_adapter.notifyItemRangeRemoved(this.opus_beat_count, original_beat_count)
-        rvTable_adapter.notifyItemRangeChanged(0, this.opus_beat_count)
+        //val rvTable_adapter = this.get_column_recycler_adapter()
+        //rvTable_adapter.notifyItemRangeRemoved(this.opus_beat_count, original_beat_count)
+        //rvTable_adapter.notifyItemRangeChanged(0, this.opus_beat_count)
 
-        val rvActiveChannels: RecyclerView = this.activity.findViewById(R.id.rvActiveChannels)
-        channel_counts.forEachIndexed { _: Int, j: Int ->
-            rvActiveChannels.adapter?.notifyItemRemoved(0)
-        }
+        //val rvActiveChannels: RecyclerView = this.activity.findViewById(R.id.rvActiveChannels)
+        //channel_counts.forEachIndexed { _: Int, j: Int ->
+        //    rvActiveChannels.adapter?.notifyItemRemoved(0)
+        //}
     }
 
     override fun unlink_beat(beat_key: BeatKey) {
@@ -394,74 +394,74 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     private fun ui_remove_beat(beat: Int) {
-        val beat_table = this.activity.findViewById<RecyclerView>(R.id.rvTable)
-        val rvTable_adapter = beat_table.adapter as ColumnRecyclerAdapter
-        rvTable_adapter.notifyItemRemoved(beat)
+       // val beat_table = this.activity.findViewById<RecyclerView>(R.id.rvTable)
+       // val rvTable_adapter = beat_table.adapter as ColumnRecyclerAdapter
+       // rvTable_adapter.notifyItemRemoved(beat)
 
         //val rvColumnLabels = this.activity.findViewById<RecyclerView>(R.id.rvColumnLabels)
         //(rvColumnLabels.adapter as ColumnLabelAdapter).refresh()
     }
     private fun ui_add_beat(beat: Int) {
-        val beat_table = this.activity.findViewById<RecyclerView>(R.id.rvTable)
-        val rvTable_adapter = beat_table.adapter as ColumnRecyclerAdapter
-        rvTable_adapter.notifyItemInserted(beat)
+       // val beat_table = this.activity.findViewById<RecyclerView>(R.id.rvTable)
+       // val rvTable_adapter = beat_table.adapter as ColumnRecyclerAdapter
+       // rvTable_adapter.notifyItemInserted(beat)
 
         //val rvColumnLabels = this.activity.findViewById<RecyclerView>(R.id.rvColumnLabels)
         //(rvColumnLabels.adapter as ColumnLabelAdapter).refresh()
     }
 
     private fun ui_add_line_label() {
-        val rvLineLabels = this.activity.findViewById<RecyclerView>(R.id.rvLineLabels)
-        val rvLineLabels_adapter = rvLineLabels.adapter as LineLabelRecyclerView.LineLabelAdapter
-        rvLineLabels_adapter.addLineLabel()
+       // val rvLineLabels = this.activity.findViewById<RecyclerView>(R.id.rvLineLabels)
+       // val rvLineLabels_adapter = rvLineLabels.adapter as LineLabelRecyclerView.LineLabelAdapter
+       // rvLineLabels_adapter.addLineLabel()
     }
 
     private fun ui_add_line(channel: Int, line_offset: Int) {
     }
 
     private fun ui_remove_line_label(channel: Int, line_offset: Int) {
-        val rvLineLabels = this.activity.findViewById<RecyclerView>(R.id.rvLineLabels)
-        val rvLineLabels_adapter = rvLineLabels.adapter as LineLabelRecyclerView.LineLabelAdapter
+       // val rvLineLabels = this.activity.findViewById<RecyclerView>(R.id.rvLineLabels)
+       // val rvLineLabels_adapter = rvLineLabels.adapter as LineLabelRecyclerView.LineLabelAdapter
 
-        rvLineLabels_adapter.removeLineLabel(
-            try {
-                this.get_abs_offset(channel, line_offset)
-            } catch (e: IndexOutOfBoundsException) {
-                return // no need to remove the label, it doesn't exist
-            }
-        )
+       // rvLineLabels_adapter.removeLineLabel(
+       //     try {
+       //         this.get_abs_offset(channel, line_offset)
+       //     } catch (e: IndexOutOfBoundsException) {
+       //         return // no need to remove the label, it doesn't exist
+       //     }
+       // )
     }
 
     private fun ui_refresh_beat_labels(beat_key: BeatKey) {
         if (this.simple_ui_locked()) {
             return
         }
-        val beat_table = this.activity.findViewById<RecyclerView>(R.id.rvTable)
-        val rvTable_adapter = beat_table.adapter as BeatColumnAdapter
-        val linked_beats = mutableSetOf<Int>()
-        for (linked_key in this.get_all_linked(beat_key)) {
-            linked_beats.add(linked_key.beat)
-        }
+        //val beat_table = this.activity.findViewById<RecyclerView>(R.id.rvTable)
+        //val rvTable_adapter = beat_table.adapter as BeatColumnAdapter
+        //val linked_beats = mutableSetOf<Int>()
+        //for (linked_key in this.get_all_linked(beat_key)) {
+        //    linked_beats.add(linked_key.beat)
+        //}
 
-        for (beat in linked_beats) {
-            rvTable_adapter.refresh_leaf_labels(beat)
-        }
+        //for (beat in linked_beats) {
+        //    rvTable_adapter.refresh_leaf_labels(beat)
+        //}
     }
 
     private fun update_line_labels() {
         if (this.simple_ui_locked()) {
             return
         }
-        val rvLineLabels = this.activity.findViewById<RecyclerView>(R.id.rvLineLabels)
-        val rvLineLabels_adapter = rvLineLabels.adapter as LineLabelRecyclerView.LineLabelAdapter
-        val start =
-            (rvLineLabels.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
-        val end =
-            (rvLineLabels.layoutManager as LinearLayoutManager).findLastVisibleItemPosition()
+        //val rvLineLabels = this.activity.findViewById<RecyclerView>(R.id.rvLineLabels)
+        //val rvLineLabels_adapter = rvLineLabels.adapter as LineLabelRecyclerView.LineLabelAdapter
+        //val start =
+        //    (rvLineLabels.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
+        //val end =
+        //    (rvLineLabels.layoutManager as LinearLayoutManager).findLastVisibleItemPosition()
 
-        for (i in start..end) {
-            rvLineLabels_adapter.notifyItemChanged(i)
-        }
+        //for (i in start..end) {
+        //    rvLineLabels_adapter.notifyItemChanged(i)
+        //}
     }
 
     private fun <T> withFragment(callback: (EditorFragment) -> T): T? {
@@ -763,14 +763,14 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         if (this.simple_ui_locked()) {
             return
         }
-        val rvTable = this.activity.findViewById<RecyclerView>(R.id.rvTable)
-        val adapter = rvTable.adapter as BeatColumnAdapter
+        //val rvTable = this.activity.findViewById<RecyclerView>(R.id.rvTable)
+        //val adapter = rvTable.adapter as BeatColumnAdapter
 
-        val rvLineLabels = this.activity.findViewById<RecyclerView>(R.id.rvLineLabels)
-        (rvLineLabels.adapter as LineLabelRecyclerView.LineLabelAdapter).set_cursor_focus(false)
+        //val rvLineLabels = this.activity.findViewById<RecyclerView>(R.id.rvLineLabels)
+        //(rvLineLabels.adapter as LineLabelRecyclerView.LineLabelAdapter).set_cursor_focus(false)
 
-        val rvColumnLabels = this.activity.findViewById<RecyclerView>(R.id.rvColumnLabels)
-        (rvColumnLabels.adapter as ColumnLabelAdapter).set_cursor_focus(false)
+        //val rvColumnLabels = this.activity.findViewById<RecyclerView>(R.id.rvColumnLabels)
+        //(rvColumnLabels.adapter as ColumnLabelAdapter).set_cursor_focus(false)
 
     }
 
@@ -778,14 +778,14 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         if (this.simple_ui_locked()) {
             return
         }
-        val rvTable = this.activity.findViewById<RecyclerView>(R.id.rvTable)
-        val adapter = rvTable.adapter as BeatColumnAdapter
+       // val rvTable = this.activity.findViewById<RecyclerView>(R.id.rvTable)
+       // val adapter = rvTable.adapter as BeatColumnAdapter
 
-        val rvLineLabels = this.activity.findViewById<RecyclerView>(R.id.rvLineLabels)
-        (rvLineLabels.adapter as LineLabelRecyclerView.LineLabelAdapter).set_cursor_focus(true)
+       // val rvLineLabels = this.activity.findViewById<RecyclerView>(R.id.rvLineLabels)
+       // (rvLineLabels.adapter as LineLabelRecyclerView.LineLabelAdapter).set_cursor_focus(true)
 
-        val rvColumnLabels = this.activity.findViewById<RecyclerView>(R.id.rvColumnLabels)
-        (rvColumnLabels.adapter as ColumnLabelAdapter).set_cursor_focus(true)
+       // val rvColumnLabels = this.activity.findViewById<RecyclerView>(R.id.rvColumnLabels)
+       // (rvColumnLabels.adapter as ColumnLabelAdapter).set_cursor_focus(true)
     }
 
 

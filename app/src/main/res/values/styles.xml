@@ -52,8 +52,7 @@
 
     <style name="leaf">
         <item name="android:gravity">center_vertical|center_horizontal</item>
-        <item name="android:paddingEnd">@dimen/line_padding</item>
-        <item name="android:paddingStart">@dimen/line_padding</item>
+        <item name="android:padding">@dimen/line_padding</item>
         <item name="android:textColor">@color/leaf_fg</item>
         <item name="android:background">@null</item>
     </style>
@@ -197,9 +196,10 @@
     <style name="line_label_outer">
         <item name="android:paddingBottom">@dimen/line_padding</item>
         <item name="android:paddingEnd">@dimen/normal_padding</item>
+        <item name="android:paddingTop">@dimen/normal_padding</item>
         <item name="android:paddingStart">0dp</item>
-        <item name="android:paddingTop">0dp</item>
         <item name="android:gravity">center</item>
         <item name="android:background">?attr/table_lines</item>
+        <item name="android:layout_height">@dimen/line_height</item>
     </style>
 </resources>

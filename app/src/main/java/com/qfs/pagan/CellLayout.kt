@@ -10,15 +10,14 @@ import com.qfs.pagan.structure.OpusTree
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
 class CellLayout(context: Context): LinearLayout(context) {
-    var viewHolder: CellViewHolder? = null
+    var viewHolder: CellRecyclerViewHolder? = null
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
         this.layoutParams.width = MATCH_PARENT
-        //this.build()
+        this.build()
     }
-
     fun get_activity(): MainActivity {
-        return viewHolder!!.get_activity()
+        return this.viewHolder!!.get_activity()
     }
 
     fun get_beat_tree(): OpusTree<OpusEvent> {
@@ -39,7 +38,6 @@ class CellLayout(context: Context): LinearLayout(context) {
 
     fun build() {
         this.removeAllViews()
-
         val tree = this.get_beat_tree()
         val max_weight = tree.get_max_child_weight()
         if (!tree.is_leaf()) {

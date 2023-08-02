@@ -5,7 +5,7 @@ import android.view.*
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 
-class ColumnLabelAdapter(editor_table: EditorTable) : RecyclerView.Adapter<ColumnLabelViewHolder>() {
+class ColumnLabelAdapter(var editor_table: EditorTable) : RecyclerView.Adapter<ColumnLabelViewHolder>() {
     var recycler: ColumnLabelRecycler
     var column_recycler: ColumnRecycler
     var column_count = 0
@@ -80,29 +80,18 @@ class ColumnLabelAdapter(editor_table: EditorTable) : RecyclerView.Adapter<Colum
 
     override fun onViewAttachedToWindow(holder: ColumnLabelViewHolder) {
         super.onViewAttachedToWindow(holder)
-        this.adjust_width(holder)
 
-        //val item_view = holder.itemView as ColumnLabelView
-        //if (item_view.update_queued) {
-        //    this.update_label_focus(item_view)
-        //    item_view.update_queued = false
-        //}
+        val beat = holder.bindingAdapterPosition
+        val new_width = this.get_column_width(beat)
+        holder.itemView.layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT
+        holder.itemView.layoutParams.width = (new_width * this.recycler.resources.getDimension(R.dimen.base_leaf_width)).toInt()
     }
 
     override fun onBindViewHolder(holder: ColumnLabelViewHolder, position: Int) {
         this.set_text(holder, position)
-        var target = this.get_column_width(position) ?: return
-        val item_view = holder.itemView
-        try {
-            item_view.layoutParams.width = target
-            item_view.layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT
-        } catch (e: Exception) {
-
-        }
     }
 
     override fun getItemCount(): Int {
-        //return (this.recycler.context as MainActivity).get_opus_manager().opus_beat_count
         return this.column_count
     }
 
@@ -116,18 +105,7 @@ class ColumnLabelAdapter(editor_table: EditorTable) : RecyclerView.Adapter<Colum
         this.notifyItemRemoved(index)
     }
 
-    fun adjust_width(holder: ColumnLabelViewHolder) {
-        val beat = holder.bindingAdapterPosition
-
-        var target = this.get_column_width(beat) ?: 1000
-        Log.d("AAA", "$target ???????")
-        val item_view = holder.itemView
-        item_view.layoutParams.width = target
-        item_view.layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT
-
-    }
-
-    fun get_column_width(beat: Int): Int? {
+    fun get_column_width(beat: Int): Int {
         val editor_table = this.recycler.editor_table
         return editor_table.get_column_width(beat)
     }
@@ -165,4 +143,9 @@ class ColumnLabelAdapter(editor_table: EditorTable) : RecyclerView.Adapter<Colum
     //        Cursor.CursorMode.Unset -> { }
     //    }
     //}
+
+    fun get_editor_table(): EditorTable {
+        return this.editor_table
+    }
+
 }

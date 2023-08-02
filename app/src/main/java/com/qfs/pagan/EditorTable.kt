@@ -27,7 +27,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
     init {
         this.top_row.addView(this.spacer)
-        //this.top_row.addView(this.column_label_recycler)
+        this.top_row.addView(this.column_label_recycler)
 
         this.bottom_row.addView(this.line_label_recycler)
         this.bottom_row.addView(this.main_recycler)
@@ -39,11 +39,9 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         val opus_manager = activity.get_opus_manager()
 
         val column_label_adapter = ColumnLabelAdapter(this)
-        //column_label_adapter.notifyItemRangeInserted(0, opus_manager.opus_beat_count)
 
         val main_adapter = ColumnRecyclerAdapter(this)
         this.main_recycler.addOnScrollListener(this.horizontal_scroll_listener)
-        //main_adapter.notifyItemRangeInserted(0, opus_manager.opus_beat_count)
 
         val line_label_adapter = LineLabelRecyclerAdapter(this)
         line_label_adapter.notifyItemRangeInserted(0, opus_manager.get_total_line_count())
@@ -88,8 +86,11 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         this.clear()
         this.init_column_width_map()
         val opus_manager = this.get_opus_manager()
+        val main_adapter = (this.main_recycler.adapter as ColumnRecyclerAdapter)
+        val label_adapter = (this.column_label_recycler.adapter as ColumnLabelAdapter)
         for (beat in 0 until opus_manager.opus_beat_count) {
-            (this.main_recycler.adapter as ColumnRecyclerAdapter).add_column(beat)
+            main_adapter.add_column(beat)
+            label_adapter.add_column(beat)
         }
     }
 
@@ -154,12 +155,14 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
         this.column_width_map.add(index, column)
         (this.main_recycler.adapter!! as ColumnRecyclerAdapter).add_column(index)
+        (this.column_label_recycler.adapter!! as ColumnLabelAdapter).add_column(index)
     }
 
 
     fun remove_column(index: Int) {
         this.column_width_map.removeAt(index)
         (this.main_recycler.adapter as ColumnRecyclerAdapter).remove_column(index)
+        (this.column_label_recycler.adapter!! as ColumnLabelAdapter).remove_column(index)
     }
 
     fun get_column_width(column: Int): Int {

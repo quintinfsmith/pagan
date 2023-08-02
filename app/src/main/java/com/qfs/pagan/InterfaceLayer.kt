@@ -1,4 +1,5 @@
 package com.qfs.pagan
+import android.util.Log
 import android.view.View
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -81,14 +82,12 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     fun set_relative_mode(event: OpusEvent) {
-        this.relative_mode = if (event.relative) {
-            if (event.note >= 0) {
-                1
-            } else {
-                2
-            }
-        } else {
+        this.relative_mode = if (!event.relative) {
             0
+        }  else if (event.note >= 0) {
+            1
+        } else {
+            2
         }
     }
 
@@ -132,14 +131,18 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             channel,
             line_offset ?: (this.channels[channel].lines.size - 1)
         )
-        this.get_column_recycler_adapter().notifyItemInserted(abs_offset)
+        if (!this.simple_ui_locked()) {
+            this.get_editor_table().new_row(abs_offset, output)
+        }
         return output
     }
 
     override fun insert_line(channel: Int, line_offset: Int, line: OpusChannel.OpusLine) {
         super.insert_line(channel, line_offset, line)
         val abs_offset = this.get_abs_offset( channel, line_offset )
-        this.get_column_recycler_adapter().notifyItemInserted(abs_offset)
+        if (!this.simple_ui_locked()) {
+            this.get_editor_table().new_row(abs_offset, line)
+        }
     }
 
     override fun move_line(channel_old: Int, line_old: Int, channel_new: Int, line_new: Int) {
@@ -163,14 +166,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         } catch (exception: IncompatibleChannelException) {
             // pass
         }
-    }
-
-    fun get_column_recycler(): ColumnRecycler {
-        return (this.activity.findViewById<RecyclerView>(R.id.etEditorTable) as EditorTable).main_recycler
-    }
-
-    fun get_column_recycler_adapter(): ColumnRecyclerAdapter {
-        return this.get_column_recycler().adapter as ColumnRecyclerAdapter
     }
 
     override fun remove_line(channel: Int, line_offset: Int): OpusChannel.OpusLine {
@@ -199,7 +194,9 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             }
         }
 
-        this.get_column_recycler_adapter().notifyItemRemoved(abs_line)
+        if (!this.simple_ui_locked()) {
+            this.get_editor_table().remove_row(abs_line)
+        }
         this.activity.update_channel_instruments()
 
         return output
@@ -227,14 +224,20 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     override fun remove_beat(beat_index: Int) {
         this.ui_unset_cursor_focus()
         super.remove_beat(beat_index)
-        this.ui_remove_beat(beat_index)
+
+        val editor_table = this.get_editor_table()
+        editor_table.remove_column(beat_index)
+
         this.ui_set_cursor_focus()
     }
 
     override fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<OpusEvent>>?) {
         this.ui_unset_cursor_focus()
         super.insert_beat(beat_index, beats_in_column)
-        this.ui_add_beat(beat_index)
+
+        val editor_table = this.get_editor_table()
+        editor_table.new_column(beat_index)
+
         this.ui_set_cursor_focus()
     }
 
@@ -256,14 +259,13 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         this.activity.setup_config_drawer()
         this.activity.cancel_reticle()
 
-        this.get_column_recycler_adapter().notifyItemRangeChanged(0, this.opus_beat_count)
-        this.get_column_recycler().scrollToPosition(0)
 
         this.activity.update_channel_instruments()
         this.withFragment {
             it.clearContextMenu()
         }
     }
+
     override fun import_midi(midi: Midi) {
         this.activity.loading_reticle()
         try {
@@ -281,8 +283,8 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
         this.activity.cancel_reticle()
 
-        this.get_column_recycler_adapter().notifyItemRangeChanged(0, this.opus_beat_count)
-        this.get_column_recycler().scrollToPosition(0)
+        var editor_table = this.get_editor_table()
+        editor_table.setup()
 
         this.activity.update_channel_instruments()
         this.withFragment {
@@ -305,8 +307,8 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         this.activity.setup_config_drawer()
         this.activity.cancel_reticle()
 
-        this.get_column_recycler_adapter().notifyItemRangeChanged(0, this.opus_beat_count)
-        this.get_column_recycler().scrollToPosition(0)
+        var editor_table = this.get_editor_table()
+        editor_table.setup()
 
         this.activity.update_channel_instruments()
 
@@ -330,8 +332,8 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         this.activity.setup_config_drawer()
         this.activity.cancel_reticle()
 
-        this.get_column_recycler_adapter().notifyItemRangeChanged(0, this.opus_beat_count)
-        this.get_column_recycler().scrollToPosition(0)
+        var editor_table = this.get_editor_table()
+        editor_table.setup()
 
         this.activity.update_channel_instruments()
         this.withFragment {
@@ -355,20 +357,8 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     override fun clear() {
-        val channel_counts = this.get_channel_line_counts()
-        val original_beat_count = this.opus_beat_count
-
         super.clear()
         this.cursor.clear()
-
-        //val rvTable_adapter = this.get_column_recycler_adapter()
-        //rvTable_adapter.notifyItemRangeRemoved(this.opus_beat_count, original_beat_count)
-        //rvTable_adapter.notifyItemRangeChanged(0, this.opus_beat_count)
-
-        //val rvActiveChannels: RecyclerView = this.activity.findViewById(R.id.rvActiveChannels)
-        //channel_counts.forEachIndexed { _: Int, j: Int ->
-        //    rvActiveChannels.adapter?.notifyItemRemoved(0)
-        //}
     }
 
     override fun unlink_beat(beat_key: BeatKey) {
@@ -1028,5 +1018,9 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                 false
             }
         }
+    }
+
+    fun get_editor_table(): EditorTable {
+        return this.activity.findViewById<EditorTable>(R.id.etEditorTable)
     }
 }

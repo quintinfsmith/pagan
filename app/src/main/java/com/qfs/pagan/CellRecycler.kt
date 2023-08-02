@@ -23,10 +23,8 @@ class CellRecycler(context: Context, var viewHolder: ColumnRecyclerViewHolder): 
         super.onAttachedToWindow()
 
         this.layoutParams.height = MATCH_PARENT
-        (this.adapter as CellRecyclerAdapter).update_width()
-
-        var column_recycler_adapter = this.get_column_recycler_adapter()
-        var column_label_recycler = column_recycler_adapter.column_label_recycler
+        this.layoutParams.width = MATCH_PARENT
+        //(this.adapter as CellRecyclerAdapter).update_width()
 
         this.conform_scroll_position()
     }

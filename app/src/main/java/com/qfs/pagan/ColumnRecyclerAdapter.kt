@@ -1,5 +1,6 @@
 package com.qfs.pagan
 
+import android.util.Log
 import android.view.ViewGroup
 import androidx.core.view.children
 import androidx.recyclerview.widget.RecyclerView
@@ -9,6 +10,7 @@ import com.qfs.pagan.InterfaceLayer as OpusManager
 class ColumnRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<ColumnRecyclerViewHolder>() {
     val recycler: ColumnRecycler
     val column_label_recycler: ColumnLabelRecycler
+    var column_count = 0
     init {
         this.column_label_recycler = editor_table.column_label_recycler
         this.recycler = editor_table.main_recycler
@@ -35,17 +37,25 @@ class ColumnRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<Col
     }
 
     override fun getItemCount(): Int {
-        return this.get_opus_manager().opus_beat_count
+        return this.column_count
+        //return this.get_opus_manager().opus_beat_count
     }
 
     override fun onBindViewHolder(holder: ColumnRecyclerViewHolder, position: Int) {
         // Looks like this isn't needed and causes problems
-        (holder.itemView as ViewGroup).removeAllViews()
-        val cell_recycler = CellRecycler(holder.itemView.context, holder)
-        (holder.itemView as ViewGroup).addView(cell_recycler)
     }
 
     override fun onViewAttachedToWindow(holder:ColumnRecyclerViewHolder) {
+        val beat = holder.bindingAdapterPosition
+        (holder.itemView as ViewGroup).removeAllViews()
+        val cell_recycler = CellRecycler(holder.itemView.context, holder)
+        (holder.itemView as ViewGroup).addView(cell_recycler)
+        for (y in 0 until this.get_opus_manager().get_total_line_count()) {
+            (cell_recycler.adapter as CellRecyclerAdapter).insert_cell(y)
+        }
+
+       val new_width = this.get_editor_table().get_column_width(beat)
+       holder.itemView.layoutParams.width = (new_width * this.recycler.resources.getDimension(R.dimen.base_leaf_width)).toInt()
     }
 
     //-------------------------------------------------------//
@@ -60,19 +70,31 @@ class ColumnRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<Col
             callback(adapter)
         }
     }
+    fun add_column(index: Int) {
+        this.column_count += 1
+        this.notifyItemInserted(index)
+    }
+
+    fun remove_column(index: Int) {
+        this.column_count -= 1
+        this.notifyItemRemoved(index)
+    }
+
     //-------------------------------------------------------//
     fun get_activity(): MainActivity {
         return this.recycler.context as MainActivity
     }
+
     fun get_opus_manager(): OpusManager {
         return this.get_activity().get_opus_manager()
     }
+
     fun get_editor_table(): EditorTable {
         return this.recycler.editor_table
     }
 
     fun get_cell_recycler(beat: Int): CellRecycler? {
-        var view_holder = this.recycler.findViewHolderForAdapterPosition(beat) ?: return null
+        val view_holder = this.recycler.findViewHolderForAdapterPosition(beat) ?: return null
         return (view_holder as ColumnRecyclerViewHolder).get_cell_recycler()
     }
 

@@ -155,6 +155,7 @@ class LeafButton(
         super.onAttachedToWindow()
         val line_height = resources.getDimension(R.dimen.line_height)
         this.layoutParams.height = line_height.toInt()
+        this.minimumWidth = resources.getDimension(R.dimen.base_leaf_width).toInt()
     }
 
     fun build_drawable_state(drawableState: IntArray?): IntArray? {

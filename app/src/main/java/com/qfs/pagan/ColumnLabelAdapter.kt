@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.RecyclerView
 class ColumnLabelAdapter(editor_table: EditorTable) : RecyclerView.Adapter<ColumnLabelViewHolder>() {
     var recycler: ColumnLabelRecycler
     var column_recycler: ColumnRecycler
+    var column_count = 0
     init {
         this.column_recycler = editor_table.main_recycler
         this.recycler = editor_table.column_label_recycler
@@ -88,23 +89,6 @@ class ColumnLabelAdapter(editor_table: EditorTable) : RecyclerView.Adapter<Colum
         //}
     }
 
-    fun adjust_width(holder: ColumnLabelViewHolder) {
-        val beat = holder.bindingAdapterPosition
-
-        var target = this.get_column_width(beat) ?: 1000
-        Log.d("AAA", "$target ???????")
-        val item_view = holder.itemView
-        item_view.layoutParams.width = target
-        item_view.layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT
-
-    }
-
-    fun get_column_width(beat: Int): Int? {
-        var adapter = this.column_recycler.adapter as ColumnRecyclerAdapter
-        var cell_recycler_adapter = ((adapter.get_cell_recycler(beat) ?: return null).adapter as CellRecyclerAdapter)
-        return cell_recycler_adapter.get_target_width()
-    }
-
     override fun onBindViewHolder(holder: ColumnLabelViewHolder, position: Int) {
         this.set_text(holder, position)
         var target = this.get_column_width(position) ?: return
@@ -117,14 +101,41 @@ class ColumnLabelAdapter(editor_table: EditorTable) : RecyclerView.Adapter<Colum
         }
     }
 
+    override fun getItemCount(): Int {
+        //return (this.recycler.context as MainActivity).get_opus_manager().opus_beat_count
+        return this.column_count
+    }
+
+    fun add_column(index: Int) {
+        this.column_count += 1
+        this.notifyItemInserted(index)
+    }
+
+    fun remove_column(index: Int) {
+        this.column_count -= 1
+        this.notifyItemRemoved(index)
+    }
+
+    fun adjust_width(holder: ColumnLabelViewHolder) {
+        val beat = holder.bindingAdapterPosition
+
+        var target = this.get_column_width(beat) ?: 1000
+        Log.d("AAA", "$target ???????")
+        val item_view = holder.itemView
+        item_view.layoutParams.width = target
+        item_view.layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT
+
+    }
+
+    fun get_column_width(beat: Int): Int? {
+        val editor_table = this.recycler.editor_table
+        return editor_table.get_column_width(beat)
+    }
+
     fun set_text(holder: ColumnLabelViewHolder, position: Int) {
         val item_view = holder.itemView as ColumnLabelView
         Log.d("AAA", "setting $position")
         item_view.set_text("$position")
-    }
-
-    override fun getItemCount(): Int {
-        return (this.recycler.context as MainActivity).get_opus_manager().opus_beat_count
     }
 
     fun scroll(x: Int) {

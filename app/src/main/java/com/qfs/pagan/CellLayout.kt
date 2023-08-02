@@ -13,6 +13,8 @@ class CellLayout(context: Context): LinearLayout(context) {
     var viewHolder: CellRecyclerViewHolder? = null
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
+        var beat_index = this.viewHolder!!.get_beat()
+        //this.layoutParams.width = this.get_editor_table().get_column_width(beat_index)
         this.layoutParams.width = MATCH_PARENT
         this.build()
     }
@@ -48,6 +50,10 @@ class CellLayout(context: Context): LinearLayout(context) {
             this.buildTreeView(tree, listOf(), max_weight)
         }
    }
+
+    fun get_editor_table(): EditorTable {
+        return this.viewHolder!!.get_adapter().get_column_adapter().get_editor_table()
+    }
 
    private fun buildTreeView(tree: OpusTree<OpusEvent>, position: List<Int>, weight: Int) {
        if (tree.is_leaf()) {

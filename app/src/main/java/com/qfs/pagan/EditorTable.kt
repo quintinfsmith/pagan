@@ -22,8 +22,12 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     val vertical_scroll_listener = VerticalScrollListener(this)
     val horizontal_scroll_listener = HorizontalScrollListener()
 
+    var linking_beat_keys: Pair<Int, Int?>? = null
+
     var initializing_column_width_map = false
     val column_width_map = mutableListOf<MutableList<Int>>()
+
+    var active_cursor: Cursor = Cursor(Cursor.CursorMode.Unset)
 
     init {
         this.top_row.addView(this.spacer)
@@ -78,7 +82,6 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     }
 
     fun clear() {
-        var original_size = this.column_width_map.size
         this.column_width_map.clear()
     }
 
@@ -165,6 +168,72 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         (this.column_label_recycler.adapter!! as ColumnLabelAdapter).remove_column(index)
     }
 
+    fun is_linking(): Boolean {
+        return this.linking_beat_keys != null
+    }
+
+    fun is_linking_range(): Boolean {
+        return this.is_linking() && this.linking_beat_keys!!.second != null
+    }
+
+    fun update_cursor(cursor: Cursor) {
+        if (cursor != this.active_cursor) {
+            this.update_cursor(this.active_cursor)
+            this.active_cursor = cursor.copy()
+        }
+        val opus_manager = this.get_opus_manager()
+        val main_recycler_adapter = (this.main_recycler.adapter!! as ColumnRecyclerAdapter)
+        val line_label_adapter = (this.line_label_recycler.adapter!! as LineLabelRecyclerAdapter)
+        val column_label_adapter = (this.column_label_recycler.adapter!! as ColumnLabelAdapter)
+        when (cursor.mode) {
+            Cursor.CursorMode.Single -> {
+                val beat_key = cursor.get_beatkey()
+                val y = opus_manager.get_abs_offset(beat_key.channel, beat_key.line_offset)
+                line_label_adapter.notifyItemChanged(y)
+                column_label_adapter.notifyItemChanged(beat_key.beat)
+
+                // Can ignore if the cell_recycler isn't visible
+                val cell_recycler = main_recycler_adapter.get_cell_recycler(beat_key.beat) ?: return
+                cell_recycler.adapter?.notifyItemChanged(y)
+
+            }
+            Cursor.CursorMode.Range -> {
+                val (top_left, bottom_right) = cursor.range!!
+                for (beat_key in opus_manager.get_beatkeys_in_range(top_left, bottom_right)) {
+                    val y = opus_manager.get_abs_offset(beat_key.channel, beat_key.line_offset)
+                    line_label_adapter.notifyItemChanged(y)
+                    column_label_adapter.notifyItemChanged(beat_key.beat)
+                    // Can ignore if the cell_recycler isn't visible
+                    val cell_recycler = main_recycler_adapter.get_cell_recycler(beat_key.beat) ?: return
+                    cell_recycler.adapter?.notifyItemChanged(y)
+                }
+            }
+            Cursor.CursorMode.Row -> {
+                val y = opus_manager.get_abs_offset(cursor.channel, cursor.line_offset)
+                for (beat in 0 until main_recycler_adapter.itemCount) {
+                    line_label_adapter.notifyItemChanged(y)
+                    column_label_adapter.notifyItemChanged(beat)
+                    val cell_recycler = main_recycler_adapter.get_cell_recycler(beat) ?: continue
+                    cell_recycler.adapter?.notifyItemChanged(y)
+                }
+            }
+            Cursor.CursorMode.Column -> {
+                var y = 0
+                opus_manager.channels.forEachIndexed { i: Int, channel: OpusChannel ->
+                    channel.lines.forEachIndexed { j: Int, line: OpusChannel.OpusLine ->
+                        val cell_recycler = main_recycler_adapter.get_cell_recycler(cursor.beat)
+                        if (cell_recycler != null) {
+                            cell_recycler.adapter?.notifyItemChanged(y)
+                        }
+                        y += 1
+                    }
+                }
+                column_label_adapter.notifyItemChanged(cursor.beat)
+            }
+            Cursor.CursorMode.Unset -> { }
+        }
+    }
+
     fun get_column_width(column: Int): Int {
         return this.column_width_map[column].max()
     }
@@ -172,7 +241,6 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     fun get_activity(): MainActivity {
         return this.context as MainActivity
     }
-
 
     fun get_opus_manager(): OpusManager {
         return (this.context as MainActivity).get_opus_manager()

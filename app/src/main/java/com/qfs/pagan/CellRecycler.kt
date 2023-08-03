@@ -17,14 +17,13 @@ class CellRecycler(context: Context, var viewHolder: ColumnRecyclerViewHolder): 
         this.adapter = CellRecyclerAdapter()
         this.layoutManager = LinearLayoutManager(context, VERTICAL, false)
         this.addOnScrollListener(this.get_scroll_listener())
+        this.itemAnimator = null
     }
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
 
-        this.layoutParams.height = MATCH_PARENT
         this.layoutParams.width = MATCH_PARENT
-        //(this.adapter as CellRecyclerAdapter).update_width()
 
         this.conform_scroll_position()
     }

@@ -12,6 +12,9 @@ import androidx.recyclerview.widget.SimpleItemAnimator
 import com.qfs.pagan.opusmanager.LinksLayer
 
 class LineLabelRecyclerView(context: Context, attrs: AttributeSet) : RecyclerView(context, attrs) {
+    init {
+        this.itemAnimator = null
+    }
     // Prevents this from intercepting linelabel touch events (disables manual scrolling)
     override fun onInterceptTouchEvent(touchEvent: MotionEvent): Boolean {
         return false

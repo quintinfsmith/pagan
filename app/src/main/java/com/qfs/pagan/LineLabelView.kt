@@ -3,17 +3,25 @@ package com.qfs.pagan
 import android.content.Context
 import android.view.ContextThemeWrapper
 import android.view.MotionEvent
+import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
+import androidx.recyclerview.widget.RecyclerView
+import com.qfs.pagan.InterfaceLayer as OpusManager
 
-class LineLabelView(context: Context): LinearLayout(ContextThemeWrapper(context, R.style.line_label_outer)) {
+class LineLabelView(var viewHolder: RecyclerView.ViewHolder): LinearLayout(ContextThemeWrapper(viewHolder.itemView.context, R.style.line_label_outer)) {
     class InnerView(context: Context): androidx.appcompat.widget.AppCompatTextView(ContextThemeWrapper(context, R.style.line_label_inner)) {
-        //override fun onCreateDrawableState(extraSpace: Int): IntArray? {
-        //    val drawableState = super.onCreateDrawableState(extraSpace + 1)
-        //    return (this.parent as LineLabelView).build_drawable_state(drawableState)
-        //}
+        override fun onCreateDrawableState(extraSpace: Int): IntArray? {
+            val drawableState = super.onCreateDrawableState(extraSpace + 1)
+            return if (this.parent == null) {
+                drawableState
+            } else {
+                (this.parent as LineLabelView).build_drawable_state(drawableState)
+            }
+        }
     }
-    var viewHolder: LineLabelViewHolder? = null
+    private val STATE_FOCUSED = intArrayOf(R.attr.state_focused)
+
     private var textView = InnerView(context)
     /*
      * update_queued exists to handle the liminal state between being detached and being destroyed
@@ -22,6 +30,14 @@ class LineLabelView(context: Context): LinearLayout(ContextThemeWrapper(context,
     var update_queued = false
     init {
         this.addView(this.textView)
+        (this.viewHolder.itemView as ViewGroup).removeAllViews()
+        (this.viewHolder.itemView as ViewGroup).addView(this)
+
+        this.setOnClickListener {
+            val opus_manager = this.get_opus_manager()
+            val (channel, line_offset) = this.get_row()
+            opus_manager.cursor_select_row(channel, line_offset)
+        }
     }
 
     override fun onAttachedToWindow() {
@@ -48,11 +64,40 @@ class LineLabelView(context: Context): LinearLayout(ContextThemeWrapper(context,
     }
 
     fun build_drawable_state(drawableState: IntArray?): IntArray? {
+        val opus_manager = this.get_opus_manager()
+        val (channel, line_offset) = this.get_row()
+        when (opus_manager.cursor.mode) {
+            Cursor.CursorMode.Single,
+            Cursor.CursorMode.Row -> {
+                if (opus_manager.cursor.channel == channel && opus_manager.cursor.line_offset == line_offset) {
+                    mergeDrawableStates(drawableState, STATE_FOCUSED)
+                }
+            }
+            Cursor.CursorMode.Range -> {
+                val (first, second) = opus_manager.cursor.range!!
+                if ((channel > first.channel && channel < second.channel) || (channel == first.channel && line_offset >= first.line_offset) || (channel == second.channel && line_offset <= second.line_offset)) {
+                    mergeDrawableStates(drawableState, STATE_FOCUSED)
+                }
+            }
+            else -> { }
+        }
         return drawableState
     }
 
     fun set_text(text: String) {
         this.textView.text = text
         this.contentDescription = text
+    }
+    fun get_opus_manager(): OpusManager {
+        return (this.viewHolder.bindingAdapter as LineLabelRecyclerAdapter).get_opus_manager()
+    }
+
+    fun get_row(): Pair<Int, Int> {
+        val opus_manager = this.get_opus_manager()
+        return opus_manager.get_std_offset(this.get_position())
+    }
+
+    fun get_position(): Int {
+        return this.viewHolder.bindingAdapterPosition
     }
 }

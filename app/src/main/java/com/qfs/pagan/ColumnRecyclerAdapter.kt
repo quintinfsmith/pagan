@@ -38,7 +38,6 @@ class ColumnRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<Col
 
     override fun getItemCount(): Int {
         return this.column_count
-        //return this.get_opus_manager().opus_beat_count
     }
 
     override fun onBindViewHolder(holder: ColumnRecyclerViewHolder, position: Int) {

@@ -2,6 +2,7 @@ package com.qfs.pagan
 
 import android.util.Log
 import android.view.ViewGroup
+import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.OpusEvent
@@ -16,7 +17,7 @@ class CellRecyclerAdapter(): RecyclerView.Adapter<CellRecyclerViewHolder>() {
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CellRecyclerViewHolder {
-        return CellRecyclerViewHolder(this.recycler.context)
+        return CellRecyclerViewHolder(parent.context)
     }
 
     override fun getItemCount(): Int {
@@ -24,22 +25,14 @@ class CellRecyclerAdapter(): RecyclerView.Adapter<CellRecyclerViewHolder>() {
     }
 
     override fun onViewAttachedToWindow(holder:CellRecyclerViewHolder) {
-        var cell_layout = (holder.itemView as CellLayout)
-        cell_layout.build()
-        this.update_width()
+        holder.itemView.layoutParams.width = MATCH_PARENT
     }
 
     override fun onBindViewHolder(holder: CellRecyclerViewHolder, position: Int) {
-        var cell_layout = (holder.itemView as CellLayout)
-        cell_layout.viewHolder = holder
+        CellLayout(holder)
     }
     //-------------------------------------------------------//
 
-    fun update_width() {
-        //var width = this.get_column_width()
-        //Log.d("AAA", "update width ${this.get_beat()} -> $width")
-        //this.recycler.layoutParams.width = width
-    }
 
     fun insert_cell(index: Int) {
         this.cell_count += 1

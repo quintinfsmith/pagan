@@ -4,6 +4,7 @@ import android.util.Log
 import android.view.*
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.qfs.pagan.InterfaceLayer as OpusManager
 
 class ColumnLabelAdapter(var editor_table: EditorTable) : RecyclerView.Adapter<ColumnLabelViewHolder>() {
     var recycler: ColumnLabelRecycler
@@ -22,38 +23,8 @@ class ColumnLabelAdapter(var editor_table: EditorTable) : RecyclerView.Adapter<C
         this.recycler.itemAnimator = null
     }
 
-    fun update_label_focus(label_view: ColumnLabelView) {
-        val holder  = label_view.viewHolder ?: return
-        val beat = holder.bindingAdapterPosition
-        //val cursor = this.opus_manager.cursor
-        //label_view.set_focused(
-        //    when (cursor.mode) {
-        //        Cursor.CursorMode.Column -> {
-        //            cursor.beat == beat
-        //        }
-        //        Cursor.CursorMode.Single -> {
-        //            cursor.beat == beat
-        //        }
-        //        Cursor.CursorMode.Range -> {
-        //            val from_key = cursor.range!!.first
-        //            val to_key = cursor.range!!.second
-
-        //            if (from_key.beat != to_key.beat) {
-        //                (from_key.beat .. to_key.beat).contains(beat)
-        //            } else {
-        //                beat == from_key.beat
-        //            }
-        //        }
-        //        else -> {
-        //            false
-        //        }
-        //    }
-        //)
-    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ColumnLabelViewHolder {
-        val label = ColumnLabelView(parent.context)
-
         //label.setOnClickListener {
         //    val holder = (it as LabelView).viewHolder ?: return@setOnClickListener
         //    val beat = holder.bindingAdapterPosition
@@ -75,12 +46,10 @@ class ColumnLabelAdapter(var editor_table: EditorTable) : RecyclerView.Adapter<C
         //    }
         //}
 
-        return ColumnLabelViewHolder(label)
+        return ColumnLabelViewHolder(parent.context)
     }
 
     override fun onViewAttachedToWindow(holder: ColumnLabelViewHolder) {
-        super.onViewAttachedToWindow(holder)
-
         val beat = holder.bindingAdapterPosition
         val new_width = this.get_column_width(beat)
         holder.itemView.layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT
@@ -88,7 +57,9 @@ class ColumnLabelAdapter(var editor_table: EditorTable) : RecyclerView.Adapter<C
     }
 
     override fun onBindViewHolder(holder: ColumnLabelViewHolder, position: Int) {
-        this.set_text(holder, position)
+        val beat = holder.bindingAdapterPosition
+        val label = ColumnLabelView(holder)
+        label.set_text("$beat")
     }
 
     override fun getItemCount(): Int {
@@ -108,12 +79,6 @@ class ColumnLabelAdapter(var editor_table: EditorTable) : RecyclerView.Adapter<C
     fun get_column_width(beat: Int): Int {
         val editor_table = this.recycler.editor_table
         return editor_table.get_column_width(beat)
-    }
-
-    fun set_text(holder: ColumnLabelViewHolder, position: Int) {
-        val item_view = holder.itemView as ColumnLabelView
-        Log.d("AAA", "setting $position")
-        item_view.set_text("$position")
     }
 
     fun scroll(x: Int) {
@@ -146,6 +111,14 @@ class ColumnLabelAdapter(var editor_table: EditorTable) : RecyclerView.Adapter<C
 
     fun get_editor_table(): EditorTable {
         return this.editor_table
+    }
+
+    fun get_activity(): MainActivity {
+        return this.recycler.context as MainActivity
+    }
+
+    fun get_opus_manager(): OpusManager {
+        return this.get_activity().get_opus_manager()
     }
 
 }

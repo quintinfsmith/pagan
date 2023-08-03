@@ -175,7 +175,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             super.remove_line(channel, line_offset)
         } catch (e: OpusChannel.LastLineException) {
             this.ui_add_line_label()
-            this.ui_set_cursor_focus()
             throw e
         }
 
@@ -228,17 +227,14 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         val editor_table = this.get_editor_table()
         editor_table.remove_column(beat_index)
 
-        this.ui_set_cursor_focus()
     }
 
     override fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<OpusEvent>>?) {
-        this.ui_unset_cursor_focus()
         super.insert_beat(beat_index, beats_in_column)
 
         val editor_table = this.get_editor_table()
         editor_table.new_column(beat_index)
 
-        this.ui_set_cursor_focus()
     }
 
     override fun new() {
@@ -764,10 +760,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
     }
 
-    private fun ui_set_cursor_focus() {
-        if (this.simple_ui_locked()) {
-            return
-        }
+    private fun refresh_cursor() {
        // val rvTable = this.activity.findViewById<RecyclerView>(R.id.rvTable)
        // val adapter = rvTable.adapter as BeatColumnAdapter
 
@@ -781,16 +774,22 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
     // Cursor Functions ////////////////////////////////////////////////////////////////////////////
     fun cursor_clear() {
-        this.ui_unset_cursor_focus()
         this.cursor.clear()
+
+        val editor_table = this.get_editor_table()
+
+        editor_table.update_cursor(this.cursor)
+
         this.withFragment {
             it.clearContextMenu()
         }
     }
     fun cursor_select_row(channel: Int, line_offset: Int, scroll: Boolean = false) {
-        this.ui_unset_cursor_focus()
+        val editor_table = this.get_editor_table()
+
         this.cursor.select_row(channel, line_offset)
-        this.ui_set_cursor_focus()
+
+        editor_table.update_cursor(this.cursor)
 
         this.withFragment {
             it.setContextMenu_line()
@@ -805,9 +804,11 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     fun cursor_select_column(beat: Int, scroll: Boolean = false) {
-        this.ui_unset_cursor_focus()
+        val editor_table = this.get_editor_table()
+
         this.cursor.select_column(beat)
-        this.ui_set_cursor_focus()
+
+        editor_table.update_cursor(this.cursor)
 
         this.withFragment {
             it.setContextMenu_column()
@@ -822,22 +823,22 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     fun cursor_select(beat_key: BeatKey, position: List<Int>, scroll: Boolean = false) {
-        this.ui_unset_cursor_focus()
+        val editor_table = this.get_editor_table()
         this.cursor.select(beat_key, position)
-        this.ui_set_cursor_focus()
+        editor_table.update_cursor(this.cursor)
 
         this.withFragment {
-            it.setContextMenu_leaf()
+            //it.setContextMenu_leaf()
         }
-        if (scroll) {
-            this.ui_scroll_to_position(beat_key, position)
-        }
+
+        //if (scroll) {
+        //    this.ui_scroll_to_position(beat_key, position)
+        //}
     }
 
     fun cursor_select_range(beat_key_a: BeatKey, beat_key_b: BeatKey) {
         this.ui_unset_cursor_focus()
         this.cursor.select_range(beat_key_a, beat_key_b)
-        this.ui_set_cursor_focus()
     }
 
     fun get_tree(): OpusTree<OpusEvent> {

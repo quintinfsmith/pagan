@@ -3,7 +3,14 @@ package com.qfs.pagan
 import android.util.Log
 import com.qfs.pagan.opusmanager.BeatKey
 
-class Cursor {
+data class Cursor(
+    var mode: CursorMode = CursorMode.Unset,
+    var channel: Int = 0,
+    var line_offset: Int = 0,
+    var beat: Int = 0,
+    var position: List<Int> = listOf(),
+    var range: Pair<BeatKey, BeatKey>? = null
+) {
     enum class CursorMode {
         Row,
         Column,
@@ -12,13 +19,6 @@ class Cursor {
         Unset
     }
     class InvalidModeException(actual: CursorMode, expected: CursorMode): Exception("Incorrect Cursor Mode. expected $expected but got $actual")
-
-    var mode = CursorMode.Unset
-    var channel: Int = 0
-    var line_offset: Int = 0
-    var beat: Int = 0
-    var position: List<Int> = listOf()
-    var range: Pair<BeatKey, BeatKey>? = null
 
     fun clear() {
         this.mode = CursorMode.Unset

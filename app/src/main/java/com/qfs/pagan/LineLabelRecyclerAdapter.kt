@@ -32,7 +32,6 @@ class LineLabelRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<
 
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): LineLabelViewHolder {
-        val label = LineLabelView(parent.context)
 
         //label.setOnClickListener {
         //    this.interact_lineLabel(it as LineLabelView)
@@ -90,23 +89,20 @@ class LineLabelRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<
         //    true
         //}
 
-        return LineLabelViewHolder(label)
+        return LineLabelViewHolder(parent.context)
     }
 
     override fun onViewAttachedToWindow(holder: LineLabelViewHolder) {
-        //val label_view = (holder.itemView as LineLabelView)
-        //val opus_manager = this.get_opus_manager()
-        //label_view.set_text(this.get_label_text())
     }
 
     override fun onBindViewHolder(holder: LineLabelViewHolder, position: Int) {
         val opus_manager = this.get_opus_manager()
+        val label_view = LineLabelView(holder)
+        val position = label_view.get_position()
         val (channel, line_offset) = opus_manager.get_std_offset(position)
         val label = this.get_label_text(channel, line_offset)
 
-        val label_view = (holder.itemView as LineLabelView)
         label_view.set_text(label)
-        this.update_label_focus(label_view)
     }
 
     fun update_label_focus(label_view: LineLabelView) {

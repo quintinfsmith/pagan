@@ -8,5 +8,7 @@ import androidx.recyclerview.widget.RecyclerView
 class ColumnRecycler(var editor_table: EditorTable, context: Context, attrs: AttributeSet): RecyclerView(context, attrs) {
     init {
         this.layoutManager = LinearLayoutManager(context, HORIZONTAL, false)
+        this.itemAnimator = null
     }
+
 }

@@ -14,6 +14,7 @@ import androidx.appcompat.view.ContextThemeWrapper
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.OpusEvent
 import com.qfs.pagan.structure.OpusTree
+import kotlin.concurrent.thread
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
 class LeafButton(
@@ -76,6 +77,84 @@ class LeafButton(
         }
 
         this.set_text(is_percussion)
+        this.setOnClickListener {
+            this.callback_click()
+        }
+    }
+
+    private fun callback_click() {
+        val beat_key = this.get_beat_key()
+        val position = this.position
+        val editor_table = this.get_editor_table()
+        val opus_manager = this.get_opus_manager()
+
+        if (editor_table.is_linking()) {
+           // // If a second link point hasn't been selected, assume just one beat is being linked
+           // if (opus_manager.cursor.mode != Cursor.CursorMode.Range) {
+           //     try {
+           //         opus_manager.link_beats(beatkey, this.linking_beat!!)
+           //         opus_manager.cursor_select(
+           //             beatkey,
+           //             opus_manager.get_first_position(beatkey)
+           //         )
+           //     } catch (e: Exception) {
+           //         when (e) {
+           //             is LinksLayer.SelfLinkError -> { }
+           //             is LinksLayer.MixedLinkException -> {
+           //                 this.get_main_activity().feedback_msg("Can't link percussion to non-percussion")
+           //             }
+           //             else -> {
+           //                 throw e
+           //             }
+           //         }
+           //     }
+           // } else {
+           //     try {
+           //         opus_manager.link_beat_range(
+           //             beatkey,
+           //             this.linking_beat!!,
+           //             this.linking_beat_b!!
+           //         )
+           //         opus_manager.cursor_select(beatkey, position)
+           //     } catch (e: Exception) {
+           //         when (e) {
+           //             is LinksLayer.SelfLinkError -> { }
+           //             is LinksLayer.LinkRangeOverlap -> { }
+           //             is LinksLayer.LinkRangeOverflow -> { }
+           //             is LinksLayer.MixedLinkException -> {
+           //                 this.get_main_activity().feedback_msg(
+           //                     "Can't link percussion to non-percussion"
+           //                 )
+           //             }
+           //             else -> {
+           //                 throw e
+           //             }
+           //         }
+
+           //     }
+           // }
+           // this.cancel_linking()
+        } else {
+            opus_manager.cursor_select(beat_key, position)
+            val tree = opus_manager.get_tree()
+
+            thread {
+                if (tree.is_event()) {
+                    val abs_value = opus_manager.get_absolute_value(beat_key, position)
+                    if ((abs_value != null) && abs_value in (0 .. 90)) {
+                        (this.get_editor_table().context as MainActivity).play_event(
+                            beat_key.channel,
+                            if (opus_manager.is_percussion(beat_key.channel)) {
+                                opus_manager.get_percussion_instrument(beat_key.line_offset)
+                            } else {
+                                opus_manager.get_absolute_value(beat_key, position) ?: return@thread
+                            },
+                            opus_manager.get_line_volume(beat_key.channel, beat_key.line_offset)
+                        )
+                    }
+                }
+            }
+        }
     }
 
     // Prevents the child labels from blocking the parent onTouchListener events
@@ -175,6 +254,7 @@ class LeafButton(
                 mergeDrawableStates(drawableState, STATE_INVALID)
             }
         }
+
         if (opus_manager.is_networked(beat_key)) {
             mergeDrawableStates(drawableState, STATE_LINKED)
         }
@@ -199,6 +279,7 @@ class LeafButton(
         super.refreshDrawableState()
     }
 
+    // ------------------------------------------------------//
     fun get_opus_manager(): OpusManager {
         return (this.parent as CellLayout).get_opus_manager()
     }
@@ -208,5 +289,7 @@ class LeafButton(
     fun get_beat_tree(): OpusTree<OpusEvent> {
         return (this.parent as CellLayout).get_beat_tree()
     }
-
+    fun get_editor_table(): EditorTable {
+        return (this.parent as CellLayout).get_editor_table()
+    }
 }

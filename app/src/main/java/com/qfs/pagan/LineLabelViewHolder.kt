@@ -1,11 +1,15 @@
 package com.qfs.pagan
 
+import android.content.Context
+import android.view.ContextThemeWrapper
 import android.view.View
+import android.view.ViewGroup
+import android.widget.LinearLayout
+import androidx.core.view.children
 import androidx.recyclerview.widget.RecyclerView
 
-class LineLabelViewHolder(itemView: LineLabelView) : RecyclerView.ViewHolder(itemView as View) {
-    init {
-        itemView.viewHolder = this
+class LineLabelViewHolder(context: Context) : RecyclerView.ViewHolder(LinearLayout(context)) {
+    fun get_label(): LineLabelView {
+        return (this.itemView as ViewGroup).children.first() as LineLabelView
     }
 }
-

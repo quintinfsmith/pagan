@@ -3,16 +3,11 @@ package com.qfs.pagan
 import androidx.recyclerview.widget.RecyclerView
 
 class VerticalScrollListener(var editor_table: EditorTable): RecyclerView.OnScrollListener() {
-    var absolute_x = 0
-    var absolute_y = 0
     override fun onScrolled(recyclerView: RecyclerView, x: Int, y: Int) {
         super.onScrolled(recyclerView, x, y)
         if ((recyclerView as CellRecycler).is_propagation_locked()) {
             return
         }
-
-        this.absolute_x += x
-        this.absolute_y += y
 
         val main_adapter = (recyclerView as CellRecycler).get_column_recycler_adapter() as ColumnRecyclerAdapter
         main_adapter.apply_to_visible_columns {

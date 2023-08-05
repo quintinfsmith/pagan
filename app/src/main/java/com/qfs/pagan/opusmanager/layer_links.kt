@@ -45,7 +45,7 @@ open class LinksLayer : OpusManagerBase() {
         }
     }
 
-    fun clear_link_pool(beat_key: BeatKey) {
+    open fun clear_link_pool(beat_key: BeatKey) {
         val index = this.link_pool_map[beat_key] ?: return
         this.remove_link_pool(index)
     }

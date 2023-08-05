@@ -20,6 +20,12 @@ data class Cursor(
     }
     class InvalidModeException(actual: CursorMode, expected: CursorMode): Exception("Incorrect Cursor Mode. expected $expected but got $actual")
 
+    var is_linking = false
+
+    fun is_linking_range(): Boolean {
+        return this.mode == CursorMode.Range && this.is_linking
+    }
+
     fun clear() {
         this.mode = CursorMode.Unset
         this.channel = 0
@@ -27,6 +33,7 @@ data class Cursor(
         this.beat = 0
         this.position = listOf()
         this.range = null
+        this.is_linking = false
     }
 
     fun get_beatkey(): BeatKey {
@@ -55,17 +62,20 @@ data class Cursor(
         this.line_offset = beat_key.line_offset
         this.beat = beat_key.beat
         this.position = position
+        this.is_linking = false
     }
 
     fun select_row(channel: Int, line_offset: Int) {
         this.mode = CursorMode.Row
         this.channel = channel
         this.line_offset = line_offset
+        this.is_linking = false
     }
 
     fun select_column(beat: Int) {
         this.mode = CursorMode.Column
         this.beat = beat
+        this.is_linking = false
     }
 
     fun select_range(beat_key_a: BeatKey, beat_key_b: BeatKey) {
@@ -98,6 +108,15 @@ data class Cursor(
         from_key.beat = Integer.min(beat_key_a.beat, beat_key_b.beat)
         to_key.beat = Integer.max(beat_key_a.beat, beat_key_b.beat)
         this.range = Pair(from_key, to_key)
+    }
+
+    fun select_range_to_link(beat_key_a: BeatKey, beat_key_b: BeatKey) {
+        this.select_range(beat_key_a, beat_key_b)
+        this.is_linking = true
+    }
+    fun select_to_link(beat_key: BeatKey) {
+        this.select(beat_key, listOf())
+        this.is_linking = true
     }
 
     //fun move_left() {

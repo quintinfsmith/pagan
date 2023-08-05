@@ -9,6 +9,7 @@ class ColumnRecycler(var editor_table: EditorTable, context: Context, attrs: Att
     init {
         this.layoutManager = LinearLayoutManager(context, HORIZONTAL, false)
         this.itemAnimator = null
+        this.setHasFixedSize(true)
     }
 
 }

@@ -12,6 +12,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.view.ContextThemeWrapper
 import com.qfs.pagan.opusmanager.BeatKey
+import com.qfs.pagan.opusmanager.LinksLayer
 import com.qfs.pagan.opusmanager.OpusEvent
 import com.qfs.pagan.structure.OpusTree
 import kotlin.concurrent.thread
@@ -57,6 +58,7 @@ class LeafButton(
     private var inner_wrapper: InnerWrapper = InnerWrapper(ContextThemeWrapper(this.context, R.style.leaf_inner))
 
     init {
+        this.minimumHeight = resources.getDimension(R.dimen.line_height).toInt()
         this.minimumWidth = resources.getDimension(R.dimen.base_leaf_width).toInt()
         this.inner_wrapper.orientation = VERTICAL
         this.value_wrapper = LinearLayout(ContextThemeWrapper(this.context, R.style.leaf_value))
@@ -76,64 +78,65 @@ class LeafButton(
             height = MATCH_PARENT
         }
 
+        //this.layoutParams.height = line_height.toInt()
+
         this.set_text(is_percussion)
         this.setOnClickListener {
-            this.callback_click()
+            this.activity.runOnUiThread {
+                this.callback_click()
+            }
+        }
+        this.setOnLongClickListener {
+            val opus_manager = this.get_opus_manager()
+            val cursor = opus_manager.cursor
+            val beat_key = this.get_beat_key()
+            if (cursor.is_linking_range()) {
+                opus_manager.cursor_select_range_to_link(
+                    opus_manager.cursor.range!!.first,
+                    beat_key
+                )
+            } else if (cursor.is_linking) {
+                opus_manager.cursor_select_range_to_link(
+                    opus_manager.cursor.get_beatkey(),
+                    beat_key
+                )
+            } else {
+                opus_manager.cursor_select_to_link(beat_key)
+            }
+            false
         }
     }
 
     private fun callback_click() {
         val beat_key = this.get_beat_key()
         val position = this.position
-        val editor_table = this.get_editor_table()
         val opus_manager = this.get_opus_manager()
 
-        if (editor_table.is_linking()) {
-           // // If a second link point hasn't been selected, assume just one beat is being linked
-           // if (opus_manager.cursor.mode != Cursor.CursorMode.Range) {
-           //     try {
-           //         opus_manager.link_beats(beatkey, this.linking_beat!!)
-           //         opus_manager.cursor_select(
-           //             beatkey,
-           //             opus_manager.get_first_position(beatkey)
-           //         )
-           //     } catch (e: Exception) {
-           //         when (e) {
-           //             is LinksLayer.SelfLinkError -> { }
-           //             is LinksLayer.MixedLinkException -> {
-           //                 this.get_main_activity().feedback_msg("Can't link percussion to non-percussion")
-           //             }
-           //             else -> {
-           //                 throw e
-           //             }
-           //         }
-           //     }
-           // } else {
-           //     try {
-           //         opus_manager.link_beat_range(
-           //             beatkey,
-           //             this.linking_beat!!,
-           //             this.linking_beat_b!!
-           //         )
-           //         opus_manager.cursor_select(beatkey, position)
-           //     } catch (e: Exception) {
-           //         when (e) {
-           //             is LinksLayer.SelfLinkError -> { }
-           //             is LinksLayer.LinkRangeOverlap -> { }
-           //             is LinksLayer.LinkRangeOverflow -> { }
-           //             is LinksLayer.MixedLinkException -> {
-           //                 this.get_main_activity().feedback_msg(
-           //                     "Can't link percussion to non-percussion"
-           //                 )
-           //             }
-           //             else -> {
-           //                 throw e
-           //             }
-           //         }
-
-           //     }
-           // }
-           // this.cancel_linking()
+        if (opus_manager.cursor.is_linking) {
+            val editor_table = this.get_editor_table() // Will need if overflow exception is passed
+            try {
+                // KLUDGE to prevent refreshing drawablestate
+                // The parent cell layout will be redrawn and finishing the setPressed process
+                // isn't required, and can cause a crash
+                (this.parent as ViewGroup).removeView(this)
+                opus_manager.link_beat(beat_key)
+            } catch (e: Exception) {
+                when (e) {
+                    is LinksLayer.SelfLinkError -> { }
+                    is LinksLayer.MixedLinkException -> {
+                        this.activity.feedback_msg("Can't link percussion to non-percussion")
+                    }
+                    is LinksLayer.LinkRangeOverflow -> {
+                        editor_table.notify_cell_change(beat_key)
+                        opus_manager.cursor.is_linking = false
+                        opus_manager.cursor_select(beat_key, this.position)
+                        this.activity.feedback_msg("Bad Range")
+                    }
+                    else -> {
+                        throw e
+                    }
+                }
+            }
         } else {
             opus_manager.cursor_select(beat_key, position)
             val tree = opus_manager.get_tree()
@@ -228,13 +231,6 @@ class LeafButton(
                 setMargins(0,0,0,0)
             }
         }
-    }
-
-    override fun onAttachedToWindow() {
-        super.onAttachedToWindow()
-        val line_height = resources.getDimension(R.dimen.line_height)
-        this.layoutParams.height = line_height.toInt()
-        this.minimumWidth = resources.getDimension(R.dimen.base_leaf_width).toInt()
     }
 
     fun build_drawable_state(drawableState: IntArray?): IntArray? {

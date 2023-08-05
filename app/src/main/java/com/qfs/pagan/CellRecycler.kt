@@ -1,13 +1,18 @@
 package com.qfs.pagan
 
-import android.content.Context
+import android.annotation.SuppressLint
+import android.view.ContextThemeWrapper
 import android.view.View
+import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
+import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import kotlin.concurrent.thread
+import com.qfs.pagan.InterfaceLayer as OpusManager
 
-class CellRecycler(context: Context, var viewHolder: ColumnRecyclerViewHolder): RecyclerView(context) {
+@SuppressLint("ViewConstructor")
+class CellRecycler(var viewHolder: ColumnRecyclerViewHolder): RecyclerView(ContextThemeWrapper(viewHolder.itemView.context, R.style.column)) {
     class ColumnDetachedException: Exception()
 
     private var _scroll_propagation_locked = false
@@ -18,13 +23,20 @@ class CellRecycler(context: Context, var viewHolder: ColumnRecyclerViewHolder): 
         this.layoutManager = LinearLayoutManager(context, VERTICAL, false)
         this.addOnScrollListener(this.get_scroll_listener())
         this.itemAnimator = null
+
+        (this.viewHolder.itemView as ViewGroup).removeAllViews()
+        this.viewHolder.itemView.background = resources.getDrawable(androidx.transition.R.color.material_deep_teal_200)
+        (this.viewHolder.itemView as ViewGroup).addView(this)
+        for (y in 0 until this.get_opus_manager().get_total_line_count()) {
+            (this.adapter as CellRecyclerAdapter).insert_cell(y)
+        }
+        this.layoutParams.height = MATCH_PARENT
+        this.layoutParams.width = WRAP_CONTENT
+        this.setHasFixedSize(true)
     }
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
-
-        this.layoutParams.width = MATCH_PARENT
-
         this.conform_scroll_position()
     }
 
@@ -35,7 +47,9 @@ class CellRecycler(context: Context, var viewHolder: ColumnRecyclerViewHolder): 
             column_adapter.get_activity().runOnUiThread {
                 this.lock_scroll_propagation()
                 try {
-                    val position = this.get_scroll_listener().absolute_y
+                    val editor_table = this.get_editor_table()
+                    val line_label_recycler = editor_table.line_label_recycler
+                    val position = line_label_recycler.computeVerticalScrollOffset()
                     val delta = position - this.computeVerticalScrollOffset()
                     this.scrollBy(0, delta)
                 } catch (e: ColumnDetachedException) {
@@ -45,8 +59,8 @@ class CellRecycler(context: Context, var viewHolder: ColumnRecyclerViewHolder): 
                 this.visibility = View.VISIBLE
             }
         }
-
     }
+
     //-------------------------------------------------------//
     fun is_propagation_locked(): Boolean {
         return this._scroll_propagation_locked
@@ -59,14 +73,17 @@ class CellRecycler(context: Context, var viewHolder: ColumnRecyclerViewHolder): 
     }
 
     //-------------------------------------------------------//
+    fun get_opus_manager(): OpusManager {
+        return (this.viewHolder.bindingAdapter as ColumnRecyclerAdapter).get_opus_manager()
+    }
     fun get_beat(): Int {
-        return this.viewHolder!!.bindingAdapterPosition
+        return this.viewHolder.bindingAdapterPosition
     }
     fun get_column_recycler_adapter(): ColumnRecyclerAdapter {
         if (this.viewHolder.bindingAdapter == null) {
             throw ColumnDetachedException()
         }
-        return this.viewHolder!!.bindingAdapter as ColumnRecyclerAdapter
+        return this.viewHolder.bindingAdapter as ColumnRecyclerAdapter
     }
     fun get_editor_table(): EditorTable {
         return this.get_column_recycler_adapter().get_editor_table()

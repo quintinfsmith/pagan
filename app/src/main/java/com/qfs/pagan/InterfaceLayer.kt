@@ -9,12 +9,12 @@ import com.qfs.pagan.opusmanager.*
 import com.qfs.pagan.structure.OpusTree
 import java.lang.Integer.max
 import java.lang.Integer.min
+import kotlin.concurrent.thread
 
 class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     private var simple_ui_lock = 0
     var relative_mode: Int = 0
     var cursor = Cursor()
-    private var queued_location_stamp: Pair<BeatKey, List<Int>?>? = null
     var first_load_done = false
 
     private fun simple_ui_locked(): Boolean {
@@ -57,12 +57,16 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
     override fun unset(beat_key: BeatKey, position: List<Int>) {
         super.unset(beat_key, position)
-        this.ui_refresh_beat_labels(beat_key)
+        if (!this.simple_ui_locked()) {
+            this.get_editor_table().notify_cell_change(beat_key)
+        }
     }
 
     override fun replace_tree(beat_key: BeatKey, position: List<Int>, tree: OpusTree<OpusEvent>) {
         super.replace_tree(beat_key, position, tree)
-        this.ui_refresh_beat_labels(beat_key)
+        if (!this.simple_ui_locked()) {
+            this.get_editor_table().notify_cell_change(beat_key)
+        }
     }
 
     override fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEvent) {
@@ -72,13 +76,17 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         if (this.history_cache.isLocked()) {
             this.set_relative_mode(event)
         }
+        if (!this.simple_ui_locked()) {
+            this.get_editor_table().notify_cell_change(beat_key)
+        }
 
-        this.ui_refresh_beat_labels(beat_key)
     }
 
     override fun set_percussion_event(beat_key: BeatKey, position: List<Int>) {
         super.set_percussion_event(beat_key, position)
-        this.ui_refresh_beat_labels(beat_key)
+        if (!this.simple_ui_locked()) {
+            this.get_editor_table().notify_cell_change(beat_key)
+        }
     }
 
     fun set_relative_mode(event: OpusEvent) {
@@ -101,28 +109,35 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                 instrument,
                 this.activity.get_drum_name(instrument)
             )
-
-            this.update_line_labels()
+            this.get_editor_table().update_line_label(this.channels.size - 1, line_offset)
         }
     }
 
     override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
         super.split_tree(beat_key, position, splits)
-        this.ui_refresh_beat_labels(beat_key)
+        if (!this.simple_ui_locked()) {
+            this.get_editor_table().notify_cell_change(beat_key)
+        }
     }
 
     override fun insert_after(beat_key: BeatKey, position: List<Int>) {
         super.insert_after(beat_key, position)
-        this.ui_refresh_beat_labels(beat_key)
+        if (!this.simple_ui_locked()) {
+            this.get_editor_table().notify_cell_change(beat_key)
+        }
     }
     override fun insert(beat_key: BeatKey, position: List<Int>) {
         super.insert(beat_key, position)
-        this.ui_refresh_beat_labels(beat_key)
+        if (!this.simple_ui_locked()) {
+            this.get_editor_table().notify_cell_change(beat_key)
+        }
     }
 
     override fun remove(beat_key: BeatKey, position: List<Int>) {
         super.remove(beat_key, position)
-        this.ui_refresh_beat_labels(beat_key)
+        if (!this.simple_ui_locked()) {
+            this.get_editor_table().notify_cell_change(beat_key)
+        }
     }
 
     override fun new_line(channel: Int, line_offset: Int?): OpusChannel.OpusLine {
@@ -174,7 +189,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         val output = try {
             super.remove_line(channel, line_offset)
         } catch (e: OpusChannel.LastLineException) {
-            this.ui_add_line_label()
             throw e
         }
 
@@ -209,9 +223,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         }
 
         super.new_channel(channel, lines, uuid)
-        for (i in 0 until lines) {
-            this.ui_add_line_label()
-        }
 
         val rvActiveChannels: RecyclerView = this.activity.findViewById(R.id.rvActiveChannels)
         this.activity.update_channel_instruments(notify_index)
@@ -221,20 +232,23 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     override fun remove_beat(beat_index: Int) {
-        this.ui_unset_cursor_focus()
         super.remove_beat(beat_index)
 
-        val editor_table = this.get_editor_table()
-        editor_table.remove_column(beat_index)
-
+        if (!this.simple_ui_locked()) {
+            val editor_table = this.get_editor_table()
+            editor_table.remove_column(beat_index)
+            editor_table.update_cursor(this.cursor)
+        }
     }
 
     override fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<OpusEvent>>?) {
         super.insert_beat(beat_index, beats_in_column)
 
-        val editor_table = this.get_editor_table()
-        editor_table.new_column(beat_index)
-
+        if (!this.simple_ui_locked()) {
+            val editor_table = this.get_editor_table()
+            editor_table.new_column(beat_index)
+            editor_table.update_cursor(this.cursor)
+        }
     }
 
     override fun new() {
@@ -339,9 +353,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
     override fun remove_channel(channel: Int) {
         val lines = this.channels[channel].size
-        for (i in 0 until lines) {
-            this.ui_remove_line_label(channel, 0)
-        }
 
         super.remove_channel(channel)
 
@@ -362,10 +373,14 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         update_keys.remove(beat_key)
         super.unlink_beat(beat_key)
 
+        this.cursor.is_linking = false
+        this.cursor_select(beat_key, this.get_first_position(beat_key))
+
         // Need to run update on both the beat_key and *any* of its former link pool
-        this.ui_refresh_beat_labels(beat_key)
+        var editor_table = this.get_editor_table()
+        editor_table.notify_cell_change(beat_key)
         if (update_keys.isNotEmpty()) {
-            this.ui_refresh_beat_labels(update_keys.first())
+            editor_table.notify_cell_change(update_keys.first())
         }
     }
 
@@ -377,77 +392,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         this.withFragment {
             it.scrollTo(beat_key, position)
         }
-    }
-
-    private fun ui_remove_beat(beat: Int) {
-       // val beat_table = this.activity.findViewById<RecyclerView>(R.id.rvTable)
-       // val rvTable_adapter = beat_table.adapter as ColumnRecyclerAdapter
-       // rvTable_adapter.notifyItemRemoved(beat)
-
-        //val rvColumnLabels = this.activity.findViewById<RecyclerView>(R.id.rvColumnLabels)
-        //(rvColumnLabels.adapter as ColumnLabelAdapter).refresh()
-    }
-    private fun ui_add_beat(beat: Int) {
-       // val beat_table = this.activity.findViewById<RecyclerView>(R.id.rvTable)
-       // val rvTable_adapter = beat_table.adapter as ColumnRecyclerAdapter
-       // rvTable_adapter.notifyItemInserted(beat)
-
-        //val rvColumnLabels = this.activity.findViewById<RecyclerView>(R.id.rvColumnLabels)
-        //(rvColumnLabels.adapter as ColumnLabelAdapter).refresh()
-    }
-
-    private fun ui_add_line_label() {
-       // val rvLineLabels = this.activity.findViewById<RecyclerView>(R.id.rvLineLabels)
-       // val rvLineLabels_adapter = rvLineLabels.adapter as LineLabelRecyclerView.LineLabelAdapter
-       // rvLineLabels_adapter.addLineLabel()
-    }
-
-    private fun ui_add_line(channel: Int, line_offset: Int) {
-    }
-
-    private fun ui_remove_line_label(channel: Int, line_offset: Int) {
-       // val rvLineLabels = this.activity.findViewById<RecyclerView>(R.id.rvLineLabels)
-       // val rvLineLabels_adapter = rvLineLabels.adapter as LineLabelRecyclerView.LineLabelAdapter
-
-       // rvLineLabels_adapter.removeLineLabel(
-       //     try {
-       //         this.get_abs_offset(channel, line_offset)
-       //     } catch (e: IndexOutOfBoundsException) {
-       //         return // no need to remove the label, it doesn't exist
-       //     }
-       // )
-    }
-
-    private fun ui_refresh_beat_labels(beat_key: BeatKey) {
-        if (this.simple_ui_locked()) {
-            return
-        }
-        //val beat_table = this.activity.findViewById<RecyclerView>(R.id.rvTable)
-        //val rvTable_adapter = beat_table.adapter as BeatColumnAdapter
-        //val linked_beats = mutableSetOf<Int>()
-        //for (linked_key in this.get_all_linked(beat_key)) {
-        //    linked_beats.add(linked_key.beat)
-        //}
-
-        //for (beat in linked_beats) {
-        //    rvTable_adapter.refresh_leaf_labels(beat)
-        //}
-    }
-
-    private fun update_line_labels() {
-        if (this.simple_ui_locked()) {
-            return
-        }
-        //val rvLineLabels = this.activity.findViewById<RecyclerView>(R.id.rvLineLabels)
-        //val rvLineLabels_adapter = rvLineLabels.adapter as LineLabelRecyclerView.LineLabelAdapter
-        //val start =
-        //    (rvLineLabels.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
-        //val end =
-        //    (rvLineLabels.layoutManager as LinearLayoutManager).findLastVisibleItemPosition()
-
-        //for (i in start..end) {
-        //    rvLineLabels_adapter.notifyItemChanged(i)
-        //}
     }
 
     private fun <T> withFragment(callback: (EditorFragment) -> T): T? {
@@ -494,84 +438,35 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         tvTempo.text = this.activity.getString(R.string.label_bpm, this.tempo.toInt())
     }
 
-    override fun apply_undo() {
-        if (this.has_history()) {
-            this.surpress_ui {
-                super.apply_undo()
-            }
-
-            var need_line_update = true
-            if (this.queued_location_stamp != null) {
-                tlog("SET CURSOR") {
-                    val (beat_key, position) = this.queued_location_stamp!!
-                    this.queued_location_stamp = null
-
-                    if (beat_key.beat == -1) { // Row Select
-                        this.cursor_select_row(
-                            beat_key.channel,
-                            beat_key.line_offset,
-                            scroll = true
-                        )
-                    } else if (beat_key.channel == -1 || beat_key.line_offset == -1) { // Beat Select
-                        this.cursor_select_column(beat_key.beat, scroll = true)
-                    } else if (position == null) {
-                        need_line_update = false
-                    } else {
-                        this.cursor_select(beat_key, position, scroll = true)
-                    }
-                }
-            } else {
+    override fun apply_history_node(current_node: HistoryCache.HistoryNode, depth: Int)  {
+        when (current_node.token) {
+            HistoryToken.CURSOR_SELECT_ROW,
+            HistoryToken.CURSOR_SELECT,
+            HistoryToken.CURSOR_SELECT_COLUMN -> {
                 this.cursor_clear()
             }
-
-            if (need_line_update) {
-                tlog("UPDATE LINES") {
-                    this.update_line_labels()
-                }
-            }
-
-        } else {
-            // It's just irritating
-            //this.activity.feedback_msg(this.activity.getString(R.string.msg_undo_none))
+            else -> { }
         }
-    }
-
-    override fun apply_history_node(current_node: HistoryCache.HistoryNode, depth: Int)  {
         super.apply_history_node(current_node, depth)
-        this.queued_location_stamp = when (current_node.token) {
+        when (current_node.token) {
             HistoryToken.CURSOR_SELECT_ROW -> {
-                Pair(
-                    BeatKey(
-                        current_node.args[0] as Int,
-                        current_node.args[1] as Int,
-                        -1
-                    ),
-                    null
+                this.cursor_select_row(
+                    current_node.args[0] as Int,
+                    current_node.args[1] as Int
                 )
             }
             HistoryToken.CURSOR_SELECT -> {
-                Pair(
+                this.cursor_select(
                     current_node.args[0] as BeatKey,
-                    if (current_node.args[1] is List<*>) {
-                        this.checked_cast<List<Int>>(current_node.args[1])
-                    } else {
-                        return
-                    }
+                    this.checked_cast<List<Int>>(current_node.args[1])
                 )
             }
             HistoryToken.CURSOR_SELECT_COLUMN -> {
-                Pair(
-                    BeatKey(
-                        -1,
-                        -1,
-                        current_node.args[0] as Int
-                    ),
-                    null
+                this.cursor_select_column(
+                    current_node.args[0] as Int
                 )
             }
-            else -> {
-                this.queued_location_stamp
-            }
+            else -> { }
         }
     }
 
@@ -745,45 +640,17 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
 
-    private fun ui_unset_cursor_focus() {
-        if (this.simple_ui_locked()) {
-            return
-        }
-        //val rvTable = this.activity.findViewById<RecyclerView>(R.id.rvTable)
-        //val adapter = rvTable.adapter as BeatColumnAdapter
-
-        //val rvLineLabels = this.activity.findViewById<RecyclerView>(R.id.rvLineLabels)
-        //(rvLineLabels.adapter as LineLabelRecyclerView.LineLabelAdapter).set_cursor_focus(false)
-
-        //val rvColumnLabels = this.activity.findViewById<RecyclerView>(R.id.rvColumnLabels)
-        //(rvColumnLabels.adapter as ColumnLabelAdapter).set_cursor_focus(false)
-
-    }
-
-    private fun refresh_cursor() {
-       // val rvTable = this.activity.findViewById<RecyclerView>(R.id.rvTable)
-       // val adapter = rvTable.adapter as BeatColumnAdapter
-
-       // val rvLineLabels = this.activity.findViewById<RecyclerView>(R.id.rvLineLabels)
-       // (rvLineLabels.adapter as LineLabelRecyclerView.LineLabelAdapter).set_cursor_focus(true)
-
-       // val rvColumnLabels = this.activity.findViewById<RecyclerView>(R.id.rvColumnLabels)
-       // (rvColumnLabels.adapter as ColumnLabelAdapter).set_cursor_focus(true)
-    }
-
-
     // Cursor Functions ////////////////////////////////////////////////////////////////////////////
     fun cursor_clear() {
         this.cursor.clear()
-
         val editor_table = this.get_editor_table()
-
         editor_table.update_cursor(this.cursor)
 
         this.withFragment {
             it.clearContextMenu()
         }
     }
+
     fun cursor_select_row(channel: Int, line_offset: Int, scroll: Boolean = false) {
         val editor_table = this.get_editor_table()
 
@@ -795,12 +662,12 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             it.setContextMenu_line()
         }
 
-        if (scroll) {
-            this.ui_scroll_to_position(
-                BeatKey(channel, line_offset, -1),
-                listOf()
-            )
-        }
+        //if (scroll) {
+        //    this.ui_scroll_to_position(
+        //        BeatKey(channel, line_offset, -1),
+        //        listOf()
+        //    )
+        //}
     }
 
     fun cursor_select_column(beat: Int, scroll: Boolean = false) {
@@ -814,31 +681,49 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             it.setContextMenu_column()
         }
 
-        if (scroll) {
-            this.ui_scroll_to_position(
-                BeatKey(-1, -1, beat),
-                listOf()
-            )
-        }
+       // if (scroll) {
+       //     this.ui_scroll_to_position(
+       //         BeatKey(-1, -1, beat),
+       //         listOf()
+       //     )
+       // }
     }
-
     fun cursor_select(beat_key: BeatKey, position: List<Int>, scroll: Boolean = false) {
         val editor_table = this.get_editor_table()
         this.cursor.select(beat_key, position)
         editor_table.update_cursor(this.cursor)
-
         this.withFragment {
-            //it.setContextMenu_leaf()
+            it.setContextMenu_leaf()
         }
-
         //if (scroll) {
         //    this.ui_scroll_to_position(beat_key, position)
         //}
     }
 
-    fun cursor_select_range(beat_key_a: BeatKey, beat_key_b: BeatKey) {
-        this.ui_unset_cursor_focus()
+    fun cursor_select_to_link(beat_key: BeatKey) {
+        this.cursor.select_to_link(beat_key)
+
+        val editor_table = this.get_editor_table()
+        editor_table.update_cursor(this.cursor)
+
+        this.withFragment {
+            it.setContextMenu_linking()
+        }
+    }
+    fun cursor_select_range_to_link(beat_key_a: BeatKey, beat_key_b: BeatKey) {
         this.cursor.select_range(beat_key_a, beat_key_b)
+
+        val editor_table = this.get_editor_table()
+        editor_table.update_cursor(this.cursor)
+
+        this.withFragment {
+            it.setContextMenu_linking()
+        }
+    }
+
+    fun cursor_select_range(beat_key_a: BeatKey, beat_key_b: BeatKey) {
+        this.cursor.select_range(beat_key_a, beat_key_b)
+        this.get_editor_table().update_cursor(this.cursor)
     }
 
     fun get_tree(): OpusTree<OpusEvent> {
@@ -895,16 +780,30 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     fun clear_link_pool() {
+        this.cursor.is_linking = false
         if (this.cursor.mode == Cursor.CursorMode.Single) {
-            this.clear_link_pool(
-                this.cursor.get_beatkey()
-            )
+            val beat_key = this.cursor.get_beatkey()
+            this.clear_link_pool(beat_key)
+            this.cursor_select(beat_key, this.get_first_position(beat_key))
         } else if (this.cursor.mode == Cursor.CursorMode.Range) {
+            val beat_key = this.cursor.range!!.first
             this.clear_link_pools_by_range(
-                this.cursor.range!!.first,
+                beat_key,
                 this.cursor.range!!.second
             )
+            this.cursor_select(beat_key, this.get_first_position(beat_key))
         }
+    }
+
+   override fun clear_link_pool(beat_key: BeatKey) {
+       val update_keys = this.get_all_linked(beat_key).toMutableList()
+       super.clear_link_pool(beat_key)
+
+       // Need to run update on both the beat_key and *any* of its former link pool
+       val editor_table = this.get_editor_table()
+       for (unlinked in update_keys) {
+           editor_table.notify_cell_change(unlinked)
+       }
     }
 
     fun set_percussion_instrument(instrument: Int) {
@@ -981,20 +880,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         btnCopyProject.visibility = View.VISIBLE
     }
 
-    override fun link_beats(beat_key: BeatKey, target: BeatKey) {
-        super.link_beats(beat_key, target)
-        this.ui_refresh_beat_labels(beat_key)
-        this.ui_refresh_beat_labels(target)
-    }
-
-    override fun remove_link_pool(index: Int) {
-        val link_pool = this.link_pools[index].toList()
-        super.remove_link_pool(index)
-        for (beat_key in link_pool) {
-            this.ui_refresh_beat_labels(beat_key)
-        }
-    }
-
     override fun link_beat_range_horizontally(channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey) {
         this.surpress_ui {
             super.link_beat_range_horizontally(channel, line_offset, first_key, second_key)
@@ -1013,7 +898,8 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                 beat_key in this.get_beatkeys_in_range(cursor.range!!.first, cursor.range!!.second)
             }
             Cursor.CursorMode.Single -> {
-                cursor.get_beatkey() == beat_key && cursor.get_position() == position
+                val cposition = this.cursor.get_position()
+                cursor.get_beatkey() == beat_key && position.size >= cposition.size && position.subList(0, cposition.size) == cposition
             }
             Cursor.CursorMode.Unset -> {
                 false
@@ -1023,5 +909,18 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
     fun get_editor_table(): EditorTable {
         return this.activity.findViewById<EditorTable>(R.id.etEditorTable)
+    }
+
+    fun link_beat(beat_key: BeatKey) {
+        if (this.cursor.is_linking_range()) {
+            var (first, second) = this.cursor.range!!
+            this.link_beat_range(beat_key, first, second)
+        } else if (this.cursor.is_linking) {
+            this.link_beats(beat_key, this.cursor.get_beatkey())
+        } else {
+            // TODO: Raise Error
+        }
+        this.cursor.is_linking = false
+        this.cursor_select(beat_key, this.get_first_position(beat_key))
     }
 }

@@ -1,12 +1,14 @@
 package com.qfs.pagan
 
 import android.content.Context
+import android.util.Log
 import android.view.ContextThemeWrapper
 import android.view.MotionEvent
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.RelativeLayout
 import androidx.recyclerview.widget.RecyclerView
+import kotlin.math.roundToInt
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
 class ColumnLabelView(val viewHolder: RecyclerView.ViewHolder): RelativeLayout(ContextThemeWrapper(viewHolder.itemView.context, R.style.column_label_outer)) {
@@ -30,6 +32,19 @@ class ColumnLabelView(val viewHolder: RecyclerView.ViewHolder): RelativeLayout(C
         this.addView(this.textView)
         (this.viewHolder.itemView as ViewGroup).removeAllViews()
         (this.viewHolder.itemView as ViewGroup).addView(this)
+
+        val beat = (this.viewHolder as ColumnLabelViewHolder).bindingAdapterPosition
+        val editor_table = ((this.viewHolder as ColumnLabelViewHolder).bindingAdapter as ColumnLabelAdapter).get_editor_table()
+        val new_width = editor_table.get_column_width(beat)
+
+        this.textView.layoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT
+        this.textView.layoutParams.height = resources.getDimension(R.dimen.line_height).toInt()
+        this.layoutParams.height = WRAP_CONTENT
+        // Adjust for rounding that occurs from dividing the width
+        this.layoutParams.width = (new_width * resources.getDimension(R.dimen.base_leaf_width).roundToInt())
+
+
+
         this.setOnClickListener {
             var opus_manager = this.get_opus_manager()
             opus_manager.cursor_select_column(this.viewHolder.bindingAdapterPosition)
@@ -43,9 +58,6 @@ class ColumnLabelView(val viewHolder: RecyclerView.ViewHolder): RelativeLayout(C
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
-        this.textView.layoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT
-        this.textView.layoutParams.height = resources.getDimension(R.dimen.line_height).toInt()
-        this.layoutParams.height = WRAP_CONTENT
     }
 
     fun set_text(text: String) {

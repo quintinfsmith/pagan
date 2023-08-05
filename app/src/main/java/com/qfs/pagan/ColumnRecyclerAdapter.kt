@@ -2,6 +2,8 @@ package com.qfs.pagan
 
 import android.util.Log
 import android.view.ViewGroup
+import android.view.ViewGroup.LayoutParams.MATCH_PARENT
+import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import androidx.core.view.children
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.pagan.opusmanager.BeatKey
@@ -16,20 +18,14 @@ class ColumnRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<Col
         this.recycler = editor_table.main_recycler
         this.recycler.adapter = this
 
-        //val that = this
-        //this.registerAdapterDataObserver(
-        //    object: RecyclerView.AdapterDataObserver() {
-        //        override fun onItemRangeRemoved(start: Int, count: Int) {
-        //            that.column_label_recycler.adapter?.notifyItemRangeRemoved(start, count)
-        //        }
-        //        override fun onItemRangeInserted(start: Int, count: Int) {
-        //            that.column_label_recycler.adapter?.notifyItemRangeInserted(start, count)
-        //        }
-        //        override fun onItemRangeChanged(start: Int, count: Int) {
-        //            that.column_label_recycler.adapter?.notifyItemRangeChanged(start, count)
-        //        }
-        //    }
-        //)
+        val that = this
+        this.registerAdapterDataObserver(
+            object: RecyclerView.AdapterDataObserver() {
+                override fun onItemRangeInserted(start: Int, count: Int) {
+                    that.notifyItemChanged(start + count - 1)
+                }
+            }
+        )
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ColumnRecyclerViewHolder {
@@ -41,20 +37,10 @@ class ColumnRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<Col
     }
 
     override fun onBindViewHolder(holder: ColumnRecyclerViewHolder, position: Int) {
-        // Looks like this isn't needed and causes problems
+        CellRecycler(holder)
     }
-
-    override fun onViewAttachedToWindow(holder:ColumnRecyclerViewHolder) {
-        val beat = holder.bindingAdapterPosition
-        (holder.itemView as ViewGroup).removeAllViews()
-        val cell_recycler = CellRecycler(holder.itemView.context, holder)
-        (holder.itemView as ViewGroup).addView(cell_recycler)
-        for (y in 0 until this.get_opus_manager().get_total_line_count()) {
-            (cell_recycler.adapter as CellRecyclerAdapter).insert_cell(y)
-        }
-
-       val new_width = this.get_editor_table().get_column_width(beat)
-       holder.itemView.layoutParams.width = (new_width * this.recycler.resources.getDimension(R.dimen.base_leaf_width)).toInt()
+    override fun onViewAttachedToWindow(holder: ColumnRecyclerViewHolder) {
+        holder.itemView.layoutParams.height = MATCH_PARENT
     }
 
     //-------------------------------------------------------//

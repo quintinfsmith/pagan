@@ -10,6 +10,7 @@ class LineLabelRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<
     // BackLink so I can get the x offset from a view in the view holder
     private var _dragging_lineLabel: View? = null
     private var recycler: LineLabelRecyclerView
+    var label_count = 0
 
     init {
         this.recycler = editor_table.line_label_recycler
@@ -21,10 +22,10 @@ class LineLabelRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<
         this.registerAdapterDataObserver(
             object: RecyclerView.AdapterDataObserver() {
                 override fun onItemRangeRemoved(start: Int, count: Int) {
-                    that.refresh()
+                    that.notifyItemRangeChanged(start, that.itemCount)
                 }
                 override fun onItemRangeInserted(start: Int, count: Int) {
-                    that.refresh()
+                    that.notifyItemRangeChanged(start, that.itemCount)
                 }
             }
         )
@@ -92,8 +93,7 @@ class LineLabelRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<
         return LineLabelViewHolder(parent.context)
     }
 
-    override fun onViewAttachedToWindow(holder: LineLabelViewHolder) {
-    }
+    override fun onViewAttachedToWindow(holder: LineLabelViewHolder) { }
 
     override fun onBindViewHolder(holder: LineLabelViewHolder, position: Int) {
         val opus_manager = this.get_opus_manager()
@@ -103,47 +103,6 @@ class LineLabelRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<
         val label = this.get_label_text(channel, line_offset)
 
         label_view.set_text(label)
-    }
-
-    fun update_label_focus(label_view: LineLabelView) {
-        val opus_manager = this.get_opus_manager()
-        val cursor = opus_manager.cursor
-        //when (cursor.mode) {
-        //    Cursor.CursorMode.Row -> {
-        //        if (cursor.channel == channel && cursor.line_offset == line_offset) {
-        //            label_view.set_focused(true)
-        //        } else {
-        //            label_view.set_focused(false)
-        //        }
-        //    }
-        //    Cursor.CursorMode.Single -> {
-        //        if (cursor.channel == channel && cursor.line_offset == line_offset) {
-        //            label_view.set_focused(true)
-        //        } else {
-        //            label_view.set_focused(false)
-        //        }
-        //    }
-        //    Cursor.CursorMode.Range -> {
-        //        val from_key = cursor.range!!.first
-        //        val to_key = cursor.range!!.second
-
-        //        val is_focused = if (from_key.channel != to_key.channel) {
-        //            if (channel == from_key.channel) {
-        //                line_offset >= from_key.line_offset
-        //            } else if (channel == to_key.channel) {
-        //                line_offset <= to_key.channel
-        //            } else {
-        //                (from_key.channel + 1 until to_key.channel).contains(channel)
-        //            }
-        //        } else {
-        //            channel == from_key.channel && line_offset in (from_key.line_offset..to_key.line_offset)
-        //        }
-        //        label_view.set_focused(is_focused)
-        //    }
-        //    else -> {
-        //        label_view.set_focused(false)
-        //    }
-        //}
     }
 
     private fun get_label_text(channel: Int, line_offset: Int): String {
@@ -157,8 +116,7 @@ class LineLabelRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<
     }
 
     override fun getItemCount(): Int {
-        val opus_manager = this.get_opus_manager()
-        return opus_manager.get_total_line_count()
+        return this.label_count
     }
 
     fun scrollToLine(y: Int) {
@@ -202,56 +160,19 @@ class LineLabelRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<
         //)
     }
 
-    fun refresh() {
-        val start = (this.recycler.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
-        val end = (this.recycler.layoutManager as LinearLayoutManager).findLastVisibleItemPosition()
-
-        // NOTE: padding the start/end since an item may be bound but not visible
-        for (i in Integer.max(0, start - 1)..Integer.min(this.itemCount, end + 1)) {
-            this.notifyItemChanged(i)
-        }
-    }
-
-    fun set_cursor_focus(show: Boolean = true) {
-        val opus_manager = this.get_opus_manager()
-        val cursor = opus_manager.cursor
-        when (cursor.mode) {
-            Cursor.CursorMode.Range -> {
-                val (from_key, to_key) = cursor.range!!
-                val offset_y = opus_manager.get_abs_offset(from_key.channel, from_key.line_offset)
-                val (diff_y, _) = opus_manager.get_abs_difference(from_key, to_key)
-                for (i in offset_y .. offset_y + diff_y) {
-                    val viewHolder = this.recycler.findViewHolderForAdapterPosition(i) ?: return
-                    val label = viewHolder.itemView as LineLabelView
-                }
-            }
-            Cursor.CursorMode.Single,
-            Cursor.CursorMode.Row -> {
-                val y_offset = try {
-                    opus_manager.get_abs_offset(
-                        cursor.channel,
-                        cursor.line_offset
-                    )
-                } catch (e: IndexOutOfBoundsException) {
-                    // If the abs_offset can't be found, presumably the label no longer exists
-                    // if we are trying to unhighlight that label, mission accomplished implicitly
-                    if (show) {
-                        throw e
-                    } else {
-                        return
-                    }
-                }
-                val viewHolder = this.recycler.findViewHolderForAdapterPosition(y_offset) ?: return
-            }
-            Cursor.CursorMode.Column,
-            Cursor.CursorMode.Unset -> { }
-        }
-    }
-
     fun get_activity(): MainActivity {
         return this.recycler.context as MainActivity
     }
     fun get_opus_manager(): OpusManager {
         return this.get_activity().get_opus_manager()
+    }
+
+    fun add_label(index: Int) {
+        this.label_count += 1
+        this.notifyItemInserted(index)
+    }
+    fun remove_label(index: Int) {
+        this.label_count -= 1
+        this.notifyItemRemoved(index)
     }
 }

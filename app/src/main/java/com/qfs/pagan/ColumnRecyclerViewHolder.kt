@@ -11,4 +11,5 @@ class ColumnRecyclerViewHolder(context: Context): RecyclerView.ViewHolder(Linear
     fun get_cell_recycler(): CellRecycler {
         return (this.itemView as ViewGroup).children.first() as CellRecycler
     }
+
 }

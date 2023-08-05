@@ -12,6 +12,20 @@ import com.qfs.pagan.InterfaceLayer as OpusManager
 class CellRecyclerAdapter(): RecyclerView.Adapter<CellRecyclerViewHolder>() {
     var cell_count = 0
     lateinit var recycler: CellRecycler
+
+    init {
+        val that = this
+        this.registerAdapterDataObserver(
+            object: RecyclerView.AdapterDataObserver() {
+                override fun onItemRangeInserted(start: Int, count: Int) {
+                    that.notifyItemChanged(start + count)
+                }
+                override fun onItemRangeChanged(start: Int, count: Int) {
+                    Log.d("AAA", "CHANGED $start")
+                }
+            }
+        )
+    }
     override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
         this.recycler = recyclerView as CellRecycler
     }

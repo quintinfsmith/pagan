@@ -1,4 +1,5 @@
 package com.qfs.pagan.opusmanager
+import android.util.Log
 import com.qfs.apres.event.BankSelect
 import com.qfs.apres.Midi
 import com.qfs.apres.event.NoteOff
@@ -64,10 +65,11 @@ open class OpusManagerBase {
     }
 
     fun get_abs_offset(channel_index: Int, line_offset: Int): Int {
+        // Allows for line_offsets longer than line counts. ie channel=1, line_offset=2 could technically be channel=2
         var count = 0
         this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
             for (j in 0 until channel.size) {
-                if (i == channel_index && j == line_offset) {
+                if (i > channel_index || (i == channel_index && j == line_offset)) {
                     return count
                 }
                 count += 1
@@ -154,7 +156,11 @@ open class OpusManagerBase {
     }
 
     fun get_tree(beat_key: BeatKey, position: List<Int>): OpusTree<OpusEvent> {
-        return this.channels[beat_key.channel].get_tree(beat_key.line_offset, beat_key.beat, position)
+        return this.channels[beat_key.channel].get_tree(
+            beat_key.line_offset,
+            beat_key.beat,
+            position
+        )
     }
 
     fun get_proceding_leaf(beat_key: BeatKey, position: List<Int>): OpusTree<OpusEvent>? {

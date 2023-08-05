@@ -54,56 +54,12 @@ class EditorFragment : PaganFragment() {
 
 
     override fun onResume() {
-        //val rvTable = this.binding.root.findViewById<RecyclerView>(R.id.rvTable)
-        //val rvTable_adapter = rvTable.adapter as ColumnRecyclerAdapter
-
-        //val rvLineLabels = this.binding.root.findViewById<RecyclerView>(R.id.rvLineLabels)
-        //val rvLineLabels_adapter = rvLineLabels.adapter as LineLabelRecyclerView.LineLabelAdapter
-
-        //val opus_manager = this.get_main().get_opus_manager()
-        //if (rvLineLabels_adapter.itemCount == 0) {
-        //    opus_manager.channels.forEach { channel: OpusChannel ->
-        //        channel.lines.forEach { _: OpusChannel.OpusLine ->
-        //            rvLineLabels_adapter.addLineLabel()
-        //        }
-        //    }
-        //}
-
-        ////rvTable_adapter.notifyItemRangeInserted(0, opus_manager.opus_beat_count)
-        //rvTable_adapter.notifyItemRangeChanged(0, opus_manager.opus_beat_count)
-
         this.get_main().update_title_text()
         super.onResume()
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        //val rvTable = view.findViewById<RecyclerView>(R.id.rvTable)
-        //val rvLineLabels = view.findViewById<RecyclerView>(R.id.rvLineLabels)
-
-        //val main = this.get_main()
-        //val opus_manager = main.get_opus_manager()
-        //val new_adapter = ColumnRecyclerAdapter(rvTable as ColumnRecycler, main)
-        //rvTable.adapter = new_adapter
-        //rvTable.adapter?.notifyItemRangeInserted(0, opus_manager.opus_beat_count)
-
-        // LineLabelRecyclerView.LineLabelAdapter(
-        //     opus_manager,
-        //     rvLineLabels,
-        //     main
-        // )
-
-        //BeatColumnAdapter(
-        //    this,
-        //    rvTable,
-        //    ColumnLabelAdapter(
-        //        opus_manager,
-        //        rvColumnLabels,
-        //        main
-        //    ),
-        //)
-
-
         setFragmentResultListener("LOAD") { _, bundle: Bundle? ->
             if (bundle == null) {
                 return@setFragmentResultListener
@@ -676,17 +632,22 @@ class EditorFragment : PaganFragment() {
     }
 
     private fun interact_btnCancelLink() {
-        val main = this.get_main()
-
-        //val rvTable = main.findViewById<RecyclerView>(R.id.rvTable)
-        //(rvTable.adapter as BeatColumnAdapter).cancel_linking()
-
-        //val rvLineLabels = main.findViewById<RecyclerView>(R.id.rvLineLabels)
-        //(rvLineLabels.adapter as LineLabelRecyclerView.LineLabelAdapter).refresh()
-        //val rvColumnLabels = main.findViewById<RecyclerView>(R.id.rvColumnLabels)
-        //(rvColumnLabels.adapter as ColumnLabelAdapter).refresh()
-
+        var opus_manager = this.get_main().get_opus_manager()
+        opus_manager.cursor.is_linking = false
+        if (opus_manager.cursor.mode == Cursor.CursorMode.Range) {
+            val beat_key = opus_manager.cursor.range!!.first
+            opus_manager.cursor_select(
+                beat_key,
+                opus_manager.get_first_position(beat_key)
+            )
+        } else {
+            opus_manager.cursor_select(
+                opus_manager.cursor.get_beatkey(),
+                opus_manager.cursor.get_position()
+            )
+        }
     }
+
 
     private fun interact_nsOffset(view: NumberSelector) {
         val main = this.get_main()

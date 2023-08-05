@@ -14,5 +14,6 @@ class ColumnLabelRecycler(var editor_table: EditorTable, context: Context, attrs
         super.onAttachedToWindow()
         this.layoutParams.width = MATCH_PARENT
         this.layoutParams.height = WRAP_CONTENT
+        this.setHasFixedSize(true)
     }
 }

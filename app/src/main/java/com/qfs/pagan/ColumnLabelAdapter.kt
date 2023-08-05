@@ -21,6 +21,20 @@ class ColumnLabelAdapter(var editor_table: EditorTable) : RecyclerView.Adapter<C
         )
         //(this.recycler.itemAnimator as SimpleItemAnimator).supportsChangeAnimations = false
         this.recycler.itemAnimator = null
+        val that = this
+        this.registerAdapterDataObserver(
+            object: RecyclerView.AdapterDataObserver() {
+                override fun onItemRangeRemoved(start: Int, count: Int) {
+                    that.notifyItemRangeChanged(start + count, that.itemCount)
+                }
+                override fun onItemRangeInserted(start: Int, count: Int) {
+                    that.notifyItemRangeChanged(start + count - 1, that.itemCount)
+                }
+                //override fun onItemRangeChanged(start: Int, count: Int) {
+                //    that.column_label_recycler.adapter?.notifyItemRangeChanged(start, count)
+                //}
+            }
+        )
     }
 
 
@@ -49,12 +63,7 @@ class ColumnLabelAdapter(var editor_table: EditorTable) : RecyclerView.Adapter<C
         return ColumnLabelViewHolder(parent.context)
     }
 
-    override fun onViewAttachedToWindow(holder: ColumnLabelViewHolder) {
-        val beat = holder.bindingAdapterPosition
-        val new_width = this.get_column_width(beat)
-        holder.itemView.layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT
-        holder.itemView.layoutParams.width = (new_width * this.recycler.resources.getDimension(R.dimen.base_leaf_width)).toInt()
-    }
+    override fun onViewAttachedToWindow(holder: ColumnLabelViewHolder) { }
 
     override fun onBindViewHolder(holder: ColumnLabelViewHolder, position: Int) {
         val beat = holder.bindingAdapterPosition
@@ -72,42 +81,14 @@ class ColumnLabelAdapter(var editor_table: EditorTable) : RecyclerView.Adapter<C
     }
 
     fun remove_column(index: Int) {
+        Log.d("AAA", "remove column $index")
         this.column_count -= 1
         this.notifyItemRemoved(index)
-    }
-
-    fun get_column_width(beat: Int): Int {
-        val editor_table = this.recycler.editor_table
-        return editor_table.get_column_width(beat)
     }
 
     fun scroll(x: Int) {
         this.recycler.scrollBy(x, 0)
     }
-
-    //fun set_cursor_focus(show: Boolean = true) {
-    //    val cursor = this.opus_manager.cursor
-    //    when (cursor.mode) {
-    //        Cursor.CursorMode.Range -> {
-    //            val (from_key, to_key) = cursor.range!!
-    //            for (i in from_key.beat .. to_key.beat) {
-    //                val viewHolder = this.recycler.findViewHolderForAdapterPosition(i) ?: return
-    //                val label = viewHolder.itemView as LabelView
-    //                label.set_focused(show)
-    //                label.invalidate()
-    //            }
-    //        }
-    //        Cursor.CursorMode.Single,
-    //        Cursor.CursorMode.Column -> {
-    //            val viewHolder = this.recycler.findViewHolderForAdapterPosition(cursor.beat) ?: return
-    //            val label = viewHolder.itemView as LabelView
-    //            label.set_focused(show)
-    //            label.invalidate()
-    //        }
-    //        Cursor.CursorMode.Row,
-    //        Cursor.CursorMode.Unset -> { }
-    //    }
-    //}
 
     fun get_editor_table(): EditorTable {
         return this.editor_table

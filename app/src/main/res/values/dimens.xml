@@ -6,5 +6,5 @@
     <dimen name="icon_size">42dp</dimen>
     <dimen name="relative_option_width">35dp</dimen>
     <dimen name="line_height">41dp</dimen>
-    <dimen name="base_leaf_width">36dp</dimen>
+    <dimen name="base_leaf_width">41dp</dimen>
 </resources>

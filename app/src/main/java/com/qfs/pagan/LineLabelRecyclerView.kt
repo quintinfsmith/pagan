@@ -11,7 +11,7 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.SimpleItemAnimator
 import com.qfs.pagan.opusmanager.LinksLayer
 
-class LineLabelRecyclerView(context: Context, attrs: AttributeSet) : RecyclerView(context, attrs) {
+class LineLabelRecyclerView(context: Context, attrs: AttributeSet) : ScrollLockingRecyclerView(context, attrs) {
     init {
         this.itemAnimator = null
         this.setHasFixedSize(true)

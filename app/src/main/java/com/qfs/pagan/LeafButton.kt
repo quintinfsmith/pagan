@@ -56,6 +56,7 @@ class LeafButton(
     private var value_label_offset: TextView
     private var prefix_label: TextView
     private var inner_wrapper: InnerWrapper = InnerWrapper(ContextThemeWrapper(this.context, R.style.leaf_inner))
+    private var _drawn = false
 
     init {
         this.minimumHeight = resources.getDimension(R.dimen.line_height).toInt()
@@ -124,6 +125,7 @@ class LeafButton(
                 when (e) {
                     is LinksLayer.SelfLinkError -> { }
                     is LinksLayer.MixedLinkException -> {
+                        editor_table.notify_cell_change(beat_key)
                         this.activity.feedback_msg("Can't link percussion to non-percussion")
                     }
                     is LinksLayer.LinkRangeOverflow -> {
@@ -234,6 +236,10 @@ class LeafButton(
     }
 
     fun build_drawable_state(drawableState: IntArray?): IntArray? {
+        if (this._drawn) {
+            return drawableState
+        }
+
         val opus_manager = this.get_opus_manager()
         val beat_key = this.get_beat_key()
         if (beat_key.beat == -1) {
@@ -264,7 +270,8 @@ class LeafButton(
 
     override fun onCreateDrawableState(extraSpace: Int): IntArray? {
         val drawableState = super.onCreateDrawableState(extraSpace + 4)
-        return this.build_drawable_state(drawableState)
+        var output = this.build_drawable_state(drawableState)
+        return output
     }
 
     override fun refreshDrawableState() {

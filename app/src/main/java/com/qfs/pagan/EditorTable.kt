@@ -23,7 +23,6 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     val bottom_row = TableRow(context, attrs)
     val spacer = LinearLayout(ContextThemeWrapper(context, R.style.column), attrs)
     val vertical_scroll_listener = VerticalScrollListener(this)
-    val horizontal_scroll_listener = HorizontalScrollListener()
 
     var initializing_column_width_map = false
     val column_width_map = mutableListOf<MutableList<Int>>()
@@ -43,7 +42,8 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         ColumnLabelAdapter(this)
         ColumnRecyclerAdapter(this)
         LineLabelRecyclerAdapter(this)
-        this.main_recycler.addOnScrollListener(this.horizontal_scroll_listener)
+        this.main_recycler.addOnScrollListener(HorizontalScrollListener(this.column_label_recycler))
+        this.column_label_recycler.addOnScrollListener(HorizontalScrollListener(this.main_recycler))
     }
 
 
@@ -85,15 +85,17 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
     fun clear() {
         this.column_width_map.clear()
+        val count = this.main_recycler.adapter!!.itemCount
+        this.main_recycler.adapter!!.notifyItemRangeChanged(0, count)
+        this.column_label_recycler.adapter!!.notifyItemRangeChanged(0, count)
     }
 
     fun setup() {
-        this.clear()
         this.init_column_width_map()
         val opus_manager = this.get_opus_manager()
         val main_adapter = (this.main_recycler.adapter as ColumnRecyclerAdapter)
         val column_label_adapter = (this.column_label_recycler.adapter as ColumnLabelAdapter)
-
+        Log.d("AAA", "NEW: ${opus_manager.opus_beat_count}")
         for (beat in 0 until opus_manager.opus_beat_count) {
             main_adapter.add_column(beat)
             column_label_adapter.add_column(beat)
@@ -142,6 +144,9 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         }
         val label_adapter = this.line_label_recycler.adapter as LineLabelRecyclerAdapter
         label_adapter.add_label(y)
+
+        // This needs to be reset here since the main_recycler and cell_recyclers need to have a fixed height.
+        this.main_recycler.minimumHeight = this.get_opus_manager().get_total_line_count() * (resources.getDimension(R.dimen.line_height).toInt())
     }
 
     fun remove_row(y: Int) {
@@ -152,6 +157,9 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         }
         val label_adapter = this.line_label_recycler.adapter as LineLabelRecyclerAdapter
         label_adapter.remove_label(y)
+
+        // This needs to be reset here since the main_recycler and cell_recyclers need to have a fixed height.
+        this.main_recycler.minimumHeight = this.get_opus_manager().get_total_line_count() * (resources.getDimension(R.dimen.line_height).toInt())
     }
 
     fun new_column(index: Int) {
@@ -190,6 +198,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         val main_recycler_adapter = (this.main_recycler.adapter!! as ColumnRecyclerAdapter)
         val line_label_adapter = (this.line_label_recycler.adapter!! as LineLabelRecyclerAdapter)
         val column_label_adapter = (this.column_label_recycler.adapter!! as ColumnLabelAdapter)
+        Log.d("AAA", "Cursor: ${cursor.mode}")
         when (cursor.mode) {
             Cursor.CursorMode.Single -> {
                 val beat_key = cursor.get_beatkey()
@@ -210,15 +219,18 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             Cursor.CursorMode.Range -> {
                 val (top_left, bottom_right) = cursor.range!!
                 for (beat_key in opus_manager.get_beatkeys_in_range(top_left, bottom_right)) {
+
                     val y = try {
                         opus_manager.get_abs_offset(beat_key.channel, beat_key.line_offset)
                     } catch (e: IndexOutOfBoundsException) {
                         continue
                     }
+
                     line_label_adapter.notifyItemChanged(y)
                     column_label_adapter.notifyItemChanged(beat_key.beat)
+
                     // Can ignore if the cell_recycler isn't visible
-                    val cell_recycler = main_recycler_adapter.get_cell_recycler(beat_key.beat) ?: return
+                    val cell_recycler = main_recycler_adapter.get_cell_recycler(beat_key.beat) ?: continue
                     cell_recycler.adapter?.notifyItemChanged(y)
                 }
             }
@@ -256,6 +268,9 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     fun notify_cell_change(beat_key: BeatKey) {
         val opus_manager = this.get_opus_manager()
         val main_recycler_adapter = (this.main_recycler.adapter!! as ColumnRecyclerAdapter)
+        // Only one tree needs to be checked, since links are all the same
+        val new_tree = opus_manager.get_beat_tree(beat_key)
+        val new_cell_width = new_tree.get_max_child_weight() * new_tree.size
         for (linked_beat_key in opus_manager.get_all_linked(beat_key)) {
 
             val y = try {
@@ -265,9 +280,8 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             }
 
 
-            val new_tree = opus_manager.get_beat_tree(linked_beat_key)
             val original_width = this.column_width_map[linked_beat_key.beat].max()
-            this.column_width_map[linked_beat_key.beat][y] = new_tree.get_max_child_weight() * new_tree.size
+            this.column_width_map[linked_beat_key.beat][y] = new_cell_width
             val new_width = this.column_width_map[linked_beat_key.beat].max()
 
 
@@ -279,7 +293,6 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             // Can ignore if the cell_recycler isn't visible
             val cell_recycler = main_recycler_adapter.get_cell_recycler(linked_beat_key.beat) ?: continue
             cell_recycler.adapter?.notifyItemChanged(y)
-
         }
     }
 
@@ -299,5 +312,15 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         val y = this.get_opus_manager().get_abs_offset(channel, line_offset)
         this.line_label_recycler.adapter!!.notifyItemChanged(y)
     }
+
+    // Aligns all columns with the line_label recycler
+    fun fix_scroll_offset() {
+        val main_adapter = (this.main_recycler.adapter!! as ColumnRecyclerAdapter)
+        for (i in 0 until this.get_opus_manager().opus_beat_count) {
+            var cell_recycler = main_adapter.get_cell_recycler(i) ?: continue
+            cell_recycler.conform_scroll_position()
+        }
+    }
+
 
 }

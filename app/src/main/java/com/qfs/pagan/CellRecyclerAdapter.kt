@@ -1,6 +1,5 @@
 package com.qfs.pagan
 
-import android.util.Log
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import androidx.recyclerview.widget.RecyclerView
@@ -20,9 +19,7 @@ class CellRecyclerAdapter(): RecyclerView.Adapter<CellRecyclerViewHolder>() {
                 override fun onItemRangeInserted(start: Int, count: Int) {
                     that.notifyItemChanged(start + count)
                 }
-                override fun onItemRangeChanged(start: Int, count: Int) {
-                    Log.d("AAA", "CHANGED $start")
-                }
+                //override fun onItemRangeChanged(start: Int, count: Int) { }
             }
         )
     }

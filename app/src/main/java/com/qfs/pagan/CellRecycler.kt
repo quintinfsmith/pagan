@@ -12,10 +12,8 @@ import kotlin.concurrent.thread
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
 @SuppressLint("ViewConstructor")
-class CellRecycler(var viewHolder: ColumnRecyclerViewHolder): RecyclerView(ContextThemeWrapper(viewHolder.itemView.context, R.style.column)) {
+class CellRecycler(var viewHolder: ColumnRecyclerViewHolder): ScrollLockingRecyclerView(ContextThemeWrapper(viewHolder.itemView.context, R.style.column)) {
     class ColumnDetachedException: Exception()
-
-    private var _scroll_propagation_locked = false
 
     init {
         this.visibility = View.INVISIBLE
@@ -25,7 +23,6 @@ class CellRecycler(var viewHolder: ColumnRecyclerViewHolder): RecyclerView(Conte
         this.itemAnimator = null
 
         (this.viewHolder.itemView as ViewGroup).removeAllViews()
-        this.viewHolder.itemView.background = resources.getDrawable(androidx.transition.R.color.material_deep_teal_200)
         (this.viewHolder.itemView as ViewGroup).addView(this)
         for (y in 0 until this.get_opus_manager().get_total_line_count()) {
             (this.adapter as CellRecyclerAdapter).insert_cell(y)
@@ -59,17 +56,6 @@ class CellRecycler(var viewHolder: ColumnRecyclerViewHolder): RecyclerView(Conte
                 this.visibility = View.VISIBLE
             }
         }
-    }
-
-    //-------------------------------------------------------//
-    fun is_propagation_locked(): Boolean {
-        return this._scroll_propagation_locked
-    }
-    fun lock_scroll_propagation() {
-        this._scroll_propagation_locked = true
-    }
-    fun unlock_scroll_propagation() {
-        this._scroll_propagation_locked = false
     }
 
     //-------------------------------------------------------//

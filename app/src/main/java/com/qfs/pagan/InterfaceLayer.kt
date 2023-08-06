@@ -366,6 +366,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     override fun clear() {
         super.clear()
         this.cursor.clear()
+        this.get_editor_table().clear()
     }
 
     override fun unlink_beat(beat_key: BeatKey) {

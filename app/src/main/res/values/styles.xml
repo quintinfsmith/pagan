@@ -204,6 +204,6 @@
     </style>
 
     <style name="column">
-        <item name="android:background">?attr/table_lines</item>
+        <item name="android:background">@null</item>
     </style>
 </resources>

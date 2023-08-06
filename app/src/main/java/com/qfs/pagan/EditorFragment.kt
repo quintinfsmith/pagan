@@ -136,6 +136,8 @@ class EditorFragment : PaganFragment() {
         val llContextMenu = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenu)
         llContextMenu.removeAllViews()
         this.active_context_menu_index = null
+        val editor_table = this.get_main().findViewById<EditorTable>(R.id.etEditorTable)
+        editor_table.fix_scroll_offset()
     }
 
     internal fun setContextMenu_linking() {
@@ -197,10 +199,12 @@ class EditorFragment : PaganFragment() {
 
         llContextMenu.addView(view)
         this.active_context_menu_index = ContextMenu.Linking
+        val editor_table = this.get_main().findViewById<EditorTable>(R.id.etEditorTable)
+        editor_table.fix_scroll_offset()
     }
 
     fun setContextMenu_column() {
-        this.clearContextMenu()
+        //this.clearContextMenu()
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
         val llContextMenu = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenu)
@@ -261,9 +265,13 @@ class EditorFragment : PaganFragment() {
         if (opus_manager.opus_beat_count == 1) {
             btnRemoveBeat.visibility = View.GONE
         }
-
         llContextMenu.addView(view)
+        if (llContextMenu.childCount == 2) {
+            llContextMenu.removeViewAt(0)
+        }
         this.active_context_menu_index = ContextMenu.Column
+        val editor_table = this.get_main().findViewById<EditorTable>(R.id.etEditorTable)
+        editor_table.fix_scroll_offset()
     }
 
     fun setContextMenu_line() {
@@ -357,6 +365,8 @@ class EditorFragment : PaganFragment() {
 
         llContextMenu.addView(view)
         this.active_context_menu_index = ContextMenu.Line
+        val editor_table = this.get_main().findViewById<EditorTable>(R.id.etEditorTable)
+        editor_table.fix_scroll_offset()
     }
 
     internal fun setContextMenu_leaf() {
@@ -509,7 +519,10 @@ class EditorFragment : PaganFragment() {
             true
         }
 
+
         this.active_context_menu_index = ContextMenu.Leaf
+        val editor_table = this.get_main().findViewById<EditorTable>(R.id.etEditorTable)
+        editor_table.fix_scroll_offset()
     }
 
     private fun interact_rosRelativeOption(view: RelativeOptionSelector) {

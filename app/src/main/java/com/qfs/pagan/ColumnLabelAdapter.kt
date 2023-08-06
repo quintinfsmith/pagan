@@ -1,6 +1,5 @@
 package com.qfs.pagan
 
-import android.util.Log
 import android.view.*
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -81,7 +80,6 @@ class ColumnLabelAdapter(var editor_table: EditorTable) : RecyclerView.Adapter<C
     }
 
     fun remove_column(index: Int) {
-        Log.d("AAA", "remove column $index")
         this.column_count -= 1
         this.notifyItemRemoved(index)
     }

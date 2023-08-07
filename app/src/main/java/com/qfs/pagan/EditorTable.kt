@@ -21,7 +21,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     val column_label_recycler = ColumnLabelRecycler(this, context, attrs)
     val top_row = TableRow(context, attrs)
     val bottom_row = TableRow(context, attrs)
-    val spacer = LinearLayout(ContextThemeWrapper(context, R.style.column), attrs)
+    val spacer = CornerView(context, attrs)
     val vertical_scroll_listener = VerticalScrollListener(this)
 
     var initializing_column_width_map = false
@@ -52,7 +52,6 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         this.column_width_map.clear()
         (this.top_row.layoutParams as LayoutParams).apply {
             width = MATCH_PARENT
-            //height = resources.getDimension(R.dimen.line_height).toInt()
             height = WRAP_CONTENT
         }
 
@@ -85,9 +84,9 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
     fun clear() {
         this.column_width_map.clear()
-        val count = this.main_recycler.adapter!!.itemCount
-        this.main_recycler.adapter!!.notifyItemRangeChanged(0, count)
-        this.column_label_recycler.adapter!!.notifyItemRangeChanged(0, count)
+        (this.main_recycler.adapter!! as ColumnRecyclerAdapter).clear()
+        (this.column_label_recycler.adapter!! as ColumnLabelAdapter).clear()
+        (this.line_label_recycler.adapter!! as LineLabelRecyclerAdapter).clear()
     }
 
     fun setup() {
@@ -95,7 +94,6 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         val opus_manager = this.get_opus_manager()
         val main_adapter = (this.main_recycler.adapter as ColumnRecyclerAdapter)
         val column_label_adapter = (this.column_label_recycler.adapter as ColumnLabelAdapter)
-        Log.d("AAA", "NEW: ${opus_manager.opus_beat_count}")
         for (beat in 0 until opus_manager.opus_beat_count) {
             main_adapter.add_column(beat)
             column_label_adapter.add_column(beat)
@@ -106,7 +104,6 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             line_label_adapter.add_label(y)
         }
     }
-
 
     fun init_column_width_map() {
         this.initializing_column_width_map = true
@@ -198,7 +195,6 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         val main_recycler_adapter = (this.main_recycler.adapter!! as ColumnRecyclerAdapter)
         val line_label_adapter = (this.line_label_recycler.adapter!! as LineLabelRecyclerAdapter)
         val column_label_adapter = (this.column_label_recycler.adapter!! as ColumnLabelAdapter)
-        Log.d("AAA", "Cursor: ${cursor.mode}")
         when (cursor.mode) {
             Cursor.CursorMode.Single -> {
                 val beat_key = cursor.get_beatkey()

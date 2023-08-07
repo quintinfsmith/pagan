@@ -11,6 +11,10 @@ import com.qfs.pagan.structure.OpusTree
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
 class CellRecyclerViewHolder(context: Context): RecyclerView.ViewHolder(LinearLayout(context)) {
+    init {
+        this.setIsRecyclable(false)
+    }
+
     fun get_adapter(): CellRecyclerAdapter {
         return this.bindingAdapter as CellRecyclerAdapter
     }

@@ -117,7 +117,7 @@ open class OpusManagerBase {
 
     fun get_std_offset(absolute: Int): Pair<Int, Int> {
         var count = 0
-        this.channels.forEachIndexed {i: Int, channel: OpusChannel ->
+        this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
             for (j in 0 until channel.size) {
                 if (count == absolute) {
                     return Pair(i, j)

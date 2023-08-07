@@ -206,4 +206,13 @@
     <style name="column">
         <item name="android:background">@null</item>
     </style>
+
+    <style name="corner_view">
+        <item name="android:background">?attr/table_lines</item>
+        <item name="android:paddingEnd">@dimen/normal_padding</item>
+        <item name="android:paddingBottom">@dimen/normal_padding</item>
+    </style>
+    <style name="corner_view_inner">
+        <item name="android:background">?attr/main_bg</item>
+    </style>
 </resources>

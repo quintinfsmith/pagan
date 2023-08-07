@@ -8,8 +8,10 @@ import androidx.core.view.children
 import androidx.recyclerview.widget.RecyclerView
 
 class ColumnRecyclerViewHolder(context: Context): RecyclerView.ViewHolder(LinearLayout(context)) {
+    init {
+        this.setIsRecyclable(false)
+    }
     fun get_cell_recycler(): CellRecycler {
         return (this.itemView as ViewGroup).children.first() as CellRecycler
     }
-
 }

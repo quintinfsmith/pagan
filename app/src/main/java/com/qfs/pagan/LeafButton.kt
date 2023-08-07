@@ -79,8 +79,6 @@ class LeafButton(
             height = MATCH_PARENT
         }
 
-        //this.layoutParams.height = line_height.toInt()
-
         this.set_text(is_percussion)
         this.setOnClickListener {
             this.activity.runOnUiThread {

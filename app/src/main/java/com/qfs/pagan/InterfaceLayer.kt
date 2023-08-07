@@ -229,6 +229,15 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
         rvActiveChannels.adapter?.notifyItemChanged(notify_index - 1)
         rvActiveChannels.adapter?.notifyItemInserted(notify_index)
+
+        if (!this.simple_ui_locked()) {
+            val editor_table = this.get_editor_table()
+            val y = this.get_abs_offset(notify_index, 0)
+
+            for (i in 0 until lines) {
+                editor_table.new_row(y + i, this.channels[notify_index].lines[i])
+            }
+        }
     }
 
     override fun remove_beat(beat_index: Int) {

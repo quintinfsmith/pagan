@@ -100,4 +100,10 @@ class ColumnLabelAdapter(var editor_table: EditorTable) : RecyclerView.Adapter<C
         return this.get_activity().get_opus_manager()
     }
 
+    fun clear() {
+        var count = this.column_count
+        this.column_count = 0
+        this.notifyItemRangeRemoved(0, count)
+    }
+
 }

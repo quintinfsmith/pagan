@@ -42,6 +42,9 @@ class ColumnRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<Col
     override fun onViewAttachedToWindow(holder: ColumnRecyclerViewHolder) {
         holder.itemView.layoutParams.height = MATCH_PARENT
     }
+    override fun onViewDetachedFromWindow(holder: ColumnRecyclerViewHolder) {
+
+    }
 
     //-------------------------------------------------------//
     fun apply_to_visible_columns(callback: (CellRecyclerAdapter) -> Unit) {
@@ -50,6 +53,7 @@ class ColumnRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<Col
             if ((viewHolder.itemView as ViewGroup).childCount == 0) {
                 continue
             }
+
             val cell_recycler = (viewHolder.itemView as ViewGroup).children.first() as CellRecycler
             val adapter = cell_recycler.adapter!! as CellRecyclerAdapter
             callback(adapter)
@@ -82,6 +86,20 @@ class ColumnRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<Col
         val view_holder = this.recycler.findViewHolderForAdapterPosition(beat) ?: return null
         return (view_holder as ColumnRecyclerViewHolder).get_cell_recycler()
     }
+
+    fun clear() {
+        var count = this.column_count
+        for (x in 0 until count) {
+            var cell_recycler = this.get_cell_recycler(x) ?: continue
+            (cell_recycler.adapter!! as CellRecyclerAdapter).clear()
+        }
+        this.column_count = 0
+        this.notifyItemRangeRemoved(0, count)
+    }
+
+    //fun get_views_in_purgatory(): List<CellRecyclerViewHolder> {
+    //    val output = mutableListOf<CellRecyclerViewHolder>()
+    //}
 
     //-------------------------------------------------------//
     fun get_leaf_view(beat_key: BeatKey, position: List<Int>): LeafButton? { return null }

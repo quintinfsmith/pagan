@@ -175,4 +175,9 @@ class LineLabelRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<
         this.label_count -= 1
         this.notifyItemRemoved(index)
     }
+    fun clear() {
+        var count = this.label_count
+        this.label_count = 0
+        this.notifyItemRangeRemoved(0, count)
+    }
 }

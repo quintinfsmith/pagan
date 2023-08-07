@@ -80,4 +80,10 @@ class CellRecyclerAdapter(): RecyclerView.Adapter<CellRecyclerViewHolder>() {
         val resources = this.recycler.resources
         return (weight * resources.getDimension(R.dimen.base_leaf_width)).toInt()
     }
+
+    fun clear() {
+        var count = this.cell_count
+        this.cell_count = 0
+        this.notifyItemRangeRemoved(0, count)
+    }
 }

@@ -43,21 +43,10 @@ class ColumnLabelView(val viewHolder: RecyclerView.ViewHolder): RelativeLayout(C
         // Adjust for rounding that occurs from dividing the width
         this.layoutParams.width = (new_width * resources.getDimension(R.dimen.base_leaf_width).roundToInt())
 
-
-
         this.setOnClickListener {
             var opus_manager = this.get_opus_manager()
             opus_manager.cursor_select_column(this.viewHolder.bindingAdapterPosition)
         }
-    }
-
-    //override fun onDetachedFromWindow() {
-    //    this.update_queued = true
-    //    super.onDetachedFromWindow()
-    //}
-
-    override fun onAttachedToWindow() {
-        super.onAttachedToWindow()
     }
 
     fun set_text(text: String) {

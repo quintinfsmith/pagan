@@ -65,9 +65,10 @@ class ColumnLabelAdapter(var editor_table: EditorTable) : RecyclerView.Adapter<C
     override fun onViewAttachedToWindow(holder: ColumnLabelViewHolder) { }
 
     override fun onBindViewHolder(holder: ColumnLabelViewHolder, position: Int) {
-        val beat = holder.bindingAdapterPosition
-        val label = ColumnLabelView(holder)
-        label.set_text("$beat")
+        var weight = editor_table.get_column_width(position)
+        val resources = this.recycler.resources
+        val width = weight * resources.getDimension(R.dimen.base_leaf_width).toInt()
+        ColumnLabelPlaceHolder(holder, width)
     }
 
     override fun getItemCount(): Int {

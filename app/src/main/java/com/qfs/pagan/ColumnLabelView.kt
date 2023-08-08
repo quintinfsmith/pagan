@@ -63,6 +63,12 @@ class ColumnLabelView(val viewHolder: RecyclerView.ViewHolder): RelativeLayout(C
         return true
     }
 
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        val beat = (this.viewHolder as ColumnLabelViewHolder).bindingAdapterPosition
+        this.set_text("$beat")
+    }
+
     fun build_drawable_state(drawableState: IntArray?): IntArray? {
         val opus_manager = this.get_opus_manager()
         val beat = this.viewHolder.bindingAdapterPosition

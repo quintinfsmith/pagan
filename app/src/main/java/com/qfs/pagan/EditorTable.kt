@@ -103,6 +103,8 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         for (y in 0 until opus_manager.get_total_line_count()) {
             line_label_adapter.add_label(y)
         }
+
+        this.main_recycler.minimumHeight = this.get_opus_manager().get_total_line_count() * (resources.getDimension(R.dimen.line_height).toInt())
     }
 
     fun init_column_width_map() {

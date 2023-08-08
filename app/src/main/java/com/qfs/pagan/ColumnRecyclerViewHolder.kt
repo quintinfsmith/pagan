@@ -11,7 +11,16 @@ class ColumnRecyclerViewHolder(context: Context): RecyclerView.ViewHolder(Linear
     init {
         this.setIsRecyclable(false)
     }
-    fun get_cell_recycler(): CellRecycler {
-        return (this.itemView as ViewGroup).children.first() as CellRecycler
+    fun get_cell_recycler(): CellRecycler? {
+        return if ((this.itemView as ViewGroup).childCount > 0) {
+            val item = (this.itemView as ViewGroup).getChildAt(0)
+            if (item is CellRecycler) {
+                item
+            } else {
+                null
+            }
+        } else {
+            null
+        }
     }
 }

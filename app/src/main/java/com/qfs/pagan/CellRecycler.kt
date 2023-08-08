@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+import androidx.core.view.children
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import kotlin.concurrent.thread
@@ -14,7 +15,7 @@ import com.qfs.pagan.InterfaceLayer as OpusManager
 @SuppressLint("ViewConstructor")
 class CellRecycler(var viewHolder: ColumnRecyclerViewHolder): ScrollLockingRecyclerView(ContextThemeWrapper(viewHolder.itemView.context, R.style.column)) {
     class ColumnDetachedException: Exception()
-
+    var original_place_holder: ColumnPlaceholder
     init {
         this.visibility = View.INVISIBLE
         this.adapter = CellRecyclerAdapter()
@@ -22,11 +23,14 @@ class CellRecycler(var viewHolder: ColumnRecyclerViewHolder): ScrollLockingRecyc
         this.addOnScrollListener(this.get_scroll_listener())
         this.itemAnimator = null
 
+        this.original_place_holder = (this.viewHolder.itemView as ViewGroup).children.first() as ColumnPlaceholder
+
         (this.viewHolder.itemView as ViewGroup).removeAllViews()
         (this.viewHolder.itemView as ViewGroup).addView(this)
         for (y in 0 until this.get_opus_manager().get_total_line_count()) {
             (this.adapter as CellRecyclerAdapter).insert_cell(y)
         }
+
         this.layoutParams.height = MATCH_PARENT
         this.layoutParams.width = WRAP_CONTENT
         this.setHasFixedSize(true)
@@ -36,7 +40,9 @@ class CellRecycler(var viewHolder: ColumnRecyclerViewHolder): ScrollLockingRecyc
         super.onAttachedToWindow()
         this.conform_scroll_position()
     }
+
     //-------------------------------------------------------//
+
     fun conform_scroll_position() {
         thread {
             val column_adapter = this.get_column_recycler_adapter()

@@ -47,7 +47,6 @@ class CellRecyclerAdapter(): RecyclerView.Adapter<CellRecyclerViewHolder>() {
         (holder.itemView as ViewGroup).removeAllViews()
     }
 
-
     override fun onBindViewHolder(holder: CellRecyclerViewHolder, position: Int) {
         CellLayout(holder)
         //var width = this.get_column_width()

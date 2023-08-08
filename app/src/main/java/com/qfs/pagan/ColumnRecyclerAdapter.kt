@@ -35,11 +35,7 @@ class ColumnRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<Col
     override fun getItemCount(): Int {
         return this.column_count
     }
-    override fun onViewRecycled(holder: ColumnRecyclerViewHolder) {
-        Log.d("AAA", "Recycling: ${holder.bindingAdapterPosition}")
-    }
     override fun onBindViewHolder(holder: ColumnRecyclerViewHolder, position: Int) {
-        Log.d("AAA", "BINDING $position")
         //CellRecycler(holder)
         var editor_table = this.get_editor_table()
 
@@ -55,9 +51,19 @@ class ColumnRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<Col
         // Need to remove the view (CellRecycler, see ColumnPlaceholder.replace())
         // so that if something changes between being bound and attached, the
         // recycler doesn't try to reattach LeafButtons
-
         (holder.itemView as ViewGroup).removeAllViews()
+
+        //var item = (holder.itemView as ViewGroup).getChildAt(0)
+        //(holder.itemView as ViewGroup).removeView(item)
+        //if (item is CellRecycler) {
+        //    var editor_table = this.get_editor_table()
+        //    var position = holder.oldPosition
+        //    var weight = editor_table.get_column_width(position)
+        //    val resources = this.recycler.resources
+        //    ColumnPlaceholder(holder, weight * resources.getDimension(R.dimen.base_leaf_width).toInt())
+        //}
     }
+
 
     //-------------------------------------------------------//
     fun apply_to_visible_columns(callback: (CellRecyclerAdapter) -> Unit) {
@@ -67,9 +73,11 @@ class ColumnRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<Col
                 continue
             }
 
-            val cell_recycler = (viewHolder.itemView as ViewGroup).children.first() as CellRecycler
-            val adapter = cell_recycler.adapter!! as CellRecyclerAdapter
-            callback(adapter)
+            val item = (viewHolder.itemView as ViewGroup).getChildAt(0)
+            if (item is CellRecycler) {
+                val adapter = item.adapter!! as CellRecyclerAdapter
+                callback(adapter)
+            }
         }
     }
     fun add_column(index: Int) {

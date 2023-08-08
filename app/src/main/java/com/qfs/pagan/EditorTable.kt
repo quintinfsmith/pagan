@@ -126,8 +126,11 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     }
 
     fun new_row(y: Int, opus_line: OpusChannel.OpusLine) {
+        val label_adapter = this.line_label_recycler.adapter as LineLabelRecyclerAdapter
+
         for (i in 0 until opus_line.beats.size) {
             val tree = opus_line.beats[i]
+            val original_size = this.column_width_map[i].max()
             this.column_width_map[i].add(
                 y,
                 if (tree.is_leaf()) {
@@ -136,10 +139,24 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                     tree.get_max_child_weight() * tree.size
                 }
             )
-            val cell_recycler = (this.main_recycler.adapter as ColumnRecyclerAdapter).get_cell_recycler(i) ?: continue
-            (cell_recycler.adapter!! as CellRecyclerAdapter).insert_cell(y)
+            val new_size = this.column_width_map[i].max()
+            if (new_size != original_size) {
+
+                val cell_recycler = (this.main_recycler.adapter as ColumnRecyclerAdapter).get_cell_recycler(i)
+                if (cell_recycler != null) {
+                    (cell_recycler.adapter!! as CellRecyclerAdapter).clear()
+                }
+
+                this.main_recycler.adapter!!.notifyItemChanged(i)
+                label_adapter.notifyItemChanged(i)
+            } else {
+                val cell_recycler =
+                    (this.main_recycler.adapter as ColumnRecyclerAdapter).get_cell_recycler(i)
+                        ?: continue
+                (cell_recycler.adapter!! as CellRecyclerAdapter).insert_cell(y)
+            }
         }
-        val label_adapter = this.line_label_recycler.adapter as LineLabelRecyclerAdapter
+
         label_adapter.add_label(y)
 
         // This needs to be reset here since the main_recycler and cell_recyclers need to have a fixed height.
@@ -147,14 +164,29 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     }
 
     fun remove_row(y: Int) {
-        for (i in 0 until this.column_width_map.size) {
-            this.column_width_map[i].removeAt(y)
-            val cell_recycler = (this.main_recycler.adapter as ColumnRecyclerAdapter).get_cell_recycler(i) ?: continue
-            (cell_recycler.adapter!! as CellRecyclerAdapter).remove_cell(y)
-        }
         val label_adapter = this.line_label_recycler.adapter as LineLabelRecyclerAdapter
-        label_adapter.remove_label(y)
 
+        for (i in 0 until this.column_width_map.size) {
+            val original_size = this.column_width_map[i].max()
+            this.column_width_map[i].removeAt(y)
+            val new_size = this.column_width_map[i].max()
+            if (new_size != original_size) {
+                val cell_recycler = (this.main_recycler.adapter as ColumnRecyclerAdapter).get_cell_recycler(i)
+                if (cell_recycler != null) {
+                    (cell_recycler.adapter!! as CellRecyclerAdapter).clear()
+                }
+
+                this.main_recycler.adapter!!.notifyItemChanged(i)
+                label_adapter.notifyItemChanged(i)
+            } else {
+                val cell_recycler =
+                    (this.main_recycler.adapter as ColumnRecyclerAdapter).get_cell_recycler(i)
+                        ?: continue
+                (cell_recycler.adapter!! as CellRecyclerAdapter).remove_cell(y)
+            }
+        }
+
+        label_adapter.remove_label(y)
         // This needs to be reset here since the main_recycler and cell_recyclers need to have a fixed height.
         this.main_recycler.minimumHeight = this.get_opus_manager().get_total_line_count() * (resources.getDimension(R.dimen.line_height).toInt())
     }

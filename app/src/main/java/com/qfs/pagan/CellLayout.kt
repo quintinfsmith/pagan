@@ -13,9 +13,10 @@ import com.qfs.pagan.InterfaceLayer as OpusManager
 
 class CellLayout(var viewHolder: CellRecyclerViewHolder): LinearLayout(viewHolder.itemView.context) {
     init {
-        var item_view = this.viewHolder.itemView as ViewGroup
+        val item_view = this.viewHolder.itemView as ViewGroup
         item_view.removeAllViews()
         item_view.addView(this)
+
         this.layoutParams.width = WRAP_CONTENT
         this.layoutParams.height = resources.getDimension(R.dimen.line_height).toInt()
         this.build()
@@ -47,6 +48,7 @@ class CellLayout(var viewHolder: CellRecyclerViewHolder): LinearLayout(viewHolde
     fun build() {
         val tree = this.get_beat_tree()
         val max_width = (this.get_editor_table().get_column_width(this.get_beat()) * resources.getDimension(R.dimen.base_leaf_width).roundToInt())
+
         if (!tree.is_leaf()) {
             for (i in 0 until tree.size) {
                 this.buildTreeView(tree[i], listOf(i), max_width / tree.size)

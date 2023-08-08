@@ -56,7 +56,6 @@ class LeafButton(
     private var value_label_offset: TextView
     private var prefix_label: TextView
     private var inner_wrapper: InnerWrapper = InnerWrapper(ContextThemeWrapper(this.context, R.style.leaf_inner))
-    private var _drawn = false
 
     init {
         this.minimumHeight = resources.getDimension(R.dimen.line_height).toInt()
@@ -234,10 +233,6 @@ class LeafButton(
     }
 
     fun build_drawable_state(drawableState: IntArray?): IntArray? {
-        if (this._drawn) {
-            return drawableState
-        }
-
         val opus_manager = this.get_opus_manager()
         val beat_key = this.get_beat_key()
         if (beat_key.beat == -1) {
@@ -258,6 +253,7 @@ class LeafButton(
         if (opus_manager.is_networked(beat_key)) {
             mergeDrawableStates(drawableState, STATE_LINKED)
         }
+
         if (opus_manager.is_selected(beat_key, position)) {
             mergeDrawableStates(drawableState, STATE_FOCUSED)
         }
@@ -268,17 +264,16 @@ class LeafButton(
 
     override fun onCreateDrawableState(extraSpace: Int): IntArray? {
         val drawableState = super.onCreateDrawableState(extraSpace + 4)
-        var output = this.build_drawable_state(drawableState)
-        return output
+        return this.build_drawable_state(drawableState)
     }
 
-    override fun refreshDrawableState() {
-        this.value_label_octave.refreshDrawableState()
-        this.value_label_offset.refreshDrawableState()
-        this.prefix_label.refreshDrawableState()
-        this.inner_wrapper.refreshDrawableState()
-        super.refreshDrawableState()
-    }
+    //override fun refreshDrawableState() {
+    //    this.value_label_octave.refreshDrawableState()
+    //    this.value_label_offset.refreshDrawableState()
+    //    this.prefix_label.refreshDrawableState()
+    //    this.inner_wrapper.refreshDrawableState()
+    //    super.refreshDrawableState()
+    //}
 
     // ------------------------------------------------------//
     fun get_opus_manager(): OpusManager {

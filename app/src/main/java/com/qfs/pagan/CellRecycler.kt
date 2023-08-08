@@ -36,7 +36,6 @@ class CellRecycler(var viewHolder: ColumnRecyclerViewHolder): ScrollLockingRecyc
         super.onAttachedToWindow()
         this.conform_scroll_position()
     }
-
     //-------------------------------------------------------//
     fun conform_scroll_position() {
         thread {

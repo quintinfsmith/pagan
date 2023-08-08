@@ -156,11 +156,15 @@ open class OpusManagerBase {
     }
 
     fun get_tree(beat_key: BeatKey, position: List<Int>): OpusTree<OpusEvent> {
-        return this.channels[beat_key.channel].get_tree(
-            beat_key.line_offset,
-            beat_key.beat,
-            position
-        )
+        try {
+            return this.channels[beat_key.channel].get_tree(
+                beat_key.line_offset,
+                beat_key.beat,
+                position
+            )
+        } catch (e: OpusTree.InvalidGetCall) {
+            throw e
+        }
     }
 
     fun get_proceding_leaf(beat_key: BeatKey, position: List<Int>): OpusTree<OpusEvent>? {

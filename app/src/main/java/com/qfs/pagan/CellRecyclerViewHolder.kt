@@ -1,6 +1,7 @@
 package com.qfs.pagan
 
 import android.content.Context
+import android.util.Log
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import androidx.core.view.children
@@ -11,6 +12,7 @@ import com.qfs.pagan.structure.OpusTree
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
 class CellRecyclerViewHolder(context: Context): RecyclerView.ViewHolder(LinearLayout(context)) {
+    var bound_and_attached = false
     init {
         this.setIsRecyclable(false)
     }
@@ -41,7 +43,8 @@ class CellRecyclerViewHolder(context: Context): RecyclerView.ViewHolder(LinearLa
 
     fun get_std_offset(): Pair<Int, Int> {
         val opus_manager = this.get_opus_manager()
-        return opus_manager.get_std_offset(this.get_y())
+        val y = this.get_y()
+        return opus_manager.get_std_offset(y)
     }
 
     fun get_beat_key(): BeatKey {

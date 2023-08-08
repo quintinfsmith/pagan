@@ -278,6 +278,8 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         this.activity.setup_config_drawer()
         this.activity.cancel_reticle()
 
+        var editor_table = this.get_editor_table()
+        editor_table.setup()
 
         this.activity.update_channel_instruments()
         this.withFragment {

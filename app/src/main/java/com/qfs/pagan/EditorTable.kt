@@ -87,6 +87,12 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         (this.main_recycler.adapter!! as ColumnRecyclerAdapter).clear()
         (this.column_label_recycler.adapter!! as ColumnLabelAdapter).clear()
         (this.line_label_recycler.adapter!! as LineLabelRecyclerAdapter).clear()
+
+        // Kludge: When cleared, the height sticks to the most recent length,
+        // so when importing a project with more lines than the last
+        // part gets cut off unless the height is reset
+        this.main_recycler.layoutParams.height = MATCH_PARENT
+        this.column_label_recycler.layoutParams.height = MATCH_PARENT
     }
 
     fun setup() {

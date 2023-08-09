@@ -126,8 +126,6 @@ class EditorFragment : PaganFragment() {
             }
             null -> { }
         }
-        //val rvTable = this.get_main().findViewById<RecyclerView>(R.id.rvTable)
-        //(rvTable.adapter as BeatColumnAdapter).refresh_visible()
     }
 
     fun clearContextMenu() {
@@ -813,21 +811,10 @@ class EditorFragment : PaganFragment() {
         val main = this.get_main()
         val editor_table = this.get_main().findViewById<EditorTable>(R.id.etEditorTable)
         editor_table.scroll_to_position(x = beat)
-        //main.runOnUiThread {
-        //    val rvTable = main.findViewById<RecyclerView>(R.id.rvTable)
-        //    (rvTable.adapter as ColumnRecyclerAdapter).scroll_to_position(beat)
-        //}
 
         if (select) {
             val opus_manager = main.get_opus_manager()
             opus_manager.cursor_select_column(beat)
         }
-    }
-
-
-    // If the position isn't on screen, scroll to it
-    fun scroll_to_position(beat_key: BeatKey, position: List<Int>) {
-        val editor_table = this.get_main().findViewById<EditorTable>(R.id.etEditorTable)
-        editor_table.scroll_to_position(beat_key, position)
     }
 }

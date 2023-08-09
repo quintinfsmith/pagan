@@ -1,7 +1,6 @@
 package com.qfs.pagan
 
 import android.content.Context
-import android.util.Log
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import androidx.core.view.children
@@ -12,7 +11,6 @@ import com.qfs.pagan.structure.OpusTree
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
 class CellRecyclerViewHolder(context: Context): RecyclerView.ViewHolder(LinearLayout(context)) {
-    var bound_and_attached = false
     init {
         this.setIsRecyclable(false)
     }

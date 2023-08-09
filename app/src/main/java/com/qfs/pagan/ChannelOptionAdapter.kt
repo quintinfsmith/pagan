@@ -57,14 +57,14 @@ class ChannelOptionAdapter(
         val channels = this.opus_manager.channels
         val curChannel = channels[position]
         val btnChooseInstrument: TextView = view.findViewById(R.id.btnChooseInstrument)
-        var defaults = this.activity.resources.getStringArray(R.array.midi_instruments)
-        var label = this.supported_instruments[Pair(
+        val defaults = this.activity.resources.getStringArray(R.array.midi_instruments)
+        val label = this.supported_instruments[Pair(
             curChannel.midi_bank,
             curChannel.midi_program
         )] ?: if (curChannel.midi_bank == 128) {
             "Percussion"
         } else {
-            "${defaults[curChannel.midi_program]}"
+            defaults[curChannel.midi_program]
         }
 
         btnChooseInstrument.text = this.activity.getString(R.string.label_choose_instrument, position, label)
@@ -77,7 +77,7 @@ class ChannelOptionAdapter(
             this.interact_btnChooseInstrument(it)
         }
 
-        var remove_button = holder.itemView.findViewById<TextView>(R.id.btnRemoveChannel)
+        val remove_button = holder.itemView.findViewById<TextView>(R.id.btnRemoveChannel)
         remove_button.visibility = if (this.opus_manager.is_percussion(position)) {
              View.GONE
         } else {
@@ -134,7 +134,7 @@ class ChannelOptionAdapter(
                 popupMenu.menu.add(0, i, x, "[${key.second}] $name")
                 x += 1
             } else if (!(key.first == 128 || this.opus_manager.is_percussion(channel))) {
-                var pairstring = "${key.first}/${key.second}"
+                val pairstring = "${key.first}/${key.second}"
                 popupMenu.menu.add(0, i, x, "[$pairstring] $name")
                 x += 1
             }

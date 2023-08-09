@@ -1,10 +1,7 @@
 package com.qfs.pagan
 
-import android.util.Log
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
-import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
-import androidx.core.view.children
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.InterfaceLayer as OpusManager
@@ -35,8 +32,8 @@ class ColumnRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<Col
     override fun getItemCount(): Int {
         return this.column_count
     }
+
     override fun onBindViewHolder(holder: ColumnRecyclerViewHolder, position: Int) {
-        //CellRecycler(holder)
         var editor_table = this.get_editor_table()
 
         var weight = editor_table.get_column_width(position)
@@ -44,24 +41,14 @@ class ColumnRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<Col
         ColumnPlaceholder(holder, weight * resources.getDimension(R.dimen.base_leaf_width).toInt())
     }
     override fun onViewAttachedToWindow(holder: ColumnRecyclerViewHolder) {
-        Log.d("AAA", "Attaching: ${holder.bindingAdapterPosition}")
         holder.itemView.layoutParams.height = MATCH_PARENT
     }
     override fun onViewDetachedFromWindow(holder: ColumnRecyclerViewHolder) {
         // Need to remove the view (CellRecycler, see ColumnPlaceholder.replace())
         // so that if something changes between being bound and attached, the
         // recycler doesn't try to reattach LeafButtons
-        (holder.itemView as ViewGroup).removeAllViews()
 
-        //var item = (holder.itemView as ViewGroup).getChildAt(0)
-        //(holder.itemView as ViewGroup).removeView(item)
-        //if (item is CellRecycler) {
-        //    var editor_table = this.get_editor_table()
-        //    var position = holder.oldPosition
-        //    var weight = editor_table.get_column_width(position)
-        //    val resources = this.recycler.resources
-        //    ColumnPlaceholder(holder, weight * resources.getDimension(R.dimen.base_leaf_width).toInt())
-        //}
+        ColumnPlaceholder(holder, holder.itemView.measuredWidth)
     }
 
 
@@ -109,18 +96,14 @@ class ColumnRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<Col
     }
 
     fun clear() {
-        var count = this.column_count
+        val count = this.column_count
         for (x in 0 until count) {
-            var cell_recycler = this.get_cell_recycler(x) ?: continue
+            val cell_recycler = this.get_cell_recycler(x) ?: continue
             (cell_recycler.adapter!! as CellRecyclerAdapter).clear()
         }
         this.column_count = 0
         this.notifyItemRangeRemoved(0, count)
     }
-
-    //fun get_views_in_purgatory(): List<CellRecyclerViewHolder> {
-    //    val output = mutableListOf<CellRecyclerViewHolder>()
-    //}
 
     //-------------------------------------------------------//
     fun get_leaf_view(beat_key: BeatKey, position: List<Int>): LeafButton? { return null }

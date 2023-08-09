@@ -15,7 +15,6 @@ import com.qfs.pagan.InterfaceLayer as OpusManager
 @SuppressLint("ViewConstructor")
 class CellRecycler(var viewHolder: ColumnRecyclerViewHolder): ScrollLockingRecyclerView(ContextThemeWrapper(viewHolder.itemView.context, R.style.column)) {
     class ColumnDetachedException: Exception()
-    var original_place_holder: ColumnPlaceholder
     init {
         this.visibility = View.INVISIBLE
         this.adapter = CellRecyclerAdapter()
@@ -23,7 +22,6 @@ class CellRecycler(var viewHolder: ColumnRecyclerViewHolder): ScrollLockingRecyc
         this.addOnScrollListener(this.get_scroll_listener())
         this.itemAnimator = null
 
-        this.original_place_holder = (this.viewHolder.itemView as ViewGroup).children.first() as ColumnPlaceholder
 
         (this.viewHolder.itemView as ViewGroup).removeAllViews()
         (this.viewHolder.itemView as ViewGroup).addView(this)
@@ -34,6 +32,7 @@ class CellRecycler(var viewHolder: ColumnRecyclerViewHolder): ScrollLockingRecyc
         this.layoutParams.height = MATCH_PARENT
         this.layoutParams.width = WRAP_CONTENT
         this.setHasFixedSize(true)
+        this.overScrollMode = View.OVER_SCROLL_NEVER
     }
 
     override fun onAttachedToWindow() {

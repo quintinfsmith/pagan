@@ -740,8 +740,10 @@ class MainActivity : AppCompatActivity() {
         val sbPlaybackPosition = viewInflated.findViewById<SeekBar>(R.id.sbPlaybackPosition)
         sbPlaybackPosition.max = opus_manager.opus_beat_count - 1
         sbPlaybackPosition.progress = working_beat
+
         val tvPlaybackPosition = viewInflated.findViewById<TextView>(R.id.tvPlaybackPosition)
         tvPlaybackPosition.text = working_beat.toString()
+
         val ibPlayPause = viewInflated.findViewById<ImageView>(R.id.ibPlayPause)
         val btnJumpTo = viewInflated.findViewById<View>(R.id.btnJumpTo)
         val tvPlaybackTime = viewInflated.findViewById<TextView>(R.id.tvPlaybackTime)

@@ -22,7 +22,9 @@ class CellRecyclerAdapter(): RecyclerView.Adapter<CellRecyclerViewHolder>() {
                 override fun onItemRangeChanged(start: Int, count: Int) {
 
                 }
-                override fun onItemRangeRemoved(start: Int, count: Int) { }
+                override fun onItemRangeRemoved(start: Int, count: Int) {
+                    that.notifyItemRangeChanged(start, that.itemCount - start)
+                }
             }
         )
     }
@@ -40,7 +42,6 @@ class CellRecyclerAdapter(): RecyclerView.Adapter<CellRecyclerViewHolder>() {
 
     override fun onViewAttachedToWindow(holder:CellRecyclerViewHolder) {
         holder.itemView.layoutParams.width = MATCH_PARENT
-        holder.bound_and_attached = true
     }
 
     override fun onViewDetachedFromWindow(holder: CellRecyclerViewHolder) {
@@ -49,8 +50,6 @@ class CellRecyclerAdapter(): RecyclerView.Adapter<CellRecyclerViewHolder>() {
 
     override fun onBindViewHolder(holder: CellRecyclerViewHolder, position: Int) {
         CellLayout(holder)
-        //var width = this.get_column_width()
-        //CellPlaceHolder(holder, width)
     }
     //-------------------------------------------------------//
 

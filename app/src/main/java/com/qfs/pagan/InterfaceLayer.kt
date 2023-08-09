@@ -1,15 +1,12 @@
 package com.qfs.pagan
-import android.util.Log
 import android.view.View
 import android.widget.TextView
-import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.apres.Midi
 import com.qfs.pagan.opusmanager.*
 import com.qfs.pagan.structure.OpusTree
 import java.lang.Integer.max
 import java.lang.Integer.min
-import kotlin.concurrent.thread
 
 class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     private var simple_ui_lock = 0
@@ -363,6 +360,12 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     override fun remove_channel(channel: Int) {
+        val y = try {
+            this.get_abs_offset(channel, 0)
+        } catch (e: IndexOutOfBoundsException) {
+            this.get_total_line_count()
+        }
+
         val lines = this.channels[channel].size
 
         super.remove_channel(channel)
@@ -371,6 +374,15 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         if (rvActiveChannels.adapter != null) {
             val rvActiveChannels_adapter = rvActiveChannels.adapter as ChannelOptionAdapter
             rvActiveChannels_adapter.notifyItemRemoved(channel)
+        }
+
+        if (!this.simple_ui_locked()) {
+            val editor_table = this.get_editor_table()
+
+            for (i in lines - 1 downTo 0) {
+                editor_table.remove_row(y + i)
+            }
+
         }
     }
 
@@ -402,7 +414,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         }
 
         this.withFragment {
-            it.scrollTo(beat_key, position)
+            it.scroll_to_position(beat_key, position)
         }
     }
 

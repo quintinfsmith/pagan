@@ -15,6 +15,7 @@ class LineLabelRecyclerView(context: Context, attrs: AttributeSet) : ScrollLocki
     init {
         this.itemAnimator = null
         this.setHasFixedSize(true)
+        this.overScrollMode = View.OVER_SCROLL_NEVER
     }
     // Prevents this from intercepting linelabel touch events (disables manual scrolling)
     override fun onInterceptTouchEvent(touchEvent: MotionEvent): Boolean {

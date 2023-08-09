@@ -1,11 +1,9 @@
 package com.qfs.pagan
 
 import android.os.Bundle
-import android.util.Log
 import android.view.*
 import android.widget.*
 import androidx.fragment.app.setFragmentResultListener
-import androidx.recyclerview.widget.RecyclerView
 import com.qfs.apres.InvalidMIDIFile
 import com.qfs.pagan.databinding.FragmentMainBinding
 import com.qfs.pagan.opusmanager.*
@@ -813,6 +811,8 @@ class EditorFragment : PaganFragment() {
 
     fun scroll_to_beat(beat: Int, select: Boolean = false) {
         val main = this.get_main()
+        val editor_table = this.get_main().findViewById<EditorTable>(R.id.etEditorTable)
+        editor_table.scroll_to_position(x = beat)
         //main.runOnUiThread {
         //    val rvTable = main.findViewById<RecyclerView>(R.id.rvTable)
         //    (rvTable.adapter as ColumnRecyclerAdapter).scroll_to_position(beat)
@@ -825,40 +825,9 @@ class EditorFragment : PaganFragment() {
     }
 
 
-    // TODO: Consider Y
-    private fun is_leaf_visible(beatkey: BeatKey, position: List<Int>): Boolean {
-        return false
-        //val main = this.get_main()
-        //val rvTable = main.findViewById<RecyclerView>(R.id.rvTable)
-        //val rvTable_adapter = rvTable.adapter as ColumnRecyclerAdapter
-        //val tree_view = rvTable_adapter.get_leaf_view(beatkey, position)
-        //return (tree_view != null)
-    }
-
     // If the position isn't on screen, scroll to it
-    fun scrollTo(beatkey: BeatKey, position: List<Int>) {
-        if (beatkey.beat == -1) {
-            return
-        }
-        val adj_beatkey = BeatKey(
-            max(0, beatkey.channel),
-            max(0, beatkey.line_offset),
-            beatkey.beat
-        )
-        // Move to leaf
-        val new_position = position.toMutableList()
-        var tree = this.get_main().get_opus_manager().get_tree(adj_beatkey, position)
-        while (! tree.is_leaf()) {
-            tree = tree[0]
-            new_position.add(0)
-        }
-
-        if (this.is_leaf_visible(adj_beatkey, new_position)) {
-            return
-        }
-        val main = this.get_main()
-        //val rvTable = main.findViewById<RecyclerView>(R.id.rvTable)
-        //val rvTable_adapter = rvTable.adapter as ColumnRecyclerAdapter
-        //rvTable_adapter.scroll_to_position(adj_beatkey, new_position)
+    fun scroll_to_position(beat_key: BeatKey, position: List<Int>) {
+        val editor_table = this.get_main().findViewById<EditorTable>(R.id.etEditorTable)
+        editor_table.scroll_to_position(beat_key, position)
     }
 }

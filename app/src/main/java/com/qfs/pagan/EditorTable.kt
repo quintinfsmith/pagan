@@ -2,17 +2,15 @@ package com.qfs.pagan
 
 import android.content.Context
 import android.util.AttributeSet
-import android.util.Log
-import android.view.ContextThemeWrapper
-import android.view.View
+import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
-import android.widget.LinearLayout
 import android.widget.TableLayout
 import android.widget.TableRow
+import androidx.core.view.children
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.OpusChannel
-import kotlin.concurrent.thread
+import kotlin.math.max
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
 class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, attrs) {
@@ -141,9 +139,9 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                     tree.get_max_child_weight() * tree.size
                 }
             )
+
             val new_size = this.column_width_map[i].max()
             if (new_size != original_size) {
-
                 val cell_recycler = (this.main_recycler.adapter as ColumnRecyclerAdapter).get_cell_recycler(i)
                 if (cell_recycler != null) {
                     (cell_recycler.adapter!! as CellRecyclerAdapter).clear()
@@ -350,6 +348,74 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             var cell_recycler = main_adapter.get_cell_recycler(i) ?: continue
             cell_recycler.conform_scroll_position()
         }
+    }
+
+    fun scroll_to_position(x: Int? = null, y: Int? = null, position: List<Int>? = null) {
+        if (x != null) {
+            this.scroll_to_x(x)
+        }
+        if (y != null) {
+            this.scroll_to_y(y)
+        }
+
+       // val leaf = this.get_leaf(x, y, new_position) ?: return
+       // this.main_recycler.scrollBy(leaf.x.toInt(), 0)
+    }
+
+    fun scroll_to_position(beat_key: BeatKey, position: List<Int>? = null) {
+        if (beat_key.beat == -1) {
+            return
+        }
+
+        val adj_beat_key = BeatKey(
+            max(0, beat_key.channel),
+            max(0, beat_key.line_offset),
+            beat_key.beat
+        )
+
+        val new_position = position?.toMutableList() ?: mutableListOf()
+
+        val opus_manager = this.get_opus_manager()
+
+        var tree = opus_manager.get_tree(adj_beat_key, new_position)
+        while (! tree.is_leaf()) {
+            tree = tree[0]
+            new_position.add(0)
+        }
+
+        this.scroll_to_x(beat_key.beat)
+        this.scroll_to_y( opus_manager.get_abs_offset(beat_key.channel, beat_key.line_offset ))
+        val leaf = this.get_leaf(adj_beat_key, new_position) ?: return
+
+        this.main_recycler.scrollBy(leaf.x.toInt(), 0)
+    }
+
+    fun scroll_to_x(x: Int) {
+        this.main_recycler.scrollToPosition(x)
+        this.column_label_recycler.scrollToPosition(x)
+    }
+    fun scroll_to_y(y: Int) {
+        this.line_label_recycler.scrollToPosition(y)
+        this.fix_scroll_offset()
+    }
+
+    fun get_leaf(beat_key: BeatKey, position: List<Int>): LeafButton? {
+        val y = this.get_opus_manager().get_abs_offset(beat_key.channel, beat_key.line_offset)
+        return this.get_leaf(beat_key.beat, y, position)
+    }
+
+    fun get_leaf(x: Int, y: Int, position: List<Int>): LeafButton? {
+        val column_view_holder = this.main_recycler.findViewHolderForAdapterPosition(x) ?: return null
+        val cell_recycler = (column_view_holder as ColumnRecyclerViewHolder).get_cell_recycler() ?: return null
+        val cell_view_holder = cell_recycler.findViewHolderForAdapterPosition(y) ?: return null
+        val cell_layout = (cell_view_holder as CellRecyclerViewHolder).get_cell_layout()
+        for (child in (cell_layout as ViewGroup).children) {
+            if ((child as LeafButton).position == position) {
+                return child
+            }
+        }
+        return null
+
     }
 
 

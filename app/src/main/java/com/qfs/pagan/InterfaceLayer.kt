@@ -143,6 +143,9 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             channel,
             line_offset ?: (this.channels[channel].lines.size - 1)
         )
+
+        //this.cursor_select_row(channel, line_offset ?: this.channels[channel].lines.size - 1)
+
         if (!this.simple_ui_locked()) {
             this.get_editor_table().new_row(abs_offset, output)
         }
@@ -155,6 +158,8 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         if (!this.simple_ui_locked()) {
             this.get_editor_table().new_row(abs_offset, line)
         }
+
+        this.cursor_select_row(channel, line_offset)
     }
 
     override fun move_line(channel_old: Int, line_old: Int, channel_new: Int, line_new: Int) {
@@ -189,24 +194,32 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             throw e
         }
 
+        if (!this.simple_ui_locked()) {
+            this.get_editor_table().remove_row(abs_line)
+        }
 
         val cursor = this.cursor
         if (cursor.line_offset != 0 && cursor.line_offset == this.channels[cursor.channel].size) {
             when (cursor.mode) {
                 Cursor.CursorMode.Row -> {
-                    cursor.line_offset -= 1
+                    this.cursor_select_row(cursor.channel, cursor.line_offset - 1)
                 }
                 Cursor.CursorMode.Single -> {
-                    cursor.line_offset -= 1
-                    cursor.position = this.get_first_position(this.cursor.get_beatkey(), listOf())
+                    val beat_key = this.cursor.get_beatkey()
+                    beat_key.line_offset -= 1
+
+                    this.cursor_select(
+                        beat_key,
+                        this.get_first_position(
+                            beat_key,
+                            listOf()
+                        )
+                    )
                 }
                 else -> {}
             }
         }
 
-        if (!this.simple_ui_locked()) {
-            this.get_editor_table().remove_row(abs_line)
-        }
 
         this.activity.update_channel_instruments()
 
@@ -405,16 +418,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         editor_table.notify_cell_change(beat_key)
         if (update_keys.isNotEmpty()) {
             editor_table.notify_cell_change(update_keys.first())
-        }
-    }
-
-    private fun ui_scroll_to_position(beat_key: BeatKey, position: List<Int>) {
-        if (this.simple_ui_locked()) {
-            return
-        }
-
-        this.withFragment {
-            it.scroll_to_position(beat_key, position)
         }
     }
 
@@ -685,13 +688,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         this.withFragment {
             it.setContextMenu_line()
         }
-
-        //if (scroll) {
-        //    this.ui_scroll_to_position(
-        //        BeatKey(channel, line_offset, -1),
-        //        listOf()
-        //    )
-        //}
+        editor_table.scroll_to_position(y = this.get_abs_offset(channel, line_offset))
     }
 
     fun cursor_select_column(beat: Int, scroll: Boolean = false) {
@@ -705,12 +702,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             it.setContextMenu_column()
         }
 
-       // if (scroll) {
-       //     this.ui_scroll_to_position(
-       //         BeatKey(-1, -1, beat),
-       //         listOf()
-       //     )
-       // }
+        editor_table.scroll_to_position(x = beat)
     }
     fun cursor_select(beat_key: BeatKey, position: List<Int>, scroll: Boolean = false) {
         val editor_table = this.get_editor_table()
@@ -719,9 +711,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         this.withFragment {
             it.setContextMenu_leaf()
         }
-        //if (scroll) {
-        //    this.ui_scroll_to_position(beat_key, position)
-        //}
+        editor_table.scroll_to_position(beat_key, position)
     }
 
     fun cursor_select_to_link(beat_key: BeatKey) {

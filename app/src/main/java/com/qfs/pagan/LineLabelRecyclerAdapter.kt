@@ -8,9 +8,10 @@ import com.qfs.pagan.InterfaceLayer as OpusManager
 
 class LineLabelRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<LineLabelViewHolder>() {
     // BackLink so I can get the x offset from a view in the view holder
-    private var _dragging_lineLabel: View? = null
+    var dragging_position: Pair<Int, Int>? = null
     private var recycler: LineLabelRecyclerView
     var label_count = 0
+
 
     init {
         this.recycler = editor_table.line_label_recycler
@@ -34,66 +35,13 @@ class LineLabelRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): LineLabelViewHolder {
 
-        //label.setOnClickListener {
-        //    this.interact_lineLabel(it as LineLabelView)
-        //}
-
-        //label.setOnFocusChangeListener { view, is_focused: Boolean ->
-        //    if (is_focused) {
-        //        this.interact_lineLabel(view as LineLabelView)
-        //    }
-        //}
-
-        //label.setOnTouchListener { view: View, touchEvent: MotionEvent ->
-        //    if (touchEvent.action == MotionEvent.ACTION_MOVE) {
-        //        if (this._dragging_lineLabel == null) {
-        //            this._dragging_lineLabel = view
-        //            view.startDragAndDrop(
-        //                null,
-        //                View.DragShadowBuilder(view),
-        //                null,
-        //                0
-        //            )
-        //            return@setOnTouchListener true
-        //        }
-        //    } else if (touchEvent.action == MotionEvent.ACTION_DOWN) {
-        //        this._dragging_lineLabel = null
-        //    }
-        //    false
-        //}
-
-        //label.setOnDragListener { view: View, dragEvent: DragEvent ->
-        //    when (dragEvent.action) {
-        //        DragEvent.ACTION_DROP -> {
-        //            val from_label =  this._dragging_lineLabel
-        //            if (from_label != null && from_label != view) {
-        //                val from_channel = (from_label as LineLabelView).channel
-        //                val from_line = from_label.line_offset
-        //                val to_channel = (view as LineLabelView).channel
-        //                val to_line = view.line_offset + 1
-
-        //                this.opus_manager.move_line(
-        //                    from_channel,
-        //                    from_line,
-        //                    to_channel,
-        //                    to_line
-        //                )
-
-        //            }
-        //            this._dragging_lineLabel = null
-        //        }
-        //        DragEvent.ACTION_DRAG_ENDED -> {
-        //            this._dragging_lineLabel = null
-        //        }
-        //        else -> { }
-        //    }
-        //    true
-        //}
 
         return LineLabelViewHolder(parent.context)
     }
 
-    override fun onViewAttachedToWindow(holder: LineLabelViewHolder) { }
+    override fun onViewAttachedToWindow(holder: LineLabelViewHolder) {
+
+    }
 
     override fun onBindViewHolder(holder: LineLabelViewHolder, position: Int) {
         val opus_manager = this.get_opus_manager()
@@ -103,6 +51,9 @@ class LineLabelRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<
         val label = this.get_label_text(channel, line_offset)
 
         label_view.set_text(label)
+
+
+
     }
 
     private fun get_label_text(channel: Int, line_offset: Int): String {
@@ -158,6 +109,16 @@ class LineLabelRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<
         //    view.channel,
         //    view.line_offset
         //)
+    }
+
+    fun set_dragging_line(channel: Int, line_offset:Int) {
+        this.dragging_position = Pair(channel, line_offset)
+    }
+    fun is_dragging(): Boolean {
+        return this.dragging_position != null
+    }
+    fun stop_dragging() {
+        this.dragging_position = null
     }
 
     fun get_activity(): MainActivity {

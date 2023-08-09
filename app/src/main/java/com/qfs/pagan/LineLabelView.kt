@@ -2,7 +2,9 @@ package com.qfs.pagan
 
 import android.content.Context
 import android.view.ContextThemeWrapper
+import android.view.DragEvent
 import android.view.MotionEvent
+import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
@@ -37,6 +39,53 @@ class LineLabelView(var viewHolder: RecyclerView.ViewHolder): LinearLayout(Conte
             val opus_manager = this.get_opus_manager()
             val (channel, line_offset) = this.get_row()
             opus_manager.cursor_select_row(channel, line_offset)
+        }
+
+
+        this.setOnTouchListener { view: View, touchEvent: MotionEvent ->
+            var adapter = (view as LineLabelView).get_adapter()
+            if (touchEvent.action == MotionEvent.ACTION_MOVE) {
+                var (channel, line_offset) = view.get_std_position()
+                if (!adapter.is_dragging()) {
+                    adapter.set_dragging_line(channel, line_offset)
+                    view.startDragAndDrop(
+                        null,
+                        View.DragShadowBuilder(view),
+                        null,
+                        0
+                    )
+                    return@setOnTouchListener true
+                }
+            } else if (touchEvent.action == MotionEvent.ACTION_DOWN) {
+                adapter.stop_dragging()
+            }
+            false
+        }
+
+        this.setOnDragListener { view: View, dragEvent: DragEvent ->
+            val adapter = (view as LineLabelView).get_adapter()
+            when (dragEvent.action) {
+                DragEvent.ACTION_DROP -> {
+                    if (adapter.is_dragging()) {
+                        val (from_channel, from_line) = adapter.dragging_position!!
+                        val (to_channel, to_line) = view.get_std_position()
+                        val opus_manager = this.get_opus_manager()
+                        opus_manager.move_line(
+                            from_channel,
+                            from_line,
+                            to_channel,
+                            to_line
+                        )
+
+                    }
+                    adapter.stop_dragging()
+                }
+                DragEvent.ACTION_DRAG_ENDED -> {
+                    adapter.stop_dragging()
+                }
+                else -> { }
+            }
+            true
         }
     }
 
@@ -92,6 +141,10 @@ class LineLabelView(var viewHolder: RecyclerView.ViewHolder): LinearLayout(Conte
         return (this.viewHolder.bindingAdapter as LineLabelRecyclerAdapter).get_opus_manager()
     }
 
+    fun get_adapter(): LineLabelRecyclerAdapter {
+        return this.viewHolder.bindingAdapter as LineLabelRecyclerAdapter
+    }
+
     fun get_row(): Pair<Int, Int> {
         val opus_manager = this.get_opus_manager()
         return opus_manager.get_std_offset(this.get_position())
@@ -99,5 +152,8 @@ class LineLabelView(var viewHolder: RecyclerView.ViewHolder): LinearLayout(Conte
 
     fun get_position(): Int {
         return this.viewHolder.bindingAdapterPosition
+    }
+    fun get_std_position(): Pair<Int, Int> {
+        return this.get_opus_manager().get_std_offset(this.get_position())
     }
 }

@@ -2,13 +2,13 @@ package com.qfs.pagan
 
 import android.content.Context
 import android.util.AttributeSet
-import android.util.Log
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.TableLayout
 import android.widget.TableRow
 import androidx.core.view.children
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.OpusChannel
 import kotlin.math.max
@@ -346,15 +346,18 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     }
 
     fun scroll_to_position(x: Int? = null, y: Int? = null, position: List<Int>? = null) {
-        if (x != null) {
+        if (x != null && ! this.is_x_visible(x)) {
             this.scroll_to_x(x)
         }
-        if (y != null) {
+        if (y != null && ! this.is_y_visible(y)) {
             this.scroll_to_y(y)
         }
 
-       // val leaf = this.get_leaf(x, y, new_position) ?: return
-       // this.main_recycler.scrollBy(leaf.x.toInt(), 0)
+        // TODO: implement this, but only when *actually* necessary
+        //if (x != null && y != null && position != null) {
+        //    val leaf = this.get_leaf(x, y, position) ?: return
+        //    this.main_recycler.scrollBy(leaf.x.toInt(), 0)
+        //}
     }
 
     fun scroll_to_position(beat_key: BeatKey, position: List<Int>? = null) {
@@ -378,11 +381,29 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             new_position.add(0)
         }
 
-        this.scroll_to_x(beat_key.beat)
-        this.scroll_to_y( opus_manager.get_abs_offset(beat_key.channel, beat_key.line_offset ))
-        val leaf = this.get_leaf(adj_beat_key, new_position) ?: return
+        if (! this.is_x_visible(beat_key.beat)) {
+            this.scroll_to_x(beat_key.beat)
+        }
+        val y = opus_manager.get_abs_offset(beat_key.channel, beat_key.line_offset )
+        if (! this.is_y_visible(y)) {
+            this.scroll_to_y(y)
+        }
+        // TODO: implement this, but only when *actually* necessary
+        // val leaf = this.get_leaf(adj_beat_key, new_position) ?: return
+        // this.main_recycler.scrollBy(leaf.x.toInt(), 0)
+    }
 
-        this.main_recycler.scrollBy(leaf.x.toInt(), 0)
+    fun is_x_visible(x: Int): Boolean {
+        val layout = this.column_label_recycler.layoutManager!! as LinearLayoutManager
+        val first = layout.findFirstCompletelyVisibleItemPosition()
+        val last = layout.findLastCompletelyVisibleItemPosition()
+        return x in first..last
+    }
+    fun is_y_visible(y: Int): Boolean {
+        val layout = this.line_label_recycler.layoutManager!! as LinearLayoutManager
+        val first = layout.findFirstCompletelyVisibleItemPosition()
+        val last = layout.findLastCompletelyVisibleItemPosition()
+        return y in first..last
     }
 
     fun scroll_to_x(x: Int) {

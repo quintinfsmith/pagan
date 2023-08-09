@@ -19,17 +19,13 @@ class CellPlaceHolder(var viewHolder: CellRecyclerViewHolder, column_width: Int)
         this.layoutParams.height = resources.getDimension(R.dimen.line_height).toInt()
 
     }
+
     fun replace() {
         CellLayout(this.viewHolder)
     }
+
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
         this.replace()
-        //thread {
-        //    //Thread.sleep(500)
-        //    this.viewHolder.get_activity().runOnUiThread {
-
-        //    }
-        //}
     }
 }

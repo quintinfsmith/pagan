@@ -17,7 +17,7 @@ class CellLayout(var viewHolder: CellRecyclerViewHolder): LinearLayout(viewHolde
         item_view.removeAllViews()
         item_view.addView(this)
 
-        this.layoutParams.width = WRAP_CONTENT
+        this.layoutParams.width = (this.get_editor_table().get_column_width(this.get_beat()) * resources.getDimension(R.dimen.base_leaf_width).roundToInt())
         this.layoutParams.height = resources.getDimension(R.dimen.line_height).toInt()
         this.build()
     }

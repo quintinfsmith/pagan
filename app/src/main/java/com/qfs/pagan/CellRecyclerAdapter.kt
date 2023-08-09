@@ -49,7 +49,7 @@ class CellRecyclerAdapter(): RecyclerView.Adapter<CellRecyclerViewHolder>() {
     }
 
     override fun onBindViewHolder(holder: CellRecyclerViewHolder, position: Int) {
-        CellLayout(holder)
+        CellPlaceHolder(holder, this.get_column_width())
     }
     //-------------------------------------------------------//
 

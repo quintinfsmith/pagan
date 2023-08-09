@@ -40,8 +40,8 @@ class CellRecycler(var viewHolder: ColumnRecyclerViewHolder): ScrollLockingRecyc
         this.conform_scroll_position()
     }
 
-    //-------------------------------------------------------//
 
+    //-------------------------------------------------------//
     fun conform_scroll_position() {
         thread {
             val column_adapter = this.get_column_recycler_adapter()

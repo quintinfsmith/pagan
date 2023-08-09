@@ -22,10 +22,10 @@ class LineLabelRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<
         this.registerAdapterDataObserver(
             object: RecyclerView.AdapterDataObserver() {
                 override fun onItemRangeRemoved(start: Int, count: Int) {
-                    that.notifyItemRangeChanged(start - 1, that.itemCount)
+                    that.notifyItemRangeChanged(start - count, that.itemCount)
                 }
                 override fun onItemRangeInserted(start: Int, count: Int) {
-                    that.notifyItemRangeChanged(start - count, count)
+                    that.notifyItemRangeChanged(start - count, that.itemCount)
                 }
             }
         )

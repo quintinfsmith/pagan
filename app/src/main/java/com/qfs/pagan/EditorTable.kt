@@ -2,6 +2,7 @@ package com.qfs.pagan
 
 import android.content.Context
 import android.util.AttributeSet
+import android.util.Log
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
@@ -37,17 +38,6 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         this.addView(this.top_row)
         this.addView(this.bottom_row)
 
-        ColumnLabelAdapter(this)
-        ColumnRecyclerAdapter(this)
-        LineLabelRecyclerAdapter(this)
-        this.main_recycler.addOnScrollListener(HorizontalScrollListener(this.column_label_recycler))
-        this.column_label_recycler.addOnScrollListener(HorizontalScrollListener(this.main_recycler))
-    }
-
-
-    override fun onAttachedToWindow() {
-        super.onAttachedToWindow()
-        this.column_width_map.clear()
         (this.top_row.layoutParams as LayoutParams).apply {
             width = MATCH_PARENT
             height = WRAP_CONTENT
@@ -55,7 +45,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
         (this.bottom_row.layoutParams as LayoutParams).apply {
             width = MATCH_PARENT
-            height = WRAP_CONTENT
+            height = MATCH_PARENT
         }
 
         this.spacer.layoutParams.apply {
@@ -78,6 +68,18 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             width = 0
             weight = 1F
         }
+
+        ColumnLabelAdapter(this)
+        ColumnRecyclerAdapter(this)
+        LineLabelRecyclerAdapter(this)
+        this.main_recycler.addOnScrollListener(HorizontalScrollListener(this.column_label_recycler))
+        this.column_label_recycler.addOnScrollListener(HorizontalScrollListener(this.main_recycler))
+    }
+
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        this.column_width_map.clear()
     }
 
     fun clear() {
@@ -102,7 +104,6 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             line_label_adapter.add_label(y)
         }
 
-        this.main_recycler.minimumHeight = this.get_opus_manager().get_total_line_count() * (resources.getDimension(R.dimen.line_height).toInt())
     }
 
     fun init_column_width_map() {
@@ -158,9 +159,6 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         }
 
         label_adapter.add_label(y)
-
-        // This needs to be reset here since the main_recycler and cell_recyclers need to have a fixed height.
-        this.main_recycler.minimumHeight = this.get_opus_manager().get_total_line_count() * (resources.getDimension(R.dimen.line_height).toInt())
     }
 
     fun remove_row(y: Int) {
@@ -172,6 +170,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             val new_size = this.column_width_map[i].max()
             if (new_size != original_size) {
                 val cell_recycler = (this.main_recycler.adapter as ColumnRecyclerAdapter).get_cell_recycler(i)
+
                 if (cell_recycler != null) {
                     (cell_recycler.adapter!! as CellRecyclerAdapter).clear()
                 }
@@ -179,16 +178,12 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                 this.main_recycler.adapter!!.notifyItemChanged(i)
                 label_adapter.notifyItemChanged(i)
             } else {
-                val cell_recycler =
-                    (this.main_recycler.adapter as ColumnRecyclerAdapter).get_cell_recycler(i)
-                        ?: continue
+                val cell_recycler = (this.main_recycler.adapter as ColumnRecyclerAdapter).get_cell_recycler(i) ?: continue
                 (cell_recycler.adapter!! as CellRecyclerAdapter).remove_cell(y)
             }
         }
 
         label_adapter.remove_label(y)
-        // This needs to be reset here since the main_recycler and cell_recyclers need to have a fixed height.
-        this.main_recycler.minimumHeight = this.get_opus_manager().get_total_line_count() * (resources.getDimension(R.dimen.line_height).toInt())
     }
 
     fun new_column(index: Int) {

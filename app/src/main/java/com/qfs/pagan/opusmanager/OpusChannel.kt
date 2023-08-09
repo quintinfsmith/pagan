@@ -17,6 +17,7 @@ class OpusChannel(var uuid: Int) {
     class OpusLine(var beats: MutableList<OpusTree<OpusEvent>>) {
         constructor(beat_count: Int) : this(Array<OpusTree<OpusEvent>>(beat_count) { OpusTree() }.toMutableList())
         var volume = 64
+        var static_value: Int? = null
     }
 
     class LastLineException: Exception("Can't remove final line in channel")
@@ -27,47 +28,13 @@ class OpusChannel(var uuid: Int) {
     var midi_channel: Int = 0
     private var beat_count: Int = 0
     var size: Int = 0
-    internal var line_map: HashMap<Int, Int>? = null
-
-    private fun is_mapped(): Boolean {
-        return this.line_map != null
-    }
 
     fun map_line(line: Int, offset: Int) {
-        if (this.line_map == null) {
-            this.set_mapped()
-        }
-        this.line_map!![line] = offset
-    }
-
-    fun unmap() {
-        this.line_map = null
-    }
-
-    fun set_mapped() {
-        this.line_map = HashMap()
+        this.lines[line].static_value = offset
     }
 
     fun get_mapped_line_offset(line: Int): Int? {
-        if (this.line_map == null) {
-            return null
-        }
-        return this.line_map!![line]
-    }
-    private fun adjust_map_for_new_line(index: Int) {
-        if (! this.is_mapped()) {
-            return
-        }
-
-        val new_map = HashMap<Int, Int>()
-        for ((line, instrument) in this.line_map!!) {
-            if (line < index) {
-                new_map[line] = instrument
-            } else {
-                new_map[line + 1] = instrument
-            }
-        }
-        this.line_map = new_map
+        return this.lines[line].static_value
     }
 
     fun new_line(index: Int? = null): OpusLine {
@@ -76,7 +43,6 @@ class OpusChannel(var uuid: Int) {
             this.lines.add(new_line)
         }  else {
             this.lines.add(index, new_line)
-            this.adjust_map_for_new_line(index)
         }
         this.size += 1
 
@@ -89,7 +55,6 @@ class OpusChannel(var uuid: Int) {
         }
 
         this.lines.add(index, line)
-        this.adjust_map_for_new_line(index)
         this.size += 1
     }
 
@@ -101,16 +66,6 @@ class OpusChannel(var uuid: Int) {
             this.size -= 1
             this.lines.removeLast()
         } else if (index < this.lines.size) {
-            if (this.line_map != null) {
-                for (i in index until this.size - 1) {
-                    val next = this.line_map!![i + 1]
-                    if (next != null) {
-                        this.line_map!![i] = next
-                    } else {
-                        this.line_map!!.remove(i)
-                    }
-                }
-            }
             this.size -= 1
             lines.removeAt(index)
         } else {

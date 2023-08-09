@@ -207,6 +207,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         if (!this.simple_ui_locked()) {
             this.get_editor_table().remove_row(abs_line)
         }
+
         this.activity.update_channel_instruments()
 
         return output
@@ -382,7 +383,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             for (i in lines - 1 downTo 0) {
                 editor_table.remove_row(y + i)
             }
-
         }
     }
 

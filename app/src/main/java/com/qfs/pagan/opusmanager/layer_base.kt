@@ -1,5 +1,4 @@
 package com.qfs.pagan.opusmanager
-import android.util.Log
 import com.qfs.apres.event.BankSelect
 import com.qfs.apres.Midi
 import com.qfs.apres.event.NoteOff
@@ -486,7 +485,6 @@ open class OpusManagerBase {
         this.channels[channel].midi_program = program
         this.channels[channel].midi_bank = 128
         this.channels[channel].midi_channel = 9
-        this.channels[channel].set_mapped()
     }
 
     open fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEvent) {
@@ -571,7 +569,6 @@ open class OpusManagerBase {
         } else {
             new_channel.midi_bank = 128
             new_channel.midi_program = 0
-            new_channel.set_mapped()
             this.channels.add(new_channel) // Will be the percussion channel
         }
     }
@@ -579,12 +576,6 @@ open class OpusManagerBase {
     open fun move_line(channel_old: Int, line_old: Int, channel_new: Int, line_new: Int) {
         if (this.is_percussion(channel_old) != this.is_percussion(channel_new)) {
             throw IncompatibleChannelException(channel_old, channel_new)
-        }
-        // preserve line map
-        val line_map = if (channel_old == channel_new && this.is_percussion(channel_old)) {
-            this.channels[channel_old].line_map!!.toList()
-        } else {
-            null
         }
 
         val line = try {
@@ -602,14 +593,6 @@ open class OpusManagerBase {
             }
         } else {
             this.insert_line(channel_new, line_new, line)
-        }
-
-        // Reassign line map that was broken by the move
-        if (line_map != null) {
-            this.channels[channel_old].line_map!!.clear()
-            for ((k, v) in line_map) {
-                this.channels[channel_old].line_map!![k] = v
-            }
         }
     }
 
@@ -641,7 +624,6 @@ open class OpusManagerBase {
             }
         }
     }
-
 
     open fun insert_line(channel: Int, line_offset: Int, line: OpusChannel.OpusLine) {
         this.channels[channel].insert_line(line_offset, line)
@@ -1201,7 +1183,7 @@ open class OpusManagerBase {
 
         this.new_channel(lines = channel_sizes[midi_channel_map[9]!!])
 
-        var sorted_channels = midi_channel_map.values.sortedBy { it }
+        val sorted_channels = midi_channel_map.values.sortedBy { it }
         sorted_channels.forEachIndexed { i: Int, channel: Int ->
             if (i == sorted_channels.size - 1) {
                 return@forEachIndexed

@@ -19,9 +19,7 @@ class CellRecyclerAdapter(): RecyclerView.Adapter<CellRecyclerViewHolder>() {
                 override fun onItemRangeInserted(start: Int, count: Int) {
                     that.notifyItemChanged(start + count)
                 }
-                override fun onItemRangeChanged(start: Int, count: Int) {
-
-                }
+                override fun onItemRangeChanged(start: Int, count: Int) { }
                 override fun onItemRangeRemoved(start: Int, count: Int) {
                     that.notifyItemRangeChanged(start, that.itemCount - start)
                 }
@@ -52,11 +50,8 @@ class CellRecyclerAdapter(): RecyclerView.Adapter<CellRecyclerViewHolder>() {
         CellPlaceHolder(holder, this.get_column_width())
     }
     //-------------------------------------------------------//
-
-
     fun insert_cell(index: Int) {
         this.cell_count += 1
-
         this.notifyItemInserted(index)
     }
 
@@ -85,14 +80,14 @@ class CellRecyclerAdapter(): RecyclerView.Adapter<CellRecyclerViewHolder>() {
     }
 
     fun get_column_width(): Int {
-        var editor_table = this.recycler.get_editor_table()
-        var weight = editor_table.get_column_width(this.get_beat())
+        val editor_table = this.recycler.get_editor_table()
+        val weight = editor_table.get_column_width(this.get_beat())
         val resources = this.recycler.resources
         return (weight * resources.getDimension(R.dimen.base_leaf_width).toInt())
     }
 
     fun clear() {
-        var count = this.cell_count
+        val count = this.cell_count
         this.cell_count = 0
         this.notifyItemRangeRemoved(0, count)
     }

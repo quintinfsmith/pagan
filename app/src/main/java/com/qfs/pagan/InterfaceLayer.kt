@@ -318,6 +318,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     override fun import_midi(midi: Midi) {
+        val editor_table = this.get_editor_table()
         this.activity.loading_reticle()
         try {
             this.surpress_ui {
@@ -334,7 +335,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
         this.activity.cancel_reticle()
 
-        val editor_table = this.get_editor_table()
         editor_table.setup()
 
         this.activity.update_channel_instruments()

@@ -1,10 +1,8 @@
 package com.qfs.pagan
 
 import android.content.Context
-import android.os.Bundle
 import android.os.Parcelable
 import android.util.AttributeSet
-import android.util.Log
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
@@ -40,6 +38,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
         this.addView(this.top_row)
         this.addView(this.bottom_row)
+
 
         (this.top_row.layoutParams as LayoutParams).apply {
             width = MATCH_PARENT
@@ -91,12 +90,8 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         (this.column_label_recycler.adapter!! as ColumnLabelAdapter).clear()
         (this.line_label_recycler.adapter!! as LineLabelRecyclerAdapter).clear()
 
-        // Kludge: When cleared, the height sticks to the most recent length,
-        // so when importing a project with more lines than the last
-        // part gets cut off unless the height is reset
-        this.main_recycler.layoutParams.height = MATCH_PARENT
-        this.column_label_recycler.layoutParams.height = MATCH_PARENT
     }
+
 
     fun setup() {
         this.init_column_width_map()

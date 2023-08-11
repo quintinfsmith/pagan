@@ -12,7 +12,6 @@ class ColumnRecycler(context: Context, attrs: AttributeSet? = null): ScrollLocki
     init {
         this.layoutManager = TestLayoutManager(context, HORIZONTAL)
         this.itemAnimator = null
-        this.setHasFixedSize(true)
         this.overScrollMode = View.OVER_SCROLL_NEVER
     }
 

@@ -1,7 +1,6 @@
 package com.qfs.pagan
 
 import android.os.Bundle
-import android.util.Log
 import android.view.*
 import android.widget.*
 import androidx.fragment.app.setFragmentResultListener
@@ -48,14 +47,6 @@ class EditorFragment : PaganFragment() {
         }
         return binding.root
     }
-    override fun onStart() {
-        Log.d("AAA", "START!")
-        super.onStart()
-    }
-    override fun onPause() {
-        Log.d("AAA", "PAUSING!")
-        super.onPause()
-    }
     override fun onStop() {
         val editor_table = this.get_main().findViewById<EditorTable>(R.id.etEditorTable)
         val (scroll_x, scroll_y) = editor_table.get_scroll_offset()
@@ -63,15 +54,12 @@ class EditorFragment : PaganFragment() {
         this.view_model.fine_x = scroll_x.second
         this.view_model.coarse_y = scroll_y.first
         this.view_model.fine_y = scroll_y.second
-        Log.d("AAA", "STOPPING!")
         super.onStop()
     }
 
     override fun onResume() {
         this.get_main().update_title_text()
         super.onResume()
-        Log.d("AAA", "resuming")
-
     }
 
 

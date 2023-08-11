@@ -1,7 +1,6 @@
 package com.qfs.pagan
 
 import android.os.Bundle
-import android.util.Log
 import android.view.*
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
@@ -14,9 +13,6 @@ import kotlinx.serialization.json.Json
 import com.qfs.pagan.opusmanager.LoadedJSONData
 import java.io.File
 
-/**
- * A simple [Fragment] subclass as the second destination in the navigation.
- */
 class LoadFragment : PaganFragment() {
     class MKDirFailedException(dir: String): Exception("Failed to create directory $dir")
 
@@ -45,7 +41,6 @@ class LoadFragment : PaganFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         setFragmentResult("RETURNED", bundleOf())
-        Log.d("AAA", "LOADVC: $savedInstanceState")
         super.onViewCreated(view, savedInstanceState)
 
         val loadprojectAdapter = ProjectToLoadAdapter(this)

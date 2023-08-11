@@ -153,6 +153,10 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     override fun insert_line(channel: Int, line_offset: Int, line: OpusChannel.OpusLine) {
+        // Need to clear cursor before change since the way the editor_table updates
+        // Cursors doesn't take into account changes to row count
+        this.cursor_clear()
+
         super.insert_line(channel, line_offset, line)
         val abs_offset = this.get_abs_offset( channel, line_offset )
         if (!this.simple_ui_locked()) {
@@ -186,6 +190,11 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     override fun remove_line(channel: Int, line_offset: Int): OpusChannel.OpusLine {
+        // Need to clear cursor before change since the way the editor_table updates
+        // Cursors doesn't take into account changes to row count
+        this.cursor_clear()
+
+
         val abs_line = this.get_abs_offset(channel, line_offset)
 
         val output = try {
@@ -252,6 +261,10 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     override fun remove_beat(beat_index: Int) {
+        // Need to clear cursor before change since the way the editor_table updates
+        // Cursors doesn't take into account changes to column count
+        this.cursor_clear()
+
         super.remove_beat(beat_index)
 
         if (!this.simple_ui_locked()) {
@@ -259,9 +272,15 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             editor_table.remove_column(beat_index)
             editor_table.update_cursor(this.cursor)
         }
+
+        this.cursor_select_column(beat_index)
     }
 
     override fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<OpusEvent>>?) {
+        // Need to clear cursor before change since the way the editor_table updates
+        // Cursors doesn't take into account changes to column count
+        this.cursor_clear()
+
         super.insert_beat(beat_index, beats_in_column)
 
         if (!this.simple_ui_locked()) {

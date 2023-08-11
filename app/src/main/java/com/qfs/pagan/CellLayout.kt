@@ -59,7 +59,7 @@ class CellLayout(var viewHolder: CellRecyclerViewHolder): LinearLayout(viewHolde
    }
 
     fun get_editor_table(): EditorTable {
-        return this.viewHolder.get_adapter().get_column_adapter().get_editor_table()
+        return this.viewHolder.get_adapter().get_column_adapter().get_editor_table()!!
     }
 
    private fun buildTreeView(tree: OpusTree<OpusEvent>, position: List<Int>, new_width: Int) {

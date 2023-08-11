@@ -4,6 +4,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.RecyclerView.VERTICAL
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
 class LineLabelRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<LineLabelViewHolder>() {
@@ -16,7 +17,7 @@ class LineLabelRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<
     init {
         this.recycler = editor_table.line_label_recycler
         this.recycler.adapter = this
-        this.recycler.layoutManager = LinearLayoutManager(this.recycler.context)
+        this.recycler.layoutManager = TestLayoutManager(this.recycler.context, VERTICAL)
         this.recycler.itemAnimator = null
 
         val that = this

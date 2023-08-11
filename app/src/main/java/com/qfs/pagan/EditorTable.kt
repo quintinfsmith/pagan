@@ -1,7 +1,10 @@
 package com.qfs.pagan
 
 import android.content.Context
+import android.os.Bundle
+import android.os.Parcelable
 import android.util.AttributeSet
+import android.util.Log
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
@@ -15,13 +18,13 @@ import kotlin.math.max
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
 class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, attrs) {
-    val main_recycler = ColumnRecycler(this, context, attrs)
-    val line_label_recycler = LineLabelRecyclerView(context, attrs)
-    val column_label_recycler = ColumnLabelRecycler(this, context, attrs)
-    val top_row = TableRow(context, attrs)
-    val bottom_row = TableRow(context, attrs)
-    val spacer = CornerView(context, attrs)
-    val vertical_scroll_listener = VerticalScrollListener(this)
+    val main_recycler = ColumnRecycler(context)
+    val line_label_recycler = LineLabelRecyclerView(context)
+    val column_label_recycler = ColumnLabelRecycler(context)
+    val top_row = TableRow(context)
+    val bottom_row = TableRow(context)
+    val spacer = CornerView(context)
+    val vertical_scroll_listener = VerticalScrollListener()
 
     var initializing_column_width_map = false
     val column_width_map = mutableListOf<MutableList<Int>>()
@@ -378,7 +381,6 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         )
 
         val new_position = position?.toMutableList() ?: mutableListOf()
-
         val opus_manager = this.get_opus_manager()
 
         var tree = opus_manager.get_tree(adj_beat_key, new_position)
@@ -413,8 +415,13 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     }
 
     fun scroll_to_x(x: Int) {
+        this.main_recycler.lock_scroll_propagation()
         this.main_recycler.scrollToPosition(x)
+        this.main_recycler.unlock_scroll_propagation()
+        this.column_label_recycler.lock_scroll_propagation()
         this.column_label_recycler.scrollToPosition(x)
+        this.column_label_recycler.unlock_scroll_propagation()
+
     }
     fun scroll_to_y(y: Int) {
         this.line_label_recycler.scrollToPosition(y)
@@ -437,8 +444,44 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             }
         }
         return null
-
     }
 
+    override fun onRestoreInstanceState(state: Parcelable?) {
+        super.onRestoreInstanceState(state)
+    }
+
+    fun get_scroll_offset(): Pair<Pair<Int, Int>, Pair<Int, Int>> {
+        val column_lm = this.column_label_recycler.layoutManager!! as LinearLayoutManager
+        val coarse_x = column_lm.findFirstVisibleItemPosition()
+        val column = column_lm.findViewByPosition(coarse_x)
+        val fine_x = column!!.x
+
+        val line_lm = this.line_label_recycler.layoutManager!! as LinearLayoutManager
+        val coarse_y = line_lm.findFirstVisibleItemPosition()
+        val line = line_lm.findViewByPosition(coarse_y)
+        val fine_y = line!!.y
+        return Pair(
+            Pair(coarse_x, fine_x.toInt()),
+            Pair(coarse_y, fine_y.toInt())
+        )
+    }
+
+    fun precise_scroll(x_coarse: Int = 0, x_fine: Int = 0, y_coarse: Int = 0, y_fine: Int = 0) {
+        this.main_recycler.lock_scroll_propagation()
+        val main_lm = (this.main_recycler.layoutManager!! as LinearLayoutManager)
+        main_lm.scrollToPositionWithOffset(x_coarse, x_fine)
+
+        this.column_label_recycler.lock_scroll_propagation()
+        val column_label_lm = (this.column_label_recycler.layoutManager!! as LinearLayoutManager)
+        column_label_lm.scrollToPositionWithOffset(x_coarse, x_fine)
+
+        this.main_recycler.unlock_scroll_propagation()
+        this.column_label_recycler.unlock_scroll_propagation()
+
+        val line_label_lm = (this.line_label_recycler.layoutManager!! as LinearLayoutManager)
+        line_label_lm.scrollToPositionWithOffset(y_coarse, y_fine)
+
+        this.fix_scroll_offset()
+    }
 
 }

@@ -289,7 +289,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         this.activity.setup_config_drawer()
         this.activity.cancel_reticle()
 
-        var editor_table = this.get_editor_table()
+        val editor_table = this.get_editor_table()
         editor_table.setup()
 
         this.activity.update_channel_instruments()
@@ -315,7 +315,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
         this.activity.cancel_reticle()
 
-        var editor_table = this.get_editor_table()
+        val editor_table = this.get_editor_table()
         editor_table.setup()
 
         this.activity.update_channel_instruments()
@@ -339,7 +339,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         this.activity.setup_config_drawer()
         this.activity.cancel_reticle()
 
-        var editor_table = this.get_editor_table()
+        val editor_table = this.get_editor_table()
         editor_table.setup()
 
         this.activity.update_channel_instruments()
@@ -364,7 +364,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         this.activity.setup_config_drawer()
         this.activity.cancel_reticle()
 
-        var editor_table = this.get_editor_table()
+        val editor_table = this.get_editor_table()
         editor_table.setup()
 
         this.activity.update_channel_instruments()
@@ -414,7 +414,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         this.cursor_select(beat_key, this.get_first_position(beat_key))
 
         // Need to run update on both the beat_key and *any* of its former link pool
-        var editor_table = this.get_editor_table()
+        val editor_table = this.get_editor_table()
         editor_table.notify_cell_change(beat_key)
         if (update_keys.isNotEmpty()) {
             editor_table.notify_cell_change(update_keys.first())
@@ -927,7 +927,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
     fun link_beat(beat_key: BeatKey) {
         if (this.cursor.is_linking_range()) {
-            var (first, second) = this.cursor.range!!
+            val (first, second) = this.cursor.range!!
             this.link_beat_range(beat_key, first, second)
         } else if (this.cursor.is_linking) {
             this.link_beats(beat_key, this.cursor.get_beatkey())

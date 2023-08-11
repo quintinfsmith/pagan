@@ -1,13 +1,15 @@
 package com.qfs.pagan
 
 import android.content.Context
+import android.os.Parcelable
 import android.util.AttributeSet
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import androidx.recyclerview.widget.RecyclerView
 
-class ColumnLabelRecycler(var editor_table: EditorTable, context: Context, attrs: AttributeSet): ScrollLockingRecyclerView(context, attrs) {
+class ColumnLabelRecycler(context: Context, attrs: AttributeSet? = null): ScrollLockingRecyclerView(context, attrs) {
     init {
         this.itemAnimator = null
     }
@@ -17,5 +19,9 @@ class ColumnLabelRecycler(var editor_table: EditorTable, context: Context, attrs
         this.layoutParams.height = WRAP_CONTENT
         this.setHasFixedSize(true)
         this.overScrollMode = View.OVER_SCROLL_NEVER
+    }
+    override fun onRestoreInstanceState(state: Parcelable?) {
+        Log.d("AAA", "COLUMNLABEL")
+        super.onRestoreInstanceState(state)
     }
 }

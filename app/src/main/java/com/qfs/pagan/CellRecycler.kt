@@ -1,6 +1,8 @@
 package com.qfs.pagan
 
 import android.annotation.SuppressLint
+import android.os.Parcelable
+import android.util.Log
 import android.view.ContextThemeWrapper
 import android.view.View
 import android.view.ViewGroup
@@ -18,7 +20,7 @@ class CellRecycler(var viewHolder: ColumnRecyclerViewHolder): ScrollLockingRecyc
     init {
         this.visibility = View.INVISIBLE
         this.adapter = CellRecyclerAdapter()
-        this.layoutManager = LinearLayoutManager(context, VERTICAL, false)
+        this.layoutManager = TestLayoutManager(context, VERTICAL)
         this.addOnScrollListener(this.get_scroll_listener())
         this.itemAnimator = null
 
@@ -39,7 +41,6 @@ class CellRecycler(var viewHolder: ColumnRecyclerViewHolder): ScrollLockingRecyc
         super.onAttachedToWindow()
         this.conform_scroll_position()
     }
-
 
     //-------------------------------------------------------//
     fun conform_scroll_position() {
@@ -76,7 +77,7 @@ class CellRecycler(var viewHolder: ColumnRecyclerViewHolder): ScrollLockingRecyc
         return this.viewHolder.bindingAdapter as ColumnRecyclerAdapter
     }
     fun get_editor_table(): EditorTable {
-        return this.get_column_recycler_adapter().get_editor_table()
+        return this.get_column_recycler_adapter().get_editor_table()!!
     }
     fun get_scroll_listener(): VerticalScrollListener {
         return this.get_editor_table().vertical_scroll_listener

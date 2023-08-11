@@ -13,15 +13,11 @@
 
         <action
             android:id="@+id/action_EditorFragment_to_LoadFragment"
-            app:destination="@id/LoadFragment"
-            app:popUpTo="@id/EditorFragment"
-            app:popUpToInclusive="false" />
+            app:destination="@id/LoadFragment" />
 
         <action
             android:id="@+id/action_EditorFragment_to_SettingsFragment"
-            app:destination="@id/SettingsFragment"
-            app:popUpTo="@id/EditorFragment"
-            app:popUpToInclusive="false" />
+            app:destination="@id/SettingsFragment"/>
     </fragment>
 
     <fragment

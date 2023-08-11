@@ -1,5 +1,6 @@
 package com.qfs.pagan
 
+import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import androidx.recyclerview.widget.RecyclerView
@@ -25,6 +26,7 @@ class ColumnRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<Col
         )
     }
 
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ColumnRecyclerViewHolder {
         return ColumnRecyclerViewHolder(parent.context)
     }
@@ -34,8 +36,7 @@ class ColumnRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<Col
     }
 
     override fun onBindViewHolder(holder: ColumnRecyclerViewHolder, position: Int) {
-        var editor_table = this.get_editor_table()
-
+        var editor_table = this.get_editor_table()!!
         var weight = editor_table.get_column_width(position)
         val resources = this.recycler.resources
         ColumnPlaceholder(holder, weight * resources.getDimension(R.dimen.base_leaf_width).toInt())
@@ -86,8 +87,16 @@ class ColumnRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<Col
         return this.get_activity().get_opus_manager()
     }
 
-    fun get_editor_table(): EditorTable {
-        return this.recycler.editor_table
+    fun get_editor_table(): EditorTable? {
+        var view = this.recycler as View
+        while (view !is EditorTable && view != null) {
+            view = view.parent as View
+        }
+        return if (view is EditorTable) {
+            view
+        } else {
+            null
+        }
     }
 
     fun get_cell_recycler(beat: Int): CellRecycler? {

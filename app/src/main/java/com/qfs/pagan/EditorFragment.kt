@@ -1,14 +1,18 @@
 package com.qfs.pagan
 
 import android.os.Bundle
+import android.util.Log
 import android.view.*
 import android.widget.*
 import androidx.fragment.app.setFragmentResultListener
+import androidx.fragment.app.viewModels
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.qfs.apres.InvalidMIDIFile
 import com.qfs.pagan.databinding.FragmentMainBinding
 import com.qfs.pagan.opusmanager.*
 import java.lang.Integer.max
 import java.lang.Integer.min
+import kotlin.concurrent.thread
 
 /**
  *
@@ -19,9 +23,8 @@ class EditorFragment : PaganFragment() {
     private val binding get() = _binding!!
     //////////////////
 
+    val view_model: EditorViewModel by viewModels()
     private var active_context_menu_index: ContextMenu? = null
-
-    private var table_offset_pause: Int = 0
 
     enum class ContextMenu {
         Leaf,
@@ -31,33 +34,71 @@ class EditorFragment : PaganFragment() {
     }
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentMainBinding.inflate(inflater, container, false)
+        if (this._binding == null) {
+            _binding = FragmentMainBinding.inflate(inflater, container, false)
 
-        this.get_main().apply {
-            unlockDrawer()
-            update_menu_options()
+            this.get_main().apply {
+                unlockDrawer()
+                update_menu_options()
+            }
         }
-
         return binding.root
     }
-
+    override fun onStart() {
+        Log.d("AAA", "START!")
+        super.onStart()
+    }
     override fun onPause() {
-        //val rvTable = this.binding.root.findViewById<RecyclerView>(R.id.rvTable)
-        //this.table_offset_pause = rvTable.computeHorizontalScrollOffset()
+        Log.d("AAA", "PAUSING!")
         super.onPause()
     }
-
+    override fun onStop() {
+        val editor_table = this.get_main().findViewById<EditorTable>(R.id.etEditorTable)
+        val (scroll_x, scroll_y) = editor_table.get_scroll_offset()
+        this.view_model.coarse_x = scroll_x.first
+        this.view_model.fine_x = scroll_x.second
+        this.view_model.coarse_y = scroll_y.first
+        this.view_model.fine_y = scroll_y.second
+        Log.d("AAA", "STOPPING!")
+        super.onStop()
+    }
 
     override fun onResume() {
         this.get_main().update_title_text()
         super.onResume()
+        Log.d("AAA", "resuming")
+
     }
+
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        if (this.view_model.coarse_x != null) {
+            val editor_table = this.get_main().findViewById<EditorTable>(R.id.etEditorTable)
+            editor_table.setup()
+            thread {
+                Thread.sleep(100)
+                this.activity!!.runOnUiThread {
+                    editor_table.precise_scroll(
+                        this.view_model.coarse_x!!,
+                        this.view_model.fine_x!!,
+                        this.view_model.coarse_y!!,
+                        this.view_model.fine_y!!
+                    )
+
+                    this.view_model.coarse_y = null
+                    this.view_model.coarse_x = null
+                    this.view_model.fine_y = null
+                    this.view_model.fine_x = null
+                }
+            }
+        }
+
         setFragmentResultListener("LOAD") { _, bundle: Bundle? ->
             if (bundle == null) {
                 return@setFragmentResultListener
@@ -103,6 +144,10 @@ class EditorFragment : PaganFragment() {
             main.get_opus_manager().new()
             main.cancel_reticle()
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
     }
 
     override fun onDestroyView() {
@@ -200,7 +245,6 @@ class EditorFragment : PaganFragment() {
     }
 
     fun setContextMenu_column() {
-        //this.clearContextMenu()
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
         val llContextMenu = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenu)
@@ -596,7 +640,6 @@ class EditorFragment : PaganFragment() {
     fun play_event(beat_key: BeatKey, position: List<Int>) {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
-        val current_tree = opus_manager.get_tree()
         var event_note = opus_manager.get_absolute_value(beat_key, position) ?: return
         if (event_note < 0) {
             return
@@ -627,8 +670,6 @@ class EditorFragment : PaganFragment() {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
         opus_manager.unlink_beat()
-        //val rvTable = main.findViewById<RecyclerView>(R.id.rvTable)
-        //(rvTable.adapter as BeatColumnAdapter).cancel_linking()
     }
 
     private fun interact_btnUnlinkAll() {
@@ -636,8 +677,6 @@ class EditorFragment : PaganFragment() {
         val opus_manager = main.get_opus_manager()
         opus_manager.clear_link_pool()
 
-        //val rvTable = main.findViewById<RecyclerView>(R.id.rvTable)
-        //(rvTable.adapter as BeatColumnAdapter).cancel_linking()
     }
 
     private fun interact_btnCancelLink() {
@@ -817,4 +856,5 @@ class EditorFragment : PaganFragment() {
             opus_manager.cursor_select_column(beat)
         }
     }
+
 }

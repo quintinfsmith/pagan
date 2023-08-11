@@ -2,7 +2,7 @@ package com.qfs.pagan
 
 import androidx.recyclerview.widget.RecyclerView
 
-class VerticalScrollListener(var editor_table: EditorTable): RecyclerView.OnScrollListener() {
+class VerticalScrollListener(): RecyclerView.OnScrollListener() {
     override fun onScrolled(recyclerView: RecyclerView, x: Int, y: Int) {
         super.onScrolled(recyclerView, x, y)
         if ((recyclerView as CellRecycler).is_propagation_locked()) {
@@ -22,12 +22,8 @@ class VerticalScrollListener(var editor_table: EditorTable): RecyclerView.OnScro
                 propagated_recycler.unlock_scroll_propagation()
             }
         }
-
-        val line_label_recycler = this.get_line_label_recycler()
-        line_label_recycler.scrollBy(x, y)
-    }
-    fun get_line_label_recycler(): LineLabelRecyclerView {
-        return this.editor_table.line_label_recycler
+        val editor_table = main_adapter.get_editor_table()!!
+        editor_table.line_label_recycler.scrollBy(x, y)
     }
 }
 

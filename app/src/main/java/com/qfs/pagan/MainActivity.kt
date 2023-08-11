@@ -13,6 +13,7 @@ import android.util.Log
 import android.view.*
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.os.bundleOf
 import androidx.drawerlayout.widget.DrawerLayout
@@ -463,12 +464,10 @@ class MainActivity : AppCompatActivity() {
     private fun closeDrawer() {
         findViewById<DrawerLayout>(R.id.drawer_layout).closeDrawers()
     }
-
     fun navTo(fragmentName: String) {
         val navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main)
         val fragment = navHost?.childFragmentManager?.fragments?.get(0)
         val navController = findNavController(R.id.nav_host_fragment_content_main)
-
         when (fragment) {
             is LoadFragment -> {
                 when (fragmentName) {
@@ -989,6 +988,12 @@ class MainActivity : AppCompatActivity() {
                 this.active_percussion_names[note] = name
             }
         }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        Log.d("AAA", "SAVE ACT")
+        super.onSaveInstanceState(outState)
+
     }
 
 }

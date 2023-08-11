@@ -1,7 +1,9 @@
 package com.qfs.pagan
 
 import android.content.Context
+import android.os.Parcelable
 import android.util.AttributeSet
+import android.util.Log
 import android.view.*
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
@@ -11,7 +13,7 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.SimpleItemAnimator
 import com.qfs.pagan.opusmanager.LinksLayer
 
-class LineLabelRecyclerView(context: Context, attrs: AttributeSet) : ScrollLockingRecyclerView(context, attrs) {
+class LineLabelRecyclerView(context: Context, attrs: AttributeSet? = null) : ScrollLockingRecyclerView(context, attrs) {
     init {
         this.itemAnimator = null
         this.setHasFixedSize(true)
@@ -20,6 +22,9 @@ class LineLabelRecyclerView(context: Context, attrs: AttributeSet) : ScrollLocki
     // Prevents this from intercepting linelabel touch events (disables manual scrolling)
     override fun onInterceptTouchEvent(touchEvent: MotionEvent): Boolean {
         return false
+    }
+    override fun onRestoreInstanceState(state: Parcelable?) {
+        super.onRestoreInstanceState(state)
     }
 }
 

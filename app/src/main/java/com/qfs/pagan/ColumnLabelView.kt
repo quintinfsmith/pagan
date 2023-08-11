@@ -35,7 +35,7 @@ class ColumnLabelView(val viewHolder: RecyclerView.ViewHolder): RelativeLayout(C
 
         val beat = (this.viewHolder as ColumnLabelViewHolder).bindingAdapterPosition
         val editor_table = ((this.viewHolder as ColumnLabelViewHolder).bindingAdapter as ColumnLabelAdapter).get_editor_table()
-        val new_width = editor_table.get_column_width(beat)
+        val new_width = editor_table!!.get_column_width(beat)
 
         this.textView.layoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT
         this.textView.layoutParams.height = resources.getDimension(R.dimen.line_height).toInt()

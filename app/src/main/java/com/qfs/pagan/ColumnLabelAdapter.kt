@@ -5,7 +5,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
-class ColumnLabelAdapter(var editor_table: EditorTable) : RecyclerView.Adapter<ColumnLabelViewHolder>() {
+class ColumnLabelAdapter(editor_table: EditorTable) : RecyclerView.Adapter<ColumnLabelViewHolder>() {
     var recycler: ColumnLabelRecycler
     var column_recycler: ColumnRecycler
     var column_count = 0
@@ -13,10 +13,9 @@ class ColumnLabelAdapter(var editor_table: EditorTable) : RecyclerView.Adapter<C
         this.column_recycler = editor_table.main_recycler
         this.recycler = editor_table.column_label_recycler
         this.recycler.adapter = this
-        this.recycler.layoutManager = LinearLayoutManager(
+        this.recycler.layoutManager = TestLayoutManager(
             this.recycler.context,
             LinearLayoutManager.HORIZONTAL,
-            false
         )
         //(this.recycler.itemAnimator as SimpleItemAnimator).supportsChangeAnimations = false
         this.recycler.itemAnimator = null
@@ -64,8 +63,9 @@ class ColumnLabelAdapter(var editor_table: EditorTable) : RecyclerView.Adapter<C
 
     override fun onViewAttachedToWindow(holder: ColumnLabelViewHolder) { }
 
+
     override fun onBindViewHolder(holder: ColumnLabelViewHolder, position: Int) {
-        var weight = editor_table.get_column_width(position)
+        var weight = this.get_editor_table()!!.get_column_width(position)
         val resources = this.recycler.resources
         val width = weight * resources.getDimension(R.dimen.base_leaf_width).toInt()
         ColumnLabelPlaceHolder(holder, width)
@@ -89,8 +89,17 @@ class ColumnLabelAdapter(var editor_table: EditorTable) : RecyclerView.Adapter<C
         this.recycler.scrollBy(x, 0)
     }
 
-    fun get_editor_table(): EditorTable {
-        return this.editor_table
+
+    fun get_editor_table(): EditorTable? {
+        var view = this.recycler as View
+        while (view !is EditorTable && view.parent != null) {
+            view = view.parent as View
+        }
+        return if (view is EditorTable) {
+            view
+        } else {
+            null
+        }
     }
 
     fun get_activity(): MainActivity {

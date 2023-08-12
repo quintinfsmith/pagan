@@ -787,6 +787,7 @@ class MainActivity : AppCompatActivity() {
             override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
                 tvPlaybackPosition.text = p1.toString()
                 tvPlaybackTime.text = that.get_timestring_at_beat(p1)
+                //that.get_opus_manager().cursor_select_column(p1)
             }
 
             override fun onStartTrackingTouch(p0: SeekBar?) {
@@ -820,7 +821,7 @@ class MainActivity : AppCompatActivity() {
 
         btnJumpTo.setOnClickListener {
             pause_playback()
-            this.scroll_to_beat(sbPlaybackPosition.progress)
+            this.get_opus_manager().cursor_select_column(sbPlaybackPosition.progress)
             dialog.dismiss()
         }
     }

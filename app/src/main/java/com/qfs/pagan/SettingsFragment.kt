@@ -93,33 +93,30 @@ class SettingsFragment : PaganFragment() {
 
         val soundfont_dir = this.get_main().get_soundfont_directory()
         popupMenu.menu.add(0, 0, 0, "No Soundfont")
-        var x = 1
         if (! this.get_main().has_fluid_soundfont()) {
-            popupMenu.menu.add(0, 1, 1, "Download Fluid Soundfont...")
+            popupMenu.menu.add(1, 0, 0, "Download Fluid Soundfont...")
         }
-        soundfont_dir.listFiles()?.forEachIndexed { i: Int, file: File ->
-            popupMenu.menu.add(0, i + 1, i + 1, file.name)
-            x += 1
+        val file_list = soundfont_dir.listFiles()?.toList() ?: listOf<File>()
+        file_list.forEachIndexed { i: Int, file: File ->
+            popupMenu.menu.add(2, i, i, file.name)
         }
-        popupMenu.menu.add(0, x, x, "Import...")
+
+        // +3 to the order to account for preceding menu entries
+        popupMenu.menu.add(3, 0, file_list.size + 3, "Import...")
 
         popupMenu.setOnMenuItemClickListener {
-            when (it.itemId) {
+            when (it.groupId) {
                 0 -> {
                     this.disable_soundfont()
                 }
                 1 -> {
-                    if (this.get_main().has_fluid_soundfont()) {
-                        this.set_soundfont(soundfont_dir.listFiles()[it.itemId - 1].name)
-                    } else {
-                        this.get_main().download_fluid()
-                    }
+                    this.get_main().download_fluid()
                 }
-                x -> {
+                2 -> {
+                    this.set_soundfont(file_list[it.order].name)
+                }
+                3 -> {
                     this.import_soundfont()
-                }
-                else -> {
-                    this.set_soundfont(soundfont_dir.listFiles()[it.itemId - 1].name)
                 }
             }
             false

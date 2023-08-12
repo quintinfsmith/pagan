@@ -772,11 +772,15 @@ class MainActivity : AppCompatActivity() {
             this.window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         }
 
-        ibPlayPause.setOnClickListener {
-            if (playback_handle != null && playback_handle!!.playing) {
-                pause_playback()
-            } else {
-                start_playback(sbPlaybackPosition.progress)
+        if (this.configuration.soundfont == null) {
+            ibPlayPause.visibility = View.GONE
+        } else {
+            ibPlayPause.setOnClickListener {
+                if (playback_handle != null && playback_handle!!.playing) {
+                    pause_playback()
+                } else {
+                    start_playback(sbPlaybackPosition.progress)
+                }
             }
         }
 

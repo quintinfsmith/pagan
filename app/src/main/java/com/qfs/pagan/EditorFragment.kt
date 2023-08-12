@@ -69,6 +69,7 @@ class EditorFragment : PaganFragment() {
         if (this.view_model.coarse_x != null) {
             val editor_table = this.get_main().findViewById<EditorTable>(R.id.etEditorTable)
             editor_table.setup()
+            editor_table.update_cursor(this.get_main().get_opus_manager().cursor)
             thread {
                 Thread.sleep(100)
                 this.activity!!.runOnUiThread {

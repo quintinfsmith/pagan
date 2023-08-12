@@ -499,7 +499,6 @@ class EditorFragment : PaganFragment() {
         } else {
             btnRemove.visibility = View.VISIBLE
             btnRemove.setOnClickListener {
-
                 opus_manager.remove(1)
             }
 
@@ -658,13 +657,20 @@ class EditorFragment : PaganFragment() {
     private fun interact_btnUnlink() {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
+        val beat_key = opus_manager.cursor.get_beatkey()
         opus_manager.unlink_beat()
+        opus_manager.cursor.is_linking = false
+        opus_manager.cursor_select(beat_key, opus_manager.get_first_position(beat_key))
+
     }
 
     private fun interact_btnUnlinkAll() {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
+        val beat_key = opus_manager.cursor.get_beatkey()
         opus_manager.clear_link_pool()
+        opus_manager.cursor.is_linking = false
+        opus_manager.cursor_select(beat_key, opus_manager.get_first_position(beat_key))
 
     }
 

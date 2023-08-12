@@ -455,6 +455,9 @@ open class LinksLayer : OpusManagerBase() {
     }
 
     open fun link_row(channel: Int, line_offset: Int, beat_key: BeatKey) {
+        if (beat_key.channel != channel || beat_key.line_offset != line_offset || beat_key.beat != 0) {
+            throw BadRowLink(beat_key, channel, line_offset)
+        }
         val working_key = BeatKey(channel, line_offset, 0)
         val new_pool = mutableListOf<BeatKey>()
         for (x in 0 until this.opus_beat_count) {
@@ -470,7 +473,7 @@ open class LinksLayer : OpusManagerBase() {
     open fun link_beat_range_horizontally(channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey) {
         val (from_key, to_key) = this.get_ordered_beat_key_pair(first_key, second_key)
         // from_key -> to_key need to be first beat. it's a bit arbitrary but from a ui perspective makes it cleaner
-        if (from_key.channel != channel || from_key.line_offset != line_offset) {
+        if (from_key.channel != channel || from_key.line_offset != line_offset || from_key.beat != 0) {
             throw BadRowLink(from_key, channel, line_offset)
         }
 

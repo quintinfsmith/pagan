@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import androidx.recyclerview.widget.RecyclerView
+import com.qfs.pagan.opusmanager.LinksLayer
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
 class LineLabelView(var viewHolder: RecyclerView.ViewHolder): LinearLayout(ContextThemeWrapper(viewHolder.itemView.context, R.style.line_label_outer)) {
@@ -38,7 +39,35 @@ class LineLabelView(var viewHolder: RecyclerView.ViewHolder): LinearLayout(Conte
         this.setOnClickListener {
             val opus_manager = this.get_opus_manager()
             val (channel, line_offset) = this.get_row()
-            opus_manager.cursor_select_row(channel, line_offset)
+            val cursor = opus_manager.cursor
+            if (cursor.is_linking_range()) {
+                val first_key = cursor.range!!.first
+                try {
+                    opus_manager.link_beat_range_horizontally(
+                        channel,
+                        line_offset,
+                        first_key,
+                        cursor.range!!.second
+                    )
+                } catch (e: LinksLayer.BadRowLink) {
+                    // TODO: Feedback
+                    //(this.context as MainActivity).feedback_msg("Can only row-link from first beat")
+                }
+                cursor.is_linking = false
+                opus_manager.cursor_select(first_key, opus_manager.get_first_position(first_key))
+            } else if (cursor.is_linking) {
+                val beat_key = opus_manager.cursor.get_beatkey()
+                try {
+                    opus_manager.link_row(channel, line_offset, beat_key)
+                } catch (e: LinksLayer.BadRowLink) {
+                    // TODO: Feedback
+                    //(this.context as MainActivity).feedback_msg("Can only row-link from first beat")
+                }
+                cursor.is_linking = false
+                opus_manager.cursor_select(beat_key, opus_manager.get_first_position(beat_key))
+            } else {
+                opus_manager.cursor_select_row(channel, line_offset)
+            }
         }
 
 

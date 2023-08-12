@@ -1,4 +1,5 @@
 package com.qfs.pagan
+import android.util.Log
 import android.view.View
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
@@ -13,6 +14,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     var relative_mode: Int = 0
     var cursor = Cursor()
     var first_load_done = false
+    var queued_cursor_selection: Pair<HistoryToken, List<Int>>? = null
 
     private fun simple_ui_locked(): Boolean {
         return this.simple_ui_lock != 0
@@ -163,9 +165,13 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             this.get_editor_table().new_row(abs_offset, line)
         }
 
-        this.cursor_select_row(channel, line_offset)
     }
 
+    /*
+     TODO: move cursor_select_row out of here. it won't break anything right now since move_line
+        is built out of multiple other remembered function but i'd like to get some consistency and not
+        have any cursor selection inside of context-independent functions()
+     */
     override fun move_line(channel_old: Int, line_old: Int, channel_new: Int, line_new: Int) {
         try {
             super.move_line(channel_old, line_old, channel_new, line_new)
@@ -433,9 +439,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         update_keys.remove(beat_key)
         super.unlink_beat(beat_key)
 
-        this.cursor.is_linking = false
-        this.cursor_select(beat_key, this.get_first_position(beat_key))
-
         // Need to run update on both the beat_key and *any* of its former link pool
         val editor_table = this.get_editor_table()
         editor_table.notify_cell_change(beat_key)
@@ -453,24 +456,36 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         }
     }
 
-    //private fun init_ui() {
-    //    val rvLineLabels = this.activity.findViewById<RecyclerView>(R.id.rvLineLabels)
-    //    val rvLineLabels_adapter = rvLineLabels.adapter as LineLabelAdapter
-    //    val rvActiveChannels: RecyclerView = this.activity.findViewById(R.id.rvActiveChannels)
-
-    //    val beat_table = this.activity.findViewById<RecyclerView>(R.id.rvTable)
-    //    val rvTable_adapter = beat_table.adapter as BeatColumnAdapter
-    //    //for (i in 0 until this.opus_beat_count) {
-    //    //    rvTable_adapter.addBeatColumn(i)
-    //    //}
-
-    //    //this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
-    //    //    repeat(channel.lines.size) {
-    //    //        rvLineLabels_adapter.addLineLabel()
-    //    //    }
-    //    //    rvActiveChannels.adapter?.notifyItemInserted(i)
-    //    //}
-    //}
+    // For history when we don't want to worry about the cursor
+    private fun queue_cursor_select(token: HistoryToken, args: List<Int>) {
+        this.queued_cursor_selection = Pair(token, args)
+    }
+    private fun apply_queued_cursor_select() {
+        if (this.queued_cursor_selection == null) {
+            return
+        }
+        var (token, args) = this.queued_cursor_selection!!
+        this.queued_cursor_selection = null
+        when (token) {
+            HistoryToken.CURSOR_SELECT_ROW -> {
+                this.cursor_select_row(args[0], args[1])
+            }
+            HistoryToken.CURSOR_SELECT_COLUMN -> {
+                this.cursor_select_column(args[0])
+            }
+            HistoryToken.CURSOR_SELECT -> {
+                this.cursor_select(
+                    BeatKey(
+                        args[0],
+                        args[1],
+                        args[2]
+                    ),
+                    args.subList(3, args.size)
+                )
+            }
+            else -> {}
+        }
+    }
 
     override fun set_transpose(new_transpose: Int)  {
         super.set_transpose(new_transpose)
@@ -488,36 +503,38 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         tvTempo.text = this.activity.getString(R.string.label_bpm, this.tempo.toInt())
     }
 
+    override fun apply_undo() {
+        super.apply_undo()
+        this.apply_queued_cursor_select()
+    }
     override fun apply_history_node(current_node: HistoryCache.HistoryNode, depth: Int)  {
         when (current_node.token) {
-            HistoryToken.CURSOR_SELECT_ROW,
-            HistoryToken.CURSOR_SELECT,
+            HistoryToken.CURSOR_SELECT_ROW -> {
+                this.queue_cursor_select(
+                    current_node.token,
+                    this.checked_cast<List<Int>>(current_node.args)
+                )
+            }
+            HistoryToken.CURSOR_SELECT -> {
+                val beat_key = current_node.args[0] as BeatKey
+                val args = mutableListOf<Int>(beat_key.channel, beat_key.line_offset, beat_key.beat)
+                val position = this.checked_cast<List<Int>>(current_node.args[1])
+                args.addAll(position)
+
+                this.queue_cursor_select(
+                    current_node.token,
+                    args
+                )
+            }
             HistoryToken.CURSOR_SELECT_COLUMN -> {
-                this.cursor_clear()
+                this.queue_cursor_select(
+                    current_node.token,
+                    this.checked_cast<List<Int>>(current_node.args)
+                )
             }
             else -> { }
         }
         super.apply_history_node(current_node, depth)
-        when (current_node.token) {
-            HistoryToken.CURSOR_SELECT_ROW -> {
-                this.cursor_select_row(
-                    current_node.args[0] as Int,
-                    current_node.args[1] as Int
-                )
-            }
-            HistoryToken.CURSOR_SELECT -> {
-                this.cursor_select(
-                    current_node.args[0] as BeatKey,
-                    this.checked_cast<List<Int>>(current_node.args[1])
-                )
-            }
-            HistoryToken.CURSOR_SELECT_COLUMN -> {
-                this.cursor_select_column(
-                    current_node.args[0] as Int
-                )
-            }
-            else -> { }
-        }
     }
 
     override fun push_to_history_stack(token: HistoryToken, args: List<Any>) {
@@ -537,7 +554,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                         listOf(
                             to_channel,
                             if (from_channel == to_channel && to_line >= from_line) {
-                                //if ((from_channel == to_channel || to_channel == this.channels.size - 1) && to_line >= from_line) {
                                 to_line - 1
                             } else {
                                 to_line
@@ -817,18 +833,15 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     fun clear_link_pool() {
-        this.cursor.is_linking = false
         if (this.cursor.mode == Cursor.CursorMode.Single) {
             val beat_key = this.cursor.get_beatkey()
             this.clear_link_pool(beat_key)
-            this.cursor_select(beat_key, this.get_first_position(beat_key))
         } else if (this.cursor.mode == Cursor.CursorMode.Range) {
             val beat_key = this.cursor.range!!.first
             this.clear_link_pools_by_range(
                 beat_key,
                 this.cursor.range!!.second
             )
-            this.cursor_select(beat_key, this.get_first_position(beat_key))
         }
     }
 
@@ -899,7 +912,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         )
     }
 
-
     fun remove_beat_at_cursor(count: Int) {
         this.remove_beat(this.cursor.beat, count)
     }
@@ -957,7 +969,9 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         } else {
             // TODO: Raise Error
         }
-        this.cursor.is_linking = false
-        this.cursor_select(beat_key, this.get_first_position(beat_key))
     }
+    override fun link_row(channel: Int, line_offset: Int, beat_key: BeatKey) {
+        super.link_row(channel, line_offset, beat_key)
+    }
+
 }

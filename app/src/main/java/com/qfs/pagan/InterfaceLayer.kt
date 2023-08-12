@@ -237,7 +237,11 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
     override fun new_channel(channel: Int?, lines: Int, uuid: Int?) {
         val notify_index = if (channel == null) {
-            this.channels.size
+            if (this.channels.isEmpty()) {
+                0
+            } else {
+                this.channels.size - 1
+            }
         } else {
             min(channel, this.channels.size)
         }
@@ -245,12 +249,12 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         super.new_channel(channel, lines, uuid)
 
         val rvActiveChannels: RecyclerView = this.activity.findViewById(R.id.rvActiveChannels)
-        this.activity.update_channel_instruments(notify_index)
 
         rvActiveChannels.adapter?.notifyItemChanged(notify_index - 1)
         rvActiveChannels.adapter?.notifyItemInserted(notify_index)
 
         if (!this.simple_ui_locked()) {
+            this.activity.update_channel_instruments(notify_index)
             val editor_table = this.get_editor_table()
             val y = this.get_abs_offset(notify_index, 0)
 

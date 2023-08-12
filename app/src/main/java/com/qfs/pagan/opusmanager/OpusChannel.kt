@@ -13,7 +13,6 @@ class OpusChannel(var uuid: Int) {
     class InvalidChannelUUID(uuid: Int): Exception("No such channel uuid: $uuid")
     class LineSizeMismatch(incoming_size: Int, required_size: Int): Exception("Line is $incoming_size beats but OpusManager is $required_size beats")
 
-
     class OpusLine(var beats: MutableList<OpusTree<OpusEvent>>) {
         constructor(beat_count: Int) : this(Array<OpusTree<OpusEvent>>(beat_count) { OpusTree() }.toMutableList())
         var volume = 64
@@ -178,5 +177,4 @@ class OpusChannel(var uuid: Int) {
     fun get_line_volume(line_offset: Int): Int {
         return this.lines[line_offset].volume
     }
-
 }

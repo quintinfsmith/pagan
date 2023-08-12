@@ -1160,6 +1160,7 @@ open class OpusManagerBase {
                 channel_sizes[channel] = max(channel_sizes[channel], size)
             }
         }
+
         // Move Percussion to Last Opus Manager Channel
         if (midi_channel_map.containsKey(9)) {
             val channel = midi_channel_map[9]!!
@@ -1179,7 +1180,6 @@ open class OpusManagerBase {
             midi_channel_map[9] = channel_sizes.size
             channel_sizes.add(1)
         }
-
 
         this.new_channel(lines = channel_sizes[midi_channel_map[9]!!])
 

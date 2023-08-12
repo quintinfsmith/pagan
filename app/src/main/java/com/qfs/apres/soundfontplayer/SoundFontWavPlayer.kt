@@ -81,7 +81,7 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
                     for (event in this.midi_events_by_frame[f]!!) {
                         when (event) {
                             is NoteOn -> {
-                                val preset = this.get_preset(event.channel)
+                                val preset = this.get_preset(event.channel) ?: continue
                                 this.active_sample_handles[Pair(event.channel, event.note)] = this.player.gen_sample_handles(event, preset).toMutableSet()
                             }
 
@@ -187,7 +187,7 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
         }
 
 
-        private fun get_preset(channel: Int): Preset {
+        private fun get_preset(channel: Int): Preset? {
             return this.player.get_preset(channel)
         }
     }
@@ -216,8 +216,8 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
         return output
     }
 
-    private fun get_preset(channel: Int): Preset {
-        return this.loaded_presets[this.get_channel_preset(channel)]!!
+    private fun get_preset(channel: Int): Preset? {
+        return this.loaded_presets[this.get_channel_preset(channel)]
     }
 
     private fun get_channel_preset(channel: Int): Pair<Int, Int> {
@@ -247,12 +247,13 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
         } else {
             0
         }
+
         val key = Pair(bank, program)
         if (this.loaded_presets[key] == null) {
             this.loaded_presets[key] = try {
                 this.sound_font.get_preset(program, bank)
             } catch (e: SoundFont.InvalidPresetIndex) {
-                if (bank == 128) {
+                if (channel == 9) {
                     if (Pair(bank, 0) in this.loaded_presets) {
                         this.loaded_presets[Pair(bank, 0)]!!
                     } else {

@@ -1,0 +1,5 @@
+- Rebuilt editor ui
+Bugfixes:
+    - undo action isn't unacceptably slow
+    - soundfont selection now functional
+    - no longer crashes when trying to play a percussion instrument not found in the soundfont

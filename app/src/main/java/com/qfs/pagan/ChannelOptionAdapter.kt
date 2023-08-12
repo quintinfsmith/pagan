@@ -61,10 +61,10 @@ class ChannelOptionAdapter(
         val label = this.supported_instruments[Pair(
             curChannel.midi_bank,
             curChannel.midi_program
-        )] ?: if (curChannel.midi_bank == 128) {
-            "Percussion"
+        )] ?: if (curChannel.midi_channel == 9) {
+            "Unknown Percussion"
         } else {
-            defaults[curChannel.midi_program]
+            "Unknown ${defaults[curChannel.midi_program]}"
         }
 
         btnChooseInstrument.text = this.activity.getString(R.string.label_choose_instrument, position, label)

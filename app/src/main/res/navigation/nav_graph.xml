@@ -57,6 +57,9 @@
         <action
             android:id="@+id/action_FrontFragment_to_LicenseFragment"
             app:destination="@id/LicenseFragment" />
+        <action
+            android:id="@+id/action_FrontFragment_to_SettingsFragment"
+            app:destination="@id/SettingsFragment" />
     </fragment>
 
     <fragment

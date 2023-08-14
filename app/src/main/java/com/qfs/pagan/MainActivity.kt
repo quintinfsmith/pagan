@@ -348,6 +348,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun update_menu_options() {
+        // TODO: Fix this Kludge
         while (this.optionsMenu == null) {
             Thread.sleep(10)
         }
@@ -363,6 +364,15 @@ class MainActivity : AppCompatActivity() {
                 this.optionsMenu!!.findItem(R.id.itmImportProject).isVisible = true
                 this.optionsMenu!!.findItem(R.id.itmSettings).isVisible = true
 
+            }
+            is LandingPageFragment -> {
+                this.optionsMenu!!.findItem(R.id.itmLoadProject).isVisible = false
+                this.optionsMenu!!.findItem(R.id.itmUndo).isVisible = false
+                this.optionsMenu!!.findItem(R.id.itmNewProject).isVisible = false
+                this.optionsMenu!!.findItem(R.id.itmPlay).isVisible = false
+                this.optionsMenu!!.findItem(R.id.itmImportMidi).isVisible = false
+                this.optionsMenu!!.findItem(R.id.itmImportProject).isVisible = false
+                this.optionsMenu!!.findItem(R.id.itmSettings).isVisible = true
             }
             else -> {
                 this.optionsMenu!!.findItem(R.id.itmLoadProject).isVisible = false
@@ -503,6 +513,9 @@ class MainActivity : AppCompatActivity() {
                         }
                         "license" -> {
                             R.id.action_FrontFragment_to_LicenseFragment
+                        }
+                        "settings" -> {
+                            R.id.action_FrontFragment_to_SettingsFragment
                         }
                         else -> { return }
                     }
@@ -861,57 +874,7 @@ class MainActivity : AppCompatActivity() {
 
         downloadReference = dm.enqueue(request)
 
-        thread {
-            Thread.sleep(10000)
-            var cursor = dm.query(DownloadManager.Query().setFilterById(downloadReference))
-            this.runOnUiThread {
-                val msg = if (cursor.moveToFirst()) {
-                    val ci = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS)
-                    if (ci >= 0) {
-                        when (cursor.getInt(ci)) {
-                            DownloadManager.STATUS_RUNNING -> {
-                                "RUNNING"
-                            }
-                            DownloadManager.STATUS_FAILED -> {
-                                "FAILED"
-                            }
-                            DownloadManager.STATUS_PENDING -> {
-                                "PENDING"
-                            }
-                            DownloadManager.STATUS_PAUSED -> {
-                                "PASUED"
-                            }
-                            else -> {
-                                "SOMETHING ELSE"
-                            }
-                        }
-                    } else {
-                        "2??????"
-                    }
-                } else {
-                    "?????"
-                }
-                AlertDialog.Builder(this, R.style.AlertDialog).apply {
-                    setTitle("Downloading Fluid Soundfont")
-                    setMessage(msg)
-                    setPositiveButton(android.R.string.ok) { dialog, _ ->
-                        dialog.dismiss()
-                    }
-                    show()
-                }
 
-            }
-        }
-
-
-        //AlertDialog.Builder(this, R.style.AlertDialog).apply {
-        //    setTitle("Downloading Fluid Soundfont")
-        //    setMessage("Sound will be enabled once the download is complete")
-        //    setPositiveButton(android.R.string.ok) { dialog, _ ->
-        //        dialog.dismiss()
-        //    }
-        //    show()
-        //}
 
         //thread {
         //    while (dm.getUriForDownloadedFile(downloadReference) == null) {
@@ -942,6 +905,7 @@ class MainActivity : AppCompatActivity() {
             return listOf()
         }
         val opus_manager = this.get_opus_manager()
+
         val (bank, program) = opus_manager.get_channel_instrument(opus_manager.channels.size - 1)
         val preset = try {
             this.soundfont!!.get_preset(program, bank)
@@ -986,7 +950,9 @@ class MainActivity : AppCompatActivity() {
         if (rvActiveChannels.adapter != null) {
             (rvActiveChannels.adapter as ChannelOptionAdapter).set_soundfont(this.soundfont!!)
         }
-        this.populate_active_percussion_names()
+        if (this.get_opus_manager().channels.size > 0) {
+            this.populate_active_percussion_names()
+        }
     }
 
     fun get_soundfont(): SoundFont? {

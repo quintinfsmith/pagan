@@ -5,9 +5,12 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.view.*
+import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.core.os.bundleOf
 import androidx.fragment.app.setFragmentResult
 import com.qfs.pagan.databinding.FragmentLandingBinding
+import kotlin.concurrent.thread
 
 class LandingPageFragment : PaganFragment() {
     // Boiler Plate //
@@ -21,6 +24,13 @@ class LandingPageFragment : PaganFragment() {
     ): View {
         _binding = FragmentLandingBinding.inflate(inflater, container, false)
         return binding.root
+    }
+
+    override fun onResume() {
+        super.onResume()
+        thread {
+            this.get_main().update_menu_options()
+        }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -84,23 +94,17 @@ class LandingPageFragment : PaganFragment() {
         }
 
         var main = this.get_main()
-        if (main.configuration.soundfont == null && !main.has_soundfont()) {
-            AlertDialog.Builder(this.context, R.style.AlertDialog).apply {
-                setTitle("You may want a soundfont")
-                setMessage(R.string.download_fluidr3)
-                setPositiveButton(R.string.download_fluidr3_download) { dialog, _ ->
-                    main.download_fluid()
-                    dialog.dismiss()
-                }
-                setNegativeButton(R.string.download_fluidr3_import) { dialog, _ ->
-                    dialog.dismiss()
-                }
-                setNeutralButton(R.string.download_fluidr3_mute) { dialog, _ ->
-                    dialog.cancel()
-                }
-                show()
+        if (main.has_soundfont()) {
+            this.binding.root.findViewById<LinearLayout>(R.id.llSFWarningLanding).visibility = View.GONE
+        }  else {
+            this.binding.root.findViewById<TextView>(R.id.tvFluidUrlLanding).setOnClickListener {
+                val url = getString(R.string.url_fluid)
+                val intent = Intent(Intent.ACTION_VIEW)
+                intent.data = Uri.parse(url)
+                startActivity(intent)
             }
         }
+
         if (!main.has_fluid_soundfont()) {
             btn_linkSFLicense.visibility = View.GONE
         } else {
@@ -122,6 +126,9 @@ class LandingPageFragment : PaganFragment() {
 
         }
 
+    }
+    override fun onStart() {
+        super.onStart()
     }
 
     override fun onDestroyView() {

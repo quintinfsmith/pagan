@@ -40,8 +40,10 @@ class OpusChannel(var uuid: Int) {
         val new_line = OpusLine(this.beat_count)
         if (index == null) {
             this.lines.add(new_line)
-        }  else {
+        } else if (index <= this.lines.size) {
             this.lines.add(index, new_line)
+        } else {
+            throw IndexOutOfBoundsException()
         }
         this.size += 1
 

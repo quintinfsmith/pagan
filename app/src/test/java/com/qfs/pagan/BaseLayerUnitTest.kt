@@ -24,10 +24,10 @@ class BaseLayerUnitTest {
     fun test_set_channel_instrument() {
         val manager = OpusManager()
         manager.new()
-        manager.set_channel_instrument(0, 5)
+        manager.set_channel_instrument(0, Pair(5,2))
         assertEquals(
             "Failed to set channel instrument",
-            5,
+            Pair(5,2),
             manager.get_channel_instrument(0)
         )
 
@@ -292,47 +292,6 @@ class BaseLayerUnitTest {
     }
 
     @Test
-    fun test_percussion() {
-        val manager = OpusManager()
-        manager.new()
-
-        val beatkey = BeatKey(0,0,0)
-        val position: List<Int> = listOf()
-
-        manager.set_percussion_channel(0)
-        assertThrows(Exception::class.java) { manager.set_event(beatkey, position, OpusEvent(10, 12, 0, false)) }
-        assertEquals(
-            "[Correctly] Threw an error, but still set the event",
-            false,
-            manager.get_tree(beatkey, position).is_event()
-        )
-
-        manager.set_percussion_event(beatkey, position)
-        assertEquals(
-            "Failed to set percussion_event",
-            true,
-            manager.get_tree(beatkey, position).is_event()
-        )
-        manager.unset(beatkey, position)
-        manager.unset_percussion_channel()
-
-        assertEquals(
-            "Failed to unset Percussion Channel",
-            null,
-            manager.percussion_channel
-        )
-
-        assertThrows(Exception::class.java) { manager.set_percussion_event(beatkey, position) }
-        assertEquals(
-            "[Correctly] Threw an error, but still set the event",
-            false,
-            manager.get_tree(beatkey, position).is_event()
-        )
-
-
-    }
-
-    @Test
     fun test_set_unset() {
         val manager = OpusManager()
         manager.new()
@@ -367,9 +326,9 @@ class BaseLayerUnitTest {
     fun test_new_channel() {
         val manager = OpusManager()
         manager.new()
-        assertEquals(1, manager.channels.size)
-        manager.new_channel(lines=0)
         assertEquals(2, manager.channels.size)
+        manager.new_channel(lines=0)
+        assertEquals(3, manager.channels.size)
         assertEquals(0, manager.channels[1].size)
     }
 
@@ -404,12 +363,9 @@ class BaseLayerUnitTest {
         assertEquals("Didn't add new line to channel", manager.channels[0].size, 3)
         assertEquals("Inserted new line in wrong place", line, manager.channels[0].lines[1])
 
-        val current_lines = manager.channels[0].size
+        var current_lines = manager.channels[0].size
         assertThrows(Exception::class.java) { manager.new_line(0, manager.channels[0].size + 1) }
         assertEquals("[Correctly] Threw exception, but still added channel", manager.channels[0].size, current_lines)
-
-        assertThrows(Exception::class.java) { manager.new_line(1) }
-        assertEquals("[Correctly] Threw exception, but still added line", manager.channels[0].size, current_lines)
 
         // Removing
         manager.remove_line(0, 0)

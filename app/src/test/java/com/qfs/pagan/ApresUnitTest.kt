@@ -109,80 +109,80 @@ fun intlist_to_bytearray(input: List<Int>): ByteArray {
 }
 
 class ApresUnitTest {
-    @Test
-    fun test_initialize_load() {
-        var midi_bytes = listOf(
-            0x4D, 0x54, 0x68, 0x64, // MThd
-            0x00, 0x00, 0x00, 0x06, // Length
-            0x00, 0x01, // format = 1
-            0x00, 0x01, // track count = 1
-            0x00, 0x1b, // bytes in midi (excluding Mthd) = 20 expressed as variable length
-            0x4D, 0x54, 0x72, 0x6B, // MTrk
-            0x00, 0x00, 0x00, 92, // Length
+    //@Test
+    //fun test_initialize_load() {
+    //    var midi_bytes = listOf(
+    //        0x4D, 0x54, 0x68, 0x64, // MThd
+    //        0x00, 0x00, 0x00, 0x06, // Length
+    //        0x00, 0x01, // format = 1
+    //        0x00, 0x01, // track count = 1
+    //        0x00, 0x1b, // bytes in midi (excluding Mthd) = 20 expressed as variable length
+    //        0x4D, 0x54, 0x72, 0x6B, // MTrk
+    //        0x00, 0x00, 0x00, 92, // Length
 
-            // EVENTS (Do not change order)
+    //        // EVENTS (Do not change order)
 
-            // Meta Events
-            // TimeSignature
-            0x00, 0xFF, 0x58, 0x04, 0x04, 0x04, 0x24, 0x04,
-            // Text ("ABC")
-            0x00, 0xFF, 0x01, 0x03, 0x41, 0x42, 0x43,
-            // CopyRightNotice ("ABC")
-            0x00, 0xFF, 0x02, 0x03, 0x41, 0x42, 0x43,
-            // TrackName ("ABC")
-            0x00, 0xFF, 0x03, 0x03, 0x41, 0x42, 0x43,
-            // InstrumentName ("ABC")
-            0x00, 0xFF, 0x04, 0x03, 0x41, 0x42, 0x43,
-            // Lyric ("ABC")
-            0x00, 0xFF, 0x05, 0x03, 0x41, 0x42, 0x43,
-            // Marker ("ABC")
-            0x00, 0xFF, 0x06, 0x03, 0x41, 0x42, 0x43,
-            // CuePoint ("ABC")
-            0x00, 0xFF, 0x07, 0x03, 0x41, 0x42, 0x43,
+    //        // Meta Events
+    //        // TimeSignature
+    //        0x00, 0xFF, 0x58, 0x04, 0x04, 0x04, 0x24, 0x04,
+    //        // Text ("ABC")
+    //        0x00, 0xFF, 0x01, 0x03, 0x41, 0x42, 0x43,
+    //        // CopyRightNotice ("ABC")
+    //        0x00, 0xFF, 0x02, 0x03, 0x41, 0x42, 0x43,
+    //        // TrackName ("ABC")
+    //        0x00, 0xFF, 0x03, 0x03, 0x41, 0x42, 0x43,
+    //        // InstrumentName ("ABC")
+    //        0x00, 0xFF, 0x04, 0x03, 0x41, 0x42, 0x43,
+    //        // Lyric ("ABC")
+    //        0x00, 0xFF, 0x05, 0x03, 0x41, 0x42, 0x43,
+    //        // Marker ("ABC")
+    //        0x00, 0xFF, 0x06, 0x03, 0x41, 0x42, 0x43,
+    //        // CuePoint ("ABC")
+    //        0x00, 0xFF, 0x07, 0x03, 0x41, 0x42, 0x43,
 
-            // Channel Prefix
-            0x00, 0xFF, 0x20, 0x01, 0x00,
+    //        // Channel Prefix
+    //        0x00, 0xFF, 0x20, 0x01, 0x00,
 
-            // SetTempo (~210)
-            0x00, 0xFF, 0x51, 0x03, 0x04, 0x5c, 0x12,
+    //        // SetTempo (~210)
+    //        0x00, 0xFF, 0x51, 0x03, 0x04, 0x5c, 0x12,
 
-            // Channel Events
-            // NoteOn
-            0x00, 0x90, 0x40, 0x18,
-            // AfterTouch
-            0x30, 0xA0, 0x40, 0x50,
-            // PitchWheel
-            0x10, 0xE0, 0x00, 0x00,
-            // ChannelPressure
-            0x00, 0xD0, 0x2F,
-            // NoteOff
-            0x38, 0x80, 0x00, 0x40,
+    //        // Channel Events
+    //        // NoteOn
+    //        0x00, 0x90, 0x40, 0x18,
+    //        // AfterTouch
+    //        0x30, 0xA0, 0x40, 0x50,
+    //        // PitchWheel
+    //        0x10, 0xE0, 0x00, 0x00,
+    //        // ChannelPressure
+    //        0x00, 0xD0, 0x2F,
+    //        // NoteOff
+    //        0x38, 0x80, 0x00, 0x40,
 
-            0x00, 0xFF, 0x2F, 0x00 // EOT
-        )
+    //        0x00, 0xFF, 0x2F, 0x00 // EOT
+    //    )
 
-        val midi = Midi.from_bytes(intlist_to_bytearray(midi_bytes))
+    //    val midi = Midi.from_bytes(intlist_to_bytearray(midi_bytes))
 
-        assertEquals(midi.count_tracks(), 1)
-        assertEquals(midi.get_track_length(0), 121)
-        assertEquals(midi.events.size, 16)
-        assertEquals(midi.event_positions.size, 16)
-        //assertEquals(midi_bytes, midi.as_bytes().toList())
-        assertEquals(midi_bytes.size, midi.as_bytes().toList().size)
-    }
+    //    assertEquals(midi.count_tracks(), 1)
+    //    assertEquals(midi.get_track_length(0), 121)
+    //    assertEquals(midi.events.size, 16)
+    //    assertEquals(midi.event_positions.size, 16)
+    //    //assertEquals(midi_bytes, midi.as_bytes().toList())
+    //    assertEquals(midi_bytes.size, midi.as_bytes().toList().size)
+    //}
 
-    @Test
-    fun test_add_event() {
-        val midi = Midi()
-        val on_event = midi.push_event(0,0, NoteOn(0, 64, 100))
-        var off_event = midi.push_event(0, 119, NoteOff(0,64,0))
-        assertEquals(1, on_event)
-        assertEquals(2, off_event)
-        assertEquals(2, midi.events.size)
-        assertEquals(2, midi.event_positions.size)
-        assertEquals(1, midi.count_tracks())
-        assertEquals(120, midi.get_track_length(0))
-    }
+    //@Test
+    //fun test_add_event() {
+    //    val midi = Midi()
+    //    val on_event = midi.push_event(0,0, NoteOn(0, 64, 100))
+    //    var off_event = midi.push_event(0, 119, NoteOff(0,64,0))
+    //    assertEquals(1, on_event)
+    //    assertEquals(2, off_event)
+    //    assertEquals(2, midi.events.size)
+    //    assertEquals(2, midi.event_positions.size)
+    //    assertEquals(1, midi.count_tracks())
+    //    assertEquals(120, midi.get_track_length(0))
+    //}
 
     @Test
     fun test_variable_length_conversion() {

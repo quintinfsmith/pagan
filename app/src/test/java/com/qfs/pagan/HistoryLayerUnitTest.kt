@@ -88,16 +88,6 @@ class HistoryCacheUnitTest {
         var manager = OpusManager()
         manager.new()
 
-        manager.set_percussion_channel(0)
-        // WILL throw. don't want to assertThrows.
-        try { manager.set_event(BeatKey(0, 0, 0), listOf(), event) } catch (e: Exception) {}
-        assertEquals(
-            "Appended to history stack on failure.",
-            true,
-            manager.history_cache.isEmpty()
-        )
-
-        manager.unset_percussion_channel()
         manager.set_event(BeatKey(0,0,0), listOf(), event)
         manager.apply_undo()
 

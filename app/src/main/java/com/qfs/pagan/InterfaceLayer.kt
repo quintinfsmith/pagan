@@ -1,5 +1,4 @@
 package com.qfs.pagan
-import android.util.Log
 import android.view.View
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
@@ -578,7 +577,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                         HistoryToken.CURSOR_SELECT_ROW,
                         listOf(
                             channel,
-                            line_offset
+                            line_offset - 1
                         )
                     )
                 }

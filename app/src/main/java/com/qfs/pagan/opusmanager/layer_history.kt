@@ -377,8 +377,9 @@ open class HistoryLayer : LinksLayer() {
 
     override fun new_line(channel: Int, line_offset: Int?): OpusChannel.OpusLine {
         return this.history_cache.remember {
-            this.push_remove_line(channel, line_offset ?: (this.channels[channel].size - 1))
-            super.new_line(channel, line_offset)
+            val output = super.new_line(channel, line_offset)
+            this.push_remove_line(channel, line_offset ?: (this.channels[channel].size))
+            output
         }
     }
 
@@ -911,7 +912,8 @@ open class HistoryLayer : LinksLayer() {
     }
 
     override fun remap_links(remap_hook: (beat_key: BeatKey) -> BeatKey?) {
-        this.push_to_history_stack(HistoryToken.RESTORE_LINK_POOLS, listOf(this.link_pools.toList()))
+        var original_link_pools = this.link_pools.toList()
+        this.push_to_history_stack(HistoryToken.RESTORE_LINK_POOLS, listOf(original_link_pools))
         super.remap_links(remap_hook)
     }
 }

@@ -3,7 +3,6 @@ package com.qfs.pagan
 import android.content.Context
 import android.os.Parcelable
 import android.util.AttributeSet
-import android.util.Log
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
@@ -28,7 +27,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     var initializing_column_width_map = false
     val column_width_map = mutableListOf<MutableList<Int>>()
 
-    var active_cursor: Cursor = Cursor(Cursor.CursorMode.Unset)
+    var active_OpusManager_cursor: OpusManagerCursor = OpusManagerCursor(OpusManagerCursor.CursorMode.Unset)
 
     init {
         this.top_row.addView(this.spacer)
@@ -217,19 +216,19 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         (this.column_label_recycler.adapter!! as ColumnLabelAdapter).remove_column(index)
     }
 
-    fun update_cursor(cursor: Cursor) {
-        if (cursor != this.active_cursor) {
-            this.update_cursor(this.active_cursor)
-            this.active_cursor = cursor.copy()
+    fun update_cursor(opusManagerCursor: OpusManagerCursor) {
+        if (opusManagerCursor != this.active_OpusManager_cursor) {
+            this.update_cursor(this.active_OpusManager_cursor)
+            this.active_OpusManager_cursor = opusManagerCursor.copy()
         }
 
         val opus_manager = this.get_opus_manager()
         val main_recycler_adapter = (this.main_recycler.adapter!! as ColumnRecyclerAdapter)
         val line_label_adapter = (this.line_label_recycler.adapter!! as LineLabelRecyclerAdapter)
         val column_label_adapter = (this.column_label_recycler.adapter!! as ColumnLabelAdapter)
-        when (cursor.mode) {
-            Cursor.CursorMode.Single -> {
-                val beat_key = cursor.get_beatkey()
+        when (opusManagerCursor.mode) {
+            OpusManagerCursor.CursorMode.Single -> {
+                val beat_key = opusManagerCursor.get_beatkey()
 
                 val y = try {
                     opus_manager.get_abs_offset(beat_key.channel, beat_key.line_offset)
@@ -244,8 +243,8 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                 (cell_recycler.adapter as CellRecyclerAdapter).notifyItemChanged(y)
 
             }
-            Cursor.CursorMode.Range -> {
-                val (top_left, bottom_right) = cursor.range!!
+            OpusManagerCursor.CursorMode.Range -> {
+                val (top_left, bottom_right) = opusManagerCursor.range!!
                 for (beat_key in opus_manager.get_beatkeys_in_range(top_left, bottom_right)) {
 
                     val y = try {
@@ -262,9 +261,9 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                     cell_recycler.adapter?.notifyItemChanged(y)
                 }
             }
-            Cursor.CursorMode.Row -> {
+            OpusManagerCursor.CursorMode.Row -> {
                 val y = try {
-                    opus_manager.get_abs_offset(cursor.channel, cursor.line_offset)
+                    opus_manager.get_abs_offset(opusManagerCursor.channel, opusManagerCursor.line_offset)
                 } catch (e: IndexOutOfBoundsException) {
                     return
                 }
@@ -276,20 +275,20 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                     cell_recycler.adapter?.notifyItemChanged(y)
                 }
             }
-            Cursor.CursorMode.Column -> {
+            OpusManagerCursor.CursorMode.Column -> {
                 var y = 0
                 opus_manager.channels.forEachIndexed { i: Int, channel: OpusChannel ->
                     channel.lines.forEachIndexed { j: Int, line: OpusChannel.OpusLine ->
-                        val cell_recycler = main_recycler_adapter.get_cell_recycler(cursor.beat)
+                        val cell_recycler = main_recycler_adapter.get_cell_recycler(opusManagerCursor.beat)
                         if (cell_recycler != null) {
                             cell_recycler.adapter?.notifyItemChanged(y)
                         }
                         y += 1
                     }
                 }
-                column_label_adapter.notifyItemChanged(cursor.beat)
+                column_label_adapter.notifyItemChanged(opusManagerCursor.beat)
             }
-            Cursor.CursorMode.Unset -> { }
+            OpusManagerCursor.CursorMode.Unset -> { }
         }
     }
 

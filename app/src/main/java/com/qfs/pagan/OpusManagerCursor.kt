@@ -1,9 +1,8 @@
 package com.qfs.pagan
 
-import android.util.Log
 import com.qfs.pagan.opusmanager.BeatKey
 
-data class Cursor(
+data class OpusManagerCursor(
     var mode: CursorMode = CursorMode.Unset,
     var channel: Int = 0,
     var line_offset: Int = 0,

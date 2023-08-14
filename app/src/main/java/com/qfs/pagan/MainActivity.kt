@@ -1,12 +1,15 @@
 package com.qfs.pagan
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.AlertDialog
 import android.app.DownloadManager
 import android.content.Context
 import android.content.Intent
+import android.database.Cursor
 import android.net.Uri
 import android.os.Bundle
+import android.provider.OpenableColumns
 import android.view.*
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
@@ -33,6 +36,7 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import kotlin.concurrent.thread
 import com.qfs.pagan.InterfaceLayer as OpusManager
+
 
 class MainActivity : AppCompatActivity() {
     private lateinit var appBarConfiguration: AppBarConfiguration
@@ -707,14 +711,12 @@ class MainActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 throw InvalidMIDIFile(path)
             }
-            var filename = java.net.URLDecoder.decode(path, "utf-8")
-            filename = filename.substring(filename.lastIndexOf("/") + 1)
-            filename = filename.substring(0, filename.lastIndexOf("."))
+            var filename = this.parse_file_name(Uri.parse(path))
 
             val new_path = this.project_manager.get_new_path()
             this.opus_manager.import_midi(midi)
             this.opus_manager.path = new_path
-            this.opus_manager.set_project_name(filename)
+            this.opus_manager.set_project_name(filename ?: "Imported Midi")
             this.opus_manager.clear_history()
         }
         this.cancel_reticle()
@@ -744,7 +746,7 @@ class MainActivity : AppCompatActivity() {
                 false
             )
         val opus_manager = this.get_opus_manager()
-        val working_beat = opus_manager.cursor.beat
+        val working_beat = opus_manager.opusManagerCursor.beat
         val sbPlaybackPosition = viewInflated.findViewById<SeekBar>(R.id.sbPlaybackPosition)
         sbPlaybackPosition.max = opus_manager.opus_beat_count - 1
         sbPlaybackPosition.progress = working_beat
@@ -1001,5 +1003,23 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    fun parse_file_name(uri: Uri): String? {
+        var result: String? = null
+        if (uri.scheme == "content") {
+            val cursor: Cursor? = contentResolver.query(uri, null, null, null, null)
+            if (cursor != null && cursor.moveToFirst()) {
+                val ci = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                if (ci >= 0) {
+                    result = cursor.getString(ci)
+                }
+            }
+        }
+
+        if (result == null && uri.path is String) {
+            result = uri.path!!
+            result = result.substring(result.lastIndexOf("/") + 1)
+        }
+        return result
+    }
 
 }

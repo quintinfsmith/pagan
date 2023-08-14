@@ -1,7 +1,6 @@
 package com.qfs.pagan
 
 import android.content.Context
-import android.util.Log
 import android.view.ContextThemeWrapper
 import android.view.MotionEvent
 import android.view.ViewGroup
@@ -72,15 +71,15 @@ class ColumnLabelView(val viewHolder: RecyclerView.ViewHolder): RelativeLayout(C
     fun build_drawable_state(drawableState: IntArray?): IntArray? {
         val opus_manager = this.get_opus_manager()
         val beat = this.viewHolder.bindingAdapterPosition
-        when (opus_manager.cursor.mode) {
-            Cursor.CursorMode.Single,
-            Cursor.CursorMode.Column -> {
-                if (opus_manager.cursor.beat == beat) {
+        when (opus_manager.opusManagerCursor.mode) {
+            OpusManagerCursor.CursorMode.Single,
+            OpusManagerCursor.CursorMode.Column -> {
+                if (opus_manager.opusManagerCursor.beat == beat) {
                     mergeDrawableStates(drawableState, this.STATE_FOCUSED)
                 }
             }
-            Cursor.CursorMode.Range -> {
-                val (first, second) = opus_manager.cursor.range!!
+            OpusManagerCursor.CursorMode.Range -> {
+                val (first, second) = opus_manager.opusManagerCursor.range!!
                 if (first.beat <= beat && second.beat >= beat) {
                     mergeDrawableStates(drawableState, this.STATE_FOCUSED)
                 }

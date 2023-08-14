@@ -11,7 +11,7 @@ import java.lang.Integer.min
 class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     private var simple_ui_lock = 0
     var relative_mode: Int = 0
-    var cursor = Cursor()
+    var opusManagerCursor = OpusManagerCursor()
     var first_load_done = false
     var queued_cursor_selection: Pair<HistoryToken, List<Int>>? = null
 
@@ -212,14 +212,14 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             this.get_editor_table().remove_row(abs_line)
         }
 
-        val cursor = this.cursor
+        val cursor = this.opusManagerCursor
         if (cursor.line_offset != 0 && cursor.line_offset == this.channels[cursor.channel].size) {
             when (cursor.mode) {
-                Cursor.CursorMode.Row -> {
+                OpusManagerCursor.CursorMode.Row -> {
                     this.cursor_select_row(cursor.channel, cursor.line_offset - 1)
                 }
-                Cursor.CursorMode.Single -> {
-                    val beat_key = this.cursor.get_beatkey()
+                OpusManagerCursor.CursorMode.Single -> {
+                    val beat_key = this.opusManagerCursor.get_beatkey()
                     beat_key.line_offset -= 1
 
                     this.cursor_select(
@@ -279,7 +279,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         if (!this.simple_ui_locked()) {
             val editor_table = this.get_editor_table()
             editor_table.remove_column(beat_index)
-            editor_table.update_cursor(this.cursor)
+            editor_table.update_cursor(this.opusManagerCursor)
         }
 
         this.cursor_select_column(beat_index)
@@ -295,7 +295,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         if (!this.simple_ui_locked()) {
             val editor_table = this.get_editor_table()
             editor_table.new_column(beat_index)
-            editor_table.update_cursor(this.cursor)
+            editor_table.update_cursor(this.opusManagerCursor)
         }
     }
 
@@ -429,7 +429,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
     override fun clear() {
         super.clear()
-        this.cursor.clear()
+        this.opusManagerCursor.clear()
         this.get_editor_table().clear()
     }
 
@@ -707,9 +707,9 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
     // Cursor Functions ////////////////////////////////////////////////////////////////////////////
     fun cursor_clear() {
-        this.cursor.clear()
+        this.opusManagerCursor.clear()
         val editor_table = this.get_editor_table()
-        editor_table.update_cursor(this.cursor)
+        editor_table.update_cursor(this.opusManagerCursor)
 
         this.withFragment {
             it.clearContextMenu()
@@ -719,9 +719,9 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     fun cursor_select_row(channel: Int, line_offset: Int, scroll: Boolean = false) {
         val editor_table = this.get_editor_table()
 
-        this.cursor.select_row(channel, line_offset)
+        this.opusManagerCursor.select_row(channel, line_offset)
 
-        editor_table.update_cursor(this.cursor)
+        editor_table.update_cursor(this.opusManagerCursor)
 
         this.withFragment {
             it.setContextMenu_line()
@@ -732,9 +732,9 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     fun cursor_select_column(beat: Int, scroll: Boolean = false) {
         val editor_table = this.get_editor_table()
 
-        this.cursor.select_column(beat)
+        this.opusManagerCursor.select_column(beat)
 
-        editor_table.update_cursor(this.cursor)
+        editor_table.update_cursor(this.opusManagerCursor)
 
         this.withFragment {
             it.setContextMenu_column()
@@ -744,8 +744,8 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
     fun cursor_select(beat_key: BeatKey, position: List<Int>, scroll: Boolean = false) {
         val editor_table = this.get_editor_table()
-        this.cursor.select(beat_key, position)
-        editor_table.update_cursor(this.cursor)
+        this.opusManagerCursor.select(beat_key, position)
+        editor_table.update_cursor(this.opusManagerCursor)
         this.withFragment {
             it.setContextMenu_leaf()
         }
@@ -753,20 +753,20 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     fun cursor_select_to_link(beat_key: BeatKey) {
-        this.cursor.select_to_link(beat_key)
+        this.opusManagerCursor.select_to_link(beat_key)
 
         val editor_table = this.get_editor_table()
-        editor_table.update_cursor(this.cursor)
+        editor_table.update_cursor(this.opusManagerCursor)
 
         this.withFragment {
             it.setContextMenu_linking()
         }
     }
     fun cursor_select_range_to_link(beat_key_a: BeatKey, beat_key_b: BeatKey) {
-        this.cursor.select_range(beat_key_a, beat_key_b)
+        this.opusManagerCursor.select_range(beat_key_a, beat_key_b)
 
         val editor_table = this.get_editor_table()
-        editor_table.update_cursor(this.cursor)
+        editor_table.update_cursor(this.opusManagerCursor)
 
         this.withFragment {
             it.setContextMenu_linking()
@@ -774,70 +774,70 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     fun cursor_select_range(beat_key_a: BeatKey, beat_key_b: BeatKey) {
-        this.cursor.select_range(beat_key_a, beat_key_b)
-        this.get_editor_table().update_cursor(this.cursor)
+        this.opusManagerCursor.select_range(beat_key_a, beat_key_b)
+        this.get_editor_table().update_cursor(this.opusManagerCursor)
     }
 
     fun get_tree(): OpusTree<OpusEvent> {
         return this.get_tree(
-            this.cursor.get_beatkey(),
-            this.cursor.get_position()
+            this.opusManagerCursor.get_beatkey(),
+            this.opusManagerCursor.get_position()
         )
     }
 
     fun unset() {
         this.unset(
-            this.cursor.get_beatkey(),
-            this.cursor.get_position()
+            this.opusManagerCursor.get_beatkey(),
+            this.opusManagerCursor.get_position()
         )
     }
 
     fun convert_event_to_absolute() {
         this.convert_event_to_absolute(
-            this.cursor.get_beatkey(),
-            this.cursor.get_position()
+            this.opusManagerCursor.get_beatkey(),
+            this.opusManagerCursor.get_position()
         )
     }
 
     fun convert_event_to_relative() {
         this.convert_event_to_relative(
-            this.cursor.get_beatkey(),
-            this.cursor.get_position()
+            this.opusManagerCursor.get_beatkey(),
+            this.opusManagerCursor.get_position()
         )
     }
 
     fun set_event(event: OpusEvent) {
         this.set_event(
-            this.cursor.get_beatkey(),
-            this.cursor.get_position(),
+            this.opusManagerCursor.get_beatkey(),
+            this.opusManagerCursor.get_position(),
             event
         )
     }
 
     fun set_percussion_event() {
         this.set_percussion_event(
-            this.cursor.get_beatkey(),
-            this.cursor.get_position()
+            this.opusManagerCursor.get_beatkey(),
+            this.opusManagerCursor.get_position()
         )
     }
 
     fun unlink_beat() {
-        if (this.cursor.mode == Cursor.CursorMode.Single) {
-            this.unlink_beat(this.cursor.get_beatkey())
-        } else if (this.cursor.mode == Cursor.CursorMode.Range) {
-            this.unlink_range(cursor.range!!.first, cursor.range!!.second)
+        if (this.opusManagerCursor.mode == OpusManagerCursor.CursorMode.Single) {
+            this.unlink_beat(this.opusManagerCursor.get_beatkey())
+        } else if (this.opusManagerCursor.mode == OpusManagerCursor.CursorMode.Range) {
+            this.unlink_range(opusManagerCursor.range!!.first, opusManagerCursor.range!!.second)
         }
     }
 
     fun clear_link_pool() {
-        if (this.cursor.mode == Cursor.CursorMode.Single) {
-            val beat_key = this.cursor.get_beatkey()
+        if (this.opusManagerCursor.mode == OpusManagerCursor.CursorMode.Single) {
+            val beat_key = this.opusManagerCursor.get_beatkey()
             this.clear_link_pool(beat_key)
-        } else if (this.cursor.mode == Cursor.CursorMode.Range) {
-            val beat_key = this.cursor.range!!.first
+        } else if (this.opusManagerCursor.mode == OpusManagerCursor.CursorMode.Range) {
+            val beat_key = this.opusManagerCursor.range!!.first
             this.clear_link_pools_by_range(
                 beat_key,
-                this.cursor.range!!.second
+                this.opusManagerCursor.range!!.second
             )
         }
     }
@@ -855,29 +855,29 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
     fun set_percussion_instrument(instrument: Int) {
         this.set_percussion_instrument(
-            this.cursor.line_offset,
+            this.opusManagerCursor.line_offset,
             instrument
         )
     }
 
     fun split_tree(splits: Int) {
         this.split_tree(
-            this.cursor.get_beatkey(),
-            this.cursor.get_position(),
+            this.opusManagerCursor.get_beatkey(),
+            this.opusManagerCursor.get_position(),
             splits
         )
     }
 
     fun insert_after(count: Int) {
         this.insert_after(
-            this.cursor.get_beatkey(),
-            this.cursor.get_position(),
+            this.opusManagerCursor.get_beatkey(),
+            this.opusManagerCursor.get_position(),
             count
         )
     }
 
     fun remove(count: Int) {
-        val cursor = this.cursor
+        val cursor = this.opusManagerCursor
         val beat_key = cursor.get_beatkey()
         val position = cursor.get_position().toMutableList()
 
@@ -895,26 +895,26 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
     fun insert_line(count: Int) {
         this.new_line(
-            this.cursor.channel,
-            this.cursor.line_offset + 1,
+            this.opusManagerCursor.channel,
+            this.opusManagerCursor.line_offset + 1,
             count
         )
     }
 
     fun remove_line(count: Int) {
         this.remove_line(
-            this.cursor.channel,
-            this.cursor.line_offset,
+            this.opusManagerCursor.channel,
+            this.opusManagerCursor.line_offset,
             count
         )
     }
 
     fun remove_beat_at_cursor(count: Int) {
-        this.remove_beat(this.cursor.beat, count)
+        this.remove_beat(this.opusManagerCursor.beat, count)
     }
 
     fun insert_beat_at_cursor(count: Int) {
-        this.insert_beat(this.cursor.beat + 1, count)
+        this.insert_beat(this.opusManagerCursor.beat + 1, count)
     }
     // End Cursor Functions ////////////////////////////////////////////////////////////////////////
 
@@ -933,21 +933,21 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     fun is_selected(beat_key: BeatKey, position: List<Int>): Boolean {
-        return when (this.cursor.mode) {
-            Cursor.CursorMode.Column -> {
-                cursor.beat == beat_key.beat
+        return when (this.opusManagerCursor.mode) {
+            OpusManagerCursor.CursorMode.Column -> {
+                opusManagerCursor.beat == beat_key.beat
             }
-            Cursor.CursorMode.Row -> {
-                cursor.channel == beat_key.channel && cursor.line_offset == beat_key.line_offset
+            OpusManagerCursor.CursorMode.Row -> {
+                opusManagerCursor.channel == beat_key.channel && opusManagerCursor.line_offset == beat_key.line_offset
             }
-            Cursor.CursorMode.Range -> {
-                beat_key in this.get_beatkeys_in_range(cursor.range!!.first, cursor.range!!.second)
+            OpusManagerCursor.CursorMode.Range -> {
+                beat_key in this.get_beatkeys_in_range(opusManagerCursor.range!!.first, opusManagerCursor.range!!.second)
             }
-            Cursor.CursorMode.Single -> {
-                val cposition = this.cursor.get_position()
-                cursor.get_beatkey() == beat_key && position.size >= cposition.size && position.subList(0, cposition.size) == cposition
+            OpusManagerCursor.CursorMode.Single -> {
+                val cposition = this.opusManagerCursor.get_position()
+                opusManagerCursor.get_beatkey() == beat_key && position.size >= cposition.size && position.subList(0, cposition.size) == cposition
             }
-            Cursor.CursorMode.Unset -> {
+            OpusManagerCursor.CursorMode.Unset -> {
                 false
             }
         }
@@ -958,11 +958,11 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     fun link_beat(beat_key: BeatKey) {
-        if (this.cursor.is_linking_range()) {
-            val (first, second) = this.cursor.range!!
+        if (this.opusManagerCursor.is_linking_range()) {
+            val (first, second) = this.opusManagerCursor.range!!
             this.link_beat_range(beat_key, first, second)
-        } else if (this.cursor.is_linking) {
-            this.link_beats(beat_key, this.cursor.get_beatkey())
+        } else if (this.opusManagerCursor.is_linking) {
+            this.link_beats(beat_key, this.opusManagerCursor.get_beatkey())
         } else {
             // TODO: Raise Error
         }

@@ -39,7 +39,7 @@ class LineLabelView(var viewHolder: RecyclerView.ViewHolder): LinearLayout(Conte
         this.setOnClickListener {
             val opus_manager = this.get_opus_manager()
             val (channel, line_offset) = this.get_row()
-            val cursor = opus_manager.cursor
+            val cursor = opus_manager.opusManagerCursor
             if (cursor.is_linking_range()) {
                 val first_key = cursor.range!!.first
                 try {
@@ -56,7 +56,7 @@ class LineLabelView(var viewHolder: RecyclerView.ViewHolder): LinearLayout(Conte
                 cursor.is_linking = false
                 opus_manager.cursor_select(first_key, opus_manager.get_first_position(first_key))
             } else if (cursor.is_linking) {
-                val beat_key = opus_manager.cursor.get_beatkey()
+                val beat_key = opus_manager.opusManagerCursor.get_beatkey()
                 try {
                     opus_manager.link_row(channel, line_offset, beat_key)
                 } catch (e: LinksLayer.BadRowLink) {
@@ -144,15 +144,15 @@ class LineLabelView(var viewHolder: RecyclerView.ViewHolder): LinearLayout(Conte
     fun build_drawable_state(drawableState: IntArray?): IntArray? {
         val opus_manager = this.get_opus_manager()
         val (channel, line_offset) = this.get_row()
-        when (opus_manager.cursor.mode) {
-            Cursor.CursorMode.Single,
-            Cursor.CursorMode.Row -> {
-                if (opus_manager.cursor.channel == channel && opus_manager.cursor.line_offset == line_offset) {
+        when (opus_manager.opusManagerCursor.mode) {
+            OpusManagerCursor.CursorMode.Single,
+            OpusManagerCursor.CursorMode.Row -> {
+                if (opus_manager.opusManagerCursor.channel == channel && opus_manager.opusManagerCursor.line_offset == line_offset) {
                     mergeDrawableStates(drawableState, STATE_FOCUSED)
                 }
             }
-            Cursor.CursorMode.Range -> {
-                val (first, second) = opus_manager.cursor.range!!
+            OpusManagerCursor.CursorMode.Range -> {
+                val (first, second) = opus_manager.opusManagerCursor.range!!
                 if ((channel > first.channel && channel < second.channel) || (channel == first.channel && line_offset >= first.line_offset) || (channel == second.channel && line_offset <= second.line_offset)) {
                     mergeDrawableStates(drawableState, STATE_FOCUSED)
                 }

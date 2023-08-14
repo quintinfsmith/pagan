@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.*
 import android.widget.Button
 import android.widget.LinearLayout
@@ -27,10 +28,7 @@ class GlobalSettingsFragment : PaganFragment() {
                 if (uri.path != null) {
                     val main = this.get_main()
                     val soundfont_dir = main.get_soundfont_directory()
-                    var file_name = uri.toString().substring(uri.toString().lastIndexOf("%3A") + 3)
-                    if (file_name.contains("%2F")) {
-                        file_name = file_name.substring(file_name.lastIndexOf("%2F") + 3)
-                    }
+                    val file_name = main.parse_file_name(uri)
 
                     val new_file = File("${soundfont_dir}/$file_name")
                     main.applicationContext.contentResolver.openFileDescriptor(uri, "r")?.use {

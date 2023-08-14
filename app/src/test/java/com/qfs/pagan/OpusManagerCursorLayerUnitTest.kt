@@ -11,7 +11,7 @@ import com.qfs.pagan.opusmanager.OpusManagerBase as OpusManager
  *
  * See [testing documentation](http://d.android.com/tools/testing).
  */
-class CursorLayerUnitTest {
+class OpusManagerCursorLayerUnitTest {
     @Test
     fun test_new() {
         var manager = OpusManager()

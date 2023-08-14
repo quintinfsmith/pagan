@@ -89,6 +89,14 @@
             android:theme="@style/button_front" />
 
         <TextView
+            android:id="@+id/btnFrontSettings"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Settings"
+            android:theme="@style/button_front" />
+
+        <TextView
             android:id="@+id/linkLicense"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="horizontal">
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:orientation="vertical">
+        <LinearLayout
+            android:id="@+id/llSFWarningLanding"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="?attr/soundfont_warning_frame"
+            android:orientation="vertical"
+            android:padding="4dp"
+            android:layout_margin="10dp"
+            app:layout_constraintBottom_toTopOf="@+id/linearLayout"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="?attr/soundfont_warning_background"
+                android:orientation="vertical"
+                android:padding="4dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/warning_nosoundfont"
+                    android:textColor="?attr/soundfont_warning_text" />
+
+                <TextView
+                    android:id="@+id/tvFluidUrlLanding"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/url_fluid"
+                    android:textColor="?attr/soundfont_warning_link"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/warning_nosoundfont_2"
+                    android:textColor="?attr/soundfont_warning_text" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <Space
+            android:layout_height="0dp"
+            android:layout_width="match_parent"
+            android:layout_weight="1"/>
+
+        <TextView
+            android:id="@+id/linkSFLicense"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="@string/soundfont_disclaimer"
+            android:theme="@style/front_text" />
+    </LinearLayout>
+
+
+
+    <LinearLayout
+        android:id="@+id/linearLayout"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="10dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <TextView
+            android:id="@+id/btnFrontNew"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="New Project"
+            android:theme="@style/button_front" />
+
+        <TextView
+            android:id="@+id/btnFrontLoad"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Load Project"
+            android:theme="@style/button_front" />
+
+        <Space
+            android:layout_height="0dp"
+            android:layout_width="match_parent"
+            android:layout_weight="1"/>
+
+        <TextView
+            android:id="@+id/linkLicense"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="@string/license_brief"
+            android:theme="@style/front_text" />
+
+
+
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/btnFrontImportProject"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Import Project"
+            android:theme="@style/button_front" />
+
+        <TextView
+            android:id="@+id/btnFrontImport"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Import MIDI"
+            android:theme="@style/button_front" />
+
+        <TextView
+            android:id="@+id/btnFrontSettings"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Settings"
+            android:theme="@style/button_front" />
+        <Space
+            android:layout_height="0dp"
+            android:layout_width="match_parent"
+            android:layout_weight="1"/>
+        <TextView
+            android:id="@+id/linkSource"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="@string/source_code_location"
+            android:theme="@style/front_text" />
+    </LinearLayout>
+
+</LinearLayout>

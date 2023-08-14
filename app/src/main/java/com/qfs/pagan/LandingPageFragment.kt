@@ -10,7 +10,6 @@ import android.widget.TextView
 import androidx.core.os.bundleOf
 import androidx.fragment.app.setFragmentResult
 import com.qfs.pagan.databinding.FragmentLandingBinding
-import kotlin.concurrent.thread
 
 class LandingPageFragment : PaganFragment() {
     // Boiler Plate //
@@ -26,22 +25,20 @@ class LandingPageFragment : PaganFragment() {
         return binding.root
     }
 
-    override fun onResume() {
-        super.onResume()
-        thread {
-            this.get_main().update_menu_options()
-        }
-    }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val btn_newProject = view.findViewById<View>(R.id.btnFrontNew)
         val btn_loadProject = view.findViewById<View>(R.id.btnFrontLoad)
         val btn_importMidi = view.findViewById<View>(R.id.btnFrontImport)
         val btn_importProject = view.findViewById<View>(R.id.btnFrontImportProject)
+        val btn_settings = view.findViewById<View>(R.id.btnFrontSettings)
         val linkSource = view.findViewById<View>(R.id.linkSource)
         val btn_linkLicense = view.findViewById<View>(R.id.linkLicense)
         val btn_linkSFLicense = view.findViewById<View>(R.id.linkSFLicense)
+
+        btn_settings.setOnClickListener {
+            this.get_main().navTo("settings")
+        }
 
         btn_linkLicense.setOnClickListener {
             val stream = this.activity!!.assets.open("LICENSE")
@@ -125,10 +122,6 @@ class LandingPageFragment : PaganFragment() {
             }
 
         }
-
-    }
-    override fun onStart() {
-        super.onStart()
     }
 
     override fun onDestroyView() {

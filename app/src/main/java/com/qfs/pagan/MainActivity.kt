@@ -367,16 +367,6 @@ class MainActivity : AppCompatActivity() {
                 this.optionsMenu!!.findItem(R.id.itmImportMidi).isVisible = true
                 this.optionsMenu!!.findItem(R.id.itmImportProject).isVisible = true
                 this.optionsMenu!!.findItem(R.id.itmSettings).isVisible = true
-
-            }
-            is LandingPageFragment -> {
-                this.optionsMenu!!.findItem(R.id.itmLoadProject).isVisible = false
-                this.optionsMenu!!.findItem(R.id.itmUndo).isVisible = false
-                this.optionsMenu!!.findItem(R.id.itmNewProject).isVisible = false
-                this.optionsMenu!!.findItem(R.id.itmPlay).isVisible = false
-                this.optionsMenu!!.findItem(R.id.itmImportMidi).isVisible = false
-                this.optionsMenu!!.findItem(R.id.itmImportProject).isVisible = false
-                this.optionsMenu!!.findItem(R.id.itmSettings).isVisible = true
             }
             else -> {
                 this.optionsMenu!!.findItem(R.id.itmLoadProject).isVisible = false

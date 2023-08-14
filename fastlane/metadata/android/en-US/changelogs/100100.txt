@@ -1,4 +1,5 @@
 - Rebuilt editor ui
+- Changed Fluid Soundfont download process
 Bugfixes:
     - undo action isn't unacceptably slow
     - soundfont selection now functional

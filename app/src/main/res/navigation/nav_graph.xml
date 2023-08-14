@@ -68,9 +68,9 @@
 
     <fragment
         android:id="@+id/SettingsFragment"
-        android:name="com.qfs.pagan.SettingsFragment"
+        android:name="com.qfs.pagan.GlobalSettingsFragment"
         android:label="@string/settings_fragment_label"
-        tools:layout="@layout/fragment_settings">
+        tools:layout="@layout/fragment_global_settings">
     </fragment>
 
 </navigation>

@@ -29,6 +29,8 @@
     <string name="download_fluidr3_download">Download Fluid Soundfont</string>
     <string name="download_fluidr3_import">Import Custom Soundfont</string>
     <string name="download_fluidr3_mute">Use without sound</string>
+    <string name="warning_nosoundfont">A soundfont is needed for playback. The Fluid General Midi soundfont can be found here:</string>
+    <string name="url_fluid">https://archive.org/download/fluidr3-gm-gs/FluidR3_GM_GS.sf2</string>
 
     <string name="line_volume">Line Volume:</string>
     <string name="source_code_location">

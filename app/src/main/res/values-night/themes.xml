@@ -55,6 +55,11 @@
 
         <item name="colorIconFG">@attr/button_fg_default</item>
         <item name="table_lines">?attr/button_fg_default</item>
+
+        <item name="soundfont_warning_background">@color/blue_sky</item>
+        <item name="soundfont_warning_frame">@color/white</item>
+        <item name="soundfont_warning_text">@color/white</item>
+        <item name="soundfont_warning_link">@color/blue_dark</item>
     </style>
 
     <style name="Theme.Pagan.NoActionBar">

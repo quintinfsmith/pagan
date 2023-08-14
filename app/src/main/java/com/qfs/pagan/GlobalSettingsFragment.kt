@@ -4,19 +4,20 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.view.*
 import android.widget.Button
+import android.widget.LinearLayout
 import android.widget.PopupMenu
+import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import com.qfs.apres.soundfont.SoundFont
-import com.qfs.pagan.databinding.FragmentSettingsBinding
+import com.qfs.pagan.databinding.FragmentGlobalSettingsBinding
 import java.io.File
 import java.io.FileInputStream
 
-class SettingsFragment : PaganFragment() {
+class GlobalSettingsFragment : PaganFragment() {
     // Boiler Plate //
-    private var _binding: FragmentSettingsBinding? = null
+    private var _binding: FragmentGlobalSettingsBinding? = null
     private val binding get() = _binding!!
     //////////////////
 
@@ -24,10 +25,15 @@ class SettingsFragment : PaganFragment() {
         if (result.resultCode == Activity.RESULT_OK) {
             result?.data?.data?.also { uri ->
                 if (uri.path != null) {
-                    val soundfont_dir = this.get_main().get_soundfont_directory()
+                    val main = this.get_main()
+                    val soundfont_dir = main.get_soundfont_directory()
                     var file_name = uri.toString().substring(uri.toString().lastIndexOf("%3A") + 3)
-                    var new_file = File("${soundfont_dir}/$file_name")
-                    this.get_main().applicationContext.contentResolver.openFileDescriptor(uri, "r")?.use {
+                    if (file_name.contains("%2F")) {
+                        file_name = file_name.substring(file_name.lastIndexOf("%2F") + 3)
+                    }
+
+                    val new_file = File("${soundfont_dir}/$file_name")
+                    main.applicationContext.contentResolver.openFileDescriptor(uri, "r")?.use {
                         new_file.writeBytes(
                             FileInputStream(it.fileDescriptor).readBytes()
                         )
@@ -41,6 +47,11 @@ class SettingsFragment : PaganFragment() {
                         new_file.delete()
                         return@registerForActivityResult
                     }
+
+                    // Hide the warning
+                    if (main.has_soundfont()) {
+                        main.findViewById<LinearLayout>(R.id.llSFWarning).visibility = View.GONE
+                    }
                 } else {
                     // TODO
                 }
@@ -53,7 +64,7 @@ class SettingsFragment : PaganFragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentSettingsBinding.inflate(inflater, container, false)
+        _binding = FragmentGlobalSettingsBinding.inflate(inflater, container, false)
         this.get_main().lockDrawer()
         this.get_main().update_menu_options()
         return binding.root
@@ -67,17 +78,38 @@ class SettingsFragment : PaganFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        val main = this.get_main()
+
+        if (main.has_soundfont()) {
+            main.findViewById<LinearLayout>(R.id.llSFWarning).visibility = View.GONE
+        }  else {
+            main.findViewById<TextView>(R.id.tvFluidUrl).setOnClickListener {
+                val url = getString(R.string.url_fluid)
+                val intent = Intent(Intent.ACTION_VIEW)
+                intent.data = Uri.parse(url)
+                startActivity(intent)
+            }
+        }
+
         val btnChooseSoundFont = view.findViewById<Button>(R.id.btnChooseSoundFont)
         btnChooseSoundFont.setOnClickListener {
             this.interact_btnChooseSoundFont(it)
         }
-        var soundfont_filename = this.get_main().configuration.soundfont
+
+        val soundfont_filename = this.get_main().configuration.soundfont
+
         btnChooseSoundFont.text = when (soundfont_filename) {
             null -> {
                 "No Soundfont"
             }
             else -> {
-                soundfont_filename
+                val soundfont_dir = main.get_soundfont_directory()
+                val filecheck = File("${soundfont_dir}/$soundfont_filename")
+                if (filecheck.exists()) {
+                    soundfont_filename
+                } else {
+                    "No Soundfont"
+                }
             }
         }
     }
@@ -93,16 +125,14 @@ class SettingsFragment : PaganFragment() {
 
         val soundfont_dir = this.get_main().get_soundfont_directory()
         popupMenu.menu.add(0, 0, 0, "No Soundfont")
-        if (! this.get_main().has_fluid_soundfont()) {
-            popupMenu.menu.add(1, 0, 0, "Download Fluid Soundfont...")
-        }
+
         val file_list = soundfont_dir.listFiles()?.toList() ?: listOf<File>()
         file_list.forEachIndexed { i: Int, file: File ->
-            popupMenu.menu.add(2, i, i, file.name)
+            popupMenu.menu.add(1, i, i, file.name)
         }
 
         // +3 to the order to account for preceding menu entries
-        popupMenu.menu.add(3, 0, file_list.size + 3, "Import...")
+        popupMenu.menu.add(2, 0, file_list.size + 3, "Import...")
 
         popupMenu.setOnMenuItemClickListener {
             when (it.groupId) {
@@ -110,14 +140,12 @@ class SettingsFragment : PaganFragment() {
                     this.disable_soundfont()
                 }
                 1 -> {
-                    this.get_main().download_fluid()
-                }
-                2 -> {
                     this.set_soundfont(file_list[it.order].name)
                 }
-                3 -> {
+                2 -> {
                     this.import_soundfont()
                 }
+                else -> { }
             }
             false
         }

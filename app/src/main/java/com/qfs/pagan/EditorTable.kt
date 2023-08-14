@@ -56,7 +56,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         }
 
         this.line_label_recycler.layoutParams.apply {
-            width = 100
+            width = WRAP_CONTENT
             height = MATCH_PARENT
         }
 

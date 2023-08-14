@@ -691,7 +691,7 @@ class MainActivity : AppCompatActivity() {
             val bytes = FileInputStream(it.fileDescriptor).readBytes()
             val midi = try {
                 Midi.from_bytes(bytes)
-            } catch (e: Midi.InvalidChunkType) {
+            } catch (e: Exception) {
                 throw InvalidMIDIFile(path)
             }
             var filename = java.net.URLDecoder.decode(path, "utf-8")
@@ -859,25 +859,69 @@ class MainActivity : AppCompatActivity() {
             setTitle(title)
         }
 
-        AlertDialog.Builder(this, R.style.AlertDialog).apply {
-            setTitle("Downloading Fluid Soundfont")
-            setMessage("Sound will be enabled once the download is complete")
-            setPositiveButton(android.R.string.ok) { dialog, _ ->
-                dialog.dismiss()
+        downloadReference = dm.enqueue(request)
+
+        thread {
+            Thread.sleep(10000)
+            var cursor = dm.query(DownloadManager.Query().setFilterById(downloadReference))
+            this.runOnUiThread {
+                val msg = if (cursor.moveToFirst()) {
+                    val ci = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS)
+                    if (ci >= 0) {
+                        when (cursor.getInt(ci)) {
+                            DownloadManager.STATUS_RUNNING -> {
+                                "RUNNING"
+                            }
+                            DownloadManager.STATUS_FAILED -> {
+                                "FAILED"
+                            }
+                            DownloadManager.STATUS_PENDING -> {
+                                "PENDING"
+                            }
+                            DownloadManager.STATUS_PAUSED -> {
+                                "PASUED"
+                            }
+                            else -> {
+                                "SOMETHING ELSE"
+                            }
+                        }
+                    } else {
+                        "2??????"
+                    }
+                } else {
+                    "?????"
+                }
+                AlertDialog.Builder(this, R.style.AlertDialog).apply {
+                    setTitle("Downloading Fluid Soundfont")
+                    setMessage(msg)
+                    setPositiveButton(android.R.string.ok) { dialog, _ ->
+                        dialog.dismiss()
+                    }
+                    show()
+                }
+
             }
-            show()
         }
 
-        downloadReference = dm.enqueue(request)
-        thread {
-            while (dm.getUriForDownloadedFile(downloadReference) == null) {
-                Thread.sleep(5)
-            }
-            this.runOnUiThread {
-                this.set_soundfont(filename)
-                this.save_configuration()
-            }
-        }
+
+        //AlertDialog.Builder(this, R.style.AlertDialog).apply {
+        //    setTitle("Downloading Fluid Soundfont")
+        //    setMessage("Sound will be enabled once the download is complete")
+        //    setPositiveButton(android.R.string.ok) { dialog, _ ->
+        //        dialog.dismiss()
+        //    }
+        //    show()
+        //}
+
+        //thread {
+        //    while (dm.getUriForDownloadedFile(downloadReference) == null) {
+        //        Thread.sleep(5)
+        //    }
+        //    this.runOnUiThread {
+        //        this.set_soundfont(filename)
+        //        this.save_configuration()
+        //    }
+        //}
         return downloadReference
     }
 

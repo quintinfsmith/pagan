@@ -54,6 +54,7 @@
     <attr name="label_fg" format="color" />
     <attr name="label_fg_focused" format="color" />
     <attr name="alert_fg" format="color" />
+    <attr name="color_hyperlink" format="color" />
 
     <attr name="button_fg_default" format="color" />
     <attr name="button_fg_pressed" format="color" />
@@ -63,4 +64,9 @@
     <attr name="colorIconFG" format="color" />
     <attr name="icon_size" format="dimension" />
     <attr name="table_lines" format="color" />
+
+    <attr name="soundfont_warning_frame" format="color" />
+    <attr name="soundfont_warning_background" format="color" />
+    <attr name="soundfont_warning_text" format="color" />
+    <attr name="soundfont_warning_link" format="color" />
 </resources>

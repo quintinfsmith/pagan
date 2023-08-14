@@ -19,7 +19,7 @@
 
     <LinearLayout
         android:id="@+id/llB"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
         android:layout_width="match_parent"
         android:layout_weight="1"
         android:orientation="vertical">
@@ -31,7 +31,7 @@
 
             <TextView
                 android:id="@+id/tvChangeProjectName"
-                android:text="Change Project Name..."
+                android:text="@string/btn_cfg_change_name"
                 android:maxLines="1"
                 android:theme="@style/button"
                 android:layout_width="0dp"
@@ -49,7 +49,7 @@
                 android:id="@+id/btnTranspose"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="T:"
+                android:text="@string/btn_cfg_transpose"
                 android:paddingStart="15dp"
                 android:paddingEnd="15dp"
                 android:theme="@style/button" />
@@ -65,7 +65,7 @@
                 android:paddingEnd="15dp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="right"
+                android:layout_gravity="end"
                 android:theme="@style/button" />
 
         </LinearLayout>
@@ -74,11 +74,11 @@
             android:id="@+id/btnAddChannel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Add Channel"
+            android:text="@string/btn_cfg_add_channel"
             android:paddingStart="15dp"
             android:paddingTop="@dimen/normal_padding"
             android:paddingEnd="15dp"
-            android:layout_gravity="right"
+            android:layout_gravity="end"
             android:theme="@style/button" />
 
 
@@ -111,7 +111,7 @@
             android:layout_weight="1"
             android:layout_height="wrap_content"
             app:srcCompat="@drawable/ic_baseline_save_24"
-            android:text="Save" />
+            android:text="@string/btn_cfg_save" />
 
         <ImageView
             android:id="@+id/btnCopyProject"
@@ -121,7 +121,7 @@
             android:layout_weight="1"
             android:layout_height="wrap_content"
             app:srcCompat="@drawable/ic_baseline_content_copy_24"
-            android:text="Copy" />
+            android:text="@string/btn_cfg_copy" />
 
         <ImageView
             android:id="@+id/btnDeleteProject"
@@ -131,7 +131,7 @@
             android:layout_weight="1"
             android:layout_height="wrap_content"
             app:srcCompat="@drawable/ic_baseline_delete_24"
-            android:text="Delete" />
+            android:text="@string/btn_cfg_delete" />
 
         <ImageView
             android:id="@+id/btnExportProject"
@@ -141,10 +141,6 @@
             android:layout_width="64dp"
             android:layout_weight="1"
             app:srcCompat="@drawable/midi_logo"
-            android:text="Export" />
-
+            android:text="@string/btn_cfg_export" />
     </LinearLayout>
-
-
-
 </LinearLayout>

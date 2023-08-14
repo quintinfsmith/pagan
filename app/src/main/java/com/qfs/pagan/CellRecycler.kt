@@ -1,16 +1,12 @@
 package com.qfs.pagan
 
 import android.annotation.SuppressLint
-import android.os.Parcelable
-import android.util.Log
 import android.view.ContextThemeWrapper
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
-import androidx.core.view.children
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import kotlin.concurrent.thread
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
@@ -20,7 +16,7 @@ class CellRecycler(var viewHolder: ColumnRecyclerViewHolder): ScrollLockingRecyc
     init {
         this.visibility = View.INVISIBLE
         this.adapter = CellRecyclerAdapter()
-        this.layoutManager = TestLayoutManager(context, VERTICAL)
+        this.layoutManager = LinearLayoutManager(context, VERTICAL, false)
         this.addOnScrollListener(this.get_scroll_listener())
         this.itemAnimator = null
 

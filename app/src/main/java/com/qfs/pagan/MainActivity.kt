@@ -1,10 +1,7 @@
 package com.qfs.pagan
 
-import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.AlertDialog
-import android.app.DownloadManager
-import android.content.Context
 import android.content.Intent
 import android.database.Cursor
 import android.net.Uri
@@ -66,7 +63,7 @@ class MainActivity : AppCompatActivity() {
                 applicationContext.contentResolver.openFileDescriptor(uri, "w")?.use {
                     val json_string = Json.encodeToString(opus_manager.to_json())
                     FileOutputStream(it.fileDescriptor).write(json_string.toByteArray())
-                    this.feedback_msg("Exported")
+                    this.feedback_msg(getString(R.string.feedback_exported))
                 }
             }
         }
@@ -88,7 +85,7 @@ class MainActivity : AppCompatActivity() {
             result?.data?.data?.also { uri ->
                 applicationContext.contentResolver.openFileDescriptor(uri, "w")?.use {
                     FileOutputStream(it.fileDescriptor).write(opus_manager.get_midi().as_bytes())
-                    this.feedback_msg("Exported to midi")
+                    this.feedback_msg(getString(R.string.feedback_exported_to_midi))
                 }
             }
         }
@@ -169,14 +166,14 @@ class MainActivity : AppCompatActivity() {
         if (this.get_opus_manager().has_changed_since_save()) {
             val that = this
             AlertDialog.Builder(this, R.style.AlertDialog).apply {
-                setTitle("Save Current Project First?")
+                setTitle(getString(R.string.dialog_save_warning_title))
                 setCancelable(true)
-                setPositiveButton("Yes") { dialog, _ ->
+                setPositiveButton(getString(R.string.dlg_confirm)) { dialog, _ ->
                     that.save_current_project()
                     dialog.dismiss()
                     callback()
                 }
-                setNegativeButton("No") { dialog, _ ->
+                setNegativeButton(getString(R.string.dlg_decline)) { dialog, _ ->
                     dialog.dismiss()
                     callback()
                 }
@@ -244,7 +241,7 @@ class MainActivity : AppCompatActivity() {
         val tvTempo: TextView = this.findViewById(R.id.tvTempo)
         tvTempo.text = this.getString(R.string.label_bpm, opus_manager.tempo.toInt())
         tvTempo.setOnClickListener {
-            this.popup_number_dialog("Set Tempo (BPM)", 1, 999, opus_manager.tempo.toInt()) { tempo: Int ->
+            this.popup_number_dialog(getString(R.string.dlg_set_tempo), 1, 999, opus_manager.tempo.toInt()) { tempo: Int ->
                 opus_manager.set_tempo(tempo.toFloat())
             }
         }
@@ -304,7 +301,7 @@ class MainActivity : AppCompatActivity() {
 
         val opus_manager = this.get_opus_manager()
         AlertDialog.Builder(main_fragment.context, R.style.AlertDialog).apply {
-            setTitle("Change Project Name")
+            setTitle(getString(R.string.dlg_change_name))
             setView(viewInflated)
             setPositiveButton(android.R.string.ok) { dialog, _ ->
                 opus_manager.set_project_name(input.text.toString())
@@ -326,7 +323,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun save_current_project() {
         this.project_manager.save(this.opus_manager)
-        this.feedback_msg("Project Saved")
+        this.feedback_msg(getString(R.string.feedback_project_saved))
         this.update_menu_options()
     }
 
@@ -431,7 +428,7 @@ class MainActivity : AppCompatActivity() {
 
         val that = this
         AlertDialog.Builder(main_fragment!!.context, R.style.AlertDialog).apply {
-            setTitle("Really delete $title?")
+            setTitle(resources.getString(R.string.dlg_delete_title, title))
 
             setPositiveButton(android.R.string.ok) { dialog, _ ->
                 that.delete_project()
@@ -453,12 +450,12 @@ class MainActivity : AppCompatActivity() {
         this.navTo("main")
 
 
-        this.feedback_msg("Deleted \"$title\"")
+        this.feedback_msg(resources.getString(R.string.feedback_delete, this.title))
     }
 
     private fun copy_project() {
         this.project_manager.copy(this.opus_manager)
-        this.feedback_msg("Now working on copy")
+        this.feedback_msg(getString(R.string.feedback_on_copy))
     }
 
     private fun closeDrawer() {
@@ -551,7 +548,7 @@ class MainActivity : AppCompatActivity() {
 
 
         AlertDialog.Builder(this, R.style.AlertDialog)
-            .setTitle("Transpose")
+            .setTitle(getString(R.string.dlg_transpose))
             .setView(viewInflated)
             .setPositiveButton(android.R.string.ok) { _, _ ->
                 val value = npOnes.value
@@ -706,7 +703,7 @@ class MainActivity : AppCompatActivity() {
             val new_path = this.project_manager.get_new_path()
             this.opus_manager.import_midi(midi)
             this.opus_manager.path = new_path
-            this.opus_manager.set_project_name(filename ?: "Imported Midi")
+            this.opus_manager.set_project_name(filename ?: getString(R.string.default_imported_midi_title))
             this.opus_manager.clear_history()
         }
         this.cancel_reticle()
@@ -839,47 +836,6 @@ class MainActivity : AppCompatActivity() {
         return this.project_manager.has_projects_saved()
     }
 
-    fun download_fluid(): Long? {
-        var filename = "FluidR3_GM_GS.sf2"
-        val url = "https://archive.org/download/fluidr3-gm-gs/$filename"
-
-        val path = "${this.getExternalFilesDir(null)}/SoundFonts"
-        val fluid_file = File("$path/$filename")
-        if (fluid_file.exists()) {
-            return null
-        }
-
-        val location = File(path)
-        if (!location.exists()) {
-            location.mkdirs()
-        }
-
-        val downloadReference: Long
-        val dm: DownloadManager = this.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-        val uri = Uri.parse(url)
-        val that = this
-        val request = DownloadManager.Request(uri).apply {
-            setDestinationInExternalFilesDir(that, null, "SoundFonts/$filename")
-            setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-            setTitle(title)
-        }
-
-        downloadReference = dm.enqueue(request)
-
-
-
-        //thread {
-        //    while (dm.getUriForDownloadedFile(downloadReference) == null) {
-        //        Thread.sleep(5)
-        //    }
-        //    this.runOnUiThread {
-        //        this.set_soundfont(filename)
-        //        this.save_configuration()
-        //    }
-        //}
-        return downloadReference
-    }
-
     fun has_fluid_soundfont(): Boolean {
         val filename = "FluidR3_GM_GS.sf2"
         val soundfont_dir = this.get_soundfont_directory()
@@ -889,7 +845,7 @@ class MainActivity : AppCompatActivity() {
 
     fun has_soundfont(): Boolean {
         val soundfont_dir = this.get_soundfont_directory()
-        return soundfont_dir.listFiles().isNotEmpty()
+        return soundfont_dir.listFiles()?.isNotEmpty() ?: false
     }
 
     fun get_drum_options(): List<Pair<String, Int>> {

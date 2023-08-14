@@ -1,6 +1,5 @@
 package com.qfs.pagan
 
-import android.app.AlertDialog
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -84,13 +83,12 @@ class LandingPageFragment : PaganFragment() {
         }
 
         linkSource.setOnClickListener {
-            val url = "https://burnsomni.net/git/radixulous"
             val intent = Intent(Intent.ACTION_VIEW)
-            intent.data = Uri.parse(url)
+            intent.data = Uri.parse(getString(R.string.url_git))
             startActivity(intent)
         }
 
-        var main = this.get_main()
+        val main = this.get_main()
         if (main.has_soundfont()) {
             this.binding.root.findViewById<LinearLayout>(R.id.llSFWarningLanding).visibility = View.GONE
         }  else {

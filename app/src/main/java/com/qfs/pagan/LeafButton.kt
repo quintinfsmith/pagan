@@ -123,14 +123,14 @@ class LeafButton(
                     is LinksLayer.SelfLinkError -> { }
                     is LinksLayer.MixedLinkException -> {
                         editor_table.notify_cell_change(beat_key)
-                        this.activity.feedback_msg("Can't link percussion to non-percussion")
+                        this.activity.feedback_msg(context.getString(R.string.feedback_mixed_link))
                     }
                     is LinksLayer.LinkRangeOverlap,
                     is LinksLayer.LinkRangeOverflow -> {
                         editor_table.notify_cell_change(beat_key)
                         opus_manager.opusManagerCursor.is_linking = false
                         opus_manager.cursor_select(beat_key, this.position)
-                        this.activity.feedback_msg("Bad Range")
+                        this.activity.feedback_msg(context.getString(R.string.feedback_bad_range))
                     }
                     else -> {
                         throw e

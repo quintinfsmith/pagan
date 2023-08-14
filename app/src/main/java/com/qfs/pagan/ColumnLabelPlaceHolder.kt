@@ -1,13 +1,7 @@
 package com.qfs.pagan
 
-import android.content.Context
-import android.util.AttributeSet
-import android.view.ContextThemeWrapper
 import android.view.ViewGroup
-import android.view.ViewGroup.LayoutParams.MATCH_PARENT
-import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
-import kotlin.concurrent.thread
 
 class ColumnLabelPlaceHolder(var viewHolder: ColumnLabelViewHolder, column_width: Int): LinearLayout(viewHolder.itemView.context) {
     init {

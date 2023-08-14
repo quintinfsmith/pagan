@@ -105,7 +105,7 @@ class EditorFragment : PaganFragment() {
                     main.import_midi(path)
                 } catch (e: InvalidMIDIFile) {
                     main.get_opus_manager().new()
-                    main.feedback_msg("Invalid MIDI")
+                    main.feedback_msg(getString(R.string.feedback_midi_fail))
                 }
             }
         }
@@ -122,7 +122,7 @@ class EditorFragment : PaganFragment() {
                 if (!opus_manager.first_load_done) {
                     opus_manager.new()
                 }
-                this.get_main().feedback_msg("Corrupt Project File")
+                this.get_main().feedback_msg(getString(R.string.feedback_import_fail))
             }
         }
 
@@ -132,10 +132,6 @@ class EditorFragment : PaganFragment() {
             main.get_opus_manager().new()
             main.cancel_reticle()
         }
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
     }
 
     override fun onDestroyView() {
@@ -251,7 +247,7 @@ class EditorFragment : PaganFragment() {
             opus_manager.cursor_select_column(beat + 1)
         }
         btnInsertBeat.setOnLongClickListener {
-            main.popup_number_dialog( "Insert Beats", 1, 99) { count: Int ->
+            main.popup_number_dialog( getString(R.string.dlg_insert_beats), 1, 99) { count: Int ->
                 val beat = opus_manager.opusManagerCursor.beat
                 opus_manager.insert_beat_at_cursor(count)
                 opus_manager.cursor_select_column(beat + count)
@@ -267,7 +263,7 @@ class EditorFragment : PaganFragment() {
                     opus_manager.cursor_select_column(opus_manager.opus_beat_count - 1)
                 }
             } catch (e: OpusManagerBase.RemovingLastBeatException) {
-                this.get_main().feedback_msg("Can't remove only beat")
+                this.get_main().feedback_msg(getString(R.string.feedback_rm_lastbeat))
             }
 
             if (opus_manager.opus_beat_count == 1) {
@@ -276,7 +272,7 @@ class EditorFragment : PaganFragment() {
         }
 
         btnRemoveBeat.setOnLongClickListener {
-            main.popup_number_dialog("Remove Beats", 1, opus_manager.opus_beat_count - 1) { count: Int ->
+            main.popup_number_dialog(getString(R.string.dlg_remove_beats), 1, opus_manager.opus_beat_count - 1) { count: Int ->
                 val beat = opus_manager.opusManagerCursor.beat
                 opus_manager.remove_beat_at_cursor(count)
                 if (beat >= opus_manager.opus_beat_count) {
@@ -352,10 +348,10 @@ class EditorFragment : PaganFragment() {
             }
 
             btnRemoveLine.setOnLongClickListener {
-                var lines = opus_manager.channels[opus_manager.opusManagerCursor.channel].size
-                var max_lines = min(lines - 1, lines - opus_manager.opusManagerCursor.line_offset)
+                val lines = opus_manager.channels[opus_manager.opusManagerCursor.channel].size
+                val max_lines = min(lines - 1, lines - opus_manager.opusManagerCursor.line_offset)
                 main.popup_number_dialog(
-                    "Remove Lines",
+                    getString(R.string.dlg_remove_lines),
                     1,
                     max_lines
                 ) { count: Int ->
@@ -372,7 +368,7 @@ class EditorFragment : PaganFragment() {
 
         btnInsertLine.setOnLongClickListener {
             main.popup_number_dialog(
-                "Insert Lines",
+                getString(R.string.dlg_insert_lines),
                 1,
                 9,
             ) { count: Int ->
@@ -472,7 +468,7 @@ class EditorFragment : PaganFragment() {
         }
 
         btnSplit.setOnLongClickListener {
-            main.popup_number_dialog("Split", 2, 29) { splits: Int ->
+            main.popup_number_dialog(getString(R.string.dlg_split), 2, 29) { splits: Int ->
                 val beatkey = opus_manager.opusManagerCursor.get_beatkey()
                 val position = opus_manager.opusManagerCursor.get_position().toMutableList()
 
@@ -531,7 +527,7 @@ class EditorFragment : PaganFragment() {
         }
 
         btnInsert.setOnLongClickListener {
-            main.popup_number_dialog("Insert", 1, 29) { count: Int ->
+            main.popup_number_dialog(getString(R.string.dlg_insert), 1, 29) { count: Int ->
                 val beat_key = opus_manager.opusManagerCursor.get_beatkey()
                 val position = opus_manager.opusManagerCursor.get_position().toMutableList()
                 if (position.isEmpty()) {
@@ -627,11 +623,11 @@ class EditorFragment : PaganFragment() {
     fun play_event(beat_key: BeatKey, position: List<Int>) {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
-        var event_note = opus_manager.get_absolute_value(beat_key, position) ?: return
+        val event_note = opus_manager.get_absolute_value(beat_key, position) ?: return
         if (event_note < 0) {
             return
         }
-        var volume = opus_manager.channels[beat_key.channel].get_line_volume(beat_key.line_offset)
+        val volume = opus_manager.channels[beat_key.channel].get_line_volume(beat_key.line_offset)
         main.play_event(
             beat_key.channel,
             event_note,
@@ -691,7 +687,7 @@ class EditorFragment : PaganFragment() {
     }
 
     private fun interact_btnCancelLink() {
-        var opus_manager = this.get_main().get_opus_manager()
+        val opus_manager = this.get_main().get_opus_manager()
         opus_manager.opusManagerCursor.is_linking = false
         if (opus_manager.opusManagerCursor.mode == OpusManagerCursor.CursorMode.Range) {
             val beat_key = opus_manager.opusManagerCursor.range!!.first

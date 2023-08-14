@@ -15,14 +15,14 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Active SoundFont:"
+                    android:text="@string/label_settings_sf"
                     android:paddingStart="15dp"
                     android:paddingTop="@dimen/normal_padding"
                     android:paddingEnd="15dp" />
 
                 <Button
                     android:id="@+id/btnChooseSoundFont"
-                    android:text="Mute"
+                    android:text="@string/btn_settings_sfmute"
                     android:layout_weight="1"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content" />

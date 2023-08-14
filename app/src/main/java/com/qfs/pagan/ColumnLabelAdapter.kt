@@ -1,6 +1,7 @@
 package com.qfs.pagan
 
-import android.view.*
+import android.view.View
+import android.view.ViewGroup
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.pagan.InterfaceLayer as OpusManager
@@ -13,11 +14,12 @@ class ColumnLabelAdapter(editor_table: EditorTable) : RecyclerView.Adapter<Colum
         this.column_recycler = editor_table.main_recycler
         this.recycler = editor_table.column_label_recycler
         this.recycler.adapter = this
-        this.recycler.layoutManager = TestLayoutManager(
+        this.recycler.layoutManager = LinearLayoutManager(
             this.recycler.context,
             LinearLayoutManager.HORIZONTAL,
+            false
         )
-        //(this.recycler.itemAnimator as SimpleItemAnimator).supportsChangeAnimations = false
+
         this.recycler.itemAnimator = null
         val that = this
         this.registerAdapterDataObserver(
@@ -37,32 +39,8 @@ class ColumnLabelAdapter(editor_table: EditorTable) : RecyclerView.Adapter<Colum
 
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ColumnLabelViewHolder {
-        //label.setOnClickListener {
-        //    val holder = (it as LabelView).viewHolder ?: return@setOnClickListener
-        //    val beat = holder.bindingAdapterPosition
-
-        //    val rvTable = this.activity.findViewById<RecyclerView>(R.id.rvTable)
-        //    val adapter = rvTable.adapter as BeatColumnAdapter
-        //    if (adapter.linking_beat != null) {
-        //        adapter.cancel_linking()
-        //    }
-
-        //    this.opus_manager.cursor_select_column(beat)
-        //}
-
-        //label.setOnFocusChangeListener { view, is_focused: Boolean ->
-        //    if (is_focused) {
-        //        val holder = (view as LabelView).viewHolder ?: return@setOnFocusChangeListener
-        //        val beat = holder.bindingAdapterPosition
-        //        this.opus_manager.cursor_select_column(beat)
-        //    }
-        //}
-
         return ColumnLabelViewHolder(parent.context)
     }
-
-    override fun onViewAttachedToWindow(holder: ColumnLabelViewHolder) { }
-
 
     override fun onBindViewHolder(holder: ColumnLabelViewHolder, position: Int) {
         var weight = this.get_editor_table()!!.get_column_width(position)
@@ -85,11 +63,6 @@ class ColumnLabelAdapter(editor_table: EditorTable) : RecyclerView.Adapter<Colum
         this.notifyItemRemoved(index)
     }
 
-    fun scroll(x: Int) {
-        this.recycler.scrollBy(x, 0)
-    }
-
-
     fun get_editor_table(): EditorTable? {
         var view = this.recycler as View
         while (view !is EditorTable && view.parent != null) {
@@ -111,7 +84,7 @@ class ColumnLabelAdapter(editor_table: EditorTable) : RecyclerView.Adapter<Colum
     }
 
     fun clear() {
-        var count = this.column_count
+        val count = this.column_count
         this.column_count = 0
         this.notifyItemRangeRemoved(0, count)
     }

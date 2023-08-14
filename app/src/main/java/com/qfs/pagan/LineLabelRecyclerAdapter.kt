@@ -1,6 +1,5 @@
 package com.qfs.pagan
 
-import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -17,7 +16,7 @@ class LineLabelRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<
     init {
         this.recycler = editor_table.line_label_recycler
         this.recycler.adapter = this
-        this.recycler.layoutManager = TestLayoutManager(this.recycler.context, VERTICAL)
+        this.recycler.layoutManager = LinearLayoutManager(this.recycler.context, VERTICAL, false)
         this.recycler.itemAnimator = null
 
         val that = this
@@ -33,28 +32,16 @@ class LineLabelRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<
         )
     }
 
-
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): LineLabelViewHolder {
-
-
         return LineLabelViewHolder(parent.context)
-    }
-
-    override fun onViewAttachedToWindow(holder: LineLabelViewHolder) {
-
     }
 
     override fun onBindViewHolder(holder: LineLabelViewHolder, position: Int) {
         val opus_manager = this.get_opus_manager()
         val label_view = LineLabelView(holder)
-        val position = label_view.get_position()
         val (channel, line_offset) = opus_manager.get_std_offset(position)
         val label = this.get_label_text(channel, line_offset)
-
         label_view.set_text(label)
-
-
-
     }
 
     private fun get_label_text(channel: Int, line_offset: Int): String {
@@ -69,47 +56,6 @@ class LineLabelRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<
 
     override fun getItemCount(): Int {
         return this.label_count
-    }
-
-    fun scrollToLine(y: Int) {
-        val current_y = this.recycler.computeVerticalScrollOffset()
-        this.recycler.scrollBy(0, y - current_y)
-    }
-
-    private fun interact_lineLabel(view: LineLabelView) {
-        //val rvTable = this.activity.findViewById<RecyclerView>(R.id.rvTable)
-        //val adapter = rvTable.adapter as BeatColumnAdapter
-
-        //if (adapter.linking_beat != null) {
-        //    try {
-        //        if (adapter.linking_beat_b == null) {
-        //            this.opus_manager.link_row(
-        //                view.channel,
-        //                view.line_offset,
-        //                adapter.linking_beat!!
-        //            )
-        //        } else {
-
-        //            this.opus_manager.link_beat_range_horizontally(
-        //                view.channel,
-        //                view.line_offset,
-        //                adapter.linking_beat!!,
-        //                adapter.linking_beat_b!!
-        //            )
-        //        }
-        //    } catch (e: Exception) {
-        //        if (e is LinksLayer.MixedLinkException) {
-        //            this.activity.feedback_msg("Can't Link percussion with non-percussion")
-        //        } else {
-        //            throw e
-        //        }
-        //    }
-        //    adapter.cancel_linking()
-        //}
-        //this.opus_manager.cursor_select_row(
-        //    view.channel,
-        //    view.line_offset
-        //)
     }
 
     fun set_dragging_line(channel: Int, line_offset:Int) {
@@ -138,7 +84,7 @@ class LineLabelRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<
         this.notifyItemRemoved(index)
     }
     fun clear() {
-        var count = this.label_count
+        val count = this.label_count
         this.label_count = 0
         this.notifyItemRangeRemoved(0, count)
     }

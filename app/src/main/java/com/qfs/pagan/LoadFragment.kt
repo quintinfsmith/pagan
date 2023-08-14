@@ -1,16 +1,17 @@
 package com.qfs.pagan
 
 import android.os.Bundle
-import android.view.*
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import androidx.core.os.bundleOf
-import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResult
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.pagan.databinding.FragmentLoadBinding
+import com.qfs.pagan.opusmanager.LoadedJSONData
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import com.qfs.pagan.opusmanager.LoadedJSONData
 import java.io.File
 
 class LoadFragment : PaganFragment() {
@@ -36,7 +37,7 @@ class LoadFragment : PaganFragment() {
     override fun onStart() {
         super.onStart()
         this.get_main().update_menu_options()
-        this.get_main().set_title_text("Load Project")
+        this.get_main().set_title_text(getString(R.string.load_fragment_label))
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

@@ -1,6 +1,5 @@
 package com.qfs.pagan
 
-import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
@@ -91,9 +90,14 @@ class ColumnRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<Col
 
     fun get_editor_table(): EditorTable? {
         var view = this.recycler as View
-        while (view !is EditorTable && view != null) {
+        while (view !is EditorTable) {
+            if (view.parent == null) {
+                break
+            }
+
             view = view.parent as View
         }
+
         return if (view is EditorTable) {
             view
         } else {

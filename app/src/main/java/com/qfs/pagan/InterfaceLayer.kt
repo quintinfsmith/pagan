@@ -967,8 +967,5 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             // TODO: Raise Error
         }
     }
-    override fun link_row(channel: Int, line_offset: Int, beat_key: BeatKey) {
-        super.link_row(channel, line_offset, beat_key)
-    }
 
 }

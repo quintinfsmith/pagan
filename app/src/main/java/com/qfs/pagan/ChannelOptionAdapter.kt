@@ -62,9 +62,9 @@ class ChannelOptionAdapter(
             curChannel.midi_bank,
             curChannel.midi_program
         )] ?: if (curChannel.midi_channel == 9) {
-            "Unknown Percussion"
+            this.activity.resources.getString(R.string.unknown_percussion)
         } else {
-            "Unknown ${defaults[curChannel.midi_program]}"
+            this.activity.resources.getString(R.string.unknown_instrument, defaults[curChannel.midi_program])
         }
 
         btnChooseInstrument.text = this.activity.getString(R.string.label_choose_instrument, position, label)

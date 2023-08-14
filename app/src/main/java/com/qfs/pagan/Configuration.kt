@@ -23,7 +23,7 @@ data class Configuration(
     }
 
     fun save(path: String) {
-        var file = File(path)
+        val file = File(path)
         val json_string = Json.encodeToString(this)
         file.writeText(json_string)
     }

@@ -48,10 +48,6 @@ class ColumnLabelView(val viewHolder: RecyclerView.ViewHolder): RelativeLayout(C
         }
     }
 
-    fun set_text(text: String) {
-        this.textView.text = text
-        this.contentDescription = "Column $text"
-    }
     override fun onCreateDrawableState(extraSpace: Int): IntArray? {
         val drawableState = super.onCreateDrawableState(extraSpace + 1)
         return this.build_drawable_state(drawableState)
@@ -65,7 +61,8 @@ class ColumnLabelView(val viewHolder: RecyclerView.ViewHolder): RelativeLayout(C
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
         val beat = (this.viewHolder as ColumnLabelViewHolder).bindingAdapterPosition
-        this.set_text("$beat")
+        this.contentDescription = resources.getString(R.string.desc_column_label, beat)
+        this.textView.text = beat.toString()
     }
 
     fun build_drawable_state(drawableState: IntArray?): IntArray? {

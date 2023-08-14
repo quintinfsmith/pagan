@@ -72,9 +72,9 @@ class LineLabelView(var viewHolder: RecyclerView.ViewHolder): LinearLayout(Conte
 
 
         this.setOnTouchListener { view: View, touchEvent: MotionEvent ->
-            var adapter = (view as LineLabelView).get_adapter()
+            val adapter = (view as LineLabelView).get_adapter()
             if (touchEvent.action == MotionEvent.ACTION_MOVE) {
-                var (channel, line_offset) = view.get_std_position()
+                val (channel, line_offset) = view.get_std_position()
                 if (!adapter.is_dragging()) {
                     adapter.set_dragging_line(channel, line_offset)
                     view.startDragAndDrop(

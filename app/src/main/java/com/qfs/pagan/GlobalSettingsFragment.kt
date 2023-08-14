@@ -4,7 +4,6 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.view.*
 import android.widget.Button
 import android.widget.LinearLayout
@@ -41,7 +40,7 @@ class GlobalSettingsFragment : PaganFragment() {
                         SoundFont(new_file.path)
                         this.set_soundfont(new_file.name)
                     } catch (e: Exception) {
-                        this.get_main().feedback_msg("Invalid sf2 File")
+                        this.get_main().feedback_msg(getString(R.string.feedback_invalid_sf2_file))
                         new_file.delete()
                         return@registerForActivityResult
                     }
@@ -98,7 +97,7 @@ class GlobalSettingsFragment : PaganFragment() {
 
         btnChooseSoundFont.text = when (soundfont_filename) {
             null -> {
-                "No Soundfont"
+                getString(R.string.no_soundfont)
             }
             else -> {
                 val soundfont_dir = main.get_soundfont_directory()
@@ -106,7 +105,7 @@ class GlobalSettingsFragment : PaganFragment() {
                 if (filecheck.exists()) {
                     soundfont_filename
                 } else {
-                    "No Soundfont"
+                    getString(R.string.no_soundfont)
                 }
             }
         }
@@ -122,7 +121,7 @@ class GlobalSettingsFragment : PaganFragment() {
         val popupMenu = PopupMenu(wrapper, view)
 
         val soundfont_dir = this.get_main().get_soundfont_directory()
-        popupMenu.menu.add(0, 0, 0, "No Soundfont")
+        popupMenu.menu.add(0, 0, 0, getString(R.string.no_soundfont))
 
         val file_list = soundfont_dir.listFiles()?.toList() ?: listOf<File>()
         file_list.forEachIndexed { i: Int, file: File ->
@@ -130,7 +129,7 @@ class GlobalSettingsFragment : PaganFragment() {
         }
 
         // +3 to the order to account for preceding menu entries
-        popupMenu.menu.add(2, 0, file_list.size + 3, "Import...")
+        popupMenu.menu.add(2, 0, file_list.size + 3, getString(R.string.option_import_soundfont))
 
         popupMenu.setOnMenuItemClickListener {
             when (it.groupId) {
@@ -153,7 +152,7 @@ class GlobalSettingsFragment : PaganFragment() {
 
     fun disable_soundfont() {
         val btnChooseSoundFont = this.get_main().findViewById<Button>(R.id.btnChooseSoundFont)
-        btnChooseSoundFont.text = "No Soundfont"
+        btnChooseSoundFont.text = getString(R.string.no_soundfont)
         this.get_main().disable_soundfont()
         this.get_main().save_configuration()
     }

@@ -1,5 +1,6 @@
 package com.qfs.pagan
 
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
@@ -22,6 +23,7 @@ class ColumnRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<Col
                 override fun onItemRangeInserted(start: Int, count: Int) {
                     that.notifyItemChanged(start + count - 1)
                 }
+                //override fun onItemRangeChanged(start: Int, count: Int) { }
             }
         )
     }

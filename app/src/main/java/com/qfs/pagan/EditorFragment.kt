@@ -657,20 +657,37 @@ class EditorFragment : PaganFragment() {
     private fun interact_btnUnlink() {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
-        val beat_key = opus_manager.cursor.get_beatkey()
         opus_manager.unlink_beat()
         opus_manager.cursor.is_linking = false
-        opus_manager.cursor_select(beat_key, opus_manager.get_first_position(beat_key))
-
+        when (opus_manager.cursor.mode) {
+            Cursor.CursorMode.Single -> {
+                val beat_key = opus_manager.cursor.get_beatkey()
+                opus_manager.cursor_select(beat_key, opus_manager.get_first_position(beat_key))
+            }
+            Cursor.CursorMode.Range -> {
+                val (first, _) = opus_manager.cursor.range!!
+                opus_manager.cursor_select(first, opus_manager.get_first_position(first))
+            }
+            else -> {}
+        }
     }
 
     private fun interact_btnUnlinkAll() {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
-        val beat_key = opus_manager.cursor.get_beatkey()
         opus_manager.clear_link_pool()
         opus_manager.cursor.is_linking = false
-        opus_manager.cursor_select(beat_key, opus_manager.get_first_position(beat_key))
+        when (opus_manager.cursor.mode) {
+            Cursor.CursorMode.Single -> {
+                val beat_key = opus_manager.cursor.get_beatkey()
+                opus_manager.cursor_select(beat_key, opus_manager.get_first_position(beat_key))
+            }
+            Cursor.CursorMode.Range -> {
+                val (first, _) = opus_manager.cursor.range!!
+                opus_manager.cursor_select(first, opus_manager.get_first_position(first))
+            }
+            else -> {}
+        }
 
     }
 

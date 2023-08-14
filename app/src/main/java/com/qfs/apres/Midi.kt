@@ -31,6 +31,11 @@ class Midi {
         }
 
         fun from_bytes(file_bytes: ByteArray): Midi {
+            val first_four = ByteArray(4) { i -> file_bytes[i] }
+            if (!first_four.contentEquals("MThd".toByteArray())) {
+                throw InvalidChunkType(first_four.toString())
+            }
+
             val working_bytes = file_bytes.toMutableList()
             val mlo = Midi()
             var sub_bytes: MutableList<Byte>

@@ -33,6 +33,7 @@ class CellRecycler(var viewHolder: ColumnRecyclerViewHolder): ScrollLockingRecyc
 
         this.layoutParams.height = MATCH_PARENT
         this.layoutParams.width = WRAP_CONTENT
+
         this.setHasFixedSize(true)
         this.overScrollMode = View.OVER_SCROLL_NEVER
     }

@@ -118,7 +118,7 @@ class LeafButton(
                 // isn't required, and can cause a crash
                 (this.parent as ViewGroup).removeView(this)
                 opus_manager.link_beat(beat_key)
-                opus_manager.cursor_select(beat_key, this.position)
+                opus_manager.cursor_select(beat_key, opus_manager.get_first_position(beat_key))
             } catch (e: Exception) {
                 when (e) {
                     is LinksLayer.SelfLinkError -> { }

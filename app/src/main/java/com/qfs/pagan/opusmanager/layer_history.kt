@@ -866,6 +866,11 @@ open class HistoryLayer : LinksLayer() {
         }
         super.unlink_beat(beat_key)
     }
+    override fun unlink_range(first_key: BeatKey, second_key: BeatKey) {
+        this.history_cache.remember {
+            super.unlink_range(first_key, second_key)
+        }
+    }
 
     override fun link_column(column: Int, beat_key: BeatKey) {
         this.history_cache.remember {

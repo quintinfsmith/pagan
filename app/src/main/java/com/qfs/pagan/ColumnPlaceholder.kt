@@ -1,5 +1,6 @@
 package com.qfs.pagan
 
+import android.util.Log
 import android.view.ContextThemeWrapper
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
@@ -21,11 +22,5 @@ class ColumnPlaceholder(var viewHolder: ColumnRecyclerViewHolder, column_width: 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
         this.replace()
-        //thread {
-        //    //Thread.sleep(500)
-        //    this.viewHolder.get_activity().runOnUiThread {
-
-        //    }
-        //}
     }
 }

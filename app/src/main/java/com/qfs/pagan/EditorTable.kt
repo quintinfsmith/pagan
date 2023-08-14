@@ -3,6 +3,7 @@ package com.qfs.pagan
 import android.content.Context
 import android.os.Parcelable
 import android.util.AttributeSet
+import android.util.Log
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
@@ -297,7 +298,11 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         val main_recycler_adapter = (this.main_recycler.adapter!! as ColumnRecyclerAdapter)
         // Only one tree needs to be checked, since links are all the same
         val new_tree = opus_manager.get_beat_tree(beat_key)
-        val new_cell_width = new_tree.get_max_child_weight() * new_tree.size
+        val new_cell_width = if (new_tree.is_leaf()) {
+            1
+        } else {
+            new_tree.get_max_child_weight() * new_tree.size
+        }
         for (linked_beat_key in opus_manager.get_all_linked(beat_key)) {
 
             val y = try {

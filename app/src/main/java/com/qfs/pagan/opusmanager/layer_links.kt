@@ -44,6 +44,11 @@ open class LinksLayer : OpusManagerBase() {
             this.remove_link_pool(index)
         }
     }
+    open fun unlink_range(first_key: BeatKey, second_key: BeatKey) {
+        for (beat_key in this.get_beatkeys_in_range(first_key, second_key)) {
+            this.unlink_beat(beat_key)
+        }
+    }
 
     open fun clear_link_pool(beat_key: BeatKey) {
         val index = this.link_pool_map[beat_key] ?: return

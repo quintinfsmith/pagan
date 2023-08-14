@@ -19,7 +19,8 @@ class CellRecyclerAdapter(): RecyclerView.Adapter<CellRecyclerViewHolder>() {
                 override fun onItemRangeInserted(start: Int, count: Int) {
                     //that.notifyItemChanged(start + count)
                 }
-                override fun onItemRangeChanged(start: Int, count: Int) { }
+                override fun onItemRangeChanged(start: Int, count: Int) {
+                }
                 override fun onItemRangeRemoved(start: Int, count: Int) {
                     that.notifyItemRangeChanged(start, that.itemCount - start)
                 }

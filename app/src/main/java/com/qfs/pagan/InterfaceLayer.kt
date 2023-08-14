@@ -826,9 +826,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         if (this.cursor.mode == Cursor.CursorMode.Single) {
             this.unlink_beat(this.cursor.get_beatkey())
         } else if (this.cursor.mode == Cursor.CursorMode.Range) {
-            for (beat_key in this.get_beatkeys_in_range(cursor.range!!.first, cursor.range!!.second)) {
-                this.unlink_beat(beat_key)
-            }
+            this.unlink_range(cursor.range!!.first, cursor.range!!.second)
         }
     }
 

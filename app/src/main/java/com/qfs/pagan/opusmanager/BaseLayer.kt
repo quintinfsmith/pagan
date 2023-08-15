@@ -17,8 +17,13 @@ import kotlinx.serialization.encodeToString
 import java.lang.Integer.max
 import java.lang.Integer.min
 import kotlin.math.pow
-
-open class OpusManagerBase {
+/**
+ * The logic of the Opus Manager.
+ *
+ * This is completely separated from user interface or state.
+ * @constructor Creates an unusablely empty object. new() / load() / import() need to be called still
+ */
+open class BaseLayer {
     class BadBeatKey(beat_key: BeatKey): Exception("BeatKey $beat_key doesn't exist")
     class NonEventConversion(beat_key: BeatKey, position: List<Int>): Exception("Attempting to convert non-event @ $beat_key:$position")
     class NoteOutOfRange(n: Int): Exception("Attempting to use unsupported note $n")
@@ -41,10 +46,16 @@ open class OpusManagerBase {
     var project_name: String = "New Opus"
 
     //// RO Functions ////
+    /**
+     * Calculates the number of channels in use.
+     */
     fun get_channel_count(): Int {
         return this.channels.size
     }
 
+    /**
+     * Calculates the position of the first leaf in a given tree
+     */
     fun get_first_position(beat_key: BeatKey, start_position: List<Int>? = null): List<Int> {
         val output = start_position?.toMutableList() ?: mutableListOf()
         var tree = this.get_tree(beat_key, output)
@@ -55,6 +66,9 @@ open class OpusManagerBase {
         return output
     }
 
+    /**
+     * Calculates how many lines are in use.
+     */
     fun get_total_line_count(): Int {
         var output = 0
         this.channels.forEach { channel: OpusChannel ->
@@ -63,6 +77,9 @@ open class OpusManagerBase {
         return output
     }
 
+    /**
+     * Calculates how many lines down a given row is.
+     */
     fun get_abs_offset(channel_index: Int, line_offset: Int): Int {
         // Allows for line_offsets longer than line counts. ie channel=1, line_offset=2 could technically be channel=2
         var count = 0
@@ -77,6 +94,9 @@ open class OpusManagerBase {
         throw IndexOutOfBoundsException()
     }
 
+    /**
+     * Finds all the BeatKeys in a range denoted by [top_left_key] & [bottom_right_key].
+     */
     fun get_beatkeys_in_range(top_left_key: BeatKey, bottom_right_key: BeatKey): List<BeatKey> {
         val output = mutableListOf<BeatKey>()
         this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
@@ -107,6 +127,10 @@ open class OpusManagerBase {
         }
         return output
     }
+
+    /**
+     * Calculate the x & y difference between two BeatKeys [beata] & [beatb]
+     */
     open fun get_abs_difference(beata: BeatKey, beatb: BeatKey): Pair<Int, Int> {
         val beata_y = this.get_abs_offset(beata.channel, beata.line_offset)
         val beatb_y = this.get_abs_offset(beatb.channel, beatb.line_offset)
@@ -114,6 +138,9 @@ open class OpusManagerBase {
         return Pair(beatb_y - beata_y, beatb.beat - beata.beat)
     }
 
+    /**
+     * Calculate which channel and line offset is denoted by the [absolute]th line
+     */
     fun get_std_offset(absolute: Int): Pair<Int, Int> {
         var count = 0
         this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
@@ -127,15 +154,24 @@ open class OpusManagerBase {
         throw IndexOutOfBoundsException()
     }
 
+    /**
+     * Get the midi instrument current used by Channel [channel]
+     */
     fun get_channel_instrument(channel: Int): Pair<Int, Int> {
         return this.channels[channel].get_instrument()
     }
 
+    /**
+     * Get the percussion instrument used on the [line_offset]th line of the percussion channel
+     */
     open fun get_percussion_instrument(line_offset: Int): Int {
         val channel = this.channels.last()
         return channel.get_mapped_line_offset(line_offset) ?: this.DEFAULT_PERCUSSION
     }
 
+    /**
+     * Get the tree structure found at the BeatKey [beat_key]
+     */
     fun get_beat_tree(beat_key: BeatKey): OpusTree<OpusEvent> {
         if (beat_key.channel >= this.channels.size) {
             throw BadBeatKey(beat_key)
@@ -154,6 +190,9 @@ open class OpusManagerBase {
         return this.channels[beat_key.channel].get_tree(line_offset, beat_key.beat)
     }
 
+    /**
+     * Get the tree structure found within the BeatKey [beat_key] at [position]
+     */
     fun get_tree(beat_key: BeatKey, position: List<Int>): OpusTree<OpusEvent> {
         try {
             return this.channels[beat_key.channel].get_tree(
@@ -166,11 +205,19 @@ open class OpusManagerBase {
         }
     }
 
+    /**
+     * Get the leaf immediately after the tree found at [beat_key]/[position], if any
+     * *it may not be an immediate sibling, rather an aunt, neice, etc*
+     */
     fun get_proceding_leaf(beat_key: BeatKey, position: List<Int>): OpusTree<OpusEvent>? {
         val pair = this.get_proceding_leaf_position(beat_key, position) ?: return null
         return this.get_tree(pair.first, pair.second)
     }
 
+    /**
+     * Get the last event before the tree at [beat_key]/[position], if any exist.
+     * This may or may not be in the preceding leaf, but will look for the first leaf with an associated event.
+     */
     fun get_preceding_event(beat_key: BeatKey, position: List<Int>): OpusEvent? {
         // Gets first preceding event. may skip empty leafs
         var working_position = position.toList()
@@ -183,12 +230,20 @@ open class OpusManagerBase {
         return this.get_tree(working_beat_key, working_position).get_event()
     }
 
+    /**
+     * Get the leaf immediately before the tree found at [beat_key]/[position], if any
+     * *it may not be an immediate sibling, rather an aunt, neice, etc*
+     */
     fun get_preceding_leaf(beat_key: BeatKey, position: List<Int>): OpusTree<OpusEvent>? {
         // Gets first preceding leaf, event or not
         val pair = this.get_preceding_leaf_position(beat_key, position) ?: return null
         return this.get_tree(pair.first, pair.second)
     }
 
+    /**
+     * Get the location of the leaf immediately before the tree found at [beat_key]/[position].
+     * *it may not be an immediate sibling, rather an aunt, neice, etc*
+     */
     fun get_preceding_leaf_position(beat_key: BeatKey, position: List<Int>): Pair<BeatKey, List<Int>>? {
         val working_position = position.toMutableList()
         val working_beat_key = BeatKey(beat_key.channel, beat_key.line_offset, beat_key.beat)
@@ -221,6 +276,10 @@ open class OpusManagerBase {
         return Pair(working_beat_key, working_position)
     }
 
+    /**
+     * Get the location of the leaf immediately after the tree found at [beat_key]/[position].
+     * *it may not be an immediate sibling, rather an aunt, neice, etc*
+     */
     fun get_proceding_leaf_position(beat_key: BeatKey, position: List<Int>): Pair<BeatKey, List<Int>>? {
         var working_position = position.toMutableList()
         val working_beat_key = BeatKey(beat_key.channel, beat_key.line_offset, beat_key.beat)
@@ -254,6 +313,10 @@ open class OpusManagerBase {
         return Pair(working_beat_key, working_position)
     }
 
+    /**
+     * Get the value of the event at location[beat_key]/[position], if any.
+     * if the event is relative, it will look back and add up preceding values
+     */
     open fun get_absolute_value(beat_key: BeatKey, position: List<Int>): Int? {
         val tree = this.get_tree(beat_key, position)
 
@@ -290,7 +353,12 @@ open class OpusManagerBase {
         return abs_value
     }
 
+    /**
+     * Get an ordered list the size of the number of channels in use, with values corresponding to the
+     * number of lines in each channel
+     */
     fun get_channel_line_counts(): List<Int> {
+        // TODO: Use Array?
         val output: MutableList<Int> = mutableListOf()
         for (i in 0 until this.channels.size) {
             output.add(this.channels[i].size)
@@ -298,6 +366,10 @@ open class OpusManagerBase {
         return output
     }
 
+    /**
+     * Check if the tree at location [beat_key]/[position] has any absolute event
+     * between it and the beginning of the opus on it's line.
+     */
     fun has_preceding_absolute_event(beat_key: BeatKey, position: List<Int>): Boolean {
         var working_beat_key = beat_key
         var working_position = position.toList()
@@ -322,11 +394,20 @@ open class OpusManagerBase {
         return output
     }
 
+    /**
+     * Artifact. Checks if the [channel] is assigned to be used as percussion.
+     * The last channel is now always used as percussion.
+     */
     fun is_percussion(channel: Int): Boolean {
         return channel == this.channels.size - 1
     }
     //// END RO Functions ////
-
+    /**
+     * Recalculate the event of the tree @ [beat_key]/[position]
+     * to be relative to the events before it, if it isn't already
+     *
+     * @throws NonEventConversion If no event is present
+     */
     fun convert_event_to_relative(beat_key: BeatKey, position: List<Int>) {
         val tree = this.get_tree(beat_key, position)
         if (!tree.is_event()) {
@@ -369,6 +450,12 @@ open class OpusManagerBase {
         }
     }
 
+    /**
+     * Recalculate the event of the tree @ [beat_key]/[position]
+     * to not depend on preceding events
+     *
+     * @throws NonEventConversion If no event is present
+     */
     fun convert_event_to_absolute(beat_key: BeatKey, position: List<Int>) {
         val tree = this.get_tree(beat_key, position)
         if (!tree.is_event()) {
@@ -393,6 +480,11 @@ open class OpusManagerBase {
         ))
     }
 
+    /**
+     * Insert a new tree @ [beat_key]/[position]
+     *
+     * @throws BadInsertPosition When attempting to insert a new tree next to a top-level tree
+     */
     open fun insert(beat_key: BeatKey, position: List<Int>) {
         if (position.isEmpty()) {
             throw BadInsertPosition()
@@ -403,6 +495,11 @@ open class OpusManagerBase {
         val index = position.last()
         tree.insert(index, OpusTree())
     }
+    /**
+     * Insert a new tree after [beat_key]/[position]
+     *
+     * @throws BadInsertPosition When attempting to insert a new tree next to a top-level tree
+     */
     open fun insert_after(beat_key: BeatKey, position: List<Int>) {
         if (position.isEmpty()) {
             throw BadInsertPosition()
@@ -415,6 +512,9 @@ open class OpusManagerBase {
         parent.insert(index + 1, OpusTree())
     }
 
+    /**
+     * Remove tree @ [beat_key]/[position] if it's not a top-level tree
+     */
     open fun remove(beat_key: BeatKey, position: List<Int>) {
         val tree = this.get_tree(beat_key, position)
 
@@ -594,11 +694,6 @@ open class OpusManagerBase {
         } else {
             this.insert_line(channel_new, line_new, line)
         }
-    }
-
-
-    private fun insert_beat() {
-        this.insert_beat(this.opus_beat_count, 1)
     }
 
     open fun insert_beat(beat_index: Int, count: Int) {
@@ -876,9 +971,7 @@ open class OpusManagerBase {
         this.clear()
         this.new_channel()
         this.new_channel()
-        for (i in 0 until 4) {
-            this.insert_beat()
-        }
+        this.insert_beat(0, 4)
         this.set_project_name(this.project_name)
     }
 
@@ -943,9 +1036,7 @@ open class OpusManagerBase {
         }
 
 
-        for (i in 0 until beat_count) {
-            this.insert_beat()
-        }
+        this.insert_beat(0, beat_count)
         y = 0
         json_data.channels.forEachIndexed { i, channel_data ->
             // Separate out percussion channel, just in case it isn't at the end of the channels
@@ -1191,9 +1282,7 @@ open class OpusManagerBase {
             this.new_channel(lines = channel_sizes[channel])
         }
 
-        for (i in 0 until settree.size) {
-            this.insert_beat()
-        }
+        this.insert_beat(0, settree.size)
 
         val events_to_set = mutableSetOf<Triple<BeatKey, List<Int>, OpusEvent>>()
         for ((position, event_set) in mapped_events) {

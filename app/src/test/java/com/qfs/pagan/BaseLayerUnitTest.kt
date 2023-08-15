@@ -5,7 +5,7 @@ import com.qfs.pagan.opusmanager.OpusEvent
 import com.qfs.pagan.structure.OpusTree
 import org.junit.Test
 import org.junit.Assert.*
-import com.qfs.pagan.opusmanager.OpusManagerBase as OpusManager
+import com.qfs.pagan.opusmanager.BaseLayer as OpusManager
 
 /**
  * Example local unit test, which will execute on the development machine (host).

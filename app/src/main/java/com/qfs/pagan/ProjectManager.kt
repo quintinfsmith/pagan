@@ -1,6 +1,6 @@
 package com.qfs.pagan
 import java.io.File
-import com.qfs.pagan.opusmanager.OpusManagerBase as OpusManager
+import com.qfs.pagan.opusmanager.BaseLayer as OpusManager
 
 class ProjectManager(data_dir: String) {
     val projects_dir = "$data_dir/projects/"

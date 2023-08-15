@@ -1,0 +1,41 @@
+gantt
+    dateFormat  YYYY-MM-DD
+    title       Pagan Opus Editor
+    %%excludes    weekends
+
+    %%section Critical tasks
+    %%Completed task in the critical line :crit, done, 2023-08-06,24h
+    %%Implement parser and jison          :crit, done, after des1, 2d
+    %%Create tests for parser             :crit, active, 3d
+    %%Future task in critical line        :crit, 5d
+    %%Create tests for renderer           :2d
+    %%Add to mermaid                      :1d
+    %%Functionality added                 :milestone, 2023-08-25, 0d
+
+    sdk 28 support                      :2023-08-16 9:00, 1h
+
+    section Minor
+    colorize channels                   :2023-08-21, 2h
+    improve line labels                 :2023-08-21, 2h
+    differentiate row colors            :2023-08-21, 2h
+
+    section Releases
+    v1.1.1                              :active, milestone, 2023-08-14, 2w
+    v1.1.0                              :milestone, 2023-08-14, 0d
+
+    section Documentation
+    Describe gantt syntax               :active, a1, after des1, 3d
+    Add gantt diagram to demo page      :after a1  , 20h
+    Add another diagram to demo page    :doc1, after a1, 48h
+
+
+    section Future Projects
+    Per-note Dynamics                   :fp_dyn, 2023-08-17, 1h
+    MIDI event broadcasting             :fp_midiev, 2023-08-16, 0h
+    MIDI 2.0 Support                    :fp_midi2, 2023-08-16, 0h
+    Variable Radix Support              :fp_vrs, after fp_midi2, 0h
+    MSCZ support                        :fp_mscz, 2023-08-16, 0h
+    High Contrast Mode                  :fp_hcm, 2023-08-16, 0h
+    custom color palettes               :fp_col, 2023-08-16, 0h
+    text events:                        :fp_texte, 2023-08-16, 0h
+

@@ -262,7 +262,7 @@ class EditorFragment : PaganFragment() {
                 if (beat >= opus_manager.opus_beat_count) {
                     opus_manager.cursor_select_column(opus_manager.opus_beat_count - 1)
                 }
-            } catch (e: OpusManagerBase.RemovingLastBeatException) {
+            } catch (e: BaseLayer.RemovingLastBeatException) {
                 this.get_main().feedback_msg(getString(R.string.feedback_rm_lastbeat))
             }
 

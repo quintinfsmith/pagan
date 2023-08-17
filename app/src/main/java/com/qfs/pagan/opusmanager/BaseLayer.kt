@@ -402,6 +402,7 @@ open class BaseLayer {
         return channel == this.channels.size - 1
     }
     //// END RO Functions ////
+
     /**
      * Recalculate the event of the tree @ [beat_key]/[position]
      * to be relative to the events before it, if it isn't already

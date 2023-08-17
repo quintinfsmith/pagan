@@ -15,7 +15,7 @@ import com.qfs.pagan.InterfaceLayer as OpusManager
 class LineLabelView(var viewHolder: RecyclerView.ViewHolder): LinearLayout(ContextThemeWrapper(viewHolder.itemView.context, R.style.line_label_outer)) {
     class InnerView(context: Context): androidx.appcompat.widget.AppCompatTextView(ContextThemeWrapper(context, R.style.line_label_inner)) {
         override fun onCreateDrawableState(extraSpace: Int): IntArray? {
-            val drawableState = super.onCreateDrawableState(extraSpace + 1)
+            val drawableState = super.onCreateDrawableState(extraSpace + 2)
             return if (this.parent == null) {
                 drawableState
             } else {
@@ -24,6 +24,7 @@ class LineLabelView(var viewHolder: RecyclerView.ViewHolder): LinearLayout(Conte
         }
     }
     private val STATE_FOCUSED = intArrayOf(R.attr.state_focused)
+    private val STATE_CHANNEL_EVEN = intArrayOf(R.attr.state_channel_even)
 
     private var textView = InnerView(context)
     /*
@@ -132,7 +133,7 @@ class LineLabelView(var viewHolder: RecyclerView.ViewHolder): LinearLayout(Conte
     }
 
     override fun onCreateDrawableState(extraSpace: Int): IntArray? {
-        val drawableState = super.onCreateDrawableState(extraSpace + 1)
+        val drawableState = super.onCreateDrawableState(extraSpace + 2)
         return this.build_drawable_state(drawableState)
     }
 
@@ -144,6 +145,10 @@ class LineLabelView(var viewHolder: RecyclerView.ViewHolder): LinearLayout(Conte
     fun build_drawable_state(drawableState: IntArray?): IntArray? {
         val opus_manager = this.get_opus_manager()
         val (channel, line_offset) = this.get_row()
+        if (channel % 2 == 0) {
+            mergeDrawableStates(drawableState, STATE_CHANNEL_EVEN)
+        }
+
         when (opus_manager.opusManagerCursor.mode) {
             OpusManagerCursor.CursorMode.Single,
             OpusManagerCursor.CursorMode.Row -> {
@@ -159,6 +164,7 @@ class LineLabelView(var viewHolder: RecyclerView.ViewHolder): LinearLayout(Conte
             }
             else -> { }
         }
+
         return drawableState
     }
 
@@ -182,6 +188,7 @@ class LineLabelView(var viewHolder: RecyclerView.ViewHolder): LinearLayout(Conte
     fun get_position(): Int {
         return this.viewHolder.bindingAdapterPosition
     }
+
     fun get_std_position(): Pair<Int, Int> {
         return this.get_opus_manager().get_std_offset(this.get_position())
     }

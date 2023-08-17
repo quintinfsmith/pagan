@@ -25,6 +25,6 @@
 
     <item
         app:state_active="false"
-        android:color="#000000"/>
+        android:color="?attr/label_fg" />
 
 </selector>

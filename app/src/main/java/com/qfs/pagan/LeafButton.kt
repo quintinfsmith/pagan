@@ -28,7 +28,7 @@ class LeafButton(
     // LeafText exists to make the text consider the state of the LeafButton
     class InnerWrapper(context: Context): LinearLayout(context) {
         override fun onCreateDrawableState(extraSpace: Int): IntArray? {
-            val drawableState = super.onCreateDrawableState(extraSpace + 4)
+            val drawableState = super.onCreateDrawableState(extraSpace + 5)
             val parent = this.parent ?: return drawableState
             return (parent as LeafButton).drawableState
         }
@@ -36,7 +36,7 @@ class LeafButton(
 
     class LeafText(context: Context): androidx.appcompat.widget.AppCompatTextView(context) {
         override fun onCreateDrawableState(extraSpace: Int): IntArray? {
-            val drawableState = super.onCreateDrawableState(extraSpace + 4)
+            val drawableState = super.onCreateDrawableState(extraSpace + 5)
             var parent = this.parent ?: return drawableState
             while (parent !is LeafButton) {
                 parent = parent.parent
@@ -49,6 +49,7 @@ class LeafButton(
     private val STATE_ACTIVE = intArrayOf(R.attr.state_active)
     private val STATE_FOCUSED = intArrayOf(R.attr.state_focused)
     private val STATE_INVALID = intArrayOf(R.attr.state_invalid)
+    private val STATE_CHANNEL_EVEN = intArrayOf(R.attr.state_channel_even)
 
     private var value_wrapper: LinearLayout
     private var value_label_octave: TextView
@@ -258,13 +259,16 @@ class LeafButton(
         if (opus_manager.is_selected(beat_key, position)) {
             mergeDrawableStates(drawableState, STATE_FOCUSED)
         }
+        if (beat_key.channel % 2 == 0) {
+            mergeDrawableStates(drawableState, STATE_CHANNEL_EVEN)
+        }
 
 
         return drawableState
     }
 
     override fun onCreateDrawableState(extraSpace: Int): IntArray? {
-        val drawableState = super.onCreateDrawableState(extraSpace + 4)
+        val drawableState = super.onCreateDrawableState(extraSpace + 5)
         return this.build_drawable_state(drawableState)
     }
 

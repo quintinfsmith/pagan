@@ -163,6 +163,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         }
 
         label_adapter.add_label(y)
+        label_adapter.notifyItemRangeChanged(y, label_adapter.itemCount)
     }
 
     fun remove_row(y: Int) {
@@ -188,6 +189,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         }
 
         label_adapter.remove_label(y)
+        label_adapter.notifyItemRangeChanged(y, label_adapter.itemCount)
     }
 
     fun new_column(index: Int) {

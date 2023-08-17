@@ -11,7 +11,7 @@ import kotlin.math.roundToInt
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
 class ColumnLabelView(val viewHolder: RecyclerView.ViewHolder): RelativeLayout(ContextThemeWrapper(viewHolder.itemView.context, R.style.column_label_outer)) {
-    class InnerView(context: Context): androidx.appcompat.widget.AppCompatTextView(ContextThemeWrapper(context, R.style.line_label_inner)) {
+    class InnerView(context: Context): androidx.appcompat.widget.AppCompatTextView(ContextThemeWrapper(context, R.style.column_label_inner)) {
         override fun onCreateDrawableState(extraSpace: Int): IntArray? {
             val drawableState = super.onCreateDrawableState(extraSpace + 1)
             return if (this.parent == null) {

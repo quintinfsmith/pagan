@@ -20,6 +20,7 @@
         <attr name="state_focused" format="boolean" />
         <attr name="state_linked" format="boolean" />
         <attr name="state_invalid" format="boolean" />
+        <attr name="state_channel_even" format="boolean" />
 
         <!-- No foreground to color on inactive leafs
         <attr name="leaf_fg_default" format="color" />
@@ -51,6 +52,9 @@
     <attr name="drawer_bg" format="color" />
     <attr name="label_bg" format="color" />
     <attr name="label_bg_focused" format="color" />
+    <attr name="label_bg_channel_even" format="color"/>
+    <attr name="label_bg_channel_odd" format="color"/>
+
     <attr name="label_fg" format="color" />
     <attr name="label_fg_focused" format="color" />
     <attr name="alert_fg" format="color" />

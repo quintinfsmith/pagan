@@ -6,8 +6,10 @@ import android.util.AttributeSet
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+import android.widget.LinearLayout
 import android.widget.TableLayout
 import android.widget.TableRow
+import androidx.appcompat.view.ContextThemeWrapper
 import androidx.core.view.children
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.qfs.pagan.opusmanager.BeatKey
@@ -33,7 +35,12 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         this.top_row.addView(this.spacer)
         this.top_row.addView(this.column_label_recycler)
 
-        this.bottom_row.addView(this.line_label_recycler)
+        this.bottom_row.addView(LinearLayout(ContextThemeWrapper(context, R.style.column)))
+
+        (this.bottom_row.getChildAt(0) as ViewGroup).layoutParams.width = MATCH_PARENT
+        (this.bottom_row.getChildAt(0) as ViewGroup).layoutParams.height = WRAP_CONTENT
+
+        (this.bottom_row.getChildAt(0) as ViewGroup).addView(this.line_label_recycler)
         this.bottom_row.addView(this.main_recycler)
 
         this.addView(this.top_row)
@@ -60,13 +67,13 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             height = MATCH_PARENT
         }
 
-        (this.main_recycler.layoutParams as TableRow.LayoutParams).apply {
+        (this.main_recycler.layoutParams as LinearLayout.LayoutParams).apply {
             width = 0
             weight = 1F
             height = MATCH_PARENT
         }
 
-        (this.column_label_recycler.layoutParams as TableRow.LayoutParams).apply {
+        (this.column_label_recycler.layoutParams as LinearLayout.LayoutParams).apply {
             width = 0
             weight = 1F
         }

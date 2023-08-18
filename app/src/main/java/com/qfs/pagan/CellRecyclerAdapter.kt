@@ -9,7 +9,7 @@ import com.qfs.pagan.structure.OpusTree
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
 class CellRecyclerAdapter(): RecyclerView.Adapter<CellRecyclerViewHolder>() {
-    var cell_count = 0
+    private var cell_count = 0
     lateinit var recycler: CellRecycler
 
     init {

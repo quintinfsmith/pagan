@@ -1,17 +1,17 @@
 package com.qfs.pagan
 
 import android.annotation.SuppressLint
-import android.view.ContextThemeWrapper
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+import androidx.appcompat.view.ContextThemeWrapper
 import androidx.recyclerview.widget.LinearLayoutManager
 import kotlin.concurrent.thread
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
 @SuppressLint("ViewConstructor")
-class CellRecycler(var viewHolder: ColumnRecyclerViewHolder): ScrollLockingRecyclerView(ContextThemeWrapper(viewHolder.itemView.context, R.style.column)) {
+class CellRecycler(var viewHolder: ColumnRecyclerViewHolder): ScrollLockingRecyclerView((viewHolder.itemView.context as ContextThemeWrapper).baseContext) {
     class ColumnDetachedException: Exception()
     init {
         this.visibility = View.INVISIBLE

@@ -6,7 +6,7 @@ import android.util.AttributeSet
 import android.view.View
 import androidx.recyclerview.widget.LinearLayoutManager
 
-class ColumnRecycler(context: Context, attrs: AttributeSet? = null): ScrollLockingRecyclerView(context, attrs) {
+class ColumnRecycler(context: Context): ScrollLockingRecyclerView(context) {
     init {
         this.layoutManager = LinearLayoutManager(context, HORIZONTAL, false)
         this.itemAnimator = null

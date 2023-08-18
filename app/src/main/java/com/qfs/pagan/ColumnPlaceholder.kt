@@ -3,8 +3,9 @@ package com.qfs.pagan
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.LinearLayout
+import androidx.appcompat.view.ContextThemeWrapper
 
-class ColumnPlaceholder(var viewHolder: ColumnRecyclerViewHolder, column_width: Int): LinearLayout(viewHolder.itemView.context) {
+class ColumnPlaceholder(var viewHolder: ColumnRecyclerViewHolder, column_width: Int): LinearLayout((viewHolder.itemView.context as ContextThemeWrapper).baseContext) {
     init {
         var item_view = this.viewHolder.itemView as ViewGroup
         item_view.removeAllViews()

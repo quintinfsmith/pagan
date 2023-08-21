@@ -56,6 +56,7 @@ class LeafButton(
     private var value_label_offset: TextView
     private var prefix_label: TextView
     private var inner_wrapper: InnerWrapper = InnerWrapper(ContextThemeWrapper(this.context, R.style.leaf_inner))
+    var invalid: Boolean = false
 
     init {
         this.minimumHeight = resources.getDimension(R.dimen.line_height).toInt()
@@ -116,7 +117,9 @@ class LeafButton(
                 // KLUDGE to prevent refreshing drawablestate
                 // The parent cell layout will be redrawn and finishing the setPressed process
                 // isn't required, and can cause a crash
-                (this.parent as ViewGroup).removeView(this)
+                //(this.parent as ViewGroup).removeView(this)
+                this.invalid = true
+
                 opus_manager.link_beat(beat_key)
                 opus_manager.cursor_select(beat_key, opus_manager.get_first_position(beat_key))
             } catch (e: Exception) {
@@ -238,6 +241,9 @@ class LeafButton(
         val opus_manager = this.get_opus_manager()
         val beat_key = this.get_beat_key()
         if (beat_key.beat == -1) {
+            return drawableState
+        }
+        if (this.invalid) {
             return drawableState
         }
 

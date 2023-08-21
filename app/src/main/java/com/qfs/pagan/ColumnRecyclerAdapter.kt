@@ -22,7 +22,9 @@ class ColumnRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<Col
                 override fun onItemRangeInserted(start: Int, count: Int) {
                     that.notifyItemChanged(start + count - 1)
                 }
-                //override fun onItemRangeChanged(start: Int, count: Int) { }
+                override fun onItemRangeChanged(start: Int, count: Int) {
+                    //that.column_label_recycler.adapter?.notifyItemRangeChanged(start, count)
+                }
             }
         )
     }

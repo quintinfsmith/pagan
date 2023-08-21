@@ -1,5 +1,6 @@
 package com.qfs.pagan
 
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -30,9 +31,9 @@ class ColumnLabelAdapter(editor_table: EditorTable) : RecyclerView.Adapter<Colum
                 override fun onItemRangeInserted(start: Int, count: Int) {
                     that.notifyItemRangeChanged(start + count - 1, that.itemCount)
                 }
-                //override fun onItemRangeChanged(start: Int, count: Int) {
-                //    that.column_label_recycler.adapter?.notifyItemRangeChanged(start, count)
-                //}
+                override fun onItemRangeChanged(start: Int, count: Int) {
+                    //that.notifyItemRangeChanged(start, count)
+                }
             }
         )
     }

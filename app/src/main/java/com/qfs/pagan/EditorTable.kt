@@ -29,7 +29,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     var initializing_column_width_map = false
     val column_width_map = mutableListOf<MutableList<Int>>()
 
-    var active_OpusManager_cursor: OpusManagerCursor = OpusManagerCursor(OpusManagerCursor.CursorMode.Unset)
+    var active_cursor: OpusManagerCursor = OpusManagerCursor(OpusManagerCursor.CursorMode.Unset)
 
     init {
         this.top_row.addView(this.spacer)
@@ -226,9 +226,9 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     }
 
     fun update_cursor(opusManagerCursor: OpusManagerCursor) {
-        if (opusManagerCursor != this.active_OpusManager_cursor) {
-            this.update_cursor(this.active_OpusManager_cursor)
-            this.active_OpusManager_cursor = opusManagerCursor.copy()
+        if (opusManagerCursor != this.active_cursor) {
+            this.update_cursor(this.active_cursor)
+            this.active_cursor = opusManagerCursor.copy()
         }
 
         val opus_manager = this.get_opus_manager()
@@ -324,15 +324,16 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             this.column_width_map[linked_beat_key.beat][y] = new_cell_width
             val new_width = this.column_width_map[linked_beat_key.beat].max()
 
-
             if (original_width != new_width) {
                 main_recycler_adapter.notifyItemChanged(linked_beat_key.beat)
                 this.column_label_recycler.adapter!!.notifyItemChanged(linked_beat_key.beat)
+            } else {
+                // Can ignore if the cell_recycler isn't visble
+                val cell_recycler =
+                    main_recycler_adapter.get_cell_recycler(linked_beat_key.beat) ?: continue
+                cell_recycler.adapter?.notifyItemChanged(y)
             }
 
-            // Can ignore if the cell_recycler isn't visible
-            val cell_recycler = main_recycler_adapter.get_cell_recycler(linked_beat_key.beat) ?: continue
-            cell_recycler.adapter?.notifyItemChanged(y)
         }
     }
 
@@ -410,16 +411,18 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     }
 
     fun is_x_visible(x: Int): Boolean {
-        val layout = this.column_label_recycler.layoutManager!! as LinearLayoutManager
-        val first = layout.findFirstCompletelyVisibleItemPosition()
-        val last = layout.findLastCompletelyVisibleItemPosition()
-        return x in first..last
+        return this.column_label_recycler.findViewHolderForAdapterPosition(x) != null
+        //val layout = this.column_label_recycler.layoutManager!! as LinearLayoutManager
+        //val first = layout.findFirstVisibleItemPosition()
+        //val last = layout.findLastVisibleItemPosition()
+        //return x in first..last
     }
     fun is_y_visible(y: Int): Boolean {
-        val layout = this.line_label_recycler.layoutManager!! as LinearLayoutManager
-        val first = layout.findFirstCompletelyVisibleItemPosition()
-        val last = layout.findLastCompletelyVisibleItemPosition()
-        return y in first..last
+        return this.line_label_recycler.findViewHolderForAdapterPosition(y) != null
+        //val layout = this.line_label_recycler.layoutManager!! as LinearLayoutManager
+        //val first = layout.findFirstVisibleItemPosition()
+        //val last = layout.findLastVisibleItemPosition()
+        //return y in first..last
     }
 
     fun scroll_to_x(x: Int) {

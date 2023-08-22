@@ -1,0 +1,2 @@
+- Fixed labels losing synchronized positions with table
+- Added color variations

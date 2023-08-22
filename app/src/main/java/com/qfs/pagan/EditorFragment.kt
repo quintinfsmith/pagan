@@ -68,7 +68,7 @@ class EditorFragment : PaganFragment() {
         if (this.view_model.coarse_x != null) {
             val editor_table = this.get_main().findViewById<EditorTable>(R.id.etEditorTable)
             editor_table.setup()
-            editor_table.update_cursor(this.get_main().get_opus_manager().opusManagerCursor)
+            editor_table.update_cursor(this.get_main().get_opus_manager().cursor)
             thread {
                 Thread.sleep(100)
                 this.activity!!.runOnUiThread {
@@ -161,8 +161,6 @@ class EditorFragment : PaganFragment() {
         val llContextMenu = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenu)
         llContextMenu.removeAllViews()
         this.active_context_menu_index = null
-        val editor_table = this.get_main().findViewById<EditorTable>(R.id.etEditorTable)
-        editor_table.fix_scroll_offset()
     }
 
     internal fun setContextMenu_linking() {
@@ -180,9 +178,9 @@ class EditorFragment : PaganFragment() {
         val btnUnLinkAll = view.findViewById<ImageView>(R.id.btnUnLinkAll)
         val btnCancelLink: TextView = view.findViewById(R.id.btnCancelLink)
 
-        val (is_networked, many_links) = if (opus_manager.opusManagerCursor.mode == OpusManagerCursor.CursorMode.Range) {
+        val (is_networked, many_links) = if (opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Range) {
             var output = false
-            for (beat_key in opus_manager.get_beatkeys_in_range(opus_manager.opusManagerCursor.range!!.first, opus_manager.opusManagerCursor.range!!.second)) {
+            for (beat_key in opus_manager.get_beatkeys_in_range(opus_manager.cursor.range!!.first, opus_manager.cursor.range!!.second)) {
                 if (opus_manager.is_networked(beat_key)) {
                     output = true
                     break
@@ -193,8 +191,8 @@ class EditorFragment : PaganFragment() {
                 output,
                 true
             )
-        } else if (opus_manager.opusManagerCursor.mode == OpusManagerCursor.CursorMode.Single) {
-            val cursor_key = opus_manager.opusManagerCursor.get_beatkey()
+        } else if (opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Single) {
+            val cursor_key = opus_manager.cursor.get_beatkey()
             Pair(
                 opus_manager.is_networked(cursor_key),
                 opus_manager.get_all_linked(cursor_key).size > 2
@@ -224,8 +222,6 @@ class EditorFragment : PaganFragment() {
 
         llContextMenu.addView(view)
         this.active_context_menu_index = ContextMenu.Linking
-        val editor_table = this.get_main().findViewById<EditorTable>(R.id.etEditorTable)
-        editor_table.fix_scroll_offset()
     }
 
     fun setContextMenu_column() {
@@ -242,13 +238,13 @@ class EditorFragment : PaganFragment() {
         val btnRemoveBeat = view.findViewById<ImageView>(R.id.btnRemoveBeat)
 
         btnInsertBeat.setOnClickListener {
-            val beat = opus_manager.opusManagerCursor.beat
+            val beat = opus_manager.cursor.beat
             opus_manager.insert_beat_at_cursor(1)
             opus_manager.cursor_select_column(beat + 1)
         }
         btnInsertBeat.setOnLongClickListener {
             main.popup_number_dialog( getString(R.string.dlg_insert_beats), 1, 99) { count: Int ->
-                val beat = opus_manager.opusManagerCursor.beat
+                val beat = opus_manager.cursor.beat
                 opus_manager.insert_beat_at_cursor(count)
                 opus_manager.cursor_select_column(beat + count)
             }
@@ -256,7 +252,7 @@ class EditorFragment : PaganFragment() {
         }
 
         btnRemoveBeat.setOnClickListener {
-            val beat = opus_manager.opusManagerCursor.beat
+            val beat = opus_manager.cursor.beat
             try {
                 opus_manager.remove_beat_at_cursor(1)
                 if (beat >= opus_manager.opus_beat_count) {
@@ -273,7 +269,7 @@ class EditorFragment : PaganFragment() {
 
         btnRemoveBeat.setOnLongClickListener {
             main.popup_number_dialog(getString(R.string.dlg_remove_beats), 1, opus_manager.opus_beat_count - 1) { count: Int ->
-                val beat = opus_manager.opusManagerCursor.beat
+                val beat = opus_manager.cursor.beat
                 opus_manager.remove_beat_at_cursor(count)
                 if (beat >= opus_manager.opus_beat_count) {
                     opus_manager.cursor_select_column(opus_manager.opus_beat_count - 1)
@@ -294,15 +290,13 @@ class EditorFragment : PaganFragment() {
             llContextMenu.removeViewAt(0)
         }
         this.active_context_menu_index = ContextMenu.Column
-        val editor_table = this.get_main().findViewById<EditorTable>(R.id.etEditorTable)
-        editor_table.fix_scroll_offset()
     }
 
     fun setContextMenu_line() {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
-        if (opus_manager.opusManagerCursor.mode != OpusManagerCursor.CursorMode.Row) {
-            throw OpusManagerCursor.InvalidModeException(opus_manager.opusManagerCursor.mode, OpusManagerCursor.CursorMode.Row)
+        if (opus_manager.cursor.mode != OpusManagerCursor.CursorMode.Row) {
+            throw OpusManagerCursor.InvalidModeException(opus_manager.cursor.mode, OpusManagerCursor.CursorMode.Row)
         }
         this.clearContextMenu()
         val llContextMenu = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenu)
@@ -321,8 +315,8 @@ class EditorFragment : PaganFragment() {
             btnRemoveLine.visibility = View.GONE
         }
 
-        val channel = opus_manager.opusManagerCursor.channel
-        val line_offset = opus_manager.opusManagerCursor.line_offset
+        val channel = opus_manager.cursor.channel
+        val line_offset = opus_manager.cursor.line_offset
 
         if (!opus_manager.is_percussion(channel)) {
             btnChoosePercussion.visibility = View.GONE
@@ -348,8 +342,8 @@ class EditorFragment : PaganFragment() {
             }
 
             btnRemoveLine.setOnLongClickListener {
-                val lines = opus_manager.channels[opus_manager.opusManagerCursor.channel].size
-                val max_lines = min(lines - 1, lines - opus_manager.opusManagerCursor.line_offset)
+                val lines = opus_manager.channels[opus_manager.cursor.channel].size
+                val max_lines = min(lines - 1, lines - opus_manager.cursor.line_offset)
                 main.popup_number_dialog(
                     getString(R.string.dlg_remove_lines),
                     1,
@@ -389,8 +383,6 @@ class EditorFragment : PaganFragment() {
 
         llContextMenu.addView(view)
         this.active_context_menu_index = ContextMenu.Line
-        val editor_table = this.get_main().findViewById<EditorTable>(R.id.etEditorTable)
-        editor_table.fix_scroll_offset()
     }
 
     internal fun setContextMenu_leaf() {
@@ -427,7 +419,7 @@ class EditorFragment : PaganFragment() {
 
         rosRelativeOption.setState(opus_manager.relative_mode, true)
 
-        if (opus_manager.is_percussion(opus_manager.opusManagerCursor.channel)) {
+        if (opus_manager.is_percussion(opus_manager.cursor.channel)) {
             nsOctave.visibility = View.GONE
             nsOffset.visibility = View.GONE
             rosRelativeOption.visibility = View.GONE
@@ -458,8 +450,8 @@ class EditorFragment : PaganFragment() {
         }
 
         btnSplit.setOnClickListener {
-            val beatkey = opus_manager.opusManagerCursor.get_beatkey()
-            val position = opus_manager.opusManagerCursor.get_position().toMutableList()
+            val beatkey = opus_manager.cursor.get_beatkey()
+            val position = opus_manager.cursor.get_position().toMutableList()
 
             opus_manager.split_tree(2)
 
@@ -469,8 +461,8 @@ class EditorFragment : PaganFragment() {
 
         btnSplit.setOnLongClickListener {
             main.popup_number_dialog(getString(R.string.dlg_split), 2, 29) { splits: Int ->
-                val beatkey = opus_manager.opusManagerCursor.get_beatkey()
-                val position = opus_manager.opusManagerCursor.get_position().toMutableList()
+                val beatkey = opus_manager.cursor.get_beatkey()
+                val position = opus_manager.cursor.get_position().toMutableList()
 
                 opus_manager.split_tree(splits)
 
@@ -484,12 +476,12 @@ class EditorFragment : PaganFragment() {
             this.interact_btnUnset()
         }
 
-        val channel = opus_manager.opusManagerCursor.channel
+        val channel = opus_manager.cursor.channel
         if (!opus_manager.is_percussion(channel) && current_tree.is_leaf() && !current_tree.is_event()) {
             btnUnset.visibility = View.GONE
         }
 
-        if (opus_manager.opusManagerCursor.get_position().isEmpty()) {
+        if (opus_manager.cursor.get_position().isEmpty()) {
             btnRemove.visibility = View.GONE
         } else {
             btnRemove.visibility = View.VISIBLE
@@ -498,13 +490,13 @@ class EditorFragment : PaganFragment() {
             }
 
             btnRemove.setOnLongClickListener {
-                val position = opus_manager.opusManagerCursor.get_position().toMutableList()
+                val position = opus_manager.cursor.get_position().toMutableList()
                 if (position.isNotEmpty()) {
                     position.removeLast()
 
                 }
                 opus_manager.cursor_select(
-                    opus_manager.opusManagerCursor.get_beatkey(),
+                    opus_manager.cursor.get_beatkey(),
                     position
                 )
 
@@ -514,8 +506,8 @@ class EditorFragment : PaganFragment() {
         }
 
         btnInsert.setOnClickListener {
-            val beat_key = opus_manager.opusManagerCursor.get_beatkey()
-            val position = opus_manager.opusManagerCursor.get_position().toMutableList()
+            val beat_key = opus_manager.cursor.get_beatkey()
+            val position = opus_manager.cursor.get_position().toMutableList()
             if (position.isEmpty()) {
                 opus_manager.split_tree(2)
                 position.add(0)
@@ -528,8 +520,8 @@ class EditorFragment : PaganFragment() {
 
         btnInsert.setOnLongClickListener {
             main.popup_number_dialog(getString(R.string.dlg_insert), 1, 29) { count: Int ->
-                val beat_key = opus_manager.opusManagerCursor.get_beatkey()
-                val position = opus_manager.opusManagerCursor.get_position().toMutableList()
+                val beat_key = opus_manager.cursor.get_beatkey()
+                val position = opus_manager.cursor.get_position().toMutableList()
                 if (position.isEmpty()) {
                     position.add(0)
                     opus_manager.split_tree(count + 1)
@@ -544,8 +536,6 @@ class EditorFragment : PaganFragment() {
 
 
         this.active_context_menu_index = ContextMenu.Leaf
-        val editor_table = this.get_main().findViewById<EditorTable>(R.id.etEditorTable)
-        editor_table.fix_scroll_offset()
     }
 
     private fun interact_rosRelativeOption(view: RelativeOptionSelector) {
@@ -640,7 +630,7 @@ class EditorFragment : PaganFragment() {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
 
-        val channel = opus_manager.opusManagerCursor.channel
+        val channel = opus_manager.cursor.channel
         if (!opus_manager.is_percussion(channel) || opus_manager.get_tree().is_event()) {
             opus_manager.unset()
         } else {
@@ -653,14 +643,14 @@ class EditorFragment : PaganFragment() {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
         opus_manager.unlink_beat()
-        opus_manager.opusManagerCursor.is_linking = false
-        when (opus_manager.opusManagerCursor.mode) {
+        opus_manager.cursor.is_linking = false
+        when (opus_manager.cursor.mode) {
             OpusManagerCursor.CursorMode.Single -> {
-                val beat_key = opus_manager.opusManagerCursor.get_beatkey()
+                val beat_key = opus_manager.cursor.get_beatkey()
                 opus_manager.cursor_select(beat_key, opus_manager.get_first_position(beat_key))
             }
             OpusManagerCursor.CursorMode.Range -> {
-                val (first, _) = opus_manager.opusManagerCursor.range!!
+                val (first, _) = opus_manager.cursor.range!!
                 opus_manager.cursor_select(first, opus_manager.get_first_position(first))
             }
             else -> {}
@@ -671,14 +661,14 @@ class EditorFragment : PaganFragment() {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
         opus_manager.clear_link_pool()
-        opus_manager.opusManagerCursor.is_linking = false
-        when (opus_manager.opusManagerCursor.mode) {
+        opus_manager.cursor.is_linking = false
+        when (opus_manager.cursor.mode) {
             OpusManagerCursor.CursorMode.Single -> {
-                val beat_key = opus_manager.opusManagerCursor.get_beatkey()
+                val beat_key = opus_manager.cursor.get_beatkey()
                 opus_manager.cursor_select(beat_key, opus_manager.get_first_position(beat_key))
             }
             OpusManagerCursor.CursorMode.Range -> {
-                val (first, _) = opus_manager.opusManagerCursor.range!!
+                val (first, _) = opus_manager.cursor.range!!
                 opus_manager.cursor_select(first, opus_manager.get_first_position(first))
             }
             else -> {}
@@ -688,17 +678,17 @@ class EditorFragment : PaganFragment() {
 
     private fun interact_btnCancelLink() {
         val opus_manager = this.get_main().get_opus_manager()
-        opus_manager.opusManagerCursor.is_linking = false
-        if (opus_manager.opusManagerCursor.mode == OpusManagerCursor.CursorMode.Range) {
-            val beat_key = opus_manager.opusManagerCursor.range!!.first
+        opus_manager.cursor.is_linking = false
+        if (opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Range) {
+            val beat_key = opus_manager.cursor.range!!.first
             opus_manager.cursor_select(
                 beat_key,
                 opus_manager.get_first_position(beat_key)
             )
         } else {
             opus_manager.cursor_select(
-                opus_manager.opusManagerCursor.get_beatkey(),
-                opus_manager.opusManagerCursor.get_position()
+                opus_manager.cursor.get_beatkey(),
+                opus_manager.cursor.get_position()
             )
         }
     }
@@ -744,8 +734,8 @@ class EditorFragment : PaganFragment() {
                     progress
                 }
                 else -> {
-                    val beat_key = opus_manager.opusManagerCursor.get_beatkey()
-                    val position = opus_manager.opusManagerCursor.get_position()
+                    val beat_key = opus_manager.cursor.get_beatkey()
+                    val position = opus_manager.cursor.get_position()
                     val preceding_event = opus_manager.get_preceding_event(beat_key, position)
                     if (preceding_event != null && !preceding_event.relative) {
                         ((preceding_event.note / opus_manager.RADIX) * opus_manager.RADIX) + progress
@@ -758,12 +748,12 @@ class EditorFragment : PaganFragment() {
         val event = OpusEvent(
             value,
             opus_manager.RADIX,
-            opus_manager.opusManagerCursor.channel,
+            opus_manager.cursor.channel,
             opus_manager.relative_mode != 0
         )
 
         opus_manager.set_event(event)
-        this.play_event(opus_manager.opusManagerCursor.get_beatkey(), opus_manager.opusManagerCursor.get_position())
+        this.play_event(opus_manager.cursor.get_beatkey(), opus_manager.cursor.get_position())
         this.reset_context_menu()
     }
 
@@ -805,8 +795,8 @@ class EditorFragment : PaganFragment() {
                     progress * opus_manager.RADIX
                 }
                 else -> {
-                    val beat_key = opus_manager.opusManagerCursor.get_beatkey()
-                    val position = opus_manager.opusManagerCursor.get_position()
+                    val beat_key = opus_manager.cursor.get_beatkey()
+                    val position = opus_manager.cursor.get_position()
                     val preceding_event = opus_manager.get_preceding_event(beat_key, position)
                     if (preceding_event != null && !preceding_event.relative) {
                         (progress * opus_manager.RADIX) + (preceding_event.note % opus_manager.RADIX)
@@ -820,12 +810,12 @@ class EditorFragment : PaganFragment() {
         val event = OpusEvent(
             value,
             opus_manager.RADIX,
-            opus_manager.opusManagerCursor.channel,
+            opus_manager.cursor.channel,
             opus_manager.relative_mode != 0
         )
 
         opus_manager.set_event(event)
-        this.play_event(opus_manager.opusManagerCursor.get_beatkey(), opus_manager.opusManagerCursor.get_position())
+        this.play_event(opus_manager.cursor.get_beatkey(), opus_manager.cursor.get_position())
         this.reset_context_menu()
     }
 

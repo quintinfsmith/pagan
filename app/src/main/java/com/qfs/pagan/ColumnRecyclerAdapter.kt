@@ -39,20 +39,24 @@ class ColumnRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<Col
     }
 
     override fun onBindViewHolder(holder: ColumnRecyclerViewHolder, position: Int) {
-        var editor_table = this.get_editor_table()!!
-        var weight = editor_table.get_column_width(position)
+        val editor_table = this.get_editor_table()!!
+        val weight = editor_table.get_column_width(position)
         val resources = this.recycler.resources
         ColumnPlaceholder(holder, weight * resources.getDimension(R.dimen.base_leaf_width).toInt())
     }
     override fun onViewAttachedToWindow(holder: ColumnRecyclerViewHolder) {
+        val editor_table = this.get_editor_table()!!
+        val weight = editor_table.get_column_width(holder.bindingAdapterPosition)
+        val resources = this.recycler.resources
         holder.itemView.layoutParams.height = MATCH_PARENT
+        //holder.itemView.layoutParams.width = weight * resources.getDimension(R.dimen.base_leaf_width).toInt()
     }
     override fun onViewDetachedFromWindow(holder: ColumnRecyclerViewHolder) {
         // Need to remove the view (CellRecycler, see ColumnPlaceholder.replace())
         // so that if something changes between being bound and attached, the
         // recycler doesn't try to reattach LeafButtons
 
-        ColumnPlaceholder(holder, holder.itemView.measuredWidth)
+        //ColumnPlaceholder(holder, holder.itemView.measuredWidth)
     }
 
 
@@ -71,6 +75,7 @@ class ColumnRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<Col
             }
         }
     }
+
     fun add_column(index: Int) {
         this.column_count += 1
         this.notifyItemInserted(index)

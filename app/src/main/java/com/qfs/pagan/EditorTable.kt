@@ -39,8 +39,8 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
         (this.bottom_row.getChildAt(0) as ViewGroup).layoutParams.width = MATCH_PARENT
         (this.bottom_row.getChildAt(0) as ViewGroup).layoutParams.height = WRAP_CONTENT
-
         (this.bottom_row.getChildAt(0) as ViewGroup).addView(this.line_label_recycler)
+
         this.bottom_row.addView(this.main_recycler)
 
         this.addView(this.top_row)
@@ -98,7 +98,6 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         (this.line_label_recycler.adapter!! as LineLabelRecyclerAdapter).clear()
 
     }
-
 
     fun setup() {
         this.init_column_width_map()

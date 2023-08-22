@@ -8,7 +8,6 @@ class ColumnLabelPlaceHolder(var viewHolder: ColumnLabelViewHolder, column_width
         var item_view = this.viewHolder.itemView as ViewGroup
         item_view.removeAllViews()
         item_view.addView(this)
-
         this.layoutParams.width = column_width
         this.layoutParams.height = resources.getDimension(R.dimen.line_height).toInt()
 

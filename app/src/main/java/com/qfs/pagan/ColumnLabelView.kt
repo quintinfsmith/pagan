@@ -68,15 +68,15 @@ class ColumnLabelView(val viewHolder: RecyclerView.ViewHolder): RelativeLayout(C
     fun build_drawable_state(drawableState: IntArray?): IntArray? {
         val opus_manager = this.get_opus_manager()
         val beat = this.viewHolder.bindingAdapterPosition
-        when (opus_manager.opusManagerCursor.mode) {
+        when (opus_manager.cursor.mode) {
             OpusManagerCursor.CursorMode.Single,
             OpusManagerCursor.CursorMode.Column -> {
-                if (opus_manager.opusManagerCursor.beat == beat) {
+                if (opus_manager.cursor.beat == beat) {
                     mergeDrawableStates(drawableState, this.STATE_FOCUSED)
                 }
             }
             OpusManagerCursor.CursorMode.Range -> {
-                val (first, second) = opus_manager.opusManagerCursor.range!!
+                val (first, second) = opus_manager.cursor.range!!
                 if (first.beat <= beat && second.beat >= beat) {
                     mergeDrawableStates(drawableState, this.STATE_FOCUSED)
                 }

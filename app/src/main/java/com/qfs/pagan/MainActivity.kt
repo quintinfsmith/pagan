@@ -733,7 +733,7 @@ class MainActivity : AppCompatActivity() {
                 false
             )
         val opus_manager = this.get_opus_manager()
-        val working_beat = opus_manager.opusManagerCursor.beat
+        val working_beat = opus_manager.cursor.beat
         val sbPlaybackPosition = viewInflated.findViewById<SeekBar>(R.id.sbPlaybackPosition)
         sbPlaybackPosition.max = opus_manager.opus_beat_count - 1
         sbPlaybackPosition.progress = working_beat

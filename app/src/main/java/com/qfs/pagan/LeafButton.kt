@@ -4,7 +4,6 @@ import android.content.Context
 import android.view.Gravity.CENTER
 import android.view.MotionEvent
 import android.view.View
-import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
@@ -87,16 +86,16 @@ class LeafButton(
         }
         this.setOnLongClickListener {
             val opus_manager = this.get_opus_manager()
-            val cursor = opus_manager.opusManagerCursor
+            val cursor = opus_manager.cursor
             val beat_key = this.get_beat_key()
             if (cursor.is_linking_range()) {
                 opus_manager.cursor_select_range_to_link(
-                    opus_manager.opusManagerCursor.range!!.first,
+                    opus_manager.cursor.range!!.first,
                     beat_key
                 )
             } else if (cursor.is_linking) {
                 opus_manager.cursor_select_range_to_link(
-                    opus_manager.opusManagerCursor.get_beatkey(),
+                    opus_manager.cursor.get_beatkey(),
                     beat_key
                 )
             } else {
@@ -111,7 +110,7 @@ class LeafButton(
         val position = this.position
         val opus_manager = this.get_opus_manager()
 
-        if (opus_manager.opusManagerCursor.is_linking) {
+        if (opus_manager.cursor.is_linking) {
             val editor_table = this.get_editor_table() // Will need if overflow exception is passed
             try {
                 // KLUDGE to prevent refreshing drawablestate
@@ -132,7 +131,7 @@ class LeafButton(
                     is LinksLayer.LinkRangeOverlap,
                     is LinksLayer.LinkRangeOverflow -> {
                         editor_table.notify_cell_change(beat_key)
-                        opus_manager.opusManagerCursor.is_linking = false
+                        opus_manager.cursor.is_linking = false
                         opus_manager.cursor_select(beat_key, this.position)
                         this.activity.feedback_msg(context.getString(R.string.feedback_bad_range))
                     }

@@ -1,6 +1,8 @@
 package com.qfs.pagan
 
+import android.util.Log
 import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.RecyclerView.SCROLL_STATE_DRAGGING
 
 class VerticalScrollListener(): RecyclerView.OnScrollListener() {
     override fun onScrolled(recyclerView: RecyclerView, x: Int, y: Int) {
@@ -8,6 +10,7 @@ class VerticalScrollListener(): RecyclerView.OnScrollListener() {
         if ((recyclerView as CellRecycler).is_propagation_locked()) {
             return
         }
+
 
         val main_adapter = (recyclerView as CellRecycler).get_column_recycler_adapter() as ColumnRecyclerAdapter
         main_adapter.apply_to_visible_columns {

@@ -6,14 +6,18 @@ import androidx.recyclerview.widget.RecyclerView
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.OpusEvent
 import com.qfs.pagan.structure.OpusTree
+import kotlin.math.max
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
-class CellRecyclerAdapter(): RecyclerView.Adapter<CellRecyclerViewHolder>() {
+class CellRecyclerAdapter(initial_cell_count: Int = 0, var initial_offset: Int = 0): RecyclerView.Adapter<CellRecyclerViewHolder>() {
     private var cell_count = 0
     lateinit var recycler: CellRecycler
 
     init {
+        this.initial_offset = max(0, this.initial_offset)
+
         val that = this
+        this.cell_count = initial_cell_count
         this.registerAdapterDataObserver(
             object: RecyclerView.AdapterDataObserver() {
                 override fun onItemRangeInserted(start: Int, count: Int) {
@@ -22,11 +26,12 @@ class CellRecyclerAdapter(): RecyclerView.Adapter<CellRecyclerViewHolder>() {
                 override fun onItemRangeChanged(start: Int, count: Int) {
                 }
                 override fun onItemRangeRemoved(start: Int, count: Int) {
-                    that.notifyItemRangeChanged(start, that.itemCount - start)
+                    that.notifyItemRangeChanged(start, that.itemCount - (start + count))
                 }
             }
         )
     }
+
     override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
         this.recycler = recyclerView as CellRecycler
     }
@@ -36,7 +41,7 @@ class CellRecyclerAdapter(): RecyclerView.Adapter<CellRecyclerViewHolder>() {
     }
 
     override fun getItemCount(): Int {
-        return this.cell_count
+        return this.cell_count - this.initial_offset
     }
 
     override fun onViewAttachedToWindow(holder:CellRecyclerViewHolder) {
@@ -55,14 +60,13 @@ class CellRecyclerAdapter(): RecyclerView.Adapter<CellRecyclerViewHolder>() {
     //-------------------------------------------------------//
     fun insert_cell(index: Int) {
         this.cell_count += 1
-        this.notifyItemInserted(index)
+        this.notifyItemInserted(index + this.initial_offset)
     }
 
     fun remove_cell(index: Int) {
         this.cell_count -= 1
-        this.notifyItemRemoved(index)
+        this.notifyItemRemoved(index + this.initial_offset)
     }
-
     //-------------------------------------------------------//
     fun get_column_adapter(): ColumnRecyclerAdapter {
         return this.recycler.get_column_recycler_adapter()
@@ -90,8 +94,14 @@ class CellRecyclerAdapter(): RecyclerView.Adapter<CellRecyclerViewHolder>() {
     }
 
     fun clear() {
-        val count = this.cell_count
+        val count = this.itemCount
         this.cell_count = 0
         this.notifyItemRangeRemoved(0, count)
+    }
+
+    fun reset_initial_offset() {
+        val r = this.initial_offset
+        this.initial_offset = 0
+        this.notifyItemRangeInserted(0, r)
     }
 }

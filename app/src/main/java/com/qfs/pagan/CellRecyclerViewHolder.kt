@@ -1,6 +1,7 @@
 package com.qfs.pagan
 
 import android.content.Context
+import android.util.Log
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import androidx.core.view.children
@@ -12,6 +13,7 @@ import com.qfs.pagan.InterfaceLayer as OpusManager
 
 class CellRecyclerViewHolder(context: Context): RecyclerView.ViewHolder(LinearLayout(context)) {
     init {
+        this.itemView.minimumHeight = context.resources.getDimension(R.dimen.line_height).toInt()
         this.setIsRecyclable(false)
     }
 
@@ -36,7 +38,8 @@ class CellRecyclerViewHolder(context: Context): RecyclerView.ViewHolder(LinearLa
     }
 
     fun get_y(): Int {
-        return this.bindingAdapterPosition
+        var offset = (this.bindingAdapter as CellRecyclerAdapter).initial_offset
+        return this.bindingAdapterPosition + offset
     }
 
     fun get_std_offset(): Pair<Int, Int> {

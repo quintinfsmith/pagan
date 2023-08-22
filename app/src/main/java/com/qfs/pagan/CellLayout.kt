@@ -45,6 +45,9 @@ class CellLayout(var viewHolder: CellRecyclerViewHolder): LinearLayout(viewHolde
     }
 
     fun build() {
+        //if (!(this.viewHolder.bindingAdapter as CellRecyclerAdapter).recycler.cells_visible) {
+        //    return
+        //}
         val tree = this.get_beat_tree()
         val max_width = (this.get_editor_table().get_column_width(this.get_beat()) * resources.getDimension(R.dimen.base_leaf_width).roundToInt())
 

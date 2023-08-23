@@ -572,12 +572,11 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                 HistoryToken.REMOVE_LINE -> {
                     val channel = args[0] as Int
                     val line_offset = min(args[1] as Int, this.channels[channel].size - 1)
-
                     this.push_to_history_stack(
                         HistoryToken.CURSOR_SELECT_ROW,
                         listOf(
                             channel,
-                            line_offset - 1
+                            max(0, line_offset - 1)
                         )
                     )
                 }

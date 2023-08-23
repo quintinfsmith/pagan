@@ -1,2 +1,3 @@
 - Fixed labels losing synchronized positions with table
 - Added color variations
+- fixed random crashing on note playback

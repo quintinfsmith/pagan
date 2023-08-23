@@ -110,8 +110,8 @@ class LeafButton(
         val position = this.position
         val opus_manager = this.get_opus_manager()
 
+        val editor_table = this.get_editor_table() // Will need if overflow exception is passed
         if (opus_manager.cursor.is_linking) {
-            val editor_table = this.get_editor_table() // Will need if overflow exception is passed
             try {
                 // KLUDGE to prevent refreshing drawablestate
                 // The parent cell layout will be redrawn and finishing the setPressed process
@@ -148,7 +148,7 @@ class LeafButton(
                 if (tree.is_event()) {
                     val abs_value = opus_manager.get_absolute_value(beat_key, position)
                     if ((abs_value != null) && abs_value in (0 .. 90)) {
-                        (this.get_editor_table().context as MainActivity).play_event(
+                        (editor_table.context as MainActivity).play_event(
                             beat_key.channel,
                             if (opus_manager.is_percussion(beat_key.channel)) {
                                 opus_manager.get_percussion_instrument(beat_key.line_offset)

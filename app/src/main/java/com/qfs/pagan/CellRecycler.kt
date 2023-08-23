@@ -13,7 +13,6 @@ import com.qfs.pagan.InterfaceLayer as OpusManager
 @SuppressLint("ViewConstructor")
 class CellRecycler(var viewHolder: ColumnRecyclerViewHolder): ScrollLockingRecyclerView((viewHolder.itemView.context as ContextThemeWrapper).baseContext) {
     class ColumnDetachedException: Exception()
-    var block_attach_callback = false
     init {
         this.adapter = CellRecyclerAdapter(this.get_opus_manager().get_total_line_count(), this.get_line_label_offset())
         this.layoutManager = CellRecyclerLayoutManager(context, this)
@@ -42,29 +41,18 @@ class CellRecycler(var viewHolder: ColumnRecyclerViewHolder): ScrollLockingRecyc
     override fun onAttachedToWindow() {
         this.visibility = View.INVISIBLE
         super.onAttachedToWindow()
-        if (this.block_attach_callback) {
-            return
-        }
 
-        val that = this
         val adapter = (this.adapter as CellRecyclerAdapter)
-        thread {
-            (that.context as MainActivity).runOnUiThread {
-                that.block_attach_callback = true
-                that.lock_scroll_propagation()
-                adapter.reset_initial_offset()
+        val margin = (this.layoutParams as MarginLayoutParams).topMargin
 
-                that.scrollBy(0, 0 - (that.layoutParams as MarginLayoutParams).topMargin)
-                (this.layoutParams as MarginLayoutParams).setMargins(0, 0, 0, 0)
+        adapter.reset_initial_offset()
+        this.lock_scroll_propagation()
+        (this.layoutParams as MarginLayoutParams).setMargins(0, 0, 0, 0)
+        this.parent.requestLayout()
+        this.scrollBy(0, 0 - margin)
+        this.unlock_scroll_propagation()
 
-                (that.viewHolder.itemView as ViewGroup).removeView(that)
-                (that.viewHolder.itemView as ViewGroup).addView(that)
-                that.block_attach_callback = false
-                this.visibility = View.VISIBLE
-                adapter.reset_initial_offset()
-                that.unlock_scroll_propagation()
-            }
-        }
+        this.visibility = View.VISIBLE
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {

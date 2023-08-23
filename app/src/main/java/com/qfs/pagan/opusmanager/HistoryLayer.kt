@@ -1,6 +1,8 @@
 package com.qfs.pagan.opusmanager
 import com.qfs.apres.Midi
 import com.qfs.pagan.structure.OpusTree
+import kotlin.math.max
+import kotlin.math.min
 
 
 open class HistoryLayer : LinksLayer() {
@@ -486,7 +488,7 @@ open class HistoryLayer : LinksLayer() {
         this.history_cache.remember {
             for (i in 0 until count) {
                 if (this.opus_beat_count > 1) {
-                    this.remove_beat(beat_index)
+                    this.remove_beat(min(beat_index, this.opus_beat_count - 1))
                 } else {
                     break
                 }

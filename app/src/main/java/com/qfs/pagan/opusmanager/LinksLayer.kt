@@ -264,11 +264,17 @@ open class LinksLayer : BaseLayer() {
     }
 
     override fun remove_channel(channel: Int) {
-        this.remap_links { beat: BeatKey  ->
-            if (beat.channel == channel) {
+        this.remap_links { beat_key: BeatKey  ->
+            if (beat_key.channel == channel) {
                 null
+            } else if (beat_key.channel < channel) {
+                beat_key
             } else {
-                beat
+                BeatKey(
+                    beat_key.channel - 1,
+                    beat_key.line_offset,
+                    beat_key.beat
+                )
             }
         }
 
@@ -623,4 +629,20 @@ open class LinksLayer : BaseLayer() {
            }
        }
    }
+
+    override fun new_channel(channel: Int?, lines: Int, uuid: Int?) {
+        var working_channel = channel ?: this.channels.size - 1
+        this.remap_links { beat_key: BeatKey ->
+            if (beat_key.channel < working_channel) {
+                beat_key
+            } else {
+                BeatKey(
+                    beat_key.channel + 1,
+                    beat_key.line_offset,
+                    beat_key.beat
+                )
+            }
+        }
+        super.new_channel(channel, lines, uuid)
+    }
 }

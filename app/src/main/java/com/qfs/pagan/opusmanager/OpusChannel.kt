@@ -1,11 +1,8 @@
 package com.qfs.pagan.opusmanager
 
-import android.util.Log
 import com.qfs.pagan.structure.OpusTree
 import kotlinx.serialization.Serializable
 
-@Serializable
-data class OpusEvent(var note: Int, var radix: Int, var channel: Int, var relative: Boolean)
 @Serializable
 data class BeatKey(var channel: Int, var line_offset: Int, var beat: Int)
 

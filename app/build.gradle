@@ -7,13 +7,13 @@ plugins {
 
 android {
     namespace 'com.qfs.pagan'
-    compileSdk 32
+    compileSdk 33
 
     defaultConfig {
         applicationId "com.qfs.pagan"
         minSdk 30
-        targetSdk 31
-        versionCode 10
+        targetSdk 33
+        versionCode 11
         versionName "1.1.1"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"

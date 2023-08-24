@@ -855,7 +855,7 @@ open class BaseLayer {
                                 )
                                 midi.insert_event(
                                     0,
-                                    current.offset + current.size,
+                                    current.offset + (current.size * event.duration),
                                     NoteOff(channel.midi_channel, note, line.volume)
                                 )
                             }

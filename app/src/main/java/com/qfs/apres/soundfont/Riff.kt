@@ -1,12 +1,11 @@
 package com.qfs.apres.soundfont
 
-import android.content.res.AssetManager
 import com.qfs.apres.toUInt
-import java.io.BufferedInputStream
 import java.io.FileInputStream
 import java.io.InputStream
 
 class Riff(private var file_path: String, init_callback: ((riff: Riff) -> Unit)? = null) {
+    class InvalidRiff(file_path: String): Exception("$file_path is not a valid Riff")
     class InputStreamClosed : Exception("Input Stream is Closed")
     data class ListChunkHeader(
         val index: Int,
@@ -29,7 +28,11 @@ class Riff(private var file_path: String, init_callback: ((riff: Riff) -> Unit)?
     init {
         this.open_stream()
 
-        this.get_string(0, 4) // fourcc
+        var header_check = this.get_string(0, 4) // fourcc
+        if (header_check != "RIFF") {
+            this.close_stream()
+            throw InvalidRiff(file_path)
+        }
         val riff_size = this.get_little_endian(4, 4)
         this.get_string(8, 4) // typecc
 
@@ -79,7 +82,6 @@ class Riff(private var file_path: String, init_callback: ((riff: Riff) -> Unit)?
 
     fun open_stream() {
         this.input_stream = FileInputStream(this.file_path)
-        //this.input_stream?.mark(input_stream?.available()!!)
     }
 
     fun close_stream() {

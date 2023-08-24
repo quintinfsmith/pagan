@@ -10,6 +10,7 @@ import android.widget.LinearLayout
 import android.widget.PopupMenu
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
+import com.qfs.apres.soundfont.Riff
 import com.qfs.apres.soundfont.SoundFont
 import com.qfs.pagan.databinding.FragmentGlobalSettingsBinding
 import java.io.File
@@ -137,7 +138,11 @@ class GlobalSettingsFragment : PaganFragment() {
                     this.disable_soundfont()
                 }
                 1 -> {
-                    this.set_soundfont(file_list[it.order].name)
+                    try {
+                        this.set_soundfont(file_list[it.order].name)
+                    } catch (e: Riff.InvalidRiff) {
+                        this.get_main().feedback_msg(getString(R.string.feedback_invalid_sf2_file))
+                    }
                 }
                 2 -> {
                     this.import_soundfont()
@@ -159,8 +164,9 @@ class GlobalSettingsFragment : PaganFragment() {
 
     fun set_soundfont(filename: String) {
         val btnChooseSoundFont = this.get_main().findViewById<Button>(R.id.btnChooseSoundFont)
-        btnChooseSoundFont.text = filename
         this.get_main().set_soundfont(filename)
+
+        btnChooseSoundFont.text = filename
         this.get_main().save_configuration()
     }
 

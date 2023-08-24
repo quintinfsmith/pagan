@@ -890,8 +890,12 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             cursor_position[cursor_position.size - 1] -= 1
         }
 
-        this.remove( beat_key, position, count )
-        this.cursor_select(beat_key, cursor_position)
+        this.remove(beat_key, position, count)
+
+        this.cursor_select(
+            beat_key,
+            this.get_first_position(beat_key, cursor_position)
+        )
     }
 
     fun insert_line(count: Int) {

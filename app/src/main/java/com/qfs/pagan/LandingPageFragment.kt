@@ -63,7 +63,7 @@ class LandingPageFragment : PaganFragment() {
         }
 
         btn_newProject.setOnClickListener {
-            this.setFragmentResult("NEW", bundleOf())
+            this.setFragmentResult(IntentFragmentToken.New.name, bundleOf())
             this.get_main().navTo("main")
         }
 

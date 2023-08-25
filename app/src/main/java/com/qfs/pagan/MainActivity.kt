@@ -7,8 +7,20 @@ import android.database.Cursor
 import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
-import android.view.*
-import android.widget.*
+import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuItem
+import android.view.View
+import android.view.ViewGroup
+import android.view.WindowManager
+import android.widget.EditText
+import android.widget.ImageView
+import android.widget.NumberPicker
+import android.widget.ProgressBar
+import android.widget.RelativeLayout
+import android.widget.SeekBar
+import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.os.bundleOf
@@ -33,7 +45,6 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import kotlin.concurrent.thread
 import com.qfs.pagan.InterfaceLayer as OpusManager
-
 
 class MainActivity : AppCompatActivity() {
     private lateinit var appBarConfiguration: AppBarConfiguration
@@ -73,7 +84,7 @@ class MainActivity : AppCompatActivity() {
         if (result.resultCode == Activity.RESULT_OK) {
             result?.data?.data?.also { uri ->
                 val fragment = this.getActiveFragment()
-                fragment?.setFragmentResult("IMPORTPROJECT", bundleOf(Pair("URI", uri.toString())))
+                fragment?.setFragmentResult(IntentFragmentToken.ImportProject.name, bundleOf(Pair("URI", uri.toString())))
                 this.navTo("main")
             }
         }
@@ -95,7 +106,7 @@ class MainActivity : AppCompatActivity() {
         if (result.resultCode == Activity.RESULT_OK) {
             result?.data?.data?.also { uri ->
                 val fragment = this.getActiveFragment()
-                fragment?.setFragmentResult("IMPORT", bundleOf(Pair("URI", uri.toString())))
+                fragment?.setFragmentResult(IntentFragmentToken.ImportMidi.name, bundleOf(Pair("URI", uri.toString())))
                 this.navTo("main")
             }
         }
@@ -191,7 +202,7 @@ class MainActivity : AppCompatActivity() {
                 // TODO: Save or discard popup dialog
                 this.save_dialog {
                     val fragment = this.getActiveFragment()
-                    fragment?.setFragmentResult("NEW", bundleOf())
+                    fragment?.setFragmentResult(IntentFragmentToken.New.name, bundleOf())
                     this.navTo("main")
                 }
             }
@@ -447,7 +458,7 @@ class MainActivity : AppCompatActivity() {
         this.project_manager.delete(this.opus_manager)
 
         val fragment = this.getActiveFragment()
-        fragment?.setFragmentResult("NEW", bundleOf())
+        fragment?.setFragmentResult(IntentFragmentToken.New.name, bundleOf())
         this.navTo("main")
 
 

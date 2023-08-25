@@ -87,7 +87,7 @@ class EditorFragment : PaganFragment() {
             }
         }
 
-        setFragmentResultListener("LOAD") { _, bundle: Bundle? ->
+        setFragmentResultListener(IntentFragmentToken.Load.name) { _, bundle: Bundle? ->
             if (bundle == null) {
                 return@setFragmentResultListener
             }
@@ -98,7 +98,7 @@ class EditorFragment : PaganFragment() {
             }
         }
 
-        setFragmentResultListener("IMPORT") { _, bundle: Bundle? ->
+        setFragmentResultListener(IntentFragmentToken.ImportMidi.name) { _, bundle: Bundle? ->
             bundle!!.getString("URI")?.let { path ->
                 val main = this.get_main()
                 try {
@@ -110,7 +110,7 @@ class EditorFragment : PaganFragment() {
             }
         }
 
-        setFragmentResultListener("IMPORTPROJECT") { _, bundle: Bundle? ->
+        setFragmentResultListener(IntentFragmentToken.ImportProject.name) { _, bundle: Bundle? ->
             try {
                 bundle!!.getString("URI")?.let { path ->
                     val main = this.get_main()
@@ -126,7 +126,7 @@ class EditorFragment : PaganFragment() {
             }
         }
 
-        setFragmentResultListener("NEW") { _, _: Bundle? ->
+        setFragmentResultListener(IntentFragmentToken.New.name) { _, _: Bundle? ->
             val main = this.get_main()
             main.loading_reticle()
             main.get_opus_manager().new()

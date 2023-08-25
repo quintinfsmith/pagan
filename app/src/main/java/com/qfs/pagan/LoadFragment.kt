@@ -73,7 +73,7 @@ class LoadFragment : PaganFragment() {
     }
 
     fun load_project(path: String) {
-        setFragmentResult("LOAD", bundleOf(Pair("PATH", path)))
+        setFragmentResult(IntentFragmentToken.Load.name, bundleOf(Pair("PATH", path)))
 
         this.get_main().apply {
             loading_reticle()

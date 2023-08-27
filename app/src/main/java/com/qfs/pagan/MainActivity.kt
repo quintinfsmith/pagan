@@ -6,7 +6,9 @@ import android.content.Intent
 import android.database.Cursor
 import android.net.Uri
 import android.os.Bundle
+import android.os.PersistableBundle
 import android.provider.OpenableColumns
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
@@ -113,7 +115,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+        // Kludge: This was causing the app the freeze when relaunching a stale session, null seems to have
+        // no side effects (at the moment) and
+        super.onCreate(null)
         this.project_manager = ProjectManager(applicationInfo.dataDir)
         this.config_path =  "${applicationInfo.dataDir}/pagan.cfg"
         this.configuration = Configuration.from_path(this.config_path)
@@ -136,7 +140,7 @@ class MainActivity : AppCompatActivity() {
 
         if (this.configuration.soundfont != null) {
             val path = "${this.getExternalFilesDir(null)}/SoundFonts/${this.configuration.soundfont}"
-            var sf_file = File(path)
+            val sf_file = File(path)
             if (sf_file.exists()) {
                 this.soundfont = SoundFont(path)
                 this.midi_playback_device = SoundFontWavPlayer(this.soundfont!!)
@@ -145,19 +149,6 @@ class MainActivity : AppCompatActivity() {
         }
 
         ///////////////////////////////////////////
-    }
-
-    fun update_channel_instruments(channel: Int) {
-        val opus_channel = this.get_opus_manager().channels[channel]
-        this.midi_playback_device?.select_bank(opus_channel.midi_channel, opus_channel.midi_bank)
-        this.midi_playback_device?.change_program(opus_channel.midi_channel, opus_channel.midi_program)
-    }
-
-    fun update_channel_instruments() {
-        for (channel in opus_manager.channels) {
-            this.midi_playback_device?.select_bank(channel.midi_channel, channel.midi_bank)
-            this.midi_playback_device?.change_program(channel.midi_channel, channel.midi_program)
-        }
     }
 
     override fun onSupportNavigateUp(): Boolean {
@@ -172,28 +163,6 @@ class MainActivity : AppCompatActivity() {
         val output = super.onCreateOptionsMenu(menu)
         this.update_menu_options()
         return output
-    }
-
-    private fun save_dialog(callback: () -> Unit) {
-        if (this.get_opus_manager().has_changed_since_save()) {
-            val that = this
-            AlertDialog.Builder(this, R.style.AlertDialog).apply {
-                setTitle(getString(R.string.dialog_save_warning_title))
-                setCancelable(true)
-                setPositiveButton(getString(R.string.dlg_confirm)) { dialog, _ ->
-                    that.save_current_project()
-                    dialog.dismiss()
-                    callback()
-                }
-                setNegativeButton(getString(R.string.dlg_decline)) { dialog, _ ->
-                    dialog.dismiss()
-                    callback()
-                }
-                show()
-            }
-        } else {
-            callback()
-        }
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -239,6 +208,44 @@ class MainActivity : AppCompatActivity() {
         }
         return super.onOptionsItemSelected(item)
     }
+    /////////////////////////////////////////////////////////////////////////////////////////////////
+
+    fun update_channel_instruments(channel: Int) {
+        val opus_channel = this.get_opus_manager().channels[channel]
+        this.midi_playback_device?.select_bank(opus_channel.midi_channel, opus_channel.midi_bank)
+        this.midi_playback_device?.change_program(opus_channel.midi_channel, opus_channel.midi_program)
+    }
+
+    fun update_channel_instruments() {
+        for (channel in opus_manager.channels) {
+            this.midi_playback_device?.select_bank(channel.midi_channel, channel.midi_bank)
+            this.midi_playback_device?.change_program(channel.midi_channel, channel.midi_program)
+        }
+    }
+
+
+    private fun save_dialog(callback: () -> Unit) {
+        if (this.get_opus_manager().has_changed_since_save()) {
+            val that = this
+            AlertDialog.Builder(this, R.style.AlertDialog).apply {
+                setTitle(getString(R.string.dialog_save_warning_title))
+                setCancelable(true)
+                setPositiveButton(getString(R.string.dlg_confirm)) { dialog, _ ->
+                    that.save_current_project()
+                    dialog.dismiss()
+                    callback()
+                }
+                setNegativeButton(getString(R.string.dlg_decline)) { dialog, _ ->
+                    dialog.dismiss()
+                    callback()
+                }
+                show()
+            }
+        } else {
+            callback()
+        }
+    }
+
 
     fun setup_config_drawer() {
         val opus_manager = this.get_opus_manager()

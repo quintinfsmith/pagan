@@ -216,4 +216,8 @@
     <style name="corner_view_inner">
         <item name="android:background">?attr/main_bg</item>
     </style>
+
+    <style name="placeholder_outer">
+        <item name="android:background">?attr/main_bg</item>
+    </style>
 </resources>

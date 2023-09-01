@@ -38,8 +38,7 @@ class CellRecyclerViewHolder(context: Context): RecyclerView.ViewHolder(LinearLa
     }
 
     fun get_y(): Int {
-        var offset = (this.bindingAdapter as CellRecyclerAdapter).initial_offset
-        return this.bindingAdapterPosition + offset
+        return this.bindingAdapterPosition
     }
 
     fun get_std_offset(): Pair<Int, Int> {

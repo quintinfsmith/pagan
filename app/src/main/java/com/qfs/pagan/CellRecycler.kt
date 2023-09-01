@@ -1,6 +1,7 @@
 package com.qfs.pagan
 
 import android.annotation.SuppressLint
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
@@ -13,8 +14,9 @@ import com.qfs.pagan.InterfaceLayer as OpusManager
 @SuppressLint("ViewConstructor")
 class CellRecycler(var viewHolder: ColumnRecyclerViewHolder): ScrollLockingRecyclerView((viewHolder.itemView.context as ContextThemeWrapper).baseContext) {
     class ColumnDetachedException: Exception()
+    var test = false
     init {
-        this.adapter = CellRecyclerAdapter(this.get_opus_manager().get_total_line_count(), this.get_line_label_offset())
+        this.adapter = CellRecyclerAdapter(this.get_opus_manager().get_total_line_count())
         this.layoutManager = CellRecyclerLayoutManager(context, this)
         this.addOnScrollListener(this.get_scroll_listener())
 
@@ -24,12 +26,6 @@ class CellRecycler(var viewHolder: ColumnRecyclerViewHolder): ScrollLockingRecyc
         (this.viewHolder.itemView as ViewGroup).removeAllViews()
         (this.viewHolder.itemView as ViewGroup).addView(this)
 
-        val adapter = (this.adapter as CellRecyclerAdapter)
-        val editor_table = this.get_editor_table()
-        val ll_view_holder = editor_table.line_label_recycler.findViewHolderForAdapterPosition( adapter.initial_offset )
-        val layout_offset = ll_view_holder?.itemView?.y?.toInt() ?: 0
-        (this.layoutParams as MarginLayoutParams).setMargins(0, layout_offset, 0, 0)
-
         this.layoutParams.height = MATCH_PARENT
         this.layoutParams.width = WRAP_CONTENT
 
@@ -38,41 +34,15 @@ class CellRecycler(var viewHolder: ColumnRecyclerViewHolder): ScrollLockingRecyc
         this.unlock_scroll_propagation()
     }
 
-    override fun onAttachedToWindow() {
-        this.visibility = View.INVISIBLE
-        super.onAttachedToWindow()
-
-        val adapter = (this.adapter as CellRecyclerAdapter)
-        val margin = (this.layoutParams as MarginLayoutParams).topMargin
-
-        adapter.reset_initial_offset()
-        this.lock_scroll_propagation()
-        (this.layoutParams as MarginLayoutParams).setMargins(0, 0, 0, 0)
-        this.parent.requestLayout()
-        this.scrollBy(0, 0 - margin)
-        this.unlock_scroll_propagation()
-
-        this.visibility = View.VISIBLE
-    }
-
-    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
-        super.onSizeChanged(w, h, oldw, oldh)
+    override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
+        super.onLayout(changed, l, t, r, b)
         this.conform_scroll_position()
     }
 
-
     //-------------------------------------------------------//
-    private fun get_line_label_offset(): Int {
-        val editor_table = this.get_editor_table()
-
-        val llmanager = editor_table.line_label_recycler.layoutManager as LinearLayoutManager
-        val p = llmanager.findFirstVisibleItemPosition() ?: return 0
-        return p
-    }
 
     fun conform_scroll_position() {
         this.lock_scroll_propagation()
-
         try {
             val editor_table = this.get_editor_table()
             val line_label_recycler = editor_table.line_label_recycler
@@ -82,10 +52,10 @@ class CellRecycler(var viewHolder: ColumnRecyclerViewHolder): ScrollLockingRecyc
             if (delta != 0) {
                 this.scrollBy(0, delta)
             }
+            this.visibility = View.VISIBLE
         } catch (e: ColumnDetachedException) {
             // Happens when scrolling quickly and the recycler is detached before it can adjust
         }
-
         this.unlock_scroll_propagation()
     }
 

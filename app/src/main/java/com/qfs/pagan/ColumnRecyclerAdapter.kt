@@ -5,6 +5,7 @@ import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.pagan.opusmanager.BeatKey
+import kotlin.math.roundToInt
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
 class ColumnRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<ColumnRecyclerViewHolder>() {
@@ -42,7 +43,7 @@ class ColumnRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<Col
         val editor_table = this.get_editor_table()!!
         val weight = editor_table.get_column_width(position)
         val resources = this.recycler.resources
-        ColumnPlaceholder(holder, weight * resources.getDimension(R.dimen.base_leaf_width).toInt())
+        ColumnPlaceholder(holder, weight * resources.getDimension(R.dimen.base_leaf_width).roundToInt())
     }
     override fun onViewAttachedToWindow(holder: ColumnRecyclerViewHolder) {
         val editor_table = this.get_editor_table()!!

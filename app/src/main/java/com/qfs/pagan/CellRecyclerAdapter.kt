@@ -9,12 +9,11 @@ import com.qfs.pagan.structure.OpusTree
 import kotlin.math.max
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
-class CellRecyclerAdapter(initial_cell_count: Int = 0, var initial_offset: Int = 0): RecyclerView.Adapter<CellRecyclerViewHolder>() {
+class CellRecyclerAdapter(initial_cell_count: Int = 0): RecyclerView.Adapter<CellRecyclerViewHolder>() {
     private var cell_count = 0
     lateinit var recycler: CellRecycler
 
     init {
-        this.initial_offset = max(0, this.initial_offset)
 
         val that = this
         this.cell_count = initial_cell_count
@@ -41,7 +40,7 @@ class CellRecyclerAdapter(initial_cell_count: Int = 0, var initial_offset: Int =
     }
 
     override fun getItemCount(): Int {
-        return this.cell_count - this.initial_offset
+        return this.cell_count
     }
 
     override fun onViewAttachedToWindow(holder:CellRecyclerViewHolder) {
@@ -60,12 +59,12 @@ class CellRecyclerAdapter(initial_cell_count: Int = 0, var initial_offset: Int =
     //-------------------------------------------------------//
     fun insert_cell(index: Int) {
         this.cell_count += 1
-        this.notifyItemInserted(index + this.initial_offset)
+        this.notifyItemInserted(index)
     }
 
     fun remove_cell(index: Int) {
         this.cell_count -= 1
-        this.notifyItemRemoved(index + this.initial_offset)
+        this.notifyItemRemoved(index)
     }
     //-------------------------------------------------------//
     fun get_column_adapter(): ColumnRecyclerAdapter {
@@ -97,11 +96,5 @@ class CellRecyclerAdapter(initial_cell_count: Int = 0, var initial_offset: Int =
         val count = this.itemCount
         this.cell_count = 0
         this.notifyItemRangeRemoved(0, count)
-    }
-
-    fun reset_initial_offset() {
-        val r = this.initial_offset
-        this.initial_offset = 0
-        this.notifyItemRangeInserted(0, r)
     }
 }

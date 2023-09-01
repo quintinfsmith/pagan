@@ -22,6 +22,7 @@ class ChannelOptionAdapter(
     init {
         this.recycler.adapter = this
         this.recycler.layoutManager = LinearLayoutManager(this.activity)
+        this.recycler.itemAnimator = null
         val that = this
         this.registerAdapterDataObserver(
             object: RecyclerView.AdapterDataObserver() {

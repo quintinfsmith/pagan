@@ -577,6 +577,28 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
+    internal fun popup_menu_dialog(title: String, options: List<String>, callback: (index: Int, value: String) -> Unit) {
+        val viewInflated: View = LayoutInflater.from(this)
+            .inflate(
+                R.layout.dialog_menu,
+                window.decorView.rootView as ViewGroup,
+                false
+            )
+
+        val recycler = viewInflated.findViewById<RecyclerView>(R.id.MenuRecycler)
+        val dialog = AlertDialog.Builder(this, R.style.AlertDialog)
+            .setTitle(title)
+            .setView(viewInflated)
+            //.setPositiveButton(android.R.string.ok) { _, _ ->}
+            //.setNegativeButton(android.R.string.cancel) { _, _ ->}
+            .show()
+
+        PopupMenuRecyclerAdapter(recycler, options) { index: Int, value: String ->
+            dialog.dismiss()
+            callback(index, value)
+        }
+    }
+
     internal fun popup_number_dialog(title: String, min_value: Int, max_value: Int, default: Int? = null, callback: (value: Int) -> Unit) {
         val coerced_default_value = default ?: (this.number_selector_defaults[title] ?: min_value)
 

@@ -15,14 +15,16 @@ class ColumnPlaceholder(var viewHolder: ColumnRecyclerViewHolder, column_width: 
 
         this.layoutParams.width = column_width
         this.layoutParams.height = MATCH_PARENT
-
     }
-    fun replace() {
+
+    private fun replace() {
         CellRecycler(this.viewHolder)
     }
+
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
         thread {
+            // Kludge
             Thread.sleep(50)
             if (this.viewHolder.bindingAdapterPosition != -1) {
                 var adapter = (this.viewHolder.bindingAdapter as ColumnRecyclerAdapter)

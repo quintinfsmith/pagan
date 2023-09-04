@@ -1,12 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
+<com.qfs.pagan.PopupMenuRecyclerView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:padding="8dp"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/MenuRecycler"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
-
-</LinearLayout>
+    android:layout_height="match_parent"/>

@@ -1,5 +1,6 @@
 package com.qfs.pagan
 
+import android.util.Log
 import android.view.ContextThemeWrapper
 import android.view.LayoutInflater
 import android.view.View
@@ -8,48 +9,31 @@ import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.PopupMenu
 import android.widget.TextView
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import com.qfs.apres.soundfont.SoundFont
 
 class PopupMenuRecyclerAdapter(
     private val recycler: RecyclerView,
-    private val options: List<String>,
-    private val callback: (Int, String) -> Unit
+    private val options: List<Pair<Int, String>>,
+    private val callback: (Int, Int) -> Unit
 ) : RecyclerView.Adapter<ViewHolder>() {
-    class PopupMenuRecyclerViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
-
-    private var supported_instruments = HashMap<Pair<Int, Int>, String>()
-
+    class PopupMenuRecyclerViewHolder(itemView: View) : ViewHolder(itemView)
     init {
         this.recycler.adapter = this
         this.recycler.itemAnimator = null
-        val that = this
-
-        this.registerAdapterDataObserver(
-            object: RecyclerView.AdapterDataObserver() {
-                override fun onItemRangeRemoved(start: Int, count: Int) {
-                    for (i in start until that.recycler.childCount) {
-                        that.notifyItemChanged(i)
-                    }
-                }
-                override fun onItemRangeChanged(start: Int, count: Int) { }
-                override fun onItemRangeInserted(start: Int, count: Int) { }
-                //override fun onChanged() { }
-            }
-        )
+        this.recycler.layoutManager = LinearLayoutManager(this.recycler.context)
+        this.notifyItemRangeInserted(0, this.options.size)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val text_view = holder.itemView as TextView
-        text_view.text = this.options[position]
-        (holder.itemView as ViewGroup).addView(text_view)
-        text_view.layoutParams.apply {
-            width = MATCH_PARENT
-            height = WRAP_CONTENT
-        }
+        text_view.text = this.options[position].second
+        text_view.minEms = 3
+
         text_view.setOnClickListener {
-            this.callback( position, this.options[position] )
+            this.callback( position, this.options[position].first )
         }
     }
 

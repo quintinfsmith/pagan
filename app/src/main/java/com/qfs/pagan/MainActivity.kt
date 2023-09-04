@@ -6,8 +6,8 @@ import android.content.Intent
 import android.database.Cursor
 import android.net.Uri
 import android.os.Bundle
-import android.os.PersistableBundle
 import android.provider.OpenableColumns
+import android.util.DisplayMetrics
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.Menu
@@ -46,6 +46,7 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import kotlin.concurrent.thread
+import kotlin.math.min
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
 class MainActivity : AppCompatActivity() {
@@ -565,7 +566,6 @@ class MainActivity : AppCompatActivity() {
         val npHundreds = viewInflated.findViewById<NumberPicker>(R.id.npHundreds)
         npHundreds.visibility = View.GONE
 
-
         AlertDialog.Builder(this, R.style.AlertDialog)
             .setTitle(getString(R.string.dlg_transpose))
             .setView(viewInflated)
@@ -577,7 +577,10 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
-    internal fun popup_menu_dialog(title: String, options: List<String>, callback: (index: Int, value: String) -> Unit) {
+    internal fun popup_menu_dialog(title: String, options: List<Pair<Int, String>>, callback: (index: Int, value: Int) -> Unit) {
+        if (options.isEmpty()) {
+            return
+        }
         val viewInflated: View = LayoutInflater.from(this)
             .inflate(
                 R.layout.dialog_menu,
@@ -585,18 +588,24 @@ class MainActivity : AppCompatActivity() {
                 false
             )
 
-        val recycler = viewInflated.findViewById<RecyclerView>(R.id.MenuRecycler)
+        val recycler = viewInflated as RecyclerView
         val dialog = AlertDialog.Builder(this, R.style.AlertDialog)
             .setTitle(title)
             .setView(viewInflated)
-            //.setPositiveButton(android.R.string.ok) { _, _ ->}
-            //.setNegativeButton(android.R.string.cancel) { _, _ ->}
             .show()
 
-        PopupMenuRecyclerAdapter(recycler, options) { index: Int, value: String ->
+        val adapter = PopupMenuRecyclerAdapter(recycler, options) { index: Int, value: Int ->
             dialog.dismiss()
             callback(index, value)
         }
+
+        adapter.notifyDataSetChanged()
+
+        val windowMetrics = this.windowManager.currentWindowMetrics
+        val max_width: Int = (windowMetrics.bounds.width().toFloat() * .9).toInt()
+        val max_height: Int = (windowMetrics.bounds.height().toFloat() * .8).toInt()
+
+        dialog.window!!.setLayout( max_width, max_height )
     }
 
     internal fun popup_number_dialog(title: String, min_value: Int, max_value: Int, default: Int? = null, callback: (value: Int) -> Unit) {

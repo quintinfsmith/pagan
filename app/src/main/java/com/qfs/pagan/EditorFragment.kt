@@ -1,6 +1,7 @@
 package com.qfs.pagan
 
 import android.os.Bundle
+import android.util.Log
 import android.view.*
 import android.widget.*
 import androidx.fragment.app.setFragmentResultListener
@@ -823,23 +824,17 @@ class EditorFragment : PaganFragment() {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
 
-        val popupMenu = PopupMenu(this.binding.root.context, view)
-
-        var i = 0
+        val options = mutableListOf<Pair<Int, String>>()
         val sorted_keys = main.active_percussion_names.keys.toMutableList()
         sorted_keys.sort()
         for (note in sorted_keys) {
             val name = main.active_percussion_names[note]
-            popupMenu.menu.add(0, note - 27, i, "${note - 27}: $name")
-            i += 1
+            options.add(Pair(note - 27, "${note - 27}: $name"))
         }
 
-        popupMenu.setOnMenuItemClickListener {
-            opus_manager.set_percussion_instrument( it.itemId)
-            true
+        main.popup_menu_dialog("Choose Percussion", options) { index: Int, value: Int ->
+            opus_manager.set_percussion_instrument(value)
         }
-
-        popupMenu.show()
     }
 
     fun scroll_to_beat(beat: Int, select: Boolean = false) {

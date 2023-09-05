@@ -319,6 +319,14 @@ open class HistoryLayer : LinksLayer() {
                     )
                 }
 
+                HistoryToken.SET_EVENT_DURATION -> {
+                    this.set_duration(
+                        current_node.args[0] as BeatKey,
+                        current_node.args[1] as List<Int>,
+                        current_node.args[2] as Int
+                    )
+                }
+
                 else -> {}
             }
         } catch (e: ClassCastException) {
@@ -917,5 +925,18 @@ open class HistoryLayer : LinksLayer() {
         var original_link_pools = this.link_pools.toList()
         this.push_to_history_stack(HistoryToken.RESTORE_LINK_POOLS, listOf(original_link_pools))
         super.remap_links(remap_hook)
+    }
+
+    override fun set_duration(beat_key: BeatKey, position: List<Int>, duration: Int) {
+        this.history_cache.remember {
+            val tree = this.get_tree(beat_key, position)
+            if (tree.is_event()) {
+                val event = tree.get_event()
+                this.push_to_history_stack(HistoryToken.SET_EVENT_DURATION, listOf(beat_key, position, event!!.duration))
+            }
+
+            super.set_duration(beat_key, position, duration)
+        }
+
     }
 }

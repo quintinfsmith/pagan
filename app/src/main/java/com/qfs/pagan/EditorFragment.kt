@@ -405,6 +405,7 @@ class EditorFragment : PaganFragment() {
         val btnSplit = view.findViewById<View>(R.id.btnSplit)
         val btnRemove = view.findViewById<View>(R.id.btnRemove)
         val btnInsert = view.findViewById<View>(R.id.btnInsert)
+        val btnDuration = view.findViewById<TextView>(R.id.btnDuration)
 
         val nsOctave: NumberSelector = view.findViewById(R.id.nsOctave)
         val nsOffset: NumberSelector = view.findViewById(R.id.nsOffset)
@@ -473,17 +474,17 @@ class EditorFragment : PaganFragment() {
             true
         }
 
-        btnUnset.setOnClickListener {
-            this.interact_btnUnset()
-        }
-
         val channel = opus_manager.cursor.channel
         if (!opus_manager.is_percussion(channel) && current_tree.is_leaf() && !current_tree.is_event()) {
-            btnUnset.visibility = View.GONE
+            btnUnset.visibility = View.INVISIBLE
+        } else {
+            btnUnset.setOnClickListener {
+                this.interact_btnUnset()
+            }
         }
 
         if (opus_manager.cursor.get_position().isEmpty()) {
-            btnRemove.visibility = View.GONE
+            btnRemove.visibility = View.INVISIBLE
         } else {
             btnRemove.visibility = View.VISIBLE
             btnRemove.setOnClickListener {
@@ -533,6 +534,23 @@ class EditorFragment : PaganFragment() {
                 opus_manager.cursor_select(beat_key, position)
             }
             true
+        }
+
+        if (current_tree.is_event()) {
+            val event = current_tree.get_event()!!
+            btnDuration.setOnClickListener {
+                main.popup_number_dialog("Duration", 1, 99, default=event.duration) { value: Int ->
+                    val adj_value = max(value, 1)
+                    val cursor = opus_manager.cursor
+                    val beat_key = cursor.get_beatkey()
+                    val position = cursor.get_position()
+                    opus_manager.set_duration(beat_key, position, adj_value)
+                    (it as TextView).text = "x$adj_value"
+                }
+            }
+            btnDuration.text = "x${event.duration}"
+        } else {
+            btnDuration.visibility = View.INVISIBLE
         }
 
 
@@ -701,6 +719,13 @@ class EditorFragment : PaganFragment() {
         val progress = view.getState()!!
         val current_tree = opus_manager.get_tree()
 
+        val duration = if (current_tree.is_event()) {
+            val event = current_tree.get_event()!!
+            event.duration
+        } else {
+            1
+        }
+
         val value = if (current_tree.is_event()) {
             val event = current_tree.get_event()!!
             var prev_note = if (opus_manager.relative_mode != 0) {
@@ -746,11 +771,13 @@ class EditorFragment : PaganFragment() {
                 }
             }
         }
+
         val event = OpusEvent(
             value,
             opus_manager.RADIX,
             opus_manager.cursor.channel,
-            opus_manager.relative_mode != 0
+            opus_manager.relative_mode != 0,
+            duration
         )
 
         opus_manager.set_event(event)
@@ -764,6 +791,12 @@ class EditorFragment : PaganFragment() {
         val progress = view.getState() ?: return
 
         val current_tree = opus_manager.get_tree()
+        val duration = if (current_tree.is_event()) {
+            val event = current_tree.get_event()!!
+            event.duration
+        } else {
+            1
+        }
 
         val value = if (current_tree.is_event()) {
             val event = current_tree.get_event()!!
@@ -812,7 +845,8 @@ class EditorFragment : PaganFragment() {
             value,
             opus_manager.RADIX,
             opus_manager.cursor.channel,
-            opus_manager.relative_mode != 0
+            opus_manager.relative_mode != 0,
+            duration
         )
 
         opus_manager.set_event(event)

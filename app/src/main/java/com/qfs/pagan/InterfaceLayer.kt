@@ -77,7 +77,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         if (!this.simple_ui_locked()) {
             this.get_editor_table().notify_cell_change(beat_key)
         }
-
     }
 
     override fun set_percussion_event(beat_key: BeatKey, position: List<Int>) {
@@ -621,6 +620,15 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                     )
                 }
                 HistoryToken.SET_EVENT -> {
+                    this.push_to_history_stack(
+                        HistoryToken.CURSOR_SELECT,
+                        listOf(
+                            args[0] as BeatKey,
+                            this.checked_cast<List<Int>>(args[1])
+                        )
+                    )
+                }
+                HistoryToken.SET_EVENT_DURATION -> {
                     this.push_to_history_stack(
                         HistoryToken.CURSOR_SELECT,
                         listOf(

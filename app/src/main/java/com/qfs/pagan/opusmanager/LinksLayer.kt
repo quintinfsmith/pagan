@@ -645,4 +645,12 @@ open class LinksLayer : BaseLayer() {
         }
         super.new_channel(channel, lines, uuid)
     }
+
+    override fun set_duration(beat_key: BeatKey, position: List<Int>, duration: Int) {
+        this.lock_links {
+            for (linked_key in this.get_all_linked(beat_key)) {
+                super.set_duration(linked_key, position, duration)
+            }
+        }
+    }
 }

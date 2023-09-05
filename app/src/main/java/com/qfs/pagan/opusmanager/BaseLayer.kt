@@ -436,7 +436,8 @@ open class BaseLayer {
                     event.note,
                     event.radix,
                     event.channel,
-                    true
+                    true,
+                    event.duration
                 )
             )
         } else {
@@ -445,7 +446,8 @@ open class BaseLayer {
                     event.note - preceding_value,
                     event.radix,
                     event.channel,
-                    true
+                    true,
+                    event.duration
                 )
             )
         }
@@ -477,7 +479,8 @@ open class BaseLayer {
             value,
             event.radix,
             event.channel,
-            false
+            false,
+            event.duration
         ))
     }
 
@@ -814,6 +817,8 @@ open class BaseLayer {
         midi.insert_event(0,0, SetTempo.from_bpm(tempo))
         data class StackItem(var tree: OpusTree<OpusEvent>, var divisions: Int, var offset: Int, var size: Int)
         val position_pointer_ticks = mutableSetOf<Pair<Int, Int>>()
+        val max_tick = midi.get_ppqn() * (this.opus_beat_count + 1)
+
         this.channels.forEachIndexed { c, channel ->
             midi.insert_event(
                 0,
@@ -855,7 +860,7 @@ open class BaseLayer {
                                 )
                                 midi.insert_event(
                                     0,
-                                    current.offset + (current.size * event.duration),
+                                    min(current.offset + (current.size * event.duration), max_tick),
                                     NoteOff(channel.midi_channel, note, line.volume)
                                 )
                             }
@@ -1463,7 +1468,15 @@ open class BaseLayer {
                 BeatKey(from_key.channel, from_key.line_offset, from_key.beat + b)
             )
         }
-
     }
 
+    open fun set_duration(beat_key: BeatKey, position: List<Int>, duration: Int) {
+        val tree = this.get_tree(beat_key, position)
+        if (!tree.is_event()) {
+            // TODO: Throw error?
+            return
+        }
+
+        tree.event!!.duration = duration
+    }
 }

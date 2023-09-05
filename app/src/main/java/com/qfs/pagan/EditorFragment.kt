@@ -835,7 +835,7 @@ class EditorFragment : PaganFragment() {
             options.add(Pair(note - 27, "${note - 27}: $name"))
         }
 
-        main.popup_menu_dialog("Choose Percussion", options, default_instrument) { index: Int, value: Int ->
+        main.popup_menu_dialog(getString(R.string.dropdown_choose_percussion), options, default_instrument) { index: Int, value: Int ->
             opus_manager.set_percussion_instrument(value)
         }
     }

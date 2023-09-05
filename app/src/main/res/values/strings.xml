@@ -94,6 +94,8 @@
     <string name="unknown_percussion">Unknown Percussion</string>
     <string name="unknown_instrument">Unknown %1s</string>
     <string name="desc_column_label">Column %1d</string>
+    <string name="dropdown_choose_percussion">Choose Percussion</string>
+    <string name="dropdown_choose_instrument">Choose Instrument</string>
     <string-array name="relative">
         <item>@string/pfx_add</item>
         <item>@string/pfx_subtract</item>

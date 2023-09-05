@@ -1,6 +1,7 @@
 package com.qfs.pagan
 
 import android.content.Context
+import android.util.Log
 import android.view.Gravity.CENTER
 import android.view.MotionEvent
 import android.view.View
@@ -181,7 +182,7 @@ class LeafButton(
         }
 
         val event = this.event!!
-
+        Log.d("AAA", "PB: ${this.paddingBottom}")
         var use_note = event.note
         this.prefix_label.text = if (!is_percussion && (event.relative && event.note != 0)) {
             this.prefix_label.visibility = View.VISIBLE
@@ -211,15 +212,15 @@ class LeafButton(
 
         if (event.relative && event.note != 0) {
             (this.prefix_label.layoutParams as LayoutParams).apply {
+                setMargins(0,-20,0,0)
                 height = WRAP_CONTENT
-                setMargins(0,-24,0,0)
                 gravity = CENTER
             }
             (this.value_wrapper.layoutParams as LayoutParams).apply {
-                weight = 1F
-                height = 0
-                gravity = CENTER
                 setMargins(0,-30,0,0)
+                weight = 1F
+                height = WRAP_CONTENT
+                gravity = CENTER
             }
         } else {
             (this.prefix_label.layoutParams as LayoutParams).apply {

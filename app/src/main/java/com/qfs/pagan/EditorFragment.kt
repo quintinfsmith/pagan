@@ -321,11 +321,12 @@ class EditorFragment : PaganFragment() {
         if (!opus_manager.is_percussion(channel)) {
             btnChoosePercussion.visibility = View.GONE
         } else {
+            val instrument = opus_manager.get_percussion_instrument(line_offset)
+
             btnChoosePercussion.setOnClickListener {
-                this.interact_btnChoosePercussion(it)
+                this.interact_btnChoosePercussion()
             }
 
-            val instrument = opus_manager.get_percussion_instrument(line_offset)
             btnChoosePercussion.text = main.getString(
                 R.string.label_choose_percussion,
                 instrument,
@@ -820,9 +821,11 @@ class EditorFragment : PaganFragment() {
     }
 
 
-    private fun interact_btnChoosePercussion(view: View) {
+    private fun interact_btnChoosePercussion() {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
+        val cursor = opus_manager.cursor
+        val default_instrument = opus_manager.get_percussion_instrument(cursor.line_offset)
 
         val options = mutableListOf<Pair<Int, String>>()
         val sorted_keys = main.active_percussion_names.keys.toMutableList()
@@ -832,7 +835,7 @@ class EditorFragment : PaganFragment() {
             options.add(Pair(note - 27, "${note - 27}: $name"))
         }
 
-        main.popup_menu_dialog("Choose Percussion", options) { index: Int, value: Int ->
+        main.popup_menu_dialog("Choose Percussion", options, default_instrument) { index: Int, value: Int ->
             opus_manager.set_percussion_instrument(value)
         }
     }

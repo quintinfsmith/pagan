@@ -577,7 +577,7 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
-    internal fun popup_menu_dialog(title: String, options: List<Pair<Int, String>>, callback: (index: Int, value: Int) -> Unit) {
+    internal fun <T> popup_menu_dialog(title: String, options: List<Pair<T, String>>, default: T? = null, callback: (index: Int, value: T) -> Unit) {
         if (options.isEmpty()) {
             return
         }
@@ -594,7 +594,7 @@ class MainActivity : AppCompatActivity() {
             .setView(viewInflated)
             .show()
 
-        val adapter = PopupMenuRecyclerAdapter(recycler, options) { index: Int, value: Int ->
+        val adapter = PopupMenuRecyclerAdapter<T>(recycler, options, default) { index: Int, value: T ->
             dialog.dismiss()
             callback(index, value)
         }

@@ -1,8 +1,6 @@
 package com.qfs.pagan
 
-import android.util.Log
 import androidx.recyclerview.widget.RecyclerView
-import androidx.recyclerview.widget.RecyclerView.SCROLL_STATE_DRAGGING
 
 class VerticalScrollListener(): RecyclerView.OnScrollListener() {
     override fun onScrolled(recyclerView: RecyclerView, x: Int, y: Int) {

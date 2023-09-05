@@ -1,10 +1,8 @@
 package com.qfs.pagan
 
-import android.view.ContextThemeWrapper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.PopupMenu
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -121,33 +119,27 @@ class ChannelOptionAdapter(
     }
 
     private fun interact_btnChooseInstrument(view: View) {
-        val wrapper = ContextThemeWrapper(this.activity, R.style.PopupMenu)
-        val popupMenu = PopupMenu(wrapper, view)
         val channel = this.get_view_channel(view)
 
         val sorted_keys = this.supported_instruments.keys.toList().sortedBy {
             it.first + (it.second * 128)
         }
-        var x = 0
+
+        val options = mutableListOf<Pair<Pair<Int, Int>, String>>()
         sorted_keys.forEachIndexed { i: Int, key: Pair<Int, Int> ->
             val name = this.supported_instruments[key]
             if ((this.opus_manager.is_percussion(channel) && key.first == 128)) {
-                popupMenu.menu.add(0, i, x, "[${key.second}] $name")
-                x += 1
+                options.add(Pair(key, "[${key.second}] $name"))
             } else if (!(key.first == 128 || this.opus_manager.is_percussion(channel))) {
                 val pairstring = "${key.first}/${key.second}"
-                popupMenu.menu.add(0, i, x, "[$pairstring] $name")
-                x += 1
+                options.add(Pair(key, "[$pairstring] $name"))
             }
         }
 
-        popupMenu.setOnMenuItemClickListener {
-            val (bank, program) = sorted_keys[it.itemId]
+        var default_position = this.opus_manager.get_channel_instrument(channel)
+        this.activity.popup_menu_dialog<Pair<Int, Int>>("Choose Instrument", options, default = default_position) { index: Int, (bank, program): Pair<Int, Int> ->
             this.set_channel_instrument(channel, bank, program)
-            false
         }
-
-        popupMenu.show()
     }
 
     private fun set_channel_instrument(channel: Int, bank: Int, program: Int) {

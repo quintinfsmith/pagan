@@ -182,7 +182,6 @@ class LeafButton(
         }
 
         val event = this.event!!
-        Log.d("AAA", "PB: ${this.paddingBottom}")
         var use_note = event.note
         this.prefix_label.text = if (!is_percussion && (event.relative && event.note != 0)) {
             this.prefix_label.visibility = View.VISIBLE

@@ -15,31 +15,32 @@ import com.qfs.pagan.opusmanager.LinksLayer as OpusManager
  * See [testing documentation](http://d.android.com/tools/testing).
  */
 class LinkLayerUnitTest {
+    private fun batch_link_test(manager: OpusManager, main_key: BeatKey, callback: (OpusTree<OpusEvent>) -> Unit) {
+        for (linked_key in manager.get_all_linked(main_key)) {
+            if (linked_key == main_key) {
+                continue
+            }
+
+            callback(manager.get_beat_tree(linked_key))
+        }
+    }
+
+    private fun setup_linked_manager(): Pair<OpusManager, BeatKey> {
+        val manager = OpusManager()
+        manager.new()
+        manager.link_beats(BeatKey(0,0,0), BeatKey(0,0,1))
+        return Pair(manager, BeatKey(0,0,0))
+    }
+
     @Test
     fun test_unlink_beat() {
         val (manager, main_key) = this.setup_linked_manager()
-        val linked_keys = manager.get_all_linked(main_key)
         manager.unlink_beat(main_key)
         assertEquals(
             "Failed to unlink beat",
             1,
             manager.get_all_linked(main_key).size
         )
-    }
-
-    @Test
-    fun test_clear_links_to_beat() {
-        //TODO("test_clear_links_to_beat")
-    }
-
-    @Test
-    fun test_clear_links_in_network() {
-        //TODO("test_clear_links_in_network")
-    }
-
-    @Test
-    fun test_remove_link_from_network() {
-        //TODO("test_remove_link_from_network")
     }
 
     @Test
@@ -60,27 +61,6 @@ class LinkLayerUnitTest {
             "Failed to link 3rd beat into pool",
             manager.get_all_linked(first_key).contains(third_key)
         )
-    }
-
-    @Test
-    fun test_get_all_linked() {
-        //TODO("test_get_all_linked")
-    }
-    @Test
-    fun test_new() {
-        //TODO("test_new")
-    }
-    @Test
-    fun test_set_percussion_event() {
-        //TODO("test_set_percussion_event")
-    }
-    @Test
-    fun test_set_event() {
-        //TODO("test_set_event")
-    }
-    @Test
-    fun test_unset() {
-        //TODO("test_unset")
     }
 
     @Test
@@ -133,11 +113,6 @@ class LinkLayerUnitTest {
             2,
             manager.get_all_linked(BeatKey(0,1,0)).size
         )
-    }
-
-    @Test
-    fun test_overwrite_beat() {
-        //TODO("test_overwrite_beat")
     }
 
     @Test
@@ -216,27 +191,6 @@ class LinkLayerUnitTest {
     }
 
     @Test
-    fun test_get_midi() {
-        //TODO("test_get_midi")
-    }
-    @Test
-    fun test_to_json() {
-        //TODO("test_to_json")
-    }
-    @Test
-    fun test_save() {
-        //TODO("test_save")
-    }
-    @Test
-    fun test_load() {
-        //TODO("test_load")
-    }
-    @Test
-    fun test_import_midi() {
-        //TODO("test_import_midi")
-    }
-
-    @Test
     fun test_insert_after() {
         val (manager, main_key) = this.setup_linked_manager()
 
@@ -302,20 +256,60 @@ class LinkLayerUnitTest {
         }
     }
 
-    fun batch_link_test(manager: OpusManager, main_key: BeatKey, callback: (OpusTree<OpusEvent>) -> Unit) {
-        for (linked_key in manager.get_all_linked(main_key)) {
-            if (linked_key == main_key) {
-                continue
-            }
+    @Test
+    fun test_set_percussion_event() {
+        val manager = OpusManager()
+        manager.new()
+        manager.link_beats(BeatKey(1,0,0), BeatKey(1,0,1))
+        manager.set_percussion_event(BeatKey(1,0,0), listOf())
+        this.batch_link_test(manager, BeatKey(1,0,0)) {
+            assertEquals(
+                "Failed to set percussion event on linked beat",
+                true,
+                it.is_event()
+            )
+        }
+    }
+    @Test
+    fun test_set_event() {
+        val (manager, main_key) = this.setup_linked_manager()
+        val event = OpusEvent(20, 12, 0, false, 1)
+        manager.set_event(main_key, listOf(), event)
 
-            callback(manager.get_beat_tree(linked_key))
+        this.batch_link_test(manager, main_key) {
+            assertEquals(
+                "Failed to set event on all linked beats",
+                true,
+                it.is_event()
+            )
+        }
+    }
+    @Test
+    fun test_unset() {
+        val (manager, main_key) = this.setup_linked_manager()
+        val event = OpusEvent(20, 12, 0, false, 1)
+        manager.set_event(main_key, listOf(), event)
+        manager.unset(main_key, listOf())
+
+        this.batch_link_test(manager, main_key) {
+            assertEquals(
+                "Failed to unset event on all linked beats",
+                false,
+                it.is_event()
+            )
         }
     }
 
-    fun setup_linked_manager(): Pair<OpusManager, BeatKey> {
-        val manager = OpusManager()
-        manager.new()
-        manager.link_beats(BeatKey(0,0,0), BeatKey(0,0,1))
-        return Pair(manager, BeatKey(0,0,0))
+    @Test
+    fun test_to_json() {
+        //TODO("test_to_json")
+    }
+    @Test
+    fun test_save() {
+        //TODO("test_save")
+    }
+    @Test
+    fun test_load() {
+        //TODO("test_load")
     }
 }

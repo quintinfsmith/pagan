@@ -1,4 +1,5 @@
 package com.qfs.pagan.opusmanager
+import android.util.Log
 import com.qfs.apres.event.BankSelect
 import com.qfs.apres.Midi
 import com.qfs.apres.event.NoteOff
@@ -729,7 +730,7 @@ open class BaseLayer {
     }
 
     open fun new_line(channel: Int, line_offset: Int? = null): OpusChannel.OpusLine {
-        return this.channels[channel].new_line(line_offset)
+        return this.channels[channel].new_line(line_offset ?: this.channels[channel].lines.size)
     }
 
     open fun overwrite_beat(old_beat: BeatKey, new_beat: BeatKey) {

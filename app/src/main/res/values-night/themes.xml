@@ -62,6 +62,8 @@
         <item name="soundfont_warning_frame">@color/white</item>
         <item name="soundfont_warning_text">@color/white</item>
         <item name="soundfont_warning_link">@color/blue_dark</item>
+
+        <item name="drop_down_bg">#FFFFFF</item>
     </style>
 
     <style name="Theme.Pagan.NoActionBar">

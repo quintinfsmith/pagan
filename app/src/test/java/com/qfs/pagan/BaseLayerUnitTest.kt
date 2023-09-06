@@ -543,12 +543,19 @@ class BaseLayerUnitTest {
         //TODO("test_import_midi")
     }
     @Test
-    fun test_purge_cache() {
-        //TODO("test_purge_cache")
-    }
-    @Test
-    fun test_reset_cache() {
-        //TODO("test_reset_cache")
-    }
+    fun test_set_duration() {
+        val manager = OpusManager()
+        manager.new()
+        val beat_key = BeatKey(0, 0, 0)
+        val event = OpusEvent(20,12, 0, false, 1)
+        manager.set_event(beat_key, listOf(), event)
 
+        val new_duration = 2
+        manager.set_duration(beat_key, listOf(), new_duration)
+        assertEquals(
+            "Failed to set event duration",
+            new_duration,
+            manager.get_beat_tree(beat_key).get_event()!!.duration
+        )
+    }
 }

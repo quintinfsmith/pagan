@@ -32,9 +32,11 @@ class GlobalSettingsFragment : PaganFragment() {
 
                     val new_file = File("${soundfont_dir}/$file_name")
                     main.applicationContext.contentResolver.openFileDescriptor(uri, "r")?.use {
-                        new_file.writeBytes(
-                            FileInputStream(it.fileDescriptor).readBytes()
-                        )
+                        val output_stream = new_file.outputStream()
+                        val input_stream = FileInputStream(it.fileDescriptor)
+                        input_stream.copyTo(output_stream, 4096)
+                        output_stream.close()
+                        input_stream.close()
                     }
 
                     try {

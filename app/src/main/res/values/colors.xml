@@ -36,4 +36,5 @@
     <color name="bg_dark">#2d2d2d</color>
     <color name="bg_light">#efefef</color>
 
+    <color name="drop_down_bg">?attr/drop_down_bg</color>
 </resources>

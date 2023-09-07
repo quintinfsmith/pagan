@@ -18,6 +18,8 @@ import kotlinx.serialization.encodeToString
 import java.lang.Integer.max
 import java.lang.Integer.min
 import kotlin.math.pow
+import kotlin.math.roundToInt
+
 /**
  * The logic of the Opus Manager.
  *
@@ -1101,9 +1103,11 @@ open class BaseLayer {
         var last_ts_change = 0
         val beat_values: MutableList<OpusTree<Set<OpusEvent>>> = mutableListOf()
         var max_tick = 0
-        val press_map = HashMap<Int, Pair<Int, Int>>()
         var tempo = 120F
         val instrument_map = mutableListOf<Triple<Int, Int?, Int?>>()
+
+        val active_event_map = HashMap<Pair<Int,Int>, OpusEvent>()
+        val opus_event_duration_map = HashMap<OpusEvent, Float>()
 
         var denominator = 4F
         for (pair in midi.get_all_events()) {
@@ -1113,7 +1117,14 @@ open class BaseLayer {
             max_tick = kotlin.math.max(tick, max_tick)
             val beat_index = ((tick - last_ts_change) / beat_size) + total_beat_offset
             val inner_beat_offset = (tick - last_ts_change) % beat_size
+
             if (event is NoteOn && event.get_velocity() > 0) {
+                val (channel, note) = if (event is NoteOn) {
+                    Pair(event.channel, event.get_note())
+                } else {
+                    Pair((event as NoteOff).channel, event.get_note())
+                }
+
                 // Add trees to list of trees
                 while (beat_values.size <= beat_index) {
                     val new_tree = OpusTree<Set<OpusEvent>>()
@@ -1128,26 +1139,35 @@ open class BaseLayer {
                     mutableSetOf()
                 }
 
-                eventset.add(
+                val opus_event =
                     OpusEvent(
-                        if (event.channel == 9) {
-                            event.get_note() - 27
+                        if (channel == 9) {
+                            note - 27
                         } else {
-                            event.get_note() - 21
+                            note - 21
                         },
                         12,
-                        event.channel,
-                        false
+                        channel,
+                        false,
+                        tick
                     )
-                )
+                eventset.add(opus_event)
 
                 tree[inner_beat_offset].set_event(eventset)
-                press_map[event.note] = Pair(beat_index, inner_beat_offset)
+                active_event_map[Pair(event.channel, event.get_note())] = opus_event
+            } else if ((event is NoteOn && event.get_velocity() == 0) || event is NoteOff) {
+                val (channel, note) = if (event is NoteOn) {
+                    Pair(event.channel, event.get_note())
+                } else {
+                    Pair((event as NoteOff).channel, event.get_note())
+                }
+
+                val opus_event = active_event_map[Pair(channel, note)] ?: continue
+                opus_event_duration_map[opus_event] = (tick - opus_event.duration).toFloat() / beat_size.toFloat()
             } else if (event is TimeSignature) {
                 total_beat_offset += (tick - last_ts_change) / beat_size
                 last_ts_change = tick
                 denominator = 2F.pow(event.get_denominator())
-
                 beat_size = (midi.get_ppqn().toFloat() * (4 / denominator)).toInt()
             } else if (event is SetTempo) {
                 if (tick == 0) {
@@ -1167,7 +1187,6 @@ open class BaseLayer {
 
         var overflow_events = mutableSetOf<OpusEvent>()
         beat_values.forEachIndexed { i, beat_tree ->
-
             // Quantize the beat ////////////
             val quantized_tree = OpusTree<Set<OpusEvent>>()
             quantized_tree.set_size(beat_tree.size)
@@ -1206,12 +1225,31 @@ open class BaseLayer {
             }
             /////////////////////////////////////
 
-
             quantized_tree.reduce()
             quantized_tree.clear_singles()
+            quantized_tree.traverse { tree: OpusTree<Set<OpusEvent>>, events: Set<OpusEvent>? ->
+                if (events == null) {
+                    return@traverse
+                }
+
+                var n: Float = 1F
+                var climb = tree.parent
+                while (climb != null) {
+                    n /= (climb.size).toFloat()
+                    climb = climb.parent
+                }
+
+                for (event in events) {
+                    val beat_ratio = opus_event_duration_map[event]
+                    event.duration = if (beat_ratio == null) {
+                        1
+                    } else {
+                        max(1, (beat_ratio / n).roundToInt())
+                    }
+                }
+            }
             opus.set(i, quantized_tree)
         }
-
 
         return Triple(opus, tempo, instrument_map)
     }

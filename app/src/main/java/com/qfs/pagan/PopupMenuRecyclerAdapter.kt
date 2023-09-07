@@ -2,8 +2,10 @@ package com.qfs.pagan
 
 import android.graphics.Typeface
 import android.util.TypedValue
+import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -27,9 +29,9 @@ class PopupMenuRecyclerAdapter<T>(
         this.recycler.layoutManager = LinearLayoutManager(this.recycler.context)
         this.notifyItemRangeInserted(0, this.options.size)
     }
-
+    override fun onViewAttachedToWindow(holder: ViewHolder) { }
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val text_view = holder.itemView as TextView
+        val text_view = holder.itemView.findViewById<TextView>(R.id.tvTextView)
         text_view.text = this.options[position].second
 
         if (this.options[position].first == this.default) {
@@ -44,14 +46,13 @@ class PopupMenuRecyclerAdapter<T>(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PopupMenuRecyclerViewHolder {
-        val text_view = TextView(parent.context)
-        val padding = this.recycler.resources.getDimension(R.dimen.dropdown_item_padding).roundToInt()
-        text_view.setPadding(0, padding, 0, padding)
-        text_view.setTextSize(
-            TypedValue.COMPLEX_UNIT_PX,
-            this.recycler.resources.getDimension(R.dimen.dropdown_textsize)
-        )
-        return PopupMenuRecyclerViewHolder(text_view)
+        val viewInflated: View = LayoutInflater.from(parent.context)
+            .inflate(
+                R.layout.dropdown_menu_item,
+                parent,
+                false
+            )
+        return PopupMenuRecyclerViewHolder(viewInflated)
     }
 
 

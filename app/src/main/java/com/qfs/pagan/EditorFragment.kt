@@ -548,6 +548,14 @@ class EditorFragment : PaganFragment() {
                     (it as TextView).text = "x$adj_value"
                 }
             }
+            btnDuration.setOnLongClickListener {
+                val cursor = opus_manager.cursor
+                val beat_key = cursor.get_beatkey()
+                val position = cursor.get_position()
+                opus_manager.set_duration(beat_key, position, 1)
+                (it as TextView).text = "x1"
+                true
+            }
             btnDuration.text = "x${event.duration}"
         } else {
             btnDuration.visibility = View.INVISIBLE

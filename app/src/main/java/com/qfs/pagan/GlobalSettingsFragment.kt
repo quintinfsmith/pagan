@@ -15,6 +15,7 @@ import com.qfs.apres.soundfont.SoundFont
 import com.qfs.pagan.databinding.FragmentGlobalSettingsBinding
 import java.io.File
 import java.io.FileInputStream
+import java.io.FileOutputStream
 
 class GlobalSettingsFragment : PaganFragment() {
     // Boiler Plate //
@@ -32,11 +33,11 @@ class GlobalSettingsFragment : PaganFragment() {
 
                     val new_file = File("${soundfont_dir}/$file_name")
                     main.applicationContext.contentResolver.openFileDescriptor(uri, "r")?.use {
-                        val output_stream = new_file.outputStream()
-                        val input_stream = FileInputStream(it.fileDescriptor)
-                        input_stream.copyTo(output_stream, 4096)
-                        output_stream.close()
-                        input_stream.close()
+                        new_file.outputStream().use { output_stream: FileOutputStream ->
+                            FileInputStream(it.fileDescriptor).use { input_stream: FileInputStream ->
+                                input_stream.copyTo(output_stream, 4096 * 4)
+                            }
+                        }
                     }
 
                     try {

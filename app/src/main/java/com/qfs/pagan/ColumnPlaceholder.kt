@@ -18,7 +18,12 @@ class ColumnPlaceholder(var viewHolder: ColumnRecyclerViewHolder, column_width: 
     }
 
     private fun replace() {
-        CellRecycler(this.viewHolder)
+        try {
+            CellRecycler(this.viewHolder)
+        } catch (e: NullPointerException) {
+            // Tried to replace after the viewHolder was detached
+            // TODO: Log
+        }
     }
 
     override fun onAttachedToWindow() {

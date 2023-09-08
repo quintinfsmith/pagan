@@ -1,16 +1,13 @@
 package com.qfs.pagan
 
 import android.graphics.Typeface
-import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
-import kotlin.math.roundToInt
 
 class PopupMenuRecyclerAdapter<T>(
     private val recycler: RecyclerView,

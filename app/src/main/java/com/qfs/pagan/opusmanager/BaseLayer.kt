@@ -1,4 +1,5 @@
 package com.qfs.pagan.opusmanager
+import android.util.Log
 import com.qfs.apres.event.BankSelect
 import com.qfs.apres.Midi
 import com.qfs.apres.event.NoteOff
@@ -1033,6 +1034,7 @@ open class BaseLayer {
             val old_data = Json.decodeFromString<LoadedJSONData0>(json_content)
             this.convert_old_fmt(old_data)
         }
+        this.load_json(json_data)
         this.path = path
     }
 
@@ -1048,16 +1050,20 @@ open class BaseLayer {
                 return new_tree
             }
 
-            new_tree.set_size(input_tree.children!!.size)
-            input_tree.children!!.forEachIndexed { i: Int, child: OpusTreeJSON? ->
-                new_tree.set(i, tree_from_json(child))
+            if (input_tree.children != null) {
+                new_tree.set_size(input_tree.children!!.size)
+                input_tree.children!!.forEachIndexed { i: Int, child: OpusTreeJSON? ->
+                    new_tree.set(i, tree_from_json(child))
+                }
             }
 
             return new_tree
         }
 
         val output = mutableListOf<MutableList<MutableList<OpusTree<OpusEvent>>>>()
+        Log.d("AAA", "------------------------")
         json_data.channels.forEach { channel_data: ChannelJSONData ->
+            Log.d("AAA", "CHANNEL: $channel_data")
             val line_list = mutableListOf<MutableList<OpusTree<OpusEvent>>>()
             channel_data.lines.forEach { input_line: OpusTreeJSON ->
                 val beat_list = mutableListOf<OpusTree<OpusEvent>>()
@@ -1065,6 +1071,7 @@ open class BaseLayer {
                 for (i in 0 until line_tree.size) {
                     beat_list.add(line_tree[i])
                 }
+                Log.d("AAA", "BL: ${beat_list.size}")
                 line_list.add(beat_list)
             }
             output.add(line_list)
@@ -1582,6 +1589,9 @@ open class BaseLayer {
     }
 
     private fun tree_to_json(tree: OpusTree<OpusEvent>): OpusTreeJSON? {
+        if (tree.is_leaf() && !tree.is_event()) {
+            return null
+        }
         var children = mutableListOf<OpusTreeJSON?>()
         if (!tree.is_leaf()) {
             for (i in 0 until tree.size) {

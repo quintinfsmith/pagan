@@ -337,7 +337,11 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     }
 
     fun get_column_width(column: Int): Int {
-        return this.column_width_map[column].max()
+        return if (this.column_width_map[column].isEmpty()) {
+            1
+        } else {
+            this.column_width_map[column].max()
+        }
     }
 
     fun get_activity(): MainActivity {

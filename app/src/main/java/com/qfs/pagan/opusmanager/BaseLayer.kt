@@ -1,5 +1,4 @@
 package com.qfs.pagan.opusmanager
-import android.util.Log
 import com.qfs.apres.event.BankSelect
 import com.qfs.apres.Midi
 import com.qfs.apres.event.NoteOff
@@ -10,7 +9,6 @@ import com.qfs.apres.event.SongPositionPointer
 import com.qfs.apres.event.TimeSignature
 import com.qfs.pagan.from_string
 import com.qfs.pagan.structure.OpusTree
-import com.qfs.pagan.to_string
 import java.io.File
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.decodeFromString
@@ -902,11 +900,11 @@ open class BaseLayer {
     open fun to_json(): LoadedJSONData {
         val channels: MutableList<ChannelJSONData> = mutableListOf()
         for (channel in this.channels) {
-            val lines: MutableList<String> = mutableListOf()
+            val lines: MutableList<OpusTreeJSON> = mutableListOf()
             val line_volumes: MutableList<Int> = mutableListOf()
             for (i in 0 until channel.size) {
                 val line = channel.get_line(i)
-                val beatstrs: MutableList<String> = mutableListOf()
+                var tree_children = mutableListOf<OpusTreeJSON?>()
                 for (beat in line.beats) {
                     if (channel.midi_channel == 9) {
                         beat.traverse { _: OpusTree<OpusEvent>, event: OpusEvent? ->
@@ -915,10 +913,11 @@ open class BaseLayer {
                             }
                         }
                     }
-                    beatstrs.add(to_string(beat))
+                    tree_children.add(this.tree_to_json(beat))
                 }
-                val str_line =  beatstrs.joinToString("|")
-                lines.add(str_line)
+                lines.add(
+                    OpusTreeJSON( null, tree_children )
+                )
                 line_volumes.add(line.volume)
             }
 
@@ -932,6 +931,7 @@ open class BaseLayer {
                 )
             )
         }
+
         return LoadedJSONData(
             name = this.project_name,
             tempo = this.tempo,
@@ -973,7 +973,48 @@ open class BaseLayer {
 
     open fun load(bytes: ByteArray) {
         val json_content = bytes.toString(Charsets.UTF_8)
-        this.load_json(Json.decodeFromString(json_content))
+        var json_data: LoadedJSONData = try {
+            Json.decodeFromString<LoadedJSONData>(json_content)
+        } catch (e: Exception) {
+            val old_data = Json.decodeFromString<LoadedJSONData0>(json_content)
+            this.convert_old_fmt(old_data)
+        }
+
+        this.load_json(json_data)
+    }
+
+    fun convert_old_fmt(old_data: LoadedJSONData0): LoadedJSONData {
+        val new_channels = mutableListOf<ChannelJSONData>()
+        for (channel in old_data.channels) {
+            val new_lines = mutableListOf<OpusTreeJSON>()
+            for (line_string in channel.lines) {
+                val line_children = mutableListOf<OpusTreeJSON?>()
+                line_string.split("|").forEach { beat_string: String ->
+                    val beat_tree = from_string(beat_string, old_data.radix, channel.midi_channel)
+                    beat_tree.clear_singles()
+
+                    line_children.add(this.tree_to_json(beat_tree))
+                }
+                new_lines.add(OpusTreeJSON(null, line_children))
+            }
+            new_channels.add(
+                ChannelJSONData(
+                    midi_channel = channel.midi_channel,
+                    midi_bank = channel.midi_bank,
+                    midi_program = channel.midi_program,
+                    lines = new_lines,
+                    line_volumes = channel.line_volumes
+                )
+            )
+        }
+        return LoadedJSONData(
+            tempo = old_data.tempo,
+            radix = old_data.radix,
+            channels = new_channels,
+            reflections = old_data.reflections,
+            transpose = old_data.transpose,
+            name = old_data.name
+        )
     }
 
     open fun new() {
@@ -984,24 +1025,45 @@ open class BaseLayer {
         this.set_project_name(this.project_name)
     }
 
-
     open fun load_json_file(path: String) {
         val json_content = File(path).readText(Charsets.UTF_8)
-        this.load_json(Json.decodeFromString(json_content))
+        var json_data: LoadedJSONData = try {
+            Json.decodeFromString<LoadedJSONData>(json_content)
+        } catch (e: Exception) {
+            val old_data = Json.decodeFromString<LoadedJSONData0>(json_content)
+            this.convert_old_fmt(old_data)
+        }
         this.path = path
     }
 
     private fun parse_line_data(json_data: LoadedJSONData): List<List<List<OpusTree<OpusEvent>>>> {
-        val output = mutableListOf<MutableList<MutableList<OpusTree<OpusEvent>>>>()
+        fun tree_from_json(input_tree: OpusTreeJSON?): OpusTree<OpusEvent> {
+            var new_tree = OpusTree<OpusEvent>()
+            if (input_tree == null) {
+                return new_tree
+            }
 
+            if (input_tree.event != null) {
+                new_tree.set_event(input_tree.event!!)
+                return new_tree
+            }
+
+            new_tree.set_size(input_tree.children!!.size)
+            input_tree.children!!.forEachIndexed { i: Int, child: OpusTreeJSON? ->
+                new_tree.set(i, tree_from_json(child))
+            }
+
+            return new_tree
+        }
+
+        val output = mutableListOf<MutableList<MutableList<OpusTree<OpusEvent>>>>()
         json_data.channels.forEach { channel_data: ChannelJSONData ->
             val line_list = mutableListOf<MutableList<OpusTree<OpusEvent>>>()
-            channel_data.lines.forEach { line_str: String ->
+            channel_data.lines.forEach { input_line: OpusTreeJSON ->
                 val beat_list = mutableListOf<OpusTree<OpusEvent>>()
-                line_str.split("|").forEach { beat_str: String ->
-                    val beat_tree = from_string(beat_str, this.RADIX, channel_data.midi_channel)
-                    beat_tree.clear_singles()
-                    beat_list.add(beat_tree)
+                var line_tree = tree_from_json(input_line)
+                for (i in 0 until line_tree.size) {
+                    beat_list.add(line_tree[i])
                 }
                 line_list.add(beat_list)
             }
@@ -1518,4 +1580,22 @@ open class BaseLayer {
 
         tree.event!!.duration = duration
     }
+
+    private fun tree_to_json(tree: OpusTree<OpusEvent>): OpusTreeJSON? {
+        var children = mutableListOf<OpusTreeJSON?>()
+        if (!tree.is_leaf()) {
+            for (i in 0 until tree.size) {
+                children.add(this.tree_to_json(tree.get(i)))
+            }
+        }
+        return OpusTreeJSON(
+            tree.event,
+            if (children.isEmpty()) {
+                null
+            } else {
+                children
+            }
+        )
+    }
+
 }

@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.pagan.databinding.FragmentLoadBinding
 import com.qfs.pagan.opusmanager.LoadedJSONData
+import com.qfs.pagan.opusmanager.LoadedJSONData0
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import java.io.File
@@ -62,7 +63,12 @@ class LoadFragment : PaganFragment() {
 
         for (json_file in directory.listFiles()!!) {
             val content = json_file.readText(Charsets.UTF_8)
-            val json_obj: LoadedJSONData = Json.decodeFromString(content)
+            val json_obj: LoadedJSONData = try {
+                Json.decodeFromString(content)
+            } catch (e: Exception) {
+                val old_data = Json.decodeFromString<LoadedJSONData0>(content)
+                this.get_main().get_opus_manager().convert_old_fmt(old_data)
+            }
             loadprojectAdapter.addProject(
                 Pair(
                     json_obj.name,

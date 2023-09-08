@@ -939,12 +939,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         btnCopyProject.visibility = View.VISIBLE
     }
 
-    override fun link_beat_range_horizontally(channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey) {
-        this.surpress_ui {
-            super.link_beat_range_horizontally(channel, line_offset, first_key, second_key)
-        }
-    }
-
     fun is_selected(beat_key: BeatKey, position: List<Int>): Boolean {
         return when (this.cursor.mode) {
             OpusManagerCursor.CursorMode.Column -> {

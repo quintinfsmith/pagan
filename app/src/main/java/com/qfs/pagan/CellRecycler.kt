@@ -14,7 +14,6 @@ import com.qfs.pagan.InterfaceLayer as OpusManager
 @SuppressLint("ViewConstructor")
 class CellRecycler(var viewHolder: ColumnRecyclerViewHolder): ScrollLockingRecyclerView((viewHolder.itemView.context as ContextThemeWrapper).baseContext) {
     class ColumnDetachedException: Exception()
-    var test = false
     init {
         this.adapter = CellRecyclerAdapter(this.get_opus_manager().get_total_line_count())
         this.layoutManager = CellRecyclerLayoutManager(context, this)

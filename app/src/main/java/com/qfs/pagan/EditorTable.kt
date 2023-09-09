@@ -362,11 +362,11 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         }
     }
 
-    fun scroll_to_position(x: Int? = null, y: Int? = null, position: List<Int>? = null) {
-        if (x != null && ! this.is_x_visible(x)) {
+    fun scroll_to_position(x: Int? = null, y: Int? = null, position: List<Int>? = null, force: Boolean = false) {
+        if (x != null && (force || ! this.is_x_visible(x))) {
             this.scroll_to_x(x)
         }
-        if (y != null && ! this.is_y_visible(y)) {
+        if (y != null && (force || ! this.is_y_visible(y))) {
             this.scroll_to_y(y)
         }
 

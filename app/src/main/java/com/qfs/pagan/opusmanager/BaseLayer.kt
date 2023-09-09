@@ -1033,6 +1033,7 @@ open class BaseLayer {
             val old_data = Json.decodeFromString<LoadedJSONData0>(json_content)
             this.convert_old_fmt(old_data)
         }
+        this.load_json(json_data)
         this.path = path
     }
 
@@ -1045,6 +1046,10 @@ open class BaseLayer {
 
             if (input_tree.event != null) {
                 new_tree.set_event(input_tree.event!!)
+                return new_tree
+            }
+
+            if (input_tree.children == null) {
                 return new_tree
             }
 

@@ -15,8 +15,8 @@ class ColumnLabelAdapter(editor_table: EditorTable) : RecyclerView.Adapter<Colum
         this.column_recycler = editor_table.main_recycler
         this.recycler = editor_table.column_label_recycler
         this.recycler.adapter = this
-        this.recycler.layoutManager = LinearLayoutManager(
-            this.recycler.context,
+        this.recycler.layoutManager = LeftAlignedLayoutManager(
+            this.recycler,
             LinearLayoutManager.HORIZONTAL,
             false
         )

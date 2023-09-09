@@ -736,7 +736,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         editor_table.scroll_to_position(y = this.get_abs_offset(channel, line_offset))
     }
 
-    fun cursor_select_column(beat: Int, scroll: Boolean = false) {
+    fun cursor_select_column(beat: Int, force_scroll: Boolean = false) {
         val editor_table = this.get_editor_table()
 
         this.cursor.select_column(beat)
@@ -747,7 +747,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             it.setContextMenu_column()
         }
 
-        editor_table.scroll_to_position(x = beat)
+        editor_table.scroll_to_position(x = beat, force = force_scroll)
     }
     fun cursor_select(beat_key: BeatKey, position: List<Int>, scroll: Boolean = false) {
         val editor_table = this.get_editor_table()

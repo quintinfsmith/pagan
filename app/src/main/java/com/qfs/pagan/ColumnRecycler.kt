@@ -8,7 +8,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 
 class ColumnRecycler(context: Context): ScrollLockingRecyclerView(context) {
     init {
-        this.layoutManager = LinearLayoutManager(context, HORIZONTAL, false)
+        this.layoutManager = LeftAlignedLayoutManager(this, HORIZONTAL, false)
         this.itemAnimator = null
         this.overScrollMode = View.OVER_SCROLL_NEVER
     }

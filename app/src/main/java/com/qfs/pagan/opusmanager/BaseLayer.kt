@@ -1055,15 +1055,14 @@ open class BaseLayer {
                 input_tree.children!!.forEachIndexed { i: Int, child: OpusTreeJSON? ->
                     new_tree.set(i, tree_from_json(child))
                 }
+                new_tree.set(i, tree_from_json(child))
             }
 
             return new_tree
         }
 
         val output = mutableListOf<MutableList<MutableList<OpusTree<OpusEvent>>>>()
-        Log.d("AAA", "------------------------")
         json_data.channels.forEach { channel_data: ChannelJSONData ->
-            Log.d("AAA", "CHANNEL: $channel_data")
             val line_list = mutableListOf<MutableList<OpusTree<OpusEvent>>>()
             channel_data.lines.forEach { input_line: OpusTreeJSON ->
                 val beat_list = mutableListOf<OpusTree<OpusEvent>>()

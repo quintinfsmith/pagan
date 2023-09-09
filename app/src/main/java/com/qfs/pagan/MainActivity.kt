@@ -119,8 +119,28 @@ class MainActivity : AppCompatActivity() {
         // Kludge: This was causing the app the freeze when relaunching a stale session, null seems to have
         // no side effects (at the moment) and
         super.onCreate(null)
-        this.project_manager = ProjectManager(applicationInfo.dataDir)
-        this.config_path =  "${applicationInfo.dataDir}/pagan.cfg"
+
+        this.project_manager = ProjectManager(this.getExternalFilesDir(null).toString())
+        // Move files from applicationInfo.data to externalfilesdir (pre v1.1.2 location)
+        val old_projects_dir = File("${applicationInfo.dataDir}/projects")
+        if (old_projects_dir.isDirectory()) {
+            for (f in old_projects_dir.listFiles()) {
+                var new_file_name = this.project_manager.get_new_path()
+                f.copyTo(File(new_file_name))
+            }
+            old_projects_dir.deleteRecursively()
+        }
+
+        this.config_path = "${this.getExternalFilesDir(null)}/pagan.cfg"
+        // [Re]move config file from < v1.1.2
+        val old_config_file = File("${applicationInfo.dataDir}/pagan.cfg")
+        val new_config_file = File(this.config_path)
+        if (old_config_file.exists()) {
+            if (!new_config_file.exists()) {
+                old_config_file.copyTo(new_config_file)
+            }
+            old_config_file.delete()
+        }
         this.configuration = Configuration.from_path(this.config_path)
 
         this.binding = ActivityMainBinding.inflate(this.layoutInflater)
@@ -843,7 +863,7 @@ class MainActivity : AppCompatActivity() {
             override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
                 tvPlaybackPosition.text = p1.toString()
                 tvPlaybackTime.text = that.get_timestring_at_beat(p1)
-                //that.get_opus_manager().cursor_select_column(p1)
+                that.get_opus_manager().cursor_select_column(p1, true)
             }
 
             override fun onStartTrackingTouch(p0: SeekBar?) {

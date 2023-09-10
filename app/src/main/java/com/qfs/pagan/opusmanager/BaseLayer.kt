@@ -1,5 +1,4 @@
 package com.qfs.pagan.opusmanager
-import android.util.Log
 import com.qfs.apres.event.BankSelect
 import com.qfs.apres.Midi
 import com.qfs.apres.event.NoteOff
@@ -1070,7 +1069,6 @@ open class BaseLayer {
                 for (i in 0 until line_tree.size) {
                     beat_list.add(line_tree[i])
                 }
-                Log.d("AAA", "BL: ${beat_list.size}")
                 line_list.add(beat_list)
             }
             output.add(line_list)

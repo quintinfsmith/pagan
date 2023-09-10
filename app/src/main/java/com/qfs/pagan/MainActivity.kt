@@ -808,11 +808,8 @@ class MainActivity : AppCompatActivity() {
         sbPlaybackPosition.max = opus_manager.opus_beat_count - 1
         sbPlaybackPosition.progress = working_beat
 
-        val tvPlaybackPosition = viewInflated.findViewById<TextView>(R.id.tvPlaybackPosition)
-        tvPlaybackPosition.text = working_beat.toString()
 
         val ibPlayPause = viewInflated.findViewById<ImageView>(R.id.ibPlayPause)
-        val btnJumpTo = viewInflated.findViewById<View>(R.id.btnJumpTo)
         val tvPlaybackTime = viewInflated.findViewById<TextView>(R.id.tvPlaybackTime)
         tvPlaybackTime.text = this.get_timestring_at_beat(working_beat)
 
@@ -861,7 +858,6 @@ class MainActivity : AppCompatActivity() {
             var was_playing = false
             var is_stopping = false
             override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
-                tvPlaybackPosition.text = p1.toString()
                 tvPlaybackTime.text = that.get_timestring_at_beat(p1)
                 that.get_opus_manager().cursor_select_column(p1, true)
             }
@@ -888,18 +884,12 @@ class MainActivity : AppCompatActivity() {
         })
 
 
-        val dialog = AlertDialog.Builder(this, R.style.AlertDialog)
+        AlertDialog.Builder(this, R.style.AlertDialog)
             .setView(viewInflated)
             .setOnCancelListener {
                 pause_playback()
             }
             .show()
-
-        btnJumpTo.setOnClickListener {
-            pause_playback()
-            this.get_opus_manager().cursor_select_column(sbPlaybackPosition.progress)
-            dialog.dismiss()
-        }
     }
 
     fun has_projects_saved(): Boolean {

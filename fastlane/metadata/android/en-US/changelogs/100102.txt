@@ -1,0 +1,10 @@
+Bugfixes:
+    - attempting to import a non-sf2 as an sf2 would cause crash
+    - importing large sf2 files may have caused crashes
+    - Cursor wasn't moving to leaf after removing a subdivision
+    - double-tapping X button on channel would cause crash
+UI:
+    - Note Duration control
+    - changed drop down menus
+    - scroll with playback
+- Updated Save format and location of files to External directory 

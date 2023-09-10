@@ -16,6 +16,7 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import java.lang.Integer.max
 import java.lang.Integer.min
+import kotlin.math.ceil
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
@@ -1202,18 +1203,17 @@ open class BaseLayer {
                     mutableSetOf()
                 }
 
-                val opus_event =
-                    OpusEvent(
-                        if (channel == 9) {
-                            note - 27
-                        } else {
-                            note - 21
-                        },
-                        12,
-                        channel,
-                        false,
-                        tick
-                    )
+                val opus_event = OpusEvent(
+                    if (channel == 9) {
+                        note - 27
+                    } else {
+                        note - 21
+                    },
+                    12,
+                    channel,
+                    false,
+                    tick
+                )
                 eventset.add(opus_event)
 
                 tree[inner_beat_offset].set_event(eventset)
@@ -1224,7 +1224,6 @@ open class BaseLayer {
                 } else {
                     Pair((event as NoteOff).channel, event.get_note())
                 }
-
                 val opus_event = active_event_map[Pair(channel, note)] ?: continue
                 opus_event_duration_map[opus_event] = (tick - opus_event.duration).toFloat() / beat_size.toFloat()
             } else if (event is TimeSignature) {
@@ -1307,7 +1306,7 @@ open class BaseLayer {
                     event.duration = if (beat_ratio == null) {
                         1
                     } else {
-                        max(1, (beat_ratio / n).roundToInt())
+                        ceil(beat_ratio / n).toInt()
                     }
                 }
             }
@@ -1432,6 +1431,43 @@ open class BaseLayer {
             } else {
                 if (event.note in 0..127) {
                     this.set_event(beatkey, position, event)
+                }
+            }
+        }
+
+        this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
+            channel.lines.forEachIndexed { j: Int, line: OpusChannel.OpusLine ->
+                for (k in 0 until this.opus_beat_count) {
+                    var beat_tree = this.get_beat_tree(BeatKey(i, j, k))
+                    beat_tree.traverse { tree: OpusTree<OpusEvent>, event: OpusEvent? ->
+                        if (event == null) {
+                            return@traverse
+                        }
+
+                        var parent = tree.parent ?: return@traverse
+                        if (tree.getIndex() != 0 || event.duration % parent.size != 0) {
+                            return@traverse
+                        }
+
+                        var do_resize = true
+                        for (i in 1 until parent.size) {
+                            var test_tree = parent[i]
+                            if (test_tree.is_leaf() && !test_tree.is_event()) {
+                                continue
+                            }
+                            do_resize = false
+                        }
+
+                        if (do_resize) {
+                            event.duration = max(1, event.duration / parent.size)
+                            if (parent == beat_tree) {
+                                this.replace_beat_tree(BeatKey(i, j, k), tree)
+                            } else {
+                                parent.replace_with(tree)
+                            }
+
+                        }
+                    }
                 }
             }
         }

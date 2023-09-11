@@ -45,6 +45,12 @@ open class LinksLayer : BaseLayer() {
     }
     open fun unlink_range(first_key: BeatKey, second_key: BeatKey) {
         for (beat_key in this.get_beatkeys_in_range(first_key, second_key)) {
+            if (!this.link_pool_map.contains(beat_key)) {
+                continue
+            }
+            if (this.link_pools.size <= this.link_pool_map[beat_key]!!) {
+                continue
+            }
             this.unlink_beat(beat_key)
         }
     }

@@ -248,7 +248,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                 column_label_adapter.notifyItemChanged(beat_key.beat)
 
                 val cell_recycler = main_recycler_adapter.get_cell_recycler(beat_key.beat) ?: return
-                (cell_recycler.adapter as CellRecyclerAdapter).notifyItemChanged(y)
+                (cell_recycler.adapter as CellRecyclerAdapter).notify_state_change(y)
 
             }
             OpusManagerCursor.CursorMode.Range -> {
@@ -266,7 +266,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
                     // Can ignore if the cell_recycler isn't visible
                     val cell_recycler = main_recycler_adapter.get_cell_recycler(beat_key.beat) ?: continue
-                    cell_recycler.adapter?.notifyItemChanged(y)
+                    (cell_recycler.adapter as CellRecyclerAdapter).notify_state_change(y)
                 }
             }
             OpusManagerCursor.CursorMode.Row -> {
@@ -280,7 +280,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                     line_label_adapter.notifyItemChanged(y)
                     column_label_adapter.notifyItemChanged(beat)
                     val cell_recycler = main_recycler_adapter.get_cell_recycler(beat) ?: continue
-                    cell_recycler.adapter?.notifyItemChanged(y)
+                    (cell_recycler.adapter as CellRecyclerAdapter).notify_state_change(y)
                 }
             }
             OpusManagerCursor.CursorMode.Column -> {
@@ -289,7 +289,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                     channel.lines.forEachIndexed { j: Int, line: OpusChannel.OpusLine ->
                         val cell_recycler = main_recycler_adapter.get_cell_recycler(opusManagerCursor.beat)
                         if (cell_recycler != null) {
-                            cell_recycler.adapter?.notifyItemChanged(y)
+                            (cell_recycler.adapter as CellRecyclerAdapter).notify_state_change(y)
                         }
                         y += 1
                     }
@@ -300,7 +300,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         }
     }
 
-    fun notify_cell_change(beat_key: BeatKey) {
+    fun notify_cell_change(beat_key: BeatKey, no_update: Boolean = true) {
         val opus_manager = this.get_opus_manager()
         val main_recycler_adapter = (this.main_recycler.adapter!! as ColumnRecyclerAdapter)
         // Only one tree needs to be checked, since links are all the same
@@ -319,18 +319,22 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             }
 
 
-            val original_width = this.column_width_map[linked_beat_key.beat].max()
-            this.column_width_map[linked_beat_key.beat][y] = new_cell_width
-            val new_width = this.column_width_map[linked_beat_key.beat].max()
+            if (! no_update) {
+                val original_width = this.column_width_map[linked_beat_key.beat].max()
+                this.column_width_map[linked_beat_key.beat][y] = new_cell_width
+                val new_width = this.column_width_map[linked_beat_key.beat].max()
 
-            if (original_width != new_width) {
-                main_recycler_adapter.notifyItemChanged(linked_beat_key.beat)
-                this.column_label_recycler.adapter!!.notifyItemChanged(linked_beat_key.beat)
+                if (original_width != new_width) {
+                    main_recycler_adapter.notifyItemChanged(linked_beat_key.beat)
+                    this.column_label_recycler.adapter!!.notifyItemChanged(linked_beat_key.beat)
+                } else {
+                    // Can ignore if the cell_recycler isn't visble
+                    val cell_recycler = main_recycler_adapter.get_cell_recycler(linked_beat_key.beat) ?: continue
+                    cell_recycler.adapter?.notifyItemChanged(y)
+                }
             } else {
-                // Can ignore if the cell_recycler isn't visble
-                val cell_recycler =
-                    main_recycler_adapter.get_cell_recycler(linked_beat_key.beat) ?: continue
-                cell_recycler.adapter?.notifyItemChanged(y)
+                val cell_recycler = main_recycler_adapter.get_cell_recycler(linked_beat_key.beat) ?: continue
+                (cell_recycler.adapter as CellRecyclerAdapter).notify_state_change(y)
             }
 
         }

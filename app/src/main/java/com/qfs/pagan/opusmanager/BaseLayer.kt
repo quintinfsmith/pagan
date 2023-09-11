@@ -17,7 +17,6 @@ import java.lang.Integer.max
 import java.lang.Integer.min
 import kotlin.math.ceil
 import kotlin.math.pow
-import kotlin.math.roundToInt
 
 /**
  * The logic of the Opus Manager.
@@ -1620,12 +1619,14 @@ open class BaseLayer {
         if (tree.is_leaf() && !tree.is_event()) {
             return null
         }
+
         val children = mutableListOf<OpusTreeJSON?>()
         if (!tree.is_leaf()) {
             for (i in 0 until tree.size) {
                 children.add(this.tree_to_json(tree.get(i)))
             }
         }
+
         return OpusTreeJSON(
             tree.event,
             if (children.isEmpty()) {

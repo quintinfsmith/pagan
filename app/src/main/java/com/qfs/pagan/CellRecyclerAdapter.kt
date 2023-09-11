@@ -6,7 +6,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.OpusEvent
 import com.qfs.pagan.structure.OpusTree
-import kotlin.math.max
+import kotlin.math.roundToInt
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
 class CellRecyclerAdapter(initial_cell_count: Int = 0): RecyclerView.Adapter<CellRecyclerViewHolder>() {
@@ -52,9 +52,7 @@ class CellRecyclerAdapter(initial_cell_count: Int = 0): RecyclerView.Adapter<Cel
     }
 
     override fun onBindViewHolder(holder: CellRecyclerViewHolder, position: Int) {
-        if (this.get_beat() > -1) {
-            CellPlaceHolder(holder, this.get_column_width())
-        }
+        CellPlaceHolder(holder, this.get_column_width())
     }
     //-------------------------------------------------------//
     fun insert_cell(index: Int) {
@@ -89,7 +87,7 @@ class CellRecyclerAdapter(initial_cell_count: Int = 0): RecyclerView.Adapter<Cel
         val editor_table = this.recycler.get_editor_table()
         val weight = editor_table.get_column_width(this.get_beat())
         val resources = this.recycler.resources
-        return (weight * resources.getDimension(R.dimen.base_leaf_width).toInt())
+        return (weight * resources.getDimension(R.dimen.base_leaf_width).roundToInt())
     }
 
     fun clear() {
@@ -97,4 +95,13 @@ class CellRecyclerAdapter(initial_cell_count: Int = 0): RecyclerView.Adapter<Cel
         this.cell_count = 0
         this.notifyItemRangeRemoved(0, count)
     }
+
+    fun get_activity(): MainActivity {
+        return this.recycler.context as MainActivity
+    }
+    fun notify_state_change(index: Int) {
+        // TODO: Right now this is just a wrapper it needs to just handle  a state change
+        this.notifyItemChanged(index)
+    }
+
 }

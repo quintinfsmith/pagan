@@ -77,4 +77,5 @@ class CellRecycler(var viewHolder: ColumnRecyclerViewHolder): ScrollLockingRecyc
     fun get_scroll_listener(): VerticalScrollListener {
         return this.get_editor_table().vertical_scroll_listener
     }
+
 }

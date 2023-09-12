@@ -1,7 +1,9 @@
 package com.qfs.pagan
 
+import android.util.Log
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
+import androidx.core.view.children
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.OpusEvent
@@ -12,6 +14,7 @@ import com.qfs.pagan.InterfaceLayer as OpusManager
 class CellRecyclerAdapter(initial_cell_count: Int = 0): RecyclerView.Adapter<CellRecyclerViewHolder>() {
     private var cell_count = 0
     lateinit var recycler: CellRecycler
+    private val queued_changes = mutableSetOf<Int>()
 
     init {
 
@@ -23,6 +26,9 @@ class CellRecyclerAdapter(initial_cell_count: Int = 0): RecyclerView.Adapter<Cel
                     //that.notifyItemChanged(start + count)
                 }
                 override fun onItemRangeChanged(start: Int, count: Int) {
+                    for (i in start until start + count) {
+                        queued_changes.add(i)
+                    }
                 }
                 override fun onItemRangeRemoved(start: Int, count: Int) {
                     that.notifyItemRangeChanged(start, that.itemCount - (start + count))
@@ -52,6 +58,7 @@ class CellRecyclerAdapter(initial_cell_count: Int = 0): RecyclerView.Adapter<Cel
     }
 
     override fun onBindViewHolder(holder: CellRecyclerViewHolder, position: Int) {
+        this.queued_changes.remove(position)
         CellPlaceHolder(holder, this.get_column_width())
     }
     //-------------------------------------------------------//
@@ -100,8 +107,18 @@ class CellRecyclerAdapter(initial_cell_count: Int = 0): RecyclerView.Adapter<Cel
         return this.recycler.context as MainActivity
     }
     fun notify_state_change(index: Int) {
-        // TODO: Right now this is just a wrapper it needs to just handle  a state change
-        this.notifyItemChanged(index)
+        if (index in this.queued_changes) {
+            return
+        }
+
+        val holder = this.recycler.findViewHolderForAdapterPosition(index) ?: return
+        val wrapper = holder.itemView as ViewGroup
+        val cell_layout = wrapper.getChildAt(0)
+        if (cell_layout !is CellLayout) {
+            return
+        }
+        wrapper.removeAllViews()
+        wrapper.addView(cell_layout)
     }
 
 }

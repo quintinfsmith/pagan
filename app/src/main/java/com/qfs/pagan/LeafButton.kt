@@ -24,7 +24,6 @@ class LeafButton(
     var position: List<Int>,
     is_percussion: Boolean
 ) : LinearLayout(ContextThemeWrapper(context, R.style.leaf)) {
-
     // LeafText exists to make the text consider the state of the LeafButton
     class InnerWrapper(context: Context): LinearLayout(context) {
         override fun onCreateDrawableState(extraSpace: Int): IntArray? {
@@ -59,6 +58,7 @@ class LeafButton(
     var invalid: Boolean = false
 
     init {
+        this.isClickable = false
         this.minimumHeight = resources.getDimension(R.dimen.line_height).toInt()
         this.minimumWidth = resources.getDimension(R.dimen.base_leaf_width).toInt()
         this.inner_wrapper.orientation = VERTICAL
@@ -245,7 +245,6 @@ class LeafButton(
         if (this.invalid) {
             return drawableState
         }
-
         val position = this.position
         val tree = opus_manager.get_tree(beat_key, position)
 

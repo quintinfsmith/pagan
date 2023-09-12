@@ -12,6 +12,7 @@ import com.qfs.pagan.InterfaceLayer as OpusManager
 
 class CellLayout(var viewHolder: CellRecyclerViewHolder): LinearLayout(viewHolder.itemView.context) {
     init {
+        this.isClickable = false
         val item_view = this.viewHolder.itemView as ViewGroup
         item_view.removeAllViews()
         item_view.addView(this)

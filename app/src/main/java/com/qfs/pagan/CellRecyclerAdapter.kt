@@ -17,17 +17,15 @@ class CellRecyclerAdapter(initial_cell_count: Int = 0): RecyclerView.Adapter<Cel
     private val queued_changes = mutableSetOf<Int>()
 
     init {
-
         val that = this
         this.cell_count = initial_cell_count
         this.registerAdapterDataObserver(
             object: RecyclerView.AdapterDataObserver() {
                 override fun onItemRangeInserted(start: Int, count: Int) {
-                    //that.notifyItemChanged(start + count)
                 }
                 override fun onItemRangeChanged(start: Int, count: Int) {
                     for (i in start until start + count) {
-                        queued_changes.add(i)
+                        that.queued_changes.add(i)
                     }
                 }
                 override fun onItemRangeRemoved(start: Int, count: Int) {

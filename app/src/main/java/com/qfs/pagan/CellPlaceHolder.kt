@@ -19,7 +19,12 @@ class CellPlaceHolder(var viewHolder: CellRecyclerViewHolder, column_width: Int)
     }
 
     fun replace() {
-        CellLayout(this.viewHolder)
+        try {
+            CellLayout(this.viewHolder)
+        } catch (e: CellRecycler.ColumnDetachedException) {
+            // let it pass
+        }
+
     }
 
     override fun onAttachedToWindow() {

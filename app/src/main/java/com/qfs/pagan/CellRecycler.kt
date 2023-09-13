@@ -14,6 +14,7 @@ import com.qfs.pagan.InterfaceLayer as OpusManager
 @SuppressLint("ViewConstructor")
 class CellRecycler(var viewHolder: ColumnRecyclerViewHolder): ScrollLockingRecyclerView((viewHolder.itemView.context as ContextThemeWrapper).baseContext) {
     class ColumnDetachedException: Exception()
+    class CellDetachedException: Exception()
     init {
         this.adapter = CellRecyclerAdapter(this.get_opus_manager().get_total_line_count())
         this.layoutManager = CellRecyclerLayoutManager(context, this)
@@ -53,6 +54,8 @@ class CellRecycler(var viewHolder: ColumnRecyclerViewHolder): ScrollLockingRecyc
             }
             this.visibility = View.VISIBLE
         } catch (e: ColumnDetachedException) {
+            // Happens when scrolling quickly and the recycler is detached before it can adjust
+        } catch (e: CellDetachedException) {
             // Happens when scrolling quickly and the recycler is detached before it can adjust
         }
         this.unlock_scroll_propagation()

@@ -38,13 +38,18 @@ class CellRecyclerViewHolder(context: Context): RecyclerView.ViewHolder(LinearLa
     }
 
     fun get_y(): Int {
-        return this.bindingAdapterPosition
+        var output = this.bindingAdapterPosition
+        if (output == -1) {
+            throw CellRecycler.ColumnDetachedException()
+        }
+        return output
     }
 
     fun get_std_offset(): Pair<Int, Int> {
         val opus_manager = this.get_opus_manager()
         val y = this.get_y()
         return opus_manager.get_std_offset(y)
+
     }
 
     fun get_beat_key(): BeatKey {

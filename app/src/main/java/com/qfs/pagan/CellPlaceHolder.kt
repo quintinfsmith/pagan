@@ -21,6 +21,8 @@ class CellPlaceHolder(var viewHolder: CellRecyclerViewHolder, column_width: Int)
     fun replace() {
         try {
             CellLayout(this.viewHolder)
+        } catch (e: CellRecycler.CellDetachedException) {
+            // let it pass
         } catch (e: CellRecycler.ColumnDetachedException) {
             // let it pass
         }

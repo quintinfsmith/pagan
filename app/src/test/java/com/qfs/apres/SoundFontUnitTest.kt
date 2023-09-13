@@ -3,7 +3,9 @@ package com.qfs.apres
 import com.qfs.apres.event.NoteOff
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.soundfont.Instrument
+import com.qfs.apres.soundfont.InstrumentSample
 import com.qfs.apres.soundfont.Preset
+import com.qfs.apres.soundfont.Sample
 import com.qfs.apres.soundfont.SoundFont
 import org.junit.Test
 import org.junit.Assert.*
@@ -14,12 +16,25 @@ class SoundFontUnitTest {
         val sffont = "FluidR3_GM_GS.sf2"
         return SoundFont(sffont)
     }
+
     fun get_preset(): Preset {
-        return this.get_soundfont().get_preset(0,0)
+        return this.get_soundfont().get_preset(0, 0)
     }
+
     fun get_instrument(): Instrument {
         return this.get_preset().get_instruments(64, 64).first().instrument!!
     }
+
+    fun get_instrument_sample(): InstrumentSample {
+        val samples = this.get_instrument().get_samples(20, 64).toList()
+        return if (samples[0].sample!!.name == "P200 Piano D2(L)") {
+            samples[0]
+        } else {
+            samples[1]
+        }
+
+    }
+
     @Test
     fun init_test() {
         //val midi = Midi()
@@ -31,11 +46,12 @@ class SoundFontUnitTest {
         //val instruments = preset.get_instruments(64,64)
         //val sample = instruments.first().instrument!!.get_samples(64,64)
     }
+
     @Test
     fun test_get_preset() {
         val some_presets = listOf<Pair<String, Pair<Int, Int>>>(
-            Pair("Yamaha Grand Piano", Pair(0,0)),
-            Pair("Bright Yamaha Grand", Pair(0,1)),
+            Pair("Yamaha Grand Piano", Pair(0, 0)),
+            Pair("Bright Yamaha Grand", Pair(0, 1)),
             Pair("Bird  2", Pair(3, 123)),
             Pair("Room", Pair(128, 8)),
             Pair("Standard", Pair(128, 0)),
@@ -59,8 +75,8 @@ class SoundFontUnitTest {
     @Test
     fun test_get_instruments() {
         var soundfont = this.get_soundfont()
-        var preset = soundfont.get_preset(0,0) // Yamaha Grand Piano
-        val instruments = preset.get_instruments(0,0)
+        var preset = soundfont.get_preset(0, 0) // Yamaha Grand Piano
+        val instruments = preset.get_instruments(0, 0)
         assertEquals(
             "Didn't get Correct instrument set",
             instruments.size,
@@ -81,6 +97,7 @@ class SoundFontUnitTest {
         )
 
     }
+
     @Test
     fun test_vol_env_attack() {
         val instrument = this.get_instrument()
@@ -91,6 +108,7 @@ class SoundFontUnitTest {
             glob.vol_env_attack
         )
     }
+
     @Test
     fun test_vol_env_sustain() {
         val instrument = this.get_instrument()
@@ -101,6 +119,7 @@ class SoundFontUnitTest {
             glob.vol_env_sustain
         )
     }
+
     @Test
     fun test_vol_env_release() {
         val instrument = this.get_instrument()
@@ -111,6 +130,7 @@ class SoundFontUnitTest {
             glob.vol_env_release
         )
     }
+
     @Test
     fun test_mod_env_release() {
         val instrument = this.get_instrument()
@@ -141,6 +161,132 @@ class SoundFontUnitTest {
             "Filter cutoff is wrong",
             11998,
             glob!!.filter_cutoff
+        )
+    }
+
+    @Test
+    fun test_attenuation() {
+        val preset = this.get_preset()
+        val glob = preset.global_zone!!
+
+        assertEquals(
+            "Attenuation is Wrong",
+            5.60,
+            glob.attenuation
+        )
+    }
+
+    @Test
+    fun test_pan() {
+        val sample = this.get_instrument_sample()
+        assertEquals(
+            "pan is wrong",
+            -50.0,
+            sample.pan
+        )
+    }
+
+    @Test
+    fun test_root_key() {
+        val sample = this.get_instrument_sample()
+        assertEquals(
+            "root key is wrong",
+            26,
+            sample.root_key
+        )
+    }
+
+    @Test
+    fun test_vol_env_hold() {
+        val sample = this.get_instrument_sample()
+        assertEquals(
+            "vol_env_hold is wrong",
+            6.00,
+            sample.vol_env_hold
+        )
+    }
+
+    @Test
+    fun test_vol_env_decay() {
+        val sample = this.get_instrument_sample()
+        assertEquals(
+            "vol_env_decay is wrong",
+            6.00,
+            sample.vol_env_decay
+        )
+    }
+
+    @Test
+    fun test_sampleMode() {
+        val sample = this.get_instrument_sample()
+        assertEquals(
+            "sampleMode is wrong",
+            1,
+            sample.sampleMode
+        )
+    }
+
+    @Test
+    fun test_sample_rate() {
+        val sample = this.get_instrument_sample().sample!!
+        assertEquals(
+            "sample rate is wrong",
+            32000,
+            sample.sampleRate
+        )
+    }
+    @Test
+    fun test_sample_size() {
+        val sample = this.get_instrument_sample().sample!!
+        assertEquals(
+            "sample size is wrong",
+            219502,
+            sample.data!!.size
+        )
+    }
+    @Test
+    fun test_sample_type() {
+        val sample = this.get_instrument_sample().sample!!
+        assertEquals(
+            "sample type is wrong",
+            4,
+            sample.sampleType
+        )
+    }
+    @Test
+    fun test_sample_link() {
+        val preset = this.get_soundfont().get_preset(124, 4)
+        val instrument = preset.get_instruments(20,64).first().instrument!!
+        val samples = instrument.get_samples(20, 64).toList()
+
+        val sample = if (samples[0].sample!!.name == "Scratchgs(R)") {
+            samples[0].sample!!
+        } else {
+            samples[1].sample!!
+        }
+
+        assertEquals(
+            "sample link is wrong",
+            1444,
+            sample.linkIndex
+        )
+    }
+    @Test
+    fun test_instrument_sample_scale_tuning() {
+        val preset = this.get_soundfont().get_preset(124, 4)
+        val instrument = preset.get_instruments(20,64).first().instrument!!
+        val samples = instrument.get_samples(20, 64).toList()
+
+        val instrument_sample = if (samples[0].sample!!.name == "Scratchgs(R)") {
+            samples[0]
+        } else {
+            samples[1]
+        }
+
+        assertEquals(
+            "Scale Tuning is off",
+            20,
+            instrument_sample.scale_tuning
         )
     }
 }

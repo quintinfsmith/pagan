@@ -100,14 +100,6 @@ import com.qfs.apres.to_variable_length_bytes
 import org.junit.Test
 import org.junit.Assert.*
 
-fun intlist_to_bytearray(input: List<Int>): ByteArray {
-    var output: MutableList<Byte> = mutableListOf()
-    for (i in input) {
-        output.add(i.toByte())
-    }
-    return output.toByteArray()
-}
-
 class ApresUnitTest {
     //@Test
     //fun test_initialize_load() {
@@ -573,6 +565,7 @@ class ApresUnitTest {
             )
         }
     }
+
     @Test
     fun test_chords() {
         assertEquals(

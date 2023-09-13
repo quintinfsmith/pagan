@@ -7,10 +7,11 @@ import com.qfs.apres.soundfont.Preset
 import com.qfs.apres.soundfont.SoundFont
 import org.junit.Test
 import org.junit.Assert.*
+import java.io.File
 
 class SoundFontUnitTest {
     fun get_soundfont(): SoundFont {
-        val sffont = "/home/pent/FluidR3_GM_GS.sf2"
+        val sffont = "FluidR3_GM_GS.sf2"
         return SoundFont(sffont)
     }
     fun get_preset(): Preset {

@@ -9,17 +9,15 @@ import androidx.recyclerview.widget.RecyclerView
 import com.qfs.apres.soundfont.SoundFont
 
 class ChannelOptionAdapter(
-    private val activity: MainActivity,
     private val opus_manager: InterfaceLayer,
-    private val recycler: RecyclerView,
-    private var soundfont: SoundFont?
+    private val recycler: RecyclerView
 ) : RecyclerView.Adapter<ChannelOptionAdapter.ChannelOptionViewHolder>() {
     class OutOfSyncException : Exception("Channel Option list out of sync with OpusManager")
     class ChannelOptionViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
     private var supported_instruments = HashMap<Pair<Int, Int>, String>()
     init {
         this.recycler.adapter = this
-        this.recycler.layoutManager = LinearLayoutManager(this.activity)
+        this.recycler.layoutManager = LinearLayoutManager(this.get_activity())
         this.recycler.itemAnimator = null
         val that = this
         this.registerAdapterDataObserver(
@@ -33,9 +31,9 @@ class ChannelOptionAdapter(
                 override fun onItemRangeInserted(start: Int, count: Int) { }
             }
         )
-
-        if (this.soundfont != null) {
-            for ((name, program, bank) in this.soundfont!!.get_available_presets()) {
+        val soundfont = this.get_activity().get_soundfont()
+        if (soundfont != null) {
+            for ((name, program, bank) in soundfont!!.get_available_presets()) {
                 this.supported_instruments[Pair(bank, program)] = name
             }
         }
@@ -51,21 +49,26 @@ class ChannelOptionAdapter(
         )
     }
 
+    fun get_activity(): MainActivity {
+        return this.recycler.context as MainActivity
+    }
+
     private fun set_text(view: View, position: Int) {
+        val activity = this.get_activity()
         val channels = this.opus_manager.channels
         val curChannel = channels[position]
         val btnChooseInstrument: TextView = view.findViewById(R.id.btnChooseInstrument)
-        val defaults = this.activity.resources.getStringArray(R.array.midi_instruments)
+        val defaults = activity.resources.getStringArray(R.array.midi_instruments)
         val label = this.supported_instruments[Pair(
             curChannel.midi_bank,
             curChannel.midi_program
         )] ?: if (curChannel.midi_channel == 9) {
-            this.activity.resources.getString(R.string.unknown_percussion)
+            activity.resources.getString(R.string.unknown_percussion)
         } else {
-            this.activity.resources.getString(R.string.unknown_instrument, defaults[curChannel.midi_program])
+            activity.resources.getString(R.string.unknown_instrument, defaults[curChannel.midi_program])
         }
 
-        btnChooseInstrument.text = this.activity.getString(R.string.label_choose_instrument, position, label)
+        btnChooseInstrument.text = activity.getString(R.string.label_choose_instrument, position, label)
     }
 
     override fun onBindViewHolder(holder: ChannelOptionViewHolder, position: Int) {
@@ -136,7 +139,7 @@ class ChannelOptionAdapter(
         }
 
         val default_position = this.opus_manager.get_channel_instrument(channel)
-        this.activity.popup_menu_dialog<Pair<Int, Int>>(this.activity.getString(R.string.dropdown_choose_instrument), options, default = default_position) { index: Int, (bank, program): Pair<Int, Int> ->
+        this.get_activity().popup_menu_dialog<Pair<Int, Int>>(this.get_activity().getString(R.string.dropdown_choose_instrument), options, default = default_position) { index: Int, (bank, program): Pair<Int, Int> ->
             this.set_channel_instrument(channel, bank, program)
         }
     }
@@ -146,13 +149,12 @@ class ChannelOptionAdapter(
     }
 
     override fun getItemCount(): Int {
-        return this.activity.get_opus_manager().channels.size
+        return this.get_activity().get_opus_manager().channels.size
     }
 
     fun set_soundfont(soundfont: SoundFont) {
-        this.soundfont = soundfont
         this.supported_instruments.clear()
-        for ((name, program, bank) in this.soundfont!!.get_available_presets()) {
+        for ((name, program, bank) in soundfont!!.get_available_presets()) {
             this.supported_instruments[Pair(bank, program)] = name
         }
         this.notifyItemRangeChanged(0, this.opus_manager.channels.size)
@@ -160,7 +162,6 @@ class ChannelOptionAdapter(
 
     fun unset_soundfont() {
         this.supported_instruments.clear()
-        this.soundfont = null
         this.notifyItemRangeChanged(0, this.opus_manager.channels.size)
     }
 }

@@ -271,7 +271,7 @@ class MainActivity : AppCompatActivity() {
     fun setup_config_drawer() {
         val opus_manager = this.get_opus_manager()
         val rvActiveChannels: RecyclerView = this.findViewById(R.id.rvActiveChannels)
-        ChannelOptionAdapter(this, opus_manager, rvActiveChannels, this.soundfont)
+        ChannelOptionAdapter(opus_manager, rvActiveChannels)
 
         val tvChangeProjectName: TextView = this.findViewById(R.id.tvChangeProjectName)
         tvChangeProjectName.setOnClickListener {

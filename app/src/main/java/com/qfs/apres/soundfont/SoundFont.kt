@@ -654,6 +654,7 @@ class SoundFont(file_path: String) {
             this.sample_data_cache[cache_key]!!.count += 1
             return this.sample_data_cache[cache_key]!!.data
         }
+
         val smpl = this.riff.get_sub_chunk_data(this.riff.sub_chunks[1][0],  (start_index * 2), 2 * (end_index - start_index))
         val sm24 = if (this.riff.sub_chunks[1].size == 2) {
             this.riff.get_sub_chunk_data(this.riff.sub_chunks[1][1], start_index, end_index - start_index)

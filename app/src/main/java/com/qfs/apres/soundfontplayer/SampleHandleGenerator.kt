@@ -1,5 +1,4 @@
 package com.qfs.apres.soundfontplayer
-
 import com.qfs.apres.soundfont.InstrumentSample
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.soundfont.Preset
@@ -48,7 +47,7 @@ class SampleHandleGenerator {
             pitch_shift *= (sample.sample!!.sampleRate.toFloat() / AudioTrackHandle.sample_rate.toFloat())
         }
 
-        val data = this.resample(sample.sample!!.data!!, pitch_shift)
+        val data = sample.sample!!.data!!
 
         val attenuation: Double = preset.global_zone?.attenuation
             ?: instrument.instrument?.global_sample?.attenuation
@@ -106,6 +105,7 @@ class SampleHandleGenerator {
 
         return SampleHandle(
             data = data,
+            pitch_shift = pitch_shift,
             attenuation = (10.0).pow(attenuation / -20.0).toFloat(),
             stereo_mode = sample.sample!!.sampleType,
             loop_points = if (sample.sampleMode != null && sample.sampleMode!! and 1 == 1) {
@@ -127,14 +127,14 @@ class SampleHandleGenerator {
         )
     }
 
-    fun resample(sample_data: ShortArray, pitch_shift: Float): ShortArray {
-        // TODO: This is VERY Niave. Look into actual resampling algorithms
-        val new_size = (sample_data.size / pitch_shift).toInt()
-        return ShortArray(new_size) { i: Int ->
-            val i_offset = (i.toFloat() * pitch_shift).toInt()
-            sample_data[i_offset]
-        }
-    }
+    //fun resample(sample_data: ShortArray, pitch_shift: Float): ShortArray {
+    //    // TODO: This is VERY Niave. Look into actual resampling algorithms
+    //    val new_size = (sample_data.size / pitch_shift).toInt()
+    //    return ShortArray(new_size) { i: Int ->
+    //        val i_offset = (i.toFloat() * pitch_shift).toInt()
+    //        sample_data[i_offset]
+    //    }
+    //}
 
     fun decache_sample_data(preset: Preset) {
         val to_remove = mutableListOf<MapKey>()

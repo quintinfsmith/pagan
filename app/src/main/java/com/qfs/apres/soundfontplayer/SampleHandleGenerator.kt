@@ -16,7 +16,7 @@ class SampleHandleGenerator {
         var preset: Int
     )
 
-    private var sample_data_map = HashMap<MapKey, SampleHandle>()
+    var sample_data_map = HashMap<MapKey, SampleHandle>()
 
     fun get(event: NoteOn, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset): SampleHandle {
         val map_key = MapKey(event.note, sample.hashCode(), instrument.hashCode(), preset.hashCode())
@@ -33,7 +33,7 @@ class SampleHandleGenerator {
         }
     }
 
-    private fun generate_new(event: NoteOn, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset): SampleHandle {
+    fun generate_new(event: NoteOn, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset): SampleHandle {
         var pitch_shift = 1F
         val original_note = sample.root_key ?: sample.sample!!.originalPitch
         if (original_note != 255) {
@@ -61,6 +61,7 @@ class SampleHandleGenerator {
             ?: instrument.vol_env_delay
             ?: sample.vol_env_delay
             ?: 0.0
+
         val vol_env_attack: Double = preset.global_zone?.vol_env_attack
             ?: instrument.instrument?.global_sample?.vol_env_attack
             ?: instrument.vol_env_attack
@@ -147,7 +148,6 @@ class SampleHandleGenerator {
         }
 
     }
-
 
     fun clear_cache() {
         this.sample_data_map.clear()

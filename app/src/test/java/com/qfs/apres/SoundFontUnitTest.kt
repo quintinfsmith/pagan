@@ -30,7 +30,6 @@ class SoundFontUnitTest {
         } else {
             samples[1]
         }
-
     }
 
     @Test
@@ -178,7 +177,7 @@ class SoundFontUnitTest {
     fun test_pan() {
         val sample = this.get_instrument_sample()
         assertEquals(
-            "pan is wrong",
+            "Pan is wrong",
             -50.0,
             sample.pan
         )
@@ -188,7 +187,7 @@ class SoundFontUnitTest {
     fun test_root_key() {
         val sample = this.get_instrument_sample()
         assertEquals(
-            "root key is wrong",
+            "Root Key is wrong",
             26,
             sample.root_key
         )
@@ -233,6 +232,7 @@ class SoundFontUnitTest {
             sample.sampleRate
         )
     }
+
     @Test
     fun test_sample_size() {
         val sample = this.get_instrument_sample().sample!!
@@ -242,6 +242,7 @@ class SoundFontUnitTest {
             sample.data!!.size
         )
     }
+
     @Test
     fun test_sample_type() {
         val sample = this.get_instrument_sample().sample!!
@@ -251,6 +252,7 @@ class SoundFontUnitTest {
             sample.sampleType
         )
     }
+
     @Test
     fun test_sample_link() {
         val preset = this.get_soundfont().get_preset(124, 4)

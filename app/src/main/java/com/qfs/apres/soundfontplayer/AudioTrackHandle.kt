@@ -8,7 +8,7 @@ import kotlin.math.max
 class AudioTrackHandle {
     class HandleStoppedException() : Exception()
     companion object {
-        const val sample_rate = 22010
+        const val sample_rate = 22050
 
         val buffer_size = max(
             sample_rate / 5, // .2 seconds. arbitrary but feels good enough

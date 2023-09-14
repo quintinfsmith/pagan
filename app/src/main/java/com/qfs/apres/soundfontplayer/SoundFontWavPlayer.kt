@@ -174,8 +174,6 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
                 }
             }
 
-
-
             this.frame +=  AudioTrackHandle.buffer_size
             this.generate_ts = null
 

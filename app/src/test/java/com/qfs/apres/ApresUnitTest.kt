@@ -577,4 +577,12 @@ class ApresUnitTest {
             get_chord_name_from_mi_sf(1.toByte(), 7.toByte())
         )
     }
+
+    @Test
+    fun test_toUInt() {
+
+
+    }
+
+
 }

@@ -1,15 +1,13 @@
 package com.qfs.apres
 
-import com.qfs.apres.event.NoteOff
-import com.qfs.apres.event.NoteOn
 import com.qfs.apres.soundfont.Instrument
 import com.qfs.apres.soundfont.InstrumentSample
 import com.qfs.apres.soundfont.Preset
-import com.qfs.apres.soundfont.Sample
 import com.qfs.apres.soundfont.SoundFont
 import org.junit.Test
 import org.junit.Assert.*
-import java.io.File
+import kotlin.math.pow
+import kotlin.math.roundToInt
 
 class SoundFontUnitTest {
     fun get_soundfont(): SoundFont {
@@ -104,8 +102,8 @@ class SoundFontUnitTest {
         val glob = instrument.global_sample!!
         assertEquals(
             "vol_env attack is wrong",
-            .008,
-            glob.vol_env_attack
+            8,
+            (glob.vol_env_attack!! * 1000).roundToInt()
         )
     }
 
@@ -137,8 +135,8 @@ class SoundFontUnitTest {
         val glob = instrument.global_sample!!
         assertEquals(
             "mod_env_release is wrong",
-            100.021,
-            glob.mod_env_release
+            100021,
+            (glob.mod_env_release!! * 1000).toInt()
         )
     }
 
@@ -160,7 +158,7 @@ class SoundFontUnitTest {
         assertEquals(
             "Filter cutoff is wrong",
             11998,
-            glob!!.filter_cutoff
+            (2F.pow(glob!!.filter_cutoff!!.toFloat()  / 1200F) * 8.176).toInt()
         )
     }
 
@@ -171,7 +169,7 @@ class SoundFontUnitTest {
 
         assertEquals(
             "Attenuation is Wrong",
-            5.60,
+            14.0,
             glob.attenuation
         )
     }
@@ -201,8 +199,8 @@ class SoundFontUnitTest {
         val sample = this.get_instrument_sample()
         assertEquals(
             "vol_env_hold is wrong",
-            6.00,
-            sample.vol_env_hold
+            6000,
+            (sample.vol_env_hold!! * 1000).toInt()
         )
     }
 
@@ -211,8 +209,8 @@ class SoundFontUnitTest {
         val sample = this.get_instrument_sample()
         assertEquals(
             "vol_env_decay is wrong",
-            6.00,
-            sample.vol_env_decay
+            40998,
+            (sample.vol_env_decay!! * 1000).toInt()
         )
     }
 

@@ -443,7 +443,7 @@ class SoundFont(file_path: String) {
                 working_generated.mod_lfo_filter = generator.asInt()
             }
             0x0B -> {
-                working_generated.mod_env_filter = generator.asInt()
+                working_generated.mod_env_filter = generator.asIntSigned()
             }
             0x0D -> {
                 working_generated.mod_lfo_volume = generator.asInt()

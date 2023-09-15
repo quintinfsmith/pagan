@@ -859,7 +859,7 @@ class MainActivity : AppCompatActivity() {
             var is_stopping = false
             override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
                 tvPlaybackTime.text = that.get_timestring_at_beat(p1)
-                //that.get_opus_manager().cursor_select_column(p1, true)
+                that.get_opus_manager().cursor_select_column(p1, true)
             }
 
             override fun onStartTrackingTouch(p0: SeekBar?) {

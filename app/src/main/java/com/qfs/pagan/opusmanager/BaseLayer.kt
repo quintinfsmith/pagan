@@ -1637,4 +1637,25 @@ open class BaseLayer {
         )
     }
 
+    fun convert_all_events_to_absolute() {
+        this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
+            channel.lines.forEachIndexed { j: Int, line: OpusChannel.OpusLine ->
+                line.beats.forEachIndexed { k: Int, beat_tree: OpusTree<OpusEvent> ->
+                    var previous_value = 0
+                    beat_tree.traverse { tree: OpusTree<OpusEvent>, event: OpusEvent? ->
+                        if (event == null) {
+                            return@traverse
+                        }
+                        if (event.relative) {
+                            event.relative = false
+                            event.note = event.note + previous_value
+                        }
+
+                        previous_value = event.note
+                    }
+                }
+            }
+        }
+    }
+
 }

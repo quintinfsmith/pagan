@@ -1,33 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:theme="@style/recycler_option"
-    android:orientation="horizontal"
-    android:paddingTop="@dimen/normal_padding"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:paddingTop="@dimen/normal_padding"
+    android:theme="@style/recycler_option">
 
 
     <TextView
         android:id="@+id/btnChooseInstrument"
-        android:maxLines="1"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
         android:gravity="start"
+        android:maxLines="1"
         android:paddingStart="8dp"
         android:paddingEnd="8dp"
-        android:layout_width="0dp"
-        android:layout_weight="1"
-        android:layout_height="match_parent"
 
         android:text="Instrument..." />
 
     <TextView
         android:id="@+id/btnRemoveChannel"
-        android:text="X"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:gravity="end"
         android:paddingStart="8dp"
         android:paddingEnd="8dp"
-        android:gravity="end"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"/>
+        android:text="X" />
 
 </LinearLayout>

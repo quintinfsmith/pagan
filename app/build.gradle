@@ -51,4 +51,5 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.4'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.0'
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.1")
+    implementation group: 'org.simpleframework', name: 'simple-xml', version: '2.7.1'
 }

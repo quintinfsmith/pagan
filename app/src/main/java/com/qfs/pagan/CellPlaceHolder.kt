@@ -26,7 +26,6 @@ class CellPlaceHolder(var viewHolder: CellRecyclerViewHolder, column_width: Int)
         } catch (e: CellRecycler.ColumnDetachedException) {
             // let it pass
         }
-
     }
 
     override fun onAttachedToWindow() {
@@ -35,13 +34,16 @@ class CellPlaceHolder(var viewHolder: CellRecyclerViewHolder, column_width: Int)
             // Kludge
             Thread.sleep(10)
             if (this.viewHolder.bindingAdapterPosition != -1) {
-                var adapter = (this.viewHolder.bindingAdapter as CellRecyclerAdapter)
-                var activity = adapter.get_activity()
+                val adapter = (this.viewHolder.bindingAdapter as CellRecyclerAdapter)
+                val activity = adapter.get_activity()
                 activity.runOnUiThread {
                     this.replace()
                 }
             }
         }
+    }
 
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
     }
 }

@@ -87,13 +87,21 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     fun set_relative_mode(event: OpusEvent) {
-        this.relative_mode = if (!event.relative) {
-            0
-        }  else if (event.note >= 0) {
-            1
+        if (this.activity.configuration.relative_mode) {
+            this.relative_mode = if (!event.relative) {
+                0
+            } else if (event.note >= 0) {
+                1
+            } else {
+                2
+            }
         } else {
-            2
+            this.relative_mode = 0
         }
+    }
+
+    fun set_relative_mode(mode: Int) {
+        this.relative_mode = mode
     }
 
     override fun set_percussion_instrument(line_offset: Int, instrument: Int) {

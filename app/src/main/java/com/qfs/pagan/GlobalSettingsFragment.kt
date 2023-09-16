@@ -6,13 +6,16 @@ import android.net.Uri
 import android.os.Bundle
 import android.view.*
 import android.widget.Button
+import android.widget.CompoundButton
 import android.widget.LinearLayout
 import android.widget.PopupMenu
+import android.widget.Switch
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import com.qfs.apres.soundfont.Riff
 import com.qfs.apres.soundfont.SoundFont
 import com.qfs.pagan.databinding.FragmentGlobalSettingsBinding
+import com.qfs.pagan.opusmanager.HistoryLayer
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -113,6 +116,15 @@ class GlobalSettingsFragment : PaganFragment() {
                 }
             }
         }
+
+        val switch_relative_mode = view.findViewById<Switch>(R.id.sRelativeEnabled)
+        switch_relative_mode.setChecked(main.configuration.relative_mode)
+        switch_relative_mode.setOnCheckedChangeListener(object: CompoundButton.OnCheckedChangeListener {
+            override fun onCheckedChanged(p0: CompoundButton?, enabled: Boolean) {
+                main.configuration.relative_mode = enabled
+                main.save_configuration()
+            }
+        })
     }
 
     override fun onDestroyView() {

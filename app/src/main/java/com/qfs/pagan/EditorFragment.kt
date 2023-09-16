@@ -420,6 +420,12 @@ class EditorFragment : PaganFragment() {
 
 
         rosRelativeOption.setState(opus_manager.relative_mode, true)
+        if (main.configuration.relative_mode) {
+            rosRelativeOption.visibility = View.VISIBLE
+        } else {
+            rosRelativeOption.visibility = View.GONE
+        }
+
 
         if (opus_manager.is_percussion(opus_manager.cursor.channel)) {
             nsOctave.visibility = View.GONE
@@ -437,13 +443,19 @@ class EditorFragment : PaganFragment() {
         } else {
             if (current_tree.is_event()) {
                 val event = current_tree.get_event()!!
-                val value = if (event.note < 0) {
-                    0 - event.note
+                val value = if (event.relative && ! main.configuration.relative_mode) {
+                    opus_manager.get_absolute_value(opus_manager.cursor.get_beatkey(), opus_manager.cursor.get_position())!!
                 } else {
-                    event.note
+                    if (event.note < 0) {
+                        0 - event.note
+                    } else {
+                        event.note
+                    }
                 }
-                nsOffset.setState(value % event.radix, manual = true, surpress_callback = true)
-                nsOctave.setState(value / event.radix, manual = true, surpress_callback = true)
+                if (value >= 0) {
+                    nsOffset.setState(value % event.radix, manual = true, surpress_callback = true)
+                    nsOctave.setState(value / event.radix, manual = true, surpress_callback = true)
+                }
             }
 
             nsOffset.setOnChange(this::interact_nsOffset)

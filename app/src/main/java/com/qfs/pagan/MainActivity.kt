@@ -1028,4 +1028,8 @@ class MainActivity : AppCompatActivity() {
         return result
     }
 
+    fun convert_opus_to_absolute() {
+        this.get_opus_manager().convert_all_events_to_absolute()
+    }
+
 }

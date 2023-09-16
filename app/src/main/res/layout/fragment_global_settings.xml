@@ -59,5 +59,23 @@
                 </LinearLayout>
         </LinearLayout>
 
+        <LinearLayout
+            android:id="@+id/llRelativeEnabled"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+                <TextView
+                    android:text="@string/label_settings_relative"
+                    android:paddingStart="15dp"
+                    android:layout_weight="1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
+                <Switch
+                    android:id="@+id/sRelativeEnabled"
+                    android:layout_width="wrap_content"
+                    android:layout_height="48dp"/>
+
+        </LinearLayout>
+
 
 </LinearLayout>

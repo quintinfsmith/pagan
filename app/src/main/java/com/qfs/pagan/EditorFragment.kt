@@ -64,6 +64,8 @@ class EditorFragment : PaganFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        val opus_manager = this.get_main().get_opus_manager()
+        opus_manager.cursor_clear()
 
         if (this.view_model.coarse_x != null) {
             val editor_table = this.get_main().findViewById<EditorTable>(R.id.etEditorTable)

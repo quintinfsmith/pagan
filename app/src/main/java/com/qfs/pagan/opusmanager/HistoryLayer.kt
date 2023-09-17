@@ -1,4 +1,5 @@
 package com.qfs.pagan.opusmanager
+import android.util.Log
 import com.qfs.apres.Midi
 import com.qfs.pagan.structure.OpusTree
 import kotlin.math.max
@@ -891,6 +892,10 @@ open class HistoryLayer : LinksLayer() {
 
     override fun link_row(channel: Int, line_offset: Int, beat_key: BeatKey) {
         this.history_cache.remember {
+            this.clear_link_pools_by_range(
+                BeatKey(channel, line_offset, 0),
+                BeatKey(channel, line_offset, this.opus_beat_count - 1)
+            )
             super.link_row(channel, line_offset, beat_key)
         }
     }
@@ -904,6 +909,18 @@ open class HistoryLayer : LinksLayer() {
 
     override fun link_beat_range_horizontally(channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey) {
         this.history_cache.remember {
+            val y_top = this.get_abs_offset(first_key.channel, first_key.line_offset)
+            val y_bottom = this.get_abs_offset(second_key.channel, second_key.line_offset)
+            val y_link_top = this.get_abs_offset(channel, line_offset)
+            val y_link_bottom = y_link_top + (y_bottom - y_top)
+            val (bottom_channel, bottom_line_offset) = this.get_std_offset(y_link_bottom)
+            val clear_beat_key_top = BeatKey(channel, line_offset, 0)
+            val clear_beat_key_bottom = BeatKey(bottom_channel, bottom_line_offset, this.opus_beat_count -1)
+
+            this.clear_link_pools_by_range(
+                clear_beat_key_top,
+                clear_beat_key_bottom
+            )
             super.link_beat_range_horizontally(channel, line_offset, first_key, second_key)
         }
     }

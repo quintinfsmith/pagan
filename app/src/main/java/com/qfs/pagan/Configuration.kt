@@ -9,7 +9,7 @@ import kotlinx.serialization.encodeToString
 @Serializable
 data class Configuration(
     var soundfont: String? = null,
-    var relative_mode: Boolean = true
+    var relative_mode: Boolean = false
 ) {
     companion object {
         fun from_path(path: String): Configuration {

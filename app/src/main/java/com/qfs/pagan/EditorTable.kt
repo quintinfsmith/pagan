@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.OpusChannel
 import kotlin.math.max
+import kotlin.math.min
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
 class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, attrs) {
@@ -34,6 +35,14 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     init {
         this.top_row.addView(this.spacer)
         this.top_row.addView(this.column_label_recycler)
+
+        this.spacer.setOnClickListener {
+            val main = (this.context as MainActivity)
+            val opus_manager = main.get_opus_manager()
+            main.popup_number_dialog("Jump To Beat", 0, opus_manager.opus_beat_count - 1) { beat: Int ->
+                opus_manager.cursor_select_column(min(opus_manager.opus_beat_count - 1,beat))
+            }
+        }
 
         this.bottom_row.addView(LinearLayout(ContextThemeWrapper(context, R.style.column)))
 

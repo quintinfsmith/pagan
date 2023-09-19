@@ -4,14 +4,37 @@ tree = ET.parse('app/score.mscx')
 root = tree.getroot()
 
 MIXED_LIST_ELEMENTS = [
-    ( "Score", "Staff", "Measure", "Voice" ),
-]
-KNOWN_LIST_ELEMENTS = [
-    ( "Score", "Staff", "Measure", "Voice", "Chord", "Note" ),
-    ( "Score", "Staff", "Measure", "Voice", "Chord", "Note", "Spanner" )
+    ( "MuseScore", "Score", "Staff", "Measure", "Voice" ),
 ]
 
+#KNOWN_LIST_ELEMENTS = [
+#    ( "Score", "Staff", "Measure", "Voice", "Chord", "Note" ),
+#    ( "Score", "Staff", "Measure", "Voice", "Chord", "Note", "Spanner" )
+#]
+
 children_accounted_for = {}
+
+def count_children(tag, path, count_map):
+    output = set()
+    class_name = any_to_camel(tag.tag)
+    path.append(class_name)
+
+    current_counts = {}
+    for child in tag:
+        k = any_to_camel(child.tag)
+        current_counts[k] = current_counts.get(k, 0) + 1
+
+    for (k, v) in current_counts.items():
+        current_key = path.copy()
+        current_key.append(k)
+        current_key = tuple(current_key)
+        if current_key not in count_map:
+            count_map[current_key] = 0
+        count_map[current_key] = max(count_map[current_key], v)
+
+    for child in tag:
+        count_children(child, path.copy(), count_map)
+
 
 
 def camel_to_snake(string):
@@ -20,11 +43,13 @@ def camel_to_snake(string):
     string = string.strip()
     while "  " in string:
         string = string.replace("  ", " ")
+    string = string.replace("-", "_")
     string = string.replace(" ", "_")
     return string.lower()
 
 def any_to_camel(string):
     string = string.replace("_", " ")
+    string = string.replace("-", " ")
     parts = string.split(" ")
     output = ""
     for part in parts:
@@ -33,58 +58,21 @@ def any_to_camel(string):
         output += part
     return output
 
-def generate_kotlin(tag, path):
+def generate_kotlin(tag, path, child_counts):
     pathstr = "/".join(path)
 
     strings = []
     class_name = any_to_camel(tag.tag)
+    path.append(class_name)
 
     if class_name == "Text":
         class_name = "MSText"
 
-    lists = set()
-    singles = set()
-    tagnames = set()
-    types = {} # 0 = Int, 1 = string
-    for child in tag:
-        if child.attrib.get("__!!", False):
-            continue
-
-        if child.tag in tagnames:
-            if child.tag in singles:
-                lists.add(child.tag)
-                singles.remove(child.tag)
-        elif tuple(path[1:] + [any_to_camel(child.tag)]) in KNOWN_LIST_ELEMENTS:
-            lists.add(child.tag)
-            tagnames.add(child.tag)
-            if len(child) or child.attrib:
-                types[child.tag] = 2
-            else:
-                try:
-                    int(child.text)
-                    types[child.tag] = 0
-                except:
-                    types[child.tag] = 1
-        else:
-            singles.add(child.tag)
-            tagnames.add(child.tag)
-            if len(child) or child.attrib:
-                types[child.tag] = 2
-            else:
-                try:
-                    int(child.text)
-                    types[child.tag] = 0
-                except:
-                    types[child.tag] = 1
-
     indent_a = " " * (4 * (len(path) - 1))
     indent_b = " " * (4 * len(path))
-    if not tag.attrib.get("__!!", False):
-        output = f"{indent_a}@Root(strict = false, name = \"{tag.tag}\")\n"
-        output += f"{indent_a}class {class_name} {{\n"
-        output += f"{indent_b}// {'|'.join(path)}\n"
-    else:
-        output =""
+    output = f"{indent_a}@Root(strict = false, name = \"{tag.tag}\")\n"
+    output += f"{indent_a}class {class_name} {{\n"
+    output += f"{indent_b}// {'|'.join(path)}\n"
 
     new_tag_map = {}
     for child in tag:
@@ -99,94 +87,77 @@ def generate_kotlin(tag, path):
         if key not in children_accounted_for:
             children_accounted_for[key] = set()
 
-        this_done = set()
         for grandchild in child:
-            gc_name  = any_to_camel(grandchild.tag)
-            if gc_name in children_accounted_for[key]:
-                grandchild.attrib["__!!"] = True
-            else:
-                grandchild.attrib["__!!"] = False
-
             working_child.append(grandchild)
-            this_done.add(gc_name)
-
-        children_accounted_for[key] = children_accounted_for[key].union(this_done)
 
         new_tag_map[child.tag] = working_child
 
         for k, v in child.attrib.items():
-            if k == "__!!":
-                continue
             working_child.attrib[k] = v
 
+    generated_tags = set()
+    tag_names = set()
     for _, child in new_tag_map.items():
-        new_path = path.copy()
-        new_path.append(any_to_camel(child.tag))
-        output += generate_kotlin(child, new_path) + "\n"
+        if child.tag.lower() in generated_tags:
+            continue
+        output += generate_kotlin(child, path.copy(), child_counts) + "\n"
+        generated_tags.add(child.tag.lower())
+        tag_names.add(child.tag)
 
+    for k, v in tag.attrib.items():
+        attr_name = k.lower().replace(" ", "_")
+        output += f"{indent_b}@field:Attribute(name = \"{k}\", required = false)\n"
+        try:
+            int(v)
+            output += f"{indent_b}var {attr_name}: Int? = null"
+        except:
+            output += f"{indent_b}var {attr_name}: String? = null"
+        output += "\n\n"
 
-    if not tag.attrib.get("__!!", False):
-        for k, v in tag.attrib.items():
-            if (k == "__!!"):
-                continue
+    if tuple(path) not in MIXED_LIST_ELEMENTS:
+        for name in tag_names:
+            elm_name = camel_to_snake(name)
+            child_class_name = any_to_camel(name)
+            if child_class_name == "Text":
+                child_class_name = "MSText"
+                elm_name = "mstext"
 
-            attr_name = k.lower().replace(" ", "_")
-            output += f"{indent_b}@field:Attribute(name = \"{k}\", required = false)\n"
-            try:
-                int(v)
-                output += f"{indent_b}var {attr_name}: Int? = null"
-            except:
-                output += f"{indent_b}var {attr_name}: String? = null"
-            output += "\n\n"
-
-        if tuple(path[1:]) not in MIXED_LIST_ELEMENTS:
-            for name in singles:
-                elm_name = camel_to_snake(name)
-                child_class_name = any_to_camel(name)
-                if child_class_name == "Text":
-                    child_class_name = "MSText"
-                    elm_name = "mstext"
-
+            key = path.copy()
+            key.append(child_class_name)
+            key = tuple(key)
+            if child_counts.get(key, 0) == 1:
                 output += f"{indent_b}@field:Element(name = \"{name}\", required = false)\n"
                 output += f"{indent_b}lateinit var {elm_name}: {child_class_name}\n\n"
-
-            for name in lists:
-                elm_name = camel_to_snake(name)
-                child_class_name = any_to_camel(name)
-                if child_class_name == "Text":
-                    child_class_name = "MSText"
-                    elm_name = "mstext"
+            else:
                 output += f"{indent_b}@field:ElementList(entry = \"{name}\", required = false, inline=true)\n"
                 output += f"{indent_b}lateinit var {elm_name}_list: List<{child_class_name}>\n\n"
-        else:
-            indent_c = " " * (4 * (len(path) + 1))
-            output += f"{indent_b}@field:ElementListUnion(\n"
+    else:
+        indent_c = " " * (4 * (len(path) + 1))
+        output += f"{indent_b}@field:ElementListUnion(\n"
+        lines = []
+        for name in tag_names:
+            elm_name = camel_to_snake(name)
+            child_class_name = any_to_camel(name)
+            lines.append(f"{indent_c}ElementList(entry = \"{name}\", inline = true, type = {child_class_name}::class, required = false)")
 
-            lines = []
-            for name in lists:
-                child_class_name = any_to_camel(name)
-                lines.append(f"{indent_c}ElementList(entry = \"{name}\", inline = true, type = {child_class_name}::class, required = false)")
+        output += ",\n".join(lines) + f"\n{indent_b})\n"
+        output += f"{indent_b}lateinit var elements: List<Any>\n"
 
-            for name in singles:
-                child_class_name = any_to_camel(name)
-                lines.append(f"{indent_c}ElementList(entry = \"{name}\", inline = true, type = {child_class_name}::class, required = false)")
+    if len(tag) == 0:
+        output += f"{indent_b}@field:Text(required = false)\n"
+        output += f"{indent_b}var text: String = \"\"\n"
 
-            output += ",\n".join(lines) + f"\n{indent_b})\n"
-            output += f"{indent_b}lateinit var elements: List<Any>\n"
-
-        if len(tag) == 0:
-            output += f"{indent_b}@field:Text(required = false)\n"
-            output += f"{indent_b}var text: String = \"\"\n"
-
-        output += f"{indent_a}}}"
+    output += f"{indent_a}}}"
 
     return output
-
-print("package com.qfs.pagan\n")
+child_counts = {}
+count_children(root, [], child_counts)
+print("package com.qfs.pagan")
+print("// DO NOT EDIT. This file was generated with musescore_lib_builder.py")
 print("import org.simpleframework.xml.Attribute")
 print("import org.simpleframework.xml.Text")
 print("import org.simpleframework.xml.Element")
 print("import org.simpleframework.xml.ElementList")
 print("import org.simpleframework.xml.ElementListUnion")
 print("import org.simpleframework.xml.Root")
-print(generate_kotlin(root, ["Musescore"]))
+print(generate_kotlin(root, [], child_counts))

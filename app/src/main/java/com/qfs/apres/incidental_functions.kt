@@ -5,10 +5,13 @@ import com.qfs.apres.event.AllNotesOff
 import com.qfs.apres.event.AllSoundOff
 import com.qfs.apres.event.Balance
 import com.qfs.apres.event.BalanceLSB
+import com.qfs.apres.event.BalanceMSB
 import com.qfs.apres.event.BankSelect
 import com.qfs.apres.event.BankSelectLSB
+import com.qfs.apres.event.BankSelectMSB
 import com.qfs.apres.event.BreathController
 import com.qfs.apres.event.BreathControllerLSB
+import com.qfs.apres.event.BreathControllerMSB
 import com.qfs.apres.event.CelesteLevel
 import com.qfs.apres.event.ChannelPrefix
 import com.qfs.apres.event.ChannelPressure
@@ -19,25 +22,34 @@ import com.qfs.apres.event.CuePoint
 import com.qfs.apres.event.DataDecrement
 import com.qfs.apres.event.DataEntry
 import com.qfs.apres.event.DataEntryLSB
+import com.qfs.apres.event.DataEntryMSB
 import com.qfs.apres.event.DataIncrement
 import com.qfs.apres.event.EffectControl1
 import com.qfs.apres.event.EffectControl1LSB
+import com.qfs.apres.event.EffectControl1MSB
 import com.qfs.apres.event.EffectControl2
 import com.qfs.apres.event.EffectControl2LSB
+import com.qfs.apres.event.EffectControl2MSB
 import com.qfs.apres.event.EffectsLevel
 import com.qfs.apres.event.EndOfTrack
 import com.qfs.apres.event.Expression
 import com.qfs.apres.event.ExpressionLSB
+import com.qfs.apres.event.ExpressionMSB
 import com.qfs.apres.event.FootPedal
 import com.qfs.apres.event.FootPedalLSB
+import com.qfs.apres.event.FootPedalMSB
 import com.qfs.apres.event.GeneralPurpose1
 import com.qfs.apres.event.GeneralPurpose1LSB
+import com.qfs.apres.event.GeneralPurpose1MSB
 import com.qfs.apres.event.GeneralPurpose2
 import com.qfs.apres.event.GeneralPurpose2LSB
+import com.qfs.apres.event.GeneralPurpose2MSB
 import com.qfs.apres.event.GeneralPurpose3
 import com.qfs.apres.event.GeneralPurpose3LSB
+import com.qfs.apres.event.GeneralPurpose3MSB
 import com.qfs.apres.event.GeneralPurpose4
 import com.qfs.apres.event.GeneralPurpose4LSB
+import com.qfs.apres.event.GeneralPurpose4MSB
 import com.qfs.apres.event.GeneralPurpose5
 import com.qfs.apres.event.GeneralPurpose6
 import com.qfs.apres.event.GeneralPurpose7
@@ -54,15 +66,18 @@ import com.qfs.apres.event.Marker
 import com.qfs.apres.event.MetaEvent
 import com.qfs.apres.event.ModulationWheel
 import com.qfs.apres.event.ModulationWheelLSB
+import com.qfs.apres.event.ModulationWheelMSB
 import com.qfs.apres.event.MonophonicOperation
 import com.qfs.apres.event.NonRegisteredParameterNumber
 import com.qfs.apres.event.NonRegisteredParameterNumberLSB
+import com.qfs.apres.event.NonRegisteredParameterNumberMSB
 import com.qfs.apres.event.NoteOff
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event.OmniOff
 import com.qfs.apres.event.OmniOn
 import com.qfs.apres.event.Pan
 import com.qfs.apres.event.PanLSB
+import com.qfs.apres.event.PanMSB
 import com.qfs.apres.event.PhaserLevel
 import com.qfs.apres.event.PitchWheelChange
 import com.qfs.apres.event.PolyphonicKeyPressure
@@ -70,9 +85,11 @@ import com.qfs.apres.event.PolyphonicOperation
 import com.qfs.apres.event.Portamento
 import com.qfs.apres.event.PortamentoTime
 import com.qfs.apres.event.PortamentoTimeLSB
+import com.qfs.apres.event.PortamentoTimeMSB
 import com.qfs.apres.event.ProgramChange
 import com.qfs.apres.event.RegisteredParameterNumber
 import com.qfs.apres.event.RegisteredParameterNumberLSB
+import com.qfs.apres.event.RegisteredParameterNumberMSB
 import com.qfs.apres.event.SMPTEOffset
 import com.qfs.apres.event.SequenceNumber
 import com.qfs.apres.event.SequencerSpecific
@@ -98,6 +115,7 @@ import com.qfs.apres.event.TrackName
 import com.qfs.apres.event.TremuloLevel
 import com.qfs.apres.event.Volume
 import com.qfs.apres.event.VolumeLSB
+import com.qfs.apres.event.VolumeMSB
 import kotlin.experimental.and
 
 class InvalidMIDIFile(var path: String): Exception("$path is not a valid midi file")
@@ -143,97 +161,97 @@ fun event_from_bytes(bytes: MutableList<Byte>, default: Byte): MIDIEvent? {
                 val value = bytes.removeFirst().toInt()
                 output = when (controller) {
                     0x00 -> {
-                        BankSelect(channel, value)
+                        BankSelectMSB(channel, value)
                     }
                     0x20 -> {
                         BankSelectLSB(channel, value)
                     }
                     0x01 -> {
-                        ModulationWheel(channel, value)
+                        ModulationWheelMSB(channel, value)
                     }
                     0x21 -> {
                         ModulationWheelLSB(channel, value)
                     }
                     0x02 -> {
-                        BreathController(channel, value)
+                        BreathControllerMSB(channel, value)
                     }
                     0x22 -> {
                         BreathControllerLSB(channel, value)
                     }
                     0x04 -> {
-                        FootPedal(channel, value)
+                        FootPedalMSB(channel, value)
                     }
                     0x24 -> {
                         FootPedalLSB(channel, value)
                     }
                     0x05 -> {
-                        PortamentoTime(channel, value)
+                        PortamentoTimeMSB(channel, value)
                     }
                     0x25 -> {
                         PortamentoTimeLSB(channel, value)
                     }
                     0x06 -> {
-                        DataEntry(channel, value)
+                        DataEntryMSB(channel, value)
                     }
                     0x26 -> {
                         DataEntryLSB(channel, value)
                     }
                     0x07 -> {
-                        Volume(channel, value)
+                        VolumeMSB(channel, value)
                     }
                     0x27 -> {
                         VolumeLSB(channel, value)
                     }
                     0x08 -> {
-                        Balance(channel, value)
+                        BalanceMSB(channel, value)
                     }
                     0x28 -> {
                         BalanceLSB(channel, value)
                     }
                     0x0A -> {
-                        Pan(channel, value)
+                        PanMSB(channel, value)
                     }
                     0x2A -> {
                         PanLSB(channel, value)
                     }
                     0x0B -> {
-                        Expression(channel, value)
+                        ExpressionMSB(channel, value)
                     }
                     0x2B -> {
                         ExpressionLSB(channel, value)
                     }
                     0x0C -> {
-                        EffectControl1(channel, value)
+                        EffectControl1MSB(channel, value)
                     }
                     0x2C -> {
                         EffectControl1LSB(channel, value)
                     }
                     0x0D -> {
-                        EffectControl2(channel, value)
+                        EffectControl2MSB(channel, value)
                     }
                     0x2D -> {
                         EffectControl2LSB(channel, value)
                     }
                     0x10 -> {
-                        GeneralPurpose1(channel, value)
+                        GeneralPurpose1MSB(channel, value)
                     }
                     0x30 -> {
                         GeneralPurpose1LSB(channel, value)
                     }
                     0x11 -> {
-                        GeneralPurpose2(channel, value)
+                        GeneralPurpose2MSB(channel, value)
                     }
                     0x31 -> {
                         GeneralPurpose2LSB(channel, value)
                     }
                     0x12 -> {
-                        GeneralPurpose3(channel, value)
+                        GeneralPurpose3MSB(channel, value)
                     }
                     0x32 -> {
                         GeneralPurpose3LSB(channel, value)
                     }
                     0x13 -> {
-                        GeneralPurpose4(channel, value)
+                        GeneralPurpose4MSB(channel, value)
                     }
                     0x33 -> {
                         GeneralPurpose4LSB(channel, value)
@@ -323,13 +341,13 @@ fun event_from_bytes(bytes: MutableList<Byte>, default: Byte): MIDIEvent? {
                         NonRegisteredParameterNumberLSB(channel, value)
                     }
                     0x63 -> {
-                        NonRegisteredParameterNumber(channel, value)
+                        NonRegisteredParameterNumberMSB(channel, value)
                     }
                     0x64 -> {
                         RegisteredParameterNumberLSB(channel, value)
                     }
                     0x65 -> {
-                        RegisteredParameterNumber(channel, value)
+                        RegisteredParameterNumberMSB(channel, value)
                     }
                     0x78 -> {
                         AllSoundOff(channel)

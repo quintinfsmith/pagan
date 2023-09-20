@@ -7,24 +7,24 @@ import android.database.Cursor
 import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
-import android.util.DisplayMetrics
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.WindowManager
 import android.widget.EditText
-import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.NumberPicker
 import android.widget.ProgressBar
 import android.widget.RelativeLayout
-import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
@@ -60,8 +60,7 @@ class MainActivity : AppCompatActivity() {
 
     private var opus_manager = OpusManager(this)
 
-    private var in_play_back: Boolean = false
-
+    private var playback_handle: SoundFontWavPlayer.PlaybackInterface? = null
     private var optionsMenu: Menu? = null
     internal lateinit var project_manager: ProjectManager
     private var progressBar: ProgressBar? = null
@@ -213,7 +212,11 @@ class MainActivity : AppCompatActivity() {
                 this.get_opus_manager().apply_undo()
             }
             R.id.itmPlay -> {
-                this.playback_dialog()
+                if (this.playback_handle != null) {
+                   this.stop_playback()
+                } else {
+                    this.start_playback()
+                }
             }
             R.id.itmImportProject -> {
                 this.save_dialog {
@@ -521,7 +524,7 @@ class MainActivity : AppCompatActivity() {
 
             }
             is EditorFragment -> {
-                this.in_play_back = false
+                this.stop_playback()
                 when (fragmentName) {
                     "load" -> {
                         navController.navigate(R.id.action_EditorFragment_to_LoadFragment)
@@ -795,101 +798,80 @@ class MainActivity : AppCompatActivity() {
         return "$minute_string:$second_string.$centi_string"
     }
 
-    private fun playback_dialog() {
-        val viewInflated: View = LayoutInflater.from(this)
-            .inflate(
-                R.layout.playback_popup,
-                window.decorView.rootView as ViewGroup,
-                false
-            )
-        val opus_manager = this.get_opus_manager()
-        val working_beat = opus_manager.cursor.beat
-        val sbPlaybackPosition = viewInflated.findViewById<SeekBar>(R.id.sbPlaybackPosition)
-        sbPlaybackPosition.max = opus_manager.opus_beat_count - 1
-        sbPlaybackPosition.progress = working_beat
+    fun start_playback() {
+        if (this.playback_handle != null) {
+            this.stop_playback()
+        }
 
+        var blocker_view = this.findViewById<LinearLayout>(R.id.llClearOverlay)
+        blocker_view.visibility = View.VISIBLE
+        blocker_view.setOnClickListener {
+            this.stop_playback()
+        }
 
-        val ibPlayPause = viewInflated.findViewById<ImageView>(R.id.ibPlayPause)
-        val tvPlaybackTime = viewInflated.findViewById<TextView>(R.id.tvPlaybackTime)
-        tvPlaybackTime.text = this.get_timestring_at_beat(working_beat)
+        this.runOnUiThread {
+            val play_pause_button = this.optionsMenu!!.findItem(R.id.itmPlay)
+            if (play_pause_button != null) {
+                play_pause_button.icon =
+                    ContextCompat.getDrawable(this, R.drawable.ic_baseline_pause_24)
+            }
+        }
 
-        var playback_handle: SoundFontWavPlayer.PlaybackInterface? = null
+        val cursor = this.get_opus_manager().cursor
+        val x = when (cursor.mode) {
+            OpusManagerCursor.CursorMode.Single,
+            OpusManagerCursor.CursorMode.Column -> {
+                cursor.beat
+            }
+            OpusManagerCursor.CursorMode.Range -> {
+                cursor.range!!.first.beat
+            }
+            else -> {
+                0
+            }
+        }
 
-        fun start_playback(x: Int) {
-            this.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-            thread {
-                val size_a = x.toFloat() / opus_manager.opus_beat_count.toFloat()
-                ibPlayPause.setImageResource(R.drawable.ic_baseline_pause_24)
-                playback_handle = this.play_midi(opus_manager.get_midi(x)) {
-                    if (it == 1F) { // Song is over, return to start state
-                        ibPlayPause.setImageResource(R.drawable.ic_baseline_play_arrow_24)
-                        sbPlaybackPosition.progress = 0
-                    } else {
-                        val size_b = (1F - size_a) * it
-                        val progress = (sbPlaybackPosition.max * (size_a + size_b)).toInt()
-                        sbPlaybackPosition.progress = progress
+        var beat_count = this.get_opus_manager().opus_beat_count.toFloat()
+        this.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
+        thread {
+            this.playback_handle = this.play_midi(opus_manager.get_midi(x)) {
+                if (it == 1F) { // Song is over, return to start state
+                    this.runOnUiThread {
+                        this.get_opus_manager().cursor_select_column(0, true)
+                        this.stop_playback()
                     }
-                }
-            }
-        }
-
-        fun pause_playback() {
-            if (playback_handle != null && playback_handle!!.playing) {
-                playback_handle?.stop()
-                ibPlayPause.setImageResource(R.drawable.ic_baseline_play_arrow_24)
-            }
-            this.window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        }
-
-        if (this.configuration.soundfont == null) {
-            ibPlayPause.visibility = View.GONE
-        } else {
-            ibPlayPause.setOnClickListener {
-                if (playback_handle != null && playback_handle!!.playing) {
-                    pause_playback()
                 } else {
-                    start_playback(sbPlaybackPosition.progress)
+                    val position = ((beat_count - x) * it).toInt() + x
+                    if (this.get_opus_manager().cursor.beat != position) {
+                        this.runOnUiThread {
+                            this.get_opus_manager().cursor_select_column(position, true)
+                        }
+                    }
                 }
             }
         }
+    }
 
-        val that = this
-        sbPlaybackPosition.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener {
-            var was_playing = false
-            var is_stopping = false
-            override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
-                tvPlaybackTime.text = that.get_timestring_at_beat(p1)
-                that.get_opus_manager().cursor_select_column(p1, true)
+    fun stop_playback() {
+        this.runOnUiThread {
+            val play_pause_button = this.optionsMenu!!.findItem(R.id.itmPlay)
+            if (play_pause_button != null) {
+                play_pause_button.icon =
+                    ContextCompat.getDrawable(this, R.drawable.ic_baseline_play_arrow_24)
             }
+        }
+        this.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
-            override fun onStartTrackingTouch(p0: SeekBar?) {
-                // Ignore touches that occur while playback is stopping (shouldn't be humanly possible)
-                if (this.is_stopping) {
-                    return
-                }
-                this.was_playing = (playback_handle != null && playback_handle!!.playing)
-                this.is_stopping = true
-                pause_playback()
-                this.is_stopping = false
-            }
-            override fun onStopTrackingTouch(seekbar: SeekBar?) {
-                // Wait until playback has been paused
-                if (this.was_playing && seekbar != null) {
-                    while (this.is_stopping) {
-                        Thread.sleep(10)
-                    }
-                    start_playback(seekbar.progress)
-                }
-            }
-        })
+        if (this.playback_handle == null) {
+            return
+        }
 
+        this.playback_handle!!.stop()
+        this.playback_handle = null
 
-        AlertDialog.Builder(this, R.style.AlertDialog)
-            .setView(viewInflated)
-            .setOnCancelListener {
-                pause_playback()
-            }
-            .show()
+        var blocker_view = this.findViewById<LinearLayout>(R.id.llClearOverlay)
+        blocker_view.visibility = View.GONE
     }
 
     fun has_projects_saved(): Boolean {

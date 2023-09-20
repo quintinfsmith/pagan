@@ -2,7 +2,6 @@ package com.qfs.pagan
 
 import org.junit.Test
 import org.junit.Assert.*
-import com.qfs.pagan.MuseScore
 import org.simpleframework.xml.Root
 import org.simpleframework.xml.Attribute
 import org.simpleframework.xml.Serializer

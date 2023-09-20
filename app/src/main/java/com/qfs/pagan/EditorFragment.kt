@@ -1,11 +1,13 @@
 package com.qfs.pagan
 
+import android.app.AlertDialog
 import android.os.Bundle
 import android.util.Log
 import android.view.*
 import android.widget.*
 import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
+import com.android.car.ui.recyclerview.ScrollBar
 import com.qfs.apres.InvalidMIDIFile
 import com.qfs.pagan.databinding.FragmentMainBinding
 import com.qfs.pagan.opusmanager.*
@@ -907,4 +909,34 @@ class EditorFragment : PaganFragment() {
         }
     }
 
+    fun shortcut_dialog() {
+        val scroll_bar = SeekBar(this.activity)
+        val opus_manager = this.get_main().get_opus_manager()
+        scroll_bar.max = opus_manager.opus_beat_count - 1
+        val cursor = opus_manager.cursor
+        scroll_bar.progress = when (cursor.mode) {
+            OpusManagerCursor.CursorMode.Single,
+            OpusManagerCursor.CursorMode.Column -> {
+                cursor.beat
+            }
+            OpusManagerCursor.CursorMode.Range -> {
+                cursor.range!!.first.beat
+            }
+            else -> {
+                0
+            }
+        }
+        scroll_bar.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
+                opus_manager.cursor_select_column(p1, true)
+            }
+            override fun onStartTrackingTouch(p0: SeekBar?) { }
+            override fun onStopTrackingTouch(seekbar: SeekBar?) { }
+        })
+        AlertDialog.Builder(this.activity).apply {
+            setTitle("Jump to Beat")
+            setView(scroll_bar)
+            show()
+        }
+    }
 }

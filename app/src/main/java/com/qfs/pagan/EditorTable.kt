@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
+import android.widget.SeekBar
 import android.widget.TableLayout
 import android.widget.TableRow
 import androidx.appcompat.view.ContextThemeWrapper
@@ -38,9 +39,9 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
         this.spacer.setOnClickListener {
             val main = (this.context as MainActivity)
-            val opus_manager = main.get_opus_manager()
-            main.popup_number_dialog("Jump To Beat", 0, opus_manager.opus_beat_count - 1) { beat: Int ->
-                opus_manager.cursor_select_column(min(opus_manager.opus_beat_count - 1,beat))
+            val fragment = this.get_activity().getActiveFragment()
+            if (fragment is EditorFragment) {
+                fragment.shortcut_dialog()
             }
         }
 
@@ -504,5 +505,4 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
         this.fix_scroll_offset()
     }
-
 }

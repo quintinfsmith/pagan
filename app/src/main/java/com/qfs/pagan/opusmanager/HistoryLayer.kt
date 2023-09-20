@@ -8,7 +8,7 @@ import kotlin.math.min
 
 open class HistoryLayer : LinksLayer() {
     class HistoryCache {
-        val max_history_size = 100
+        private val max_history_size = 100
         class HistoryNode(var token: HistoryToken, var args: List<Any>) {
             var children: MutableList<HistoryNode> = mutableListOf()
             var parent: HistoryNode? = null

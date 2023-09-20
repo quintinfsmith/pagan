@@ -3,6 +3,7 @@ package com.qfs.pagan
 import android.content.Context
 import android.os.Parcelable
 import android.util.AttributeSet
+import android.util.Log
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
@@ -238,7 +239,11 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         if (opusManagerCursor != this.active_cursor) {
             this.update_cursor(this.active_cursor)
             this.active_cursor = opusManagerCursor.copy()
+            Log.d("AAA", "CURRENT")
+        } else {
+            Log.d("AAA", "NOTE PREV")
         }
+
 
         val opus_manager = this.get_opus_manager()
         val main_recycler_adapter = (this.main_recycler.adapter!! as ColumnRecyclerAdapter)

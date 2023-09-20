@@ -246,7 +246,12 @@ class LeafButton(
             return drawableState
         }
         val position = this.position
-        val tree = opus_manager.get_tree(beat_key, position)
+
+        val tree = try {
+            opus_manager.get_tree(beat_key, position)
+        } catch (e: OpusTree.InvalidGetCall) {
+            return drawableState
+        }
 
         if (tree.is_event()) {
             mergeDrawableStates(drawableState, STATE_ACTIVE)

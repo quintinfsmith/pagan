@@ -18,6 +18,5 @@ class CornerView(context: Context, attrs: AttributeSet? = null): LinearLayout(Co
         inner_inner_view.layoutParams.width = MATCH_PARENT
         inner_inner_view.layoutParams.height = MATCH_PARENT
         inner_inner_view.setImageResource(R.drawable.baseline_shortcut_24)
-        inner_inner_view.setPadding(16, 0,16,0)
     }
 }

@@ -215,6 +215,8 @@
     </style>
     <style name="corner_view_inner">
         <item name="android:background">?attr/main_bg</item>
+        <item name="android:colorControlHighlight">#88FFFFFF</item>
+        <item name="android:padding">4dp</item>
     </style>
 
     <style name="placeholder_outer">

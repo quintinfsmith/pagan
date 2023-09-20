@@ -909,7 +909,16 @@ class EditorFragment : PaganFragment() {
     }
 
     fun shortcut_dialog() {
-        val scroll_bar = SeekBar(this.activity)
+        val view = LayoutInflater.from(this.context)
+            .inflate(
+                R.layout.dialog_shortcut,
+                this.view as ViewGroup,
+                false
+            )
+
+        val scroll_bar = view.findViewById<SeekBar>(R.id.shortcut_scrollbar)!!
+        val title_text = view.findViewById<TextView>(R.id.shortcut_title)!!
+
         val opus_manager = this.get_main().get_opus_manager()
         scroll_bar.max = opus_manager.opus_beat_count - 1
         val cursor = opus_manager.cursor
@@ -925,17 +934,19 @@ class EditorFragment : PaganFragment() {
                 0
             }
         }
+
+        title_text.text = "Jump To Beat ${scroll_bar.progress}"
+        val dialog = AlertDialog.Builder(this.activity).apply {
+            setView(view)
+            show()
+        }
         scroll_bar.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
+                title_text.text = "Jump To Beat $p1"
                 opus_manager.cursor_select_column(p1, true)
             }
             override fun onStartTrackingTouch(p0: SeekBar?) { }
             override fun onStopTrackingTouch(seekbar: SeekBar?) { }
         })
-        AlertDialog.Builder(this.activity).apply {
-            setTitle("Jump to Beat")
-            setView(scroll_bar)
-            show()
-        }
     }
 }

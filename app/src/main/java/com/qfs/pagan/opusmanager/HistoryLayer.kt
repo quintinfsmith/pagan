@@ -8,6 +8,7 @@ import kotlin.math.min
 
 open class HistoryLayer : LinksLayer() {
     class HistoryCache {
+        val max_history_size = 100
         class HistoryNode(var token: HistoryToken, var args: List<Any>) {
             var children: MutableList<HistoryNode> = mutableListOf()
             var parent: HistoryNode? = null
@@ -37,6 +38,8 @@ open class HistoryLayer : LinksLayer() {
             } else {
                 this.history.add(new_node)
             }
+
+            this.check_size()
         }
 
         // Keep track of all history as one group
@@ -50,6 +53,7 @@ open class HistoryLayer : LinksLayer() {
                 this.cancel_multi()
                 throw e
             }
+            this.check_size()
         }
 
         // Run a callback with logging history
@@ -102,6 +106,12 @@ open class HistoryLayer : LinksLayer() {
                 this.history.removeLast()
             }
         }
+        fun check_size() {
+            while (this.history.size > this.max_history_size) {
+                this.history.removeFirst()
+            }
+        }
+
 
         fun clear() {
             this.history.clear()
@@ -141,7 +151,6 @@ open class HistoryLayer : LinksLayer() {
             throw ClassCastException()
         }
     }
-
 
     open fun push_to_history_stack(token: HistoryToken, args: List<Any>) {
         this.history_cache.append_undoer(token, args)

@@ -50,18 +50,33 @@ import com.qfs.apres.event.Legato
 import com.qfs.apres.event.LocalControl
 import com.qfs.apres.event.Lyric
 import com.qfs.apres.Midi
+import com.qfs.apres.event.BalanceMSB
+import com.qfs.apres.event.BankSelectMSB
+import com.qfs.apres.event.BreathControllerMSB
+import com.qfs.apres.event.DataEntryMSB
+import com.qfs.apres.event.EffectControl1MSB
+import com.qfs.apres.event.EffectControl2MSB
+import com.qfs.apres.event.ExpressionMSB
+import com.qfs.apres.event.FootPedalMSB
+import com.qfs.apres.event.GeneralPurpose1MSB
+import com.qfs.apres.event.GeneralPurpose2MSB
+import com.qfs.apres.event.GeneralPurpose3MSB
+import com.qfs.apres.event.GeneralPurpose4MSB
 import com.qfs.apres.event.Marker
 import com.qfs.apres.event.ModulationWheel
 import com.qfs.apres.event.ModulationWheelLSB
+import com.qfs.apres.event.ModulationWheelMSB
 import com.qfs.apres.event.MonophonicOperation
 import com.qfs.apres.event.NonRegisteredParameterNumber
 import com.qfs.apres.event.NonRegisteredParameterNumberLSB
+import com.qfs.apres.event.NonRegisteredParameterNumberMSB
 import com.qfs.apres.event.NoteOff
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event.OmniOff
 import com.qfs.apres.event.OmniOn
 import com.qfs.apres.event.Pan
 import com.qfs.apres.event.PanLSB
+import com.qfs.apres.event.PanMSB
 import com.qfs.apres.event.PhaserLevel
 import com.qfs.apres.event.PitchWheelChange
 import com.qfs.apres.event.PolyphonicKeyPressure
@@ -69,9 +84,11 @@ import com.qfs.apres.event.PolyphonicOperation
 import com.qfs.apres.event.Portamento
 import com.qfs.apres.event.PortamentoTime
 import com.qfs.apres.event.PortamentoTimeLSB
+import com.qfs.apres.event.PortamentoTimeMSB
 import com.qfs.apres.event.ProgramChange
 import com.qfs.apres.event.RegisteredParameterNumber
 import com.qfs.apres.event.RegisteredParameterNumberLSB
+import com.qfs.apres.event.RegisteredParameterNumberMSB
 import com.qfs.apres.event.SMPTEOffset
 import com.qfs.apres.event.SequenceNumber
 import com.qfs.apres.event.SetTempo
@@ -94,6 +111,7 @@ import com.qfs.apres.event.TrackName
 import com.qfs.apres.event.TremuloLevel
 import com.qfs.apres.event.Volume
 import com.qfs.apres.event.VolumeLSB
+import com.qfs.apres.event.VolumeMSB
 import com.qfs.apres.get_chord_name_from_mi_sf
 import com.qfs.apres.get_variable_length_number
 import com.qfs.apres.to_variable_length_bytes
@@ -474,37 +492,37 @@ class ApresUnitTest {
         var channel = 1
         var value = 25
         var compare_variable_controls = listOf(
-            Pair(BankSelect(channel, value), 0x00),
+            Pair(BankSelectMSB(channel, value), 0x00),
             Pair(BankSelectLSB(channel, value), 0x20),
-            Pair(ModulationWheel(channel, value), 0x01),
+            Pair(ModulationWheelMSB(channel, value), 0x01),
             Pair(ModulationWheelLSB(channel, value), 0x21),
-            Pair(BreathController(channel, value), 0x02),
+            Pair(BreathControllerMSB(channel, value), 0x02),
             Pair(BreathControllerLSB(channel, value), 0x22),
-            Pair(FootPedal(channel, value), 0x04),
+            Pair(FootPedalMSB(channel, value), 0x04),
             Pair(FootPedalLSB(channel, value), 0x24),
-            Pair(PortamentoTime(channel, value), 0x05),
+            Pair(PortamentoTimeMSB(channel, value), 0x05),
             Pair(PortamentoTimeLSB(channel, value), 0x25),
-            Pair(DataEntry(channel, value), 0x06),
+            Pair(DataEntryMSB(channel, value), 0x06),
             Pair(DataEntryLSB(channel, value), 0x26),
-            Pair(Volume(channel, value), 0x07),
+            Pair(VolumeMSB(channel, value), 0x07),
             Pair(VolumeLSB(channel, value), 0x27),
-            Pair(Balance(channel, value), 0x08),
+            Pair(BalanceMSB(channel, value), 0x08),
             Pair(BalanceLSB(channel, value), 0x28),
-            Pair(Pan(channel, value), 0x0A),
+            Pair(PanMSB(channel, value), 0x0A),
             Pair(PanLSB(channel, value), 0x2A),
-            Pair(Expression(channel, value), 0x0B),
+            Pair(ExpressionMSB(channel, value), 0x0B),
             Pair(ExpressionLSB(channel, value), 0x2B),
-            Pair(EffectControl1(channel, value), 0x0C),
+            Pair(EffectControl1MSB(channel, value), 0x0C),
             Pair(EffectControl1LSB(channel, value), 0x2C),
-            Pair(EffectControl2(channel, value), 0x0D),
+            Pair(EffectControl2MSB(channel, value), 0x0D),
             Pair(EffectControl2LSB(channel, value), 0x2D),
-            Pair(GeneralPurpose1(channel, value), 0x10),
+            Pair(GeneralPurpose1MSB(channel, value), 0x10),
             Pair(GeneralPurpose1LSB(channel, value), 0x30),
-            Pair(GeneralPurpose2(channel, value), 0x11),
+            Pair(GeneralPurpose2MSB(channel, value), 0x11),
             Pair(GeneralPurpose2LSB(channel, value), 0x31),
-            Pair(GeneralPurpose3(channel, value), 0x12),
+            Pair(GeneralPurpose3MSB(channel, value), 0x12),
             Pair(GeneralPurpose3LSB(channel, value), 0x32),
-            Pair(GeneralPurpose4(channel, value), 0x13),
+            Pair(GeneralPurpose4MSB(channel, value), 0x13),
             Pair(GeneralPurpose4LSB(channel, value), 0x33),
             Pair(HoldPedal(channel, value), 0x40),
             Pair(Portamento(channel, value), 0x41),
@@ -531,9 +549,9 @@ class ApresUnitTest {
             Pair(ChorusLevel(channel, value), 0x5D),
             Pair(CelesteLevel(channel, value), 0x5E),
             Pair(PhaserLevel(channel, value), 0x5F),
-            Pair(RegisteredParameterNumber(channel, value), 0x65),
+            Pair(RegisteredParameterNumberMSB(channel, value), 0x65),
             Pair(RegisteredParameterNumberLSB(channel, value), 0x64),
-            Pair(NonRegisteredParameterNumber(channel, value), 0x63),
+            Pair(NonRegisteredParameterNumberMSB(channel, value), 0x63),
             Pair(NonRegisteredParameterNumberLSB(channel, value), 0x62),
             Pair(LocalControl(channel, value), 0x7A),
             Pair(MonophonicOperation(channel, value), 0xFE)

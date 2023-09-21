@@ -61,7 +61,9 @@ class HistoryCacheUnitTest {
         var manager = OpusManager()
         manager.new()
 
-        try { manager.set_percussion_event(BeatKey(0,0,0), listOf()) } catch (e: Exception) {}
+        try {
+            manager.set_percussion_event(BeatKey(0,0,0), listOf())
+        } catch (e: Exception) {}
 
         assertEquals(
             "Appended to history stack on failure.",
@@ -69,8 +71,7 @@ class HistoryCacheUnitTest {
             manager.history_cache.isEmpty()
         )
 
-        manager.set_percussion_channel(0)
-        manager.set_percussion_event(BeatKey(0,0,0), listOf())
+        manager.set_percussion_event(BeatKey(1,0,0), listOf())
 
         manager.apply_undo()
 
@@ -132,16 +133,17 @@ class HistoryCacheUnitTest {
 
         manager.new_channel()
         manager.new_channel()
+
         manager.apply_undo()
         assertEquals(
             "Failed to undo new_channel",
-            2,
+            3,
             manager.channels.size
         )
         manager.apply_undo()
         assertEquals(
             "Failed to undo new_channel",
-            1,
+            2,
             manager.channels.size
         )
     }

@@ -1,5 +1,4 @@
 package com.qfs.apres.soundfontplayer
-import android.util.Log
 import com.qfs.apres.soundfont.InstrumentSample
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.soundfont.Preset
@@ -100,7 +99,6 @@ class SampleHandleGenerator {
             //    ?: sample.mod_lfo_volume
             //    ?: 0
             val level = .2
-            Log.d("AAA", "LFO VOL: $freq_mod_lfo. $level")
 
             val wave_length = AudioTrackHandle.sample_rate.toDouble() / freq_mod_lfo
             ShortArray(wave_length.toInt()) { i: Int ->

@@ -1,6 +1,5 @@
 package com.qfs.apres.soundfontplayer
 
-import android.util.Log
 import java.nio.DoubleBuffer
 import java.nio.ShortBuffer
 
@@ -18,11 +17,6 @@ class SampleHandle(
     var pitch_shift: Float = 1F,
     var lfo_data: ShortArray?
 ) {
-    init {
-        if (this.loop_points != null){
-        Log.d("AAA", "Loop Size: ${loop_points.second - loop_points.first}")
-        }
-    }
     companion object {
         val MAXIMUM_VOLUME = .8F
     }

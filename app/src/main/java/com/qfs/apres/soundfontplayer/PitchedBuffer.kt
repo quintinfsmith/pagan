@@ -3,6 +3,7 @@ package com.qfs.apres.soundfontplayer
 import android.util.Log
 import java.nio.BufferUnderflowException
 import java.nio.ShortBuffer
+import kotlin.math.min
 import kotlin.math.roundToInt
 
 class PitchedBuffer(data: ShortArray, val pitch: Float) {
@@ -19,14 +20,14 @@ class PitchedBuffer(data: ShortArray, val pitch: Float) {
 
     fun position(): Int {
         return if (this.pitch >= 1F) {
-            (this.buffer.position() / this.pitch).toInt()
+            min((this.buffer.position() / this.pitch).roundToInt(), this.size - 1)
         } else {
             this.virtual_position!!
         }
     }
 
     fun position(index: Int) {
-        var pos = (index.toFloat() * this.pitch).toInt()
+        val pos = min((index.toFloat() * this.pitch).roundToInt(), this.size - 1)
         if (this.pitch < 1F) {
             this.buffer.position(pos)
             this.cached_value = this.buffer.get()
@@ -38,11 +39,13 @@ class PitchedBuffer(data: ShortArray, val pitch: Float) {
     fun get(): Short {
         return if (this.pitch >= 1F) {
             val next_position = this.position() + 1
-            var value = this.buffer.get()
+            var value = this.buffer.get().toInt()
+            var count = 1
             while (next_position > this.position()) {
-                value = this.buffer.get()
+                count += 1
+                value += this.buffer.get()
             }
-            value
+            (value / count).toShort()
         } else {
             val output = this.cached_value!!
             if (this.virtual_position + 1 < this.size && ((this.virtual_position + 1) * this.pitch).roundToInt() != (this.virtual_position * this.pitch).roundToInt()) {
@@ -50,7 +53,6 @@ class PitchedBuffer(data: ShortArray, val pitch: Float) {
             }
 
             this.virtual_position += 1
-
             output
         }
     }

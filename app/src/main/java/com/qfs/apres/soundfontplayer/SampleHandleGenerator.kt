@@ -39,13 +39,11 @@ class SampleHandleGenerator {
         var pitch_shift = 1F
         val original_note = sample.root_key ?: sample.sample!!.originalPitch
         if (original_note != 255) {
-            val original_pitch = 2F.pow(original_note.toFloat() / 12F)
-            var tuning_cent = (sample.tuning_cent ?: instrument.tuning_cent ?: preset.global_zone?.tuning_cent ?: 0).toFloat()
-            Log.d("AAA", "tuning_cent :: $tuning_cent")
-
+            val tuning_cent = (sample.tuning_cent ?: instrument.tuning_cent ?: preset.global_zone?.tuning_cent ?: 0).toFloat()
             val tuning_semi = (sample.tuning_semi ?: instrument.tuning_semi ?: preset.global_zone?.tuning_semi ?: 0).toFloat()
-            val requiredPitch = 2F.pow((event.note.toFloat() + (tuning_semi + (tuning_cent / 1200))) / 12F)
-            pitch_shift = requiredPitch / original_pitch
+            val original_pitch = 2F.pow(original_note.toFloat() / 12F)
+            val required_pitch = 2F.pow((event.note.toFloat() + (tuning_semi + (tuning_cent / 1200F))) / 12F)
+            pitch_shift = required_pitch / original_pitch
         }
 
         if (sample.sample!!.sampleRate != AudioTrackHandle.sample_rate) {

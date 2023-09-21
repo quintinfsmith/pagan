@@ -239,9 +239,6 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         if (opusManagerCursor != this.active_cursor) {
             this.update_cursor(this.active_cursor)
             this.active_cursor = opusManagerCursor.copy()
-            Log.d("AAA", "CURRENT")
-        } else {
-            Log.d("AAA", "NOTE PREV")
         }
 
 

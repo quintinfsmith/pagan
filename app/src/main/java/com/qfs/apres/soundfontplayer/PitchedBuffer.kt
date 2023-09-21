@@ -20,7 +20,7 @@ class PitchedBuffer(data: ShortArray, val pitch: Float) {
 
     fun position(): Int {
         return if (this.pitch >= 1F) {
-            min((this.buffer.position() / this.pitch).roundToInt(), this.size - 1)
+            min((this.buffer.position() / this.pitch).roundToInt(), this.size)
         } else {
             this.virtual_position!!
         }

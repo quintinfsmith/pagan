@@ -1,10 +1,13 @@
 package com.qfs.apres.soundfontplayer
+import android.util.Log
 import com.qfs.apres.soundfont.InstrumentSample
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.soundfont.Preset
 import com.qfs.apres.soundfont.PresetInstrument
+import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.pow
+import kotlin.math.sin
 
 class SampleHandleGenerator {
     // Hash ignores velocity since velocity isn't baked into sample data
@@ -37,7 +40,9 @@ class SampleHandleGenerator {
         val original_note = sample.root_key ?: sample.sample!!.originalPitch
         if (original_note != 255) {
             val original_pitch = 2F.pow(original_note.toFloat() / 12F)
-            val tuning_cent = (sample.tuning_cent ?: instrument.tuning_cent ?: preset.global_zone?.tuning_cent ?: 0).toFloat()
+            var tuning_cent = (sample.tuning_cent ?: instrument.tuning_cent ?: preset.global_zone?.tuning_cent ?: 0).toFloat()
+            Log.d("AAA", "tuning_cent :: $tuning_cent")
+
             val tuning_semi = (sample.tuning_semi ?: instrument.tuning_semi ?: preset.global_zone?.tuning_semi ?: 0).toFloat()
             val requiredPitch = 2F.pow((event.note.toFloat() + (tuning_semi + (tuning_cent / 1200))) / 12F)
             pitch_shift = requiredPitch / original_pitch
@@ -85,6 +90,29 @@ class SampleHandleGenerator {
             ?: sample.vol_env_release
             ?: 0.0
 
+        val freq_mod_lfo: Double? = preset.global_zone?.mod_lfo_freq
+            ?: instrument.instrument?.global_sample?.mod_lfo_freq
+            ?: instrument.mod_lfo_freq
+            ?: sample.mod_lfo_freq
+
+        val lfo_data: ShortArray? = if (freq_mod_lfo is Double) {
+            //val lfo_vol: Int = preset.global_zone?.mod_lfo_volume
+            //    ?: instrument.instrument?.global_sample?.mod_lfo_volume
+            //    ?: instrument.mod_lfo_volume
+            //    ?: sample.mod_lfo_volume
+            //    ?: 0
+            val level = .2
+            Log.d("AAA", "LFO VOL: $freq_mod_lfo. $level")
+
+            val wave_length = AudioTrackHandle.sample_rate.toDouble() / freq_mod_lfo
+            ShortArray(wave_length.toInt()) { i: Int ->
+                val p = (i.toDouble() / wave_length)
+                (sin(p * PI) * level * 0x7FFF.toDouble()).toInt().toShort()
+            }
+        } else {
+            null
+        }
+
         val release_mask_size = ((AudioTrackHandle.sample_rate.toDouble() * vol_env_release)).toInt()
 
         val max_values = mutableListOf<Short>()
@@ -105,6 +133,7 @@ class SampleHandleGenerator {
 
         return SampleHandle(
             data = data,
+            lfo_data = lfo_data,
             pitch_shift = pitch_shift,
             attenuation = (10.0).pow(attenuation / -20.0).toFloat(),
             stereo_mode = sample.sample!!.sampleType,

@@ -1,5 +1,6 @@
 package com.qfs.apres.soundfontplayer
 
+import java.nio.DoubleBuffer
 import java.nio.ShortBuffer
 
 class SampleHandle(
@@ -13,7 +14,8 @@ class SampleHandle(
     var decay_frame_count: Int = 0,
     var release_mask: Array<Double>,
     var max_values: Array<Float> = Array<Float>(0) { 0F },
-    var pitch_shift: Float = 1F
+    var pitch_shift: Float = 1F,
+    var lfo_data: ShortArray?
 ) {
     companion object {
         val MAXIMUM_VOLUME = .8F
@@ -30,7 +32,8 @@ class SampleHandle(
         original.decay_frame_count,
         original.release_mask,
         original.max_values,
-        original.pitch_shift
+        original.pitch_shift,
+        original.lfo_data
     )
 
     var is_pressed = true
@@ -48,6 +51,7 @@ class SampleHandle(
     var release_delay: Int? = null
     var remove_delay: Int? = null
     var data_buffer = PitchedBuffer(this.data, this.pitch_shift)
+    var lfo_buffer: ShortBuffer? = if (this.lfo_data == null) { null } else { ShortBuffer.wrap(this.lfo_data) }
 
     fun get_max_value(): Float {
         var i = this.data_buffer.position() * this.max_values.size / this.data_buffer.size
@@ -69,8 +73,12 @@ class SampleHandle(
             this.is_dead = true
             return null
         }
-
         var frame = (this.data_buffer.get().toDouble() * this.attenuation * this.current_volume).toInt().toShort()
+        var lfo_frame = this.lfo_buffer?.get() ?: 0.toShort()
+        if (this.lfo_buffer != null && this.lfo_buffer!!.position() >= this.lfo_data!!.size) {
+            this.lfo_buffer!!.position(0)
+        }
+        frame = (frame + lfo_frame).toShort()
 
         this.shorts_called += 1
         if (this.current_attack_position < this.attack_frame_count) {

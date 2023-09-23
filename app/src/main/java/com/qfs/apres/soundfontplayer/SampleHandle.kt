@@ -1,5 +1,7 @@
 package com.qfs.apres.soundfontplayer
 
+import java.lang.Math.PI
+import java.lang.Math.tan
 import java.nio.DoubleBuffer
 import java.nio.ShortBuffer
 
@@ -15,7 +17,8 @@ class SampleHandle(
     var release_mask: Array<Double>,
     var max_values: Array<Float> = Array<Float>(0) { 0F },
     var pitch_shift: Float = 1F,
-    var lfo_data: ShortArray?
+    var lfo_data: ShortArray?,
+    var filter_cutoff: Int? = null
 ) {
     companion object {
         val MAXIMUM_VOLUME = .8F
@@ -34,6 +37,7 @@ class SampleHandle(
         original.max_values,
         original.pitch_shift,
         original.lfo_data,
+
     )
 
     var is_pressed = true
@@ -52,6 +56,7 @@ class SampleHandle(
     var remove_delay: Int? = null
     var data_buffer = PitchedBuffer(this.data, this.pitch_shift)
     var lfo_buffer: ShortBuffer? = if (this.lfo_data == null) { null } else { ShortBuffer.wrap(this.lfo_data) }
+    var lpf_previous: Double = 0.0
 
     fun get_max_value(): Float {
         var i = this.data_buffer.position() * this.max_values.size / this.data_buffer.size
@@ -102,6 +107,15 @@ class SampleHandle(
             if (offset >= 0) {
                 this.data_buffer.position(this.loop_points.first + offset)
             }
+        }
+
+        // low pass filter
+        if (this.filter_cutoff != null) {
+            val tan_val = tan(PI * this.filter_cutoff!!.toFloat() / AudioTrackHandle.sample_rate.toFloat())
+            var lpf_tmp = frame.toDouble()
+            val a = ((tan_val - 1) / (tan_val + 1))
+            frame = (a * frame.toDouble() + this.lpf_previous).toInt().toShort()
+            this.lpf_previous = lpf_tmp - (a * frame.toDouble())
         }
 
         return frame

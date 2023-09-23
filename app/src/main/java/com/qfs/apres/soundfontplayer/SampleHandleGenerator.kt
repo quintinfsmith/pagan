@@ -6,6 +6,7 @@ import com.qfs.apres.soundfont.PresetInstrument
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.pow
+import kotlin.math.roundToInt
 import kotlin.math.sin
 
 class SampleHandleGenerator {
@@ -129,14 +130,17 @@ class SampleHandleGenerator {
 
         return SampleHandle(
             data = data,
-            lfo_data = lfo_data,
+            //lfo_data = lfo_data,
+            lfo_data = null,
             pitch_shift = pitch_shift,
             attenuation = (10.0).pow(attenuation / -20.0).toFloat(),
             stereo_mode = sample.sample!!.sampleType,
             loop_points = if (sample.sampleMode != null && sample.sampleMode!! and 1 == 1) {
+                val start = (sample.sample!!.loopStart.toFloat() / pitch_shift)
+                val size = (sample.sample!!.loopEnd - sample.sample!!.loopStart).toFloat() / pitch_shift
                 Pair(
-                    (sample.sample!!.loopStart.toFloat() / pitch_shift).toInt(),
-                    (sample.sample!!.loopEnd.toFloat() / pitch_shift).toInt()
+                    start.roundToInt(),
+                    (start + size).roundToInt()
                 )
             } else {
                 null
@@ -148,7 +152,9 @@ class SampleHandleGenerator {
             release_mask = Array(release_mask_size) { i ->
                 (release_mask_size - i - 1).toDouble() / release_mask_size.toDouble()
             },
-            max_values = max_values_floats
+            max_values = max_values_floats,
+            //filter_cutoff = sample.filter_cutoff ?: instrument.filter_cutoff
+            filter_cutoff = null
         )
     }
 

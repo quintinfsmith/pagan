@@ -1,4 +1,5 @@
 package com.qfs.apres.soundfontplayer
+import android.util.Log
 import com.qfs.apres.soundfont.InstrumentSample
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.soundfont.Preset
@@ -39,10 +40,17 @@ class SampleHandleGenerator {
         var pitch_shift = 1F
         val original_note = sample.root_key ?: sample.sample!!.originalPitch
         if (original_note != 255) {
-            val tuning_cent = (sample.tuning_cent ?: instrument.tuning_cent ?: preset.global_zone?.tuning_cent ?: 0).toFloat()
-            val tuning_semi = (sample.tuning_semi ?: instrument.tuning_semi ?: preset.global_zone?.tuning_semi ?: 0).toFloat()
+            var tuning_cent = (sample.tuning_cent ?: instrument.tuning_cent ?: preset.global_zone?.tuning_cent ?: 0).toFloat()
+            // Kludge: modulators arent implemendted yet, so this is still needed for tuning
+            var mod_env_pitch = (sample.mod_env_pitch ?: instrument.mod_env_pitch ?: preset.global_zone?.mod_env_pitch ?: 0).toFloat()
+            Log.d("AAA", "MODENVPITCH: $mod_env_pitch")
+            tuning_cent += (sample.mod_env_pitch ?: instrument.mod_env_pitch ?: preset.global_zone?.mod_env_pitch ?: 0).toFloat()
+
+            var tuning_semi = (sample.tuning_semi ?: instrument.tuning_semi ?: preset.global_zone?.tuning_semi ?: 0).toFloat()
+            tuning_semi += (tuning_cent / 100F)
+            Log.d("AAA", "SEMI TONES: $tuning_semi")
             val original_pitch = 2F.pow(original_note.toFloat() / 12F)
-            val required_pitch = 2F.pow((event.note.toFloat() + (tuning_semi + (tuning_cent / 1200F))) / 12F)
+            val required_pitch = 2F.pow((event.note.toFloat() + tuning_semi) / 12F)
             pitch_shift = required_pitch / original_pitch
         }
 
@@ -138,10 +146,8 @@ class SampleHandleGenerator {
             loop_points = if (sample.sampleMode != null && sample.sampleMode!! and 1 == 1) {
                 val start = (sample.sample!!.loopStart.toFloat() / pitch_shift)
                 val size = (sample.sample!!.loopEnd - sample.sample!!.loopStart).toFloat() / pitch_shift
-                Pair(
-                    start.roundToInt(),
-                    (start + size).roundToInt()
-                )
+
+                Pair( start.roundToInt(), (start + size).roundToInt() )
             } else {
                 null
             },
@@ -154,7 +160,7 @@ class SampleHandleGenerator {
             },
             max_values = max_values_floats,
             //filter_cutoff = sample.filter_cutoff ?: instrument.filter_cutoff
-            filter_cutoff = null
+            //filter_cutoff = (20 .. 20000).random()
         )
     }
 

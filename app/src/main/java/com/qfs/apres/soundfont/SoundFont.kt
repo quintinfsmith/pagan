@@ -431,7 +431,7 @@ class SoundFont(file_path: String) {
                 working_generated.vib_lfo_pitch = generator.asInt()
             }
             0x07 -> {
-                working_generated.mod_env_pitch = generator.asInt()
+                working_generated.mod_env_pitch = generator.asIntSigned()
             }
             0x08 -> {
                 working_generated.filter_cutoff = generator.asInt()

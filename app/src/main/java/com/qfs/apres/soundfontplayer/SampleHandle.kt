@@ -1,9 +1,11 @@
 package com.qfs.apres.soundfontplayer
 
+import android.util.Log
 import java.lang.Math.PI
 import java.lang.Math.tan
 import java.nio.DoubleBuffer
 import java.nio.ShortBuffer
+import kotlin.math.roundToInt
 
 class SampleHandle(
     var data: ShortArray,
@@ -37,7 +39,7 @@ class SampleHandle(
         original.max_values,
         original.pitch_shift,
         original.lfo_data,
-
+        original.filter_cutoff
     )
 
     var is_pressed = true
@@ -112,9 +114,9 @@ class SampleHandle(
         // low pass filter
         if (this.filter_cutoff != null) {
             val tan_val = tan(PI * this.filter_cutoff!!.toFloat() / AudioTrackHandle.sample_rate.toFloat())
-            var lpf_tmp = frame.toDouble()
+            val lpf_tmp = frame.toDouble()
             val a = ((tan_val - 1) / (tan_val + 1))
-            frame = (a * frame.toDouble() + this.lpf_previous).toInt().toShort()
+            frame = (a * frame.toDouble() + this.lpf_previous).roundToInt().toShort()
             this.lpf_previous = lpf_tmp - (a * frame.toDouble())
         }
 

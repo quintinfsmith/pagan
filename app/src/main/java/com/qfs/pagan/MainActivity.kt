@@ -23,6 +23,7 @@ import android.widget.RelativeLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
@@ -114,6 +115,12 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onPause() {
+        this.stop_playback()
+        super.onPause()
+
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         // Kludge: This was causing the app the freeze when relaunching a stale session, null seems to have
         // no side effects (at the moment) and
@@ -169,6 +176,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         ///////////////////////////////////////////
+
     }
 
     override fun onSupportNavigateUp(): Boolean {
@@ -186,6 +194,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (item.itemId != R.id.itmPlay) {
+            this.stop_playback()
+        }
+
         when (item.itemId) {
             R.id.itmNewProject -> {
                 // TODO: Save or discard popup dialog
@@ -327,6 +339,18 @@ class MainActivity : AppCompatActivity() {
             this.copy_project()
             this.closeDrawer()
         }
+
+        val drawer_layout = this.findViewById<DrawerLayout>(R.id.drawer_layout) ?: return
+        drawer_layout.addDrawerListener(object : ActionBarDrawerToggle(this, drawer_layout, R.string.drawer_open, R.string.drawer_close) {
+            override fun onDrawerClosed(view: View) {
+                super.onDrawerClosed(view)
+            }
+
+            override fun onDrawerOpened(drawerView: View) {
+                super.onDrawerOpened(drawerView)
+                this@MainActivity.stop_playback()
+            }
+        })
     }
 
     private fun change_name_dialog() {
@@ -524,7 +548,6 @@ class MainActivity : AppCompatActivity() {
 
             }
             is EditorFragment -> {
-                this.stop_playback()
                 when (fragmentName) {
                     "load" -> {
                         navController.navigate(R.id.action_EditorFragment_to_LoadFragment)

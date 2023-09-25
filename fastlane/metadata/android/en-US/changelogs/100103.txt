@@ -1,0 +1,10 @@
+Bugfixes:
+    - Improved tuning on many simpler samples
+    - crashing when undoing a split
+    - Undoing a linked row could potentially crash
+UI:
+    - Overhauled playback
+    - Created 'jump to beat' control
+    - added maximum stack size to history
+    - Can toggle relative mode in settings
+

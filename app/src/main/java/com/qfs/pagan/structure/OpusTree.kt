@@ -201,7 +201,7 @@ class OpusTree<T> {
         }
 
         if (index >= this.size) {
-            throw IndexOutOfBoundsException()
+            throw InvalidGetCall()
         }
 
         val output: OpusTree<T>

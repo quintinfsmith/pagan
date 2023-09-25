@@ -16,6 +16,7 @@ import androidx.core.view.children
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.OpusChannel
+import com.qfs.pagan.structure.OpusTree
 import kotlin.math.max
 import kotlin.math.min
 import com.qfs.pagan.InterfaceLayer as OpusManager
@@ -237,7 +238,11 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
     fun update_cursor(opusManagerCursor: OpusManagerCursor) {
         if (opusManagerCursor != this.active_cursor) {
-            this.update_cursor(this.active_cursor)
+            try {
+                this.update_cursor(this.active_cursor)
+            } catch (e: OpusTree.InvalidGetCall) {
+                // Pass
+            }
             this.active_cursor = opusManagerCursor.copy()
         }
 
@@ -271,6 +276,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                     } catch (e: IndexOutOfBoundsException) {
                         continue
                     }
+
 
                     line_label_adapter.notifyItemChanged(y)
                     column_label_adapter.notifyItemChanged(beat_key.beat)

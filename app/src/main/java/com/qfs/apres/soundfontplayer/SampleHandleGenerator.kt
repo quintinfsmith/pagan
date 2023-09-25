@@ -40,7 +40,7 @@ class SampleHandleGenerator {
         val original_note = sample.root_key ?: sample.sample!!.originalPitch
         if (original_note != 255) {
             val tuning_cent = (sample.tuning_cent ?: instrument.tuning_cent ?: preset.global_zone?.tuning_cent ?: 0).toFloat()
-            // Kludge: modulators arent implemendted yet, so this is still needed for tuning
+            // Kludge: modulators arent implemented yet, so this is still needed for tuning
             val mod_env_pitch = (sample.mod_env_pitch ?: instrument.mod_env_pitch ?: preset.global_zone?.mod_env_pitch ?: 0).toFloat()
             var tuning_semi = (sample.tuning_semi ?: instrument.tuning_semi ?: preset.global_zone?.tuning_semi ?: 0).toFloat()
             tuning_semi += (tuning_cent + mod_env_pitch) / 100F
@@ -143,7 +143,7 @@ class SampleHandleGenerator {
                 val start = (sample.sample!!.loopStart.toFloat() / pitch_shift)
                 val size = (sample.sample!!.loopEnd - sample.sample!!.loopStart).toFloat() / pitch_shift
 
-                Pair( start.roundToInt(), (start + size).roundToInt() )
+                Pair( start.toInt(), (start + size).toInt() )
             } else {
                 null
             },

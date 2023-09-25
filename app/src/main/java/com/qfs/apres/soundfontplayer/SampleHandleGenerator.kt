@@ -39,13 +39,11 @@ class SampleHandleGenerator {
         var pitch_shift = 1F
         val original_note = sample.root_key ?: sample.sample!!.originalPitch
         if (original_note != 255) {
-            var tuning_cent = (sample.tuning_cent ?: instrument.tuning_cent ?: preset.global_zone?.tuning_cent ?: 0).toFloat()
-
+            val tuning_cent = (sample.tuning_cent ?: instrument.tuning_cent ?: preset.global_zone?.tuning_cent ?: 0).toFloat()
             // Kludge: modulators arent implemendted yet, so this is still needed for tuning
-            tuning_cent += (sample.mod_env_pitch ?: instrument.mod_env_pitch ?: preset.global_zone?.mod_env_pitch ?: 0).toFloat()
-
+            val mod_env_pitch = (sample.mod_env_pitch ?: instrument.mod_env_pitch ?: preset.global_zone?.mod_env_pitch ?: 0).toFloat()
             var tuning_semi = (sample.tuning_semi ?: instrument.tuning_semi ?: preset.global_zone?.tuning_semi ?: 0).toFloat()
-            tuning_semi += (tuning_cent / 100F)
+            tuning_semi += (tuning_cent + mod_env_pitch) / 100F
             val original_pitch = 2F.pow(original_note.toFloat() / 12F)
             val required_pitch = 2F.pow((event.note.toFloat() + tuning_semi) / 12F)
             pitch_shift = required_pitch / original_pitch
@@ -137,6 +135,7 @@ class SampleHandleGenerator {
             data = data,
             //lfo_data = lfo_data,
             lfo_data = null,
+            pan = (sample.pan ?: instrument.pan ?: preset.global_zone?.pan ?: 0.0) * 100.0/ 500.0,
             pitch_shift = pitch_shift,
             attenuation = (10.0).pow(attenuation / -20.0).toFloat(),
             stereo_mode = sample.sample!!.sampleType,

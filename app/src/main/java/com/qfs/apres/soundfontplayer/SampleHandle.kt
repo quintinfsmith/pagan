@@ -1,9 +1,7 @@
 package com.qfs.apres.soundfontplayer
 
-import android.util.Log
 import java.lang.Math.PI
 import java.lang.Math.tan
-import java.nio.DoubleBuffer
 import java.nio.ShortBuffer
 import kotlin.math.roundToInt
 
@@ -20,7 +18,8 @@ class SampleHandle(
     var max_values: Array<Float> = Array<Float>(0) { 0F },
     var pitch_shift: Float = 1F,
     var lfo_data: ShortArray?,
-    var filter_cutoff: Int? = null
+    var filter_cutoff: Int? = null,
+    var pan: Double = 0.0
 ) {
     companion object {
         val MAXIMUM_VOLUME = .8F
@@ -39,7 +38,8 @@ class SampleHandle(
         original.max_values,
         original.pitch_shift,
         original.lfo_data,
-        original.filter_cutoff
+        original.filter_cutoff,
+        original.pan
     )
 
     var is_pressed = true
@@ -59,6 +59,7 @@ class SampleHandle(
     var data_buffer = PitchedBuffer(this.data, this.pitch_shift)
     var lfo_buffer: ShortBuffer? = if (this.lfo_data == null) { null } else { ShortBuffer.wrap(this.lfo_data) }
     var lpf_previous: Double = 0.0
+
 
     fun get_max_value(): Float {
         var i = this.data_buffer.position() * this.max_values.size / this.data_buffer.size

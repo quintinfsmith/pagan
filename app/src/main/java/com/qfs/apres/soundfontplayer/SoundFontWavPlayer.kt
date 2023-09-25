@@ -112,18 +112,35 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
                         }
 
                         // TODO: Implement ROM stereo modes
+                        var pan = sample_handle.pan
                         when (sample_handle.stereo_mode and 7) {
                             1 -> { // mono
-                                left_frame += frame_value
-                                right_frame += frame_value
+                                if (pan > 0) {
+                                    left_frame += frame_value
+                                    right_frame += (frame_value.toDouble() * (100 - pan) / 100.0).toInt().toShort()
+                                } else if (pan < 0) {
+                                    left_frame += (frame_value.toDouble() * (100 + pan) / 100.0).toInt().toShort()
+                                    right_frame += frame_value
+                                } else {
+                                    left_frame += frame_value
+                                    right_frame += frame_value
+                                }
                             }
 
                             2 -> { // right
-                                right_frame += frame_value
+                                if (pan > 0) {
+                                    right_frame += (frame_value.toDouble() * (100 - pan) / 100.0).toInt().toShort()
+                                } else {
+                                    right_frame += frame_value
+                                }
                             }
 
                             4 -> { // left
-                                left_frame += frame_value
+                                if (pan < 0) {
+                                    left_frame += (frame_value.toDouble() * (100 + pan) / 100.0).toInt().toShort()
+                                } else {
+                                    left_frame += frame_value
+                                }
                             }
 
                             else -> {}

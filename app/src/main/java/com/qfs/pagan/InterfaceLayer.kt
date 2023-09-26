@@ -56,14 +56,14 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     override fun unset(beat_key: BeatKey, position: List<Int>) {
         super.unset(beat_key, position)
         if (!this.simple_ui_locked()) {
-            this.get_editor_table().notify_cell_change(beat_key)
+            this.get_editor_table()?.notify_cell_change(beat_key)
         }
     }
 
     override fun replace_tree(beat_key: BeatKey, position: List<Int>, tree: OpusTree<OpusEvent>) {
         super.replace_tree(beat_key, position, tree)
         if (!this.simple_ui_locked()) {
-            this.get_editor_table().notify_cell_change(beat_key)
+            this.get_editor_table()?.notify_cell_change(beat_key)
         }
     }
 
@@ -75,14 +75,14 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             this.set_relative_mode(event)
         }
         if (!this.simple_ui_locked()) {
-            this.get_editor_table().notify_cell_change(beat_key)
+            this.get_editor_table()?.notify_cell_change(beat_key)
         }
     }
 
     override fun set_percussion_event(beat_key: BeatKey, position: List<Int>) {
         super.set_percussion_event(beat_key, position)
         if (!this.simple_ui_locked()) {
-            this.get_editor_table().notify_cell_change(beat_key)
+            this.get_editor_table()?.notify_cell_change(beat_key)
         }
     }
 
@@ -114,34 +114,34 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                 instrument,
                 this.activity.get_drum_name(instrument)
             )
-            this.get_editor_table().update_line_label(this.channels.size - 1, line_offset)
+            this.get_editor_table()?.update_line_label(this.channels.size - 1, line_offset)
         }
     }
 
     override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
         super.split_tree(beat_key, position, splits)
         if (!this.simple_ui_locked()) {
-            this.get_editor_table().notify_cell_change(beat_key)
+            this.get_editor_table()?.notify_cell_change(beat_key)
         }
     }
 
     override fun insert_after(beat_key: BeatKey, position: List<Int>) {
         super.insert_after(beat_key, position)
         if (!this.simple_ui_locked()) {
-            this.get_editor_table().notify_cell_change(beat_key)
+            this.get_editor_table()?.notify_cell_change(beat_key)
         }
     }
     override fun insert(beat_key: BeatKey, position: List<Int>) {
         super.insert(beat_key, position)
         if (!this.simple_ui_locked()) {
-            this.get_editor_table().notify_cell_change(beat_key)
+            this.get_editor_table()?.notify_cell_change(beat_key)
         }
     }
 
     override fun remove(beat_key: BeatKey, position: List<Int>) {
         super.remove(beat_key, position)
         if (!this.simple_ui_locked()) {
-            this.get_editor_table().notify_cell_change(beat_key)
+            this.get_editor_table()?.notify_cell_change(beat_key)
         }
     }
 
@@ -155,7 +155,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         //this.cursor_select_row(channel, line_offset ?: this.channels[channel].lines.size - 1)
 
         if (!this.simple_ui_locked()) {
-            this.get_editor_table().new_row(abs_offset, output)
+            this.get_editor_table()?.new_row(abs_offset, output)
         }
         return output
     }
@@ -168,7 +168,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         super.insert_line(channel, line_offset, line)
         val abs_offset = this.get_abs_offset( channel, line_offset )
         if (!this.simple_ui_locked()) {
-            this.get_editor_table().new_row(abs_offset, line)
+            this.get_editor_table()?.new_row(abs_offset, line)
         }
 
     }
@@ -216,7 +216,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         }
 
         if (!this.simple_ui_locked()) {
-            this.get_editor_table().remove_row(abs_line)
+            this.get_editor_table()?.remove_row(abs_line)
         }
 
         val cursor = this.cursor
@@ -271,7 +271,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             val y = this.get_abs_offset(notify_index, 0)
 
             for (i in 0 until lines) {
-                editor_table.new_row(y + i, this.channels[notify_index].lines[i])
+                editor_table?.new_row(y + i, this.channels[notify_index].lines[i])
             }
         }
     }
@@ -285,8 +285,8 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
         if (!this.simple_ui_locked()) {
             val editor_table = this.get_editor_table()
-            editor_table.remove_column(beat_index)
-            editor_table.update_cursor(this.cursor)
+            editor_table?.remove_column(beat_index)
+            editor_table?.update_cursor(this.cursor)
         }
 
         this.cursor_select_column(beat_index)
@@ -301,8 +301,8 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
         if (!this.simple_ui_locked()) {
             val editor_table = this.get_editor_table()
-            editor_table.new_column(beat_index)
-            editor_table.update_cursor(this.cursor)
+            editor_table?.new_column(beat_index)
+            editor_table?.update_cursor(this.cursor)
         }
     }
 
@@ -325,7 +325,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         this.activity.cancel_reticle()
 
         val editor_table = this.get_editor_table()
-        editor_table.setup()
+        editor_table?.setup()
 
         this.activity.update_channel_instruments()
         this.withFragment {
@@ -351,7 +351,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
         this.activity.cancel_reticle()
 
-        editor_table.setup()
+        editor_table?.setup()
 
         this.activity.update_channel_instruments()
         this.withFragment {
@@ -375,7 +375,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         this.activity.cancel_reticle()
 
         val editor_table = this.get_editor_table()
-        editor_table.setup()
+        editor_table?.setup()
 
         this.activity.update_channel_instruments()
 
@@ -400,7 +400,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         this.activity.cancel_reticle()
 
         val editor_table = this.get_editor_table()
-        editor_table.setup()
+        editor_table?.setup()
 
         this.activity.update_channel_instruments()
         this.withFragment {
@@ -429,7 +429,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             val editor_table = this.get_editor_table()
 
             for (i in lines - 1 downTo 0) {
-                editor_table.remove_row(y + i)
+                editor_table?.remove_row(y + i)
             }
         }
     }
@@ -437,7 +437,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     override fun clear() {
         super.clear()
         this.cursor.clear()
-        this.get_editor_table().clear()
+        this.get_editor_table()?.clear()
     }
 
     override fun unlink_beat(beat_key: BeatKey) {
@@ -447,9 +447,9 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
         // Need to run update on both the beat_key and *any* of its former link pool
         val editor_table = this.get_editor_table()
-        editor_table.notify_cell_change(beat_key)
+        editor_table?.notify_cell_change(beat_key)
         if (update_keys.isNotEmpty()) {
-            editor_table.notify_cell_change(update_keys.first())
+            editor_table?.notify_cell_change(update_keys.first())
         }
     }
 
@@ -724,7 +724,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     fun cursor_clear() {
         this.cursor.clear()
         val editor_table = this.get_editor_table()
-        editor_table.update_cursor(this.cursor)
+        editor_table?.update_cursor(this.cursor)
 
         this.withFragment {
             it.clearContextMenu()
@@ -736,12 +736,12 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
         this.cursor.select_row(channel, line_offset)
 
-        editor_table.update_cursor(this.cursor)
+        editor_table?.update_cursor(this.cursor)
 
         this.withFragment {
             it.setContextMenu_line()
         }
-        editor_table.scroll_to_position(y = this.get_abs_offset(channel, line_offset))
+        editor_table?.scroll_to_position(y = this.get_abs_offset(channel, line_offset))
     }
 
     fun cursor_select_column(beat: Int, force_scroll: Boolean = false) {
@@ -749,13 +749,13 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
         this.cursor.select_column(beat)
 
-        editor_table.update_cursor(this.cursor)
+        editor_table?.update_cursor(this.cursor)
 
         this.withFragment {
             it.setContextMenu_column()
         }
 
-        editor_table.scroll_to_position(x = beat, force = force_scroll)
+        editor_table?.scroll_to_position(x = beat, force = force_scroll)
     }
     fun cursor_select(beat_key: BeatKey, position: List<Int>, scroll: Boolean = false) {
         val editor_table = this.get_editor_table()
@@ -765,15 +765,15 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             it.setContextMenu_leaf()
         }
 
-        editor_table.update_cursor(this.cursor)
-        editor_table.scroll_to_position(beat_key, position)
+        editor_table?.update_cursor(this.cursor)
+        editor_table?.scroll_to_position(beat_key, position)
     }
 
     fun cursor_select_to_link(beat_key: BeatKey) {
         this.cursor.select_to_link(beat_key)
 
         val editor_table = this.get_editor_table()
-        editor_table.update_cursor(this.cursor)
+        editor_table?.update_cursor(this.cursor)
 
         this.withFragment {
             it.setContextMenu_linking()
@@ -783,7 +783,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         this.cursor.select_range(beat_key_a, beat_key_b)
 
         val editor_table = this.get_editor_table()
-        editor_table.update_cursor(this.cursor)
+        editor_table?.update_cursor(this.cursor)
 
         this.withFragment {
             it.setContextMenu_linking()
@@ -792,7 +792,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
     fun cursor_select_range(beat_key_a: BeatKey, beat_key_b: BeatKey) {
         this.cursor.select_range(beat_key_a, beat_key_b)
-        this.get_editor_table().update_cursor(this.cursor)
+        this.get_editor_table()?.update_cursor(this.cursor)
     }
 
     fun get_tree(): OpusTree<OpusEvent> {
@@ -866,7 +866,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
        // Need to run update on both the beat_key and *any* of its former link pool
        val editor_table = this.get_editor_table()
        for (unlinked in update_keys) {
-           editor_table.notify_cell_change(unlinked)
+           editor_table?.notify_cell_change(unlinked)
        }
     }
 
@@ -968,8 +968,12 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         }
     }
 
-    fun get_editor_table(): EditorTable {
-        return this.activity.findViewById<EditorTable>(R.id.etEditorTable)
+    fun get_editor_table(): EditorTable? {
+        return try {
+            this.activity.findViewById<EditorTable>(R.id.etEditorTable)
+        } catch (e: Exception) {
+            null
+        }
     }
 
     fun link_beat(beat_key: BeatKey) {

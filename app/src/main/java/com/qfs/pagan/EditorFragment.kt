@@ -38,16 +38,18 @@ class EditorFragment : PaganFragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        if (this._binding == null) {
-            _binding = FragmentMainBinding.inflate(inflater, container, false)
-
-            this.get_main().apply {
-                unlockDrawer()
-                update_menu_options()
-            }
+        Log.d("AAA", "AA: $savedInstanceState")
+        super.onCreateView(inflater, container, savedInstanceState)
+        Log.d("AAA", "AAC: $savedInstanceState")
+        this._binding = FragmentMainBinding.inflate(inflater, container, false)
+        Log.d("AAA", "AAX: $savedInstanceState")
+        this.get_main().apply {
+            unlockDrawer()
         }
+        Log.d("AAA", "AAB: $savedInstanceState")
         return binding.root
     }
+
     override fun onStop() {
         val editor_table = this.get_main().findViewById<EditorTable>(R.id.etEditorTable)
         val (scroll_x, scroll_y) = editor_table.get_scroll_offset()
@@ -57,13 +59,20 @@ class EditorFragment : PaganFragment() {
         this.view_model.fine_y = scroll_y.second
         super.onStop()
     }
+    override fun onSaveInstanceState(outState: Bundle) {
+        //this.get_main().supportFragmentManager.saveFragmentInstanceState(this)
+        outState.putString("TEST", "BOOP")
+        super.onSaveInstanceState(outState)
+        Log.d("AAA", "F: $outState")
+    }
+
 
     override fun onResume() {
         this.get_main().update_title_text()
         super.onResume()
     }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        Log.d("AAA", "View Created, ${savedInstanceState}")
         super.onViewCreated(view, savedInstanceState)
         val opus_manager = this.get_main().get_opus_manager()
         opus_manager.cursor_clear()
@@ -135,6 +144,7 @@ class EditorFragment : PaganFragment() {
             main.get_opus_manager().new()
             main.cancel_reticle()
         }
+        this.get_main().update_menu_options()
     }
 
     override fun onDestroyView() {
@@ -161,8 +171,7 @@ class EditorFragment : PaganFragment() {
     }
 
     fun clearContextMenu() {
-        val llContextMenu = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenu)
-        llContextMenu.removeAllViews()
+        activity!!.findViewById<LinearLayout>(R.id.llContextMenu)?.removeAllViews()
         this.active_context_menu_index = null
     }
 

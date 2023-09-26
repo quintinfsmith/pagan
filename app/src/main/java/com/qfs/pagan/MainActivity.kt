@@ -5,7 +5,9 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.database.Cursor
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.os.PersistableBundle
 import android.provider.OpenableColumns
 import android.util.Log
 import android.view.LayoutInflater
@@ -23,10 +25,12 @@ import android.widget.RelativeLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
+import androidx.core.util.Supplier
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResult
@@ -40,7 +44,10 @@ import com.qfs.apres.Midi
 import com.qfs.apres.soundfont.SoundFont
 import com.qfs.apres.soundfontplayer.SoundFontWavPlayer
 import com.qfs.pagan.databinding.ActivityMainBinding
+import com.qfs.pagan.opusmanager.LoadedJSONData
+import com.qfs.pagan.opusmanager.LoadedJSONData0
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
@@ -118,13 +125,46 @@ class MainActivity : AppCompatActivity() {
     override fun onPause() {
         this.stop_playback()
         super.onPause()
+    }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        val json_string = Json.encodeToString(this.get_opus_manager().to_json())
+        outState.putString("backup", json_string)
+        super.onSaveInstanceState(outState)
+    }
+
+    override fun onStop() {
+        Log.d("AAA", "Stoop")
+        super.onStop()
+    }
+
+
+    override fun onResume() {
+        Log.d("AAA", "RESTuming")
+        super.onResume()
+    }
+
+    override fun onRestart() {
+        Log.d("AAA", "RESTARTING")
+        super.onRestart()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // Kludge: This was causing the app the freeze when relaunching a stale session, null seems to have
         // no side effects (at the moment) and
-        super.onCreate(null)
+        //if (savedInstanceState != null) {
+        //    var substate = savedInstanceState.getBundle("android:viewHierarchyState")!!
+        //    //var subsubstate = substate.getBundle("android:support:fragments")!!
+        //    for (key in substate.keySet()) {
+        //        Log.d("AAA", "KEY: $key")
+        //        Log.d("AAA", "${substate.get(key)}")
+        //    }
+        //    Log.d("AAA", "---------------------------------------")
+        //    Log.d("AAA", "${savedInstanceState.get("android:fragments")}")
+        //
+        //}
+        Log.d("AAA", "00: $savedInstanceState")
+        super.onCreate(savedInstanceState)
 
         this.project_manager = ProjectManager(this.getExternalFilesDir(null).toString())
         // Move files from applicationInfo.data to externalfilesdir (pre v1.1.2 location)
@@ -148,11 +188,12 @@ class MainActivity : AppCompatActivity() {
             old_config_file.delete()
         }
         this.configuration = Configuration.from_path(this.config_path)
-
         this.binding = ActivityMainBinding.inflate(this.layoutInflater)
         setContentView(this.binding.root)
         setSupportActionBar(this.binding.appBarMain.toolbar)
         val navController = findNavController(R.id.nav_host_fragment_content_main)
+
+
         this.appBarConfiguration = AppBarConfiguration(
             setOf(
                 R.id.FrontFragment,
@@ -160,6 +201,25 @@ class MainActivity : AppCompatActivity() {
             )
         )
         setupActionBarWithNavController(navController, this.appBarConfiguration)
+        this.update_menu_options()
+        if (savedInstanceState != null) {
+            when (navController.currentDestination?.id) {
+                R.id.EditorFragment -> {
+
+                    val json_content = savedInstanceState.getString("backup")!!
+                    Log.d("AAA", json_content)
+                    val json_data: LoadedJSONData = try {
+                        Json.decodeFromString<LoadedJSONData>(json_content)
+                    } catch (e: Exception) {
+                        val old_data = Json.decodeFromString<LoadedJSONData0>(json_content)
+                        this.get_opus_manager().convert_old_fmt(old_data)
+                    }
+
+                    //this.get_opus_manager().load_json(json_data)
+                    //this.get_opus_manager().new()
+                }
+            }
+        }
 
         this.lockDrawer()
         //////////////////////////////////////////
@@ -416,12 +476,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun update_menu_options() {
-        // TODO: Fix this Kludge
-        while (this.optionsMenu == null) {
-            Thread.sleep(10)
-        }
         val navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main)
-        this.optionsMenu!!.setGroupDividerEnabled(true)
+        if (this.optionsMenu == null) {
+            return
+        }
+        this.optionsMenu?.setGroupDividerEnabled(true)
         when (navHost?.childFragmentManager?.fragments?.get(0)) {
             is EditorFragment -> {
                 this.optionsMenu!!.findItem(R.id.itmLoadProject).isVisible = this.has_projects_saved()
@@ -442,6 +501,7 @@ class MainActivity : AppCompatActivity() {
                 this.optionsMenu!!.findItem(R.id.itmSettings).isVisible = false
             }
         }
+        Log.d("AAA", "menu updated")
     }
 
     fun update_title_text() {
@@ -775,6 +835,7 @@ class MainActivity : AppCompatActivity() {
         } catch (e: UninitializedPropertyAccessException) {
             // pass, if it's not initialized, it's not locked
         }
+        Log.d("AAA", "Drawer Unlocked")
     }
 
     fun import_project(path: String) {

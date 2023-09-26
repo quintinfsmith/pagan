@@ -16,7 +16,6 @@ class LineLabelRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<
     init {
         this.recycler = editor_table.line_label_recycler
         this.recycler.adapter = this
-        this.recycler.layoutManager = LinearLayoutManager(this.recycler.context, VERTICAL, false)
         this.recycler.itemAnimator = null
 
         val that = this

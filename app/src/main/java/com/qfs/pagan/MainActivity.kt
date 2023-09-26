@@ -193,7 +193,6 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(this.binding.appBarMain.toolbar)
         val navController = findNavController(R.id.nav_host_fragment_content_main)
 
-
         this.appBarConfiguration = AppBarConfiguration(
             setOf(
                 R.id.FrontFragment,
@@ -215,7 +214,8 @@ class MainActivity : AppCompatActivity() {
                         this.get_opus_manager().convert_old_fmt(old_data)
                     }
 
-                    //this.get_opus_manager().load_json(json_data)
+                    this.get_opus_manager().load_json(json_data)
+                    Log.d("AAA", "LOADED?")
                     //this.get_opus_manager().new()
                 }
             }
@@ -345,7 +345,7 @@ class MainActivity : AppCompatActivity() {
 
     fun setup_config_drawer() {
         val opus_manager = this.get_opus_manager()
-        val rvActiveChannels: RecyclerView = this.findViewById(R.id.rvActiveChannels)
+        val rvActiveChannels: ChannelOptionRecycler = this.findViewById(R.id.rvActiveChannels)
         ChannelOptionAdapter(opus_manager, rvActiveChannels)
 
         val tvChangeProjectName: TextView = this.findViewById(R.id.tvChangeProjectName)
@@ -835,7 +835,6 @@ class MainActivity : AppCompatActivity() {
         } catch (e: UninitializedPropertyAccessException) {
             // pass, if it's not initialized, it's not locked
         }
-        Log.d("AAA", "Drawer Unlocked")
     }
 
     fun import_project(path: String) {
@@ -1020,7 +1019,7 @@ class MainActivity : AppCompatActivity() {
         this.soundfont = SoundFont(path)
         this.midi_playback_device = SoundFontWavPlayer(this.soundfont!!)
         this.update_channel_instruments()
-        val rvActiveChannels: RecyclerView = this.findViewById(R.id.rvActiveChannels)
+        val rvActiveChannels: ChannelOptionRecycler = this.findViewById(R.id.rvActiveChannels)
         if (rvActiveChannels.adapter != null) {
             (rvActiveChannels.adapter as ChannelOptionAdapter).set_soundfont(this.soundfont!!)
         }
@@ -1034,7 +1033,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun disable_soundfont() {
-        val rvActiveChannels: RecyclerView = this.findViewById(R.id.rvActiveChannels)
+        val rvActiveChannels: ChannelOptionRecycler = this.findViewById(R.id.rvActiveChannels)
         if (rvActiveChannels.adapter != null) {
             (rvActiveChannels.adapter as ChannelOptionAdapter).unset_soundfont()
         }

@@ -38,15 +38,11 @@ class EditorFragment : PaganFragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        Log.d("AAA", "AA: $savedInstanceState")
         super.onCreateView(inflater, container, savedInstanceState)
-        Log.d("AAA", "AAC: $savedInstanceState")
         this._binding = FragmentMainBinding.inflate(inflater, container, false)
-        Log.d("AAA", "AAX: $savedInstanceState")
         this.get_main().apply {
             unlockDrawer()
         }
-        Log.d("AAA", "AAB: $savedInstanceState")
         return binding.root
     }
 
@@ -66,19 +62,27 @@ class EditorFragment : PaganFragment() {
         Log.d("AAA", "F: $outState")
     }
 
-
     override fun onResume() {
         this.get_main().update_title_text()
         super.onResume()
     }
+    override fun onViewStateRestored(savedInstanceState: Bundle?) {
+        Log.d("AAA", "RESTORED, ${savedInstanceState}")
+        super.onViewStateRestored(savedInstanceState)
+        if (savedInstanceState != null) {
+            val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
+            editor_table.setup()
+        }
+    }
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         Log.d("AAA", "View Created, ${savedInstanceState}")
+        Log.d("AAA", "View MODEL: ${this.view_model.coarse_x == null}")
         super.onViewCreated(view, savedInstanceState)
-        val opus_manager = this.get_main().get_opus_manager()
-        opus_manager.cursor_clear()
+        //val opus_manager = this.get_main().get_opus_manager()
+        //opus_manager.cursor_clear()
 
         if (this.view_model.coarse_x != null) {
-            val editor_table = this.get_main().findViewById<EditorTable>(R.id.etEditorTable)
+            val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
             editor_table.setup()
             editor_table.update_cursor(this.get_main().get_opus_manager().cursor)
             thread {

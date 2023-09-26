@@ -4,9 +4,11 @@ import android.content.Context
 import android.os.Parcelable
 import android.util.AttributeSet
 import android.view.*
+import androidx.recyclerview.widget.LinearLayoutManager
 
 class LineLabelRecyclerView(context: Context, attrs: AttributeSet? = null) : ScrollLockingRecyclerView(context, attrs) {
     init {
+        this.layoutManager = LinearLayoutManager(this.context, VERTICAL, false)
         this.itemAnimator = null
         this.overScrollMode = View.OVER_SCROLL_NEVER
         //this.setHasFixedSize(true)

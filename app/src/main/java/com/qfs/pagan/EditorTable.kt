@@ -22,7 +22,7 @@ import kotlin.math.min
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
 class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, attrs) {
-    val main_recycler = ColumnRecycler(context)
+    val main_recycler = ColumnRecycler(this)
     val line_label_recycler = LineLabelRecyclerView(context)
     val column_label_recycler = ColumnLabelRecycler(context)
     val top_row = TableRow(context)
@@ -91,7 +91,6 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         }
 
         ColumnLabelAdapter(this)
-        ColumnRecyclerAdapter(this)
         LineLabelRecyclerAdapter(this)
         this.main_recycler.addOnScrollListener(HorizontalScrollListener(this.column_label_recycler))
         this.column_label_recycler.addOnScrollListener(HorizontalScrollListener(this.main_recycler))
@@ -512,5 +511,11 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         line_label_lm.scrollToPositionWithOffset(y_coarse, y_fine)
 
         this.fix_scroll_offset()
+    }
+
+    fun restore() {
+        val opus_manager = this.get_opus_manager()
+
+        Log.d("AAA", "Restore tODO:")
     }
 }

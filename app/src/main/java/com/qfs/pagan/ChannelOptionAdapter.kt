@@ -17,8 +17,6 @@ class ChannelOptionAdapter(
     private var supported_instruments = HashMap<Pair<Int, Int>, String>()
     init {
         this.recycler.adapter = this
-        this.recycler.layoutManager = LinearLayoutManager(this.get_activity())
-        this.recycler.itemAnimator = null
         val that = this
         this.registerAdapterDataObserver(
             object: RecyclerView.AdapterDataObserver() {

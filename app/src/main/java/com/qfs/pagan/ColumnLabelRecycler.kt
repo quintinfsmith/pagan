@@ -6,9 +6,15 @@ import android.util.AttributeSet
 import android.view.View
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+import androidx.recyclerview.widget.LinearLayoutManager
 
 class ColumnLabelRecycler(context: Context, attrs: AttributeSet? = null): ScrollLockingRecyclerView(context, attrs) {
     init {
+        this.layoutManager = LeftAlignedLayoutManager(
+            this,
+            LinearLayoutManager.HORIZONTAL,
+            false
+        )
         this.itemAnimator = null
     }
     override fun onAttachedToWindow() {

@@ -8,14 +8,11 @@ import com.qfs.pagan.opusmanager.BeatKey
 import kotlin.math.roundToInt
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
-class ColumnRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<ColumnRecyclerViewHolder>() {
-    val recycler: ColumnRecycler
+class ColumnRecyclerAdapter(val recycler: ColumnRecycler, editor_table: EditorTable): RecyclerView.Adapter<ColumnRecyclerViewHolder>() {
     val column_label_recycler: ColumnLabelRecycler
     var column_count = 0
     init {
         this.column_label_recycler = editor_table.column_label_recycler
-        this.recycler = editor_table.main_recycler
-        this.recycler.adapter = this
 
         val that = this
         this.registerAdapterDataObserver(
@@ -30,7 +27,6 @@ class ColumnRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<Col
         )
     }
 
-
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ColumnRecyclerViewHolder {
         return ColumnRecyclerViewHolder(parent.context)
     }
@@ -40,7 +36,7 @@ class ColumnRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<Col
     }
 
     override fun onBindViewHolder(holder: ColumnRecyclerViewHolder, position: Int) {
-        val editor_table = this.get_editor_table()!!
+        val editor_table = this.get_editor_table() ?: return
         val weight = editor_table.get_column_width(position)
         val resources = this.recycler.resources
         ColumnPlaceholder(holder, weight * resources.getDimension(R.dimen.base_leaf_width).roundToInt())
@@ -97,7 +93,7 @@ class ColumnRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<Col
     }
 
     fun get_editor_table(): EditorTable? {
-        var view = this.recycler as View
+        var view = (this.recycler ?: return null) as View
         while (view !is EditorTable) {
             if (view.parent == null) {
                 break

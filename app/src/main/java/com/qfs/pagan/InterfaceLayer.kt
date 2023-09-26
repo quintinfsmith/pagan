@@ -311,6 +311,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         try {
             this.surpress_ui {
                 super.new()
+                this.cursor_clear()
             }
         } catch (e: Exception) {
             this.activity.cancel_reticle()
@@ -339,6 +340,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         try {
             this.surpress_ui {
                 super.import_midi(midi)
+                this.cursor_clear()
             }
         } catch (e: Exception) {
             this.activity.cancel_reticle()
@@ -364,6 +366,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         try {
             this.surpress_ui {
                 super.load(bytes)
+                this.cursor_clear()
             }
         } catch (e: Exception) {
             this.activity.cancel_reticle()
@@ -389,6 +392,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         try {
             this.surpress_ui {
                 super.load(path)
+                this.cursor_clear()
             }
         } catch (e: Exception) {
             this.activity.cancel_reticle()

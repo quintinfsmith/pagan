@@ -82,7 +82,7 @@
             android:theme="@style/button" />
 
 
-        <androidx.recyclerview.widget.RecyclerView
+        <com.qfs.pagan.ChannelOptionRecycler
             android:id="@+id/rvActiveChannels"
             android:paddingTop="@dimen/normal_padding"
             android:layout_width="match_parent"

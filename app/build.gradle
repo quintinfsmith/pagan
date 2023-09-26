@@ -46,7 +46,6 @@ dependencies {
     implementation 'androidx.navigation:navigation-ui-ktx:2.4.1'
     implementation 'androidx.drawerlayout:drawerlayout:1.1.1'
     implementation 'androidx.recyclerview:recyclerview:1.2.1'
-    implementation 'com.android.car.ui:car-ui-lib:2.5.1'
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'io.mockk:mockk:1.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.4'

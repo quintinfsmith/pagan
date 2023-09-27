@@ -1,0 +1,3 @@
+Bugfixes:
+    - Remembers place when restarting activity
+    - No longer able to click through the config drawer

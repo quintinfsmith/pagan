@@ -21,6 +21,7 @@ import android.widget.ProgressBar
 import android.widget.RelativeLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
@@ -189,6 +190,19 @@ class MainActivity : AppCompatActivity() {
                 this.lockDrawer()
             }
         }
+
+        var that = this
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (navController.currentDestination?.id == R.id.EditorFragment) {
+                    that.save_dialog {
+                        finish()
+                    }
+                } else {
+                    finish()
+                }
+            }
+        })
 
     }
 

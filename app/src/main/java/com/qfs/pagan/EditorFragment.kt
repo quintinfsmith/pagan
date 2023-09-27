@@ -10,6 +10,7 @@ import androidx.fragment.app.viewModels
 import com.qfs.apres.InvalidMIDIFile
 import com.qfs.pagan.databinding.FragmentMainBinding
 import com.qfs.pagan.opusmanager.*
+import java.io.FileInputStream
 import java.lang.Integer.max
 import java.lang.Integer.min
 import kotlin.concurrent.thread
@@ -56,30 +57,42 @@ class EditorFragment : PaganFragment() {
         super.onStop()
     }
     override fun onSaveInstanceState(outState: Bundle) {
-        //this.get_main().supportFragmentManager.saveFragmentInstanceState(this)
-        outState.putString("TEST", "BOOP")
+        val editor_table = this.get_main().findViewById<EditorTable>(R.id.etEditorTable)
+        val (scroll_x, scroll_y) = editor_table.get_scroll_offset()
+        outState.putInt("coarse_x", scroll_x.first)
+        outState.putInt("fine_x", scroll_x.second)
+        outState.putInt("coarse_y", scroll_y.first)
+        outState.putInt("fine_y", scroll_y.second)
+        outState.putBoolean("block_state_restore", this.get_main().block_state_restore)
+
         super.onSaveInstanceState(outState)
-        Log.d("AAA", "F: $outState")
     }
 
     override fun onResume() {
         this.get_main().update_title_text()
         super.onResume()
     }
+
     override fun onViewStateRestored(savedInstanceState: Bundle?) {
-        Log.d("AAA", "RESTORED, ${savedInstanceState}")
-        super.onViewStateRestored(savedInstanceState)
-        if (savedInstanceState != null) {
+        if (savedInstanceState != null && !savedInstanceState.getBoolean("block_state_restore")) {
+            val main = this.get_main()
+            val opus_manager = main.get_opus_manager()
+            val bkp_path = "${main.applicationInfo.dataDir}/.bkp.json"
+            val bytes = FileInputStream(bkp_path).readBytes()
+            opus_manager.load(bytes)
+
             val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
-            editor_table.setup()
+            editor_table.precise_scroll(
+                savedInstanceState.getInt("coarse_x"),
+                savedInstanceState.getInt("fine_x"),
+                savedInstanceState.getInt("coarse_y"),
+                savedInstanceState.getInt("fine_y")
+            )
         }
+        super.onViewStateRestored(savedInstanceState)
     }
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        Log.d("AAA", "View Created, ${savedInstanceState}")
-        Log.d("AAA", "View MODEL: ${this.view_model.coarse_x == null}")
         super.onViewCreated(view, savedInstanceState)
-        //val opus_manager = this.get_main().get_opus_manager()
-        //opus_manager.cursor_clear()
 
         if (this.view_model.coarse_x != null) {
             val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
@@ -115,8 +128,8 @@ class EditorFragment : PaganFragment() {
         }
 
         setFragmentResultListener(IntentFragmentToken.ImportMidi.name) { _, bundle: Bundle? ->
+            val main = this.get_main()
             bundle!!.getString("URI")?.let { path ->
-                val main = this.get_main()
                 try {
                     main.import_midi(path)
                 } catch (e: InvalidMIDIFile) {
@@ -131,6 +144,7 @@ class EditorFragment : PaganFragment() {
                 bundle!!.getString("URI")?.let { path ->
                     val main = this.get_main()
                     main.import_project(path)
+                    this.binding.root.findViewById<EditorTable>(R.id.etEditorTable).setup()
                 }
             } catch (e: Exception) {
                 val opus_manager = this.get_main().get_opus_manager()

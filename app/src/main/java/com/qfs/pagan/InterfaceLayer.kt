@@ -1,4 +1,5 @@
 package com.qfs.pagan
+import android.util.Log
 import android.view.View
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
@@ -388,6 +389,8 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     override fun load(path: String) {
+        val editor_table = this.get_editor_table()
+        editor_table?.clear()
         this.activity.loading_reticle()
         try {
             this.surpress_ui {
@@ -403,7 +406,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         this.activity.setup_config_drawer()
         this.activity.cancel_reticle()
 
-        val editor_table = this.get_editor_table()
         editor_table?.setup()
 
         this.activity.update_channel_instruments()

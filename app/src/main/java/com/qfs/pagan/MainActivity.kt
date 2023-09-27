@@ -5,9 +5,7 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.database.Cursor
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
-import android.os.PersistableBundle
 import android.provider.OpenableColumns
 import android.util.Log
 import android.view.LayoutInflater
@@ -15,7 +13,6 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.WindowManager
 import android.widget.EditText
 import android.widget.LinearLayout
@@ -25,7 +22,6 @@ import android.widget.RelativeLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.RequiresApi
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -44,17 +40,13 @@ import com.qfs.apres.Midi
 import com.qfs.apres.soundfont.SoundFont
 import com.qfs.apres.soundfontplayer.SoundFontWavPlayer
 import com.qfs.pagan.databinding.ActivityMainBinding
-import com.qfs.pagan.opusmanager.LoadedJSONData
-import com.qfs.pagan.opusmanager.LoadedJSONData0
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import kotlin.concurrent.thread
-import kotlin.math.min
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
 class MainActivity : AppCompatActivity() {
@@ -65,6 +57,7 @@ class MainActivity : AppCompatActivity() {
     private var midi_playback_device: SoundFontWavPlayer? = null
     private var soundfont: SoundFont? = null
     var active_percussion_names = HashMap<Int, String>()
+    var block_state_restore = false
 
     private var opus_manager = OpusManager(this)
 
@@ -113,6 +106,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     var import_midi_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        this.block_state_restore = false
         if (result.resultCode == Activity.RESULT_OK) {
             result?.data?.data?.also { uri ->
                 val fragment = this.getActiveFragment()
@@ -128,42 +122,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
-        val json_string = Json.encodeToString(this.get_opus_manager().to_json())
-        outState.putString("backup", json_string)
+        this.get_opus_manager().save("${applicationInfo.dataDir}/.bkp.json")
         super.onSaveInstanceState(outState)
     }
 
-    override fun onStop() {
-        Log.d("AAA", "Stoop")
-        super.onStop()
-    }
-
-
-    override fun onResume() {
-        Log.d("AAA", "RESTuming")
-        super.onResume()
-    }
-
-    override fun onRestart() {
-        Log.d("AAA", "RESTARTING")
-        super.onRestart()
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
-        // Kludge: This was causing the app the freeze when relaunching a stale session, null seems to have
-        // no side effects (at the moment) and
-        //if (savedInstanceState != null) {
-        //    var substate = savedInstanceState.getBundle("android:viewHierarchyState")!!
-        //    //var subsubstate = substate.getBundle("android:support:fragments")!!
-        //    for (key in substate.keySet()) {
-        //        Log.d("AAA", "KEY: $key")
-        //        Log.d("AAA", "${substate.get(key)}")
-        //    }
-        //    Log.d("AAA", "---------------------------------------")
-        //    Log.d("AAA", "${savedInstanceState.get("android:fragments")}")
-        //
-        //}
-        Log.d("AAA", "00: $savedInstanceState")
         super.onCreate(savedInstanceState)
 
         this.project_manager = ProjectManager(this.getExternalFilesDir(null).toString())
@@ -191,7 +154,6 @@ class MainActivity : AppCompatActivity() {
         this.binding = ActivityMainBinding.inflate(this.layoutInflater)
         setContentView(this.binding.root)
         setSupportActionBar(this.binding.appBarMain.toolbar)
-        val navController = findNavController(R.id.nav_host_fragment_content_main)
 
         this.appBarConfiguration = AppBarConfiguration(
             setOf(
@@ -199,27 +161,10 @@ class MainActivity : AppCompatActivity() {
                 R.id.EditorFragment
             )
         )
+
+        val navController = findNavController(R.id.nav_host_fragment_content_main)
         setupActionBarWithNavController(navController, this.appBarConfiguration)
         this.update_menu_options()
-        if (savedInstanceState != null) {
-            when (navController.currentDestination?.id) {
-                R.id.EditorFragment -> {
-
-                    val json_content = savedInstanceState.getString("backup")!!
-                    Log.d("AAA", json_content)
-                    val json_data: LoadedJSONData = try {
-                        Json.decodeFromString<LoadedJSONData>(json_content)
-                    } catch (e: Exception) {
-                        val old_data = Json.decodeFromString<LoadedJSONData0>(json_content)
-                        this.get_opus_manager().convert_old_fmt(old_data)
-                    }
-
-                    this.get_opus_manager().load_json(json_data)
-                    Log.d("AAA", "LOADED?")
-                    //this.get_opus_manager().new()
-                }
-            }
-        }
 
         this.lockDrawer()
         //////////////////////////////////////////
@@ -236,7 +181,6 @@ class MainActivity : AppCompatActivity() {
         }
 
         ///////////////////////////////////////////
-
     }
 
     override fun onSupportNavigateUp(): Boolean {
@@ -277,6 +221,7 @@ class MainActivity : AppCompatActivity() {
                     val intent = Intent()
                         .setType("*/*")
                         .setAction(Intent.ACTION_GET_CONTENT)
+                    this.block_state_restore = true
                     this.import_midi_intent_launcher.launch(intent)
                 }
             }
@@ -501,7 +446,6 @@ class MainActivity : AppCompatActivity() {
                 this.optionsMenu!!.findItem(R.id.itmSettings).isVisible = false
             }
         }
-        Log.d("AAA", "menu updated")
     }
 
     fun update_title_text() {
@@ -783,7 +727,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-
         AlertDialog.Builder(this, R.style.AlertDialog)
             .setTitle(title)
             .setView(viewInflated)
@@ -840,7 +783,6 @@ class MainActivity : AppCompatActivity() {
     fun import_project(path: String) {
         this.applicationContext.contentResolver.openFileDescriptor(Uri.parse(path), "r")?.use {
             val bytes = FileInputStream(it.fileDescriptor).readBytes()
-
             this.opus_manager.load(bytes)
             this.opus_manager.path = this.project_manager.get_new_path()
         }

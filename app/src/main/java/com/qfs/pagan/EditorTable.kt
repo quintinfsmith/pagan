@@ -96,18 +96,11 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         this.column_label_recycler.addOnScrollListener(HorizontalScrollListener(this.main_recycler))
     }
 
-
-    override fun onAttachedToWindow() {
-        super.onAttachedToWindow()
-        this.column_width_map.clear()
-    }
-
     fun clear() {
         this.column_width_map.clear()
         (this.main_recycler.adapter!! as ColumnRecyclerAdapter).clear()
         (this.column_label_recycler.adapter!! as ColumnLabelAdapter).clear()
         (this.line_label_recycler.adapter!! as LineLabelRecyclerAdapter).clear()
-
     }
 
     fun setup() {
@@ -326,14 +319,13 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         } else {
             new_tree.get_max_child_weight() * new_tree.size
         }
-        for (linked_beat_key in opus_manager.get_all_linked(beat_key)) {
 
+        for (linked_beat_key in opus_manager.get_all_linked(beat_key)) {
             val y = try {
                 opus_manager.get_abs_offset(linked_beat_key.channel, linked_beat_key.line_offset)
             } catch (e: IndexOutOfBoundsException) {
                 continue
             }
-
 
             val original_width = this.column_width_map[linked_beat_key.beat].max()
             this.column_width_map[linked_beat_key.beat][y] = new_cell_width
@@ -347,7 +339,6 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                 val cell_recycler = main_recycler_adapter.get_cell_recycler(linked_beat_key.beat) ?: continue
                 cell_recycler.adapter?.notifyItemChanged(y)
             }
-
         }
     }
 

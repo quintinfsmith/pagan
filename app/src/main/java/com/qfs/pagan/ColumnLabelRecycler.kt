@@ -23,7 +23,4 @@ class ColumnLabelRecycler(context: Context, attrs: AttributeSet? = null): Scroll
         this.layoutParams.height = WRAP_CONTENT
         this.overScrollMode = View.OVER_SCROLL_NEVER
     }
-    override fun onRestoreInstanceState(state: Parcelable?) {
-        super.onRestoreInstanceState(state)
-    }
 }

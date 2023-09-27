@@ -13,8 +13,4 @@ class ColumnRecycler(editor_table: EditorTable): ScrollLockingRecyclerView(edito
         this.overScrollMode = View.OVER_SCROLL_NEVER
         this.adapter = ColumnRecyclerAdapter(this, editor_table)
     }
-
-    override fun onRestoreInstanceState(state: Parcelable?) {
-        super.onRestoreInstanceState(state)
-    }
 }

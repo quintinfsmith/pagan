@@ -466,10 +466,6 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         return null
     }
 
-    override fun onRestoreInstanceState(state: Parcelable?) {
-        super.onRestoreInstanceState(state)
-    }
-
     fun get_scroll_offset(): Pair<Pair<Int, Int>, Pair<Int, Int>> {
         val column_lm = this.column_label_recycler.layoutManager!! as LinearLayoutManager
         val coarse_x = column_lm.findFirstVisibleItemPosition()
@@ -502,11 +498,5 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         line_label_lm.scrollToPositionWithOffset(y_coarse, y_fine)
 
         this.fix_scroll_offset()
-    }
-
-    fun restore() {
-        val opus_manager = this.get_opus_manager()
-
-        Log.d("AAA", "Restore tODO:")
     }
 }

@@ -26,7 +26,6 @@ import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
-import androidx.core.util.Supplier
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResult
@@ -57,7 +56,6 @@ class MainActivity : AppCompatActivity() {
     private var midi_playback_device: SoundFontWavPlayer? = null
     private var soundfont: SoundFont? = null
     var active_percussion_names = HashMap<Int, String>()
-    var block_state_restore = false
 
     private var opus_manager = OpusManager(this)
 
@@ -106,7 +104,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     var import_midi_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        this.block_state_restore = false
         if (result.resultCode == Activity.RESULT_OK) {
             result?.data?.data?.also { uri ->
                 val fragment = this.getActiveFragment()
@@ -122,7 +119,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
+        val path = this.get_opus_manager().path
         this.get_opus_manager().save("${applicationInfo.dataDir}/.bkp.json")
+        // saving changes the path, need to change it back
+        this.get_opus_manager().path = path
+
         super.onSaveInstanceState(outState)
     }
 
@@ -164,9 +165,8 @@ class MainActivity : AppCompatActivity() {
 
         val navController = findNavController(R.id.nav_host_fragment_content_main)
         setupActionBarWithNavController(navController, this.appBarConfiguration)
-        this.update_menu_options()
+        //this.update_menu_options()
 
-        this.lockDrawer()
         //////////////////////////////////////////
         // TODO: clean up the file -> riff -> soundfont -> midi playback device process
 
@@ -179,8 +179,17 @@ class MainActivity : AppCompatActivity() {
             }
             this.update_channel_instruments()
         }
-
         ///////////////////////////////////////////
+
+        when (navController.currentDestination?.id) {
+            R.id.EditorFragment -> {
+                this.unlockDrawer()
+            }
+            else -> {
+                this.lockDrawer()
+            }
+        }
+
     }
 
     override fun onSupportNavigateUp(): Boolean {
@@ -221,7 +230,6 @@ class MainActivity : AppCompatActivity() {
                     val intent = Intent()
                         .setType("*/*")
                         .setAction(Intent.ACTION_GET_CONTENT)
-                    this.block_state_restore = true
                     this.import_midi_intent_launcher.launch(intent)
                 }
             }
@@ -536,6 +544,11 @@ class MainActivity : AppCompatActivity() {
         val navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main)
         val fragment = navHost?.childFragmentManager?.fragments?.get(0)
         val navController = findNavController(R.id.nav_host_fragment_content_main)
+        if (fragmentName == "main") {
+            this.unlockDrawer()
+        } else {
+            this.lockDrawer()
+        }
         when (fragment) {
             is LoadFragment -> {
                 when (fragmentName) {
@@ -741,7 +754,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun loading_reticle() {
-        var that = this
+        val that = this
         runBlocking {
             that.runOnUiThread {
                 if (that.progressBar == null) {
@@ -783,22 +796,23 @@ class MainActivity : AppCompatActivity() {
     fun import_project(path: String) {
         this.applicationContext.contentResolver.openFileDescriptor(Uri.parse(path), "r")?.use {
             val bytes = FileInputStream(it.fileDescriptor).readBytes()
-            this.opus_manager.load(bytes)
-            this.opus_manager.path = this.project_manager.get_new_path()
+            this.opus_manager.load(bytes, this.project_manager.get_new_path())
         }
     }
 
     fun import_midi(path: String) {
         this.applicationContext.contentResolver.openFileDescriptor(Uri.parse(path), "r")?.use {
             val bytes = FileInputStream(it.fileDescriptor).readBytes()
+
             val midi = try {
                 Midi.from_bytes(bytes)
             } catch (e: Exception) {
                 throw InvalidMIDIFile(path)
             }
-            var filename = this.parse_file_name(Uri.parse(path))
 
+            val filename = this.parse_file_name(Uri.parse(path))
             val new_path = this.project_manager.get_new_path()
+
             this.opus_manager.import_midi(midi)
             this.opus_manager.path = new_path
             this.opus_manager.set_project_name(filename ?: getString(R.string.default_imported_midi_title))

@@ -69,8 +69,6 @@ class GlobalSettingsFragment : PaganFragment() {
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentGlobalSettingsBinding.inflate(inflater, container, false)
-        this.get_main().lockDrawer()
-        this.get_main().update_menu_options()
         return binding.root
     }
 
@@ -85,9 +83,9 @@ class GlobalSettingsFragment : PaganFragment() {
         val main = this.get_main()
 
         if (main.has_soundfont()) {
-            main.findViewById<LinearLayout>(R.id.llSFWarning).visibility = View.GONE
+            this.binding.root.findViewById<LinearLayout>(R.id.llSFWarning).visibility = View.GONE
         }  else {
-            main.findViewById<TextView>(R.id.tvFluidUrl).setOnClickListener {
+            this.binding.root.findViewById<TextView>(R.id.tvFluidUrl).setOnClickListener {
                 val url = getString(R.string.url_fluid)
                 val intent = Intent(Intent.ACTION_VIEW)
                 intent.data = Uri.parse(url)
@@ -100,7 +98,7 @@ class GlobalSettingsFragment : PaganFragment() {
             this.interact_btnChooseSoundFont(it)
         }
 
-        val soundfont_filename = this.get_main().configuration.soundfont
+        val soundfont_filename = main.configuration.soundfont
 
         btnChooseSoundFont.text = when (soundfont_filename) {
             null -> {
@@ -118,13 +116,11 @@ class GlobalSettingsFragment : PaganFragment() {
         }
 
         val switch_relative_mode = view.findViewById<Switch>(R.id.sRelativeEnabled)
-        switch_relative_mode.setChecked(main.configuration.relative_mode)
-        switch_relative_mode.setOnCheckedChangeListener(object: CompoundButton.OnCheckedChangeListener {
-            override fun onCheckedChanged(p0: CompoundButton?, enabled: Boolean) {
-                main.configuration.relative_mode = enabled
-                main.save_configuration()
-            }
-        })
+        switch_relative_mode.isChecked = main.configuration.relative_mode
+        switch_relative_mode.setOnCheckedChangeListener { _, enabled: Boolean ->
+            main.configuration.relative_mode = enabled
+            main.save_configuration()
+        }
     }
 
     override fun onDestroyView() {

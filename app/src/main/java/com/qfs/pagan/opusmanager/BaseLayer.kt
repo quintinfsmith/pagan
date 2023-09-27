@@ -971,7 +971,7 @@ open class BaseLayer {
         this.load_json_file(path)
     }
 
-    open fun load(bytes: ByteArray) {
+    open fun load(bytes: ByteArray, new_path: String? = null) {
         val json_content = bytes.toString(Charsets.UTF_8)
         val json_data: LoadedJSONData = try {
             Json.decodeFromString<LoadedJSONData>(json_content)
@@ -981,6 +981,7 @@ open class BaseLayer {
         }
 
         this.load_json(json_data)
+        this.path = new_path
     }
 
     fun convert_old_fmt(old_data: LoadedJSONData0): LoadedJSONData {

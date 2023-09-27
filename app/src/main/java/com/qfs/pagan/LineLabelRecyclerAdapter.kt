@@ -1,9 +1,7 @@
 package com.qfs.pagan
 
 import android.view.ViewGroup
-import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import androidx.recyclerview.widget.RecyclerView.VERTICAL
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
 class LineLabelRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<LineLabelViewHolder>() {
@@ -12,23 +10,10 @@ class LineLabelRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<
     private var recycler: LineLabelRecyclerView
     var label_count = 0
 
-
     init {
         this.recycler = editor_table.line_label_recycler
         this.recycler.adapter = this
         this.recycler.itemAnimator = null
-
-        val that = this
-        this.registerAdapterDataObserver(
-            object: RecyclerView.AdapterDataObserver() {
-                override fun onItemRangeRemoved(start: Int, count: Int) {
-                    //that.notifyItemRangeChanged(start - count, that.itemCount)
-                }
-                override fun onItemRangeInserted(start: Int, count: Int) {
-                    //that.notifyItemRangeChanged(start - count, that.itemCount)
-                }
-            }
-        )
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): LineLabelViewHolder {

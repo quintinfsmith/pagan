@@ -597,9 +597,9 @@ open class HistoryLayer : LinksLayer() {
         }
     }
 
-    override fun load(bytes: ByteArray) {
+    override fun load(bytes: ByteArray, new_path: String?) {
         this.history_cache.forget {
-            super.load(bytes)
+            super.load(bytes, new_path)
         }
     }
 

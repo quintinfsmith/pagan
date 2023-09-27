@@ -1,5 +1,4 @@
 package com.qfs.pagan
-import android.util.Log
 import android.view.View
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
@@ -336,7 +335,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     override fun import_midi(midi: Midi) {
-        val editor_table = this.get_editor_table()
         this.activity.loading_reticle()
         try {
             this.surpress_ui {
@@ -351,9 +349,9 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         this.first_load_done = true
         this.activity.update_menu_options()
         this.activity.setup_config_drawer()
-
         this.activity.cancel_reticle()
 
+        val editor_table = this.get_editor_table()
         editor_table?.setup()
 
         this.activity.update_channel_instruments()
@@ -362,11 +360,11 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         }
     }
 
-    override fun load(bytes: ByteArray) {
+    override fun load(bytes: ByteArray, new_path: String?) {
         this.activity.loading_reticle()
         try {
             this.surpress_ui {
-                super.load(bytes)
+                super.load(bytes, new_path)
                 this.cursor_clear()
             }
         } catch (e: Exception) {
@@ -382,7 +380,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         editor_table?.setup()
 
         this.activity.update_channel_instruments()
-
         this.withFragment {
             it.clearContextMenu()
         }
@@ -392,6 +389,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         val editor_table = this.get_editor_table()
         editor_table?.clear()
         this.activity.loading_reticle()
+
         try {
             this.surpress_ui {
                 super.load(path)
@@ -401,6 +399,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             this.activity.cancel_reticle()
             throw e
         }
+
         this.first_load_done = true
         this.activity.update_menu_options()
         this.activity.setup_config_drawer()

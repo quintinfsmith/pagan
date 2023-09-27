@@ -41,9 +41,6 @@ class EditorFragment : PaganFragment() {
     ): View {
         super.onCreateView(inflater, container, savedInstanceState)
         this._binding = FragmentMainBinding.inflate(inflater, container, false)
-        this.get_main().apply {
-            unlockDrawer()
-        }
         return binding.root
     }
 
@@ -58,13 +55,21 @@ class EditorFragment : PaganFragment() {
     }
     override fun onSaveInstanceState(outState: Bundle) {
         val editor_table = this.get_main().findViewById<EditorTable>(R.id.etEditorTable)
-        val (scroll_x, scroll_y) = editor_table.get_scroll_offset()
-        outState.putInt("coarse_x", scroll_x.first)
-        outState.putInt("fine_x", scroll_x.second)
-        outState.putInt("coarse_y", scroll_y.first)
-        outState.putInt("fine_y", scroll_y.second)
-        outState.putBoolean("block_state_restore", this.get_main().block_state_restore)
+        if (editor_table != null) {
+            val (scroll_x, scroll_y) = editor_table.get_scroll_offset()
 
+            outState.putInt("coarse_x", scroll_x.first)
+            outState.putInt("fine_x", scroll_x.second)
+            outState.putInt("coarse_y", scroll_y.first)
+            outState.putInt("fine_y", scroll_y.second)
+
+
+            val main = this.get_main()
+            val opus_manager = main.get_opus_manager()
+            if (opus_manager.path != null) {
+                outState.putString("path", opus_manager.path)
+            }
+        }
         super.onSaveInstanceState(outState)
     }
 
@@ -74,12 +79,19 @@ class EditorFragment : PaganFragment() {
     }
 
     override fun onViewStateRestored(savedInstanceState: Bundle?) {
-        if (savedInstanceState != null && !savedInstanceState.getBoolean("block_state_restore")) {
+        if (savedInstanceState != null) {
             val main = this.get_main()
             val opus_manager = main.get_opus_manager()
             val bkp_path = "${main.applicationInfo.dataDir}/.bkp.json"
             val bytes = FileInputStream(bkp_path).readBytes()
-            opus_manager.load(bytes)
+
+            val new_path = if (savedInstanceState.containsKey("path")) {
+                savedInstanceState.getString("path")
+            } else {
+                null
+            }
+            opus_manager.load(bytes, new_path)
+
 
             val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
             editor_table.precise_scroll(
@@ -88,6 +100,7 @@ class EditorFragment : PaganFragment() {
                 savedInstanceState.getInt("coarse_y"),
                 savedInstanceState.getInt("fine_y")
             )
+
         }
         super.onViewStateRestored(savedInstanceState)
     }
@@ -98,6 +111,7 @@ class EditorFragment : PaganFragment() {
             val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
             editor_table.setup()
             editor_table.update_cursor(this.get_main().get_opus_manager().cursor)
+            this.get_main().unlockDrawer()
             thread {
                 Thread.sleep(100)
                 this.activity!!.runOnUiThread {
@@ -133,25 +147,28 @@ class EditorFragment : PaganFragment() {
                 try {
                     main.import_midi(path)
                 } catch (e: InvalidMIDIFile) {
-                    main.get_opus_manager().new()
+                    val opus_manager = main.get_opus_manager()
+                    if (!opus_manager.first_load_done) {
+                        main.get_opus_manager().new()
+                    }
                     main.feedback_msg(getString(R.string.feedback_midi_fail))
                 }
             }
         }
 
         setFragmentResultListener(IntentFragmentToken.ImportProject.name) { _, bundle: Bundle? ->
+            val main = this.get_main()
             try {
                 bundle!!.getString("URI")?.let { path ->
-                    val main = this.get_main()
                     main.import_project(path)
-                    this.binding.root.findViewById<EditorTable>(R.id.etEditorTable).setup()
                 }
             } catch (e: Exception) {
-                val opus_manager = this.get_main().get_opus_manager()
+                val opus_manager = main.get_opus_manager()
                 // if Not Loaded, just create new and throw a message up
                 if (!opus_manager.first_load_done) {
                     opus_manager.new()
                 }
+
                 this.get_main().feedback_msg(getString(R.string.feedback_import_fail))
             }
         }
@@ -162,6 +179,7 @@ class EditorFragment : PaganFragment() {
             main.get_opus_manager().new()
             main.cancel_reticle()
         }
+
         this.get_main().update_menu_options()
     }
 

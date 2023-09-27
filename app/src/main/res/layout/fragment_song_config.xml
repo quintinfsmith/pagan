@@ -8,6 +8,7 @@
     android:layout_height="match_parent"
     android:padding="@dimen/padding_config"
     android:minWidth="300dp"
+    android:clickable="true"
     android:background="?attr/drawer_bg" >
 
     <ImageView

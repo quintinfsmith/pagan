@@ -80,6 +80,7 @@ class EditorFragment : PaganFragment() {
 
     override fun onViewStateRestored(savedInstanceState: Bundle?) {
         if (savedInstanceState != null) {
+            // TODO: When 'don't keep apps' is enabled, this path will be followed even when importing a midi or project
             val main = this.get_main()
             val opus_manager = main.get_opus_manager()
             val bkp_path = "${main.applicationInfo.dataDir}/.bkp.json"

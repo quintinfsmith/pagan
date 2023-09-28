@@ -199,7 +199,7 @@ class MainActivity : AppCompatActivity() {
                         finish()
                     }
                 } else {
-                    finish()
+                    navController.popBackStack()
                 }
             }
         })

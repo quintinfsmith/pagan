@@ -1,0 +1,1 @@
+Fixed overusage of memory when dealing with soundfont with large 'vol_env_release' values

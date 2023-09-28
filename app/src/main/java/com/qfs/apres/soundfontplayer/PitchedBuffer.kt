@@ -3,57 +3,75 @@ package com.qfs.apres.soundfontplayer
 import android.util.Log
 import java.nio.BufferUnderflowException
 import java.nio.ShortBuffer
+import kotlin.math.abs
 import kotlin.math.min
-import kotlin.math.roundToInt
 
-class PitchedBuffer(data: ShortArray, val pitch: Float) {
+class PitchedBuffer(val data: ShortArray, val pitch: Float) {
     val buffer = ShortBuffer.wrap(data)
     val size = (data.size.toFloat() / this.pitch).toInt()
     var cached_value: Short? = null
+    var cached_position = 0
     var virtual_position: Int = 0
     init {
+        this.cached_position = 0
+        this.virtual_position = 0
         if (this.pitch < 1F) {
             this.cached_value = this.buffer.get()
-            this.buffer.position(0)
         }
     }
 
     fun position(): Int {
-        return if (this.pitch >= 1F) {
-            min((this.buffer.position() / this.pitch).roundToInt(), this.size)
-        } else {
-            this.virtual_position!!
-        }
+        return this.virtual_position
     }
 
     fun position(index: Int) {
-        val pos = min((index.toFloat() * this.pitch).roundToInt(), this.size - 1)
-        if (this.pitch < 1F) {
-            this.buffer.position(pos)
-            this.cached_value = this.buffer.get()
-            this.virtual_position = index
-        }
+        this.virtual_position = index
+
+        val pos = min((index.toFloat() * this.pitch).toInt(), this.size - 1)
         this.buffer.position(pos)
+        if (this.pitch < 1F) {
+            this.cached_value = this.data[pos]
+            this.cached_position = pos
+        }
     }
 
     fun get(): Short {
         return if (this.pitch >= 1F) {
-            val next_position = this.position() + 1
-            var value = this.buffer.get().toInt()
-            var count = 1
-            while (next_position > this.position()) {
-                count += 1
-                value += this.buffer.get()
-            }
-            (value / count).toShort()
+            this.get_high()
         } else {
-            val output = this.cached_value!!
-            if (this.virtual_position + 1 < this.size && ((this.virtual_position + 1) * this.pitch).roundToInt() != (this.virtual_position * this.pitch).roundToInt()) {
-                this.cached_value = this.buffer.get()
-            }
-
-            this.virtual_position += 1
-            output
+            this.get_low()
         }
     }
+
+    private fun get_high(): Short {
+        var value: Short = 0
+        while (this.buffer.position() / this.pitch < this.position()) {
+            value = this.buffer.get()
+        }
+        this.virtual_position += 1
+
+        return value
+    }
+    private fun get_low(): Short {
+        val pitched_position = this.virtual_position * this.pitch
+        if (pitched_position > this.cached_position) {
+            this.cached_value = this.buffer.get()
+            this.cached_position = this.buffer.position()
+        }
+
+        val next_position = if (this.cached_position < this.data.size - 1) {
+            this.cached_position + 1
+        } else {
+            0
+        }
+
+        val next_value = this.data[next_position]
+        this.virtual_position += 1
+
+        val weight = pitched_position - pitched_position.toInt()
+        val output = this.cached_value!! + ((next_value - this.cached_value!!) * weight).toInt().toShort()
+
+        return output.toShort()
+    }
+
 }

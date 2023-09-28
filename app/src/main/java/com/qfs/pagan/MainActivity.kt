@@ -453,7 +453,7 @@ class MainActivity : AppCompatActivity() {
                 this.optionsMenu!!.findItem(R.id.itmLoadProject).isVisible = this.has_projects_saved()
                 this.optionsMenu!!.findItem(R.id.itmUndo).isVisible = true
                 this.optionsMenu!!.findItem(R.id.itmNewProject).isVisible = true
-                this.optionsMenu!!.findItem(R.id.itmPlay).isVisible = this.has_soundfont()
+                this.optionsMenu!!.findItem(R.id.itmPlay).isVisible = this.soundfont != null
                 this.optionsMenu!!.findItem(R.id.itmImportMidi).isVisible = true
                 this.optionsMenu!!.findItem(R.id.itmImportProject).isVisible = true
                 this.optionsMenu!!.findItem(R.id.itmSettings).isVisible = true

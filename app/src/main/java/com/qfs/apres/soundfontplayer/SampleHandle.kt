@@ -1,5 +1,6 @@
 package com.qfs.apres.soundfontplayer
 
+import android.util.Log
 import java.lang.Math.PI
 import java.lang.Math.tan
 import java.nio.ShortBuffer

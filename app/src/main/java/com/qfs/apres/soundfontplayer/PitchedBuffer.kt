@@ -6,8 +6,9 @@ import java.nio.ShortBuffer
 import kotlin.math.abs
 import kotlin.math.min
 
-class PitchedBuffer(val data: ShortArray, val pitch: Float) {
+class PitchedBuffer(data: ShortArray, val pitch: Float) {
     val buffer = ShortBuffer.wrap(data)
+    private val buffer_size = data.size
     val size = (data.size.toFloat() / this.pitch).toInt()
     var cached_value: Short? = null
     var cached_position = 0
@@ -30,7 +31,8 @@ class PitchedBuffer(val data: ShortArray, val pitch: Float) {
         val pos = min((index.toFloat() * this.pitch).toInt(), this.size - 1)
         this.buffer.position(pos)
         if (this.pitch < 1F) {
-            this.cached_value = this.data[pos]
+            this.cached_value = this.buffer.get()
+            this.buffer.position(pos)
             this.cached_position = pos
         }
     }
@@ -59,13 +61,16 @@ class PitchedBuffer(val data: ShortArray, val pitch: Float) {
             this.cached_position = this.buffer.position()
         }
 
-        val next_position = if (this.cached_position < this.data.size - 1) {
+        val next_position = if (this.cached_position < this.buffer_size - 1) {
             this.cached_position + 1
         } else {
+            this.buffer.position(0)
             0
         }
 
-        val next_value = this.data[next_position]
+        val next_value = this.buffer.get()
+        this.buffer.position(this.cached_position)
+
         this.virtual_position += 1
 
         val weight = pitched_position - pitched_position.toInt()

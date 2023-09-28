@@ -55,6 +55,7 @@ class AudioTrackHandle {
                     shorts.size,
                     AudioTrack.WRITE_BLOCKING
                 )
+                this.audioTrack.flush()
             } catch (e: IllegalStateException) {
                 // Shouldn't need to do anything. the audio track was released and this should stop on its own
             }

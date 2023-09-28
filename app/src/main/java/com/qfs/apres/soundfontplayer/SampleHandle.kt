@@ -1,6 +1,5 @@
 package com.qfs.apres.soundfontplayer
 
-import android.util.Log
 import java.lang.Math.PI
 import java.lang.Math.tan
 import java.nio.ShortBuffer
@@ -15,7 +14,7 @@ class SampleHandle(
     var attack_frame_count: Int = 0,
     var hold_frame_count: Int = 0,
     var decay_frame_count: Int = 0,
-    var release_mask: Array<Double>,
+    var release_size: Float, // Is actually integer, but is only ever used in calculations as Float
     var max_values: Array<Float> = Array<Float>(0) { 0F },
     var pitch_shift: Float = 1F,
     var lfo_data: ShortArray?,
@@ -35,7 +34,7 @@ class SampleHandle(
         original.attack_frame_count,
         original.hold_frame_count,
         original.decay_frame_count,
-        original.release_mask,
+        original.release_size,
         original.max_values,
         original.pitch_shift,
         original.lfo_data,
@@ -52,7 +51,7 @@ class SampleHandle(
 //    var current_delay_position: Int = 0
     var decay_position: Int? = null
     var sustain_volume: Int = 0 // TODO
-    private var current_release_position: Int = 0
+    private var current_release_position: Float = 0F // Is actually integer, but is only ever used in calculations as Float
     var current_volume: Double = 0.5
     private var shorts_called: Int = 0 // running total
     var release_delay: Int? = null
@@ -99,8 +98,8 @@ class SampleHandle(
         }
 
         if (! this.is_pressed) {
-            if (this.current_release_position < this.release_mask.size) {
-                frame = (frame * this.release_mask[this.current_release_position]).toInt().toShort()
+            if (this.current_release_position < this.release_size) {
+                frame = (frame * (1F - (this.current_release_position / this.release_size)).toInt()).toShort()
                 this.current_release_position += 1
             } else {
                 this.is_dead = true

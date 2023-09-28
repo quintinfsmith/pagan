@@ -1,6 +1,5 @@
 package com.qfs.apres.soundfontplayer
 
-import android.util.Log
 import com.qfs.apres.event.BankSelect
 import com.qfs.apres.Midi
 import com.qfs.apres.event.MIDIEvent
@@ -17,7 +16,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import java.lang.Integer.sum
 import java.nio.IntBuffer
 import kotlin.concurrent.thread
 import kotlin.math.max
@@ -73,20 +71,6 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
             val buffer = IntBuffer.wrap(initial_array)
             this.generate_ts = System.currentTimeMillis()
 
-            var sample_sizes = mutableSetOf<Int>()
-            var sample_key_set = mutableSetOf<Int>()
-            for ((k, samples) in this.active_sample_handles) {
-                for (sample in samples) {
-                    if (sample_key_set.contains(sample.data.hashCode())) {
-                        continue
-                    }
-                    sample_key_set.add(sample.data.hashCode())
-                    sample_sizes.add(sample.data.size)
-                }
-            }
-            Log.d("AAA", "DAT SIZE: ${sample_sizes.sum()} | ${AudioTrackHandle.buffer_size}")
-            sample_sizes.clear()
-            sample_key_set.clear()
 
             var max_frame_value: Int = 0
             for (i in 0 until AudioTrackHandle.buffer_size) {
@@ -206,7 +190,6 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
                     (((v + mid).toFloat() * compression_ratio).toInt() - mid).toShort()
                 }
             }
-            Log.d("AAA", "CA: ${compressed_array.size}")
 
             this.frame +=  AudioTrackHandle.buffer_size
             this.generate_ts = null
@@ -358,6 +341,7 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
 
         audio_track_handle.play()
         val mutex = Mutex()
+        val that = this
         runBlocking {
             var done_building_chunks = false
             launch(newSingleThreadContext("A")) {

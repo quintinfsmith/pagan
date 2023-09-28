@@ -52,7 +52,8 @@ class ColumnRecyclerAdapter(val recycler: ColumnRecycler, editor_table: EditorTa
         // Need to remove the view (CellRecycler, see ColumnPlaceholder.replace())
         // so that if something changes between being bound and attached, the
         // recycler doesn't try to reattach LeafButtons
-        //(holder.itemView as ViewGroup).removeAllViews()
+
+        //ColumnPlaceholder(holder, holder.itemView.measuredWidth)
     }
 
 

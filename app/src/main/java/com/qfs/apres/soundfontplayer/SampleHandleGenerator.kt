@@ -113,7 +113,6 @@ class SampleHandleGenerator {
             null
         }
 
-        val release_mask_size = ((AudioTrackHandle.sample_rate.toDouble() * vol_env_release)).toInt()
 
         val max_values = mutableListOf<Short>()
         data.forEachIndexed { i: Int, frame: Short ->
@@ -151,9 +150,7 @@ class SampleHandleGenerator {
             attack_frame_count = ((AudioTrackHandle.sample_rate.toDouble() * vol_env_attack )).toInt(),
             hold_frame_count = ((AudioTrackHandle.sample_rate.toDouble() * vol_env_hold )).toInt(),
             decay_frame_count = ((AudioTrackHandle.sample_rate.toDouble() * vol_env_decay )).toInt(),
-            release_mask = Array(release_mask_size) { i ->
-                (release_mask_size - i - 1).toDouble() / release_mask_size.toDouble()
-            },
+            release_size = ((AudioTrackHandle.sample_rate.toDouble() * vol_env_release)).toFloat(),
             max_values = max_values_floats,
             //filter_cutoff = sample.filter_cutoff ?: instrument.filter_cutoff
             //filter_cutoff = (20 .. 20000).random()

@@ -918,11 +918,23 @@ open class HistoryLayer : LinksLayer() {
 
     override fun link_beat_range_horizontally(channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey) {
         this.history_cache.remember {
+            val (from_key, to_key) = this.get_ordered_beat_key_pair(first_key, second_key)
+            if (from_key.channel != channel || from_key.line_offset != line_offset || from_key.beat != 0) {
+                throw BadRowLink(from_key, channel, line_offset)
+            }
+
             val y_top = this.get_abs_offset(first_key.channel, first_key.line_offset)
             val y_bottom = this.get_abs_offset(second_key.channel, second_key.line_offset)
             val y_link_top = this.get_abs_offset(channel, line_offset)
             val y_link_bottom = y_link_top + (y_bottom - y_top)
-            val (bottom_channel, bottom_line_offset) = this.get_std_offset(y_link_bottom)
+
+
+            val (bottom_channel, bottom_line_offset) = try {
+                this.get_std_offset(y_link_bottom)
+            } catch (e: IndexOutOfBoundsException) {
+                throw LinksLayer.BadRowLink(first_key, channel, line_offset)
+            }
+
             val clear_beat_key_top = BeatKey(channel, line_offset, 0)
             val clear_beat_key_bottom = BeatKey(bottom_channel, bottom_line_offset, this.opus_beat_count -1)
 

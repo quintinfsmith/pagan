@@ -57,6 +57,7 @@ class MainActivity : AppCompatActivity() {
     private var midi_playback_device: SoundFontWavPlayer? = null
     private var soundfont: SoundFont? = null
     var active_percussion_names = HashMap<Int, String>()
+    private var _navigating = false
 
     private var opus_manager = OpusManager(this)
 
@@ -555,6 +556,10 @@ class MainActivity : AppCompatActivity() {
         findViewById<DrawerLayout>(R.id.drawer_layout).closeDrawers()
     }
     fun navTo(fragmentName: String) {
+        if (this._navigating) {
+            return
+        }
+        this._navigating = true
         val navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main)
         val fragment = navHost?.childFragmentManager?.fragments?.get(0)
         val navController = findNavController(R.id.nav_host_fragment_content_main)
@@ -612,6 +617,7 @@ class MainActivity : AppCompatActivity() {
             }
             else -> {}
         }
+        this._navigating = false
     }
 
     fun getActiveFragment(): Fragment? {
@@ -857,9 +863,11 @@ class MainActivity : AppCompatActivity() {
         }
 
         var blocker_view = this.findViewById<LinearLayout>(R.id.llClearOverlay)
-        blocker_view.visibility = View.VISIBLE
-        blocker_view.setOnClickListener {
-            this.stop_playback()
+        if (blocker_view != null) {
+            blocker_view.visibility = View.VISIBLE
+            blocker_view.setOnClickListener {
+                this.stop_playback()
+            }
         }
 
         this.runOnUiThread {
@@ -923,7 +931,8 @@ class MainActivity : AppCompatActivity() {
         this.playback_handle!!.stop()
         this.playback_handle = null
 
-        var blocker_view = this.findViewById<LinearLayout>(R.id.llClearOverlay)
+        var blocker_view = this.findViewById<LinearLayout>(R.id.llClearOverlay) ?: return
+
         blocker_view.visibility = View.GONE
     }
 

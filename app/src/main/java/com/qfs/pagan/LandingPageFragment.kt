@@ -26,6 +26,7 @@ class LandingPageFragment : PaganFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
         val btn_newProject = view.findViewById<View>(R.id.btnFrontNew)
         val btn_loadProject = view.findViewById<View>(R.id.btnFrontLoad)
         val btn_importMidi = view.findViewById<View>(R.id.btnFrontImport)
@@ -118,7 +119,6 @@ class LandingPageFragment : PaganFragment() {
                 )
                 this.get_main().navTo("license")
             }
-
         }
     }
 

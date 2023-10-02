@@ -3,7 +3,6 @@ package com.qfs.pagan
 import android.content.Context
 import android.os.Parcelable
 import android.util.AttributeSet
-import android.util.Log
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
@@ -117,7 +116,6 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         for (y in 0 until opus_manager.get_total_line_count()) {
             line_label_adapter.add_label(y)
         }
-
     }
 
     fun init_column_width_map() {

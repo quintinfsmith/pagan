@@ -7,7 +7,6 @@ import android.database.Cursor
 import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
@@ -57,7 +56,6 @@ class MainActivity : AppCompatActivity() {
     private var midi_playback_device: SoundFontWavPlayer? = null
     private var soundfont: SoundFont? = null
     var active_percussion_names = HashMap<Int, String>()
-    private var _navigating = false
 
     private var opus_manager = OpusManager(this)
 
@@ -556,10 +554,6 @@ class MainActivity : AppCompatActivity() {
         findViewById<DrawerLayout>(R.id.drawer_layout).closeDrawers()
     }
     fun navTo(fragmentName: String) {
-        if (this._navigating) {
-            return
-        }
-        this._navigating = true
         val navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main)
         val fragment = navHost?.childFragmentManager?.fragments?.get(0)
         val navController = findNavController(R.id.nav_host_fragment_content_main)
@@ -568,56 +562,71 @@ class MainActivity : AppCompatActivity() {
         } else {
             this.lockDrawer()
         }
-        when (fragment) {
-            is LoadFragment -> {
-                when (fragmentName) {
-                    "main" -> {
-                        if (this.has_seen_front_page) {
-                            navController.navigate(R.id.action_LoadFragment_to_EditorFragment2)
-                        } else {
-                            navController.navigate(R.id.action_LoadFragment_to_EditorFragment)
-                        }
-                    }
-                    else -> {}
-                }
-                this.has_seen_front_page = true
-
-            }
-            is EditorFragment -> {
-                when (fragmentName) {
-                    "load" -> {
-                        navController.navigate(R.id.action_EditorFragment_to_LoadFragment)
-                    }
-                    "settings" -> {
-                        navController.navigate(R.id.action_EditorFragment_to_SettingsFragment)
-                    }
-                    else -> {}
-                }
-            }
-            is LandingPageFragment -> {
-                navController.navigate(
+        try {
+            when (fragment) {
+                is LoadFragment -> {
                     when (fragmentName) {
                         "main" -> {
-                            this.has_seen_front_page = true
-                            R.id.action_FrontFragment_to_EditorFragment
+                            if (this.has_seen_front_page) {
+                                navController.navigate(R.id.action_LoadFragment_to_EditorFragment2)
+                            } else {
+                                navController.navigate(R.id.action_LoadFragment_to_EditorFragment)
+                            }
                         }
-                        "load" -> {
-                            R.id.action_FrontFragment_to_LoadFragment
-                        }
-                        "license" -> {
-                            R.id.action_FrontFragment_to_LicenseFragment
-                        }
-                        "settings" -> {
-                            R.id.action_FrontFragment_to_SettingsFragment
-                        }
-                        else -> { return }
-                    }
-                )
 
+                        else -> {}
+                    }
+                    this.has_seen_front_page = true
+
+                }
+
+                is EditorFragment -> {
+                    when (fragmentName) {
+                        "load" -> {
+                            navController.navigate(R.id.action_EditorFragment_to_LoadFragment)
+                        }
+
+                        "settings" -> {
+                            navController.navigate(R.id.action_EditorFragment_to_SettingsFragment)
+                        }
+
+                        else -> {}
+                    }
+                }
+
+                is LandingPageFragment -> {
+                    navController.navigate(
+                        when (fragmentName) {
+                            "main" -> {
+                                this.has_seen_front_page = true
+                                R.id.action_FrontFragment_to_EditorFragment
+                            }
+
+                            "load" -> {
+                                R.id.action_FrontFragment_to_LoadFragment
+                            }
+
+                            "license" -> {
+                                R.id.action_FrontFragment_to_LicenseFragment
+                            }
+
+                            "settings" -> {
+                                R.id.action_FrontFragment_to_SettingsFragment
+                            }
+
+                            else -> {
+                                return
+                            }
+                        }
+                    )
+
+                }
+
+                else -> {}
             }
-            else -> {}
+        } catch (e: java.lang.IllegalArgumentException) {
+            // pass
         }
-        this._navigating = false
     }
 
     fun getActiveFragment(): Fragment? {

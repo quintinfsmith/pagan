@@ -31,6 +31,7 @@
                 android:textColor="?attr/soundfont_warning_text" />
 
             <TextView
+                android:clickable="true"
                 android:id="@+id/tvFluidUrlLanding"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -57,6 +58,7 @@
         app:layout_constraintStart_toStartOf="parent">
 
         <TextView
+            android:clickable="true"
             android:id="@+id/btnFrontNew"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -65,6 +67,7 @@
             android:theme="@style/button_front" />
 
         <TextView
+            android:clickable="true"
             android:id="@+id/btnFrontLoad"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -73,6 +76,7 @@
             android:theme="@style/button_front" />
 
         <TextView
+            android:clickable="true"
             android:id="@+id/btnFrontImportProject"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -81,6 +85,7 @@
             android:theme="@style/button_front" />
 
         <TextView
+            android:clickable="true"
             android:id="@+id/btnFrontImport"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -89,6 +94,7 @@
             android:theme="@style/button_front" />
 
         <TextView
+            android:clickable="true"
             android:id="@+id/btnFrontSettings"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -97,6 +103,7 @@
             android:theme="@style/button_front" />
 
         <TextView
+            android:clickable="true"
             android:id="@+id/linkLicense"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -106,6 +113,7 @@
             android:theme="@style/front_text" />
 
         <TextView
+            android:clickable="true"
             android:id="@+id/linkSource"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -115,6 +123,7 @@
             android:theme="@style/front_text" />
 
         <TextView
+            android:clickable="true"
             android:id="@+id/linkSFLicense"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

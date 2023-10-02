@@ -12,7 +12,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.qfs.pagan.opusmanager.LinksLayer
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
-class LineLabelView(var viewHolder: RecyclerView.ViewHolder): LinearLayout(ContextThemeWrapper(viewHolder.itemView.context, R.style.line_label_outer)) {
+class LineLabelView(var viewHolder: RecyclerView.ViewHolder): LinearLayout(ContextThemeWrapper(viewHolder.itemView.context, R.style.line_label_outer)),
+    View.OnTouchListener {
     class InnerView(context: Context): androidx.appcompat.widget.AppCompatTextView(ContextThemeWrapper(context, R.style.line_label_inner)) {
         override fun onCreateDrawableState(extraSpace: Int): IntArray? {
             val drawableState = super.onCreateDrawableState(extraSpace + 2)
@@ -31,66 +32,16 @@ class LineLabelView(var viewHolder: RecyclerView.ViewHolder): LinearLayout(Conte
      * update_queued exists to handle the liminal state between being detached and being destroyed
      * If the cursor is pointed to a location in this space, but changed, then the recycler view doesn't handle it normally
      */
-    var update_queued = false
+    private var update_queued = false
     init {
         this.addView(this.textView)
         (this.viewHolder.itemView as ViewGroup).removeAllViews()
         (this.viewHolder.itemView as ViewGroup).addView(this)
-
         this.setOnClickListener {
-            val opus_manager = this.get_opus_manager()
-            val (channel, line_offset) = this.get_row()
-            val cursor = opus_manager.cursor
-            if (cursor.is_linking_range()) {
-                val first_key = cursor.range!!.first
-                try {
-                    opus_manager.link_beat_range_horizontally(
-                        channel,
-                        line_offset,
-                        first_key,
-                        cursor.range!!.second
-                    )
-                } catch (e: LinksLayer.BadRowLink) {
-                    // TODO: Feedback
-                    //(this.context as MainActivity).feedback_msg("Can only row-link from first beat")
-                }
-                cursor.is_linking = false
-                opus_manager.cursor_select(first_key, opus_manager.get_first_position(first_key))
-            } else if (cursor.is_linking) {
-                val beat_key = opus_manager.cursor.get_beatkey()
-                try {
-                    opus_manager.link_row(channel, line_offset, beat_key)
-                } catch (e: LinksLayer.BadRowLink) {
-                    // TODO: Feedback
-                    //(this.context as MainActivity).feedback_msg("Can only row-link from first beat")
-                }
-                cursor.is_linking = false
-                opus_manager.cursor_select(beat_key, opus_manager.get_first_position(beat_key))
-            } else {
-                opus_manager.cursor_select_row(channel, line_offset)
-            }
+            this.on_click()
         }
 
-
-        this.setOnTouchListener { view: View, touchEvent: MotionEvent ->
-            val adapter = (view as LineLabelView).get_adapter()
-            if (touchEvent.action == MotionEvent.ACTION_MOVE) {
-                val (channel, line_offset) = view.get_std_position()
-                if (!adapter.is_dragging()) {
-                    adapter.set_dragging_line(channel, line_offset)
-                    view.startDragAndDrop(
-                        null,
-                        View.DragShadowBuilder(view),
-                        null,
-                        0
-                    )
-                    return@setOnTouchListener true
-                }
-            } else if (touchEvent.action == MotionEvent.ACTION_DOWN) {
-                adapter.stop_dragging()
-            }
-            false
-        }
+        this.setOnTouchListener(this)
 
         this.setOnDragListener { view: View, dragEvent: DragEvent ->
             val adapter = (view as LineLabelView).get_adapter()
@@ -100,19 +51,21 @@ class LineLabelView(var viewHolder: RecyclerView.ViewHolder): LinearLayout(Conte
                         val (from_channel, from_line) = adapter.dragging_position!!
                         val (to_channel, to_line) = view.get_std_position()
                         val opus_manager = this.get_opus_manager()
-                        opus_manager.move_line(
-                            from_channel,
-                            from_line,
-                            to_channel,
-                            to_line
-                        )
-
+                        if (from_channel != to_channel || from_line != to_line) {
+                            opus_manager.move_line(
+                                from_channel,
+                                from_line,
+                                to_channel,
+                                to_line
+                            )
+                        }
                     }
                     adapter.stop_dragging()
                 }
                 DragEvent.ACTION_DRAG_ENDED -> {
                     adapter.stop_dragging()
                 }
+                DragEvent.ACTION_DRAG_STARTED -> { }
                 else -> { }
             }
             true
@@ -191,5 +144,65 @@ class LineLabelView(var viewHolder: RecyclerView.ViewHolder): LinearLayout(Conte
 
     fun get_std_position(): Pair<Int, Int> {
         return this.get_opus_manager().get_std_offset(this.get_position())
+    }
+
+    override fun onTouch(view: View?, touchEvent: MotionEvent?): Boolean {
+        val adapter = (view as LineLabelView).get_adapter()
+
+        return if (touchEvent == null) {
+            true
+        } else if (touchEvent.action == MotionEvent.ACTION_MOVE) {
+            val (channel, line_offset) = view.get_std_position()
+            if (!adapter.is_dragging()) {
+                adapter.set_dragging_line(channel, line_offset)
+                view.startDragAndDrop(
+                    null,
+                    View.DragShadowBuilder(view),
+                    null,
+                    0
+                )
+            }
+            true
+        } else if (touchEvent.action == MotionEvent.ACTION_DOWN) {
+            adapter.stop_dragging()
+            true
+        } else {
+            performClick()
+        }
+    }
+
+    private fun on_click() {
+        val opus_manager = this.get_opus_manager()
+        val (channel, line_offset) = this.get_row()
+
+        val cursor = opus_manager.cursor
+        if (cursor.is_linking_range()) {
+            val first_key = cursor.range!!.first
+            try {
+                opus_manager.link_beat_range_horizontally(
+                    channel,
+                    line_offset,
+                    first_key,
+                    cursor.range!!.second
+                )
+            } catch (e: LinksLayer.BadRowLink) {
+                // TODO: Feedback
+                //(this.context as MainActivity).feedback_msg("Can only row-link from first beat")
+            }
+            cursor.is_linking = false
+            opus_manager.cursor_select(first_key, opus_manager.get_first_position(first_key))
+        } else if (cursor.is_linking) {
+            val beat_key = opus_manager.cursor.get_beatkey()
+            try {
+                opus_manager.link_row(channel, line_offset, beat_key)
+            } catch (e: LinksLayer.BadRowLink) {
+                // TODO: Feedback
+                //(this.context as MainActivity).feedback_msg("Can only row-link from first beat")
+            }
+            cursor.is_linking = false
+            opus_manager.cursor_select(beat_key, opus_manager.get_first_position(beat_key))
+        } else {
+            opus_manager.cursor_select_row(channel, line_offset)
+        }
     }
 }

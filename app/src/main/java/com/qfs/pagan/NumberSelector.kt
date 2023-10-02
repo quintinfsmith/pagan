@@ -2,6 +2,7 @@ package com.qfs.pagan
 
 import android.content.Context
 import android.util.AttributeSet
+import android.view.Gravity.BOTTOM
 import android.view.Gravity.CENTER
 import android.widget.LinearLayout
 import androidx.appcompat.view.ContextThemeWrapper
@@ -19,7 +20,11 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
         androidx.appcompat.widget.AppCompatTextView(
             ContextThemeWrapper(
                 numberSelector.context,
-                R.style.numberSelector
+                if (numberSelector.orientation == VERTICAL) {
+                    R.style.numberSelectorVertical
+                } else {
+                    R.style.numberSelectorHorizontal
+                }
             )
         ) {
         private var bkp_text: String = get_number_string(this.value, 12,1)
@@ -44,9 +49,9 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
 
 
         override fun onLayout(isChanged: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
-            super.onLayout(isChanged, left, top, right, bottom)
             this.text = this.bkp_text
-            this.gravity = CENTER
+            this.gravity = BOTTOM
+            super.onLayout(isChanged, left, top, right, bottom)
         }
 
         fun setActive(value: Boolean) {
@@ -69,6 +74,17 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
 
     override fun onLayout(isChanged: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         super.onLayout(isChanged, left, top, right, bottom)
+        when (this.orientation) {
+            VERTICAL -> {
+                this.layout_vertical(isChanged, left, top, right, bottom)
+            }
+            HORIZONTAL -> {
+                this.layout_horizontal(isChanged, left, top, right, bottom)
+            }
+        }
+    }
+
+    fun layout_horizontal(isChanged: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         if (this.childCount > 0) {
             val scale = resources.displayMetrics.density
             val margin = (2 * scale + 0.5f).toInt()
@@ -94,10 +110,44 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
                     offset,
                     0,
                     offset + working_width,
-                    bottom - top
+                    bottom
                 )
 
                 total_width += working_width
+            }
+        }
+    }
+
+    fun layout_vertical(isChanged: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
+        if (this.childCount > 0) {
+            val scale = resources.displayMetrics.density
+            val margin = (2 * scale + 0.5f).toInt()
+
+            var available_space = ((bottom - top) - (this.paddingTop + this.paddingBottom))
+            available_space -= (this.childCount - 1) * margin
+
+            val height = available_space / this.childCount
+            var remainder = available_space % this.childCount
+            var total_height = 0
+
+            for (i in 0 until this.childCount) {
+                val view = this.getChildAt(i)
+                var working_height = height
+
+                if (remainder > 0) {
+                    working_height += 1
+                    remainder -= 1
+                }
+
+                val offset = this.paddingTop + (i * margin) + total_height
+                view.layout(
+                    0,
+                    offset,
+                    right,
+                    offset + working_height
+                )
+
+                total_height += working_height
             }
         }
     }
@@ -166,7 +216,11 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
     private fun populate() {
         for (i in this.min .. this.max) {
             val currentView = NumberSelectorButton(this, i)
-            this.addView(currentView)
+            if (this.orientation == VERTICAL) {
+                this.addView(currentView, 0)
+            } else {
+                this.addView(currentView)
+            }
             this.button_map[currentView] = i
         }
     }

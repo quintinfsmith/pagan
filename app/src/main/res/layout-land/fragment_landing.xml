@@ -81,20 +81,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
 
-        <TextView
-            android:id="@+id/btnFrontNew"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="New Project"
-            android:theme="@style/button_front" />
-
-        <TextView
-            android:id="@+id/btnFrontLoad"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Load Project"
-            android:theme="@style/button_front" />
-
         <Space
             android:layout_height="0dp"
             android:layout_width="match_parent"
@@ -116,6 +102,21 @@
         android:layout_height="match_parent"
         android:layout_weight="1"
         android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/btnFrontNew"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="New Project"
+            android:theme="@style/button_front" />
+
+        <TextView
+            android:id="@+id/btnFrontLoad"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Load Project"
+            android:theme="@style/button_front" />
+
 
         <TextView
             android:id="@+id/btnFrontImportProject"

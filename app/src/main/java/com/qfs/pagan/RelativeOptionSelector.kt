@@ -100,13 +100,24 @@ class RelativeOptionSelector(context: Context, attrs: AttributeSet) : LinearLayo
         this.itemList.forEachIndexed { i, string_index ->
             val currentView = RelativeOptionSelectorButton(this, string_index)
             this.addView(currentView)
-            (currentView.layoutParams as LayoutParams).apply {
-                height = 0
-                weight = 1f
-                width = MATCH_PARENT
-            }
-            if (i == 1) {
-                (currentView.layoutParams as MarginLayoutParams).setMargins(0, 5, 0, 5)
+            if (this.orientation == HORIZONTAL) {
+                (currentView.layoutParams as LayoutParams).apply {
+                    height = MATCH_PARENT
+                    weight = 1f
+                    width = 41
+                }
+                if (i == 1) {
+                    (currentView.layoutParams as MarginLayoutParams).setMargins(5, 0, 5, 0)
+                }
+            } else {
+                (currentView.layoutParams as LayoutParams).apply {
+                    height = 0
+                    weight = 1f
+                    width = MATCH_PARENT
+                }
+                if (i == 1) {
+                    (currentView.layoutParams as MarginLayoutParams).setMargins(0, 5, 0, 5)
+                }
             }
 
             this.button_map[currentView] = i

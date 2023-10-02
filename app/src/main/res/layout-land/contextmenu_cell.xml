@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="horizontal"
+    android:layout_width="wrap_content"
+    android:layout_height="match_parent">
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <LinearLayout
+                android:id="@+id/clButtons"
+                android:orientation="vertical"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:paddingEnd="@dimen/normal_padding"
+                android:paddingStart="@dimen/normal_padding">
+
+                <ImageView
+                    android:id="@+id/btnSplit"
+                    android:theme="@style/icon_button"
+                    android:layout_weight="1"
+                    android:layout_height="0dp"
+                    android:layout_width="wrap_content"
+                    android:text="Split"
+                    android:contentDescription="@string/cd_split"
+                    app:srcCompat="@drawable/split"/>
+
+                <ImageView
+                    android:id="@+id/btnInsert"
+                    android:layout_weight="1"
+                    android:layout_height="0dp"
+                    android:layout_width="wrap_content"
+                    android:contentDescription="@string/cd_insert"
+                    android:text="Insert"
+                    android:theme="@style/icon_button"
+                    app:srcCompat="@drawable/insert" />
+
+                <ImageView
+                    android:id="@+id/btnRemove"
+                    android:layout_weight="1"
+                    android:layout_height="0dp"
+                    android:layout_width="wrap_content"
+                    android:contentDescription="@string/cd_remove"
+                    android:text="Remove"
+                    android:theme="@style/icon_button"
+                    app:srcCompat="@drawable/remove" />
+
+                <ImageView
+                    android:id="@+id/btnUnset"
+                    android:layout_weight="1"
+                    android:layout_height="0dp"
+                    android:layout_width="wrap_content"
+                    android:contentDescription="@string/cd_unset"
+                    android:text="Unset"
+                    android:theme="@style/icon_button"
+                    app:srcCompat="@drawable/unset" />
+
+                <TextView
+                    android:id="@+id/btnDuration"
+                    android:layout_height="0dp"
+                    android:layout_width="match_parent"
+                    android:layout_weight="1"
+                    android:theme="@style/icon_button"
+                    android:text="T" />
+                </LinearLayout>
+
+                <com.qfs.pagan.NumberSelector xmlns:android="http://schemas.android.com/apk/res/android"
+                    xmlns:custom="http://schemas.android.com/apk/res-auto"
+                    android:orientation="vertical"
+                    android:id="@+id/nsOctave"
+                    android:layout_width="41dp"
+                    android:layout_height="match_parent"
+                    android:paddingLeft="@dimen/normal_padding"
+                    android:paddingRight="@dimen/normal_padding"
+                    custom:min="0"
+                    custom:max="7"/>
+
+        </LinearLayout>
+        <com.qfs.pagan.RelativeOptionSelector
+            android:orientation="horizontal"
+            android:id="@+id/rosRelativeOption"
+            android:minHeight="@dimen/relative_option_width"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/relative_option_width" />
+
+    </LinearLayout>
+
+    <com.qfs.pagan.NumberSelector xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:custom="http://schemas.android.com/apk/res-auto"
+        android:orientation="vertical"
+        android:id="@+id/nsOffset"
+        android:layout_width="41dp"
+        android:layout_height="match_parent"
+        android:paddingLeft="@dimen/normal_padding"
+        android:paddingRight="@dimen/normal_padding"
+        custom:min="0"
+        custom:max="11"/>
+</LinearLayout>

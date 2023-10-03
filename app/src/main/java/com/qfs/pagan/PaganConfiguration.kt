@@ -7,18 +7,18 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 
 @Serializable
-data class Configuration(
+data class PaganConfiguration(
     var soundfont: String? = null,
     var relative_mode: Boolean = false
 ) {
     companion object {
-        fun from_path(path: String): Configuration {
+        fun from_path(path: String): PaganConfiguration {
             val file = File(path)
             return if (file.exists()) {
                 val json_content = file.readText(Charsets.UTF_8)
                 Json.decodeFromString(json_content)
             } else {
-                Configuration()
+                PaganConfiguration()
             }
         }
     }

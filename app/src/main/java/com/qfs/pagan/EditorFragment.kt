@@ -1,8 +1,8 @@
 package com.qfs.pagan
 
 import android.app.AlertDialog
+import android.content.res.Configuration
 import android.os.Bundle
-import android.util.Log
 import android.view.*
 import android.widget.*
 import androidx.fragment.app.setFragmentResultListener
@@ -227,7 +227,7 @@ class EditorFragment : PaganFragment() {
         )
         val btnUnLink = view.findViewById<ImageView>(R.id.btnUnLink)
         val btnUnLinkAll = view.findViewById<ImageView>(R.id.btnUnLinkAll)
-        val btnCancelLink: TextView = view.findViewById(R.id.btnCancelLink)
+        val btnCancelLink: View = view.findViewById(R.id.btnCancelLink)
 
         val (is_networked, many_links) = if (opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Range) {
             var output = false
@@ -378,11 +378,21 @@ class EditorFragment : PaganFragment() {
                 this.interact_btnChoosePercussion()
             }
 
-            btnChoosePercussion.text = main.getString(
-                R.string.label_choose_percussion,
-                instrument,
-                main.get_drum_name(instrument) ?: "Drum Not Found"
-            )
+            if (this.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                // Need to call get_drum name to repopulate instrument list if needed
+                main.get_drum_name(instrument)
+                if (instrument < 10) {
+                    btnChoosePercussion.text = "!0$instrument"
+                } else {
+                    btnChoosePercussion.text = "!$instrument"
+                }
+            } else {
+                btnChoosePercussion.text = main.getString(
+                    R.string.label_choose_percussion,
+                    instrument,
+                    main.get_drum_name(instrument) ?: "Drum Not Found"
+                )
+            }
         }
 
         if (opus_manager.channels[channel].size == 1) {
@@ -424,6 +434,10 @@ class EditorFragment : PaganFragment() {
             true
         }
 
+        if (this.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            sbLineVolume.layoutParams.width = ((llContextMenu.measuredHeight - (btnRemoveLine.measuredHeight + btnInsertLine.measuredHeight)) * .6).toInt()
+        }
+
         sbLineVolume.progress = opus_manager.get_line_volume(channel, line_offset)
         sbLineVolume.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(p0: SeekBar, p1: Int, p2: Boolean) { }
@@ -432,6 +446,7 @@ class EditorFragment : PaganFragment() {
                 opus_manager.set_line_volume(channel, line_offset, seekbar.progress)
             }
         })
+
 
         llContextMenu.addView(view)
         this.active_context_menu_index = ContextMenu.Line

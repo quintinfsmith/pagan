@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <ImageButton
+        android:id="@+id/btnUnLink"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/button"
+        android:src="@drawable/unlink"
+        android:padding="8dp"
+        android:contentDescription="Remove Link" />
+
+    <ImageButton
+        android:id="@+id/btnUnLinkAll"
+        android:background="@drawable/button"
+        android:src="@drawable/unlinkall"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="8dp"
+        android:contentDescription="Remove All Links"/>
+
+    <ImageButton
+        android:id="@+id/btnCancelLink"
+        android:background="@drawable/button"
+        android:padding="8dp"
+        android:src="@drawable/baseline_arrow_back_24"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Cancel"/>
+</LinearLayout>

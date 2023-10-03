@@ -3,6 +3,7 @@ package com.qfs.pagan
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.Intent
+import android.content.res.Configuration
 import android.database.Cursor
 import android.net.Uri
 import android.os.Bundle
@@ -52,7 +53,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
     private lateinit var config_path: String
-    lateinit var configuration: Configuration
+    lateinit var configuration: PaganConfiguration
     private var midi_playback_device: SoundFontWavPlayer? = null
     private var soundfont: SoundFont? = null
     var active_percussion_names = HashMap<Int, String>()
@@ -113,6 +114,11 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+   override fun onConfigurationChanged(newConfig: Configuration) {
+       super.onConfigurationChanged(newConfig)
+       this.recreate()
+   }
+
     override fun onPause() {
         this.stop_playback()
         super.onPause()
@@ -151,7 +157,7 @@ class MainActivity : AppCompatActivity() {
             }
             old_config_file.delete()
         }
-        this.configuration = Configuration.from_path(this.config_path)
+        this.configuration = PaganConfiguration.from_path(this.config_path)
         this.binding = ActivityMainBinding.inflate(this.layoutInflater)
         setContentView(this.binding.root)
         setSupportActionBar(this.binding.appBarMain.toolbar)

@@ -1,4 +1,5 @@
 package com.qfs.pagan
+import android.content.res.Configuration
 import android.view.View
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
@@ -109,11 +110,22 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
         val btnChoosePercussion: TextView? = this.activity.findViewById(R.id.btnChoosePercussion)
         if (btnChoosePercussion != null) {
-            btnChoosePercussion.text = this.activity.getString(
-                R.string.label_choose_percussion,
-                instrument,
+            if (this.activity.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                // Need to call get_drum name to repopulate instrument list if needed
                 this.activity.get_drum_name(instrument)
-            )
+
+                if (instrument < 10) {
+                    btnChoosePercussion.text = "!0$instrument"
+                } else {
+                    btnChoosePercussion.text = "!$instrument"
+                }
+            } else {
+                btnChoosePercussion.text = this.activity.getString(
+                    R.string.label_choose_percussion,
+                    instrument,
+                    this.activity.get_drum_name(instrument)
+                )
+            }
             this.get_editor_table()?.update_line_label(this.channels.size - 1, line_offset)
         }
     }

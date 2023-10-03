@@ -30,7 +30,6 @@ class LandingPageFragment : PaganFragment() {
         val btn_newProject = view.findViewById<View>(R.id.btnFrontNew)
         val btn_loadProject = view.findViewById<View>(R.id.btnFrontLoad)
         val btn_importMidi = view.findViewById<View>(R.id.btnFrontImport)
-        val btn_importProject = view.findViewById<View>(R.id.btnFrontImportProject)
         val btn_settings = view.findViewById<View>(R.id.btnFrontSettings)
         val linkSource = view.findViewById<View>(R.id.linkSource)
         val btn_linkLicense = view.findViewById<View>(R.id.linkLicense)
@@ -56,13 +55,6 @@ class LandingPageFragment : PaganFragment() {
             this.get_main().navTo("license")
         }
 
-        btn_importProject.setOnClickListener {
-            val intent = Intent()
-                .setType("application/json")
-                .setAction(Intent.ACTION_GET_CONTENT)
-            this.get_main().import_project_intent_launcher.launch(intent)
-        }
-
         btn_newProject.setOnClickListener {
             this.setFragmentResult(IntentFragmentToken.New.name, bundleOf())
             this.get_main().navTo("main")
@@ -72,8 +64,21 @@ class LandingPageFragment : PaganFragment() {
             btn_loadProject.setOnClickListener {
                 this.get_main().navTo("load")
             }
+
+            btn_loadProject.setOnLongClickListener {
+                val intent = Intent()
+                    .setType("application/json")
+                    .setAction(Intent.ACTION_GET_CONTENT)
+                this.get_main().import_project_intent_launcher.launch(intent)
+                true
+            }
         } else {
-            btn_loadProject.visibility = View.GONE
+            btn_loadProject.setOnClickListener {
+                val intent = Intent()
+                    .setType("application/json")
+                    .setAction(Intent.ACTION_GET_CONTENT)
+                this.get_main().import_project_intent_launcher.launch(intent)
+            }
         }
 
         btn_importMidi.setOnClickListener {

@@ -77,15 +77,6 @@
 
         <TextView
             android:clickable="true"
-            android:id="@+id/btnFrontImportProject"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/btn_landing_import"
-            android:theme="@style/button_front" />
-
-        <TextView
-            android:clickable="true"
             android:id="@+id/btnFrontImport"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

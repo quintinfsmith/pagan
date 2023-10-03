@@ -282,9 +282,11 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             val editor_table = this.get_editor_table()
             val y = this.get_abs_offset(notify_index, 0)
 
+            var line_list = mutableListOf<OpusChannel.OpusLine>()
             for (i in 0 until lines) {
-                editor_table?.new_row(y + i, this.channels[notify_index].lines[i])
+                line_list.add(this.channels[notify_index].lines[i])
             }
+            editor_table?.new_channel_rows(y, line_list)
         }
     }
 
@@ -444,10 +446,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
         if (!this.simple_ui_locked()) {
             val editor_table = this.get_editor_table()
-
-            for (i in lines - 1 downTo 0) {
-                editor_table?.remove_row(y + i)
-            }
+            editor_table?.remove_channel_rows(y, lines)
         }
     }
 

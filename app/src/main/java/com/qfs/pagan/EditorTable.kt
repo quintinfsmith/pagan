@@ -174,6 +174,23 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         label_adapter.notifyItemRangeChanged(y, label_adapter.itemCount)
     }
 
+    fun new_channel_rows(y: Int, opus_lines: List<OpusChannel.OpusLine>) {
+        opus_lines.forEachIndexed { i: Int, line: OpusChannel.OpusLine ->
+            this.new_row(y + i, line)
+        }
+
+        val layout = this.line_label_recycler.layoutManager as LinearLayoutManager
+        val last_visible_row = layout.findLastVisibleItemPosition()
+
+        if (y + opus_lines.size > last_visible_row) {
+            return
+        }
+
+        (this.main_recycler.adapter as ColumnRecyclerAdapter).apply_to_visible_columns {
+            it.notifyItemRangeChanged(y + opus_lines.size, (last_visible_row + 1) - (y + opus_lines.size))
+        }
+    }
+
     fun remove_row(y: Int) {
         val label_adapter = this.line_label_recycler.adapter as LineLabelRecyclerAdapter
 
@@ -199,6 +216,23 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         label_adapter.remove_label(y)
         label_adapter.notifyItemRangeChanged(y, label_adapter.itemCount)
     }
+
+    fun remove_channel_rows(y: Int, count: Int) {
+        for (i in count - 1 downTo 0) {
+            this.remove_row(y + i)
+        }
+        val layout = this.line_label_recycler.layoutManager as LinearLayoutManager
+        val last_visible_row = layout.findLastVisibleItemPosition()
+
+        if (y > last_visible_row) {
+            return
+        }
+
+        (this.main_recycler.adapter as ColumnRecyclerAdapter).apply_to_visible_columns {
+            it.notifyItemRangeChanged(y, last_visible_row - y)
+        }
+    }
+
 
     fun new_column(index: Int) {
         val opus_manager = this.get_opus_manager()

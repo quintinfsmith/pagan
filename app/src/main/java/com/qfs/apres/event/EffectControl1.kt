@@ -1,7 +1,5 @@
 package com.qfs.apres.event
 
-import com.qfs.apres.event.CompoundEvent
-
 class EffectControl1(channel: Int, value: Int): CompoundEvent(channel, value) {
     override val controller = 0x64
 }

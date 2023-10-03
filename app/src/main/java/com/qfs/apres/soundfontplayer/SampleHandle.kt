@@ -48,23 +48,18 @@ class SampleHandle(
     private var current_hold_position: Int = 0
     private var current_decay_position: Int = 0
 
-//    var current_delay_position: Int = 0
-    var decay_position: Int? = null
-    var sustain_volume: Int = 0 // TODO
     private var current_release_position: Float = 0F // Is actually integer, but is only ever used in calculations as Float
     var current_volume: Double = 0.5
     private var shorts_called: Int = 0 // running total
-    var release_delay: Int? = null
-    var remove_delay: Int? = null
     var data_buffer = PitchedBuffer(this.data, this.pitch_shift)
     var lfo_buffer: ShortBuffer? = if (this.lfo_data == null) { null } else { ShortBuffer.wrap(this.lfo_data) }
     var lpf_previous: Double = 0.0
-
-
-    fun get_max_value(): Float {
-        var i = this.data_buffer.position() * this.max_values.size / this.data_buffer.size
-        return this.max_values[i] * this.current_volume.toFloat()
-    }
+    // TODO: Unimplimented
+    // var current_delay_position: Int = 0
+    // var decay_position: Int? = null
+    // var sustain_volume: Int = 0 // TODO
+    // var release_delay: Int? = null
+    // var remove_delay: Int? = null
 
     fun get_next_frame(): Short? {
         if (this.is_dead) {
@@ -82,7 +77,7 @@ class SampleHandle(
             return null
         }
         var frame = (this.data_buffer.get().toDouble() * this.attenuation * this.current_volume).toInt().toShort()
-        var lfo_frame = this.lfo_buffer?.get() ?: 0.toShort()
+        val lfo_frame = this.lfo_buffer?.get() ?: 0.toShort()
         if (this.lfo_buffer != null && this.lfo_buffer!!.position() >= this.lfo_data!!.size) {
             this.lfo_buffer!!.position(0)
         }
@@ -126,9 +121,6 @@ class SampleHandle(
 
     fun release_note() {
         this.is_pressed = false
-    }
-    fun kill_note() {
-        this.is_dead = true
     }
 }
 

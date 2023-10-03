@@ -1,18 +1,14 @@
 package com.qfs.apres.soundfontplayer
 
-import android.util.Log
-import java.nio.BufferUnderflowException
 import java.nio.ShortBuffer
-import kotlin.math.abs
 import kotlin.math.min
 
-class PitchedBuffer(data: ShortArray, val pitch: Float) {
-    val buffer = ShortBuffer.wrap(data)
-    private val buffer_size = data.size
+class PitchedBuffer(data: ShortArray, private val pitch: Float) {
+    private val buffer: ShortBuffer = ShortBuffer.wrap(data)
     val size = (data.size.toFloat() / this.pitch).toInt()
-    var cached_value: Short? = null
-    var cached_position = 0
-    var virtual_position: Int = 0
+    private var cached_value: Short? = null
+    private var cached_position = 0
+    private var virtual_position: Int = 0
     init {
         this.cached_position = 0
         this.virtual_position = 0
@@ -59,13 +55,6 @@ class PitchedBuffer(data: ShortArray, val pitch: Float) {
         if (pitched_position > this.cached_position) {
             this.cached_value = this.buffer.get()
             this.cached_position = this.buffer.position()
-        }
-
-        val next_position = if (this.cached_position < this.buffer_size - 1) {
-            this.cached_position + 1
-        } else {
-            this.buffer.position(0)
-            0
         }
 
         val next_value = this.buffer.get()

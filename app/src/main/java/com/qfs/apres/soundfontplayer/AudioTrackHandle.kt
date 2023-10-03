@@ -6,7 +6,6 @@ import android.media.AudioTrack
 import kotlin.math.max
 
 class AudioTrackHandle {
-    class HandleStoppedException() : Exception()
     companion object {
         const val sample_rate = 22050
 
@@ -19,7 +18,6 @@ class AudioTrackHandle {
             ) * 4
         )
         val buffer_size_in_bytes: Int = buffer_size * 4
-        private const val maxkey = 0xFFFFFFFF
     }
 
     private var audioTrack: AudioTrack = AudioTrack.Builder()

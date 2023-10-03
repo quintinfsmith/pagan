@@ -21,7 +21,7 @@ import kotlin.concurrent.thread
 import kotlin.math.max
 import kotlin.math.min
 
-class SoundFontWavPlayer(var sound_font: SoundFont) {
+class SoundFontWavPlayer(private var sound_font: SoundFont) {
     class PlaybackInterface() {
         var playing = true
         var stop_forced = false
@@ -29,10 +29,10 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
             this.stop_forced = true
         }
     }
-    class WaveGenerator(var player: SoundFontWavPlayer) {
+    class WaveGenerator(private var player: SoundFontWavPlayer) {
         var frame = 0
-        var active_sample_handles = HashMap<Pair<Int, Int>, MutableSet<SampleHandle>>()
-        var midi_events_by_frame = HashMap<Int, MutableList<MIDIEvent>>()
+        private var active_sample_handles = HashMap<Pair<Int, Int>, MutableSet<SampleHandle>>()
+        private var midi_events_by_frame = HashMap<Int, MutableList<MIDIEvent>>()
         var max_frame = 0
         var is_alive = true
         private var generate_ts: Long? = null
@@ -72,7 +72,7 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
             this.generate_ts = System.currentTimeMillis()
 
 
-            var max_frame_value: Int = 0
+            var max_frame_value = 0
             for (i in 0 until AudioTrackHandle.buffer_size) {
                 var left_frame = 0
                 var right_frame = 0
@@ -112,7 +112,7 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
                         }
 
                         // TODO: Implement ROM stereo modes
-                        var pan = sample_handle.pan
+                        val pan = sample_handle.pan
                         when (sample_handle.stereo_mode and 7) {
                             1 -> { // mono
                                 if (pan > 0) {
@@ -291,16 +291,16 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
         this.decache_unused_presets()
     }
 
-    fun decache_unused_presets() {
-        var loaded_preset_keys = this.loaded_presets.keys.toMutableSet()
-        for ((channel, key) in this.preset_channel_map) {
+    private fun decache_unused_presets() {
+        val loaded_preset_keys = this.loaded_presets.keys.toMutableSet()
+        for ((_, key) in this.preset_channel_map) {
             if (loaded_preset_keys.contains(key)) {
                 loaded_preset_keys.remove(key)
             }
         }
 
         for (key in loaded_preset_keys) {
-            var preset = this.loaded_presets[key]!!
+            val preset = this.loaded_presets[key]!!
             this.sample_handle_generator.decache_sample_data(preset)
             this.loaded_presets.remove(key)
         }
@@ -314,7 +314,7 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
         val wave_generator = WaveGenerator(this)
         wave_generator.parse_midi(midi)
 
-        var playback_interface = PlaybackInterface()
+        val playback_interface = PlaybackInterface()
         thread {
             this.controllable_play(
                 playback_interface,
@@ -327,7 +327,7 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
         return playback_interface
     }
 
-    fun controllable_play(playback_interface: PlaybackInterface, audio_track_handle: AudioTrackHandle, wave_generator: WaveGenerator, callback: (position: Float) -> Unit) {
+    private fun controllable_play(playback_interface: PlaybackInterface, audio_track_handle: AudioTrackHandle, wave_generator: WaveGenerator, callback: (position: Float) -> Unit) {
         val chunk_limit = 10
         val buffer_duration = AudioTrackHandle.buffer_size.toLong() * 1000.toLong() / AudioTrackHandle.sample_rate.toLong()
         val chunks = mutableListOf<Pair<ShortArray, Float>>()
@@ -341,7 +341,6 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
 
         audio_track_handle.play()
         val mutex = Mutex()
-        val that = this
         runBlocking {
             var done_building_chunks = false
             launch(newSingleThreadContext("A")) {
@@ -391,7 +390,7 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
                     val chunk = wave_generator.generate()
 
                     // TODO: This won't be 100% accurate due to samples' vol_env_release
-                    var generator_position = min(1F, wave_generator.frame.toFloat() / wave_generator.max_frame.toFloat())
+                    val generator_position = min(1F, wave_generator.frame.toFloat() / wave_generator.max_frame.toFloat())
 
                     mutex.withLock {
                         chunks.add(Pair(chunk, generator_position))
@@ -408,8 +407,8 @@ class SoundFontWavPlayer(var sound_font: SoundFont) {
     }
 
     fun play_note(channel: Int, note: Int, velocity: Int, duration: Int) {
-        var midi = Midi()
-        var ticks = max(1, (duration * 1000) / (500000 / midi.get_ppqn()))
+        val midi = Midi()
+        val ticks = max(1, (duration * 1000) / (500000 / midi.get_ppqn()))
         midi.insert_event(0, 0, NoteOn(channel, note, velocity))
         midi.insert_event(0, ticks, NoteOff(channel, note, 64))
         this.play(midi) {}

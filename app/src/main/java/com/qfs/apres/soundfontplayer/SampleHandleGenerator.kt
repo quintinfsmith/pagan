@@ -3,11 +3,8 @@ import com.qfs.apres.soundfont.InstrumentSample
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.soundfont.Preset
 import com.qfs.apres.soundfont.PresetInstrument
-import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.pow
-import kotlin.math.roundToInt
-import kotlin.math.sin
 
 class SampleHandleGenerator {
     // Hash ignores velocity since velocity isn't baked into sample data
@@ -21,18 +18,16 @@ class SampleHandleGenerator {
     var sample_data_map = HashMap<MapKey, SampleHandle>()
 
     fun get(event: NoteOn, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset): SampleHandle {
+        val map_key = this.cache_new(event, sample, instrument, preset)
+        return SampleHandle(this.sample_data_map[map_key]!!)
+    }
+
+    fun cache_new(event: NoteOn, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset): MapKey {
         val map_key = MapKey(event.note, sample.hashCode(), instrument.hashCode(), preset.hashCode())
         if (!sample_data_map.contains(map_key)) {
             this.sample_data_map[map_key] = this.generate_new(event, sample, instrument, preset)
         }
-        return SampleHandle(this.sample_data_map[map_key]!!)
-    }
-
-    fun cache_new(event: NoteOn, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset) {
-        val mapkey = MapKey(event.note, sample.hashCode(), instrument.hashCode(), preset.hashCode())
-        if (!sample_data_map.contains(mapkey)) {
-            this.sample_data_map[mapkey] = this.generate_new(event, sample, instrument, preset)
-        }
+        return map_key
     }
 
     fun generate_new(event: NoteOn, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset): SampleHandle {
@@ -91,27 +86,27 @@ class SampleHandleGenerator {
             ?: sample.vol_env_release
             ?: 0.0
 
-        val freq_mod_lfo: Double? = preset.global_zone?.mod_lfo_freq
-            ?: instrument.instrument?.global_sample?.mod_lfo_freq
-            ?: instrument.mod_lfo_freq
-            ?: sample.mod_lfo_freq
+        // TODO: Commenting out for now. lfo's aren't current being used
+        //val freq_mod_lfo: Double? = preset.global_zone?.mod_lfo_freq
+        //    ?: instrument.instrument?.global_sample?.mod_lfo_freq
+        //    ?: instrument.mod_lfo_freq
+        //    ?: sample.mod_lfo_freq
+        //val lfo_data: ShortArray? = if (freq_mod_lfo is Double) {
+        //    //val lfo_vol: Int = preset.global_zone?.mod_lfo_volume
+        //    //    ?: instrument.instrument?.global_sample?.mod_lfo_volume
+        //    //    ?: instrument.mod_lfo_volume
+        //    //    ?: sample.mod_lfo_volume
+        //    //    ?: 0
+        //    val level = .2
 
-        val lfo_data: ShortArray? = if (freq_mod_lfo is Double) {
-            //val lfo_vol: Int = preset.global_zone?.mod_lfo_volume
-            //    ?: instrument.instrument?.global_sample?.mod_lfo_volume
-            //    ?: instrument.mod_lfo_volume
-            //    ?: sample.mod_lfo_volume
-            //    ?: 0
-            val level = .2
-
-            val wave_length = AudioTrackHandle.sample_rate.toDouble() / freq_mod_lfo
-            ShortArray(wave_length.toInt()) { i: Int ->
-                val p = (i.toDouble() / wave_length)
-                (sin(p * PI) * level * 0x7FFF.toDouble()).toInt().toShort()
-            }
-        } else {
-            null
-        }
+        //    val wave_length = AudioTrackHandle.sample_rate.toDouble() / freq_mod_lfo
+        //    ShortArray(wave_length.toInt()) { i: Int ->
+        //        val p = (i.toDouble() / wave_length)
+        //        (sin(p * PI) * level * 0x7FFF.toDouble()).toInt().toShort()
+        //    }
+        //} else {
+        //    null
+        //}
 
 
         val max_values = mutableListOf<Short>()
@@ -174,12 +169,8 @@ class SampleHandleGenerator {
             }
         }
         for (mapkey in to_remove) {
-            this.sample_data_map.remove(mapkey)
+             this.sample_data_map.remove(mapkey)
         }
 
-    }
-
-    fun clear_cache() {
-        this.sample_data_map.clear()
     }
 }

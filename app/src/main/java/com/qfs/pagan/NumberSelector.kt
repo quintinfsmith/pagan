@@ -4,7 +4,9 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.Gravity.BOTTOM
 import android.view.Gravity.CENTER
+import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.appcompat.view.ContextThemeWrapper
 
 
@@ -15,24 +17,27 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
     private var active_button: NumberSelectorButton? = null
     private var on_change_hook: ((NumberSelector) -> Unit)? = null
 
-    class NumberSelectorButton// TODO: Handle any radix
-        (private var numberSelector: NumberSelector, var value: Int) :
-        androidx.appcompat.widget.AppCompatTextView(
-            ContextThemeWrapper(
-                numberSelector.context,
-                if (numberSelector.orientation == VERTICAL) {
-                    R.style.numberSelectorVertical
-                } else {
-                    R.style.numberSelectorHorizontal
-                }
-            )
-        ) {
+
+    // TODO: Handle any radix
+    class NumberSelectorButton(private var numberSelector: NumberSelector, var value: Int):
+        LinearLayout(ContextThemeWrapper( numberSelector.context, R.style.numberSelectorButton )) {
         private var bkp_text: String = get_number_string(this.value, 12,1)
         private val STATE_ACTIVE = intArrayOf(R.attr.state_active)
         private var state_active: Boolean = false
+        private val text_view = TextView(
+            ContextThemeWrapper(
+                numberSelector.context,
+                if (numberSelector.orientation == VERTICAL) {
+                    R.style.numberSelectorTextVertical
+                } else {
+                    R.style.numberSelectorTextHorizontal
+                }
+            )
+        )
 
         init {
-            this.text = this.bkp_text
+            this.text_view.text = this.bkp_text
+            this.addView(this.text_view)
             this.setOnClickListener {
                 this.numberSelector.set_active_button(this)
                 this.setActive(true)
@@ -49,9 +54,10 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
 
 
         override fun onLayout(isChanged: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
-            this.text = this.bkp_text
-            this.gravity = BOTTOM
+            this.text_view.text = this.bkp_text
             super.onLayout(isChanged, left, top, right, bottom)
+            this.text_view.width = right - left
+            this.text_view.height = bottom - top
         }
 
         fun setActive(value: Boolean) {
@@ -110,7 +116,7 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
                     offset,
                     0,
                     offset + working_width,
-                    bottom
+                    (bottom - top)
                 )
 
                 total_width += working_width
@@ -214,6 +220,7 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
     }
 
     private fun populate() {
+        var that = this
         for (i in this.min .. this.max) {
             val currentView = NumberSelectorButton(this, i)
             if (this.orientation == VERTICAL) {
@@ -221,6 +228,16 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
             } else {
                 this.addView(currentView)
             }
+
+            currentView.layoutParams.apply {
+                if (that.orientation == VERTICAL) {
+                    width = MATCH_PARENT
+                } else {
+                    height = MATCH_PARENT
+                }
+                gravity = CENTER
+            }
+
             this.button_map[currentView] = i
         }
     }

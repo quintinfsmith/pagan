@@ -83,12 +83,12 @@
                     android:paddingRight="@dimen/normal_padding"
                     custom:min="0"
                     custom:max="7"/>
-
         </LinearLayout>
         <com.qfs.pagan.RelativeOptionSelector
             android:orientation="horizontal"
             android:id="@+id/rosRelativeOption"
             android:minHeight="@dimen/relative_option_width"
+            android:padding="@dimen/normal_padding"
             android:layout_width="match_parent"
             android:layout_height="@dimen/relative_option_width" />
 

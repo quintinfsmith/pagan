@@ -1,8 +1,6 @@
 package com.qfs.pagan.opusmanager
-import android.util.Log
 import com.qfs.apres.Midi
 import com.qfs.pagan.structure.OpusTree
-import kotlin.math.max
 import kotlin.math.min
 
 
@@ -53,7 +51,6 @@ open class HistoryLayer : LinksLayer() {
                 this.cancel_multi()
                 throw e
             }
-            this.check_size()
         }
 
         // Run a callback with logging history
@@ -184,7 +181,7 @@ open class HistoryLayer : LinksLayer() {
                 }
 
                 HistoryToken.RESTORE_LINK_POOLS -> {
-                    var pools = this.checked_cast<List<Set<BeatKey>>>(current_node.args[0])
+                    val pools = this.checked_cast<List<Set<BeatKey>>>(current_node.args[0])
                     this.link_pools.clear()
                     this.link_pool_map.clear()
                     pools.forEachIndexed { i: Int, pool: Set<BeatKey> ->
@@ -277,12 +274,12 @@ open class HistoryLayer : LinksLayer() {
                 }
 
                 HistoryToken.REMOVE_CHANNEL -> {
-                    var uuid = current_node.args[0] as Int
+                    val uuid = current_node.args[0] as Int
                     this.remove_channel_by_uuid(uuid)
                 }
 
                 HistoryToken.NEW_CHANNEL -> {
-                    var channel = current_node.args[0] as Int
+                    val channel = current_node.args[0] as Int
                     this.new_channel(
                         channel = channel,
                         uuid = current_node.args[1] as Int
@@ -332,7 +329,7 @@ open class HistoryLayer : LinksLayer() {
                 HistoryToken.SET_EVENT_DURATION -> {
                     this.set_duration(
                         current_node.args[0] as BeatKey,
-                        current_node.args[1] as List<Int>,
+                        this.checked_cast<List<Int>>(current_node.args[1]),
                         current_node.args[2] as Int
                     )
                 }
@@ -419,7 +416,7 @@ open class HistoryLayer : LinksLayer() {
                 try {
                     this.remove_line(
                         channel,
-                        kotlin.math.min(line_offset, this.channels[channel].size - 1)
+                        min(line_offset, this.channels[channel].size - 1)
                     )
                 } catch (e: OpusChannel.LastLineException) {
                     break
@@ -430,7 +427,7 @@ open class HistoryLayer : LinksLayer() {
 
     override fun remove_line(channel: Int, line_offset: Int): OpusChannel.OpusLine {
         return this.history_cache.remember {
-            var line = super.remove_line(channel, line_offset)
+            val line = super.remove_line(channel, line_offset)
             this.push_rebuild_line(channel, line_offset, line)
             line
         }
@@ -638,7 +635,7 @@ open class HistoryLayer : LinksLayer() {
 
     private fun push_rebuild_channel(channel: Int) {
         this.history_cache.remember {
-            var line_count = this.channels[channel].lines.size
+            val line_count = this.channels[channel].lines.size
             // Will be an extra empty line that needs to be removed
             this.push_remove_line(channel, line_count)
             for (i in line_count - 1 downTo 0) {
@@ -705,10 +702,6 @@ open class HistoryLayer : LinksLayer() {
 
     private fun push_remove_line(channel: Int, index: Int) {
         this.push_to_history_stack( HistoryToken.REMOVE_LINE, listOf(channel, index) )
-    }
-
-    fun has_history(): Boolean {
-        return ! this.history_cache.isEmpty()
     }
 
     override fun link_beats(beat_key: BeatKey, target: BeatKey) {
@@ -918,7 +911,7 @@ open class HistoryLayer : LinksLayer() {
 
     override fun link_beat_range_horizontally(channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey) {
         this.history_cache.remember {
-            val (from_key, to_key) = this.get_ordered_beat_key_pair(first_key, second_key)
+            val (from_key, _) = this.get_ordered_beat_key_pair(first_key, second_key)
             if (from_key.channel != channel || from_key.line_offset != line_offset || from_key.beat != 0) {
                 throw BadRowLink(from_key, channel, line_offset)
             }
@@ -932,7 +925,7 @@ open class HistoryLayer : LinksLayer() {
             val (bottom_channel, bottom_line_offset) = try {
                 this.get_std_offset(y_link_bottom)
             } catch (e: IndexOutOfBoundsException) {
-                throw LinksLayer.BadRowLink(first_key, channel, line_offset)
+                throw BadRowLink(first_key, channel, line_offset)
             }
 
             val clear_beat_key_top = BeatKey(channel, line_offset, 0)
@@ -960,7 +953,7 @@ open class HistoryLayer : LinksLayer() {
     }
 
     override fun remap_links(remap_hook: (beat_key: BeatKey) -> BeatKey?) {
-        var original_link_pools = this.link_pools.toList()
+        val original_link_pools = this.link_pools.toList()
         this.push_to_history_stack(HistoryToken.RESTORE_LINK_POOLS, listOf(original_link_pools))
         super.remap_links(remap_hook)
     }

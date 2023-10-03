@@ -77,7 +77,7 @@ class CellLayout(var viewHolder: CellRecyclerViewHolder): LinearLayout(viewHolde
 
            this.addView(tvLeaf)
 
-           (tvLeaf.layoutParams as LinearLayout.LayoutParams).apply {
+           tvLeaf.layoutParams.apply {
                gravity = Gravity.CENTER
                height = MATCH_PARENT
                width = new_width

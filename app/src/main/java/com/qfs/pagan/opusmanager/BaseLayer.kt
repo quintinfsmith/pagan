@@ -22,7 +22,7 @@ import kotlin.math.pow
  * The logic of the Opus Manager.
  *
  * This is completely separated from user interface or state.
- * @constructor Creates an unusablely empty object. new() / load() / import() need to be called still
+ * @constructor Creates an unusably empty object. new() / load() / import() need to be called still
  */
 open class BaseLayer {
     class BadBeatKey(beat_key: BeatKey): Exception("BeatKey $beat_key doesn't exist")
@@ -1434,22 +1434,22 @@ open class BaseLayer {
         }
 
         this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
-            channel.lines.forEachIndexed { j: Int, line: OpusChannel.OpusLine ->
+            for (j in channel.lines.indices) {
                 for (k in 0 until this.opus_beat_count) {
-                    var beat_tree = this.get_beat_tree(BeatKey(i, j, k))
+                    val beat_tree = this.get_beat_tree(BeatKey(i, j, k))
                     beat_tree.traverse { tree: OpusTree<OpusEvent>, event: OpusEvent? ->
                         if (event == null) {
                             return@traverse
                         }
 
-                        var parent = tree.parent ?: return@traverse
+                        val parent = tree.parent ?: return@traverse
                         if (tree.getIndex() != 0 || event.duration % parent.size != 0) {
                             return@traverse
                         }
 
                         var do_resize = true
-                        for (i in 1 until parent.size) {
-                            var test_tree = parent[i]
+                        for (l in 1 until parent.size) {
+                            val test_tree = parent[l]
                             if (test_tree.is_leaf() && !test_tree.is_event()) {
                                 continue
                             }
@@ -1624,7 +1624,7 @@ open class BaseLayer {
         val children = mutableListOf<OpusTreeJSON?>()
         if (!tree.is_leaf()) {
             for (i in 0 until tree.size) {
-                children.add(this.tree_to_json(tree.get(i)))
+                children.add(this.tree_to_json(tree[i]))
             }
         }
 
@@ -1639,11 +1639,11 @@ open class BaseLayer {
     }
 
     fun convert_all_events_to_absolute() {
-        this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
-            channel.lines.forEachIndexed { j: Int, line: OpusChannel.OpusLine ->
-                line.beats.forEachIndexed { k: Int, beat_tree: OpusTree<OpusEvent> ->
+        this.channels.forEach { channel: OpusChannel ->
+            channel.lines.forEach { line: OpusChannel.OpusLine ->
+                line.beats.forEach { beat_tree: OpusTree<OpusEvent> ->
                     var previous_value = 0
-                    beat_tree.traverse { tree: OpusTree<OpusEvent>, event: OpusEvent? ->
+                    beat_tree.traverse { _: OpusTree<OpusEvent>, event: OpusEvent? ->
                         if (event == null) {
                             return@traverse
                         }

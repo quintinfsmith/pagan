@@ -497,13 +497,11 @@ open class LinksLayer : BaseLayer() {
         val to_beat = max(from_key.beat, to_key.beat)
         val range_width = (to_beat - from_beat) + 1
 
-        if (from_key.beat != 0) {
-            this.overwrite_beat_range(
-                BeatKey(channel, line_offset, 0),
-                first_key,
-                second_key
-            )
-        }
+        this.overwrite_beat_range(
+            BeatKey(channel, line_offset, 0),
+            first_key,
+            second_key
+        )
 
         from_key.beat = 0
         to_key.beat = range_width - 1
@@ -572,9 +570,9 @@ open class LinksLayer : BaseLayer() {
     override fun move_line(channel_old: Int, line_old: Int, channel_new: Int, line_new: Int) {
         // Create a map of where the removed line was. no need to pop at this point since
         // that is handled in remove_line() within move_line()
-        var new_pools = mutableListOf<MutableSet<BeatKey>>()
+        val new_pools = mutableListOf<MutableSet<BeatKey>>()
         this.link_pools.forEachIndexed { i: Int, pool: MutableSet<BeatKey> ->
-            var new_pool = mutableSetOf<BeatKey>()
+            val new_pool = mutableSetOf<BeatKey>()
             for (beat_key in pool) {
                 // new_channel will only be changed if the beatkey is on the line being moved AND being moved out of the channel
                 var new_channel = beat_key.channel
@@ -637,7 +635,7 @@ open class LinksLayer : BaseLayer() {
    }
 
     override fun new_channel(channel: Int?, lines: Int, uuid: Int?) {
-        var working_channel = channel ?: this.channels.size - 1
+        val working_channel = channel ?: (this.channels.size - 1)
         this.remap_links { beat_key: BeatKey ->
             if (beat_key.channel < working_channel) {
                 beat_key

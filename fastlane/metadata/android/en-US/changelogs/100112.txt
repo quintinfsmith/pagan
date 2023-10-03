@@ -1,0 +1,4 @@
+UI:
+    - Landscape Mode
+Bugfixes:
+    - Lines weren't refreshing when adding/removing channels

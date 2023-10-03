@@ -568,70 +568,66 @@ class MainActivity : AppCompatActivity() {
         } else {
             this.lockDrawer()
         }
-        try {
-            when (fragment) {
-                is LoadFragment -> {
+        when (fragment) {
+            is LoadFragment -> {
+                when (fragmentName) {
+                    "main" -> {
+                        if (this.has_seen_front_page) {
+                            navController.navigate(R.id.action_LoadFragment_to_EditorFragment2)
+                        } else {
+                            navController.navigate(R.id.action_LoadFragment_to_EditorFragment)
+                        }
+                    }
+
+                    else -> {}
+                }
+                this.has_seen_front_page = true
+
+            }
+
+            is EditorFragment -> {
+                when (fragmentName) {
+                    "load" -> {
+                        navController.navigate(R.id.action_EditorFragment_to_LoadFragment)
+                    }
+
+                    "settings" -> {
+                        navController.navigate(R.id.action_EditorFragment_to_SettingsFragment)
+                    }
+
+                    else -> {}
+                }
+            }
+
+            is LandingPageFragment -> {
+                navController.navigate(
                     when (fragmentName) {
                         "main" -> {
-                            if (this.has_seen_front_page) {
-                                navController.navigate(R.id.action_LoadFragment_to_EditorFragment2)
-                            } else {
-                                navController.navigate(R.id.action_LoadFragment_to_EditorFragment)
-                            }
+                            this.has_seen_front_page = true
+                            R.id.action_FrontFragment_to_EditorFragment
                         }
 
-                        else -> {}
-                    }
-                    this.has_seen_front_page = true
-
-                }
-
-                is EditorFragment -> {
-                    when (fragmentName) {
                         "load" -> {
-                            navController.navigate(R.id.action_EditorFragment_to_LoadFragment)
+                            R.id.action_FrontFragment_to_LoadFragment
+                        }
+
+                        "license" -> {
+                            R.id.action_FrontFragment_to_LicenseFragment
                         }
 
                         "settings" -> {
-                            navController.navigate(R.id.action_EditorFragment_to_SettingsFragment)
+                            R.id.action_FrontFragment_to_SettingsFragment
                         }
 
-                        else -> {}
+                        else -> {
+                            return
+                        }
                     }
-                }
+                )
 
-                is LandingPageFragment -> {
-                    navController.navigate(
-                        when (fragmentName) {
-                            "main" -> {
-                                this.has_seen_front_page = true
-                                R.id.action_FrontFragment_to_EditorFragment
-                            }
-
-                            "load" -> {
-                                R.id.action_FrontFragment_to_LoadFragment
-                            }
-
-                            "license" -> {
-                                R.id.action_FrontFragment_to_LicenseFragment
-                            }
-
-                            "settings" -> {
-                                R.id.action_FrontFragment_to_SettingsFragment
-                            }
-
-                            else -> {
-                                return
-                            }
-                        }
-                    )
-
-                }
-
-                else -> {}
             }
-        } catch (e: java.lang.IllegalArgumentException) {
-            // pass
+
+            else -> {}
         }
     }
 

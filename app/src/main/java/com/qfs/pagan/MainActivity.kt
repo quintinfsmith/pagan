@@ -140,8 +140,8 @@ class MainActivity : AppCompatActivity() {
         // Move files from applicationInfo.data to externalfilesdir (pre v1.1.2 location)
         val old_projects_dir = File("${applicationInfo.dataDir}/projects")
         if (old_projects_dir.isDirectory()) {
-            for (f in old_projects_dir.listFiles()) {
-                var new_file_name = this.project_manager.get_new_path()
+            for (f in old_projects_dir.listFiles()!!) {
+                val new_file_name = this.project_manager.get_new_path()
                 f.copyTo(File(new_file_name))
             }
             old_projects_dir.deleteRecursively()
@@ -196,7 +196,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        var that = this
+        val that = this
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 if (navController.currentDestination?.id == R.id.EditorFragment) {
@@ -873,7 +873,7 @@ class MainActivity : AppCompatActivity() {
             this.stop_playback()
         }
 
-        var blocker_view = this.findViewById<LinearLayout>(R.id.llClearOverlay)
+        val blocker_view = this.findViewById<LinearLayout>(R.id.llClearOverlay)
         if (blocker_view != null) {
             blocker_view.visibility = View.VISIBLE
             blocker_view.setOnClickListener {
@@ -903,7 +903,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        var beat_count = this.get_opus_manager().opus_beat_count.toFloat()
+        val beat_count = this.get_opus_manager().opus_beat_count.toFloat()
         this.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
         thread {
@@ -942,7 +942,7 @@ class MainActivity : AppCompatActivity() {
         this.playback_handle!!.stop()
         this.playback_handle = null
 
-        var blocker_view = this.findViewById<LinearLayout>(R.id.llClearOverlay) ?: return
+        val blocker_view = this.findViewById<LinearLayout>(R.id.llClearOverlay) ?: return
 
         blocker_view.visibility = View.GONE
     }
@@ -1068,11 +1068,14 @@ class MainActivity : AppCompatActivity() {
         var result: String? = null
         if (uri.scheme == "content") {
             val cursor: Cursor? = contentResolver.query(uri, null, null, null, null)
-            if (cursor != null && cursor.moveToFirst()) {
-                val ci = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-                if (ci >= 0) {
-                    result = cursor.getString(ci)
+            if (cursor != null) {
+                if (cursor.moveToFirst()) {
+                    val ci = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                    if (ci >= 0) {
+                        result = cursor.getString(ci)
+                    }
                 }
+                cursor.close()
             }
         }
 

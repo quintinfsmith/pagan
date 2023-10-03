@@ -1,7 +1,6 @@
 package com.qfs.pagan
 
 import android.content.Context
-import android.util.Log
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import androidx.core.view.children
@@ -38,7 +37,7 @@ class CellRecyclerViewHolder(context: Context): RecyclerView.ViewHolder(LinearLa
     }
 
     fun get_y(): Int {
-        var output = this.bindingAdapterPosition
+        val output = this.bindingAdapterPosition
         if (output == -1) {
             throw CellRecycler.ColumnDetachedException()
         }

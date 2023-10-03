@@ -10,7 +10,7 @@ class VerticalScrollListener(): RecyclerView.OnScrollListener() {
         }
 
 
-        val main_adapter = (recyclerView as CellRecycler).get_column_recycler_adapter() as ColumnRecyclerAdapter
+        val main_adapter = recyclerView.get_column_recycler_adapter()
         main_adapter.apply_to_visible_columns {
             if (recyclerView.adapter == it) {
                 return@apply_to_visible_columns

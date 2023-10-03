@@ -4,7 +4,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.apres.soundfont.SoundFont
 
@@ -31,7 +30,7 @@ class ChannelOptionAdapter(
         )
         val soundfont = this.get_activity().get_soundfont()
         if (soundfont != null) {
-            for ((name, program, bank) in soundfont!!.get_available_presets()) {
+            for ((name, program, bank) in soundfont.get_available_presets()) {
                 this.supported_instruments[Pair(bank, program)] = name
             }
         }
@@ -152,7 +151,7 @@ class ChannelOptionAdapter(
 
     fun set_soundfont(soundfont: SoundFont) {
         this.supported_instruments.clear()
-        for ((name, program, bank) in soundfont!!.get_available_presets()) {
+        for ((name, program, bank) in soundfont.get_available_presets()) {
             this.supported_instruments[Pair(bank, program)] = name
         }
         this.notifyItemRangeChanged(0, this.opus_manager.channels.size)

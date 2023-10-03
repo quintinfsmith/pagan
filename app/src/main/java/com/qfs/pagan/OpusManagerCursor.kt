@@ -109,10 +109,6 @@ data class OpusManagerCursor(
         this.range = Pair(from_key, to_key)
     }
 
-    fun select_range_to_link(beat_key_a: BeatKey, beat_key_b: BeatKey) {
-        this.select_range(beat_key_a, beat_key_b)
-        this.is_linking = true
-    }
     fun select_to_link(beat_key: BeatKey) {
         this.select(beat_key, listOf())
         this.is_linking = true

@@ -1,7 +1,6 @@
 package com.qfs.pagan
 
 import android.content.Context
-import android.os.Parcelable
 import android.util.AttributeSet
 import android.view.View
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT

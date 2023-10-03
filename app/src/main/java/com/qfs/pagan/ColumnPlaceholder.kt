@@ -32,8 +32,8 @@ class ColumnPlaceholder(var viewHolder: ColumnRecyclerViewHolder, column_width: 
             // Kludge
             Thread.sleep(50)
             if (this.viewHolder.bindingAdapterPosition != -1) {
-                var adapter = (this.viewHolder.bindingAdapter as ColumnRecyclerAdapter)
-                var activity = adapter.get_activity()
+                val adapter = (this.viewHolder.bindingAdapter as ColumnRecyclerAdapter)
+                val activity = adapter.get_activity()
                 activity.runOnUiThread {
                     this.replace()
                 }

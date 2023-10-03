@@ -282,7 +282,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             val editor_table = this.get_editor_table()
             val y = this.get_abs_offset(notify_index, 0)
 
-            var line_list = mutableListOf<OpusChannel.OpusLine>()
+            val line_list = mutableListOf<OpusChannel.OpusLine>()
             for (i in 0 until lines) {
                 line_list.add(this.channels[notify_index].lines[i])
             }
@@ -486,7 +486,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         if (this.queued_cursor_selection == null) {
             return
         }
-        var (token, args) = this.queued_cursor_selection!!
+        val (token, args) = this.queued_cursor_selection!!
         this.queued_cursor_selection = null
         when (token) {
             HistoryToken.CURSOR_SELECT_ROW -> {
@@ -747,7 +747,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         }
     }
 
-    fun cursor_select_row(channel: Int, line_offset: Int, scroll: Boolean = false) {
+    fun cursor_select_row(channel: Int, line_offset: Int) {
         val editor_table = this.get_editor_table()
 
         this.cursor.select_row(channel, line_offset)
@@ -773,7 +773,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
         editor_table?.scroll_to_position(x = beat, force = force_scroll)
     }
-    fun cursor_select(beat_key: BeatKey, position: List<Int>, scroll: Boolean = false) {
+    fun cursor_select(beat_key: BeatKey, position: List<Int>) {
         val editor_table = this.get_editor_table()
         this.cursor.select(beat_key, position)
 

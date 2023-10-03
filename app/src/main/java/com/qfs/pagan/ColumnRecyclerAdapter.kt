@@ -4,7 +4,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import androidx.recyclerview.widget.RecyclerView
-import com.qfs.pagan.opusmanager.BeatKey
 import kotlin.math.roundToInt
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
@@ -42,18 +41,7 @@ class ColumnRecyclerAdapter(val recycler: ColumnRecycler, editor_table: EditorTa
         ColumnPlaceholder(holder, weight * resources.getDimension(R.dimen.base_leaf_width).roundToInt())
     }
     override fun onViewAttachedToWindow(holder: ColumnRecyclerViewHolder) {
-        val editor_table = this.get_editor_table()!!
-        val weight = editor_table.get_column_width(holder.bindingAdapterPosition)
-        val resources = this.recycler.resources
         holder.itemView.layoutParams.height = MATCH_PARENT
-        //holder.itemView.layoutParams.width = weight * resources.getDimension(R.dimen.base_leaf_width).toInt()
-    }
-    override fun onViewDetachedFromWindow(holder: ColumnRecyclerViewHolder) {
-        // Need to remove the view (CellRecycler, see ColumnPlaceholder.replace())
-        // so that if something changes between being bound and attached, the
-        // recycler doesn't try to reattach LeafButtons
-
-        //ColumnPlaceholder(holder, holder.itemView.measuredWidth)
     }
 
 
@@ -93,7 +81,7 @@ class ColumnRecyclerAdapter(val recycler: ColumnRecycler, editor_table: EditorTa
     }
 
     fun get_editor_table(): EditorTable? {
-        var view = (this.recycler ?: return null) as View
+        var view = this.recycler as View
         while (view !is EditorTable) {
             if (view.parent == null) {
                 break
@@ -125,7 +113,4 @@ class ColumnRecyclerAdapter(val recycler: ColumnRecycler, editor_table: EditorTa
     }
 
     //-------------------------------------------------------//
-    fun get_leaf_view(beat_key: BeatKey, position: List<Int>): LeafButton? { return null }
-    fun scroll_to_position(column: Int) { }
-    fun scroll_to_position(beat_key: BeatKey, position: List<Int>) {}
 }

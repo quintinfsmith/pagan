@@ -1,13 +1,11 @@
 package com.qfs.pagan
 
 import android.content.Context
-import android.os.Parcelable
 import android.util.AttributeSet
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
-import android.widget.SeekBar
 import android.widget.TableLayout
 import android.widget.TableRow
 import androidx.appcompat.view.ContextThemeWrapper
@@ -17,7 +15,6 @@ import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.OpusChannel
 import com.qfs.pagan.structure.OpusTree
 import kotlin.math.max
-import kotlin.math.min
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
 class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, attrs) {
@@ -39,7 +36,6 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         this.top_row.addView(this.column_label_recycler)
 
         this.spacer.setOnClickListener {
-            val main = (this.context as MainActivity)
             val fragment = this.get_activity().getActiveFragment()
             if (fragment is EditorFragment) {
                 fragment.shortcut_dialog()
@@ -399,7 +395,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     fun fix_scroll_offset() {
         val main_adapter = (this.main_recycler.adapter!! as ColumnRecyclerAdapter)
         for (i in 0 until this.get_opus_manager().opus_beat_count) {
-            var cell_recycler = main_adapter.get_cell_recycler(i) ?: continue
+            val cell_recycler = main_adapter.get_cell_recycler(i) ?: continue
             cell_recycler.conform_scroll_position()
         }
     }
@@ -480,23 +476,25 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         this.fix_scroll_offset()
     }
 
-    fun get_leaf(beat_key: BeatKey, position: List<Int>): LeafButton? {
-        val y = this.get_opus_manager().get_abs_offset(beat_key.channel, beat_key.line_offset)
-        return this.get_leaf(beat_key.beat, y, position)
-    }
 
-    fun get_leaf(x: Int, y: Int, position: List<Int>): LeafButton? {
-        val column_view_holder = this.main_recycler.findViewHolderForAdapterPosition(x) ?: return null
-        val cell_recycler = (column_view_holder as ColumnRecyclerViewHolder).get_cell_recycler() ?: return null
-        val cell_view_holder = cell_recycler.findViewHolderForAdapterPosition(y) ?: return null
-        val cell_layout = (cell_view_holder as CellRecyclerViewHolder).get_cell_layout()
-        for (child in (cell_layout as ViewGroup).children) {
-            if ((child as LeafButton).position == position) {
-                return child
-            }
-        }
-        return null
-    }
+    //  Unused. I don't know if i'll need them at any point
+    //fun get_leaf(beat_key: BeatKey, position: List<Int>): LeafButton? {
+    //    val y = this.get_opus_manager().get_abs_offset(beat_key.channel, beat_key.line_offset)
+    //    return this.get_leaf(beat_key.beat, y, position)
+    //}
+
+    //fun get_leaf(x: Int, y: Int, position: List<Int>): LeafButton? {
+    //    val column_view_holder = this.main_recycler.findViewHolderForAdapterPosition(x) ?: return null
+    //    val cell_recycler = (column_view_holder as ColumnRecyclerViewHolder).get_cell_recycler() ?: return null
+    //    val cell_view_holder = cell_recycler.findViewHolderForAdapterPosition(y) ?: return null
+    //    val cell_layout = (cell_view_holder as CellRecyclerViewHolder).get_cell_layout()
+    //    for (child in (cell_layout as ViewGroup).children) {
+    //        if ((child as LeafButton).position == position) {
+    //            return child
+    //        }
+    //    }
+    //    return null
+    //}
 
     fun get_scroll_offset(): Pair<Pair<Int, Int>, Pair<Int, Int>> {
         val column_lm = this.column_label_recycler.layoutManager!! as LinearLayoutManager

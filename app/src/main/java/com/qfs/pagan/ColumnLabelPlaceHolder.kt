@@ -5,7 +5,7 @@ import android.widget.LinearLayout
 
 class ColumnLabelPlaceHolder(var viewHolder: ColumnLabelViewHolder, column_width: Int): LinearLayout(viewHolder.itemView.context) {
     init {
-        var item_view = this.viewHolder.itemView as ViewGroup
+        val item_view = this.viewHolder.itemView as ViewGroup
         item_view.removeAllViews()
         item_view.addView(this)
         this.layoutParams.width = column_width

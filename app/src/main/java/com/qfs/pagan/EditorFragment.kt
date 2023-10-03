@@ -999,10 +999,7 @@ class EditorFragment : PaganFragment() {
         }
 
         title_text.text = "Jump To Beat ${scroll_bar.progress}"
-        val dialog = AlertDialog.Builder(this.activity).apply {
-            setView(view)
-            show()
-        }
+
         scroll_bar.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
                 title_text.text = "Jump To Beat $p1"
@@ -1011,5 +1008,10 @@ class EditorFragment : PaganFragment() {
             override fun onStartTrackingTouch(p0: SeekBar?) { }
             override fun onStopTrackingTouch(seekbar: SeekBar?) { }
         })
+
+        AlertDialog.Builder(this.activity).apply {
+            setView(view)
+            show()
+        }
     }
 }

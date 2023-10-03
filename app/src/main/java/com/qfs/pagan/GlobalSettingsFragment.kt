@@ -4,9 +4,11 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.view.*
+import android.view.ContextThemeWrapper
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.widget.Button
-import android.widget.CompoundButton
 import android.widget.LinearLayout
 import android.widget.PopupMenu
 import android.widget.Switch
@@ -15,7 +17,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import com.qfs.apres.soundfont.Riff
 import com.qfs.apres.soundfont.SoundFont
 import com.qfs.pagan.databinding.FragmentGlobalSettingsBinding
-import com.qfs.pagan.opusmanager.HistoryLayer
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream

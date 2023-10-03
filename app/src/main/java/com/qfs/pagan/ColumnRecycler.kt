@@ -1,10 +1,6 @@
 package com.qfs.pagan
 
-import android.content.Context
-import android.os.Parcelable
-import android.util.AttributeSet
 import android.view.View
-import androidx.recyclerview.widget.LinearLayoutManager
 
 class ColumnRecycler(editor_table: EditorTable): ScrollLockingRecyclerView(editor_table.context) {
     init {

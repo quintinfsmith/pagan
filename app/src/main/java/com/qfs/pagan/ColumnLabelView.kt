@@ -33,7 +33,7 @@ class ColumnLabelView(val viewHolder: RecyclerView.ViewHolder): RelativeLayout(C
         (this.viewHolder.itemView as ViewGroup).addView(this)
 
         val beat = (this.viewHolder as ColumnLabelViewHolder).bindingAdapterPosition
-        val editor_table = ((this.viewHolder as ColumnLabelViewHolder).bindingAdapter as ColumnLabelAdapter).get_editor_table()
+        val editor_table = (this.viewHolder.bindingAdapter as ColumnLabelAdapter).get_editor_table()
         val new_width = editor_table!!.get_column_width(beat)
 
         this.textView.layoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT
@@ -43,7 +43,7 @@ class ColumnLabelView(val viewHolder: RecyclerView.ViewHolder): RelativeLayout(C
         this.layoutParams.width = (new_width * resources.getDimension(R.dimen.base_leaf_width).roundToInt())
 
         this.setOnClickListener {
-            var opus_manager = this.get_opus_manager()
+            val opus_manager = this.get_opus_manager()
             opus_manager.cursor_select_column(this.viewHolder.bindingAdapterPosition)
         }
     }

@@ -2,7 +2,6 @@ package com.qfs.pagan
 
 import android.content.Context
 import android.util.AttributeSet
-import android.view.Gravity.BOTTOM
 import android.view.Gravity.CENTER
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.LinearLayout
@@ -82,15 +81,15 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
         super.onLayout(isChanged, left, top, right, bottom)
         when (this.orientation) {
             VERTICAL -> {
-                this.layout_vertical(isChanged, left, top, right, bottom)
+                this.layout_vertical(left, top, right, bottom)
             }
             HORIZONTAL -> {
-                this.layout_horizontal(isChanged, left, top, right, bottom)
+                this.layout_horizontal(left, top, right, bottom)
             }
         }
     }
 
-    fun layout_horizontal(isChanged: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
+    fun layout_horizontal(left: Int, top: Int, right: Int, bottom: Int) {
         if (this.childCount > 0) {
             val scale = resources.displayMetrics.density
             val margin = (2 * scale + 0.5f).toInt()
@@ -124,7 +123,7 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
         }
     }
 
-    fun layout_vertical(isChanged: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
+    fun layout_vertical(left: Int, top: Int, right: Int, bottom: Int) {
         if (this.childCount > 0) {
             val scale = resources.displayMetrics.density
             val margin = (2 * scale + 0.5f).toInt()
@@ -220,7 +219,7 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
     }
 
     private fun populate() {
-        var that = this
+        val orientation = this.orientation
         for (i in this.min .. this.max) {
             val currentView = NumberSelectorButton(this, i)
             if (this.orientation == VERTICAL) {
@@ -230,7 +229,7 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
             }
 
             currentView.layoutParams.apply {
-                if (that.orientation == VERTICAL) {
+                if (orientation == VERTICAL) {
                     width = MATCH_PARENT
                 } else {
                     height = MATCH_PARENT
@@ -241,6 +240,7 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
             this.button_map[currentView] = i
         }
     }
+
     fun setOnChange(hook: (NumberSelector) -> Unit) {
         this.on_change_hook = hook
     }

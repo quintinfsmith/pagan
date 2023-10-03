@@ -1,7 +1,6 @@
 package com.qfs.pagan
 
 import android.content.Context
-import android.util.Log
 import android.view.Gravity.CENTER
 import android.view.MotionEvent
 import android.view.View

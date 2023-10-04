@@ -2,6 +2,7 @@ package com.qfs.pagan
 
 import com.qfs.pagan.opusmanager.OpusEvent
 import com.qfs.pagan.opusmanager.BeatKey
+import com.qfs.pagan.structure.OpusTree
 import org.junit.Test
 import org.junit.Assert.*
 import com.qfs.pagan.opusmanager.HistoryLayer as OpusManager
@@ -52,10 +53,12 @@ class HistoryCacheUnitTest {
         //manager.apply_undo()
         //TODO("test_convert_event_to_relative")
     }
+
     @Test
     fun test_convert_event_to_absolute() {
         //TODO("test_convert_event_to_absolute")
     }
+
     @Test
     fun test_set_percussion_event() {
         var manager = OpusManager()
@@ -116,13 +119,27 @@ class HistoryCacheUnitTest {
         var manager = OpusManager()
         manager.new()
         manager.set_event(BeatKey(0,0,0), listOf(), event)
+        manager.clear_history()
+
+        var original = manager.to_json()
+
         manager.unset(BeatKey(0,0,0), listOf())
         manager.apply_undo()
 
         assertEquals(
             "Failed to undo unset()",
-            event,
-            manager.get_tree(BeatKey(0,0,0), listOf()).get_event()
+            manager.to_json(),
+            original
+        )
+
+        try {
+            manager.unset(BeatKey(0, 0, 0), listOf(0, 2))
+        } catch (e: Exception) { }
+
+        assertEquals(
+            "Didn't clean history stack on error",
+            true,
+            manager.history_cache.isEmpty()
         )
     }
 
@@ -131,20 +148,14 @@ class HistoryCacheUnitTest {
         var manager = OpusManager()
         manager.new()
 
+        var original = manager.to_json()
         manager.new_channel()
-        manager.new_channel()
+        manager.apply_undo()
 
-        manager.apply_undo()
         assertEquals(
             "Failed to undo new_channel",
-            3,
-            manager.channels.size
-        )
-        manager.apply_undo()
-        assertEquals(
-            "Failed to undo new_channel",
-            2,
-            manager.channels.size
+            manager.to_json(),
+            original
         )
     }
 
@@ -162,25 +173,114 @@ class HistoryCacheUnitTest {
     }
     @Test
     fun test_remove_beat() {
-        //TODO("test_remove_beat")
-    }
-    @Test
-    fun test_remove_channel() {
-        //TODO("test_remove_channel")
-    }
-
-    @Test
-    fun test_new_remove_line() {
         var manager = OpusManager()
         manager.new()
-        manager.new_line(0)
-        manager.new_line(0)
-        manager.remove_line(0, 1, 1)
+        var original = manager.to_json()
 
+        manager.remove_beat(0)
+        manager.apply_undo()
+        var new = manager.to_json()
+
+        assertEquals(
+            "undo remove_beat broken",
+            original,
+            new
+        )
+
+        try {
+            manager.remove_beat(200)
+        } catch (e: Exception) {}
+        assertEquals(
+            "history stack not cleared with error",
+            true,
+            manager.history_cache.isEmpty()
+        )
+    }
+
+    @Test
+    fun test_remove_channel() {
+        var manager = OpusManager()
+        manager.new()
+        manager.new_channel()
+        manager.split_tree(BeatKey(0,0,0), listOf(), 2)
+        manager.clear_history()
+
+        var original = manager.to_json()
+
+        manager.remove_channel(0)
         manager.apply_undo()
 
-        //TODO("test_new_line")
-        //TODO("test_remove_line")
+        var new = manager.to_json()
+        assertEquals(
+            "undo remove_channel broken",
+            original,
+            new
+        )
+
+        try {
+            manager.remove_channel(4)
+        } catch (e: Exception) {}
+        assertEquals(
+            "history stack not cleared with error",
+            true,
+            manager.history_cache.isEmpty()
+        )
+    }
+
+    @Test
+    fun test_remove_line() {
+        var manager = OpusManager()
+        manager.new()
+        manager.new_line(0,0)
+        manager.split_tree(BeatKey(0,0,0), listOf(), 2)
+        manager.clear_history()
+
+        var original = manager.to_json()
+
+        manager.remove_line(0, 0)
+        manager.apply_undo()
+
+        var new = manager.to_json()
+        assertEquals(
+            "undo remove_line broken",
+            original,
+            new
+        )
+
+        try {
+            manager.remove_line(4, 0)
+        } catch (e: Exception) {}
+        assertEquals(
+            "history stack not cleared with error",
+            true,
+            manager.history_cache.isEmpty()
+        )
+    }
+
+    @Test
+    fun test_new_line() {
+        var manager = OpusManager()
+        manager.new()
+        var original = manager.to_json()
+
+        manager.new_line(0, 0)
+        manager.apply_undo()
+
+        var new = manager.to_json()
+        assertEquals(
+            "undo new_line broken",
+            original,
+            new
+        )
+
+        try {
+            manager.new_line(4, 0)
+        } catch (e: Exception) {}
+        assertEquals(
+            "history stack not cleared with error",
+            true,
+            manager.history_cache.isEmpty()
+        )
     }
 
     @Test
@@ -189,16 +289,32 @@ class HistoryCacheUnitTest {
     }
     @Test
     fun test_replace_tree() {
-        //TODO("test_replace_tree")
+        var manager = OpusManager()
+        manager.new()
+        var original = manager.to_json()
+        var new_tree = OpusTree<OpusEvent>()
+        new_tree.set_size(5)
+
+        manager.replace_tree(BeatKey(0,0,0), listOf(), new_tree)
+        manager.apply_undo()
+        var new = manager.to_json()
+        assertEquals(
+            "undo replace_tree broken",
+            original,
+            new
+        )
+
+        try {
+            manager.replace_tree(BeatKey(5,0,0), listOf(), new_tree)
+        } catch (e: Exception) { }
+
+        assertEquals(
+            "Didn't clean history stack on error",
+            true,
+            manager.history_cache.isEmpty()
+        )
     }
-    @Test
-    fun test_set_beat_count() {
-        //TODO("test_set_beat_count")
-    }
-    @Test
-    fun test_get_midi() {
-        //TODO("test_get_midi")
-    }
+
     @Test
     fun test_to_json() {
         //TODO("test_to_json")
@@ -226,11 +342,59 @@ class HistoryCacheUnitTest {
 
     @Test
     fun test_insert_after() {
-        //TODO("test_insert_after")
+        var manager = OpusManager()
+        manager.new()
+        manager.split_tree(BeatKey(0,0,0), listOf(), 2)
+        // Need to clean stack for final check
+        manager.clear_history()
+
+        var original = manager.to_json()
+
+        manager.insert_after(BeatKey(0,0,0), listOf(0), 1)
+
+        manager.apply_undo()
+        var new = manager.to_json()
+        assertEquals(
+            "undo insert_after broken",
+            original,
+            new
+        )
+
+        try {
+            manager.split_tree(BeatKey(0, 0, 0), listOf(0, 2), 1)
+        } catch (e: Exception) { }
+
+        assertEquals(
+            "Didn't clean history stack on error",
+            true,
+            manager.history_cache.isEmpty()
+        )
     }
 
     @Test
     fun test_split_tree() {
-        //TODO("test_split_tree")
+        var manager = OpusManager()
+        manager.new()
+        var original = manager.to_json()
+
+        manager.split_tree(BeatKey(0,0,0), listOf(), 3)
+
+        manager.apply_undo()
+        var new = manager.to_json()
+        assertEquals(
+            "undo split_tree broken",
+            original,
+            new
+        )
+
+        try {
+            manager.split_tree(BeatKey(0, 0, 0), listOf(0, 2), 3)
+        } catch (e: Exception) { }
+
+        assertEquals(
+            "Didn't clean history stack on error",
+            true,
+            manager.history_cache.isEmpty()
+        )
     }
 }

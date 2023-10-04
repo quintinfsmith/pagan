@@ -1,4 +1,5 @@
 package com.qfs.pagan.opusmanager
+import android.util.Log
 import com.qfs.apres.Midi
 import com.qfs.pagan.structure.OpusTree
 import kotlin.math.min
@@ -6,6 +7,7 @@ import kotlin.math.min
 
 open class HistoryLayer : LinksLayer() {
     class HistoryCache {
+        class HistoryError(val e: Exception, val failed_node: HistoryNode?): Exception()
         private val max_history_size = 100
         class HistoryNode(var token: HistoryToken, var args: List<Any>) {
             var children: MutableList<HistoryNode> = mutableListOf()
@@ -48,8 +50,8 @@ open class HistoryLayer : LinksLayer() {
                 this.close_multi()
                 return output
             } catch (e: Exception) {
-                this.cancel_multi()
-                throw e
+                Log.d("AAA", "$e")
+                throw HistoryError(e, this.cancel_multi())
             }
         }
 
@@ -92,12 +94,12 @@ open class HistoryLayer : LinksLayer() {
             }
         }
 
-        private fun cancel_multi() {
+        private fun cancel_multi(): HistoryNode? {
             if (this.isLocked()) {
-                return
+                return null
             }
             this.close_multi()
-            if (this.working_node != null) {
+            return if (this.working_node != null) {
                 this.working_node!!.children.removeLast()
             } else {
                 this.history.removeLast()
@@ -376,14 +378,14 @@ open class HistoryLayer : LinksLayer() {
 
 
     override fun overwrite_beat(old_beat: BeatKey, new_beat: BeatKey) {
-        this.history_cache.remember {
+        this.remember {
             this.push_replace_tree(old_beat, listOf())
             super.overwrite_beat(old_beat, new_beat)
         }
     }
 
     fun new_line(channel: Int, line_offset: Int, count: Int): List<OpusChannel.OpusLine> {
-        return this.history_cache.remember {
+        return this.remember {
             val output: MutableList<OpusChannel.OpusLine> = mutableListOf()
             for (i in 0 until count) {
                 output.add(this.new_line(channel, line_offset))
@@ -393,7 +395,7 @@ open class HistoryLayer : LinksLayer() {
     }
 
     override fun new_line(channel: Int, line_offset: Int?): OpusChannel.OpusLine {
-        return this.history_cache.remember {
+        return this.remember {
             val output = super.new_line(channel, line_offset)
             this.push_remove_line(channel, line_offset ?: (this.channels[channel].size))
             output
@@ -401,14 +403,14 @@ open class HistoryLayer : LinksLayer() {
     }
 
     override fun insert_line(channel: Int, line_offset: Int, line: OpusChannel.OpusLine) {
-        this.history_cache.remember {
+        this.remember {
             this.push_remove_line(channel, line_offset)
             super.insert_line(channel, line_offset, line)
         }
     }
 
     open fun remove_line(channel: Int, line_offset: Int, count: Int) {
-        this.history_cache.remember {
+        this.remember {
             for (i in 0 until count) {
                 if (this.channels[channel].size == 0) {
                     break
@@ -426,7 +428,7 @@ open class HistoryLayer : LinksLayer() {
     }
 
     override fun remove_line(channel: Int, line_offset: Int): OpusChannel.OpusLine {
-        return this.history_cache.remember {
+        return this.remember {
             val line = super.remove_line(channel, line_offset)
             this.push_rebuild_line(channel, line_offset, line)
             line
@@ -434,7 +436,7 @@ open class HistoryLayer : LinksLayer() {
     }
 
     fun insert_after(beat_key: BeatKey, position: List<Int>, repeat: Int) {
-        this.history_cache.remember {
+        this.remember {
             for (i in 0 until repeat) {
                 this.insert_after(beat_key, position)
             }
@@ -443,7 +445,7 @@ open class HistoryLayer : LinksLayer() {
     }
 
     override fun insert_after(beat_key: BeatKey, position: List<Int>) {
-        this.history_cache.remember {
+        this.remember {
             val remove_position = position.toMutableList()
             remove_position[remove_position.size - 1] += 1
             super.insert_after(beat_key, position)
@@ -451,14 +453,14 @@ open class HistoryLayer : LinksLayer() {
         }
     }
     override fun insert(beat_key: BeatKey, position: List<Int>) {
-        this.history_cache.remember {
+        this.remember {
             super.insert(beat_key, position)
             this.push_remove(beat_key, position)
         }
     }
 
     override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
-        this.history_cache.remember {
+        this.remember {
             this.push_replace_tree(beat_key, position)
             super.split_tree(beat_key, position, splits)
         }
@@ -471,7 +473,7 @@ open class HistoryLayer : LinksLayer() {
     }
 
     override fun remove(beat_key: BeatKey, position: List<Int>) {
-        this.history_cache.remember {
+        this.remember {
             val old_tree = this.get_tree(beat_key, position)
 
             this.push_to_history_stack(HistoryToken.INSERT_TREE, listOf(beat_key, position, old_tree))
@@ -489,7 +491,7 @@ open class HistoryLayer : LinksLayer() {
     }
 
     override fun insert_beat(beat_index: Int, count: Int) {
-        this.history_cache.remember {
+        this.remember {
             super.insert_beat(beat_index, count)
         }
     }
@@ -500,7 +502,7 @@ open class HistoryLayer : LinksLayer() {
     }
 
     fun remove_beat(beat_index: Int, count: Int) {
-        this.history_cache.remember {
+        this.remember {
             for (i in 0 until count) {
                 if (this.opus_beat_count > 1) {
                     this.remove_beat(min(beat_index, this.opus_beat_count - 1))
@@ -512,7 +514,7 @@ open class HistoryLayer : LinksLayer() {
     }
 
     override fun remove_beat(beat_index: Int) {
-        this.history_cache.remember {
+        this.remember {
             val beat_cells = mutableListOf<OpusTree<OpusEvent>>()
             for (channel in 0 until this.channels.size) {
                 val line_count = this.channels[channel].size
@@ -535,20 +537,20 @@ open class HistoryLayer : LinksLayer() {
     }
 
     override fun replace_tree(beat_key: BeatKey, position: List<Int>, tree: OpusTree<OpusEvent>) {
-        this.history_cache.remember {
+        this.remember {
             this.push_replace_tree(beat_key, position, this.get_tree(beat_key, position).copy())
             super.replace_tree(beat_key, position, tree)
         }
     }
 
     override fun move_leaf(beatkey_from: BeatKey, position_from: List<Int>, beatkey_to: BeatKey, position_to: List<Int>) {
-        this.history_cache.remember {
+        this.remember {
             super.move_leaf(beatkey_from, position_from, beatkey_to, position_to)
         }
     }
 
     override fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEvent) {
-        this.history_cache.remember {
+        this.remember {
             val tree = this.get_tree(beat_key, position).copy()
             super.set_event(beat_key, position, event)
             this.push_replace_tree(beat_key, position, tree)
@@ -556,7 +558,7 @@ open class HistoryLayer : LinksLayer() {
     }
 
     override fun set_percussion_event(beat_key: BeatKey, position: List<Int>) {
-        this.history_cache.remember {
+        this.remember {
             val tree = this.get_tree(beat_key, position)
             if (tree.is_event()) {
                 this.push_set_percussion_event(beat_key, position)
@@ -568,7 +570,7 @@ open class HistoryLayer : LinksLayer() {
     }
 
     override fun unset(beat_key: BeatKey, position: List<Int>) {
-        this.history_cache.remember {
+        this.remember {
             val tree = this.get_tree(beat_key, position)
             if (tree.is_event()) {
                 val original_event = tree.get_event()!!
@@ -634,7 +636,7 @@ open class HistoryLayer : LinksLayer() {
     }
 
     private fun push_rebuild_channel(channel: Int) {
-        this.history_cache.remember {
+        this.remember {
             val line_count = this.channels[channel].lines.size
             // Will be an extra empty line that needs to be removed
             this.push_remove_line(channel, line_count)
@@ -705,13 +707,13 @@ open class HistoryLayer : LinksLayer() {
     }
 
     override fun link_beats(beat_key: BeatKey, target: BeatKey) {
-        this.history_cache.remember {
+        this.remember {
             super.link_beats(beat_key, target)
         }
     }
 
     override fun merge_link_pools(index_first: Int, index_second: Int) {
-        this.history_cache.remember {
+        this.remember {
 
             val old_link_pool = mutableSetOf<BeatKey>()
             for (beat_key in this.link_pools[index_first]) {
@@ -727,14 +729,14 @@ open class HistoryLayer : LinksLayer() {
     }
 
     override fun link_beat_into_pool(beat_key: BeatKey, index: Int, overwrite_pool: Boolean) {
-        this.history_cache.remember {
+        this.remember {
             super.link_beat_into_pool(beat_key, index, overwrite_pool)
             this.push_to_history_stack(HistoryToken.UNLINK_BEAT, listOf(beat_key))
         }
     }
 
     override fun create_link_pool(beat_keys: List<BeatKey>) {
-        this.history_cache.remember {
+        this.remember {
             // Do not unlink last. it is automatically unlinked by the penultimate
             beat_keys.forEachIndexed { i: Int, beat_key ->
                 if (i == beat_keys.size - 1) {
@@ -747,13 +749,13 @@ open class HistoryLayer : LinksLayer() {
     }
 
     override fun batch_link_beats(beat_key_pairs: List<Pair<BeatKey, BeatKey>>) {
-        this.history_cache.remember {
+        this.remember {
             super.batch_link_beats(beat_key_pairs)
         }
     }
 
     override fun remove_channel(channel: Int) {
-        this.history_cache.remember {
+        this.remember {
             this.push_rebuild_channel(channel)
         }
         this.history_cache.lock()
@@ -762,7 +764,7 @@ open class HistoryLayer : LinksLayer() {
     }
 
     override fun new_channel(channel: Int?, lines: Int, uuid: Int?) {
-        this.history_cache.remember {
+        this.remember {
             super.new_channel(channel, lines, uuid)
             val channel_to_remove = channel ?: if (this.channels.size > 1) {
                 this.channels.size - 2
@@ -820,7 +822,7 @@ open class HistoryLayer : LinksLayer() {
             return
         }
 
-        this.history_cache.remember {
+        this.remember {
             var restore_old_line = false
             val return_from_line = if (channel_old == channel_new) {
                 if (line_old < line_new) {
@@ -853,7 +855,7 @@ open class HistoryLayer : LinksLayer() {
     }
 
     override fun set_channel_instrument(channel: Int, instrument: Pair<Int, Int>) {
-        this.history_cache.remember {
+        this.remember {
             this.push_to_history_stack(
                 HistoryToken.SET_CHANNEL_INSTRUMENT,
                 listOf(channel, this.channels[channel].get_instrument())
@@ -863,7 +865,7 @@ open class HistoryLayer : LinksLayer() {
     }
 
     override fun set_percussion_instrument(line_offset: Int, instrument: Int) {
-        this.history_cache.remember {
+        this.remember {
             val current = this.get_percussion_instrument(line_offset)
             this.push_to_history_stack(HistoryToken.SET_PERCUSSION_INSTRUMENT, listOf(line_offset, current))
             super.set_percussion_instrument(line_offset, instrument)
@@ -881,19 +883,19 @@ open class HistoryLayer : LinksLayer() {
         super.unlink_beat(beat_key)
     }
     override fun unlink_range(first_key: BeatKey, second_key: BeatKey) {
-        this.history_cache.remember {
+        this.remember {
             super.unlink_range(first_key, second_key)
         }
     }
 
     override fun link_column(column: Int, beat_key: BeatKey) {
-        this.history_cache.remember {
+        this.remember {
             super.link_column(column, beat_key)
         }
     }
 
     override fun link_row(channel: Int, line_offset: Int, beat_key: BeatKey) {
-        this.history_cache.remember {
+        this.remember {
             this.clear_link_pools_by_range(
                 BeatKey(channel, line_offset, 0),
                 BeatKey(channel, line_offset, this.opus_beat_count - 1)
@@ -903,14 +905,14 @@ open class HistoryLayer : LinksLayer() {
     }
 
     override fun remove_link_pool(index: Int) {
-        this.history_cache.remember {
+        this.remember {
             this.push_to_history_stack(HistoryToken.CREATE_LINK_POOL, listOf(this.link_pools[index]))
             super.remove_link_pool(index)
         }
     }
 
     override fun link_beat_range_horizontally(channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey) {
-        this.history_cache.remember {
+        this.remember {
             val (from_key, _) = this.get_ordered_beat_key_pair(first_key, second_key)
             if (from_key.channel != channel || from_key.line_offset != line_offset || from_key.beat != 0) {
                 throw BadRowLink(from_key, channel, line_offset)
@@ -940,14 +942,14 @@ open class HistoryLayer : LinksLayer() {
     }
 
     override fun overwrite_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
-        this.history_cache.remember {
+        this.remember {
             super.overwrite_beat_range(beat_key, first_corner, second_corner)
         }
 
     }
 
     override fun clear_link_pools_by_range(first_key: BeatKey, second_key: BeatKey) {
-        this.history_cache.remember {
+        this.remember {
             super.clear_link_pools_by_range(first_key, second_key)
         }
     }
@@ -959,7 +961,7 @@ open class HistoryLayer : LinksLayer() {
     }
 
     override fun set_duration(beat_key: BeatKey, position: List<Int>, duration: Int) {
-        this.history_cache.remember {
+        this.remember {
             val tree = this.get_tree(beat_key, position)
             if (tree.is_event()) {
                 val event = tree.get_event()
@@ -969,5 +971,22 @@ open class HistoryLayer : LinksLayer() {
             super.set_duration(beat_key, position, duration)
         }
 
+    }
+
+    private fun <T> remember(callback: () -> T): T {
+        return try {
+            this.history_cache.remember {
+                callback()
+            }
+        } catch (history_error: HistoryCache.HistoryError) {
+            val real_exception = history_error.e
+            val node = history_error.failed_node
+            if (node != null) {
+                this.history_cache.forget {
+                    this.apply_history_node(node)
+                }
+            }
+            throw real_exception
+        }
     }
 }

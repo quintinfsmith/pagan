@@ -500,12 +500,12 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         val column_lm = this.column_label_recycler.layoutManager!! as LinearLayoutManager
         val coarse_x = column_lm.findFirstVisibleItemPosition()
         val column = column_lm.findViewByPosition(coarse_x)
-        val fine_x = column!!.x
+        val fine_x = column?.x ?: 0
 
         val line_lm = this.line_label_recycler.layoutManager!! as LinearLayoutManager
         val coarse_y = line_lm.findFirstVisibleItemPosition()
         val line = line_lm.findViewByPosition(coarse_y)
-        val fine_y = line!!.y
+        val fine_y = line?.y ?: 0
         return Pair(
             Pair(coarse_x, fine_x.toInt()),
             Pair(coarse_y, fine_y.toInt())

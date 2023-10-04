@@ -16,6 +16,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import java.nio.BufferUnderflowException
 import java.nio.IntBuffer
 import kotlin.concurrent.thread
 import kotlin.math.max
@@ -386,8 +387,11 @@ class SoundFontWavPlayer(private var sound_font: SoundFont) {
                         }
                         continue
                     }
-
-                    val chunk = wave_generator.generate()
+                    val chunk = try {
+                        wave_generator.generate()
+                    } catch (e: BufferUnderflowException) {
+                        break
+                    }
 
                     // TODO: This won't be 100% accurate due to samples' vol_env_release
                     val generator_position = min(1F, wave_generator.frame.toFloat() / wave_generator.max_frame.toFloat())

@@ -46,11 +46,13 @@ class EditorFragment : PaganFragment() {
 
     override fun onStop() {
         val editor_table = this.get_main().findViewById<EditorTable>(R.id.etEditorTable)
-        val (scroll_x, scroll_y) = editor_table.get_scroll_offset()
-        this.view_model.coarse_x = scroll_x.first
-        this.view_model.fine_x = scroll_x.second
-        this.view_model.coarse_y = scroll_y.first
-        this.view_model.fine_y = scroll_y.second
+        if (editor_table != null) {
+            val (scroll_x, scroll_y) = editor_table.get_scroll_offset()
+            this.view_model.coarse_x = scroll_x.first
+            this.view_model.fine_x = scroll_x.second
+            this.view_model.coarse_y = scroll_y.first
+            this.view_model.fine_y = scroll_y.second
+        }
         super.onStop()
     }
     override fun onSaveInstanceState(outState: Bundle) {

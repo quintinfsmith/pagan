@@ -7,6 +7,7 @@ import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.view.ContextThemeWrapper
+import kotlin.math.roundToInt
 
 
 class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(context, attrs) {
@@ -37,6 +38,9 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
         init {
             this.text_view.text = this.bkp_text
             this.addView(this.text_view)
+            this.text_view.layoutParams.width = MATCH_PARENT
+            this.text_view.layoutParams.height = MATCH_PARENT
+
             this.setOnClickListener {
                 this.numberSelector.set_active_button(this)
                 this.setActive(true)
@@ -51,13 +55,6 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
             return drawableState
         }
 
-
-        override fun onLayout(isChanged: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
-            this.text_view.text = this.bkp_text
-            super.onLayout(isChanged, left, top, right, bottom)
-            this.text_view.width = right - left
-            this.text_view.height = bottom - top
-        }
 
         fun setActive(value: Boolean) {
             this.state_active = value
@@ -75,86 +72,6 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
             }
         }
         this.populate()
-    }
-
-    override fun onLayout(isChanged: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
-        super.onLayout(isChanged, left, top, right, bottom)
-        when (this.orientation) {
-            VERTICAL -> {
-                this.layout_vertical(left, top, right, bottom)
-            }
-            HORIZONTAL -> {
-                this.layout_horizontal(left, top, right, bottom)
-            }
-        }
-    }
-
-    fun layout_horizontal(left: Int, top: Int, right: Int, bottom: Int) {
-        if (this.childCount > 0) {
-            val scale = resources.displayMetrics.density
-            val margin = (2 * scale + 0.5f).toInt()
-
-            var available_space = ((right - left) - (this.paddingLeft + this.paddingRight))
-            available_space -= (this.childCount - 1) * margin
-
-            val width = available_space / this.childCount
-            var remainder = available_space % this.childCount
-            var total_width = 0
-
-            for (i in 0 until this.childCount) {
-                val view = this.getChildAt(i)
-                var working_width = width
-
-                if (remainder > 0) {
-                    working_width += 1
-                    remainder -= 1
-                }
-
-                val offset = this.paddingLeft + (i * margin) + total_width
-                view.layout(
-                    offset,
-                    0,
-                    offset + working_width,
-                    (bottom - top)
-                )
-
-                total_width += working_width
-            }
-        }
-    }
-
-    fun layout_vertical(left: Int, top: Int, right: Int, bottom: Int) {
-        if (this.childCount > 0) {
-            val scale = resources.displayMetrics.density
-            val margin = (2 * scale + 0.5f).toInt()
-
-            var available_space = ((bottom - top) - (this.paddingTop + this.paddingBottom))
-            available_space -= (this.childCount - 1) * margin
-
-            val height = available_space / this.childCount
-            var remainder = available_space % this.childCount
-            var total_height = 0
-
-            for (i in 0 until this.childCount) {
-                val view = this.getChildAt(i)
-                var working_height = height
-
-                if (remainder > 0) {
-                    working_height += 1
-                    remainder -= 1
-                }
-
-                val offset = this.paddingTop + (i * margin) + total_height
-                view.layout(
-                    0,
-                    offset,
-                    right,
-                    offset + working_height
-                )
-
-                total_height += working_height
-            }
-        }
     }
 
     fun getState(): Int? {
@@ -228,13 +145,30 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
                 this.addView(currentView)
             }
 
-            currentView.layoutParams.apply {
+            (currentView.layoutParams as LinearLayout.LayoutParams).apply {
                 if (orientation == VERTICAL) {
                     width = MATCH_PARENT
+                    height = 0
                 } else {
                     height = MATCH_PARENT
+                    width = 0
                 }
+                weight = 1F
                 gravity = CENTER
+            }
+
+            val that = this
+            (currentView.layoutParams as MarginLayoutParams).apply {
+                var padding = resources.getDimension(R.dimen.normal_padding).roundToInt()
+                if (orientation == VERTICAL) {
+                    if (i != that.max) {
+                        setMargins(0, padding, 0, 0)
+                    }
+                } else {
+                    if (i != that.min) {
+                        setMargins(padding, 0, 0, 0)
+                    }
+                }
             }
 
             this.button_map[currentView] = i

@@ -83,7 +83,7 @@ class LoadFragment : PaganFragment() {
 
         this.get_main().apply {
             loading_reticle()
-            navTo("main")
+            navTo(R.id.EditorFragment)
         }
 
     }

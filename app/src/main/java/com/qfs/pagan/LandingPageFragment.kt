@@ -36,7 +36,7 @@ class LandingPageFragment : PaganFragment() {
         val btn_linkSFLicense = view.findViewById<View>(R.id.linkSFLicense)
 
         btn_settings.setOnClickListener {
-            this.get_main().navTo("settings")
+            this.get_main().navTo(R.id.SettingsFragment)
         }
 
         btn_linkLicense.setOnClickListener {
@@ -52,17 +52,17 @@ class LandingPageFragment : PaganFragment() {
                     Pair("TITLE", "GPLv3")
                 )
             )
-            this.get_main().navTo("license")
+            this.get_main().navTo(R.id.LicenseFragment)
         }
 
         btn_newProject.setOnClickListener {
             this.setFragmentResult(IntentFragmentToken.New.name, bundleOf())
-            this.get_main().navTo("main")
+            this.get_main().navTo(R.id.EditorFragment)
         }
 
         if (this.get_main().has_projects_saved()) {
             btn_loadProject.setOnClickListener {
-                this.get_main().navTo("load")
+                this.get_main().navTo(R.id.LoadFragment)
             }
 
             btn_loadProject.setOnLongClickListener {
@@ -122,7 +122,7 @@ class LandingPageFragment : PaganFragment() {
                         Pair("TITLE", "FluidR3_GM License")
                     )
                 )
-                this.get_main().navTo("license")
+                this.get_main().navTo(R.id.LicenseFragment)
             }
         }
     }

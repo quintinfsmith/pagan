@@ -87,7 +87,9 @@ class MainActivity : AppCompatActivity() {
             result?.data?.data?.also { uri ->
                 val fragment = this.getActiveFragment()
                 fragment?.setFragmentResult(IntentFragmentToken.ImportProject.name, bundleOf(Pair("URI", uri.toString())))
-                this.navTo("main")
+                if (fragment !is EditorFragment) {
+                    this.navTo(R.id.EditorFragment)
+                }
             }
         }
     }
@@ -108,11 +110,15 @@ class MainActivity : AppCompatActivity() {
         if (result.resultCode == Activity.RESULT_OK) {
             result?.data?.data?.also { uri ->
                 val fragment = this.getActiveFragment()
+
                 fragment?.setFragmentResult(IntentFragmentToken.ImportMidi.name, bundleOf(Pair("URI", uri.toString())))
-                this.navTo("main")
+                if (fragment !is EditorFragment) {
+                    this.navTo(R.id.EditorFragment)
+                }
             }
         }
     }
+
 
    override fun onConfigurationChanged(newConfig: Configuration) {
        super.onConfigurationChanged(newConfig)
@@ -236,12 +242,12 @@ class MainActivity : AppCompatActivity() {
                 this.save_dialog {
                     val fragment = this.getActiveFragment()
                     fragment?.setFragmentResult(IntentFragmentToken.New.name, bundleOf())
-                    this.navTo("main")
+                    this.navTo(R.id.EditorFragment)
                 }
             }
             R.id.itmLoadProject -> {
                 this.save_dialog {
-                    this.navTo("load")
+                    this.navTo(R.id.LoadFragment)
                 }
             }
             R.id.itmImportMidi -> {
@@ -271,7 +277,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             R.id.itmSettings -> {
-                this.navTo("settings")
+                this.navTo(R.id.SettingsFragment)
             }
         }
         return super.onOptionsItemSelected(item)
@@ -545,7 +551,7 @@ class MainActivity : AppCompatActivity() {
 
         val fragment = this.getActiveFragment()
         fragment?.setFragmentResult(IntentFragmentToken.New.name, bundleOf())
-        this.navTo("main")
+        this.navTo(R.id.EditorFragment)
 
 
         this.feedback_msg(resources.getString(R.string.feedback_delete, this.title))
@@ -559,76 +565,15 @@ class MainActivity : AppCompatActivity() {
     private fun closeDrawer() {
         findViewById<DrawerLayout>(R.id.drawer_layout).closeDrawers()
     }
-    fun navTo(fragmentName: String) {
-        val navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main)
-        val fragment = navHost?.childFragmentManager?.fragments?.get(0)
+    fun navTo(fragment: Int) {
         val navController = findNavController(R.id.nav_host_fragment_content_main)
-        if (fragmentName == "main") {
+        if (fragment == R.id.EditorFragment) {
+            this.has_seen_front_page = true
             this.unlockDrawer()
         } else {
             this.lockDrawer()
         }
-        when (fragment) {
-            is LoadFragment -> {
-                when (fragmentName) {
-                    "main" -> {
-                        if (this.has_seen_front_page) {
-                            navController.navigate(R.id.action_LoadFragment_to_EditorFragment2)
-                        } else {
-                            navController.navigate(R.id.action_LoadFragment_to_EditorFragment)
-                        }
-                    }
-
-                    else -> {}
-                }
-                this.has_seen_front_page = true
-
-            }
-
-            is EditorFragment -> {
-                when (fragmentName) {
-                    "load" -> {
-                        navController.navigate(R.id.action_EditorFragment_to_LoadFragment)
-                    }
-
-                    "settings" -> {
-                        navController.navigate(R.id.action_EditorFragment_to_SettingsFragment)
-                    }
-
-                    else -> {}
-                }
-            }
-
-            is LandingPageFragment -> {
-                navController.navigate(
-                    when (fragmentName) {
-                        "main" -> {
-                            this.has_seen_front_page = true
-                            R.id.action_FrontFragment_to_EditorFragment
-                        }
-
-                        "load" -> {
-                            R.id.action_FrontFragment_to_LoadFragment
-                        }
-
-                        "license" -> {
-                            R.id.action_FrontFragment_to_LicenseFragment
-                        }
-
-                        "settings" -> {
-                            R.id.action_FrontFragment_to_SettingsFragment
-                        }
-
-                        else -> {
-                            return
-                        }
-                    }
-                )
-
-            }
-
-            else -> {}
-        }
+        navController.navigate(fragment)
     }
 
     fun getActiveFragment(): Fragment? {

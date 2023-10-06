@@ -12,7 +12,7 @@ class OpusChannel(var uuid: Int) {
 
     class OpusLine(var beats: MutableList<OpusTree<OpusEvent>>) {
         constructor(beat_count: Int) : this(Array<OpusTree<OpusEvent>>(beat_count) { OpusTree() }.toMutableList())
-        var volume = 64
+        var volume = 96
         var static_value: Int? = null
     }
 

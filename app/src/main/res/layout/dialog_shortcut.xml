@@ -12,7 +12,7 @@
 
     <TextView
         android:paddingStart="16dp"
-        android:textSize="20dp"
+        android:textSize="20sp"
         android:id="@+id/shortcut_title"
         android:layout_weight="1"
         android:layout_width="match_parent"

@@ -441,8 +441,11 @@ class EditorFragment : PaganFragment() {
         }
 
         sbLineVolume.progress = opus_manager.get_line_volume(channel, line_offset)
+        sbLineVolume.contentDescription = resources.getString(R.string.label_volume_scrollbar, sbLineVolume.progress / sbLineVolume.max)
         sbLineVolume.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(p0: SeekBar, p1: Int, p2: Boolean) { }
+            override fun onProgressChanged(p0: SeekBar, p1: Int, p2: Boolean) {
+                p0.contentDescription = resources.getString(R.string.label_volume_scrollbar, (p1 / p0.max))
+            }
             override fun onStartTrackingTouch(p0: SeekBar?) { }
             override fun onStopTrackingTouch(seekbar: SeekBar) {
                 opus_manager.set_line_volume(channel, line_offset, seekbar.progress)
@@ -1000,11 +1003,13 @@ class EditorFragment : PaganFragment() {
             }
         }
 
-        title_text.text = "Jump To Beat ${scroll_bar.progress}"
+        title_text.text = resources.getString(R.string.label_shortcut_scrollbar, scroll_bar.progress)
+        title_text.contentDescription = resources.getString(R.string.label_shortcut_scrollbar, scroll_bar.progress)
 
         scroll_bar.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
-                title_text.text = "Jump To Beat $p1"
+                title_text.text = resources.getString(R.string.label_shortcut_scrollbar, p1)
+                title_text.contentDescription = resources.getString(R.string.label_shortcut_scrollbar, p1)
                 opus_manager.cursor_select_column(p1, true)
             }
             override fun onStartTrackingTouch(p0: SeekBar?) { }

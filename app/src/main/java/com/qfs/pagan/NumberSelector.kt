@@ -40,6 +40,10 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
             this.addView(this.text_view)
             this.text_view.layoutParams.width = MATCH_PARENT
             this.text_view.layoutParams.height = MATCH_PARENT
+            if (numberSelector.orientation != VERTICAL) {
+                var padding = (resources.displayMetrics.density * 3f).toInt()
+                this.setPadding(0, padding, 0, padding)
+            }
 
             this.setOnClickListener {
                 this.numberSelector.set_active_button(this)

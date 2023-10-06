@@ -122,7 +122,7 @@ class OpusChannel(var uuid: Int) {
         return Pair(this.midi_bank, this.midi_program)
     }
 
-    // TODO: Impliment
+    // TODO: Implement
     //fun swap_lines(first_index: Int, second_index: Int) {
     //    // Adjust the new_index so it doesn't get confused
     //    // when we pop() the old_index

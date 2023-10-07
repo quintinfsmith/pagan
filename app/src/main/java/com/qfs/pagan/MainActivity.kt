@@ -242,7 +242,9 @@ class MainActivity : AppCompatActivity() {
                 this.save_dialog {
                     val fragment = this.getActiveFragment()
                     fragment?.setFragmentResult(IntentFragmentToken.New.name, bundleOf())
-                    this.navTo(R.id.EditorFragment)
+                    if (fragment !is EditorFragment) {
+                        this.navTo(R.id.EditorFragment)
+                    }
                 }
             }
             R.id.itmLoadProject -> {
@@ -1034,5 +1036,4 @@ class MainActivity : AppCompatActivity() {
     fun convert_opus_to_absolute() {
         this.get_opus_manager().convert_all_events_to_absolute()
     }
-
 }

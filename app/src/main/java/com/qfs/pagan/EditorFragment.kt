@@ -180,12 +180,9 @@ class EditorFragment : PaganFragment() {
 
         setFragmentResultListener(IntentFragmentToken.New.name) { _, _: Bundle? ->
             val main = this.get_main()
-            main.loading_reticle()
             main.get_opus_manager().new()
-            main.cancel_reticle()
         }
 
-        this.get_main().update_menu_options()
     }
 
     override fun onDestroyView() {

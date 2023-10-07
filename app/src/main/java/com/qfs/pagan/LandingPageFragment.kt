@@ -127,6 +127,11 @@ class LandingPageFragment : PaganFragment() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        this.get_main().set_title_text("${getString(R.string.app_name)} ${getString(R.string.app_version)}")
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null

@@ -5,6 +5,7 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.content.res.Configuration
 import android.database.Cursor
+import android.media.midi.MidiDeviceInfo
 import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
@@ -38,6 +39,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.qfs.apres.InvalidMIDIFile
 import com.qfs.apres.Midi
 import com.qfs.apres.MidiController
+import com.qfs.apres.MidiPlayer
 import com.qfs.apres.VirtualMidiDevice
 import com.qfs.apres.event.NoteOff
 import com.qfs.apres.event.NoteOn
@@ -162,11 +164,18 @@ class MainActivity : AppCompatActivity() {
         super.onSaveInstanceState(outState)
     }
 
-    var test_output_device = VirtualMidiDevice()
+    var test_output_device = MidiPlayer()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        this.midi_interface = MidiController(this)
+        this.midi_interface = object: MidiController(this) {
+            override fun onDeviceAdded(device_info: MidiDeviceInfo) {
+                this@MainActivity.update_menu_options()
+            }
+            override fun onDeviceRemoved(device_info: MidiDeviceInfo) {
+                this@MainActivity.update_menu_options()
+            }
+        }
 
         //var test_device = object: VirtualMidiDevice() {
         //    override fun onNoteOn(event: NoteOn) {
@@ -174,7 +183,7 @@ class MainActivity : AppCompatActivity() {
         //    }
         //}
         //this.midi_interface.register_virtual_device(test_device)
-        this.midi_interface.register_virtual_device(this.test_output_device)
+        this.midi_interface.connect_virtual_device(this.test_output_device)
 
         this.project_manager = ProjectManager(this.getExternalFilesDir(null).toString())
         // Move files from applicationInfo.data to externalfilesdir (pre v1.1.2 location)
@@ -539,7 +548,7 @@ class MainActivity : AppCompatActivity() {
                     this.has_projects_saved()
                 this.optionsMenu!!.findItem(R.id.itmUndo).isVisible = true
                 this.optionsMenu!!.findItem(R.id.itmNewProject).isVisible = true
-                this.optionsMenu!!.findItem(R.id.itmPlay).isVisible = this.soundfont != null
+                this.optionsMenu!!.findItem(R.id.itmPlay).isVisible = (this.soundfont != null || this.midi_interface.output_devices_connected())
                 this.optionsMenu!!.findItem(R.id.itmImportMidi).isVisible = true
                 this.optionsMenu!!.findItem(R.id.itmImportProject).isVisible = true
                 this.optionsMenu!!.findItem(R.id.itmSettings).isVisible = true
@@ -573,15 +582,16 @@ class MainActivity : AppCompatActivity() {
             event_value + 21 + this.opus_manager.transpose
         }
 
-
-        this@MainActivity.runOnUiThread {
+        if (this.midi_interface.output_devices_connected()) {
             thread {
-
                 this.test_output_device.sendEvent(NoteOn(channel, note, velocity))
                 Thread.sleep(300)
                 this.test_output_device.sendEvent(NoteOff(channel, note, velocity))
             }
-            this.midi_playback_device?.play_note(midi_channel, note, velocity, 100)
+        } else {
+            this@MainActivity.runOnUiThread {
+                this.midi_playback_device?.play_note(midi_channel, note, velocity, 100)
+            }
         }
     }
 
@@ -589,7 +599,12 @@ class MainActivity : AppCompatActivity() {
         midi: Midi,
         callback: (position: Float) -> Unit
     ): SoundFontWavPlayer.PlaybackInterface? {
-        return this.midi_playback_device?.play(midi, callback)
+        if (this.midi_interface.output_devices_connected()) {
+            this.test_output_device.play_midi(midi)
+            return null
+        } else {
+            return this.midi_playback_device?.play(midi, callback)
+        }
     }
 
     private fun export_midi() {

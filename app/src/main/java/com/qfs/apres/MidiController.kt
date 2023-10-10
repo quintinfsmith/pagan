@@ -7,12 +7,12 @@ import android.media.midi.MidiDeviceInfo.PortInfo.TYPE_INPUT
 import android.media.midi.MidiDeviceInfo.PortInfo.TYPE_OUTPUT
 import android.media.midi.MidiInputPort
 import android.media.midi.MidiManager
+import android.media.midi.MidiOutputPort
 import android.media.midi.MidiReceiver
-import android.util.Log
 import com.qfs.apres.event.MIDIEvent
 import kotlin.concurrent.thread
 
-open class MidiController(var context: Context) {
+open class MidiController(var context: Context, var auto_connect: Boolean = true) {
     var midi_manager: MidiManager = this.context.getSystemService(Context.MIDI_SERVICE) as MidiManager
     var receiver = object: MidiReceiver() {
         override fun onSend(msg: ByteArray?, offset: Int, count: Int, timestamp: Long) {
@@ -25,13 +25,49 @@ open class MidiController(var context: Context) {
 
     var virtual_devices: MutableList<VirtualMidiDevice> = mutableListOf()
     var connected_input_ports = mutableListOf<MidiInputPort>()
+    private val mapped_input_ports = HashMap<Int, MutableList<MidiInputPort>>()
+    private val mapped_output_ports = HashMap<Int, MutableList<MidiOutputPort>>()
 
-    fun register_virtual_device(device: VirtualMidiDevice) {
+    init {
+        var that = this
+        this.midi_manager.registerDeviceCallback(object: MidiManager.DeviceCallback() {
+            override fun onDeviceAdded(device_info: MidiDeviceInfo) {
+                if (that.auto_connect) {
+                    if (device_info.inputPortCount > 0) {
+                        that.open_output_device(device_info)
+                    }
+                    if (device_info.outputPortCount > 0) {
+                        that.open_input_device(device_info)
+                    }
+                }
+            }
+            override fun onDeviceRemoved(device_info: MidiDeviceInfo) {
+                that.close_device(device_info)
+            }
+        }, null)
+        if (this.auto_connect) {
+            this.open_connected_devices()
+        }
+    }
+
+    open fun onDeviceAdded(device_info: MidiDeviceInfo) { }
+    open fun onDeviceRemoved(device_info: MidiDeviceInfo) { }
+
+    fun open_connected_devices() {
+        for (device_info in this.poll_output_devices()) {
+            this.open_output_device(device_info)
+        }
+        for (device_info in this.poll_input_devices()) {
+            this.open_input_device(device_info)
+        }
+    }
+
+    fun connect_virtual_device(device: VirtualMidiDevice) {
         this.virtual_devices.add(device)
         device.setMidiController(this)
     }
 
-    fun unregisterVirtualDevice(device: VirtualMidiDevice) {
+    fun disconnect_virtual_device(device: VirtualMidiDevice) {
         val index = this.virtual_devices.indexOf(device)
         if (index >= 0) {
             this.virtual_devices.removeAt(index)
@@ -63,8 +99,7 @@ open class MidiController(var context: Context) {
         }
 
         for (input_port in this.connected_input_ports) {
-            Log.d("AAA", "SENDING: $event")
-            var event_bytes = event.as_bytes()
+            val event_bytes = event.as_bytes()
             input_port.send(event_bytes, 0, event_bytes.size)
         }
     }
@@ -97,13 +132,15 @@ open class MidiController(var context: Context) {
 
     // NOTE: output device has input port
     fun open_output_device(device_info: MidiDeviceInfo, port: Int? = null) {
-        var that = this
         var port_number = port ?: (device_info.ports.filter { it.type == TYPE_INPUT }).first().portNumber
 
         this.midi_manager.openDevice(device_info, {
             val input_port = it.openInputPort(port_number) // TODO: check open ports?
-            that.connected_input_ports.add(input_port)
-            input_port.flush()
+            this.connected_input_ports.add(input_port)
+            if (!this.mapped_input_ports.containsKey(device_info.id)) {
+                this.mapped_input_ports[device_info.id] = mutableListOf()
+            }
+            this.mapped_input_ports[device_info.id]!!.add(input_port)
         }, null)
     }
 
@@ -114,6 +151,29 @@ open class MidiController(var context: Context) {
         this.midi_manager.openDevice(device_info, {
             val output_port = it.openOutputPort(port_number)
             output_port.connect(this.receiver)
+            if (!this.mapped_output_ports.containsKey(device_info.id)) {
+                this.mapped_output_ports[device_info.id] = mutableListOf()
+            }
+            this.mapped_output_ports[device_info.id]!!.add(output_port)
         }, null)
+    }
+
+    fun output_devices_connected(): Boolean {
+        return this.connected_input_ports.isNotEmpty()
+    }
+
+    fun close_device(device_info: MidiDeviceInfo) {
+        if (this.mapped_input_ports.containsKey(device_info.id)) {
+            this.mapped_input_ports[device_info.id]!!.forEach {
+                it.close()
+            }
+            this.mapped_input_ports.remove(device_info.id)
+        }
+        if (this.mapped_output_ports.containsKey(device_info.id)) {
+            this.mapped_output_ports[device_info.id]!!.forEach {
+                it.close()
+            }
+            this.mapped_output_ports.remove(device_info.id)
+        }
     }
 }

@@ -13,7 +13,7 @@ class MidiPlayer: VirtualMidiDevice() {
             return
         }
 
-        if (! this.is_registered()) {
+        if (! this.is_connected()) {
             Log.w("apres", "Can't play without registering a midi controller first")
             return
         }

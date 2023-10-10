@@ -1,63 +1,59 @@
 package com.qfs.apres
 
+import android.annotation.SuppressLint
 import android.content.Context
+import android.media.midi.MidiDeviceInfo
+import android.media.midi.MidiDeviceInfo.PortInfo.TYPE_INPUT
+import android.media.midi.MidiDeviceInfo.PortInfo.TYPE_OUTPUT
+import android.media.midi.MidiInputPort
+import android.media.midi.MidiManager
+import android.media.midi.MidiReceiver
+import android.util.Log
 import com.qfs.apres.event.MIDIEvent
 import kotlin.concurrent.thread
 
-// Reference code base on https://github.com/android/ndk-samples/tree/main/native-midi
 open class MidiController(var context: Context) {
-    var virtualDevices: MutableList<VirtualMidiDevice> = mutableListOf()
-
-    fun registerVirtualDevice(device: VirtualMidiDevice) {
-        this.virtualDevices.add(device)
-        device.setMidiController(this)
-    }
-    fun unregisterVirtualDevice(device: VirtualMidiDevice) {
-        val index = this.virtualDevices.indexOf(device)
-        if (index >= 0) {
-            this.virtualDevices.removeAt(index)
+    var midi_manager: MidiManager = this.context.getSystemService(Context.MIDI_SERVICE) as MidiManager
+    var receiver = object: MidiReceiver() {
+        override fun onSend(msg: ByteArray?, offset: Int, count: Int, timestamp: Long) {
+            val msg_list = msg!!.toMutableList()
+            msg_list.removeFirst()
+            val event = event_from_bytes(msg_list, 0x90.toByte()) ?: return
+            broadcast_event(event)
         }
     }
 
-    // TODO: Native midi support
-    //private val midiManager = context.getSystemService(Context.MIDI_SERVICE) as MidiManager
+    var virtual_devices: MutableList<VirtualMidiDevice> = mutableListOf()
+    var connected_input_ports = mutableListOf<MidiInputPort>()
 
+    fun register_virtual_device(device: VirtualMidiDevice) {
+        this.virtual_devices.add(device)
+        device.setMidiController(this)
+    }
 
-    //// Selected Device(s)
-    //private var incomingDevice : MidiDevice? = null
-    //private var outgoingDevice : MidiDevice? = null
-    //private val outgoingPort: MidiInputPort? = null
+    fun unregisterVirtualDevice(device: VirtualMidiDevice) {
+        val index = this.virtual_devices.indexOf(device)
+        if (index >= 0) {
+            this.virtual_devices.removeAt(index)
+        }
+    }
 
-    //private var process_queue: MutableList<MIDIEvent> = mutableListOf()
+    fun broadcast_event(event: MIDIEvent) {
+        // Rebroadcast to listening devices
+        for (device in this.virtual_devices) {
+            thread {
+                device.receiveMessage(event)
+            }
+        }
 
-    //init {
-    //    val midiDevices = getIncomingDevices() // method defined in snippet above
-    //    if (midiDevices.isNotEmpty()) {
-    //        this.openIncomingDevice(midiDevices[0])
-    //    }
-    //}
+        for (input_port in this.connected_input_ports) {
+            input_port.send(event.as_bytes(), 0, 1)
+        }
+    }
 
-    //class OpenIncomingDeviceListener : OnDeviceOpenedListener {
-    //    open external fun startReadingMidi(incomingDevice: MidiDevice?, portNumber: Int)
-    //    open external fun stopReadingMidi()
-    //    override fun onDeviceOpened(device: MidiDevice) {
-    //        this.startReadingMidi(device, 0 /*mPortNumber*/)
-    //    }
-    //}
-
-    //open fun openIncomingDevice(devInfo: MidiDeviceInfo?) {
-    //    midiManager.openDevice(devInfo, OpenIncomingDeviceListener(), null)
-    //}
-
-    //open fun closeIncomingDevice() {
-    //    if (this.incomingDevice != null) {
-    //        // Native API
-    //        this.incomingDevice = null
-    //    }
-    //}
     fun receiveMessage(event: MIDIEvent, source: VirtualMidiDevice) {
         // Rebroadcast to listening devices
-        for (device in this.virtualDevices) {
+        for (device in this.virtual_devices) {
             if (device == source) {
                 continue
             }
@@ -65,56 +61,58 @@ open class MidiController(var context: Context) {
                 device.receiveMessage(event)
             }
         }
+
+        for (input_port in this.connected_input_ports) {
+            Log.d("AAA", "SENDING: $event")
+            input_port.send(event.as_bytes(), 0, 1)
+        }
     }
 
-    //open fun onNativeMessageReceive(message: ByteArray) {
-    //    var event = event_from_bytes(message.toMutableList()) ?: return
-    //    this.receiveMessage(event)
-    //    this.process_queue.add(event)
-    //    // Messages are received on some other thread, so switch to the UI thread
-    //    // before attempting to access the UI
-    //    // UiThreadStatement.runOnUiThread(Runnable { showReceivedMessage(message) })
-    //}
+    @SuppressLint("NewApi")
+    fun poll_output_devices(): List<MidiDeviceInfo> {
+        val devices_info =  this.midi_manager.getDevicesForTransport(MidiManager.TRANSPORT_MIDI_BYTE_STREAM)
+        val output_devices = mutableListOf<MidiDeviceInfo>()
+        for (device_info in devices_info) {
+            var device_name = device_info.properties.getString(MidiDeviceInfo.PROPERTY_NAME)
+            if (device_info.outputPortCount > 0) {
+                output_devices.add(device_info)
+            }
+        }
+        return output_devices
+    }
 
-    //// Send Device
-    //class OpenOutgoingDeviceListener : OnDeviceOpenedListener {
-    //    open external fun startWritingMidi(sendDevice: MidiDevice?, portNumber: Int)
-    //    open external fun stopWritingMidi()
-    //    override fun onDeviceOpened(device: MidiDevice) {
-    //        this.startWritingMidi(device, 0 /*mPortNumber*/)
-    //    }
-    //}
+    @SuppressLint("NewApi")
+    fun poll_input_devices(): List<MidiDeviceInfo> {
+        val devices_info =  this.midi_manager.getDevicesForTransport(MidiManager.TRANSPORT_MIDI_BYTE_STREAM)
+        val input_devices = mutableListOf<MidiDeviceInfo>()
+        for (device_info in devices_info) {
+            var device_name = device_info.properties.getString(MidiDeviceInfo.PROPERTY_NAME)
+            if (device_info.inputPortCount > 0) {
+                input_devices.add(device_info)
+            }
+        }
+        return input_devices
+    }
 
-    //open fun openSendDevice(devInfo: MidiDeviceInfo?) {
-    //    this.midiManager.openDevice(devInfo, OpenOutgoingDeviceListener(), null)
-    //}
+    // NOTE: output device has input port
+    fun open_output_device(device_info: MidiDeviceInfo, port: Int? = null) {
+        var that = this
+        var port_number = port ?: (device_info.ports.filter { it.type == TYPE_INPUT }).first().portNumber
 
-    //open fun closeSendDevice() {
-    //    if (this.outgoingDevice != null) {
-    //        // Native API
-    //        this.outgoingDevice = null
-    //    }
-    //}
+        this.midi_manager.openDevice(device_info, {
+            val input_port = it.openInputPort(port_number) // TODO: check open ports?
+            that.connected_input_ports.add(input_port)
+            input_port.flush()
+        }, null)
+    }
 
-    //fun sendMessage(event: MIDIEvent) {
-    //    var bytes = event.as_bytes()
-    //    this.writeMidi(bytes, bytes.size)
-    //}
+    // NOTE: input device has output port
+    fun open_input_device(device_info: MidiDeviceInfo, port: Int? = null) {
+        var port_number = port ?: (device_info.ports.filter { it.type == TYPE_OUTPUT }).first().portNumber
 
-    //private fun getOutgoingDevices(): List<MidiDeviceInfo> {
-    //    return midiManager.devices.filter { it.outputPortCount > 0 }
-    //}
-
-    //private fun getIncomingDevices() : List<MidiDeviceInfo> {
-    //    return midiManager.devices.filter { it.inputPortCount > 0 }
-    //}
-
-    ////
-    //// Native API stuff
-    ////
-    //open fun loadNativeAPI() {
-    //    System.loadLibrary("native_midi")
-    //}
-
-    //open external fun writeMidi(data: ByteArray?, length: Int)
+        this.midi_manager.openDevice(device_info, {
+            val output_port = it.openOutputPort(port_number)
+            output_port.connect(this.receiver)
+        }, null)
+    }
 }

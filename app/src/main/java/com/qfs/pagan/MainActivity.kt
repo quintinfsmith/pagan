@@ -168,12 +168,12 @@ class MainActivity : AppCompatActivity() {
 
         this.midi_interface = MidiController(this)
 
-        var test_device = object: VirtualMidiDevice() {
-            override fun onNoteOn(event: NoteOn) {
-                play_event(event.channel, event.note - 27, event.velocity)
-            }
-        }
-        this.midi_interface.register_virtual_device(test_device)
+        //var test_device = object: VirtualMidiDevice() {
+        //    override fun onNoteOn(event: NoteOn) {
+        //        play_event(event.channel, event.note - 27, event.velocity)
+        //    }
+        //}
+        //this.midi_interface.register_virtual_device(test_device)
         this.midi_interface.register_virtual_device(this.test_output_device)
 
         this.project_manager = ProjectManager(this.getExternalFilesDir(null).toString())

@@ -64,7 +64,8 @@ open class MidiController(var context: Context) {
 
         for (input_port in this.connected_input_ports) {
             Log.d("AAA", "SENDING: $event")
-            input_port.send(event.as_bytes(), 0, 1)
+            var event_bytes = event.as_bytes()
+            input_port.send(event_bytes, 0, event_bytes.size)
         }
     }
 
@@ -74,7 +75,7 @@ open class MidiController(var context: Context) {
         val output_devices = mutableListOf<MidiDeviceInfo>()
         for (device_info in devices_info) {
             var device_name = device_info.properties.getString(MidiDeviceInfo.PROPERTY_NAME)
-            if (device_info.outputPortCount > 0) {
+            if (device_info.inputPortCount > 0) {
                 output_devices.add(device_info)
             }
         }
@@ -87,7 +88,7 @@ open class MidiController(var context: Context) {
         val input_devices = mutableListOf<MidiDeviceInfo>()
         for (device_info in devices_info) {
             var device_name = device_info.properties.getString(MidiDeviceInfo.PROPERTY_NAME)
-            if (device_info.inputPortCount > 0) {
+            if (device_info.outputPortCount > 0) {
                 input_devices.add(device_info)
             }
         }

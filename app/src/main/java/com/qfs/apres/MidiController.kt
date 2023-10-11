@@ -23,13 +23,14 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
         }
     }
 
-    var virtual_devices: MutableList<VirtualMidiDevice> = mutableListOf()
+    var virtual_input_devices: MutableList<VirtualMidiDevice> = mutableListOf()
+    var virtual_output_devices: MutableList<VirtualMidiDevice> = mutableListOf()
     var connected_input_ports = mutableListOf<MidiInputPort>()
     private val mapped_input_ports = HashMap<Int, MutableList<MidiInputPort>>()
     private val mapped_output_ports = HashMap<Int, MutableList<MidiOutputPort>>()
 
     init {
-        var that = this
+        val that = this
         this.midi_manager.registerDeviceCallback(object: MidiManager.DeviceCallback() {
             override fun onDeviceAdded(device_info: MidiDeviceInfo) {
                 if (that.auto_connect) {
@@ -40,11 +41,14 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
                         that.open_input_device(device_info)
                     }
                 }
+                this@MidiController.onDeviceAdded(device_info)
             }
             override fun onDeviceRemoved(device_info: MidiDeviceInfo) {
                 that.close_device(device_info)
+                this@MidiController.onDeviceRemoved(device_info)
             }
         }, null)
+
         if (this.auto_connect) {
             this.open_connected_devices()
         }
@@ -62,45 +66,41 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
         }
     }
 
-    fun connect_virtual_device(device: VirtualMidiDevice) {
-        this.virtual_devices.add(device)
+    fun connect_virtual_input_device(device: VirtualMidiDevice) {
+        this.virtual_input_devices.add(device)
         device.setMidiController(this)
     }
 
-    fun disconnect_virtual_device(device: VirtualMidiDevice) {
-        val index = this.virtual_devices.indexOf(device)
+    fun disconnect_virtual_input_device(device: VirtualMidiDevice) {
+        val index = this.virtual_input_devices.indexOf(device)
         if (index >= 0) {
-            this.virtual_devices.removeAt(index)
+            this.virtual_input_devices.removeAt(index)
+        }
+    }
+
+    fun connect_virtual_output_device(device: VirtualMidiDevice) {
+        this.virtual_output_devices.add(device)
+        device.setMidiController(this)
+    }
+
+    fun disconnect_virtual_output_device(device: VirtualMidiDevice) {
+        val index = this.virtual_output_devices.indexOf(device)
+        if (index >= 0) {
+            this.virtual_output_devices.removeAt(index)
         }
     }
 
     fun broadcast_event(event: MIDIEvent) {
         // Rebroadcast to listening devices
-        for (device in this.virtual_devices) {
+        for (device in this.virtual_output_devices) {
             thread {
                 device.receiveMessage(event)
             }
         }
 
         for (input_port in this.connected_input_ports) {
-            input_port.send(event.as_bytes(), 0, 1)
-        }
-    }
-
-    fun receiveMessage(event: MIDIEvent, source: VirtualMidiDevice) {
-        // Rebroadcast to listening devices
-        for (device in this.virtual_devices) {
-            if (device == source) {
-                continue
-            }
-            thread {
-                device.receiveMessage(event)
-            }
-        }
-
-        for (input_port in this.connected_input_ports) {
-            val event_bytes = event.as_bytes()
-            input_port.send(event_bytes, 0, event_bytes.size)
+            var bytes = event.as_bytes()
+            input_port.send(bytes, 0, bytes.size)
         }
     }
 
@@ -165,6 +165,9 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
     fun close_device(device_info: MidiDeviceInfo) {
         if (this.mapped_input_ports.containsKey(device_info.id)) {
             this.mapped_input_ports[device_info.id]!!.forEach {
+                if (this.connected_input_ports.contains(it)) {
+                    this.connected_input_ports.remove(it)
+                }
                 it.close()
             }
             this.mapped_input_ports.remove(device_info.id)

@@ -43,6 +43,7 @@ import com.qfs.apres.MidiPlayer
 import com.qfs.apres.VirtualMidiDevice
 import com.qfs.apres.event.NoteOff
 import com.qfs.apres.event.NoteOn
+import com.qfs.apres.event.SongPositionPointer
 import com.qfs.apres.soundfont.SoundFont
 import com.qfs.apres.soundfontplayer.SoundFontWavPlayer
 import com.qfs.pagan.databinding.ActivityMainBinding
@@ -164,26 +165,34 @@ class MainActivity : AppCompatActivity() {
         super.onSaveInstanceState(outState)
     }
 
-    var test_output_device = MidiPlayer()
+    private var virtual_input_device = MidiPlayer()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         this.midi_interface = object: MidiController(this) {
             override fun onDeviceAdded(device_info: MidiDeviceInfo) {
-                this@MainActivity.update_menu_options()
+                this@MainActivity.runOnUiThread {
+                    this@MainActivity.update_menu_options()
+                }
             }
             override fun onDeviceRemoved(device_info: MidiDeviceInfo) {
-                this@MainActivity.update_menu_options()
+                this@MainActivity.runOnUiThread {
+                    this@MainActivity.stop_playback()
+                    this@MainActivity.update_menu_options()
+                }
             }
         }
 
-        //var test_device = object: VirtualMidiDevice() {
-        //    override fun onNoteOn(event: NoteOn) {
-        //        play_event(event.channel, event.note - 27, event.velocity)
-        //    }
-        //}
-        //this.midi_interface.register_virtual_device(test_device)
-        this.midi_interface.connect_virtual_device(this.test_output_device)
+        val midi_observer = object: VirtualMidiDevice() {
+            override fun onSongPositionPointer(event: SongPositionPointer) {
+                this@MainActivity.runOnUiThread {
+                    this@MainActivity.get_opus_manager().cursor_select_column(event.beat, true)
+                }
+            }
+        }
+
+        this.midi_interface.connect_virtual_input_device(this.virtual_input_device)
+        this.midi_interface.connect_virtual_output_device(midi_observer)
 
         this.project_manager = ProjectManager(this.getExternalFilesDir(null).toString())
         // Move files from applicationInfo.data to externalfilesdir (pre v1.1.2 location)
@@ -247,11 +256,10 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        val that = this
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 if (navController.currentDestination?.id == R.id.EditorFragment) {
-                    that.save_dialog {
+                    this@MainActivity.save_dialog {
                         finish()
                     }
                 } else {
@@ -259,7 +267,6 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         })
-
     }
 
     override fun onSupportNavigateUp(): Boolean {
@@ -283,7 +290,6 @@ class MainActivity : AppCompatActivity() {
 
         when (item.itemId) {
             R.id.itmNewProject -> {
-                // TODO: Save or discard popup dialog
                 this.save_dialog {
                     val fragment = this.getActiveFragment()
                     fragment?.setFragmentResult(IntentFragmentToken.New.name, bundleOf())
@@ -313,7 +319,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             R.id.itmPlay -> {
-                if (this.playback_handle != null) {
+                if (this.playback_handle != null || this.virtual_input_device.playing) {
                     this.stop_playback()
                 } else {
                     this.start_playback()
@@ -333,7 +339,6 @@ class MainActivity : AppCompatActivity() {
                 this.navTo(R.id.SettingsFragment)
             }
             R.id.itmMidiTest -> {
-                var that = this
                 for (device in this.midi_interface.poll_input_devices()) {
                     this.midi_interface.open_input_device(device)
                 }
@@ -341,7 +346,7 @@ class MainActivity : AppCompatActivity() {
                     this.midi_interface.open_output_device(device)
                 }
                 AlertDialog.Builder(this, R.style.AlertDialog).apply {
-                    setTitle("M COUNT: ${that.midi_interface.poll_input_devices().size}")
+                    setTitle("M COUNT: ${this@MainActivity.midi_interface.poll_input_devices().size}")
                     setPositiveButton(getString(R.string.dlg_confirm)) { dialog, _ -> }
                     show()
                 }
@@ -369,13 +374,13 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun save_dialog(callback: () -> Unit) {
+
         if (this.get_opus_manager().has_changed_since_save()) {
-            val that = this
             AlertDialog.Builder(this, R.style.AlertDialog).apply {
                 setTitle(getString(R.string.dialog_save_warning_title))
                 setCancelable(true)
                 setPositiveButton(getString(R.string.dlg_confirm)) { dialog, _ ->
-                    that.save_current_project()
+                    this@MainActivity.save_current_project()
                     dialog.dismiss()
                     callback()
                 }
@@ -584,9 +589,9 @@ class MainActivity : AppCompatActivity() {
 
         if (this.midi_interface.output_devices_connected()) {
             thread {
-                this.test_output_device.sendEvent(NoteOn(channel, note, velocity))
+                this.midi_interface.broadcast_event(NoteOn(channel, note, velocity))
                 Thread.sleep(300)
-                this.test_output_device.sendEvent(NoteOff(channel, note, velocity))
+                this.midi_interface.broadcast_event(NoteOff(channel, note, velocity))
             }
         } else {
             this@MainActivity.runOnUiThread {
@@ -599,11 +604,21 @@ class MainActivity : AppCompatActivity() {
         midi: Midi,
         callback: (position: Float) -> Unit
     ): SoundFontWavPlayer.PlaybackInterface? {
-        if (this.midi_interface.output_devices_connected()) {
-            this.test_output_device.play_midi(midi)
-            return null
+        return if (this.midi_interface.output_devices_connected()) {
+            try {
+                this.virtual_input_device.play_midi(midi) {
+                    this.runOnUiThread {
+                        this.stop_playback()
+                    }
+                }
+            } catch (e: java.io.IOException) {
+                this.runOnUiThread {
+                    this.stop_playback()
+                }
+            }
+            null
         } else {
-            return this.midi_playback_device?.play(midi, callback)
+            this.midi_playback_device?.play(midi, callback)
         }
     }
 
@@ -630,14 +645,13 @@ class MainActivity : AppCompatActivity() {
 
         val title = this.get_opus_manager().project_name
 
-        val that = this
         AlertDialog.Builder(main_fragment!!.context, R.style.AlertDialog).apply {
             setTitle(resources.getString(R.string.dlg_delete_title, title))
 
             setPositiveButton(android.R.string.ok) { dialog, _ ->
-                that.delete_project()
+                this@MainActivity.delete_project()
                 dialog.dismiss()
-                that.closeDrawer()
+                this@MainActivity.closeDrawer()
             }
             setNegativeButton(android.R.string.cancel) { dialog, _ ->
                 dialog.cancel()
@@ -843,20 +857,19 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun loading_reticle() {
-        val that = this
         runBlocking {
-            that.runOnUiThread {
-                if (that.progressBar == null) {
-                    that.progressBar =
-                        ProgressBar(that, null, android.R.attr.progressBarStyleLarge)
+            this@MainActivity.runOnUiThread {
+                if (this@MainActivity.progressBar == null) {
+                    this@MainActivity.progressBar =
+                        ProgressBar(this@MainActivity, null, android.R.attr.progressBarStyleLarge)
                 }
                 val params: RelativeLayout.LayoutParams = RelativeLayout.LayoutParams(50, 50)
                 params.addRule(RelativeLayout.CENTER_IN_PARENT)
-                val parent = that.progressBar!!.parent
+                val parent = this@MainActivity.progressBar!!.parent
                 if (parent != null) {
-                    (parent as ViewGroup).removeView(that.progressBar)
+                    (parent as ViewGroup).removeView(this@MainActivity.progressBar)
                 }
-                that.binding.root.addView(that.progressBar, params)
+                this@MainActivity.binding.root.addView(this@MainActivity.progressBar, params)
             }
         }
     }
@@ -989,20 +1002,21 @@ class MainActivity : AppCompatActivity() {
 
     fun stop_playback() {
         this.runOnUiThread {
-            val play_pause_button = this.optionsMenu!!.findItem(R.id.itmPlay)
+            val play_pause_button = this.optionsMenu?.findItem(R.id.itmPlay) ?: return@runOnUiThread
             if (play_pause_button != null) {
-                play_pause_button.icon =
-                    ContextCompat.getDrawable(this, R.drawable.ic_baseline_play_arrow_24)
+                play_pause_button.icon = ContextCompat.getDrawable(this, R.drawable.ic_baseline_play_arrow_24)
             }
         }
         this.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
-        if (this.playback_handle == null) {
-            return
+        if (this.virtual_input_device.playing) {
+            this.virtual_input_device.stop()
         }
 
-        this.playback_handle!!.stop()
-        this.playback_handle = null
+        if (this.playback_handle != null) {
+            this.playback_handle!!.stop()
+            this.playback_handle = null
+        }
 
         val blocker_view = this.findViewById<LinearLayout>(R.id.llClearOverlay) ?: return
 

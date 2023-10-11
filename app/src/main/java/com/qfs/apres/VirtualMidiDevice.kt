@@ -137,7 +137,7 @@ open class VirtualMidiDevice {
     fun sendEvent(event: MIDIEvent) {
         // TODO: Throw error?
         if (is_connected()) {
-            this.midi_controller!!.receiveMessage(event, this)
+            this.midi_controller!!.broadcast_event(event)
         }
     }
 

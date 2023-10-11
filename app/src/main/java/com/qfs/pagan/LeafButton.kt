@@ -18,8 +18,8 @@ import com.qfs.pagan.InterfaceLayer as OpusManager
 
 class LeafButton(
     context: Context,
-    private var activity: MainActivity,
-    private var event: OpusEvent?,
+    private var _activity: MainActivity,
+    private var _event: OpusEvent?,
     var position: List<Int>,
     is_percussion: Boolean
 ) : LinearLayout(ContextThemeWrapper(context, R.style.leaf)) {
@@ -49,38 +49,38 @@ class LeafButton(
     private val STATE_INVALID = intArrayOf(R.attr.state_invalid)
     private val STATE_CHANNEL_EVEN = intArrayOf(R.attr.state_channel_even)
 
-    private var value_wrapper: LinearLayout
-    private var value_label_octave: TextView
-    private var value_label_offset: TextView
-    private var prefix_label: TextView
-    private var inner_wrapper: InnerWrapper = InnerWrapper(ContextThemeWrapper(this.context, R.style.leaf_inner))
+    private var _value_wrapper: LinearLayout
+    private var _value_label_octave: TextView
+    private var _value_label_offset: TextView
+    private var _prefix_label: TextView
+    private var _inner_wrapper: InnerWrapper = InnerWrapper(ContextThemeWrapper(this.context, R.style.leaf_inner))
     var invalid: Boolean = false
 
     init {
         this.isClickable = false
         this.minimumHeight = resources.getDimension(R.dimen.line_height).toInt()
         this.minimumWidth = resources.getDimension(R.dimen.base_leaf_width).toInt()
-        this.inner_wrapper.orientation = VERTICAL
-        this.value_wrapper = LinearLayout(ContextThemeWrapper(this.context, R.style.leaf_value))
-        this.value_wrapper.orientation = HORIZONTAL
+        this._inner_wrapper.orientation = VERTICAL
+        this._value_wrapper = LinearLayout(ContextThemeWrapper(this.context, R.style.leaf_value))
+        this._value_wrapper.orientation = HORIZONTAL
 
-        this.value_label_octave = LeafText(ContextThemeWrapper(this.context, R.style.leaf_value_octave))
-        this.value_label_offset = LeafText(ContextThemeWrapper(this.context, R.style.leaf_value_offset))
-        this.prefix_label = LeafText(ContextThemeWrapper(this.context, R.style.leaf_prefix))
-        (this.inner_wrapper as LinearLayout).addView(this.prefix_label)
-        (this.inner_wrapper as LinearLayout).addView(this.value_wrapper)
-        this.value_wrapper.addView(this.value_label_octave)
-        this.value_wrapper.addView(this.value_label_offset)
+        this._value_label_octave = LeafText(ContextThemeWrapper(this.context, R.style.leaf_value_octave))
+        this._value_label_offset = LeafText(ContextThemeWrapper(this.context, R.style.leaf_value_offset))
+        this._prefix_label = LeafText(ContextThemeWrapper(this.context, R.style.leaf_prefix))
+        (this._inner_wrapper as LinearLayout).addView(this._prefix_label)
+        (this._inner_wrapper as LinearLayout).addView(this._value_wrapper)
+        this._value_wrapper.addView(this._value_label_octave)
+        this._value_wrapper.addView(this._value_label_offset)
 
-        this.addView(this.inner_wrapper)
-        this.inner_wrapper.layoutParams.apply {
+        this.addView(this._inner_wrapper)
+        this._inner_wrapper.layoutParams.apply {
             width = MATCH_PARENT
             height = MATCH_PARENT
         }
 
         this.set_text(is_percussion)
         this.setOnClickListener {
-            this.activity.runOnUiThread {
+            this._activity.runOnUiThread {
                 this.callback_click()
             }
         }
@@ -126,14 +126,14 @@ class LeafButton(
                     is LinksLayer.SelfLinkError -> { }
                     is LinksLayer.MixedLinkException -> {
                         editor_table.notify_cell_change(beat_key)
-                        this.activity.feedback_msg(context.getString(R.string.feedback_mixed_link))
+                        this._activity.feedback_msg(context.getString(R.string.feedback_mixed_link))
                     }
                     is LinksLayer.LinkRangeOverlap,
                     is LinksLayer.LinkRangeOverflow -> {
                         editor_table.notify_cell_change(beat_key)
                         opus_manager.cursor.is_linking = false
                         opus_manager.cursor_select(beat_key, this.position)
-                        this.activity.feedback_msg(context.getString(R.string.feedback_bad_range))
+                        this._activity.feedback_msg(context.getString(R.string.feedback_bad_range))
                     }
                     else -> {
                         throw e
@@ -169,64 +169,64 @@ class LeafButton(
     }
 
     private fun unset_text() {
-        this.prefix_label.visibility = View.GONE
-        this.value_label_octave.visibility = View.GONE
-        this.value_label_offset.visibility = View.GONE
+        this._prefix_label.visibility = View.GONE
+        this._value_label_octave.visibility = View.GONE
+        this._value_label_offset.visibility = View.GONE
     }
 
     private fun set_text(is_percussion: Boolean) {
-        if (this.event == null) {
+        if (this._event == null) {
             this.unset_text()
             return
         }
 
-        val event = this.event!!
+        val event = this._event!!
         var use_note = event.note
-        this.prefix_label.text = if (!is_percussion && (event.relative && event.note != 0)) {
-            this.prefix_label.visibility = View.VISIBLE
+        this._prefix_label.text = if (!is_percussion && (event.relative && event.note != 0)) {
+            this._prefix_label.visibility = View.VISIBLE
             if (event.note < 0) {
                 use_note = 0 - event.note
-                this.activity.getString(R.string.pfx_subtract)
+                this._activity.getString(R.string.pfx_subtract)
             } else {
-                this.activity.getString(R.string.pfx_add)
+                this._activity.getString(R.string.pfx_add)
             }
         } else {
-            this.prefix_label.visibility = View.GONE
+            this._prefix_label.visibility = View.GONE
             ""
         }
 
 
         if (is_percussion) {
-            this.value_label_octave.visibility = View.GONE
-            this.value_label_offset.text = this.activity.getString(R.string.percussion_label)
+            this._value_label_octave.visibility = View.GONE
+            this._value_label_offset.text = this._activity.getString(R.string.percussion_label)
         } else if (event.relative && event.note == 0) {
-            this.value_label_octave.visibility = View.GONE
-            this.value_label_offset.text = this.activity.getString(R.string.repeat_note)
+            this._value_label_octave.visibility = View.GONE
+            this._value_label_offset.text = this._activity.getString(R.string.repeat_note)
         } else {
-            this.value_label_octave.visibility = View.VISIBLE
-            this.value_label_octave.text = get_number_string(use_note / event.radix, event.radix, 1)
-            this.value_label_offset.text = get_number_string(use_note % event.radix, event.radix, 1)
+            this._value_label_octave.visibility = View.VISIBLE
+            this._value_label_octave.text = get_number_string(use_note / event.radix, event.radix, 1)
+            this._value_label_offset.text = get_number_string(use_note % event.radix, event.radix, 1)
         }
 
         if (event.relative && event.note != 0) {
-            (this.prefix_label.layoutParams as LayoutParams).apply {
+            (this._prefix_label.layoutParams as LayoutParams).apply {
                 setMargins(0,-20,0,0)
                 height = WRAP_CONTENT
                 gravity = CENTER
             }
-            (this.value_wrapper.layoutParams as LayoutParams).apply {
+            (this._value_wrapper.layoutParams as LayoutParams).apply {
                 setMargins(0,-30,0,0)
                 weight = 1F
                 height = WRAP_CONTENT
                 gravity = CENTER
             }
         } else {
-            (this.prefix_label.layoutParams as LayoutParams).apply {
+            (this._prefix_label.layoutParams as LayoutParams).apply {
                 height = WRAP_CONTENT
                 setMargins(0,0,0,0)
                 gravity = CENTER
             }
-            (this.value_wrapper.layoutParams as LayoutParams).apply {
+            (this._value_wrapper.layoutParams as LayoutParams).apply {
                 weight = 1F
                 height = 0
                 gravity = CENTER

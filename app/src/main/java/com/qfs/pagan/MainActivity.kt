@@ -50,26 +50,26 @@ import kotlin.concurrent.thread
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var appBarConfiguration: AppBarConfiguration
+    private lateinit var _app_bar_configuration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
-    private lateinit var config_path: String
+    private lateinit var _config_path: String
     lateinit var configuration: PaganConfiguration
-    private var midi_playback_device: SoundFontWavPlayer? = null
-    private var soundfont: SoundFont? = null
+    private var _midi_playback_device: SoundFontWavPlayer? = null
+    private var _soundfont: SoundFont? = null
     var active_percussion_names = HashMap<Int, String>()
 
-    private var opus_manager = OpusManager(this)
+    private var _opus_manager = OpusManager(this)
 
-    private var playback_handle: SoundFontWavPlayer.PlaybackInterface? = null
-    private var optionsMenu: Menu? = null
+    private var _playback_handle: SoundFontWavPlayer.PlaybackInterface? = null
+    private var _options_menu: Menu? = null
     internal lateinit var project_manager: ProjectManager
-    private var progressBar: ProgressBar? = null
+    private var _progress_bar: ProgressBar? = null
 
-    private var number_selector_defaults = HashMap<String, Int>()
+    private var _number_selector_defaults = HashMap<String, Int>()
     // flag to indicate that the landing page has been navigated away from for navigation management
-    private var has_seen_front_page = false
+    private var _has_seen_front_page = false
 
-    private var export_project_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+    private var _export_project_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             val opus_manager = this.get_opus_manager()
             result?.data?.data?.also { uri ->
@@ -94,7 +94,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private var export_midi_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+    private var _export_midi_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             val opus_manager = this.get_opus_manager()
             result?.data?.data?.also { uri ->
@@ -153,22 +153,22 @@ class MainActivity : AppCompatActivity() {
             old_projects_dir.deleteRecursively()
         }
 
-        this.config_path = "${this.getExternalFilesDir(null)}/pagan.cfg"
+        this._config_path = "${this.getExternalFilesDir(null)}/pagan.cfg"
         // [Re]move config file from < v1.1.2
         val old_config_file = File("${applicationInfo.dataDir}/pagan.cfg")
-        val new_config_file = File(this.config_path)
+        val new_config_file = File(this._config_path)
         if (old_config_file.exists()) {
             if (!new_config_file.exists()) {
                 old_config_file.copyTo(new_config_file)
             }
             old_config_file.delete()
         }
-        this.configuration = PaganConfiguration.from_path(this.config_path)
+        this.configuration = PaganConfiguration.from_path(this._config_path)
         this.binding = ActivityMainBinding.inflate(this.layoutInflater)
         setContentView(this.binding.root)
         setSupportActionBar(this.binding.appBarMain.toolbar)
 
-        this.appBarConfiguration = AppBarConfiguration(
+        this._app_bar_configuration = AppBarConfiguration(
             setOf(
                 R.id.FrontFragment,
                 R.id.EditorFragment
@@ -176,7 +176,7 @@ class MainActivity : AppCompatActivity() {
         )
 
         val navController = findNavController(R.id.nav_host_fragment_content_main)
-        setupActionBarWithNavController(navController, this.appBarConfiguration)
+        setupActionBarWithNavController(navController, this._app_bar_configuration)
         //this.update_menu_options()
 
         //////////////////////////////////////////
@@ -186,8 +186,8 @@ class MainActivity : AppCompatActivity() {
             val path = "${this.getExternalFilesDir(null)}/SoundFonts/${this.configuration.soundfont}"
             val sf_file = File(path)
             if (sf_file.exists()) {
-                this.soundfont = SoundFont(path)
-                this.midi_playback_device = SoundFontWavPlayer(this.soundfont!!)
+                this._soundfont = SoundFont(path)
+                this._midi_playback_device = SoundFontWavPlayer(this._soundfont!!)
             }
             this.update_channel_instruments()
         }
@@ -219,13 +219,13 @@ class MainActivity : AppCompatActivity() {
 
     override fun onSupportNavigateUp(): Boolean {
         val navController = findNavController(R.id.nav_host_fragment_content_main)
-        return navController.navigateUp(appBarConfiguration)
+        return navController.navigateUp(_app_bar_configuration)
                 || super.onSupportNavigateUp()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         this.menuInflater.inflate(R.menu.main_options_menu, menu)
-        this.optionsMenu = menu
+        this._options_menu = menu
         val output = super.onCreateOptionsMenu(menu)
         this.update_menu_options()
         return output
@@ -264,7 +264,7 @@ class MainActivity : AppCompatActivity() {
                 this.get_opus_manager().apply_undo()
             }
             R.id.itmPlay -> {
-                if (this.playback_handle != null) {
+                if (this._playback_handle != null) {
                    this.stop_playback()
                 } else {
                     this.start_playback()
@@ -288,14 +288,14 @@ class MainActivity : AppCompatActivity() {
 
     fun update_channel_instruments(channel: Int) {
         val opus_channel = this.get_opus_manager().channels[channel]
-        this.midi_playback_device?.select_bank(opus_channel.midi_channel, opus_channel.midi_bank)
-        this.midi_playback_device?.change_program(opus_channel.midi_channel, opus_channel.midi_program)
+        this._midi_playback_device?.select_bank(opus_channel.midi_channel, opus_channel.midi_bank)
+        this._midi_playback_device?.change_program(opus_channel.midi_channel, opus_channel.midi_program)
     }
 
     fun update_channel_instruments() {
-        for (channel in opus_manager.channels) {
-            this.midi_playback_device?.select_bank(channel.midi_channel, channel.midi_bank)
-            this.midi_playback_device?.change_program(channel.midi_channel, channel.midi_program)
+        for (channel in _opus_manager.channels) {
+            this._midi_playback_device?.select_bank(channel.midi_channel, channel.midi_bank)
+            this._midi_playback_device?.change_program(channel.midi_channel, channel.midi_program)
         }
     }
 
@@ -429,13 +429,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun save_current_project() {
-        this.project_manager.save(this.opus_manager)
+        this.project_manager.save(this._opus_manager)
         this.feedback_msg(getString(R.string.feedback_project_saved))
         this.update_menu_options()
     }
 
     private fun export_current_project() {
-        var name = opus_manager.path
+        var name = _opus_manager.path
         if (name != null) {
             name = name.substring(name.lastIndexOf("/") + 1)
             name = name.substring(0, name.lastIndexOf("."))
@@ -447,38 +447,38 @@ class MainActivity : AppCompatActivity() {
             putExtra(Intent.EXTRA_TITLE, "$name.json")
         }
 
-        this.export_project_intent_launcher.launch(intent)
+        this._export_project_intent_launcher.launch(intent)
 
     }
 
     fun get_opus_manager(): OpusManager {
-        return this.opus_manager
+        return this._opus_manager
     }
 
     fun update_menu_options() {
         val navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main)
-        if (this.optionsMenu == null) {
+        if (this._options_menu == null) {
             return
         }
-        this.optionsMenu?.setGroupDividerEnabled(true)
+        this._options_menu?.setGroupDividerEnabled(true)
         when (navHost?.childFragmentManager?.fragments?.get(0)) {
             is EditorFragment -> {
-                this.optionsMenu!!.findItem(R.id.itmLoadProject).isVisible = this.has_projects_saved()
-                this.optionsMenu!!.findItem(R.id.itmUndo).isVisible = true
-                this.optionsMenu!!.findItem(R.id.itmNewProject).isVisible = true
-                this.optionsMenu!!.findItem(R.id.itmPlay).isVisible = this.soundfont != null
-                this.optionsMenu!!.findItem(R.id.itmImportMidi).isVisible = true
-                this.optionsMenu!!.findItem(R.id.itmImportProject).isVisible = true
-                this.optionsMenu!!.findItem(R.id.itmSettings).isVisible = true
+                this._options_menu!!.findItem(R.id.itmLoadProject).isVisible = this.has_projects_saved()
+                this._options_menu!!.findItem(R.id.itmUndo).isVisible = true
+                this._options_menu!!.findItem(R.id.itmNewProject).isVisible = true
+                this._options_menu!!.findItem(R.id.itmPlay).isVisible = this._soundfont != null
+                this._options_menu!!.findItem(R.id.itmImportMidi).isVisible = true
+                this._options_menu!!.findItem(R.id.itmImportProject).isVisible = true
+                this._options_menu!!.findItem(R.id.itmSettings).isVisible = true
             }
             else -> {
-                this.optionsMenu!!.findItem(R.id.itmLoadProject).isVisible = false
-                this.optionsMenu!!.findItem(R.id.itmUndo).isVisible = false
-                this.optionsMenu!!.findItem(R.id.itmNewProject).isVisible = false
-                this.optionsMenu!!.findItem(R.id.itmPlay).isVisible = false
-                this.optionsMenu!!.findItem(R.id.itmImportMidi).isVisible = false
-                this.optionsMenu!!.findItem(R.id.itmImportProject).isVisible = false
-                this.optionsMenu!!.findItem(R.id.itmSettings).isVisible = false
+                this._options_menu!!.findItem(R.id.itmLoadProject).isVisible = false
+                this._options_menu!!.findItem(R.id.itmUndo).isVisible = false
+                this._options_menu!!.findItem(R.id.itmNewProject).isVisible = false
+                this._options_menu!!.findItem(R.id.itmPlay).isVisible = false
+                this._options_menu!!.findItem(R.id.itmImportMidi).isVisible = false
+                this._options_menu!!.findItem(R.id.itmImportProject).isVisible = false
+                this._options_menu!!.findItem(R.id.itmSettings).isVisible = false
             }
         }
     }
@@ -492,21 +492,21 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun play_event(channel: Int, event_value: Int, velocity: Int=64) {
-        val midi_channel = this.opus_manager.channels[channel].midi_channel
-        val note = if (this.opus_manager.is_percussion(channel)) {
+        val midi_channel = this._opus_manager.channels[channel].midi_channel
+        val note = if (this._opus_manager.is_percussion(channel)) {
             event_value + 27
         } else {
-            event_value + 21 + this.opus_manager.transpose
+            event_value + 21 + this._opus_manager.transpose
         }
 
 
         this@MainActivity.runOnUiThread {
-            this.midi_playback_device?.play_note(midi_channel, note, velocity, 100)
+            this._midi_playback_device?.play_note(midi_channel, note, velocity, 100)
         }
     }
 
     private fun play_midi(midi: Midi, callback: (position: Float) -> Unit): SoundFontWavPlayer.PlaybackInterface? {
-        return this.midi_playback_device?.play(midi, callback)
+        return this._midi_playback_device?.play(midi, callback)
     }
 
     private fun export_midi() {
@@ -524,7 +524,7 @@ class MainActivity : AppCompatActivity() {
             putExtra(Intent.EXTRA_TITLE, "$name.mid")
         }
 
-        this.export_midi_intent_launcher.launch(intent)
+        this._export_midi_intent_launcher.launch(intent)
     }
 
     private fun delete_project_dialog() {
@@ -549,7 +549,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun delete_project() {
-        this.project_manager.delete(this.opus_manager)
+        this.project_manager.delete(this._opus_manager)
 
         val fragment = this.getActiveFragment()
         fragment?.setFragmentResult(IntentFragmentToken.New.name, bundleOf())
@@ -560,7 +560,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun copy_project() {
-        this.project_manager.copy(this.opus_manager)
+        this.project_manager.copy(this._opus_manager)
         this.feedback_msg(getString(R.string.feedback_on_copy))
     }
 
@@ -570,7 +570,7 @@ class MainActivity : AppCompatActivity() {
     fun navTo(fragment: Int) {
         val navController = findNavController(R.id.nav_host_fragment_content_main)
         if (fragment == R.id.EditorFragment) {
-            this.has_seen_front_page = true
+            this._has_seen_front_page = true
             this.unlockDrawer()
         } else {
             this.lockDrawer()
@@ -612,7 +612,7 @@ class MainActivity : AppCompatActivity() {
             .setView(viewInflated)
             .setPositiveButton(android.R.string.ok) { _, _ ->
                 val value = npOnes.value
-                this.opus_manager.set_transpose(value)
+                this._opus_manager.set_transpose(value)
             }
             .setNegativeButton(android.R.string.cancel) { _, _ -> }
             .show()
@@ -650,7 +650,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     internal fun popup_number_dialog(title: String, min_value: Int, max_value: Int, default: Int? = null, callback: (value: Int) -> Unit) {
-        val coerced_default_value = default ?: (this.number_selector_defaults[title] ?: min_value)
+        val coerced_default_value = default ?: (this._number_selector_defaults[title] ?: min_value)
 
         val viewInflated: View = LayoutInflater.from(this)
             .inflate(
@@ -723,7 +723,7 @@ class MainActivity : AppCompatActivity() {
             .setView(viewInflated)
             .setPositiveButton(android.R.string.ok) { _, _ ->
                 val value = (npHundreds.value * 100) + (npTens.value * 10) + npOnes.value
-                this.number_selector_defaults[title] = value
+                this._number_selector_defaults[title] = value
                 callback(value)
             }
             .setNegativeButton(android.R.string.cancel) { _, _ ->
@@ -735,24 +735,24 @@ class MainActivity : AppCompatActivity() {
         val that = this
         runBlocking {
             that.runOnUiThread {
-                if (that.progressBar == null) {
-                    that.progressBar =
+                if (that._progress_bar == null) {
+                    that._progress_bar =
                         ProgressBar(that, null, android.R.attr.progressBarStyleLarge)
                 }
                 val params: RelativeLayout.LayoutParams = RelativeLayout.LayoutParams(50, 50)
                 params.addRule(RelativeLayout.CENTER_IN_PARENT)
-                val parent = that.progressBar!!.parent
+                val parent = that._progress_bar!!.parent
                 if (parent != null) {
-                    (parent as ViewGroup).removeView(that.progressBar)
+                    (parent as ViewGroup).removeView(that._progress_bar)
                 }
-                that.binding.root.addView(that.progressBar, params)
+                that.binding.root.addView(that._progress_bar, params)
             }
         }
     }
 
     fun cancel_reticle() {
         this.runOnUiThread {
-            val progressBar = this.progressBar ?: return@runOnUiThread
+            val progressBar = this._progress_bar ?: return@runOnUiThread
             if (progressBar.parent != null) {
                 (progressBar.parent as ViewGroup).removeView(progressBar)
             }
@@ -774,7 +774,7 @@ class MainActivity : AppCompatActivity() {
     fun import_project(path: String) {
         this.applicationContext.contentResolver.openFileDescriptor(Uri.parse(path), "r")?.use {
             val bytes = FileInputStream(it.fileDescriptor).readBytes()
-            this.opus_manager.load(bytes, this.project_manager.get_new_path())
+            this._opus_manager.load(bytes, this.project_manager.get_new_path())
         }
     }
 
@@ -791,10 +791,10 @@ class MainActivity : AppCompatActivity() {
             val filename = this.parse_file_name(Uri.parse(path))
             val new_path = this.project_manager.get_new_path()
 
-            this.opus_manager.import_midi(midi)
-            this.opus_manager.path = new_path
-            this.opus_manager.set_project_name(filename ?: getString(R.string.default_imported_midi_title))
-            this.opus_manager.clear_history()
+            this._opus_manager.import_midi(midi)
+            this._opus_manager.path = new_path
+            this._opus_manager.set_project_name(filename ?: getString(R.string.default_imported_midi_title))
+            this._opus_manager.clear_history()
         }
         this.cancel_reticle()
     }
@@ -816,7 +816,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun start_playback() {
-        if (this.playback_handle != null) {
+        if (this._playback_handle != null) {
             this.stop_playback()
         }
 
@@ -829,7 +829,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         this.runOnUiThread {
-            val play_pause_button = this.optionsMenu!!.findItem(R.id.itmPlay)
+            val play_pause_button = this._options_menu!!.findItem(R.id.itmPlay)
             if (play_pause_button != null) {
                 play_pause_button.icon =
                     ContextCompat.getDrawable(this, R.drawable.ic_baseline_pause_24)
@@ -854,7 +854,7 @@ class MainActivity : AppCompatActivity() {
         this.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
         thread {
-            this.playback_handle = this.play_midi(opus_manager.get_midi(x)) {
+            this._playback_handle = this.play_midi(_opus_manager.get_midi(x)) {
                 if (it == 1F) { // Song is over, return to start state
                     this.runOnUiThread {
                         this.get_opus_manager().cursor_select_column(0, true)
@@ -874,7 +874,7 @@ class MainActivity : AppCompatActivity() {
 
     fun stop_playback() {
         this.runOnUiThread {
-            val play_pause_button = this.optionsMenu!!.findItem(R.id.itmPlay)
+            val play_pause_button = this._options_menu!!.findItem(R.id.itmPlay)
             if (play_pause_button != null) {
                 play_pause_button.icon =
                     ContextCompat.getDrawable(this, R.drawable.ic_baseline_play_arrow_24)
@@ -882,12 +882,12 @@ class MainActivity : AppCompatActivity() {
         }
         this.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
-        if (this.playback_handle == null) {
+        if (this._playback_handle == null) {
             return
         }
 
-        this.playback_handle!!.stop()
-        this.playback_handle = null
+        this._playback_handle!!.stop()
+        this._playback_handle = null
 
         val blocker_view = this.findViewById<LinearLayout>(R.id.llClearOverlay) ?: return
 
@@ -911,14 +911,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun get_drum_options(): List<Pair<String, Int>> {
-        if (this.soundfont == null) {
+        if (this._soundfont == null) {
             return listOf()
         }
         val opus_manager = this.get_opus_manager()
 
         val (bank, program) = opus_manager.get_channel_instrument(opus_manager.channels.size - 1)
         val preset = try {
-            this.soundfont!!.get_preset(program, bank)
+            this._soundfont!!.get_preset(program, bank)
         } catch (e: SoundFont.InvalidPresetIndex) {
             return listOf()
         }
@@ -953,12 +953,12 @@ class MainActivity : AppCompatActivity() {
 
         this.configuration.soundfont = filename
         val path = "${this.getExternalFilesDir(null)}/SoundFonts/$filename"
-        this.soundfont = SoundFont(path)
-        this.midi_playback_device = SoundFontWavPlayer(this.soundfont!!)
+        this._soundfont = SoundFont(path)
+        this._midi_playback_device = SoundFontWavPlayer(this._soundfont!!)
         this.update_channel_instruments()
         val rvActiveChannels: ChannelOptionRecycler = this.findViewById(R.id.rvActiveChannels)
         if (rvActiveChannels.adapter != null) {
-            (rvActiveChannels.adapter as ChannelOptionAdapter).set_soundfont(this.soundfont!!)
+            (rvActiveChannels.adapter as ChannelOptionAdapter).set_soundfont(this._soundfont!!)
         }
         if (this.get_opus_manager().channels.size > 0) {
             this.populate_active_percussion_names()
@@ -966,7 +966,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun get_soundfont(): SoundFont? {
-        return this.soundfont
+        return this._soundfont
     }
 
     fun disable_soundfont() {
@@ -975,9 +975,9 @@ class MainActivity : AppCompatActivity() {
             (rvActiveChannels.adapter as ChannelOptionAdapter).unset_soundfont()
         }
         this.update_channel_instruments()
-        this.soundfont = null
+        this._soundfont = null
         this.configuration.soundfont = null
-        this.midi_playback_device = null
+        this._midi_playback_device = null
         this.populate_active_percussion_names()
     }
 
@@ -991,7 +991,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun save_configuration() {
-        this.configuration.save(this.config_path)
+        this.configuration.save(this._config_path)
     }
 
     fun get_drum_name(index: Int): String? {

@@ -10,10 +10,10 @@ import com.qfs.pagan.structure.OpusTree
 import kotlin.math.roundToInt
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
-class CellLayout(var viewHolder: CellRecyclerViewHolder): LinearLayout(viewHolder.itemView.context) {
+class CellLayout(var view_holder: CellRecyclerViewHolder): LinearLayout(view_holder.itemView.context) {
     init {
         this.isClickable = false
-        val item_view = this.viewHolder.itemView as ViewGroup
+        val item_view = this.view_holder.itemView as ViewGroup
         item_view.removeAllViews()
         item_view.addView(this)
 
@@ -23,26 +23,26 @@ class CellLayout(var viewHolder: CellRecyclerViewHolder): LinearLayout(viewHolde
     }
 
     fun get_activity(): MainActivity {
-        return this.viewHolder.get_activity()
+        return this.view_holder.get_activity()
     }
 
     fun get_beat_tree(): OpusTree<OpusEvent> {
-        return this.viewHolder.get_beat_tree()
+        return this.view_holder.get_beat_tree()
     }
 
     fun get_beat_key(): BeatKey {
-        return this.viewHolder.get_beat_key()
+        return this.view_holder.get_beat_key()
     }
     fun get_beat(): Int {
-        return this.viewHolder.get_beat()
+        return this.view_holder.get_beat()
     }
 
     fun is_percussion(): Boolean {
-        return this.viewHolder.is_percussion()
+        return this.view_holder.is_percussion()
     }
 
     fun get_opus_manager(): OpusManager {
-        return this.viewHolder.get_opus_manager()
+        return this.view_holder.get_opus_manager()
     }
 
     fun build() {
@@ -62,7 +62,7 @@ class CellLayout(var viewHolder: CellRecyclerViewHolder): LinearLayout(viewHolde
    }
 
     fun get_editor_table(): EditorTable {
-        return this.viewHolder.get_adapter().get_column_adapter().get_editor_table()!!
+        return this.view_holder.get_adapter().get_column_adapter().get_editor_table()!!
     }
 
    private fun buildTreeView(tree: OpusTree<OpusEvent>, position: List<Int>, new_width: Int) {

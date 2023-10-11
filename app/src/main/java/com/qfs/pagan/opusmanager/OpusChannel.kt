@@ -22,7 +22,7 @@ class OpusChannel(var uuid: Int) {
     var midi_bank = 0
     var midi_program = 0
     var midi_channel: Int = 0
-    private var beat_count: Int = 0
+    private var _beat_count: Int = 0
     var size: Int = 0
 
     fun map_line(line: Int, offset: Int) {
@@ -34,7 +34,7 @@ class OpusChannel(var uuid: Int) {
     }
 
     fun new_line(index: Int? = null): OpusLine {
-        val new_line = OpusLine(this.beat_count)
+        val new_line = OpusLine(this._beat_count)
         if (index == null) {
             this.lines.add(new_line)
         } else if (index <= this.lines.size) {
@@ -48,8 +48,8 @@ class OpusChannel(var uuid: Int) {
     }
 
     fun insert_line(index: Int, line: OpusLine) {
-        if (line.beats.size != this.beat_count) {
-            throw LineSizeMismatch(line.beats.size, this.beat_count)
+        if (line.beats.size != this._beat_count) {
+            throw LineSizeMismatch(line.beats.size, this._beat_count)
         }
 
         this.lines.add(index, line)
@@ -96,7 +96,7 @@ class OpusChannel(var uuid: Int) {
     }
 
     fun set_beat_count(new_beat_count: Int) {
-        if (new_beat_count > this.beat_count) {
+        if (new_beat_count > this._beat_count) {
             for (line in this.lines) {
                 while (line.beats.size < new_beat_count) {
                     line.beats.add(OpusTree())
@@ -110,7 +110,7 @@ class OpusChannel(var uuid: Int) {
             }
         }
 
-        this.beat_count = new_beat_count
+        this._beat_count = new_beat_count
     }
 
     fun set_instrument(instrument: Pair<Int, Int>) {
@@ -147,16 +147,16 @@ class OpusChannel(var uuid: Int) {
         for (line in this.lines) {
             line.beats.removeAt(index)
         }
-        this.beat_count -= 1
+        this._beat_count -= 1
     }
 
     fun insert_beat(index: Int? = null) {
         if (index == null) {
-            this.set_beat_count(this.beat_count + 1)
+            this.set_beat_count(this._beat_count + 1)
             return
         }
 
-        this.beat_count += 1
+        this._beat_count += 1
         for (line in this.lines) {
             line.beats.add(index, OpusTree())
         }

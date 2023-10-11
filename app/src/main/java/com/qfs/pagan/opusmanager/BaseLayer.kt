@@ -38,8 +38,8 @@ open class BaseLayer {
     var RADIX: Int = 12
     var DEFAULT_PERCUSSION: Int = 0
     var channels: MutableList<OpusChannel> = mutableListOf()
-    private var channel_uuid_generator: Int = 0x00
-    private var channel_uuid_map = HashMap<Int, OpusChannel>()
+    private var _channel_uuid_generator: Int = 0x00
+    private var _channel_uuid_map = HashMap<Int, OpusChannel>()
     var opus_beat_count: Int = 1
     var path: String? = null
     var tempo: Float = 120F
@@ -646,8 +646,8 @@ open class BaseLayer {
     }
 
     private fun gen_channel_uuid(): Int {
-        val output = this.channel_uuid_generator
-        this.channel_uuid_generator += 1
+        val output = this._channel_uuid_generator
+        this._channel_uuid_generator += 1
         return output
     }
 
@@ -659,7 +659,7 @@ open class BaseLayer {
         } else {
             9
         }
-        this.channel_uuid_map[new_channel.uuid] = new_channel
+        this._channel_uuid_map[new_channel.uuid] = new_channel
         for (i in 0 until lines) {
             new_channel.new_line(i)
         }
@@ -750,7 +750,7 @@ open class BaseLayer {
     }
 
     fun remove_channel_by_uuid(uuid: Int) {
-        val channel = this.channel_uuid_map[uuid] ?: throw OpusChannel.InvalidChannelUUID(uuid)
+        val channel = this._channel_uuid_map[uuid] ?: throw OpusChannel.InvalidChannelUUID(uuid)
         var channel_index: Int? = null
         for (i in 0 until this.channels.size) {
             if (this.channels[i] == channel) {
@@ -765,7 +765,7 @@ open class BaseLayer {
 
     open fun remove_channel(channel: Int) {
         val opus_channel = this.channels.removeAt(channel)
-        this.channel_uuid_map.remove(opus_channel.uuid)
+        this._channel_uuid_map.remove(opus_channel.uuid)
     }
 
     open fun move_leaf(beatkey_from: BeatKey, position_from: List<Int>, beatkey_to: BeatKey, position_to: List<Int>) {

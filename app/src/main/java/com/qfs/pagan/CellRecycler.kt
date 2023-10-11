@@ -9,7 +9,7 @@ import androidx.appcompat.view.ContextThemeWrapper
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
 @SuppressLint("ViewConstructor")
-class CellRecycler(var viewHolder: ColumnRecyclerViewHolder): ScrollLockingRecyclerView((viewHolder.itemView.context as ContextThemeWrapper).baseContext) {
+class CellRecycler(var view_holder: ColumnRecyclerViewHolder): ScrollLockingRecyclerView((view_holder.itemView.context as ContextThemeWrapper).baseContext) {
     class ColumnDetachedException: Exception()
     class CellDetachedException: Exception()
     init {
@@ -20,8 +20,8 @@ class CellRecycler(var viewHolder: ColumnRecyclerViewHolder): ScrollLockingRecyc
         this.lock_scroll_propagation()
         this.itemAnimator = null
 
-        (this.viewHolder.itemView as ViewGroup).removeAllViews()
-        (this.viewHolder.itemView as ViewGroup).addView(this)
+        (this.view_holder.itemView as ViewGroup).removeAllViews()
+        (this.view_holder.itemView as ViewGroup).addView(this)
 
         this.layoutParams.height = MATCH_PARENT
         this.layoutParams.width = WRAP_CONTENT
@@ -60,16 +60,16 @@ class CellRecycler(var viewHolder: ColumnRecyclerViewHolder): ScrollLockingRecyc
 
     //-------------------------------------------------------//
     fun get_opus_manager(): OpusManager {
-        return (this.viewHolder.bindingAdapter as ColumnRecyclerAdapter).get_opus_manager()
+        return (this.view_holder.bindingAdapter as ColumnRecyclerAdapter).get_opus_manager()
     }
     fun get_beat(): Int {
-        return this.viewHolder.bindingAdapterPosition
+        return this.view_holder.bindingAdapterPosition
     }
     fun get_column_recycler_adapter(): ColumnRecyclerAdapter {
-        if (this.viewHolder.bindingAdapter == null) {
+        if (this.view_holder.bindingAdapter == null) {
             throw ColumnDetachedException()
         }
-        return this.viewHolder.bindingAdapter as ColumnRecyclerAdapter
+        return this.view_holder.bindingAdapter as ColumnRecyclerAdapter
     }
     fun get_editor_table(): EditorTable {
         return this.get_column_recycler_adapter().get_editor_table()!!

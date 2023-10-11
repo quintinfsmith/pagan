@@ -12,7 +12,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.qfs.pagan.opusmanager.LinksLayer
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
-class LineLabelView(var viewHolder: RecyclerView.ViewHolder): LinearLayout(ContextThemeWrapper(viewHolder.itemView.context, R.style.line_label_outer)),
+class LineLabelView(var view_holder: RecyclerView.ViewHolder): LinearLayout(ContextThemeWrapper(view_holder.itemView.context, R.style.line_label_outer)),
     View.OnTouchListener {
     class InnerView(context: Context): androidx.appcompat.widget.AppCompatTextView(ContextThemeWrapper(context, R.style.line_label_inner)) {
         override fun onCreateDrawableState(extraSpace: Int): IntArray? {
@@ -27,16 +27,16 @@ class LineLabelView(var viewHolder: RecyclerView.ViewHolder): LinearLayout(Conte
     private val STATE_FOCUSED = intArrayOf(R.attr.state_focused)
     private val STATE_CHANNEL_EVEN = intArrayOf(R.attr.state_channel_even)
 
-    private var textView = InnerView(context)
+    private var _text_view = InnerView(context)
     /*
      * update_queued exists to handle the liminal state between being detached and being destroyed
      * If the cursor is pointed to a location in this space, but changed, then the recycler view doesn't handle it normally
      */
-    private var update_queued = false
+    private var _update_queued = false
     init {
-        this.addView(this.textView)
-        (this.viewHolder.itemView as ViewGroup).removeAllViews()
-        (this.viewHolder.itemView as ViewGroup).addView(this)
+        this.addView(this._text_view)
+        (this.view_holder.itemView as ViewGroup).removeAllViews()
+        (this.view_holder.itemView as ViewGroup).addView(this)
         this.setOnClickListener {
             this.on_click()
         }
@@ -74,7 +74,7 @@ class LineLabelView(var viewHolder: RecyclerView.ViewHolder): LinearLayout(Conte
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
-        this.textView.layoutParams.height = resources.getDimension(R.dimen.line_height).toInt()
+        this._text_view.layoutParams.height = resources.getDimension(R.dimen.line_height).toInt()
         val line_height = resources.getDimension(R.dimen.line_height)
         this.layoutParams.height = line_height.toInt()
         this.layoutParams.width = WRAP_CONTENT
@@ -82,7 +82,7 @@ class LineLabelView(var viewHolder: RecyclerView.ViewHolder): LinearLayout(Conte
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
-        this.update_queued = true
+        this._update_queued = true
     }
 
     override fun onCreateDrawableState(extraSpace: Int): IntArray? {
@@ -122,15 +122,15 @@ class LineLabelView(var viewHolder: RecyclerView.ViewHolder): LinearLayout(Conte
     }
 
     fun set_text(text: String) {
-        this.textView.text = text
+        this._text_view.text = text
         this.contentDescription = text
     }
     fun get_opus_manager(): OpusManager {
-        return (this.viewHolder.bindingAdapter as LineLabelRecyclerAdapter).get_opus_manager()
+        return (this.view_holder.bindingAdapter as LineLabelRecyclerAdapter).get_opus_manager()
     }
 
     fun get_adapter(): LineLabelRecyclerAdapter {
-        return this.viewHolder.bindingAdapter as LineLabelRecyclerAdapter
+        return this.view_holder.bindingAdapter as LineLabelRecyclerAdapter
     }
 
     fun get_row(): Pair<Int, Int> {
@@ -139,7 +139,7 @@ class LineLabelView(var viewHolder: RecyclerView.ViewHolder): LinearLayout(Conte
     }
 
     fun get_position(): Int {
-        return this.viewHolder.bindingAdapterPosition
+        return this.view_holder.bindingAdapterPosition
     }
 
     fun get_std_position(): Pair<Int, Int> {
@@ -157,7 +157,7 @@ class LineLabelView(var viewHolder: RecyclerView.ViewHolder): LinearLayout(Conte
                 adapter.set_dragging_line(channel, line_offset)
                 view.startDragAndDrop(
                     null,
-                    View.DragShadowBuilder(view),
+                    DragShadowBuilder(view),
                     null,
                     0
                 )

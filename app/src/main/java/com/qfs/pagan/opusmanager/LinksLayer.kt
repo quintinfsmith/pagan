@@ -14,22 +14,22 @@ open class LinksLayer : BaseLayer() {
     var link_pools = mutableListOf<MutableSet<BeatKey>>()
     var link_pool_map = HashMap<BeatKey, Int>()
     // Indicates that links are being calculated to prevent recursion
-    private var link_locker: Int = 0
+    private var _link_locker: Int = 0
 
     override fun clear() {
         super.clear()
         this.link_pools.clear()
         this.link_pool_map.clear()
-        this.link_locker = 0
+        this._link_locker = 0
     }
     private fun <T> lock_links(callback: () -> T): T {
-        this.link_locker += 1
+        this._link_locker += 1
         try {
             val output = callback()
-            this.link_locker -= 1
+            this._link_locker -= 1
             return output
         } catch (e: Exception) {
-            this.link_locker -= 1
+            this._link_locker -= 1
             throw e
         }
     }
@@ -177,7 +177,7 @@ open class LinksLayer : BaseLayer() {
     }
 
     fun get_all_linked(beat_key: BeatKey): Set<BeatKey> {
-        if (this.link_locker > 1) {
+        if (this._link_locker > 1) {
             return setOf(beat_key)
         }
 
@@ -571,7 +571,7 @@ open class LinksLayer : BaseLayer() {
         // Create a map of where the removed line was. no need to pop at this point since
         // that is handled in remove_line() within move_line()
         val new_pools = mutableListOf<MutableSet<BeatKey>>()
-        this.link_pools.forEachIndexed { i: Int, pool: MutableSet<BeatKey> ->
+        this.link_pools.forEach { pool: MutableSet<BeatKey> ->
             val new_pool = mutableSetOf<BeatKey>()
             for (beat_key in pool) {
                 // new_channel will only be changed if the beatkey is on the line being moved AND being moved out of the channel

@@ -9,7 +9,6 @@ import android.widget.LinearLayout
 import android.widget.TableLayout
 import android.widget.TableRow
 import androidx.appcompat.view.ContextThemeWrapper
-import androidx.core.view.children
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.OpusChannel
@@ -120,7 +119,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         for (beat in 0 until opus_manager.opus_beat_count) {
             this.column_width_map.add(mutableListOf<Int>())
             opus_manager.channels.forEachIndexed { i: Int, channel: OpusChannel ->
-                channel.lines.forEachIndexed { j: Int, line: OpusChannel.OpusLine ->
+                for (j in channel.lines.indices) {
                     val tree = opus_manager.get_beat_tree(BeatKey(i, j, beat))
                     if (tree.is_leaf()) {
                         this.column_width_map[beat].add(1)

@@ -7,13 +7,13 @@ import com.qfs.pagan.InterfaceLayer as OpusManager
 class LineLabelRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<LineLabelViewHolder>() {
     // BackLink so I can get the x offset from a view in the view holder
     var dragging_position: Pair<Int, Int>? = null
-    private var recycler: LineLabelRecyclerView
+    private var _recycler: LineLabelRecyclerView
     var label_count = 0
 
     init {
-        this.recycler = editor_table.line_label_recycler
-        this.recycler.adapter = this
-        this.recycler.itemAnimator = null
+        this._recycler = editor_table.line_label_recycler
+        this._recycler.adapter = this
+        this._recycler.itemAnimator = null
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): LineLabelViewHolder {
@@ -53,7 +53,7 @@ class LineLabelRecyclerAdapter(editor_table: EditorTable): RecyclerView.Adapter<
     }
 
     fun get_activity(): MainActivity {
-        return this.recycler.context as MainActivity
+        return this._recycler.context as MainActivity
     }
     fun get_opus_manager(): OpusManager {
         return this.get_activity().get_opus_manager()

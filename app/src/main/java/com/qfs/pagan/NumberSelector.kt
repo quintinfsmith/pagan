@@ -13,21 +13,21 @@ import kotlin.math.roundToInt
 class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(context, attrs) {
     var min: Int = 0
     var max: Int = 1
-    private var button_map = HashMap<NumberSelectorButton, Int>()
-    private var active_button: NumberSelectorButton? = null
-    private var on_change_hook: ((NumberSelector) -> Unit)? = null
+    private var _button_map = HashMap<NumberSelectorButton, Int>()
+    private var _active_button: NumberSelectorButton? = null
+    private var _on_change_hook: ((NumberSelector) -> Unit)? = null
 
 
     // TODO: Handle any radix
-    class NumberSelectorButton(private var numberSelector: NumberSelector, var value: Int):
-        LinearLayout(ContextThemeWrapper( numberSelector.context, R.style.numberSelectorButton )) {
-        private var bkp_text: String = get_number_string(this.value, 12,1)
+    class NumberSelectorButton(private var _number_selector: NumberSelector, var value: Int):
+        LinearLayout(ContextThemeWrapper( _number_selector.context, R.style.numberSelectorButton )) {
+        private var _bkp_text: String = get_number_string(this.value, 12,1)
         private val STATE_ACTIVE = intArrayOf(R.attr.state_active)
-        private var state_active: Boolean = false
-        private val text_view = TextView(
+        private var _state_active: Boolean = false
+        private val _text_view = TextView(
             ContextThemeWrapper(
-                numberSelector.context,
-                if (numberSelector.orientation == VERTICAL) {
+                _number_selector.context,
+                if (_number_selector.orientation == VERTICAL) {
                     R.style.numberSelectorTextVertical
                 } else {
                     R.style.numberSelectorTextHorizontal
@@ -36,24 +36,24 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
         )
 
         init {
-            this.text_view.text = this.bkp_text
-            this.addView(this.text_view)
-            this.text_view.layoutParams.width = MATCH_PARENT
-            this.text_view.layoutParams.height = MATCH_PARENT
-            if (numberSelector.orientation != VERTICAL) {
-                var padding = (resources.displayMetrics.density * 3f).toInt()
+            this._text_view.text = this._bkp_text
+            this.addView(this._text_view)
+            this._text_view.layoutParams.width = MATCH_PARENT
+            this._text_view.layoutParams.height = MATCH_PARENT
+            if (this._number_selector.orientation != VERTICAL) {
+                val padding = (resources.displayMetrics.density * 3f).toInt()
                 this.setPadding(0, padding, 0, padding)
             }
 
             this.setOnClickListener {
-                this.numberSelector.set_active_button(this)
+                this._number_selector.set_active_button(this)
                 this.setActive(true)
             }
         }
 
         override fun onCreateDrawableState(extraSpace: Int): IntArray? {
             val drawableState = super.onCreateDrawableState(extraSpace + 1)
-            if (this.state_active) {
+            if (this._state_active) {
                 mergeDrawableStates(drawableState, STATE_ACTIVE)
             }
             return drawableState
@@ -61,7 +61,7 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
 
 
         fun setActive(value: Boolean) {
-            this.state_active = value
+            this._state_active = value
             refreshDrawableState()
         }
     }
@@ -79,10 +79,10 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
     }
 
     fun getState(): Int? {
-        if (this.active_button == null) {
+        if (this._active_button == null) {
             return null
         }
-        return this.active_button!!.value
+        return this._active_button!!.value
     }
 
     fun setState(new_state: Int, manual: Boolean = false, surpress_callback: Boolean = false) {
@@ -90,7 +90,7 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
             throw IndexOutOfBoundsException()
         }
 
-        for ((button, value) in this.button_map) {
+        for ((button, value) in this._button_map) {
             if (value == new_state) {
                 this.set_active_button(button, surpress_callback)
                 if (manual) {
@@ -114,7 +114,7 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
     }
 
     fun set_range(new_min: Int, new_max: Int) {
-        val original_value = this.button_map[this.active_button]
+        val original_value = this._button_map[this._active_button]
 
         this.clear()
         this.min = new_min
@@ -134,8 +134,8 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
     }
 
     private fun clear() {
-        this.active_button = null
-        this.button_map.clear()
+        this._active_button = null
+        this._button_map.clear()
         this.removeAllViews()
     }
 
@@ -162,7 +162,7 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
             }
 
             (currentView.layoutParams as MarginLayoutParams).apply {
-                var padding = resources.getDimension(R.dimen.normal_padding).roundToInt()
+                val padding = resources.getDimension(R.dimen.normal_padding).roundToInt()
                 if (orientation == VERTICAL) {
                     if (i != this@NumberSelector.max) {
                         setMargins(0, padding, 0, 0)
@@ -174,32 +174,32 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
                 }
             }
 
-            this.button_map[currentView] = i
+            this._button_map[currentView] = i
         }
     }
 
     fun setOnChange(hook: (NumberSelector) -> Unit) {
-        this.on_change_hook = hook
+        this._on_change_hook = hook
     }
 
     fun set_active_button(view: NumberSelectorButton, surpress_callback: Boolean = false) {
-        if (this.active_button != view && this.active_button != null) {
-            this.active_button!!.setActive(false)
+        if (this._active_button != view && this._active_button != null) {
+            this._active_button!!.setActive(false)
         }
         this.unset_active_button()
 
-        this.active_button = view
+        this._active_button = view
 
-        if (!surpress_callback && this.on_change_hook != null) {
-            this.on_change_hook!!(this)
+        if (!surpress_callback && this._on_change_hook != null) {
+            this._on_change_hook!!(this)
         }
     }
 
     fun unset_active_button() {
-        if (this.active_button == null) {
+        if (this._active_button == null) {
             return
         }
-        this.active_button!!.setActive(false)
-        this.active_button = null
+        this._active_button!!.setActive(false)
+        this._active_button = null
     }
 }

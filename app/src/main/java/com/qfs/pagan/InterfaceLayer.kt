@@ -10,24 +10,24 @@ import java.lang.Integer.max
 import java.lang.Integer.min
 
 class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
-    private var simple_ui_lock = 0
+    private var _simple_ui_lock = 0
     var relative_mode: Int = 0
     var cursor = OpusManagerCursor()
     var first_load_done = false
     var queued_cursor_selection: Pair<HistoryToken, List<Int>>? = null
 
     private fun simple_ui_locked(): Boolean {
-        return this.simple_ui_lock != 0
+        return this._simple_ui_lock != 0
     }
 
     private fun <T> surpress_ui(callback:(InterfaceLayer) -> T): T {
-        this.simple_ui_lock += 1
+        this._simple_ui_lock += 1
         try {
             val output = callback(this)
-            this.simple_ui_lock -= 1
+            this._simple_ui_lock -= 1
             return output
         } catch (e: Exception) {
-            this.simple_ui_lock -= 1
+            this._simple_ui_lock -= 1
             throw e
         }
     }

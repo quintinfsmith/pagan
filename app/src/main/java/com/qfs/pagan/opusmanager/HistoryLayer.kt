@@ -1,5 +1,4 @@
 package com.qfs.pagan.opusmanager
-import android.util.Log
 import com.qfs.apres.Midi
 import com.qfs.pagan.structure.OpusTree
 import kotlin.math.min
@@ -8,22 +7,21 @@ import kotlin.math.min
 open class HistoryLayer : LinksLayer() {
     class HistoryCache {
         class HistoryError(val e: Exception, val failed_node: HistoryNode?): Exception()
-        private val max_history_size = 100
         class HistoryNode(var token: HistoryToken, var args: List<Any>) {
             var children: MutableList<HistoryNode> = mutableListOf()
             var parent: HistoryNode? = null
         }
-
-        private var history_lock = 0
-        private var history: MutableList<HistoryNode> = mutableListOf()
-        private var working_node: HistoryNode? = null
+        private val _max_history_size = 100
+        private var _history_lock = 0
+        private var _history: MutableList<HistoryNode> = mutableListOf()
+        private var _working_node: HistoryNode? = null
 
         fun isLocked(): Boolean {
-            return this.history_lock != 0
+            return this._history_lock != 0
         }
 
         fun isEmpty(): Boolean {
-            return this.history.isEmpty()
+            return this._history.isEmpty()
         }
 
         fun append_undoer(token: HistoryToken, args: List<Any>) {
@@ -32,11 +30,11 @@ open class HistoryLayer : LinksLayer() {
             }
             val new_node = HistoryNode(token, args)
 
-            if (this.working_node != null) {
-                new_node.parent = this.working_node
-                this.working_node!!.children.add(new_node)
+            if (this._working_node != null) {
+                new_node.parent = this._working_node
+                this._working_node!!.children.add(new_node)
             } else {
-                this.history.add(new_node)
+                this._history.add(new_node)
             }
 
             this.check_size()
@@ -74,13 +72,13 @@ open class HistoryLayer : LinksLayer() {
 
             val next_node = HistoryNode(HistoryToken.MULTI, listOf())
 
-            if (this.working_node != null) {
-                next_node.parent = this.working_node
-                this.working_node!!.children.add(next_node)
+            if (this._working_node != null) {
+                next_node.parent = this._working_node
+                this._working_node!!.children.add(next_node)
             } else {
-                this.history.add(next_node)
+                this._history.add(next_node)
             }
-            this.working_node = next_node
+            this._working_node = next_node
         }
 
         fun close_multi() {
@@ -88,8 +86,8 @@ open class HistoryLayer : LinksLayer() {
                 return
             }
 
-            if (this.working_node != null) {
-                this.working_node = this.working_node!!.parent
+            if (this._working_node != null) {
+                this._working_node = this._working_node!!.parent
             }
         }
 
@@ -98,44 +96,44 @@ open class HistoryLayer : LinksLayer() {
                 return null
             }
             this.close_multi()
-            return if (this.working_node != null) {
-                this.working_node!!.children.removeLast()
+            return if (this._working_node != null) {
+                this._working_node!!.children.removeLast()
             } else {
-                this.history.removeLast()
+                this._history.removeLast()
             }
         }
         fun check_size() {
-            while (this.history.size > this.max_history_size) {
-                this.history.removeFirst()
+            while (this._history.size > this._max_history_size) {
+                this._history.removeFirst()
             }
         }
 
 
         fun clear() {
-            this.history.clear()
+            this._history.clear()
         }
 
         fun lock() {
-            this.history_lock += 1
+            this._history_lock += 1
         }
 
         fun unlock() {
-            this.history_lock -= 1
+            this._history_lock -= 1
         }
 
         fun pop(): HistoryNode? {
-            return if (this.history.isEmpty()) {
+            return if (this._history.isEmpty()) {
                 null
             } else {
-                this.history.removeLast()
+                this._history.removeLast()
             }
         }
 
         fun peek(): HistoryNode? {
-            return if (this.history.isEmpty()) {
+            return if (this._history.isEmpty()) {
                 null
             } else {
-                this.history.last()
+                this._history.last()
             }
         }
     }
@@ -643,7 +641,7 @@ open class HistoryLayer : LinksLayer() {
         return if (!this.history_cache.isLocked()) {
             val use_tree = tree ?: this.get_tree(beat_key, position).copy()
 
-            var output = callback()
+            val output = callback()
 
             this.push_to_history_stack(
                 HistoryToken.REPLACE_TREE,

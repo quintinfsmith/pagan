@@ -5,11 +5,11 @@ import android.widget.LinearLayout
 import androidx.appcompat.view.ContextThemeWrapper
 import kotlin.concurrent.thread
 
-class CellPlaceHolder(var viewHolder: CellRecyclerViewHolder, column_width: Int): LinearLayout(
-    ContextThemeWrapper(viewHolder.itemView.context, R.style.placeholder_outer)
+class CellPlaceHolder(var view_holder: CellRecyclerViewHolder, column_width: Int): LinearLayout(
+    ContextThemeWrapper(view_holder.itemView.context, R.style.placeholder_outer)
 ) {
     init {
-        val item_view = this.viewHolder.itemView as ViewGroup
+        val item_view = this.view_holder.itemView as ViewGroup
         item_view.removeAllViews()
         item_view.addView(this)
 
@@ -20,7 +20,7 @@ class CellPlaceHolder(var viewHolder: CellRecyclerViewHolder, column_width: Int)
 
     fun replace() {
         try {
-            CellLayout(this.viewHolder)
+            CellLayout(this.view_holder)
         } catch (e: CellRecycler.CellDetachedException) {
             // let it pass
         } catch (e: CellRecycler.ColumnDetachedException) {
@@ -33,8 +33,8 @@ class CellPlaceHolder(var viewHolder: CellRecyclerViewHolder, column_width: Int)
         thread {
             // Kludge
             Thread.sleep(10)
-            if (this.viewHolder.bindingAdapterPosition != -1) {
-                val adapter = (this.viewHolder.bindingAdapter as CellRecyclerAdapter)
+            if (this.view_holder.bindingAdapterPosition != -1) {
+                val adapter = (this.view_holder.bindingAdapter as CellRecyclerAdapter)
                 val activity = adapter.get_activity()
                 activity.runOnUiThread {
                     this.replace()

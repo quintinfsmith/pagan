@@ -3,18 +3,26 @@ package com.qfs.apres.soundfontplayer
 import java.nio.ShortBuffer
 import kotlin.math.min
 
-class PitchedBuffer(data: ShortArray, private val pitch: Float) {
+class PitchedBuffer(data: ShortArray, private var pitch: Float) {
     private val buffer: ShortBuffer = ShortBuffer.wrap(data)
-    val size = (data.size.toFloat() / this.pitch).toInt()
+    private val data_size = data.size
+    private var size = (data.size.toFloat() / this.pitch).toInt()
     private var cached_value: Short? = null
     private var cached_position = 0
     private var virtual_position: Int = 0
+
     init {
         this.cached_position = 0
         this.virtual_position = 0
         if (this.pitch < 1F) {
             this.cached_value = this.buffer.get()
         }
+    }
+
+    fun repitch(pitch_factor: Float) {
+        this.pitch *= pitch_factor
+        this.size = (this.data_size.toFloat() / this.pitch).toInt()
+        this.virtual_position = (this.virtual_position.toFloat() / pitch_factor).toInt()
     }
 
     fun position(): Int {

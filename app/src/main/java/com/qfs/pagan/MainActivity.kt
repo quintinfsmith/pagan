@@ -595,7 +595,7 @@ class MainActivity : AppCompatActivity() {
             }
         } else {
             this@MainActivity.runOnUiThread {
-                this.midi_playback_device?.play_note(midi_channel, note, velocity, 100)
+                this.midi_playback_device?.play_note(midi_channel, note, velocity, 200)
             }
         }
     }

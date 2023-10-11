@@ -1,6 +1,5 @@
 package com.qfs.apres
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.media.midi.MidiDeviceInfo
 import android.media.midi.MidiDeviceInfo.PortInfo.TYPE_INPUT
@@ -9,6 +8,7 @@ import android.media.midi.MidiInputPort
 import android.media.midi.MidiManager
 import android.media.midi.MidiOutputPort
 import android.media.midi.MidiReceiver
+import android.os.Build
 import com.qfs.apres.event.MIDIEvent
 import kotlin.concurrent.thread
 
@@ -30,21 +30,20 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
     private val mapped_output_ports = HashMap<Int, MutableList<MidiOutputPort>>()
 
     init {
-        val that = this
         this.midi_manager.registerDeviceCallback(object: MidiManager.DeviceCallback() {
             override fun onDeviceAdded(device_info: MidiDeviceInfo) {
-                if (that.auto_connect) {
+                if (this@MidiController.auto_connect) {
                     if (device_info.inputPortCount > 0) {
-                        that.open_output_device(device_info)
+                        this@MidiController.open_output_device(device_info)
                     }
                     if (device_info.outputPortCount > 0) {
-                        that.open_input_device(device_info)
+                        this@MidiController.open_input_device(device_info)
                     }
                 }
                 this@MidiController.onDeviceAdded(device_info)
             }
             override fun onDeviceRemoved(device_info: MidiDeviceInfo) {
-                that.close_device(device_info)
+                this@MidiController.close_device(device_info)
                 this@MidiController.onDeviceRemoved(device_info)
             }
         }, null)
@@ -104,9 +103,12 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
         }
     }
 
-    @SuppressLint("NewApi")
     fun poll_output_devices(): List<MidiDeviceInfo> {
-        val devices_info =  this.midi_manager.getDevicesForTransport(MidiManager.TRANSPORT_MIDI_BYTE_STREAM)
+        val devices_info = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            this.midi_manager.getDevicesForTransport(MidiManager.TRANSPORT_MIDI_BYTE_STREAM)
+        } else {
+            this.midi_manager.devices.toList()
+        }
         val output_devices = mutableListOf<MidiDeviceInfo>()
         for (device_info in devices_info) {
             var device_name = device_info.properties.getString(MidiDeviceInfo.PROPERTY_NAME)
@@ -117,9 +119,12 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
         return output_devices
     }
 
-    @SuppressLint("NewApi")
     fun poll_input_devices(): List<MidiDeviceInfo> {
-        val devices_info =  this.midi_manager.getDevicesForTransport(MidiManager.TRANSPORT_MIDI_BYTE_STREAM)
+        val devices_info = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            this.midi_manager.getDevicesForTransport(MidiManager.TRANSPORT_MIDI_BYTE_STREAM)
+        } else {
+            this.midi_manager.devices.toList()
+        }
         val input_devices = mutableListOf<MidiDeviceInfo>()
         for (device_info in devices_info) {
             var device_name = device_info.properties.getString(MidiDeviceInfo.PROPERTY_NAME)

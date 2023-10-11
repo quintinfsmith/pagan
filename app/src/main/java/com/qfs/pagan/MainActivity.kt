@@ -92,6 +92,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+    }
 
     var import_project_intent_launcher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -603,7 +604,7 @@ class MainActivity : AppCompatActivity() {
             }
             null
         } else {
-            this.midi_playback_device?.play(midi, callback)
+            this._midi_playback_device?.play(midi, callback)
         }
     }
 
@@ -992,9 +993,9 @@ class MainActivity : AppCompatActivity() {
             this.virtual_input_device.stop()
         }
 
-        if (this.playback_handle != null) {
-            this.playback_handle!!.stop()
-            this.playback_handle = null
+        if (this._playback_handle != null) {
+            this._playback_handle!!.stop()
+            this._playback_handle = null
         }
 
         val blocker_view = this.findViewById<LinearLayout>(R.id.llClearOverlay) ?: return

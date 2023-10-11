@@ -15,17 +15,16 @@ class ColumnLabelAdapter(editor_table: EditorTable) : RecyclerView.Adapter<Colum
         this.recycler.adapter = this
 
         this.recycler.itemAnimator = null
-        val that = this
         this.registerAdapterDataObserver(
             object: RecyclerView.AdapterDataObserver() {
                 override fun onItemRangeRemoved(start: Int, count: Int) {
-                    that.notifyItemRangeChanged(start + count, that.itemCount)
+                    this@ColumnLabelAdapter.notifyItemRangeChanged(start + count, this@ColumnLabelAdapter.itemCount)
                 }
                 override fun onItemRangeInserted(start: Int, count: Int) {
-                    that.notifyItemRangeChanged(start + count - 1, that.itemCount)
+                    this@ColumnLabelAdapter.notifyItemRangeChanged(start + count - 1, this@ColumnLabelAdapter.itemCount)
                 }
                 override fun onItemRangeChanged(start: Int, count: Int) {
-                    //that.notifyItemRangeChanged(start, count)
+                    //this@ColumnLabelAdapter.notifyItemRangeChanged(start, count)
                 }
             }
         )

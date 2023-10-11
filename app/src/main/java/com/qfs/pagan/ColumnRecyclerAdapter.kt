@@ -13,14 +13,13 @@ class ColumnRecyclerAdapter(val recycler: ColumnRecycler, editor_table: EditorTa
     init {
         this.column_label_recycler = editor_table.column_label_recycler
 
-        val that = this
         this.registerAdapterDataObserver(
             object: RecyclerView.AdapterDataObserver() {
                 override fun onItemRangeInserted(start: Int, count: Int) {
-                    that.notifyItemChanged(start + count - 1)
+                    this@ColumnRecyclerAdapter.notifyItemChanged(start + count - 1)
                 }
                 override fun onItemRangeChanged(start: Int, count: Int) {
-                    //that.column_label_recycler.adapter?.notifyItemRangeChanged(start, count)
+                    //this@ColumnRecyclerAdapter.column_label_recycler.adapter?.notifyItemRangeChanged(start, count)
                 }
             }
         )

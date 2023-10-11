@@ -161,15 +161,14 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
                 gravity = CENTER
             }
 
-            val that = this
             (currentView.layoutParams as MarginLayoutParams).apply {
                 var padding = resources.getDimension(R.dimen.normal_padding).roundToInt()
                 if (orientation == VERTICAL) {
-                    if (i != that.max) {
+                    if (i != this@NumberSelector.max) {
                         setMargins(0, padding, 0, 0)
                     }
                 } else {
-                    if (i != that.min) {
+                    if (i != this@NumberSelector.min) {
                         setMargins(padding, 0, 0, 0)
                     }
                 }

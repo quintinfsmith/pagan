@@ -39,15 +39,14 @@ class MidiPlayer: VirtualMidiDevice() {
                 previous_tick = tick
             }
 
-            val that = this
             for (event in events) {
                 when (event) {
                     is SetTempo -> {
                         us_per_tick = event.get_uspqn() / ppqn
                     }
                 }
-                if (that.playing) {
-                    that.sendEvent(event)
+                if (this@MidiPlayer.playing) {
+                    this@MidiPlayer.sendEvent(event)
                 }
             }
         }

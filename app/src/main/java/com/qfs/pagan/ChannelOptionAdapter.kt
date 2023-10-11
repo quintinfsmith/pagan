@@ -16,12 +16,11 @@ class ChannelOptionAdapter(
     private var supported_instruments = HashMap<Pair<Int, Int>, String>()
     init {
         this.recycler.adapter = this
-        val that = this
         this.registerAdapterDataObserver(
             object: RecyclerView.AdapterDataObserver() {
                 override fun onItemRangeRemoved(start: Int, count: Int) {
-                    for (i in start until that.recycler.childCount) {
-                        that.notifyItemChanged(i)
+                    for (i in start until this@ChannelOptionAdapter.recycler.childCount) {
+                        this@ChannelOptionAdapter.notifyItemChanged(i)
                     }
                 }
                 override fun onItemRangeChanged(start: Int, count: Int) { }

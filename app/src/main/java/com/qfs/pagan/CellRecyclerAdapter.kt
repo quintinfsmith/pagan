@@ -15,7 +15,6 @@ class CellRecyclerAdapter(initial_cell_count: Int = 0): RecyclerView.Adapter<Cel
     private val queued_changes = mutableSetOf<Int>()
 
     init {
-        val that = this
         this.cell_count = initial_cell_count
         this.registerAdapterDataObserver(
             object: RecyclerView.AdapterDataObserver() {
@@ -23,11 +22,11 @@ class CellRecyclerAdapter(initial_cell_count: Int = 0): RecyclerView.Adapter<Cel
                 }
                 override fun onItemRangeChanged(start: Int, count: Int) {
                     for (i in start until start + count) {
-                        that.queued_changes.add(i)
+                        this@CellRecyclerAdapter.queued_changes.add(i)
                     }
                 }
                 override fun onItemRangeRemoved(start: Int, count: Int) {
-                    that.notifyItemRangeChanged(start, that.itemCount - (start + count))
+                    this@CellRecyclerAdapter.notifyItemRangeChanged(start, this@CellRecyclerAdapter.itemCount - (start + count))
                 }
             }
         )

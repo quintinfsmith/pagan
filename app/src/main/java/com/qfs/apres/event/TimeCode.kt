@@ -1,7 +1,5 @@
 package com.qfs.apres.event
 
-import com.qfs.apres.event.MIDIEvent
-
 data class TimeCode(var rate: Int, var hour: Int, var minute: Int, var second: Int, var frame: Int):
     MIDIEvent {
     override fun as_bytes(): ByteArray {

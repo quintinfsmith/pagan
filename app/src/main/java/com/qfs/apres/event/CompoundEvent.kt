@@ -1,7 +1,5 @@
 package com.qfs.apres.event
 
-import com.qfs.apres.event.MIDIEvent
-
 abstract class CompoundEvent(var channel: Int, var value: Int): MIDIEvent {
     abstract val controller: Int
     open val controller_lsb: Int? = null// NRN/RN are the only events that arent 0x20 apart. So assume 0x20 unless specified

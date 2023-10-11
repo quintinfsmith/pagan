@@ -1,7 +1,5 @@
 package com.qfs.apres.event
 
-import com.qfs.apres.event.MIDIEvent
-
 data class PitchWheelChange(var channel: Int, var value: Float): MIDIEvent {
     override fun as_bytes(): ByteArray {
         val unsigned_value = this.get_unsigned_value()

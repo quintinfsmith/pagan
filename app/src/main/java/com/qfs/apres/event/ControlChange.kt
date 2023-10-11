@@ -1,7 +1,5 @@
 package com.qfs.apres.event
 
-import com.qfs.apres.event.MIDIEvent
-
 open class ControlChange(var channel: Int, var controller: Int, open var value: Int): MIDIEvent {
     override fun as_bytes(): ByteArray {
         return byteArrayOf(

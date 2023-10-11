@@ -1,7 +1,5 @@
 package com.qfs.apres.event
 
-import com.qfs.apres.event.MIDIEvent
-
 data class NoteOn(var channel: Int, var note: Int, var velocity: Int): MIDIEvent {
     override fun as_bytes(): ByteArray {
         return byteArrayOf(

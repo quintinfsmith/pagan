@@ -6,7 +6,7 @@ import kotlin.math.min
 class PitchedBuffer(data: ShortArray, private var pitch: Float) {
     private val buffer: ShortBuffer = ShortBuffer.wrap(data)
     private val data_size = data.size
-    private var size = (data.size.toFloat() / this.pitch).toInt()
+    var size = (data.size.toFloat() / this.pitch).toInt()
     private var cached_value: Short? = null
     private var cached_position = 0
     private var virtual_position: Int = 0

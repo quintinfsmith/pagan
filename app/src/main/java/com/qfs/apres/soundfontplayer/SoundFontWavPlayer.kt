@@ -287,7 +287,6 @@ class SoundFontWavPlayer(private var sound_font: SoundFont) {
             }
         }
 
-
         this.preset_channel_map[channel] = key
         this.decache_unused_presets()
     }

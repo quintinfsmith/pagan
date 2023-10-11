@@ -1,7 +1,5 @@
 package com.qfs.apres.event
 
-import com.qfs.apres.event.MIDIEvent
-
 data class PolyphonicKeyPressure(var channel: Int, var note: Int, var velocity: Int): MIDIEvent {
     override fun as_bytes(): ByteArray {
         return byteArrayOf(

@@ -1,7 +1,5 @@
 package com.qfs.apres.event
 
-import com.qfs.apres.event.MIDIEvent
-
 data class MTCQuarterFrame(var time_code: Int): MIDIEvent {
     override fun as_bytes(): ByteArray {
         return byteArrayOf(0xF1.toByte(), this.time_code.toByte())

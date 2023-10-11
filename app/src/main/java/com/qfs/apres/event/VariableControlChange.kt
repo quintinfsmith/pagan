@@ -1,7 +1,5 @@
 package com.qfs.apres.event
 
-import com.qfs.apres.event.MIDIEvent
-
 abstract class VariableControlChange(var channel: Int, var value: Int): MIDIEvent {
     abstract val controller: Int
     override fun as_bytes(): ByteArray {

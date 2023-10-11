@@ -1,7 +1,5 @@
 package com.qfs.apres.event
 
-import com.qfs.apres.event.MIDIEvent
-
 data class SongPositionPointer(var beat: Int): MIDIEvent {
     override fun as_bytes(): ByteArray {
         val least = this.beat and 0x007F

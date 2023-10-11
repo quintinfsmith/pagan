@@ -6,14 +6,14 @@ import com.qfs.apres.event.MIDIStop
 import com.qfs.apres.event.SetTempo
 import com.qfs.apres.event.SongPositionPointer
 
-class MidiPlayer: VirtualMidiDevice() {
+open class MidiPlayer: VirtualMidiDevice() {
     var playing = false
-    fun play_midi(midi: Midi) {
+    fun play_midi(midi: Midi, callback: (() -> Unit)? = null) {
         if (this.playing) {
             return
         }
 
-        if (! this.is_registered()) {
+        if (! this.is_connected()) {
             Log.w("apres", "Can't play without registering a midi controller first")
             return
         }
@@ -59,6 +59,9 @@ class MidiPlayer: VirtualMidiDevice() {
             this.sendEvent(AllSoundOff(i))
         }
         this.playing = false
+        if (callback != null) {
+            callback()
+        }
     }
 
     override fun onMIDIStop(event: MIDIStop) {

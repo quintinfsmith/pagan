@@ -130,14 +130,14 @@ open class VirtualMidiDevice {
         this.midi_controller = controller
     }
 
-    fun is_registered(): Boolean {
+    fun is_connected(): Boolean {
         return this.midi_controller != null
     }
 
     fun sendEvent(event: MIDIEvent) {
         // TODO: Throw error?
-        if (is_registered()) {
-            this.midi_controller!!.receiveMessage(event, this)
+        if (is_connected()) {
+            this.midi_controller!!.broadcast_event(event)
         }
     }
 

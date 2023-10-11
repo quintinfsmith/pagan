@@ -46,6 +46,7 @@ dependencies {
     implementation 'androidx.navigation:navigation-ui-ktx:2.4.1'
     implementation 'androidx.drawerlayout:drawerlayout:1.1.1'
     implementation 'androidx.recyclerview:recyclerview:1.2.1'
+    implementation 'androidx.media3:media3-common:1.1.1'
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'io.mockk:mockk:1.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.2.0-alpha01'

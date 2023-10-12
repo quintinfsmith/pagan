@@ -327,11 +327,11 @@ class MainActivity : AppCompatActivity() {
                 for (device in this._midi_interface.poll_output_devices()) {
                     this._midi_interface.open_output_device(device)
                 }
-                AlertDialog.Builder(this, R.style.AlertDialog).apply {
-                    setTitle("M COUNT: ${this@MainActivity._midi_interface.poll_input_devices().size}")
-                    setPositiveButton(getString(R.string.dlg_confirm)) { dialog, _ -> }
-                    show()
-                }
+
+                AlertDialog.Builder(this, R.style.AlertDialog)
+                    .setTitle("M COUNT: ${this@MainActivity._midi_interface.poll_input_devices().size}")
+                    .setPositiveButton(getString(R.string.dlg_confirm)) { dialog, _ -> }
+                    .show()
             }
         }
         return super.onOptionsItemSelected(item)
@@ -867,18 +867,18 @@ class MainActivity : AppCompatActivity() {
         input.setText(this.get_opus_manager().project_name)
 
         val opus_manager = this.get_opus_manager()
-        AlertDialog.Builder(main_fragment.context, R.style.AlertDialog).apply {
-            setTitle(getString(R.string.dlg_change_name))
-            setView(viewInflated)
-            setPositiveButton(android.R.string.ok) { dialog, _ ->
+
+        AlertDialog.Builder(main_fragment.context, R.style.AlertDialog)
+            .setTitle(getString(R.string.dlg_change_name))
+            .setView(viewInflated)
+            .setPositiveButton(android.R.string.ok) { dialog, _ ->
                 opus_manager.set_project_name(input.text.toString())
                 dialog.dismiss()
             }
-            setNegativeButton(android.R.string.cancel) { dialog, _ ->
+            .setNegativeButton(android.R.string.cancel) { dialog, _ ->
                 dialog.cancel()
             }
-            show()
-        }
+            .show()
     }
     // Can't use the general popup_number_dialog. We want a picker using radix-N
     private fun dialog_transpose() {
@@ -1024,20 +1024,19 @@ class MainActivity : AppCompatActivity() {
     }
     private fun dialog_save_project(callback: () -> Unit) {
         if (this.get_opus_manager().has_changed_since_save()) {
-            AlertDialog.Builder(this, R.style.AlertDialog).apply {
-                setTitle(getString(R.string.dialog_save_warning_title))
-                setCancelable(true)
-                setPositiveButton(getString(R.string.dlg_confirm)) { dialog, _ ->
+            AlertDialog.Builder(this, R.style.AlertDialog)
+                .setTitle(getString(R.string.dialog_save_warning_title))
+                .setCancelable(true)
+                .setPositiveButton(getString(R.string.dlg_confirm)) { dialog, _ ->
                     this@MainActivity.project_save()
                     dialog.dismiss()
                     callback()
                 }
-                setNegativeButton(getString(R.string.dlg_decline)) { dialog, _ ->
+                .setNegativeButton(getString(R.string.dlg_decline)) { dialog, _ ->
                     dialog.dismiss()
                     callback()
                 }
-                show()
-            }
+                .show()
         } else {
             callback()
         }
@@ -1047,19 +1046,17 @@ class MainActivity : AppCompatActivity() {
 
         val title = this.get_opus_manager().project_name
 
-        AlertDialog.Builder(main_fragment!!.context, R.style.AlertDialog).apply {
-            setTitle(resources.getString(R.string.dlg_delete_title, title))
-
-            setPositiveButton(android.R.string.ok) { dialog, _ ->
+        AlertDialog.Builder(main_fragment!!.context, R.style.AlertDialog)
+            .setTitle(resources.getString(R.string.dlg_delete_title, title))
+            .setPositiveButton(android.R.string.ok) { dialog, _ ->
                 this@MainActivity.project_delete()
                 dialog.dismiss()
                 this@MainActivity.drawer_close()
             }
-            setNegativeButton(android.R.string.cancel) { dialog, _ ->
+            .setNegativeButton(android.R.string.cancel) { dialog, _ ->
                 dialog.cancel()
             }
-            show()
-        }
+            .show()
     }
 
     fun select_midi_file() {
@@ -1084,11 +1081,10 @@ class MainActivity : AppCompatActivity() {
             name = name.substring(0, name.lastIndexOf("."))
         }
 
-        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
-            addCategory(Intent.CATEGORY_OPENABLE)
-            type = "application/midi"
-            putExtra(Intent.EXTRA_TITLE, "$name.mid")
-        }
+        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT)
+        intent.addCategory(Intent.CATEGORY_OPENABLE)
+        intent.putExtra(Intent.EXTRA_TITLE, "$name.mid")
+        intent.type = "application/midi"
 
         this._export_midi_intent_launcher.launch(intent)
     }
@@ -1100,11 +1096,10 @@ class MainActivity : AppCompatActivity() {
             name = name.substring(0, name.lastIndexOf("."))
         }
 
-        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
-            addCategory(Intent.CATEGORY_OPENABLE)
-            type = "application/json"
-            putExtra(Intent.EXTRA_TITLE, "$name.json")
-        }
+        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT)
+        intent.addCategory(Intent.CATEGORY_OPENABLE)
+        intent.type = "application/json"
+        intent.putExtra(Intent.EXTRA_TITLE, "$name.json")
 
         this._export_project_intent_launcher.launch(intent)
     }

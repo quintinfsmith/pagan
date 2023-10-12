@@ -53,36 +53,24 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         this.addView(this.bottom_row)
 
 
-        (this.top_row.layoutParams as LayoutParams).apply {
-            width = MATCH_PARENT
-            height = WRAP_CONTENT
-        }
+        this.top_row.layoutParams.width = MATCH_PARENT
+        this.top_row.layoutParams.height = WRAP_CONTENT
 
-        (this.bottom_row.layoutParams as LayoutParams).apply {
-            width = MATCH_PARENT
-            height = MATCH_PARENT
-        }
+        this.bottom_row.layoutParams.width = MATCH_PARENT
+        this.bottom_row.layoutParams.height = MATCH_PARENT
 
-        this.spacer.layoutParams.apply {
-            width = MATCH_PARENT
-            height = MATCH_PARENT
-        }
+        this.spacer.layoutParams.width = MATCH_PARENT
+        this.spacer.layoutParams.height = MATCH_PARENT
 
-        this.line_label_recycler.layoutParams.apply {
-            width = WRAP_CONTENT
-            height = MATCH_PARENT
-        }
+        this.line_label_recycler.layoutParams.width = WRAP_CONTENT
+        this.line_label_recycler.layoutParams.height = MATCH_PARENT
 
-        (this.main_recycler.layoutParams as LinearLayout.LayoutParams).apply {
-            width = 0
-            weight = 1F
-            height = MATCH_PARENT
-        }
+        (this.main_recycler.layoutParams as LinearLayout.LayoutParams).weight = 1F
+        this.main_recycler.layoutParams.width = 0
+        this.main_recycler.layoutParams.height = MATCH_PARENT
 
-        (this.column_label_recycler.layoutParams as LinearLayout.LayoutParams).apply {
-            width = 0
-            weight = 1F
-        }
+        (this.column_label_recycler.layoutParams as LinearLayout.LayoutParams).weight = 1F
+        this.column_label_recycler.layoutParams.width = 0
 
         ColumnLabelAdapter(this)
         LineLabelRecyclerAdapter(this)

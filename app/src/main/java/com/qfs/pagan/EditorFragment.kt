@@ -1013,9 +1013,8 @@ class EditorFragment : PaganFragment() {
             override fun onStopTrackingTouch(seekbar: SeekBar?) { }
         })
 
-        AlertDialog.Builder(this.activity).apply {
-            setView(view)
-            show()
-        }
+        val dialog = AlertDialog.Builder(this.activity)
+        dialog.setView(view)
+        dialog.show()
     }
 }

@@ -67,13 +67,12 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
     }
 
     init {
-        context.theme.obtainStyledAttributes(attrs, R.styleable.NumberSelector, 0, 0).apply {
-            try {
-                max = getInteger(R.styleable.NumberSelector_max, 2)
-                min = getInteger(R.styleable.NumberSelector_min, 0)
-            } finally {
-                recycle()
-            }
+        var styled_attributes = context.theme.obtainStyledAttributes(attrs, R.styleable.NumberSelector, 0, 0)
+        try {
+            max = styled_attributes.getInteger(R.styleable.NumberSelector_max, 2)
+            min = styled_attributes.getInteger(R.styleable.NumberSelector_min, 0)
+        } finally {
+           styled_attributes.recycle()
         }
         this.populate()
     }
@@ -149,29 +148,22 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
                 this.addView(currentView)
             }
 
-            (currentView.layoutParams as LinearLayout.LayoutParams).apply {
-                if (orientation == VERTICAL) {
-                    width = MATCH_PARENT
-                    height = 0
-                } else {
-                    height = MATCH_PARENT
-                    width = 0
-                }
-                weight = 1F
-                gravity = CENTER
+            val layout_params = (currentView.layoutParams as LinearLayout.LayoutParams)
+            layout_params.weight = 1F
+            layout_params.gravity = CENTER
+            if (orientation == VERTICAL) {
+                layout_params.width = MATCH_PARENT
+                layout_params.height = 0
+            } else {
+                layout_params.height = MATCH_PARENT
+                layout_params.width = 0
             }
 
-            (currentView.layoutParams as MarginLayoutParams).apply {
-                val padding = resources.getDimension(R.dimen.normal_padding).roundToInt()
-                if (orientation == VERTICAL) {
-                    if (i != this@NumberSelector.max) {
-                        setMargins(0, padding, 0, 0)
-                    }
-                } else {
-                    if (i != this@NumberSelector.min) {
-                        setMargins(padding, 0, 0, 0)
-                    }
-                }
+            val padding = resources.getDimension(R.dimen.normal_padding).roundToInt()
+            if (orientation == VERTICAL && i != this@NumberSelector.max) {
+                (layout_params as MarginLayoutParams).setMargins(0, padding, 0, 0)
+            } else if (orientation != VERTICAL && i != this@NumberSelector.min) {
+                (layout_params as MarginLayoutParams).setMargins(padding, 0, 0, 0)
             }
 
             this._button_map[currentView] = i

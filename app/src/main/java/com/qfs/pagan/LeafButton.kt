@@ -73,10 +73,8 @@ class LeafButton(
         this._value_wrapper.addView(this._value_label_offset)
 
         this.addView(this._inner_wrapper)
-        this._inner_wrapper.layoutParams.apply {
-            width = MATCH_PARENT
-            height = MATCH_PARENT
-        }
+        this._inner_wrapper.layoutParams.width = MATCH_PARENT
+        this._inner_wrapper.layoutParams.height = MATCH_PARENT
 
         this.set_text(is_percussion)
         this.setOnClickListener {
@@ -209,29 +207,23 @@ class LeafButton(
         }
 
         if (event.relative && event.note != 0) {
-            (this._prefix_label.layoutParams as LayoutParams).apply {
-                setMargins(0,-20,0,0)
-                height = WRAP_CONTENT
-                gravity = CENTER
-            }
-            (this._value_wrapper.layoutParams as LayoutParams).apply {
-                setMargins(0,-30,0,0)
-                weight = 1F
-                height = WRAP_CONTENT
-                gravity = CENTER
-            }
+            (this._prefix_label.layoutParams as LayoutParams).setMargins(0,-20,0,0)
+            (this._prefix_label.layoutParams as LayoutParams).height = WRAP_CONTENT
+            (this._prefix_label.layoutParams as LayoutParams).gravity = CENTER
+
+            (this._value_wrapper.layoutParams as LayoutParams).setMargins(0,-30,0,0)
+            (this._value_wrapper.layoutParams as LayoutParams).weight = 1F
+            (this._value_wrapper.layoutParams as LayoutParams).height = WRAP_CONTENT
+            (this._value_wrapper.layoutParams as LayoutParams).gravity = CENTER
         } else {
-            (this._prefix_label.layoutParams as LayoutParams).apply {
-                height = WRAP_CONTENT
-                setMargins(0,0,0,0)
-                gravity = CENTER
-            }
-            (this._value_wrapper.layoutParams as LayoutParams).apply {
-                weight = 1F
-                height = 0
-                gravity = CENTER
-                setMargins(0,0,0,0)
-            }
+            (this._prefix_label.layoutParams as LayoutParams).height = WRAP_CONTENT
+            (this._prefix_label.layoutParams as LayoutParams).setMargins(0,0,0,0)
+            (this._prefix_label.layoutParams as LayoutParams).gravity = CENTER
+
+            (this._value_wrapper.layoutParams as LayoutParams).weight = 1F
+            (this._value_wrapper.layoutParams as LayoutParams).height = 0
+            (this._value_wrapper.layoutParams as LayoutParams).gravity = CENTER
+            (this._value_wrapper.layoutParams as LayoutParams).setMargins(0,0,0,0)
         }
     }
 

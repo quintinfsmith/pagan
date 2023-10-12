@@ -16,21 +16,18 @@ import kotlinx.serialization.json.Json
 
 class LoadFragment : PaganFragment() {
     class MKDirFailedException(dir: String): Exception("Failed to create directory $dir")
-
-    // Boiler Plate //
     private var _binding: FragmentLoadBinding? = null
-    private val binding get() = _binding!!
-    //////////////////
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentLoadBinding.inflate(inflater, container, false)
+        this._binding = FragmentLoadBinding.inflate(inflater, container, false)
+
         this.get_main().drawer_lock()
         this.get_main().update_menu_options()
-        return binding.root
+        return this._binding!!.root
     }
 
 
@@ -43,7 +40,6 @@ class LoadFragment : PaganFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         setFragmentResult("RETURNED", bundleOf())
         super.onViewCreated(view, savedInstanceState)
-
 
         val rvProjectList: RecyclerView = view.findViewById(R.id.rvProjectList)
         rvProjectList.adapter = ProjectToLoadAdapter(this)
@@ -65,17 +61,12 @@ class LoadFragment : PaganFragment() {
 
     fun load_project(path: String) {
         setFragmentResult(IntentFragmentToken.Load.name, bundleOf(Pair("PATH", path)))
-
-        this.get_main().apply {
-            loading_reticle_show()
-            navigate(R.id.EditorFragment)
-        }
-
+        this.get_main().navigate(R.id.EditorFragment)
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
-        _binding = null
+        this._binding = null
     }
 
 }

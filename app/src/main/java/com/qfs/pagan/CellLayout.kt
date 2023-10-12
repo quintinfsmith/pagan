@@ -77,11 +77,10 @@ class CellLayout(var view_holder: CellRecyclerViewHolder): LinearLayout(view_hol
 
            this.addView(tvLeaf)
 
-           tvLeaf.layoutParams.apply {
-               gravity = Gravity.CENTER
-               height = MATCH_PARENT
-               width = new_width
-           }
+           (tvLeaf.layoutParams as LayoutParams).gravity = Gravity.CENTER
+           (tvLeaf.layoutParams as LayoutParams).height = MATCH_PARENT
+           (tvLeaf.layoutParams as LayoutParams).width = new_width
+
            tvLeaf.minimumWidth = resources.getDimension(R.dimen.base_leaf_width).toInt()
        } else {
            val next_width = new_width / tree.size

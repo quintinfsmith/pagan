@@ -320,19 +320,6 @@ class MainActivity : AppCompatActivity() {
             R.id.itmSettings -> {
                 this.navigate(R.id.SettingsFragment)
             }
-            R.id.itmMidiTest -> {
-                for (device in this._midi_interface.poll_input_devices()) {
-                    this._midi_interface.open_input_device(device)
-                }
-                for (device in this._midi_interface.poll_output_devices()) {
-                    this._midi_interface.open_output_device(device)
-                }
-
-                AlertDialog.Builder(this, R.style.AlertDialog)
-                    .setTitle("M COUNT: ${this@MainActivity._midi_interface.poll_input_devices().size}")
-                    .setPositiveButton(getString(R.string.dlg_confirm)) { dialog, _ -> }
-                    .show()
-            }
         }
         return super.onOptionsItemSelected(item)
     }

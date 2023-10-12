@@ -33,9 +33,4 @@
         android:id="@+id/itmSettings"
         android:title="Settings..."
         app:showAsAction="never"/>
-    <item
-        android:menuCategory="secondary"
-        android:id="@+id/itmMidiTest"
-        android:title="MidiTest"
-        app:showAsAction="never"/>
 </menu>

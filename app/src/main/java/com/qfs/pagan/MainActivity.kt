@@ -1101,12 +1101,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun get_project_directory(): File {
-        val directory = File(this.project_manager.projects_dir)
-        if (!directory.isDirectory) {
-            if (! directory.mkdirs()) {
-                throw LoadFragment.MKDirFailedException(project_manager.projects_dir)
-            }
-        }
-        return directory
+        return this.project_manager.get_directory()
     }
 }

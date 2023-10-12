@@ -15,7 +15,6 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 
 class LoadFragment : PaganFragment() {
-    class MKDirFailedException(dir: String): Exception("Failed to create directory $dir")
     private var _binding: FragmentLoadBinding? = null
 
     override fun onCreateView(

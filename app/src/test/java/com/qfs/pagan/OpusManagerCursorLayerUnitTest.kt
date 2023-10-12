@@ -16,7 +16,7 @@ class OpusManagerCursorLayerUnitTest {
     fun test_new() {
         var manager = OpusManager()
         manager.new()
-        assertNotEquals(manager.opus_beat_count, 0)
+        assertNotEquals(manager.beat_count, 0)
     }
 
     @Test

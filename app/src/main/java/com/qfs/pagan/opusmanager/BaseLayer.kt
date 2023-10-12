@@ -35,16 +35,20 @@ open class BaseLayer {
     class RemovingLastBeatException : Exception("OpusManager requires at least 1 beat")
     class IncompatibleChannelException(channel_old: Int, channel_new: Int) : Exception("Can't move lines into or out of the percussion channel ($channel_old -> $channel_new)")
 
-    var RADIX: Int = 12
-    var DEFAULT_PERCUSSION: Int = 0
-    var channels: MutableList<OpusChannel> = mutableListOf()
+    companion object {
+        private var DEFAULT_PERCUSSION: Int = 0
+    }
+
     private var _channel_uuid_generator: Int = 0x00
     private var _channel_uuid_map = HashMap<Int, OpusChannel>()
-    var opus_beat_count: Int = 1
+
+    var beat_count: Int = 1
+    var channels: MutableList<OpusChannel> = mutableListOf()
     var path: String? = null
+    var project_name: String = "New Opus"
+    var radix: Int = 12
     var tempo: Float = 120F
     var transpose: Int = 0
-    var project_name: String = "New Opus"
 
     //// RO Functions ////
     /**
@@ -167,7 +171,7 @@ open class BaseLayer {
      */
     open fun get_percussion_instrument(line_offset: Int): Int {
         val channel = this.channels.last()
-        return channel.get_mapped_line_offset(line_offset) ?: this.DEFAULT_PERCUSSION
+        return channel.get_mapped_line_offset(line_offset) ?: BaseLayer.DEFAULT_PERCUSSION
     }
 
     /**
@@ -297,7 +301,7 @@ open class BaseLayer {
                     working_position.removeLast()
                     working_tree = working_tree.parent!!
                 }
-            } else if (working_beat_key.beat < this.opus_beat_count - 1) {
+            } else if (working_beat_key.beat < this.beat_count - 1) {
                 working_beat_key.beat += 1
                 working_position = mutableListOf()
                 working_tree = this.get_tree(working_beat_key, working_position)
@@ -565,7 +569,7 @@ open class BaseLayer {
         val instrument = this.get_percussion_instrument(beat_key.line_offset)
         tree.set_event(OpusEvent(
             instrument,
-            this.RADIX,
+            this.radix,
             9,
             false
         ))
@@ -653,7 +657,7 @@ open class BaseLayer {
 
     open fun new_channel(channel: Int? = null, lines: Int = 1, uuid: Int? = null) {
         val new_channel = OpusChannel(uuid ?: this.gen_channel_uuid())
-        new_channel.set_beat_count(this.opus_beat_count)
+        new_channel.set_beat_count(this.beat_count)
         new_channel.midi_channel = if (this.channels.isNotEmpty()) {
             this.get_next_available_midi_channel()
         } else {
@@ -708,10 +712,10 @@ open class BaseLayer {
     }
 
     open fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<OpusEvent>>? = null) {
-        this.opus_beat_count += 1
+        this.beat_count += 1
         for (channel in this.channels) {
             channel.insert_beat(beat_index)
-            channel.set_beat_count(this.opus_beat_count)
+            channel.set_beat_count(this.beat_count)
         }
         if (beats_in_column == null) {
             return
@@ -740,13 +744,13 @@ open class BaseLayer {
     }
 
     open fun remove_beat(beat_index: Int) {
-        if (this.opus_beat_count == 1) {
+        if (this.beat_count == 1) {
             throw RemovingLastBeatException()
         }
         for (channel in this.channels) {
             channel.remove_beat(beat_index)
         }
-        this.set_beat_count(this.opus_beat_count - 1)
+        this.set_beat_count(this.beat_count - 1)
     }
 
     fun remove_channel_by_uuid(uuid: Int) {
@@ -797,7 +801,7 @@ open class BaseLayer {
     }
 
     open fun set_beat_count(new_count: Int) {
-        this.opus_beat_count = new_count
+        this.beat_count = new_count
         for (channel in this.channels) {
             channel.set_beat_count(new_count)
         }
@@ -805,9 +809,9 @@ open class BaseLayer {
 
     open fun get_midi(start_beat: Int = 0, end_beat_rel: Int? = null): Midi {
         val end_beat = if (end_beat_rel == null) {
-            this.opus_beat_count
+            this.beat_count
         } else if (end_beat_rel < 0) {
-            this.opus_beat_count + end_beat_rel
+            this.beat_count + end_beat_rel
         } else {
             end_beat_rel
         }
@@ -818,7 +822,7 @@ open class BaseLayer {
         midi.insert_event(0,0, SetTempo.from_bpm(tempo))
         data class StackItem(var tree: OpusTree<OpusEvent>, var divisions: Int, var offset: Int, var size: Int)
         val position_pointer_ticks = mutableSetOf<Pair<Int, Int>>()
-        val max_tick = midi.get_ppqn() * (this.opus_beat_count + 1)
+        val max_tick = midi.get_ppqn() * (this.beat_count + 1)
 
         this.channels.forEachIndexed { c, channel ->
             midi.insert_event(
@@ -909,7 +913,7 @@ open class BaseLayer {
                     if (channel.midi_channel == 9) {
                         beat.traverse { _: OpusTree<OpusEvent>, event: OpusEvent? ->
                             if (event != null) {
-                                event.note = channel.get_mapped_line_offset(i) ?: this.DEFAULT_PERCUSSION
+                                event.note = channel.get_mapped_line_offset(i) ?: BaseLayer.DEFAULT_PERCUSSION
                             }
                         }
                     }
@@ -935,7 +939,7 @@ open class BaseLayer {
         return LoadedJSONData(
             name = this.project_name,
             tempo = this.tempo,
-            radix = this.RADIX,
+            radix = this.radix,
             channels = channels,
             transpose = this.transpose
         )
@@ -957,7 +961,7 @@ open class BaseLayer {
 
     // Clear function is used for new projects
     open fun clear() {
-        this.opus_beat_count = 0
+        this.beat_count = 0
         for (i in this.channels.size - 1 downTo 0) {
             this.remove_channel(i)
         }
@@ -1082,7 +1086,7 @@ open class BaseLayer {
         val parsed = this.parse_line_data(json_data)
         this.clear()
 
-        this.RADIX = json_data.radix
+        this.radix = json_data.radix
         this.tempo = json_data.tempo
         this.transpose = json_data.transpose
         this.set_project_name(json_data.name)
@@ -1435,7 +1439,7 @@ open class BaseLayer {
 
         this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
             for (j in channel.lines.indices) {
-                for (k in 0 until this.opus_beat_count) {
+                for (k in 0 until this.beat_count) {
                     val beat_tree = this.get_beat_tree(BeatKey(i, j, k))
                     beat_tree.traverse { tree: OpusTree<OpusEvent>, event: OpusEvent? ->
                         if (event == null) {

@@ -423,7 +423,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun playback_start_soundfont_player(start_point: Int = 0) {
         val midi = this.get_opus_manager().get_midi(start_point)
-        val beat_count = this.get_opus_manager().opus_beat_count.toFloat()
+        val beat_count = this.get_opus_manager().beat_count.toFloat()
         this._playback_handle = this._midi_playback_device?.play(midi) {
             if (it == 1F) { // Song is over, return to start state
                 this.runOnUiThread {
@@ -592,7 +592,7 @@ class MainActivity : AppCompatActivity() {
         val btnTranspose: TextView = this.findViewById(R.id.btnTranspose)
         btnTranspose.text = this.getString(
             R.string.label_transpose,
-            get_number_string(opus_manager.transpose, opus_manager.RADIX, 1)
+            get_number_string(opus_manager.transpose, opus_manager.radix, 1)
         )
         btnTranspose.setOnClickListener {
             this.dialog_transpose()

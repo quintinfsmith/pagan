@@ -90,7 +90,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         val opus_manager = this.get_opus_manager()
         val main_adapter = (this.main_recycler.adapter as ColumnRecyclerAdapter)
         val column_label_adapter = (this.column_label_recycler.adapter as ColumnLabelAdapter)
-        for (beat in 0 until opus_manager.opus_beat_count) {
+        for (beat in 0 until opus_manager.beat_count) {
             main_adapter.add_column(beat)
             column_label_adapter.add_column(beat)
         }
@@ -104,7 +104,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     fun init_column_width_map() {
         this.initializing_column_width_map = true
         val opus_manager = this.get_opus_manager()
-        for (beat in 0 until opus_manager.opus_beat_count) {
+        for (beat in 0 until opus_manager.beat_count) {
             this.column_width_map.add(mutableListOf<Int>())
             opus_manager.channels.forEachIndexed { i: Int, channel: OpusChannel ->
                 for (j in channel.lines.indices) {
@@ -381,7 +381,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     // Aligns all columns with the line_label recycler
     fun fix_scroll_offset() {
         val main_adapter = (this.main_recycler.adapter!! as ColumnRecyclerAdapter)
-        for (i in 0 until this.get_opus_manager().opus_beat_count) {
+        for (i in 0 until this.get_opus_manager().beat_count) {
             val cell_recycler = main_adapter.get_cell_recycler(i) ?: continue
             cell_recycler.conform_scroll_position()
         }

@@ -17,7 +17,7 @@ class BaseLayerUnitTest {
     fun test_new() {
         val manager = OpusManager()
         manager.new()
-        assertNotEquals(manager.opus_beat_count, 0)
+        assertNotEquals(manager.beat_count, 0)
     }
 
     @Test
@@ -113,7 +113,7 @@ class BaseLayerUnitTest {
         assertEquals(
             "Failed to return null when looking for proceding leaf after last position",
             null,
-            manager.get_proceding_leaf_position(BeatKey(0,0, manager.opus_beat_count - 1),listOf())
+            manager.get_proceding_leaf_position(BeatKey(0,0, manager.beat_count - 1),listOf())
         )
 
         assertEquals(
@@ -337,17 +337,17 @@ class BaseLayerUnitTest {
         val manager = OpusManager()
         manager.new()
 
-        var beats = manager.opus_beat_count
+        var beats = manager.beat_count
 
         manager.insert_beat(0)
-        assertEquals(beats + 1, manager.opus_beat_count)
+        assertEquals(beats + 1, manager.beat_count)
 
-        manager.insert_beat(manager.opus_beat_count)
-        assertEquals(beats + 2, manager.opus_beat_count)
+        manager.insert_beat(manager.beat_count)
+        assertEquals(beats + 2, manager.beat_count)
 
-        beats = manager.opus_beat_count
-        assertThrows(Exception::class.java) { manager.insert_beat(manager.opus_beat_count + 1) }
-        assertThrows(Exception::class.java) { manager.remove_beat(manager.opus_beat_count + 1) }
+        beats = manager.beat_count
+        assertThrows(Exception::class.java) { manager.insert_beat(manager.beat_count + 1) }
+        assertThrows(Exception::class.java) { manager.remove_beat(manager.beat_count + 1) }
     }
 
     @Test

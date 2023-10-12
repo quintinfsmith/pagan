@@ -367,7 +367,7 @@ open class LinksLayer : BaseLayer() {
         if (overlap) {
             throw LinkRangeOverlap(from_key, to_key, beat)
         }
-        if (this.opus_beat_count <= beat.beat + (to_key.beat - from_key.beat)) {
+        if (this.beat_count <= beat.beat + (to_key.beat - from_key.beat)) {
             throw LinkRangeOverflow(from_key, to_key, beat)
         }
 
@@ -476,7 +476,7 @@ open class LinksLayer : BaseLayer() {
         }
         val working_key = BeatKey(channel, line_offset, 0)
         val new_pool = mutableListOf<BeatKey>()
-        for (x in 0 until this.opus_beat_count) {
+        for (x in 0 until this.beat_count) {
             working_key.beat = x
             if (working_key != beat_key) {
                 this.overwrite_beat(working_key, beat_key)
@@ -505,7 +505,7 @@ open class LinksLayer : BaseLayer() {
 
         from_key.beat = 0
         to_key.beat = range_width - 1
-        for (i in 1 until this.opus_beat_count / range_width) {
+        for (i in 1 until this.beat_count / range_width) {
             this.link_beat_range(
                 BeatKey(channel, line_offset, i * range_width),
                 from_key,

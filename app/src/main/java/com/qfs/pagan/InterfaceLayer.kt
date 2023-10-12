@@ -518,7 +518,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         val btnTranspose: TextView = this.activity.findViewById(R.id.btnTranspose)
         btnTranspose.text = this.activity.getString(
             R.string.label_transpose,
-            get_number_string(new_transpose, this.RADIX, 2)
+            get_number_string(new_transpose, this.radix, 2)
         )
     }
 
@@ -681,7 +681,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                     )
                 }
                 HistoryToken.REMOVE_BEAT -> {
-                    val x = max(0, min(args[0] as Int, this.opus_beat_count - 2))
+                    val x = max(0, min(args[0] as Int, this.beat_count - 2))
                     this.push_to_history_stack(
                         HistoryToken.CURSOR_SELECT_COLUMN,
                         listOf(x)

@@ -509,8 +509,8 @@ open class HistoryLayer : LinksLayer() {
     fun remove_beat(beat_index: Int, count: Int) {
         this.remember {
             for (i in 0 until count) {
-                if (this.opus_beat_count > 1) {
-                    this.remove_beat(min(beat_index, this.opus_beat_count - 1))
+                if (this.beat_count > 1) {
+                    this.remove_beat(min(beat_index, this.beat_count - 1))
                 } else {
                     break
                 }
@@ -920,7 +920,7 @@ open class HistoryLayer : LinksLayer() {
         this.remember {
             this.clear_link_pools_by_range(
                 BeatKey(channel, line_offset, 0),
-                BeatKey(channel, line_offset, this.opus_beat_count - 1)
+                BeatKey(channel, line_offset, this.beat_count - 1)
             )
             super.link_row(channel, line_offset, beat_key)
         }
@@ -953,7 +953,7 @@ open class HistoryLayer : LinksLayer() {
             }
 
             val clear_beat_key_top = BeatKey(channel, line_offset, 0)
-            val clear_beat_key_bottom = BeatKey(bottom_channel, bottom_line_offset, this.opus_beat_count -1)
+            val clear_beat_key_bottom = BeatKey(bottom_channel, bottom_line_offset, this.beat_count -1)
 
             this.clear_link_pools_by_range(
                 clear_beat_key_top,

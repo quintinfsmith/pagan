@@ -305,34 +305,34 @@ class EditorFragment : PaganFragment() {
             val beat = opus_manager.cursor.beat
             try {
                 opus_manager.remove_beat_at_cursor(1)
-                if (beat >= opus_manager.opus_beat_count) {
-                    opus_manager.cursor_select_column(opus_manager.opus_beat_count - 1)
+                if (beat >= opus_manager.beat_count) {
+                    opus_manager.cursor_select_column(opus_manager.beat_count - 1)
                 }
             } catch (e: BaseLayer.RemovingLastBeatException) {
                 this.get_main().feedback_msg(getString(R.string.feedback_rm_lastbeat))
             }
 
-            if (opus_manager.opus_beat_count == 1) {
+            if (opus_manager.beat_count == 1) {
                 btnRemoveBeat.visibility = View.GONE
             }
         }
 
         btnRemoveBeat.setOnLongClickListener {
-            main.dialog_number_input(getString(R.string.dlg_remove_beats), 1, opus_manager.opus_beat_count - 1) { count: Int ->
+            main.dialog_number_input(getString(R.string.dlg_remove_beats), 1, opus_manager.beat_count - 1) { count: Int ->
                 val beat = opus_manager.cursor.beat
                 opus_manager.remove_beat_at_cursor(count)
-                if (beat >= opus_manager.opus_beat_count) {
-                    opus_manager.cursor_select_column(opus_manager.opus_beat_count - 1)
+                if (beat >= opus_manager.beat_count) {
+                    opus_manager.cursor_select_column(opus_manager.beat_count - 1)
                 }
 
-                if (opus_manager.opus_beat_count == 1) {
+                if (opus_manager.beat_count == 1) {
                     btnRemoveBeat.visibility = View.GONE
                 }
             }
             true
         }
 
-        if (opus_manager.opus_beat_count == 1) {
+        if (opus_manager.beat_count == 1) {
             btnRemoveBeat.visibility = View.GONE
         }
         llContextMenu.addView(view)
@@ -852,7 +852,7 @@ class EditorFragment : PaganFragment() {
                     val position = opus_manager.cursor.get_position()
                     val preceding_event = opus_manager.get_preceding_event(beat_key, position)
                     if (preceding_event != null && !preceding_event.relative) {
-                        ((preceding_event.note / opus_manager.RADIX) * opus_manager.RADIX) + progress
+                        ((preceding_event.note / opus_manager.radix) * opus_manager.radix) + progress
                     } else {
                         progress
                     }
@@ -862,7 +862,7 @@ class EditorFragment : PaganFragment() {
 
         val event = OpusEvent(
             value,
-            opus_manager.RADIX,
+            opus_manager.radix,
             opus_manager.cursor.channel,
             opus_manager.relative_mode != 0,
             duration
@@ -911,19 +911,19 @@ class EditorFragment : PaganFragment() {
         } else {
             when (opus_manager.relative_mode) {
                 2 -> {
-                    (0 - progress) * opus_manager.RADIX
+                    (0 - progress) * opus_manager.radix
                 }
                 1 -> {
-                    progress * opus_manager.RADIX
+                    progress * opus_manager.radix
                 }
                 else -> {
                     val beat_key = opus_manager.cursor.get_beatkey()
                     val position = opus_manager.cursor.get_position()
                     val preceding_event = opus_manager.get_preceding_event(beat_key, position)
                     if (preceding_event != null && !preceding_event.relative) {
-                        (progress * opus_manager.RADIX) + (preceding_event.note % opus_manager.RADIX)
+                        (progress * opus_manager.radix) + (preceding_event.note % opus_manager.radix)
                     } else {
-                        (progress * opus_manager.RADIX)
+                        (progress * opus_manager.radix)
                     }
                 }
             }
@@ -931,7 +931,7 @@ class EditorFragment : PaganFragment() {
 
         val event = OpusEvent(
             value,
-            opus_manager.RADIX,
+            opus_manager.radix,
             opus_manager.cursor.channel,
             opus_manager.relative_mode != 0,
             duration
@@ -985,7 +985,7 @@ class EditorFragment : PaganFragment() {
         val title_text = view.findViewById<TextView>(R.id.shortcut_title)!!
 
         val opus_manager = this.get_main().get_opus_manager()
-        scroll_bar.max = opus_manager.opus_beat_count - 1
+        scroll_bar.max = opus_manager.beat_count - 1
         val cursor = opus_manager.cursor
         scroll_bar.progress = when (cursor.mode) {
             OpusManagerCursor.CursorMode.Single,

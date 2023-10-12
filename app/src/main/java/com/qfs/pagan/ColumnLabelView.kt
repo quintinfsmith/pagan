@@ -21,7 +21,9 @@ class ColumnLabelView(val view_holder: RecyclerView.ViewHolder): RelativeLayout(
             }
         }
     }
-    private val STATE_FOCUSED = intArrayOf(R.attr.state_focused)
+    companion object {
+        private val STATE_FOCUSED = intArrayOf(R.attr.state_focused)
+    }
     private var _text_view = InnerView(this.context)
     /*
      * update_queued exists to handle the liminal state between being detached and being destroyed
@@ -72,13 +74,13 @@ class ColumnLabelView(val view_holder: RecyclerView.ViewHolder): RelativeLayout(
             OpusManagerCursor.CursorMode.Single,
             OpusManagerCursor.CursorMode.Column -> {
                 if (opus_manager.cursor.beat == beat) {
-                    mergeDrawableStates(drawableState, this.STATE_FOCUSED)
+                    mergeDrawableStates(drawableState, ColumnLabelView.STATE_FOCUSED)
                 }
             }
             OpusManagerCursor.CursorMode.Range -> {
                 val (first, second) = opus_manager.cursor.range!!
                 if (first.beat <= beat && second.beat >= beat) {
-                    mergeDrawableStates(drawableState, this.STATE_FOCUSED)
+                    mergeDrawableStates(drawableState, ColumnLabelView.STATE_FOCUSED)
                 }
             }
             else -> {}

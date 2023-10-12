@@ -24,8 +24,10 @@ class LineLabelView(var view_holder: RecyclerView.ViewHolder): LinearLayout(Cont
             }
         }
     }
-    private val STATE_FOCUSED = intArrayOf(R.attr.state_focused)
-    private val STATE_CHANNEL_EVEN = intArrayOf(R.attr.state_channel_even)
+    companion object {
+        private val STATE_FOCUSED = intArrayOf(R.attr.state_focused)
+        private val STATE_CHANNEL_EVEN = intArrayOf(R.attr.state_channel_even)
+    }
 
     private var _text_view = InnerView(context)
     /*
@@ -99,20 +101,20 @@ class LineLabelView(var view_holder: RecyclerView.ViewHolder): LinearLayout(Cont
         val opus_manager = this.get_opus_manager()
         val (channel, line_offset) = this.get_row()
         if (channel % 2 == 0) {
-            mergeDrawableStates(drawableState, STATE_CHANNEL_EVEN)
+            mergeDrawableStates(drawableState, LineLabelView.STATE_CHANNEL_EVEN)
         }
 
         when (opus_manager.cursor.mode) {
             OpusManagerCursor.CursorMode.Single,
             OpusManagerCursor.CursorMode.Row -> {
                 if (opus_manager.cursor.channel == channel && opus_manager.cursor.line_offset == line_offset) {
-                    mergeDrawableStates(drawableState, STATE_FOCUSED)
+                    mergeDrawableStates(drawableState, LineLabelView.STATE_FOCUSED)
                 }
             }
             OpusManagerCursor.CursorMode.Range -> {
                 val (first, second) = opus_manager.cursor.range!!
                 if ((channel > first.channel && channel < second.channel) || (channel == first.channel && line_offset >= first.line_offset) || (channel == second.channel && line_offset <= second.line_offset)) {
-                    mergeDrawableStates(drawableState, STATE_FOCUSED)
+                    mergeDrawableStates(drawableState, LineLabelView.STATE_FOCUSED)
                 }
             }
             else -> { }

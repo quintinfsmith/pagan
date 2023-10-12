@@ -20,8 +20,11 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
 
     class NumberSelectorButton(private var _number_selector: NumberSelector, var value: Int):
         LinearLayout(ContextThemeWrapper( _number_selector.context, R.style.numberSelectorButton )) {
+        companion object {
+            private val STATE_ACTIVE = intArrayOf(R.attr.state_active)
+        }
+
         private var _bkp_text: String = get_number_string(this.value, this._number_selector.radix,1)
-        private val STATE_ACTIVE = intArrayOf(R.attr.state_active)
         private var _state_active: Boolean = false
         private val _text_view = TextView(
             ContextThemeWrapper(
@@ -53,7 +56,7 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
         override fun onCreateDrawableState(extraSpace: Int): IntArray? {
             val drawableState = super.onCreateDrawableState(extraSpace + 1)
             if (this._state_active) {
-                mergeDrawableStates(drawableState, STATE_ACTIVE)
+                mergeDrawableStates(drawableState, NumberSelectorButton.STATE_ACTIVE)
             }
             return drawableState
         }

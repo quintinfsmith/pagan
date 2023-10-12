@@ -21,7 +21,6 @@ class RelativeOptionSelector(context: Context, attrs: AttributeSet) : LinearLayo
     private var _hidden_options: MutableSet<Int> = mutableSetOf()
     private var _on_change_hook: ((RelativeOptionSelector) -> Unit)? = null
 
-    // TODO: Handle any radix
     class RelativeOptionSelectorButton (
         private var _relative_option_selector: RelativeOptionSelector,
         private var _value: Int
@@ -31,7 +30,9 @@ class RelativeOptionSelector(context: Context, attrs: AttributeSet) : LinearLayo
             R.style.relativeSelector
         )
     ) {
-        private val STATE_ACTIVE = intArrayOf(R.attr.state_active)
+        companion object {
+            private val STATE_ACTIVE = intArrayOf(R.attr.state_active)
+        }
         private var _state_active: Boolean = false
 
         init {
@@ -46,7 +47,7 @@ class RelativeOptionSelector(context: Context, attrs: AttributeSet) : LinearLayo
         override fun onCreateDrawableState(extraSpace: Int): IntArray? {
             val drawableState = super.onCreateDrawableState(extraSpace + 1)
             if (this._state_active) {
-                mergeDrawableStates(drawableState, STATE_ACTIVE)
+                mergeDrawableStates(drawableState, RelativeOptionSelectorButton.STATE_ACTIVE)
             }
             return drawableState
         }

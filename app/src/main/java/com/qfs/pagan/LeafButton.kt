@@ -43,11 +43,13 @@ class LeafButton(
         }
     }
 
-    private val STATE_LINKED = intArrayOf(R.attr.state_linked)
-    private val STATE_ACTIVE = intArrayOf(R.attr.state_active)
-    private val STATE_FOCUSED = intArrayOf(R.attr.state_focused)
-    private val STATE_INVALID = intArrayOf(R.attr.state_invalid)
-    private val STATE_CHANNEL_EVEN = intArrayOf(R.attr.state_channel_even)
+    companion object {
+        private val STATE_LINKED = intArrayOf(R.attr.state_linked)
+        private val STATE_ACTIVE = intArrayOf(R.attr.state_active)
+        private val STATE_FOCUSED = intArrayOf(R.attr.state_focused)
+        private val STATE_INVALID = intArrayOf(R.attr.state_invalid)
+        private val STATE_CHANNEL_EVEN = intArrayOf(R.attr.state_channel_even)
+    }
 
     private var _value_wrapper: LinearLayout
     private var _value_label_octave: TextView
@@ -245,22 +247,22 @@ class LeafButton(
         }
 
         if (tree.is_event()) {
-            mergeDrawableStates(drawableState, STATE_ACTIVE)
+            mergeDrawableStates(drawableState, LeafButton.STATE_ACTIVE)
             val abs_value = opus_manager.get_absolute_value(beat_key, position)
             if (abs_value == null || abs_value < 0) {
-                mergeDrawableStates(drawableState, STATE_INVALID)
+                mergeDrawableStates(drawableState, LeafButton.STATE_INVALID)
             }
         }
 
         if (opus_manager.is_networked(beat_key)) {
-            mergeDrawableStates(drawableState, STATE_LINKED)
+            mergeDrawableStates(drawableState, LeafButton.STATE_LINKED)
         }
 
         if (opus_manager.is_selected(beat_key, position)) {
-            mergeDrawableStates(drawableState, STATE_FOCUSED)
+            mergeDrawableStates(drawableState, LeafButton.STATE_FOCUSED)
         }
         if (beat_key.channel % 2 == 0) {
-            mergeDrawableStates(drawableState, STATE_CHANNEL_EVEN)
+            mergeDrawableStates(drawableState, LeafButton.STATE_CHANNEL_EVEN)
         }
 
 

@@ -65,7 +65,11 @@ class PitchedBuffer(data: ShortArray, private var pitch: Float) {
             this.cached_position = this.buffer.position()
         }
 
-        val next_value = this.buffer.get()
+        val next_value = if (this.cached_position == this.data_size) {
+            this.cached_value!!
+        } else {
+            this.buffer.get()
+        }
         this.buffer.position(this.cached_position)
 
         this.virtual_position += 1

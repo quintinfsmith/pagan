@@ -25,14 +25,12 @@ class LoadFragment : PaganFragment() {
         this._binding = FragmentLoadBinding.inflate(inflater, container, false)
 
         this.get_main().drawer_lock()
-        this.get_main().update_menu_options()
         return this._binding!!.root
     }
 
 
     override fun onStart() {
         super.onStart()
-        this.get_main().update_menu_options()
         this.get_main().set_title_text(getString(R.string.load_fragment_label))
     }
 

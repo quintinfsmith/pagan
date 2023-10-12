@@ -74,11 +74,6 @@ class GlobalSettingsFragment : PaganFragment() {
     }
 
 
-    override fun onStart() {
-        super.onStart()
-        this.get_main().update_menu_options()
-    }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val main = this.get_main()

@@ -217,7 +217,6 @@ class MainActivity : AppCompatActivity() {
 
         val navController = findNavController(R.id.nav_host_fragment_content_main)
         setupActionBarWithNavController(navController, this._app_bar_configuration)
-        //this.update_menu_options()
 
         //////////////////////////////////////////
         // TODO: clean up the file -> riff -> soundfont -> midi playback device process
@@ -253,14 +252,14 @@ class MainActivity : AppCompatActivity() {
                 } else {
                     navController.popBackStack()
                 }
+
             }
         })
     }
 
     override fun onSupportNavigateUp(): Boolean {
         val navController = findNavController(R.id.nav_host_fragment_content_main)
-        return navController.navigateUp(_app_bar_configuration)
-                || super.onSupportNavigateUp()
+        return navController.navigateUp(this._app_bar_configuration) || super.onSupportNavigateUp()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {

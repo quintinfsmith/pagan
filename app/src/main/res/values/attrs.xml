@@ -2,6 +2,7 @@
     <declare-styleable name="NumberSelector">
         <attr name="min" format="integer" />
         <attr name="max" format="integer" />
+        <attr name="radix" format="integer" />
         <attr name="numberselector_bg_default" format="color"/>
         <attr name="numberselector_fg_default" format="color"/>
         <attr name="numberselector_bg_pressed" format="color"/>

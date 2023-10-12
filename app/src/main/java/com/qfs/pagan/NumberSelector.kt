@@ -13,6 +13,7 @@ import kotlin.math.roundToInt
 class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(context, attrs) {
     var min: Int = 0
     var max: Int = 1
+    var radix: Int = 12
     private var _button_map = HashMap<NumberSelectorButton, Int>()
     private var _active_button: NumberSelectorButton? = null
     private var _on_change_hook: ((NumberSelector) -> Unit)? = null
@@ -21,7 +22,7 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
     // TODO: Handle any radix
     class NumberSelectorButton(private var _number_selector: NumberSelector, var value: Int):
         LinearLayout(ContextThemeWrapper( _number_selector.context, R.style.numberSelectorButton )) {
-        private var _bkp_text: String = get_number_string(this.value, 12,1)
+        private var _bkp_text: String = get_number_string(this.value, this._number_selector.radix,1)
         private val STATE_ACTIVE = intArrayOf(R.attr.state_active)
         private var _state_active: Boolean = false
         private val _text_view = TextView(
@@ -67,10 +68,11 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
     }
 
     init {
-        var styled_attributes = context.theme.obtainStyledAttributes(attrs, R.styleable.NumberSelector, 0, 0)
+        val styled_attributes = context.theme.obtainStyledAttributes(attrs, R.styleable.NumberSelector, 0, 0)
         try {
-            max = styled_attributes.getInteger(R.styleable.NumberSelector_max, 2)
-            min = styled_attributes.getInteger(R.styleable.NumberSelector_min, 0)
+            this.max = styled_attributes.getInteger(R.styleable.NumberSelector_max, 2)
+            this.min = styled_attributes.getInteger(R.styleable.NumberSelector_min, 0)
+            this.radix = styled_attributes.getInteger(R.styleable.NumberSelector_radix, 12)
         } finally {
            styled_attributes.recycle()
         }

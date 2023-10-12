@@ -18,8 +18,6 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
     private var _active_button: NumberSelectorButton? = null
     private var _on_change_hook: ((NumberSelector) -> Unit)? = null
 
-
-    // TODO: Handle any radix
     class NumberSelectorButton(private var _number_selector: NumberSelector, var value: Int):
         LinearLayout(ContextThemeWrapper( _number_selector.context, R.style.numberSelectorButton )) {
         private var _bkp_text: String = get_number_string(this.value, this._number_selector.radix,1)

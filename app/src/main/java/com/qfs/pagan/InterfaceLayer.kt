@@ -15,10 +15,10 @@ import java.lang.Integer.min
 
 class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     private var _simple_ui_lock = 0
+    private var _queued_cursor_selection: Pair<HistoryToken, List<Int>>? = null
     var relative_mode: Int = 0
     var cursor = OpusManagerCursor()
     var first_load_done = false
-    var queued_cursor_selection: Pair<HistoryToken, List<Int>>? = null
 
     private fun simple_ui_locked(): Boolean {
         return this._simple_ui_lock != 0
@@ -91,24 +91,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         }
     }
 
-    fun set_relative_mode(event: OpusEvent) {
-        if (this.activity.configuration.relative_mode) {
-            this.relative_mode = if (!event.relative) {
-                0
-            } else if (event.note >= 0) {
-                1
-            } else {
-                2
-            }
-        } else {
-            this.relative_mode = 0
-        }
-    }
-
-    fun set_relative_mode(mode: Int) {
-        this.relative_mode = mode
-    }
-
     override fun set_percussion_instrument(line_offset: Int, instrument: Int) {
         super.set_percussion_instrument(line_offset, instrument)
 
@@ -147,6 +129,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             this.get_editor_table()?.notify_cell_change(beat_key)
         }
     }
+
     override fun insert(beat_key: BeatKey, position: List<Int>) {
         super.insert(beat_key, position)
         if (!this.simple_ui_locked()) {
@@ -484,14 +467,15 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
     // For history when we don't want to worry about the cursor
     private fun queue_cursor_select(token: HistoryToken, args: List<Int>) {
-        this.queued_cursor_selection = Pair(token, args)
+        this._queued_cursor_selection = Pair(token, args)
     }
+
     private fun apply_queued_cursor_select() {
-        if (this.queued_cursor_selection == null) {
+        if (this._queued_cursor_selection == null) {
             return
         }
-        val (token, args) = this.queued_cursor_selection!!
-        this.queued_cursor_selection = null
+        val (token, args) = this._queued_cursor_selection!!
+        this._queued_cursor_selection = null
         when (token) {
             HistoryToken.CURSOR_SELECT_ROW -> {
                 this.cursor_select_row(args[0], args[1])
@@ -533,6 +517,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         super.apply_undo()
         this.apply_queued_cursor_select()
     }
+
     override fun apply_history_node(current_node: HistoryCache.HistoryNode, depth: Int)  {
         when (current_node.token) {
             HistoryToken.CURSOR_SELECT_ROW -> {
@@ -739,7 +724,19 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         }
     }
 
-
+    fun set_relative_mode(event: OpusEvent) {
+        if (this.activity.configuration.relative_mode) {
+            this.relative_mode = if (!event.relative) {
+                0
+            } else if (event.note >= 0) {
+                1
+            } else {
+                2
+            }
+        } else {
+            this.relative_mode = 0
+        }
+    }
     // Cursor Functions ////////////////////////////////////////////////////////////////////////////
     fun cursor_clear() {
         this.cursor.clear()

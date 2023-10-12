@@ -14,7 +14,7 @@ class ProjectManager(data_dir: String) {
         }
     }
 
-    fun copy(opus_manager: OpusManager) {
+    fun move_to_copy(opus_manager: OpusManager) {
         val old_title = opus_manager.project_name
         val new_title = "$old_title (Copy)"
         val new_path = this.get_new_path()

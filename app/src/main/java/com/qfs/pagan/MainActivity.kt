@@ -355,8 +355,8 @@ class MainActivity : AppCompatActivity() {
         this.feedback_msg(resources.getString(R.string.feedback_delete, this.title))
     }
 
-    private fun project_copy() {
-        this.project_manager.copy(this._opus_manager)
+    private fun project_move_to_copy() {
+        this.project_manager.move_to_copy(this._opus_manager)
         this.feedback_msg(getString(R.string.feedback_on_copy))
     }
 
@@ -387,18 +387,15 @@ class MainActivity : AppCompatActivity() {
             OpusManagerCursor.CursorMode.Column -> {
                 cursor.beat
             }
-
             OpusManagerCursor.CursorMode.Range -> {
                 cursor.range!!.first.beat
             }
-
             else -> {
                 0
             }
         }
 
         this.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-
         if (this._midi_interface.output_devices_connected()) {
             this.playback_start_midi_device(start_point)
         } else {
@@ -440,7 +437,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
 
     private fun playback_stop() {
         this.runOnUiThread {
@@ -627,7 +623,7 @@ class MainActivity : AppCompatActivity() {
             this.dialog_delete_project()
         }
         btnCopyProject.setOnClickListener {
-            this.project_copy()
+            this.project_move_to_copy()
             this.drawer_close()
         }
 

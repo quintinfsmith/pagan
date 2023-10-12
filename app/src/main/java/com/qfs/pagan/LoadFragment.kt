@@ -13,7 +13,6 @@ import com.qfs.pagan.opusmanager.LoadedJSONData
 import com.qfs.pagan.opusmanager.LoadedJSONData0
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import java.io.File
 
 class LoadFragment : PaganFragment() {
     class MKDirFailedException(dir: String): Exception("Failed to create directory $dir")
@@ -29,7 +28,7 @@ class LoadFragment : PaganFragment() {
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentLoadBinding.inflate(inflater, container, false)
-        this.get_main().lockDrawer()
+        this.get_main().drawer_lock()
         this.get_main().update_menu_options()
         return binding.root
     }
@@ -45,36 +44,22 @@ class LoadFragment : PaganFragment() {
         setFragmentResult("RETURNED", bundleOf())
         super.onViewCreated(view, savedInstanceState)
 
-        val loadprojectAdapter = ProjectToLoadAdapter(this)
 
         val rvProjectList: RecyclerView = view.findViewById(R.id.rvProjectList)
-        rvProjectList.adapter = loadprojectAdapter
+        rvProjectList.adapter = ProjectToLoadAdapter(this)
         rvProjectList.layoutManager = LinearLayoutManager(view.context)
 
         val main = this.get_main()
-        val project_manager = main.project_manager
 
-        val directory = File(project_manager.projects_dir)
-        if (!directory.isDirectory) {
-            if (! directory.mkdirs()) {
-                throw MKDirFailedException(project_manager.projects_dir)
-            }
-        }
-
-        for (json_file in directory.listFiles()!!) {
+        for (json_file in main.get_project_directory().listFiles()!!) {
             val content = json_file.readText(Charsets.UTF_8)
             val json_obj: LoadedJSONData = try {
                 Json.decodeFromString(content)
             } catch (e: Exception) {
                 val old_data = Json.decodeFromString<LoadedJSONData0>(content)
-                this.get_main().get_opus_manager().convert_old_fmt(old_data)
+                main.get_opus_manager().convert_old_fmt(old_data)
             }
-            loadprojectAdapter.addProject(
-                Pair(
-                    json_obj.name,
-                    json_file.path
-                )
-            )
+            (rvProjectList.adapter as ProjectToLoadAdapter).addProject(Pair(json_obj.name, json_file.path))
         }
     }
 
@@ -82,8 +67,8 @@ class LoadFragment : PaganFragment() {
         setFragmentResult(IntentFragmentToken.Load.name, bundleOf(Pair("PATH", path)))
 
         this.get_main().apply {
-            loading_reticle()
-            navTo(R.id.EditorFragment)
+            loading_reticle_show()
+            navigate(R.id.EditorFragment)
         }
 
     }

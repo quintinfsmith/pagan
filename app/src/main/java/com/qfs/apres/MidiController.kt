@@ -4,8 +4,10 @@ import android.content.Context
 import android.media.midi.MidiDeviceInfo
 import android.media.midi.MidiDeviceInfo.PortInfo.TYPE_INPUT
 import android.media.midi.MidiDeviceInfo.PortInfo.TYPE_OUTPUT
+import android.media.midi.MidiDeviceStatus
 import android.media.midi.MidiInputPort
 import android.media.midi.MidiManager
+import android.media.midi.MidiManager.TRANSPORT_MIDI_BYTE_STREAM
 import android.media.midi.MidiOutputPort
 import android.media.midi.MidiReceiver
 import android.os.Build
@@ -30,7 +32,7 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
     private val mapped_output_ports = HashMap<Int, MutableList<MidiOutputPort>>()
 
     init {
-        this.midi_manager.registerDeviceCallback(object: MidiManager.DeviceCallback() {
+        val midi_manager_callback = object: MidiManager.DeviceCallback() {
             override fun onDeviceAdded(device_info: MidiDeviceInfo) {
                 if (this@MidiController.auto_connect) {
                     if (device_info.inputPortCount > 0) {
@@ -46,7 +48,15 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
                 this@MidiController.close_device(device_info)
                 this@MidiController.onDeviceRemoved(device_info)
             }
-        }, null)
+            override fun onDeviceStatusChanged(status: MidiDeviceStatus) {
+            }
+        }
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.TIRAMISU) {
+            this.midi_manager.registerDeviceCallback( TRANSPORT_MIDI_BYTE_STREAM, { }, midi_manager_callback)
+        } else {
+            @Suppress("DEPRECATION")
+            this.midi_manager.registerDeviceCallback(midi_manager_callback, null)
+        }
 
         if (this.auto_connect) {
             this.open_connected_devices()

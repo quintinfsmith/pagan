@@ -54,7 +54,7 @@ class GlobalSettingsFragment : PaganFragment() {
                     }
 
                     // Hide the warning
-                    if (main.has_soundfont()) {
+                    if (main.is_soundfont_available()) {
                         main.findViewById<LinearLayout>(R.id.llSFWarning).visibility = View.GONE
                     }
                 } else {
@@ -83,7 +83,7 @@ class GlobalSettingsFragment : PaganFragment() {
         super.onViewCreated(view, savedInstanceState)
         val main = this.get_main()
 
-        if (main.has_soundfont()) {
+        if (main.is_soundfont_available()) {
             this.binding.root.findViewById<LinearLayout>(R.id.llSFWarning).visibility = View.GONE
         }  else {
             this.binding.root.findViewById<TextView>(R.id.tvFluidUrl).setOnClickListener {

@@ -38,7 +38,7 @@ class LandingPageFragment : PaganFragment() {
         val btn_linkSFLicense = view.findViewById<View>(R.id.linkSFLicense)
 
         btn_settings.setOnClickListener {
-            this.get_main().navTo(R.id.SettingsFragment)
+            this.get_main().navigate(R.id.SettingsFragment)
         }
 
         btn_linkLicense.setOnClickListener {
@@ -54,40 +54,31 @@ class LandingPageFragment : PaganFragment() {
                     Pair("TITLE", "GPLv3")
                 )
             )
-            this.get_main().navTo(R.id.LicenseFragment)
+            this.get_main().navigate(R.id.LicenseFragment)
         }
 
         btn_newProject.setOnClickListener {
             this.setFragmentResult(IntentFragmentToken.New.name, bundleOf())
-            this.get_main().navTo(R.id.EditorFragment)
+            this.get_main().navigate(R.id.EditorFragment)
         }
 
         if (this.get_main().has_projects_saved()) {
             btn_loadProject.setOnClickListener {
-                this.get_main().navTo(R.id.LoadFragment)
+                this.get_main().navigate(R.id.LoadFragment)
             }
 
             btn_loadProject.setOnLongClickListener {
-                val intent = Intent()
-                    .setType("application/json")
-                    .setAction(Intent.ACTION_GET_CONTENT)
-                this.get_main().import_project_intent_launcher.launch(intent)
+                this.get_main().select_project_file()
                 true
             }
         } else {
             btn_loadProject.setOnClickListener {
-                val intent = Intent()
-                    .setType("application/json")
-                    .setAction(Intent.ACTION_GET_CONTENT)
-                this.get_main().import_project_intent_launcher.launch(intent)
+                this.get_main().select_project_file()
             }
         }
 
         btn_importMidi.setOnClickListener {
-            val intent = Intent()
-                .setType("*/*")
-                .setAction(Intent.ACTION_GET_CONTENT)
-            this.get_main().import_midi_intent_launcher.launch(intent)
+            this.get_main().select_midi_file()
         }
 
         linkSource.setOnClickListener {
@@ -97,7 +88,7 @@ class LandingPageFragment : PaganFragment() {
         }
 
         val main = this.get_main()
-        if (main.has_soundfont()) {
+        if (main.is_soundfont_available()) {
             this.binding.root.findViewById<LinearLayout>(R.id.llSFWarningLanding).visibility = View.GONE
         }  else {
             this.binding.root.findViewById<TextView>(R.id.tvFluidUrlLanding).setOnClickListener {
@@ -108,7 +99,7 @@ class LandingPageFragment : PaganFragment() {
             }
         }
 
-        if (!main.has_fluid_soundfont()) {
+        if (!main.is_fluid_soundfont_available()) {
             btn_linkSFLicense.visibility = View.GONE
         } else {
             btn_linkSFLicense.setOnClickListener {
@@ -124,7 +115,7 @@ class LandingPageFragment : PaganFragment() {
                         Pair("TITLE", "FluidR3_GM License")
                     )
                 )
-                this.get_main().navTo(R.id.LicenseFragment)
+                this.get_main().navigate(R.id.LicenseFragment)
             }
         }
     }

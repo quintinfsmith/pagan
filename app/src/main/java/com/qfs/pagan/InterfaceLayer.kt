@@ -4,7 +4,11 @@ import android.view.View
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.apres.Midi
-import com.qfs.pagan.opusmanager.*
+import com.qfs.pagan.opusmanager.BeatKey
+import com.qfs.pagan.opusmanager.HistoryLayer
+import com.qfs.pagan.opusmanager.HistoryToken
+import com.qfs.pagan.opusmanager.OpusChannel
+import com.qfs.pagan.opusmanager.OpusEvent
 import com.qfs.pagan.structure.OpusTree
 import java.lang.Integer.max
 import java.lang.Integer.min
@@ -33,7 +37,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     override fun set_channel_instrument(channel: Int, instrument: Pair<Int, Int>) {
-        this.activity.loading_reticle()
+        this.activity.loading_reticle_show()
         super.set_channel_instrument(channel, instrument)
 
         val rvActiveChannels: RecyclerView = this.activity.findViewById(R.id.rvActiveChannels)
@@ -46,7 +50,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         }
 
         this.activity.update_channel_instruments()
-        this.activity.cancel_reticle()
+        this.activity.loading_reticle_hide()
     }
 
     override fun set_project_name(new_name: String) {
@@ -321,23 +325,23 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     override fun new() {
-        this.activity.loading_reticle()
+        this.activity.loading_reticle_show()
         try {
             this.surpress_ui {
                 super.new()
                 this.cursor_clear()
             }
         } catch (e: Exception) {
-            this.activity.cancel_reticle()
+            this.activity.loading_reticle_hide()
             throw e
         }
         this.first_load_done = true
-        val new_path = this.activity.project_manager.get_new_path()
+        val new_path = this.activity.get_new_project_path()
         this.path = new_path
 
         this.activity.update_menu_options()
-        this.activity.setup_config_drawer()
-        this.activity.cancel_reticle()
+        this.activity.setup_project_config_drawer()
+        this.activity.loading_reticle_hide()
 
         val editor_table = this.get_editor_table()
         editor_table?.setup()
@@ -349,21 +353,21 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     override fun import_midi(midi: Midi) {
-        this.activity.loading_reticle()
+        this.activity.loading_reticle_show()
         try {
             this.surpress_ui {
                 super.import_midi(midi)
                 this.cursor_clear()
             }
         } catch (e: Exception) {
-            this.activity.cancel_reticle()
+            this.activity.loading_reticle_hide()
             throw e
         }
 
         this.first_load_done = true
         this.activity.update_menu_options()
-        this.activity.setup_config_drawer()
-        this.activity.cancel_reticle()
+        this.activity.setup_project_config_drawer()
+        this.activity.loading_reticle_hide()
 
         val editor_table = this.get_editor_table()
         editor_table?.setup()
@@ -375,20 +379,20 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     override fun load(bytes: ByteArray, new_path: String?) {
-        this.activity.loading_reticle()
+        this.activity.loading_reticle_show()
         try {
             this.surpress_ui {
                 super.load(bytes, new_path)
                 this.cursor_clear()
             }
         } catch (e: Exception) {
-            this.activity.cancel_reticle()
+            this.activity.loading_reticle_hide()
             throw e
         }
         this.first_load_done = true
         this.activity.update_menu_options()
-        this.activity.setup_config_drawer()
-        this.activity.cancel_reticle()
+        this.activity.setup_project_config_drawer()
+        this.activity.loading_reticle_hide()
 
         val editor_table = this.get_editor_table()
         editor_table?.setup()
@@ -402,7 +406,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     override fun load(path: String) {
         val editor_table = this.get_editor_table()
         editor_table?.clear()
-        this.activity.loading_reticle()
+        this.activity.loading_reticle_show()
 
         try {
             this.surpress_ui {
@@ -410,14 +414,14 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                 this.cursor_clear()
             }
         } catch (e: Exception) {
-            this.activity.cancel_reticle()
+            this.activity.loading_reticle_hide()
             throw e
         }
 
         this.first_load_done = true
         this.activity.update_menu_options()
-        this.activity.setup_config_drawer()
-        this.activity.cancel_reticle()
+        this.activity.setup_project_config_drawer()
+        this.activity.loading_reticle_hide()
 
         editor_table?.setup()
 
@@ -470,7 +474,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     private fun <T> withFragment(callback: (EditorFragment) -> T): T? {
-        val fragment = this.activity.getActiveFragment()
+        val fragment = this.activity.get_active_fragment()
         return if (fragment is EditorFragment) {
             callback(fragment)
         } else {

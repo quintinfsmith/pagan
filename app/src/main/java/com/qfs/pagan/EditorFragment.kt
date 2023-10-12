@@ -116,7 +116,7 @@ class EditorFragment : PaganFragment() {
             val main = this.get_main()
             val opus_manager = main.get_opus_manager()
             opus_manager.cursor_clear()
-            this.get_main().unlockDrawer()
+            this.get_main().drawer_unlock()
             thread {
                 Thread.sleep(100)
                 this.activity!!.runOnUiThread {
@@ -293,7 +293,7 @@ class EditorFragment : PaganFragment() {
             opus_manager.cursor_select_column(beat + 1)
         }
         btnInsertBeat.setOnLongClickListener {
-            main.popup_number_dialog( getString(R.string.dlg_insert_beats), 1, 99) { count: Int ->
+            main.dialog_number_input( getString(R.string.dlg_insert_beats), 1, 99) { count: Int ->
                 val beat = opus_manager.cursor.beat
                 opus_manager.insert_beat_at_cursor(count)
                 opus_manager.cursor_select_column(beat + count)
@@ -318,7 +318,7 @@ class EditorFragment : PaganFragment() {
         }
 
         btnRemoveBeat.setOnLongClickListener {
-            main.popup_number_dialog(getString(R.string.dlg_remove_beats), 1, opus_manager.opus_beat_count - 1) { count: Int ->
+            main.dialog_number_input(getString(R.string.dlg_remove_beats), 1, opus_manager.opus_beat_count - 1) { count: Int ->
                 val beat = opus_manager.cursor.beat
                 opus_manager.remove_beat_at_cursor(count)
                 if (beat >= opus_manager.opus_beat_count) {
@@ -405,7 +405,7 @@ class EditorFragment : PaganFragment() {
             btnRemoveLine.setOnLongClickListener {
                 val lines = opus_manager.channels[opus_manager.cursor.channel].size
                 val max_lines = min(lines - 1, lines - opus_manager.cursor.line_offset)
-                main.popup_number_dialog(
+                main.dialog_number_input(
                     getString(R.string.dlg_remove_lines),
                     1,
                     max_lines
@@ -422,7 +422,7 @@ class EditorFragment : PaganFragment() {
         }
 
         btnInsertLine.setOnLongClickListener {
-            main.popup_number_dialog(
+            main.dialog_number_input(
                 getString(R.string.dlg_insert_lines),
                 1,
                 9,
@@ -542,7 +542,7 @@ class EditorFragment : PaganFragment() {
         }
 
         btnSplit.setOnLongClickListener {
-            main.popup_number_dialog(getString(R.string.dlg_split), 2, 29) { splits: Int ->
+            main.dialog_number_input(getString(R.string.dlg_split), 2, 29) { splits: Int ->
                 val beatkey = opus_manager.cursor.get_beatkey()
                 val position = opus_manager.cursor.get_position().toMutableList()
 
@@ -601,7 +601,7 @@ class EditorFragment : PaganFragment() {
         }
 
         btnInsert.setOnLongClickListener {
-            main.popup_number_dialog(getString(R.string.dlg_insert), 1, 29) { count: Int ->
+            main.dialog_number_input(getString(R.string.dlg_insert), 1, 29) { count: Int ->
                 val beat_key = opus_manager.cursor.get_beatkey()
                 val position = opus_manager.cursor.get_position().toMutableList()
                 if (position.isEmpty()) {
@@ -619,7 +619,7 @@ class EditorFragment : PaganFragment() {
         if (current_tree.is_event()) {
             val event = current_tree.get_event()!!
             btnDuration.setOnClickListener {
-                main.popup_number_dialog("Duration", 1, 99, default=event.duration) { value: Int ->
+                main.dialog_number_input("Duration", 1, 99, default=event.duration) { value: Int ->
                     val adj_value = max(value, 1)
                     val cursor = opus_manager.cursor
                     val beat_key = cursor.get_beatkey()
@@ -957,7 +957,7 @@ class EditorFragment : PaganFragment() {
             options.add(Pair(note - 27, "${note - 27}: $name"))
         }
 
-        main.popup_menu_dialog(getString(R.string.dropdown_choose_percussion), options, default_instrument) { index: Int, value: Int ->
+        main.dialog_popup_menu(getString(R.string.dropdown_choose_percussion), options, default_instrument) { index: Int, value: Int ->
             opus_manager.set_percussion_instrument(value)
         }
     }

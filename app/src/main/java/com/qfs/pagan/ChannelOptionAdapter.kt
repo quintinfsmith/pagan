@@ -135,7 +135,7 @@ class ChannelOptionAdapter(
         }
 
         val default_position = this._opus_manager.get_channel_instrument(channel)
-        this.get_activity().popup_menu_dialog<Pair<Int, Int>>(this.get_activity().getString(R.string.dropdown_choose_instrument), options, default = default_position) { _: Int, (bank, program): Pair<Int, Int> ->
+        this.get_activity().dialog_popup_menu<Pair<Int, Int>>(this.get_activity().getString(R.string.dropdown_choose_instrument), options, default = default_position) { _: Int, (bank, program): Pair<Int, Int> ->
             this.set_channel_instrument(channel, bank, program)
         }
     }

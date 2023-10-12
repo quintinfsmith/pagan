@@ -35,7 +35,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         this.top_row.addView(this.column_label_recycler)
 
         this.spacer.setOnClickListener {
-            val fragment = this.get_activity().getActiveFragment()
+            val fragment = this.get_activity().get_active_fragment()
             if (fragment is EditorFragment) {
                 fragment.shortcut_dialog()
             }

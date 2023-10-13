@@ -181,6 +181,7 @@ class MainActivity : AppCompatActivity() {
         }
         this._midi_interface.connect_virtual_input_device(this._virtual_input_device)
         this._midi_interface.connect_virtual_output_device(midi_observer)
+        this._midi_interface.connect_virtual_output_device(this._midi_playback_device!!)
 
         this.project_manager = ProjectManager(this.getExternalFilesDir(null).toString())
         // Move files from applicationInfo.data to externalfilesdir (pre v1.1.2 location)

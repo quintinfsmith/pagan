@@ -3,6 +3,7 @@ package com.qfs.apres.soundfontplayer
 import android.util.Log
 import com.qfs.apres.Midi
 import com.qfs.apres.VirtualMidiDevice
+import com.qfs.apres.event.AllSoundOff
 import com.qfs.apres.event.BankSelect
 import com.qfs.apres.event.MIDIEvent
 import com.qfs.apres.event.MIDIStart
@@ -80,27 +81,41 @@ class SoundFontWavPlayer(private var sound_font: SoundFont): VirtualMidiDevice()
             val initial_array = IntArray(AudioTrackHandle.buffer_size * 2)
             val buffer = IntBuffer.wrap(initial_array)
 
-            Log.d("AAA", "G @ frame: ${this.frame}")
             var max_frame_value = 0
             for (i in 0 until AudioTrackHandle.buffer_size) {
                 var left_frame = 0
                 var right_frame = 0
                 val f = this.frame + i
 
-                if (this.midi_events_by_frame.containsKey(f)) {
-                    for (event in this.midi_events_by_frame[f]!!) {
-                        when (event) {
-                            is NoteOn -> {
-                                val preset = this.get_preset(event.channel) ?: continue
-                                this.active_sample_handles[Pair(event.channel, event.note)] = this.player.gen_sample_handles(event, preset).toMutableSet()
-                            }
+                if (this.player.stop_forced) {
+                    for ((_, handles) in this.active_sample_handles) {
+                        for (handle in handles) {
+                            handle.release_note()
+                        }
+                    }
+                } else {
+                    if (this.midi_events_by_frame.containsKey(f)) {
+                        for (event in this.midi_events_by_frame[f]!!) {
+                            when (event) {
+                                is NoteOn -> {
+                                    if (!this.player.stop_forced) {
+                                        val preset = this.get_preset(event.channel) ?: continue
+                                        this.active_sample_handles[Pair(
+                                            event.channel,
+                                            event.note
+                                        )] =
+                                            this.player.gen_sample_handles(event, preset)
+                                                .toMutableSet()
+                                    }
+                                }
 
-                            is NoteOff -> {
-                                for (handle in this.active_sample_handles[Pair(
-                                    event.channel,
-                                    event.note
-                                )] ?: continue) {
-                                    handle.release_note()
+                                is NoteOff -> {
+                                    for (handle in this.active_sample_handles[Pair(
+                                        event.channel,
+                                        event.note
+                                    )] ?: continue) {
+                                        handle.release_note()
+                                    }
                                 }
                             }
                         }
@@ -115,63 +130,71 @@ class SoundFontWavPlayer(private var sound_font: SoundFont): VirtualMidiDevice()
 
                 val keys_to_pop = mutableSetOf<Pair<Int, Int>>()
                 var overlap = 0
-                for ((key, sample_handles) in this.active_sample_handles) {
-                    overlap += 1
-                    val to_kill = mutableSetOf<SampleHandle>()
-                    for (sample_handle in sample_handles) {
-                        val frame_value = sample_handle.get_next_frame()
-                        if (frame_value == null) {
-                            to_kill.add(sample_handle)
-                            continue
+                if (! this.player.stop_forced) {
+                    for ((key, sample_handles) in this.active_sample_handles) {
+                        overlap += 1
+                        val to_kill = mutableSetOf<SampleHandle>()
+                        for (sample_handle in sample_handles) {
+                            val frame_value = sample_handle.get_next_frame()
+                            if (frame_value == null) {
+                                to_kill.add(sample_handle)
+                                continue
+                            }
+
+                            // TODO: Implement ROM stereo modes
+                            val pan = sample_handle.pan
+                            when (sample_handle.stereo_mode and 7) {
+                                1 -> { // mono
+                                    if (pan > 0) {
+                                        left_frame += frame_value
+                                        right_frame += (frame_value.toDouble() * (100 - pan) / 100.0).toInt()
+                                            .toShort()
+                                    } else if (pan < 0) {
+                                        left_frame += (frame_value.toDouble() * (100 + pan) / 100.0).toInt()
+                                            .toShort()
+                                        right_frame += frame_value
+                                    } else {
+                                        left_frame += frame_value
+                                        right_frame += frame_value
+                                    }
+                                }
+
+                                2 -> { // right
+                                    right_frame += if (pan > 0) {
+                                        (frame_value.toDouble() * (100 - pan) / 100.0).toInt()
+                                            .toShort()
+                                    } else {
+                                        frame_value
+                                    }
+                                }
+
+                                4 -> { // left
+                                    left_frame += if (pan < 0) {
+                                        (frame_value.toDouble() * (100 + pan) / 100.0).toInt()
+                                            .toShort()
+                                    } else {
+                                        frame_value
+                                    }
+                                }
+
+                                else -> {}
+                            }
                         }
 
-                        // TODO: Implement ROM stereo modes
-                        val pan = sample_handle.pan
-                        when (sample_handle.stereo_mode and 7) {
-                            1 -> { // mono
-                                if (pan > 0) {
-                                    left_frame += frame_value
-                                    right_frame += (frame_value.toDouble() * (100 - pan) / 100.0).toInt().toShort()
-                                } else if (pan < 0) {
-                                    left_frame += (frame_value.toDouble() * (100 + pan) / 100.0).toInt().toShort()
-                                    right_frame += frame_value
-                                } else {
-                                    left_frame += frame_value
-                                    right_frame += frame_value
-                                }
-                            }
-
-                            2 -> { // right
-                                right_frame += if (pan > 0) {
-                                    (frame_value.toDouble() * (100 - pan) / 100.0).toInt().toShort()
-                                } else {
-                                    frame_value
-                                }
-                            }
-
-                            4 -> { // left
-                                left_frame += if (pan < 0) {
-                                    (frame_value.toDouble() * (100 + pan) / 100.0).toInt().toShort()
-                                } else {
-                                    frame_value
-                                }
-                            }
-
-                            else -> {}
+                        for (sample_handle in to_kill) {
+                            this.active_sample_handles[key]!!.remove(sample_handle)
+                        }
+                        if (this.active_sample_handles[key]!!.isEmpty()) {
+                            keys_to_pop.add(key)
                         }
                     }
-
-                    for (sample_handle in to_kill) {
-                        this.active_sample_handles[key]!!.remove(sample_handle)
+                    for (key in keys_to_pop) {
+                        this.active_sample_handles.remove(key)
                     }
-                    if (this.active_sample_handles[key]!!.isEmpty()) {
-                        keys_to_pop.add(key)
-                    }
+                } else {
+                    this.active_sample_handles.clear()
                 }
 
-                for (key in keys_to_pop) {
-                    this.active_sample_handles.remove(key)
-                }
 
                 max_frame_value = max(
                     max_frame_value,
@@ -237,8 +260,12 @@ class SoundFontWavPlayer(private var sound_font: SoundFont): VirtualMidiDevice()
 
     override fun onMIDIStop(event: MIDIStop) {
         this.stop_forced = true
+        this.active_audio_track_handle?.stop()
+        this.active_wave_generator?.process_event(event) ?: return
     }
-    override fun onMIDIStart(event: MIDIStart) { }
+    override fun onMIDIStart(event: MIDIStart) {
+        this.listen()
+    }
 
     override fun onBankSelect(event: BankSelect) {
         val channel = event.channel
@@ -292,15 +319,17 @@ class SoundFontWavPlayer(private var sound_font: SoundFont): VirtualMidiDevice()
 
 
     fun listen() {
-        this.listening = true
-        this.stop_forced = false
-        val audio_track_handle = AudioTrackHandle()
-        this.active_audio_track_handle = audio_track_handle
+        if (!this.listening) {
+            this.listening = true
+            this.stop_forced = false
+            val audio_track_handle = AudioTrackHandle()
+            this.active_audio_track_handle = audio_track_handle
 
-        this.active_wave_generator = WaveGenerator(this)
+            this.active_wave_generator = WaveGenerator(this)
 
-        thread {
-            this.controllable_play()
+            thread {
+                this.controllable_play()
+            }
         }
     }
 
@@ -377,7 +406,6 @@ class SoundFontWavPlayer(private var sound_font: SoundFont): VirtualMidiDevice()
                         val (next_chunk, position) = mutex.withLock {
                             chunks.removeFirst()
                         }
-
                         audio_track_handle.write(next_chunk)
                     } catch (e: NoSuchElementException) {
                         if (done_building_chunks) {
@@ -428,7 +456,11 @@ class SoundFontWavPlayer(private var sound_font: SoundFont): VirtualMidiDevice()
             }
         }
 
-        audio_track_handle.stop()
+        try {
+            audio_track_handle.stop()
+        } catch (e: IllegalStateException) {
+            //pass
+        }
         this.active_wave_generator = null
     }
 
@@ -437,6 +469,11 @@ class SoundFontWavPlayer(private var sound_font: SoundFont): VirtualMidiDevice()
         val ticks = max(1, (duration * 1000) / (500000 / midi.get_ppqn()))
         midi.insert_event(0, 0, NoteOn(channel, note, velocity))
         midi.insert_event(0, ticks, NoteOff(channel, note, 64))
+    }
+
+    private fun stop() {
+        this.stop_forced = true
+        this.active_audio_track_handle?.stop()
     }
 }
 

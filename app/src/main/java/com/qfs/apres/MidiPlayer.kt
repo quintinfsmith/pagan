@@ -17,12 +17,14 @@ open class MidiPlayer: VirtualMidiDevice() {
             Log.w("apres", "Can't play without registering a midi controller first")
             return
         }
+
         this.playing = true
         val ppqn = midi.get_ppqn()
         var us_per_tick = 60000000 / (ppqn * 120)
         var previous_tick = 0
         val start_time = System.currentTimeMillis()
         var delay_accum = 0
+
         for ((tick, events) in midi.get_all_events_grouped()) {
             if (!this.playing) {
                 break
@@ -50,6 +52,8 @@ open class MidiPlayer: VirtualMidiDevice() {
                 }
             }
         }
+
+        this.sendEvent(MIDIStop())
         // if the song wasn't manually stopped, return to the start
         if (this.playing) {
             this.sendEvent(SongPositionPointer(0))
@@ -58,7 +62,9 @@ open class MidiPlayer: VirtualMidiDevice() {
         for (i in 0 until 16) {
             this.sendEvent(AllSoundOff(i))
         }
+
         this.playing = false
+
         if (callback != null) {
             callback()
         }

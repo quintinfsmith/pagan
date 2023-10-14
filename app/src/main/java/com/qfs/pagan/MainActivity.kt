@@ -9,6 +9,7 @@ import android.media.midi.MidiDeviceInfo
 import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
@@ -48,6 +49,7 @@ import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event.ProgramChange
 import com.qfs.apres.event.SongPositionPointer
 import com.qfs.apres.soundfont.SoundFont
+import com.qfs.apres.soundfontplayer.AudioTrackHandle
 import com.qfs.apres.soundfontplayer.SoundFontWavPlayer
 import com.qfs.pagan.databinding.ActivityMainBinding
 import kotlinx.coroutines.runBlocking
@@ -183,7 +185,6 @@ class MainActivity : AppCompatActivity() {
         }
         this._midi_interface.connect_virtual_input_device(this._virtual_input_device)
         this._midi_interface.connect_virtual_output_device(midi_observer)
-        this._midi_interface.connect_virtual_output_device(this._midi_playback_device!!)
 
         this.project_manager = ProjectManager(this.getExternalFilesDir(null).toString())
         // Move files from applicationInfo.data to externalfilesdir (pre v1.1.2 location)

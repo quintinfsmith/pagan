@@ -3,6 +3,7 @@ package com.qfs.apres.soundfontplayer
 import android.media.AudioAttributes
 import android.media.AudioFormat
 import android.media.AudioTrack
+import android.util.Log
 import kotlin.math.max
 
 class AudioTrackHandle {
@@ -60,6 +61,7 @@ class AudioTrackHandle {
         }
     }
     fun stop() {
+        Log.d("AAA", "AT STOPPED")
         this.audioTrack.stop()
         this.audioTrack.release()
     }

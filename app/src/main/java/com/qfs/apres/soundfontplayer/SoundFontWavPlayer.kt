@@ -28,6 +28,7 @@ import kotlin.math.min
 class SoundFontWavPlayer(private var sound_font: SoundFont): VirtualMidiDevice() {
     class WaveGenerator(private var player: SoundFontWavPlayer) {
         var frame = 0
+        private var listening: Boolean = false
         private var active_sample_handles = HashMap<Pair<Int, Int>, MutableSet<SampleHandle>>()
         private var midi_events_by_frame = HashMap<Int, MutableList<MIDIEvent>>()
         var max_frame = 0
@@ -293,7 +294,6 @@ class SoundFontWavPlayer(private var sound_font: SoundFont): VirtualMidiDevice()
     fun listen() {
         this.listening = true
         this.stop_forced = false
-
         val audio_track_handle = AudioTrackHandle()
         this.active_audio_track_handle = audio_track_handle
 

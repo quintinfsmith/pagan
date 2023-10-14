@@ -58,6 +58,7 @@ class PitchedBuffer(data: ShortArray, private var pitch: Float) {
 
         return value
     }
+
     private fun get_low(): Short {
         val pitched_position = this.virtual_position * this.pitch
         if (pitched_position > this.cached_position) {
@@ -79,5 +80,4 @@ class PitchedBuffer(data: ShortArray, private var pitch: Float) {
 
         return output.toShort()
     }
-
 }

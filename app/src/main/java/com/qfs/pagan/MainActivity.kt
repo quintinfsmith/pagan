@@ -41,8 +41,11 @@ import com.qfs.apres.Midi
 import com.qfs.apres.MidiController
 import com.qfs.apres.MidiPlayer
 import com.qfs.apres.VirtualMidiDevice
+import com.qfs.apres.event.BankSelect
+import com.qfs.apres.event.MIDIStop
 import com.qfs.apres.event.NoteOff
 import com.qfs.apres.event.NoteOn
+import com.qfs.apres.event.ProgramChange
 import com.qfs.apres.event.SongPositionPointer
 import com.qfs.apres.soundfont.SoundFont
 import com.qfs.apres.soundfontplayer.SoundFontWavPlayer
@@ -74,7 +77,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var _midi_interface: MidiController
     private var _soundfont: SoundFont? = null
     private var _midi_playback_device: SoundFontWavPlayer? = null
-    private var _playback_handle: SoundFontWavPlayer.PlaybackInterface? = null
 
     private lateinit var _app_bar_configuration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
@@ -228,6 +230,7 @@ class MainActivity : AppCompatActivity() {
             if (sf_file.exists()) {
                 this._soundfont = SoundFont(path)
                 this._midi_playback_device = SoundFontWavPlayer(this._soundfont!!)
+                this._midi_interface.connect_virtual_output_device(this._midi_playback_device!!)
             }
             this.update_channel_instruments()
         }
@@ -303,7 +306,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             R.id.itmPlay -> {
-                if (this._playback_handle != null || this._virtual_input_device.playing) {
+                if (this._midi_playback_device!!.listening || this._virtual_input_device.playing) {
                    this.playback_stop()
                 } else {
                     this.playback_start()
@@ -347,10 +350,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun playback_start() {
-        if (this._playback_handle != null) {
-            this.playback_stop()
-        }
-
         val blocker_view = this.findViewById<LinearLayout>(R.id.llClearOverlay)
         if (blocker_view != null) {
             blocker_view.visibility = View.VISIBLE
@@ -382,47 +381,50 @@ class MainActivity : AppCompatActivity() {
         }
 
         this.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        if (this._midi_interface.output_devices_connected()) {
-            this.playback_start_midi_device(start_point)
-        } else {
-            this.playback_start_soundfont_player(start_point)
-        }
+        this.playback_start_midi_device(start_point)
+        //if (this._midi_interface.output_devices_connected()) {
+        //} else {
+        //    this.playback_start_soundfont_player(start_point)
+        //}
     }
 
     private fun playback_start_midi_device(start_point: Int = 0) {
         val midi = this.get_opus_manager().get_midi(start_point)
-        try {
-            this._virtual_input_device.play_midi(midi) {
+        this._midi_playback_device?.listen()
+        thread {
+            try {
+                this._virtual_input_device.play_midi(midi) {
+                    this.runOnUiThread {
+                        this.playback_stop()
+                    }
+                }
+            } catch (e: java.io.IOException) {
                 this.runOnUiThread {
                     this.playback_stop()
                 }
-            }
-        } catch (e: java.io.IOException) {
-            this.runOnUiThread {
-                this.playback_stop()
             }
         }
     }
 
-    private fun playback_start_soundfont_player(start_point: Int = 0) {
-        val midi = this.get_opus_manager().get_midi(start_point)
-        val beat_count = this.get_opus_manager().beat_count.toFloat()
-        this._playback_handle = this._midi_playback_device?.play(midi) {
-            if (it == 1F) { // Song is over, return to start state
-                this.runOnUiThread {
-                    this.get_opus_manager().cursor_select_column(0, true)
-                    this.playback_stop()
-                }
-            } else {
-                val position = ((beat_count - start_point) * it).toInt() + start_point
-                if (this.get_opus_manager().cursor.beat != position) {
-                    this.runOnUiThread {
-                        this.get_opus_manager().cursor_select_column(position, true)
-                    }
-                }
-            }
-        }
-    }
+    //private fun playback_start_soundfont_player(start_point: Int = 0) {
+    //    val midi = this.get_opus_manager().get_midi(start_point)
+    //    val beat_count = this.get_opus_manager().beat_count.toFloat()
+    //    this._playback_handle = this._midi_playback_device?.play(midi) {
+    //        if (it == 1F) { // Song is over, return to start state
+    //            this.runOnUiThread {
+    //                this.get_opus_manager().cursor_select_column(0, true)
+    //                this.playback_stop()
+    //            }
+    //        } else {
+    //            val position = ((beat_count - start_point) * it).toInt() + start_point
+    //            if (this.get_opus_manager().cursor.beat != position) {
+    //                this.runOnUiThread {
+    //                    this.get_opus_manager().cursor_select_column(position, true)
+    //                }
+    //            }
+    //        }
+    //    }
+    //}
 
     private fun playback_stop() {
         this.runOnUiThread {
@@ -433,11 +435,6 @@ class MainActivity : AppCompatActivity() {
 
         if (this._virtual_input_device.playing) {
             this._virtual_input_device.stop()
-        }
-
-        if (this._playback_handle != null) {
-            this._playback_handle!!.stop()
-            this._playback_handle = null
         }
 
         val blocker_view = this.findViewById<LinearLayout>(R.id.llClearOverlay) ?: return
@@ -667,13 +664,13 @@ class MainActivity : AppCompatActivity() {
     fun update_channel_instruments(index: Int? = null) {
         if (index == null) {
             for (channel in this._opus_manager.channels) {
-                this._midi_playback_device?.select_bank(channel.midi_channel, channel.midi_bank)
-                this._midi_playback_device?.change_program(channel.midi_channel, channel.midi_program)
+                this._midi_interface.broadcast_event(BankSelect(channel.midi_channel, channel.midi_bank))
+                this._midi_interface.broadcast_event(ProgramChange(channel.midi_channel, channel.midi_program))
             }
         } else {
             val opus_channel = this.get_opus_manager().channels[index]
-            this._midi_playback_device?.select_bank(opus_channel.midi_channel, opus_channel.midi_bank)
-            this._midi_playback_device?.change_program(opus_channel.midi_channel, opus_channel.midi_program)
+            this._midi_interface.broadcast_event(BankSelect(opus_channel.midi_channel, opus_channel.midi_bank))
+            this._midi_interface.broadcast_event(ProgramChange(opus_channel.midi_channel, opus_channel.midi_program))
         }
     }
 
@@ -688,18 +685,14 @@ class MainActivity : AppCompatActivity() {
         } else {
             event_value + 21 + this._opus_manager.transpose
         }
-
-        if (this._midi_interface.output_devices_connected()) {
-            thread {
-                this._midi_interface.broadcast_event(NoteOn(channel, note, velocity))
-                Thread.sleep(300)
-                this._midi_interface.broadcast_event(NoteOff(channel, note, velocity))
-            }
-        } else {
-            this@MainActivity.runOnUiThread {
-                this._midi_playback_device?.play_note(midi_channel, note, velocity, 200)
-            }
+        thread {
+            this._midi_playback_device?.listen()
+            this._midi_interface.broadcast_event(NoteOn(midi_channel, note, velocity))
+            Thread.sleep(300)
+            this._midi_interface.broadcast_event(NoteOff(midi_channel, note, velocity))
+            this._midi_interface.broadcast_event(MIDIStop())
         }
+
     }
 
     fun import_project(path: String) {
@@ -755,7 +748,12 @@ class MainActivity : AppCompatActivity() {
         this.configuration.soundfont = filename
         val path = "${this.getExternalFilesDir(null)}/SoundFonts/$filename"
         this._soundfont = SoundFont(path)
+        if (this._midi_playback_device != null) {
+            this._midi_interface.disconnect_virtual_output_device(this._midi_playback_device!!)
+        }
         this._midi_playback_device = SoundFontWavPlayer(this._soundfont!!)
+        this._midi_interface.connect_virtual_output_device(this._midi_playback_device!!)
+
         this.update_channel_instruments()
         val rvActiveChannels: ChannelOptionRecycler = this.findViewById(R.id.rvActiveChannels)
         if (rvActiveChannels.adapter != null) {

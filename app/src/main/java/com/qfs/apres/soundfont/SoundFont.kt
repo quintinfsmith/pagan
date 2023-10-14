@@ -1,6 +1,5 @@
 package com.qfs.apres.soundfont
 
-import android.content.res.AssetManager
 import com.qfs.apres.toUInt
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -274,14 +273,14 @@ class SoundFont(file_path: String) {
             }.toMutableList()
 
 
-            this.riff.open_stream()
-            for (sample in ordered_samples) {
-                sample.data = this.get_sample_data(
-                    sample.data_placeholder.first,
-                    sample.data_placeholder.second
-                )
+            this.riff.with {
+                for (sample in ordered_samples) {
+                    sample.data = this.get_sample_data(
+                        sample.data_placeholder.first,
+                        sample.data_placeholder.second
+                    )
+                }
             }
-            this.riff.close_stream()
         }
 
         return output ?: throw InvalidPresetIndex(preset_index,preset_bank)

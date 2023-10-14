@@ -1,6 +1,9 @@
 package com.qfs.apres.soundfont
 
 import com.qfs.apres.toUInt
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.io.FileInputStream
 import java.io.InputStream
 
@@ -24,78 +27,82 @@ class Riff(private var file_path: String, init_callback: ((riff: Riff) -> Unit)?
     var sub_chunks: MutableList<List<SubChunkHeader>> = mutableListOf()
     private var input_stream: InputStream? = null
     private var input_position: Int = 0
+    var read_mutex = Mutex()
 
     init {
-        this.open_stream()
+        this.with {
+            var header_check = this.get_string(0, 4) // fourcc
+            if (header_check != "RIFF") {
+                this.close_stream()
+                throw InvalidRiff(file_path)
+            }
+            val riff_size = this.get_little_endian(4, 4)
+            this.get_string(8, 4) // typecc
 
-        var header_check = this.get_string(0, 4) // fourcc
-        if (header_check != "RIFF") {
-            this.close_stream()
-            throw InvalidRiff(file_path)
-        }
-        val riff_size = this.get_little_endian(4, 4)
-        this.get_string(8, 4) // typecc
+            var working_index = 12
+            while (working_index < riff_size - 4) {
+                val header_index = working_index - 12
+                val tag = this.get_string(working_index, 4)
+                working_index += 4
 
-        var working_index = 12
-        while (working_index < riff_size - 4) {
-            val header_index = working_index - 12
-            val tag = this.get_string(working_index, 4)
-            working_index += 4
+                val chunk_size = this.get_little_endian(working_index, 4)
+                working_index += 4
 
-            val chunk_size = this.get_little_endian(working_index, 4)
-            working_index += 4
+                val type = this.get_string(working_index, 4)
+                working_index += 4
 
-            val type = this.get_string(working_index, 4)
-            working_index += 4
-
-            this.list_chunks.add(
-                ListChunkHeader(
-                    header_index,
-                    tag,
-                    chunk_size,
-                    type
+                this.list_chunks.add(
+                    ListChunkHeader(
+                        header_index,
+                        tag,
+                        chunk_size,
+                        type
+                    )
                 )
-            )
 
-            val sub_chunk_list: MutableList<SubChunkHeader> = mutableListOf()
-            var sub_index = 0
-            while (sub_index < chunk_size - 4) {
-                val subchunkheader = SubChunkHeader(
-                    index = sub_index + working_index - 12,
-                    tag = this.get_string(working_index + sub_index, 4),
-                    size = this.get_little_endian(working_index + sub_index + 4, 4)
-                )
-                sub_chunk_list.add(subchunkheader)
+                val sub_chunk_list: MutableList<SubChunkHeader> = mutableListOf()
+                var sub_index = 0
+                while (sub_index < chunk_size - 4) {
+                    val subchunkheader = SubChunkHeader(
+                        index = sub_index + working_index - 12,
+                        tag = this.get_string(working_index + sub_index, 4),
+                        size = this.get_little_endian(working_index + sub_index + 4, 4)
+                    )
+                    sub_chunk_list.add(subchunkheader)
 
-                sub_index += 8 + subchunkheader.size
+                    sub_index += 8 + subchunkheader.size
+                }
+
+                working_index += sub_index
+                this.sub_chunks.add(sub_chunk_list)
+            }
+            if (init_callback != null) {
+                init_callback(this)
             }
 
-            working_index += sub_index
-            this.sub_chunks.add(sub_chunk_list)
         }
-        if (init_callback != null) {
-            init_callback(this)
-        }
-
-        this.close_stream()
     }
 
-    fun open_stream() {
+    private fun open_stream() {
         this.input_stream = FileInputStream(this.file_path)
     }
 
-    fun close_stream() {
+    private fun close_stream() {
         this.input_stream?.close()
         this.input_position = 0
         this.input_stream = null
     }
 
     fun with(callback: (Riff) -> Unit) {
-        this.open_stream()
-        try {
-            callback(this)
-        } finally {
-            this.close_stream()
+        runBlocking {
+            this@Riff.read_mutex.withLock {
+                this@Riff.open_stream()
+                try {
+                    callback(this@Riff)
+                } finally {
+                    this@Riff.close_stream()
+                }
+            }
         }
     }
 

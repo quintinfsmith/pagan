@@ -61,8 +61,12 @@ class AudioTrackHandle {
         }
     }
     fun stop() {
-        Log.d("AAA", "AT STOPPED")
-        this.audioTrack.stop()
-        this.audioTrack.release()
+        try {
+            this.audioTrack.stop()
+            this.audioTrack.release()
+        } catch (e: IllegalStateException) {
+            Log.w("AudioTrackHandle", "Attempted to stop stopped track")
+        }
+
     }
 }

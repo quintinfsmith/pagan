@@ -9,7 +9,6 @@ import android.media.midi.MidiDeviceInfo
 import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
@@ -49,7 +48,6 @@ import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event.ProgramChange
 import com.qfs.apres.event.SongPositionPointer
 import com.qfs.apres.soundfont.SoundFont
-import com.qfs.apres.soundfontplayer.AudioTrackHandle
 import com.qfs.apres.soundfontplayer.SoundFontWavPlayer
 import com.qfs.pagan.databinding.ActivityMainBinding
 import kotlinx.coroutines.runBlocking
@@ -308,7 +306,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             R.id.itmPlay -> {
-                if (this._midi_playback_device!!.listening || this._virtual_input_device.playing) {
+                if (this._midi_playback_device!!.listening() || this._virtual_input_device.playing) {
                    this.playback_stop()
                 } else {
                     this.playback_start()
@@ -392,7 +390,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun playback_start_midi_device(start_point: Int = 0) {
         val midi = this.get_opus_manager().get_midi(start_point)
-        this._midi_playback_device?.listen()
+        this._midi_playback_device?.start_playback()
         thread {
             try {
                 this._virtual_input_device.play_midi(midi) {
@@ -688,13 +686,10 @@ class MainActivity : AppCompatActivity() {
             event_value + 21 + this._opus_manager.transpose
         }
         thread {
-            this._midi_playback_device?.listen()
             this._midi_interface.broadcast_event(NoteOn(midi_channel, note, velocity))
             Thread.sleep(300)
             this._midi_interface.broadcast_event(NoteOff(midi_channel, note, velocity))
-            this._midi_interface.broadcast_event(MIDIStop())
         }
-
     }
 
     fun import_project(path: String) {

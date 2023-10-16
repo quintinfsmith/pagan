@@ -11,7 +11,7 @@ class AudioTrackHandle {
         const val sample_rate = 22050
 
         val buffer_size = max(
-            sample_rate / 5, // .2 seconds. arbitrary but feels good enough
+            sample_rate / 12, // 1/12 seconds. arbitrary but feels good enough
             AudioTrack.getMinBufferSize(
                 sample_rate,
                 AudioFormat.ENCODING_PCM_16BIT,

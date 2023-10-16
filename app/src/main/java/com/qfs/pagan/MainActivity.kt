@@ -305,7 +305,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             R.id.itmPlay -> {
-                if (this._midi_playback_device!!.listening() || this._virtual_input_device.playing) {
+                if (this._virtual_input_device.playing) {
                    this.playback_stop()
                 } else {
                     this.playback_start()

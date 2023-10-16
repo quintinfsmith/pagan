@@ -22,6 +22,7 @@ import kotlin.math.max
 class SoundFontWavPlayer(private var sound_font: SoundFont): VirtualMidiDevice() {
     companion object {
         val SAMPLE_RATE_NANO = AudioTrackHandle.sample_rate.toFloat() / 1_000_000_000F
+        val BUFFER_MICRO = AudioTrackHandle.buffer_size.toLong() * 1000.toLong() / AudioTrackHandle.sample_rate.toLong()
     }
 
     class WaveGenerator(private var player: SoundFontWavPlayer) {
@@ -34,10 +35,12 @@ class SoundFontWavPlayer(private var sound_font: SoundFont): VirtualMidiDevice()
         private var active_sample_handles = HashMap<Pair<Int, Int>, MutableSet<SampleHandle>>()
         private var midi_events_by_frame = HashMap<Int, MutableList<MIDIEvent>>()
         var event_mutex = Mutex()
+        var delay = AudioTrackHandle.buffer_size
 
         fun process_event(event: MIDIEvent) {
+            Log.d("AAA", "process: $event")
             val delta_nano = (System.nanoTime() - this.timestamp).toFloat()
-            val frame = (SAMPLE_RATE_NANO * delta_nano).toInt() + (AudioTrackHandle.buffer_size * 2)
+            val frame = (SAMPLE_RATE_NANO * delta_nano).toInt() + this.delay
 
             runBlocking {
                 this@WaveGenerator.event_mutex.withLock {
@@ -68,6 +71,7 @@ class SoundFontWavPlayer(private var sound_font: SoundFont): VirtualMidiDevice()
                     }
                     throw KilledException()
                 } else if (this.midi_events_by_frame.containsKey(f)) {
+                    Log.d("AAA", "P!!!$f, ${this.midi_events_by_frame[f]}")
                     for (event in this.midi_events_by_frame[f]!!) {
                         when (event) {
                             is NoteOn -> {
@@ -196,12 +200,15 @@ class SoundFontWavPlayer(private var sound_font: SoundFont): VirtualMidiDevice()
             }
 
             this.frame += AudioTrackHandle.buffer_size
+
             if (is_empty) {
                 this.empty_chunks_count += 1
             } else {
                 this.empty_chunks_count = 0
             }
-            if (this.empty_chunks_count >= 5 && this.active_sample_handles.isEmpty()) {
+
+            // Declare dead after 5 silent seconds
+            if (this.empty_chunks_count * AudioTrackHandle.buffer_size > AudioTrackHandle.sample_rate * 5 && this.active_sample_handles.isEmpty()) {
                 throw DeadException()
             }
 
@@ -375,13 +382,12 @@ class SoundFontWavPlayer(private var sound_font: SoundFont): VirtualMidiDevice()
     }
 
     private fun _start_play_loop() {
-        val buffer_duration = AudioTrackHandle.buffer_size.toLong() * 1000.toLong() / AudioTrackHandle.sample_rate.toLong()
         val audio_track_handle = this.active_audio_track_handle!!
 
         this.wave_generator.timestamp = System.nanoTime()
         // TODO: At the moment, an array of chunks is unnecessary, but I'd like to have a variable
         //  delay for pieces with more lines/devices with less power
-        val chunks: MutableList<ShortArray> = mutableListOf()
+        val chunks: MutableList<ShortArray> = mutableListOf( )
 
         audio_track_handle.play()
         thread {
@@ -401,13 +407,11 @@ class SoundFontWavPlayer(private var sound_font: SoundFont): VirtualMidiDevice()
                 }
 
                 val delta = System.currentTimeMillis() - write_start_ts
-                val sleep = buffer_duration - 10 - delta
+                val sleep = BUFFER_MICRO - 10 - delta
                 if (sleep > 0) {
                     Thread.sleep(sleep)
                 }
             }
-
-            Log.d("AAA", "STOPPED")
 
             audio_track_handle.stop()
             this.active_audio_track_handle = null

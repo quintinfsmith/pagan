@@ -1,6 +1,6 @@
 package com.qfs.apres.soundfontplayer
 
-import com.qfs.apres.Midi
+import android.util.Log
 import com.qfs.apres.VirtualMidiDevice
 import com.qfs.apres.event.AllSoundOff
 import com.qfs.apres.event.BankSelect
@@ -23,15 +23,16 @@ class SoundFontWavPlayer(private var sound_font: SoundFont): VirtualMidiDevice()
     companion object {
         val SAMPLE_RATE_NANO = AudioTrackHandle.sample_rate.toFloat() / 1_000_000_000F
     }
+
     class WaveGenerator(private var player: SoundFontWavPlayer) {
         class KilledException: Exception()
         class DeadException: Exception()
 
         var frame = 0
+        var empty_chunks_count = 0
         var timestamp: Long = System.nanoTime()
         private var active_sample_handles = HashMap<Pair<Int, Int>, MutableSet<SampleHandle>>()
         private var midi_events_by_frame = HashMap<Int, MutableList<MIDIEvent>>()
-        var max_frame = 0
         var event_mutex = Mutex()
 
         fun process_event(event: MIDIEvent) {
@@ -53,7 +54,7 @@ class SoundFontWavPlayer(private var sound_font: SoundFont): VirtualMidiDevice()
             val buffer = IntBuffer.wrap(initial_array)
 
             var max_frame_value = 0
-
+            var is_empty = true
             for (i in 0 until AudioTrackHandle.buffer_size) {
                 var left_frame = 0
                 var right_frame = 0
@@ -80,7 +81,6 @@ class SoundFontWavPlayer(private var sound_font: SoundFont): VirtualMidiDevice()
                                             .toMutableSet()
                                 }
                             }
-
                             is NoteOff -> {
                                 for (handle in this.active_sample_handles[Pair(
                                     event.channel,
@@ -102,6 +102,7 @@ class SoundFontWavPlayer(private var sound_font: SoundFont): VirtualMidiDevice()
                 val keys_to_pop = mutableSetOf<Pair<Int, Int>>()
                 var overlap = 0
                 for ((key, sample_handles) in this.active_sample_handles) {
+                    is_empty = false
                     overlap += 1
                     val to_kill = mutableSetOf<SampleHandle>()
                     for (sample_handle in sample_handles) {
@@ -154,6 +155,7 @@ class SoundFontWavPlayer(private var sound_font: SoundFont): VirtualMidiDevice()
                     for (sample_handle in to_kill) {
                         this.active_sample_handles[key]!!.remove(sample_handle)
                     }
+
                     if (this.active_sample_handles[key]!!.isEmpty()) {
                         keys_to_pop.add(key)
                     }
@@ -165,12 +167,10 @@ class SoundFontWavPlayer(private var sound_font: SoundFont): VirtualMidiDevice()
 
                 max_frame_value = max(
                     max_frame_value,
-                    kotlin.math.abs(right_frame)
-                )
-
-                max_frame_value = max(
-                    max_frame_value,
-                    kotlin.math.abs(left_frame)
+                    max(
+                        kotlin.math.abs(right_frame),
+                        kotlin.math.abs(left_frame)
+                    )
                 )
 
                 buffer.put(right_frame)
@@ -196,8 +196,12 @@ class SoundFontWavPlayer(private var sound_font: SoundFont): VirtualMidiDevice()
             }
 
             this.frame += AudioTrackHandle.buffer_size
-
-            if (this.max_frame > 0 && this.frame >= this.max_frame && this.active_sample_handles.isEmpty()) {
+            if (is_empty) {
+                this.empty_chunks_count += 1
+            } else {
+                this.empty_chunks_count = 0
+            }
+            if (this.empty_chunks_count >= 5 && this.active_sample_handles.isEmpty()) {
                 throw DeadException()
             }
 
@@ -206,6 +210,13 @@ class SoundFontWavPlayer(private var sound_font: SoundFont): VirtualMidiDevice()
 
         private fun get_preset(channel: Int): Preset? {
             return this.player.get_preset(channel)
+        }
+
+        fun clear() {
+            this.active_sample_handles.clear()
+            this.midi_events_by_frame.clear()
+            this.frame = 0
+            this.empty_chunks_count = 0
         }
     }
 
@@ -216,7 +227,7 @@ class SoundFontWavPlayer(private var sound_font: SoundFont): VirtualMidiDevice()
         Neutral
     }
 
-    private var active_wave_generator: WaveGenerator? = null
+    private var wave_generator = WaveGenerator(this)
     private var active_audio_track_handle: AudioTrackHandle? = null
     private val loaded_presets = HashMap<Pair<Int, Int>, Preset>()
     private val preset_channel_map = HashMap<Int, Pair<Int, Int>>()
@@ -225,16 +236,16 @@ class SoundFontWavPlayer(private var sound_font: SoundFont): VirtualMidiDevice()
 
     override fun onNoteOn(event: NoteOn) {
         this.start_playback() // Only starts if not already started
-        this.active_wave_generator?.process_event(event) ?: return
+        this.process_event(event) ?: return
     }
 
     override fun onNoteOff(event: NoteOff) {
-        this.active_wave_generator?.process_event(event) ?: return
+        this.process_event(event)
     }
 
     override fun onMIDIStop(event: MIDIStop) {
         this.stop()
-        this.active_wave_generator?.process_event(event) ?: return
+        this.process_event(event)
     }
 
     override fun onMIDIStart(event: MIDIStart) {
@@ -295,12 +306,20 @@ class SoundFontWavPlayer(private var sound_font: SoundFont): VirtualMidiDevice()
         this.decache_unused_presets()
     }
 
+    private fun process_event(event: MIDIEvent){
+        if (!this.listening()) {
+            return
+        }
+        this.wave_generator.process_event(event)
+    }
+
     fun start_playback() {
-        if (this.active_wave_generator == null && this.stop_request == StopRequest.Neutral) {
+        if (this.stop_request == StopRequest.Neutral) {
             this.stop_request = StopRequest.Play
             val audio_track_handle = AudioTrackHandle()
             this.active_audio_track_handle = audio_track_handle
-            this.active_wave_generator = WaveGenerator(this)
+            this.wave_generator.clear()
+
 
             this._start_play_loop()
         }
@@ -358,12 +377,11 @@ class SoundFontWavPlayer(private var sound_font: SoundFont): VirtualMidiDevice()
     private fun _start_play_loop() {
         val buffer_duration = AudioTrackHandle.buffer_size.toLong() * 1000.toLong() / AudioTrackHandle.sample_rate.toLong()
         val audio_track_handle = this.active_audio_track_handle!!
-        val wave_generator = this.active_wave_generator!!
 
-        this.active_wave_generator?.timestamp = System.nanoTime()
+        this.wave_generator.timestamp = System.nanoTime()
         // TODO: At the moment, an array of chunks is unnecessary, but I'd like to have a variable
         //  delay for pieces with more lines/devices with less power
-        val chunks: MutableList<ShortArray> = mutableListOf( )
+        val chunks: MutableList<ShortArray> = mutableListOf()
 
         audio_track_handle.play()
         thread {
@@ -375,7 +393,7 @@ class SoundFontWavPlayer(private var sound_font: SoundFont): VirtualMidiDevice()
                 }
 
                 try {
-                    chunks.add(wave_generator.generate())
+                    chunks.add(this.wave_generator.generate())
                 } catch (e: WaveGenerator.KilledException) {
                     break
                 } catch (e: WaveGenerator.DeadException) {
@@ -389,20 +407,24 @@ class SoundFontWavPlayer(private var sound_font: SoundFont): VirtualMidiDevice()
                 }
             }
 
-            audio_track_handle.stop()
+            Log.d("AAA", "STOPPED")
 
-            this.active_wave_generator = null
+            audio_track_handle.stop()
             this.active_audio_track_handle = null
             this.stop_request = StopRequest.Neutral
         }
     }
 
     private fun stop() {
-        this.stop_request = StopRequest.Stop
+        if (this.stop_request != StopRequest.Neutral) {
+            this.stop_request = StopRequest.Stop
+        }
     }
 
     private fun kill() {
-        this.stop_request = StopRequest.Kill
+        if (this.stop_request != StopRequest.Neutral) {
+            this.stop_request = StopRequest.Kill
+        }
     }
 
     fun listening(): Boolean {

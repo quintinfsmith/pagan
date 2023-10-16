@@ -42,7 +42,6 @@ import com.qfs.apres.MidiController
 import com.qfs.apres.MidiPlayer
 import com.qfs.apres.VirtualMidiDevice
 import com.qfs.apres.event.BankSelect
-import com.qfs.apres.event.MIDIStop
 import com.qfs.apres.event.NoteOff
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event.ProgramChange
@@ -685,6 +684,7 @@ class MainActivity : AppCompatActivity() {
         } else {
             event_value + 21 + this._opus_manager.transpose
         }
+
         thread {
             this._midi_interface.broadcast_event(NoteOn(midi_channel, note, velocity))
             Thread.sleep(300)

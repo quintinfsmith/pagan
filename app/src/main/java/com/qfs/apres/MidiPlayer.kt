@@ -1,6 +1,7 @@
 package com.qfs.apres
 
 import android.util.Log
+import com.qfs.apres.event.AllSoundOff
 import com.qfs.apres.event.MIDIStop
 import com.qfs.apres.event.SetTempo
 import com.qfs.apres.event.SongPositionPointer
@@ -57,9 +58,9 @@ open class MidiPlayer: VirtualMidiDevice() {
             this.sendEvent(SongPositionPointer(0))
         }
 
-        //for (i in 0 until 16) {
-        //    this.sendEvent(AllSoundOff(i))
-        //}
+        for (i in 0 until 16) {
+            this.sendEvent(AllSoundOff(i))
+        }
 
         this.playing = false
 

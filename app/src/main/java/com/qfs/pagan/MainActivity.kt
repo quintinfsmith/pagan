@@ -378,7 +378,8 @@ class MainActivity : AppCompatActivity() {
                 cursor.range!!.first.beat
             }
             else -> {
-                0
+                val editor_table = this.findViewById<EditorTable?>(R.id.etEditorTable)
+                editor_table?.get_first_visible_column_index() ?: 0
             }
         }
 

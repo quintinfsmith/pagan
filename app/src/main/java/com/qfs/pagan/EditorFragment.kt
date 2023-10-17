@@ -996,7 +996,8 @@ class EditorFragment : PaganFragment() {
                 cursor.range!!.first.beat
             }
             else -> {
-                0
+                val editor_table = this.get_main().findViewById<EditorTable>(R.id.etEditorTable)
+                editor_table.get_first_visible_column_index()
             }
         }
 

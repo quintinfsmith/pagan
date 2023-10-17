@@ -516,4 +516,8 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
         this.fix_scroll_offset()
     }
+
+    fun get_first_visible_column_index(): Int {
+        return (this.main_recycler.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
+    }
 }

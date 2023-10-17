@@ -436,5 +436,13 @@ class SoundFontWavPlayer(private var sound_font: SoundFont): VirtualMidiDevice()
     fun listening(): Boolean {
         return this.stop_request == StopRequest.Play
     }
+
+    fun get_delay(): Long {
+        if (this.listening()) {
+            return this.wave_generator.delay.toLong() * 1_000_000_000.toLong() / AudioTrackHandle.sample_rate.toLong()
+        } else {
+            return 0.toLong()
+        }
+    }
 }
 

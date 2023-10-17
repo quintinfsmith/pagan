@@ -161,6 +161,9 @@ class MainActivity : AppCompatActivity() {
 
         val midi_observer = object: VirtualMidiDevice() {
             override fun onSongPositionPointer(event: SongPositionPointer) {
+                var delay = this@MainActivity._midi_playback_device?.get_delay() ?: 0
+                Thread.sleep(delay / 1_000_000, (delay % 1_000_000).toInt())
+
                 this@MainActivity.runOnUiThread {
                     this@MainActivity.get_opus_manager().cursor_select_column(event.beat, true)
                 }

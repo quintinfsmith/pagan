@@ -11,7 +11,6 @@ import android.media.midi.MidiManager.TRANSPORT_MIDI_BYTE_STREAM
 import android.media.midi.MidiOutputPort
 import android.media.midi.MidiReceiver
 import android.os.Build
-import android.util.Log
 import com.qfs.apres.event.MIDIEvent
 import kotlin.concurrent.thread
 
@@ -101,7 +100,6 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
     }
 
     fun broadcast_event(event: MIDIEvent) {
-        Log.d("AAA", "BROADCAST $event")
         // Rebroadcast to listening devices
         for (device in this.virtual_output_devices) {
             thread {

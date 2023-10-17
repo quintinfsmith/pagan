@@ -57,7 +57,7 @@ class SampleHandle(
     // TODO: Unimplimented
     // var current_delay_position: Int = 0
     // var decay_position: Int? = null
-    // var sustain_volume: Int = 0 // TODO
+    // var sustain_volume: Int = 0
     // var release_delay: Int? = null
     // var remove_delay: Int? = null
 

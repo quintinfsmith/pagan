@@ -9,9 +9,10 @@ import kotlin.math.max
 class AudioTrackHandle {
     companion object {
         const val sample_rate = 22050
+        //const val sample_rate = 44100
 
         val buffer_size = max(
-            sample_rate / 12, // 1/12 seconds. arbitrary but feels good enough
+            sample_rate / 8, // 1/8 seconds. arbitrary but feels good enough
             AudioTrack.getMinBufferSize(
                 sample_rate,
                 AudioFormat.ENCODING_PCM_16BIT,
@@ -21,7 +22,7 @@ class AudioTrackHandle {
         val buffer_size_in_bytes: Int = buffer_size * 4
     }
 
-    private var audioTrack: AudioTrack = AudioTrack.Builder()
+    private var audio_track: AudioTrack = AudioTrack.Builder()
         .setAudioAttributes(
             AudioAttributes.Builder()
                 .setUsage(AudioAttributes.USAGE_MEDIA)
@@ -39,22 +40,22 @@ class AudioTrackHandle {
         .build()
 
     fun pause() {
-        this.audioTrack.pause()
+        this.audio_track.pause()
     }
 
     fun play() {
-        this.audioTrack.play()
+        this.audio_track.play()
     }
     fun write(shorts: ShortArray) {
-        if (this.audioTrack.state != AudioTrack.STATE_UNINITIALIZED) {
+        if (this.audio_track.state != AudioTrack.STATE_UNINITIALIZED) {
             try {
-                this.audioTrack.write(
+                this.audio_track.write(
                     shorts,
                     0,
                     shorts.size,
                     AudioTrack.WRITE_BLOCKING
                 )
-                this.audioTrack.flush()
+                this.audio_track.flush()
             } catch (e: IllegalStateException) {
                 // Shouldn't need to do anything. the audio track was released and this should stop on its own
             }
@@ -62,8 +63,8 @@ class AudioTrackHandle {
     }
     fun stop() {
         try {
-            this.audioTrack.stop()
-            this.audioTrack.release()
+            this.audio_track.stop()
+            this.audio_track.release()
         } catch (e: IllegalStateException) {
             Log.w("AudioTrackHandle", "Attempted to stop stopped track")
         }

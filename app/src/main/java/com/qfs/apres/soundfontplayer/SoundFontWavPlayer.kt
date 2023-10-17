@@ -22,7 +22,7 @@ import kotlin.math.max
 class SoundFontWavPlayer(private var sound_font: SoundFont): VirtualMidiDevice() {
     companion object {
         val SAMPLE_RATE_NANO = AudioTrackHandle.sample_rate.toFloat() / 1_000_000_000F
-        val BUFFER_MICRO = AudioTrackHandle.buffer_size.toLong() * 1000.toLong() / AudioTrackHandle.sample_rate.toLong()
+        val BUFFER_NANO = AudioTrackHandle.buffer_size.toLong() * 1_000_000_000.toLong() / AudioTrackHandle.sample_rate.toLong()
     }
 
     class WaveGenerator(private var player: SoundFontWavPlayer) {
@@ -38,7 +38,6 @@ class SoundFontWavPlayer(private var sound_font: SoundFont): VirtualMidiDevice()
         var delay = AudioTrackHandle.buffer_size
 
         fun process_event(event: MIDIEvent) {
-            Log.d("AAA", "process: $event")
             val delta_nano = (System.nanoTime() - this.timestamp).toFloat()
             val frame = (SAMPLE_RATE_NANO * delta_nano).toInt() + this.delay
 
@@ -71,7 +70,6 @@ class SoundFontWavPlayer(private var sound_font: SoundFont): VirtualMidiDevice()
                     }
                     throw KilledException()
                 } else if (this.midi_events_by_frame.containsKey(f)) {
-                    Log.d("AAA", "P!!!$f, ${this.midi_events_by_frame[f]}")
                     for (event in this.midi_events_by_frame[f]!!) {
                         when (event) {
                             is NoteOn -> {
@@ -392,10 +390,12 @@ class SoundFontWavPlayer(private var sound_font: SoundFont): VirtualMidiDevice()
         audio_track_handle.play()
         thread {
             while (true) {
-                val write_start_ts = System.currentTimeMillis()
+                val write_start_ts = System.nanoTime()
                 if (chunks.isNotEmpty()) {
                     val chunk = chunks.removeAt(0)
-                    audio_track_handle.write(chunk)
+                    thread {
+                        audio_track_handle.write(chunk)
+                    }
                 }
 
                 try {
@@ -406,10 +406,12 @@ class SoundFontWavPlayer(private var sound_font: SoundFont): VirtualMidiDevice()
                     break
                 }
 
-                val delta = System.currentTimeMillis() - write_start_ts
-                val sleep = BUFFER_MICRO - 10 - delta
+                val delta = System.nanoTime() - write_start_ts
+                val sleep = BUFFER_NANO - delta
                 if (sleep > 0) {
-                    Thread.sleep(sleep)
+                    Thread.sleep(sleep / 1_000_000, (sleep % 1_000_000).toInt())
+                } else {
+                    Log.d("AAA", "TOO SLOW")
                 }
             }
 

@@ -419,24 +419,28 @@ class SoundFontWavPlayer(var sample_rate: Int, private var sound_font: SoundFont
             this.wave_generator.timestamp = System.nanoTime()
             val chunks: MutableList<ShortArray> = mutableListOf( )
             audio_track_handle.play()
+
             var flag_killed = false
             var buffering = false
             var first_pass = true
             while (!flag_killed) {
                 val write_start_ts = System.nanoTime()
-                if (chunks.isNotEmpty()) {
-                    val chunk = chunks.removeAt(0)
-                    thread {
-                        audio_track_handle.write(chunk)
+                if (!buffering) {
+                    if (chunks.isNotEmpty()) {
+                        val chunk = chunks.removeAt(0)
+                        thread {
+                            audio_track_handle.write(chunk)
+                        }
+                    } else if (!first_pass) {
+                        this.delay += 1
+                        this.slow_pass_count += 1
+                    } else {
+                        this.slow_pass_count += 1
                     }
-                } else if (!first_pass) {
-                    this.delay += 1
-                    this.slow_pass_count += 1
-                    Log.d("AAA", "Slow. buffer_delay = ${this.delay}")
                 } else {
                     this.slow_pass_count += 1
-                    first_pass = false
                 }
+
 
 
                 if (!buffering) {
@@ -468,8 +472,7 @@ class SoundFontWavPlayer(var sample_rate: Int, private var sound_font: SoundFont
             audio_track_handle.stop()
             this.active_audio_track_handle = null
             this.stop_request = StopRequest.Neutral
-            this.slow_pass_count = 0
-            this.delay = 1
+            //this.delay = 1
         }
     }
 

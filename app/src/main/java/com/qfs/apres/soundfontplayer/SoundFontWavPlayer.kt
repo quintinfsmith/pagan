@@ -480,6 +480,7 @@ class SoundFontWavPlayer(var sample_rate: Int, private var sound_font: SoundFont
             this.active_audio_track_handle = null
             this.stop_request = StopRequest.Neutral
             //this.delay = 1
+            this.slow_pass_count = 0
         }
     }
 

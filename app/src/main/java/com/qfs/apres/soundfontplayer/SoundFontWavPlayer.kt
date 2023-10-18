@@ -82,6 +82,13 @@ class SoundFontWavPlayer(var sample_rate: Int, private var sound_font: SoundFont
                                     handle.release_note()
                                 }
                             }
+                            is AllSoundOff -> {
+                                for ((_, handles) in this.active_sample_handles) {
+                                    for (handle in handles) {
+                                        handle.release_note()
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -300,7 +307,7 @@ class SoundFontWavPlayer(var sample_rate: Int, private var sound_font: SoundFont
     }
 
     override fun onAllSoundOff(event: AllSoundOff) {
-        this.kill()
+        this.process_event(event)
     }
 
     override fun onProgramChange(event: ProgramChange) {

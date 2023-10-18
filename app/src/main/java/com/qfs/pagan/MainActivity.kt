@@ -165,7 +165,9 @@ class MainActivity : AppCompatActivity() {
                 Thread.sleep(delay / 1_000_000, (delay % 1_000_000).toInt())
 
                 this@MainActivity.runOnUiThread {
-                    this@MainActivity.get_opus_manager().cursor_select_column(event.beat, true)
+                    if (this@MainActivity._virtual_input_device.playing) {
+                        this@MainActivity.get_opus_manager().cursor_select_column(event.beat, true)
+                    }
                 }
             }
         }

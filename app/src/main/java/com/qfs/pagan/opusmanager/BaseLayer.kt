@@ -1,6 +1,6 @@
 package com.qfs.pagan.opusmanager
-import com.qfs.apres.event.BankSelect
 import com.qfs.apres.Midi
+import com.qfs.apres.event.BankSelect
 import com.qfs.apres.event.NoteOff
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event.ProgramChange
@@ -9,10 +9,10 @@ import com.qfs.apres.event.SongPositionPointer
 import com.qfs.apres.event.TimeSignature
 import com.qfs.pagan.from_string
 import com.qfs.pagan.structure.OpusTree
-import java.io.File
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import java.io.File
 import java.lang.Integer.max
 import java.lang.Integer.min
 import kotlin.math.ceil

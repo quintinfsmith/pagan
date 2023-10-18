@@ -1,5 +1,7 @@
 package com.qfs.apres.soundfontplayer
 
+import android.media.AudioFormat
+import android.media.AudioTrack
 import android.util.Log
 import com.qfs.apres.VirtualMidiDevice
 import com.qfs.apres.event.AllSoundOff
@@ -19,12 +21,7 @@ import java.nio.IntBuffer
 import kotlin.concurrent.thread
 import kotlin.math.max
 
-class SoundFontWavPlayer(private var sound_font: SoundFont): VirtualMidiDevice() {
-    companion object {
-        val SAMPLE_RATE_NANO = AudioTrackHandle.sample_rate.toFloat() / 1_000_000_000F
-        val BUFFER_NANO = AudioTrackHandle.buffer_size.toLong() * 1_000_000_000.toLong() / AudioTrackHandle.sample_rate.toLong()
-    }
-
+class SoundFontWavPlayer(var sample_rate: Int, private var sound_font: SoundFont): VirtualMidiDevice() {
     class WaveGenerator(private var player: SoundFontWavPlayer) {
         class KilledException: Exception()
         class DeadException: Exception()
@@ -35,11 +32,10 @@ class SoundFontWavPlayer(private var sound_font: SoundFont): VirtualMidiDevice()
         private var active_sample_handles = HashMap<Pair<Int, Int>, MutableSet<SampleHandle>>()
         private var midi_events_by_frame = HashMap<Int, MutableList<MIDIEvent>>()
         var event_mutex = Mutex()
-        var delay = AudioTrackHandle.buffer_size
 
-        fun process_event(event: MIDIEvent) {
+        fun process_event(event: MIDIEvent, delay: Int) {
             val delta_nano = (System.nanoTime() - this.timestamp).toFloat()
-            val frame = (SAMPLE_RATE_NANO * delta_nano).toInt() + this.delay
+            val frame = (this.player.SAMPLE_RATE_NANO * delta_nano).toInt() + (delay * this.player.buffer_size)
 
             runBlocking {
                 this@WaveGenerator.event_mutex.withLock {
@@ -52,12 +48,12 @@ class SoundFontWavPlayer(private var sound_font: SoundFont): VirtualMidiDevice()
         }
 
         fun generate(): ShortArray {
-            val initial_array = IntArray(AudioTrackHandle.buffer_size * 2)
+            val initial_array = IntArray(this.player.buffer_size * 2)
             val buffer = IntBuffer.wrap(initial_array)
 
             var max_frame_value = 0
             var is_empty = true
-            for (i in 0 until AudioTrackHandle.buffer_size) {
+            for (i in 0 until this.player.buffer_size) {
                 var left_frame = 0
                 var right_frame = 0
                 val f = this.frame + i
@@ -73,21 +69,16 @@ class SoundFontWavPlayer(private var sound_font: SoundFont): VirtualMidiDevice()
                     for (event in this.midi_events_by_frame[f]!!) {
                         when (event) {
                             is NoteOn -> {
+                                var key_pair = Pair(event.channel, event.note)
                                 if (this.player.stop_request == StopRequest.Play) {
                                     val preset = this.get_preset(event.channel) ?: continue
-                                    this.active_sample_handles[Pair(
-                                        event.channel,
-                                        event.note
-                                    )] =
-                                        this.player.gen_sample_handles(event, preset)
-                                            .toMutableSet()
+                                    this.active_sample_handles[key_pair] =
+                                        this.player.gen_sample_handles(event, preset).toMutableSet()
                                 }
                             }
                             is NoteOff -> {
-                                for (handle in this.active_sample_handles[Pair(
-                                    event.channel,
-                                    event.note
-                                )] ?: continue) {
+                                var key_pair = Pair(event.channel, event.note)
+                                for (handle in this.active_sample_handles[key_pair] ?: continue) {
                                     handle.release_note()
                                 }
                             }
@@ -197,7 +188,7 @@ class SoundFontWavPlayer(private var sound_font: SoundFont): VirtualMidiDevice()
                 }
             }
 
-            this.frame += AudioTrackHandle.buffer_size
+            this.frame += this.player.buffer_size
 
             if (is_empty) {
                 this.empty_chunks_count += 1
@@ -206,7 +197,7 @@ class SoundFontWavPlayer(private var sound_font: SoundFont): VirtualMidiDevice()
             }
 
             // Declare dead after 5 silent seconds
-            if (this.empty_chunks_count * AudioTrackHandle.buffer_size > AudioTrackHandle.sample_rate * 5 && this.active_sample_handles.isEmpty()) {
+            if (this.empty_chunks_count * this.player.buffer_size > this.player.sample_rate * 5 && this.active_sample_handles.isEmpty()) {
                 throw DeadException()
             }
 
@@ -232,12 +223,50 @@ class SoundFontWavPlayer(private var sound_font: SoundFont): VirtualMidiDevice()
         Neutral
     }
 
+    companion object {
+        fun calc_sample_rate(): Int {
+            val target_nano = 70_000_000.toLong()
+            val c = 6
+            var factor = 0f
+
+            for (i in 0 until c) {
+                val start_ts = System.nanoTime()
+                var x = 0
+                for (j in 0 until 100_000_000) {
+                    x += 1
+                }
+
+                val delta = max(System.nanoTime() - start_ts, target_nano)
+                factor += target_nano.toFloat() / delta.toFloat()
+            }
+
+            factor /= c
+
+            var output = (44100.toFloat() * factor).toInt()
+
+            return max(output, 11025)
+        }
+    }
+
+    var buffer_size = max(
+        sample_rate / 8, // 1/8 seconds. arbitrary but feels good enough
+        AudioTrack.getMinBufferSize(
+            sample_rate,
+            AudioFormat.ENCODING_PCM_16BIT,
+            AudioFormat.CHANNEL_OUT_STEREO
+        ) * 4
+    )
+    var SAMPLE_RATE_NANO = sample_rate.toFloat() / 1_000_000_000F
+    var BUFFER_NANO = buffer_size.toLong() * 1_000_000_000.toLong() / sample_rate.toLong()
+
     private var wave_generator = WaveGenerator(this)
     private var active_audio_track_handle: AudioTrackHandle? = null
     private val loaded_presets = HashMap<Pair<Int, Int>, Preset>()
     private val preset_channel_map = HashMap<Int, Pair<Int, Int>>()
-    private val sample_handle_generator = SampleHandleGenerator()
+    private val sample_handle_generator = SampleHandleGenerator(sample_rate, buffer_size)
     private var stop_request = StopRequest.Neutral
+    private var slow_pass_count = 0 // Used to count the number of times during a single play that the buffering process has taken too long
+    private var delay = 1 // (in frames) how many x the buffer size should be delayed
 
     override fun onNoteOn(event: NoteOn) {
         this.start_playback() // Only starts if not already started
@@ -315,16 +344,15 @@ class SoundFontWavPlayer(private var sound_font: SoundFont): VirtualMidiDevice()
         if (!this.listening()) {
             return
         }
-        this.wave_generator.process_event(event)
+        this.wave_generator.process_event(event, this.delay)
     }
 
     fun start_playback() {
         if (this.stop_request == StopRequest.Neutral) {
             this.stop_request = StopRequest.Play
-            val audio_track_handle = AudioTrackHandle()
+            val audio_track_handle = AudioTrackHandle(this.sample_rate, this.buffer_size * 4)
             this.active_audio_track_handle = audio_track_handle
             this.wave_generator.clear()
-
 
             this._start_play_loop()
         }
@@ -380,30 +408,52 @@ class SoundFontWavPlayer(private var sound_font: SoundFont): VirtualMidiDevice()
     }
 
     private fun _start_play_loop() {
+        /*
+            This loop will attempt to play a chunk, and while it's playing, generate the next chunk.
+            Any time the generate() call takes longer than the buffer takes to play and empties the queue,
+                the number of chunks in queue is increased, and the chunk queue is refilled.
+            Every time this happens is counted and considered in get_delay() call.
+         */
         val audio_track_handle = this.active_audio_track_handle!!
-
-        this.wave_generator.timestamp = System.nanoTime()
-        // TODO: At the moment, an array of chunks is unnecessary, but I'd like to have a variable
-        //  delay for pieces with more lines/devices with less power
-        val chunks: MutableList<ShortArray> = mutableListOf( )
-
-        audio_track_handle.play()
         thread {
-            while (true) {
+            this.wave_generator.timestamp = System.nanoTime()
+            val chunks: MutableList<ShortArray> = mutableListOf( )
+            audio_track_handle.play()
+            var flag_killed = false
+            var buffering = false
+            var first_pass = true
+            while (!flag_killed) {
                 val write_start_ts = System.nanoTime()
                 if (chunks.isNotEmpty()) {
                     val chunk = chunks.removeAt(0)
                     thread {
                         audio_track_handle.write(chunk)
                     }
+                } else if (!first_pass) {
+                    this.delay += 1
+                    this.slow_pass_count += 1
+                    Log.d("AAA", "Slow. buffer_delay = ${this.delay}")
+                } else {
+                    this.slow_pass_count += 1
+                    first_pass = false
                 }
 
-                try {
-                    chunks.add(this.wave_generator.generate())
-                } catch (e: WaveGenerator.KilledException) {
-                    break
-                } catch (e: WaveGenerator.DeadException) {
-                    break
+
+                if (!buffering) {
+                    thread {
+                        buffering = true
+                        try {
+                            for (i in chunks.size until this.delay) {
+                                var chunk = this.wave_generator.generate()
+                                chunks.add(chunk)
+                            }
+                        } catch (e: WaveGenerator.KilledException) {
+                            flag_killed = true
+                        } catch (e: WaveGenerator.DeadException) {
+                            flag_killed = true
+                        }
+                        buffering = false
+                    }
                 }
 
                 val delta = System.nanoTime() - write_start_ts
@@ -411,13 +461,15 @@ class SoundFontWavPlayer(private var sound_font: SoundFont): VirtualMidiDevice()
                 if (sleep > 0) {
                     Thread.sleep(sleep / 1_000_000, (sleep % 1_000_000).toInt())
                 } else {
-                    Log.d("AAA", "TOO SLOW")
+                    Log.d("AAA", "TOO SLOW $delta, $sleep")
                 }
             }
 
             audio_track_handle.stop()
             this.active_audio_track_handle = null
             this.stop_request = StopRequest.Neutral
+            this.slow_pass_count = 0
+            this.delay = 1
         }
     }
 
@@ -438,10 +490,10 @@ class SoundFontWavPlayer(private var sound_font: SoundFont): VirtualMidiDevice()
     }
 
     fun get_delay(): Long {
-        if (this.listening()) {
-            return this.wave_generator.delay.toLong() * 1_000_000_000.toLong() / AudioTrackHandle.sample_rate.toLong()
+        return if (this.listening()) {
+            (((this.delay + this.slow_pass_count) * this.buffer_size).toLong() * 1_000_000_000.toLong()) / this.sample_rate.toLong()
         } else {
-            return 0.toLong()
+            0.toLong()
         }
     }
 }

@@ -1,9 +1,6 @@
 package com.qfs.apres.soundfontplayer
 
-import java.lang.Math.PI
-import java.lang.Math.tan
 import java.nio.ShortBuffer
-import kotlin.math.roundToInt
 
 class SampleHandle(
     var data: ShortArray,
@@ -108,13 +105,13 @@ class SampleHandle(
         }
 
         // low pass filter
-        if (this.filter_cutoff != null) {
-            val tan_val = tan(PI * this.filter_cutoff!!.toFloat() / AudioTrackHandle.sample_rate.toFloat())
-            val lpf_tmp = frame.toDouble()
-            val a = ((tan_val - 1) / (tan_val + 1))
-            frame = (a * frame.toDouble() + this.lpf_previous).roundToInt().toShort()
-            this.lpf_previous = lpf_tmp - (a * frame.toDouble())
-        }
+        //if (this.filter_cutoff != null) {
+        //    val tan_val = tan(PI * this.filter_cutoff!!.toFloat() / AudioTrackHandle.sample_rate.toFloat())
+        //    val lpf_tmp = frame.toDouble()
+        //    val a = ((tan_val - 1) / (tan_val + 1))
+        //    frame = (a * frame.toDouble() + this.lpf_previous).roundToInt().toShort()
+        //    this.lpf_previous = lpf_tmp - (a * frame.toDouble())
+        //}
 
         return frame
     }

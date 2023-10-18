@@ -4,24 +4,8 @@ import android.media.AudioAttributes
 import android.media.AudioFormat
 import android.media.AudioTrack
 import android.util.Log
-import kotlin.math.max
 
-class AudioTrackHandle {
-    companion object {
-        const val sample_rate = 22050
-        //const val sample_rate = 44100
-
-        val buffer_size = max(
-            sample_rate / 8, // 1/8 seconds. arbitrary but feels good enough
-            AudioTrack.getMinBufferSize(
-                sample_rate,
-                AudioFormat.ENCODING_PCM_16BIT,
-                AudioFormat.CHANNEL_OUT_STEREO
-            ) * 4
-        )
-        val buffer_size_in_bytes: Int = buffer_size * 4
-    }
-
+class AudioTrackHandle(sample_rate: Int, buffer_size: Int) {
     private var audio_track: AudioTrack = AudioTrack.Builder()
         .setAudioAttributes(
             AudioAttributes.Builder()
@@ -36,7 +20,7 @@ class AudioTrackHandle {
                 .setChannelMask(AudioFormat.CHANNEL_OUT_STEREO)
                 .build()
         )
-        .setBufferSizeInBytes(buffer_size_in_bytes)
+        .setBufferSizeInBytes(buffer_size)
         .build()
 
     fun pause() {

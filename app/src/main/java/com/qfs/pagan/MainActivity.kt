@@ -224,14 +224,12 @@ class MainActivity : AppCompatActivity() {
 
         //////////////////////////////////////////
         // TODO: clean up the file -> riff -> soundfont -> midi playback device process
-
         if (this.configuration.soundfont != null) {
-            val path =
-                "${this.getExternalFilesDir(null)}/SoundFonts/${this.configuration.soundfont}"
+            val path = "${this.getExternalFilesDir(null)}/SoundFonts/${this.configuration.soundfont}"
             val sf_file = File(path)
             if (sf_file.exists()) {
                 this._soundfont = SoundFont(path)
-                this._midi_playback_device = SoundFontWavPlayer(this._soundfont!!)
+                this._midi_playback_device = SoundFontWavPlayer(SoundFontWavPlayer.calc_sample_rate(), this._soundfont!!)
                 this._midi_interface.connect_virtual_output_device(this._midi_playback_device!!)
             }
             this.update_channel_instruments()
@@ -752,7 +750,7 @@ class MainActivity : AppCompatActivity() {
         if (this._midi_playback_device != null) {
             this._midi_interface.disconnect_virtual_output_device(this._midi_playback_device!!)
         }
-        this._midi_playback_device = SoundFontWavPlayer(this._soundfont!!)
+        this._midi_playback_device = SoundFontWavPlayer(44100, this._soundfont!!)
         this._midi_interface.connect_virtual_output_device(this._midi_playback_device!!)
 
         this.update_channel_instruments()
@@ -1087,5 +1085,13 @@ class MainActivity : AppCompatActivity() {
 
     fun get_project_directory(): File {
         return this.project_manager.get_directory()
+    }
+
+    fun set_sample_rate(new_sample_rate: Int) {
+        if (this._midi_playback_device != null) {
+            this._midi_interface.disconnect_virtual_output_device(this._midi_playback_device!!)
+        }
+        this._midi_playback_device = SoundFontWavPlayer(new_sample_rate, this._soundfont!!)
+        this._midi_interface.connect_virtual_output_device(this._midi_playback_device!!)
     }
 }

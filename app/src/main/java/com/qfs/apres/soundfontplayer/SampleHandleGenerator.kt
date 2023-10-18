@@ -1,12 +1,12 @@
 package com.qfs.apres.soundfontplayer
-import com.qfs.apres.soundfont.InstrumentSample
 import com.qfs.apres.event.NoteOn
+import com.qfs.apres.soundfont.InstrumentSample
 import com.qfs.apres.soundfont.Preset
 import com.qfs.apres.soundfont.PresetInstrument
 import kotlin.math.abs
 import kotlin.math.pow
 
-class SampleHandleGenerator {
+class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
     // Hash ignores velocity since velocity isn't baked into sample data
     data class MapKey(
         var note: Int,
@@ -44,8 +44,8 @@ class SampleHandleGenerator {
             pitch_shift = required_pitch / original_pitch
         }
 
-        if (sample.sample!!.sampleRate != AudioTrackHandle.sample_rate) {
-            pitch_shift *= (sample.sample!!.sampleRate.toFloat() / AudioTrackHandle.sample_rate.toFloat())
+        if (sample.sample!!.sampleRate != this.sample_rate) {
+            pitch_shift *= (sample.sample!!.sampleRate.toFloat() / this.sample_rate.toFloat())
         }
 
         val data = sample.sample!!.data!!
@@ -99,7 +99,7 @@ class SampleHandleGenerator {
         //    //    ?: 0
         //    val level = .2
 
-        //    val wave_length = AudioTrackHandle.sample_rate.toDouble() / freq_mod_lfo
+        //    val wave_length = this.sample_rate.toDouble() / freq_mod_lfo
         //    ShortArray(wave_length.toInt()) { i: Int ->
         //        val p = (i.toDouble() / wave_length)
         //        (sin(p * PI) * level * 0x7FFF.toDouble()).toInt().toShort()
@@ -111,7 +111,7 @@ class SampleHandleGenerator {
 
         val max_values = mutableListOf<Short>()
         data.forEachIndexed { i: Int, frame: Short ->
-            val d = i / (AudioTrackHandle.buffer_size / 3)
+            val d = i / (this@SampleHandleGenerator.buffer_size / 3)
             while (max_values.size <= d) {
                 max_values.add(0)
             }
@@ -141,11 +141,11 @@ class SampleHandleGenerator {
             } else {
                 null
             },
-            delay_frames = ((AudioTrackHandle.sample_rate.toDouble() * vol_env_delay)).toInt(),
-            attack_frame_count = ((AudioTrackHandle.sample_rate.toDouble() * vol_env_attack )).toInt(),
-            hold_frame_count = ((AudioTrackHandle.sample_rate.toDouble() * vol_env_hold )).toInt(),
-            decay_frame_count = ((AudioTrackHandle.sample_rate.toDouble() * vol_env_decay )).toInt(),
-            release_size = ((AudioTrackHandle.sample_rate.toDouble() * vol_env_release)).toFloat(),
+            delay_frames = ((this.sample_rate.toDouble() * vol_env_delay)).toInt(),
+            attack_frame_count = ((this.sample_rate.toDouble() * vol_env_attack )).toInt(),
+            hold_frame_count = ((this.sample_rate.toDouble() * vol_env_hold )).toInt(),
+            decay_frame_count = ((this.sample_rate.toDouble() * vol_env_decay )).toInt(),
+            release_size = ((this.sample_rate.toDouble() * vol_env_release)).toFloat(),
             max_values = max_values_floats,
             //filter_cutoff = sample.filter_cutoff ?: instrument.filter_cutoff
             //filter_cutoff = (20 .. 20000).random()

@@ -9,6 +9,7 @@ import android.media.midi.MidiDeviceInfo
 import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
@@ -392,8 +393,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun playback_start_midi_device(start_point: Int = 0) {
-        val midi = this.get_opus_manager().get_midi(start_point)
+        var opus_manager = this.get_opus_manager()
+        val midi = opus_manager.get_midi(start_point)
         this._midi_playback_device?.start_playback()
+
+        var mode = opus_manager.get_mode_simultaneous_notes()
+        Log.d("AAA", "Mode ON: ${mode.first} | ${mode.second * opus_manager.beat_count}")
+
         thread {
             try {
                 this._virtual_input_device.play_midi(midi) {

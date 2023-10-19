@@ -1,4 +1,5 @@
 package com.qfs.pagan.opusmanager
+import android.util.Log
 import com.qfs.apres.Midi
 import com.qfs.apres.event.BankSelect
 import com.qfs.apres.event.NoteOff
@@ -1663,4 +1664,93 @@ open class BaseLayer {
         }
     }
 
+    fun get_press_breakdown(): List<Pair<Double, Int>> {
+        var tick_map = mutableListOf<Pair<Double, Boolean>>()
+        this.channels.forEach { channel: OpusChannel ->
+            channel.lines.forEach { line: OpusChannel.OpusLine ->
+                line.beats.forEachIndexed { beat_index: Int, beat_tree: OpusTree<OpusEvent> ->
+                    var previous_value = 0
+                    beat_tree.traverse { tree: OpusTree<OpusEvent>, event: OpusEvent? ->
+                        if (event == null) {
+                            return@traverse
+                        }
+
+                        var tmp_tree = tree
+                        val position = mutableListOf<Int>()
+                        while (tmp_tree != beat_tree) {
+                            position.add(0, tmp_tree.getIndex()!!)
+                            tmp_tree = tmp_tree.get_parent()!!
+                        }
+                        var position_scalar: Double = 0.0
+                        tmp_tree = beat_tree
+                        var running_size = 1
+
+                        for (p in position) {
+                            running_size *= tmp_tree.size
+                            position_scalar += p.toDouble() / running_size.toDouble()
+                            tmp_tree = tmp_tree[p]
+                        }
+
+                        tick_map.add(
+                            Pair(
+                                position_scalar + beat_index,
+                                true
+                            )
+                        )
+
+                        tick_map.add(
+                            Pair(
+                                position_scalar + beat_index + (event.duration.toDouble() / running_size.toDouble()),
+                                false
+                            )
+                        )
+                    }
+                }
+            }
+        }
+
+        tick_map.sortBy { it.first }
+        var breakdown = mutableListOf<Pair<Double, Int>>()
+
+        var currently_on = 0
+        var last_position = 0.0
+        for ((position, state) in tick_map) {
+            if (position != last_position) {
+                breakdown.add(Pair((position - last_position) / (this.beat_count + 1).toDouble(), currently_on))
+            }
+
+            if (state) {
+                currently_on += 1
+            } else {
+                currently_on -= 1
+            }
+
+            last_position = position
+        }
+
+        return breakdown
+    }
+
+    fun get_maximum_simultaneous_notes(): Int {
+        return (this.get_press_breakdown().sortedBy { it.second }).last().second
+    }
+
+    /*
+        Get the most usually active number of notes
+     */
+    fun get_mode_simultaneous_notes(): Pair<Int, Double> {
+        val merged_counts = HashMap<Int, Double>()
+        for ((percentage, press_count) in this.get_press_breakdown()) {
+            merged_counts[press_count] = merged_counts.getOrDefault(press_count, 0.0) + percentage
+        }
+        var mode_press_count = 0
+        var mode_percentage = 0.0
+        for ((press_count, percentage) in merged_counts) {
+            if ((percentage == mode_percentage && mode_press_count < press_count) || percentage > mode_percentage) {
+                mode_press_count = press_count
+                mode_percentage = percentage
+            }
+        }
+        return Pair(mode_press_count, mode_percentage)
+    }
 }

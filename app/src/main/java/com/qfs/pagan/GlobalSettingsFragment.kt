@@ -11,6 +11,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.PopupMenu
+import android.widget.SeekBar
 import android.widget.Switch
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
@@ -117,6 +118,21 @@ class GlobalSettingsFragment : PaganFragment() {
             main.configuration.relative_mode = enabled
             main.save_configuration()
         }
+
+        val slider_playback_quality = view.findViewById<SeekBar>(R.id.sbPlaybackQuality)
+        val min_sample_rate = 11025
+        val max_sample_rate = 44100
+        slider_playback_quality.progress = (main.configuration.sample_rate - min_sample_rate) * slider_playback_quality.max / (max_sample_rate - min_sample_rate)
+        slider_playback_quality.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) { }
+            override fun onStartTrackingTouch(p0: SeekBar?) { }
+            override fun onStopTrackingTouch(seekbar: SeekBar?) {
+                main.configuration.sample_rate = (seekbar!!.progress * (max_sample_rate - min_sample_rate) / seekbar!!.max) + min_sample_rate
+                main.set_sample_rate(main.configuration.sample_rate)
+                main.save_configuration()
+            }
+        })
+
     }
 
     override fun onDestroyView() {

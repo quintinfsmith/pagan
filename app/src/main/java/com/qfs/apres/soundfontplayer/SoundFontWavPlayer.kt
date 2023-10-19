@@ -25,7 +25,6 @@ class SoundFontWavPlayer(var sample_rate: Int, private var sound_font: SoundFont
     class WaveGenerator(private var player: SoundFontWavPlayer) {
         class KilledException: Exception()
         class DeadException: Exception()
-
         var frame = 0
         var empty_chunks_count = 0
         var timestamp: Long = System.nanoTime()

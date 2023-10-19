@@ -232,7 +232,7 @@ class MainActivity : AppCompatActivity() {
             val sf_file = File(path)
             if (sf_file.exists()) {
                 this._soundfont = SoundFont(path)
-                this._midi_playback_device = SoundFontWavPlayer(SoundFontWavPlayer.calc_sample_rate(), this._soundfont!!)
+                this._midi_playback_device = SoundFontWavPlayer(this.configuration.sample_rate, this._soundfont!!)
                 this._midi_interface.connect_virtual_output_device(this._midi_playback_device!!)
             }
             this.update_channel_instruments()
@@ -395,10 +395,11 @@ class MainActivity : AppCompatActivity() {
     private fun playback_start_midi_device(start_point: Int = 0) {
         var opus_manager = this.get_opus_manager()
         val midi = opus_manager.get_midi(start_point)
-        this._midi_playback_device?.start_playback()
 
-        var mode = opus_manager.get_mode_simultaneous_notes()
-        Log.d("AAA", "Mode ON: ${mode.first} | ${mode.second * opus_manager.beat_count}")
+        if (this._midi_playback_device != null) {
+            var mode = opus_manager.get_mode_simultaneous_notes()
+            Log.d("AAA", "Mode ON: ${mode.first} | ${mode.second * opus_manager.beat_count}")
+        }
 
         thread {
             try {
@@ -758,7 +759,7 @@ class MainActivity : AppCompatActivity() {
         if (this._midi_playback_device != null) {
             this._midi_interface.disconnect_virtual_output_device(this._midi_playback_device!!)
         }
-        this._midi_playback_device = SoundFontWavPlayer(44100, this._soundfont!!)
+        this._midi_playback_device = SoundFontWavPlayer(this.configuration.sample_rate, this._soundfont!!)
         this._midi_interface.connect_virtual_output_device(this._midi_playback_device!!)
 
         this.update_channel_instruments()

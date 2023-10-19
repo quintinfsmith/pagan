@@ -60,6 +60,27 @@
         </LinearLayout>
 
         <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/label_settings_playback_quality"
+                    android:paddingStart="15dp"
+                    android:paddingTop="@dimen/normal_padding"
+                    android:paddingEnd="15dp" />
+
+                <SeekBar
+                    android:id="@+id/sbPlaybackQuality"
+                    android:text="@string/label_settings_playback_quality"
+                    android:max="5"
+                    android:min="0"
+                    android:layout_weight="1"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content" />
+        </LinearLayout>
+        <LinearLayout
             android:id="@+id/llRelativeEnabled"
             android:orientation="horizontal"
             android:layout_width="match_parent"
@@ -76,6 +97,7 @@
                     android:layout_height="48dp"/>
 
         </LinearLayout>
+
 
 
 </LinearLayout>

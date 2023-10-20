@@ -31,18 +31,18 @@ class AudioTrackHandle(sample_rate: Int, buffer_size: Int) {
         this.audio_track.play()
     }
     fun write(shorts: ShortArray) {
-        if (this.audio_track.state != AudioTrack.STATE_UNINITIALIZED) {
-            try {
-                this.audio_track.write(
-                    shorts,
-                    0,
-                    shorts.size,
-                    AudioTrack.WRITE_BLOCKING
-                )
-                this.audio_track.flush()
-            } catch (e: IllegalStateException) {
-                // Shouldn't need to do anything. the audio track was released and this should stop on its own
-            }
+        if (this.audio_track.playState != AudioTrack.PLAYSTATE_PLAYING) {
+            this.audio_track.play()
+        }
+        try {
+            this.audio_track.write(
+                shorts,
+                0,
+                shorts.size,
+                AudioTrack.WRITE_BLOCKING
+            )
+        } catch (e: IllegalStateException) {
+            // Shouldn't need to do anything. the audio track was released and this should stop on its own
         }
     }
     fun stop() {

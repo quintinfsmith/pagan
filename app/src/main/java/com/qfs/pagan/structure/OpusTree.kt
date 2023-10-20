@@ -695,4 +695,15 @@ class OpusTree<T> {
         }
         callback(this, this.event)
     }
+
+    fun is_eventless(): Boolean {
+        var has_event = false
+        this.traverse { _: OpusTree<T>, event: T? ->
+            if (event != null) {
+                has_event = true
+                return@traverse
+            }
+        }
+        return has_event
+    }
 }

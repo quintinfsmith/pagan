@@ -1452,24 +1452,40 @@ open class BaseLayer {
                             return@traverse
                         }
 
-                        var do_resize = true
-                        for (l in 1 until parent.size) {
-                            val test_tree = parent[l]
-                            if (test_tree.is_leaf() && !test_tree.is_event()) {
-                                continue
+                        if (tree.size > 1 && tree[0].is_event()) {
+                            for ((i, branch) in tree.divisions) {
+                                if (i == 0) {
+                                    continue
+                                }
+                                if (!branch.is_eventless()) {
+                                    return@traverse
+                                }
                             }
-                            do_resize = false
-                        }
 
-                        if (do_resize) {
-                            event.duration = max(1, event.duration / parent.size)
-                            if (parent == beat_tree) {
+                            if (tree == beat_tree) {
                                 this.replace_beat_tree(BeatKey(i, j, k), tree)
                             } else {
-                                parent.replace_with(tree)
+                                tree.replace_with(tree[0])
                             }
-
                         }
+
+                        //var do_resize = true
+                        //for (l in 1 until parent.size) {
+                        //    val test_tree = parent[l]
+                        //    if (test_tree.is_leaf() && !test_tree.is_event()) {
+                        //        continue
+                        //    }
+                        //    do_resize = false
+                        //}
+
+                        //if (do_resize) {
+                        //    event.duration = max(1, event.duration / parent.size)
+                        //    if (parent == beat_tree) {
+                        //        this.replace_beat_tree(BeatKey(i, j, k), tree)
+                        //    } else {
+                        //        parent.replace_with(tree)
+                        //    }
+                        //}
                     }
                 }
             }

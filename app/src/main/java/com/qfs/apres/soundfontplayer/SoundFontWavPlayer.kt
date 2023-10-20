@@ -2,7 +2,6 @@ package com.qfs.apres.soundfontplayer
 
 import android.media.AudioFormat
 import android.media.AudioTrack
-import android.util.Log
 import com.qfs.apres.VirtualMidiDevice
 import com.qfs.apres.event.AllSoundOff
 import com.qfs.apres.event.BankSelect
@@ -462,14 +461,17 @@ class SoundFontWavPlayer(var sample_rate: Int, private var sound_font: SoundFont
                         val chunk = chunks.removeAt(0)
                         audio_track_handle.write(chunk)
                     } else if (!flag_no_more_chunks) {
+                        this.play_drift += (BUFFER_NANO / 1_000_000).toInt()
                         pause_write = true
                         this.delay += 1
-                        Log.d("AAA", "Delay increased to ${this.delay}")
                     } else {
                         flag_writing = false
                         break
                     }
+                } else {
+                    this.play_drift += (BUFFER_NANO / 1_000_000).toInt()
                 }
+
                 val delta = System.nanoTime() - write_start_ts
                 val sleep = BUFFER_NANO - delta - 1
                 if (sleep > 0) {
@@ -502,7 +504,7 @@ class SoundFontWavPlayer(var sample_rate: Int, private var sound_font: SoundFont
     }
 
     fun get_delay(): Long {
-        return (((this.delay * this.buffer_size).toLong() * 1_000_000_000.toLong()) / this.sample_rate.toLong()) + (this.play_drift)
+        return (((this.delay * this.buffer_size).toLong() * 1_000.toLong()) / this.sample_rate.toLong()) + (this.play_drift)
     }
 }
 

@@ -427,43 +427,53 @@ class SoundFontWavPlayer(var sample_rate: Int, private var sound_font: SoundFont
             val chunks: MutableList<ShortArray> = mutableListOf()
 
             this.play_drift = 0
-            var flag_killed = false
+            var flag_writing = true
+            var flag_no_more_chunks = false
+            var pause_write = true
 
-            while (!flag_killed) {
+            thread {
+                while (!flag_no_more_chunks) {
+                    if (chunks.size < this.delay) {
+                        try {
+                            val chunk = this.wave_generator.generate()
+                            chunks.add(chunk)
+                        } catch (e: WaveGenerator.KilledException) {
+                            flag_no_more_chunks = true
+                            break
+                        } catch (e: WaveGenerator.DeadException) {
+                            flag_no_more_chunks = true
+                            break
+                        }
+                    } else if (!pause_write) {
+                        val sleep = BUFFER_NANO  / 2
+                        if (sleep > 0) {
+                            Thread.sleep(sleep / 1_000_000, (sleep % 1_000_000).toInt())
+                        }
+                    } else {
+                        pause_write = false
+                    }
+                }
+            }
+
+            while (flag_writing) {
                 val write_start_ts = System.nanoTime()
-                if (chunks.isNotEmpty()) {
-                    val chunk = chunks.removeAt(0)
-                    thread {
+                if (!pause_write) {
+                    if (chunks.isNotEmpty()) {
+                        val chunk = chunks.removeAt(0)
                         audio_track_handle.write(chunk)
+                    } else if (!flag_no_more_chunks) {
+                        pause_write = true
+                        this.delay += 1
+                        Log.d("AAA", "Delay increased to ${this.delay}")
+                    } else {
+                        flag_writing = false
+                        break
                     }
                 }
-
-                var delay_locked = this.delay - chunks.size > 1
-                try {
-                    for (i in chunks.size until this.delay) {
-                        val chunk = this.wave_generator.generate()
-                        chunks.add(chunk)
-                    }
-                } catch (e: WaveGenerator.KilledException) {
-                    flag_killed = true
-                } catch (e: WaveGenerator.DeadException) {
-                    flag_killed = true
-                }
-
-
                 val delta = System.nanoTime() - write_start_ts
                 val sleep = BUFFER_NANO - delta - 1
                 if (sleep > 0) {
                     Thread.sleep(sleep / 1_000_000, (sleep % 1_000_000).toInt())
-                } else {
-                    audio_track_handle.pause()
-                    if (!delay_locked) {
-                        val i =
-                            ceil((delta - BUFFER_NANO).toDouble() / BUFFER_NANO.toDouble()).toInt()
-                        Log.d("AAA", "delay += $i, ${chunks.size}")
-                        this.delay += i
-                    }
-                    this.play_drift -= (sleep / 1_000_000).toInt()
                 }
             }
 

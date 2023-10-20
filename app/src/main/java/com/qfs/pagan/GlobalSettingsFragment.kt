@@ -127,7 +127,7 @@ class GlobalSettingsFragment : PaganFragment() {
             override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) { }
             override fun onStartTrackingTouch(p0: SeekBar?) { }
             override fun onStopTrackingTouch(seekbar: SeekBar?) {
-                main.configuration.sample_rate = (seekbar!!.progress * (max_sample_rate - min_sample_rate) / seekbar!!.max) + min_sample_rate
+                main.configuration.sample_rate = (seekbar!!.progress * (max_sample_rate - min_sample_rate) / seekbar.max) + min_sample_rate
                 main.set_sample_rate(main.configuration.sample_rate)
                 main.save_configuration()
             }

@@ -1456,7 +1456,6 @@ open class BaseLayer {
                             }
                         }
 
-
                         tree[0].event!!.duration = max(1, tree[0].event!!.duration / tree.size)
 
                         if (tree == beat_tree) {

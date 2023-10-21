@@ -81,6 +81,9 @@ class SoundFontWavPlayer(var sample_rate: Int, private var sound_font: SoundFont
                                     handle.release_note()
                                 }
                             }
+                            is MIDIStop -> {
+                                throw KilledException()
+                            }
                             is AllSoundOff -> {
                                 for ((_, handles) in this.active_sample_handles) {
                                     for (handle in handles) {
@@ -255,7 +258,7 @@ class SoundFontWavPlayer(var sample_rate: Int, private var sound_font: SoundFont
     }
 
     var buffer_size = max(
-        sample_rate / 4, // 1/4 seconds. arbitrary but feels good enough
+        sample_rate / 8, // 1/4 seconds. arbitrary but feels good enough
         AudioTrack.getMinBufferSize(
             sample_rate,
             AudioFormat.ENCODING_PCM_16BIT,
@@ -284,7 +287,7 @@ class SoundFontWavPlayer(var sample_rate: Int, private var sound_font: SoundFont
     }
 
     override fun onMIDIStop(event: MIDIStop) {
-        this.stop()
+        this.kill()
         this.process_event(event)
     }
 
@@ -353,10 +356,11 @@ class SoundFontWavPlayer(var sample_rate: Int, private var sound_font: SoundFont
         this.wave_generator.process_event(event, this.delay)
     }
 
-    fun start_playback() {
+    fun start_playback(initial_delay: Int? = null) {
+        this.delay = initial_delay ?: this.delay
         if (this.stop_request == StopRequest.Neutral) {
             this.stop_request = StopRequest.Play
-            val audio_track_handle = AudioTrackHandle(this.sample_rate, this.buffer_size * 4)
+            val audio_track_handle = AudioTrackHandle(this.sample_rate, this.buffer_size)
             this.active_audio_track_handle = audio_track_handle
             this.wave_generator.clear()
 
@@ -482,7 +486,6 @@ class SoundFontWavPlayer(var sample_rate: Int, private var sound_font: SoundFont
             audio_track_handle.stop()
             this.active_audio_track_handle = null
             this.stop_request = StopRequest.Neutral
-            //this.delay = 1
             this.play_drift = 0
         }
     }

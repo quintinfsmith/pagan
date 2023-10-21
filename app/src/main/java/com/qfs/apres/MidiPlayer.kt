@@ -69,11 +69,8 @@ open class MidiPlayer: VirtualMidiDevice() {
         }
     }
 
-    override fun onMIDIStop(event: MIDIStop) {
-        this.stop()
-    }
-
     fun stop() {
+        this.sendEvent(MIDIStop())
         this.playing = false
     }
 }

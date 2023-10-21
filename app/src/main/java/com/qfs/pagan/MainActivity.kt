@@ -160,8 +160,12 @@ class MainActivity : AppCompatActivity() {
 
         val midi_observer = object: VirtualMidiDevice() {
             override fun onSongPositionPointer(event: SongPositionPointer) {
-                val delay = this@MainActivity._midi_playback_device?.get_delay() ?: 0
-                Thread.sleep(delay)
+                var delay = this@MainActivity._midi_playback_device?.get_delay() ?: 0
+                // Need to check the delay after every sleep to make sure the delay didn't change during the sleep
+                while (delay > 0) {
+                    Thread.sleep(delay)
+                    delay = (this@MainActivity._midi_playback_device?.get_delay() ?: 0) - delay
+                }
 
                 this@MainActivity.runOnUiThread {
                     if (this@MainActivity._midi_playback_device?.listening() ?: this@MainActivity._virtual_input_device.playing) {
@@ -384,6 +388,9 @@ class MainActivity : AppCompatActivity() {
         }
 
         this.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        if (this._midi_playback_device != null) {
+            this._midi_playback_device!!.start_playback(3)
+        }
         this.playback_start_midi_device(start_point)
         //if (this._midi_interface.output_devices_connected()) {
         //} else {
@@ -696,6 +703,9 @@ class MainActivity : AppCompatActivity() {
         }
 
         thread {
+            if (this._midi_playback_device != null) {
+                this._midi_playback_device!!.start_playback(1)
+            }
             this._midi_feedback_dispatcher.play_note(midi_channel, note)
         }
     }

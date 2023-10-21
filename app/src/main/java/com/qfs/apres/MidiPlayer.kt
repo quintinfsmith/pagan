@@ -6,7 +6,7 @@ import com.qfs.apres.event.MIDIStop
 import com.qfs.apres.event.SetTempo
 import com.qfs.apres.event.SongPositionPointer
 
-class MidiPlayer: VirtualMidiDevice() {
+class MidiPlayer: VirtualMidiInputDevice() {
     var playing = false
     fun play_midi(midi: Midi, callback: (() -> Unit)? = null) {
         if (this.playing) {
@@ -48,18 +48,18 @@ class MidiPlayer: VirtualMidiDevice() {
                     }
                 }
                 if (this@MidiPlayer.playing) {
-                    this@MidiPlayer.sendEvent(event)
+                    this@MidiPlayer.send_event(event)
                 }
             }
         }
 
         // if the song wasn't manually stopped, return to the start
         if (this.playing) {
-            this.sendEvent(SongPositionPointer(0))
+            this.send_event(SongPositionPointer(0))
         }
 
         for (i in 0 until 16) {
-            this.sendEvent(AllSoundOff(i))
+            this.send_event(AllSoundOff(i))
         }
 
         this.playing = false
@@ -70,7 +70,7 @@ class MidiPlayer: VirtualMidiDevice() {
     }
 
     fun stop() {
-        this.sendEvent(MIDIStop())
+        this.send_event(MIDIStop())
         this.playing = false
     }
 }

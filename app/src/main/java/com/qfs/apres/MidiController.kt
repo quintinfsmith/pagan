@@ -25,8 +25,8 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
         }
     }
 
-    var virtual_input_devices: MutableList<VirtualMidiDevice> = mutableListOf()
-    var virtual_output_devices: MutableList<VirtualMidiDevice> = mutableListOf()
+    var virtual_input_devices: MutableList<VirtualMidiInputDevice> = mutableListOf()
+    var virtual_output_devices: MutableList<VirtualMidiOutputDevice> = mutableListOf()
     var connected_input_ports = mutableListOf<MidiInputPort>()
     private val mapped_input_ports = HashMap<Int, MutableList<MidiInputPort>>()
     private val mapped_output_ports = HashMap<Int, MutableList<MidiOutputPort>>()
@@ -75,24 +75,24 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
         }
     }
 
-    fun connect_virtual_input_device(device: VirtualMidiDevice) {
+    fun connect_virtual_input_device(device: VirtualMidiInputDevice) {
         this.virtual_input_devices.add(device)
-        device.setMidiController(this)
+        device.set_midi_controller(this)
     }
 
-    fun disconnect_virtual_input_device(device: VirtualMidiDevice) {
+    fun disconnect_virtual_input_device(device: VirtualMidiInputDevice) {
         val index = this.virtual_input_devices.indexOf(device)
         if (index >= 0) {
             this.virtual_input_devices.removeAt(index)
         }
+        device.unset_midi_controller()
     }
 
-    fun connect_virtual_output_device(device: VirtualMidiDevice) {
+    fun connect_virtual_output_device(device: VirtualMidiOutputDevice) {
         this.virtual_output_devices.add(device)
-        device.setMidiController(this)
     }
 
-    fun disconnect_virtual_output_device(device: VirtualMidiDevice) {
+    fun disconnect_virtual_output_device(device: VirtualMidiOutputDevice) {
         val index = this.virtual_output_devices.indexOf(device)
         if (index >= 0) {
             this.virtual_output_devices.removeAt(index)

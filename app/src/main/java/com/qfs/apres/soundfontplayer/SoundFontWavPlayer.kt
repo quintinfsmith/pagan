@@ -2,7 +2,7 @@ package com.qfs.apres.soundfontplayer
 
 import android.media.AudioFormat
 import android.media.AudioTrack
-import com.qfs.apres.VirtualMidiDevice
+import com.qfs.apres.VirtualMidiOutputDevice
 import com.qfs.apres.event.AllSoundOff
 import com.qfs.apres.event.BankSelect
 import com.qfs.apres.event.MIDIEvent
@@ -20,7 +20,7 @@ import java.nio.IntBuffer
 import kotlin.concurrent.thread
 import kotlin.math.max
 
-class SoundFontWavPlayer(var sample_rate: Int, private var sound_font: SoundFont): VirtualMidiDevice() {
+class SoundFontWavPlayer(var sample_rate: Int, private var sound_font: SoundFont): VirtualMidiOutputDevice() {
     class WaveGenerator(private var player: SoundFontWavPlayer) {
         class KilledException: Exception()
         class DeadException: Exception()

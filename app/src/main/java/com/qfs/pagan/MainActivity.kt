@@ -40,7 +40,7 @@ import com.qfs.apres.InvalidMIDIFile
 import com.qfs.apres.Midi
 import com.qfs.apres.MidiController
 import com.qfs.apres.MidiPlayer
-import com.qfs.apres.VirtualMidiDevice
+import com.qfs.apres.VirtualMidiOutputDevice
 import com.qfs.apres.event.BankSelect
 import com.qfs.apres.event.ProgramChange
 import com.qfs.apres.event.SongPositionPointer
@@ -158,7 +158,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val midi_observer = object: VirtualMidiDevice() {
+        val midi_observer = object: VirtualMidiOutputDevice() {
             override fun onSongPositionPointer(event: SongPositionPointer) {
                 var delay = this@MainActivity._midi_playback_device?.get_delay() ?: 0
                 // Need to check the delay after every sleep to make sure the delay didn't change during the sleep

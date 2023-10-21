@@ -124,23 +124,7 @@ import com.qfs.apres.event.Volume
 import com.qfs.apres.event.VolumeLSB
 import com.qfs.apres.event.VolumeMSB
 
-abstract class VirtualMidiDevice {
-    private var midi_controller: MidiController? = null
-    fun setMidiController(controller: MidiController) {
-        this.midi_controller = controller
-    }
-
-    fun is_connected(): Boolean {
-        return this.midi_controller != null
-    }
-
-    fun sendEvent(event: MIDIEvent) {
-        // TODO: Throw error?
-        if (is_connected()) {
-            this.midi_controller!!.broadcast_event(event)
-        }
-    }
-
+abstract class VirtualMidiOutputDevice {
     fun receiveMessage(event: MIDIEvent) {
         when (event) {
             is SequenceNumber -> this.onSequenceNumber(event)

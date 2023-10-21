@@ -81,5 +81,4 @@ class ColumnLabelAdapter(editor_table: EditorTable) : RecyclerView.Adapter<Colum
         this.column_count = 0
         this.notifyItemRangeRemoved(0, count)
     }
-
 }

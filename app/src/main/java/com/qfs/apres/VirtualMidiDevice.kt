@@ -124,7 +124,7 @@ import com.qfs.apres.event.Volume
 import com.qfs.apres.event.VolumeLSB
 import com.qfs.apres.event.VolumeMSB
 
-open class VirtualMidiDevice {
+abstract class VirtualMidiDevice {
     private var midi_controller: MidiController? = null
     fun setMidiController(controller: MidiController) {
         this.midi_controller = controller

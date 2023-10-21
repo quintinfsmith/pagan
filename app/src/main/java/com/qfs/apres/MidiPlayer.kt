@@ -6,7 +6,7 @@ import com.qfs.apres.event.MIDIStop
 import com.qfs.apres.event.SetTempo
 import com.qfs.apres.event.SongPositionPointer
 
-open class MidiPlayer: VirtualMidiDevice() {
+class MidiPlayer: VirtualMidiDevice() {
     var playing = false
     fun play_midi(midi: Midi, callback: (() -> Unit)? = null) {
         if (this.playing) {

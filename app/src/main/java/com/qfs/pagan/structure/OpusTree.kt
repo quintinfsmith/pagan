@@ -704,6 +704,6 @@ class OpusTree<T> {
                 return@traverse
             }
         }
-        return has_event
+        return !has_event
     }
 }

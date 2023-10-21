@@ -1,10 +1,10 @@
 package com.qfs.pagan
 
-import com.qfs.pagan.opusmanager.OpusEvent
 import com.qfs.pagan.opusmanager.BeatKey
+import com.qfs.pagan.opusmanager.OpusEvent
 import com.qfs.pagan.structure.OpusTree
+import org.junit.Assert.assertEquals
 import org.junit.Test
-import org.junit.Assert.*
 import com.qfs.pagan.opusmanager.HistoryLayer as OpusManager
 
 class HistoryCacheUnitTest {
@@ -26,13 +26,13 @@ class HistoryCacheUnitTest {
 
        var manager = OpusManager()
        manager.new()
-       manager.split_tree(key, listOf(), 3)
+       manager.split_tree(key, listOf(), 2)
        manager.set_event(key, listOf(1), test_event)
        manager.remove(key, listOf(1))
        manager.apply_undo()
        assertEquals(
            "Failed to undo remove",
-           3,
+           2,
            manager.get_tree(key, listOf()).size,
        )
 

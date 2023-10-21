@@ -3,8 +3,10 @@ package com.qfs.pagan
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.OpusEvent
 import com.qfs.pagan.structure.OpusTree
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertThrows
 import org.junit.Test
-import org.junit.Assert.*
 import com.qfs.pagan.opusmanager.BaseLayer as OpusManager
 
 /**
@@ -39,17 +41,17 @@ class BaseLayerUnitTest {
         manager.new()
         assertEquals(
             "Percussion instrument wasn't correctly defaulted",
-            manager.DEFAULT_PERCUSSION,
+            OpusManager.DEFAULT_PERCUSSION,
             manager.get_percussion_instrument(0)
         )
 
         manager.set_percussion_channel(0)
-        manager.set_percussion_instrument(0, manager.DEFAULT_PERCUSSION + 1)
+        manager.set_percussion_instrument(0, OpusManager.DEFAULT_PERCUSSION + 1)
 
 
         assertEquals(
             "Percussion instrument wasn't set",
-            manager.DEFAULT_PERCUSSION + 1,
+            OpusManager.DEFAULT_PERCUSSION + 1,
             manager.get_percussion_instrument(0)
         )
     }

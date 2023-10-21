@@ -2,16 +2,13 @@ package com.qfs.apres
 
 import android.media.AudioFormat
 import android.media.AudioTrack
-import com.qfs.apres.event.NoteOff
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.soundfont.SoundFont
 import com.qfs.apres.soundfontplayer.SampleHandleGenerator
-import com.qfs.apres.soundfontplayer.SoundFontWavPlayer
 import io.mockk.every
-import io.mockk.mockk
 import io.mockk.mockkStatic
+import org.junit.Assert.assertEquals
 import org.junit.Test
-import org.junit.Assert.*
 
 class SoundFontPlayerUnitTest {
     fun get_soundfont(): SoundFont {
@@ -28,7 +25,7 @@ class SoundFontPlayerUnitTest {
             val preset = soundfont.get_preset(0,0)
             val preset_instrument = preset.get_instruments(test_on.note, test_on.velocity).first()
             val samples = preset_instrument.instrument!!.get_samples(test_on.note, test_on.velocity).toList()
-            var sample_handle_generator = SampleHandleGenerator()
+            var sample_handle_generator = SampleHandleGenerator(44100, 44100)
             sample_handle_generator.get(
                 test_on,
                 samples.first(),

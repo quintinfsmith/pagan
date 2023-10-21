@@ -1,5 +1,4 @@
 package com.qfs.pagan.opusmanager
-import android.util.Log
 import com.qfs.apres.Midi
 import com.qfs.apres.event.BankSelect
 import com.qfs.apres.event.NoteOff
@@ -37,7 +36,7 @@ open class BaseLayer {
     class IncompatibleChannelException(channel_old: Int, channel_new: Int) : Exception("Can't move lines into or out of the percussion channel ($channel_old -> $channel_new)")
 
     companion object {
-        private var DEFAULT_PERCUSSION: Int = 0
+        var DEFAULT_PERCUSSION: Int = 0
     }
 
     private var _channel_uuid_generator: Int = 0x00
@@ -1441,51 +1440,29 @@ open class BaseLayer {
         this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
             for (j in channel.lines.indices) {
                 for (k in 0 until this.beat_count) {
-                    val beat_tree = this.get_beat_tree(BeatKey(i, j, k))
+                    val beat_key = BeatKey(i, j, k)
+                    val beat_tree = this.get_beat_tree(beat_key)
                     beat_tree.traverse { tree: OpusTree<OpusEvent>, event: OpusEvent? ->
-                        if (event == null) {
+                        if (event != null || tree.size <= 1 || !tree[0].is_event()) {
                             return@traverse
                         }
 
-                        val parent = tree.parent ?: return@traverse
-                        if (tree.getIndex() != 0 || event.duration % parent.size != 0) {
-                            return@traverse
-                        }
-
-                        if (tree.size > 1 && tree[0].is_event()) {
-                            for ((i, branch) in tree.divisions) {
-                                if (i == 0) {
-                                    continue
-                                }
-                                if (!branch.is_eventless()) {
-                                    return@traverse
-                                }
+                        for ((l, branch) in tree.divisions) {
+                            if (l == 0) {
+                                continue
                             }
-
-                            if (tree == beat_tree) {
-                                this.replace_beat_tree(BeatKey(i, j, k), tree)
-                            } else {
-                                tree.replace_with(tree[0])
+                            if (!branch.is_eventless()) {
+                                return@traverse
                             }
                         }
 
-                        //var do_resize = true
-                        //for (l in 1 until parent.size) {
-                        //    val test_tree = parent[l]
-                        //    if (test_tree.is_leaf() && !test_tree.is_event()) {
-                        //        continue
-                        //    }
-                        //    do_resize = false
-                        //}
+                        tree[0].event!!.duration = max(1, tree[0].event!!.duration / tree.size)
 
-                        //if (do_resize) {
-                        //    event.duration = max(1, event.duration / parent.size)
-                        //    if (parent == beat_tree) {
-                        //        this.replace_beat_tree(BeatKey(i, j, k), tree)
-                        //    } else {
-                        //        parent.replace_with(tree)
-                        //    }
-                        //}
+                        if (tree == beat_tree) {
+                            this.replace_beat_tree(beat_key, tree[0])
+                        } else {
+                            tree.replace_with(tree[0])
+                        }
                     }
                 }
             }

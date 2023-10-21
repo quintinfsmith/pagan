@@ -478,19 +478,10 @@ open class HistoryLayer : LinksLayer() {
     }
 
     override fun remove(beat_key: BeatKey, position: List<Int>) {
-        this.remember {
-            val old_tree = this.get_tree(beat_key, position)
-
-            val parent_size = old_tree.parent!!.size
-            super.remove(beat_key, position)
-            this.push_to_history_stack(HistoryToken.INSERT_TREE, listOf(beat_key, position, old_tree))
-
-            // Pushing the replace_tree AFTER the target has been removed allows for HistoryToken.INSERT_TREE
-            // to be called on apply-history
-            if (parent_size == 2) {
-                val parent_position = position.toMutableList()
-                parent_position.removeLast()
-                this.push_replace_tree(beat_key, parent_position) {}
+        val old_tree = this.get_tree(beat_key, position.subList(0, position.size - 1)).copy()
+        this.push_replace_tree(beat_key, position.subList(0, position.size - 1), old_tree) {
+            this.forget {
+                super.remove(beat_key, position)
             }
         }
     }
@@ -543,7 +534,7 @@ open class HistoryLayer : LinksLayer() {
 
     override fun replace_tree(beat_key: BeatKey, position: List<Int>, tree: OpusTree<OpusEvent>) {
         this.remember {
-            this.push_replace_tree(beat_key, position, this.get_tree(beat_key, position).copy()) {
+            this.push_replace_tree(beat_key, position) {
                 super.replace_tree(beat_key, position, tree)
             }
         }
@@ -690,11 +681,10 @@ open class HistoryLayer : LinksLayer() {
     private fun push_remove(beat_key: BeatKey, position: List<Int>) {
         if (position.isNotEmpty()) {
             val stamp_position = position.toMutableList()
-            val parent = this.get_tree(beat_key, position).parent!!
+            val parent_position = position.subList(0, position.size - 1)
+            val parent = this.get_tree(beat_key, parent_position)
             if (stamp_position.last() >= parent.size - 1 && parent.size > 1) {
                 stamp_position[stamp_position.size - 1] = parent.size - 2
-            //} else if (parent.size <= 1) {
-                // Shouldn't be Possible
             }
             this.push_to_history_stack( HistoryToken.REMOVE, listOf(beat_key.copy(), position) )
         }
@@ -1014,6 +1004,11 @@ open class HistoryLayer : LinksLayer() {
                 }
             }
             throw real_exception
+        }
+    }
+    private fun <T> forget(callback: () -> T): T {
+        return this.history_cache.forget {
+            callback()
         }
     }
 }

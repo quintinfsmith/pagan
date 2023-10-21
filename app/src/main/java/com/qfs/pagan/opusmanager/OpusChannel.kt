@@ -78,7 +78,6 @@ class OpusChannel(var uuid: Int) {
         } else {
             tree.parent = null
         }
-
         if (position.isEmpty()) {
             this.lines[line].beats[beat] = tree
         }

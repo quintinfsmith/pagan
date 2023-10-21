@@ -1443,7 +1443,7 @@ open class BaseLayer {
                     val beat_key = BeatKey(i, j, k)
                     val beat_tree = this.get_beat_tree(beat_key)
                     beat_tree.traverse { tree: OpusTree<OpusEvent>, event: OpusEvent? ->
-                        if (event != null || tree.size <= 1 || !tree[0].is_event()) {
+                        if (event != null || tree.size <= 1 || !tree[0].is_event() || tree[0].event!!.duration < tree.size) {
                             return@traverse
                         }
 
@@ -1455,6 +1455,7 @@ open class BaseLayer {
                                 return@traverse
                             }
                         }
+
 
                         tree[0].event!!.duration = max(1, tree[0].event!!.duration / tree.size)
 

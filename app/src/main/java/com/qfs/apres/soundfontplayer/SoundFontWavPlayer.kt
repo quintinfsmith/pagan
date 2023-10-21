@@ -18,7 +18,6 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.nio.IntBuffer
 import kotlin.concurrent.thread
-import kotlin.math.ceil
 import kotlin.math.max
 
 class SoundFontWavPlayer(var sample_rate: Int, private var sound_font: SoundFont): VirtualMidiDevice() {

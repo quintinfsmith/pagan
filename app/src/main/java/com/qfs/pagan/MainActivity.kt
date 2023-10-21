@@ -9,7 +9,6 @@ import android.media.midi.MidiDeviceInfo
 import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
@@ -43,8 +42,6 @@ import com.qfs.apres.MidiController
 import com.qfs.apres.MidiPlayer
 import com.qfs.apres.VirtualMidiDevice
 import com.qfs.apres.event.BankSelect
-import com.qfs.apres.event.NoteOff
-import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event.ProgramChange
 import com.qfs.apres.event.SongPositionPointer
 import com.qfs.apres.soundfont.SoundFont
@@ -77,6 +74,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var _midi_interface: MidiController
     private var _soundfont: SoundFont? = null
     private var _midi_playback_device: SoundFontWavPlayer? = null
+    private var _midi_feedback_dispatcher = MidiFeedBackDispatcher()
 
     private lateinit var _app_bar_configuration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
@@ -187,6 +185,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
         this._midi_interface.connect_virtual_input_device(this._virtual_input_device)
+        this._midi_interface.connect_virtual_input_device(this._midi_feedback_dispatcher)
         this._midi_interface.connect_virtual_output_device(midi_observer)
 
         this.project_manager = ProjectManager(this.getExternalFilesDir(null).toString())
@@ -396,10 +395,10 @@ class MainActivity : AppCompatActivity() {
         var opus_manager = this.get_opus_manager()
         val midi = opus_manager.get_midi(start_point)
 
-        if (this._midi_playback_device != null) {
-            var mode = opus_manager.get_mode_simultaneous_notes()
-            Log.d("AAA", "Mode ON: ${mode.first} | ${mode.second * opus_manager.beat_count}")
-        }
+        //if (this._midi_playback_device != null) {
+        //    var mode = opus_manager.get_mode_simultaneous_notes()
+        //    Log.d("AAA", "Mode ON: ${mode.first} | ${mode.second * opus_manager.beat_count}")
+        //}
 
         thread {
             try {
@@ -697,9 +696,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         thread {
-            this._midi_interface.broadcast_event(NoteOn(midi_channel, note, velocity))
-            Thread.sleep(300)
-            this._midi_interface.broadcast_event(NoteOff(midi_channel, note, velocity))
+            this._midi_feedback_dispatcher.play_note(midi_channel, note)
         }
     }
 

@@ -232,6 +232,9 @@ class SoundFontWavPlayer(var sample_rate: Int, private var sound_font: SoundFont
     }
 
     companion object {
+        /*
+            Not in use right now. a half-assed attempt to estimate a decent sample rate
+         */
         fun calc_sample_rate(): Int {
             val target_nano = 70_000_000.toLong()
             val c = 6
@@ -256,14 +259,11 @@ class SoundFontWavPlayer(var sample_rate: Int, private var sound_font: SoundFont
         }
     }
 
-    var buffer_size = max(
-        sample_rate / 8, // 1/4 seconds. arbitrary but feels good enough
-        AudioTrack.getMinBufferSize(
-            sample_rate,
-            AudioFormat.ENCODING_PCM_16BIT,
-            AudioFormat.CHANNEL_OUT_STEREO
-        )
-    )
+    var buffer_size = AudioTrack.getMinBufferSize(
+        sample_rate,
+        AudioFormat.ENCODING_PCM_16BIT,
+        AudioFormat.CHANNEL_OUT_STEREO
+    ) * 2
     var SAMPLE_RATE_NANO = sample_rate.toFloat() / 1_000_000_000F
     var BUFFER_NANO = buffer_size.toLong() * 1_000_000_000.toLong() / sample_rate.toLong()
 
@@ -356,8 +356,8 @@ class SoundFontWavPlayer(var sample_rate: Int, private var sound_font: SoundFont
     }
 
     fun start_playback(initial_delay: Int? = null) {
-        this.delay = initial_delay ?: this.delay
         if (this.stop_request == StopRequest.Neutral) {
+            this.delay = initial_delay ?: this.delay
             this.stop_request = StopRequest.Play
             val audio_track_handle = AudioTrackHandle(this.sample_rate, this.buffer_size)
             this.active_audio_track_handle = audio_track_handle

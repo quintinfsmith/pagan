@@ -1,17 +1,16 @@
 package com.qfs.pagan
 
-import com.qfs.apres.soundfontplayer.SoundFontWavPlayer
-import kotlinx.serialization.json.Json
-import java.io.File
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import java.io.File
 
 @Serializable
 data class PaganConfiguration(
     var soundfont: String? = null,
     var relative_mode: Boolean = false,
-    var sample_rate: Int = SoundFontWavPlayer.calc_sample_rate()
+    var sample_rate: Int = 27562
 ) {
     companion object {
         fun from_path(path: String): PaganConfiguration {

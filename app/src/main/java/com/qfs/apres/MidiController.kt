@@ -12,6 +12,9 @@ import android.media.midi.MidiOutputPort
 import android.media.midi.MidiReceiver
 import android.os.Build
 import com.qfs.apres.event.MIDIEvent
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlin.concurrent.thread
 
 open class MidiController(var context: Context, var auto_connect: Boolean = true) {
@@ -30,6 +33,7 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
     var connected_input_ports = mutableListOf<MidiInputPort>()
     private val mapped_input_ports = HashMap<Int, MutableList<MidiInputPort>>()
     private val mapped_output_ports = HashMap<Int, MutableList<MidiOutputPort>>()
+    private val virtual_output_mutex = Mutex()
 
     init {
         val midi_manager_callback = object: MidiManager.DeviceCallback() {
@@ -89,21 +93,33 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
     }
 
     fun connect_virtual_output_device(device: VirtualMidiOutputDevice) {
-        this.virtual_output_devices.add(device)
+        runBlocking {
+            this@MidiController.virtual_output_mutex.withLock{
+                this@MidiController.virtual_output_devices.add(device)
+            }
+        }
     }
 
     fun disconnect_virtual_output_device(device: VirtualMidiOutputDevice) {
-        val index = this.virtual_output_devices.indexOf(device)
-        if (index >= 0) {
-            this.virtual_output_devices.removeAt(index)
+        runBlocking {
+            this@MidiController.virtual_output_mutex.withLock {
+                val index = this@MidiController.virtual_output_devices.indexOf(device)
+                if (index >= 0) {
+                    this@MidiController.virtual_output_devices.removeAt(index)
+                }
+            }
         }
     }
 
     fun broadcast_event(event: MIDIEvent) {
         // Rebroadcast to listening devices
-        for (device in this.virtual_output_devices) {
-            thread {
-                device.receiveMessage(event)
+        runBlocking {
+            this@MidiController.virtual_output_mutex.withLock {
+                for (device in this@MidiController.virtual_output_devices) {
+                    thread {
+                        device.receiveMessage(event)
+                    }
+                }
             }
         }
 

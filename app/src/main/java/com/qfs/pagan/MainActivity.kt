@@ -160,15 +160,17 @@ class MainActivity : AppCompatActivity() {
 
         val midi_observer = object: VirtualMidiOutputDevice() {
             override fun onSongPositionPointer(event: SongPositionPointer) {
-                var delay = this@MainActivity._midi_playback_device?.get_delay() ?: 0
-                // Need to check the delay after every sleep to make sure the delay didn't change during the sleep
-                while (delay > 0) {
-                    Thread.sleep(delay)
-                    delay = (this@MainActivity._midi_playback_device?.get_delay() ?: 0) - delay
+                if (!this@MainActivity._midi_interface.output_devices_connected()) {
+                    var delay = this@MainActivity._midi_playback_device?.get_delay() ?: 0
+                    // Need to check the delay after every sleep to make sure the delay didn't change during the sleep
+                    while (delay > 0) {
+                        Thread.sleep(delay)
+                        delay = (this@MainActivity._midi_playback_device?.get_delay() ?: 0) - delay
+                    }
                 }
 
                 this@MainActivity.runOnUiThread {
-                    if (this@MainActivity._midi_playback_device?.listening() ?: this@MainActivity._virtual_input_device.playing) {
+                    if (this@MainActivity._midi_playback_device?.listening() ?: this@MainActivity._virtual_input_device.playing || this@MainActivity._midi_interface.output_devices_connected()) {
                         this@MainActivity.get_opus_manager().cursor_select_column(event.beat, true)
                     }
                 }
@@ -177,20 +179,37 @@ class MainActivity : AppCompatActivity() {
 
         this._midi_interface = object: MidiController(this) {
             override fun onDeviceAdded(device_info: MidiDeviceInfo) {
-                this@MainActivity.runOnUiThread {
-                    this@MainActivity.update_menu_options()
+                thread {
+                    Thread.sleep(300) // kludge
+
+                    if (this@MainActivity._midi_playback_device != null) {
+                        this@MainActivity.playback_stop()
+                        this@MainActivity._midi_interface.disconnect_virtual_output_device(
+                            this@MainActivity._midi_playback_device!!
+                        )
+                    }
+
+                    this@MainActivity.runOnUiThread {
+                        this@MainActivity.update_menu_options()
+                    }
                 }
             }
             override fun onDeviceRemoved(device_info: MidiDeviceInfo) {
                 this@MainActivity.runOnUiThread {
-                    this@MainActivity.playback_stop()
-                    this@MainActivity.update_menu_options()
+                    if (!this@MainActivity._midi_interface.output_devices_connected()) {
+                        this@MainActivity.update_menu_options()
+                        this@MainActivity.playback_stop()
+                        if (this@MainActivity.configuration.soundfont != null) {
+                            this@MainActivity.set_soundfont(this@MainActivity.configuration.soundfont)
+                        }
+                    }
                 }
             }
         }
+
         this._midi_interface.connect_virtual_input_device(this._virtual_input_device)
         this._midi_interface.connect_virtual_input_device(this._midi_feedback_dispatcher)
-        this._midi_interface.connect_virtual_output_device(midi_observer)
+        this@MainActivity._midi_interface.connect_virtual_output_device(midi_observer)
 
         this.project_manager = ProjectManager(this.getExternalFilesDir(null).toString())
         // Move files from applicationInfo.data to externalfilesdir (pre v1.1.2 location)
@@ -213,6 +232,7 @@ class MainActivity : AppCompatActivity() {
             }
             old_config_file.delete()
         }
+
         this.configuration = PaganConfiguration.from_path(this._config_path)
         this.binding = ActivityMainBinding.inflate(this.layoutInflater)
         setContentView(this.binding.root)
@@ -229,14 +249,16 @@ class MainActivity : AppCompatActivity() {
         setupActionBarWithNavController(navController, this._app_bar_configuration)
 
         //////////////////////////////////////////
-        // TODO: clean up the file -> riff -> soundfont -> midi playback device process
         if (this.configuration.soundfont != null) {
             val path = "${this.getExternalFilesDir(null)}/SoundFonts/${this.configuration.soundfont}"
             val sf_file = File(path)
             if (sf_file.exists()) {
                 this._soundfont = SoundFont(path)
-                this._midi_playback_device = SoundFontWavPlayer(this.configuration.sample_rate, this._soundfont!!)
-                this._midi_interface.connect_virtual_output_device(this._midi_playback_device!!)
+                if (!this._midi_interface.output_devices_connected()) {
+                    this._midi_playback_device =
+                        SoundFontWavPlayer(this.configuration.sample_rate, this._soundfont!!)
+                    this._midi_interface.connect_virtual_output_device(this._midi_playback_device!!)
+                }
             }
             this.update_channel_instruments()
         }
@@ -421,26 +443,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
-    //private fun playback_start_soundfont_player(start_point: Int = 0) {
-    //    val midi = this.get_opus_manager().get_midi(start_point)
-    //    val beat_count = this.get_opus_manager().beat_count.toFloat()
-    //    this._playback_handle = this._midi_playback_device?.play(midi) {
-    //        if (it == 1F) { // Song is over, return to start state
-    //            this.runOnUiThread {
-    //                this.get_opus_manager().cursor_select_column(0, true)
-    //                this.playback_stop()
-    //            }
-    //        } else {
-    //            val position = ((beat_count - start_point) * it).toInt() + start_point
-    //            if (this.get_opus_manager().cursor.beat != position) {
-    //                this.runOnUiThread {
-    //                    this.get_opus_manager().cursor_select_column(position, true)
-    //                }
-    //            }
-    //        }
-    //    }
-    //}
 
     private fun playback_stop() {
         this.runOnUiThread {
@@ -1107,7 +1109,9 @@ class MainActivity : AppCompatActivity() {
         if (this._midi_playback_device != null) {
             this._midi_interface.disconnect_virtual_output_device(this._midi_playback_device!!)
         }
-        this._midi_playback_device = SoundFontWavPlayer(new_sample_rate, this._soundfont!!)
-        this._midi_interface.connect_virtual_output_device(this._midi_playback_device!!)
+        if (!this._midi_interface.output_devices_connected()) {
+            this._midi_playback_device = SoundFontWavPlayer(new_sample_rate, this._soundfont!!)
+            this._midi_interface.connect_virtual_output_device(this._midi_playback_device!!)
+        }
     }
 }

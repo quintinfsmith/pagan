@@ -313,7 +313,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             R.id.itmPlay -> {
-                if (this._midi_playback_device?.is_playing() ?: this._virtual_input_device.playing) {
+                if (this._midi_playback_device?.is_playing() ?: (this._midi_interface.output_devices_connected() && this._virtual_input_device.playing)) {
                    this.playback_stop()
                 } else {
                     this.playback_start()
@@ -685,12 +685,7 @@ class MainActivity : AppCompatActivity() {
             event_value + 21 + this._opus_manager.transpose
         }
 
-        thread {
-            if (this._midi_playback_device != null) {
-                this._midi_playback_device!!.start_playback()
-            }
-            this._midi_feedback_dispatcher.play_note(midi_channel, note)
-        }
+        this._midi_feedback_dispatcher.play_note(midi_channel, note)
     }
 
     fun import_project(path: String) {

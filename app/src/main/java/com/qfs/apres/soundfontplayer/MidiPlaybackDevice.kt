@@ -64,8 +64,13 @@ open class MidiPlaybackDevice(
             }
         }
 
+        // TODO: Only used by Active MidiAudioPlayer. Maybe shouldn't be *here*?
         fun process_event(event: MIDIEvent, delay: Int) {
-            val delta_nano = (System.nanoTime() - this.timestamp).toFloat()
+            val delta_nano = if (this.player.is_playing()) {
+                (System.nanoTime() - this.timestamp).toFloat()
+            } else {
+                0f
+            }
             val frame = (this.player.SAMPLE_RATE_NANO * delta_nano).toInt() + (delay * this.player.buffer_size)
             this.place_event(event, frame)
         }
@@ -94,11 +99,9 @@ open class MidiPlaybackDevice(
                         when (event) {
                             is NoteOn -> {
                                 var key_pair = Pair(event.channel, event.note)
-                                if (this.player.stop_request == StopRequest.Play) {
-                                    val preset = this.get_preset(event.channel) ?: continue
-                                    this.active_sample_handles[key_pair] =
-                                        this.player.gen_sample_handles(event, preset).toMutableSet()
-                                }
+                                val preset = this.get_preset(event.channel) ?: continue
+                                this.active_sample_handles[key_pair] =
+                                    this.player.gen_sample_handles(event, preset).toMutableSet()
                             }
                             is NoteOff -> {
                                 var key_pair = Pair(event.channel, event.note)
@@ -240,11 +243,6 @@ open class MidiPlaybackDevice(
                 this.empty_chunks_count = 0
             }
 
-            // Declare dead after 5 silent seconds
-            if (this.empty_chunks_count * this.player.buffer_size > this.player.sample_rate * 5 && this.active_sample_handles.isEmpty()) {
-                throw DeadException()
-            }
-
             return Pair(compressed_array, pointer_list)
         }
 
@@ -354,9 +352,7 @@ open class MidiPlaybackDevice(
     fun start_playback() {
         if (this.stop_request == StopRequest.Neutral) {
             this.stop_request = StopRequest.Play
-            val audio_track_handle = AudioTrackHandle(this.sample_rate, this.buffer_size)
-            this.active_audio_track_handle = audio_track_handle
-
+            this.active_audio_track_handle = AudioTrackHandle(this.sample_rate, this.buffer_size)
             this._start_play_loop()
         }
     }

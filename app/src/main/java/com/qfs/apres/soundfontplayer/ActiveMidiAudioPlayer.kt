@@ -19,7 +19,7 @@ class ActiveMidiAudioPlayer(sample_rate: Int, sound_font: SoundFont): MidiPlayba
         this.buffer_delay = 1
     }
     override fun onNoteOn(event: NoteOn) {
-        this.process_event(event) ?: return
+        this.process_event(event)
         this.start_playback() // Only starts if not already started
     }
 
@@ -49,9 +49,6 @@ class ActiveMidiAudioPlayer(sample_rate: Int, sound_font: SoundFont): MidiPlayba
     }
 
     private fun process_event(event: MIDIEvent) {
-        if (!this.is_playing()) {
-            return
-        }
         this.wave_generator.process_event(event, this.buffer_delay)
     }
 }

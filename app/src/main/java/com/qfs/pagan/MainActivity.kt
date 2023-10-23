@@ -45,7 +45,8 @@ import com.qfs.apres.event.BankSelect
 import com.qfs.apres.event.ProgramChange
 import com.qfs.apres.event.SongPositionPointer
 import com.qfs.apres.soundfont.SoundFont
-import com.qfs.apres.soundfontplayer.SoundFontWavPlayer
+import com.qfs.apres.soundfontplayer.ActiveMidiAudioPlayer
+import com.qfs.apres.soundfontplayer.CachedMidiAudioPlayer
 import com.qfs.pagan.databinding.ActivityMainBinding
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.encodeToString
@@ -73,7 +74,8 @@ class MainActivity : AppCompatActivity() {
     private var _virtual_input_device = MidiPlayer()
     private lateinit var _midi_interface: MidiController
     private var _soundfont: SoundFont? = null
-    private var _midi_playback_device: SoundFontWavPlayer? = null
+    private var _midi_playback_device: CachedMidiAudioPlayer? = null
+    private var _midi_feedback_device: ActiveMidiAudioPlayer? = null
     private var _midi_feedback_dispatcher = MidiFeedBackDispatcher()
 
     private lateinit var _app_bar_configuration: AppBarConfiguration
@@ -158,19 +160,10 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val midi_observer = object: VirtualMidiOutputDevice() {
+        val midi_observer = object: VirtualMidiOutputDevice {
             override fun onSongPositionPointer(event: SongPositionPointer) {
-                if (!this@MainActivity._midi_interface.output_devices_connected()) {
-                    var delay = this@MainActivity._midi_playback_device?.get_delay() ?: 0
-                    // Need to check the delay after every sleep to make sure the delay didn't change during the sleep
-                    while (delay > 0) {
-                        Thread.sleep(delay)
-                        delay = (this@MainActivity._midi_playback_device?.get_delay() ?: 0) - delay
-                    }
-                }
-
                 this@MainActivity.runOnUiThread {
-                    if (this@MainActivity._midi_playback_device?.listening() ?: this@MainActivity._virtual_input_device.playing || this@MainActivity._midi_interface.output_devices_connected()) {
+                    if (this@MainActivity._midi_playback_device?.is_playing() ?: this@MainActivity._virtual_input_device.playing || this@MainActivity._midi_interface.output_devices_connected()) {
                         this@MainActivity.get_opus_manager().cursor_select_column(event.beat, true)
                     }
                 }
@@ -182,10 +175,10 @@ class MainActivity : AppCompatActivity() {
                 thread {
                     Thread.sleep(300) // kludge
 
-                    if (this@MainActivity._midi_playback_device != null) {
+                    if (this@MainActivity._midi_feedback_device != null) {
                         this@MainActivity.playback_stop()
                         this@MainActivity._midi_interface.disconnect_virtual_output_device(
-                            this@MainActivity._midi_playback_device!!
+                            this@MainActivity._midi_feedback_device!!
                         )
                     }
 
@@ -255,9 +248,9 @@ class MainActivity : AppCompatActivity() {
             if (sf_file.exists()) {
                 this._soundfont = SoundFont(path)
                 if (!this._midi_interface.output_devices_connected()) {
-                    this._midi_playback_device =
-                        SoundFontWavPlayer(this.configuration.sample_rate, this._soundfont!!)
-                    this._midi_interface.connect_virtual_output_device(this._midi_playback_device!!)
+                    this._midi_playback_device = CachedMidiAudioPlayer(this.configuration.sample_rate, this._soundfont!!)
+                    this._midi_feedback_device = ActiveMidiAudioPlayer(11025, this._soundfont!!)
+                    this._midi_interface.connect_virtual_output_device(this._midi_feedback_device!!)
                 }
             }
             this.update_channel_instruments()
@@ -334,7 +327,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             R.id.itmPlay -> {
-                if (this._virtual_input_device.playing) {
+                if (this._midi_playback_device?.is_playing() ?: this._virtual_input_device.playing) {
                    this.playback_stop()
                 } else {
                     this.playback_start()
@@ -410,24 +403,22 @@ class MainActivity : AppCompatActivity() {
         }
 
         this.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        if (this._midi_playback_device != null) {
-            this._midi_playback_device!!.start_playback(3)
+        if (this._midi_interface.output_devices_connected()) {
+            this.playback_start_midi_device(start_point)
+        } else if (this._midi_playback_device != null) {
+            this.playback_start_precached(start_point)
         }
-        this.playback_start_midi_device(start_point)
-        //if (this._midi_interface.output_devices_connected()) {
-        //} else {
-        //    this.playback_start_soundfont_player(start_point)
-        //}
+    }
+
+    private fun playback_start_precached(start_beat: Int) {
+        thread {
+            this._midi_playback_device?.play_midi(this.get_opus_manager().get_midi(start_beat))
+        }
     }
 
     private fun playback_start_midi_device(start_point: Int = 0) {
         var opus_manager = this.get_opus_manager()
         val midi = opus_manager.get_midi(start_point)
-
-        //if (this._midi_playback_device != null) {
-        //    var mode = opus_manager.get_mode_simultaneous_notes()
-        //    Log.d("AAA", "Mode ON: ${mode.first} | ${mode.second * opus_manager.beat_count}")
-        //}
 
         thread {
             try {
@@ -453,6 +444,10 @@ class MainActivity : AppCompatActivity() {
 
         if (this._virtual_input_device.playing) {
             this._virtual_input_device.stop()
+        }
+
+        if (this._midi_playback_device != null) {
+            this._midi_playback_device!!.kill()
         }
 
         val blocker_view = this.findViewById<LinearLayout>(R.id.llClearOverlay) ?: return
@@ -706,7 +701,7 @@ class MainActivity : AppCompatActivity() {
 
         thread {
             if (this._midi_playback_device != null) {
-                this._midi_playback_device!!.start_playback(1)
+                this._midi_playback_device!!.start_playback()
             }
             this._midi_feedback_dispatcher.play_note(midi_channel, note)
         }
@@ -765,11 +760,12 @@ class MainActivity : AppCompatActivity() {
         this.configuration.soundfont = filename
         val path = "${this.getExternalFilesDir(null)}/SoundFonts/$filename"
         this._soundfont = SoundFont(path)
-        if (this._midi_playback_device != null) {
-            this._midi_interface.disconnect_virtual_output_device(this._midi_playback_device!!)
+        if (this._midi_feedback_device != null) {
+            this._midi_interface.disconnect_virtual_output_device(this._midi_feedback_device!!)
         }
-        this._midi_playback_device = SoundFontWavPlayer(this.configuration.sample_rate, this._soundfont!!)
-        this._midi_interface.connect_virtual_output_device(this._midi_playback_device!!)
+        this._midi_feedback_device = ActiveMidiAudioPlayer(11025, this._soundfont!!)
+        this._midi_playback_device = CachedMidiAudioPlayer(this.configuration.sample_rate, this._soundfont!!)
+        this._midi_interface.connect_virtual_output_device(this._midi_feedback_device!!)
 
         this.update_channel_instruments()
         val rvActiveChannels: ChannelOptionRecycler = this.findViewById(R.id.rvActiveChannels)
@@ -1106,12 +1102,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun set_sample_rate(new_sample_rate: Int) {
-        if (this._midi_playback_device != null) {
-            this._midi_interface.disconnect_virtual_output_device(this._midi_playback_device!!)
-        }
-        if (!this._midi_interface.output_devices_connected()) {
-            this._midi_playback_device = SoundFontWavPlayer(new_sample_rate, this._soundfont!!)
-            this._midi_interface.connect_virtual_output_device(this._midi_playback_device!!)
-        }
+        this._midi_playback_device?.kill()
+        this._midi_playback_device = CachedMidiAudioPlayer(new_sample_rate, this._soundfont!!)
     }
 }

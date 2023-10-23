@@ -124,7 +124,7 @@ import com.qfs.apres.event.Volume
 import com.qfs.apres.event.VolumeLSB
 import com.qfs.apres.event.VolumeMSB
 
-abstract class VirtualMidiOutputDevice {
+interface VirtualMidiOutputDevice {
     fun receiveMessage(event: MIDIEvent) {
         when (event) {
             is SequenceNumber -> this.onSequenceNumber(event)
@@ -253,126 +253,126 @@ abstract class VirtualMidiOutputDevice {
     }
 
     // abstract functions
-    open fun onSequenceNumber(event: SequenceNumber) { }
-    open fun onText(event: Text) { }
-    open fun onCopyRightNotice(event: CopyRightNotice) { }
-    open fun onTrackName(event: TrackName) { }
-    open fun onInstrumentName(event: InstrumentName) { }
-    open fun onLyric(event: Lyric) { }
-    open fun onMarker(event: Marker) { }
-    open fun onCuePoint(event: CuePoint) { }
-    open fun onEndOfTrack(event: EndOfTrack) { }
-    open fun onChannelPrefix(event: ChannelPrefix) { }
-    open fun onSetTempo(event: SetTempo) { }
-    open fun onSMPTEOffset(event: SMPTEOffset) { }
-    open fun onTimeSignature(event: TimeSignature) { }
-    open fun onKeySignature(event: KeySignature) { }
-    open fun onSequencerSpecific(event: SequencerSpecific) { }
-    open fun onNoteOn(event: NoteOn) { }
-    open fun onNoteOff(event: NoteOff) { }
-    open fun onPolyphonicKeyPressure(event: PolyphonicKeyPressure) { }
-    open fun onHoldPedal(event: HoldPedal) { }
-    open fun onPortamento(event: Portamento) { }
-    open fun onSustenuto(event: Sustenuto) { }
-    open fun onSoftPedal(event: SoftPedal) { }
-    open fun onLegato(event: Legato) { }
-    open fun onHold2Pedal(event: Hold2Pedal) { }
-    open fun onSoundVariation(event: SoundVariation) { }
-    open fun onSoundTimbre(event: SoundTimbre) { }
-    open fun onSoundReleaseTime(event: SoundReleaseTime) { }
-    open fun onSoundAttack(event: SoundAttack) { }
-    open fun onSoundBrightness(event: SoundBrightness) { }
-    open fun onSoundControl1(event: SoundControl1) { }
-    open fun onSoundControl2(event: SoundControl2) { }
-    open fun onSoundControl3(event: SoundControl3) { }
-    open fun onSoundControl4(event: SoundControl4) { }
-    open fun onSoundControl5(event: SoundControl5) { }
-    open fun onEffectsLevel(event: EffectsLevel) { }
-    open fun onTremuloLevel(event: TremuloLevel) { }
-    open fun onChorusLevel(event: ChorusLevel) { }
-    open fun onCelesteLevel(event: CelesteLevel) { }
-    open fun onPhaserLevel(event: PhaserLevel) { }
-    open fun onLocalControl(event: LocalControl) { }
-    open fun onMonophonicOperation(event: MonophonicOperation) { }
-    open fun onBankSelect(event: BankSelect) { }
-    open fun onBankSelectLSB(event: BankSelectLSB) { }
-    open fun onBankSelectMSB(event: BankSelectMSB) { }
-    open fun onModulationWheel(event: ModulationWheel) { }
-    open fun onModulationWheelLSB(event: ModulationWheelLSB) { }
-    open fun onModulationWheelMSB(event: ModulationWheelMSB) { }
-    open fun onBreathController(event: BreathController) { }
-    open fun onBreathControllerLSB(event: BreathControllerLSB) { }
-    open fun onBreathControllerMSB(event: BreathControllerMSB) { }
-    open fun onFootPedal(event: FootPedal) { }
-    open fun onFootPedalLSB(event: FootPedalLSB) { }
-    open fun onFootPedalMSB(event: FootPedalMSB) { }
-    open fun onPortamentoTime(event: PortamentoTime) { }
-    open fun onPortamentoTimeLSB(event: PortamentoTimeLSB) { }
-    open fun onPortamentoTimeMSB(event: PortamentoTimeMSB) { }
-    open fun onDataEntry(event: DataEntry) { }
-    open fun onDataEntryLSB(event: DataEntryLSB) { }
-    open fun onDataEntryMSB(event: DataEntryMSB) { }
-    open fun onVolume(event: Volume) { }
-    open fun onVolumeLSB(event: VolumeLSB) { }
-    open fun onVolumeMSB(event: VolumeMSB) { }
-    open fun onBalance(event: Balance) { }
-    open fun onBalanceLSB(event: BalanceLSB) { }
-    open fun onBalanceMSB(event: BalanceMSB) { }
-    open fun onPan(event: Pan) { }
-    open fun onPanLSB(event: PanLSB) { }
-    open fun onPanMSB(event: PanMSB) { }
-    open fun onExpression(event: Expression) { }
-    open fun onExpressionLSB(event: ExpressionLSB) { }
-    open fun onExpressionMSB(event: ExpressionMSB) { }
-    open fun onNonRegisteredParameterNumber(event: NonRegisteredParameterNumber) { }
-    open fun onNonRegisteredParameterNumberLSB(event: NonRegisteredParameterNumberLSB) { }
-    open fun onNonRegisteredParameterNumberMSB(event: NonRegisteredParameterNumberMSB) { }
-    open fun onRegisteredParameterNumber(event: RegisteredParameterNumber) { }
-    open fun onRegisteredParameterNumberLSB(event: RegisteredParameterNumberLSB) { }
-    open fun onRegisteredParameterNumberMSB(event: RegisteredParameterNumberMSB) { }
-    open fun onEffectControl1(event: EffectControl1) { }
-    open fun onEffectControl1LSB(event: EffectControl1LSB) { }
-    open fun onEffectControl1MSB(event: EffectControl1MSB) { }
-    open fun onEffectControl2(event: EffectControl2) { }
-    open fun onEffectControl2LSB(event: EffectControl2LSB) { }
-    open fun onEffectControl2MSB(event: EffectControl2MSB) { }
-    open fun onGeneralPurpose1(event: GeneralPurpose1) { }
-    open fun onGeneralPurpose1LSB(event: GeneralPurpose1LSB) { }
-    open fun onGeneralPurpose1MSB(event: GeneralPurpose1MSB) { }
-    open fun onGeneralPurpose2(event: GeneralPurpose2) { }
-    open fun onGeneralPurpose2LSB(event: GeneralPurpose2LSB) { }
-    open fun onGeneralPurpose2MSB(event: GeneralPurpose2MSB) { }
-    open fun onGeneralPurpose3(event: GeneralPurpose3) { }
-    open fun onGeneralPurpose3LSB(event: GeneralPurpose3LSB) { }
-    open fun onGeneralPurpose3MSB(event: GeneralPurpose3MSB) { }
-    open fun onGeneralPurpose4(event: GeneralPurpose4) { }
-    open fun onGeneralPurpose4LSB(event: GeneralPurpose4LSB) { }
-    open fun onGeneralPurpose4MSB(event: GeneralPurpose4MSB) { }
-    open fun onGeneralPurpose5(event: GeneralPurpose5) { }
-    open fun onGeneralPurpose6(event: GeneralPurpose6) { }
-    open fun onGeneralPurpose7(event: GeneralPurpose7) { }
-    open fun onGeneralPurpose8(event: GeneralPurpose8) { }
-    open fun onDataIncrement(event: DataIncrement) { }
-    open fun onDataDecrement(event: DataDecrement) { }
-    open fun onAllControllersOff(event: AllControllersOff) { }
-    open fun onAllNotesOff(event: AllNotesOff) { }
-    open fun onAllSoundOff(event: AllSoundOff) { }
-    open fun onOmniOff(event: OmniOff) { }
-    open fun onOmniOn(event: OmniOn) { }
-    open fun onPolyphonicOperation(event: PolyphonicOperation) { }
-    open fun onProgramChange(event: ProgramChange) { }
-    open fun onChannelPressure(event: ChannelPressure) { }
-    open fun onPitchWheelChange(event: PitchWheelChange) { }
-    open fun onSystemExclusive(event: SystemExclusive) { }
-    open fun onMTCQuarterFrame(event: MTCQuarterFrame) { }
-    open fun onSongPositionPointer(event: SongPositionPointer) { }
-    open fun onSongSelect(event: SongSelect) { }
-    open fun onTuneRequest(event: TuneRequest) { }
-    open fun onMIDIClock(event: MIDIClock) { }
-    open fun onMIDIStart(event: MIDIStart) { }
-    open fun onMIDIContinue(event: MIDIContinue) { }
-    open fun onMIDIStop(event: MIDIStop) { }
-    open fun onActiveSense(event: ActiveSense) { }
-    open fun onReset(event: Reset) { }
-    open fun onTimeCode(event: TimeCode) { }
+    fun onSequenceNumber(event: SequenceNumber) { }
+    fun onText(event: Text) { }
+    fun onCopyRightNotice(event: CopyRightNotice) { }
+    fun onTrackName(event: TrackName) { }
+    fun onInstrumentName(event: InstrumentName) { }
+    fun onLyric(event: Lyric) { }
+    fun onMarker(event: Marker) { }
+    fun onCuePoint(event: CuePoint) { }
+    fun onEndOfTrack(event: EndOfTrack) { }
+    fun onChannelPrefix(event: ChannelPrefix) { }
+    fun onSetTempo(event: SetTempo) { }
+    fun onSMPTEOffset(event: SMPTEOffset) { }
+    fun onTimeSignature(event: TimeSignature) { }
+    fun onKeySignature(event: KeySignature) { }
+    fun onSequencerSpecific(event: SequencerSpecific) { }
+    fun onNoteOn(event: NoteOn) { }
+    fun onNoteOff(event: NoteOff) { }
+    fun onPolyphonicKeyPressure(event: PolyphonicKeyPressure) { }
+    fun onHoldPedal(event: HoldPedal) { }
+    fun onPortamento(event: Portamento) { }
+    fun onSustenuto(event: Sustenuto) { }
+    fun onSoftPedal(event: SoftPedal) { }
+    fun onLegato(event: Legato) { }
+    fun onHold2Pedal(event: Hold2Pedal) { }
+    fun onSoundVariation(event: SoundVariation) { }
+    fun onSoundTimbre(event: SoundTimbre) { }
+    fun onSoundReleaseTime(event: SoundReleaseTime) { }
+    fun onSoundAttack(event: SoundAttack) { }
+    fun onSoundBrightness(event: SoundBrightness) { }
+    fun onSoundControl1(event: SoundControl1) { }
+    fun onSoundControl2(event: SoundControl2) { }
+    fun onSoundControl3(event: SoundControl3) { }
+    fun onSoundControl4(event: SoundControl4) { }
+    fun onSoundControl5(event: SoundControl5) { }
+    fun onEffectsLevel(event: EffectsLevel) { }
+    fun onTremuloLevel(event: TremuloLevel) { }
+    fun onChorusLevel(event: ChorusLevel) { }
+    fun onCelesteLevel(event: CelesteLevel) { }
+    fun onPhaserLevel(event: PhaserLevel) { }
+    fun onLocalControl(event: LocalControl) { }
+    fun onMonophonicOperation(event: MonophonicOperation) { }
+    fun onBankSelect(event: BankSelect) { }
+    fun onBankSelectLSB(event: BankSelectLSB) { }
+    fun onBankSelectMSB(event: BankSelectMSB) { }
+    fun onModulationWheel(event: ModulationWheel) { }
+    fun onModulationWheelLSB(event: ModulationWheelLSB) { }
+    fun onModulationWheelMSB(event: ModulationWheelMSB) { }
+    fun onBreathController(event: BreathController) { }
+    fun onBreathControllerLSB(event: BreathControllerLSB) { }
+    fun onBreathControllerMSB(event: BreathControllerMSB) { }
+    fun onFootPedal(event: FootPedal) { }
+    fun onFootPedalLSB(event: FootPedalLSB) { }
+    fun onFootPedalMSB(event: FootPedalMSB) { }
+    fun onPortamentoTime(event: PortamentoTime) { }
+    fun onPortamentoTimeLSB(event: PortamentoTimeLSB) { }
+    fun onPortamentoTimeMSB(event: PortamentoTimeMSB) { }
+    fun onDataEntry(event: DataEntry) { }
+    fun onDataEntryLSB(event: DataEntryLSB) { }
+    fun onDataEntryMSB(event: DataEntryMSB) { }
+    fun onVolume(event: Volume) { }
+    fun onVolumeLSB(event: VolumeLSB) { }
+    fun onVolumeMSB(event: VolumeMSB) { }
+    fun onBalance(event: Balance) { }
+    fun onBalanceLSB(event: BalanceLSB) { }
+    fun onBalanceMSB(event: BalanceMSB) { }
+    fun onPan(event: Pan) { }
+    fun onPanLSB(event: PanLSB) { }
+    fun onPanMSB(event: PanMSB) { }
+    fun onExpression(event: Expression) { }
+    fun onExpressionLSB(event: ExpressionLSB) { }
+    fun onExpressionMSB(event: ExpressionMSB) { }
+    fun onNonRegisteredParameterNumber(event: NonRegisteredParameterNumber) { }
+    fun onNonRegisteredParameterNumberLSB(event: NonRegisteredParameterNumberLSB) { }
+    fun onNonRegisteredParameterNumberMSB(event: NonRegisteredParameterNumberMSB) { }
+    fun onRegisteredParameterNumber(event: RegisteredParameterNumber) { }
+    fun onRegisteredParameterNumberLSB(event: RegisteredParameterNumberLSB) { }
+    fun onRegisteredParameterNumberMSB(event: RegisteredParameterNumberMSB) { }
+    fun onEffectControl1(event: EffectControl1) { }
+    fun onEffectControl1LSB(event: EffectControl1LSB) { }
+    fun onEffectControl1MSB(event: EffectControl1MSB) { }
+    fun onEffectControl2(event: EffectControl2) { }
+    fun onEffectControl2LSB(event: EffectControl2LSB) { }
+    fun onEffectControl2MSB(event: EffectControl2MSB) { }
+    fun onGeneralPurpose1(event: GeneralPurpose1) { }
+    fun onGeneralPurpose1LSB(event: GeneralPurpose1LSB) { }
+    fun onGeneralPurpose1MSB(event: GeneralPurpose1MSB) { }
+    fun onGeneralPurpose2(event: GeneralPurpose2) { }
+    fun onGeneralPurpose2LSB(event: GeneralPurpose2LSB) { }
+    fun onGeneralPurpose2MSB(event: GeneralPurpose2MSB) { }
+    fun onGeneralPurpose3(event: GeneralPurpose3) { }
+    fun onGeneralPurpose3LSB(event: GeneralPurpose3LSB) { }
+    fun onGeneralPurpose3MSB(event: GeneralPurpose3MSB) { }
+    fun onGeneralPurpose4(event: GeneralPurpose4) { }
+    fun onGeneralPurpose4LSB(event: GeneralPurpose4LSB) { }
+    fun onGeneralPurpose4MSB(event: GeneralPurpose4MSB) { }
+    fun onGeneralPurpose5(event: GeneralPurpose5) { }
+    fun onGeneralPurpose6(event: GeneralPurpose6) { }
+    fun onGeneralPurpose7(event: GeneralPurpose7) { }
+    fun onGeneralPurpose8(event: GeneralPurpose8) { }
+    fun onDataIncrement(event: DataIncrement) { }
+    fun onDataDecrement(event: DataDecrement) { }
+    fun onAllControllersOff(event: AllControllersOff) { }
+    fun onAllNotesOff(event: AllNotesOff) { }
+    fun onAllSoundOff(event: AllSoundOff) { }
+    fun onOmniOff(event: OmniOff) { }
+    fun onOmniOn(event: OmniOn) { }
+    fun onPolyphonicOperation(event: PolyphonicOperation) { }
+    fun onProgramChange(event: ProgramChange) { }
+    fun onChannelPressure(event: ChannelPressure) { }
+    fun onPitchWheelChange(event: PitchWheelChange) { }
+    fun onSystemExclusive(event: SystemExclusive) { }
+    fun onMTCQuarterFrame(event: MTCQuarterFrame) { }
+    fun onSongPositionPointer(event: SongPositionPointer) { }
+    fun onSongSelect(event: SongSelect) { }
+    fun onTuneRequest(event: TuneRequest) { }
+    fun onMIDIClock(event: MIDIClock) { }
+    fun onMIDIStart(event: MIDIStart) { }
+    fun onMIDIContinue(event: MIDIContinue) { }
+    fun onMIDIStop(event: MIDIStop) { }
+    fun onActiveSense(event: ActiveSense) { }
+    fun onReset(event: Reset) { }
+    fun onTimeCode(event: TimeCode) { }
 }

@@ -474,6 +474,7 @@ open class MidiPlaybackDevice(
             this.active_audio_track_handle = null
             this.stop_request = StopRequest.Neutral
             this.play_drift = 0
+            this.on_stop()
         }
     }
 
@@ -497,4 +498,6 @@ open class MidiPlaybackDevice(
         //return (((this.delay_limit * this.buffer_size).toLong() * 1_000.toLong()) / this.sample_rate.toLong()) + (this.play_drift)
         return this.play_drift.toLong()
     }
+
+    open fun on_stop() { }
 }

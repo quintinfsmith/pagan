@@ -207,7 +207,7 @@ class MainActivity : AppCompatActivity() {
         this.project_manager = ProjectManager(this.getExternalFilesDir(null).toString())
         // Move files from applicationInfo.data to externalfilesdir (pre v1.1.2 location)
         val old_projects_dir = File("${applicationInfo.dataDir}/projects")
-        if (old_projects_dir.isDirectory()) {
+        if (old_projects_dir.isDirectory) {
             for (f in old_projects_dir.listFiles()!!) {
                 val new_file_name = this.project_manager.get_new_path()
                 f.copyTo(File(new_file_name))
@@ -248,7 +248,13 @@ class MainActivity : AppCompatActivity() {
             if (sf_file.exists()) {
                 this._soundfont = SoundFont(path)
                 if (!this._midi_interface.output_devices_connected()) {
-                    this._midi_playback_device = CachedMidiAudioPlayer(this.configuration.sample_rate, this._soundfont!!)
+                    this._midi_playback_device = object : CachedMidiAudioPlayer(this@MainActivity.configuration.sample_rate, this@MainActivity._soundfont!!) {
+                        override fun on_stop() {
+                            this@MainActivity.runOnUiThread {
+                                this@MainActivity.playback_stop()
+                            }
+                        }
+                    }
                     this._midi_feedback_device = ActiveMidiAudioPlayer(11025, this._soundfont!!)
                     this._midi_interface.connect_virtual_output_device(this._midi_feedback_device!!)
                 }
@@ -764,7 +770,14 @@ class MainActivity : AppCompatActivity() {
             this._midi_interface.disconnect_virtual_output_device(this._midi_feedback_device!!)
         }
         this._midi_feedback_device = ActiveMidiAudioPlayer(11025, this._soundfont!!)
-        this._midi_playback_device = CachedMidiAudioPlayer(this.configuration.sample_rate, this._soundfont!!)
+        this._midi_playback_device = object: CachedMidiAudioPlayer(this@MainActivity.configuration.sample_rate, this@MainActivity._soundfont!!) {
+            override fun on_stop() {
+                this@MainActivity.runOnUiThread {
+                    this@MainActivity.playback_stop()
+                }
+            }
+        }
+
         this._midi_interface.connect_virtual_output_device(this._midi_feedback_device!!)
 
         this.update_channel_instruments()
@@ -1103,6 +1116,12 @@ class MainActivity : AppCompatActivity() {
 
     fun set_sample_rate(new_sample_rate: Int) {
         this._midi_playback_device?.kill()
-        this._midi_playback_device = CachedMidiAudioPlayer(new_sample_rate, this._soundfont!!)
+        this._midi_playback_device = object: CachedMidiAudioPlayer(new_sample_rate, this@MainActivity._soundfont!!) {
+            override fun on_stop() {
+                this@MainActivity.runOnUiThread {
+                    this@MainActivity.playback_stop()
+                }
+            }
+        }
     }
 }

@@ -15,6 +15,9 @@ class ActiveMidiAudioPlayer(sample_rate: Int, sound_font: SoundFont): MidiPlayba
     sample_rate = sample_rate,
     cache_size_limit = 1,
     sound_font = sound_font), VirtualMidiOutputDevice {
+    init {
+        this.buffer_delay = 1
+    }
     override fun onNoteOn(event: NoteOn) {
         this.process_event(event) ?: return
         this.start_playback() // Only starts if not already started

@@ -40,13 +40,10 @@ import com.qfs.apres.InvalidMIDIFile
 import com.qfs.apres.Midi
 import com.qfs.apres.MidiController
 import com.qfs.apres.MidiPlayer
-import com.qfs.apres.VirtualMidiOutputDevice
 import com.qfs.apres.event.BankSelect
 import com.qfs.apres.event.ProgramChange
-import com.qfs.apres.event.SongPositionPointer
 import com.qfs.apres.soundfont.SoundFont
 import com.qfs.apres.soundfontplayer.ActiveMidiAudioPlayer
-import com.qfs.apres.soundfontplayer.CachedMidiAudioPlayer
 import com.qfs.pagan.databinding.ActivityMainBinding
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.encodeToString
@@ -74,7 +71,7 @@ class MainActivity : AppCompatActivity() {
     private var _virtual_input_device = MidiPlayer()
     private lateinit var _midi_interface: MidiController
     private var _soundfont: SoundFont? = null
-    private var _midi_playback_device: CachedMidiAudioPlayer? = null
+    private var _midi_playback_device: PaganPlaybackDevice? = null
     private var _midi_feedback_device: ActiveMidiAudioPlayer? = null
     private var _midi_feedback_dispatcher = MidiFeedBackDispatcher()
 
@@ -160,16 +157,6 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val midi_observer = object: VirtualMidiOutputDevice {
-            override fun onSongPositionPointer(event: SongPositionPointer) {
-                this@MainActivity.runOnUiThread {
-                    if (this@MainActivity._midi_playback_device?.is_playing() ?: this@MainActivity._virtual_input_device.playing || this@MainActivity._midi_interface.output_devices_connected()) {
-                        this@MainActivity.get_opus_manager().cursor_select_column(event.beat, true)
-                    }
-                }
-            }
-        }
-
         this._midi_interface = object: MidiController(this) {
             override fun onDeviceAdded(device_info: MidiDeviceInfo) {
                 thread {
@@ -202,7 +189,6 @@ class MainActivity : AppCompatActivity() {
 
         this._midi_interface.connect_virtual_input_device(this._virtual_input_device)
         this._midi_interface.connect_virtual_input_device(this._midi_feedback_dispatcher)
-        this@MainActivity._midi_interface.connect_virtual_output_device(midi_observer)
 
         this.project_manager = ProjectManager(this.getExternalFilesDir(null).toString())
         // Move files from applicationInfo.data to externalfilesdir (pre v1.1.2 location)
@@ -248,13 +234,7 @@ class MainActivity : AppCompatActivity() {
             if (sf_file.exists()) {
                 this._soundfont = SoundFont(path)
                 if (!this._midi_interface.output_devices_connected()) {
-                    this._midi_playback_device = object : CachedMidiAudioPlayer(this@MainActivity.configuration.sample_rate, this@MainActivity._soundfont!!) {
-                        override fun on_stop() {
-                            this@MainActivity.runOnUiThread {
-                                this@MainActivity.playback_stop()
-                            }
-                        }
-                    }
+                    this._midi_playback_device = PaganPlaybackDevice(this)
                     this._midi_feedback_device = ActiveMidiAudioPlayer(11025, this._soundfont!!)
                     this._midi_interface.connect_virtual_output_device(this._midi_feedback_device!!)
                 }
@@ -441,7 +421,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun playback_stop() {
+    internal fun playback_stop() {
         this.runOnUiThread {
             val play_pause_button = this._options_menu?.findItem(R.id.itmPlay) ?: return@runOnUiThread
             play_pause_button.icon = ContextCompat.getDrawable(this, R.drawable.ic_baseline_play_arrow_24)
@@ -770,13 +750,7 @@ class MainActivity : AppCompatActivity() {
             this._midi_interface.disconnect_virtual_output_device(this._midi_feedback_device!!)
         }
         this._midi_feedback_device = ActiveMidiAudioPlayer(11025, this._soundfont!!)
-        this._midi_playback_device = object: CachedMidiAudioPlayer(this@MainActivity.configuration.sample_rate, this@MainActivity._soundfont!!) {
-            override fun on_stop() {
-                this@MainActivity.runOnUiThread {
-                    this@MainActivity.playback_stop()
-                }
-            }
-        }
+        this._midi_playback_device = PaganPlaybackDevice(this)
 
         this._midi_interface.connect_virtual_output_device(this._midi_feedback_device!!)
 
@@ -1115,13 +1089,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun set_sample_rate(new_sample_rate: Int) {
+        this.configuration.sample_rate = new_sample_rate
         this._midi_playback_device?.kill()
-        this._midi_playback_device = object: CachedMidiAudioPlayer(new_sample_rate, this@MainActivity._soundfont!!) {
-            override fun on_stop() {
-                this@MainActivity.runOnUiThread {
-                    this@MainActivity.playback_stop()
-                }
-            }
-        }
+        this._midi_playback_device = PaganPlaybackDevice(this)
     }
 }

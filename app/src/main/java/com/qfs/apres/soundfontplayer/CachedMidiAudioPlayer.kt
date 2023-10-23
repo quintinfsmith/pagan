@@ -29,12 +29,12 @@ open class CachedMidiAudioPlayer(sample_rate: Int, sound_font: SoundFont): MidiP
         }
         val tick_frame = (last_tick * frames_per_tick) + start_frame
         this.wave_generator.place_event(MIDIStop(), tick_frame)
-
     }
 
     fun play_midi(midi: Midi) {
         this.parse_midi(midi)
         this.start_playback()
     }
+
 }
 

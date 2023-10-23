@@ -9,6 +9,7 @@ import com.qfs.apres.event.MIDIStop
 import com.qfs.apres.event.NoteOff
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event.ProgramChange
+import com.qfs.apres.event.SongPositionPointer
 import com.qfs.apres.soundfont.Preset
 import com.qfs.apres.soundfont.SoundFont
 import kotlinx.coroutines.runBlocking
@@ -27,7 +28,7 @@ open class MidiPlaybackDevice(
             AudioFormat.CHANNEL_OUT_STEREO
         ),
         private var cache_size_limit: Int = 10, // (in frames) how many x the buffer size should be delayed
-        private var sound_font: SoundFont ) {
+        private var sound_font: SoundFont) {
 
     class WaveGenerator(private var player: MidiPlaybackDevice) {
         class KilledException: Exception()
@@ -50,8 +51,8 @@ open class MidiPlaybackDevice(
                     }
                 }
             }
-
         }
+
         fun place_event(event: MIDIEvent, frame: Int) {
             runBlocking {
                 this@WaveGenerator.event_mutex.withLock {
@@ -69,9 +70,10 @@ open class MidiPlaybackDevice(
             this.place_event(event, frame)
         }
 
-        fun generate(): ShortArray {
+        fun generate(): Pair<ShortArray, List<Pair<Int, Int>>> {
             val initial_array = IntArray(this.player.buffer_size * 2)
             val buffer = IntBuffer.wrap(initial_array)
+            val pointer_list = mutableListOf<Pair<Int, Int>>()
 
             var max_frame_value = 0
             var is_empty = true
@@ -119,6 +121,10 @@ open class MidiPlaybackDevice(
                             }
                             is BankSelect -> {
                                 this.player.select_bank(event.channel, event.value)
+                            }
+                            is SongPositionPointer -> {
+                                var millis = (f - this.frame) * 1_000 / this.player.sample_rate
+                                pointer_list.add(Pair(millis, event.beat))
                             }
                         }
                     }
@@ -239,7 +245,7 @@ open class MidiPlaybackDevice(
                 throw DeadException()
             }
 
-            return compressed_array
+            return Pair(compressed_array, pointer_list)
         }
 
         private fun get_preset(channel: Int): Preset? {
@@ -293,10 +299,10 @@ open class MidiPlaybackDevice(
     internal var wave_generator = WaveGenerator(this)
     private var active_audio_track_handle: AudioTrackHandle? = null
     private val loaded_presets = HashMap<Pair<Int, Int>, Preset>()
-    internal val preset_channel_map = HashMap<Int, Pair<Int, Int>>()
+    private val preset_channel_map = HashMap<Int, Pair<Int, Int>>()
     private val sample_handle_generator = SampleHandleGenerator(sample_rate, buffer_size)
     internal var stop_request = StopRequest.Neutral
-    internal var play_drift = 0
+    private var play_drift = 0
     var SAMPLE_RATE_NANO = sample_rate.toFloat() / 1_000_000_000F
     var BUFFER_NANO = buffer_size.toLong() * 1_000_000_000.toLong() / sample_rate.toLong()
 
@@ -414,7 +420,7 @@ open class MidiPlaybackDevice(
         val audio_track_handle = this.active_audio_track_handle!!
         thread {
             this.wave_generator.timestamp = System.nanoTime()
-            val chunks: MutableList<ShortArray> = mutableListOf()
+            val chunks: MutableList<Pair<ShortArray, List<Pair<Int, Int>>>> = mutableListOf()
 
             this.play_drift = 0
             var flag_writing = true
@@ -449,7 +455,15 @@ open class MidiPlaybackDevice(
                 val write_start_ts = System.nanoTime()
                 if (!pause_write) {
                     if (chunks.isNotEmpty()) {
-                        val chunk = chunks.removeAt(0)
+                        val (chunk, pointers) = chunks.removeAt(0)
+                        thread {
+                            for ((millis, beat) in pointers) {
+                                thread {
+                                    Thread.sleep(millis.toLong())
+                                    this.on_beat_signal(beat)
+                                }
+                            }
+                        }
                         audio_track_handle.write(chunk)
                     } else if (!flag_no_more_chunks) {
                         this.play_drift += (BUFFER_NANO / 1_000_000).toInt()
@@ -495,9 +509,9 @@ open class MidiPlaybackDevice(
     }
 
     fun get_delay(): Long {
-        //return (((this.delay_limit * this.buffer_size).toLong() * 1_000.toLong()) / this.sample_rate.toLong()) + (this.play_drift)
-        return this.play_drift.toLong()
+        return (((this.buffer_delay * this.buffer_size).toLong() * 1_000.toLong()) / this.sample_rate.toLong()) + (this.play_drift)
     }
 
     open fun on_stop() { }
+    open fun on_beat_signal(beat: Int) { }
 }

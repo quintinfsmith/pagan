@@ -1746,4 +1746,9 @@ open class BaseLayer {
         }
         return Pair(mode_press_count, mode_percentage)
     }
+
+    fun has_percussion(): Boolean {
+        var channel = this.channels[this.channels.size - 1]
+        return !channel.is_empty()
+    }
 }

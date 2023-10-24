@@ -90,14 +90,18 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         val opus_manager = this.get_opus_manager()
         val main_adapter = (this.main_recycler.adapter as ColumnRecyclerAdapter)
         val column_label_adapter = (this.column_label_recycler.adapter as ColumnLabelAdapter)
+
         for (beat in 0 until opus_manager.beat_count) {
             main_adapter.add_column(beat)
             column_label_adapter.add_column(beat)
         }
 
         val line_label_adapter = (this.line_label_recycler.adapter as LineLabelRecyclerAdapter)
-        for (y in 0 until opus_manager.get_total_line_count()) {
-            line_label_adapter.add_label(y)
+        var y = 0
+        opus_manager.get_visible_channels().forEach { channel: OpusChannel ->
+            channel.lines.forEach {
+                line_label_adapter.add_label(y++)
+            }
         }
     }
 
@@ -106,7 +110,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         val opus_manager = this.get_opus_manager()
         for (beat in 0 until opus_manager.beat_count) {
             this.column_width_map.add(mutableListOf<Int>())
-            opus_manager.channels.forEachIndexed { i: Int, channel: OpusChannel ->
+            opus_manager.get_visible_channels().forEachIndexed { i: Int, channel: OpusChannel ->
                 for (j in channel.lines.indices) {
                     val tree = opus_manager.get_beat_tree(BeatKey(i, j, beat))
                     if (tree.is_leaf()) {
@@ -220,7 +224,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     fun new_column(index: Int) {
         val opus_manager = this.get_opus_manager()
         val column = mutableListOf<Int>()
-        opus_manager.channels.forEachIndexed { i: Int, channel: OpusChannel ->
+        opus_manager.get_visible_channels().forEachIndexed { i: Int, channel: OpusChannel ->
             channel.lines.forEachIndexed { j: Int, line: OpusChannel.OpusLine ->
                 val tree = opus_manager.get_beat_tree(BeatKey(i, j, index))
                 if (tree.is_leaf()) {
@@ -309,7 +313,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             }
             OpusManagerCursor.CursorMode.Column -> {
                 var y = 0
-                opus_manager.channels.forEachIndexed { i: Int, channel: OpusChannel ->
+                opus_manager.get_visible_channels().forEachIndexed { i: Int, channel: OpusChannel ->
                     channel.lines.forEachIndexed { j: Int, line: OpusChannel.OpusLine ->
                         val cell_recycler = main_recycler_adapter.get_cell_recycler(opusManagerCursor.beat)
                         if (cell_recycler != null) {
@@ -519,5 +523,19 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
     fun get_first_visible_column_index(): Int {
         return (this.main_recycler.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
+    }
+
+    fun update_percussion_visibility() {
+        val main = this.get_activity()
+        val percussion_channel = this.get_opus_manager().channels.last()
+        if (main.configuration.show_percussion) {
+            for (i in 0 until percussion_channel.size) {
+                this.new_row(this.line_label_recycler.adapter!!.itemCount, percussion_channel.lines[i])
+            }
+        } else {
+            for (i in 0 until percussion_channel.size) {
+                this.remove_row(this.line_label_recycler.adapter!!.itemCount - 1)
+            }
+        }
     }
 }

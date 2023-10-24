@@ -132,7 +132,6 @@ class GlobalSettingsFragment : PaganFragment() {
                 main.save_configuration()
             }
         })
-
     }
 
     override fun onDestroyView() {

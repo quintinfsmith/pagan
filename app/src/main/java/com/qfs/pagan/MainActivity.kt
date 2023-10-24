@@ -1088,4 +1088,11 @@ class MainActivity : AppCompatActivity() {
         this._midi_playback_device?.kill()
         this._midi_playback_device = PaganPlaybackDevice(this)
     }
+
+    fun validate_percussion_visibility() {
+        val opus_manager = this.get_opus_manager()
+        if (!this.configuration.show_percussion && opus_manager.has_percussion()) {
+            this.configuration.show_percussion = true
+        }
+    }
 }

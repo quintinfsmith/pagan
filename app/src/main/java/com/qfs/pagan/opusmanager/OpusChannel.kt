@@ -169,6 +169,15 @@ class OpusChannel(var uuid: Int) {
         }
         return true
     }
+    fun is_empty(): Boolean {
+        for (i in 0 until this.lines.size) {
+            if (!this.line_is_empty(i)) {
+                return false
+            }
+        }
+
+        return true
+    }
 
     fun set_line_volume(line_offset: Int, volume: Int) {
         this.lines[line_offset].volume = volume

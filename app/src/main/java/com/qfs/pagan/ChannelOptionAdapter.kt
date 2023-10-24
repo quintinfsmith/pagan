@@ -75,14 +75,15 @@ class ChannelOptionAdapter(
         }
 
         val remove_button = holder.itemView.findViewById<TextView>(R.id.btnRemoveChannel)
-        remove_button.visibility = if (this._opus_manager.is_percussion(position)) {
-             View.GONE
+        if (this._opus_manager.is_percussion(position)) {
+            remove_button.text = this.get_percussion_visibility_button_text()
+            remove_button.setOnClickListener {
+                this.interact_btnTogglePercussionVisibility(remove_button)
+            }
         } else {
-            View.VISIBLE
-        }
-
-        remove_button.setOnClickListener {
-            this.interact_btnRemoveChannel(it)
+            remove_button.setOnClickListener {
+                this.interact_btnRemoveChannel(it)
+            }
         }
     }
 
@@ -109,8 +110,40 @@ class ChannelOptionAdapter(
         return x
     }
 
+    private fun get_percussion_visibility_button_text(): String {
+        val main = this.get_activity()
+        return if (main.configuration.show_percussion) {
+            "-"
+        } else {
+            "+"
+        }
+    }
+
+    private fun interact_btnTogglePercussionVisibility(view: TextView) {
+        val main = this.get_activity()
+        val opus_manager = main.get_opus_manager()
+        if (main.configuration.show_percussion) {
+            if (!opus_manager.has_percussion() && opus_manager.channels.size > 1) {
+                main.configuration.show_percussion = false
+            } else {
+                return
+            }
+        } else {
+            main.configuration.show_percussion = true
+        }
+
+        main.save_configuration()
+        view.text = this.get_percussion_visibility_button_text()
+        val editor_table = main.findViewById<EditorTable>(R.id.etEditorTable)
+        editor_table.update_percussion_visibility()
+    }
+
     private fun interact_btnRemoveChannel(view: View) {
         if (this._opus_manager.channels.size > 1) {
+            if (this._opus_manager.channels.size == 2) {
+                this.get_activity().configuration.show_percussion = true
+                this.get_activity().save_configuration()
+            }
             val x = this.get_view_channel(view)
             this._opus_manager.remove_channel(x)
         }

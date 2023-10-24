@@ -154,7 +154,9 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         //this.cursor_select_row(channel, line_offset ?: this.channels[channel].lines.size - 1)
 
         if (!this.simple_ui_locked()) {
-            this.get_editor_table()?.new_row(abs_offset, output)
+            if (!this.is_percussion(channel) || this.activity.configuration.show_percussion) {
+                this.get_editor_table()?.new_row(abs_offset, output)
+            }
         }
         return output
     }
@@ -322,6 +324,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         val new_path = this.activity.get_new_project_path()
         this.path = new_path
 
+        this.activity.validate_percussion_visibility()
         this.activity.update_menu_options()
         this.activity.setup_project_config_drawer()
         this.activity.loading_reticle_hide()
@@ -348,6 +351,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         }
 
         this.first_load_done = true
+        this.activity.validate_percussion_visibility()
         this.activity.update_menu_options()
         this.activity.setup_project_config_drawer()
         this.activity.loading_reticle_hide()
@@ -373,6 +377,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             throw e
         }
         this.first_load_done = true
+        this.activity.validate_percussion_visibility()
         this.activity.update_menu_options()
         this.activity.setup_project_config_drawer()
         this.activity.loading_reticle_hide()
@@ -402,6 +407,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         }
 
         this.first_load_done = true
+        this.activity.validate_percussion_visibility()
         this.activity.update_menu_options()
         this.activity.setup_project_config_drawer()
         this.activity.loading_reticle_hide()
@@ -1001,6 +1007,14 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             this.link_beats(beat_key, this.cursor.get_beatkey())
         } else {
             // TODO: Raise Error
+        }
+    }
+
+    fun get_visible_channels(): List<OpusChannel> {
+        return if (this.activity.configuration.show_percussion) {
+            this.channels
+        } else {
+            this.channels.subList(0, this.channels.size - 1)
         }
     }
 

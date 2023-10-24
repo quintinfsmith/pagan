@@ -29,8 +29,6 @@ class ColumnPlaceholder(var view_holder: ColumnRecyclerViewHolder, column_width:
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
         thread {
-            // Kludge
-            Thread.sleep(50)
             if (this.view_holder.bindingAdapterPosition != -1) {
                 val adapter = (this.view_holder.bindingAdapter as ColumnRecyclerAdapter)
                 val activity = adapter.get_activity()

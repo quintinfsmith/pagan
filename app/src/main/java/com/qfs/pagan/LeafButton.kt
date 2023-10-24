@@ -113,10 +113,6 @@ class LeafButton(
         val editor_table = this.get_editor_table() // Will need if overflow exception is passed
         if (opus_manager.cursor.is_linking) {
             try {
-                // KLUDGE to prevent refreshing drawablestate
-                // The parent cell layout will be redrawn and finishing the setPressed process
-                // isn't required, and can cause a crash
-                //(this.parent as ViewGroup).removeView(this)
                 this.invalid = true
 
                 opus_manager.link_beat(beat_key)

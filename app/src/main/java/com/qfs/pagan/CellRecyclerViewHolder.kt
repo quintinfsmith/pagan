@@ -48,7 +48,6 @@ class CellRecyclerViewHolder(context: Context): RecyclerView.ViewHolder(LinearLa
         val opus_manager = this.get_opus_manager()
         val y = this.get_y()
         return opus_manager.get_std_offset(y)
-
     }
 
     fun get_beat_key(): BeatKey {

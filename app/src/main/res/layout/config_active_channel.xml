@@ -26,6 +26,5 @@
         android:gravity="end"
         android:paddingStart="8dp"
         android:paddingEnd="8dp"
-        android:text="X" />
-
+        android:text="\u2715" />
 </LinearLayout>

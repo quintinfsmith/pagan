@@ -1,6 +1,5 @@
 package com.qfs.pagan
 
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
@@ -12,7 +11,7 @@ data class PaganConfiguration(
     var soundfont: String? = null,
     var relative_mode: Boolean = false,
     var sample_rate: Int = 27562,
-    var show_percussion: Boolean = false
+    var show_percussion: Boolean = true
 ) {
     companion object {
         fun from_path(path: String): PaganConfiguration {

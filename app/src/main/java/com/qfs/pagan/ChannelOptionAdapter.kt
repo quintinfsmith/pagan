@@ -113,9 +113,9 @@ class ChannelOptionAdapter(
     private fun get_percussion_visibility_button_text(): String {
         val main = this.get_activity()
         return if (main.configuration.show_percussion) {
-            "-"
+            "\u2611"
         } else {
-            "+"
+            "\u2610"
         }
     }
 
@@ -140,9 +140,12 @@ class ChannelOptionAdapter(
 
     private fun interact_btnRemoveChannel(view: View) {
         if (this._opus_manager.channels.size > 1) {
-            if (this._opus_manager.channels.size == 2) {
+            if (this._opus_manager.channels.size == 2 && !this.get_activity().configuration.show_percussion) {
                 this.get_activity().configuration.show_percussion = true
                 this.get_activity().save_configuration()
+                val editor_table = this.get_activity().findViewById<EditorTable>(R.id.etEditorTable)
+
+                editor_table.update_percussion_visibility()
             }
             val x = this.get_view_channel(view)
             this._opus_manager.remove_channel(x)

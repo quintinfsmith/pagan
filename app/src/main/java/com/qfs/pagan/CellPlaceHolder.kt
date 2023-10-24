@@ -31,8 +31,6 @@ class CellPlaceHolder(var view_holder: CellRecyclerViewHolder, column_width: Int
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
         thread {
-            // Kludge
-            Thread.sleep(10)
             if (this.view_holder.bindingAdapterPosition != -1) {
                 val adapter = (this.view_holder.bindingAdapter as CellRecyclerAdapter)
                 val activity = adapter.get_activity()

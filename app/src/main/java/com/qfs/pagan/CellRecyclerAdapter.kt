@@ -115,5 +115,4 @@ class CellRecyclerAdapter(initial_cell_count: Int = 0): RecyclerView.Adapter<Cel
         wrapper.removeAllViews()
         wrapper.addView(cell_layout)
     }
-
 }

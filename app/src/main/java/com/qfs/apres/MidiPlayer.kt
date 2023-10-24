@@ -56,6 +56,7 @@ class MidiPlayer: VirtualMidiInputDevice() {
         // if the song wasn't manually stopped, return to the start
         if (this.playing) {
             this.send_event(SongPositionPointer(0))
+            this.send_event(MIDIStop())
         }
 
         for (i in 0 until 16) {

@@ -55,16 +55,18 @@ class ChannelOptionAdapter(
         val curChannel = channels[position]
         val btnChooseInstrument: TextView = view.findViewById(R.id.btnChooseInstrument)
         val defaults = activity.resources.getStringArray(R.array.midi_instruments)
-        val label = this._supported_instruments[Pair(
-            curChannel.midi_bank,
-            curChannel.midi_program
-        )] ?: if (curChannel.midi_channel == 9) {
+        val key = Pair(curChannel.midi_bank, curChannel.midi_program)
+        val label = this._supported_instruments[key] ?: if (curChannel.midi_channel == 9) {
             activity.resources.getString(R.string.unknown_percussion)
         } else {
             activity.resources.getString(R.string.unknown_instrument, defaults[curChannel.midi_program])
         }
+        btnChooseInstrument.text = if (curChannel.midi_channel != 9) {
+            activity.getString(R.string.label_choose_instrument, position, label)
+        } else {
+            activity.getString(R.string.label_choose_instrument_percussion, label)
 
-        btnChooseInstrument.text = activity.getString(R.string.label_choose_instrument, position, label)
+        }
     }
 
     override fun onBindViewHolder(holder: ChannelOptionViewHolder, position: Int) {

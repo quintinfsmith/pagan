@@ -207,7 +207,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         // Cursors doesn't take into account changes to row count
         this.cursor_clear()
 
-
         val abs_line = this.get_abs_offset(channel, line_offset)
 
         val output = try {
@@ -220,28 +219,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             this.get_editor_table()?.remove_row(abs_line)
         }
 
-        val cursor = this.cursor
-        if (cursor.line_offset != 0 && cursor.line_offset == this.channels[cursor.channel].size) {
-            when (cursor.mode) {
-                OpusManagerCursor.CursorMode.Row -> {
-                    this.cursor_select_row(cursor.channel, cursor.line_offset - 1)
-                }
-                OpusManagerCursor.CursorMode.Single -> {
-                    val beat_key = this.cursor.get_beatkey()
-                    beat_key.line_offset -= 1
-
-                    this.cursor_select(
-                        beat_key,
-                        this.get_first_position(
-                            beat_key,
-                            listOf()
-                        )
-                    )
-                }
-                else -> {}
-            }
-        }
-
+        this.cursor_select_row(channel, max(0, line_offset - 1))
 
         this.activity.update_channel_instruments()
 

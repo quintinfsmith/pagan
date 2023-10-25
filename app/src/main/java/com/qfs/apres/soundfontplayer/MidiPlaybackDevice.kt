@@ -34,20 +34,20 @@ open class MidiPlaybackDevice(
         class KilledException: Exception()
         class DeadException: Exception()
         var frame = 0
-        var empty_chunks_count = 0
+        private var _empty_chunks_count = 0
         var timestamp: Long = System.nanoTime()
-        private var active_sample_handles = HashMap<Pair<Int, Int>, MutableSet<SampleHandle>>()
-        private var midi_events_by_frame = HashMap<Int, MutableList<MIDIEvent>>()
-        var event_mutex = Mutex()
+        private var _active_sample_handles = HashMap<Pair<Int, Int>, MutableSet<SampleHandle>>()
+        private var _midi_events_by_frame = HashMap<Int, MutableList<MIDIEvent>>()
+        private var _event_mutex = Mutex()
 
         fun place_events(events: List<MIDIEvent>, frame: Int) {
             runBlocking {
-                this@WaveGenerator.event_mutex.withLock {
-                    if (!this@WaveGenerator.midi_events_by_frame.containsKey(frame)) {
-                        this@WaveGenerator.midi_events_by_frame[frame] = mutableListOf()
+                this@WaveGenerator._event_mutex.withLock {
+                    if (!this@WaveGenerator._midi_events_by_frame.containsKey(frame)) {
+                        this@WaveGenerator._midi_events_by_frame[frame] = mutableListOf()
                     }
                     for (event in events) {
-                        this@WaveGenerator.midi_events_by_frame[frame]!!.add(event)
+                        this@WaveGenerator._midi_events_by_frame[frame]!!.add(event)
                     }
                 }
             }
@@ -55,11 +55,11 @@ open class MidiPlaybackDevice(
 
         fun place_event(event: MIDIEvent, frame: Int) {
             runBlocking {
-                this@WaveGenerator.event_mutex.withLock {
-                    if (!this@WaveGenerator.midi_events_by_frame.containsKey(frame)) {
-                        this@WaveGenerator.midi_events_by_frame[frame] = mutableListOf()
+                this@WaveGenerator._event_mutex.withLock {
+                    if (!this@WaveGenerator._midi_events_by_frame.containsKey(frame)) {
+                        this@WaveGenerator._midi_events_by_frame[frame] = mutableListOf()
                     }
-                    this@WaveGenerator.midi_events_by_frame[frame]!!.add(event)
+                    this@WaveGenerator._midi_events_by_frame[frame]!!.add(event)
                 }
             }
         }
@@ -88,24 +88,24 @@ open class MidiPlaybackDevice(
                 val f = this.frame + i
 
                 if (this.player.stop_request == StopRequest.Kill) {
-                    for ((_, handles) in this.active_sample_handles) {
+                    for ((_, handles) in this._active_sample_handles) {
                         for (handle in handles) {
                             handle.release_note()
                         }
                     }
                     throw KilledException()
-                } else if (this.midi_events_by_frame.containsKey(f)) {
-                    for (event in this.midi_events_by_frame[f]!!) {
+                } else if (this._midi_events_by_frame.containsKey(f)) {
+                    for (event in this._midi_events_by_frame[f]!!) {
                         when (event) {
                             is NoteOn -> {
                                 var key_pair = Pair(event.channel, event.note)
                                 val preset = this.get_preset(event.channel) ?: continue
-                                this.active_sample_handles[key_pair] =
+                                this._active_sample_handles[key_pair] =
                                     this.player.gen_sample_handles(event, preset).toMutableSet()
                             }
                             is NoteOff -> {
                                 var key_pair = Pair(event.channel, event.note)
-                                for (handle in this.active_sample_handles[key_pair] ?: continue) {
+                                for (handle in this._active_sample_handles[key_pair] ?: continue) {
                                     handle.release_note()
                                 }
                             }
@@ -113,7 +113,7 @@ open class MidiPlaybackDevice(
                                 throw KilledException()
                             }
                             is AllSoundOff -> {
-                                for ((_, handles) in this.active_sample_handles) {
+                                for ((_, handles) in this._active_sample_handles) {
                                     for (handle in handles) {
                                         handle.release_note()
                                     }
@@ -134,14 +134,14 @@ open class MidiPlaybackDevice(
                 }
 
                 runBlocking {
-                    this@WaveGenerator.event_mutex.withLock {
-                        this@WaveGenerator.midi_events_by_frame.remove(f)
+                    this@WaveGenerator._event_mutex.withLock {
+                        this@WaveGenerator._midi_events_by_frame.remove(f)
                     }
                 }
 
                 val keys_to_pop = mutableSetOf<Pair<Int, Int>>()
                 var overlap = 0
-                for ((key, sample_handles) in this.active_sample_handles) {
+                for ((key, sample_handles) in this._active_sample_handles) {
                     is_empty = false
                     overlap += 1
                     val to_kill = mutableSetOf<SampleHandle>()
@@ -193,16 +193,16 @@ open class MidiPlaybackDevice(
                     }
 
                     for (sample_handle in to_kill) {
-                        this.active_sample_handles[key]!!.remove(sample_handle)
+                        this._active_sample_handles[key]!!.remove(sample_handle)
                     }
 
-                    if (this.active_sample_handles[key]!!.isEmpty()) {
+                    if (this._active_sample_handles[key]!!.isEmpty()) {
                         keys_to_pop.add(key)
                     }
                 }
 
                 for (key in keys_to_pop) {
-                    this.active_sample_handles.remove(key)
+                    this._active_sample_handles.remove(key)
                 }
 
                 max_frame_value = max(
@@ -238,9 +238,9 @@ open class MidiPlaybackDevice(
             this.frame += this.player.buffer_size
 
             if (is_empty) {
-                this.empty_chunks_count += 1
+                this._empty_chunks_count += 1
             } else {
-                this.empty_chunks_count = 0
+                this._empty_chunks_count = 0
             }
 
             return Pair(compressed_array, pointer_list)
@@ -251,10 +251,10 @@ open class MidiPlaybackDevice(
         }
 
         fun clear() {
-            this.active_sample_handles.clear()
-            this.midi_events_by_frame.clear()
+            this._active_sample_handles.clear()
+            this._midi_events_by_frame.clear()
             this.frame = 0
-            this.empty_chunks_count = 0
+            this._empty_chunks_count = 0
         }
     }
 

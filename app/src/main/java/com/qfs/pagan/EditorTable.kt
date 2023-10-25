@@ -148,12 +148,13 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                 }
 
                 this.main_recycler.adapter!!.notifyItemChanged(i)
-                label_adapter.notifyItemChanged(i)
+                if (cell_recycler != null) {
+                    cell_recycler.adapter!!.notifyItemRangeChanged( y + 1, cell_recycler.adapter!!.itemCount )
+                }
             } else {
-                val cell_recycler =
-                    (this.main_recycler.adapter as ColumnRecyclerAdapter).get_cell_recycler(i)
-                        ?: continue
+                val cell_recycler = (this.main_recycler.adapter as ColumnRecyclerAdapter).get_cell_recycler(i) ?: continue
                 (cell_recycler.adapter!! as CellRecyclerAdapter).insert_cell(y)
+                cell_recycler.adapter!!.notifyItemRangeChanged(y + 1, cell_recycler.adapter!!.itemCount )
             }
         }
 
@@ -193,7 +194,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                 }
 
                 this.main_recycler.adapter!!.notifyItemChanged(i)
-                label_adapter.notifyItemChanged(i)
+                this.column_label_recycler.adapter!!.notifyItemChanged(i)
             } else {
                 val cell_recycler = (this.main_recycler.adapter as ColumnRecyclerAdapter).get_cell_recycler(i) ?: continue
                 (cell_recycler.adapter!! as CellRecyclerAdapter).remove_cell(y)
@@ -205,19 +206,40 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     }
 
     fun remove_channel_rows(y: Int, count: Int) {
-        for (i in count - 1 downTo 0) {
-            this.remove_row(y + i)
-        }
-        val layout = this.line_label_recycler.layoutManager as LinearLayoutManager
-        val last_visible_row = layout.findLastVisibleItemPosition()
+        val label_adapter = this.line_label_recycler.adapter as LineLabelRecyclerAdapter
+        for (i in 0 until this.column_width_map.size) {
+            val original_size = this.column_width_map[i].max()
+            for (j in 0 until count) {
+                this.column_width_map[i].removeAt(y)
+            }
 
-        if (y > last_visible_row) {
-            return
-        }
+            val new_size = this.column_width_map[i].max()
+            val cell_recycler = (this.main_recycler.adapter as ColumnRecyclerAdapter).get_cell_recycler(i)
+            if (new_size != original_size) {
+                if (cell_recycler != null) {
+                    (cell_recycler.adapter!! as CellRecyclerAdapter).clear()
+                }
 
-        (this.main_recycler.adapter as ColumnRecyclerAdapter).apply_to_visible_columns {
-            it.notifyItemRangeChanged(y, last_visible_row - y)
+                this.main_recycler.adapter!!.notifyItemChanged(i)
+                this.column_label_recycler.adapter!!.notifyItemChanged(i)
+            } else if (cell_recycler != null) {
+                for (j in 0 until count) {
+                    (cell_recycler.adapter!! as CellRecyclerAdapter).remove_cell(y)
+                }
+            } else {
+                continue
+            }
+            if (cell_recycler != null) {
+                cell_recycler.adapter!!.notifyItemRangeChanged(
+                    y,
+                    cell_recycler.adapter!!.itemCount
+                )
+            }
         }
+        for (j in 0 until count) {
+            label_adapter.remove_label(y)
+        }
+        label_adapter.notifyItemRangeChanged(y, label_adapter.itemCount)
     }
 
 

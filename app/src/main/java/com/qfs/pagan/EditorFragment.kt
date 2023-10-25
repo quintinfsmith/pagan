@@ -4,12 +4,17 @@ import android.app.AlertDialog
 import android.content.res.Configuration
 import android.os.Bundle
 import android.view.*
-import android.widget.*
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.SeekBar
+import android.widget.TextView
 import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
 import com.qfs.apres.InvalidMIDIFile
 import com.qfs.pagan.databinding.FragmentMainBinding
-import com.qfs.pagan.opusmanager.*
+import com.qfs.pagan.opusmanager.BaseLayer
+import com.qfs.pagan.opusmanager.BeatKey
+import com.qfs.pagan.opusmanager.OpusEvent
 import java.io.FileInputStream
 import java.lang.Integer.max
 import java.lang.Integer.min
@@ -399,7 +404,6 @@ class EditorFragment : PaganFragment() {
         } else {
             btnRemoveLine.setOnClickListener {
                 opus_manager.remove_line(1)
-                opus_manager.cursor_select_row(channel, max(0, line_offset - 1))
             }
 
             btnRemoveLine.setOnLongClickListener {

@@ -426,7 +426,7 @@ class MainActivity : AppCompatActivity() {
             val play_pause_button = this._options_menu?.findItem(R.id.itmPlay) ?: return@runOnUiThread
             play_pause_button.icon = ContextCompat.getDrawable(this, R.drawable.ic_baseline_play_arrow_24)
         }
-        this.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        this.window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
         if (this._virtual_input_device.playing) {
             this._virtual_input_device.stop()

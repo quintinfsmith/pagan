@@ -992,7 +992,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         return if (this.activity.configuration.show_percussion) {
             this.channels
         } else {
-            this.channels.subList(0, this.channels.size - 1)
+            this.channels.subList(0, max(this.channels.size - 1, 0))
         }
     }
 

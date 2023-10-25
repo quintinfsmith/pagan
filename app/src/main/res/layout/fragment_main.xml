@@ -14,9 +14,16 @@
         android:layout_weight="1"/>
 
     <LinearLayout
-        android:id="@+id/llContextMenu"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:paddingTop="@dimen/normal_padding"/>
+        android:background="?attr/table_lines"
+        android:paddingTop="@dimen/context_menu_border">
+        <LinearLayout
+            android:id="@+id/llContextMenu"
+            android:background="?attr/main_bg"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingTop="@dimen/normal_padding"/>
+    </LinearLayout>
 </LinearLayout>

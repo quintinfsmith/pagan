@@ -13,10 +13,20 @@ tools:context=".EditorFragment">
     android:layout_height="match_parent"
     android:layout_weight="1"/>
 
-<LinearLayout
-    android:id="@+id/llContextMenu"
-    android:layout_width="wrap_content"
-    android:layout_height="match_parent"
-    android:orientation="horizontal"
-    android:paddingTop="@dimen/normal_padding"/>
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:background="?attr/table_lines"
+        android:paddingStart="@dimen/context_menu_border">
+
+        <LinearLayout
+            android:id="@+id/llContextMenu"
+            android:background="?attr/main_bg"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:paddingTop="@dimen/normal_padding"
+            android:paddingBottom="@dimen/normal_padding"/>
+
+    </LinearLayout>
 </LinearLayout>

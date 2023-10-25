@@ -20,7 +20,7 @@ class AudioTrackHandle(sample_rate: Int, buffer_size: Int) {
                 .setChannelMask(AudioFormat.CHANNEL_OUT_STEREO)
                 .build()
         )
-        .setBufferSizeInBytes(buffer_size)
+        .setBufferSizeInBytes(buffer_size * 4)
         .build()
 
     fun pause() {

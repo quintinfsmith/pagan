@@ -366,7 +366,7 @@ class EditorFragment : PaganFragment() {
         val btnInsertLine = view.findViewById<ImageView>(R.id.btnInsertLine)
         val btnChoosePercussion: TextView = view.findViewById(R.id.btnChoosePercussion)
 
-        if (opus_manager.get_total_line_count() == 1) {
+        if (opus_manager.get_visible_line_count() == 1) {
             btnRemoveLine.visibility = View.GONE
         }
 

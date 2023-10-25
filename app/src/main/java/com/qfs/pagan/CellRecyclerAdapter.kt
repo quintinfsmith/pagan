@@ -18,8 +18,7 @@ class CellRecyclerAdapter(initial_cell_count: Int = 0): RecyclerView.Adapter<Cel
         this.cell_count = initial_cell_count
         this.registerAdapterDataObserver(
             object: RecyclerView.AdapterDataObserver() {
-                override fun onItemRangeInserted(start: Int, count: Int) {
-                }
+                override fun onItemRangeInserted(start: Int, count: Int) { }
                 override fun onItemRangeChanged(start: Int, count: Int) {
                     for (i in start until start + count) {
                         this@CellRecyclerAdapter.queued_changes.add(i)

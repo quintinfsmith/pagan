@@ -996,4 +996,14 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         }
     }
 
+    fun get_visible_line_count(): Int {
+        var total = 0
+        for (channel in this.get_visible_channels()) {
+            for (line in channel.lines) {
+                total += 1
+            }
+        }
+        return total
+    }
+
 }

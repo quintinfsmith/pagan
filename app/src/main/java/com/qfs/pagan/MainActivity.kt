@@ -235,7 +235,7 @@ class MainActivity : AppCompatActivity() {
                 this._soundfont = SoundFont(path)
                 if (!this._midi_interface.output_devices_connected()) {
                     this._midi_playback_device = PaganPlaybackDevice(this)
-                    this._midi_feedback_device = ActiveMidiAudioPlayer(11025, this._soundfont!!)
+                    this._midi_feedback_device = ActiveMidiAudioPlayer(22050, this._soundfont!!)
                     this._midi_interface.connect_virtual_output_device(this._midi_feedback_device!!)
                 }
             }

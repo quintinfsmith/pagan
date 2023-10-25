@@ -13,7 +13,7 @@ class CellRecycler(var view_holder: ColumnRecyclerViewHolder): ScrollLockingRecy
     class ColumnDetachedException: Exception()
     class CellDetachedException: Exception()
     init {
-        this.adapter = CellRecyclerAdapter(this.get_opus_manager().get_total_line_count())
+        this.adapter = CellRecyclerAdapter(this.get_opus_manager().get_visible_line_count())
         this.layoutManager = CellRecyclerLayoutManager(context, this)
         this.addOnScrollListener(this.get_scroll_listener())
 

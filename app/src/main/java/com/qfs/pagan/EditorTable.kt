@@ -149,12 +149,12 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
                 this.main_recycler.adapter!!.notifyItemChanged(i)
                 if (cell_recycler != null) {
-                    cell_recycler.adapter!!.notifyItemRangeChanged( y + 1, cell_recycler.adapter!!.itemCount )
+                    cell_recycler.adapter!!.notifyItemRangeChanged(y + 1, cell_recycler.adapter!!.itemCount)
                 }
             } else {
                 val cell_recycler = (this.main_recycler.adapter as ColumnRecyclerAdapter).get_cell_recycler(i) ?: continue
                 (cell_recycler.adapter!! as CellRecyclerAdapter).insert_cell(y)
-                cell_recycler.adapter!!.notifyItemRangeChanged(y + 1, cell_recycler.adapter!!.itemCount )
+                cell_recycler.adapter!!.notifyItemRangeChanged(y + 1, cell_recycler.adapter!!.itemCount)
             }
         }
 

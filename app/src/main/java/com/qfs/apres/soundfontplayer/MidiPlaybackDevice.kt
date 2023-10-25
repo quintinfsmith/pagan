@@ -298,6 +298,7 @@ open class MidiPlaybackDevice(
     private var active_audio_track_handle: AudioTrackHandle? = null
     private val loaded_presets = HashMap<Pair<Int, Int>, Preset>()
     private val preset_channel_map = HashMap<Int, Pair<Int, Int>>()
+    private val preset_channel_map_mutex = Mutex()
     private val sample_handle_generator = SampleHandleGenerator(sample_rate, buffer_size)
     internal var stop_request = StopRequest.Neutral
     private var play_drift = 0
@@ -344,8 +345,11 @@ open class MidiPlaybackDevice(
                 }
             }
         }
-
-        this.preset_channel_map[channel] = key
+        runBlocking {
+            this@MidiPlaybackDevice.preset_channel_map_mutex.withLock {
+                this@MidiPlaybackDevice.preset_channel_map[channel] = key
+            }
+        }
         this.decache_unused_presets()
     }
 
@@ -393,9 +397,14 @@ open class MidiPlaybackDevice(
 
     private fun decache_unused_presets() {
         val loaded_preset_keys = this.loaded_presets.keys.toMutableSet()
-        for ((_, key) in this.preset_channel_map) {
-            if (loaded_preset_keys.contains(key)) {
-                loaded_preset_keys.remove(key)
+        runBlocking {
+            this@MidiPlaybackDevice.preset_channel_map_mutex.withLock {
+                for ((_, key) in this@MidiPlaybackDevice.preset_channel_map) {
+                    if (loaded_preset_keys.contains(key)) {
+                        loaded_preset_keys.remove(key)
+                    }
+                }
+
             }
         }
 

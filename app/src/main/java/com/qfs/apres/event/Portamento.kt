@@ -1,5 +1,3 @@
 package com.qfs.apres.event
 
-class Portamento(channel: Int, value: Int): VariableControlChange(channel, value) {
-    override val controller = 0x41
-}
+class Portamento(channel: Int, value: Int): VariableControlChange(channel, 0x41, value)

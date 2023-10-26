@@ -1,24 +1,11 @@
 package com.qfs.apres.event
 
-data class ProgramChange(var channel: Int, var program: Int): MIDIEvent {
-    override fun as_bytes(): ByteArray {
-        return byteArrayOf(
-            (0xC0 or this.channel).toByte(),
-            this.program.toByte()
-        )
-    }
-
-    fun get_channel(): Int {
-        return this.channel
-    }
-    fun set_channel(channel: Int) {
-        this.channel = channel
-    }
-
+ class ProgramChange(channel: Int, program: Int): ChannelVoiceMessage(0xC0, channel, arrayOf<Int>(program)) {
     fun get_program(): Int {
-        return this.program
+        return this.get_data(0)
     }
+
     fun set_program(program: Int) {
-        this.program = program
+        this.set_data(0, program)
     }
 }

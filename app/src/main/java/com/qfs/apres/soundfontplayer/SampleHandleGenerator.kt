@@ -23,7 +23,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
     }
 
     fun cache_new(event: NoteOn, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset): MapKey {
-        val map_key = MapKey(event.note, sample.hashCode(), instrument.hashCode(), preset.hashCode())
+        val map_key = MapKey(event.get_note(), sample.hashCode(), instrument.hashCode(), preset.hashCode())
         if (!sample_data_map.contains(map_key)) {
             this.sample_data_map[map_key] = this.generate_new(event, sample, instrument, preset)
         }
@@ -40,7 +40,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
             var tuning_semi = (sample.tuning_semi ?: instrument.tuning_semi ?: preset.global_zone?.tuning_semi ?: 0).toFloat()
             tuning_semi += (tuning_cent + mod_env_pitch) / 100F
             val original_pitch = 2F.pow(original_note.toFloat() / 12F)
-            val required_pitch = 2F.pow((event.note.toFloat() + tuning_semi) / 12F)
+            val required_pitch = 2F.pow((event.get_note().toFloat() + tuning_semi) / 12F)
             pitch_shift = required_pitch / original_pitch
         }
 

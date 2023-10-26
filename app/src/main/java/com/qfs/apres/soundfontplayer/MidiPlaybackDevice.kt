@@ -98,13 +98,13 @@ open class MidiPlaybackDevice(
                     for (event in this._midi_events_by_frame[f]!!) {
                         when (event) {
                             is NoteOn -> {
-                                var key_pair = Pair(event.channel, event.note)
+                                var key_pair = Pair(event.channel, event.get_note())
                                 val preset = this.get_preset(event.channel) ?: continue
                                 this._active_sample_handles[key_pair] =
                                     this.player.gen_sample_handles(event, preset).toMutableSet()
                             }
                             is NoteOff -> {
-                                var key_pair = Pair(event.channel, event.note)
+                                var key_pair = Pair(event.channel, event.get_note())
                                 for (handle in this._active_sample_handles[key_pair] ?: continue) {
                                     handle.release_note()
                                 }
@@ -120,7 +120,7 @@ open class MidiPlaybackDevice(
                                 }
                             }
                             is ProgramChange -> {
-                                this.player.change_program(event.channel, event.program)
+                                this.player.change_program(event.channel, event.get_program())
                             }
                             is BankSelect -> {
                                 this.player.select_bank(event.channel, event.value)
@@ -366,17 +366,17 @@ open class MidiPlaybackDevice(
 
     private fun gen_sample_handles(event: NoteOn, preset: Preset): Set<SampleHandle> {
         val output = mutableSetOf<SampleHandle>()
-        val potential_instruments = preset.get_instruments(event.note, event.velocity)
+        val potential_instruments = preset.get_instruments(event.get_note(), event.get_velocity())
 
         for (p_instrument in potential_instruments) {
             val samples = p_instrument.instrument!!.get_samples(
-                event.note,
-                event.velocity
+                event.get_note(),
+                event.get_velocity()
             ).toList()
 
             for (sample in samples) {
                 val new_handle = this.sample_handle_generator.get(event, sample, p_instrument, preset)
-                new_handle.current_volume = (event.velocity.toDouble() / 128.toDouble()) * SampleHandle.MAXIMUM_VOLUME
+                new_handle.current_volume = (event.get_velocity().toDouble() / 128.toDouble()) * SampleHandle.MAXIMUM_VOLUME
                 output.add( new_handle )
             }
         }

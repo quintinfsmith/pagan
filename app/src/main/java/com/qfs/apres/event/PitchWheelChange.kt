@@ -1,37 +1,37 @@
 package com.qfs.apres.event
 
-data class PitchWheelChange(var channel: Int, var value: Float): MIDIEvent {
-    override fun as_bytes(): ByteArray {
-        val unsigned_value = this.get_unsigned_value()
-        val least = unsigned_value and 0x007F
-        val most = (unsigned_value shr 8) and 0x007F
-        return byteArrayOf(
-            (0xE0 or this.channel).toByte(),
-            least.toByte(),
-            most.toByte()
-        )
-    }
-
-    fun get_channel(): Int {
-        return this.channel
-    }
-    fun set_channel(channel: Int) {
-        this.channel = channel
-    }
-    fun get_value(): Float {
-        return this.value
-    }
-    fun set_value(value: Float) {
-        this.value = value
-    }
-
-    fun get_unsigned_value(): Int {
-        return if (this.value == 0.toFloat()) {
-            0x2000
-        } else if (this.value < 0) {
-            ((1.toFloat() + this.value) * 0x2000.toFloat()).toInt()
-        } else {
-            (this.value * 0x1FFF.toFloat()).toInt() + 0x2000
+class PitchWheelChange(channel: Int, value: Double): ChannelVoiceMessage(0xE0, channel, PitchWheelChange.to_ints(value))  {
+    companion object {
+        fun to_unsigned(value: Double): Int {
+            return if (value == 0.0) {
+                0x2000
+            } else if (value < 0) {
+                ((1.0 + value) * 0x2000.toDouble()).toInt()
+            } else {
+                (value * 0x1FFF.toDouble()).toInt() + 0x2000
+            }
         }
+        fun to_ints(value: Double): Array<Int> {
+            val unsigned_value = to_unsigned(value)
+            val least = unsigned_value and 0x007F
+            val most = (unsigned_value shr 8) and 0x007F
+            return arrayOf(least, most)
+        }
+        fun from_bytes(msb: Int, lsb: Int): Double {
+            val unsigned_value = ((msb and 0xFF) shl 8) + (lsb and 0xFF)
+            return ((unsigned_value.toDouble() * 2.0) / 0x3FFF.toDouble()) - 1
+        }
+    }
+
+    fun get_value(): Double {
+        val msb = this.get_data(1)
+        val lsb = this.get_data(0)
+        return PitchWheelChange.from_bytes(msb, lsb)
+    }
+
+    fun set_value(value: Double) {
+        var ints = PitchWheelChange.to_ints(value)
+        this.set_data(0, ints[0])
+        this.set_data(1, ints[1])
     }
 }

@@ -356,7 +356,8 @@ fun event_from_bytes(bytes: MutableList<Byte>, default: Byte): MIDIEvent? {
                         PolyphonicOperation(channel)
                     }
                     else -> {
-                        ControlChange(channel, controller, value)
+                        null
+                        //ControlChange(channel, controller, value)
                     }
                 }
             }
@@ -541,9 +542,7 @@ fun build_key_signature(mi: Byte, sf: Byte): KeySignature {
 }
 
 fun build_pitch_wheel_change(channel: Byte, lsb: Byte, msb: Byte): PitchWheelChange {
-    val unsigned_value = ((msb.toInt() and 0xFF) shl 8) + (lsb.toInt() and 0xFF)
-    val new_value: Float = ((unsigned_value.toFloat() * 2.toFloat()) / 0x3FFF.toFloat()) - 1
-    return PitchWheelChange(channel.toInt(), new_value)
+    return PitchWheelChange(channel.toInt(), PitchWheelChange.from_bytes(msb.toInt(), lsb.toInt()))
 }
 
 fun get_mi_sf(chord_name: String): Pair<Byte, Byte> {

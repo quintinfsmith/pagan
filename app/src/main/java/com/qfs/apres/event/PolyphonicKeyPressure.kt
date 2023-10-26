@@ -1,35 +1,19 @@
 package com.qfs.apres.event
 
-data class PolyphonicKeyPressure(var channel: Int, var note: Int, var velocity: Int): MIDIEvent {
-    override fun as_bytes(): ByteArray {
-        return byteArrayOf(
-            (0xA0 or this.channel).toByte(),
-            this.note.toByte(),
-            this.velocity.toByte()
-        )
-    }
-
-    fun get_channel(): Int {
-        return this.channel
-    }
-
+class PolyphonicKeyPressure(channel: Int, note: Int, velocity: Int): ChannelVoiceMessage(0xA0, channel, arrayOf<Int>(note, velocity)) {
     fun get_note(): Int {
-        return this.note
+        return this.get_data(0)
     }
 
     fun get_velocity(): Int {
-        return this.velocity
-    }
-
-    fun set_channel(channel: Int) {
-        this.channel = channel
+        return this.get_data(1)
     }
 
     fun set_note(note: Int) {
-        this.note = note
+        this.set_data(0, note)
     }
 
     fun set_velocity(velocity: Int) {
-        this.velocity = velocity
+        this.set_data(1, velocity)
     }
 }

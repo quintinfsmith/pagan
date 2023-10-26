@@ -1238,7 +1238,7 @@ open class BaseLayer {
                     tempo = event.get_bpm() * (denominator / 4)
                 }
             } else if (event is ProgramChange) {
-                instrument_map.add(Triple(event.channel, null, event.program))
+                instrument_map.add(Triple(event.channel, null, event.get_program()))
             } else if (event is BankSelect) {
                 instrument_map.add(Triple(event.channel, event.value, null))
             }

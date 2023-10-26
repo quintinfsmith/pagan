@@ -23,8 +23,8 @@ class SoundFontPlayerUnitTest {
             val soundfont = this.get_soundfont()
             val test_on = NoteOn(0, 64,64)
             val preset = soundfont.get_preset(0,0)
-            val preset_instrument = preset.get_instruments(test_on.note, test_on.velocity).first()
-            val samples = preset_instrument.instrument!!.get_samples(test_on.note, test_on.velocity).toList()
+            val preset_instrument = preset.get_instruments(test_on.get_note(), test_on.get_velocity()).first()
+            val samples = preset_instrument.instrument!!.get_samples(test_on.get_note(), test_on.get_velocity()).toList()
             var sample_handle_generator = SampleHandleGenerator(44100, 44100)
             sample_handle_generator.get(
                 test_on,

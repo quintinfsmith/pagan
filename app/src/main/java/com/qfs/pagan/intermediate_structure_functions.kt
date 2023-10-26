@@ -26,27 +26,27 @@ val SPECIAL_CHARS = listOf(CH_OPEN, CH_CLOSE, CH_NEXT, CH_ADD, CH_SUBTRACT, CH_U
 fun to_string(node: OpusTree<OpusEvent>, depth: Int = 0): String {
     var output: String
     if (node.is_event()) {
-        val event = node.get_event()!!
-        output = if (event.relative) {
+        val opus_event = node.get_event()!!
+        output = if (opus_event.relative) {
             var new_string: String
-            if (event.note == 0 || event.note % event.radix != 0) {
-                new_string = if (event.note < 0) {
+            if (opus_event.note == 0 || opus_event.note % opus_event.radix != 0) {
+                new_string = if (opus_event.note < 0) {
                     CH_SUBTRACT.toString()
                 } else {
                     CH_ADD.toString()
                 }
-                new_string += get_number_string(abs(event.note), event.radix, 1)
+                new_string += get_number_string(abs(opus_event.note), opus_event.radix, 1)
             } else {
-                new_string = if (event.note < 0) {
+                new_string = if (opus_event.note < 0) {
                     CH_DOWN.toString()
                 } else {
                     CH_UP.toString()
                 }
-                new_string += get_number_string(abs(event.note) / event.radix, event.radix, 1)
+                new_string += get_number_string(abs(opus_event.note) / opus_event.radix, opus_event.radix, 1)
             }
             new_string
         } else {
-            get_number_string(event.note, event.radix, 2)
+            get_number_string(opus_event.note, opus_event.radix, 2)
         }
     } else if (node.is_leaf()) {
         output = "__"
@@ -249,7 +249,7 @@ fun tree_from_midi(midi: Midi): OpusTree<Set<OpusEvent>> {
             )
 
             tree[inner_beat_offset].set_event(eventset)
-            press_map[event.note] = Pair(beat_index, inner_beat_offset)
+            press_map[event.get_note()] = Pair(beat_index, inner_beat_offset)
         } else if (event is TimeSignature) {
             total_beat_offset += (tick - last_ts_change) / beat_size
             last_ts_change = tick

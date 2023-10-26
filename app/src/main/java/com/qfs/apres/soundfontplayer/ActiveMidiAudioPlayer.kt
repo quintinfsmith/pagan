@@ -45,7 +45,7 @@ class ActiveMidiAudioPlayer(sample_rate: Int, sound_font: SoundFont): MidiPlayba
     }
 
     override fun onProgramChange(event: ProgramChange) {
-        this.change_program(event.channel, event.program)
+        this.change_program(event.get_channel(), event.get_program())
     }
 
     private fun process_event(event: MIDIEvent) {

@@ -9,6 +9,9 @@ open class CachedMidiAudioPlayer(sample_rate: Int, sound_font: SoundFont): MidiP
     sample_rate = sample_rate,
     cache_size_limit = 10,
     sound_font = sound_font) {
+    init {
+        this.buffer_delay = 5
+    }
     private fun parse_midi(midi: Midi) {
         var start_frame = this.wave_generator.frame
         var frames_per_tick = ((500_000 / midi.get_ppqn()) * this.sample_rate) / 1_000_000

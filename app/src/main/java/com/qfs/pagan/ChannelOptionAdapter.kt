@@ -56,11 +56,13 @@ class ChannelOptionAdapter(
         val btnChooseInstrument: TextView = view.findViewById(R.id.btnChooseInstrument)
         val defaults = activity.resources.getStringArray(R.array.midi_instruments)
         val key = Pair(curChannel.midi_bank, curChannel.midi_program)
+
         val label = this._supported_instruments[key] ?: if (curChannel.midi_channel == 9) {
             activity.resources.getString(R.string.unknown_percussion)
         } else {
             activity.resources.getString(R.string.unknown_instrument, defaults[curChannel.midi_program])
         }
+
         btnChooseInstrument.text = if (curChannel.midi_channel != 9) {
             activity.getString(R.string.label_choose_instrument, position, label)
         } else {
@@ -127,6 +129,7 @@ class ChannelOptionAdapter(
         if (main.configuration.show_percussion) {
             if (!opus_manager.has_percussion() && opus_manager.channels.size > 1) {
                 main.configuration.show_percussion = false
+                opus_manager.cursor_clear()
             } else {
                 return
             }

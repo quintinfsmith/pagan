@@ -296,6 +296,7 @@ open class MidiPlaybackDevice(
     var buffer_delay = 0
     internal var wave_generator = WaveGenerator(this)
     private var active_audio_track_handle: AudioTrackHandle? = null
+    private val loaded_presets_mutex = Mutex()
     private val loaded_presets = HashMap<Pair<Int, Int>, Preset>()
     private val preset_channel_map = HashMap<Int, Pair<Int, Int>>()
     private val preset_channel_map_mutex = Mutex()
@@ -324,28 +325,30 @@ open class MidiPlaybackDevice(
         }
 
         val key = Pair(bank, program)
-        if (this.loaded_presets[key] == null) {
-            this.loaded_presets[key] = try {
-                this.sound_font.get_preset(program, bank)
-            } catch (e: SoundFont.InvalidPresetIndex) {
-                if (channel == 9) {
-                    if (Pair(bank, 0) in this.loaded_presets) {
-                        this.loaded_presets[Pair(bank, 0)]!!
-                    } else {
-                        return
-                    }
-                } else {
-                    if (Pair(0, program) in this.loaded_presets) {
-                        this.loaded_presets[Pair(0, program)]!!
-                    } else if (Pair(0, 0) in this.loaded_presets) {
-                        this.loaded_presets[Pair(0, 0)]!!
-                    } else {
-                        return
+        runBlocking {
+            this@MidiPlaybackDevice.loaded_presets_mutex.withLock {
+                if (this@MidiPlaybackDevice.loaded_presets[key] == null) {
+                    this@MidiPlaybackDevice.loaded_presets[key] = try {
+                        this@MidiPlaybackDevice.sound_font.get_preset(program, bank)
+                    } catch (e: SoundFont.InvalidPresetIndex) {
+                        if (channel == 9) {
+                            if (Pair(bank, 0) in this@MidiPlaybackDevice.loaded_presets) {
+                                this@MidiPlaybackDevice.loaded_presets[Pair(bank, 0)]!!
+                            } else {
+                                return@withLock
+                            }
+                        } else {
+                            if (Pair(0, program) in this@MidiPlaybackDevice.loaded_presets) {
+                                this@MidiPlaybackDevice.loaded_presets[Pair(0, program)]!!
+                            } else if (Pair(0, 0) in this@MidiPlaybackDevice.loaded_presets) {
+                                this@MidiPlaybackDevice.loaded_presets[Pair(0, 0)]!!
+                            } else {
+                                return@withLock
+                            }
+                        }
                     }
                 }
             }
-        }
-        runBlocking {
             this@MidiPlaybackDevice.preset_channel_map_mutex.withLock {
                 this@MidiPlaybackDevice.preset_channel_map[channel] = key
             }
@@ -396,8 +399,10 @@ open class MidiPlaybackDevice(
     }
 
     private fun decache_unused_presets() {
-        val loaded_preset_keys = this.loaded_presets.keys.toMutableSet()
         runBlocking {
+            val loaded_preset_keys = this@MidiPlaybackDevice.loaded_presets_mutex.withLock {
+                this@MidiPlaybackDevice.loaded_presets.keys.toMutableSet()
+            }
             this@MidiPlaybackDevice.preset_channel_map_mutex.withLock {
                 for ((_, key) in this@MidiPlaybackDevice.preset_channel_map) {
                     if (loaded_preset_keys.contains(key)) {
@@ -406,12 +411,14 @@ open class MidiPlaybackDevice(
                 }
 
             }
-        }
 
-        for (key in loaded_preset_keys) {
-            val preset = this.loaded_presets[key]!!
-            this.sample_handle_generator.decache_sample_data(preset)
-            this.loaded_presets.remove(key)
+            this@MidiPlaybackDevice.loaded_presets_mutex.withLock {
+                for (key in loaded_preset_keys) {
+                    val preset = this@MidiPlaybackDevice.loaded_presets[key]!!
+                    this@MidiPlaybackDevice.sample_handle_generator.decache_sample_data(preset)
+                    this@MidiPlaybackDevice.loaded_presets.remove(key)
+                }
+            }
         }
     }
 

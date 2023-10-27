@@ -9,6 +9,7 @@ import android.media.midi.MidiDeviceInfo
 import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
@@ -357,6 +358,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun playback_start() {
+        thread {
+            Log.d("AAA", "WRiting")
+            this._midi_playback_device?.export_wav(
+                this.get_opus_manager().get_midi(0),
+                "${this.getExternalFilesDir(null).toString()}/test.wav"
+            )
+            Log.d("AAA", "WRitten")
+        }
+        return
         val blocker_view = this.findViewById<LinearLayout>(R.id.llClearOverlay)
         if (blocker_view != null) {
             blocker_view.visibility = View.VISIBLE

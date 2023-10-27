@@ -25,13 +25,13 @@ class Riff(private var file_path: String, init_callback: ((riff: Riff) -> Unit)?
 
     var list_chunks: MutableList<ListChunkHeader> = mutableListOf()
     var sub_chunks: MutableList<List<SubChunkHeader>> = mutableListOf()
-    private var input_stream: InputStream? = null
-    private var input_position: Int = 0
-    var read_mutex = Mutex()
+    private var _input_stream: InputStream? = null
+    private var _input_position: Int = 0
+    private var _read_mutex = Mutex()
 
     init {
         this.with {
-            var header_check = this.get_string(0, 4) // fourcc
+            val header_check = this.get_string(0, 4) // fourcc
             if (header_check != "RIFF") {
                 this.close_stream()
                 throw InvalidRiff(file_path)
@@ -79,23 +79,22 @@ class Riff(private var file_path: String, init_callback: ((riff: Riff) -> Unit)?
             if (init_callback != null) {
                 init_callback(this)
             }
-
         }
     }
 
     private fun open_stream() {
-        this.input_stream = FileInputStream(this.file_path)
+        this._input_stream = FileInputStream(this.file_path)
     }
 
     private fun close_stream() {
-        this.input_stream?.close()
-        this.input_position = 0
-        this.input_stream = null
+        this._input_stream?.close()
+        this._input_position = 0
+        this._input_stream = null
     }
 
     fun with(callback: (Riff) -> Unit) {
         runBlocking {
-            this@Riff.read_mutex.withLock {
+            this@Riff._read_mutex.withLock {
                 this@Riff.open_stream()
                 try {
                     callback(this@Riff)
@@ -153,25 +152,25 @@ class Riff(private var file_path: String, init_callback: ((riff: Riff) -> Unit)?
     }
 
     private fun move_to_offset(offset: Long) {
-        val stream: InputStream = this.input_stream ?: throw InputStreamClosed()
+        val stream: InputStream = this._input_stream ?: throw InputStreamClosed()
 
-        if (this.input_position < offset) {
-            stream.skip(offset - this.input_position)
+        if (this._input_position < offset) {
+            stream.skip(offset - this._input_position)
 
-        } else if (this.input_position > offset) {
+        } else if (this._input_position > offset) {
             this.close_stream()
             this.open_stream()
-            this.input_stream?.skip(offset)
+            this._input_stream?.skip(offset)
         }
-        this.input_position = offset.toInt()
+        this._input_position = offset.toInt()
     }
 
     private fun get_bytes(offset: Int, size: Int): ByteArray {
-        val stream: InputStream = this.input_stream ?: throw InputStreamClosed()
+        val stream: InputStream = this._input_stream ?: throw InputStreamClosed()
         this.move_to_offset(offset.toLong())
         val output = ByteArray(size)
-        this.input_stream?.read(output)
-        this.input_position += size
+        this._input_stream?.read(output)
+        this._input_position += size
         return output
     }
 

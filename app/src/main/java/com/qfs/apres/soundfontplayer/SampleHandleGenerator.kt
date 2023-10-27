@@ -1,5 +1,6 @@
 package com.qfs.apres.soundfontplayer
 import com.qfs.apres.event.NoteOn
+import com.qfs.apres.event2.NoteOn79
 import com.qfs.apres.soundfont.InstrumentSample
 import com.qfs.apres.soundfont.Preset
 import com.qfs.apres.soundfont.PresetInstrument
@@ -9,7 +10,7 @@ import kotlin.math.pow
 class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
     // Hash ignores velocity since velocity isn't baked into sample data
     data class MapKey(
-        var note: Int,
+        var index: Int,
         var sample: Int,
         var instrument: Int,
         var preset: Int
@@ -18,19 +19,25 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
     var sample_data_map = HashMap<MapKey, SampleHandle>()
 
     fun get(event: NoteOn, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset): SampleHandle {
-        val map_key = this.cache_new(event, sample, instrument, preset)
+        // set the key index to some hash of the note to allow for indexing byte note AS WELL as indexing by index
+        val map_key = this.cache_new(event.get_note() + 150, event.get_note(), 0, sample, instrument, preset)
         return SampleHandle(this.sample_data_map[map_key]!!)
     }
 
-    fun cache_new(event: NoteOn, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset): MapKey {
-        val map_key = MapKey(event.get_note(), sample.hashCode(), instrument.hashCode(), preset.hashCode())
+    fun get(event: NoteOn79, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset): SampleHandle {
+        val map_key = this.cache_new(event.index, event.note, event.bend, sample, instrument, preset)
+        return SampleHandle(this.sample_data_map[map_key]!!)
+    }
+
+    fun cache_new(index: Int, note: Int, bend: Int, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset): MapKey {
+        val map_key = MapKey(index, sample.hashCode(), instrument.hashCode(), preset.hashCode())
         if (!sample_data_map.contains(map_key)) {
-            this.sample_data_map[map_key] = this.generate_new(event, sample, instrument, preset)
+            this.sample_data_map[map_key] = this.generate_new(note, bend, sample, instrument, preset)
         }
         return map_key
     }
 
-    fun generate_new(event: NoteOn, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset): SampleHandle {
+    fun generate_new(note: Int, bend: Int, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset): SampleHandle {
         var pitch_shift = 1F
         val original_note = sample.root_key ?: sample.sample!!.originalPitch
         if (original_note != 255) {
@@ -40,7 +47,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
             var tuning_semi = (sample.tuning_semi ?: instrument.tuning_semi ?: preset.global_zone?.tuning_semi ?: 0).toFloat()
             tuning_semi += (tuning_cent + mod_env_pitch) / 100F
             val original_pitch = 2F.pow(original_note.toFloat() / 12F)
-            val required_pitch = 2F.pow((event.get_note().toFloat() + tuning_semi) / 12F)
+            val required_pitch = 2F.pow((note.toFloat() + tuning_semi + (bend / 512)) / 12F)
             pitch_shift = required_pitch / original_pitch
         }
 

@@ -1,6 +1,7 @@
 package com.qfs.pagan.opusmanager
 import com.qfs.apres.Midi
 import com.qfs.apres.event.BankSelect
+import com.qfs.apres.event.MIDIEvent
 import com.qfs.apres.event.NoteOff
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event.ProgramChange
@@ -16,6 +17,7 @@ import java.io.File
 import java.lang.Integer.max
 import java.lang.Integer.min
 import kotlin.math.ceil
+import kotlin.math.floor
 import kotlin.math.pow
 
 /**
@@ -808,6 +810,9 @@ open class BaseLayer {
     }
 
     open fun get_midi(start_beat: Int = 0, end_beat_rel: Int? = null): Midi {
+        data class StackItem(var tree: OpusTree<OpusEvent>, var divisions: Int, var offset: Int, var size: Int)
+        data class PseudoMidiEvent(var channel: Int, var note: Int, var bend: Int, var velocity: Int)
+
         val end_beat = if (end_beat_rel == null) {
             this.beat_count
         } else if (end_beat_rel < 0) {
@@ -815,32 +820,18 @@ open class BaseLayer {
         } else {
             end_beat_rel
         }
-        val tempo = this.tempo
-
         val midi = Midi()
+        midi.insert_event(0,0, SetTempo.from_bpm(this.tempo))
 
-        midi.insert_event(0,0, SetTempo.from_bpm(tempo))
-        data class StackItem(var tree: OpusTree<OpusEvent>, var divisions: Int, var offset: Int, var size: Int)
         val position_pointer_ticks = mutableSetOf<Pair<Int, Int>>()
+        val pseudo_midi_map = mutableListOf<Triple<Int, PseudoMidiEvent, Boolean>>()
         val max_tick = midi.get_ppqn() * (this.beat_count + 1)
 
-        this.channels.forEachIndexed { c, channel ->
-            midi.insert_event(
-                0,
-                0,
-                BankSelect(channel.midi_channel, channel.midi_bank)
-            )
-            midi.insert_event(
-                0,
-                0,
-                ProgramChange(channel.midi_channel, channel.midi_program)
-            )
-
-            for (l in 0 until channel.size) {
-                val line = channel.get_line(l)
+        this.channels.forEachIndexed { c: Int, channel: OpusChannel ->
+            channel.lines.forEachIndexed { l: Int, line: OpusChannel.OpusLine ->
                 var current_tick = 0
                 var prev_note = 0
-                line.beats.forEachIndexed { b, beat ->
+                line.beats.forEachIndexed { b: Int, beat: OpusTree<OpusEvent> ->
                     if (b in start_beat until end_beat) {
                         position_pointer_ticks.add(Pair(b, current_tick))
                     }
@@ -849,25 +840,53 @@ open class BaseLayer {
                         val current = stack.removeFirst()
                         if (current.tree.is_event()) {
                             val event = current.tree.get_event()!!
-                            val note = if (this.is_percussion(c)) { // Ignore the event data and use percussion map
-                                this.get_percussion_instrument(l) + 27
-                            } else if (event.relative) {
-                                event.note + prev_note
+                            val (note, bend) = if (this.is_percussion(c)) { // Ignore the event data and use percussion map
+                                Pair(this.get_percussion_instrument(l) + 27, 0)
                             } else {
-                                event.note + 21 + this.transpose
+                                var octave = event.note / event.radix
+                                var offset = event.note % event.radix
+                                var std_octave = octave * 12
+                                var std_offset = (offset.toDouble() * 12.0 / event.radix.toDouble())
+                                var bend = ((std_offset - floor(std_offset)) * 512.0).toInt()
+                                if (event.relative) {
+                                    var current_note = event.note + prev_note
+                                    prev_note = current_note
+
+                                    var octave = current_note / event.radix
+                                    var offset = current_note % event.radix
+                                    var std_octave = octave * 12
+                                    var std_offset = (offset.toDouble() * 12.0 / event.radix.toDouble())
+                                    var bend = ((std_offset - floor(std_offset)) * 512.0).toInt()
+
+                                    Pair((octave * 12) + std_offset.toInt() + 21 + this.transpose, bend)
+                                } else {
+                                    prev_note = event.note
+                                    var octave = event.note / event.radix
+                                    var offset = event.note % event.radix
+                                    var std_octave = octave * 12
+                                    var std_offset = (offset.toDouble() * 12.0 / event.radix.toDouble())
+                                    var bend = ((std_offset - floor(std_offset)) * 512.0).toInt()
+                                    Pair((octave * 12) + std_offset.toInt() + 21 + this.transpose, bend)
+                                }
                             }
 
                             if (!(b < start_beat || b >= end_beat)) {
-                                midi.insert_event(
-                                    0,
+                                var pseudo_event = PseudoMidiEvent(
+                                    channel.midi_channel,
+                                    note,
+                                    bend,
+                                    line.volume
+                                )
+                                pseudo_midi_map.add(Triple(
                                     current.offset,
-                                    NoteOn(channel.midi_channel, note, line.volume)
-                                )
-                                midi.insert_event(
-                                    0,
+                                    pseudo_event,
+                                    true
+                                ))
+                                pseudo_midi_map.add(Triple(
                                     min(current.offset + (current.size * event.duration), max_tick),
-                                    NoteOff(channel.midi_channel, note, line.volume)
-                                )
+                                    pseudo_event,
+                                    false
+                                ))
                             }
                             prev_note = note
                         } else if (!current.tree.is_leaf()) {
@@ -891,6 +910,20 @@ open class BaseLayer {
                 }
             }
         }
+
+        this.channels.forEachIndexed { c, channel ->
+            midi.insert_event(
+                0,
+                0,
+                BankSelect(channel.midi_channel, channel.midi_bank)
+            )
+            midi.insert_event(
+                0,
+                0,
+                ProgramChange(channel.midi_channel, channel.midi_program)
+            )
+        }
+
         for ((beat, tick) in position_pointer_ticks) {
             midi.insert_event(
                 0,
@@ -1658,7 +1691,7 @@ open class BaseLayer {
     }
 
     fun get_press_breakdown(): List<Pair<Double, Int>> {
-        var tick_map = mutableListOf<Pair<Double, Boolean>>()
+        val tick_map = mutableListOf<Pair<Double, Boolean>>()
         this.channels.forEach { channel: OpusChannel ->
             channel.lines.forEach { line: OpusChannel.OpusLine ->
                 line.beats.forEachIndexed { beat_index: Int, beat_tree: OpusTree<OpusEvent> ->
@@ -1674,6 +1707,7 @@ open class BaseLayer {
                             position.add(0, tmp_tree.getIndex()!!)
                             tmp_tree = tmp_tree.get_parent()!!
                         }
+
                         var position_scalar: Double = 0.0
                         tmp_tree = beat_tree
                         var running_size = 1

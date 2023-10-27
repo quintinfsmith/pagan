@@ -9,6 +9,8 @@ import com.qfs.apres.event.MIDIStop
 import com.qfs.apres.event.NoteOff
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event.ProgramChange
+import com.qfs.apres.event2.NoteOff79
+import com.qfs.apres.event2.NoteOn79
 import com.qfs.apres.soundfont.SoundFont
 
 class ActiveMidiAudioPlayer(sample_rate: Int, sound_font: SoundFont): MidiPlaybackDevice(
@@ -18,11 +20,18 @@ class ActiveMidiAudioPlayer(sample_rate: Int, sound_font: SoundFont): MidiPlayba
     init {
         this.buffer_delay = 1
     }
+    override fun onNoteOn79(event: NoteOn79) {
+        this.process_event(event)
+        this.start_playback() // Only starts if not already started
+    }
     override fun onNoteOn(event: NoteOn) {
         this.process_event(event)
         this.start_playback() // Only starts if not already started
     }
 
+    override fun onNoteOff79(event: NoteOff79) {
+        this.process_event(event)
+    }
     override fun onNoteOff(event: NoteOff) {
         this.process_event(event)
     }

@@ -5,6 +5,8 @@ import com.qfs.apres.event.MIDIEvent
 import com.qfs.apres.event.NoteOff
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event.SongPositionPointer
+import com.qfs.apres.event2.NoteOff79
+import com.qfs.apres.event2.NoteOn79
 import java.io.File
 import kotlin.experimental.or
 
@@ -335,7 +337,9 @@ class Midi {
                         working_pair.second.sortedBy {
                             return@sortedBy when (it) {
                                 is NoteOn -> { 1 }
+                                is NoteOn79 -> { 1 }
                                 is NoteOff -> { -1 }
+                                is NoteOff79 -> { -1 }
                                 is SongPositionPointer -> { -2 }
                                 else -> { 0 }
                             }
@@ -358,6 +362,8 @@ class Midi {
                         return@sortedBy when (it) {
                             is NoteOn -> { 1 }
                             is NoteOff -> { -1 }
+                            is NoteOn79 -> { 1 }
+                            is NoteOff79 -> { -1 }
                             else -> { 0 }
                         }
                     }

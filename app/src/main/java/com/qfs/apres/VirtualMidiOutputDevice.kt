@@ -123,6 +123,8 @@ import com.qfs.apres.event.TuneRequest
 import com.qfs.apres.event.Volume
 import com.qfs.apres.event.VolumeLSB
 import com.qfs.apres.event.VolumeMSB
+import com.qfs.apres.event2.NoteOff79
+import com.qfs.apres.event2.NoteOn79
 
 interface VirtualMidiOutputDevice {
     fun receiveMessage(event: MIDIEvent) {
@@ -249,6 +251,9 @@ interface VirtualMidiOutputDevice {
             is ActiveSense -> this.onActiveSense(event)
             is Reset -> this.onReset(event)
             is TimeCode -> this.onTimeCode(event)
+
+            is NoteOn79 -> this.onNoteOn79(event)
+            is NoteOff79 -> this.onNoteOff79(event)
         }
     }
 
@@ -375,4 +380,8 @@ interface VirtualMidiOutputDevice {
     fun onActiveSense(event: ActiveSense) { }
     fun onReset(event: Reset) { }
     fun onTimeCode(event: TimeCode) { }
+
+    fun onNoteOn79(event: NoteOn79) { }
+    fun onNoteOff79(event: NoteOff79) { }
+
 }

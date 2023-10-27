@@ -10,6 +10,8 @@ import com.qfs.apres.event.NoteOff
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event.ProgramChange
 import com.qfs.apres.event.SongPositionPointer
+import com.qfs.apres.event2.NoteOff79
+import com.qfs.apres.event2.NoteOn79
 import com.qfs.apres.soundfont.Preset
 import com.qfs.apres.soundfont.SoundFont
 import kotlinx.coroutines.runBlocking
@@ -36,7 +38,7 @@ open class MidiPlaybackDevice(
         var frame = 0
         private var _empty_chunks_count = 0
         var timestamp: Long = System.nanoTime()
-        private var _active_sample_handles = HashMap<Pair<Int, Int>, MutableSet<SampleHandle>>()
+        private var _active_sample_handles = HashMap<Triple<Int, Int, Boolean>, MutableSet<SampleHandle>>()
         private var _midi_events_by_frame = HashMap<Int, MutableList<MIDIEvent>>()
         private var _event_mutex = Mutex()
 
@@ -98,14 +100,26 @@ open class MidiPlaybackDevice(
                     for (event in this._midi_events_by_frame[f]!!) {
                         when (event) {
                             is NoteOn -> {
-                                var key_pair = Pair(event.channel, event.get_note())
+                                var key = Triple(event.channel, event.get_note(), false)
                                 val preset = this.get_preset(event.channel) ?: continue
-                                this._active_sample_handles[key_pair] =
+                                this._active_sample_handles[key] =
                                     this.player.gen_sample_handles(event, preset).toMutableSet()
                             }
                             is NoteOff -> {
-                                var key_pair = Pair(event.channel, event.get_note())
-                                for (handle in this._active_sample_handles[key_pair] ?: continue) {
+                                var key = Triple(event.channel, event.get_note(), false)
+                                for (handle in this._active_sample_handles[key] ?: continue) {
+                                    handle.release_note()
+                                }
+                            }
+                            is NoteOn79 -> {
+                                val key = Triple(event.channel, event.index, true)
+                                val preset = this.get_preset(event.channel) ?: continue
+                                this._active_sample_handles[key] =
+                                    this.player.gen_sample_handles(event, preset).toMutableSet()
+                            }
+                            is NoteOff79 -> {
+                                val key = Triple(event.channel, event.index, true)
+                                for (handle in this._active_sample_handles[key] ?: continue) {
                                     handle.release_note()
                                 }
                             }
@@ -139,7 +153,7 @@ open class MidiPlaybackDevice(
                     }
                 }
 
-                val keys_to_pop = mutableSetOf<Pair<Int, Int>>()
+                val keys_to_pop = mutableSetOf<Triple<Int, Int, Boolean>>()
                 var overlap = 0
                 for ((key, sample_handles) in this._active_sample_handles) {
                     is_empty = false
@@ -293,6 +307,7 @@ open class MidiPlaybackDevice(
         }
     }
 
+
     var buffer_delay = 0
     internal var wave_generator = WaveGenerator(this)
     private var active_audio_track_handle: AudioTrackHandle? = null
@@ -362,6 +377,29 @@ open class MidiPlaybackDevice(
             this.active_audio_track_handle = AudioTrackHandle(this.sample_rate, this.buffer_size)
             this._start_play_loop()
         }
+    }
+
+    private fun gen_sample_handles(event: NoteOn79, preset: Preset): Set<SampleHandle> {
+        val output = mutableSetOf<SampleHandle>()
+        val potential_instruments = preset.get_instruments(
+            event.note,
+            event.velocity,
+        )
+
+        for (p_instrument in potential_instruments) {
+            val samples = p_instrument.instrument!!.get_samples(
+                event.note,
+                event.velocity
+            ).toList()
+
+            for (sample in samples) {
+                val new_handle = this.sample_handle_generator.get(event, sample, p_instrument, preset)
+                new_handle.current_volume = (event.velocity.toDouble() / 65536.toDouble()) * SampleHandle.MAXIMUM_VOLUME
+                output.add( new_handle )
+            }
+        }
+
+        return output
     }
 
     private fun gen_sample_handles(event: NoteOn, preset: Preset): Set<SampleHandle> {

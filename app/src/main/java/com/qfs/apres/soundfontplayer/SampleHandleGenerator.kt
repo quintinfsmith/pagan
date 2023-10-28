@@ -10,7 +10,8 @@ import kotlin.math.pow
 class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
     // Hash ignores velocity since velocity isn't baked into sample data
     data class MapKey(
-        var index: Int,
+        var note: Int,
+        var bend: Int,
         var sample: Int,
         var instrument: Int,
         var preset: Int
@@ -20,17 +21,17 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
 
     fun get(event: NoteOn, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset): SampleHandle {
         // set the key index to some hash of the note to allow for indexing byte note AS WELL as indexing by index
-        val map_key = this.cache_new(event.get_note() + 150, event.get_note(), 0, sample, instrument, preset)
+        val map_key = this.cache_new(event.get_note(), 0, sample, instrument, preset)
         return SampleHandle(this.sample_data_map[map_key]!!)
     }
 
     fun get(event: NoteOn79, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset): SampleHandle {
-        val map_key = this.cache_new(event.index, event.note, event.bend, sample, instrument, preset)
+        val map_key = this.cache_new(event.note, event.bend, sample, instrument, preset)
         return SampleHandle(this.sample_data_map[map_key]!!)
     }
 
-    fun cache_new(index: Int, note: Int, bend: Int, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset): MapKey {
-        val map_key = MapKey(index, sample.hashCode(), instrument.hashCode(), preset.hashCode())
+    fun cache_new(note: Int, bend: Int, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset): MapKey {
+        val map_key = MapKey(note, bend, sample.hashCode(), instrument.hashCode(), preset.hashCode())
         if (!sample_data_map.contains(map_key)) {
             this.sample_data_map[map_key] = this.generate_new(note, bend, sample, instrument, preset)
         }
@@ -47,7 +48,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
             var tuning_semi = (sample.tuning_semi ?: instrument.tuning_semi ?: preset.global_zone?.tuning_semi ?: 0).toFloat()
             tuning_semi += (tuning_cent + mod_env_pitch) / 100F
             val original_pitch = 2F.pow(original_note.toFloat() / 12F)
-            val required_pitch = 2F.pow((note.toFloat() + tuning_semi + (bend / 512)) / 12F)
+            val required_pitch = 2F.pow((note.toFloat() + tuning_semi + (bend.toFloat() / 512F)) / 12F)
             pitch_shift = required_pitch / original_pitch
         }
 

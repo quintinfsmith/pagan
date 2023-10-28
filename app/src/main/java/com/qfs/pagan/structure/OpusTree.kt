@@ -303,6 +303,16 @@ class OpusTree<T> {
         return this.event
     }
 
+    fun get_path(): List<Int> {
+        var tree = this
+        var output = mutableListOf<Int>()
+        while (tree.parent != null) {
+            output.add(tree.getIndex()!!)
+            tree = tree.parent!!
+        }
+        return output.reversed()
+    }
+
     fun clear_singles() {
         if (this.is_leaf()) {
             return

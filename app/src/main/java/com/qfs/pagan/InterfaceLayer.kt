@@ -1006,4 +1006,8 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         return total
     }
 
+    override fun set_radix(radix: Int) {
+        super.set_radix(radix)
+    }
+
 }

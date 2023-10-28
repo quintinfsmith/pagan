@@ -481,6 +481,8 @@ class EditorFragment : PaganFragment() {
 
         val nsOctave: NumberSelector = view.findViewById(R.id.nsOctave)
         val nsOffset: NumberSelector = view.findViewById(R.id.nsOffset)
+        nsOffset.set_radix(opus_manager.radix)
+        nsOffset.set_max(opus_manager.radix - 1)
 
         val current_tree = opus_manager.get_tree()
 
@@ -490,14 +492,12 @@ class EditorFragment : PaganFragment() {
             opus_manager.set_relative_mode(event)
         }
 
-
         rosRelativeOption.setState(opus_manager.relative_mode, true)
         if (main.configuration.relative_mode) {
             rosRelativeOption.visibility = View.VISIBLE
         } else {
             rosRelativeOption.visibility = View.GONE
         }
-
 
         if (opus_manager.is_percussion(opus_manager.cursor.channel)) {
             nsOctave.visibility = View.GONE

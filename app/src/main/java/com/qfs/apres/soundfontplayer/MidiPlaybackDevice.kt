@@ -383,13 +383,12 @@ open class MidiPlaybackDevice(
         val output = mutableSetOf<SampleHandle>()
         val potential_instruments = preset.get_instruments(
             event.note,
-            event.velocity,
+            event.velocity shr 8,
         )
-
         for (p_instrument in potential_instruments) {
             val samples = p_instrument.instrument!!.get_samples(
                 event.note,
-                event.velocity
+                event.velocity shr 8
             ).toList()
 
             for (sample in samples) {

@@ -1011,4 +1011,10 @@ open class HistoryLayer : LinksLayer() {
             callback()
         }
     }
+
+    override fun set_radix(radix: Int) {
+        this.remember {
+            super.set_radix(radix)
+        }
+    }
 }

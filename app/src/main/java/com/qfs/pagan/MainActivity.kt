@@ -9,6 +9,7 @@ import android.media.midi.MidiDeviceInfo
 import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
@@ -52,6 +53,7 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import kotlin.concurrent.thread
+import kotlin.math.floor
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
 /**
@@ -576,6 +578,20 @@ class MainActivity : AppCompatActivity() {
             this.dialog_transpose()
         }
 
+        val btnRadix: TextView = this.findViewById(R.id.btnRadix)
+        btnRadix.text = this.getString( R.string.label_radix, opus_manager.radix )
+        btnRadix.setOnClickListener {
+            this.dialog_number_input(
+                getString(R.string.dlg_set_radix),
+                2,
+                24,
+                opus_manager.radix
+            ) { radix: Int ->
+                opus_manager.set_radix(radix)
+
+            }
+        }
+
         this.findViewById<View>(R.id.btnAddChannel).setOnClickListener {
             opus_manager.new_channel()
         }
@@ -679,13 +695,23 @@ class MainActivity : AppCompatActivity() {
 
     fun play_event(channel: Int, event_value: Int, velocity: Int = 64) {
         val midi_channel = this._opus_manager.channels[channel].midi_channel
-        val note = if (this._opus_manager.is_percussion(channel)) {
-            event_value + 27
+
+        val (note, bend) = if (this._opus_manager.is_percussion(channel)) { // Ignore the event data and use percussion map
+            Pair(event_value + 27, 0)
         } else {
-            event_value + 21 + this._opus_manager.transpose
+            val radix = this._opus_manager.radix
+            val octave = (event_value + this._opus_manager.transpose) / radix
+            val offset = (event_value + this._opus_manager.transpose) % radix
+
+            val std_offset = (offset.toDouble() * 12.0 / radix.toDouble())
+            val bend = ((std_offset - floor(std_offset)) * 512.0).toInt()
+            val new_note = (octave * 12) + std_offset.toInt() + 21
+
+            Log.d("AAA", "$new_note | $bend ($octave | $offset | $std_offset)")
+            Pair( new_note, bend )
         }
 
-        this._midi_feedback_dispatcher.play_note(midi_channel, note)
+        this._midi_feedback_dispatcher.play_note(midi_channel, note, bend)
     }
 
     fun import_project(path: String) {

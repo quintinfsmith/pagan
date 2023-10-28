@@ -1,13 +1,14 @@
 package com.qfs.pagan.opusmanager
 import com.qfs.apres.Midi
 import com.qfs.apres.event.BankSelect
-import com.qfs.apres.event.MIDIEvent
 import com.qfs.apres.event.NoteOff
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event.ProgramChange
 import com.qfs.apres.event.SetTempo
 import com.qfs.apres.event.SongPositionPointer
 import com.qfs.apres.event.TimeSignature
+import com.qfs.apres.event2.NoteOff79
+import com.qfs.apres.event2.NoteOn79
 import com.qfs.pagan.from_string
 import com.qfs.pagan.structure.OpusTree
 import kotlinx.serialization.decodeFromString
@@ -558,6 +559,35 @@ open class BaseLayer {
         }
     }
 
+    open fun set_radix(radix: Int) {
+        this.radix = radix
+        this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
+            if (this.is_percussion(i)) {
+                return@forEachIndexed
+            }
+
+            channel.lines.forEachIndexed { j: Int, line: OpusChannel.OpusLine ->
+                line.beats.forEachIndexed { k: Int, beat_tree: OpusTree<OpusEvent> ->
+                    beat_tree.traverse { tree: OpusTree<OpusEvent>, event: OpusEvent? ->
+                        if (event == null) {
+                            return@traverse
+                        }
+
+                        var position = tree.get_path()
+                        var new_event = event.copy()
+                        var octave = (event.note / event.radix)
+
+                        new_event.radix = radix
+                        new_event.note = (octave * radix) + ((event.note % event.radix) * radix / event.radix)
+
+                        this.set_event(BeatKey(i, j, k), position, new_event)
+                    }
+                }
+            }
+
+        }
+    }
+
     open fun set_percussion_event(beat_key: BeatKey, position: List<Int>) {
         if (!this.is_percussion(beat_key.channel)) {
             throw PercussionEventSet()
@@ -820,6 +850,7 @@ open class BaseLayer {
         } else {
             end_beat_rel
         }
+
         val midi = Midi()
         midi.insert_event(0,0, SetTempo.from_bpm(this.tempo))
 
@@ -828,6 +859,16 @@ open class BaseLayer {
         val max_tick = midi.get_ppqn() * (this.beat_count + 1)
 
         this.channels.forEachIndexed { c: Int, channel: OpusChannel ->
+            midi.insert_event(
+                0,
+                0,
+                BankSelect(channel.midi_channel, channel.midi_bank)
+            )
+            midi.insert_event(
+                0,
+                0,
+                ProgramChange(channel.midi_channel, channel.midi_program)
+            )
             channel.lines.forEachIndexed { l: Int, line: OpusChannel.OpusLine ->
                 var current_tick = 0
                 var prev_note = 0
@@ -843,35 +884,27 @@ open class BaseLayer {
                             val (note, bend) = if (this.is_percussion(c)) { // Ignore the event data and use percussion map
                                 Pair(this.get_percussion_instrument(l) + 27, 0)
                             } else {
-                                var octave = event.note / event.radix
-                                var offset = event.note % event.radix
-                                var std_octave = octave * 12
-                                var std_offset = (offset.toDouble() * 12.0 / event.radix.toDouble())
-                                var bend = ((std_offset - floor(std_offset)) * 512.0).toInt()
-                                if (event.relative) {
-                                    var current_note = event.note + prev_note
-                                    prev_note = current_note
-
-                                    var octave = current_note / event.radix
-                                    var offset = current_note % event.radix
-                                    var std_octave = octave * 12
-                                    var std_offset = (offset.toDouble() * 12.0 / event.radix.toDouble())
-                                    var bend = ((std_offset - floor(std_offset)) * 512.0).toInt()
-
-                                    Pair((octave * 12) + std_offset.toInt() + 21 + this.transpose, bend)
+                                val current_note = if (event.relative) {
+                                    event.note + prev_note
                                 } else {
-                                    prev_note = event.note
-                                    var octave = event.note / event.radix
-                                    var offset = event.note % event.radix
-                                    var std_octave = octave * 12
-                                    var std_offset = (offset.toDouble() * 12.0 / event.radix.toDouble())
-                                    var bend = ((std_offset - floor(std_offset)) * 512.0).toInt()
-                                    Pair((octave * 12) + std_offset.toInt() + 21 + this.transpose, bend)
+                                    event.note
                                 }
+
+                                val octave = current_note / event.radix
+                                val offset = current_note % event.radix
+                                val std_offset = (offset.toDouble() * 12.0 / event.radix.toDouble())
+                                val bend = ((std_offset - floor(std_offset)) * 512.0).toInt()
+
+                                prev_note = current_note
+
+                                Pair(
+                                    (octave * 12) + std_offset.toInt() + 21 + this.transpose,
+                                    bend
+                                )
                             }
 
                             if (!(b < start_beat || b >= end_beat)) {
-                                var pseudo_event = PseudoMidiEvent(
+                                val pseudo_event = PseudoMidiEvent(
                                     channel.midi_channel,
                                     note,
                                     bend,
@@ -888,7 +921,6 @@ open class BaseLayer {
                                     false
                                 ))
                             }
-                            prev_note = note
                         } else if (!current.tree.is_leaf()) {
                             val working_subdiv_size = current.size / current.tree.size
                             for ((i, subtree) in current.tree.divisions) {
@@ -911,16 +943,52 @@ open class BaseLayer {
             }
         }
 
-        this.channels.forEachIndexed { c, channel ->
+        pseudo_midi_map.sortBy { it.first }
+        val index_map = HashMap<PseudoMidiEvent, Int>()
+
+        for ((tick, pseudo_event, is_on) in pseudo_midi_map) {
             midi.insert_event(
                 0,
-                0,
-                BankSelect(channel.midi_channel, channel.midi_bank)
-            )
-            midi.insert_event(
-                0,
-                0,
-                ProgramChange(channel.midi_channel, channel.midi_program)
+                tick,
+                if (is_on) {
+                    var current_index = 0
+                    while (index_map.containsValue(current_index)) {
+                        current_index += 1
+                    }
+
+                    index_map[pseudo_event] = current_index
+                    if (this.radix != 12) {
+                        NoteOn79(
+                            index = current_index,
+                            note = pseudo_event.note,
+                            bend = pseudo_event.bend,
+                            channel = pseudo_event.channel,
+                            velocity = pseudo_event.velocity shl 8
+                        )
+                    } else {
+                        NoteOn(
+                            channel = pseudo_event.channel,
+                            note = pseudo_event.note,
+                            velocity = pseudo_event.velocity
+                        )
+                    }
+                } else {
+                    if (this.radix != 12) {
+                        NoteOff79(
+                            index = index_map.remove(pseudo_event)!!,
+                            note = pseudo_event.note,
+                            bend = pseudo_event.bend,
+                            channel = pseudo_event.channel,
+                            velocity = pseudo_event.velocity shl 8
+                        )
+                    } else {
+                        NoteOff(
+                            channel = pseudo_event.channel,
+                            note = pseudo_event.note,
+                            velocity = pseudo_event.velocity
+                        )
+                    }
+                }
             )
         }
 
@@ -931,6 +999,7 @@ open class BaseLayer {
                 SongPositionPointer(beat)
             )
         }
+
         return midi
     }
 

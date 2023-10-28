@@ -80,6 +80,10 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
         this.populate()
     }
 
+    fun set_radix(radix: Int) {
+        this.radix = radix
+    }
+
     fun getState(): Int? {
         if (this._active_button == null) {
             return null

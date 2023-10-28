@@ -2,8 +2,8 @@ package com.qfs.pagan
 
 import com.qfs.apres.VirtualMidiInputDevice
 import com.qfs.apres.event.MIDIStop
-import com.qfs.apres.event.NoteOff
-import com.qfs.apres.event.NoteOn
+import com.qfs.apres.event2.NoteOff79
+import com.qfs.apres.event2.NoteOn79
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -11,40 +11,54 @@ import kotlin.concurrent.thread
 
 class MidiFeedBackDispatcher: VirtualMidiInputDevice() {
     var mutex = Mutex()
-    private var playing_note_map = HashMap<Pair<Int, Int>, Int>()
-    private var note_handle_gen = 0
+    private var active_handles = mutableSetOf<Int>()
 
-    fun play_note(channel: Int, note: Int) {
+    fun play_note(channel: Int, note: Int, bend: Int) {
         val handle = runBlocking {
             this@MidiFeedBackDispatcher.mutex.withLock {
-                val handle = this@MidiFeedBackDispatcher.note_handle_gen++
-                this@MidiFeedBackDispatcher.playing_note_map[Pair(channel, note)] = handle
-                handle
+                var new_handle = 0
+                while (this@MidiFeedBackDispatcher.active_handles.contains(new_handle)) {
+                    new_handle += 1
+                }
+                this@MidiFeedBackDispatcher.active_handles.add(new_handle)
+                new_handle
             }
         }
-        this.send_event(NoteOn(channel, note, 64))
+
+        this.send_event(
+            NoteOn79(
+                index = handle,
+                channel = channel,
+                note = note,
+                bend = bend,
+                velocity = 64 shl 8
+            )
+        )
+
         thread {
             Thread.sleep(400)
-            this.disable_note(channel, note, handle)
+            this.disable_note(handle, channel)
         }
     }
 
-    private fun disable_note(channel: Int, note: Int, handle: Int) {
-        var unused_note_handle = runBlocking {
+    private fun disable_note(handle: Int, channel: Int) {
+        this.send_event(
+            NoteOff79(
+                index = handle,
+                channel = channel,
+                note = 0,
+                velocity = 64 shl 8
+            )
+        )
+        runBlocking {
             this@MidiFeedBackDispatcher.mutex.withLock {
-                val key = Pair(channel, note)
-                val playing_handle = this@MidiFeedBackDispatcher.playing_note_map[key]
-                if (handle == playing_handle) {
-                    this@MidiFeedBackDispatcher.send_event(NoteOff(channel, note, 64))
-                    this@MidiFeedBackDispatcher.playing_note_map.remove(key)
-                }
-                this@MidiFeedBackDispatcher.note_handle_gen
+                this@MidiFeedBackDispatcher.active_handles.remove(handle)
             }
         }
 
         Thread.sleep(1000)
 
-        if (unused_note_handle == this.note_handle_gen) {
+        if (this.active_handles.isEmpty()) {
             this.send_event(MIDIStop())
         }
     }

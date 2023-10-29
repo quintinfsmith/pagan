@@ -1,5 +1,6 @@
 package com.qfs.apres.soundfontplayer
 
+import android.util.Log
 import com.qfs.apres.Midi
 import com.qfs.apres.event.MIDIStop
 import com.qfs.apres.event.SetTempo
@@ -43,41 +44,71 @@ open class CachedMidiAudioPlayer(sample_rate: Int, sound_font: SoundFont): MidiP
 
 
     fun export_wav(midi: Midi, path: String) {
+        var original_delay = this.buffer_delay
+        this.buffer_delay = 1
         this.parse_midi(midi)
+        //var tmp_file = File("$path.tmp")
         var file = File(path)
+        if (file.exists()){
+            file.delete()
+        }
         var output_stream: OutputStream = FileOutputStream(file)
         var buffered_output_stream = BufferedOutputStream(output_stream)
+
         var data_output_stream = DataOutputStream(buffered_output_stream)
+
+        // 00
         data_output_stream.writeBytes("RIFF")
-        var chunk_size = (this.frame_count * 2) + 40 + 4
-        data_output_stream.writeInt(Integer.reverseBytes(chunk_size))
-        data_output_stream.writeBytes("WAVEfmt ")
-        data_output_stream.writeInt(Integer.reverseBytes(40))
-        data_output_stream.writeShort(0xEFFF)
+        // 04
+        data_output_stream.writeInt(Integer.reverseBytes(4 + 24 + 8 + (this.frame_count * 2)))
+        // 08
+        data_output_stream.writeBytes("WAVE")
+
+        // 12
+        data_output_stream.writeBytes("fmt ")
+        // 16
+        data_output_stream.writeInt(Integer.reverseBytes(16))
+        // 20
+        data_output_stream.writeShort(0x0100)
+        // 22
         data_output_stream.writeShort(0x0200)
+        // 24
         data_output_stream.writeInt(Integer.reverseBytes(this.sample_rate))
+        // 28
         data_output_stream.writeInt(Integer.reverseBytes(this.sample_rate * 4))
-        data_output_stream.writeInt(0x0400)
-        data_output_stream.writeInt(0x1000)
-        data_output_stream.writeInt(0x1600)
-        data_output_stream.writeInt(0x1000)
+        // 32
+        data_output_stream.writeByte(0x04)
+        data_output_stream.writeByte(0x00)
+        // 34
+        data_output_stream.writeByte(0x01)
+        data_output_stream.writeByte(0x00)
+        // 36
+        data_output_stream.writeBytes("data")
+        // 40
+        data_output_stream.writeInt(
+            Integer.reverseBytes(this.frame_count * 2)
+        )
 
-
-
-
-
-        while (true) {
+        var frame_count = this.frame_count
+        while (frame_count > 0) {
             try {
                 for (b in this.wave_generator.generate().first) {
                     data_output_stream.writeByte((b.toInt() and 0xFF))
                     data_output_stream.writeByte((b.toInt() shr 8))
+                    frame_count -= 1
                 }
             } catch (e: Exception) {
                 break
             }
         }
+
+        Log.d("AAA", "DONE !${this.frame_count} - $frame_count")
+
         data_output_stream.flush()
         data_output_stream.close()
+
+
+        this.buffer_delay = original_delay
     }
 
     fun play_midi(midi: Midi) {

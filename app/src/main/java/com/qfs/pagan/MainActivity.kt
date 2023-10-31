@@ -45,6 +45,7 @@ import com.qfs.apres.event.BankSelect
 import com.qfs.apres.event.ProgramChange
 import com.qfs.apres.soundfont.SoundFont
 import com.qfs.apres.soundfontplayer.ActiveMidiAudioPlayer
+import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.pagan.databinding.ActivityMainBinding
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.encodeToString
@@ -236,7 +237,12 @@ class MainActivity : AppCompatActivity() {
                 this._soundfont = SoundFont(path)
                 if (!this._midi_interface.output_devices_connected()) {
                     this._midi_playback_device = PaganPlaybackDevice(this)
-                    this._midi_feedback_device = ActiveMidiAudioPlayer(22050, this._soundfont!!)
+                    this._midi_feedback_device = ActiveMidiAudioPlayer(
+                        SampleHandleManager(
+                            this._soundfont!!,
+                            22050
+                        )
+                    )
                     this._midi_interface.connect_virtual_output_device(this._midi_feedback_device!!)
                 }
             }
@@ -357,6 +363,9 @@ class MainActivity : AppCompatActivity() {
         this.feedback_msg(getString(R.string.feedback_on_copy))
     }
 
+    fun export_wav() {
+    }
+
     private fun playback_start() {
         thread {
             Log.d("AAA", "WRiting")
@@ -364,6 +373,12 @@ class MainActivity : AppCompatActivity() {
                 this.get_opus_manager().get_midi(0),
                 "${this.getExternalFilesDir(null).toString()}/test.wav"
             )
+            //var builder = NotificationCompat.Builder(this, CHANNEL_ID)
+            //    .setSmallIcon(R.drawable.notification_icon)
+            //    .setContentTitle(textTitle)
+            //    .setContentText(textContent)
+            //    .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+
             Log.d("AAA", "WRitten")
         }
         return
@@ -754,7 +769,7 @@ class MainActivity : AppCompatActivity() {
         if (this._midi_feedback_device != null) {
             this._midi_interface.disconnect_virtual_output_device(this._midi_feedback_device!!)
         }
-        this._midi_feedback_device = ActiveMidiAudioPlayer(11025, this._soundfont!!)
+        this._midi_feedback_device = ActiveMidiAudioPlayer(SampleHandleManager(this._soundfont!!, 11025))
         this._midi_playback_device = PaganPlaybackDevice(this)
 
         this._midi_interface.connect_virtual_output_device(this._midi_feedback_device!!)

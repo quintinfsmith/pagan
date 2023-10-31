@@ -4,25 +4,22 @@ import android.util.Log
 import com.qfs.apres.Midi
 import com.qfs.apres.event.MIDIStop
 import com.qfs.apres.event.SetTempo
-import com.qfs.apres.soundfont.SoundFont
 import java.io.BufferedOutputStream
 import java.io.DataOutputStream
 import java.io.File
-import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.OutputStream
 
-open class CachedMidiAudioPlayer(sample_rate: Int, sound_font: SoundFont): MidiPlaybackDevice(
-    sample_rate = sample_rate,
-    cache_size_limit = 10,
-    sound_font = sound_font) {
+open class CachedMidiAudioPlayer(sample_handle_manager: SampleHandleManager): MidiPlaybackDevice(
+    sample_handle_manager,
+    cache_size_limit = 10) {
     var frame_count: Int = 0
     init {
         this.buffer_delay = 5
     }
     private fun parse_midi(midi: Midi) {
         var start_frame = this.wave_generator.frame
-        var frames_per_tick = ((500_000 / midi.get_ppqn()) * this.sample_rate) / 1_000_000
+        var frames_per_tick = ((500_000 / midi.get_ppqn()) * this.sample_handle_manager.sample_rate) / 1_000_000
         var last_tick = 0
         for ((tick, events) in midi.get_all_events_grouped()) {
             last_tick = tick
@@ -33,7 +30,7 @@ open class CachedMidiAudioPlayer(sample_rate: Int, sound_font: SoundFont): MidiP
             for (event in events) {
                 when (event) {
                     is SetTempo -> {
-                        frames_per_tick = ((event.get_uspqn() / midi.get_ppqn()) * this.sample_rate) / 1_000_000
+                        frames_per_tick = ((event.get_uspqn() / midi.get_ppqn()) * this.sample_handle_manager.sample_rate) / 1_000_000
                     }
                 }
             }
@@ -46,7 +43,7 @@ open class CachedMidiAudioPlayer(sample_rate: Int, sound_font: SoundFont): MidiP
 
     fun export_wav(midi: Midi, path: String) {
         var original_delay = this.buffer_delay
-        this.buffer_delay = 1
+        this.buffer_delay = 0
         this.parse_midi(midi)
 
         var tmp_file = File("$path.tmp")
@@ -59,9 +56,18 @@ open class CachedMidiAudioPlayer(sample_rate: Int, sound_font: SoundFont): MidiP
         var data_output_stream = DataOutputStream(buffered_output_stream)
 
         var data_byte_count = 0
+        var ts_deltas = mutableListOf<Int>()
+        var chunk_count = 0
+        var full_ts = System.currentTimeMillis()
+
         while (true) {
             try {
-                for (b in this.wave_generator.generate().first) {
+                val g_ts = System.currentTimeMillis()
+                val chunk = this.wave_generator.generate(this.sample_handle_manager.buffer_size).first
+                ts_deltas.add((System.currentTimeMillis() - g_ts).toInt())
+                chunk_count += 1
+
+                for (b in chunk) {
                     data_output_stream.writeByte((b.toInt() and 0xFF))
                     data_output_stream.writeByte((b.toInt() shr 8))
                     data_byte_count += 2
@@ -70,6 +76,9 @@ open class CachedMidiAudioPlayer(sample_rate: Int, sound_font: SoundFont): MidiP
                 break
             }
         }
+
+        Log.d("AAA", "Chunk count: $chunk_count, avg delta = ${ts_deltas.average()}")
+        Log.d("AAA", "Total Dur ${System.currentTimeMillis() - full_ts}")
 
         data_output_stream.close()
 
@@ -99,9 +108,9 @@ open class CachedMidiAudioPlayer(sample_rate: Int, sound_font: SoundFont): MidiP
         // 22 Channel Count
         data_output_stream.writeShort(0x0200)
         // 24 Sample rate
-        data_output_stream.writeInt(Integer.reverseBytes(this.sample_rate))
+        data_output_stream.writeInt(Integer.reverseBytes(this.sample_handle_manager.sample_rate))
         // 28 byte rate
-        data_output_stream.writeInt(Integer.reverseBytes(this.sample_rate * 2))
+        data_output_stream.writeInt(Integer.reverseBytes(this.sample_handle_manager.sample_rate * 2))
         // 32 Block Alignment
         data_output_stream.writeByte(0x04)
         data_output_stream.writeByte(0x00)
@@ -114,9 +123,7 @@ open class CachedMidiAudioPlayer(sample_rate: Int, sound_font: SoundFont): MidiP
         data_output_stream.writeInt( Integer.reverseBytes(data_byte_count) )
 
         val input_stream = tmp_file.inputStream()
-        input_stream.copyTo(
-            data_output_stream
-        )
+        input_stream.copyTo(data_output_stream)
 
         input_stream.close()
         data_output_stream.close()
@@ -124,12 +131,12 @@ open class CachedMidiAudioPlayer(sample_rate: Int, sound_font: SoundFont): MidiP
         tmp_file.delete()
 
         this.buffer_delay = original_delay
+        this.wave_generator.frame = 0
     }
 
     fun play_midi(midi: Midi) {
         this.parse_midi(midi)
         this.start_playback()
     }
-
 }
 

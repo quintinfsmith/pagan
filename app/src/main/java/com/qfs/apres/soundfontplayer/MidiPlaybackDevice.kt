@@ -1,262 +1,13 @@
 package com.qfs.apres.soundfontplayer
 
-import android.media.AudioFormat
-import android.media.AudioTrack
-import com.qfs.apres.event.AllSoundOff
-import com.qfs.apres.event.BankSelect
-import com.qfs.apres.event.MIDIEvent
-import com.qfs.apres.event.MIDIStop
-import com.qfs.apres.event.NoteOff
-import com.qfs.apres.event.NoteOn
-import com.qfs.apres.event.ProgramChange
-import com.qfs.apres.event.SongPositionPointer
-import com.qfs.apres.soundfont.Preset
-import com.qfs.apres.soundfont.SoundFont
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
-import java.nio.IntBuffer
 import kotlin.concurrent.thread
-import kotlin.math.abs
 import kotlin.math.max
 
 open class MidiPlaybackDevice(
-        var sample_rate: Int,
-        val buffer_size: Int = AudioTrack.getMinBufferSize(
-            sample_rate,
-            AudioFormat.ENCODING_PCM_16BIT,
-            AudioFormat.CHANNEL_OUT_STEREO
-        ),
-        private var cache_size_limit: Int = 10, // (in frames) how many x the buffer size should be delayed
-        private var sound_font: SoundFont) {
+        var sample_handle_manager: SampleHandleManager,
+        // (in frames) how many x the buffer size should be delayed
+        private var cache_size_limit: Int = 10) {
 
-    class WaveGenerator(private var player: MidiPlaybackDevice) {
-        class KilledException: Exception()
-        class DeadException: Exception()
-        var frame = 0
-        private var _empty_chunks_count = 0
-        var timestamp: Long = System.nanoTime()
-        private var _active_sample_handles = HashMap<Pair<Int, Int>, MutableSet<SampleHandle>>()
-        private var _midi_events_by_frame = HashMap<Int, MutableList<MIDIEvent>>()
-        private var _event_mutex = Mutex()
-
-        fun place_events(events: List<MIDIEvent>, frame: Int) {
-            runBlocking {
-                this@WaveGenerator._event_mutex.withLock {
-                    if (!this@WaveGenerator._midi_events_by_frame.containsKey(frame)) {
-                        this@WaveGenerator._midi_events_by_frame[frame] = mutableListOf()
-                    }
-                    for (event in events) {
-                        this@WaveGenerator._midi_events_by_frame[frame]!!.add(event)
-                    }
-                }
-            }
-        }
-
-        fun place_event(event: MIDIEvent, frame: Int) {
-            runBlocking {
-                this@WaveGenerator._event_mutex.withLock {
-                    if (!this@WaveGenerator._midi_events_by_frame.containsKey(frame)) {
-                        this@WaveGenerator._midi_events_by_frame[frame] = mutableListOf()
-                    }
-                    this@WaveGenerator._midi_events_by_frame[frame]!!.add(event)
-                }
-            }
-        }
-
-        // TODO: Only used by Active MidiAudioPlayer. Maybe shouldn't be *here*?
-        fun process_event(event: MIDIEvent, delay: Int) {
-            val delta_nano = if (this.player.is_playing()) {
-                (System.nanoTime() - this.timestamp).toFloat()
-            } else {
-                0f
-            }
-            val frame = (this.player.SAMPLE_RATE_NANO * delta_nano).toInt() + (delay * this.player.buffer_size)
-            this.place_event(event, frame)
-        }
-
-        fun generate(): Pair<ShortArray, List<Pair<Int, Int>>> {
-            val initial_array = IntArray(this.player.buffer_size * 2)
-            val buffer = IntBuffer.wrap(initial_array)
-            val pointer_list = mutableListOf<Pair<Int, Int>>()
-
-            var max_frame_value = 0
-            var is_empty = true
-            for (i in 0 until this.player.buffer_size) {
-                var left_frame = 0
-                var right_frame = 0
-                val f = this.frame + i
-
-                if (this.player.stop_request == StopRequest.Kill) {
-                    for ((_, handles) in this._active_sample_handles) {
-                        for (handle in handles) {
-                            handle.release_note()
-                        }
-                    }
-                    throw KilledException()
-                } else if (this._midi_events_by_frame.containsKey(f)) {
-                    for (event in this._midi_events_by_frame[f]!!) {
-                        when (event) {
-                            is NoteOn -> {
-                                var key_pair = Pair(event.channel, event.get_note())
-                                val preset = this.get_preset(event.channel) ?: continue
-                                this._active_sample_handles[key_pair] =
-                                    this.player.gen_sample_handles(event, preset).toMutableSet()
-                            }
-                            is NoteOff -> {
-                                var key_pair = Pair(event.channel, event.get_note())
-                                for (handle in this._active_sample_handles[key_pair] ?: continue) {
-                                    handle.release_note()
-                                }
-                            }
-                            is MIDIStop -> {
-                                throw KilledException()
-                            }
-                            is AllSoundOff -> {
-                                for ((_, handles) in this._active_sample_handles) {
-                                    for (handle in handles) {
-                                        handle.release_note()
-                                    }
-                                }
-                            }
-                            is ProgramChange -> {
-                                this.player.change_program(event.channel, event.get_program())
-                            }
-                            is BankSelect -> {
-                                this.player.select_bank(event.channel, event.value)
-                            }
-                            is SongPositionPointer -> {
-                                var millis = (f - this.frame) * 1_000 / this.player.sample_rate
-                                pointer_list.add(Pair(millis, event.beat))
-                            }
-                        }
-                    }
-                }
-
-                runBlocking {
-                    this@WaveGenerator._event_mutex.withLock {
-                        this@WaveGenerator._midi_events_by_frame.remove(f)
-                    }
-                }
-
-                val keys_to_pop = mutableSetOf<Pair<Int, Int>>()
-                var overlap = 0
-                for ((key, sample_handles) in this._active_sample_handles) {
-                    is_empty = false
-                    overlap += 1
-                    val to_kill = mutableSetOf<SampleHandle>()
-                    for (sample_handle in sample_handles) {
-                        val frame_value = sample_handle.get_next_frame()
-                        if (frame_value == null) {
-                            to_kill.add(sample_handle)
-                            continue
-                        }
-
-                        // TODO: Implement ROM stereo modes
-                        val pan = sample_handle.pan
-                        when (sample_handle.stereo_mode and 7) {
-                            1 -> { // mono
-                                if (pan > 0) {
-                                    left_frame += frame_value
-                                    right_frame += (frame_value.toDouble() * (100 - pan) / 100.0).toInt()
-                                        .toShort()
-                                } else if (pan < 0) {
-                                    left_frame += (frame_value.toDouble() * (100 + pan) / 100.0).toInt()
-                                        .toShort()
-                                    right_frame += frame_value
-                                } else {
-                                    left_frame += frame_value
-                                    right_frame += frame_value
-                                }
-                            }
-
-                            2 -> { // right
-                                right_frame += if (pan > 0) {
-                                    (frame_value.toDouble() * (100 - pan) / 100.0).toInt()
-                                        .toShort()
-                                } else {
-                                    frame_value
-                                }
-                            }
-
-                            4 -> { // left
-                                left_frame += if (pan < 0) {
-                                    (frame_value.toDouble() * (100 + pan) / 100.0).toInt()
-                                        .toShort()
-                                } else {
-                                    frame_value
-                                }
-                            }
-
-                            else -> {}
-                        }
-                    }
-
-                    for (sample_handle in to_kill) {
-                        this._active_sample_handles[key]!!.remove(sample_handle)
-                    }
-
-                    if (this._active_sample_handles[key]!!.isEmpty()) {
-                        keys_to_pop.add(key)
-                    }
-                }
-
-                for (key in keys_to_pop) {
-                    this._active_sample_handles.remove(key)
-                }
-
-                max_frame_value = max(
-                    max_frame_value,
-                    max(
-                        abs(right_frame),
-                        abs(left_frame)
-                    )
-                )
-
-                buffer.put(right_frame)
-                buffer.put(left_frame)
-            }
-
-            val mid = Short.MAX_VALUE / 2
-            val compression_ratio = if (max_frame_value <= Short.MAX_VALUE) {
-                1F
-            } else {
-                (Short.MAX_VALUE - mid).toFloat() / (max_frame_value - mid).toFloat()
-            }
-
-            val compressed_array = ShortArray(initial_array.size) { i: Int ->
-                val v = initial_array[i]
-                if (compression_ratio >= 1F || (0 - mid .. mid).contains(v)) {
-                    v.toShort()
-                } else if (v > mid) {
-                    (mid + ((v - mid).toFloat() * compression_ratio).toInt()).toShort()
-                } else {
-                    (((v + mid).toFloat() * compression_ratio).toInt() - mid).toShort()
-                }
-            }
-
-            this.frame += this.player.buffer_size
-
-            if (is_empty) {
-                this._empty_chunks_count += 1
-            } else {
-                this._empty_chunks_count = 0
-            }
-
-            return Pair(compressed_array, pointer_list)
-        }
-
-        private fun get_preset(channel: Int): Preset? {
-            return this.player.get_preset(channel)
-        }
-
-        fun clear() {
-            this._active_sample_handles.clear()
-            this._midi_events_by_frame.clear()
-            this.frame = 0
-            this._empty_chunks_count = 0
-        }
-    }
 
     enum class StopRequest() {
         Play,
@@ -294,131 +45,18 @@ open class MidiPlaybackDevice(
     }
 
     var buffer_delay = 0
-    internal var wave_generator = WaveGenerator(this)
+    internal var wave_generator = WaveGenerator(sample_handle_manager)
     private var active_audio_track_handle: AudioTrackHandle? = null
-    private val loaded_presets_mutex = Mutex()
-    private val loaded_presets = HashMap<Pair<Int, Int>, Preset>()
-    private val preset_channel_map = HashMap<Int, Pair<Int, Int>>()
-    private val preset_channel_map_mutex = Mutex()
-    private val sample_handle_generator = SampleHandleGenerator(sample_rate, buffer_size)
     internal var stop_request = StopRequest.Neutral
     private var play_drift = 0
-    var SAMPLE_RATE_NANO = sample_rate.toFloat() / 1_000_000_000F
-    var BUFFER_NANO = buffer_size.toLong() * 1_000_000_000.toLong() / sample_rate.toLong()
-
-    fun select_bank(channel: Int, bank: Int) {
-        // NOTE: Changing the bank doesn't trigger a preset change
-        // That occurs in change_program()
-        val program = if (this.preset_channel_map.containsKey(channel)) {
-            this.preset_channel_map[channel]!!.second
-        } else {
-            0
-        }
-        this.preset_channel_map[channel] = Pair(bank, program)
-    }
-
-    fun change_program(channel: Int, program: Int) {
-        val bank = if (this.preset_channel_map.containsKey(channel)) {
-            this.preset_channel_map[channel]!!.first
-        } else {
-            0
-        }
-
-        val key = Pair(bank, program)
-        runBlocking {
-            this@MidiPlaybackDevice.loaded_presets_mutex.withLock {
-                if (this@MidiPlaybackDevice.loaded_presets[key] == null) {
-                    this@MidiPlaybackDevice.loaded_presets[key] = try {
-                        this@MidiPlaybackDevice.sound_font.get_preset(program, bank)
-                    } catch (e: SoundFont.InvalidPresetIndex) {
-                        if (channel == 9) {
-                            if (Pair(bank, 0) in this@MidiPlaybackDevice.loaded_presets) {
-                                this@MidiPlaybackDevice.loaded_presets[Pair(bank, 0)]!!
-                            } else {
-                                return@withLock
-                            }
-                        } else {
-                            if (Pair(0, program) in this@MidiPlaybackDevice.loaded_presets) {
-                                this@MidiPlaybackDevice.loaded_presets[Pair(0, program)]!!
-                            } else if (Pair(0, 0) in this@MidiPlaybackDevice.loaded_presets) {
-                                this@MidiPlaybackDevice.loaded_presets[Pair(0, 0)]!!
-                            } else {
-                                return@withLock
-                            }
-                        }
-                    }
-                }
-            }
-            this@MidiPlaybackDevice.preset_channel_map_mutex.withLock {
-                this@MidiPlaybackDevice.preset_channel_map[channel] = key
-            }
-        }
-        this.decache_unused_presets()
-    }
+    var SAMPLE_RATE_NANO = sample_handle_manager.sample_rate.toFloat() / 1_000_000_000F
+    var BUFFER_NANO = sample_handle_manager.buffer_size.toLong() * 1_000_000_000.toLong() / sample_handle_manager.sample_rate.toLong()
 
     fun start_playback() {
         if (this.stop_request == StopRequest.Neutral) {
             this.stop_request = StopRequest.Play
-            this.active_audio_track_handle = AudioTrackHandle(this.sample_rate, this.buffer_size)
+            this.active_audio_track_handle = AudioTrackHandle(sample_handle_manager.sample_rate, sample_handle_manager.buffer_size)
             this._start_play_loop()
-        }
-    }
-
-    private fun gen_sample_handles(event: NoteOn, preset: Preset): Set<SampleHandle> {
-        val output = mutableSetOf<SampleHandle>()
-        val potential_instruments = preset.get_instruments(event.get_note(), event.get_velocity())
-
-        for (p_instrument in potential_instruments) {
-            val samples = p_instrument.instrument!!.get_samples(
-                event.get_note(),
-                event.get_velocity()
-            ).toList()
-
-            for (sample in samples) {
-                val new_handle = this.sample_handle_generator.get(event, sample, p_instrument, preset)
-                new_handle.current_volume = (event.get_velocity().toDouble() / 128.toDouble()) * SampleHandle.MAXIMUM_VOLUME
-                output.add( new_handle )
-            }
-        }
-
-        return output
-    }
-
-    private fun get_preset(channel: Int): Preset? {
-        return this.loaded_presets[this.get_channel_preset(channel)]
-    }
-
-    private fun get_channel_preset(channel: Int): Pair<Int, Int> {
-        return if (this.preset_channel_map.containsKey(channel)) {
-            this.preset_channel_map[channel]!!
-        } else if (channel == 9) {
-            Pair(128, 0)
-        } else {
-            Pair(0,0)
-        }
-    }
-
-    private fun decache_unused_presets() {
-        runBlocking {
-            val loaded_preset_keys = this@MidiPlaybackDevice.loaded_presets_mutex.withLock {
-                this@MidiPlaybackDevice.loaded_presets.keys.toMutableSet()
-            }
-            this@MidiPlaybackDevice.preset_channel_map_mutex.withLock {
-                for ((_, key) in this@MidiPlaybackDevice.preset_channel_map) {
-                    if (loaded_preset_keys.contains(key)) {
-                        loaded_preset_keys.remove(key)
-                    }
-                }
-
-            }
-
-            this@MidiPlaybackDevice.loaded_presets_mutex.withLock {
-                for (key in loaded_preset_keys) {
-                    val preset = this@MidiPlaybackDevice.loaded_presets[key]!!
-                    this@MidiPlaybackDevice.sample_handle_generator.decache_sample_data(preset)
-                    this@MidiPlaybackDevice.loaded_presets.remove(key)
-                }
-            }
         }
     }
 
@@ -443,7 +81,7 @@ open class MidiPlaybackDevice(
                 while (!flag_no_more_chunks && this.stop_request != StopRequest.Kill) {
                     if (chunks.size < this.cache_size_limit) {
                         try {
-                            val chunk = this.wave_generator.generate()
+                            val chunk = this.wave_generator.generate(this.sample_handle_manager.buffer_size)
                             chunks.add(chunk)
                         } catch (e: WaveGenerator.KilledException) {
                             flag_no_more_chunks = true
@@ -521,7 +159,7 @@ open class MidiPlaybackDevice(
     }
 
     fun get_delay(): Long {
-        return (((this.buffer_delay * this.buffer_size).toLong() * 1_000.toLong()) / this.sample_rate.toLong()) + (this.play_drift)
+        return (((this.buffer_delay * this.sample_handle_manager.buffer_size).toLong() * 1_000.toLong()) / this.sample_handle_manager.sample_rate.toLong()) + this.play_drift
     }
 
     open fun on_stop() { }

@@ -1,8 +1,9 @@
 package com.qfs.pagan
 
 import com.qfs.apres.soundfontplayer.CachedMidiAudioPlayer
+import com.qfs.apres.soundfontplayer.SampleHandleManager
 
-class PaganPlaybackDevice(var activity: MainActivity): CachedMidiAudioPlayer(activity.configuration.sample_rate, activity.get_soundfont()!!) {
+class PaganPlaybackDevice(var activity: MainActivity): CachedMidiAudioPlayer(SampleHandleManager(activity.get_soundfont()!!, activity.configuration.sample_rate)) {
     override fun on_stop() {
         this.activity.runOnUiThread {
             this.activity.playback_stop()

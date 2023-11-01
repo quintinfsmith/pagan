@@ -2,7 +2,10 @@ package com.qfs.pagan
 
 import android.app.Activity
 import android.app.AlertDialog
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.res.Configuration
 import android.database.Cursor
 import android.media.midi.MidiDeviceInfo
@@ -184,6 +187,22 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        this.registerReceiver(
+            object: BroadcastReceiver() {
+                override fun onReceive(context: Context?, intent: Intent?) {
+                    when (intent?.action) {
+                        "com.qfs.pagan.CANCEL_EXPORT_WAV" -> {
+                            this@MainActivity.export_wav_cancel()
+                        }
+                        else -> { }
+                    }
+                }
+            },
+            IntentFilter("com.qfs.pagan.CANCEL_EXPORT_WAV"),
+            RECEIVER_NOT_EXPORTED
+        )
+
 
         this._midi_interface = object: MidiController(this) {
             override fun onDeviceAdded(device_info: MidiDeviceInfo) {
@@ -1115,6 +1134,7 @@ class MainActivity : AppCompatActivity() {
             return
         }
         this._exporting_wav_handle!!.export_wav_cancel()
+        this.feedback_msg("Export Cancelled")
     }
 
     fun export_midi() {

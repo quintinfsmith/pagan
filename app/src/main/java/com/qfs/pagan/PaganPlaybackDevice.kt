@@ -3,17 +3,15 @@ package com.qfs.pagan
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.content.BroadcastReceiver
-import android.content.Context
 import android.content.Intent
 import android.os.ParcelFileDescriptor
 import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationCompat.EXTRA_NOTIFICATION_ID
 import androidx.core.app.NotificationManagerCompat
 import com.qfs.apres.Midi
 import com.qfs.apres.soundfontplayer.CachedMidiAudioPlayer
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.io.BufferedOutputStream
@@ -79,26 +77,12 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
     fun get_notification(): NotificationCompat.Builder {
         if (this.active_notification == null) {
             this.get_notification_channel()
-            var cancel_export_flag = "CANCEL_EXPORT_WAV"
-            // Build a PendingIntent for the reply action to trigger.
-            var cancel_intent = Intent(this.activity, object : BroadcastReceiver() {
-                override fun onReceive(main_activity: Context?, intent: Intent?) {
-                    when (intent?.action) {
-                        cancel_export_flag -> {
-                            this@PaganPlaybackDevice.activity.export_wav_cancel()
-                        }
-                    }
-                }
-            }.javaClass)
-
-            cancel_intent.action = cancel_export_flag
-            cancel_intent.putExtra(EXTRA_NOTIFICATION_ID, 0)
-
+            var cancel_export_flag = "com.qfs.pagan.CANCEL_EXPORT_WAV"
             var pending_cancel_intent = PendingIntent.getBroadcast(
                 this.activity,
-                1,
-                cancel_intent,
-                PendingIntent.FLAG_UPDATE_CURRENT
+                0,
+                Intent( cancel_export_flag),
+                PendingIntent.FLAG_IMMUTABLE
             )
 
             var builder = NotificationCompat.Builder(this.activity, CHANNEL_ID)
@@ -144,6 +128,7 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
 
                 var notification_ts = System.currentTimeMillis()
                 while (true) {
+                    ensureActive()
                     try {
                         val g_ts = System.currentTimeMillis()
                         val chunk =

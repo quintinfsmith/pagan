@@ -895,12 +895,19 @@ class MainActivity : AppCompatActivity() {
                 window.decorView.rootView as ViewGroup,
                 false
             )
+        val recycler = viewInflated.findViewById<RecyclerView>(R.id.rvOptions)
+        val title_view = viewInflated.findViewById<TextView>(R.id.tvTitle)
+        val close_button = viewInflated.findViewById<TextView>(R.id.btnClose)
 
-        val recycler = viewInflated as RecyclerView
+        title_view.text = title
+
         val dialog = AlertDialog.Builder(this, R.style.AlertDialog)
-            .setTitle(title)
             .setView(viewInflated)
             .show()
+
+        close_button.setOnClickListener {
+            dialog.dismiss()
+        }
 
         val adapter =
             PopupMenuRecyclerAdapter<T>(recycler, options, default) { index: Int, value: T ->

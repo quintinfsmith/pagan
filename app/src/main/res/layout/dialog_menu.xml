@@ -1,8 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.qfs.pagan.PopupMenuRecyclerView
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:paddingTop="8dp"
-    android:paddingBottom="8dp"
-    android:scrollbars="vertical"
+    android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"/>
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:padding="8dp"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <TextView
+            android:id="@+id/tvTitle"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:gravity="top|center_horizontal"
+            android:textSize="@dimen/dropdown_title_textsize"
+            android:layout_height="wrap_content"/>
+        <TextView
+            android:id="@+id/btnClose"
+            android:clickable="true"
+            android:textSize="@dimen/dropdown_title_textsize"
+            android:text="\u2715"
+            android:gravity="top|center_horizontal"
+            android:paddingEnd="4dp"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"/>
+    </LinearLayout>
+
+    <com.qfs.pagan.PopupMenuRecyclerView
+        android:id="@+id/rvOptions"
+        android:paddingBottom="8dp"
+        android:scrollbars="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"/>
+</LinearLayout>

@@ -172,6 +172,16 @@ class MainActivity : AppCompatActivity() {
         super.onSaveInstanceState(outState)
     }
 
+    override fun onDestroy() {
+        if (this._exporting_wav_handle != null) {
+            this._exporting_wav_handle!!.export_wav_cancel()
+            this._exporting_wav_handle = null
+        }
+        super.onDestroy()
+    }
+
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -379,8 +389,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun playback_start() {
-        this.export_wav()
-        return
         val blocker_view = this.findViewById<LinearLayout>(R.id.llClearOverlay)
         if (blocker_view != null) {
             blocker_view.visibility = View.VISIBLE
@@ -607,7 +615,20 @@ class MainActivity : AppCompatActivity() {
         }
 
         this.findViewById<View>(R.id.btnExportProject).setOnClickListener {
-            this.export_midi()
+            var export_options = if (this.get_opus_manager().radix == 12) {
+                listOf(
+                    Pair(0, "Midi File"),
+                    Pair(1, "Wav File")
+                )
+            } else {
+                listOf( Pair(1, "Wav File") )
+            }
+            this.dialog_popup_menu("Export Project to...", export_options, default = null) { index: Int, value: Int ->
+                when (value) {
+                    0 -> this.export_midi()
+                    1 -> this.export_wav()
+                }
+            }
         }
 
         this.findViewById<View>(R.id.btnSaveProject).setOnClickListener {

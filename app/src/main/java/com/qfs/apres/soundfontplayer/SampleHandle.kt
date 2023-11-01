@@ -47,7 +47,6 @@ class SampleHandle(
 
     private var current_release_position: Float = 0F // Is actually integer, but is only ever used in calculations as Float
     var current_volume: Double = 0.5
-    private var shorts_called: Int = 0 // running total
     var data_buffer = PitchedBuffer(this.data, this.pitch_shift)
     var lfo_buffer: ShortBuffer? = if (this.lfo_data == null) { null } else { ShortBuffer.wrap(this.lfo_data) }
     var lpf_previous: Double = 0.0
@@ -58,7 +57,7 @@ class SampleHandle(
     // var release_delay: Int? = null
     // var remove_delay: Int? = null
 
-    fun get_next_frame(): Short? {
+    fun get_next_frame(): Int? {
         if (this.is_dead) {
             return null
         }
@@ -73,14 +72,13 @@ class SampleHandle(
             this.is_dead = true
             return null
         }
-        var frame = (this.data_buffer.get().toDouble() * this.attenuation * this.current_volume).toInt().toShort()
-        val lfo_frame = this.lfo_buffer?.get() ?: 0.toShort()
+        var frame = (this.data_buffer.get().toDouble() * this.attenuation * this.current_volume).toInt()
+        val lfo_frame = this.lfo_buffer?.get() ?: 0
         if (this.lfo_buffer != null && this.lfo_buffer!!.position() >= this.lfo_data!!.size) {
             this.lfo_buffer!!.position(0)
         }
-        frame = (frame + lfo_frame).toShort()
+        frame += lfo_frame
 
-        this.shorts_called += 1
         if (this.current_attack_position < this.attack_frame_count) {
             this.current_attack_position += 1
         } else if (this.current_hold_position < this.hold_frame_count) {
@@ -91,7 +89,7 @@ class SampleHandle(
 
         if (! this.is_pressed) {
             if (this.current_release_position < this.release_size) {
-                frame = (frame * (1F - (this.current_release_position / this.release_size)).toInt()).toShort()
+                frame = (frame * (1F - (this.current_release_position / this.release_size))).toInt()
                 this.current_release_position += 1
             } else {
                 this.is_dead = true

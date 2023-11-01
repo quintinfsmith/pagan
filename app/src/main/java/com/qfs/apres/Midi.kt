@@ -112,8 +112,6 @@ class Midi {
             this._active_byte = bytes.first()
         }
 
-
-
         return try {
             val event: MIDIEvent? = event_from_bytes(bytes, this._active_byte)
             if (event != null) {

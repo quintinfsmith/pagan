@@ -9,7 +9,6 @@ import android.media.midi.MidiDeviceInfo
 import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
@@ -81,6 +80,18 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private var _options_menu: Menu? = null
     private var _progress_bar: ProgressBar? = null
+
+    private var _export_wav_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val opus_manager = this.get_opus_manager()
+            result?.data?.data?.also { uri ->
+                applicationContext.contentResolver.openFileDescriptor(uri, "w")?.use {
+                    var tmp_midi_playback_device = PaganPlaybackDevice(this, 44100)
+                    tmp_midi_playback_device.export_wav(opus_manager.get_midi(), it)
+                }
+            }
+        }
+    }
 
     private var _export_project_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
@@ -191,7 +202,6 @@ class MainActivity : AppCompatActivity() {
 
         this._midi_interface.connect_virtual_input_device(this._virtual_input_device)
         this._midi_interface.connect_virtual_input_device(this._midi_feedback_dispatcher)
-
         this.project_manager = ProjectManager(this.getExternalFilesDir(null).toString())
         // Move files from applicationInfo.data to externalfilesdir (pre v1.1.2 location)
         val old_projects_dir = File("${applicationInfo.dataDir}/projects")
@@ -363,25 +373,10 @@ class MainActivity : AppCompatActivity() {
         this.feedback_msg(getString(R.string.feedback_on_copy))
     }
 
-    fun export_wav() {
-    }
-
     private fun playback_start() {
-        thread {
-            Log.d("AAA", "WRiting")
-            this._midi_playback_device?.export_wav(
-                this.get_opus_manager().get_midi(0),
-                "${this.getExternalFilesDir(null).toString()}/test.wav"
-            )
-            //var builder = NotificationCompat.Builder(this, CHANNEL_ID)
-            //    .setSmallIcon(R.drawable.notification_icon)
-            //    .setContentTitle(textTitle)
-            //    .setContentText(textContent)
-            //    .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-
-            Log.d("AAA", "WRitten")
-        }
+        this.export_wav()
         return
+
         val blocker_view = this.findViewById<LinearLayout>(R.id.llClearOverlay)
         if (blocker_view != null) {
             blocker_view.visibility = View.VISIBLE
@@ -1070,6 +1065,24 @@ class MainActivity : AppCompatActivity() {
             .setType("application/json")
             .setAction(Intent.ACTION_GET_CONTENT)
         this._import_project_intent_launcher.launch(intent)
+    }
+
+    fun export_wav() {
+        val opus_manager = this.get_opus_manager()
+
+        var name = opus_manager.path
+        if (name != null) {
+            name = name.substring(name.lastIndexOf("/") + 1)
+            name = name.substring(0, name.lastIndexOf("."))
+        }
+
+        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT)
+        intent.addCategory(Intent.CATEGORY_OPENABLE)
+        intent.putExtra(Intent.EXTRA_TITLE, "$name.wav")
+        intent.type = "application/wav"
+
+        this._export_wav_intent_launcher.launch(intent)
+
     }
 
     fun export_midi() {

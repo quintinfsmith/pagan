@@ -139,9 +139,9 @@
             android:maxLines="1"
             android:theme="@style/icon_button"
             android:layout_height="wrap_content"
-            android:layout_width="64dp"
+            android:layout_width="52dp"
             android:layout_weight="1"
-            app:srcCompat="@drawable/midi_logo"
+            app:srcCompat="@drawable/baseline_save_alt_24"
             android:text="@string/btn_cfg_export" />
     </LinearLayout>
 </LinearLayout>

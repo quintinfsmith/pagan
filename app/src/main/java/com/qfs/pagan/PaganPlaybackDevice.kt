@@ -2,8 +2,13 @@ package com.qfs.pagan
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
 import android.os.ParcelFileDescriptor
 import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationCompat.EXTRA_NOTIFICATION_ID
 import androidx.core.app.NotificationManagerCompat
 import com.qfs.apres.Midi
 import com.qfs.apres.soundfontplayer.CachedMidiAudioPlayer
@@ -17,6 +22,7 @@ import kotlin.math.min
 
 class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activity.configuration.sample_rate): CachedMidiAudioPlayer(SampleHandleManager(activity.get_soundfont()!!, sample_rate)) {
     val CHANNEL_ID = "EXPORTWAV"
+    var _exporting = false
     override fun on_stop() {
         this.activity.runOnUiThread {
             this.activity.playback_stop()
@@ -28,7 +34,16 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
         }
     }
 
+    fun export_wav_cancel() {
+        this._exporting = false
+    }
+
     fun export_wav(midi: Midi, file_descriptor: ParcelFileDescriptor) {
+        if (this._exporting) {
+            return
+        }
+        this._exporting = true
+        this.activity.feedback_msg("Exporting to wav")
         var notification_manager = NotificationManagerCompat.from(this.activity)
 
         // Create the NotificationChannel.
@@ -59,18 +74,36 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
         var est_chunk_count = (this.frame_count / this.sample_handle_manager.buffer_size)
         var chunk_count = 0
 
-        var builder = NotificationCompat.Builder(this.activity, "CUNT")
+        var cancel_export_flag = "CANCEL_EXPORT_WAV"
+        // Build a PendingIntent for the reply action to trigger.
+        var cancel_intent = Intent(this.activity, object : BroadcastReceiver() {
+            override fun onReceive(main_activity: Context?, intent: Intent?) {
+                when (intent?.action) {
+                    cancel_export_flag -> {
+                        this@PaganPlaybackDevice.activity.export_wav_cancel()
+                    }
+                }
+            }
+        }.javaClass)
+
+        cancel_intent.action = cancel_export_flag
+        cancel_intent.putExtra(EXTRA_NOTIFICATION_ID, 0)
+
+        var pending_cancel_intent = PendingIntent.getBroadcast(this.activity, 1, cancel_intent, PendingIntent.FLAG_UPDATE_CURRENT)
+
+        var builder = NotificationCompat.Builder(this.activity, CHANNEL_ID)
             .setContentTitle("Exporting ${this.activity.get_opus_manager().project_name}")
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setSmallIcon(R.drawable.ic_baseline_pause_24)
             .setSilent(true)
+            .addAction(R.drawable.ic_baseline_pause_24, "Cancel", pending_cancel_intent)
 
         var notification_id = 0
         builder.setProgress(est_chunk_count, chunk_count, false)
         notification_manager.notify(notification_id, builder.build())
 
         var notification_ts = System.currentTimeMillis()
-        while (true) {
+        while (this._exporting) {
             try {
                 val g_ts = System.currentTimeMillis()
                 val chunk = this.wave_generator.generate(this.sample_handle_manager.buffer_size).first
@@ -82,7 +115,8 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
                     data_output_stream.writeByte((b.toInt() shr 8))
                     data_byte_count += 2
                 }
-                if (System.currentTimeMillis() - notification_ts > 200) {
+
+                if (System.currentTimeMillis() - notification_ts > 500) {
                     builder.setProgress(est_chunk_count, min(est_chunk_count, chunk_count), false)
                     notification_manager.notify(notification_id, builder.build())
                     notification_ts = System.currentTimeMillis()
@@ -130,10 +164,12 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
         // 40 Chunk size
         data_output_stream.writeInt( Integer.reverseBytes(data_byte_count) )
 
-        val input_stream = tmp_file.inputStream()
-        input_stream.copyTo(data_output_stream)
+        if (this._exporting) {
+            val input_stream = tmp_file.inputStream()
+            input_stream.copyTo(data_output_stream)
 
-        input_stream.close()
+            input_stream.close()
+        }
         data_output_stream.close()
 
         tmp_file.delete()
@@ -141,14 +177,22 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
         this.buffer_delay = original_delay
         this.wave_generator.frame = 0
 
+        if (! this._exporting) {
+            builder.setContentText("Cancelled")
+                .setProgress(0, 0, false)
+                .setAutoCancel(true)
+                .setTimeoutAfter(5000)
+                .setSilent(false)
+        } else {
+            builder.setContentText("Done")
+                .setProgress(0, 0, false)
+                .setAutoCancel(true)
+                .setTimeoutAfter(5000)
+                .setSilent(false)
 
-        builder.setContentText("Done")
-            .setProgress(0, 0, false)
-            .setAutoCancel(true)
-            .setTimeoutAfter(5000)
-            .setSilent(false)
-
+        }
         notification_manager.notify(notification_id, builder.build())
 
+        this._exporting = false
     }
 }

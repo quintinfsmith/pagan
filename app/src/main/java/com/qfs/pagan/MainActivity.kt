@@ -81,13 +81,18 @@ class MainActivity : AppCompatActivity() {
     private var _options_menu: Menu? = null
     private var _progress_bar: ProgressBar? = null
 
+    private var _exporting_wav_handle: PaganPlaybackDevice? = null
+
     private var _export_wav_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            val opus_manager = this.get_opus_manager()
-            result?.data?.data?.also { uri ->
-                applicationContext.contentResolver.openFileDescriptor(uri, "w")?.use {
-                    var tmp_midi_playback_device = PaganPlaybackDevice(this, 44100)
-                    tmp_midi_playback_device.export_wav(opus_manager.get_midi(), it)
+        thread {
+            if (result.resultCode == Activity.RESULT_OK && this._exporting_wav_handle == null) {
+                val opus_manager = this.get_opus_manager()
+                result?.data?.data?.also { uri ->
+                    applicationContext.contentResolver.openFileDescriptor(uri, "w")?.use {
+                        this._exporting_wav_handle = PaganPlaybackDevice(this, 44100)
+                        this._exporting_wav_handle!!.export_wav(opus_manager.get_midi(), it)
+                        this._exporting_wav_handle = null
+                    }
                 }
             }
         }
@@ -376,7 +381,6 @@ class MainActivity : AppCompatActivity() {
     private fun playback_start() {
         this.export_wav()
         return
-
         val blocker_view = this.findViewById<LinearLayout>(R.id.llClearOverlay)
         if (blocker_view != null) {
             blocker_view.visibility = View.VISIBLE
@@ -482,7 +486,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun feedback_msg(msg: String) {
-        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+        this.runOnUiThread {
+            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+        }
     }
 
     fun loading_reticle_show() {
@@ -1080,9 +1086,14 @@ class MainActivity : AppCompatActivity() {
         intent.addCategory(Intent.CATEGORY_OPENABLE)
         intent.putExtra(Intent.EXTRA_TITLE, "$name.wav")
         intent.type = "application/wav"
-
         this._export_wav_intent_launcher.launch(intent)
+    }
 
+    fun export_wav_cancel() {
+        if (this._exporting_wav_handle == null) {
+            return
+        }
+        this._exporting_wav_handle!!.export_wav_cancel()
     }
 
     fun export_midi() {

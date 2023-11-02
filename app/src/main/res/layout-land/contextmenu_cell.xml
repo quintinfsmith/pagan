@@ -75,7 +75,7 @@
 
                 <com.qfs.pagan.NumberSelector xmlns:android="http://schemas.android.com/apk/res/android"
                     xmlns:custom="http://schemas.android.com/apk/res-auto"
-                    android:orientation="vertical"
+                    android:orientation="horizontal"
                     android:id="@+id/nsOctave"
                     android:layout_width="41dp"
                     android:layout_height="match_parent"
@@ -96,7 +96,7 @@
 
     <com.qfs.pagan.NumberSelector xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:custom="http://schemas.android.com/apk/res-auto"
-        android:orientation="vertical"
+        android:orientation="horizontal"
         android:id="@+id/nsOffset"
         android:layout_width="41dp"
         android:layout_height="match_parent"

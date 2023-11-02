@@ -87,6 +87,7 @@
             <com.qfs.pagan.NumberSelector xmlns:android="http://schemas.android.com/apk/res/android"
                 xmlns:custom="http://schemas.android.com/apk/res-auto"
                 android:id="@+id/nsOctave"
+                android:orientation="vertical"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:paddingLeft="@dimen/normal_padding"
@@ -107,6 +108,7 @@
         android:layout_weight="1"
         android:paddingLeft="@dimen/normal_padding"
         android:paddingRight="@dimen/normal_padding"
+        android:orientation="vertical"
         custom:min="0"
         custom:max="11"/>
 

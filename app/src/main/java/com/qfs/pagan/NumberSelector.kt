@@ -3,7 +3,9 @@ package com.qfs.pagan
 import android.content.Context
 import android.util.AttributeSet
 import android.view.Gravity.CENTER
+import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
+import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.view.ContextThemeWrapper
@@ -13,7 +15,7 @@ import kotlin.math.roundToInt
 class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(context, attrs) {
     var min: Int = 0
     var max: Int = 1
-    var radix: Int = 12
+    var radix: Int = 10
     private var _button_map = HashMap<NumberSelectorButton, Int>()
     private var _active_button: NumberSelectorButton? = null
     private var _on_change_hook: ((NumberSelector) -> Unit)? = null
@@ -73,16 +75,12 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
         try {
             this.max = styled_attributes.getInteger(R.styleable.NumberSelector_max, 2)
             this.min = styled_attributes.getInteger(R.styleable.NumberSelector_min, 0)
-            this.radix = styled_attributes.getInteger(R.styleable.NumberSelector_radix, 12)
         } finally {
            styled_attributes.recycle()
         }
         this.populate()
     }
 
-    fun set_radix(radix: Int) {
-        this.radix = radix
-    }
 
     fun getState(): Int? {
         if (this._active_button == null) {
@@ -147,18 +145,32 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
 
     private fun populate() {
         val orientation = this.orientation
-        for (i in this.min .. this.max) {
-            val currentView = NumberSelectorButton(this, i)
-            if (this.orientation == VERTICAL) {
-                this.addView(currentView, 0)
+        for (i in 0 .. ((this.max - this.min) / 12)) {
+            var new_linear_layout = LinearLayout(this.context)
+            this.addView(new_linear_layout)
+
+            if (this.orientation == HORIZONTAL) {
+                new_linear_layout.layoutParams.width = WRAP_CONTENT
+                new_linear_layout.orientation = VERTICAL
             } else {
-                this.addView(currentView)
+                new_linear_layout.layoutParams.height = WRAP_CONTENT
+                new_linear_layout.orientation = HORIZONTAL
+            }
+        }
+
+        for (i in this.min .. this.max) {
+            val j = (i - this.min) % this.childCount
+            val currentView = NumberSelectorButton(this, i)
+            if (this.orientation == HORIZONTAL) {
+                (this.getChildAt(j) as ViewGroup).addView(currentView, 0)
+            } else {
+                (this.getChildAt(j) as ViewGroup).addView(currentView)
             }
 
             val layout_params = (currentView.layoutParams as LinearLayout.LayoutParams)
             layout_params.weight = 1F
             layout_params.gravity = CENTER
-            if (orientation == VERTICAL) {
+            if (orientation != VERTICAL) {
                 layout_params.width = MATCH_PARENT
                 layout_params.height = 0
             } else {
@@ -167,9 +179,9 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
             }
 
             val padding = resources.getDimension(R.dimen.normal_padding).roundToInt()
-            if (orientation == VERTICAL && i != this@NumberSelector.max) {
+            if (orientation == HORIZONTAL && i != this@NumberSelector.max) {
                 (layout_params as MarginLayoutParams).setMargins(0, padding, 0, 0)
-            } else if (orientation != VERTICAL && i != this@NumberSelector.min) {
+            } else if (orientation != HORIZONTAL && i != this@NumberSelector.min) {
                 (layout_params as MarginLayoutParams).setMargins(padding, 0, 0, 0)
             }
 

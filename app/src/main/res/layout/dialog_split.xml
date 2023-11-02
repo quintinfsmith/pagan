@@ -10,26 +10,14 @@
         android:layout_width="wrap_content"
         android:layout_height="match_parent">
 
-    <NumberPicker
-        android:id="@+id/npHundreds"
-        android:layout_gravity="right"
-        android:gravity="right"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"  />
-
-    <NumberPicker
-        android:id="@+id/npTens"
-        android:layout_gravity="right"
-        android:gravity="right"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"  />
-
-    <NumberPicker
-        android:id="@+id/npOnes"
-        android:layout_gravity="right"
-        android:gravity="right"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"  />
+        <EditText
+            android:id="@+id/etNumber"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ems="3"
+            android:textAlignment="textEnd"
+            android:inputType="number" />
 
     </LinearLayout>
 

@@ -12,6 +12,10 @@ import android.media.midi.MidiDeviceInfo
 import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
+import android.text.Editable
+import android.text.InputFilter
+import android.text.Spanned
+import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
@@ -20,7 +24,6 @@ import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.EditText
 import android.widget.LinearLayout
-import android.widget.NumberPicker
 import android.widget.ProgressBar
 import android.widget.RelativeLayout
 import android.widget.TextView
@@ -58,7 +61,9 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import kotlin.concurrent.thread
 import kotlin.math.floor
+import kotlin.math.max
 import com.qfs.pagan.InterfaceLayer as OpusManager
+
 
 /**
  * Device Scanning
@@ -627,8 +632,11 @@ class MainActivity : AppCompatActivity() {
             R.string.label_transpose,
             get_number_string(opus_manager.transpose, opus_manager.radix, 1)
         )
+
         btnTranspose.setOnClickListener {
-            this.dialog_transpose()
+            this.dialog_number_input("Transpose", 0, this.get_opus_manager().radix - 1) { value: Int ->
+                opus_manager.set_transpose(value)
+            }
         }
 
         val btnRadix: TextView = this.findViewById(R.id.btnRadix)
@@ -946,36 +954,7 @@ class MainActivity : AppCompatActivity() {
             }
             .show()
     }
-    // Can't use the general popup_number_dialog. We want a picker using radix-N
-    private fun dialog_transpose() {
-        val viewInflated: View = LayoutInflater.from(this)
-            .inflate(
-                R.layout.dialog_split,
-                window.decorView.rootView as ViewGroup,
-                false
-            )
 
-        val npOnes = viewInflated.findViewById<NumberPicker>(R.id.npOnes)
-        npOnes.minValue = 0
-        npOnes.maxValue = 11
-        npOnes.displayedValues = arrayOf("0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B")
-        npOnes.value = this.get_opus_manager().transpose
-
-        val npTens = viewInflated.findViewById<NumberPicker>(R.id.npTens)
-        npTens.visibility = View.GONE
-        val npHundreds = viewInflated.findViewById<NumberPicker>(R.id.npHundreds)
-        npHundreds.visibility = View.GONE
-
-        AlertDialog.Builder(this, R.style.AlertDialog)
-            .setTitle(getString(R.string.dlg_transpose))
-            .setView(viewInflated)
-            .setPositiveButton(android.R.string.ok) { _, _ ->
-                val value = npOnes.value
-                this._opus_manager.set_transpose(value)
-            }
-            .setNegativeButton(android.R.string.cancel) { _, _ -> }
-            .show()
-    }
     internal fun <T> dialog_popup_menu(title: String, options: List<Pair<T, String>>, default: T? = null, callback: (index: Int, value: T) -> Unit ) {
         if (options.isEmpty()) {
             return
@@ -1023,77 +1002,71 @@ class MainActivity : AppCompatActivity() {
                 window.decorView.rootView as ViewGroup,
                 false
             )
-
-        val ones_min = if (min_value > 9 || max_value > 9) {
-            0
-        } else {
-            min_value
+        var number_input = viewInflated.findViewById<EditText>(R.id.etNumber)
+        number_input.setText("$coerced_default_value")
+        number_input.setOnClickListener {
+            number_input.selectAll()
         }
 
-        val ones_max = if (max_value > 9) {
-            9
-        } else {
-            max_value % 10
-        }
+        /*
+            Use filters to ensure a number is input
+            Then the listener to ensure the value is <= the maximum_value
+            THEN on close, return the max(min_value, output)
+         */
 
-        val npOnes = viewInflated.findViewById<NumberPicker>(R.id.npOnes)
-        npOnes.minValue = ones_min
-        npOnes.maxValue = ones_max
-
-        val tens_min = if (min_value / 10 > 9 || max_value / 10 > 9) {
-            0
-        } else {
-            (min_value / 10) % 10
-        }
-
-        val tens_max = if (max_value / 10 > 9) {
-            9
-        } else {
-            (max_value / 10)
-        }
-
-        val npTens = viewInflated.findViewById<NumberPicker>(R.id.npTens)
-        npTens.minValue = tens_min
-        npTens.maxValue = tens_max
-
-        val hundreds_min = if (min_value / 100 > 9 || max_value / 100 > 9) {
-            0
-        } else {
-            (min_value / 100) % 10
-        }
-
-        val hundreds_max = if (max_value / 100 > 9) {
-            9
-        } else {
-            (max_value / 100)
-        }
-
-        val npHundreds = viewInflated.findViewById<NumberPicker>(R.id.npHundreds)
-        npHundreds.maxValue = hundreds_max
-        npHundreds.minValue = hundreds_min
-
-        npHundreds.value = (coerced_default_value / 100) % 10
-        npTens.value = (coerced_default_value / 10) % 10
-        npOnes.value = coerced_default_value % 10
-
-        if (hundreds_max == 0) {
-            npHundreds.visibility = View.GONE
-            if (tens_max == 0) {
-                npTens.visibility = View.GONE
+        number_input.filters = arrayOf(object: InputFilter {
+            override fun filter(
+                source: CharSequence,
+                start: Int,
+                end: Int,
+                dest: Spanned,
+                dstart: Int,
+                dend: Int
+            ): CharSequence? {
+                try {
+                    "${dest.substring(0, dstart)}$source${dest.substring(dend)}".toInt()
+                    return null
+                } catch (nfe: NumberFormatException) {
+                }
+                return ""
             }
-        }
+        })
+
+        number_input.addTextChangedListener( object : TextWatcher {
+            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
+            override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
+
+            override fun afterTextChanged(p0: Editable?) {
+                if (p0 == null || p0.toString() == "") {
+                    number_input.setText("$min_value")
+                    number_input.selectAll()
+                } else {
+                    val value = p0.toString().toInt()
+                    if (value > max_value) {
+                        number_input.setText("$max_value")
+                        number_input.selectAll()
+                    }
+                }
+            }
+        })
 
         AlertDialog.Builder(this, R.style.AlertDialog)
             .setTitle(title)
             .setView(viewInflated)
             .setPositiveButton(android.R.string.ok) { _, _ ->
-                val value = (npHundreds.value * 100) + (npTens.value * 10) + npOnes.value
+                val value = try {
+                    max(min_value, number_input.text.toString().toInt())
+                } catch (nfe: NumberFormatException) {
+                    coerced_default_value
+                }
                 this._number_selector_defaults[title] = value
                 callback(value)
             }
             .setNegativeButton(android.R.string.cancel) { _, _ ->
             }
             .show()
+        number_input.requestFocus()
+        number_input.selectAll()
     }
     private fun dialog_save_project(callback: () -> Unit) {
         if (this.get_opus_manager().has_changed_since_save()) {

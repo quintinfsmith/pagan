@@ -11,12 +11,10 @@ import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event.ProgramChange
 import com.qfs.apres.event2.NoteOff79
 import com.qfs.apres.event2.NoteOn79
-import com.qfs.apres.soundfont.SoundFont
 
-class ActiveMidiAudioPlayer(sample_rate: Int, sound_font: SoundFont): MidiPlaybackDevice(
-    sample_rate = sample_rate,
-    cache_size_limit = 1,
-    sound_font = sound_font), VirtualMidiOutputDevice {
+class ActiveMidiAudioPlayer(sample_handle_manager: SampleHandleManager): MidiPlaybackDevice(
+    sample_handle_manager,
+    cache_size_limit = 1), VirtualMidiOutputDevice {
     init {
         this.buffer_delay = 1
     }
@@ -46,7 +44,7 @@ class ActiveMidiAudioPlayer(sample_rate: Int, sound_font: SoundFont): MidiPlayba
     }
 
     override fun onBankSelect(event: BankSelect) {
-        this.select_bank(event.channel, event.value)
+        this.process_event(event)
     }
 
     override fun onAllSoundOff(event: AllSoundOff) {
@@ -54,10 +52,16 @@ class ActiveMidiAudioPlayer(sample_rate: Int, sound_font: SoundFont): MidiPlayba
     }
 
     override fun onProgramChange(event: ProgramChange) {
-        this.change_program(event.get_channel(), event.get_program())
+        this.process_event(event)
     }
 
     private fun process_event(event: MIDIEvent) {
-        this.wave_generator.process_event(event, this.buffer_delay)
+        val delta_nano = if (this.is_playing()) {
+            (System.nanoTime() - this.wave_generator.timestamp).toFloat()
+        } else {
+            0f
+        }
+        val frame = (this.SAMPLE_RATE_NANO * delta_nano).toInt() + (this.buffer_delay * this.sample_handle_manager.buffer_size)
+        this.wave_generator.place_event(event, frame)
     }
 }

@@ -2,7 +2,10 @@ package com.qfs.pagan
 
 import android.app.Activity
 import android.app.AlertDialog
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.res.Configuration
 import android.database.Cursor
 import android.media.midi.MidiDeviceInfo
@@ -32,6 +35,7 @@ import androidx.core.os.bundleOf
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResult
+import androidx.media3.common.MimeTypes
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
@@ -45,6 +49,7 @@ import com.qfs.apres.event.BankSelect
 import com.qfs.apres.event.ProgramChange
 import com.qfs.apres.soundfont.SoundFont
 import com.qfs.apres.soundfontplayer.ActiveMidiAudioPlayer
+import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.pagan.databinding.ActivityMainBinding
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.encodeToString
@@ -81,6 +86,23 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private var _options_menu: Menu? = null
     private var _progress_bar: ProgressBar? = null
+
+    private var _exporting_wav_handle: PaganPlaybackDevice? = null
+
+    private var _export_wav_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        thread {
+            if (result.resultCode == Activity.RESULT_OK && this._exporting_wav_handle == null) {
+                val opus_manager = this.get_opus_manager()
+                result?.data?.data?.also { uri ->
+                    applicationContext.contentResolver.openFileDescriptor(uri, "w")?.use {
+                        this._exporting_wav_handle = PaganPlaybackDevice(this, 44100)
+                        this._exporting_wav_handle!!.export_wav(opus_manager.get_midi(), it)
+                        this._exporting_wav_handle = null
+                    }
+                }
+            }
+        }
+    }
 
     private var _export_project_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
@@ -156,8 +178,34 @@ class MainActivity : AppCompatActivity() {
         super.onSaveInstanceState(outState)
     }
 
+    override fun onDestroy() {
+        if (this._exporting_wav_handle != null) {
+            this._exporting_wav_handle!!.export_wav_cancel()
+            this._exporting_wav_handle = null
+        }
+        super.onDestroy()
+    }
+
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        this.registerReceiver(
+            object: BroadcastReceiver() {
+                override fun onReceive(context: Context?, intent: Intent?) {
+                    when (intent?.action) {
+                        "com.qfs.pagan.CANCEL_EXPORT_WAV" -> {
+                            this@MainActivity.export_wav_cancel()
+                        }
+                        else -> { }
+                    }
+                }
+            },
+            IntentFilter("com.qfs.pagan.CANCEL_EXPORT_WAV"),
+            RECEIVER_NOT_EXPORTED
+        )
+
 
         this._midi_interface = object: MidiController(this) {
             override fun onDeviceAdded(device_info: MidiDeviceInfo) {
@@ -191,7 +239,6 @@ class MainActivity : AppCompatActivity() {
 
         this._midi_interface.connect_virtual_input_device(this._virtual_input_device)
         this._midi_interface.connect_virtual_input_device(this._midi_feedback_dispatcher)
-
         this.project_manager = ProjectManager(this.getExternalFilesDir(null).toString())
         // Move files from applicationInfo.data to externalfilesdir (pre v1.1.2 location)
         val old_projects_dir = File("${applicationInfo.dataDir}/projects")
@@ -237,7 +284,12 @@ class MainActivity : AppCompatActivity() {
                 this._soundfont = SoundFont(path)
                 if (!this._midi_interface.output_devices_connected()) {
                     this._midi_playback_device = PaganPlaybackDevice(this)
-                    this._midi_feedback_device = ActiveMidiAudioPlayer(22050, this._soundfont!!)
+                    this._midi_feedback_device = ActiveMidiAudioPlayer(
+                        SampleHandleManager(
+                            this._soundfont!!,
+                            22050
+                        )
+                    )
                     this._midi_interface.connect_virtual_output_device(this._midi_feedback_device!!)
                 }
             }
@@ -464,7 +516,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun feedback_msg(msg: String) {
-        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+        this.runOnUiThread {
+            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+        }
     }
 
     fun loading_reticle_show() {
@@ -597,7 +651,20 @@ class MainActivity : AppCompatActivity() {
         }
 
         this.findViewById<View>(R.id.btnExportProject).setOnClickListener {
-            this.export_midi()
+            var export_options = if (this.get_opus_manager().radix == 12) {
+                listOf(
+                    Pair(0, "Midi File"),
+                    Pair(1, "Wav File")
+                )
+            } else {
+                listOf( Pair(1, "Wav File") )
+            }
+            this.dialog_popup_menu("Export Project to...", export_options, default = null) { index: Int, value: Int ->
+                when (value) {
+                    0 -> this.export_midi()
+                    1 -> this.export_wav()
+                }
+            }
         }
 
         this.findViewById<View>(R.id.btnSaveProject).setOnClickListener {
@@ -770,7 +837,7 @@ class MainActivity : AppCompatActivity() {
         if (this._midi_feedback_device != null) {
             this._midi_interface.disconnect_virtual_output_device(this._midi_feedback_device!!)
         }
-        this._midi_feedback_device = ActiveMidiAudioPlayer(11025, this._soundfont!!)
+        this._midi_feedback_device = ActiveMidiAudioPlayer(SampleHandleManager(this._soundfont!!, 11025))
         this._midi_playback_device = PaganPlaybackDevice(this)
 
         this._midi_interface.connect_virtual_output_device(this._midi_feedback_device!!)
@@ -921,12 +988,19 @@ class MainActivity : AppCompatActivity() {
                 window.decorView.rootView as ViewGroup,
                 false
             )
+        val recycler = viewInflated.findViewById<RecyclerView>(R.id.rvOptions)
+        val title_view = viewInflated.findViewById<TextView>(R.id.tvTitle)
+        val close_button = viewInflated.findViewById<TextView>(R.id.btnClose)
 
-        val recycler = viewInflated as RecyclerView
+        title_view.text = title
+
         val dialog = AlertDialog.Builder(this, R.style.AlertDialog)
-            .setTitle(title)
             .setView(viewInflated)
             .show()
+
+        close_button.setOnClickListener {
+            dialog.dismiss()
+        }
 
         val adapter =
             PopupMenuRecyclerAdapter<T>(recycler, options, default) { index: Int, value: T ->
@@ -1062,15 +1136,40 @@ class MainActivity : AppCompatActivity() {
 
     fun select_midi_file() {
         val intent = Intent()
-            .setType("*/*")
+            .setType(MimeTypes.AUDIO_MIDI)
             .setAction(Intent.ACTION_GET_CONTENT)
         this._import_midi_intent_launcher.launch(intent)
     }
+
     fun select_project_file() {
         val intent = Intent()
             .setType("application/json")
             .setAction(Intent.ACTION_GET_CONTENT)
         this._import_project_intent_launcher.launch(intent)
+    }
+
+    fun export_wav() {
+        val opus_manager = this.get_opus_manager()
+
+        var name = opus_manager.path
+        if (name != null) {
+            name = name.substring(name.lastIndexOf("/") + 1)
+            name = name.substring(0, name.lastIndexOf("."))
+        }
+
+        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT)
+        intent.addCategory(Intent.CATEGORY_OPENABLE)
+        intent.type = MimeTypes.AUDIO_WAV
+        intent.putExtra(Intent.EXTRA_TITLE, "$name.wav")
+        this._export_wav_intent_launcher.launch(intent)
+    }
+
+    fun export_wav_cancel() {
+        if (this._exporting_wav_handle == null) {
+            return
+        }
+        this._exporting_wav_handle!!.export_wav_cancel()
+        this.feedback_msg("Export Cancelled")
     }
 
     fun export_midi() {
@@ -1084,8 +1183,8 @@ class MainActivity : AppCompatActivity() {
 
         val intent = Intent(Intent.ACTION_CREATE_DOCUMENT)
         intent.addCategory(Intent.CATEGORY_OPENABLE)
+        intent.type = MimeTypes.AUDIO_MIDI
         intent.putExtra(Intent.EXTRA_TITLE, "$name.mid")
-        intent.type = "application/midi"
 
         this._export_midi_intent_launcher.launch(intent)
     }

@@ -1,11 +1,9 @@
 package com.qfs.pagan
 
 import android.content.Context
-import android.view.Gravity.CENTER
+import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
-import android.view.ViewGroup.LayoutParams.MATCH_PARENT
-import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.view.ContextThemeWrapper
@@ -14,6 +12,7 @@ import com.qfs.pagan.opusmanager.LinksLayer
 import com.qfs.pagan.opusmanager.OpusEvent
 import com.qfs.pagan.structure.OpusTree
 import kotlin.concurrent.thread
+import kotlin.math.abs
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
 class LeafButton(
@@ -23,25 +22,6 @@ class LeafButton(
     var position: List<Int>,
     is_percussion: Boolean
 ) : LinearLayout(ContextThemeWrapper(context, R.style.leaf)) {
-    // LeafText exists to make the text consider the state of the LeafButton
-    class InnerWrapper(context: Context): LinearLayout(context) {
-        override fun onCreateDrawableState(extraSpace: Int): IntArray? {
-            val drawableState = super.onCreateDrawableState(extraSpace + 5)
-            val parent = this.parent ?: return drawableState
-            return (parent as LeafButton).drawableState
-        }
-    }
-
-    class LeafText(context: Context): androidx.appcompat.widget.AppCompatTextView(context) {
-        override fun onCreateDrawableState(extraSpace: Int): IntArray? {
-            val drawableState = super.onCreateDrawableState(extraSpace + 5)
-            var parent = this.parent ?: return drawableState
-            while (parent !is LeafButton) {
-                parent = parent.parent
-            }
-            return parent.drawableState
-        }
-    }
 
     companion object {
         private val STATE_LINKED = intArrayOf(R.attr.state_linked)
@@ -51,32 +31,12 @@ class LeafButton(
         private val STATE_CHANNEL_EVEN = intArrayOf(R.attr.state_channel_even)
     }
 
-    private var _value_wrapper: LinearLayout
-    private var _value_label_octave: TextView
-    private var _value_label_offset: TextView
-    private var _prefix_label: TextView
-    private var _inner_wrapper: InnerWrapper = InnerWrapper(ContextThemeWrapper(this.context, R.style.leaf_inner))
     var invalid: Boolean = false
 
     init {
         this.isClickable = false
         this.minimumHeight = resources.getDimension(R.dimen.line_height).toInt()
         this.minimumWidth = resources.getDimension(R.dimen.base_leaf_width).toInt()
-        this._inner_wrapper.orientation = VERTICAL
-        this._value_wrapper = LinearLayout(ContextThemeWrapper(this.context, R.style.leaf_value))
-        this._value_wrapper.orientation = HORIZONTAL
-
-        this._value_label_octave = LeafText(ContextThemeWrapper(this.context, R.style.leaf_value_octave))
-        this._value_label_offset = LeafText(ContextThemeWrapper(this.context, R.style.leaf_value_offset))
-        this._prefix_label = LeafText(ContextThemeWrapper(this.context, R.style.leaf_prefix))
-        (this._inner_wrapper as LinearLayout).addView(this._prefix_label)
-        (this._inner_wrapper as LinearLayout).addView(this._value_wrapper)
-        this._value_wrapper.addView(this._value_label_octave)
-        this._value_wrapper.addView(this._value_label_offset)
-
-        this.addView(this._inner_wrapper)
-        this._inner_wrapper.layoutParams.width = MATCH_PARENT
-        this._inner_wrapper.layoutParams.height = MATCH_PARENT
 
         this.set_text(is_percussion)
         this.setOnClickListener {
@@ -164,64 +124,57 @@ class LeafButton(
         return true
     }
 
-    private fun unset_text() {
-        this._prefix_label.visibility = View.GONE
-        this._value_label_octave.visibility = View.GONE
-        this._value_label_offset.visibility = View.GONE
-    }
-
     private fun set_text(is_percussion: Boolean) {
-        if (this._event == null) {
-            this.unset_text()
-            return
-        }
+        val event = this._event
+        this.removeAllViews()
+        var base_context = (this.context as ContextThemeWrapper).baseContext
+        if (event == null) {
+            val inner_wrapper: View = LayoutInflater.from(base_context)
+                .inflate(
+                    R.layout.leaf_empty,
+                    this,
+                    false
+                )
+            this.addView(inner_wrapper)
+        } else if (is_percussion) {
+            val inner_wrapper: View = LayoutInflater.from(base_context)
+                .inflate(
+                    R.layout.leaf_percussion,
+                    this,
+                    false
+                )
+            this.addView(inner_wrapper)
+        } else if (event.relative) {
+            val inner_wrapper: View = LayoutInflater.from(base_context)
+                .inflate(
+                    R.layout.leaf_relative,
+                    this,
+                    false
+                )
+            this.addView(inner_wrapper)
 
-        val event = this._event!!
-        var use_note = event.note
-        this._prefix_label.text = if (!is_percussion && (event.relative && event.note != 0)) {
-            this._prefix_label.visibility = View.VISIBLE
-            if (event.note < 0) {
-                use_note = 0 - event.note
-                this._activity.getString(R.string.pfx_subtract)
+            val label_prefix = inner_wrapper.findViewById<TextView>(R.id.tvPrefix)
+            val label_octave = inner_wrapper.findViewById<TextView>(R.id.tvOctave)
+            val label_offset = inner_wrapper.findViewById<TextView>(R.id.tvOffset)
+            label_prefix.text = if (event.note < 0) {
+                "-"
             } else {
-                this._activity.getString(R.string.pfx_add)
+                "+"
             }
+            label_octave.text = "${abs(event.note) / event.radix}"
+            label_offset.text = "${abs(event.note) % event.radix}"
         } else {
-            this._prefix_label.visibility = View.GONE
-            ""
-        }
-
-
-        if (is_percussion) {
-            this._value_label_octave.visibility = View.GONE
-            this._value_label_offset.text = this._activity.getString(R.string.percussion_label)
-        } else if (event.relative && event.note == 0) {
-            this._value_label_octave.visibility = View.GONE
-            this._value_label_offset.text = this._activity.getString(R.string.repeat_note)
-        } else {
-            this._value_label_octave.visibility = View.VISIBLE
-            this._value_label_octave.text = get_number_string(use_note / event.radix, event.radix, 1)
-            this._value_label_offset.text = get_number_string(use_note % event.radix, event.radix, 1)
-        }
-
-        if (event.relative && event.note != 0) {
-            (this._prefix_label.layoutParams as LayoutParams).setMargins(0,-20,0,0)
-            (this._prefix_label.layoutParams as LayoutParams).height = WRAP_CONTENT
-            (this._prefix_label.layoutParams as LayoutParams).gravity = CENTER
-
-            (this._value_wrapper.layoutParams as LayoutParams).setMargins(0,-30,0,0)
-            (this._value_wrapper.layoutParams as LayoutParams).weight = 1F
-            (this._value_wrapper.layoutParams as LayoutParams).height = WRAP_CONTENT
-            (this._value_wrapper.layoutParams as LayoutParams).gravity = CENTER
-        } else {
-            (this._prefix_label.layoutParams as LayoutParams).height = WRAP_CONTENT
-            (this._prefix_label.layoutParams as LayoutParams).setMargins(0,0,0,0)
-            (this._prefix_label.layoutParams as LayoutParams).gravity = CENTER
-
-            (this._value_wrapper.layoutParams as LayoutParams).weight = 1F
-            (this._value_wrapper.layoutParams as LayoutParams).height = 0
-            (this._value_wrapper.layoutParams as LayoutParams).gravity = CENTER
-            (this._value_wrapper.layoutParams as LayoutParams).setMargins(0,0,0,0)
+            val inner_wrapper: View = LayoutInflater.from(base_context)
+                .inflate(
+                    R.layout.leaf_absolute,
+                    this,
+                    false
+                )
+            this.addView(inner_wrapper)
+            val label_octave = inner_wrapper.findViewById<TextView>(R.id.tvOctave)
+            val label_offset = inner_wrapper.findViewById<TextView>(R.id.tvOffset)
+            label_octave.text = "${event.note / event.radix}"
+            label_offset.text = "${event.note % event.radix}"
         }
     }
 

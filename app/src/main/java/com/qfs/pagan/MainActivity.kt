@@ -34,6 +34,7 @@ import androidx.core.os.bundleOf
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResult
+import androidx.media3.common.MimeTypes
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
@@ -1109,10 +1110,11 @@ class MainActivity : AppCompatActivity() {
 
     fun select_midi_file() {
         val intent = Intent()
-            .setType("*/*")
+            .setType(MimeTypes.AUDIO_MIDI)
             .setAction(Intent.ACTION_GET_CONTENT)
         this._import_midi_intent_launcher.launch(intent)
     }
+
     fun select_project_file() {
         val intent = Intent()
             .setType("application/json")
@@ -1131,8 +1133,8 @@ class MainActivity : AppCompatActivity() {
 
         val intent = Intent(Intent.ACTION_CREATE_DOCUMENT)
         intent.addCategory(Intent.CATEGORY_OPENABLE)
+        intent.type = MimeTypes.AUDIO_WAV
         intent.putExtra(Intent.EXTRA_TITLE, "$name.wav")
-        intent.type = "application/wav"
         this._export_wav_intent_launcher.launch(intent)
     }
 
@@ -1155,8 +1157,8 @@ class MainActivity : AppCompatActivity() {
 
         val intent = Intent(Intent.ACTION_CREATE_DOCUMENT)
         intent.addCategory(Intent.CATEGORY_OPENABLE)
+        intent.type = MimeTypes.AUDIO_MIDI
         intent.putExtra(Intent.EXTRA_TITLE, "$name.mid")
-        intent.type = "application/midi"
 
         this._export_midi_intent_launcher.launch(intent)
     }

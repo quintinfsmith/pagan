@@ -159,7 +159,11 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
         }
 
         for (i in this.min .. this.max) {
-            val j = (i - this.min) % this.childCount
+            val j = if (this.orientation == VERTICAL) {
+                this.childCount - 1 - ((i - this.min) % this.childCount)
+            } else {
+                ((i - this.min) % this.childCount)
+            }
             val currentView = NumberSelectorButton(this, i)
             if (this.orientation == HORIZONTAL) {
                 (this.getChildAt(j) as ViewGroup).addView(currentView, 0)

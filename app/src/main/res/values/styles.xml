@@ -64,16 +64,6 @@
 
     </style>
 
-    <style name="leaf_prefix" parent="@android:style/Widget.TextView">
-        <item name="android:gravity">center_vertical|center_horizontal</item>
-        <item name="android:textSize">20sp</item>
-        <item name="android:padding">0dp</item>
-        <item name="android:paddingLeft">1dp</item>
-        <item name="android:textStyle">normal</item>
-        <item name="android:background">@null</item>
-        <item name="android:maxLines">1</item>
-    </style>
-
     <style name="leaf_value" parent="@android:style/Widget.TextView">
         <item name="android:textColor">@color/leaf_fg</item>
         <item name="android:gravity">center_vertical|center_horizontal</item>
@@ -82,6 +72,11 @@
         <item name="android:textStyle">normal</item>
         <item name="android:maxLines">1</item>
     </style>
+    <style name="leaf_prefix" parent="@style/leaf_value">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+
     <style name="leaf_value_octave" parent="@style/leaf_value">
         <item name="android:textSize">14sp</item>
         <item name="android:textStyle">normal</item>

@@ -12,7 +12,6 @@ import android.media.midi.MidiDeviceInfo
 import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
@@ -774,7 +773,6 @@ class MainActivity : AppCompatActivity() {
             val bend = ((std_offset - floor(std_offset)) * 512.0).toInt()
             val new_note = (octave * 12) + std_offset.toInt() + 21
 
-            Log.d("AAA", "$new_note | $bend ($octave | $offset | $std_offset)")
             Pair( new_note, bend )
         }
 

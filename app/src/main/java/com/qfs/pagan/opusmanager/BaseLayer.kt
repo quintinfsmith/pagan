@@ -841,7 +841,8 @@ open class BaseLayer {
 
     open fun get_midi(start_beat: Int = 0, end_beat_rel: Int? = null): Midi {
         data class StackItem(var tree: OpusTree<OpusEvent>, var divisions: Int, var offset: Int, var size: Int)
-        data class PseudoMidiEvent(var channel: Int, var note: Int, var bend: Int, var velocity: Int)
+        data class PseudoMidiEvent(var channel: Int, var note: Int, var bend: Int, var velocity: Int, var uuid: Int)
+        var event_uuid_gen = 0
 
         val end_beat = if (end_beat_rel == null) {
             this.beat_count
@@ -908,7 +909,8 @@ open class BaseLayer {
                                     channel.midi_channel,
                                     note,
                                     bend,
-                                    line.volume
+                                    line.volume,
+                                    event_uuid_gen++
                                 )
                                 pseudo_midi_map.add(Triple(
                                     current.offset,
@@ -943,7 +945,9 @@ open class BaseLayer {
             }
         }
 
-        pseudo_midi_map.sortBy { it.first }
+        pseudo_midi_map.sortBy {
+            (it.first * 2) + (if (it.third) { 1 } else { 0})
+        }
         val index_map = HashMap<PseudoMidiEvent, Int>()
 
         for ((tick, pseudo_event, is_on) in pseudo_midi_map) {

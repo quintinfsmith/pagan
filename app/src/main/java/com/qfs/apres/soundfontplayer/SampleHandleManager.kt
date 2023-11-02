@@ -3,6 +3,7 @@ package com.qfs.apres.soundfontplayer
 import android.media.AudioFormat
 import android.media.AudioTrack
 import com.qfs.apres.event.NoteOn
+import com.qfs.apres.event2.NoteOn79
 import com.qfs.apres.soundfont.Preset
 import com.qfs.apres.soundfont.SoundFont
 import kotlinx.coroutines.runBlocking
@@ -71,6 +72,27 @@ class SampleHandleManager(
             }
         }
         this.decache_unused_presets()
+    }
+
+    fun gen_sample_handles(event: NoteOn79, preset: Preset): Set<SampleHandle> {
+        val output = mutableSetOf<SampleHandle>()
+        val velocity = event.velocity shr 8
+        val potential_instruments = preset.get_instruments(event.note, velocity)
+
+        for (p_instrument in potential_instruments) {
+            val samples = p_instrument.instrument!!.get_samples(
+                event.note,
+                velocity
+            ).toList()
+
+            for (sample in samples) {
+                val new_handle = this.sample_handle_generator.get(event, sample, p_instrument, preset)
+                new_handle.current_volume = (velocity.toDouble()  / 128.toDouble()) * SampleHandle.MAXIMUM_VOLUME
+                output.add( new_handle )
+            }
+        }
+
+        return output
     }
 
     fun gen_sample_handles(event: NoteOn, preset: Preset): Set<SampleHandle> {

@@ -8,6 +8,8 @@ import com.qfs.apres.event.NoteOff
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event.ProgramChange
 import com.qfs.apres.event.SongPositionPointer
+import com.qfs.apres.event2.NoteOff79
+import com.qfs.apres.event2.NoteOn79
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -71,6 +73,17 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
                         }
                         is NoteOff -> {
                             var key_pair = Pair(event.channel, event.get_note())
+                            for (handle in this._active_sample_handles[key_pair] ?: continue) {
+                                handle.release_note()
+                            }
+                        }
+                        is NoteOn79 -> {
+                            var key_pair = Pair(event.channel, event.index)
+                            val preset = this.sample_handle_manager.get_preset(event.channel) ?: continue
+                            this._active_sample_handles[key_pair] = this.sample_handle_manager.gen_sample_handles(event, preset).toMutableSet()
+                        }
+                        is NoteOff79 -> {
+                            var key_pair = Pair(event.channel, event.index)
                             for (handle in this._active_sample_handles[key_pair] ?: continue) {
                                 handle.release_note()
                             }

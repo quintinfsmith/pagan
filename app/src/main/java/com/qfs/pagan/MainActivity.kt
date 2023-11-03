@@ -16,7 +16,6 @@ import android.text.Editable
 import android.text.InputFilter
 import android.text.Spanned
 import android.text.TextWatcher
-import android.util.Log
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.Menu
@@ -449,7 +448,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         this.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        if (this._midi_interface.output_devices_connected()) {
+        // Currently, Midi2.0 output is not supported. will be needed for N-radix projects
+        if (this._midi_interface.output_devices_connected() && this.get_opus_manager().radix == 12) {
             this.playback_start_midi_device(start_point)
         } else if (this._midi_playback_device != null) {
             this.playback_start_precached(start_point)
@@ -588,12 +588,11 @@ class MainActivity : AppCompatActivity() {
                 this._options_menu!!.findItem(R.id.itmLoadProject).isVisible = this.has_projects_saved()
                 this._options_menu!!.findItem(R.id.itmUndo).isVisible = true
                 this._options_menu!!.findItem(R.id.itmNewProject).isVisible = true
-                this._options_menu!!.findItem(R.id.itmPlay).isVisible = (this._soundfont != null || this._midi_interface.output_devices_connected())
+                this._options_menu!!.findItem(R.id.itmPlay).isVisible = (this._soundfont != null || (this._midi_interface.output_devices_connected() && this.get_opus_manager().radix == 12))
                 this._options_menu!!.findItem(R.id.itmImportMidi).isVisible = true
                 this._options_menu!!.findItem(R.id.itmImportProject).isVisible = true
                 this._options_menu!!.findItem(R.id.itmSettings).isVisible = true
             }
-
             else -> {
                 this._options_menu!!.findItem(R.id.itmLoadProject).isVisible = false
                 this._options_menu!!.findItem(R.id.itmUndo).isVisible = false

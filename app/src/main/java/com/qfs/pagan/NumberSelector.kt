@@ -167,8 +167,7 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
             layout_params.gravity = CENTER
             if (orientation == HORIZONTAL) {
                 layout_params.width = MATCH_PARENT
-                layout_params.height = 0
-                currentView.maxHeight = resources.getDimension(R.dimen.line_height).roundToInt()
+                layout_params.height = resources.getDimension(R.dimen.line_height).roundToInt()
             } else {
                 layout_params.height = MATCH_PARENT
                 layout_params.width = 0

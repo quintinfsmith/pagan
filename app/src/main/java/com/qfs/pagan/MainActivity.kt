@@ -16,6 +16,8 @@ import android.text.Editable
 import android.text.InputFilter
 import android.text.Spanned
 import android.text.TextWatcher
+import android.util.Log
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
@@ -1024,9 +1026,39 @@ class MainActivity : AppCompatActivity() {
                 false
             )
         val number_input = viewInflated.findViewById<EditText>(R.id.etNumber)
+        fun submit_wrapper() {
+            val value = try {
+                max(min_value, number_input.text.toString().toInt())
+            } catch (nfe: NumberFormatException) {
+                coerced_default_value
+            }
+            this._number_selector_defaults[title] = value
+            callback(value)
+        }
+
+        val dialog = AlertDialog.Builder(this, R.style.AlertDialog)
+            .setTitle(title)
+            .setView(viewInflated)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                submit_wrapper()
+            }
+            .setNegativeButton(android.R.string.cancel) { _, _ ->
+            }
+            .show()
+
         number_input.setText("$coerced_default_value")
         number_input.setOnClickListener {
             number_input.selectAll()
+        }
+
+        number_input.setOnEditorActionListener { text_view: TextView?, action_id: Int?, key_event: KeyEvent? ->
+            if (action_id != null) {
+                submit_wrapper()
+                dialog.dismiss()
+                false
+            } else {
+                true
+            }
         }
 
         /*
@@ -1053,7 +1085,11 @@ class MainActivity : AppCompatActivity() {
         })
 
         number_input.addTextChangedListener( object : TextWatcher {
-            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
+            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
+                if (p0 =="\n") {
+                    dialog.dismiss()
+                }
+            }
             override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
 
             override fun afterTextChanged(p0: Editable?) {
@@ -1070,21 +1106,6 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
-        AlertDialog.Builder(this, R.style.AlertDialog)
-            .setTitle(title)
-            .setView(viewInflated)
-            .setPositiveButton(android.R.string.ok) { _, _ ->
-                val value = try {
-                    max(min_value, number_input.text.toString().toInt())
-                } catch (nfe: NumberFormatException) {
-                    coerced_default_value
-                }
-                this._number_selector_defaults[title] = value
-                callback(value)
-            }
-            .setNegativeButton(android.R.string.cancel) { _, _ ->
-            }
-            .show()
         number_input.requestFocus()
         number_input.selectAll()
     }

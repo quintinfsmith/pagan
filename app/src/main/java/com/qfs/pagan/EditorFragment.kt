@@ -195,7 +195,7 @@ class EditorFragment : PaganFragment() {
         _binding = null
     }
 
-    private fun reset_context_menu() {
+    fun reset_context_menu() {
         when (this.active_context_menu_index) {
             ContextMenu.Leaf -> {
                 this.setContextMenu_leaf()

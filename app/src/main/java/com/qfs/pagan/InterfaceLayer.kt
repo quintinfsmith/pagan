@@ -1013,6 +1013,11 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             R.string.label_radix,
             radix
         )
+
+        this.withFragment {
+            it.reset_context_menu()
+            this.activity.setup_project_config_drawer_export_button()
+        }
     }
 
 }

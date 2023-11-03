@@ -657,23 +657,7 @@ class MainActivity : AppCompatActivity() {
             opus_manager.new_channel()
         }
 
-        this.findViewById<View>(R.id.btnExportProject).setOnClickListener {
-            var export_options = if (this.get_opus_manager().radix == 12) {
-                listOf(
-                    Pair(0, "Midi File"),
-                    Pair(1, "Wav File")
-                )
-            } else {
-                listOf( Pair(1, "Wav File") )
-            }
-            this.dialog_popup_menu("Export Project to...", export_options, default = null) { index: Int, value: Int ->
-                when (value) {
-                    0 -> this.export_midi()
-                    1 -> this.export_wav()
-                }
-            }
-        }
-
+        this.setup_project_config_drawer_export_button()
         this.findViewById<View>(R.id.btnSaveProject).setOnClickListener {
             this.project_save()
         }
@@ -711,6 +695,42 @@ class MainActivity : AppCompatActivity() {
                 this@MainActivity.playback_stop()
             }
         })
+    }
+
+    fun setup_project_config_drawer_export_button() {
+        var export_options = this.get_exportable_options()
+        var export_button: View = this.findViewById<View>(R.id.btnExportProject) ?: return
+        if (export_options.isNotEmpty()) {
+            export_button.setOnClickListener {
+                this.dialog_popup_menu(
+                    "Export Project to...",
+                    export_options,
+                    default = null
+                ) { index: Int, value: Int ->
+                    when (value) {
+                        0 -> this.export_midi()
+                        1 -> this.export_wav()
+                    }
+                }
+            }
+            export_button.visibility = View.VISIBLE
+        } else {
+            export_button.visibility = View.GONE
+        }
+
+    }
+
+    fun get_exportable_options(): List<Pair<Int, String>> {
+        var export_options = mutableListOf<Pair<Int, String>>()
+        if (this.get_opus_manager().radix == 12) {
+            export_options.add( Pair(0, "Midi File") )
+        }
+
+        if (this.get_soundfont() != null) {
+            export_options.add( Pair(1, "Wav File") )
+        }
+
+        return export_options
     }
 
     // Ui Wrappers End ////////////////////////////////////////
@@ -856,6 +876,7 @@ class MainActivity : AppCompatActivity() {
         if (this.get_opus_manager().channels.size > 0) {
             this.populate_active_percussion_names()
         }
+        this.setup_project_config_drawer_export_button()
     }
 
     fun get_soundfont(): SoundFont? {
@@ -1181,7 +1202,11 @@ class MainActivity : AppCompatActivity() {
     fun set_sample_rate(new_sample_rate: Int) {
         this.configuration.sample_rate = new_sample_rate
         this._midi_playback_device?.kill()
-        this._midi_playback_device = PaganPlaybackDevice(this)
+        if (this.get_soundfont() != null) {
+            this._midi_playback_device = PaganPlaybackDevice(this)
+        } else {
+           this._midi_playback_device = null
+        }
     }
 
     fun validate_percussion_visibility() {

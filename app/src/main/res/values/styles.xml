@@ -85,31 +85,17 @@
         <item name="android:textSize">18sp</item>
         <item name="android:textStyle">bold</item>
     </style>
-    <style name="numberSelector">
 
-    </style>
     <style name="numberSelectorButton">
         <item name="android:background">@color/numberselector_bg</item>
-        <item name="android:clickable">true</item>
-    </style>
-
-    <style name="numberSelectorText" parent="@android:style/Widget.TextView">
         <item name="android:textColor">@color/numberselector_fg</item>
+        <item name="android:clickable">true</item>
         <item name="android:textStyle">normal</item>
         <item name="android:shadowColor">#FF000000</item>
         <item name="android:shadowDx">0</item>
         <item name="android:shadowDy">0</item>
         <item name="android:shadowRadius">0</item>
-        <item name="android:elevation">2dp</item>
         <item name="android:gravity">center_vertical|center_horizontal</item>
-    </style>
-
-    <style name="numberSelectorTextHorizontal" parent="@style/numberSelectorText">
-        <item name="android:textSize">20sp</item>
-    </style>
-
-    <style name="numberSelectorTextVertical" parent="@style/numberSelectorText">
-        <item name="android:textSize">18sp</item>
     </style>
 
     <style name="relativeSelector" parent="@android:style/Widget.TextView">

@@ -3,12 +3,12 @@ package com.qfs.pagan
 import android.content.Context
 import android.util.AttributeSet
 import android.view.Gravity.CENTER
+import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
-import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
-import android.widget.TextView
 import androidx.appcompat.view.ContextThemeWrapper
+import androidx.core.view.children
 import kotlin.math.roundToInt
 
 
@@ -21,33 +21,16 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
     private var _on_change_hook: ((NumberSelector) -> Unit)? = null
 
     class NumberSelectorButton(private var _number_selector: NumberSelector, var value: Int):
-        LinearLayout(ContextThemeWrapper( _number_selector.context, R.style.numberSelectorButton )) {
+        androidx.appcompat.widget.AppCompatTextView(ContextThemeWrapper(_number_selector.context, R.style.numberSelectorButton)) {
         companion object {
             private val STATE_ACTIVE = intArrayOf(R.attr.state_active)
         }
 
         private var _bkp_text: String = get_number_string(this.value, this._number_selector.radix,1)
         private var _state_active: Boolean = false
-        private val _text_view = TextView(
-            ContextThemeWrapper(
-                _number_selector.context,
-                if (_number_selector.orientation == VERTICAL) {
-                    R.style.numberSelectorTextVertical
-                } else {
-                    R.style.numberSelectorTextHorizontal
-                }
-            )
-        )
 
         init {
-            this._text_view.text = this._bkp_text
-            this.addView(this._text_view)
-            this._text_view.layoutParams.width = MATCH_PARENT
-            this._text_view.layoutParams.height = MATCH_PARENT
-            if (this._number_selector.orientation != VERTICAL) {
-                val padding = (resources.displayMetrics.density * 3f).toInt()
-                this.setPadding(0, padding, 0, padding)
-            }
+            this.text = this._bkp_text
 
             this.setOnClickListener {
                 this._number_selector.set_active_button(this)
@@ -62,7 +45,6 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
             }
             return drawableState
         }
-
 
         fun setActive(value: Boolean) {
             this._state_active = value
@@ -80,7 +62,6 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
         }
         this.populate()
     }
-
 
     fun getState(): Int? {
         if (this._active_button == null) {
@@ -145,16 +126,25 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
 
     private fun populate() {
         val orientation = this.orientation
+        var margin = resources.getDimension(R.dimen.normal_padding).roundToInt()
         for (i in 0 .. ((this.max - this.min) / 12)) {
             var new_linear_layout = LinearLayout(this.context)
             this.addView(new_linear_layout)
 
             if (this.orientation == HORIZONTAL) {
-                new_linear_layout.layoutParams.width = WRAP_CONTENT
+                new_linear_layout.layoutParams.width = resources.getDimension(R.dimen.base_leaf_width).roundToInt()
+                new_linear_layout.layoutParams.height = MATCH_PARENT
                 new_linear_layout.orientation = VERTICAL
+                if (i != 0) {
+                    new_linear_layout.setPadding(margin, 0, 0, 0)
+                }
             } else {
-                new_linear_layout.layoutParams.height = WRAP_CONTENT
+                new_linear_layout.layoutParams.height = resources.getDimension(R.dimen.line_height).roundToInt()
+                new_linear_layout.layoutParams.width = MATCH_PARENT
                 new_linear_layout.orientation = HORIZONTAL
+                if (i != 0) {
+                    new_linear_layout.setPadding(0, margin, 0, 0)
+                }
             }
         }
 
@@ -164,6 +154,7 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
             } else {
                 ((i - this.min) % this.childCount)
             }
+
             val currentView = NumberSelectorButton(this, i)
             if (this.orientation == HORIZONTAL) {
                 (this.getChildAt(j) as ViewGroup).addView(currentView, 0)
@@ -174,22 +165,43 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
             val layout_params = (currentView.layoutParams as LinearLayout.LayoutParams)
             layout_params.weight = 1F
             layout_params.gravity = CENTER
-            if (orientation != VERTICAL) {
+            if (orientation == HORIZONTAL) {
                 layout_params.width = MATCH_PARENT
                 layout_params.height = 0
             } else {
                 layout_params.height = MATCH_PARENT
                 layout_params.width = 0
             }
-
-            val padding = resources.getDimension(R.dimen.normal_padding).roundToInt()
-            if (orientation == HORIZONTAL && i != this@NumberSelector.max) {
-                (layout_params as MarginLayoutParams).setMargins(0, padding, 0, 0)
-            } else if (orientation != HORIZONTAL && i != this@NumberSelector.min) {
-                (layout_params as MarginLayoutParams).setMargins(padding, 0, 0, 0)
-            }
-
             this._button_map[currentView] = i
+        }
+
+        this.children.forEachIndexed { i: Int, row: View ->
+            (row as ViewGroup).children.forEachIndexed { j: Int, button: View ->
+                var layout_params = button.layoutParams
+                if (orientation == HORIZONTAL) {
+                    (layout_params as MarginLayoutParams).setMargins(
+                        0,
+                        if (j != 0) {
+                            margin
+                        } else {
+                            0
+                        },
+                        0,
+                       0
+                    )
+                } else {
+                    (layout_params as MarginLayoutParams).setMargins(
+                        if (j != 0) {
+                            margin
+                        } else {
+                            0
+                        },
+                        0,
+                        0,
+                        0
+                    )
+                }
+            }
         }
     }
 

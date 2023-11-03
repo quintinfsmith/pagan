@@ -1002,7 +1002,7 @@ class MainActivity : AppCompatActivity() {
                 window.decorView.rootView as ViewGroup,
                 false
             )
-        var number_input = viewInflated.findViewById<EditText>(R.id.etNumber)
+        val number_input = viewInflated.findViewById<EditText>(R.id.etNumber)
         number_input.setText("$coerced_default_value")
         number_input.setOnClickListener {
             number_input.selectAll()
@@ -1013,7 +1013,6 @@ class MainActivity : AppCompatActivity() {
             Then the listener to ensure the value is <= the maximum_value
             THEN on close, return the max(min_value, output)
          */
-
         number_input.filters = arrayOf(object: InputFilter {
             override fun filter(
                 source: CharSequence,

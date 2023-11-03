@@ -73,16 +73,23 @@
                     android:text="T" />
                 </LinearLayout>
 
+            <LinearLayout
+                android:background="?attr/main_fg"
+                android:paddingStart="1dp"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent">
                 <com.qfs.pagan.NumberSelector xmlns:android="http://schemas.android.com/apk/res/android"
                     xmlns:custom="http://schemas.android.com/apk/res-auto"
                     android:orientation="horizontal"
+                    android:background="?attr/main_bg"
                     android:id="@+id/nsOctave"
-                    android:layout_width="41dp"
+                    android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:paddingLeft="@dimen/normal_padding"
                     android:paddingRight="@dimen/normal_padding"
                     custom:min="0"
                     custom:max="7"/>
+            </LinearLayout>
         </LinearLayout>
         <com.qfs.pagan.RelativeOptionSelector
             android:orientation="horizontal"
@@ -94,14 +101,21 @@
 
     </LinearLayout>
 
-    <com.qfs.pagan.NumberSelector xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:custom="http://schemas.android.com/apk/res-auto"
-        android:orientation="horizontal"
-        android:id="@+id/nsOffset"
-        android:layout_width="41dp"
-        android:layout_height="match_parent"
-        android:paddingLeft="@dimen/normal_padding"
-        android:paddingRight="@dimen/normal_padding"
-        custom:min="0"
-        custom:max="11"/>
+    <LinearLayout
+        android:background="?attr/main_fg"
+        android:paddingStart="1dp"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent">
+        <com.qfs.pagan.NumberSelector xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:custom="http://schemas.android.com/apk/res-auto"
+            android:background="?attr/main_bg"
+            android:orientation="horizontal"
+            android:id="@+id/nsOffset"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:paddingLeft="@dimen/normal_padding"
+            android:paddingRight="@dimen/normal_padding"
+            custom:min="0"
+            custom:max="11"/>
+    </LinearLayout>
 </LinearLayout>

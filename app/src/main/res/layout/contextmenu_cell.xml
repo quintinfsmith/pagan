@@ -84,33 +84,47 @@
                     android:text="T" />
             </LinearLayout>
 
-            <com.qfs.pagan.NumberSelector xmlns:android="http://schemas.android.com/apk/res/android"
-                xmlns:custom="http://schemas.android.com/apk/res-auto"
-                android:id="@+id/nsOctave"
-                android:orientation="vertical"
+            <LinearLayout
+                android:background="?attr/main_fg"
+                android:paddingTop="1dp"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:paddingLeft="@dimen/normal_padding"
-                android:paddingRight="@dimen/normal_padding"
-                custom:min="0"
-                custom:max="7"/>
+                android:layout_height="wrap_content">
+                <com.qfs.pagan.NumberSelector xmlns:android="http://schemas.android.com/apk/res/android"
+                    xmlns:custom="http://schemas.android.com/apk/res-auto"
+                    android:id="@+id/nsOctave"
+                    android:background="?attr/main_bg"
+                    android:orientation="vertical"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingLeft="@dimen/normal_padding"
+                    android:paddingRight="@dimen/normal_padding"
+                    custom:min="0"
+                    custom:max="7"/>
+            </LinearLayout>
         </LinearLayout>
 
     </LinearLayout>
 
 
-    <com.qfs.pagan.NumberSelector xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:custom="http://schemas.android.com/apk/res-auto"
-        android:id="@+id/nsOffset"
-        android:layout_marginTop="@dimen/normal_padding"
+    <LinearLayout
+        android:background="?attr/main_fg"
+        android:paddingTop="1dp"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:paddingLeft="@dimen/normal_padding"
-        android:paddingRight="@dimen/normal_padding"
-        android:orientation="vertical"
-        custom:min="0"
-        custom:max="11"/>
+        android:layout_height="wrap_content">
+        <com.qfs.pagan.NumberSelector xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:custom="http://schemas.android.com/apk/res-auto"
+            android:id="@+id/nsOffset"
+            android:background="?attr/main_bg"
+            android:layout_marginTop="@dimen/normal_padding"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:paddingLeft="@dimen/normal_padding"
+            android:paddingRight="@dimen/normal_padding"
+            android:orientation="vertical"
+            custom:min="0"
+            custom:max="11"/>
+    </LinearLayout>
 
 
 </LinearLayout>

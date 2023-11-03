@@ -372,7 +372,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             R.id.itmPlay -> {
-                if (this._midi_playback_device?.is_playing() ?: (this._midi_interface.output_devices_connected() && this._virtual_input_device.playing)) {
+                if (this.in_playback()) {
                    this.playback_stop()
                 } else {
                     this.playback_start()
@@ -1234,5 +1234,9 @@ class MainActivity : AppCompatActivity() {
         if (!this.configuration.show_percussion && opus_manager.has_percussion()) {
             this.configuration.show_percussion = true
         }
+    }
+
+    fun in_playback(): Boolean {
+        return this._midi_playback_device?.is_playing() ?: (this._midi_interface.output_devices_connected() && this._virtual_input_device.playing)
     }
 }

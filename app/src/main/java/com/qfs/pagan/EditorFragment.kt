@@ -281,8 +281,13 @@ class EditorFragment : PaganFragment() {
 
     fun setContextMenu_column() {
         val main = this.get_main()
-        val opus_manager = main.get_opus_manager()
         val llContextMenu = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenu)
+        if (main.in_playback()) {
+            llContextMenu.removeAllViews()
+            return
+        }
+
+        val opus_manager = main.get_opus_manager()
 
         val view = LayoutInflater.from(llContextMenu.context).inflate(
             R.layout.contextmenu_column,

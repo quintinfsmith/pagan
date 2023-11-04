@@ -218,6 +218,12 @@ open class HistoryLayer : LinksLayer() {
                     )
                 }
 
+                HistoryToken.SET_RADIX -> {
+                    // don't use 'set_radix()' since it will try to set the events
+                    // which is already handled in the history stack
+                    this.set_radix(current_node.args[0] as Int, false)
+                }
+
                 HistoryToken.SET_PERCUSSION_EVENT -> {
                     this.set_percussion_event(
                         current_node.args[0] as BeatKey,
@@ -1012,9 +1018,10 @@ open class HistoryLayer : LinksLayer() {
         }
     }
 
-    override fun set_radix(radix: Int) {
+    override fun set_radix(radix: Int, mod_events: Boolean) {
         this.remember {
-            super.set_radix(radix)
+            this.push_to_history_stack(HistoryToken.SET_RADIX, listOf(this.radix))
+            super.set_radix(radix, mod_events)
         }
     }
 }

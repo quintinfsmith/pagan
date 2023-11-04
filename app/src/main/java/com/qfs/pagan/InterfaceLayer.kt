@@ -1006,8 +1006,8 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         return total
     }
 
-    override fun set_radix(radix: Int) {
-        super.set_radix(radix)
+    override fun set_radix(radix: Int, mod_events: Boolean) {
+        super.set_radix(radix, mod_events)
         val btnTranspose: TextView = this.activity.findViewById(R.id.btnRadix)
         btnTranspose.text = this.activity.getString(
             R.string.label_radix,

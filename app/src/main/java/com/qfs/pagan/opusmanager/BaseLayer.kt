@@ -559,8 +559,11 @@ open class BaseLayer {
         }
     }
 
-    open fun set_radix(radix: Int) {
+    open fun set_radix(radix: Int, mod_events: Boolean = true) {
         this.radix = radix
+        if (!mod_events) {
+            return
+        }
         this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
             if (this.is_percussion(i)) {
                 return@forEachIndexed

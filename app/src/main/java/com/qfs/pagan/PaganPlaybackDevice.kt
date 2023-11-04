@@ -89,9 +89,9 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
             var builder = NotificationCompat.Builder(this.activity, CHANNEL_ID)
                 .setContentTitle("Exporting ${this.activity.get_opus_manager().project_name}")
                 .setPriority(NotificationCompat.PRIORITY_LOW)
-                .setSmallIcon(R.drawable.ic_baseline_pause_24)
+                .setSmallIcon(R.mipmap.logo_round)
                 .setSilent(true)
-                .addAction(R.drawable.ic_baseline_pause_24, "Cancel", pending_cancel_intent)
+                .addAction(R.drawable.baseline_cancel_24, "Cancel", pending_cancel_intent)
 
             this.active_notification = builder
         }
@@ -203,6 +203,7 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
                 builder.setContentText("Done")
                     .setProgress(0, 0, false)
                     .setAutoCancel(true)
+                    .clearActions()
                     .setTimeoutAfter(5000)
                     .setSilent(false)
 

@@ -27,7 +27,7 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
         handle anything more.
      */
     var NOTIFICATION_ID = 0
-    val CHANNEL_ID = "EXPORTWAV"
+    val CHANNEL_ID = "com.qfs.pagan"
     var notification_channel: NotificationChannel? = null
     var active_notification: NotificationCompat.Builder? = null
     var export_wav_thread: Job? = null
@@ -47,22 +47,26 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
 
     fun export_wav_cancel() {
         var builder = this.get_notification()
-        builder.setContentText("Cancelled")
-            .setProgress(0, 0, false)
-            .setAutoCancel(true)
-            .setTimeoutAfter(5000)
-            .clearActions()
-        val notification_manager = NotificationManagerCompat.from(this.activity)
-        notification_manager.notify(NOTIFICATION_ID, builder.build())
+        if (builder != null) {
+            builder.setContentText("Cancelled")
+                .setProgress(0, 0, false)
+                .setAutoCancel(true)
+                .setTimeoutAfter(5000)
+                .clearActions()
+            val notification_manager = NotificationManagerCompat.from(this.activity)
+            notification_manager.notify(NOTIFICATION_ID, builder.build())
+        }
         this.export_wav_thread?.cancel()
     }
 
-    fun get_notification_channel(): NotificationChannel {
-        return if (this.notification_channel == null) {
+    fun get_notification_channel(): NotificationChannel? {
+        return if (this.activity.has_notification_permission()) {
+            null
+        } else if (this.notification_channel == null) {
             val notification_manager = NotificationManagerCompat.from(this.activity)
             // Create the NotificationChannel.
-            val name = "export_wave"
-            val descriptionText = "exporting wave in pagan opus editor"
+            val name = "Export Wav File Progress"
+            val descriptionText = "Converting Pagan project to .wav"
             val importance = NotificationManager.IMPORTANCE_DEFAULT
             val mChannel = NotificationChannel(CHANNEL_ID, name, importance)
             mChannel.description = descriptionText
@@ -75,7 +79,11 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
         }
     }
 
-    fun get_notification(): NotificationCompat.Builder {
+    fun get_notification(): NotificationCompat.Builder? {
+         if (this.activity.has_notification_permission()) {
+             null
+         }
+
         if (this.active_notification == null) {
             this.get_notification_channel()
             var cancel_export_flag = "com.qfs.pagan.CANCEL_EXPORT_WAV"
@@ -124,8 +132,10 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
                 var est_chunk_count = (this@PaganPlaybackDevice.frame_count / this@PaganPlaybackDevice.sample_handle_manager.buffer_size)
                 var chunk_count = 0
 
-                builder.setProgress(est_chunk_count, chunk_count, false)
-                notification_manager.notify(NOTIFICATION_ID, builder.build())
+                if (builder != null) {
+                    builder.setProgress(est_chunk_count, chunk_count, false)
+                    notification_manager.notify(NOTIFICATION_ID, builder.build())
+                }
 
                 var notification_ts = System.currentTimeMillis()
                 while (true) {
@@ -143,7 +153,7 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
                             data_byte_count += 2
                         }
 
-                        if (System.currentTimeMillis() - notification_ts > 500) {
+                        if (builder != null && System.currentTimeMillis() - notification_ts > 500) {
                             builder.setProgress(
                                 est_chunk_count,
                                 min(est_chunk_count, chunk_count),
@@ -200,14 +210,17 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
 
                 input_stream.close()
 
-                builder.setContentText("Done")
-                    .setProgress(0, 0, false)
-                    .setAutoCancel(true)
-                    .clearActions()
-                    .setTimeoutAfter(5000)
-                    .setSilent(false)
+                if (builder != null) {
+                    builder.setContentText("Done")
+                        .setProgress(0, 0, false)
+                        .setAutoCancel(true)
+                        .clearActions()
+                        .setTimeoutAfter(5000)
+                        .setSilent(false)
 
-                notification_manager.notify(NOTIFICATION_ID, builder.build())
+                    notification_manager.notify(NOTIFICATION_ID, builder.build())
+                }
+                (this@PaganPlaybackDevice.activity).feedback_msg("Done Export")
             }
         }
 

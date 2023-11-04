@@ -48,7 +48,6 @@ open class MidiPlaybackDevice(
     internal var wave_generator = WaveGenerator(sample_handle_manager)
     private var active_audio_track_handle: AudioTrackHandle? = null
     internal var stop_request = StopRequest.Neutral
-    private var play_drift = 0
     var SAMPLE_RATE_NANO = sample_handle_manager.sample_rate.toFloat() / 1_000_000_000F
     var BUFFER_NANO = sample_handle_manager.buffer_size.toLong() * 1_000_000_000.toLong() / sample_handle_manager.sample_rate.toLong()
 
@@ -72,7 +71,6 @@ open class MidiPlaybackDevice(
             this.wave_generator.timestamp = System.nanoTime()
             val chunks: MutableList<Pair<ShortArray, List<Pair<Int, Int>>>> = mutableListOf()
 
-            this.play_drift = 0
             var flag_writing = true
             var flag_no_more_chunks = false
             var pause_write = true
@@ -101,7 +99,7 @@ open class MidiPlaybackDevice(
                 }
             }
 
-            while (flag_writing && this.stop_request != StopRequest.Kill) {
+            while (this.stop_request != StopRequest.Kill) {
                 val write_start_ts = System.nanoTime()
                 if (!pause_write) {
                     if (chunks.isNotEmpty()) {
@@ -116,14 +114,10 @@ open class MidiPlaybackDevice(
                         }
                         audio_track_handle.write(chunk)
                     } else if (!flag_no_more_chunks) {
-                        this.play_drift += (BUFFER_NANO / 1_000_000).toInt()
                         pause_write = true
                     } else {
-                        flag_writing = false
                         break
                     }
-                } else {
-                    this.play_drift += (BUFFER_NANO / 1_000_000).toInt()
                 }
 
                 val delta = System.nanoTime() - write_start_ts
@@ -137,7 +131,6 @@ open class MidiPlaybackDevice(
             this.wave_generator.clear()
             this.active_audio_track_handle = null
             this.stop_request = StopRequest.Neutral
-            this.play_drift = 0
             this.on_stop()
         }
     }
@@ -156,10 +149,6 @@ open class MidiPlaybackDevice(
 
     fun is_playing(): Boolean {
         return this.stop_request == StopRequest.Play
-    }
-
-    fun get_delay(): Long {
-        return (((this.buffer_delay * this.sample_handle_manager.buffer_size).toLong() * 1_000.toLong()) / this.sample_handle_manager.sample_rate.toLong()) + this.play_drift
     }
 
     open fun on_stop() { }

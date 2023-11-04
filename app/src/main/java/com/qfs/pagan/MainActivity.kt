@@ -6,10 +6,12 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.database.Cursor
 import android.media.midi.MidiDeviceInfo
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.OpenableColumns
 import android.text.Editable
@@ -33,6 +35,7 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
 import androidx.drawerlayout.widget.DrawerLayout
@@ -95,6 +98,7 @@ class MainActivity : AppCompatActivity() {
     private var _exporting_wav_handle: PaganPlaybackDevice? = null
 
     private var _export_wav_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        this.getNotificationPermission()
         thread {
             if (result.resultCode == Activity.RESULT_OK && this._exporting_wav_handle == null) {
                 val opus_manager = this.get_opus_manager()
@@ -1238,5 +1242,20 @@ class MainActivity : AppCompatActivity() {
 
     fun in_playback(): Boolean {
         return this._midi_playback_device?.is_playing() ?: (this._midi_interface.output_devices_connected() && this._virtual_input_device.playing)
+    }
+
+    fun has_notification_permission(): Boolean {
+        return (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU || ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED )
+    }
+    private fun getNotificationPermission(): Boolean {
+        if (! this.has_notification_permission()) {
+            ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 100)
+        }
+
+        return if (!this.has_notification_permission()) {
+            false
+        } else {
+            true
+        }
     }
 }

@@ -44,6 +44,7 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
         }
     }
 
+
     fun export_wav_cancel() {
         var builder = this.get_notification()
         builder.setContentText("Cancelled")

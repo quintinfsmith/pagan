@@ -949,19 +949,17 @@ open class BaseLayer {
             (it.first * 2) + (if (it.third) { 1 } else { 0})
         }
         val index_map = HashMap<PseudoMidiEvent, Int>()
-
         for ((tick, pseudo_event, is_on) in pseudo_midi_map) {
             midi.insert_event(
                 0,
                 tick,
                 if (is_on) {
-                    var current_index = 0
-                    while (index_map.containsValue(current_index)) {
-                        current_index += 1
-                    }
-
-                    index_map[pseudo_event] = current_index
                     if (this.radix != 12) {
+                        var current_index = 0
+                        while (index_map.containsValue(current_index)) {
+                            current_index += 1
+                        }
+                        index_map[pseudo_event] = current_index
                         NoteOn79(
                             index = current_index,
                             note = pseudo_event.note,

@@ -1,6 +1,7 @@
 package com.qfs.pagan
 
 import android.content.Context
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
@@ -180,7 +181,13 @@ class LeafButton(
 
     fun build_drawable_state(drawableState: IntArray?): IntArray? {
         val opus_manager = this.get_opus_manager()
-        val beat_key = this.get_beat_key()
+        val beat_key = try {
+            this.get_beat_key()
+        } catch (e: IndexOutOfBoundsException) {
+            Log.d("AAA", "SAVED CRASH!")
+            return drawableState
+        }
+
         if (beat_key.beat == -1) {
             return drawableState
         }

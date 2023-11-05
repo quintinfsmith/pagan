@@ -834,7 +834,7 @@ class MainActivity : AppCompatActivity() {
 
             this._opus_manager.import_midi(midi)
             this._opus_manager.path = new_path
-            this._opus_manager.set_project_name(filename ?: getString(R.string.default_imported_midi_title))
+            this._opus_manager.set_project_name(filename?.substring(0, filename?.lastIndexOf(".") ?: filename.length) ?: getString(R.string.default_imported_midi_title))
             this._opus_manager.clear_history()
         }
         this.loading_reticle_hide()
@@ -1163,14 +1163,17 @@ class MainActivity : AppCompatActivity() {
         this._import_project_intent_launcher.launch(intent)
     }
 
-    fun export_wav() {
-        val opus_manager = this.get_opus_manager()
-
-        var name = opus_manager.path
-        if (name != null) {
-            name = name.substring(name.lastIndexOf("/") + 1)
-            name = name.substring(0, name.lastIndexOf("."))
+    fun get_export_name(): String {
+        val reserved_chars = "|\\?*<\":>+[]/'"
+        var base_name = this.get_opus_manager().project_name
+        for (c in reserved_chars) {
+            base_name = base_name.replace("$c", "_")
         }
+        return base_name
+    }
+
+    fun export_wav() {
+        var name = this.get_export_name()
 
         val intent = Intent(Intent.ACTION_CREATE_DOCUMENT)
         intent.addCategory(Intent.CATEGORY_OPENABLE)
@@ -1189,12 +1192,7 @@ class MainActivity : AppCompatActivity() {
 
     fun export_midi() {
         val opus_manager = this.get_opus_manager()
-
-        var name = opus_manager.path
-        if (name != null) {
-            name = name.substring(name.lastIndexOf("/") + 1)
-            name = name.substring(0, name.lastIndexOf("."))
-        }
+        var name = this.get_export_name()
 
         val intent = Intent(Intent.ACTION_CREATE_DOCUMENT)
         intent.addCategory(Intent.CATEGORY_OPENABLE)
@@ -1205,11 +1203,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun export_project() {
-        var name = _opus_manager.path
-        if (name != null) {
-            name = name.substring(name.lastIndexOf("/") + 1)
-            name = name.substring(0, name.lastIndexOf("."))
-        }
+        var name = this.get_export_name()
 
         val intent = Intent(Intent.ACTION_CREATE_DOCUMENT)
         intent.addCategory(Intent.CATEGORY_OPENABLE)
@@ -1252,10 +1246,6 @@ class MainActivity : AppCompatActivity() {
             ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 100)
         }
 
-        return if (!this.has_notification_permission()) {
-            false
-        } else {
-            true
-        }
+        return this.has_notification_permission()
     }
 }

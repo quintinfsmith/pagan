@@ -1075,6 +1075,7 @@ open class BaseLayer {
         this.path = null
         this.project_name = "New Opus"
         this.tempo = 120F
+        this.radix = 12
         this.transpose = 0
     }
 

@@ -1,0 +1,4 @@
+- Variable radix
+- Export to .wav
+- UI no longer uses N-Radix display. Instead uses Decimal for all numbers. (eg, 4B becomes 4 - 11. Octave four. offset 11)
+- Changed Odometer-style number inputs to more standard number input.

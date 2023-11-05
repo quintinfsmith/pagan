@@ -18,6 +18,8 @@ import android.text.Editable
 import android.text.InputFilter
 import android.text.Spanned
 import android.text.TextWatcher
+import android.util.Log
+import android.view.Gravity
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.Menu
@@ -38,6 +40,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
+import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResult
@@ -275,6 +278,10 @@ class MainActivity : AppCompatActivity() {
         setContentView(this.binding.root)
         setSupportActionBar(this.binding.appBarMain.toolbar)
 
+        /*
+            TODO: I think this setOf may be making my navigation more complicated
+            than it needs to be. Needs investigation.
+         */
         this._app_bar_configuration = AppBarConfiguration(
             setOf(
                 R.id.FrontFragment,
@@ -349,6 +356,12 @@ class MainActivity : AppCompatActivity() {
         }
 
         when (item.itemId) {
+            android.R.id.home -> {
+                val fragment = this.get_active_fragment()
+                if (fragment is EditorFragment) {
+                    this.drawer_open()
+                }
+            }
             R.id.itmNewProject -> {
                 this.dialog_save_project {
                     val fragment = this.get_active_fragment()
@@ -513,6 +526,10 @@ class MainActivity : AppCompatActivity() {
         findViewById<DrawerLayout>(R.id.drawer_layout).closeDrawers()
     }
 
+    private fun drawer_open() {
+        findViewById<DrawerLayout>(R.id.drawer_layout).openDrawer(GravityCompat.START)
+    }
+
     fun drawer_lock() {
         this.binding.root.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
     }
@@ -579,6 +596,9 @@ class MainActivity : AppCompatActivity() {
 
     fun set_title_text(new_text: String) {
         this.binding.appBarMain.toolbar.title = new_text
+        if (this.get_active_fragment() is EditorFragment) {
+            this.binding.appBarMain.toolbar.setNavigationIcon(R.drawable.hamburger_32)
+        }
     }
 
     fun update_menu_options() {

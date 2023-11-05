@@ -155,7 +155,7 @@
             android:layout_height="wrap_content"
             android:layout_width="52dp"
             android:layout_weight="1"
-            app:srcCompat="@drawable/baseline_save_alt_24"
+            app:srcCompat="@drawable/export"
             android:text="@string/btn_cfg_export" />
     </LinearLayout>
 </LinearLayout>

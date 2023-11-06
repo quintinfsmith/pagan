@@ -53,7 +53,7 @@ class CellRecyclerAdapter(initial_cell_count: Int = 0): RecyclerView.Adapter<Cel
 
     override fun onBindViewHolder(holder: CellRecyclerViewHolder, position: Int) {
         this.queued_changes.remove(position)
-        CellPlaceHolder(holder, this.get_column_width())
+        CellLayout(holder)
     }
     //-------------------------------------------------------//
     fun insert_cell(index: Int) {

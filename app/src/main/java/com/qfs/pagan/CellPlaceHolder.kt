@@ -6,7 +6,7 @@ import androidx.appcompat.view.ContextThemeWrapper
 import kotlin.concurrent.thread
 
 class CellPlaceHolder(var view_holder: CellRecyclerViewHolder, column_width: Int): LinearLayout(
-    ContextThemeWrapper(view_holder.itemView.context, R.style.placeholder_outer)
+    ContextThemeWrapper(view_holder.itemView.context, R.style.cell_placeholder)
 ) {
     init {
         val item_view = this.view_holder.itemView as ViewGroup

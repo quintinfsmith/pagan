@@ -213,4 +213,8 @@
     <style name="placeholder_outer">
         <item name="android:background">?attr/main_bg</item>
     </style>
+    <style name="cell_placeholder">
+        <item name="android:background">@drawable/leaf_facade</item>
+        <item name="android:tileMode">repeat</item>
+    </style>
 </resources>

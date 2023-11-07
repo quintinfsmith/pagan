@@ -4,7 +4,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import androidx.recyclerview.widget.RecyclerView
-import kotlin.math.roundToInt
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
 class ColumnRecyclerAdapter(val recycler: ColumnRecycler, editor_table: EditorTable): RecyclerView.Adapter<ColumnRecyclerViewHolder>() {
@@ -34,10 +33,7 @@ class ColumnRecyclerAdapter(val recycler: ColumnRecycler, editor_table: EditorTa
     }
 
     override fun onBindViewHolder(holder: ColumnRecyclerViewHolder, position: Int) {
-        val editor_table = this.get_editor_table() ?: return
-        val weight = editor_table.get_column_width(position)
-        val resources = this.recycler.resources
-        ColumnPlaceholder(holder, weight * resources.getDimension(R.dimen.base_leaf_width).roundToInt())
+        CellRecycler(holder)
     }
     override fun onViewAttachedToWindow(holder: ColumnRecyclerViewHolder) {
         holder.itemView.layoutParams.height = MATCH_PARENT

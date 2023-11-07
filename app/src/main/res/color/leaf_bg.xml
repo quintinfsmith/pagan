@@ -6,6 +6,38 @@
         android:color="?attr/leaf_bg_invalid" />
 
     <item
+        android:state_pressed="true"
+        app:state_invalid="false"
+        app:state_focused="false"
+        app:state_active="true"
+        app:state_linked="false"
+        android:color="?attr/leaf_bg_active_focused" />
+
+    <item
+        android:state_pressed="true"
+        app:state_invalid="false"
+        app:state_focused="false"
+        app:state_active="false"
+        app:state_linked="false"
+        android:color="?attr/label_bg_focused" />
+
+    <item
+        android:state_pressed="true"
+        app:state_invalid="false"
+        app:state_focused="false"
+        app:state_active="true"
+        app:state_linked="true"
+        android:color="?attr/leaf_bg_active_linked" />
+
+    <item
+        android:state_pressed="true"
+        app:state_invalid="false"
+        app:state_focused="false"
+        app:state_active="false"
+        app:state_linked="true"
+        android:color="?attr/leaf_bg_focused_linked" />
+
+    <item
         app:state_invalid="false"
         app:state_focused="true"
         app:state_active="true"
@@ -13,6 +45,7 @@
         android:color="?attr/leaf_bg_active_focused" />
 
     <item
+        android:state_pressed="false"
         app:state_invalid="false"
         app:state_focused="false"
         app:state_active="true"
@@ -26,6 +59,7 @@
         app:state_linked="false"
         android:color="?attr/leaf_bg_focused" />
     <item
+        android:state_pressed="false"
         app:state_invalid="false"
         app:state_focused="false"
         app:state_active="false"
@@ -33,6 +67,7 @@
         app:state_channel_even="true"
         android:color="?attr/label_bg_channel_even" />
     <item
+        android:state_pressed="false"
         app:state_invalid="false"
         app:state_focused="false"
         app:state_active="false"
@@ -48,6 +83,7 @@
         android:color="?attr/leaf_bg_active_focused_linked" />
 
     <item
+        android:state_pressed="false"
         app:state_invalid="false"
         app:state_focused="false"
         app:state_active="true"
@@ -61,6 +97,7 @@
         app:state_linked="true"
         android:color="?attr/leaf_bg_focused_linked" />
     <item
+        android:state_pressed="false"
         app:state_invalid="false"
         app:state_focused="false"
         app:state_active="false"

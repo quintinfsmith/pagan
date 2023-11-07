@@ -41,9 +41,7 @@ class LeafButton(
 
         this.set_text(is_percussion)
         this.setOnClickListener {
-            this._activity.runOnUiThread {
-                this.callback_click()
-            }
+            this.callback_click()
         }
         this.setOnLongClickListener {
             val opus_manager = this.get_opus_manager()

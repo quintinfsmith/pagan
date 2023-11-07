@@ -28,13 +28,22 @@ class ActiveMidiAudioPlayer(sample_handle_manager: SampleHandleManager): MidiPla
     }
 
     override fun onNoteOff79(event: NoteOff79) {
+        if (! this.is_playing()) {
+            return
+        }
         this.process_event(event)
     }
     override fun onNoteOff(event: NoteOff) {
+        if (! this.is_playing()) {
+            return
+        }
         this.process_event(event)
     }
 
     override fun onMIDIStop(event: MIDIStop) {
+        if (! this.is_playing()) {
+            return
+        }
         this.kill()
         this.process_event(event)
     }

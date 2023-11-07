@@ -28,6 +28,9 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
     private var _event_mutex = Mutex()
 
     fun place_events(events: List<MIDIEvent>, frame: Int) {
+        if (frame < this.frame) {
+            return
+        }
         runBlocking {
             this@WaveGenerator._event_mutex.withLock {
                 if (!this@WaveGenerator._midi_events_by_frame.containsKey(frame)) {
@@ -41,6 +44,10 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
     }
 
     fun place_event(event: MIDIEvent, frame: Int) {
+        if (frame < this.frame) {
+            return
+        }
+
         runBlocking {
             this@WaveGenerator._event_mutex.withLock {
                 if (!this@WaveGenerator._midi_events_by_frame.containsKey(frame)) {

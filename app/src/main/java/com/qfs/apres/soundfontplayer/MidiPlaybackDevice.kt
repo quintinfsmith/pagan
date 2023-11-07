@@ -77,6 +77,7 @@ open class MidiPlaybackDevice(
 
             var flag_no_more_chunks = false
             var pause_write = true
+            var first_pass = true
 
             thread {
                 while (!flag_no_more_chunks && this@MidiPlaybackDevice.stop_request != StopRequest.Kill) {
@@ -88,6 +89,10 @@ open class MidiPlaybackDevice(
                                         this@MidiPlaybackDevice.wave_generator.generate(this@MidiPlaybackDevice.sample_handle_manager.buffer_size)
                                     chunks.add(chunk)
                                 }
+                                if (first_pass) {
+                                    pause_write = false
+                                }
+                                first_pass = false
                             }
                         } catch (e: WaveGenerator.KilledException) {
                             flag_no_more_chunks = true

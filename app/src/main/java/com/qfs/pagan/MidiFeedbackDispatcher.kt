@@ -9,22 +9,19 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.concurrent.thread
 
-class MidiFeedBackDispatcher: VirtualMidiInputDevice() {
+class MidiFeedbackDispatcher: VirtualMidiInputDevice() {
     var mutex = Mutex()
     private var active_handles = mutableSetOf<Int>()
+    var handle_gen = 0
 
     fun play_note(channel: Int, note: Int, bend: Int) {
         val handle = runBlocking {
-            this@MidiFeedBackDispatcher.mutex.withLock {
-                var new_handle = 0
-                while (this@MidiFeedBackDispatcher.active_handles.contains(new_handle)) {
-                    new_handle += 1
-                }
-                this@MidiFeedBackDispatcher.active_handles.add(new_handle)
+            this@MidiFeedbackDispatcher.mutex.withLock {
+                var new_handle = this@MidiFeedbackDispatcher.handle_gen++
+                this@MidiFeedbackDispatcher.active_handles.add(new_handle)
                 new_handle
             }
         }
-
         this.send_event(
             NoteOn79(
                 index = handle,
@@ -51,8 +48,8 @@ class MidiFeedBackDispatcher: VirtualMidiInputDevice() {
             )
         )
         runBlocking {
-            this@MidiFeedBackDispatcher.mutex.withLock {
-                this@MidiFeedBackDispatcher.active_handles.remove(handle)
+            this@MidiFeedbackDispatcher.mutex.withLock {
+                this@MidiFeedbackDispatcher.active_handles.remove(handle)
             }
         }
 

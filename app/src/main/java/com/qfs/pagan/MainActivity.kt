@@ -91,7 +91,7 @@ class MainActivity : AppCompatActivity() {
     private var _soundfont: SoundFont? = null
     private var _midi_playback_device: PaganPlaybackDevice? = null
     private var _midi_feedback_device: ActiveMidiAudioPlayer? = null
-    private var _midi_feedback_dispatcher = MidiFeedBackDispatcher()
+    private var _midi_feedback_dispatcher = MidiFeedbackDispatcher()
 
     private lateinit var _app_bar_configuration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
@@ -257,6 +257,7 @@ class MainActivity : AppCompatActivity() {
                 super.onSongPositionPointer(event)
             }
         })
+
         this._midi_interface.connect_virtual_input_device(this._midi_feedback_dispatcher)
         this.project_manager = ProjectManager(this.getExternalFilesDir(null).toString())
         // Move files from applicationInfo.data to externalfilesdir (pre v1.1.2 location)

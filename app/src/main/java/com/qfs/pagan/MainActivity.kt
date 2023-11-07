@@ -52,8 +52,10 @@ import com.qfs.apres.InvalidMIDIFile
 import com.qfs.apres.Midi
 import com.qfs.apres.MidiController
 import com.qfs.apres.MidiPlayer
+import com.qfs.apres.VirtualMidiOutputDevice
 import com.qfs.apres.event.BankSelect
 import com.qfs.apres.event.ProgramChange
+import com.qfs.apres.event.SongPositionPointer
 import com.qfs.apres.soundfont.SoundFont
 import com.qfs.apres.soundfontplayer.ActiveMidiAudioPlayer
 import com.qfs.apres.soundfontplayer.SampleHandleManager
@@ -248,6 +250,13 @@ class MainActivity : AppCompatActivity() {
         }
 
         this._midi_interface.connect_virtual_input_device(this._virtual_input_device)
+        // Listens for SongPositionPointer (provided by midi) and scrolls to that beat
+        this._midi_interface.connect_virtual_output_device( object : VirtualMidiOutputDevice {
+            override fun onSongPositionPointer(event: SongPositionPointer) {
+                this@MainActivity.get_opus_manager().cursor_select_column(event.get_beat(), true)
+                super.onSongPositionPointer(event)
+            }
+        })
         this._midi_interface.connect_virtual_input_device(this._midi_feedback_dispatcher)
         this.project_manager = ProjectManager(this.getExternalFilesDir(null).toString())
         // Move files from applicationInfo.data to externalfilesdir (pre v1.1.2 location)

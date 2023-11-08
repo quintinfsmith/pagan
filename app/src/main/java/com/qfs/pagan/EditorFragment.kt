@@ -270,12 +270,14 @@ class EditorFragment : PaganFragment() {
             return
         }
         if (is_networked) {
+            btnUnLink.visibility = View.VISIBLE
             btnUnLink.setOnClickListener {
                 this.interact_btnUnlink()
             }
             if (!many_links) {
                 btnUnLinkAll.visibility = View.GONE
             } else {
+                btnUnLinkAll.visibility = View.VISIBLE
                 btnUnLinkAll.setOnClickListener {
                     this.interact_btnUnlinkAll()
                 }

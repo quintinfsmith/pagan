@@ -1,7 +1,6 @@
 package com.qfs.pagan
 
 import android.content.Context
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
@@ -32,7 +31,6 @@ class LeafButton(
         private val STATE_CHANNEL_EVEN = intArrayOf(R.attr.state_channel_even)
     }
 
-    var invalid: Boolean = false
 
     init {
         this.isClickable = false
@@ -60,7 +58,7 @@ class LeafButton(
             } else {
                 opus_manager.cursor_select_to_link(beat_key)
             }
-            false
+            true
         }
     }
 
@@ -72,8 +70,6 @@ class LeafButton(
         val editor_table = this.get_editor_table() // Will need if overflow exception is passed
         if (opus_manager.cursor.is_linking) {
             try {
-                this.invalid = true
-
                 opus_manager.link_beat(beat_key)
                 opus_manager.cursor_select(beat_key, opus_manager.get_first_position(beat_key))
             } catch (e: Exception) {
@@ -182,14 +178,9 @@ class LeafButton(
         val beat_key = try {
             this.get_beat_key()
         } catch (e: IndexOutOfBoundsException) {
-            Log.d("AAA", "SAVED CRASH!")
             return drawableState
         }
-
         if (beat_key.beat == -1) {
-            return drawableState
-        }
-        if (this.invalid) {
             return drawableState
         }
         val position = this.position
@@ -211,7 +202,6 @@ class LeafButton(
         if (opus_manager.is_networked(beat_key)) {
             mergeDrawableStates(drawableState, LeafButton.STATE_LINKED)
         }
-
         if (opus_manager.is_selected(beat_key, position)) {
             mergeDrawableStates(drawableState, LeafButton.STATE_FOCUSED)
         }

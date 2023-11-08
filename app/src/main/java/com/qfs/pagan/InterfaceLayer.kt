@@ -952,17 +952,17 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     fun is_selected(beat_key: BeatKey, position: List<Int>): Boolean {
         return when (this.cursor.mode) {
             OpusManagerCursor.CursorMode.Column -> {
-                cursor.beat == beat_key.beat
+                this.cursor.beat == beat_key.beat
             }
             OpusManagerCursor.CursorMode.Row -> {
-                cursor.channel == beat_key.channel && cursor.line_offset == beat_key.line_offset
+                this.cursor.channel == beat_key.channel && this.cursor.line_offset == beat_key.line_offset
             }
             OpusManagerCursor.CursorMode.Range -> {
-                beat_key in this.get_beatkeys_in_range(cursor.range!!.first, cursor.range!!.second)
+                beat_key in this.get_beatkeys_in_range(this.cursor.range!!.first, this.cursor.range!!.second)
             }
             OpusManagerCursor.CursorMode.Single -> {
                 val cposition = this.cursor.get_position()
-                cursor.get_beatkey() == beat_key && position.size >= cposition.size && position.subList(0, cposition.size) == cposition
+                this.cursor.get_beatkey() == beat_key && position.size >= cposition.size && position.subList(0, cposition.size) == cposition
             }
             OpusManagerCursor.CursorMode.Unset -> {
                 false

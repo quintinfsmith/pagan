@@ -840,7 +840,7 @@ class MainActivity : AppCompatActivity() {
             Pair(new_note, bend)
         }
 
-        this._midi_feedback_dispatcher.play_note(midi_channel, note, bend, !this._midi_interface.output_devices_connected() && radix != 12)
+        this._midi_feedback_dispatcher.play_note(midi_channel, note, bend, !this._midi_interface.output_devices_connected())
     }
 
     fun import_project(path: String) {

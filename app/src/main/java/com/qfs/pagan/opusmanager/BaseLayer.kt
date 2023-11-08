@@ -576,9 +576,9 @@ open class BaseLayer {
                             return@traverse
                         }
 
-                        var position = tree.get_path()
-                        var new_event = event.copy()
-                        var octave = (event.note / event.radix)
+                        val position = tree.get_path()
+                        val new_event = event.copy()
+                        val octave = (event.note / event.radix)
 
                         new_event.radix = radix
                         new_event.note = (octave * radix) + ((event.note % event.radix) * radix / event.radix)
@@ -1292,7 +1292,6 @@ open class BaseLayer {
             max_tick = kotlin.math.max(tick, max_tick)
             val beat_index = ((tick - last_ts_change) / beat_size) + total_beat_offset
             val inner_beat_offset = (tick - last_ts_change) % beat_size
-
             if (event is NoteOn && event.get_velocity() > 0) {
                 val (channel, note) = Pair(event.channel, event.get_note())
 
@@ -1335,9 +1334,37 @@ open class BaseLayer {
                 opus_event_duration_map[opus_event] = (tick - opus_event.duration).toFloat() / beat_size.toFloat()
             } else if (event is TimeSignature) {
                 total_beat_offset += (tick - last_ts_change) / beat_size
-                last_ts_change = tick
+
                 denominator = 2F.pow(event.get_denominator())
-                beat_size = (midi.get_ppqn().toFloat() * (4 / denominator)).toInt()
+                val new_beat_size = (midi.get_ppqn().toFloat() * (4 / denominator)).toInt()
+
+                // Need to resize the current beat to match the timesignature that change if noteons
+                // have already been added to that tree (shouldn't ever happen)
+                if (beat_index < beat_values.size) {
+                    val original_beat_size = beat_size
+                    val tree = beat_values[beat_index]
+                    val tree_divisions = tree.divisions.toList()
+                    tree.set_size(new_beat_size)
+                    for ((f, child) in tree_divisions) {
+                        if (!child.is_event()) {
+                            continue
+                        }
+                        val new_index = f * new_beat_size / original_beat_size
+
+                        val eventset = if (!tree[new_index].is_event()) {
+                            mutableSetOf()
+                        }  else {
+                            tree[new_index].get_event()!!.toMutableSet()
+                        }
+                        for (e in child.get_event()!!) {
+                            eventset.add(e)
+                        }
+                        tree[new_index].set_event(eventset)
+                    }
+                }
+
+                last_ts_change = tick
+                beat_size = new_beat_size
             } else if (event is SetTempo) {
                 if (tick == 0) {
                     tempo = event.get_bpm() * (denominator / 4)
@@ -1809,7 +1836,7 @@ open class BaseLayer {
         }
 
         tick_map.sortBy { it.first }
-        var breakdown = mutableListOf<Pair<Double, Int>>()
+        val breakdown = mutableListOf<Pair<Double, Int>>()
 
         var currently_on = 0
         var last_position = 0.0
@@ -1854,7 +1881,7 @@ open class BaseLayer {
     }
 
     fun has_percussion(): Boolean {
-        var channel = this.channels[this.channels.size - 1]
+        val channel = this.channels[this.channels.size - 1]
         return !channel.is_empty()
     }
 }

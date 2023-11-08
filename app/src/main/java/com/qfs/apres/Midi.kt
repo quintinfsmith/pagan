@@ -5,6 +5,7 @@ import com.qfs.apres.event.MIDIEvent
 import com.qfs.apres.event.NoteOff
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event.SongPositionPointer
+import com.qfs.apres.event.TimeSignature
 import com.qfs.apres.event2.NoteOff79
 import com.qfs.apres.event2.NoteOn79
 import java.io.File
@@ -322,7 +323,15 @@ class Midi {
             output.add(Pair(tick, this.events[eid]!!))
         }
 
-        return output.sortedBy { it.first }
+        return output.sortedBy {
+            (it.first * 10) + when (it.second) {
+                is TimeSignature -> { 6 }
+                is SongPositionPointer -> { 6 }
+                is NoteOff -> { 7 }
+                is NoteOn -> { 8 }
+                else -> { 9 }
+            }
+        }
     }
 
     fun get_all_events_grouped(): List<Pair<Int, List<MIDIEvent>>> {

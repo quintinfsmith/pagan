@@ -251,10 +251,9 @@ class MainActivity : AppCompatActivity() {
 
         this._midi_interface.connect_virtual_input_device(this._virtual_input_device)
         // Listens for SongPositionPointer (provided by midi) and scrolls to that beat
-        this._midi_interface.connect_virtual_output_device( object : VirtualMidiOutputDevice {
+        this._midi_interface.connect_virtual_output_device(object : VirtualMidiOutputDevice {
             override fun onSongPositionPointer(event: SongPositionPointer) {
                 this@MainActivity.get_opus_manager().cursor_select_column(event.get_beat(), true)
-                super.onSongPositionPointer(event)
             }
         })
 
@@ -511,7 +510,9 @@ class MainActivity : AppCompatActivity() {
             val play_pause_button = this._options_menu?.findItem(R.id.itmPlay) ?: return@runOnUiThread
             play_pause_button.icon = ContextCompat.getDrawable(this, R.drawable.ic_baseline_play_arrow_24)
         }
-        this.window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        this.runOnUiThread {
+            this.window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
 
         if (this._virtual_input_device.playing) {
             this._virtual_input_device.stop()
@@ -521,8 +522,10 @@ class MainActivity : AppCompatActivity() {
             this._midi_playback_device!!.kill()
         }
 
-        val blocker_view = this.findViewById<LinearLayout>(R.id.llClearOverlay) ?: return
-        blocker_view.visibility = View.GONE
+        this.runOnUiThread {
+            val blocker_view = this.findViewById<LinearLayout>(R.id.llClearOverlay) ?: return@runOnUiThread
+            blocker_view.visibility = View.GONE
+        }
     }
 
     fun get_new_project_path(): String {

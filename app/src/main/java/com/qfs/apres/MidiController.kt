@@ -113,13 +113,14 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
 
     fun broadcast_event(event: MIDIEvent) {
         // Rebroadcast to listening devices
-        runBlocking {
+        var devices = runBlocking {
             this@MidiController.virtual_output_mutex.withLock {
-                for (device in this@MidiController.virtual_output_devices) {
-                    thread {
-                        device.receiveMessage(event)
-                    }
-                }
+                this@MidiController.virtual_output_devices.toList()
+            }
+        }
+        for (device in devices) {
+            thread {
+                device.receiveMessage(event)
             }
         }
 

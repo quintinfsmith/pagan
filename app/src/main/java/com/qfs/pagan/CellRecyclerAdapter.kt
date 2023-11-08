@@ -111,7 +111,9 @@ class CellRecyclerAdapter(initial_cell_count: Int = 0): RecyclerView.Adapter<Cel
         if (cell_layout !is CellLayout) {
             return
         }
-        wrapper.removeAllViews()
-        wrapper.addView(cell_layout)
+        this.get_activity().runOnUiThread {
+            wrapper.removeAllViews()
+            wrapper.addView(cell_layout)
+        }
     }
 }

@@ -749,15 +749,16 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         val editor_table = this.get_editor_table()
 
         this.cursor.select_column(beat)
-
-        editor_table?.update_cursor(this.cursor)
-
-        this.withFragment {
-            it.setContextMenu_column()
+        this.activity.runOnUiThread {
+            editor_table?.update_cursor(this.cursor)
+            this.withFragment {
+                it.setContextMenu_column()
+            }
+            editor_table?.scroll_to_position(x = beat, force = force_scroll)
         }
 
-        editor_table?.scroll_to_position(x = beat, force = force_scroll)
     }
+
     fun cursor_select(beat_key: BeatKey, position: List<Int>) {
         val editor_table = this.get_editor_table()
         this.cursor.select(beat_key, position)

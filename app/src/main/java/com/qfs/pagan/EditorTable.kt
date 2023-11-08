@@ -279,7 +279,6 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             this.active_cursor = opusManagerCursor.copy()
         }
 
-
         val opus_manager = this.get_opus_manager()
         val main_recycler_adapter = (this.main_recycler.adapter!! as ColumnRecyclerAdapter)
         val line_label_adapter = (this.line_label_recycler.adapter!! as LineLabelRecyclerAdapter)
@@ -482,7 +481,6 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         this.column_label_recycler.lock_scroll_propagation()
         this.column_label_recycler.scrollToPosition(x)
         this.column_label_recycler.unlock_scroll_propagation()
-
     }
     fun scroll_to_y(y: Int) {
         this.line_label_recycler.scrollToPosition(y)

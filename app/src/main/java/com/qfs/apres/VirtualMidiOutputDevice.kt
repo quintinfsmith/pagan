@@ -383,5 +383,4 @@ interface VirtualMidiOutputDevice {
 
     fun onNoteOn79(event: NoteOn79) { }
     fun onNoteOff79(event: NoteOff79) { }
-
 }

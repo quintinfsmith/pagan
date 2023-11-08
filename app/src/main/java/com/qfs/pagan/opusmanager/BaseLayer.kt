@@ -858,7 +858,6 @@ open class BaseLayer {
         val midi = Midi()
         midi.insert_event(0,0, SetTempo.from_bpm(this.tempo))
 
-        val position_pointer_ticks = mutableSetOf<Pair<Int, Int>>()
         val pseudo_midi_map = mutableListOf<Triple<Int, PseudoMidiEvent, Boolean>>()
         val max_tick = midi.get_ppqn() * (this.beat_count + 1)
 
@@ -877,9 +876,6 @@ open class BaseLayer {
                 var current_tick = 0
                 var prev_note = 0
                 line.beats.forEachIndexed { b: Int, beat: OpusTree<OpusEvent> ->
-                    if (b in start_beat until end_beat) {
-                        position_pointer_ticks.add(Pair(b, current_tick))
-                    }
                     val stack: MutableList<StackItem> = mutableListOf(StackItem(beat, 1, current_tick, midi.ppqn))
                     while (stack.isNotEmpty()) {
                         val current = stack.removeFirst()
@@ -951,6 +947,7 @@ open class BaseLayer {
         pseudo_midi_map.sortBy {
             (it.first * 2) + (if (it.third) { 1 } else { 0})
         }
+
         val index_map = HashMap<PseudoMidiEvent, Int>()
         for ((tick, pseudo_event, is_on) in pseudo_midi_map) {
             midi.insert_event(
@@ -997,10 +994,10 @@ open class BaseLayer {
             )
         }
 
-        for ((beat, tick) in position_pointer_ticks) {
+        for (beat in start_beat .. end_beat) {
             midi.insert_event(
                 0,
-                tick,
+                midi.ppqn * (beat - start_beat),
                 SongPositionPointer(beat)
             )
         }

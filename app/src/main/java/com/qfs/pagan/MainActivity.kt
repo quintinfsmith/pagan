@@ -824,13 +824,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun play_event(channel: Int, event_value: Int, velocity: Int = 64) {
-        return
         val midi_channel = this._opus_manager.channels[channel].midi_channel
 
+        val radix = this._opus_manager.radix
         val (note, bend) = if (this._opus_manager.is_percussion(channel)) { // Ignore the event data and use percussion map
             Pair(event_value + 27, 0)
         } else {
-            val radix = this._opus_manager.radix
             val octave = (event_value + this._opus_manager.transpose) / radix
             val offset = (event_value + this._opus_manager.transpose) % radix
 
@@ -838,10 +837,10 @@ class MainActivity : AppCompatActivity() {
             val bend = ((std_offset - floor(std_offset)) * 512.0).toInt()
             val new_note = (octave * 12) + std_offset.toInt() + 21
 
-            Pair( new_note, bend )
+            Pair(new_note, bend)
         }
 
-        this._midi_feedback_dispatcher.play_note(midi_channel, note, bend)
+        this._midi_feedback_dispatcher.play_note(midi_channel, note, bend, !this._midi_interface.output_devices_connected() && radix != 12)
     }
 
     fun import_project(path: String) {

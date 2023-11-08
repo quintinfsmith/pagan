@@ -1,9 +1,11 @@
 package com.qfs.pagan
 
 import android.view.Gravity
+import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.LinearLayout
+import androidx.core.view.children
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.OpusEvent
 import com.qfs.pagan.structure.OpusTree
@@ -20,6 +22,20 @@ class CellLayout(var view_holder: CellRecyclerViewHolder): LinearLayout(view_hol
         this.layoutParams.width = (this.get_editor_table().get_column_width(this.get_beat()) * resources.getDimension(R.dimen.base_leaf_width).roundToInt())
         this.layoutParams.height = resources.getDimension(R.dimen.line_height).toInt()
         this.build()
+    }
+
+    fun invalidate_all() {
+        var view_stack = mutableListOf<View>(this)
+        while (view_stack.isNotEmpty()) {
+            var current_view = view_stack.removeAt(0)
+            if (current_view is ViewGroup) {
+                for (child in (current_view as ViewGroup).children) {
+                    view_stack.add(child)
+                }
+            }
+            current_view.postInvalidate()
+            current_view.refreshDrawableState()
+        }
     }
 
     fun get_activity(): MainActivity {

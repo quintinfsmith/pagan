@@ -8,6 +8,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.TextView
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
 import com.qfs.apres.InvalidMIDIFile
@@ -214,24 +215,34 @@ class EditorFragment : PaganFragment() {
     }
 
     fun clearContextMenu() {
-        activity!!.findViewById<LinearLayout>(R.id.llContextMenu)?.removeAllViews()
         this.active_context_menu_index = null
+        val llContextCell = this.activity!!.findViewById<LinearLayout>(R.id.llContextCell)
+        val llContextRow = this.activity!!.findViewById<LinearLayout>(R.id.llContextRow)
+        val llContextCol = this.activity!!.findViewById<LinearLayout>(R.id.llContextCol)
+        val llContextLink = this.activity!!.findViewById<ConstraintLayout>(R.id.llContextLink)
+        llContextCell.visibility = View.GONE
+        llContextRow.visibility = View.GONE
+        llContextCol.visibility = View.GONE
+        llContextLink.visibility = View.GONE
     }
 
     internal fun setContextMenu_linking() {
-        this.clearContextMenu()
+        this.active_context_menu_index = ContextMenu.Linking
+        val llContextCell = this.activity!!.findViewById<LinearLayout>(R.id.llContextCell)
+        val llContextRow = this.activity!!.findViewById<LinearLayout>(R.id.llContextRow)
+        val llContextCol = this.activity!!.findViewById<LinearLayout>(R.id.llContextCol)
+        val llContextLink = this.activity!!.findViewById<ConstraintLayout>(R.id.llContextLink)
+        llContextCell.visibility = View.GONE
+        llContextRow.visibility = View.GONE
+        llContextCol.visibility = View.GONE
+        llContextLink.visibility = View.VISIBLE
+        //////////////////////////////////////////////
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
-        val llContextMenu = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenu)
 
-        val view = LayoutInflater.from(llContextMenu.context).inflate(
-            R.layout.contextmenu_linking,
-            llContextMenu,
-            false
-        )
-        val btnUnLink = view.findViewById<ImageView>(R.id.btnUnLink)
-        val btnUnLinkAll = view.findViewById<ImageView>(R.id.btnUnLinkAll)
-        val btnCancelLink: View = view.findViewById(R.id.btnCancelLink)
+        val btnUnLink = llContextLink.findViewById<ImageView>(R.id.btnUnLink)
+        val btnUnLinkAll = llContextLink.findViewById<ImageView>(R.id.btnUnLinkAll)
+        val btnCancelLink: View = llContextLink.findViewById(R.id.btnCancelLink)
 
         val (is_networked, many_links) = if (opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Range) {
             var output = false
@@ -274,28 +285,28 @@ class EditorFragment : PaganFragment() {
         btnCancelLink.setOnClickListener {
             this.interact_btnCancelLink()
         }
-
-        llContextMenu.addView(view)
-        this.active_context_menu_index = ContextMenu.Linking
     }
 
     fun setContextMenu_column() {
+        this.active_context_menu_index = ContextMenu.Column
+        val llContextCell = this.activity!!.findViewById<LinearLayout>(R.id.llContextCell)
+        val llContextRow = this.activity!!.findViewById<LinearLayout>(R.id.llContextRow)
+        val llContextCol = this.activity!!.findViewById<LinearLayout>(R.id.llContextCol)
+        val llContextLink = this.activity!!.findViewById<ConstraintLayout>(R.id.llContextLink)
+        llContextCell.visibility = View.GONE
+        llContextRow.visibility = View.GONE
+        llContextCol.visibility = View.VISIBLE
+        llContextLink.visibility = View.GONE
+        //////////////////////////////////////////////////////////
         val main = this.get_main()
-        val llContextMenu = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenu)
         if (main.in_playback()) {
-            llContextMenu.removeAllViews()
             return
         }
 
         val opus_manager = main.get_opus_manager()
 
-        val view = LayoutInflater.from(llContextMenu.context).inflate(
-            R.layout.contextmenu_column,
-            llContextMenu,
-            false
-        )
-        val btnInsertBeat = view.findViewById<ImageView>(R.id.btnInsertBeat)
-        val btnRemoveBeat = view.findViewById<ImageView>(R.id.btnRemoveBeat)
+        val btnInsertBeat = llContextCol.findViewById<ImageView>(R.id.btnInsertBeat)
+        val btnRemoveBeat = llContextCol.findViewById<ImageView>(R.id.btnRemoveBeat)
 
         btnInsertBeat.setOnClickListener {
             val beat = opus_manager.cursor.beat
@@ -345,34 +356,35 @@ class EditorFragment : PaganFragment() {
         if (opus_manager.beat_count == 1) {
             btnRemoveBeat.visibility = View.GONE
         }
-        llContextMenu.addView(view)
-        if (llContextMenu.childCount == 2) {
-            llContextMenu.removeViewAt(0)
-        }
-        this.active_context_menu_index = ContextMenu.Column
     }
 
     fun setContextMenu_line() {
+        this.active_context_menu_index = ContextMenu.Line
+        val llContextCell = this.activity!!.findViewById<LinearLayout>(R.id.llContextCell)
+        val llContextRow = this.activity!!.findViewById<LinearLayout>(R.id.llContextRow)
+        val llContextCol = this.activity!!.findViewById<LinearLayout>(R.id.llContextCol)
+        val llContextLink = this.activity!!.findViewById<ConstraintLayout>(R.id.llContextLink)
+        llContextCell.visibility = View.GONE
+        llContextRow.visibility = View.VISIBLE
+        llContextCol.visibility = View.GONE
+        llContextLink.visibility = View.GONE
+        ///////////////////////////////////////////
+
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
         if (opus_manager.cursor.mode != OpusManagerCursor.CursorMode.Row) {
             throw OpusManagerCursor.InvalidModeException(opus_manager.cursor.mode, OpusManagerCursor.CursorMode.Row)
         }
-        this.clearContextMenu()
-        val llContextMenu = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenu)
 
-        val view = LayoutInflater.from(llContextMenu.context).inflate(
-            R.layout.contextmenu_row,
-            llContextMenu,
-            false
-        )
-        val sbLineVolume = view.findViewById<SeekBar>(R.id.sbLineVolume)
-        val btnRemoveLine = view.findViewById<ImageView>(R.id.btnRemoveLine)
-        val btnInsertLine = view.findViewById<ImageView>(R.id.btnInsertLine)
-        val btnChoosePercussion: TextView = view.findViewById(R.id.btnChoosePercussion)
+        val sbLineVolume =  llContextRow.findViewById<SeekBar>(R.id.sbLineVolume)
+        val btnRemoveLine = llContextRow.findViewById<ImageView>(R.id.btnRemoveLine)
+        val btnInsertLine = llContextRow.findViewById<ImageView>(R.id.btnInsertLine)
+        val btnChoosePercussion: TextView = llContextRow.findViewById(R.id.btnChoosePercussion)
 
         if (opus_manager.get_visible_line_count() == 1) {
             btnRemoveLine.visibility = View.GONE
+        } else {
+            btnRemoveLine.visibility = View.VISIBLE
         }
 
         val channel = opus_manager.cursor.channel
@@ -381,6 +393,7 @@ class EditorFragment : PaganFragment() {
         if (!opus_manager.is_percussion(channel)) {
             btnChoosePercussion.visibility = View.GONE
         } else {
+            btnChoosePercussion.visibility = View.VISIBLE
             val instrument = opus_manager.get_percussion_instrument(line_offset)
 
             btnChoosePercussion.setOnClickListener {
@@ -407,6 +420,7 @@ class EditorFragment : PaganFragment() {
         if (opus_manager.channels[channel].size == 1) {
             btnRemoveLine.visibility = View.GONE
         } else {
+            btnRemoveLine.visibility = View.VISIBLE
             btnRemoveLine.setOnClickListener {
                 opus_manager.remove_line(1)
             }
@@ -442,9 +456,9 @@ class EditorFragment : PaganFragment() {
             true
         }
 
-        if (this.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            sbLineVolume.layoutParams.width = ((llContextMenu.measuredHeight - (btnRemoveLine.measuredHeight + btnInsertLine.measuredHeight)) * .6).toInt()
-        }
+        //if (this.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+        //    sbLineVolume.layoutParams.width = ((llContextMenu.measuredHeight - (btnRemoveLine.measuredHeight + btnInsertLine.measuredHeight)) * .6).toInt()
+        //}
 
         sbLineVolume.progress = opus_manager.get_line_volume(channel, line_offset)
         sbLineVolume.contentDescription = resources.getString(R.string.label_volume_scrollbar, sbLineVolume.progress / sbLineVolume.max)
@@ -457,35 +471,32 @@ class EditorFragment : PaganFragment() {
                 opus_manager.set_line_volume(channel, line_offset, seekbar.progress)
             }
         })
-
-
-        llContextMenu.addView(view)
-        this.active_context_menu_index = ContextMenu.Line
     }
 
     internal fun setContextMenu_leaf() {
-        this.clearContextMenu()
+        this.active_context_menu_index = ContextMenu.Leaf
+        val llContextCell = this.activity!!.findViewById<LinearLayout>(R.id.llContextCell)
+        val llContextRow = this.activity!!.findViewById<LinearLayout>(R.id.llContextRow)
+        val llContextCol = this.activity!!.findViewById<LinearLayout>(R.id.llContextCol)
+        val llContextLink = this.activity!!.findViewById<ConstraintLayout>(R.id.llContextLink)
+        llContextCell.visibility = View.VISIBLE
+        llContextRow.visibility = View.GONE
+        llContextCol.visibility = View.GONE
+        llContextLink.visibility = View.GONE
+        //////////////////////////////////////////////
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
-        val llContextMenu: LinearLayout = this.activity!!.findViewById(R.id.llContextMenu)
 
-        val view = LayoutInflater.from(llContextMenu.context).inflate(
-            R.layout.contextmenu_cell,
-            llContextMenu,
-            false
-        )
-        llContextMenu.addView(view)
+        val rosRelativeOption = llContextCell.findViewById<RelativeOptionSelector>(R.id.rosRelativeOption)
 
-        val rosRelativeOption = view.findViewById<RelativeOptionSelector>(R.id.rosRelativeOption)
+        val btnUnset = llContextCell.findViewById<ImageView>(R.id.btnUnset)
+        val btnSplit = llContextCell.findViewById<View>(R.id.btnSplit)
+        val btnRemove = llContextCell.findViewById<View>(R.id.btnRemove)
+        val btnInsert = llContextCell.findViewById<View>(R.id.btnInsert)
+        val btnDuration = llContextCell.findViewById<TextView>(R.id.btnDuration)
 
-        val btnUnset = view.findViewById<ImageView>(R.id.btnUnset)
-        val btnSplit = view.findViewById<View>(R.id.btnSplit)
-        val btnRemove = view.findViewById<View>(R.id.btnRemove)
-        val btnInsert = view.findViewById<View>(R.id.btnInsert)
-        val btnDuration = view.findViewById<TextView>(R.id.btnDuration)
-
-        val nsOctave: NumberSelector = view.findViewById(R.id.nsOctave)
-        val nsOffset: NumberSelector = view.findViewById(R.id.nsOffset)
+        val nsOctave: NumberSelector = llContextCell.findViewById(R.id.nsOctave)
+        val nsOffset: NumberSelector = llContextCell.findViewById(R.id.nsOffset)
         nsOffset.set_max(opus_manager.radix - 1)
 
         val current_tree = opus_manager.get_tree()
@@ -517,6 +528,9 @@ class EditorFragment : PaganFragment() {
             }
 
         } else {
+            nsOctave.visibility = View.VISIBLE
+            nsOffset.visibility = View.VISIBLE
+            rosRelativeOption.visibility = View.VISIBLE
             if (current_tree.is_event()) {
                 val event = current_tree.get_event()!!
                 val value = if (event.relative && ! main.configuration.relative_mode) {
@@ -532,6 +546,7 @@ class EditorFragment : PaganFragment() {
                     nsOffset.setState(value % event.radix, manual = true, surpress_callback = true)
                     nsOctave.setState(value / event.radix, manual = true, surpress_callback = true)
                 }
+                btnUnset.setImageResource(R.drawable.unset)
             }
 
             nsOffset.setOnChange(this::interact_nsOffset)
@@ -566,6 +581,7 @@ class EditorFragment : PaganFragment() {
         if (!opus_manager.is_percussion(channel) && current_tree.is_leaf() && !current_tree.is_event()) {
             btnUnset.visibility = View.INVISIBLE
         } else {
+            btnUnset.visibility = View.VISIBLE
             btnUnset.setOnClickListener {
                 this.interact_btnUnset()
             }
@@ -645,12 +661,10 @@ class EditorFragment : PaganFragment() {
                 true
             }
             btnDuration.text = "x${event.duration}"
+            btnDuration.visibility = View.VISIBLE
         } else {
             btnDuration.visibility = View.INVISIBLE
         }
-
-
-        this.active_context_menu_index = ContextMenu.Leaf
     }
 
     private fun interact_rosRelativeOption(view: RelativeOptionSelector) {

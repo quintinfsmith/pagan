@@ -26,7 +26,20 @@ tools:context=".EditorFragment">
             android:layout_height="match_parent"
             android:orientation="horizontal"
             android:paddingTop="@dimen/normal_padding"
-            android:paddingBottom="@dimen/normal_padding"/>
+            android:paddingBottom="@dimen/normal_padding">
+            <include
+                android:id="@+id/llContextCell"
+                layout="@layout/contextmenu_cell"/>
+            <include
+                android:id="@+id/llContextCol"
+                layout="@layout/contextmenu_column"/>
+            <include
+                android:id="@+id/llContextRow"
+                layout="@layout/contextmenu_row"/>
+            <include
+                android:id="@+id/llContextLink"
+                layout="@layout/contextmenu_linking"/>
+        </LinearLayout>
 
     </LinearLayout>
 </LinearLayout>

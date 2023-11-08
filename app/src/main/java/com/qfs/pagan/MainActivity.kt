@@ -824,6 +824,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun play_event(channel: Int, event_value: Int, velocity: Int = 64) {
+        return
         val midi_channel = this._opus_manager.channels[channel].midi_channel
 
         val (note, bend) = if (this._opus_manager.is_percussion(channel)) { // Ignore the event data and use percussion map

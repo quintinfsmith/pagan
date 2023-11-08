@@ -508,11 +508,6 @@ class EditorFragment : PaganFragment() {
         }
 
         rosRelativeOption.setState(opus_manager.relative_mode, true)
-        if (main.configuration.relative_mode) {
-            rosRelativeOption.visibility = View.VISIBLE
-        } else {
-            rosRelativeOption.visibility = View.GONE
-        }
 
         if (opus_manager.is_percussion(opus_manager.cursor.channel)) {
             nsOctave.visibility = View.GONE
@@ -528,9 +523,13 @@ class EditorFragment : PaganFragment() {
             }
 
         } else {
+            if (main.configuration.relative_mode) {
+                rosRelativeOption.visibility = View.VISIBLE
+            } else {
+                rosRelativeOption.visibility = View.GONE
+            }
             nsOctave.visibility = View.VISIBLE
             nsOffset.visibility = View.VISIBLE
-            rosRelativeOption.visibility = View.VISIBLE
             if (current_tree.is_event()) {
                 val event = current_tree.get_event()!!
                 val value = if (event.relative && ! main.configuration.relative_mode) {
@@ -746,13 +745,13 @@ class EditorFragment : PaganFragment() {
         if (event_note < 0) {
             return
         }
+
         val volume = opus_manager.channels[beat_key.channel].get_line_volume(beat_key.line_offset)
         main.play_event(
             beat_key.channel,
             event_note,
             volume
         )
-
     }
 
     private fun interact_btnUnset() {

@@ -40,6 +40,5 @@ tools:context=".EditorFragment">
                 android:id="@+id/llContextLink"
                 layout="@layout/contextmenu_linking"/>
         </LinearLayout>
-
     </LinearLayout>
 </LinearLayout>

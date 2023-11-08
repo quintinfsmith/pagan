@@ -8,7 +8,6 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.TextView
-import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
 import com.qfs.apres.InvalidMIDIFile
@@ -125,6 +124,7 @@ class EditorFragment : PaganFragment() {
             this.get_main().drawer_unlock()
             thread {
                 Thread.sleep(100)
+
                 this.activity!!.runOnUiThread {
                     editor_table.precise_scroll(
                         this.view_model.coarse_x!!,
@@ -216,14 +216,14 @@ class EditorFragment : PaganFragment() {
 
     fun clearContextMenu() {
         this.active_context_menu_index = null
-        val llContextCell = this.activity!!.findViewById<LinearLayout>(R.id.llContextCell)
-        val llContextRow = this.activity!!.findViewById<LinearLayout>(R.id.llContextRow)
-        val llContextCol = this.activity!!.findViewById<LinearLayout>(R.id.llContextCol)
-        val llContextLink = this.activity!!.findViewById<ConstraintLayout>(R.id.llContextLink)
-        llContextCell.visibility = View.GONE
-        llContextRow.visibility = View.GONE
-        llContextCol.visibility = View.GONE
-        llContextLink.visibility = View.GONE
+        val llContextCell = this.activity!!.findViewById<LinearLayout?>(R.id.llContextCell)
+        val llContextRow = this.activity!!.findViewById<LinearLayout?>(R.id.llContextRow)
+        val llContextCol = this.activity!!.findViewById<LinearLayout?>(R.id.llContextCol)
+        val llContextLink = this.activity!!.findViewById<View?>(R.id.llContextLink)
+        llContextCell?.visibility = View.GONE
+        llContextRow?.visibility = View.GONE
+        llContextCol?.visibility = View.GONE
+        llContextLink?.visibility = View.GONE
     }
 
     internal fun setContextMenu_linking() {
@@ -231,7 +231,7 @@ class EditorFragment : PaganFragment() {
         val llContextCell = this.activity!!.findViewById<LinearLayout>(R.id.llContextCell)
         val llContextRow = this.activity!!.findViewById<LinearLayout>(R.id.llContextRow)
         val llContextCol = this.activity!!.findViewById<LinearLayout>(R.id.llContextCol)
-        val llContextLink = this.activity!!.findViewById<ConstraintLayout>(R.id.llContextLink)
+        val llContextLink = this.activity!!.findViewById<View>(R.id.llContextLink)
         llContextCell.visibility = View.GONE
         llContextRow.visibility = View.GONE
         llContextCol.visibility = View.GONE
@@ -242,7 +242,10 @@ class EditorFragment : PaganFragment() {
 
         val btnUnLink = llContextLink.findViewById<ImageView>(R.id.btnUnLink)
         val btnUnLinkAll = llContextLink.findViewById<ImageView>(R.id.btnUnLinkAll)
-        val btnCancelLink: View = llContextLink.findViewById(R.id.btnCancelLink)
+
+        // Double btnCancel Link due to different View Types needing different ids
+        val btnCancelLink = llContextLink.findViewById<View?>(R.id.btnCancelLink)
+        val ibtnCancelLink = llContextLink.findViewById<View?>(R.id.ibtnCancelLink)
 
         val (is_networked, many_links) = if (opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Range) {
             var output = false
@@ -282,7 +285,10 @@ class EditorFragment : PaganFragment() {
             btnUnLinkAll.visibility = View.GONE
         }
 
-        btnCancelLink.setOnClickListener {
+        btnCancelLink?.setOnClickListener {
+            this.interact_btnCancelLink()
+        }
+        ibtnCancelLink?.setOnClickListener {
             this.interact_btnCancelLink()
         }
     }
@@ -292,7 +298,7 @@ class EditorFragment : PaganFragment() {
         val llContextCell = this.activity!!.findViewById<LinearLayout>(R.id.llContextCell)
         val llContextRow = this.activity!!.findViewById<LinearLayout>(R.id.llContextRow)
         val llContextCol = this.activity!!.findViewById<LinearLayout>(R.id.llContextCol)
-        val llContextLink = this.activity!!.findViewById<ConstraintLayout>(R.id.llContextLink)
+        val llContextLink = this.activity!!.findViewById<View>(R.id.llContextLink)
         llContextCell.visibility = View.GONE
         llContextRow.visibility = View.GONE
         llContextCol.visibility = View.VISIBLE
@@ -363,7 +369,7 @@ class EditorFragment : PaganFragment() {
         val llContextCell = this.activity!!.findViewById<LinearLayout>(R.id.llContextCell)
         val llContextRow = this.activity!!.findViewById<LinearLayout>(R.id.llContextRow)
         val llContextCol = this.activity!!.findViewById<LinearLayout>(R.id.llContextCol)
-        val llContextLink = this.activity!!.findViewById<ConstraintLayout>(R.id.llContextLink)
+        val llContextLink = this.activity!!.findViewById<View>(R.id.llContextLink)
         llContextCell.visibility = View.GONE
         llContextRow.visibility = View.VISIBLE
         llContextCol.visibility = View.GONE
@@ -478,7 +484,7 @@ class EditorFragment : PaganFragment() {
         val llContextCell = this.activity!!.findViewById<LinearLayout>(R.id.llContextCell)
         val llContextRow = this.activity!!.findViewById<LinearLayout>(R.id.llContextRow)
         val llContextCol = this.activity!!.findViewById<LinearLayout>(R.id.llContextCol)
-        val llContextLink = this.activity!!.findViewById<ConstraintLayout>(R.id.llContextLink)
+        val llContextLink = this.activity!!.findViewById<View>(R.id.llContextLink)
         llContextCell.visibility = View.VISIBLE
         llContextRow.visibility = View.GONE
         llContextCol.visibility = View.GONE

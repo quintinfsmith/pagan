@@ -1,6 +1,7 @@
 package com.qfs.pagan
 
 import com.qfs.apres.VirtualMidiInputDevice
+import com.qfs.apres.event.MIDIStop
 import com.qfs.apres.event.NoteOff
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event2.NoteOff79
@@ -99,13 +100,11 @@ class MidiFeedbackDispatcher: VirtualMidiInputDevice() {
                     )
                 )
             }
+            Thread.sleep(this.timeout.toLong())
+            if (this._active_handles.isEmpty()) {
+                this.send_event(MIDIStop())
+            }
         }
     }
 
-    //private fun disable_handle(handle: Pair<Int, Int>) {
-    //    Thread.sleep(this.timeout)
-    //    if (this._active_handles.isEmpty()) {
-    //        this.send_event(MIDIStop())
-    //    }
-    //}
 }

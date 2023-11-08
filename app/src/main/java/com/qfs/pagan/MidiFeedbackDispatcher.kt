@@ -1,7 +1,6 @@
 package com.qfs.pagan
 
 import com.qfs.apres.VirtualMidiInputDevice
-import com.qfs.apres.event.MIDIStop
 import com.qfs.apres.event.NoteOff
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event2.NoteOff79
@@ -12,86 +11,101 @@ import kotlinx.coroutines.sync.withLock
 import kotlin.concurrent.thread
 
 class MidiFeedbackDispatcher: VirtualMidiInputDevice() {
-    var mutex = Mutex()
-    private var active_handles = mutableSetOf<Int>()
-    var handle_gen = 0
+    private var _handle_mutex = Mutex()
+    private var _index_mutex = Mutex()
+    // channel 17 for midi2 devices
+    private var _active_handles = HashMap<Triple<Int, Int, Boolean>, Int>()
+    private var _index_gen = HashMap<Int, Int>()
+    val timeout = 3000
+    val note_duration: Long = 400
 
-
-    fun play_note(channel: Int, note: Int, bend: Int = 0, midi2: Boolean = true) {
-        val handle = runBlocking {
-            this@MidiFeedbackDispatcher.mutex.withLock {
-                if (midi2) {
-                    var new_handle = this@MidiFeedbackDispatcher.handle_gen++
-                    this@MidiFeedbackDispatcher.active_handles.add(new_handle)
-                    new_handle
-                } else {
-                    note
-                }
+    private fun gen_index(channel: Int): Int {
+        return runBlocking {
+            this@MidiFeedbackDispatcher._index_mutex.withLock {
+                val index = this@MidiFeedbackDispatcher._index_gen[channel] ?: 0
+                this@MidiFeedbackDispatcher._index_gen[channel] = index + 1
+                index
             }
         }
+    }
 
-        this.send_event(
-            if (midi2) {
+    fun play_note(channel: Int, note: Int, bend: Int = 0, midi2: Boolean = true) {
+        var handle = if (midi2) {
+            var index = this.gen_index(channel)
+            this.send_event(
                 NoteOn79(
-                    index = handle,
+                    index = index,
                     channel = channel,
                     note = note,
                     bend = bend,
                     velocity = 64 shl 8
                 )
-            } else {
+            )
+            Triple(channel, index, true)
+        } else {
+            this.send_event(
                 NoteOn(
                     channel = channel,
                     note = note,
                     velocity = 64
                 )
+            )
+            Triple(channel, note, false)
+        }
+
+        var initial_count = runBlocking {
+            this@MidiFeedbackDispatcher._handle_mutex.withLock {
+                var count = this@MidiFeedbackDispatcher._active_handles[handle] ?: 0
+                this@MidiFeedbackDispatcher._active_handles[handle] = count + 1
+                count + 1
             }
-        )
+        }
 
         thread {
-            Thread.sleep(400)
-            this.disable_note(
-                if (midi2) {
-                    handle
-                } else {
-                   note
-                },
-                channel,
-                midi2
-            )
-        }
-    }
-
-    private fun disable_note(handle: Int, channel: Int, midi2: Boolean) {
-        runBlocking {
-            this@MidiFeedbackDispatcher.mutex.withLock {
-                if (midi2) {
-                    this@MidiFeedbackDispatcher.send_event(
-                        NoteOff79(
-                            index = handle,
-                            channel = channel,
-                            note = 0,
-                            velocity = 64 shl 8
-                        )
-                    )
-                    this@MidiFeedbackDispatcher.active_handles.remove(handle)
-                } else {
-                    this@MidiFeedbackDispatcher.send_event(
-                        NoteOff(
-                            channel = channel,
-                            note = handle,
-                            velocity = 64
-                        )
-                    )
+            Thread.sleep(this.note_duration)
+            val do_cancel = runBlocking {
+                this@MidiFeedbackDispatcher._handle_mutex.withLock {
+                    val active_count = this@MidiFeedbackDispatcher._active_handles[handle] ?: 1
+                    // If another note on the same handle has been pressed during the sleep,
+                    // don't bother turning this one off
+                    if (active_count == initial_count) {
+                        this@MidiFeedbackDispatcher._active_handles.remove(handle)
+                        false
+                    } else {
+                        true
+                    }
                 }
-                false
+            }
+
+            if (do_cancel) {
+                return@thread
+            }
+
+            if (midi2) {
+                this@MidiFeedbackDispatcher.send_event(
+                    NoteOff79(
+                        index = handle.second,
+                        channel = channel,
+                        note = 0,
+                        velocity = 64 shl 8
+                    )
+                )
+            } else {
+                this@MidiFeedbackDispatcher.send_event(
+                    NoteOff(
+                        channel = channel,
+                        note = note,
+                        velocity = 64
+                    )
+                )
             }
         }
-
-        Thread.sleep(1000)
-
-        if (this.active_handles.isEmpty()) {
-            this.send_event(MIDIStop())
-        }
     }
+
+    //private fun disable_handle(handle: Pair<Int, Int>) {
+    //    Thread.sleep(this.timeout)
+    //    if (this._active_handles.isEmpty()) {
+    //        this.send_event(MIDIStop())
+    //    }
+    //}
 }

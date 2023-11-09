@@ -11,7 +11,9 @@ import android.widget.ScrollView
 import android.widget.TableLayout
 import android.widget.TableRow
 import androidx.appcompat.view.ContextThemeWrapper
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.OpusChannel
 import com.qfs.pagan.structure.OpusTree
@@ -19,7 +21,8 @@ import kotlin.math.max
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
 class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, attrs) {
-    val main_recycler = ColumnRecycler(this)
+    //val main_recycler = ColumnRecycler(this)
+    val main_recycler = RecyclerView(context)
     val line_label_layout = LineLabelColumnLayout(this)
     val column_label_recycler = ColumnLabelRecycler(context)
     val top_row = TableRow(context)
@@ -33,6 +36,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     var active_cursor: OpusManagerCursor = OpusManagerCursor(OpusManagerCursor.CursorMode.Unset)
 
     init {
+        this.main_recycler.layoutManager = GridLayoutManager(this.context, this.get_opus_manager().beat_count)
         this.top_row.addView(this.spacer)
         this.top_row.addView(this.column_label_recycler)
 
@@ -233,14 +237,21 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         }
 
         this.column_width_map.add(index, column)
-        (this.main_recycler.adapter!! as ColumnRecyclerAdapter).add_column(index)
         (this.column_label_recycler.adapter!! as ColumnLabelAdapter).add_column(index)
+
+        (this.main_recycler.layoutManager as GridLayoutManager).spanCount += 1
+        opus_manager.get_visible_channels().forEachIndexed { i: Int, channel: OpusChannel ->
+            channel.lines.forEachIndexed { j: Int, line: OpusChannel.OpusLine ->
+                this.main_recycler.adapter.
+            }
+        }
+
     }
 
 
     fun remove_column(index: Int) {
         this.column_width_map.removeAt(index)
-        (this.main_recycler.adapter as ColumnRecyclerAdapter).remove_column(index)
+        (this.main_recycler.layoutManager as GridLayoutManager).spanCount -= 1
         (this.column_label_recycler.adapter!! as ColumnLabelAdapter).remove_column(index)
     }
 

@@ -35,6 +35,7 @@ class ColumnRecyclerAdapter(val recycler: ColumnRecycler, editor_table: EditorTa
     override fun onBindViewHolder(holder: ColumnRecyclerViewHolder, position: Int) {
         ColumnLayout(holder)
     }
+
     override fun onViewAttachedToWindow(holder: ColumnRecyclerViewHolder) {
         holder.itemView.layoutParams.height = MATCH_PARENT
     }

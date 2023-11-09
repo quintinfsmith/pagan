@@ -23,22 +23,37 @@ class ColumnLayout(var view_holder: ColumnRecyclerViewHolder): LinearLayout((vie
     }
 
     fun populate() {
-        for (y in 0 until this.get_opus_manager().get_visible_line_count()) {
-            this.insert_cell(y)
+        var opus_manager = this.get_opus_manager()
+        var channel = 0
+        var line_offset = 0
+        for (y in 0 until opus_manager.get_visible_line_count()) {
+            this.addView(CellLayout(this.context, channel, line_offset))
+            if (line_offset >= opus_manager.channels[channel].size - 1) {
+                channel += 1
+                line_offset = 0
+            } else {
+                line_offset += 1
+            }
         }
     }
 
-    fun insert_cell(y: Int) {
-        this.addView(CellLayout(this.context), y)
-    }
+
     fun remove_cell(y: Int) {
         this.removeViewAt(y)
+        this.notifyItemRangeChanged(y,this.childCount - y)
     }
-    fun notify_state_change(y: Int) {
-        this.remove_cell(y)
-        this.insert_cell(y)
-        //(this.getChildAt(y) as CellLayout).invalidate_all()
+
+    fun remove_cells(y: Int, count: Int) {
+        this.removeViews(y, count)
+        this.notifyItemRangeChanged(y,this.childCount - y)
     }
+
+    fun notifyItemRangeChanged(y: Int, count: Int) {
+        for (i in 0 until count) {
+            (this.getChildAt(y + i) as CellLayout).invalidate_all()
+        }
+    }
+
     fun clear() {
         this.removeAllViews()
     }
@@ -46,9 +61,11 @@ class ColumnLayout(var view_holder: ColumnRecyclerViewHolder): LinearLayout((vie
     fun get_opus_manager(): OpusManager {
         return (this.view_holder.bindingAdapter as ColumnRecyclerAdapter).get_opus_manager()
     }
+
     fun get_beat(): Int {
         return this.view_holder.bindingAdapterPosition
     }
+
     fun get_column_recycler_adapter(): ColumnRecyclerAdapter {
         if (this.view_holder.bindingAdapter == null) {
             throw ColumnDetachedException()

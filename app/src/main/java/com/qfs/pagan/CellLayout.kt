@@ -13,7 +13,7 @@ import com.qfs.pagan.structure.OpusTree
 import kotlin.math.roundToInt
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
-class CellLayout(context: Context): LinearLayout(context) {
+class CellLayout(context: Context, var channel: Int, var line_offset: Int): LinearLayout(context) {
     init {
         this.isClickable = false
     }
@@ -25,6 +25,11 @@ class CellLayout(context: Context): LinearLayout(context) {
             .roundToInt())
         this.layoutParams.height = resources.getDimension(R.dimen.line_height).toInt()
         this.build()
+    }
+
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        this.removeAllViews()
     }
 
     fun invalidate_all() {
@@ -55,10 +60,8 @@ class CellLayout(context: Context): LinearLayout(context) {
 
 
     fun build() {
-        //if (!(this.viewHolder.bindingAdapter as CellRecyclerAdapter).recycler.cells_visible) {
-        //    return
-        //}
-        val tree = this.get_beat_tree()
+        //val tree = this.get_beat_tree()
+        val tree = OpusTree<OpusEvent>()
         val max_width = (this.get_editor_table().get_column_width(this.get_beat()) * resources.getDimension(R.dimen.base_leaf_width).roundToInt())
 
         if (!tree.is_leaf()) {
@@ -74,7 +77,6 @@ class CellLayout(context: Context): LinearLayout(context) {
        if (tree.is_leaf()) {
            val tvLeaf = LeafButton(
                this.context,
-               this.get_activity(),
                tree.get_event(),
                position,
                this.is_percussion()
@@ -101,23 +103,8 @@ class CellLayout(context: Context): LinearLayout(context) {
         return (this.parent as ColumnLayout).get_beat()
     }
 
-    fun get_y(): Int {
-        val output = (this.parent as ViewGroup).indexOfChild(this)
-        if (output == -1) {
-            throw ColumnLayout.ColumnDetachedException()
-        }
-        return output
-    }
-
-    fun get_std_offset(): Pair<Int, Int> {
-        val opus_manager = this.get_opus_manager()
-        val y = this.get_y()
-        return opus_manager.get_std_offset(y)
-    }
-
     fun get_beat_key(): BeatKey {
-        val (channel, line_offset) = this.get_std_offset()
-        return BeatKey(channel, line_offset, this.get_beat())
+        return BeatKey(this.channel, this.line_offset, this.get_beat())
     }
 
     fun get_beat_tree(): OpusTree<OpusEvent> {
@@ -128,7 +115,6 @@ class CellLayout(context: Context): LinearLayout(context) {
 
     fun is_percussion(): Boolean {
         val opus_manager = this.get_opus_manager()
-        val (channel, _) = this.get_std_offset()
-        return opus_manager.is_percussion(channel)
+        return opus_manager.is_percussion(this.channel)
     }
 }

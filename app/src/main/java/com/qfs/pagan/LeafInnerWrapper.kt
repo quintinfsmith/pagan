@@ -9,8 +9,7 @@ import androidx.constraintlayout.widget.ConstraintLayout
 class LeafInnerWrapper(context: Context, attrs: AttributeSet): ConstraintLayout(ContextThemeWrapper(context, R.style.leaf_inner), attrs) {
     override fun onCreateDrawableState(extraSpace: Int): IntArray? {
         val drawableState = super.onCreateDrawableState(extraSpace + 5)
-        val parent = this.parent ?: return drawableState
-        return (parent as LeafButton).drawableState
+        return (this.parent as LeafButton?)?.drawableState ?: drawableState
     }
 
 }

@@ -52,6 +52,8 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         this.vertical_scroll_view.addView(this.main_recycler)
 
         this.bottom_row.addView(this.vertical_scroll_view)
+        this.vertical_scroll_view.isVerticalScrollBarEnabled = false
+        this.vertical_scroll_view.isHorizontalScrollBarEnabled = false
 
         this.addView(this.top_row)
         this.addView(this.bottom_row)
@@ -71,6 +73,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         (this.vertical_scroll_view.layoutParams as LinearLayout.LayoutParams).weight = 1F
         this.vertical_scroll_view.layoutParams.width = 0
         this.vertical_scroll_view.layoutParams.height = MATCH_PARENT
+        this.vertical_scroll_view.overScrollMode = OVER_SCROLL_NEVER
         this.main_recycler.layoutParams.width = MATCH_PARENT
         this.main_recycler.layoutParams.height = WRAP_CONTENT
 
@@ -80,7 +83,9 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         ColumnLabelAdapter(this)
         this.main_recycler.addOnScrollListener(HorizontalScrollListener(this.column_label_recycler))
         this.column_label_recycler.addOnScrollListener(HorizontalScrollListener(this.main_recycler))
-        this.vertical_scroll_view.setOnScrollChangeListener { scroll_view: View, x: Int, y: Int, old_x: Int, old_y: Int -> }
+        this.vertical_scroll_view.setOnScrollChangeListener { scroll_view: View, x: Int, y: Int, old_x: Int, old_y: Int ->
+            this.line_label_layout.scrollTo(x, y)
+        }
     }
 
     fun clear() {
@@ -133,7 +138,6 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
         for (i in 0 until opus_line.beats.size) {
             val tree = opus_line.beats[i]
-            val original_size = this.column_width_map[i].max()
             this.column_width_map[i].add(
                 y,
                 if (tree.is_leaf()) {
@@ -142,36 +146,31 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                     tree.get_max_child_weight() * tree.size
                 }
             )
-
-            val new_size = this.column_width_map[i].max()
-            if (new_size != original_size) {
-                val cell_recycler = (this.main_recycler.adapter as ColumnRecyclerAdapter).get_column_layout(i)
-                cell_recycler?.clear()
-
-                this.main_recycler.adapter!!.notifyItemChanged(i)
-                //if (cell_recycler != null) {
-                //    cell_recycler.adapter!!.notifyItemRangeChanged(y + 1, cell_recycler.adapter!!.itemCount)
-                //}
-            } else {
-                val cell_recycler = (this.main_recycler.adapter as ColumnRecyclerAdapter).get_column_layout(i) ?: continue
-                cell_recycler.insert_cell(y)
-                //cell_recycler.adapter!!.notifyItemRangeChanged(y + 1, cell_recycler.adapter!!.itemCount)
-            }
         }
+
+        var adapter = (this.main_recycler.adapter as ColumnRecyclerAdapter)
+        adapter.notifyDataSetChanged()
 
         this.line_label_layout.insert_label(y)
     }
 
     fun new_channel_rows(y: Int, opus_lines: List<OpusChannel.OpusLine>) {
-        opus_lines.forEachIndexed { i: Int, line: OpusChannel.OpusLine ->
-            this.new_row(y + i, line)
+        opus_lines.forEachIndexed { i: Int, opus_line: OpusChannel.OpusLine ->
+            for (j in 0 until opus_line.beats.size) {
+                val tree = opus_line.beats[j]
+                this.column_width_map[j].add(
+                    y + i,
+                    if (tree.is_leaf()) {
+                        1
+                    } else {
+                        tree.get_max_child_weight() * tree.size
+                    }
+                )
+            }
         }
 
-        this.line_label_layout.insert_label(y)
-
-        //(this.main_recycler.adapter as ColumnRecyclerAdapter).apply_to_visible_columns {
-        //    it.notifyItemRangeChanged(y + opus_lines.size, (last_visible_row + 1) - (y + opus_lines.size))
-        //}
+        var adapter = (this.main_recycler.adapter as ColumnRecyclerAdapter)
+        adapter.notifyDataSetChanged()
     }
 
     fun remove_row(y: Int) {
@@ -203,29 +202,19 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             }
 
             val new_size = this.column_width_map[i].max()
-            val cell_recycler = (this.main_recycler.adapter as ColumnRecyclerAdapter).get_column_layout(i)
+            val column_layout = (this.main_recycler.adapter as ColumnRecyclerAdapter).get_column_layout(i)
             if (new_size != original_size) {
-                cell_recycler?.clear()
-
-                this.main_recycler.adapter!!.notifyItemChanged(i)
+                column_layout?.clear()
                 this.column_label_recycler.adapter!!.notifyItemChanged(i)
-            } else if (cell_recycler != null) {
-                for (j in 0 until count) {
-                    cell_recycler.remove_cell(y)
-                }
+            } else if (column_layout != null) {
+                column_layout.remove_cells(y, count)
             } else {
                 continue
             }
-            //if (cell_recycler != null) {
-            //    cell_recycler.adapter!!.notifyItemRangeChanged(
-            //        y,
-            //        cell_recycler.adapter!!.itemCount
-            //    )
-            //}
         }
-        for (j in 0 until count) {
-            this.line_label_layout.remove_label(y)
-        }
+
+        this.main_recycler.adapter?.notifyDataSetChanged()
+        this.line_label_layout.remove_labels(y, count)
     }
 
 
@@ -278,11 +267,11 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                     return
                 }
 
-                line_label_adapter.notifyItemChanged(y)
+                this.line_label_layout.notify_item_changed(y)
                 column_label_adapter.notifyItemChanged(beat_key.beat)
 
                 val cell_recycler = main_recycler_adapter.get_column_layout(beat_key.beat) ?: return
-                cell_recycler.notify_state_change(y)
+                cell_recycler.notifyItemRangeChanged(y, 1)
             }
             OpusManagerCursor.CursorMode.Range -> {
                 val (top_left, bottom_right) = opusManagerCursor.range!!
@@ -295,12 +284,12 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                     }
 
 
-                    line_label_adapter.notifyItemChanged(y)
+                    this.line_label_layout.notify_item_changed(y)
                     column_label_adapter.notifyItemChanged(beat_key.beat)
 
                     // Can ignore if the cell_recycler isn't visible
                     val cell_recycler = main_recycler_adapter.get_column_layout(beat_key.beat) ?: continue
-                    cell_recycler.notify_state_change(y)
+                    cell_recycler.notifyItemRangeChanged(y, 1)
                 }
             }
             OpusManagerCursor.CursorMode.Row -> {
@@ -311,20 +300,18 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                 }
 
                 for (beat in 0 until main_recycler_adapter.itemCount) {
-                    line_label_adapter.notifyItemChanged(y)
                     column_label_adapter.notifyItemChanged(beat)
                     val cell_recycler = main_recycler_adapter.get_column_layout(beat) ?: continue
-                    cell_recycler.notify_state_change(y)
+                    cell_recycler.notifyItemRangeChanged(y, 1)
                 }
+                this.line_label_layout.notify_item_changed(y)
             }
             OpusManagerCursor.CursorMode.Column -> {
                 var y = 0
                 opus_manager.get_visible_channels().forEachIndexed { i: Int, channel: OpusChannel ->
                     channel.lines.forEachIndexed { j: Int, line: OpusChannel.OpusLine ->
-                        val cell_recycler = main_recycler_adapter.get_column_layout(opusManagerCursor.beat)
-                        if (cell_recycler != null) {
-                            cell_recycler.notify_state_change(y)
-                        }
+                        main_recycler_adapter.get_column_layout(opusManagerCursor.beat)
+                            ?.notifyItemRangeChanged(y, 1)
                         y += 1
                     }
                 }
@@ -362,8 +349,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             } else {
                 // Can ignore if the cell_recycler isn't visble
                 val cell_recycler = main_recycler_adapter.get_column_layout(linked_beat_key.beat) ?: continue
-                //cell_recycler.adapter?.notifyItemChanged(y)
-                cell_recycler.notify_state_change(y)
+                cell_recycler.notifyItemRangeChanged(y, 1)
             }
         }
     }
@@ -386,7 +372,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
     fun update_line_label(channel: Int, line_offset: Int) {
         val y = this.get_opus_manager().get_abs_offset(channel, line_offset)
-        this.line_label_recycler.adapter!!.notifyItemChanged(y)
+        this.line_label_layout.notify_item_changed(y)
     }
 
     fun scroll_to_position(x: Int? = null, y: Int? = null, position: List<Int>? = null, force: Boolean = false) {
@@ -444,11 +430,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         //return x in first..last
     }
     fun is_y_visible(y: Int): Boolean {
-        return this.line_label_recycler.findViewHolderForAdapterPosition(y) != null
-        //val layout = this.line_label_recycler.layoutManager!! as LinearLayoutManager
-        //val first = layout.findFirstVisibleItemPosition()
-        //val last = layout.findLastVisibleItemPosition()
-        //return y in first..last
+        return true
     }
 
     fun scroll_to_x(x: Int) {
@@ -459,8 +441,11 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         this.column_label_recycler.scrollToPosition(x)
         this.column_label_recycler.unlock_scroll_propagation()
     }
+
     fun scroll_to_y(y: Int) {
-        this.line_label_recycler.scrollToPosition(y)
+        val line_height = (resources.getDimension(R.dimen.line_height) + resources.getDimension(R.dimen.line_padding)).toInt()
+        this.line_label_layout.scrollTo(0, y * line_height)
+        this.vertical_scroll_view.scrollTo(0, y * line_height)
     }
 
 
@@ -489,13 +474,13 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         val column = column_lm.findViewByPosition(coarse_x)
         val fine_x = column?.x ?: 0
 
-        val line_lm = this.line_label_recycler.layoutManager!! as LinearLayoutManager
-        val coarse_y = line_lm.findFirstVisibleItemPosition()
-        val line = line_lm.findViewByPosition(coarse_y)
-        val fine_y = line?.y ?: 0
+        val line_lm = this.line_label_layout
+        var line_height = (resources.getDimension(R.dimen.line_height) + resources.getDimension(R.dimen.line_padding)).toInt()
+        val coarse_y = line_lm.scrollY / line_height
+        val fine_y = line_lm.scrollY % line_height
         return Pair(
             Pair(coarse_x, fine_x.toInt()),
-            Pair(coarse_y, fine_y.toInt())
+            Pair(coarse_y, fine_y)
         )
     }
 
@@ -511,8 +496,12 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         this.main_recycler.unlock_scroll_propagation()
         this.column_label_recycler.unlock_scroll_propagation()
 
-        val line_label_lm = (this.line_label_recycler.layoutManager!! as LinearLayoutManager)
-        line_label_lm.scrollToPositionWithOffset(y_coarse, y_fine)
+        var line_height = (resources.getDimension(R.dimen.line_height) + resources.getDimension(R.dimen.line_padding)).toInt()
+        this.line_label_layout.scrollTo(
+            0,
+            (line_height * y_coarse) + y_fine
+        )
+
     }
 
     fun get_first_visible_column_index(): Int {
@@ -524,11 +513,11 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         val percussion_channel = this.get_opus_manager().channels.last()
         if (main.configuration.show_percussion) {
             for (i in 0 until percussion_channel.size) {
-                this.new_row(this.line_label_recycler.adapter!!.itemCount, percussion_channel.lines[i])
+                this.new_row(this.line_label_layout.get_count(), percussion_channel.lines[i])
             }
         } else {
             for (i in 0 until percussion_channel.size) {
-                this.remove_row(this.line_label_recycler.adapter!!.itemCount - 1)
+                this.remove_row(this.line_label_layout.get_count() - 1)
             }
         }
     }

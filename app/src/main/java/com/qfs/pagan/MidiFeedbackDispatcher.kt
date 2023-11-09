@@ -106,5 +106,4 @@ class MidiFeedbackDispatcher: VirtualMidiInputDevice() {
             }
         }
     }
-
 }

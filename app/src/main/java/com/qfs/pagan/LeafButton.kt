@@ -17,7 +17,6 @@ import com.qfs.pagan.InterfaceLayer as OpusManager
 
 class LeafButton(
     context: Context,
-    private var _activity: MainActivity,
     private var _event: OpusEvent?,
     var position: List<Int>,
     is_percussion: Boolean
@@ -30,7 +29,6 @@ class LeafButton(
         private val STATE_INVALID = intArrayOf(R.attr.state_invalid)
         private val STATE_CHANNEL_EVEN = intArrayOf(R.attr.state_channel_even)
     }
-
 
     init {
         this.isClickable = false
@@ -77,14 +75,14 @@ class LeafButton(
                     is LinksLayer.SelfLinkError -> { }
                     is LinksLayer.MixedLinkException -> {
                         editor_table.notify_cell_change(beat_key)
-                        this._activity.feedback_msg(context.getString(R.string.feedback_mixed_link))
+                        (this.context as MainActivity).feedback_msg(context.getString(R.string.feedback_mixed_link))
                     }
                     is LinksLayer.LinkRangeOverlap,
                     is LinksLayer.LinkRangeOverflow -> {
                         editor_table.notify_cell_change(beat_key)
                         opus_manager.cursor.is_linking = false
                         opus_manager.cursor_select(beat_key, this.position)
-                        this._activity.feedback_msg(context.getString(R.string.feedback_bad_range))
+                        (this.context as MainActivity).feedback_msg(context.getString(R.string.feedback_bad_range))
                     }
                     else -> {
                         throw e
@@ -209,7 +207,6 @@ class LeafButton(
             mergeDrawableStates(drawableState, LeafButton.STATE_CHANNEL_EVEN)
         }
 
-
         return drawableState
     }
 
@@ -217,14 +214,6 @@ class LeafButton(
         val drawableState = super.onCreateDrawableState(extraSpace + 5)
         return this.build_drawable_state(drawableState)
     }
-
-    //override fun refreshDrawableState() {
-    //    this.value_label_octave.refreshDrawableState()
-    //    this.value_label_offset.refreshDrawableState()
-    //    this.prefix_label.refreshDrawableState()
-    //    this.inner_wrapper.refreshDrawableState()
-    //    super.refreshDrawableState()
-    //}
 
     // ------------------------------------------------------//
     fun get_opus_manager(): OpusManager {

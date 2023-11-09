@@ -7,10 +7,8 @@ import com.qfs.pagan.InterfaceLayer as OpusManager
 
 class ColumnLabelAdapter(editor_table: EditorTable) : RecyclerView.Adapter<ColumnLabelViewHolder>() {
     var recycler: ColumnLabelRecycler
-    var column_recycler: ColumnRecycler
     var column_count = 0
     init {
-        this.column_recycler = editor_table.main_recycler
         this.recycler = editor_table.column_label_recycler
         this.recycler.adapter = this
 

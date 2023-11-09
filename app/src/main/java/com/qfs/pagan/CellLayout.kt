@@ -13,7 +13,7 @@ import com.qfs.pagan.structure.OpusTree
 import kotlin.math.roundToInt
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
-class CellLayout(context: Context, var channel: Int, var line_offset: Int): LinearLayout(context) {
+class CellLayout(context: Context, var beat_key: BeatKey): LinearLayout(context) {
     init {
         this.isClickable = false
     }
@@ -37,7 +37,7 @@ class CellLayout(context: Context, var channel: Int, var line_offset: Int): Line
         while (view_stack.isNotEmpty()) {
             var current_view = view_stack.removeAt(0)
             if (current_view is ViewGroup) {
-                for (child in (current_view as ViewGroup).children) {
+                for (child in current_view.children) {
                     view_stack.add(child)
                 }
             }
@@ -55,9 +55,8 @@ class CellLayout(context: Context, var channel: Int, var line_offset: Int): Line
     }
 
     fun get_editor_table(): EditorTable {
-        return (this.parent as ColumnLayout).get_editor_table()
+        return this.get_activity().findViewById(R.id.etEditorTable)
     }
-
 
     fun build() {
         //val tree = this.get_beat_tree()
@@ -100,11 +99,11 @@ class CellLayout(context: Context, var channel: Int, var line_offset: Int): Line
    }
 
     fun get_beat(): Int {
-        return (this.parent as ColumnLayout).get_beat()
+        return this.beat_key.beat
     }
 
     fun get_beat_key(): BeatKey {
-        return BeatKey(this.channel, this.line_offset, this.get_beat())
+        return this.beat_key
     }
 
     fun get_beat_tree(): OpusTree<OpusEvent> {
@@ -115,6 +114,6 @@ class CellLayout(context: Context, var channel: Int, var line_offset: Int): Line
 
     fun is_percussion(): Boolean {
         val opus_manager = this.get_opus_manager()
-        return opus_manager.is_percussion(this.channel)
+        return opus_manager.is_percussion(this.beat_key.channel)
     }
 }

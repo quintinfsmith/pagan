@@ -8,11 +8,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
-import androidx.recyclerview.widget.RecyclerView
 import com.qfs.pagan.opusmanager.LinksLayer
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
-class LineLabelView(var view_holder: RecyclerView.ViewHolder): LinearLayout(ContextThemeWrapper(view_holder.itemView.context, R.style.line_label_outer)),
+class LineLabelView(context: Context): LinearLayout(ContextThemeWrapper(context, R.style.line_label_outer)),
     View.OnTouchListener {
     class InnerView(context: Context): androidx.appcompat.widget.AppCompatTextView(ContextThemeWrapper(context, R.style.line_label_inner)) {
         override fun onCreateDrawableState(extraSpace: Int): IntArray? {
@@ -37,8 +36,6 @@ class LineLabelView(var view_holder: RecyclerView.ViewHolder): LinearLayout(Cont
     private var _update_queued = false
     init {
         this.addView(this._text_view)
-        (this.view_holder.itemView as ViewGroup).removeAllViews()
-        (this.view_holder.itemView as ViewGroup).addView(this)
         this.setOnClickListener {
             this.on_click()
         }
@@ -46,12 +43,12 @@ class LineLabelView(var view_holder: RecyclerView.ViewHolder): LinearLayout(Cont
         this.setOnTouchListener(this)
 
         this.setOnDragListener { view: View, dragEvent: DragEvent ->
-            val adapter = (view as LineLabelView).get_adapter()
+            val adapter = (view.parent.parent as LineLabelColumnLayout)
             when (dragEvent.action) {
                 DragEvent.ACTION_DROP -> {
                     if (adapter.is_dragging()) {
                         val (from_channel, from_line) = adapter.dragging_position!!
-                        val (to_channel, to_line) = view.get_std_position()
+                        val (to_channel, to_line) = (view as LineLabelView).get_std_position()
                         val opus_manager = this.get_opus_manager()
                         if (from_channel != to_channel || from_line != to_line) {
                             opus_manager.move_line(
@@ -128,11 +125,7 @@ class LineLabelView(var view_holder: RecyclerView.ViewHolder): LinearLayout(Cont
         this.contentDescription = text
     }
     fun get_opus_manager(): OpusManager {
-        return (this.view_holder.bindingAdapter as LineLabelRecyclerAdapter).get_opus_manager()
-    }
-
-    fun get_adapter(): LineLabelRecyclerAdapter {
-        return this.view_holder.bindingAdapter as LineLabelRecyclerAdapter
+        return (this.parent.parent as LineLabelColumnLayout).get_opus_manager()
     }
 
     fun get_row(): Pair<Int, Int> {
@@ -141,7 +134,8 @@ class LineLabelView(var view_holder: RecyclerView.ViewHolder): LinearLayout(Cont
     }
 
     fun get_position(): Int {
-        return this.view_holder.bindingAdapterPosition
+        var parent = this.parent as ViewGroup
+        return parent.indexOfChild(this)
     }
 
     fun get_std_position(): Pair<Int, Int> {
@@ -149,14 +143,14 @@ class LineLabelView(var view_holder: RecyclerView.ViewHolder): LinearLayout(Cont
     }
 
     override fun onTouch(view: View?, touchEvent: MotionEvent?): Boolean {
-        val adapter = (view as LineLabelView).get_adapter()
+        val column_layout = this.parent.parent as LineLabelColumnLayout
 
         return if (touchEvent == null) {
             true
         } else if (touchEvent.action == MotionEvent.ACTION_MOVE) {
-            val (channel, line_offset) = view.get_std_position()
-            if (!adapter.is_dragging()) {
-                adapter.set_dragging_line(channel, line_offset)
+            val (channel, line_offset) = (view as LineLabelView).get_std_position()
+            if (!column_layout.is_dragging()) {
+                column_layout.set_dragging_line(channel, line_offset)
                 view.startDragAndDrop(
                     null,
                     DragShadowBuilder(view),
@@ -166,7 +160,7 @@ class LineLabelView(var view_holder: RecyclerView.ViewHolder): LinearLayout(Cont
             }
             true
         } else if (touchEvent.action == MotionEvent.ACTION_DOWN) {
-            adapter.stop_dragging()
+            column_layout.stop_dragging()
             true
         } else {
             performClick()

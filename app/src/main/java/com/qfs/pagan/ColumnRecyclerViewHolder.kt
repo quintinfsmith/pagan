@@ -14,10 +14,10 @@ class ColumnRecyclerViewHolder(context: Context): RecyclerView.ViewHolder(Linear
         //this.itemView.layoutParams.width = MATCH_PARENT
         //this.itemView.layoutParams.height = WRAP_CONTENT
     }
-    fun get_cell_recycler(): CellRecycler? {
+    fun get_column_layout(): ColumnLayout? {
         return if ((this.itemView as ViewGroup).childCount > 0) {
             val item = (this.itemView as ViewGroup).getChildAt(0)
-            if (item is CellRecycler) {
+            if (item is ColumnLayout) {
                 item
             } else {
                 null

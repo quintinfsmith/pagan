@@ -1,5 +1,6 @@
 package com.qfs.pagan
 
+import android.content.Context
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -12,14 +13,16 @@ import com.qfs.pagan.structure.OpusTree
 import kotlin.math.roundToInt
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
-class CellLayout(var view_holder: CellRecyclerViewHolder): LinearLayout(view_holder.itemView.context) {
+class CellLayout(context: Context): LinearLayout(context) {
     init {
         this.isClickable = false
-        val item_view = this.view_holder.itemView as ViewGroup
-        item_view.removeAllViews()
-        item_view.addView(this)
+    }
 
-        this.layoutParams.width = (this.get_editor_table().get_column_width(this.get_beat()) * resources.getDimension(R.dimen.base_leaf_width).roundToInt())
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        this.layoutParams.width = (this.get_editor_table()
+            .get_column_width(this.get_beat()) * resources.getDimension(R.dimen.base_leaf_width)
+            .roundToInt())
         this.layoutParams.height = resources.getDimension(R.dimen.line_height).toInt()
         this.build()
     }
@@ -39,27 +42,17 @@ class CellLayout(var view_holder: CellRecyclerViewHolder): LinearLayout(view_hol
     }
 
     fun get_activity(): MainActivity {
-        return this.view_holder.get_activity()
-    }
-
-    fun get_beat_tree(): OpusTree<OpusEvent> {
-        return this.view_holder.get_beat_tree()
-    }
-
-    fun get_beat_key(): BeatKey {
-        return this.view_holder.get_beat_key()
-    }
-    fun get_beat(): Int {
-        return this.view_holder.get_beat()
-    }
-
-    fun is_percussion(): Boolean {
-        return this.view_holder.is_percussion()
+        return this.context as MainActivity
     }
 
     fun get_opus_manager(): OpusManager {
-        return this.view_holder.get_opus_manager()
+        return this.get_activity().get_opus_manager()
     }
+
+    fun get_editor_table(): EditorTable {
+        return (this.parent as ColumnLayout).get_editor_table()
+    }
+
 
     fun build() {
         //if (!(this.viewHolder.bindingAdapter as CellRecyclerAdapter).recycler.cells_visible) {
@@ -76,10 +69,6 @@ class CellLayout(var view_holder: CellRecyclerViewHolder): LinearLayout(view_hol
             this.buildTreeView(tree, listOf(), max_width)
         }
    }
-
-    fun get_editor_table(): EditorTable {
-        return this.view_holder.get_adapter().get_column_adapter().get_editor_table()!!
-    }
 
    private fun buildTreeView(tree: OpusTree<OpusEvent>, position: List<Int>, new_width: Int) {
        if (tree.is_leaf()) {
@@ -107,4 +96,39 @@ class CellLayout(var view_holder: CellRecyclerViewHolder): LinearLayout(view_hol
            }
        }
    }
+
+    fun get_beat(): Int {
+        return (this.parent as ColumnLayout).get_beat()
+    }
+
+    fun get_y(): Int {
+        val output = (this.parent as ViewGroup).indexOfChild(this)
+        if (output == -1) {
+            throw ColumnLayout.ColumnDetachedException()
+        }
+        return output
+    }
+
+    fun get_std_offset(): Pair<Int, Int> {
+        val opus_manager = this.get_opus_manager()
+        val y = this.get_y()
+        return opus_manager.get_std_offset(y)
+    }
+
+    fun get_beat_key(): BeatKey {
+        val (channel, line_offset) = this.get_std_offset()
+        return BeatKey(channel, line_offset, this.get_beat())
+    }
+
+    fun get_beat_tree(): OpusTree<OpusEvent> {
+        val opus_manager = this.get_opus_manager()
+        val beat_key = this.get_beat_key()
+        return opus_manager.get_beat_tree(beat_key)
+    }
+
+    fun is_percussion(): Boolean {
+        val opus_manager = this.get_opus_manager()
+        val (channel, _) = this.get_std_offset()
+        return opus_manager.is_percussion(channel)
+    }
 }

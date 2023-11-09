@@ -33,7 +33,7 @@ class ColumnRecyclerAdapter(val recycler: ColumnRecycler, editor_table: EditorTa
     }
 
     override fun onBindViewHolder(holder: ColumnRecyclerViewHolder, position: Int) {
-        CellRecycler(holder)
+        ColumnLayout(holder)
     }
     override fun onViewAttachedToWindow(holder: ColumnRecyclerViewHolder) {
         holder.itemView.layoutParams.height = MATCH_PARENT
@@ -41,7 +41,7 @@ class ColumnRecyclerAdapter(val recycler: ColumnRecycler, editor_table: EditorTa
 
 
     //-------------------------------------------------------//
-    fun apply_to_visible_columns(callback: (CellRecyclerAdapter) -> Unit) {
+    fun apply_to_visible_columns(callback: (ColumnLayout) -> Unit) {
         for (i in 0 until this.itemCount) {
             val viewHolder = this.recycler.findViewHolderForAdapterPosition(i) ?: continue
             if ((viewHolder.itemView as ViewGroup).childCount == 0) {
@@ -49,9 +49,8 @@ class ColumnRecyclerAdapter(val recycler: ColumnRecycler, editor_table: EditorTa
             }
 
             val item = (viewHolder.itemView as ViewGroup).getChildAt(0)
-            if (item is CellRecycler) {
-                val adapter = item.adapter!! as CellRecyclerAdapter
-                callback(adapter)
+            if (item is ColumnLayout) {
+                callback(item)
             }
         }
     }
@@ -92,20 +91,18 @@ class ColumnRecyclerAdapter(val recycler: ColumnRecycler, editor_table: EditorTa
         }
     }
 
-    fun get_cell_recycler(beat: Int): CellRecycler? {
+    fun get_column_layout(beat: Int): ColumnLayout? {
         val view_holder = this.recycler.findViewHolderForAdapterPosition(beat) ?: return null
-        return (view_holder as ColumnRecyclerViewHolder).get_cell_recycler()
+        return (view_holder as ColumnRecyclerViewHolder).get_column_layout()
     }
 
     fun clear() {
         val count = this.column_count
         for (x in 0 until count) {
-            val cell_recycler = this.get_cell_recycler(x) ?: continue
-            (cell_recycler.adapter!! as CellRecyclerAdapter).clear()
+            val column_layout = this.get_column_layout(x) ?: continue
+            column_layout.clear()
         }
         this.column_count = 0
         this.notifyItemRangeRemoved(0, count)
     }
-
-    //-------------------------------------------------------//
 }

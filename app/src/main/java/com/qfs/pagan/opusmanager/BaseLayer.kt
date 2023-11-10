@@ -53,6 +53,9 @@ open class BaseLayer {
     var tempo: Float = 120F
     var transpose: Int = 0
 
+    private var _cached_abs_line_map = mutableListOf<Pair<Int, Int>>()
+    private var _cached_std_line_map = HashMap<Pair<Int, Int>, Int>()
+
     //// RO Functions ////
     /**
      * Calculates the number of channels in use.
@@ -78,28 +81,14 @@ open class BaseLayer {
      * Calculates how many lines are in use.
      */
     fun get_total_line_count(): Int {
-        var output = 0
-        this.channels.forEach { channel: OpusChannel ->
-            output += channel.size
-        }
-        return output
+        return this._cached_abs_line_map.size
     }
 
     /**
      * Calculates how many lines down a given row is.
      */
     fun get_abs_offset(channel_index: Int, line_offset: Int): Int {
-        // Allows for line_offsets longer than line counts. ie channel=1, line_offset=2 could technically be channel=2
-        var count = 0
-        this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
-            for (j in 0 until channel.size) {
-                if (i > channel_index || (i == channel_index && j == line_offset)) {
-                    return count
-                }
-                count += 1
-            }
-        }
-        throw IndexOutOfBoundsException()
+        return this._cached_std_line_map[Pair(channel_index, line_offset)] ?: throw IndexOutOfBoundsException()
     }
 
     /**
@@ -150,16 +139,11 @@ open class BaseLayer {
      * Calculate which channel and line offset is denoted by the [absolute]th line
      */
     fun get_std_offset(absolute: Int): Pair<Int, Int> {
-        var count = 0
-        this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
-            for (j in 0 until channel.size) {
-                if (count == absolute) {
-                    return Pair(i, j)
-                }
-                count += 1
-            }
+        if (absolute >= this._cached_abs_line_map.size) {
+            throw IndexOutOfBoundsException()
         }
-        throw IndexOutOfBoundsException()
+
+        return this._cached_abs_line_map[absolute]
     }
 
     /**
@@ -706,7 +690,9 @@ open class BaseLayer {
         if (this.channels.isNotEmpty()) {
             // Always insert new channels BEFORE the percussion channel
             if (channel != null) {
-                this.channels.add(min(channel, this.channels.size - 1), new_channel)
+                var new_channel_index = min(channel, this.channels.size - 1)
+                this.channels.add(new_channel_index, new_channel)
+
             } else {
                 this.channels.add(this.channels.size - 1, new_channel)
             }
@@ -715,6 +701,9 @@ open class BaseLayer {
             new_channel.midi_program = 0
             this.channels.add(new_channel) // Will be the percussion channel
         }
+
+
+        this.recache_line_maps()
     }
 
     open fun move_line(channel_old: Int, line_old: Int, channel_new: Int, line_new: Int) {
@@ -738,6 +727,7 @@ open class BaseLayer {
         } else {
             this.insert_line(channel_new, line_new, line)
         }
+        this.recache_line_maps()
     }
 
     open fun insert_beat(beat_index: Int, count: Int) {
@@ -766,10 +756,13 @@ open class BaseLayer {
 
     open fun insert_line(channel: Int, line_offset: Int, line: OpusChannel.OpusLine) {
         this.channels[channel].insert_line(line_offset, line)
+        this.recache_line_maps()
     }
 
     open fun new_line(channel: Int, line_offset: Int? = null): OpusChannel.OpusLine {
-        return this.channels[channel].new_line(line_offset ?: this.channels[channel].lines.size)
+        val output = this.channels[channel].new_line(line_offset ?: this.channels[channel].lines.size)
+        this.recache_line_maps()
+        return output
     }
 
     open fun overwrite_beat(old_beat: BeatKey, new_beat: BeatKey) {
@@ -805,6 +798,7 @@ open class BaseLayer {
     open fun remove_channel(channel: Int) {
         val opus_channel = this.channels.removeAt(channel)
         this._channel_uuid_map.remove(opus_channel.uuid)
+        this.recache_line_maps()
     }
 
     open fun move_leaf(beatkey_from: BeatKey, position_from: List<Int>, beatkey_to: BeatKey, position_to: List<Int>) {
@@ -814,8 +808,9 @@ open class BaseLayer {
     }
 
     open fun remove_line(channel: Int, line_offset: Int): OpusChannel.OpusLine {
-        return this.channels[channel].remove_line(line_offset)
-
+        val output = this.channels[channel].remove_line(line_offset)
+        this.recache_line_maps()
+        return output
     }
 
     private fun copy_func(tree: OpusTree<OpusEvent>): OpusEvent? {
@@ -1883,5 +1878,20 @@ open class BaseLayer {
     fun has_percussion(): Boolean {
         val channel = this.channels[this.channels.size - 1]
         return !channel.is_empty()
+    }
+
+    // Calling this function every time a channel/line is modified should still be more efficient
+    // than calculating offsets as needed
+    private fun recache_line_maps() {
+        this._cached_abs_line_map.clear()
+        this._cached_std_line_map.clear()
+        var y = 0
+        this.channels.forEachIndexed { channel_index: Int, channel: OpusChannel ->
+            channel.lines.forEachIndexed { line_offset: Int, line: OpusChannel.OpusLine ->
+                var keypair = Pair(channel_index, line_offset)
+                this._cached_abs_line_map.add(keypair)
+                this._cached_std_line_map[keypair] = y++
+            }
+        }
     }
 }

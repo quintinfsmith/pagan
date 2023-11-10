@@ -16,12 +16,6 @@ import com.qfs.pagan.InterfaceLayer as OpusManager
 class CellLayout(context: Context, var beat_key: BeatKey): LinearLayout(context) {
     init {
         this.isClickable = false
-        var placeholder = LinearLayout(context)
-        this.addView(placeholder)
-        (placeholder.layoutParams as MarginLayoutParams).setMargins(1,1,1,1)
-        placeholder.layoutParams.width = MATCH_PARENT
-        placeholder.layoutParams.height = MATCH_PARENT
-        placeholder.background = resources.getDrawable(R.color.blue_dark)
     }
 
     override fun onAttachedToWindow() {

@@ -89,34 +89,44 @@ class CellAdapter(var recycler: RecyclerView): RecyclerView.Adapter<CellViewHold
         this.notifyItemRangeRemoved(0, item_count)
     }
 
-    fun notifyBeatChanged(beat_key: BeatKey) {
+    fun notifyBeatChanged(beat_key: BeatKey, state_only: Boolean = false) {
         val abs_line = this.get_opus_manager().get_abs_offset(beat_key.channel, beat_key.line_offset)
         var span_count = (this.recycler.layoutManager as GridLayoutManager).spanCount
 
         val offset = (beat_key.beat * span_count) + abs_line
-        this.notifyItemChanged(offset)
+        if (state_only) {
+            this.invalidate_items(offset, 1)
+        } else {
+            this.notifyItemChanged(offset)
+        }
     }
 
-    // Notify that the beat state changed but doesn't need to be rebuilt
-    fun notify_state_changed(beat_key: BeatKey) {
-        val abs_line = this.get_opus_manager().get_abs_offset(beat_key.channel, beat_key.line_offset)
-        var span_count = (this.recycler.layoutManager as GridLayoutManager).spanCount
-
-        val offset = (beat_key.beat * span_count) + abs_line
-        var item_view = this.recycler.findViewHolderForAdapterPosition(offset)?.itemView ?: return
-        ((item_view as ViewGroup).getChildAt(0) as CellLayout).invalidate_all()
+    private fun invalidate_items(offset: Int, count: Int) {
+        for (i in offset until offset + count) {
+            var item_view =
+                this.recycler.findViewHolderForAdapterPosition(i)?.itemView ?: return
+            ((item_view as ViewGroup).getChildAt(0) as CellLayout).invalidate_all()
+        }
     }
 
-    fun notifyColumnChanged(index: Int) {
+    fun notifyColumnChanged(index: Int, state_only: Boolean = false) {
         val span_count = (this.recycler.layoutManager as GridLayoutManager).spanCount
-        this.notifyItemRangeChanged(index * span_count, span_count)
+        if (state_only) {
+            this.invalidate_items(index * span_count, span_count)
+        } else {
+            this.notifyItemRangeChanged(index * span_count, span_count)
+        }
     }
 
-    fun notifyRowChanged(index: Int) {
+    fun notifyRowChanged(index: Int, state_only: Boolean = false) {
         val span_count = (this.recycler.layoutManager as GridLayoutManager).spanCount
         val beat_count = this.get_opus_manager().beat_count
         for (i in 0 until beat_count) {
-            this.notifyItemChanged(index + (i * span_count))
+            if (state_only) {
+                this.invalidate_items(index + (i * span_count), 1)
+            } else {
+                this.notifyItemChanged(index + (i * span_count))
+            }
         }
     }
 }

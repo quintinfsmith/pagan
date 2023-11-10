@@ -265,8 +265,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
                 this.line_label_layout.notify_item_changed(y)
                 column_label_adapter.notifyItemChanged(beat_key.beat)
-                (this.main_recycler.adapter as CellAdapter).notify_state_changed(beat_key)
-                //(this.main_recycler.adapter as CellAdapter).notifyBeatChanged(beat_key)
+                (this.main_recycler.adapter as CellAdapter).notifyBeatChanged(beat_key, true)
             }
             OpusManagerCursor.CursorMode.Range -> {
                 val (top_left, bottom_right) = opusManagerCursor.range!!
@@ -282,7 +281,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                     this.line_label_layout.notify_item_changed(y)
                     column_label_adapter.notifyItemChanged(beat_key.beat)
 
-                    (this.main_recycler.adapter as CellAdapter).notifyBeatChanged(beat_key)
+                    (this.main_recycler.adapter as CellAdapter).notifyBeatChanged(beat_key, true)
                 }
             }
             OpusManagerCursor.CursorMode.Row -> {
@@ -292,11 +291,11 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                     return
                 }
 
-                (this.main_recycler.adapter as CellAdapter).notifyRowChanged(y)
+                (this.main_recycler.adapter as CellAdapter).notifyRowChanged(y, true)
                 this.line_label_layout.notify_item_changed(y)
             }
             OpusManagerCursor.CursorMode.Column -> {
-                (this.main_recycler.adapter as CellAdapter).notifyColumnChanged(opusManagerCursor.beat)
+                (this.main_recycler.adapter as CellAdapter).notifyColumnChanged(opusManagerCursor.beat, true)
                 column_label_adapter.notifyItemChanged(opusManagerCursor.beat)
             }
             OpusManagerCursor.CursorMode.Unset -> { }

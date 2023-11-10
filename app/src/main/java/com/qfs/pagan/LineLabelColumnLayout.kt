@@ -99,6 +99,11 @@ class LineLabelColumnLayout(editor_table: EditorTable): ScrollView(editor_table.
 
     // TODO: THis feels like it could be much tighter
     fun notify_item_range_changed(y: Int, count: Int) {
+        if (y > this.inner_wrapper.childCount) {
+            // Nothing to change
+            return
+        }
+
         var view_stack = mutableListOf<View>()
         var opus_manager = this.get_opus_manager()
 

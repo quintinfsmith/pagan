@@ -17,11 +17,11 @@ class CellAdapter(var recycler: RecyclerView): RecyclerView.Adapter<CellViewHold
     }
 
     override fun onBindViewHolder(holder: CellViewHolder, position: Int) {
-        var item_view = (holder.itemView as ViewGroup)
-        var opus_manager = this.get_opus_manager()
-
-        var (channel, line_offset) = opus_manager.get_std_offset(position / opus_manager.beat_count)
-        var beat = position % opus_manager.beat_count
+        val item_view = (holder.itemView as ViewGroup)
+        val opus_manager = this.get_opus_manager()
+        var line_count = opus_manager.get_visible_line_count()
+        val (channel, line_offset) = opus_manager.get_std_offset(position % line_count)
+        val beat = position / line_count
 
         item_view.removeAllViews()
         item_view.addView( CellLayout(item_view.context, BeatKey(channel, line_offset, beat)) )
@@ -48,7 +48,10 @@ class CellAdapter(var recycler: RecyclerView): RecyclerView.Adapter<CellViewHold
     fun remove_columns(index: Int, count: Int) {
         var line_count = this.get_opus_manager().get_visible_line_count()
         this.item_count -= line_count * count
-        this.notifyItemRangeRemoved(index * line_count, line_count * count)
+        this.notifyItemRangeRemoved(
+            index * line_count,
+            line_count * count
+        )
     }
 
     fun insert_row(index: Int) {
@@ -87,13 +90,23 @@ class CellAdapter(var recycler: RecyclerView): RecyclerView.Adapter<CellViewHold
     }
 
     fun notifyBeatChanged(beat_key: BeatKey) {
-        var abs_line = this.get_opus_manager().get_abs_offset(beat_key.channel, beat_key.line_offset)
-        var offset = (abs_line * this.get_opus_manager().beat_count) + beat_key.beat
+        val abs_line = this.get_opus_manager().get_abs_offset(beat_key.channel, beat_key.line_offset)
+        var span_count = (this.recycler.layoutManager as GridLayoutManager).spanCount
+
+        val offset = (beat_key.beat * span_count) + abs_line
         this.notifyItemChanged(offset)
     }
 
     fun notifyColumnChanged(index: Int) {
-        var beat_count = this.get_opus_manager().beat_count
-        this.notifyItemRangeChanged(index * beat_count, beat_count)
+        val span_count = (this.recycler.layoutManager as GridLayoutManager).spanCount
+        this.notifyItemRangeChanged(index * span_count, span_count)
+    }
+
+    fun notifyRowChanged(index: Int) {
+        val span_count = (this.recycler.layoutManager as GridLayoutManager).spanCount
+        val beat_count = this.get_opus_manager().beat_count
+        for (i in 0 until beat_count) {
+            this.notifyItemChanged(index + (i * span_count))
+        }
     }
 }

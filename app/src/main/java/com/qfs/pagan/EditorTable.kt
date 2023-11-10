@@ -2,15 +2,19 @@ package com.qfs.pagan
 
 import android.content.Context
 import android.util.AttributeSet
+import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.TableLayout
 import android.widget.TableRow
 import androidx.appcompat.view.ContextThemeWrapper
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.RecyclerView.OnScrollListener
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.OpusChannel
 import com.qfs.pagan.structure.OpusTree
@@ -18,8 +22,8 @@ import kotlin.math.max
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
 class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, attrs) {
-    //val main_recycler = ColumnRecycler(this)
     val main_recycler = CellRecycler(context)
+    var scroll_view = ScrollView(context)
     val line_label_layout = LineLabelColumnLayout(this)
     val column_label_recycler = ColumnLabelRecycler(context)
     val top_row = TableRow(context)
@@ -30,6 +34,10 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     val column_width_map = mutableListOf<MutableList<Int>>()
 
     var active_cursor: OpusManagerCursor = OpusManagerCursor(OpusManagerCursor.CursorMode.Unset)
+
+    // Scroll Locks
+    private var _label_scroll_locked = false
+    private var _main_scroll_locked = false
 
     init {
         this.top_row.addView(this.spacer)
@@ -48,8 +56,8 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         (this.bottom_row.getChildAt(0) as ViewGroup).layoutParams.height = WRAP_CONTENT
         (this.bottom_row.getChildAt(0) as ViewGroup).addView(this.line_label_layout)
 
-
-        this.bottom_row.addView(this.main_recycler)
+        this.scroll_view.addView(this.main_recycler)
+        this.bottom_row.addView(this.scroll_view)
 
         this.addView(this.top_row)
         this.addView(this.bottom_row)
@@ -66,6 +74,11 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         this.line_label_layout.layoutParams.width = WRAP_CONTENT
         this.line_label_layout.layoutParams.height = MATCH_PARENT
 
+        this.scroll_view.overScrollMode = OVER_SCROLL_NEVER
+        (this.scroll_view.layoutParams as LinearLayout.LayoutParams).weight = 1F
+        this.scroll_view.layoutParams.width = 0
+        this.scroll_view.layoutParams.height = MATCH_PARENT
+
         this.main_recycler.layoutParams.width = WRAP_CONTENT
         this.main_recycler.layoutParams.height = WRAP_CONTENT
 
@@ -73,10 +86,29 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         this.column_label_recycler.layoutParams.width = 0
 
         ColumnLabelAdapter(this)
-        //this.main_recycler.addOnScrollListener(HorizontalScrollListener(this.column_label_recycler))
-        //this.vertical_scroll_view.setOnScrollChangeListener { scroll_view: View, x: Int, y: Int, old_x: Int, old_y: Int ->
-        //    this.line_label_layout.scrollTo(x, y)
-        //}
+
+        this.main_recycler.addOnScrollListener(object : OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, x: Int, y: Int) {
+                if (! this@EditorTable._main_scroll_locked) {
+                    this@EditorTable._label_scroll_locked = true
+                    this@EditorTable.column_label_recycler.scrollBy(x, 0)
+                    this@EditorTable._label_scroll_locked = false
+                }
+            }
+        })
+        this.column_label_recycler.addOnScrollListener(object : OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, x: Int, y: Int) {
+                if (! this@EditorTable._label_scroll_locked) {
+                    this@EditorTable._main_scroll_locked = true
+                    this@EditorTable.main_recycler.scrollBy(x, 0)
+                    this@EditorTable._main_scroll_locked = false
+                }
+            }
+        })
+
+        this.scroll_view.setOnScrollChangeListener { scroll_view: View, x: Int, y: Int, old_x: Int, old_y: Int ->
+            this.line_label_layout.scrollTo(x, y)
+        }
     }
 
     fun clear() {
@@ -91,7 +123,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         val opus_manager = this.get_opus_manager()
         val main_adapter = (this.main_recycler.adapter as CellAdapter)
         val column_label_adapter = (this.column_label_recycler.adapter as ColumnLabelAdapter)
-        (this.main_recycler.layoutManager as GridLayoutManager).spanCount = opus_manager.get_visible_line_count()
+        (this.main_recycler.layoutManager as GridLayoutManager).spanCount = max(1, opus_manager.get_visible_line_count())
 
         for (beat in 0 until opus_manager.beat_count) {
             column_label_adapter.add_column(beat)
@@ -260,11 +292,10 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                     return
                 }
 
-                (this.main_recycler.adapter as CellAdapter).notifyItemRangeChanged(y, opus_manager.beat_count)
+                (this.main_recycler.adapter as CellAdapter).notifyRowChanged(y)
                 this.line_label_layout.notify_item_changed(y)
             }
             OpusManagerCursor.CursorMode.Column -> {
-                var y = 0
                 (this.main_recycler.adapter as CellAdapter).notifyColumnChanged(opusManagerCursor.beat)
                 column_label_adapter.notifyItemChanged(opusManagerCursor.beat)
             }
@@ -297,8 +328,10 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
             if (original_width != new_width) {
                 this.column_label_recycler.adapter!!.notifyItemChanged(linked_beat_key.beat)
+                main_recycler_adapter.notifyColumnChanged(linked_beat_key.beat)
+            } else {
+                main_recycler_adapter.notifyBeatChanged(linked_beat_key)
             }
-            main_recycler_adapter.notifyBeatChanged(linked_beat_key)
         }
     }
 
@@ -361,39 +394,42 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         if (! this.is_x_visible(beat_key.beat)) {
             this.scroll_to_x(beat_key.beat)
         }
+
         val y = opus_manager.get_abs_offset(beat_key.channel, beat_key.line_offset )
         if (! this.is_y_visible(y)) {
             this.scroll_to_y(y)
         }
+
         // TODO: implement this, but only when *actually* necessary
         // val leaf = this.get_leaf(adj_beat_key, new_position) ?: return
         // this.main_recycler.scrollBy(leaf.x.toInt(), 0)
     }
 
     fun is_x_visible(x: Int): Boolean {
-        return this.column_label_recycler.findViewHolderForAdapterPosition(x) != null
-        //val layout = this.column_label_recycler.layoutManager!! as LinearLayoutManager
-        //val first = layout.findFirstVisibleItemPosition()
-        //val last = layout.findLastVisibleItemPosition()
-        //return x in first..last
+        var first_visible = (this.column_label_recycler.layoutManager as LinearLayoutManager).findFirstCompletelyVisibleItemPosition()
+        var last_visible = (this.column_label_recycler.layoutManager as LinearLayoutManager).findLastCompletelyVisibleItemPosition()
+        return x in (first_visible .. last_visible)
     }
     fun is_y_visible(y: Int): Boolean {
-        return true
+        val line_height = (resources.getDimension(R.dimen.line_height)).toInt()
+        var scroll_offset = this.line_label_layout.scrollY / line_height
+        var height = this.scroll_view.measuredHeight / line_height
+        return y >= scroll_offset && y <= (scroll_offset + height)
     }
 
     fun scroll_to_x(x: Int) {
-        //this.main_recycler.lock_scroll_propagation()
-        this.main_recycler.scrollToPosition(x)
-        //this.main_recycler.unlock_scroll_propagation()
-        this.column_label_recycler.lock_scroll_propagation()
+        this._main_scroll_locked = true
+        this.main_recycler.scrollToPosition(x * (this.main_recycler.layoutManager as GridLayoutManager).spanCount)
+        this._main_scroll_locked = false
+        this._label_scroll_locked = true
         this.column_label_recycler.scrollToPosition(x)
-        this.column_label_recycler.unlock_scroll_propagation()
+        this._label_scroll_locked = false
     }
 
     fun scroll_to_y(y: Int) {
-        val line_height = (resources.getDimension(R.dimen.line_height) + resources.getDimension(R.dimen.line_padding)).toInt()
+        val line_height = (resources.getDimension(R.dimen.line_height)).toInt()
         this.line_label_layout.scrollTo(0, y * line_height)
-        //this.vertical_scroll_view.scrollTo(0, y * line_height)
+        this.scroll_view.scrollTo(0, y * line_height)
     }
 
 
@@ -423,7 +459,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         val fine_x = column?.x ?: 0
 
         val line_lm = this.line_label_layout
-        var line_height = (resources.getDimension(R.dimen.line_height) + resources.getDimension(R.dimen.line_padding)).toInt()
+        val line_height = (resources.getDimension(R.dimen.line_height)).toInt()
         val coarse_y = line_lm.scrollY / line_height
         val fine_y = line_lm.scrollY % line_height
         return Pair(
@@ -433,23 +469,14 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     }
 
     fun precise_scroll(x_coarse: Int = 0, x_fine: Int = 0, y_coarse: Int = 0, y_fine: Int = 0) {
-        //this.main_recycler.lock_scroll_propagation()
         val main_lm = (this.main_recycler.layoutManager!! as LinearLayoutManager)
         main_lm.scrollToPositionWithOffset(x_coarse, x_fine)
 
-        this.column_label_recycler.lock_scroll_propagation()
         val column_label_lm = (this.column_label_recycler.layoutManager!! as LinearLayoutManager)
         column_label_lm.scrollToPositionWithOffset(x_coarse, x_fine)
 
-        //this.main_recycler.unlock_scroll_propagation()
-        this.column_label_recycler.unlock_scroll_propagation()
-
-        var line_height = (resources.getDimension(R.dimen.line_height) + resources.getDimension(R.dimen.line_padding)).toInt()
-        this.line_label_layout.scrollTo(
-            0,
-            (line_height * y_coarse) + y_fine
-        )
-
+        val line_height = (resources.getDimension(R.dimen.line_height)).toInt()
+        this.scroll_view.scrollTo(0, (line_height * y_coarse) + y_fine)
     }
 
     fun get_first_visible_column_index(): Int {

@@ -59,8 +59,7 @@ class CellLayout(context: Context, var beat_key: BeatKey): LinearLayout(context)
     }
 
     fun build() {
-        //val tree = this.get_beat_tree()
-        val tree = OpusTree<OpusEvent>()
+        val tree = this.get_beat_tree()
         val max_width = (this.get_editor_table().get_column_width(this.get_beat()) * resources.getDimension(R.dimen.base_leaf_width).roundToInt())
 
         if (!tree.is_leaf()) {

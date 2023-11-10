@@ -314,6 +314,8 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             new_tree.get_max_child_weight() * new_tree.size
         }
 
+        var changed_beats = mutableSetOf<Int>()
+        var changed_beat_keys = mutableSetOf<BeatKey>()
         for (linked_beat_key in opus_manager.get_all_linked(beat_key)) {
             val y = try {
                 opus_manager.get_abs_offset(linked_beat_key.channel, linked_beat_key.line_offset)
@@ -326,11 +328,23 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             val new_width = this.column_width_map[linked_beat_key.beat].max()
 
             if (original_width != new_width) {
-                this.column_label_recycler.adapter!!.notifyItemChanged(linked_beat_key.beat)
-                main_recycler_adapter.notifyColumnChanged(linked_beat_key.beat)
+                changed_beats.add(linked_beat_key.beat)
             } else {
-                main_recycler_adapter.notifyBeatChanged(linked_beat_key)
+                changed_beat_keys.add(linked_beat_key)
             }
+        }
+
+        // In set so as to not notify the same column multiple times
+        for (beat in changed_beats) {
+            this.column_label_recycler.adapter!!.notifyItemChanged(beat)
+            main_recycler_adapter.notifyColumnChanged(beat)
+        }
+        for (beat_key in changed_beat_keys) {
+            // Don't bother notifying beat changed, was handled in column notification
+            if (beat_key.beat in changed_beats) {
+                continue
+            }
+            main_recycler_adapter.notifyBeatChanged(beat_key)
         }
     }
 

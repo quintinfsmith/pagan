@@ -16,21 +16,23 @@ import com.qfs.pagan.InterfaceLayer as OpusManager
 class CellLayout(context: Context, var beat_key: BeatKey): LinearLayout(context) {
     init {
         this.isClickable = false
+        var placeholder = LinearLayout(context)
+        this.addView(placeholder)
+        (placeholder.layoutParams as MarginLayoutParams).setMargins(1,1,1,1)
+        placeholder.layoutParams.width = MATCH_PARENT
+        placeholder.layoutParams.height = MATCH_PARENT
+        placeholder.background = resources.getDrawable(R.color.blue_dark)
     }
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
+        this.layoutParams.height = resources.getDimension(R.dimen.line_height).toInt()
         this.layoutParams.width = (this.get_editor_table()
             .get_column_width(this.get_beat()) * resources.getDimension(R.dimen.base_leaf_width)
             .roundToInt())
-        this.layoutParams.height = resources.getDimension(R.dimen.line_height).toInt()
         this.build()
     }
 
-    override fun onDetachedFromWindow() {
-        super.onDetachedFromWindow()
-        this.removeAllViews()
-    }
 
     fun invalidate_all() {
         var view_stack = mutableListOf<View>(this)

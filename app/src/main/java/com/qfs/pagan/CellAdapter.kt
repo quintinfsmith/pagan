@@ -19,7 +19,7 @@ class CellAdapter(var recycler: RecyclerView): RecyclerView.Adapter<CellViewHold
     override fun onBindViewHolder(holder: CellViewHolder, position: Int) {
         val item_view = (holder.itemView as ViewGroup)
         val opus_manager = this.get_opus_manager()
-        var line_count = opus_manager.get_visible_line_count()
+        val line_count = opus_manager.get_visible_line_count()
         val (channel, line_offset) = opus_manager.get_std_offset(position % line_count)
         val beat = position / line_count
 
@@ -74,8 +74,8 @@ class CellAdapter(var recycler: RecyclerView): RecyclerView.Adapter<CellViewHold
     }
 
     fun remove_rows(index: Int, count: Int) {
-        var line_count = this.get_opus_manager().get_visible_line_count()
-        var beat_count = this.get_opus_manager().beat_count
+        val line_count = this.get_opus_manager().get_visible_line_count()
+        val beat_count = this.get_opus_manager().beat_count
         this.item_count -= beat_count
         for (i in 0 until beat_count) {
             this.notifyItemRemoved((i * line_count) + index)
@@ -95,6 +95,16 @@ class CellAdapter(var recycler: RecyclerView): RecyclerView.Adapter<CellViewHold
 
         val offset = (beat_key.beat * span_count) + abs_line
         this.notifyItemChanged(offset)
+    }
+
+    // Notify that the beat state changed but doesn't need to be rebuilt
+    fun notify_state_changed(beat_key: BeatKey) {
+        val abs_line = this.get_opus_manager().get_abs_offset(beat_key.channel, beat_key.line_offset)
+        var span_count = (this.recycler.layoutManager as GridLayoutManager).spanCount
+
+        val offset = (beat_key.beat * span_count) + abs_line
+        var item_view = this.recycler.findViewHolderForAdapterPosition(offset)?.itemView ?: return
+        ((item_view as ViewGroup).getChildAt(0) as CellLayout).invalidate_all()
     }
 
     fun notifyColumnChanged(index: Int) {

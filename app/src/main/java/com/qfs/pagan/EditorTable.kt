@@ -265,8 +265,8 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
                 this.line_label_layout.notify_item_changed(y)
                 column_label_adapter.notifyItemChanged(beat_key.beat)
-
-                (this.main_recycler.adapter as CellAdapter).notifyBeatChanged(beat_key)
+                (this.main_recycler.adapter as CellAdapter).notify_state_changed(beat_key)
+                //(this.main_recycler.adapter as CellAdapter).notifyBeatChanged(beat_key)
             }
             OpusManagerCursor.CursorMode.Range -> {
                 val (top_left, bottom_right) = opusManagerCursor.range!!

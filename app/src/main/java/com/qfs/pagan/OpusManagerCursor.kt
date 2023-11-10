@@ -20,7 +20,32 @@ data class OpusManagerCursor(
     class InvalidModeException(actual: CursorMode, expected: CursorMode): Exception("Incorrect Cursor Mode. expected $expected but got $actual")
 
     var is_linking = false
+    override fun equals(other: Any?): Boolean {
+        if (other !is OpusManagerCursor) {
+            return false
+        }
 
+        if (other.mode != this.mode) {
+            return false
+        }
+        return when (this.mode) {
+            CursorMode.Row -> {
+                other.channel == this.channel && other.line_offset == this.line_offset
+            }
+            CursorMode.Column -> {
+                other.beat == this.beat
+            }
+            CursorMode.Unset -> {
+                true
+            }
+            CursorMode.Single -> {
+                this.get_beatkey() == other.get_beatkey()
+            }
+            CursorMode.Range -> {
+                this.range == other.range
+            }
+        }
+    }
     fun is_linking_range(): Boolean {
         return this.mode == CursorMode.Range && this.is_linking
     }

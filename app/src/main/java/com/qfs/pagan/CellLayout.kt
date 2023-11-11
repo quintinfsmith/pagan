@@ -1,6 +1,5 @@
 package com.qfs.pagan
 
-import android.content.Context
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -13,9 +12,13 @@ import com.qfs.pagan.structure.OpusTree
 import kotlin.math.roundToInt
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
-class CellLayout(context: Context, var beat_key: BeatKey): LinearLayout(context) {
+class CellLayout(var view_holder: CellViewHolder): LinearLayout(view_holder.itemView.context) {
+    class BeatKeyNotSet: Exception()
     init {
         this.isClickable = false
+        (this.view_holder.itemView as ViewGroup).removeAllViews()
+        (this.view_holder.itemView as ViewGroup).addView(this)
+        this.build()
     }
 
     override fun onAttachedToWindow() {
@@ -24,7 +27,6 @@ class CellLayout(context: Context, var beat_key: BeatKey): LinearLayout(context)
         this.layoutParams.width = (this.get_editor_table()
             .get_column_width(this.get_beat()) * resources.getDimension(R.dimen.base_leaf_width)
             .roundToInt())
-        this.build()
     }
 
 
@@ -60,14 +62,14 @@ class CellLayout(context: Context, var beat_key: BeatKey): LinearLayout(context)
 
         if (!tree.is_leaf()) {
             for (i in 0 until tree.size) {
-                this.buildTreeView(tree[i], listOf(i), max_width / tree.size)
+                this.buildTreeView(tree[i], listOf(i), 1F / tree.size.toFloat())
             }
         } else {
-            this.buildTreeView(tree, listOf(), max_width)
+            this.buildTreeView(tree, listOf(), 1F)
         }
    }
 
-   private fun buildTreeView(tree: OpusTree<OpusEvent>, position: List<Int>, new_width: Int) {
+   private fun buildTreeView(tree: OpusTree<OpusEvent>, position: List<Int>, new_width: Float) {
        if (tree.is_leaf()) {
            val tvLeaf = LeafButton(
                this.context,
@@ -80,7 +82,8 @@ class CellLayout(context: Context, var beat_key: BeatKey): LinearLayout(context)
 
            (tvLeaf.layoutParams as LayoutParams).gravity = Gravity.CENTER
            (tvLeaf.layoutParams as LayoutParams).height = MATCH_PARENT
-           (tvLeaf.layoutParams as LayoutParams).width = new_width
+           (tvLeaf.layoutParams as LayoutParams).weight = new_width
+           (tvLeaf.layoutParams as LayoutParams).width = 0
 
            tvLeaf.minimumWidth = resources.getDimension(R.dimen.base_leaf_width).toInt()
        } else {
@@ -94,11 +97,11 @@ class CellLayout(context: Context, var beat_key: BeatKey): LinearLayout(context)
    }
 
     fun get_beat(): Int {
-        return this.beat_key.beat
+        return this.get_beat_key().beat
     }
 
     fun get_beat_key(): BeatKey {
-        return this.beat_key
+        return this.view_holder.beat_key ?: throw BeatKeyNotSet()
     }
 
     fun get_beat_tree(): OpusTree<OpusEvent> {
@@ -109,6 +112,6 @@ class CellLayout(context: Context, var beat_key: BeatKey): LinearLayout(context)
 
     fun is_percussion(): Boolean {
         val opus_manager = this.get_opus_manager()
-        return opus_manager.is_percussion(this.beat_key.channel)
+        return opus_manager.is_percussion(this.get_beat_key().channel)
     }
 }

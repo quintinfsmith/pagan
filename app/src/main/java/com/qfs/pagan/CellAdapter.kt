@@ -17,14 +17,20 @@ class CellAdapter(var recycler: RecyclerView): RecyclerView.Adapter<CellViewHold
     }
 
     override fun onBindViewHolder(holder: CellViewHolder, position: Int) {
-        val item_view = (holder.itemView as ViewGroup)
         val opus_manager = this.get_opus_manager()
         val line_count = opus_manager.get_visible_line_count()
         val (channel, line_offset) = opus_manager.get_std_offset(position % line_count)
         val beat = position / line_count
+        holder.beat_key = BeatKey(channel, line_offset, beat)
+        CellLayout(holder)
+    }
 
-        item_view.removeAllViews()
-        item_view.addView( CellLayout(item_view.context, BeatKey(channel, line_offset, beat)) )
+    fun get_activity(): MainActivity {
+        return this.recycler.context as MainActivity
+    }
+
+    fun get_editor_table(): EditorTable {
+        return this.get_activity().findViewById(R.id.etEditorTable)
     }
 
     fun get_opus_manager(): OpusManager {

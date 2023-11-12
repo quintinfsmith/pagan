@@ -219,7 +219,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             this.get_editor_table()?.remove_row(abs_line)
         }
 
-        this.cursor_select_row(channel, max(0, line_offset - 1))
+        //this.cursor_select_row(channel, max(0, line_offset - 1))
 
         this.activity.update_channel_instruments()
 
@@ -746,17 +746,15 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     fun cursor_select_column(beat: Int, force_scroll: Boolean = false) {
-        val editor_table = this.get_editor_table()
-
         this.cursor.select_column(beat)
         this.activity.runOnUiThread {
+            val editor_table = this.get_editor_table()
             editor_table?.update_cursor(this.cursor)
             this.withFragment {
                 it.setContextMenu_column()
             }
             editor_table?.scroll_to_position(x = beat, force = force_scroll)
         }
-
     }
 
     fun cursor_select(beat_key: BeatKey, position: List<Int>) {

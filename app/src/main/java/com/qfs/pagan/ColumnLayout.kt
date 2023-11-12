@@ -59,6 +59,8 @@ class ColumnLayout(var view_holder: ColumnRecyclerViewHolder): LinearLayout((vie
         for (i in y until y + count) {
             this.addView(CellLayout(this.context), i)
         }
+        this.notifyItemRangeChanged(0, y)
+        this.notifyItemRangeChanged(y + count,this.childCount - (y + count))
     }
 
     fun insert_cell(y: Int) {
@@ -66,13 +68,13 @@ class ColumnLayout(var view_holder: ColumnRecyclerViewHolder): LinearLayout((vie
     }
 
     fun remove_cell(y: Int) {
-        this.removeViewAt(y)
-        this.notifyItemRangeChanged(y,this.childCount - 1 - y)
+        this.remove_cells(y, 1)
     }
 
     fun remove_cells(y: Int, count: Int) {
         this.removeViews(y, count)
-        //this.notifyItemRangeChanged(y,this.childCount)
+        this.notifyItemRangeChanged(0, y)
+        this.notifyItemRangeChanged(y, this.childCount - (y + count - 1))
     }
 
     fun notifyItemChanged(y: Int, state_only: Boolean = false) {

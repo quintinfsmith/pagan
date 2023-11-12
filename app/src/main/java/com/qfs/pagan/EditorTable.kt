@@ -173,6 +173,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
         var adapter = (this.main_recycler.adapter as ColumnRecyclerAdapter)
         adapter.insert_row(y)
+        (this.column_label_recycler.adapter as ColumnLabelAdapter).notifyDataSetChanged()
 
         this.line_label_layout.insert_label(y)
     }
@@ -194,15 +195,16 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         this.line_label_layout.insert_labels(y, opus_lines.size)
         var adapter = (this.main_recycler.adapter as ColumnRecyclerAdapter)
         adapter.insert_rows(y, opus_lines.size)
+        (this.column_label_recycler.adapter as ColumnLabelAdapter).notifyDataSetChanged()
     }
 
     fun remove_row(y: Int) {
         for (i in 0 until this.column_width_map.size) {
             this.column_width_map[i].removeAt(y)
         }
-
         (this.main_recycler.adapter as ColumnRecyclerAdapter).remove_row(y)
         this.line_label_layout.remove_label(y)
+        (this.column_label_recycler.adapter as ColumnLabelAdapter).notifyDataSetChanged()
     }
 
     fun remove_channel_rows(y: Int, count: Int) {
@@ -213,6 +215,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         }
         (this.main_recycler.adapter as ColumnRecyclerAdapter).remove_rows(y, count)
         this.line_label_layout.remove_labels(y, count)
+        (this.column_label_recycler.adapter as ColumnLabelAdapter).notifyDataSetChanged()
     }
 
     fun new_column(index: Int) {

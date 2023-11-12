@@ -505,7 +505,6 @@ class EditorFragment : PaganFragment() {
 
         val nsOctave: NumberSelector = llContextCell.findViewById(R.id.nsOctave)
         val nsOffset: NumberSelector = llContextCell.findViewById(R.id.nsOffset)
-        nsOffset.set_max(opus_manager.radix - 1)
 
         val current_tree = opus_manager.get_tree()
 
@@ -524,6 +523,8 @@ class EditorFragment : PaganFragment() {
 
             if (!opus_manager.get_tree().is_event()) {
                 btnUnset.setImageResource(R.drawable.set_percussion)
+            } else {
+                btnUnset.setImageResource(R.drawable.unset)
             }
 
             btnUnset.setOnClickListener {
@@ -539,6 +540,7 @@ class EditorFragment : PaganFragment() {
             nsOctave.visibility = View.VISIBLE
             nsOffset.visibility = View.VISIBLE
             if (current_tree.is_event()) {
+                nsOffset.set_max(opus_manager.radix - 1)
                 val event = current_tree.get_event()!!
                 val value = if (event.relative && ! main.configuration.relative_mode) {
                     opus_manager.get_absolute_value(opus_manager.cursor.get_beatkey(), opus_manager.cursor.get_position())!!
@@ -554,6 +556,9 @@ class EditorFragment : PaganFragment() {
                     nsOctave.setState(value / event.radix, manual = true, surpress_callback = true)
                 }
                 btnUnset.setImageResource(R.drawable.unset)
+            } else {
+                nsOctave.unset_active_button()
+                nsOffset.unset_active_button()
             }
 
             nsOffset.setOnChange(this::interact_nsOffset)

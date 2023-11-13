@@ -14,7 +14,7 @@ import com.qfs.apres.event2.NoteOn79
 
 class ActiveMidiAudioPlayer(sample_handle_manager: SampleHandleManager): MidiPlaybackDevice(
     sample_handle_manager,
-    cache_size_limit = 1), VirtualMidiOutputDevice {
+    cache_size_limit = 3), VirtualMidiOutputDevice {
     init {
         this.buffer_delay = 1
     }

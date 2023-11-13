@@ -16,6 +16,7 @@ import kotlinx.coroutines.sync.withLock
 import java.nio.IntBuffer
 import kotlin.math.abs
 import kotlin.math.max
+import kotlin.math.roundToInt
 
 class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
     class KilledException: Exception()
@@ -26,6 +27,8 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
     private var _active_sample_handles = HashMap<Pair<Int, Int>, MutableSet<SampleHandle>>()
     private var _midi_events_by_frame = HashMap<Int, MutableList<MIDIEvent>>()
     private var _event_mutex = Mutex()
+    private var _generate_durations = mutableListOf<Int>()
+    private var avg_generate_time: Int? = null
 
     fun place_events(events: List<MIDIEvent>, frame: Int) {
         if (frame < this.frame) {
@@ -59,6 +62,7 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
     }
 
     fun generate(buffer_size: Int): Pair<ShortArray, List<Pair<Int, Int>>> {
+        val start_timestamp = System.currentTimeMillis()
         val initial_array = IntArray(buffer_size * 2)
         val buffer = IntBuffer.wrap(initial_array)
         val pointer_list = mutableListOf<Pair<Int, Int>>()
@@ -225,12 +229,15 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
             this._empty_chunks_count = 0
         }
 
+        this._generate_durations.add((System.currentTimeMillis() - start_timestamp).toInt())
         return Pair(compressed_array, pointer_list)
     }
 
     fun clear() {
         this._active_sample_handles.clear()
         this._midi_events_by_frame.clear()
+        this.avg_generate_time = this._generate_durations.average().roundToInt()
+        this._generate_durations.clear()
         this.frame = 0
         this._empty_chunks_count = 0
     }

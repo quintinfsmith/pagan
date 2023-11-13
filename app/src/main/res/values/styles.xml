@@ -61,18 +61,7 @@
         <item name="android:gravity">center_vertical|center_horizontal</item>
         <item name="android:textColor">@color/leaf_fg</item>
         <item name="android:background">@color/leaf_bg</item>
-
     </style>
-
-    <style name="leaf_inner_pl_even" parent="@android:style/Widget.TextView">
-        <item name="android:background">?attr/label_bg_channel_even</item>
-
-    </style>
-
-    <style name="leaf_inner_pl_odd" parent="@android:style/Widget.TextView">
-        <item name="android:background">?attr/label_bg_channel_odd</item>
-    </style>
-
 
     <style name="leaf_value" parent="@android:style/Widget.TextView">
         <item name="android:textColor">@color/leaf_fg</item>

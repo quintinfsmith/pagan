@@ -28,20 +28,6 @@ class ColumnLayout(var view_holder: ColumnRecyclerViewHolder): LinearLayout((vie
         this.populate()
     }
 
-    fun placeholder_populate() {
-        val opus_manager = this.get_opus_manager()
-        var base_width = (resources.getDimension(R.dimen.base_leaf_width) + resources.getDimension(R.dimen.line_padding)).toInt()
-        var placeholder_width = (this.get_editor_table().get_column_width(this.get_beat()) * base_width)
-        var placeholder_height = resources.getDimension(R.dimen.line_height).toInt()
-        for (i in 0 until opus_manager.get_visible_line_count()) {
-            var is_even = opus_manager.get_std_offset(i).first % 2 == 0
-            var placeholder = CellPlaceHolder(this.context, is_even)
-            this.addView(placeholder)
-            placeholder.layoutParams.width = placeholder_width
-            placeholder.layoutParams.height = placeholder_height
-        }
-    }
-
     fun populate() {
         this.populated = true
         val opus_manager = this.get_opus_manager()

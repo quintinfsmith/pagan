@@ -155,13 +155,18 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                     }
                 }
             }
-            this.column_width_maxes.add(this.column_width_map[beat].max())
+            this.column_width_maxes.add(
+                if (this.column_width_map.size > beat && this.column_width_map[beat].isNotEmpty()) {
+                    this.column_width_map[beat].max()
+                } else {
+                   1
+                }
+            )
         }
         this.initializing_column_width_map = false
     }
 
     fun new_row(y: Int, opus_line: OpusChannel.OpusLine) {
-
         for (i in 0 until opus_line.beats.size) {
             val tree = opus_line.beats[i]
             this.column_width_map[i].add(

@@ -9,7 +9,7 @@ import kotlin.math.max
 open class MidiPlaybackDevice(
         var sample_handle_manager: SampleHandleManager,
         // (in frames) how many x the buffer size should be delayed
-        private var cache_size_limit: Int = 10) {
+        private var cache_size_limit: Int? = null) {
 
     enum class StopRequest() {
         Play,
@@ -80,7 +80,7 @@ open class MidiPlaybackDevice(
 
             thread {
                 while (!flag_no_more_chunks && this@MidiPlaybackDevice.stop_request != StopRequest.Kill) {
-                    if (chunks.size < this@MidiPlaybackDevice.cache_size_limit) {
+                    if (this.cache_size_limit == null || chunks.size < this.cache_size_limit!!) {
                         try {
                             runBlocking {
                                 chunk_mutex.withLock {
@@ -109,7 +109,6 @@ open class MidiPlaybackDevice(
                     }
                 }
             }
-
             while (this.stop_request != StopRequest.Kill) {
                 val write_start_ts = System.nanoTime()
                 if (!pause_write) {

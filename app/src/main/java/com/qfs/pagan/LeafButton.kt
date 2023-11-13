@@ -6,7 +6,6 @@ import android.view.MotionEvent
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
-import android.widget.TextView
 import androidx.appcompat.view.ContextThemeWrapper
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.LinksLayer
@@ -127,9 +126,8 @@ class LeafButton(
         inner_wrapper.layoutParams.width = MATCH_PARENT
         inner_wrapper.layoutParams.height = MATCH_PARENT
         if (event == null) {
-
         } else if (is_percussion) {
-            val label_percussion = TextView(ContextThemeWrapper(base_context, R.style.leaf_value))
+            val label_percussion = LeafText(ContextThemeWrapper(base_context, R.style.leaf_value))
             inner_wrapper.addView(label_percussion)
             label_percussion.gravity = Gravity.CENTER
             label_percussion.text = resources.getString(R.string.percussion_label)
@@ -137,9 +135,9 @@ class LeafButton(
             val sub_wrapper = LinearLayout(base_context)
             val right_wrapper = LinearLayout(base_context)
             right_wrapper.orientation = VERTICAL
-            val label_octave = TextView(ContextThemeWrapper(base_context, R.style.leaf_value_octave))
-            val label_offset = TextView(ContextThemeWrapper(base_context, R.style.leaf_value_offset))
-            val label_prefix = TextView(ContextThemeWrapper(base_context, R.style.leaf_prefix))
+            val label_octave = LeafText(ContextThemeWrapper(base_context, R.style.leaf_value_octave))
+            val label_offset = LeafText(ContextThemeWrapper(base_context, R.style.leaf_value_offset))
+            val label_prefix = LeafText(ContextThemeWrapper(base_context, R.style.leaf_prefix))
 
             inner_wrapper.addView(sub_wrapper)
             sub_wrapper.layoutParams.width = WRAP_CONTENT
@@ -171,8 +169,8 @@ class LeafButton(
             label_offset.text = "${abs(event.note) % event.radix}"
         } else {
             val sub_wrapper = LinearLayout(base_context)
-            val label_octave = TextView(ContextThemeWrapper(base_context, R.style.leaf_value_octave))
-            val label_offset = TextView(ContextThemeWrapper(base_context, R.style.leaf_value_offset))
+            val label_octave = LeafText(ContextThemeWrapper(base_context, R.style.leaf_value_octave))
+            val label_offset = LeafText(ContextThemeWrapper(base_context, R.style.leaf_value_offset))
 
             inner_wrapper.addView(sub_wrapper)
             sub_wrapper.layoutParams.width = WRAP_CONTENT

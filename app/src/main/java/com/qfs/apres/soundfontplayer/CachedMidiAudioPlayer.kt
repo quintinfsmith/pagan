@@ -5,8 +5,7 @@ import com.qfs.apres.event.MIDIStop
 import com.qfs.apres.event.SetTempo
 
 open class CachedMidiAudioPlayer(sample_handle_manager: SampleHandleManager): MidiPlaybackDevice(
-    sample_handle_manager,
-    cache_size_limit = 20) {
+    sample_handle_manager) {
     var frame_count: Int = 0
     init {
         this.buffer_delay = 5

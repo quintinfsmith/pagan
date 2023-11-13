@@ -17,4 +17,21 @@ class CellPlaceHolder(context: Context, is_even: Boolean): LinearLayout(ContextT
         inner.layoutParams.height = MATCH_PARENT
         inner.layoutParams.width = MATCH_PARENT
     }
+
+    fun get_activity(): MainActivity {
+        return ((this.context as ContextThemeWrapper).baseContext as MainActivity)
+    }
+    //fun replace() {
+    //    thread {
+    //        this.get_activity().runOnUiThread {
+    //            if (this.parent == null) {
+    //                return@runOnUiThread
+    //            }
+    //            var index = (this.parent as ViewGroup).indexOfChild(this)
+    //            (this.parent as ViewGroup).addView(CellLayout(this, index), index)
+    //            (this.parent as ViewGroup).removeView(this)
+
+    //        }
+    //    }
+    //}
 }

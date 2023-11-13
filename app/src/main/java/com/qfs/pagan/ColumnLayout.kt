@@ -6,12 +6,12 @@ import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import androidx.appcompat.view.ContextThemeWrapper
-import kotlin.concurrent.thread
-import kotlin.math.roundToInt
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
 class ColumnLayout(var view_holder: ColumnRecyclerViewHolder): LinearLayout((view_holder.itemView.context as ContextThemeWrapper).baseContext) {
     class ColumnDetachedException: Exception()
+    var populated = false
+    var column_width_factor = 1
     init {
         this.orientation = VERTICAL
         (this.view_holder.itemView as ViewGroup).removeAllViews()
@@ -20,15 +20,18 @@ class ColumnLayout(var view_holder: ColumnRecyclerViewHolder): LinearLayout((vie
         this.layoutParams.height = MATCH_PARENT
         this.layoutParams.width = WRAP_CONTENT
         this.overScrollMode = View.OVER_SCROLL_NEVER
+        this.column_width_factor = this.get_editor_table().get_column_width(this.view_holder.bindingAdapterPosition)
 
         // first, populate with placeholders that have minimal overhead...
-        this.placeholder_populate()
-        // ...Then populate with real cells after checking that the layout is still attached (ie quick scrolling)
+        //this.placeholder_populate()
+       // // ...Then populate with real cells after checking that the layout is still attached (ie quick scrolling)
         this.populate()
     }
+
     fun placeholder_populate() {
         val opus_manager = this.get_opus_manager()
-        var placeholder_width = (this.get_editor_table().get_column_width(this.get_beat()) * resources.getDimension(R.dimen.base_leaf_width)).roundToInt()
+        var base_width = (resources.getDimension(R.dimen.base_leaf_width) + resources.getDimension(R.dimen.line_padding)).toInt()
+        var placeholder_width = (this.get_editor_table().get_column_width(this.get_beat()) * base_width)
         var placeholder_height = resources.getDimension(R.dimen.line_height).toInt()
         for (i in 0 until opus_manager.get_visible_line_count()) {
             var is_even = opus_manager.get_std_offset(i).first % 2 == 0
@@ -40,24 +43,19 @@ class ColumnLayout(var view_holder: ColumnRecyclerViewHolder): LinearLayout((vie
     }
 
     fun populate() {
-        thread {
-            if (this.view_holder.bindingAdapter == null) {
-                return@thread
-            }
-            val opus_manager = this.get_opus_manager()
+        this.populated = true
+        val opus_manager = this.get_opus_manager()
 
-            (this.context as MainActivity).runOnUiThread {
-                for (y in 0 until opus_manager.get_visible_line_count()) {
-                    this.addView(CellLayout(this.context), y)
-                    this.removeViewAt(this.childCount - 1)
-                }
+        (this.context as MainActivity).runOnUiThread {
+            for (y in 0 until opus_manager.get_visible_line_count()) {
+                this.addView(CellLayout(this, y), y)
             }
         }
     }
 
     fun insert_cells(y: Int, count: Int) {
         for (i in y until y + count) {
-            this.addView(CellLayout(this.context), i)
+            this.addView(CellLayout(this, i), i)
         }
         this.notifyItemRangeChanged(0, y)
         this.notifyItemRangeChanged(y + count,this.childCount - (y + count))
@@ -93,7 +91,7 @@ class ColumnLayout(var view_holder: ColumnRecyclerViewHolder): LinearLayout((vie
 
     fun rebind(index: Int) {
         this.removeViewAt(index)
-        this.addView(CellLayout(this.context), index)
+        this.addView(CellLayout(this, index), index)
     }
 
     fun clear() {

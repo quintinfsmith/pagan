@@ -31,6 +31,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
     var initializing_column_width_map = false
     val column_width_map = mutableListOf<MutableList<Int>>()
+    val column_width_maxes = mutableListOf<Int>()
 
     var active_cursor: OpusManagerCursor = OpusManagerCursor(OpusManagerCursor.CursorMode.Unset)
 
@@ -113,6 +114,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
     fun clear() {
         this.column_width_map.clear()
+        this.column_width_maxes.clear()
         (this.main_recycler.adapter!! as ColumnRecyclerAdapter).clear()
         (this.column_label_recycler.adapter!! as ColumnLabelAdapter).clear()
         this.line_label_layout.clear()
@@ -153,6 +155,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                     }
                 }
             }
+            this.column_width_maxes.add(this.column_width_map[beat].max())
         }
         this.initializing_column_width_map = false
     }
@@ -169,6 +172,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                     tree.get_max_child_weight() * tree.size
                 }
             )
+            this.column_width_maxes[i] = this.column_width_map[i].max()
         }
 
         var adapter = (this.main_recycler.adapter as ColumnRecyclerAdapter)
@@ -192,6 +196,9 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                 )
             }
         }
+        for (j in 0 until this.get_opus_manager().beat_count) {
+            this.column_width_maxes[j] = this.column_width_map[j].max()
+        }
         this.line_label_layout.insert_labels(y, opus_lines.size)
         var adapter = (this.main_recycler.adapter as ColumnRecyclerAdapter)
         adapter.insert_rows(y, opus_lines.size)
@@ -201,6 +208,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     fun remove_row(y: Int) {
         for (i in 0 until this.column_width_map.size) {
             this.column_width_map[i].removeAt(y)
+            this.column_width_maxes[i] = this.column_width_map[i].max()
         }
         (this.main_recycler.adapter as ColumnRecyclerAdapter).remove_row(y)
         this.line_label_layout.remove_label(y)
@@ -211,6 +219,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         for (i in 0 until this.column_width_map.size) {
             for (j in 0 until count) {
                 this.column_width_map[i].removeAt(y)
+                this.column_width_maxes[i] = this.column_width_map[i].max()
             }
         }
         (this.main_recycler.adapter as ColumnRecyclerAdapter).remove_rows(y, count)
@@ -233,12 +242,15 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         }
 
         this.column_width_map.add(index, column)
+        this.column_width_maxes.add(index, column.max())
+
         (this.column_label_recycler.adapter!! as ColumnLabelAdapter).add_column(index)
         (this.main_recycler.adapter as ColumnRecyclerAdapter).add_column(index)
     }
 
     fun remove_column(index: Int) {
         this.column_width_map.removeAt(index)
+        this.column_width_maxes.removeAt(index)
         (this.column_label_recycler.adapter!! as ColumnLabelAdapter).remove_column(index)
         (this.main_recycler.adapter as ColumnRecyclerAdapter).remove_column(index)
     }
@@ -324,11 +336,11 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                 continue
             }
 
-            val original_width = this.column_width_map[linked_beat_key.beat].max()
+            val original_width = this.column_width_maxes[linked_beat_key.beat]
             this.column_width_map[linked_beat_key.beat][y] = new_cell_width
-            val new_width = this.column_width_map[linked_beat_key.beat].max()
+            this.column_width_maxes[linked_beat_key.beat] = this.column_width_map[linked_beat_key.beat].max()
 
-            if (original_width != new_width) {
+            if (original_width != this.column_width_maxes[linked_beat_key.beat]) {
                 changed_beats.add(linked_beat_key.beat)
             } else {
                 changed_beat_keys.add(linked_beat_key)
@@ -350,11 +362,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     }
 
     fun get_column_width(column: Int): Int {
-        return if (this.column_width_map[column].isEmpty()) {
-            1
-        } else {
-            this.column_width_map[column].max()
-        }
+        return this.column_width_maxes[column]
     }
 
     fun get_activity(): MainActivity {

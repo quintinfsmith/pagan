@@ -1,9 +1,10 @@
 package com.qfs.pagan
 
 import android.content.Context
-import android.view.LayoutInflater
+import android.view.Gravity
 import android.view.MotionEvent
-import android.view.View
+import android.view.ViewGroup.LayoutParams.MATCH_PARENT
+import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.view.ContextThemeWrapper
@@ -121,34 +122,46 @@ class LeafButton(
         val event = this._event
         this.removeAllViews()
         var base_context = (this.context as ContextThemeWrapper).baseContext
+        val inner_wrapper = LeafInnerWrapper(base_context)
+        this.addView(inner_wrapper)
+        inner_wrapper.layoutParams.width = MATCH_PARENT
+        inner_wrapper.layoutParams.height = MATCH_PARENT
         if (event == null) {
-            val inner_wrapper: View = LayoutInflater.from(base_context)
-                .inflate(
-                    R.layout.leaf_empty,
-                    this,
-                    false
-                )
-            this.addView(inner_wrapper)
-        } else if (is_percussion) {
-            val inner_wrapper: View = LayoutInflater.from(base_context)
-                .inflate(
-                    R.layout.leaf_percussion,
-                    this,
-                    false
-                )
-            this.addView(inner_wrapper)
-        } else if (event.relative) {
-            val inner_wrapper: View = LayoutInflater.from(base_context)
-                .inflate(
-                    R.layout.leaf_relative,
-                    this,
-                    false
-                )
-            this.addView(inner_wrapper)
 
-            val label_prefix = inner_wrapper.findViewById<TextView>(R.id.tvPrefix)
-            val label_octave = inner_wrapper.findViewById<TextView>(R.id.tvOctave)
-            val label_offset = inner_wrapper.findViewById<TextView>(R.id.tvOffset)
+        } else if (is_percussion) {
+            val label_percussion = TextView(ContextThemeWrapper(base_context, R.style.leaf_value))
+            inner_wrapper.addView(label_percussion)
+            label_percussion.gravity = Gravity.CENTER
+            label_percussion.text = resources.getString(R.string.percussion_label)
+        } else if (event.relative) {
+            val sub_wrapper = LinearLayout(base_context)
+            val right_wrapper = LinearLayout(base_context)
+            right_wrapper.orientation = VERTICAL
+            val label_octave = TextView(ContextThemeWrapper(base_context, R.style.leaf_value_octave))
+            val label_offset = TextView(ContextThemeWrapper(base_context, R.style.leaf_value_offset))
+            val label_prefix = TextView(ContextThemeWrapper(base_context, R.style.leaf_prefix))
+
+            inner_wrapper.addView(sub_wrapper)
+            sub_wrapper.layoutParams.width = WRAP_CONTENT
+            sub_wrapper.layoutParams.height = MATCH_PARENT
+            (sub_wrapper.layoutParams as LinearLayout.LayoutParams).gravity = Gravity.CENTER
+
+            sub_wrapper.addView(right_wrapper)
+            right_wrapper.layoutParams.height = MATCH_PARENT
+
+            right_wrapper.addView(label_prefix)
+            label_prefix.layoutParams.height = 0
+            (label_prefix.layoutParams as LinearLayout.LayoutParams).weight = 1F
+            label_prefix.gravity = Gravity.START
+
+            right_wrapper.addView(label_octave)
+            label_octave.gravity = Gravity.START
+            label_octave.layoutParams.height = 0
+            (label_octave.layoutParams as LinearLayout.LayoutParams).weight = 1F
+
+            sub_wrapper.addView(label_offset)
+            label_offset.layoutParams.height = MATCH_PARENT
+
             label_prefix.text = if (event.note < 0) {
                 "-"
             } else {
@@ -157,15 +170,22 @@ class LeafButton(
             label_octave.text = "${abs(event.note) / event.radix}"
             label_offset.text = "${abs(event.note) % event.radix}"
         } else {
-            val inner_wrapper: View = LayoutInflater.from(base_context)
-                .inflate(
-                    R.layout.leaf_absolute,
-                    this,
-                    false
-                )
-            this.addView(inner_wrapper)
-            val label_octave = inner_wrapper.findViewById<TextView>(R.id.tvOctave)
-            val label_offset = inner_wrapper.findViewById<TextView>(R.id.tvOffset)
+            val sub_wrapper = LinearLayout(base_context)
+            val label_octave = TextView(ContextThemeWrapper(base_context, R.style.leaf_value_octave))
+            val label_offset = TextView(ContextThemeWrapper(base_context, R.style.leaf_value_offset))
+
+            inner_wrapper.addView(sub_wrapper)
+            sub_wrapper.layoutParams.width = WRAP_CONTENT
+            sub_wrapper.layoutParams.height = MATCH_PARENT
+            (sub_wrapper.layoutParams as LinearLayout.LayoutParams).gravity = Gravity.CENTER
+
+            sub_wrapper.addView(label_octave)
+            label_octave.gravity = Gravity.BOTTOM
+            label_octave.layoutParams.height = MATCH_PARENT
+
+            sub_wrapper.addView(label_offset)
+            label_offset.layoutParams.height = MATCH_PARENT
+
             label_octave.text = "${event.note / event.radix}"
             label_offset.text = "${event.note % event.radix}"
         }

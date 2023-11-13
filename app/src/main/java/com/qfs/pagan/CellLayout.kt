@@ -1,6 +1,5 @@
 package com.qfs.pagan
 
-import android.content.Context
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -13,7 +12,7 @@ import com.qfs.pagan.structure.OpusTree
 import kotlin.math.roundToInt
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
-class CellLayout(context: Context): LinearLayout(context) {
+class CellLayout(val column_layout: ColumnLayout, val y: Int): LinearLayout(column_layout.context) {
     class BeatKeyNotSet: Exception()
     init {
         this.isClickable = false
@@ -23,9 +22,9 @@ class CellLayout(context: Context): LinearLayout(context) {
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
         this.layoutParams.height = resources.getDimension(R.dimen.line_height).toInt()
-        this.layoutParams.width = (this.get_editor_table().get_column_width(this.get_beat()) * resources.getDimension(R.dimen.base_leaf_width).roundToInt())
-
+        this.layoutParams.width = (column_layout.column_width_factor * resources.getDimension(R.dimen.base_leaf_width).roundToInt())
         val base_leaf_width = resources.getDimension(R.dimen.base_leaf_width).roundToInt()
+
         val beat_key = this.get_beat_key()
         val tree = this.get_beat_tree(beat_key)
         this.build(tree, this.get_editor_table().get_column_width(beat_key.beat) * base_leaf_width)
@@ -100,8 +99,7 @@ class CellLayout(context: Context): LinearLayout(context) {
 
     fun get_beat_key(): BeatKey {
         var opus_manager = this.get_opus_manager()
-        var abs_offset = (this.parent as ViewGroup).indexOfChild(this)
-        var (channel, line_offset) = opus_manager.get_std_offset(abs_offset)
+        var (channel, line_offset) = opus_manager.get_std_offset(this.y)
         return BeatKey(channel, line_offset, this.get_beat())
     }
 

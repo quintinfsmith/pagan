@@ -1,39 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <com.qfs.pagan.LeafInnerWrapper
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="horizontal"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-    <androidx.constraintlayout.widget.ConstraintLayout
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
+    <LinearLayout
+        android:orientation="horizontal"
         android:background="#00000000"
-        app:layout_constraintHorizontal_bias="0.45"
+        android:layout_gravity="center"
         android:layout_width="@dimen/base_leaf_width"
         android:layout_height="match_parent">
 
         <com.qfs.pagan.LeafText
             android:id="@+id/tvOctave"
+            android:gravity="bottom"
+            android:layout_gravity="bottom"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:text="0"
-            android:theme="@style/leaf_value_octave"
-            app:layout_constraintEnd_toStartOf="@id/tvOffset"
-            app:layout_constraintHorizontal_bias="0.80"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent" />
+            android:theme="@style/leaf_value_octave"/>
 
         <com.qfs.pagan.LeafText
             android:id="@+id/tvOffset"
+            android:layout_gravity="center"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="1"
-            android:theme="@style/leaf_value_offset"
-            app:layout_constraintHorizontal_bias="0.6"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
+            android:theme="@style/leaf_value_offset"/>
+    </LinearLayout>
 </com.qfs.pagan.LeafInnerWrapper>

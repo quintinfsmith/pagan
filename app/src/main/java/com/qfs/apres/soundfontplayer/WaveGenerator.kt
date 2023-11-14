@@ -163,19 +163,20 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
 
         for ((key, pair_list) in this._active_sample_handles) {
             // Run in reverse order to get the most recent frame
-            pair_list.forEachIndexed { i: Int, (first_frame: Int, sample_handles: List<SampleHandle>) ->
-                sample_handles.forEachIndexed { j: Int, sample_handle: SampleHandle ->
-                    if (sample_handle.is_dead || (first_frame < this.frame || first_frame >= this.frame + buffer_size)) {
-                        return@forEachIndexed
+            for (i in pair_list.indices) {
+                val (first_sample_frame, sample_handles) = pair_list[i]
+                for (j in sample_handles.indices) {
+                    val sample_handle = sample_handles[j]
+                    if (sample_handle.is_dead || (first_sample_frame >= this.frame + buffer_size)) {
+                        continue
                     }
 
                     is_empty = false
-                    for (f in first_frame until this.frame + buffer_size) {
+                    for (f in max(first_sample_frame, this.frame) until this.frame + buffer_size) {
                         if (sample_handle.is_pressed && f == this.sample_release_map[sample_handle.uuid]) {
                             sample_handle.release_note()
                             this.sample_release_map.remove(sample_handle.uuid)
                         }
-
 
                         val frame_value = sample_handle.get_next_frame()
                         if (frame_value == null) {
@@ -220,6 +221,7 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
 
                             else -> {}
                         }
+
                         var buffer_index = (f - this.frame) * 2
                         initial_array[buffer_index] += right_frame
                         initial_array[buffer_index + 1] += left_frame
@@ -267,7 +269,7 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
         }
 
         val mid = Short.MAX_VALUE / 2
-        val compression_ratio = if (max_frame_value <= Short.MAX_VALUE) {
+        val compression_ratio = if (true || max_frame_value <= Short.MAX_VALUE) {
             1F
         } else {
             (Short.MAX_VALUE - mid).toFloat() / (max_frame_value - mid).toFloat()

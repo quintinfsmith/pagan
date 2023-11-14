@@ -1,8 +1,6 @@
 package com.qfs.apres.soundfontplayer
 
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlin.concurrent.thread
 import kotlin.math.max
 
@@ -72,69 +70,22 @@ open class MidiPlaybackDevice(
         var chunk_mutex = Mutex()
         thread {
             this.wave_generator.timestamp = System.nanoTime()
-            val chunks: MutableList<ShortArray> = mutableListOf()
-
-            var flag_no_more_chunks = false
-            var pause_write = true
-
-            thread {
-                while (!flag_no_more_chunks && this@MidiPlaybackDevice.stop_request != StopRequest.Kill) {
-                    if (chunks.size < this.cache_size_limit!!) {
-                        try {
-                            runBlocking {
-                                chunk_mutex.withLock {
-                                    val chunk = this@MidiPlaybackDevice.wave_generator.generate(this@MidiPlaybackDevice.sample_handle_manager.buffer_size)
-                                    chunks.add(chunk)
-                                }
-                                if (pause_write && chunks.size >= this@MidiPlaybackDevice.buffer_delay) {
-                                    pause_write = false
-                                }
-                            }
-                        } catch (e: WaveGenerator.KilledException) {
-                            flag_no_more_chunks = true
-                            break
-                        } catch (e: WaveGenerator.DeadException) {
-                            flag_no_more_chunks = true
-                            break
-                        }
-                    } else if (!pause_write) {
-
-                        val sleep = BUFFER_NANO / 2
-                        if (sleep > 0) {
-                            Thread.sleep(sleep / 1_000_000, (sleep % 1_000_000).toInt())
-                        }
-                    } else {
-                        pause_write = false
-                    }
-                }
-            }
 
             while (this.stop_request != StopRequest.Kill) {
-                val write_start_ts = System.nanoTime()
-                if (!pause_write) {
-                    if (chunks.isNotEmpty()) {
-                        val chunk = chunks.removeAt(0)
-                        audio_track_handle.write(chunk)
-                    } else if (!flag_no_more_chunks) {
-                        pause_write = true
-                    } else {
-                        break
-                    }
+                val chunk = try {
+                    this@MidiPlaybackDevice.wave_generator.generate(this@MidiPlaybackDevice.sample_handle_manager.buffer_size)
+                } catch (e: WaveGenerator.KilledException) {
+                    break
+                } catch (e: WaveGenerator.DeadException) {
+                    break
                 }
 
-                val delta = System.nanoTime() - write_start_ts
-                val sleep = BUFFER_NANO - delta - 1
-                if (sleep > 0) {
-                    Thread.sleep(sleep / 1_000_000, (sleep % 1_000_000).toInt())
-                }
+                audio_track_handle.write(chunk)
             }
 
+            this@MidiPlaybackDevice.wave_generator.clear()
             audio_track_handle.stop()
-            runBlocking {
-                chunk_mutex.withLock {
-                    this@MidiPlaybackDevice.wave_generator.clear()
-                }
-            }
+
             this.active_audio_track_handle = null
             this.stop_request = StopRequest.Neutral
             this.on_stop()

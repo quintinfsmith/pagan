@@ -19,7 +19,12 @@ class SampleHandle(
     var pan: Double = 0.0
 ) {
     companion object {
+        var uuid_gen = 0
         val MAXIMUM_VOLUME = .8F
+    }
+    var uuid: Int
+    init {
+        this.uuid = SampleHandle.uuid_gen++
     }
 
     constructor(original: SampleHandle): this(
@@ -40,7 +45,7 @@ class SampleHandle(
     )
 
     var is_pressed = true
-    private var is_dead = false
+    var is_dead = false
     private var current_attack_position: Int = 0
     private var current_hold_position: Int = 0
     private var current_decay_position: Int = 0
@@ -73,6 +78,7 @@ class SampleHandle(
             return null
         }
         var frame = (this.data_buffer.get().toDouble() * this.attenuation * this.current_volume).toInt()
+
         val lfo_frame = this.lfo_buffer?.get() ?: 0
         if (this.lfo_buffer != null && this.lfo_buffer!!.position() >= this.lfo_data!!.size) {
             this.lfo_buffer!!.position(0)

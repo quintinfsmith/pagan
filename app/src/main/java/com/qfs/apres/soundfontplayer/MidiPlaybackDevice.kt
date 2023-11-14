@@ -1,5 +1,6 @@
 package com.qfs.apres.soundfontplayer
 
+import android.util.Log
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -73,7 +74,7 @@ open class MidiPlaybackDevice(
         var chunk_mutex = Mutex()
         thread {
             this.wave_generator.timestamp = System.nanoTime()
-            val chunks: MutableList<Pair<ShortArray, List<Pair<Int, Int>>>> = mutableListOf()
+            val chunks: MutableList<ShortArray> = mutableListOf()
 
             var flag_no_more_chunks = false
             var pause_write = true
@@ -84,8 +85,10 @@ open class MidiPlaybackDevice(
                         try {
                             runBlocking {
                                 chunk_mutex.withLock {
-                                    val chunk =
-                                        this@MidiPlaybackDevice.wave_generator.generate(this@MidiPlaybackDevice.sample_handle_manager.buffer_size)
+                                    var start_millis = System.currentTimeMillis()
+                                    val chunk = this@MidiPlaybackDevice.wave_generator.generate(this@MidiPlaybackDevice.sample_handle_manager.buffer_size)
+                                    var delta = System.currentTimeMillis() - start_millis
+                                    Log.d("AAA", " $delta")
                                     chunks.add(chunk)
                                 }
                                 if (pause_write && chunks.size >= this@MidiPlaybackDevice.buffer_delay) {
@@ -113,15 +116,18 @@ open class MidiPlaybackDevice(
                 val write_start_ts = System.nanoTime()
                 if (!pause_write) {
                     if (chunks.isNotEmpty()) {
-                        val (chunk, pointers) = chunks.removeAt(0)
-                        thread {
-                            for ((millis, beat) in pointers) {
-                                thread {
-                                    Thread.sleep(millis.toLong())
-                                    this.on_beat_signal(beat)
-                                }
-                            }
-                        }
+                        val chunk = chunks.removeAt(0)
+                        //thread {
+                        //    for ((millis, in pointers) {
+                        //        thread {
+                        //            Thread.sleep(millis.toLong())
+                        //            this.on_beat_signal(beat)
+                        //        }
+                        //    }
+                        //}
+
+
+                        Log.d("AAA", "WRITE")
                         audio_track_handle.write(chunk)
                     } else if (!flag_no_more_chunks) {
                         pause_write = true

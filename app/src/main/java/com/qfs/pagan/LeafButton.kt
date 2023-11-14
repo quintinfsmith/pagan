@@ -39,6 +39,7 @@ class LeafButton(
         this.setOnClickListener {
             this.callback_click()
         }
+
         this.setOnLongClickListener {
             val opus_manager = this.get_opus_manager()
             val cursor = opus_manager.cursor

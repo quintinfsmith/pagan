@@ -74,7 +74,8 @@ class SampleHandleManager(
         this.decache_unused_presets()
     }
 
-    fun gen_sample_handles(event: NoteOn79, preset: Preset): Set<SampleHandle> {
+    fun gen_sample_handles(event: NoteOn79): Set<SampleHandle> {
+        val preset = this.get_preset(event.channel) ?: return setOf()
         val output = mutableSetOf<SampleHandle>()
         val velocity = event.velocity shr 8
         val potential_instruments = preset.get_instruments(event.note, velocity)
@@ -95,7 +96,8 @@ class SampleHandleManager(
         return output
     }
 
-    fun gen_sample_handles(event: NoteOn, preset: Preset): Set<SampleHandle> {
+    fun gen_sample_handles(event: NoteOn): Set<SampleHandle> {
+        val preset = this.get_preset(event.channel) ?: return setOf()
         val output = mutableSetOf<SampleHandle>()
         val potential_instruments = preset.get_instruments(event.get_note(), event.get_velocity())
 

@@ -1020,20 +1020,7 @@ class EditorFragment : PaganFragment() {
 
         val opus_manager = this.get_main().get_opus_manager()
         scroll_bar.max = opus_manager.beat_count - 1
-        val cursor = opus_manager.cursor
-        scroll_bar.progress = when (cursor.mode) {
-            OpusManagerCursor.CursorMode.Single,
-            OpusManagerCursor.CursorMode.Column -> {
-                cursor.beat
-            }
-            OpusManagerCursor.CursorMode.Range -> {
-                cursor.range!!.first.beat
-            }
-            else -> {
-                val editor_table = this.get_main().findViewById<EditorTable>(R.id.etEditorTable)
-                editor_table.get_first_visible_column_index()
-            }
-        }
+        scroll_bar.progress = this.get_start_column()
 
         title_text.text = resources.getString(R.string.label_shortcut_scrollbar, scroll_bar.progress)
         title_text.contentDescription = resources.getString(R.string.label_shortcut_scrollbar, scroll_bar.progress)
@@ -1051,5 +1038,23 @@ class EditorFragment : PaganFragment() {
         val dialog = AlertDialog.Builder(this.activity)
         dialog.setView(view)
         dialog.show()
+    }
+
+    fun get_start_column(): Int {
+        val opus_manager = this.get_main().get_opus_manager()
+        var cursor = opus_manager.cursor
+        return when (cursor.mode) {
+            OpusManagerCursor.CursorMode.Single,
+            OpusManagerCursor.CursorMode.Column -> {
+                cursor.beat
+            }
+            OpusManagerCursor.CursorMode.Range -> {
+                cursor.range!!.first.beat
+            }
+            else -> {
+                val editor_table = this.get_main().findViewById<EditorTable>(R.id.etEditorTable)
+                editor_table.get_first_visible_column_index()
+            }
+        }
     }
 }

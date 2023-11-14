@@ -850,6 +850,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+
     fun import_midi(path: String) {
         this.applicationContext.contentResolver.openFileDescriptor(Uri.parse(path), "r")?.use {
             val bytes = FileInputStream(it.fileDescriptor).readBytes()
@@ -1279,4 +1280,5 @@ class MainActivity : AppCompatActivity() {
 
         return this.has_notification_permission()
     }
+
 }

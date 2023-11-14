@@ -90,6 +90,7 @@ open class MidiPlaybackDevice(
             this.stop_request = StopRequest.Neutral
             this.on_stop()
         }
+        this.on_start()
     }
 
     private fun stop() {
@@ -108,6 +109,6 @@ open class MidiPlaybackDevice(
         return this.stop_request == StopRequest.Play
     }
 
+    open fun on_start() { }
     open fun on_stop() { }
-    open fun on_beat_signal(beat: Int) { }
 }

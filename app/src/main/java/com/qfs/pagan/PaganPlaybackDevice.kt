@@ -21,7 +21,7 @@ import java.io.FileOutputStream
 import java.io.OutputStream
 import kotlin.concurrent.thread
 import kotlin.math.min
-class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activity.configuration.sample_rate): CachedMidiAudioPlayer(SampleHandleManager(activity.get_soundfont()!!, sample_rate, buffer_size = sample_rate / 4)) {
+class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activity.configuration.sample_rate): CachedMidiAudioPlayer(SampleHandleManager(activity.get_soundfont()!!, sample_rate, buffer_size = sample_rate)) {
     /*
         All of this notification stuff is used with the understanding that the PaganPlaybackDevice
         used to export wavs will be discarded after a single use. It'll need to be cleaned up to

@@ -69,9 +69,10 @@ open class MidiPlaybackDevice(
         thread {
             this.wave_generator.timestamp = System.nanoTime()
 
+            var chunk = ShortArray(this@MidiPlaybackDevice.sample_handle_manager.buffer_size * 2)
             while (this.stop_request != StopRequest.Kill) {
-                val chunk = try {
-                    this@MidiPlaybackDevice.wave_generator.generate(this@MidiPlaybackDevice.sample_handle_manager.buffer_size)
+                try {
+                    this@MidiPlaybackDevice.wave_generator.generate(chunk)
                 } catch (e: WaveGenerator.KilledException) {
                     break
                 } catch (e: WaveGenerator.DeadException) {

@@ -27,6 +27,8 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
     private var _midi_events_by_frame = HashMap<Int, MutableList<MIDIEvent>>()
     private var _event_mutex = Mutex()
 
+    private var _working_int_array = IntArray(sample_handle_manager.buffer_size * 2)
+
     fun place_events(events: List<MIDIEvent>, frame: Int) {
         if (frame < this.frame) {
             return
@@ -153,10 +155,20 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
 
     data class Quad(var first: Int, var second: Int, var third: Int, var fourth: Int)
     fun generate(buffer_size: Int): ShortArray {
+        var output_array = ShortArray(buffer_size * 2)
+        this.generate(output_array)
+        return output_array
+    }
+
+    fun generate(array: ShortArray) {
+        var buffer_size = array.size / 2
         this.timestamp = System.nanoTime()
         this.update_active_frames(this.frame, buffer_size)
 
-        val initial_array = IntArray(buffer_size * 2) { 0 }
+        for (i in this._working_int_array.indices) {
+            this._working_int_array[i] = 0
+        }
+
         var max_frame_value = 0
         var is_empty = true
 
@@ -224,14 +236,14 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
                         }
 
                         var buffer_index = (f - this.frame) * 2
-                        initial_array[buffer_index] += right_frame
-                        initial_array[buffer_index + 1] += left_frame
+                        this._working_int_array[buffer_index] += right_frame
+                        this._working_int_array[buffer_index + 1] += left_frame
                     }
                 }
             }
         }
 
-        for (v in initial_array) {
+        for (v in this._working_int_array) {
             max_frame_value = max(max_frame_value, abs(v))
         }
 
@@ -276,9 +288,8 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
             (Short.MAX_VALUE - mid).toFloat() / (max_frame_value - mid).toFloat()
         }
 
-        val compressed_array = ShortArray(initial_array.size) { i: Int ->
-            val v = initial_array[i]
-            if (compression_ratio >= 1F || (0 - mid <= v && v <= mid)) {
+        this._working_int_array.forEachIndexed { i: Int, v: Int ->
+            array[i] = if (compression_ratio >= 1F || (0 - mid <= v && v <= mid)) {
                 v.toShort()
             } else if (v > mid) {
                 (mid + ((v - mid).toFloat() * compression_ratio).toInt()).toShort()
@@ -294,8 +305,6 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
         } else {
             this._empty_chunks_count = 0
         }
-
-        return compressed_array
     }
 
     fun clear() {

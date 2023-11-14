@@ -1,6 +1,5 @@
 package com.qfs.apres.soundfontplayer
 
-import kotlinx.coroutines.sync.Mutex
 import kotlin.concurrent.thread
 import kotlin.math.max
 
@@ -67,7 +66,6 @@ open class MidiPlaybackDevice(
             Every time this happens is counted and considered in get_delay() call.
          */
         val audio_track_handle = this.active_audio_track_handle!!
-        var chunk_mutex = Mutex()
         thread {
             this.wave_generator.timestamp = System.nanoTime()
 
@@ -88,7 +86,6 @@ open class MidiPlaybackDevice(
 
             this.active_audio_track_handle = null
             this.stop_request = StopRequest.Neutral
-            this.on_stop()
         }
         this.on_start()
     }
@@ -96,12 +93,14 @@ open class MidiPlaybackDevice(
     private fun stop() {
         if (this.stop_request != StopRequest.Neutral) {
             this.stop_request = StopRequest.Stop
+            this.on_stop()
         }
     }
 
     fun kill() {
         if (this.stop_request != StopRequest.Neutral) {
             this.stop_request = StopRequest.Kill
+            this.on_stop()
         }
     }
 

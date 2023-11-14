@@ -66,7 +66,7 @@ class ActiveMidiAudioPlayer(sample_handle_manager: SampleHandleManager): MidiPla
         } else {
             0f
         }
-        val frame = (this.SAMPLE_RATE_NANO * delta_nano).toInt() + (this.buffer_delay * this.sample_handle_manager.buffer_size)
+        val frame = this.wave_generator.frame + (this.SAMPLE_RATE_NANO * delta_nano).toInt() + (this.buffer_delay * this.sample_handle_manager.buffer_size)
         this.wave_generator.place_event(event, frame)
     }
 }

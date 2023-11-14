@@ -1,5 +1,6 @@
 package com.qfs.apres.soundfontplayer
 
+import android.util.Log
 import com.qfs.apres.event.AllSoundOff
 import com.qfs.apres.event.BankSelect
 import com.qfs.apres.event.MIDIEvent
@@ -153,6 +154,7 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
 
     data class Quad(var first: Int, var second: Int, var third: Int, var fourth: Int)
     fun generate(buffer_size: Int): ShortArray {
+        this.timestamp = System.nanoTime()
         this.update_active_frames(this.frame, buffer_size)
 
         val initial_array = IntArray(buffer_size * 2) { 0 }

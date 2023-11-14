@@ -1,6 +1,5 @@
 package com.qfs.apres.soundfontplayer
 
-import android.util.Log
 import com.qfs.apres.event.AllSoundOff
 import com.qfs.apres.event.BankSelect
 import com.qfs.apres.event.MIDIEvent
@@ -271,7 +270,7 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
         }
 
         val mid = Short.MAX_VALUE / 2
-        val compression_ratio = if (true || max_frame_value <= Short.MAX_VALUE) {
+        val compression_ratio = if (max_frame_value <= Short.MAX_VALUE) {
             1F
         } else {
             (Short.MAX_VALUE - mid).toFloat() / (max_frame_value - mid).toFloat()

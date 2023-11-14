@@ -13,11 +13,7 @@ import com.qfs.apres.event2.NoteOff79
 import com.qfs.apres.event2.NoteOn79
 
 class ActiveMidiAudioPlayer(sample_handle_manager: SampleHandleManager): MidiPlaybackDevice(
-    sample_handle_manager,
-    cache_size_limit = 3), VirtualMidiOutputDevice {
-    init {
-        this.buffer_delay = 1
-    }
+    sample_handle_manager), VirtualMidiOutputDevice {
     override fun onNoteOn79(event: NoteOn79) {
         this.process_event(event)
         this.start_playback() // Only starts if not already started

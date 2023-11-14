@@ -12,6 +12,7 @@ import com.qfs.apres.event2.NoteOn79
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlin.math.abs
 import kotlin.math.max
 
 class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
@@ -112,10 +113,6 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
                                 }
 
                             }
-
-                            // for (handle in this._active_sample_handles[key_pair] ?: continue) {
-                            //     handle.release_note()
-                            // }
                         }
 
                         is MIDIStop -> {
@@ -166,14 +163,14 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
 
         for ((key, pair_list) in this._active_sample_handles) {
             // Run in reverse order to get the most recent frame
-            pair_list.forEachIndexed { k: Int, (first_frame: Int, sample_handles: List<SampleHandle>) ->
+            pair_list.forEachIndexed { i: Int, (first_frame: Int, sample_handles: List<SampleHandle>) ->
                 sample_handles.forEachIndexed { j: Int, sample_handle: SampleHandle ->
-                    if (sample_handle.is_dead) {
+                    if (sample_handle.is_dead || (first_frame < this.frame || first_frame >= this.frame + buffer_size)) {
                         return@forEachIndexed
                     }
-                    is_empty = false
 
-                    for (f in this.frame + first_frame until this.frame + buffer_size) {
+                    is_empty = false
+                    for (f in first_frame until this.frame + buffer_size) {
                         if (sample_handle.is_pressed && f == this.sample_release_map[sample_handle.uuid]) {
                             sample_handle.release_note()
                             this.sample_release_map.remove(sample_handle.uuid)
@@ -182,7 +179,7 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
 
                         val frame_value = sample_handle.get_next_frame()
                         if (frame_value == null) {
-                            killed_sample_handles.add(Quad(key.first, key.second, k, j))
+                            killed_sample_handles.add(Quad(key.first, key.second, i, j))
                             break
                         }
 
@@ -232,9 +229,8 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
         }
 
         for (v in initial_array) {
-            max_frame_value = max(max_frame_value, v)
+            max_frame_value = max(max_frame_value, abs(v))
         }
-
 
         var ordered_killed_sample_handles = killed_sample_handles.toMutableList()
         ordered_killed_sample_handles.sortWith { quad, quad2 ->

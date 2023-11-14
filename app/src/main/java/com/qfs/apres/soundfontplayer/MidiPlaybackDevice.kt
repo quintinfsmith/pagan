@@ -1,6 +1,5 @@
 package com.qfs.apres.soundfontplayer
 
-import android.util.Log
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -9,8 +8,7 @@ import kotlin.math.max
 
 open class MidiPlaybackDevice(
         var sample_handle_manager: SampleHandleManager,
-        // (in frames) how many x the buffer size should be delayed
-        private var cache_size_limit: Int? = null) {
+        private var cache_size_limit: Int = 10) {
 
     enum class StopRequest() {
         Play,
@@ -48,7 +46,7 @@ open class MidiPlaybackDevice(
     }
 
 
-    var buffer_delay = 0
+    var buffer_delay = 1
     internal var wave_generator = WaveGenerator(sample_handle_manager)
     private var active_audio_track_handle: AudioTrackHandle? = null
     internal var stop_request = StopRequest.Neutral
@@ -81,14 +79,11 @@ open class MidiPlaybackDevice(
 
             thread {
                 while (!flag_no_more_chunks && this@MidiPlaybackDevice.stop_request != StopRequest.Kill) {
-                    if (this.cache_size_limit == null || chunks.size < this.cache_size_limit!!) {
+                    if (chunks.size < this.cache_size_limit!!) {
                         try {
                             runBlocking {
                                 chunk_mutex.withLock {
-                                    var start_millis = System.currentTimeMillis()
                                     val chunk = this@MidiPlaybackDevice.wave_generator.generate(this@MidiPlaybackDevice.sample_handle_manager.buffer_size)
-                                    var delta = System.currentTimeMillis() - start_millis
-                                    Log.d("AAA", " $delta")
                                     chunks.add(chunk)
                                 }
                                 if (pause_write && chunks.size >= this@MidiPlaybackDevice.buffer_delay) {
@@ -103,6 +98,7 @@ open class MidiPlaybackDevice(
                             break
                         }
                     } else if (!pause_write) {
+
                         val sleep = BUFFER_NANO / 2
                         if (sleep > 0) {
                             Thread.sleep(sleep / 1_000_000, (sleep % 1_000_000).toInt())
@@ -112,22 +108,12 @@ open class MidiPlaybackDevice(
                     }
                 }
             }
+
             while (this.stop_request != StopRequest.Kill) {
                 val write_start_ts = System.nanoTime()
                 if (!pause_write) {
                     if (chunks.isNotEmpty()) {
                         val chunk = chunks.removeAt(0)
-                        //thread {
-                        //    for ((millis, in pointers) {
-                        //        thread {
-                        //            Thread.sleep(millis.toLong())
-                        //            this.on_beat_signal(beat)
-                        //        }
-                        //    }
-                        //}
-
-
-                        Log.d("AAA", "WRITE")
                         audio_track_handle.write(chunk)
                     } else if (!flag_no_more_chunks) {
                         pause_write = true

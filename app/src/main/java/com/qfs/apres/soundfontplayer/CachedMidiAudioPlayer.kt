@@ -8,12 +8,8 @@ import com.qfs.apres.event.ProgramChange
 import com.qfs.apres.event.SetTempo
 import com.qfs.apres.event2.NoteOn79
 
-open class CachedMidiAudioPlayer(sample_handle_manager: SampleHandleManager): MidiPlaybackDevice(
-    sample_handle_manager) {
+open class CachedMidiAudioPlayer(sample_handle_manager: SampleHandleManager): MidiPlaybackDevice(sample_handle_manager) {
     var frame_count: Int = 0
-    init {
-        this.buffer_delay = 1
-    }
     internal fun parse_midi(midi: Midi) {
         var start_frame = this.wave_generator.frame
         var frames_per_tick = ((500_000 / midi.get_ppqn()) * this.sample_handle_manager.sample_rate) / 1_000_000
@@ -56,4 +52,3 @@ open class CachedMidiAudioPlayer(sample_handle_manager: SampleHandleManager): Mi
         this.start_playback()
     }
 }
-

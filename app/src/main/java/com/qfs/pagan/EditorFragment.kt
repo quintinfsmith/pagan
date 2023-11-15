@@ -10,7 +10,6 @@ import android.widget.SeekBar
 import android.widget.TextView
 import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
-import com.qfs.apres.InvalidMIDIFile
 import com.qfs.pagan.databinding.FragmentMainBinding
 import com.qfs.pagan.opusmanager.BaseLayer
 import com.qfs.pagan.opusmanager.BeatKey
@@ -114,9 +113,10 @@ class EditorFragment : PaganFragment() {
     }
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
+        this.clearContextMenu()
 
         if (this.view_model.coarse_x != null) {
-            val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
             editor_table.setup()
             val main = this.get_main()
             val opus_manager = main.get_opus_manager()
@@ -153,17 +153,17 @@ class EditorFragment : PaganFragment() {
         }
 
         setFragmentResultListener(IntentFragmentToken.ImportMidi.name) { _, bundle: Bundle? ->
+            val path = bundle!!.getString("URI") ?: return@setFragmentResultListener
             val main = this.get_main()
-            bundle!!.getString("URI")?.let { path ->
-                try {
-                    main.import_midi(path)
-                } catch (e: InvalidMIDIFile) {
-                    val opus_manager = main.get_opus_manager()
-                    if (!opus_manager.first_load_done) {
-                        main.get_opus_manager().new()
-                    }
-                    main.feedback_msg(getString(R.string.feedback_midi_fail))
+            try {
+                main.import_midi(path)
+            //} catch (e: InvalidMIDIFile) {
+            } catch (e: Exception) {
+                val opus_manager = main.get_opus_manager()
+                if (!opus_manager.first_load_done) {
+                    main.get_opus_manager().new()
                 }
+                main.feedback_msg(getString(R.string.feedback_midi_fail))
             }
         }
 
@@ -321,6 +321,7 @@ class EditorFragment : PaganFragment() {
             opus_manager.insert_beat_at_cursor(1)
             opus_manager.cursor_select_column(beat + 1)
         }
+
         btnInsertBeat.setOnLongClickListener {
             main.dialog_number_input( getString(R.string.dlg_insert_beats), 1, 99) { count: Int ->
                 val beat = opus_manager.cursor.beat

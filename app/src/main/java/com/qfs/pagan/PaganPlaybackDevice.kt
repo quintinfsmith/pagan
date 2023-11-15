@@ -32,7 +32,6 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
     var notification_channel: NotificationChannel? = null
     var active_notification: NotificationCompat.Builder? = null
     var export_wav_thread: Job? = null
-
     override fun on_stop() {
         this.activity.runOnUiThread {
             this.activity.playback_stop()
@@ -249,4 +248,5 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
         this.buffer_delay = original_delay
         this.wave_generator.frame = 0
     }
+
 }

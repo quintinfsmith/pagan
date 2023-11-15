@@ -160,6 +160,10 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
         return output_array
     }
 
+    fun generate(): ShortArray {
+        return this.generate(this.sample_handle_manager.buffer_size)
+    }
+
     fun generate(array: ShortArray) {
         var buffer_size = array.size / 2
         this.timestamp = System.nanoTime()

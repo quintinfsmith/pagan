@@ -10,7 +10,7 @@ import java.io.File
 data class PaganConfiguration(
     var soundfont: String? = null,
     var relative_mode: Boolean = false,
-    var sample_rate: Int = 27562,
+    var sample_rate: Int = 22100,
     var show_percussion: Boolean = true
 ) {
     companion object {

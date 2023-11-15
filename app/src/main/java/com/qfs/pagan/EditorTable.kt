@@ -191,6 +191,9 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         opus_lines.forEachIndexed { i: Int, opus_line: OpusChannel.OpusLine ->
             for (j in 0 until opus_line.beats.size) {
                 val tree = opus_line.beats[j]
+                if (this.column_width_map.size <= j) {
+                    continue
+                }
                 this.column_width_map[j].add(
                     y + i,
                     if (tree.is_leaf()) {
@@ -202,7 +205,11 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             }
         }
         for (j in 0 until this.get_opus_manager().beat_count) {
-            this.column_width_maxes[j] = this.column_width_map[j].max()
+            if (this.column_width_map.size <= j) {
+                this.column_width_maxes[j] = 1
+            } else {
+                this.column_width_maxes[j] = this.column_width_map[j].max()
+            }
         }
         this.line_label_layout.insert_labels(y, opus_lines.size)
         var adapter = (this.main_recycler.adapter as ColumnRecyclerAdapter)

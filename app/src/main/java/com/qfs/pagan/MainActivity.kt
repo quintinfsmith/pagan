@@ -60,7 +60,6 @@ import com.qfs.apres.soundfont.SoundFont
 import com.qfs.apres.soundfontplayer.ActiveMidiAudioPlayer
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.pagan.databinding.ActivityMainBinding
-import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
@@ -157,6 +156,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private var _import_midi_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        this.loading_reticle_show()
         if (result.resultCode == Activity.RESULT_OK) {
             result?.data?.data?.also { uri ->
                 val fragment = this.get_active_fragment()
@@ -560,27 +560,28 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun loading_reticle_show() {
-        runBlocking {
-            this@MainActivity.runOnUiThread {
-                if (this@MainActivity._progress_bar == null) {
-                    this@MainActivity._progress_bar = ProgressBar(this@MainActivity, null, android.R.attr.progressBarStyleLarge)
-                }
-                val params: RelativeLayout.LayoutParams = RelativeLayout.LayoutParams(50, 50)
-                params.addRule(RelativeLayout.CENTER_IN_PARENT)
-                val parent = this@MainActivity._progress_bar!!.parent
-                if (parent != null) {
-                    (parent as ViewGroup).removeView(this@MainActivity._progress_bar)
-                }
-                this@MainActivity.binding.root.addView(this@MainActivity._progress_bar, params)
+        this.runOnUiThread {
+            if (this@MainActivity._progress_bar == null) {
+                this@MainActivity._progress_bar =
+                    ProgressBar(this@MainActivity, null, android.R.attr.progressBarStyleLarge)
             }
+            val params: RelativeLayout.LayoutParams = RelativeLayout.LayoutParams(50, 50)
+            params.addRule(RelativeLayout.CENTER_IN_PARENT)
+            val parent = this@MainActivity._progress_bar!!.parent
+            if (parent != null) {
+                (parent as ViewGroup).removeView(this@MainActivity._progress_bar)
+            }
+            this@MainActivity.binding.root.addView(this@MainActivity._progress_bar, params)
         }
     }
 
     fun loading_reticle_hide() {
-        this.runOnUiThread {
-            val progressBar = this._progress_bar ?: return@runOnUiThread
-            if (progressBar.parent != null) {
-                (progressBar.parent as ViewGroup).removeView(progressBar)
+        thread {
+            this.runOnUiThread {
+                val progressBar = this._progress_bar ?: return@runOnUiThread
+                if (progressBar.parent != null) {
+                    (progressBar.parent as ViewGroup).removeView(progressBar)
+                }
             }
         }
     }
@@ -1280,5 +1281,4 @@ class MainActivity : AppCompatActivity() {
 
         return this.has_notification_permission()
     }
-
 }

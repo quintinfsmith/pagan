@@ -23,6 +23,12 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     private fun simple_ui_locked(): Boolean {
         return this._simple_ui_lock != 0
     }
+    private fun runOnUiThread(callback: (MainActivity) -> Unit) {
+        var main = this.activity
+        main.runOnUiThread {
+            callback(main)
+        }
+    }
 
     private fun <T> surpress_ui(callback:(InterfaceLayer) -> T): T {
         this._simple_ui_lock += 1
@@ -37,38 +43,44 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     override fun set_channel_instrument(channel: Int, instrument: Pair<Int, Int>) {
-        this.activity.loading_reticle_show()
         super.set_channel_instrument(channel, instrument)
 
-        val rvActiveChannels: RecyclerView = this.activity.findViewById(R.id.rvActiveChannels)
-        rvActiveChannels.adapter?.notifyItemChanged(channel)
+        this.runOnUiThread { main: MainActivity ->
+            val rvActiveChannels: RecyclerView = main.findViewById(R.id.rvActiveChannels)
+            rvActiveChannels.adapter?.notifyItemChanged(channel)
 
-        if (this.is_percussion(channel)) {
-            withFragment {
-                it.get_main().populate_active_percussion_names()
+            if (this.is_percussion(channel)) {
+                withFragment {
+                    it.get_main().populate_active_percussion_names()
+                }
             }
-        }
 
-        this.activity.update_channel_instruments()
-        this.activity.loading_reticle_hide()
+            main.update_channel_instruments()
+        }
     }
 
     override fun set_project_name(new_name: String) {
         super.set_project_name(new_name)
-        this.activity.update_title_text()
+        this.runOnUiThread { main: MainActivity ->
+            main.update_title_text()
+        }
     }
 
     override fun unset(beat_key: BeatKey, position: List<Int>) {
         super.unset(beat_key, position)
         if (!this.simple_ui_locked()) {
-            this.get_editor_table()?.notify_cell_change(beat_key)
+            this.runOnUiThread { main: MainActivity ->
+                this.get_editor_table()?.notify_cell_change(beat_key)
+            }
         }
     }
 
     override fun replace_tree(beat_key: BeatKey, position: List<Int>, tree: OpusTree<OpusEvent>) {
         super.replace_tree(beat_key, position, tree)
         if (!this.simple_ui_locked()) {
-            this.get_editor_table()?.notify_cell_change(beat_key)
+            this.runOnUiThread { main: MainActivity ->
+                this.get_editor_table()?.notify_cell_change(beat_key)
+            }
         }
     }
 
@@ -80,67 +92,81 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             this.set_relative_mode(event)
         }
         if (!this.simple_ui_locked()) {
-            this.get_editor_table()?.notify_cell_change(beat_key)
+            this.runOnUiThread { main: MainActivity ->
+                this.get_editor_table()?.notify_cell_change(beat_key)
+            }
         }
     }
 
     override fun set_percussion_event(beat_key: BeatKey, position: List<Int>) {
         super.set_percussion_event(beat_key, position)
         if (!this.simple_ui_locked()) {
-            this.get_editor_table()?.notify_cell_change(beat_key)
+            this.runOnUiThread { main: MainActivity ->
+                this.get_editor_table()?.notify_cell_change(beat_key)
+            }
         }
     }
 
     override fun set_percussion_instrument(line_offset: Int, instrument: Int) {
         super.set_percussion_instrument(line_offset, instrument)
 
-        val btnChoosePercussion: TextView? = this.activity.findViewById(R.id.btnChoosePercussion)
-        if (btnChoosePercussion != null) {
-            if (this.activity.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                // Need to call get_drum name to repopulate instrument list if needed
-                this.activity.get_drum_name(instrument)
+        this.runOnUiThread { main: MainActivity ->
+            val btnChoosePercussion: TextView? = main.findViewById(R.id.btnChoosePercussion)
+            if (btnChoosePercussion != null) {
+                if (main.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                    // Need to call get_drum name to repopulate instrument list if needed
+                    main.get_drum_name(instrument)
 
-                if (instrument < 10) {
-                    btnChoosePercussion.text = "!0$instrument"
+                    if (instrument < 10) {
+                        btnChoosePercussion.text = "!0$instrument"
+                    } else {
+                        btnChoosePercussion.text = "!$instrument"
+                    }
                 } else {
-                    btnChoosePercussion.text = "!$instrument"
+                    btnChoosePercussion.text = main.getString(
+                        R.string.label_choose_percussion,
+                        instrument,
+                        main.get_drum_name(instrument)
+                    )
                 }
-            } else {
-                btnChoosePercussion.text = this.activity.getString(
-                    R.string.label_choose_percussion,
-                    instrument,
-                    this.activity.get_drum_name(instrument)
-                )
+                this.get_editor_table()?.update_line_label(this.channels.size - 1, line_offset)
             }
-            this.get_editor_table()?.update_line_label(this.channels.size - 1, line_offset)
         }
     }
 
     override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
         super.split_tree(beat_key, position, splits)
         if (!this.simple_ui_locked()) {
-            this.get_editor_table()?.notify_cell_change(beat_key)
+            this.runOnUiThread { main: MainActivity ->
+                this.get_editor_table()?.notify_cell_change(beat_key)
+            }
         }
     }
 
     override fun insert_after(beat_key: BeatKey, position: List<Int>) {
         super.insert_after(beat_key, position)
         if (!this.simple_ui_locked()) {
-            this.get_editor_table()?.notify_cell_change(beat_key)
+            this.runOnUiThread { main: MainActivity ->
+                this.get_editor_table()?.notify_cell_change(beat_key)
+            }
         }
     }
 
     override fun insert(beat_key: BeatKey, position: List<Int>) {
         super.insert(beat_key, position)
         if (!this.simple_ui_locked()) {
-            this.get_editor_table()?.notify_cell_change(beat_key)
+            this.runOnUiThread { main: MainActivity ->
+                this.get_editor_table()?.notify_cell_change(beat_key)
+            }
         }
     }
 
     override fun remove(beat_key: BeatKey, position: List<Int>) {
         super.remove(beat_key, position)
         if (!this.simple_ui_locked()) {
-            this.get_editor_table()?.notify_cell_change(beat_key)
+            this.runOnUiThread { main: MainActivity ->
+                this.get_editor_table()?.notify_cell_change(beat_key)
+            }
         }
     }
 
@@ -155,7 +181,9 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
         if (!this.simple_ui_locked()) {
             if (!this.is_percussion(channel) || this.activity.configuration.show_percussion) {
-                this.get_editor_table()?.new_row(abs_offset, output)
+                this.runOnUiThread { main: MainActivity ->
+                    this.get_editor_table()?.new_row(abs_offset, output)
+                }
             }
         }
         return output
@@ -169,7 +197,9 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         super.insert_line(channel, line_offset, line)
         val abs_offset = this.get_abs_offset( channel, line_offset )
         if (!this.simple_ui_locked()) {
-            this.get_editor_table()?.new_row(abs_offset, line)
+            this.runOnUiThread { main: MainActivity ->
+                this.get_editor_table()?.new_row(abs_offset, line)
+            }
         }
 
     }
@@ -215,13 +245,12 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             throw e
         }
 
-        if (!this.simple_ui_locked()) {
-            this.get_editor_table()?.remove_row(abs_line)
+        this.runOnUiThread { main: MainActivity ->
+            if (!this.simple_ui_locked()) {
+                this.get_editor_table()?.remove_row(abs_line)
+            }
+            main.update_channel_instruments()
         }
-
-        //this.cursor_select_row(channel, max(0, line_offset - 1))
-
-        this.activity.update_channel_instruments()
 
         return output
     }
@@ -239,21 +268,23 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
         super.new_channel(channel, lines, uuid)
 
-        val rvActiveChannels: RecyclerView = this.activity.findViewById(R.id.rvActiveChannels)
+        this.runOnUiThread { main: MainActivity ->
+            val rvActiveChannels: RecyclerView = main.findViewById(R.id.rvActiveChannels)
 
-        rvActiveChannels.adapter?.notifyItemChanged(notify_index - 1)
-        rvActiveChannels.adapter?.notifyItemInserted(notify_index)
+            rvActiveChannels.adapter?.notifyItemChanged(notify_index - 1)
+            rvActiveChannels.adapter?.notifyItemInserted(notify_index)
 
-        if (!this.simple_ui_locked()) {
-            this.activity.update_channel_instruments(notify_index)
-            val editor_table = this.get_editor_table()
-            val y = this.get_abs_offset(notify_index, 0)
+            if (!this.simple_ui_locked()) {
+                main.update_channel_instruments(notify_index)
+                val editor_table = this.get_editor_table()
+                val y = this.get_abs_offset(notify_index, 0)
 
-            val line_list = mutableListOf<OpusChannel.OpusLine>()
-            for (i in 0 until lines) {
-                line_list.add(this.channels[notify_index].lines[i])
+                val line_list = mutableListOf<OpusChannel.OpusLine>()
+                for (i in 0 until lines) {
+                    line_list.add(this.channels[notify_index].lines[i])
+                }
+                editor_table?.new_channel_rows(y, line_list)
             }
-            editor_table?.new_channel_rows(y, line_list)
         }
     }
 
@@ -265,9 +296,11 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         super.remove_beat(beat_index)
 
         if (!this.simple_ui_locked()) {
-            val editor_table = this.get_editor_table()
-            editor_table?.remove_column(beat_index)
-            editor_table?.update_cursor(this.cursor)
+            this.runOnUiThread { main: MainActivity ->
+                val editor_table = this.get_editor_table()
+                editor_table?.remove_column(beat_index)
+                editor_table?.update_cursor(this.cursor)
+            }
         }
 
         this.cursor_select_column(beat_index)
@@ -281,98 +314,98 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         super.insert_beat(beat_index, beats_in_column)
 
         if (!this.simple_ui_locked()) {
-            val editor_table = this.get_editor_table()
-            editor_table?.new_column(beat_index)
-            editor_table?.update_cursor(this.cursor)
+            this.runOnUiThread { main: MainActivity ->
+                val editor_table = this.get_editor_table()
+                editor_table?.new_column(beat_index)
+                editor_table?.update_cursor(this.cursor)
+            }
         }
     }
 
     override fun new() {
-        this.activity.loading_reticle_show()
         try {
             this.surpress_ui {
                 super.new()
                 this.cursor_clear()
             }
         } catch (e: Exception) {
-            this.activity.loading_reticle_hide()
             throw e
         }
         this.first_load_done = true
         val new_path = this.activity.get_new_project_path()
         this.path = new_path
 
-        this.activity.validate_percussion_visibility()
-        this.activity.update_menu_options()
-        this.activity.setup_project_config_drawer()
-        this.activity.loading_reticle_hide()
+        this.runOnUiThread { main: MainActivity ->
+            main.validate_percussion_visibility()
+            main.update_menu_options()
+            main.setup_project_config_drawer()
 
-        val editor_table = this.get_editor_table()
-        editor_table?.setup()
+            val editor_table = this.get_editor_table()
+            editor_table?.setup()
+            editor_table?.visibility = View.VISIBLE
 
-        this.activity.update_channel_instruments()
-        this.withFragment {
-            it.clearContextMenu()
+            main.update_channel_instruments()
+            this.withFragment {
+                it.clearContextMenu()
+            }
         }
     }
 
     override fun import_midi(midi: Midi) {
-        this.activity.loading_reticle_show()
         try {
             this.surpress_ui {
-                super.import_midi(midi)
                 this.cursor_clear()
+                super.import_midi(midi)
             }
         } catch (e: Exception) {
-            this.activity.loading_reticle_hide()
             throw e
         }
 
         this.first_load_done = true
-        this.activity.validate_percussion_visibility()
-        this.activity.update_menu_options()
-        this.activity.setup_project_config_drawer()
-        this.activity.loading_reticle_hide()
+        this.runOnUiThread { main: MainActivity ->
+            main.validate_percussion_visibility()
+            main.update_menu_options()
+            main.setup_project_config_drawer()
 
-        val editor_table = this.get_editor_table()
-        editor_table?.setup()
+            val editor_table = this.get_editor_table()
+            editor_table?.setup()
+            editor_table?.visibility = View.VISIBLE
 
-        this.activity.update_channel_instruments()
-        this.withFragment {
-            it.clearContextMenu()
+            main.update_channel_instruments()
+            this.withFragment {
+                it.clearContextMenu()
+            }
         }
     }
 
     override fun load(bytes: ByteArray, new_path: String?) {
-        this.activity.loading_reticle_show()
         try {
             this.surpress_ui {
-                super.load(bytes, new_path)
                 this.cursor_clear()
+                super.load(bytes, new_path)
             }
         } catch (e: Exception) {
-            this.activity.loading_reticle_hide()
             throw e
         }
         this.first_load_done = true
-        this.activity.validate_percussion_visibility()
-        this.activity.update_menu_options()
-        this.activity.setup_project_config_drawer()
-        this.activity.loading_reticle_hide()
+        this.runOnUiThread { main: MainActivity ->
+            main.validate_percussion_visibility()
+            main.update_menu_options()
+            main.setup_project_config_drawer()
 
-        val editor_table = this.get_editor_table()
-        editor_table?.setup()
+            val editor_table = this.get_editor_table()
+            editor_table?.setup()
 
-        this.activity.update_channel_instruments()
-        this.withFragment {
-            it.clearContextMenu()
+            main.update_channel_instruments()
+            this.withFragment {
+                it.clearContextMenu()
+            }
         }
     }
 
     override fun load(path: String) {
         val editor_table = this.get_editor_table()
         editor_table?.clear()
-        this.activity.loading_reticle_show()
 
         try {
             this.surpress_ui {
@@ -380,21 +413,21 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                 this.cursor_clear()
             }
         } catch (e: Exception) {
-            this.activity.loading_reticle_hide()
             throw e
         }
 
         this.first_load_done = true
-        this.activity.validate_percussion_visibility()
-        this.activity.update_menu_options()
-        this.activity.setup_project_config_drawer()
-        this.activity.loading_reticle_hide()
+        this.runOnUiThread { main: MainActivity ->
+            main.validate_percussion_visibility()
+            main.update_menu_options()
+            main.setup_project_config_drawer()
 
-        editor_table?.setup()
+            editor_table?.setup()
 
-        this.activity.update_channel_instruments()
-        this.withFragment {
-            it.clearContextMenu()
+            main.update_channel_instruments()
+            this.withFragment {
+                it.clearContextMenu()
+            }
         }
     }
 
@@ -409,22 +442,26 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
         super.remove_channel(channel)
 
-        val rvActiveChannels: RecyclerView = this.activity.findViewById(R.id.rvActiveChannels)
-        if (rvActiveChannels.adapter != null) {
-            val rvActiveChannels_adapter = rvActiveChannels.adapter as ChannelOptionAdapter
-            rvActiveChannels_adapter.notifyItemRemoved(channel)
-        }
+        this.runOnUiThread { main: MainActivity ->
+            val rvActiveChannels: RecyclerView = main.findViewById(R.id.rvActiveChannels)
+            if (rvActiveChannels.adapter != null) {
+                val rvActiveChannels_adapter = rvActiveChannels.adapter as ChannelOptionAdapter
+                rvActiveChannels_adapter.notifyItemRemoved(channel)
+            }
 
-        if (!this.simple_ui_locked()) {
-            val editor_table = this.get_editor_table()
-            editor_table?.remove_channel_rows(y, lines)
+            if (!this.simple_ui_locked()) {
+                val editor_table = this.get_editor_table()
+                editor_table?.remove_channel_rows(y, lines)
+            }
         }
     }
 
     override fun clear() {
         super.clear()
         this.cursor.clear()
-        this.get_editor_table()?.clear()
+        this.runOnUiThread {
+            this.get_editor_table()?.clear()
+        }
     }
 
     override fun unlink_beat(beat_key: BeatKey) {
@@ -432,11 +469,13 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         update_keys.remove(beat_key)
         super.unlink_beat(beat_key)
 
-        // Need to run update on both the beat_key and *any* of its former link pool
-        val editor_table = this.get_editor_table()
-        editor_table?.notify_cell_change(beat_key)
-        if (update_keys.isNotEmpty()) {
-            editor_table?.notify_cell_change(update_keys.first())
+        this.runOnUiThread {
+            // Need to run update on both the beat_key and *any* of its former link pool
+            val editor_table = this.get_editor_table()
+            editor_table?.notify_cell_change(beat_key)
+            if (update_keys.isNotEmpty()) {
+                editor_table?.notify_cell_change(update_keys.first())
+            }
         }
     }
 
@@ -483,18 +522,22 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
     override fun set_transpose(new_transpose: Int)  {
         super.set_transpose(new_transpose)
-        val btnTranspose: TextView = this.activity.findViewById(R.id.btnTranspose)
-        btnTranspose.text = this.activity.getString(
-            R.string.label_transpose,
-            get_number_string(new_transpose, this.radix, 2)
-        )
+        this.runOnUiThread { main: MainActivity ->
+            val btnTranspose: TextView = main.findViewById(R.id.btnTranspose)
+            btnTranspose.text = main.getString(
+                R.string.label_transpose,
+                get_number_string(new_transpose, this.radix, 2)
+            )
+        }
     }
 
     override fun set_tempo(new_tempo: Float) {
         super.set_tempo(new_tempo)
 
-        val tvTempo = this.activity.findViewById<TextView>(R.id.tvTempo)
-        tvTempo.text = this.activity.getString(R.string.label_bpm, this.tempo.toInt())
+        this.runOnUiThread { main: MainActivity ->
+            val tvTempo = main.findViewById<TextView>(R.id.tvTempo)
+            tvTempo.text = main.getString(R.string.label_bpm, this.tempo.toInt())
+        }
     }
 
     override fun apply_undo() {
@@ -724,75 +767,84 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     // Cursor Functions ////////////////////////////////////////////////////////////////////////////
     fun cursor_clear() {
         this.cursor.clear()
-        val editor_table = this.get_editor_table()
-        editor_table?.update_cursor(this.cursor)
+        this.runOnUiThread {
+            val editor_table = this.get_editor_table()
+            editor_table?.update_cursor(this.cursor)
 
-        this.withFragment {
-            it.clearContextMenu()
+            this.withFragment {
+                it.clearContextMenu()
+            }
         }
     }
 
     fun cursor_select_row(channel: Int, line_offset: Int) {
-        val editor_table = this.get_editor_table()
-
         this.cursor.select_row(channel, line_offset)
+        this.runOnUiThread {
+            val editor_table = this.get_editor_table()
+            editor_table?.update_cursor(this.cursor)
 
-        editor_table?.update_cursor(this.cursor)
-
-        this.withFragment {
-            it.setContextMenu_line()
+            this.withFragment {
+                it.setContextMenu_line()
+            }
+            editor_table?.scroll_to_position(y = this.get_abs_offset(channel, line_offset))
         }
-        editor_table?.scroll_to_position(y = this.get_abs_offset(channel, line_offset))
     }
 
     fun cursor_select_column(beat: Int, force_scroll: Boolean = false) {
         this.cursor.select_column(beat)
-        this.activity.runOnUiThread {
-            val editor_table = this.get_editor_table()
-            editor_table?.update_cursor(this.cursor)
+        this.runOnUiThread {
             this.withFragment {
                 it.setContextMenu_column()
             }
-            editor_table?.scroll_to_position(x = beat, force = force_scroll)
+            val editor_table = this.get_editor_table() ?: return@runOnUiThread
+            editor_table.update_cursor(this.cursor)
+            editor_table.scroll_to_position(x = beat, force = force_scroll)
         }
     }
 
     fun cursor_select(beat_key: BeatKey, position: List<Int>) {
-        val editor_table = this.get_editor_table()
         this.cursor.select(beat_key, position)
 
-        this.withFragment {
-            it.setContextMenu_leaf()
-        }
+        this.runOnUiThread {
+            this.withFragment {
+                it.setContextMenu_leaf()
+            }
 
-        editor_table?.update_cursor(this.cursor)
-        editor_table?.scroll_to_position(beat_key, position)
+            val editor_table = this.get_editor_table() ?: return@runOnUiThread
+            editor_table.update_cursor(this.cursor)
+            editor_table.scroll_to_position(beat_key, position)
+        }
     }
 
     fun cursor_select_to_link(beat_key: BeatKey) {
         this.cursor.select_to_link(beat_key)
 
-        val editor_table = this.get_editor_table()
-        editor_table?.update_cursor(this.cursor)
-
-        this.withFragment {
-            it.setContextMenu_linking()
+        this.runOnUiThread {
+            this.withFragment {
+                it.setContextMenu_linking()
+            }
+            val editor_table = this.get_editor_table() ?: return@runOnUiThread
+            editor_table.update_cursor(this.cursor)
         }
     }
     fun cursor_select_range_to_link(beat_key_a: BeatKey, beat_key_b: BeatKey) {
         this.cursor.select_range(beat_key_a, beat_key_b)
 
-        val editor_table = this.get_editor_table()
-        editor_table?.update_cursor(this.cursor)
+        this.runOnUiThread {
+            this.withFragment {
+                it.setContextMenu_linking()
+            }
+            val editor_table = this.get_editor_table() ?: return@runOnUiThread
+            editor_table.update_cursor(this.cursor)
 
-        this.withFragment {
-            it.setContextMenu_linking()
         }
     }
 
     fun cursor_select_range(beat_key_a: BeatKey, beat_key_b: BeatKey) {
         this.cursor.select_range(beat_key_a, beat_key_b)
-        this.get_editor_table()?.update_cursor(this.cursor)
+        this.runOnUiThread {
+            this.get_editor_table()?.update_cursor(this.cursor)
+        }
     }
 
     fun get_tree(): OpusTree<OpusEvent> {
@@ -863,10 +915,12 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
        val update_keys = this.get_all_linked(beat_key).toMutableList()
        super.clear_link_pool(beat_key)
 
-       // Need to run update on both the beat_key and *any* of its former link pool
-       val editor_table = this.get_editor_table()
-       for (unlinked in update_keys) {
-           editor_table?.notify_cell_change(unlinked)
+       this.runOnUiThread {
+           // Need to run update on both the beat_key and *any* of its former link pool
+           val editor_table = this.get_editor_table() ?: return@runOnUiThread
+           for (unlinked in update_keys) {
+               editor_table.notify_cell_change(unlinked)
+           }
        }
     }
 
@@ -1007,15 +1061,17 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
     override fun set_radix(radix: Int, mod_events: Boolean) {
         super.set_radix(radix, mod_events)
-        val btnTranspose: TextView = this.activity.findViewById(R.id.btnRadix)
-        btnTranspose.text = this.activity.getString(
-            R.string.label_radix,
-            radix
-        )
+        this.runOnUiThread { main: MainActivity ->
+            val btnTranspose: TextView = main.findViewById(R.id.btnRadix)
+            btnTranspose.text = main.getString(
+                R.string.label_radix,
+                radix
+            )
 
-        this.withFragment {
-            it.reset_context_menu()
-            this.activity.setup_project_config_drawer_export_button()
+            this.withFragment {
+                it.reset_context_menu()
+                main.setup_project_config_drawer_export_button()
+            }
         }
     }
 

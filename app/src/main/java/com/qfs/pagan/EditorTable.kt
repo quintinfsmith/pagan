@@ -2,7 +2,6 @@ package com.qfs.pagan
 
 import android.content.Context
 import android.util.AttributeSet
-import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
@@ -139,6 +138,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             }
         }
         main_adapter.add_columns(0, opus_manager.beat_count)
+
     }
 
     fun init_column_width_map() {
@@ -169,7 +169,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     }
 
     fun new_row(y: Int, opus_line: OpusChannel.OpusLine, ignore_ui: Boolean = false) {
-        for (i in 0 until opus_line.beats.size) {
+        for (i in 0 until this.get_opus_manager().beat_count) {
             val tree = opus_line.beats[i]
             this.column_width_map[i].add(
                 y,
@@ -364,7 +364,6 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             }
 
             val original_width = this.column_width_maxes[linked_beat_key.beat]
-            Log.d("AAA", "${linked_beat_key}| $y")
             this.column_width_map[linked_beat_key.beat][y] = new_cell_width
             this.column_width_maxes[linked_beat_key.beat] = this.column_width_map[linked_beat_key.beat].max()
 
@@ -544,9 +543,10 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                 this.new_row(this.line_label_layout.get_count(), percussion_channel.lines[i])
             }
         } else {
-            var abs_y = opus_manager.get_abs_offset(opus_manager.channels.size - 1, 0)
-            for (i in 0 until percussion_channel.size) {
-                this.remove_row(abs_y)
+            var target_line_count = opus_manager.get_visible_line_count()
+            var current_line_count = opus_manager.get_total_line_count()
+            for (i in target_line_count until current_line_count) {
+                this.remove_row(target_line_count)
             }
         }
     }

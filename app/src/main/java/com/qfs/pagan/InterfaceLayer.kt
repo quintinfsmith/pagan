@@ -369,6 +369,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             main.setup_project_config_drawer()
 
             val editor_table = this.get_editor_table()
+            editor_table?.clear()
             editor_table?.setup()
             editor_table?.visibility = View.VISIBLE
 
@@ -396,6 +397,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             main.setup_project_config_drawer()
 
             val editor_table = this.get_editor_table()
+            editor_table?.clear()
             editor_table?.setup()
             editor_table?.visibility = View.VISIBLE
 
@@ -422,6 +424,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             main.setup_project_config_drawer()
 
             val editor_table = this.get_editor_table()
+            editor_table?.clear()
             editor_table?.setup()
 
             main.update_channel_instruments()
@@ -450,6 +453,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             main.update_menu_options()
             main.setup_project_config_drawer()
 
+            editor_table?.clear()
             editor_table?.setup()
 
             main.update_channel_instruments()

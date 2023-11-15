@@ -142,51 +142,67 @@ class EditorFragment : PaganFragment() {
         }
 
         setFragmentResultListener(IntentFragmentToken.Load.name) { _, bundle: Bundle? ->
-            if (bundle == null) {
-                return@setFragmentResultListener
-            }
-
-            bundle.getString("PATH")?.let { path: String ->
-                val main = this.get_main()
-                main.get_opus_manager().load(path)
+            val main = this.get_main()
+            main.loading_reticle_show()
+            thread {
+                val path = bundle?.getString("PATH")
+                if (path != null) {
+                    main.get_opus_manager().load(path)
+                }
+                main.loading_reticle_hide()
             }
         }
 
         setFragmentResultListener(IntentFragmentToken.ImportMidi.name) { _, bundle: Bundle? ->
-            val path = bundle!!.getString("URI") ?: return@setFragmentResultListener
             val main = this.get_main()
-            try {
-                main.import_midi(path)
-            //} catch (e: InvalidMIDIFile) {
-            } catch (e: Exception) {
-                val opus_manager = main.get_opus_manager()
-                if (!opus_manager.first_load_done) {
-                    main.get_opus_manager().new()
+            main.loading_reticle_show()
+            thread {
+                val path = bundle?.getString("URI")
+                if (path != null) {
+                    main.import_midi(path)
+                    //try {
+                    //    main.import_midi(path)
+                    //    //} catch (e: InvalidMIDIFile) {
+                    //} catch (e: Exception) {
+                    //    val opus_manager = main.get_opus_manager()
+                    //    if (!opus_manager.first_load_done) {
+                    //        main.get_opus_manager().new()
+                    //    }
+                    //    main.feedback_msg(getString(R.string.feedback_midi_fail))
+                    //}
                 }
-                main.feedback_msg(getString(R.string.feedback_midi_fail))
+                main.loading_reticle_hide()
             }
         }
 
         setFragmentResultListener(IntentFragmentToken.ImportProject.name) { _, bundle: Bundle? ->
             val main = this.get_main()
-            try {
-                bundle!!.getString("URI")?.let { path ->
-                    main.import_project(path)
-                }
-            } catch (e: Exception) {
-                val opus_manager = main.get_opus_manager()
-                // if Not Loaded, just create new and throw a message up
-                if (!opus_manager.first_load_done) {
-                    opus_manager.new()
-                }
+            main.loading_reticle_show()
+            thread {
+                try {
+                    bundle!!.getString("URI")?.let { path ->
+                        main.import_project(path)
+                    }
+                } catch (e: Exception) {
+                    val opus_manager = main.get_opus_manager()
+                    // if Not Loaded, just create new and throw a message up
+                    if (!opus_manager.first_load_done) {
+                        opus_manager.new()
+                    }
 
-                this.get_main().feedback_msg(getString(R.string.feedback_import_fail))
+                    this.get_main().feedback_msg(getString(R.string.feedback_import_fail))
+                }
+                main.loading_reticle_hide()
             }
         }
 
         setFragmentResultListener(IntentFragmentToken.New.name) { _, _: Bundle? ->
             val main = this.get_main()
-            main.get_opus_manager().new()
+            main.loading_reticle_show()
+            thread {
+                main.get_opus_manager().new()
+                main.loading_reticle_hide()
+            }
         }
 
     }

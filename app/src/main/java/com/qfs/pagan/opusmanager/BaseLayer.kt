@@ -40,6 +40,11 @@ open class BaseLayer {
 
     companion object {
         var DEFAULT_PERCUSSION: Int = 0
+        fun from_midi(midi: Midi): BaseLayer {
+            var new = BaseLayer()
+            new.import_midi(midi)
+            return new
+        }
     }
 
     private var _channel_uuid_generator: Int = 0x00
@@ -1443,6 +1448,19 @@ open class BaseLayer {
         }
 
         return Triple(opus, tempo, instrument_map)
+    }
+
+    open fun import_from_other(other: BaseLayer) {
+        this.clear()
+        this.beat_count = other.beat_count
+        this.tempo = other.tempo
+        this.channels = other.channels
+        this.path = other.path
+        this.project_name = other.project_name
+        this.radix = other.radix
+        this.transpose = other.transpose
+        this._cached_abs_line_map = other._cached_abs_line_map
+        this._cached_std_line_map = other._cached_std_line_map
     }
 
     open fun import_midi(midi: Midi) {

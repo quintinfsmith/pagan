@@ -2,6 +2,7 @@ package com.qfs.pagan
 
 import android.content.Context
 import android.util.AttributeSet
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
@@ -115,6 +116,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     fun clear() {
         this.column_width_map.clear()
         this.column_width_maxes.clear()
+
         (this.main_recycler.adapter!! as ColumnRecyclerAdapter).clear()
         (this.column_label_recycler.adapter!! as ColumnLabelAdapter).clear()
         this.line_label_layout.clear()
@@ -166,7 +168,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         this.initializing_column_width_map = false
     }
 
-    fun new_row(y: Int, opus_line: OpusChannel.OpusLine) {
+    fun new_row(y: Int, opus_line: OpusChannel.OpusLine, ignore_ui: Boolean = false) {
         for (i in 0 until opus_line.beats.size) {
             val tree = opus_line.beats[i]
             this.column_width_map[i].add(
@@ -180,14 +182,16 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             this.column_width_maxes[i] = this.column_width_map[i].max()
         }
 
-        var adapter = (this.main_recycler.adapter as ColumnRecyclerAdapter)
-        adapter.insert_row(y)
-        (this.column_label_recycler.adapter as ColumnLabelAdapter).notifyDataSetChanged()
+        if (!ignore_ui) {
+            var adapter = (this.main_recycler.adapter as ColumnRecyclerAdapter)
+            adapter.insert_row(y)
+            (this.column_label_recycler.adapter as ColumnLabelAdapter).notifyDataSetChanged()
 
-        this.line_label_layout.insert_label(y)
+            this.line_label_layout.insert_label(y)
+        }
     }
 
-    fun new_channel_rows(y: Int, opus_lines: List<OpusChannel.OpusLine>) {
+    fun new_channel_rows(y: Int, opus_lines: List<OpusChannel.OpusLine>, ignore_ui: Boolean = false) {
         opus_lines.forEachIndexed { i: Int, opus_line: OpusChannel.OpusLine ->
             for (j in 0 until opus_line.beats.size) {
                 val tree = opus_line.beats[j]
@@ -211,35 +215,42 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                 this.column_width_maxes[j] = this.column_width_map[j].max()
             }
         }
-        this.line_label_layout.insert_labels(y, opus_lines.size)
-        var adapter = (this.main_recycler.adapter as ColumnRecyclerAdapter)
-        adapter.insert_rows(y, opus_lines.size)
-        (this.column_label_recycler.adapter as ColumnLabelAdapter).notifyDataSetChanged()
+
+        if (! ignore_ui) {
+            this.line_label_layout.insert_labels(y, opus_lines.size)
+            var adapter = (this.main_recycler.adapter as ColumnRecyclerAdapter)
+            adapter.insert_rows(y, opus_lines.size)
+            (this.column_label_recycler.adapter as ColumnLabelAdapter).notifyDataSetChanged()
+        }
     }
 
-    fun remove_row(y: Int) {
+    fun remove_row(y: Int, ignore_ui: Boolean = false) {
         for (i in 0 until this.column_width_map.size) {
             this.column_width_map[i].removeAt(y)
             this.column_width_maxes[i] = this.column_width_map[i].max()
         }
-        (this.main_recycler.adapter as ColumnRecyclerAdapter).remove_row(y)
-        this.line_label_layout.remove_label(y)
-        (this.column_label_recycler.adapter as ColumnLabelAdapter).notifyDataSetChanged()
+        if (! ignore_ui) {
+            (this.main_recycler.adapter as ColumnRecyclerAdapter).remove_row(y)
+            this.line_label_layout.remove_label(y)
+            (this.column_label_recycler.adapter as ColumnLabelAdapter).notifyDataSetChanged()
+        }
     }
 
-    fun remove_channel_rows(y: Int, count: Int) {
+    fun remove_channel_rows(y: Int, count: Int, ignore_ui: Boolean = false) {
         for (i in 0 until this.column_width_map.size) {
             for (j in 0 until count) {
                 this.column_width_map[i].removeAt(y)
                 this.column_width_maxes[i] = this.column_width_map[i].max()
             }
         }
-        (this.main_recycler.adapter as ColumnRecyclerAdapter).remove_rows(y, count)
-        this.line_label_layout.remove_labels(y, count)
-        (this.column_label_recycler.adapter as ColumnLabelAdapter).notifyDataSetChanged()
+        if (! ignore_ui) {
+            (this.main_recycler.adapter as ColumnRecyclerAdapter).remove_rows(y, count)
+            this.line_label_layout.remove_labels(y, count)
+            (this.column_label_recycler.adapter as ColumnLabelAdapter).notifyDataSetChanged()
+        }
     }
 
-    fun new_column(index: Int) {
+    fun new_column(index: Int, ignore_ui: Boolean = false) {
         val opus_manager = this.get_opus_manager()
         val column = mutableListOf<Int>()
         opus_manager.get_visible_channels().forEachIndexed { i: Int, channel: OpusChannel ->
@@ -256,15 +267,19 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         this.column_width_map.add(index, column)
         this.column_width_maxes.add(index, column.max())
 
-        (this.column_label_recycler.adapter!! as ColumnLabelAdapter).add_column(index)
-        (this.main_recycler.adapter as ColumnRecyclerAdapter).add_column(index)
+        if (! ignore_ui) {
+            (this.column_label_recycler.adapter!! as ColumnLabelAdapter).add_column(index)
+            (this.main_recycler.adapter as ColumnRecyclerAdapter).add_column(index)
+        }
     }
 
-    fun remove_column(index: Int) {
+    fun remove_column(index: Int, ignore_ui: Boolean = false) {
         this.column_width_map.removeAt(index)
         this.column_width_maxes.removeAt(index)
-        (this.column_label_recycler.adapter!! as ColumnLabelAdapter).remove_column(index)
-        (this.main_recycler.adapter as ColumnRecyclerAdapter).remove_column(index)
+        if (! ignore_ui) {
+            (this.column_label_recycler.adapter!! as ColumnLabelAdapter).remove_column(index)
+            (this.main_recycler.adapter as ColumnRecyclerAdapter).remove_column(index)
+        }
     }
 
     fun update_cursor(opusManagerCursor: OpusManagerCursor) {
@@ -327,7 +342,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         }
     }
 
-    fun notify_cell_change(beat_key: BeatKey) {
+    fun notify_cell_change(beat_key: BeatKey, ignore_ui: Boolean = false) {
         val opus_manager = this.get_opus_manager()
         val main_recycler_adapter = (this.main_recycler.adapter!! as ColumnRecyclerAdapter)
 
@@ -349,6 +364,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             }
 
             val original_width = this.column_width_maxes[linked_beat_key.beat]
+            Log.d("AAA", "${linked_beat_key}| $y")
             this.column_width_map[linked_beat_key.beat][y] = new_cell_width
             this.column_width_maxes[linked_beat_key.beat] = this.column_width_map[linked_beat_key.beat].max()
 
@@ -359,17 +375,19 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             }
         }
 
-        // In set so as to not notify the same column multiple times
-        for (beat in changed_beats) {
-            this.column_label_recycler.adapter!!.notifyItemChanged(beat)
-            main_recycler_adapter.notifyItemChanged(beat)
-        }
-        for (beat_key in changed_beat_keys) {
-            // Don't bother notifying beat changed, was handled in column notification
-            if (beat_key.beat in changed_beats) {
-                continue
+        if (! ignore_ui) {
+            // In set so as to not notify the same column multiple times
+            for (beat in changed_beats) {
+                this.column_label_recycler.adapter!!.notifyItemChanged(beat)
+                main_recycler_adapter.notifyItemChanged(beat)
             }
-            main_recycler_adapter.notifyCellChanged(beat_key)
+            for (beat_key in changed_beat_keys) {
+                // Don't bother notifying beat changed, was handled in column notification
+                if (beat_key.beat in changed_beats) {
+                    continue
+                }
+                main_recycler_adapter.notifyCellChanged(beat_key)
+            }
         }
     }
 
@@ -519,14 +537,16 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
     fun update_percussion_visibility() {
         val main = this.get_activity()
-        val percussion_channel = this.get_opus_manager().channels.last()
+        var opus_manager = this.get_opus_manager()
+        val percussion_channel = opus_manager.channels.last()
         if (main.configuration.show_percussion) {
             for (i in 0 until percussion_channel.size) {
                 this.new_row(this.line_label_layout.get_count(), percussion_channel.lines[i])
             }
         } else {
+            var abs_y = opus_manager.get_abs_offset(opus_manager.channels.size - 1, 0)
             for (i in 0 until percussion_channel.size) {
-                this.remove_row(this.line_label_layout.get_count() - 1)
+                this.remove_row(abs_y)
             }
         }
     }

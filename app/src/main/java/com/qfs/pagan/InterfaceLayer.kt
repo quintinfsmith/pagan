@@ -81,6 +81,8 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             this.runOnUiThread { main: MainActivity ->
                 this.get_editor_table()?.notify_cell_change(beat_key)
             }
+        } else {
+            this.get_editor_table()?.notify_cell_change(beat_key, true)
         }
     }
 
@@ -136,9 +138,13 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
     override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
         super.split_tree(beat_key, position, splits)
-        if (!this.simple_ui_locked()) {
-            this.runOnUiThread { main: MainActivity ->
-                this.get_editor_table()?.notify_cell_change(beat_key)
+        if (!this.is_percussion(beat_key.channel) || this.activity.configuration.show_percussion) {
+            if (!this.simple_ui_locked()) {
+                this.runOnUiThread { main: MainActivity ->
+                    this.get_editor_table()?.notify_cell_change(beat_key)
+                }
+            } else {
+                this.get_editor_table()?.notify_cell_change(beat_key, true)
             }
         }
     }
@@ -149,6 +155,8 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             this.runOnUiThread { main: MainActivity ->
                 this.get_editor_table()?.notify_cell_change(beat_key)
             }
+        } else {
+            this.get_editor_table()?.notify_cell_change(beat_key, true)
         }
     }
 
@@ -158,6 +166,8 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             this.runOnUiThread { main: MainActivity ->
                 this.get_editor_table()?.notify_cell_change(beat_key)
             }
+        } else {
+            this.get_editor_table()?.notify_cell_change(beat_key, true)
         }
     }
 
@@ -167,6 +177,8 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             this.runOnUiThread { main: MainActivity ->
                 this.get_editor_table()?.notify_cell_change(beat_key)
             }
+        } else {
+            this.get_editor_table()?.notify_cell_change(beat_key, true)
         }
     }
 
@@ -179,11 +191,13 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
         //this.cursor_select_row(channel, line_offset ?: this.channels[channel].lines.size - 1)
 
-        if (!this.simple_ui_locked()) {
-            if (!this.is_percussion(channel) || this.activity.configuration.show_percussion) {
+        if (!this.is_percussion(channel) || this.activity.configuration.show_percussion) {
+            if (!this.simple_ui_locked()) {
                 this.runOnUiThread { main: MainActivity ->
                     this.get_editor_table()?.new_row(abs_offset, output)
                 }
+            } else {
+                this.get_editor_table()?.new_row(abs_offset, output, true)
             }
         }
         return output
@@ -200,6 +214,8 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             this.runOnUiThread { main: MainActivity ->
                 this.get_editor_table()?.new_row(abs_offset, line)
             }
+        } else {
+            this.get_editor_table()?.new_row(abs_offset, line, true)
         }
 
     }
@@ -245,12 +261,15 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             throw e
         }
 
-        this.runOnUiThread { main: MainActivity ->
-            if (!this.simple_ui_locked()) {
+        if (!this.simple_ui_locked()) {
+            this.runOnUiThread { main: MainActivity ->
                 this.get_editor_table()?.remove_row(abs_line)
             }
-            main.update_channel_instruments()
+        } else {
+            this.get_editor_table()?.remove_row(abs_line, true)
         }
+
+        this.activity.update_channel_instruments()
 
         return output
     }
@@ -268,22 +287,27 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
         super.new_channel(channel, lines, uuid)
 
-        this.runOnUiThread { main: MainActivity ->
-            val rvActiveChannels: RecyclerView = main.findViewById(R.id.rvActiveChannels)
+        val editor_table = this.get_editor_table()
+        val line_list = mutableListOf<OpusChannel.OpusLine>()
+        for (i in 0 until lines) {
+            line_list.add(this.channels[notify_index].lines[i])
+        }
+        val y = this.get_abs_offset(notify_index, 0)
 
-            rvActiveChannels.adapter?.notifyItemChanged(notify_index - 1)
-            rvActiveChannels.adapter?.notifyItemInserted(notify_index)
-
+        if (!this.is_percussion(notify_index) || this.activity.configuration.show_percussion) {
             if (!this.simple_ui_locked()) {
-                main.update_channel_instruments(notify_index)
-                val editor_table = this.get_editor_table()
-                val y = this.get_abs_offset(notify_index, 0)
+                this.runOnUiThread { main: MainActivity ->
+                    val rvActiveChannels: RecyclerView = main.findViewById(R.id.rvActiveChannels)
 
-                val line_list = mutableListOf<OpusChannel.OpusLine>()
-                for (i in 0 until lines) {
-                    line_list.add(this.channels[notify_index].lines[i])
+                    rvActiveChannels.adapter?.notifyItemChanged(notify_index - 1)
+                    rvActiveChannels.adapter?.notifyItemInserted(notify_index)
+
+                    main.update_channel_instruments(notify_index)
+
+                    editor_table?.new_channel_rows(y, line_list)
                 }
-                editor_table?.new_channel_rows(y, line_list)
+            } else {
+                editor_table?.new_channel_rows(y, line_list, true)
             }
         }
     }
@@ -295,12 +319,14 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
         super.remove_beat(beat_index)
 
+        val editor_table = this.get_editor_table()
         if (!this.simple_ui_locked()) {
             this.runOnUiThread { main: MainActivity ->
-                val editor_table = this.get_editor_table()
                 editor_table?.remove_column(beat_index)
                 editor_table?.update_cursor(this.cursor)
             }
+        } else {
+            editor_table?.remove_column(beat_index, true)
         }
 
         this.cursor_select_column(beat_index)
@@ -313,13 +339,16 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
         super.insert_beat(beat_index, beats_in_column)
 
+        val editor_table = this.get_editor_table()
         if (!this.simple_ui_locked()) {
             this.runOnUiThread { main: MainActivity ->
-                val editor_table = this.get_editor_table()
                 editor_table?.new_column(beat_index)
                 editor_table?.update_cursor(this.cursor)
             }
+        } else {
+            editor_table?.new_column(beat_index, true)
         }
+
     }
 
     override fun new() {
@@ -334,7 +363,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         this.first_load_done = true
         val new_path = this.activity.get_new_project_path()
         this.path = new_path
-
         this.runOnUiThread { main: MainActivity ->
             main.validate_percussion_visibility()
             main.update_menu_options()
@@ -442,14 +470,14 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
         super.remove_channel(channel)
 
-        this.runOnUiThread { main: MainActivity ->
-            val rvActiveChannels: RecyclerView = main.findViewById(R.id.rvActiveChannels)
-            if (rvActiveChannels.adapter != null) {
-                val rvActiveChannels_adapter = rvActiveChannels.adapter as ChannelOptionAdapter
-                rvActiveChannels_adapter.notifyItemRemoved(channel)
-            }
+        if (!this.simple_ui_locked()) {
+            this.runOnUiThread { main: MainActivity ->
+                val rvActiveChannels: RecyclerView = main.findViewById(R.id.rvActiveChannels)
+                if (rvActiveChannels.adapter != null) {
+                    val rvActiveChannels_adapter = rvActiveChannels.adapter as ChannelOptionAdapter
+                    rvActiveChannels_adapter.notifyItemRemoved(channel)
+                }
 
-            if (!this.simple_ui_locked()) {
                 val editor_table = this.get_editor_table()
                 editor_table?.remove_channel_rows(y, lines)
             }
@@ -457,7 +485,9 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     override fun clear() {
-        super.clear()
+        this.surpress_ui {
+            super.clear()
+        }
         this.cursor.clear()
         this.runOnUiThread {
             this.get_editor_table()?.clear()
@@ -469,12 +499,20 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         update_keys.remove(beat_key)
         super.unlink_beat(beat_key)
 
-        this.runOnUiThread {
+        val editor_table = this.get_editor_table()
+        if (!this.simple_ui_locked()) {
+            this.runOnUiThread {
+                // Need to run update on both the beat_key and *any* of its former link pool
+                editor_table?.notify_cell_change(beat_key)
+                if (update_keys.isNotEmpty()) {
+                    editor_table?.notify_cell_change(update_keys.first())
+                }
+            }
+        } else {
             // Need to run update on both the beat_key and *any* of its former link pool
-            val editor_table = this.get_editor_table()
-            editor_table?.notify_cell_change(beat_key)
+            editor_table?.notify_cell_change(beat_key, true)
             if (update_keys.isNotEmpty()) {
-                editor_table?.notify_cell_change(update_keys.first())
+                editor_table?.notify_cell_change(update_keys.first(), true)
             }
         }
     }
@@ -767,26 +805,30 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     // Cursor Functions ////////////////////////////////////////////////////////////////////////////
     fun cursor_clear() {
         this.cursor.clear()
-        this.runOnUiThread {
-            val editor_table = this.get_editor_table()
-            editor_table?.update_cursor(this.cursor)
+        if (!this.simple_ui_locked()) {
+            this.runOnUiThread {
+                val editor_table = this.get_editor_table()
+                editor_table?.update_cursor(this.cursor)
 
-            this.withFragment {
-                it.clearContextMenu()
+                this.withFragment {
+                    it.clearContextMenu()
+                }
             }
         }
     }
 
     fun cursor_select_row(channel: Int, line_offset: Int) {
         this.cursor.select_row(channel, line_offset)
-        this.runOnUiThread {
-            val editor_table = this.get_editor_table()
-            editor_table?.update_cursor(this.cursor)
+        if (!this.simple_ui_locked()) {
+            this.runOnUiThread {
+                val editor_table = this.get_editor_table()
+                editor_table?.update_cursor(this.cursor)
 
-            this.withFragment {
-                it.setContextMenu_line()
+                this.withFragment {
+                    it.setContextMenu_line()
+                }
+                editor_table?.scroll_to_position(y = this.get_abs_offset(channel, line_offset))
             }
-            editor_table?.scroll_to_position(y = this.get_abs_offset(channel, line_offset))
         }
     }
 
@@ -915,11 +957,17 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
        val update_keys = this.get_all_linked(beat_key).toMutableList()
        super.clear_link_pool(beat_key)
 
-       this.runOnUiThread {
-           // Need to run update on both the beat_key and *any* of its former link pool
-           val editor_table = this.get_editor_table() ?: return@runOnUiThread
+       val editor_table = this.get_editor_table() ?: return
+       if (! simple_ui_locked()) {
+           this.runOnUiThread {
+               // Need to run update on both the beat_key and *any* of its former link pool
+               for (unlinked in update_keys) {
+                   editor_table.notify_cell_change(unlinked)
+               }
+           }
+       } else {
            for (unlinked in update_keys) {
-               editor_table.notify_cell_change(unlinked)
+               editor_table.notify_cell_change(unlinked, true)
            }
        }
     }

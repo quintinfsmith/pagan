@@ -156,7 +156,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private var _import_midi_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        this.loading_reticle_show()
         if (result.resultCode == Activity.RESULT_OK) {
             result?.data?.data?.also { uri ->
                 val fragment = this.get_active_fragment()
@@ -851,26 +850,23 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
     fun import_midi(path: String) {
-        this.applicationContext.contentResolver.openFileDescriptor(Uri.parse(path), "r")?.use {
-            val bytes = FileInputStream(it.fileDescriptor).readBytes()
+        val bytes = this.applicationContext.contentResolver.openFileDescriptor(Uri.parse(path), "r")?.use {
+            FileInputStream(it.fileDescriptor).readBytes()
+        } ?: return // TODO. throw error?
 
-            val midi = try {
-                Midi.from_bytes(bytes)
-            } catch (e: Exception) {
-                throw InvalidMIDIFile(path)
-            }
-
-            val filename = this.parse_file_name(Uri.parse(path))
-            val new_path = this.project_manager.get_new_path()
-
-            this._opus_manager.import_midi(midi)
-            this._opus_manager.path = new_path
-            this._opus_manager.set_project_name(filename?.substring(0, filename?.lastIndexOf(".") ?: filename.length) ?: getString(R.string.default_imported_midi_title))
-            this._opus_manager.clear_history()
+        val midi = try {
+            Midi.from_bytes(bytes)
+        } catch (e: Exception) {
+            throw InvalidMIDIFile(path)
         }
-        this.loading_reticle_hide()
+        this._opus_manager.import_midi(midi)
+        val filename = this.parse_file_name(Uri.parse(path))
+        val new_path = this.project_manager.get_new_path()
+
+        this._opus_manager.path = new_path
+        this._opus_manager.set_project_name(filename?.substring(0, filename?.lastIndexOf(".") ?: filename.length) ?: getString(R.string.default_imported_midi_title))
+        this._opus_manager.clear_history()
     }
 
     fun has_projects_saved(): Boolean {

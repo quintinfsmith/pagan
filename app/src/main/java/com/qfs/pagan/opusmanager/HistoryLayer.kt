@@ -289,6 +289,7 @@ open class HistoryLayer : LinksLayer() {
                         channel = channel,
                         uuid = current_node.args[1] as Int
                     )
+                    this.set_channel_instrument(channel, Pair(current_node.args[2] as Int, current_node.args[3] as Int))
                 }
 
                 HistoryToken.REMOVE -> {
@@ -670,7 +671,9 @@ open class HistoryLayer : LinksLayer() {
                     HistoryToken.NEW_CHANNEL,
                     listOf(
                         channel,
-                        this.channels[channel].uuid
+                        this.channels[channel].uuid,
+                        this.channels[channel].midi_bank,
+                        this.channels[channel].midi_program
                     )
                 )
             )

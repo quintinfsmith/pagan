@@ -303,13 +303,16 @@ class EditorFragment : PaganFragment() {
         val llContextLink = this.activity!!.findViewById<View>(R.id.llContextLink)
         llContextCell.visibility = View.GONE
         llContextRow.visibility = View.GONE
-        llContextCol.visibility = View.VISIBLE
         llContextLink.visibility = View.GONE
-        //////////////////////////////////////////////////////////
+
         val main = this.get_main()
         if (main.in_playback()) {
+            llContextCol.visibility = View.GONE
             return
+        } else {
+            llContextCol.visibility = View.VISIBLE
         }
+        //////////////////////////////////////////////////////////
 
         val opus_manager = main.get_opus_manager()
 

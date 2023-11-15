@@ -67,18 +67,49 @@ open class MidiPlaybackDevice(
          */
         val audio_track_handle = this.active_audio_track_handle!!
         thread {
-            this.wave_generator.timestamp = System.nanoTime()
+            var buffer_millis = this.BUFFER_NANO / 1000000
+            var chunks = mutableListOf<Triple<ShortArray, List<Pair<Int, Int>>, Int>>()
+            var building_chunks = true
+            thread {
+                while (this.stop_request != StopRequest.Kill) {
+                    if (chunks.size >= 4) {
+                        Thread.sleep(buffer_millis)
+                        continue
+                    }
+                    var frame = this.wave_generator.frame
+                    var chunk = try {
+                        this@MidiPlaybackDevice.wave_generator.generate(this@MidiPlaybackDevice.sample_handle_manager.buffer_size)
+                    } catch (e: WaveGenerator.KilledException) {
+                        break
+                    } catch (e: WaveGenerator.DeadException) {
+                        break
+                    }
+                    var frame_beats = this.wave_generator.buffered_beat_frames.toList()
+                    this.wave_generator.buffered_beat_frames.clear()
 
-            while (this.stop_request != StopRequest.Kill) {
-                val chunk = try {
-                    this@MidiPlaybackDevice.wave_generator.generate(this@MidiPlaybackDevice.sample_handle_manager.buffer_size)
-                } catch (e: WaveGenerator.KilledException) {
-                    break
-                } catch (e: WaveGenerator.DeadException) {
-                    break
+                    chunks.add(Triple(chunk, frame_beats, frame))
                 }
+                building_chunks = false
+            }
 
-                audio_track_handle.write(chunk)
+            while (this.stop_request != StopRequest.Kill && (building_chunks || chunks.isNotEmpty())) {
+                if (chunks.isEmpty()) {
+                    Thread.sleep(1)
+                } else {
+                    var (chunk, frame_beats, current_frame) = chunks.removeFirst()
+                    thread {
+                        for ((frame, beat) in frame_beats) {
+                            var millis = (frame - current_frame) * 1_000 / this.sample_handle_manager.sample_rate
+                            Thread.sleep(millis.toLong())
+                            this.on_beat(beat)
+                            current_frame = frame
+                        }
+                    }
+                    thread {
+                        audio_track_handle.write(chunk)
+                    }
+                    Thread.sleep(buffer_millis - 1)
+                }
             }
 
             this@MidiPlaybackDevice.wave_generator.clear()
@@ -110,4 +141,5 @@ open class MidiPlaybackDevice(
 
     open fun on_start() { }
     open fun on_stop() { }
+    open fun on_beat(i: Int) { }
 }

@@ -19,7 +19,7 @@ import java.io.DataOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.io.OutputStream
-import kotlin.concurrent.thread
+import kotlin.math.max
 import kotlin.math.min
 class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activity.configuration.sample_rate): CachedMidiAudioPlayer(SampleHandleManager(activity.get_soundfont()!!, sample_rate, buffer_size = sample_rate)) {
     /*
@@ -37,29 +37,19 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
             this.activity.playback_stop()
         }
     }
-    // Since the playback in this class is ALWAYS from a knowable point,
-    // We can just call a loop to select the columns at regular intervals
+
     override fun on_start() {
         val fragment = this.activity.get_active_fragment()
         if (fragment !is EditorFragment) {
             return
         }
-        this.activity.get_opus_manager().cursor_select_column(fragment.get_start_column(), true)
-        beat_loop()
     }
 
-    fun beat_loop() {
-        val opus_manager = this.activity.get_opus_manager()
-        val delay: Long = (60_000 /opus_manager.tempo).toLong()
-        thread {
-            while (this.is_playing()) {
-                Thread.sleep(delay)
-                val fragment = this.activity.get_active_fragment()
-                if (fragment !is EditorFragment) {
-                    break
-                }
-                opus_manager.cursor_select_column(fragment.get_start_column() + 1, true)
-            }
+    override fun on_beat(i: Int) {
+        var opus_manager = this.activity.get_opus_manager()
+        var modulo = max(1, (opus_manager.tempo / 60f).toInt())
+        if (i % modulo == 0) {
+            opus_manager.cursor_select_column(i, true)
         }
     }
 

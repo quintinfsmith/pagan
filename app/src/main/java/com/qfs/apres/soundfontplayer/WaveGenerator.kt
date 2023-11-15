@@ -7,6 +7,7 @@ import com.qfs.apres.event.MIDIStop
 import com.qfs.apres.event.NoteOff
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event.ProgramChange
+import com.qfs.apres.event.SongPositionPointer
 import com.qfs.apres.event2.NoteOff79
 import com.qfs.apres.event2.NoteOn79
 import kotlinx.coroutines.runBlocking
@@ -22,6 +23,7 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
     private var _empty_chunks_count = 0
     var timestamp: Long = System.nanoTime()
     private var _active_sample_handles = HashMap<Pair<Int, Int>, MutableList<Pair<Int, MutableList<SampleHandle>>>>()
+    var buffered_beat_frames = mutableListOf<Pair<Int, Int>>()
     private var sample_release_map = HashMap<Int, Int>() // Key = samplehandle uuid, value = Off frame
 
     private var _midi_events_by_frame = HashMap<Int, MutableList<MIDIEvent>>()
@@ -143,10 +145,9 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
                         is BankSelect -> {
                             this.sample_handle_manager.select_bank(event.channel, event.value)
                         }
-                        //is SongPositionPointer -> {
-                        //    var millis = (f - this.frame) * 1_000 / this.sample_handle_manager.sample_rate
-                        //    pointer_list.add(Pair(millis, event.beat))
-                        //}
+                        is SongPositionPointer -> {
+                            this.buffered_beat_frames.add(Pair(f, event.beat))
+                        }
                     }
                 }
             }
@@ -314,6 +315,7 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
     fun clear() {
         this._active_sample_handles.clear()
         this._midi_events_by_frame.clear()
+        this.buffered_beat_frames.clear()
         this.frame = 0
         this._empty_chunks_count = 0
     }

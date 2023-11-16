@@ -120,7 +120,7 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
                         }
 
                         is MIDIStop -> {
-                            throw KilledException()
+                           // throw KilledException()
                         }
 
                         is AllSoundOff -> {

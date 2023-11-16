@@ -67,7 +67,7 @@ class ColumnLayout(var view_holder: ColumnRecyclerViewHolder): LinearLayout((vie
 
     fun notifyItemRangeChanged(y: Int, count: Int, state_only: Boolean = false) {
         for (i in 0 until count) {
-            if (state_only) {
+            if (state_only && this.childCount > y + i) {
                 (this.getChildAt(y + i) as CellLayout).invalidate_all()
             } else {
                 this.rebind(i + y)

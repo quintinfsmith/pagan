@@ -96,6 +96,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private var _options_menu: Menu? = null
     private var _progress_bar: ProgressBar? = null
+    var playback_queued: Boolean = false
+    var stop_queued: Boolean = false
 
     private var _exporting_wav_handle: PaganPlaybackDevice? = null
 
@@ -395,10 +397,12 @@ class MainActivity : AppCompatActivity() {
             }
 
             R.id.itmPlay -> {
-                if (this.in_playback()) {
-                   this.playback_stop()
-                } else {
-                    this.playback_start()
+                if (!this.playback_queued) {
+                    if (this.in_playback()) {
+                        this.playback_stop()
+                    } else {
+                        this.playback_start()
+                    }
                 }
             }
 
@@ -439,20 +443,20 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun playback_start() {
-        val blocker_view = this.findViewById<LinearLayout>(R.id.llClearOverlay)
-        if (blocker_view != null) {
-            blocker_view.visibility = View.VISIBLE
-            blocker_view.setOnClickListener {
-                this.playback_stop()
-            }
+        if (this.playback_queued || this.stop_queued || this.in_playback()) {
+            return
         }
+        this.playback_queued = true
 
+        val blocker_view = this.findViewById<LinearLayout>(R.id.llClearOverlay)
+        blocker_view?.setOnClickListener {
+            this.playback_stop()
+        }
         this.runOnUiThread {
-            val play_pause_button = this._options_menu!!.findItem(R.id.itmPlay)
-            if (play_pause_button != null) {
-                play_pause_button.icon =
-                    ContextCompat.getDrawable(this, R.drawable.ic_baseline_pause_24)
+            if (blocker_view != null) {
+                blocker_view?.visibility = View.VISIBLE
             }
+            this.set_playback_button(R.drawable.baseline_play_disabled_24)
         }
 
         val cursor = this.get_opus_manager().cursor
@@ -505,14 +509,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     internal fun playback_stop() {
-        this.runOnUiThread {
-            val play_pause_button = this._options_menu?.findItem(R.id.itmPlay) ?: return@runOnUiThread
-            play_pause_button.icon = ContextCompat.getDrawable(this, R.drawable.ic_baseline_play_arrow_24)
+        if (this.playback_queued || this.stop_queued || !this.in_playback()) {
+            return
         }
-        this.runOnUiThread {
-            this.window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        }
-
+        this.stop_queued = true
         if (this._virtual_input_device.playing) {
             this._virtual_input_device.stop()
         }
@@ -520,11 +520,16 @@ class MainActivity : AppCompatActivity() {
         if (this._midi_playback_device != null) {
             this._midi_playback_device!!.kill()
         }
+    }
 
+    fun restore_playback_state() {
         this.runOnUiThread {
+            this.set_playback_button(R.drawable.ic_baseline_play_arrow_24)
+            this.window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             val blocker_view = this.findViewById<LinearLayout>(R.id.llClearOverlay) ?: return@runOnUiThread
             blocker_view.visibility = View.GONE
         }
+
     }
 
     fun get_new_project_path(): String {
@@ -807,6 +812,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun update_channel_instruments(index: Int? = null) {
+        this.runOnUiThread {
+            val rvActiveChannels: RecyclerView = this.findViewById(R.id.rvActiveChannels)
+            rvActiveChannels.adapter?.notifyDataSetChanged()
+        }
+
         if (index == null) {
             for (channel in this._opus_manager.channels) {
                 this._midi_interface.broadcast_event(BankSelect(channel.midi_channel, channel.midi_bank))
@@ -1276,5 +1286,12 @@ class MainActivity : AppCompatActivity() {
         }
 
         return this.has_notification_permission()
+    }
+
+    fun set_playback_button(drawable: Int) {
+        val play_pause_button = this._options_menu!!.findItem(R.id.itmPlay)
+        if (play_pause_button != null) {
+            play_pause_button.icon = ContextCompat.getDrawable(this, drawable)
+        }
     }
 }

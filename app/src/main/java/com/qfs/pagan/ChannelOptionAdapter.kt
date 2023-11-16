@@ -67,7 +67,6 @@ class ChannelOptionAdapter(
             activity.getString(R.string.label_choose_instrument, position, label)
         } else {
             activity.getString(R.string.label_choose_instrument_percussion, label)
-
         }
     }
 
@@ -85,6 +84,7 @@ class ChannelOptionAdapter(
                 this.interact_btnTogglePercussionVisibility(remove_button)
             }
         } else {
+            remove_button.text = holder.itemView.context.resources.getString(R.string.percussion_label)
             remove_button.setOnClickListener {
                 this.interact_btnRemoveChannel(it)
             }

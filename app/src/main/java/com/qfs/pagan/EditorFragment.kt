@@ -97,6 +97,7 @@ class EditorFragment : PaganFragment() {
             } else {
                 null
             }
+            opus_manager.clear()
             opus_manager.load(bytes, new_path)
 
 

@@ -111,6 +111,7 @@ open class MidiPlaybackDevice(
                     Thread.sleep(buffer_millis - 1)
                 }
             }
+            this.on_stop()
 
             this@MidiPlaybackDevice.wave_generator.clear()
             audio_track_handle.stop()
@@ -124,14 +125,12 @@ open class MidiPlaybackDevice(
     private fun stop() {
         if (this.stop_request != StopRequest.Neutral) {
             this.stop_request = StopRequest.Stop
-            this.on_stop()
         }
     }
 
     fun kill() {
         if (this.stop_request != StopRequest.Neutral) {
             this.stop_request = StopRequest.Kill
-            this.on_stop()
         }
     }
 

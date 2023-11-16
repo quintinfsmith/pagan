@@ -33,21 +33,20 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
     var active_notification: NotificationCompat.Builder? = null
     var export_wav_thread: Job? = null
     override fun on_stop() {
-        this.activity.runOnUiThread {
-            this.activity.playback_stop()
-        }
+        this.activity.stop_queued = false
+        this.activity.restore_playback_state()
     }
 
     override fun on_start() {
-        val fragment = this.activity.get_active_fragment()
-        if (fragment !is EditorFragment) {
-            return
+        this.activity.playback_queued = false
+        this.activity.runOnUiThread {
+            this.activity.set_playback_button(R.drawable.ic_baseline_pause_24)
         }
     }
 
     override fun on_beat(i: Int) {
         var opus_manager = this.activity.get_opus_manager()
-        var modulo = max(1, (opus_manager.tempo / 60f).toInt())
+        var modulo = max(1, (opus_manager.tempo / 240f).toInt())
         if (i % modulo == 0) {
             opus_manager.cursor_select_column(i, true)
         }

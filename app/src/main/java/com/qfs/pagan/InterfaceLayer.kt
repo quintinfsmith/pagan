@@ -46,16 +46,8 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         super.set_channel_instrument(channel, instrument)
 
         this.runOnUiThread { main: MainActivity ->
-            val rvActiveChannels: RecyclerView = main.findViewById(R.id.rvActiveChannels)
-            rvActiveChannels.adapter?.notifyItemChanged(channel)
-
-            if (this.is_percussion(channel)) {
-                withFragment {
-                    it.get_main().populate_active_percussion_names()
-                }
-            }
-
             main.update_channel_instruments()
+            main.populate_active_percussion_names()
         }
     }
 
@@ -294,16 +286,11 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         }
         val y = this.get_abs_offset(notify_index, 0)
 
+        this.activity.update_channel_instruments()
+
         if (!this.is_percussion(notify_index) || this.activity.configuration.show_percussion) {
             if (!this.simple_ui_locked()) {
                 this.runOnUiThread { main: MainActivity ->
-                    val rvActiveChannels: RecyclerView = main.findViewById(R.id.rvActiveChannels)
-
-                    rvActiveChannels.adapter?.notifyItemChanged(notify_index - 1)
-                    rvActiveChannels.adapter?.notifyItemInserted(notify_index)
-
-                    main.update_channel_instruments(notify_index)
-
                     editor_table?.new_channel_rows(y, line_list)
                 }
             } else {
@@ -474,14 +461,16 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
         super.remove_channel(channel)
 
+        this.runOnUiThread { main: MainActivity ->
+            val rvActiveChannels: RecyclerView = main.findViewById(R.id.rvActiveChannels)
+            if (rvActiveChannels.adapter != null) {
+                val rvActiveChannels_adapter = rvActiveChannels.adapter as ChannelOptionAdapter
+                rvActiveChannels_adapter.notifyItemRemoved(channel)
+            }
+
+        }
         if (!this.simple_ui_locked()) {
             this.runOnUiThread { main: MainActivity ->
-                val rvActiveChannels: RecyclerView = main.findViewById(R.id.rvActiveChannels)
-                if (rvActiveChannels.adapter != null) {
-                    val rvActiveChannels_adapter = rvActiveChannels.adapter as ChannelOptionAdapter
-                    rvActiveChannels_adapter.notifyItemRemoved(channel)
-                }
-
                 val editor_table = this.get_editor_table()
                 editor_table?.remove_channel_rows(y, lines)
             }
@@ -493,9 +482,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             super.clear()
         }
         this.cursor.clear()
-        this.runOnUiThread {
-            this.get_editor_table()?.clear()
-        }
+        this.get_editor_table()?.clear()
     }
 
     override fun unlink_beat(beat_key: BeatKey) {

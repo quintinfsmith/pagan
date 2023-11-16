@@ -116,9 +116,11 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         this.column_width_map.clear()
         this.column_width_maxes.clear()
 
-        (this.main_recycler.adapter!! as ColumnRecyclerAdapter).clear()
-        (this.column_label_recycler.adapter!! as ColumnLabelAdapter).clear()
-        this.line_label_layout.clear()
+        this.get_activity().runOnUiThread {
+            (this.main_recycler.adapter!! as ColumnRecyclerAdapter).clear()
+            (this.column_label_recycler.adapter!! as ColumnLabelAdapter).clear()
+            this.line_label_layout.clear()
+        }
     }
 
     fun setup() {
@@ -345,6 +347,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     fun notify_cell_change(beat_key: BeatKey, ignore_ui: Boolean = false) {
         val opus_manager = this.get_opus_manager()
         val main_recycler_adapter = (this.main_recycler.adapter!! as ColumnRecyclerAdapter)
+        var percussion_visible = this.get_activity().configuration.show_percussion
 
         // Only one tree needs to be checked, since links are all the same
         val new_tree = opus_manager.get_beat_tree(beat_key)
@@ -357,6 +360,9 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         var changed_beats = mutableSetOf<Int>()
         var changed_beat_keys = mutableSetOf<BeatKey>()
         for (linked_beat_key in opus_manager.get_all_linked(beat_key)) {
+            if (!percussion_visible && opus_manager.is_percussion(linked_beat_key.channel)) {
+                continue
+            }
             val y = try {
                 opus_manager.get_abs_offset(linked_beat_key.channel, linked_beat_key.line_offset)
             } catch (e: IndexOutOfBoundsException) {

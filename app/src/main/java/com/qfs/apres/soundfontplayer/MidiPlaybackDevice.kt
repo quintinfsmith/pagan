@@ -90,6 +90,7 @@ open class MidiPlaybackDevice(
                     chunks.add(Triple(chunk, frame_beats, frame))
                 }
                 building_chunks = false
+                this@MidiPlaybackDevice.wave_generator.clear()
             }
 
             while (this.stop_request != StopRequest.Kill && (building_chunks || chunks.isNotEmpty())) {
@@ -113,7 +114,6 @@ open class MidiPlaybackDevice(
             }
             this.on_stop()
 
-            this@MidiPlaybackDevice.wave_generator.clear()
             audio_track_handle.stop()
 
             this.active_audio_track_handle = null

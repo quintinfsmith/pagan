@@ -35,15 +35,14 @@ class AudioTrackHandle(sample_rate: Int, buffer_size: Int) {
         }
     }
 
-    fun play(update_listener: AudioTrack.OnPlaybackPositionUpdateListener) {
-        this.audio_track.setPlaybackPositionUpdateListener(update_listener)
+    fun play(update_listener: AudioTrack.OnPlaybackPositionUpdateListener? = null) {
+        if (update_listener != null) {
+            this.audio_track.setPlaybackPositionUpdateListener(update_listener)
+        }
         this.audio_track.play()
     }
 
     fun write(shorts: ShortArray) {
-        if (this.audio_track.playState != AudioTrack.PLAYSTATE_PLAYING) {
-            this.audio_track.play()
-        }
         try {
             this.audio_track.write(
                 shorts,

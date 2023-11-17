@@ -86,7 +86,7 @@ class EditorFragment : PaganFragment() {
 
     override fun onViewStateRestored(savedInstanceState: Bundle?) {
         val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
-        editor_table.visibility = View.GONE
+        editor_table.visibility = View.VISIBLE
         if (savedInstanceState != null) {
             // TODO: When 'don't keep apps' is enabled, this path will be followed even when importing a midi or project
             val main = this.get_main()
@@ -103,21 +103,19 @@ class EditorFragment : PaganFragment() {
             opus_manager.load(bytes, new_path)
 
 
-            editor_table.visibility = View.VISIBLE
             editor_table.precise_scroll(
                 savedInstanceState.getInt("coarse_x"),
                 savedInstanceState.getInt("fine_x"),
                 savedInstanceState.getInt("coarse_y"),
                 savedInstanceState.getInt("fine_y")
             )
-
         }
         super.onViewStateRestored(savedInstanceState)
     }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
-        editor_table.visibility = View.GONE
         this.clearContextMenu()
 
         if (this.view_model.coarse_x != null) {
@@ -143,7 +141,9 @@ class EditorFragment : PaganFragment() {
                     this.view_model.fine_x = null
                 }
             }
-            //editor_table.visibility = View.VISIBLE
+            editor_table.visibility = View.VISIBLE
+        } else {
+            editor_table.visibility = View.GONE
         }
 
         setFragmentResultListener(IntentFragmentToken.Load.name) { _, bundle: Bundle? ->

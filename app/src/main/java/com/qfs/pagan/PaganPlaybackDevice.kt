@@ -8,7 +8,7 @@ import android.os.ParcelFileDescriptor
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.qfs.apres.Midi
-import com.qfs.apres.soundfontplayer.CachedMidiAudioPlayer
+import com.qfs.apres.soundfontplayer.FiniteMidiDevice
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.ensureActive
@@ -20,7 +20,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.OutputStream
 import kotlin.math.min
-class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activity.configuration.sample_rate): CachedMidiAudioPlayer(SampleHandleManager(activity.get_soundfont()!!, sample_rate, buffer_size = sample_rate)) {
+class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activity.configuration.sample_rate): FiniteMidiDevice(SampleHandleManager(activity.get_soundfont()!!, sample_rate, buffer_size = sample_rate)) {
     /*
         All of this notification stuff is used with the understanding that the PaganPlaybackDevice
         used to export wavs will be discarded after a single use. It'll need to be cleaned up to
@@ -33,7 +33,6 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
     var export_wav_thread: Job? = null
     var current_relative_beat = 0
     var start_beat = 0
-    var bts = System.currentTimeMillis()
     override fun on_stop() {
         this.activity.stop_queued = false
         this.activity.restore_playback_state()
@@ -42,6 +41,7 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
     override fun on_start() {
         this.activity.playback_queued = false
         this.activity.runOnUiThread {
+            this.activity.loading_reticle_hide()
             this.activity.set_playback_button(R.drawable.ic_baseline_pause_24)
         }
     }
@@ -146,7 +146,7 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
             this@PaganPlaybackDevice.export_wav_thread = launch {
                 var data_byte_count = 0
                 var ts_deltas = mutableListOf<Int>()
-                var est_chunk_count = (this@PaganPlaybackDevice.frame_count / this@PaganPlaybackDevice.sample_handle_manager.buffer_size)
+                var est_chunk_count = (this@PaganPlaybackDevice.approximate_frame_count / this@PaganPlaybackDevice.sample_handle_manager.buffer_size)
                 var chunk_count = 0
 
                 if (builder != null) {

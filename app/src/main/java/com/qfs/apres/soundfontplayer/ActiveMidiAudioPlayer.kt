@@ -11,9 +11,17 @@ import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event.ProgramChange
 import com.qfs.apres.event2.NoteOff79
 import com.qfs.apres.event2.NoteOn79
+import kotlin.concurrent.thread
 
-class ActiveMidiAudioPlayer(sample_handle_manager: SampleHandleManager): MidiPlaybackDevice(
-    sample_handle_manager), VirtualMidiOutputDevice {
+// Ended up needing to split the active and cache Midi Players due to different fundemental requirements
+class ActiveMidiAudioPlayer(var sample_handle_manager: SampleHandleManager): VirtualMidiOutputDevice {
+    internal var active_audio_track_handle: AudioTrackHandle? = null
+    internal var wave_generator = WaveGenerator(sample_handle_manager)
+    var SAMPLE_RATE_NANO = sample_handle_manager.sample_rate.toFloat() / 1_000_000_000F
+    var buffer_delay = 1
+    var is_playing = false
+    var generate_timestamp: Long? = null
+
     override fun onNoteOn79(event: NoteOn79) {
         this.process_event(event)
         this.start_playback() // Only starts if not already started
@@ -61,12 +69,62 @@ class ActiveMidiAudioPlayer(sample_handle_manager: SampleHandleManager): MidiPla
     }
 
     private fun process_event(event: MIDIEvent) {
-        val delta_nano = if (this.is_playing) {
-            (System.nanoTime() - this.wave_generator.timestamp).toFloat()
+        var gts = this.generate_timestamp
+        val (delta_nano, start_frame) = if (gts != null) {
+            Pair((System.currentTimeMillis() - gts).toFloat(), this.wave_generator.frame + this.sample_handle_manager.buffer_size)
         } else {
-            0f
+           Pair(0f, this.wave_generator.frame)
         }
-        val frame = this.wave_generator.frame + (this.SAMPLE_RATE_NANO * delta_nano).toInt() + (this.buffer_delay * this.sample_handle_manager.buffer_size)
+
+        val frame = start_frame + (this.SAMPLE_RATE_NANO * delta_nano).toInt() + (this.sample_handle_manager.buffer_size * this.buffer_delay)
         this.wave_generator.place_event(event, frame)
+    }
+
+    fun start_playback() {
+        if (this.in_playable_state()) {
+            this.active_audio_track_handle = AudioTrackHandle(sample_handle_manager.sample_rate, sample_handle_manager.buffer_size)
+            this._start_play_loop()
+        }
+    }
+
+    fun in_playable_state(): Boolean {
+        return !this.is_playing && this.active_audio_track_handle == null
+    }
+
+    fun _start_play_loop() {
+        this.is_playing = true
+        thread {
+            this.active_audio_track_handle = AudioTrackHandle(
+                this.sample_handle_manager.sample_rate,
+                this.sample_handle_manager.buffer_size
+            )
+
+            this.active_audio_track_handle?.play()
+
+            while (this.is_playing) {
+                try {
+                    this.generate_timestamp = System.nanoTime()
+                    val chunk = this.wave_generator.generate()
+                    this.generate_timestamp = null
+                    this.active_audio_track_handle?.write(chunk)
+                } catch (e: WaveGenerator.KilledException) {
+                    break
+                }
+            }
+            this.is_playing = false
+            this.active_audio_track_handle?.stop()
+            this.active_audio_track_handle = null
+            this.wave_generator.clear()
+        }
+    }
+
+    private fun stop() {
+        this.active_audio_track_handle?.pause()
+        this.is_playing = false
+    }
+
+    fun kill() {
+        this.active_audio_track_handle?.pause()
+        this.is_playing = false
     }
 }

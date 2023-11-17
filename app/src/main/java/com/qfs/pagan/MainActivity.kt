@@ -446,6 +446,7 @@ class MainActivity : AppCompatActivity() {
         if (this.playback_queued || this.stop_queued || this.in_playback()) {
             return
         }
+        this.loading_reticle_show()
         this.playback_queued = true
 
         val blocker_view = this.findViewById<LinearLayout>(R.id.llClearOverlay)
@@ -499,6 +500,7 @@ class MainActivity : AppCompatActivity() {
         if (this.playback_queued || this.stop_queued || !this.in_playback()) {
             return
         }
+        this.loading_reticle_hide()
         this.stop_queued = true
         if (this._virtual_input_device.playing) {
             this._virtual_input_device.stop()
@@ -1261,7 +1263,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun in_playback(): Boolean {
-        return (this._midi_interface.output_devices_connected() && this._virtual_input_device.playing) || (this._midi_playback_device?.is_playing ?: false || this._midi_playback_device?.is_stopping ?: false)
+        return (this._midi_interface.output_devices_connected() && this._virtual_input_device.playing) || !(this._midi_playback_device?.in_playable_state() ?: false)
     }
 
     fun has_notification_permission(): Boolean {

@@ -1,5 +1,6 @@
 package com.qfs.apres.soundfontplayer
 
+import android.util.Log
 import com.qfs.apres.event.AllSoundOff
 import com.qfs.apres.event.BankSelect
 import com.qfs.apres.event.MIDIEvent
@@ -22,7 +23,6 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
     var frame = 0
     var kill_flagged = false
     private var _empty_chunks_count = 0
-    var timestamp: Long = System.nanoTime()
     private var _active_sample_handles = HashMap<Pair<Int, Int>, MutableList<Pair<Int, MutableList<SampleHandle>>>>()
     private var sample_release_map = HashMap<Int, Int>() // Key = samplehandle uuid, value = Off frame
 
@@ -49,8 +49,10 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
 
     fun place_event(event: MIDIEvent, frame: Int) {
         if (frame < this.frame) {
+            Log.d("AAA", "SKIP $frame $event")
             return
         }
+        Log.d("AAA", "PLACE $frame $event")
 
         runBlocking {
             this@WaveGenerator._event_mutex.withLock {
@@ -174,7 +176,6 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
             throw KilledException()
         }
         var buffer_size = array.size / 2
-        this.timestamp = System.nanoTime()
         this.update_active_frames(this.frame, buffer_size)
 
         for (i in this._working_int_array.indices) {

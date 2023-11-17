@@ -85,6 +85,8 @@ class EditorFragment : PaganFragment() {
     }
 
     override fun onViewStateRestored(savedInstanceState: Bundle?) {
+        val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
+        editor_table.visibility = View.GONE
         if (savedInstanceState != null) {
             // TODO: When 'don't keep apps' is enabled, this path will be followed even when importing a midi or project
             val main = this.get_main()
@@ -101,7 +103,7 @@ class EditorFragment : PaganFragment() {
             opus_manager.load(bytes, new_path)
 
 
-            val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
+            editor_table.visibility = View.VISIBLE
             editor_table.precise_scroll(
                 savedInstanceState.getInt("coarse_x"),
                 savedInstanceState.getInt("fine_x"),
@@ -115,6 +117,7 @@ class EditorFragment : PaganFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
+        editor_table.visibility = View.GONE
         this.clearContextMenu()
 
         if (this.view_model.coarse_x != null) {
@@ -140,15 +143,22 @@ class EditorFragment : PaganFragment() {
                     this.view_model.fine_x = null
                 }
             }
+            //editor_table.visibility = View.VISIBLE
         }
 
         setFragmentResultListener(IntentFragmentToken.Load.name) { _, bundle: Bundle? ->
             val main = this.get_main()
             main.loading_reticle_show()
+            main.runOnUiThread {
+                editor_table?.visibility = View.GONE
+            }
             thread {
                 val path = bundle?.getString("PATH")
                 if (path != null) {
                     main.get_opus_manager().load(path)
+                }
+                main.runOnUiThread {
+                    editor_table?.visibility = View.VISIBLE
                 }
                 main.loading_reticle_hide()
             }
@@ -157,20 +167,25 @@ class EditorFragment : PaganFragment() {
         setFragmentResultListener(IntentFragmentToken.ImportMidi.name) { _, bundle: Bundle? ->
             val main = this.get_main()
             main.loading_reticle_show()
+            main.runOnUiThread {
+                editor_table?.visibility = View.GONE
+            }
             thread {
                 val path = bundle?.getString("URI")
                 if (path != null) {
-                    main.import_midi(path)
-                    //try {
-                    //    main.import_midi(path)
-                    //    //} catch (e: InvalidMIDIFile) {
-                    //} catch (e: Exception) {
-                    //    val opus_manager = main.get_opus_manager()
-                    //    if (!opus_manager.first_load_done) {
-                    //        main.get_opus_manager().new()
-                    //    }
-                    //    main.feedback_msg(getString(R.string.feedback_midi_fail))
-                    //}
+                    try {
+                        main.import_midi(path)
+                        //} catch (e: InvalidMIDIFile) {
+                    } catch (e: Exception) {
+                        val opus_manager = main.get_opus_manager()
+                        if (!opus_manager.first_load_done) {
+                            main.get_opus_manager().new()
+                        }
+                        main.feedback_msg(getString(R.string.feedback_midi_fail))
+                    }
+                }
+                main.runOnUiThread {
+                    editor_table?.visibility = View.VISIBLE
                 }
                 main.loading_reticle_hide()
             }
@@ -179,6 +194,9 @@ class EditorFragment : PaganFragment() {
         setFragmentResultListener(IntentFragmentToken.ImportProject.name) { _, bundle: Bundle? ->
             val main = this.get_main()
             main.loading_reticle_show()
+            main.runOnUiThread {
+                editor_table?.visibility = View.GONE
+            }
             thread {
                 try {
                     bundle!!.getString("URI")?.let { path ->
@@ -193,6 +211,9 @@ class EditorFragment : PaganFragment() {
 
                     this.get_main().feedback_msg(getString(R.string.feedback_import_fail))
                 }
+                main.runOnUiThread {
+                    editor_table?.visibility = View.VISIBLE
+                }
                 main.loading_reticle_hide()
             }
         }
@@ -200,8 +221,14 @@ class EditorFragment : PaganFragment() {
         setFragmentResultListener(IntentFragmentToken.New.name) { _, _: Bundle? ->
             val main = this.get_main()
             main.loading_reticle_show()
+            main.runOnUiThread {
+                editor_table?.visibility = View.GONE
+            }
             thread {
                 main.get_opus_manager().new()
+                main.runOnUiThread {
+                    editor_table?.visibility = View.VISIBLE
+                }
                 main.loading_reticle_hide()
             }
         }

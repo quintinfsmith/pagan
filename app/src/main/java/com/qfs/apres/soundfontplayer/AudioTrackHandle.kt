@@ -4,7 +4,6 @@ import android.media.AudioAttributes
 import android.media.AudioFormat
 import android.media.AudioTrack
 import android.util.Log
-
 class AudioTrackHandle(sample_rate: Int, buffer_size: Int) {
     private var audio_track: AudioTrack = AudioTrack.Builder()
         .setAudioAttributes(
@@ -27,9 +26,20 @@ class AudioTrackHandle(sample_rate: Int, buffer_size: Int) {
         this.audio_track.pause()
     }
 
-    fun play() {
+    fun offset_next_notification_position(next: Int) {
+        try {
+            this.audio_track.notificationMarkerPosition =
+                next + (this.audio_track.notificationMarkerPosition ?: 0)
+        } catch (e: IllegalStateException) {
+            // pass
+        }
+    }
+
+    fun play(update_listener: AudioTrack.OnPlaybackPositionUpdateListener) {
+        this.audio_track.setPlaybackPositionUpdateListener(update_listener)
         this.audio_track.play()
     }
+
     fun write(shorts: ShortArray) {
         if (this.audio_track.playState != AudioTrack.PLAYSTATE_PLAYING) {
             this.audio_track.play()
@@ -48,6 +58,7 @@ class AudioTrackHandle(sample_rate: Int, buffer_size: Int) {
     fun stop() {
         try {
             this.audio_track.stop()
+            this.audio_track.flush()
             this.audio_track.release()
         } catch (e: IllegalStateException) {
             Log.w("AudioTrackHandle", "Attempted to stop stopped track")

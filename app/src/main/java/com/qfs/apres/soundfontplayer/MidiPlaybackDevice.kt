@@ -1,5 +1,6 @@
 package com.qfs.apres.soundfontplayer
 
+import android.media.AudioTrack
 import kotlin.concurrent.thread
 import kotlin.math.max
 
@@ -42,17 +43,18 @@ open class MidiPlaybackDevice(
         }
     }
 
-
     var buffer_delay = 1
     internal var wave_generator = WaveGenerator(sample_handle_manager)
-    private var active_audio_track_handle: AudioTrackHandle? = null
-    internal var stop_request = StopRequest.Neutral
+    internal var active_audio_track_handle: AudioTrackHandle? = null
+    var frames_per_beat = 0
+
     var SAMPLE_RATE_NANO = sample_handle_manager.sample_rate.toFloat() / 1_000_000_000F
     var BUFFER_NANO = sample_handle_manager.buffer_size.toLong() * 1_000_000_000.toLong() / sample_handle_manager.sample_rate.toLong()
+    var is_playing = false
+    var is_stopping = false
 
     fun start_playback() {
-        if (this.stop_request == StopRequest.Neutral) {
-            this.stop_request = StopRequest.Play
+        if (!this.is_playing && !this.is_stopping) {
             this.active_audio_track_handle = AudioTrackHandle(sample_handle_manager.sample_rate, sample_handle_manager.buffer_size)
             this._start_play_loop()
         }
@@ -66,79 +68,82 @@ open class MidiPlaybackDevice(
             Every time this happens is counted and considered in get_delay() call.
          */
         val audio_track_handle = this.active_audio_track_handle!!
+        this.is_playing = true
         thread {
-            var buffer_millis = this.BUFFER_NANO / 1000000
-            var chunks = mutableListOf<Triple<ShortArray, List<Pair<Int, Int>>, Int>>()
+            var buffer_millis = this.BUFFER_NANO / 1_000_000
+            var chunks = mutableListOf<ShortArray>()
             var building_chunks = true
             thread {
-                while (this.stop_request != StopRequest.Kill) {
+                while (this.is_playing) {
                     if (chunks.size >= 4) {
                         Thread.sleep(buffer_millis)
                         continue
                     }
-                    var frame = this.wave_generator.frame
-                    var chunk = try {
-                        this@MidiPlaybackDevice.wave_generator.generate(this@MidiPlaybackDevice.sample_handle_manager.buffer_size)
+
+                    val chunk = try {
+                        this.wave_generator.generate(this.sample_handle_manager.buffer_size)
                     } catch (e: WaveGenerator.KilledException) {
                         break
                     } catch (e: WaveGenerator.DeadException) {
                         break
                     }
-                    var frame_beats = this.wave_generator.buffered_beat_frames.toList()
-                    this.wave_generator.buffered_beat_frames.clear()
 
-                    chunks.add(Triple(chunk, frame_beats, frame))
+                    chunks.add(chunk)
                 }
                 building_chunks = false
-                this@MidiPlaybackDevice.wave_generator.clear()
+                this.wave_generator.clear()
+                this.is_stopping = true
             }
 
-            while (this.stop_request != StopRequest.Kill && (building_chunks || chunks.isNotEmpty())) {
+            audio_track_handle.play(object : AudioTrack.OnPlaybackPositionUpdateListener {
+                var notification_index = 0
+                init {
+                    this@MidiPlaybackDevice.on_start()
+                    //this@MidiPlaybackDevice.active_audio_track_handle?.offset_next_notification_position(
+                    //    this@MidiPlaybackDevice.buffer_delay * this@MidiPlaybackDevice.sample_handle_manager.buffer_size
+                    //)
+                    this@MidiPlaybackDevice.on_beat(this.notification_index++)
+                    this@MidiPlaybackDevice.active_audio_track_handle?.offset_next_notification_position(this@MidiPlaybackDevice.get_next_beat_delay() ?: 0)
+                }
+                override fun onMarkerReached(p0: AudioTrack?) {
+                    this@MidiPlaybackDevice.on_beat(this.notification_index++)
+                    this@MidiPlaybackDevice.active_audio_track_handle?.offset_next_notification_position(this@MidiPlaybackDevice.get_next_beat_delay() ?: 0)
+                }
+                override fun onPeriodicNotification(p0: AudioTrack?) { }
+            })
+
+            while (this.is_playing && (building_chunks || chunks.isNotEmpty())) {
                 if (chunks.isEmpty()) {
-                    Thread.sleep(1)
+                    Thread.sleep(buffer_millis / 2)
                 } else {
-                    var (chunk, frame_beats, current_frame) = chunks.removeFirst()
-                    thread {
-                        for ((frame, beat) in frame_beats) {
-                            var millis = (frame - current_frame) * 1_000 / this.sample_handle_manager.sample_rate
-                            Thread.sleep(millis.toLong())
-                            this.on_beat(beat)
-                            current_frame = frame
-                        }
-                    }
-                    thread {
-                        audio_track_handle.write(chunk)
-                    }
-                    Thread.sleep(buffer_millis - 1)
+                    audio_track_handle.write(chunks.removeFirst())
                 }
             }
+
             this.on_stop()
 
             audio_track_handle.stop()
-
+            this.is_stopping = false
             this.active_audio_track_handle = null
-            this.stop_request = StopRequest.Neutral
         }
-        this.on_start()
     }
 
     private fun stop() {
-        if (this.stop_request != StopRequest.Neutral) {
-            this.stop_request = StopRequest.Stop
-        }
+        this.is_playing = false
+        this.is_stopping = true
     }
 
     fun kill() {
-        if (this.stop_request != StopRequest.Neutral) {
-            this.stop_request = StopRequest.Kill
-        }
+        this.is_playing = false
+        this.is_stopping = true
     }
 
-    fun is_playing(): Boolean {
-        return this.stop_request == StopRequest.Play
+    open fun get_next_beat_delay(): Int? {
+        return this.frames_per_beat
     }
 
+    open fun on_write() { }
     open fun on_start() { }
     open fun on_stop() { }
-    open fun on_beat(i: Int) { }
+    open fun on_beat(i :Int) { }
 }

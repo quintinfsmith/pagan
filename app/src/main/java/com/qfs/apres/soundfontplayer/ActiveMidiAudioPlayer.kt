@@ -24,20 +24,20 @@ class ActiveMidiAudioPlayer(sample_handle_manager: SampleHandleManager): MidiPla
     }
 
     override fun onNoteOff79(event: NoteOff79) {
-        if (! this.is_playing()) {
+        if (! this.is_playing) {
             return
         }
         this.process_event(event)
     }
     override fun onNoteOff(event: NoteOff) {
-        if (! this.is_playing()) {
+        if (! this.is_playing) {
             return
         }
         this.process_event(event)
     }
 
     override fun onMIDIStop(event: MIDIStop) {
-        if (! this.is_playing()) {
+        if (! this.is_playing) {
             return
         }
         this.kill()
@@ -61,7 +61,7 @@ class ActiveMidiAudioPlayer(sample_handle_manager: SampleHandleManager): MidiPla
     }
 
     private fun process_event(event: MIDIEvent) {
-        val delta_nano = if (this.is_playing()) {
+        val delta_nano = if (this.is_playing) {
             (System.nanoTime() - this.wave_generator.timestamp).toFloat()
         } else {
             0f

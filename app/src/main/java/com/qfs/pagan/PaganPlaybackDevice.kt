@@ -19,7 +19,6 @@ import java.io.DataOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.io.OutputStream
-import kotlin.math.max
 import kotlin.math.min
 class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activity.configuration.sample_rate): CachedMidiAudioPlayer(SampleHandleManager(activity.get_soundfont()!!, sample_rate, buffer_size = sample_rate)) {
     /*
@@ -32,6 +31,9 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
     var notification_channel: NotificationChannel? = null
     var active_notification: NotificationCompat.Builder? = null
     var export_wav_thread: Job? = null
+    var current_relative_beat = 0
+    var start_beat = 0
+    var bts = System.currentTimeMillis()
     override fun on_stop() {
         this.activity.stop_queued = false
         this.activity.restore_playback_state()
@@ -45,11 +47,19 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
     }
 
     override fun on_beat(i: Int) {
+        var i = this.current_relative_beat++ + this.start_beat
         var opus_manager = this.activity.get_opus_manager()
-        var modulo = max(1, (opus_manager.tempo / 240f).toInt())
-        if (i % modulo == 0) {
-            opus_manager.cursor_select_column(i, true)
+        if (i >= opus_manager.beat_count) {
+            return
         }
+        opus_manager.cursor_select_column(i, true)
+    }
+
+    fun play_opus(start_beat: Int) {
+        var midi = this.activity.get_opus_manager().get_midi(start_beat)
+        this.start_beat = start_beat
+        this.current_relative_beat = 0
+        this.play_midi(midi)
     }
 
     fun export_wav_cancel() {

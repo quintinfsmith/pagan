@@ -20,10 +20,10 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
     class KilledException: Exception()
     class DeadException: Exception()
     var frame = 0
+    var kill_flagged = false
     private var _empty_chunks_count = 0
     var timestamp: Long = System.nanoTime()
     private var _active_sample_handles = HashMap<Pair<Int, Int>, MutableList<Pair<Int, MutableList<SampleHandle>>>>()
-    var buffered_beat_frames = mutableListOf<Pair<Int, Int>>()
     private var sample_release_map = HashMap<Int, Int>() // Key = samplehandle uuid, value = Off frame
 
     private var _midi_events_by_frame = HashMap<Int, MutableList<MIDIEvent>>()
@@ -64,6 +64,9 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
 
     fun update_active_frames(initial_frame: Int, buffer_size: Int) {
         for (f in initial_frame until initial_frame + buffer_size) {
+            if (this.kill_flagged) {
+                return
+            }
             if (this._midi_events_by_frame.containsKey(f)) {
                 for (event in this._midi_events_by_frame[f]!!) {
                     when (event) {
@@ -120,7 +123,7 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
                         }
 
                         is MIDIStop -> {
-                           // throw KilledException()
+                            this.kill_flagged = true
                         }
 
                         is AllSoundOff -> {
@@ -145,8 +148,9 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
                         is BankSelect -> {
                             this.sample_handle_manager.select_bank(event.channel, event.value)
                         }
+
                         is SongPositionPointer -> {
-                            this.buffered_beat_frames.add(Pair(f, event.beat))
+
                         }
                     }
                 }
@@ -166,6 +170,9 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
     }
 
     fun generate(array: ShortArray) {
+        if (this.kill_flagged) {
+            throw KilledException()
+        }
         var buffer_size = array.size / 2
         this.timestamp = System.nanoTime()
         this.update_active_frames(this.frame, buffer_size)
@@ -302,7 +309,6 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
                 (((v + mid).toFloat() * compression_ratio).toInt() - mid).toShort()
             }
         }
-
         this.frame += buffer_size
 
         if (is_empty) {
@@ -313,9 +319,9 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
     }
 
     fun clear() {
+        this.kill_flagged = false
         this._active_sample_handles.clear()
         this._midi_events_by_frame.clear()
-        this.buffered_beat_frames.clear()
         this.frame = 0
         this._empty_chunks_count = 0
     }

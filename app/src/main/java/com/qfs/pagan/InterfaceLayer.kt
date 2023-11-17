@@ -181,8 +181,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             line_offset ?: (this.channels[channel].lines.size - 1)
         )
 
-        //this.cursor_select_row(channel, line_offset ?: this.channels[channel].lines.size - 1)
-
         if (!this.is_percussion(channel) || this.activity.configuration.show_percussion) {
             if (!this.simple_ui_locked()) {
                 this.runOnUiThread { main: MainActivity ->
@@ -358,7 +356,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             val editor_table = this.get_editor_table()
             editor_table?.clear()
             editor_table?.setup()
-            editor_table?.visibility = View.VISIBLE
 
             main.update_channel_instruments()
             this.withFragment {
@@ -386,7 +383,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             val editor_table = this.get_editor_table()
             editor_table?.clear()
             editor_table?.setup()
-            editor_table?.visibility = View.VISIBLE
 
             main.update_channel_instruments()
             this.withFragment {

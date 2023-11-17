@@ -459,20 +459,7 @@ class MainActivity : AppCompatActivity() {
             this.set_playback_button(R.drawable.baseline_play_disabled_24)
         }
 
-        val cursor = this.get_opus_manager().cursor
-        val start_point = when (cursor.mode) {
-            OpusManagerCursor.CursorMode.Single,
-            OpusManagerCursor.CursorMode.Column -> {
-                cursor.beat
-            }
-            OpusManagerCursor.CursorMode.Range -> {
-                cursor.range!!.first.beat
-            }
-            else -> {
-                val editor_table = this.findViewById<EditorTable?>(R.id.etEditorTable)
-                editor_table?.get_first_visible_column_index() ?: 0
-            }
-        }
+        val start_point = this.get_working_column()
 
         this.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         // Currently, Midi2.0 output is not supported. will be needed for N-radix projects
@@ -485,7 +472,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun playback_start_precached(start_beat: Int) {
         thread {
-            this._midi_playback_device?.play_midi(this.get_opus_manager().get_midi(start_beat))
+            this._midi_playback_device?.play_opus(start_beat)
         }
     }
 
@@ -1274,7 +1261,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun in_playback(): Boolean {
-        return (this._midi_interface.output_devices_connected() && this._virtual_input_device.playing) || (this._midi_playback_device?.is_playing() ?: false)
+        return (this._midi_interface.output_devices_connected() && this._virtual_input_device.playing) || (this._midi_playback_device?.is_playing ?: false || this._midi_playback_device?.is_stopping ?: false)
     }
 
     fun has_notification_permission(): Boolean {
@@ -1292,6 +1279,22 @@ class MainActivity : AppCompatActivity() {
         val play_pause_button = this._options_menu!!.findItem(R.id.itmPlay)
         if (play_pause_button != null) {
             play_pause_button.icon = ContextCompat.getDrawable(this, drawable)
+        }
+    }
+    fun get_working_column(): Int {
+        val cursor = this.get_opus_manager().cursor
+        return when (cursor.mode) {
+            OpusManagerCursor.CursorMode.Single,
+            OpusManagerCursor.CursorMode.Column -> {
+                cursor.beat
+            }
+            OpusManagerCursor.CursorMode.Range -> {
+                cursor.range!!.first.beat
+            }
+            else -> {
+                val editor_table = this.findViewById<EditorTable?>(R.id.etEditorTable)
+                editor_table?.get_first_visible_column_index() ?: 0
+            }
         }
     }
 }

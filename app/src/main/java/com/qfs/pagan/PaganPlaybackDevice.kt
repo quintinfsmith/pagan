@@ -55,6 +55,11 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
         opus_manager.cursor_select_column(i, true)
     }
 
+    override fun on_cancelled() {
+        this.activity.stop_queued = false
+        this.activity.restore_playback_state()
+    }
+
     fun play_opus(start_beat: Int) {
         var midi = this.activity.get_opus_manager().get_midi(start_beat)
         this.start_beat = start_beat

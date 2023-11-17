@@ -497,17 +497,20 @@ class MainActivity : AppCompatActivity() {
     }
 
     internal fun playback_stop() {
-        if (this.playback_queued || this.stop_queued || !this.in_playback()) {
-            return
-        }
+        //if (this.playback_queued || this.stop_queued || !this.in_playback()) {
+        //    return
+        //}
         this.loading_reticle_hide()
-        this.stop_queued = true
         if (this._virtual_input_device.playing) {
+            this.stop_queued = true
             this._virtual_input_device.stop()
         }
 
         if (this._midi_playback_device != null) {
-            this._midi_playback_device!!.kill()
+            if (!(this._midi_playback_device?.in_playable_state() ?: false)) {
+                this._midi_playback_device!!.kill()
+                this.stop_queued = true
+            }
         }
     }
 

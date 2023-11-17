@@ -140,7 +140,6 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             }
         }
         main_adapter.add_columns(0, opus_manager.beat_count)
-
     }
 
     fun init_column_width_map() {

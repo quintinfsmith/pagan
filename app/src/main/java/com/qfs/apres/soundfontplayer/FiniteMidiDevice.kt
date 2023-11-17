@@ -20,21 +20,23 @@ open class FiniteMidiDevice(var sample_handle_manager: SampleHandleManager, priv
 
     var SAMPLE_RATE_NANO = sample_handle_manager.sample_rate.toFloat() / 1_000_000_000F
     var BUFFER_NANO = sample_handle_manager.buffer_size.toLong() * 1_000_000_000.toLong() / sample_handle_manager.sample_rate.toLong()
+    var play_queued = false
     var is_playing = false
+    var play_cancelled = false // need a away to cancel between parsing and playing
     var fill_buffer_cache = true
 
     var approximate_frame_count: Int = 0
     var beat_delays = mutableListOf<Int>()
 
     fun start_playback() {
-        if (this.in_playable_state()) {
+        if (!this.is_playing && this.active_audio_track_handle == null) {
             this.active_audio_track_handle = AudioTrackHandle(sample_handle_manager.sample_rate, sample_handle_manager.buffer_size)
             this._start_play_loop()
         }
     }
 
     fun in_playable_state(): Boolean {
-        return !this.is_playing && this.active_audio_track_handle == null
+        return !this.is_playing && this.active_audio_track_handle == null && !this.play_queued
     }
 
     private fun _start_play_loop() {
@@ -45,6 +47,8 @@ open class FiniteMidiDevice(var sample_handle_manager: SampleHandleManager, priv
             Every time this happens is counted and considered in get_delay() call.
          */
         val audio_track_handle = this.active_audio_track_handle!!
+
+        this.play_queued = false
         this.is_playing = true
         thread {
             var buffer_millis = this.BUFFER_NANO / 1_000_000
@@ -77,9 +81,16 @@ open class FiniteMidiDevice(var sample_handle_manager: SampleHandleManager, priv
             audio_track_handle.play(object : AudioTrack.OnPlaybackPositionUpdateListener {
                 var notification_index = 0
                 init {
-                    this@FiniteMidiDevice.on_start()
-                    this@FiniteMidiDevice.on_beat(this.notification_index++)
-                    this@FiniteMidiDevice.active_audio_track_handle?.offset_next_notification_position(this@FiniteMidiDevice.get_next_beat_delay() ?: 0)
+                    if (this@FiniteMidiDevice.play_cancelled) {
+                        this@FiniteMidiDevice.play_cancelled = false
+                        this@FiniteMidiDevice.is_playing = false
+                        this@FiniteMidiDevice.on_cancelled()
+                    } else {
+                        this@FiniteMidiDevice.on_start()
+                        this@FiniteMidiDevice.on_beat(this.notification_index++)
+                        this@FiniteMidiDevice.active_audio_track_handle?.offset_next_notification_position(this@FiniteMidiDevice.get_next_beat_delay() ?: 0)
+                    }
+
                 }
                 override fun onMarkerReached(p0: AudioTrack?) {
                     this@FiniteMidiDevice.on_beat(this.notification_index++)
@@ -109,13 +120,14 @@ open class FiniteMidiDevice(var sample_handle_manager: SampleHandleManager, priv
     }
 
     fun kill() {
+        this.play_cancelled = true
         this.active_audio_track_handle?.pause()
         this.is_playing = false
     }
 
-    open fun on_write() { }
     open fun on_start() { }
     open fun on_stop() { }
+    open fun on_cancelled() { }
     open fun on_beat(i :Int) { }
 
     internal fun parse_midi(midi: Midi) {
@@ -171,6 +183,8 @@ open class FiniteMidiDevice(var sample_handle_manager: SampleHandleManager, priv
     }
 
     fun play_midi(midi: Midi) {
+        this.play_cancelled = false
+        this.play_queued = true
         this.parse_midi(midi)
         this.start_playback()
     }

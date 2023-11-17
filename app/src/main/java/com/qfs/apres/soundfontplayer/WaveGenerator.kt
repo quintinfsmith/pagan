@@ -1,6 +1,5 @@
 package com.qfs.apres.soundfontplayer
 
-import android.util.Log
 import com.qfs.apres.event.AllSoundOff
 import com.qfs.apres.event.BankSelect
 import com.qfs.apres.event.MIDIEvent
@@ -49,10 +48,8 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
 
     fun place_event(event: MIDIEvent, frame: Int) {
         if (frame < this.frame) {
-            Log.d("AAA", "SKIP $frame $event")
             return
         }
-        Log.d("AAA", "PLACE $frame $event")
 
         runBlocking {
             this@WaveGenerator._event_mutex.withLock {

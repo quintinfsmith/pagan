@@ -52,15 +52,8 @@
 
     <style name="leaf">
         <item name="android:gravity">center_vertical|center_horizontal</item>
-        <item name="android:padding">@dimen/line_padding</item>
         <item name="android:textColor">@color/leaf_fg</item>
-        <item name="android:background">?attr/table_lines</item>
-    </style>
-
-    <style name="leaf_inner" parent="@android:style/Widget.TextView">
-        <item name="android:gravity">center_vertical|center_horizontal</item>
-        <item name="android:textColor">@color/leaf_fg</item>
-        <item name="android:background">@color/leaf_bg</item>
+        <item name="android:background">@drawable/leaf</item>
     </style>
 
     <style name="leaf_value" parent="@android:style/Widget.TextView">
@@ -169,44 +162,29 @@
     </style>
 
     <style name="column_label_outer">
-        <item name="android:paddingEnd">@dimen/line_padding</item>
-        <item name="android:paddingStart">@dimen/line_padding</item>
+        <item name="android:paddingEnd">@dimen/stroke_leaf</item>
+        <item name="android:paddingStart">@dimen/stroke_leaf</item>
         <item name="android:paddingBottom">@dimen/normal_padding</item>
         <item name="android:gravity">center</item>
         <item name="android:background">?attr/table_lines</item>
     </style>
 
-    <style name="line_label_inner">
+    <style name="line_label">
         <item name="android:minWidth">41dp</item>
         <item name="android:gravity">bottom|center_horizontal</item>
-        <item name="android:background">@color/leaf_bg</item>
         <item name="android:textColor">@color/leaf_fg</item>
-    </style>
-
-    <style name="line_label_outer">
-        <item name="android:paddingBottom">@dimen/line_padding</item>
-        <item name="android:paddingEnd">@dimen/normal_padding</item>
-        <item name="android:paddingTop">@dimen/normal_padding</item>
-        <item name="android:paddingStart">0dp</item>
-        <item name="android:gravity">center</item>
-        <item name="android:background">?attr/table_lines</item>
+        <item name="android:background">@drawable/editor_label</item>
         <item name="android:layout_height">@dimen/line_height</item>
     </style>
 
     <style name="column">
-        <item name="android:paddingBottom">@dimen/line_padding</item>
-        <item name="android:background">?attr/table_lines</item>
+        <item name="android:paddingBottom">@dimen/stroke_leaf</item>
+        <item name="android:background">?attr/main_bg</item>
     </style>
 
     <style name="corner_view">
-        <item name="android:background">?attr/table_lines</item>
-        <item name="android:paddingEnd">@dimen/normal_padding</item>
-        <item name="android:paddingBottom">@dimen/normal_padding</item>
-    </style>
-    <style name="corner_view_inner">
-        <item name="android:background">?attr/main_bg</item>
+        <item name="android:background">@drawable/corner_button</item>
         <item name="android:colorControlHighlight">#88FFFFFF</item>
-        <item name="android:padding">4dp</item>
     </style>
 
     <style name="placeholder_outer">

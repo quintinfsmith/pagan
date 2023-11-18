@@ -9,15 +9,11 @@ import android.widget.LinearLayout
 
 class CornerView(context: Context, attrs: AttributeSet? = null): LinearLayout(ContextThemeWrapper(context, R.style.corner_view), attrs) {
     init {
-        val inner_view = LinearLayout(ContextThemeWrapper(context, R.style.corner_view_inner))
-        val inner_inner_view = ImageView(context)
+        val inner_view = ImageView(context)
         this.addView(inner_view)
-        inner_view.addView(inner_inner_view)
         inner_view.layoutParams.width = MATCH_PARENT
         inner_view.layoutParams.height = MATCH_PARENT
-        inner_inner_view.layoutParams.width = MATCH_PARENT
-        inner_inner_view.layoutParams.height = MATCH_PARENT
-        inner_inner_view.setImageResource(R.drawable.baseline_shortcut_24)
-        inner_inner_view.contentDescription = resources.getString(R.string.label_shortcut)
+        inner_view.setImageResource(R.drawable.baseline_shortcut_24)
+        inner_view.contentDescription = resources.getString(R.string.label_shortcut)
     }
 }

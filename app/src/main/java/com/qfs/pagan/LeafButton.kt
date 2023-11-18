@@ -120,16 +120,12 @@ class LeafButton(
 
     private fun set_text(is_percussion: Boolean) {
         val event = this._event
-        this.removeAllViews()
         var base_context = (this.context as ContextThemeWrapper).baseContext
-        val inner_wrapper = LeafInnerWrapper(base_context)
-        this.addView(inner_wrapper)
-        inner_wrapper.layoutParams.width = MATCH_PARENT
-        inner_wrapper.layoutParams.height = MATCH_PARENT
+        this.removeAllViews()
         if (event == null) {
         } else if (is_percussion) {
             val label_percussion = LeafText(ContextThemeWrapper(base_context, R.style.leaf_value))
-            inner_wrapper.addView(label_percussion)
+            this.addView(label_percussion)
             label_percussion.gravity = Gravity.CENTER
             label_percussion.text = resources.getString(R.string.percussion_label)
         } else if (event.relative) {
@@ -140,7 +136,7 @@ class LeafButton(
             val label_offset = LeafText(ContextThemeWrapper(base_context, R.style.leaf_value_offset))
             val label_prefix = LeafText(ContextThemeWrapper(base_context, R.style.leaf_prefix))
 
-            inner_wrapper.addView(sub_wrapper)
+            this.addView(sub_wrapper)
             sub_wrapper.layoutParams.width = WRAP_CONTENT
             sub_wrapper.layoutParams.height = MATCH_PARENT
             (sub_wrapper.layoutParams as LinearLayout.LayoutParams).gravity = Gravity.CENTER
@@ -173,7 +169,7 @@ class LeafButton(
             val label_octave = LeafText(ContextThemeWrapper(base_context, R.style.leaf_value_octave))
             val label_offset = LeafText(ContextThemeWrapper(base_context, R.style.leaf_value_offset))
 
-            inner_wrapper.addView(sub_wrapper)
+            this.addView(sub_wrapper)
             sub_wrapper.layoutParams.width = WRAP_CONTENT
             sub_wrapper.layoutParams.height = MATCH_PARENT
             (sub_wrapper.layoutParams as LinearLayout.LayoutParams).gravity = Gravity.CENTER
@@ -191,6 +187,10 @@ class LeafButton(
     }
 
     fun build_drawable_state(drawableState: IntArray?): IntArray? {
+        if (this.parent == null) {
+            return drawableState
+        }
+
         val opus_manager = this.get_opus_manager()
         val beat_key = try {
             this.get_beat_key()

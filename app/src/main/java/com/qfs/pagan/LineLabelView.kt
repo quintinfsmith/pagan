@@ -7,35 +7,23 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
-import android.widget.LinearLayout
+import androidx.appcompat.widget.AppCompatTextView
 import com.qfs.pagan.opusmanager.LinksLayer
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
-class LineLabelView(context: Context, var channel: Int, var line_offset: Int): LinearLayout(ContextThemeWrapper(context, R.style.line_label_outer)),
+class LineLabelView(context: Context, var channel: Int, var line_offset: Int): AppCompatTextView(ContextThemeWrapper(context, R.style.line_label)),
     View.OnTouchListener {
-    class InnerView(context: Context): androidx.appcompat.widget.AppCompatTextView(ContextThemeWrapper(context, R.style.line_label_inner)) {
-        override fun onCreateDrawableState(extraSpace: Int): IntArray? {
-            val drawableState = super.onCreateDrawableState(extraSpace + 2)
-            return if (this.parent == null) {
-                drawableState
-            } else {
-                (this.parent as LineLabelView).build_drawable_state(drawableState)
-            }
-        }
-    }
     companion object {
         private val STATE_FOCUSED = intArrayOf(R.attr.state_focused)
         private val STATE_CHANNEL_EVEN = intArrayOf(R.attr.state_channel_even)
     }
 
-    private var _text_view = InnerView(context)
     /*
      * update_queued exists to handle the liminal state between being detached and being destroyed
      * If the cursor is pointed to a location in this space, but changed, then the recycler view doesn't handle it normally
      */
     private var _update_queued = false
     init {
-        this.addView(this._text_view)
         this.setOnClickListener {
             this.on_click()
         }
@@ -73,7 +61,6 @@ class LineLabelView(context: Context, var channel: Int, var line_offset: Int): L
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
-        this._text_view.layoutParams.height = resources.getDimension(R.dimen.line_height).toInt()
         val line_height = resources.getDimension(R.dimen.line_height)
         this.layoutParams.height = line_height.toInt()
         this.layoutParams.width = WRAP_CONTENT
@@ -100,12 +87,10 @@ class LineLabelView(context: Context, var channel: Int, var line_offset: Int): L
         return this.build_drawable_state(drawableState)
     }
 
-    // Prevents the child labels from blocking the parent onTouchListener events
-    override fun onInterceptTouchEvent(touchEvent: MotionEvent): Boolean {
-        return true
-    }
-
     fun build_drawable_state(drawableState: IntArray?): IntArray? {
+        if (this.parent == null) {
+            return drawableState
+        }
         val opus_manager = this.get_opus_manager()
         if (this.channel % 2 == 0) {
             mergeDrawableStates(drawableState, LineLabelView.STATE_CHANNEL_EVEN)
@@ -132,7 +117,7 @@ class LineLabelView(context: Context, var channel: Int, var line_offset: Int): L
 
     fun set_text() {
         val text = this.get_label_text()
-        this._text_view.text = text
+        this.text = text
         this.contentDescription = text
     }
 

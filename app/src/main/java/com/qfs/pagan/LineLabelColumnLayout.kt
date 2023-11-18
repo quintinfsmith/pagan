@@ -53,13 +53,10 @@ class LineLabelColumnLayout(editor_table: EditorTable): ScrollView(editor_table.
         this.inner_wrapper.removeViewAt(y)
         this.notify_item_range_changed(y, this.inner_wrapper.childCount - y)
     }
+
     fun remove_labels(y: Int, count: Int) {
         this.inner_wrapper.removeViews(y, count)
         this.notify_item_range_changed(y, this.inner_wrapper.childCount - y)
-    }
-
-    fun get_label(y: Int): LineLabelView {
-        return this.inner_wrapper.getChildAt(y) as LineLabelView
     }
 
     fun set_dragging_line(channel: Int, line_offset:Int) {

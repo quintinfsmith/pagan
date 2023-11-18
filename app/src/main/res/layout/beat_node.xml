@@ -6,7 +6,7 @@
     android:background="?attr/table_lines"
     android:gravity="center"
     android:clipToPadding="false"
-    android:paddingBottom="@dimen/line_padding"
+    android:paddingBottom="@dimen/stroke_leaf"
     android:paddingTop="0dp"
     android:paddingStart="0dp"
     android:paddingEnd="0dp"

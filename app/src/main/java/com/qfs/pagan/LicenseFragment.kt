@@ -4,19 +4,12 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResultListener
 import com.qfs.pagan.databinding.FragmentLicenseBinding
 
-class LicenseFragment: Fragment() {
-    // Boiler Plate //
-    private var _binding: FragmentLicenseBinding? = null
-    private val binding get() = _binding!!
-    //////////////////
-
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle? ): View {
-        _binding = FragmentLicenseBinding.inflate(inflater, container, false)
-        return binding.root
+class LicenseFragment: PaganFragment<FragmentLicenseBinding>() {
+    override fun inflate(inflater: LayoutInflater, container: ViewGroup?): FragmentLicenseBinding {
+        return FragmentLicenseBinding.inflate(inflater, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -35,10 +28,5 @@ class LicenseFragment: Fragment() {
                 (this.activity as MainActivity).set_title_text(text)
             }
         }
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
     }
 }

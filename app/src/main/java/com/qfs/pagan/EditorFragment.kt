@@ -8,6 +8,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.TextView
+import androidx.fragment.app.setFragmentResult
 import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
 import com.qfs.pagan.databinding.FragmentMainBinding
@@ -22,12 +23,7 @@ import kotlin.concurrent.thread
 /**
  *
  */
-class EditorFragment : PaganFragment() {
-    // Boiler Plate //
-    private var _binding: FragmentMainBinding? = null
-    private val binding get() = _binding!!
-    //////////////////
-
+class EditorFragment : PaganFragment<FragmentMainBinding>() {
     val view_model: EditorViewModel by viewModels()
     private var active_context_menu_index: ContextMenu? = null
 
@@ -38,14 +34,8 @@ class EditorFragment : PaganFragment() {
         Linking
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        super.onCreateView(inflater, container, savedInstanceState)
-        this._binding = FragmentMainBinding.inflate(inflater, container, false)
-        return binding.root
+    override fun inflate(inflater: LayoutInflater, container: ViewGroup?): FragmentMainBinding {
+        return FragmentMainBinding.inflate(inflater, container, false)
     }
 
     override fun onStop() {
@@ -117,11 +107,11 @@ class EditorFragment : PaganFragment() {
         super.onViewCreated(view, savedInstanceState)
         val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
         this.clearContextMenu()
+        val main = this.get_main()
+        val opus_manager = main.get_opus_manager()
 
-        if (this.view_model.coarse_x != null) {
+        if (this.view_model.coarse_x != null && opus_manager.first_load_done) {
             editor_table.setup()
-            val main = this.get_main()
-            val opus_manager = main.get_opus_manager()
             opus_manager.cursor_clear()
             this.get_main().drawer_unlock()
             thread {
@@ -146,6 +136,18 @@ class EditorFragment : PaganFragment() {
             editor_table.visibility = View.GONE
         }
 
+        if (this.view_model.backup_fragment_intent != null) {
+            var (token, bundle) = this.view_model.backup_fragment_intent!!
+            if (bundle != null) {
+                this.setFragmentResult(token.name, bundle)
+            }
+            this.view_model.backup_fragment_intent = null
+        }
+        this.set_result_listeners()
+    }
+
+    fun set_result_listeners() {
+        val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
         setFragmentResultListener(IntentFragmentToken.Load.name) { _, bundle: Bundle? ->
             val main = this.get_main()
             main.loading_reticle_show()
@@ -165,6 +167,7 @@ class EditorFragment : PaganFragment() {
         }
 
         setFragmentResultListener(IntentFragmentToken.ImportMidi.name) { _, bundle: Bundle? ->
+            this.view_model.backup_fragment_intent = Pair(IntentFragmentToken.ImportMidi, bundle)
             val main = this.get_main()
             main.loading_reticle_show()
             main.runOnUiThread {
@@ -187,6 +190,7 @@ class EditorFragment : PaganFragment() {
                 main.runOnUiThread {
                     editor_table?.visibility = View.VISIBLE
                 }
+                this.view_model.backup_fragment_intent = null
                 main.loading_reticle_hide()
             }
         }
@@ -232,12 +236,6 @@ class EditorFragment : PaganFragment() {
                 main.loading_reticle_hide()
             }
         }
-
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
     }
 
     fun reset_context_menu() {
@@ -256,6 +254,10 @@ class EditorFragment : PaganFragment() {
             }
             null -> { }
         }
+    }
+
+    fun save_fragment_result(token: IntentFragmentToken, bundle: Bundle) {
+
     }
 
     fun clearContextMenu() {

@@ -12,18 +12,9 @@ import androidx.core.os.bundleOf
 import androidx.fragment.app.setFragmentResult
 import com.qfs.pagan.databinding.FragmentLandingBinding
 
-class LandingPageFragment : PaganFragment() {
-    // Boiler Plate //
-    private var _binding: FragmentLandingBinding? = null
-    private val binding get() = _binding!!
-    //////////////////
-
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        _binding = FragmentLandingBinding.inflate(inflater, container, false)
-        return binding.root
+class LandingPageFragment : PaganFragment<FragmentLandingBinding>() {
+    override fun inflate( inflater: LayoutInflater, container: ViewGroup?): FragmentLandingBinding {
+        return FragmentLandingBinding.inflate(inflater, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -124,10 +115,4 @@ class LandingPageFragment : PaganFragment() {
         super.onResume()
         this.get_main().set_title_text("${getString(R.string.app_name)} ${getString(R.string.app_version)}")
     }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
-    }
-
 }

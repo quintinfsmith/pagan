@@ -14,20 +14,19 @@ import com.qfs.pagan.opusmanager.LoadedJSONData0
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 
-class LoadFragment : PaganFragment() {
-    private var _binding: FragmentLoadBinding? = null
-
+class LoadFragment : PaganFragment<FragmentLoadBinding>() {
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        this._binding = FragmentLoadBinding.inflate(inflater, container, false)
-
         this.get_main().drawer_lock()
-        return this._binding!!.root
+        return super.onCreateView(inflater, container, savedInstanceState)
     }
 
+    override fun inflate(inflater: LayoutInflater, container: ViewGroup?): FragmentLoadBinding {
+        return FragmentLoadBinding.inflate(inflater, container, false)
+    }
 
     override fun onStart() {
         super.onStart()
@@ -54,16 +53,12 @@ class LoadFragment : PaganFragment() {
             }
             (rvProjectList.adapter as ProjectToLoadAdapter).addProject(Pair(json_obj.name, json_file.path))
         }
+
     }
 
     fun load_project(path: String) {
         setFragmentResult(IntentFragmentToken.Load.name, bundleOf(Pair("PATH", path)))
         this.get_main().navigate(R.id.EditorFragment)
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        this._binding = null
     }
 
 }

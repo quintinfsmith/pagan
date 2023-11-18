@@ -22,12 +22,7 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 
-class GlobalSettingsFragment : PaganFragment() {
-    // Boiler Plate //
-    private var _binding: FragmentGlobalSettingsBinding? = null
-    private val binding get() = _binding!!
-    //////////////////
-
+class GlobalSettingsFragment : PaganFragment<FragmentGlobalSettingsBinding>() {
     var import_soundfont_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             result?.data?.data?.also { uri ->
@@ -65,15 +60,9 @@ class GlobalSettingsFragment : PaganFragment() {
         }
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        _binding = FragmentGlobalSettingsBinding.inflate(inflater, container, false)
-        return binding.root
+    override fun inflate( inflater: LayoutInflater, container: ViewGroup?): FragmentGlobalSettingsBinding {
+        return FragmentGlobalSettingsBinding.inflate(inflater, container, false)
     }
-
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -132,11 +121,6 @@ class GlobalSettingsFragment : PaganFragment() {
                 main.save_configuration()
             }
         })
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
     }
 
     private fun interact_btnChooseSoundFont(view: View) {

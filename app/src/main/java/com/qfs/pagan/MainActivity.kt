@@ -18,6 +18,7 @@ import android.text.Editable
 import android.text.InputFilter
 import android.text.Spanned
 import android.text.TextWatcher
+import android.util.Log
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.Menu
@@ -98,6 +99,10 @@ class MainActivity : AppCompatActivity() {
     private var _progress_bar: ProgressBar? = null
     var playback_queued: Boolean = false
     var stop_queued: Boolean = false
+    var last_orientation_landscape: Boolean? = null
+    init {
+        Log.d("AAA", "????")
+    }
 
     private var _exporting_wav_handle: PaganPlaybackDevice? = null
 
@@ -165,6 +170,7 @@ class MainActivity : AppCompatActivity() {
                     IntentFragmentToken.ImportMidi.name,
                     bundleOf(Pair("URI", uri.toString()))
                 )
+
                 if (fragment !is EditorFragment) {
                     this.navigate(R.id.EditorFragment)
                 }
@@ -198,8 +204,6 @@ class MainActivity : AppCompatActivity() {
         }
         super.onDestroy()
     }
-
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -1301,5 +1305,17 @@ class MainActivity : AppCompatActivity() {
                 editor_table?.get_first_visible_column_index() ?: 0
             }
         }
+    }
+
+    fun is_orientation_landscape(): Boolean {
+        return this.windowManager.currentWindowMetrics.bounds.width() > this.windowManager.currentWindowMetrics.bounds.height()
+    }
+    fun has_orientation_changed(): Boolean {
+        Log.d("AAA", "ORIENTATION: $last_orientation_landscape")
+        var current_orientation = this.is_orientation_landscape()
+        Log.d("AAA", "NEW: ORIENTATION: $current_orientation")
+        var output = (this.last_orientation_landscape != null && this.last_orientation_landscape != current_orientation)
+        this.last_orientation_landscape = current_orientation
+        return output
     }
 }

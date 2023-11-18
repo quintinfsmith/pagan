@@ -266,7 +266,11 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         }
 
         this.column_width_map.add(index, column)
-        this.column_width_maxes.add(index, column.max())
+        this.column_width_maxes.add(index, if (column.isNotEmpty()) {
+            column.max()
+        } else {
+            1
+        })
 
         if (! ignore_ui) {
             (this.column_label_recycler.adapter!! as ColumnLabelAdapter).add_column(index)

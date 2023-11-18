@@ -39,6 +39,7 @@
             app:destination="@id/EditorFragment" />
     </fragment>
 
+
     <fragment
         android:id="@+id/FrontFragment"
         android:name="com.qfs.pagan.LandingPageFragment"

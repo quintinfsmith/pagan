@@ -256,10 +256,6 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         }
     }
 
-    fun save_fragment_result(token: IntentFragmentToken, bundle: Bundle) {
-
-    }
-
     fun clearContextMenu() {
         this.active_context_menu_index = null
         val llContextCell = this.activity!!.findViewById<LinearLayout?>(R.id.llContextCell)

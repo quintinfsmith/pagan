@@ -111,8 +111,8 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         val opus_manager = main.get_opus_manager()
 
         if (this.view_model.coarse_x != null && opus_manager.first_load_done) {
-            editor_table.setup()
             opus_manager.cursor_clear()
+            editor_table.setup()
             this.get_main().drawer_unlock()
             thread {
                 Thread.sleep(100)
@@ -172,6 +172,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             main.loading_reticle_show()
             main.runOnUiThread {
                 editor_table?.visibility = View.GONE
+                this@EditorFragment.clearContextMenu()
             }
             thread {
                 val path = bundle?.getString("URI")

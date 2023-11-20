@@ -566,7 +566,6 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         if (opus_manager.is_percussion(opus_manager.cursor.channel)) {
             nsOctave.visibility = View.GONE
             nsOffset.visibility = View.GONE
-            (nsOffset.parent as View).visibility = View.GONE
             rosRelativeOption.visibility = View.GONE
 
             if (!opus_manager.get_tree().is_event()) {
@@ -587,7 +586,6 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             }
             nsOctave.visibility = View.VISIBLE
             nsOffset.visibility = View.VISIBLE
-            (nsOffset.parent as View).visibility = View.VISIBLE
             if (current_tree.is_event()) {
                 nsOffset.set_max(opus_manager.radix - 1)
                 val event = current_tree.get_event()!!

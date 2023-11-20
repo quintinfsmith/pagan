@@ -90,6 +90,7 @@
                 android:layout_height="wrap_content"
                 android:paddingLeft="@dimen/normal_padding"
                 android:paddingRight="@dimen/normal_padding"
+                custom:button_theme="1"
                 custom:min="0"
                 custom:max="7"/>
         </LinearLayout>
@@ -103,21 +104,14 @@
 
     </LinearLayout>
 
-    <LinearLayout
-        android:background="?attr/main_fg"
-        android:paddingStart="1dp"
+    <com.qfs.pagan.NumberSelector xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:custom="http://schemas.android.com/apk/res-auto"
+        android:orientation="horizontal"
+        android:id="@+id/nsOffset"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content">
-        <com.qfs.pagan.NumberSelector xmlns:android="http://schemas.android.com/apk/res/android"
-            xmlns:custom="http://schemas.android.com/apk/res-auto"
-            android:background="?attr/main_bg"
-            android:orientation="horizontal"
-            android:id="@+id/nsOffset"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:paddingLeft="@dimen/normal_padding"
-            android:paddingRight="@dimen/normal_padding"
-            custom:min="0"
-            custom:max="11"/>
-    </LinearLayout>
+        android:layout_height="wrap_content"
+        android:paddingLeft="@dimen/normal_padding"
+        android:paddingRight="@dimen/normal_padding"
+        custom:min="0"
+        custom:max="11"/>
 </LinearLayout>

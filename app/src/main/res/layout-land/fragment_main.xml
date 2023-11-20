@@ -7,18 +7,16 @@ android:layout_height="match_parent"
 android:orientation="horizontal"
 tools:context=".EditorFragment">
 
-<com.qfs.pagan.EditorTable
-    android:id="@+id/etEditorTable"
-    android:layout_width="0dp"
-    android:layout_height="wrap_content"
-    android:paddingBottom="@dimen/stroke_leaf"
-    android:paddingEnd="@dimen/stroke_leaf"
-    android:background="?attr/table_lines"
-    android:layout_weight="1"/>
+    <com.qfs.pagan.EditorTable
+        android:id="@+id/etEditorTable"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:background="?attr/main_bg"/>
 
     <LinearLayout
         android:id="@+id/llContextMenu"
-        android:background="?attr/main_bg"
+        android:background="?attr/context_menu_bg"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:orientation="horizontal"

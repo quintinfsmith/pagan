@@ -15,13 +15,14 @@ import kotlin.math.roundToInt
 class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(context, attrs) {
     var min: Int = 0
     var max: Int = 1
+    var button_theme: Int = R.style.numberSelectorButtonA
     var radix: Int = 10
     private var _button_map = HashMap<NumberSelectorButton, Int>()
     private var _active_button: NumberSelectorButton? = null
     private var _on_change_hook: ((NumberSelector) -> Unit)? = null
 
-    class NumberSelectorButton(private var _number_selector: NumberSelector, var value: Int):
-        androidx.appcompat.widget.AppCompatTextView(ContextThemeWrapper(_number_selector.context, R.style.numberSelectorButton)) {
+    class NumberSelectorButton(private var _number_selector: NumberSelector, var value: Int, theme: Int):
+        androidx.appcompat.widget.AppCompatTextView(ContextThemeWrapper(_number_selector.context, theme)) {
         companion object {
             private val STATE_ACTIVE = intArrayOf(R.attr.state_active)
         }
@@ -55,6 +56,11 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
     init {
         val styled_attributes = context.theme.obtainStyledAttributes(attrs, R.styleable.NumberSelector, 0, 0)
         try {
+            this.button_theme = when (styled_attributes.getInteger(R.styleable.NumberSelector_button_theme, 0)) {
+                1 -> R.style.numberSelectorButtonB
+                else -> R.style.numberSelectorButtonA
+            }
+
             this.max = styled_attributes.getInteger(R.styleable.NumberSelector_max, 2)
             this.min = styled_attributes.getInteger(R.styleable.NumberSelector_min, 0)
         } finally {
@@ -155,7 +161,7 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
                 ((i - this.min) % this.childCount)
             }
 
-            val currentView = NumberSelectorButton(this, i)
+            val currentView = NumberSelectorButton(this, i, this.button_theme)
             if (this.orientation == HORIZONTAL) {
                 (this.getChildAt(j) as ViewGroup).addView(currentView, 0)
             } else {

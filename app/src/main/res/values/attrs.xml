@@ -2,8 +2,10 @@
     <declare-styleable name="NumberSelector">
         <attr name="min" format="integer" />
         <attr name="max" format="integer" />
+        <attr name="button_theme" format="integer" />
         <attr name="radix" format="integer" />
         <attr name="numberselector_bg_default" format="color"/>
+        <attr name="numberselector_bg_second" format="color"/>
         <attr name="numberselector_fg_default" format="color"/>
         <attr name="numberselector_bg_pressed" format="color"/>
         <attr name="numberselector_fg_pressed" format="color"/>
@@ -55,6 +57,8 @@
     <attr name="label_bg_focused" format="color" />
     <attr name="label_bg_channel_even" format="color"/>
     <attr name="label_bg_channel_odd" format="color"/>
+    <attr name="context_menu_bg" format="color" />
+
 
     <attr name="label_fg" format="color" />
     <attr name="label_fg_focused" format="color" />
@@ -65,6 +69,7 @@
     <attr name="button_fg_pressed" format="color" />
     <attr name="button_bg_default" format="color" />
     <attr name="button_bg_pressed" format="color" />
+    <attr name="button_stroke_color" format="color" />
 
     <attr name="colorIconFG" format="color" />
     <attr name="icon_size" format="dimension" />

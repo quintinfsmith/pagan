@@ -326,6 +326,7 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
     fun clear() {
         this.kill_frame = null
         this._active_sample_handles.clear()
+        this.sample_release_map.clear()
         this._midi_events_by_frame.clear()
         this.frame = 0
         this._empty_chunks_count = 0

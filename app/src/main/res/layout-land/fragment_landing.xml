@@ -101,6 +101,7 @@
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="1"
+        android:padding="4dp"
         android:orientation="vertical">
 
         <TextView
@@ -110,6 +111,10 @@
             android:text="New Project"
             android:theme="@style/button_front" />
 
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/normal_padding" />
+
         <TextView
             android:id="@+id/btnFrontLoad"
             android:layout_width="match_parent"
@@ -117,6 +122,9 @@
             android:text="Load Project"
             android:theme="@style/button_front" />
 
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/normal_padding" />
 
         <TextView
             android:id="@+id/btnFrontImport"
@@ -124,6 +132,10 @@
             android:layout_height="wrap_content"
             android:text="Import MIDI"
             android:theme="@style/button_front" />
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/normal_padding" />
 
         <TextView
             android:id="@+id/btnFrontSettings"

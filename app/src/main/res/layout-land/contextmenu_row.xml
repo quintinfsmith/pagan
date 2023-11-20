@@ -8,7 +8,6 @@
     android:paddingEnd="@dimen/normal_padding"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-
     <ImageView
         android:id="@+id/btnInsertLine"
         android:theme="@style/icon_button"
@@ -16,6 +15,10 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:contentDescription="Insert Line"/>
+
+    <Space
+        android:layout_height="@dimen/normal_padding"
+        android:layout_width="wrap_content"/>
 
     <ImageView
         android:id="@+id/btnRemoveLine"
@@ -25,17 +28,14 @@
         android:layout_height="wrap_content"
         android:contentDescription="Remove Line"/>
 
-    <SeekBar
-        android:id="@+id/sbLineVolume"
-        android:visibility="gone"
-        android:max="127"
-        android:min="0"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+    <Space
+        android:layout_height="@dimen/normal_padding"
+        android:layout_width="wrap_content"/>
 
     <TextView
         android:id="@+id/btnChoosePercussion"
         android:theme="@style/button"
+        android:textSize="12sp"
         android:layout_marginTop="@dimen/normal_padding"
         android:gravity="center"
         android:layout_width="match_parent"
@@ -44,5 +44,16 @@
         android:paddingBottom="4dp"
         android:text="Instrument..." />
 
+    <Space
+        android:layout_height="@dimen/normal_padding"
+        android:layout_width="wrap_content"/>
+
+    <SeekBar
+        android:id="@+id/sbLineVolume"
+        android:visibility="gone"
+        android:max="127"
+        android:min="0"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
 
 </LinearLayout>

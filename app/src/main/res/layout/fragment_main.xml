@@ -10,33 +10,34 @@
     <com.qfs.pagan.EditorTable
         android:id="@+id/etEditorTable"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"/>
+        android:layout_height="wrap_content"
+        android:paddingBottom="@dimen/stroke_leaf"
+        android:paddingEnd="@dimen/stroke_leaf"
+        android:background="?attr/table_lines"/>
+
+    <Space
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1" />
 
     <LinearLayout
+        android:id="@+id/llContextMenu"
+        android:background="?attr/main_bg"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="?attr/table_lines"
-        android:paddingTop="@dimen/context_menu_border">
-        <LinearLayout
-            android:id="@+id/llContextMenu"
-            android:background="?attr/main_bg"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingTop="@dimen/normal_padding">
-            <include
-                android:id="@+id/llContextCell"
-                layout="@layout/contextmenu_cell"/>
-            <include
-                android:id="@+id/llContextCol"
-                layout="@layout/contextmenu_column"/>
-            <include
-                android:id="@+id/llContextRow"
-                layout="@layout/contextmenu_row"/>
-            <include
-                android:id="@+id/llContextLink"
-                layout="@layout/contextmenu_linking"/>
-        </LinearLayout>
+        android:orientation="vertical"
+        android:paddingTop="@dimen/normal_padding">
+        <include
+            android:id="@+id/llContextCell"
+            layout="@layout/contextmenu_cell"/>
+        <include
+            android:id="@+id/llContextCol"
+            layout="@layout/contextmenu_column"/>
+        <include
+            android:id="@+id/llContextRow"
+            layout="@layout/contextmenu_row"/>
+        <include
+            android:id="@+id/llContextLink"
+            layout="@layout/contextmenu_linking"/>
     </LinearLayout>
 </LinearLayout>

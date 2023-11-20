@@ -65,7 +65,9 @@
             android:layout_weight="1"
             android:text="@string/btn_landing_new"
             android:theme="@style/button_front" />
-
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/normal_padding" />
         <TextView
             android:clickable="true"
             android:id="@+id/btnFrontLoad"
@@ -74,6 +76,10 @@
             android:layout_weight="1"
             android:text="@string/btn_landing_load"
             android:theme="@style/button_front" />
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/normal_padding" />
 
         <TextView
             android:clickable="true"
@@ -84,6 +90,10 @@
             android:text="@string/btn_landing_midi"
             android:theme="@style/button_front" />
 
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/normal_padding" />
+
         <TextView
             android:clickable="true"
             android:id="@+id/btnFrontSettings"
@@ -92,6 +102,10 @@
             android:layout_weight="1"
             android:text="@string/btn_landing_settings"
             android:theme="@style/button_front" />
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/normal_padding" />
 
         <TextView
             android:clickable="true"

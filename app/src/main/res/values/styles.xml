@@ -1,31 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="recycler_option" parent="@android:style/Widget.TextView">
+    <style name="recycler_option" parent="button">
+        <item name="android:gravity">center</item>
+        <item name="android:textColor">@color/button_fg</item>
+        <item name="android:clickable">true</item>
+        <item name="android:paddingStart">8dp</item>
+        <item name="android:paddingEnd">8dp</item>
+        <item name="android:background">@drawable/button</item>
+        <item name="android:layout_marginBottom">@dimen/config_item_padding</item>
+    </style>
+
+    <style name="recycler_option_text">
+        <item name="android:textColor">@color/button_fg</item>
+        <item name="android:textSize">18sp</item>
+    </style>
+
+    <style name="recycler_option_instrument" parent="recycler_option_text">
+    </style>
+
+    <style name="recycler_option_x" parent="recycler_option_text">
+        <item name="android:gravity">center</item>
+    </style>
+
+    <style name="button" parent="Widget.AppCompat.TextView">
+        <item name="android:background">@drawable/button</item>
         <item name="android:textSize">18sp</item>
         <item name="android:gravity">center</item>
         <item name="android:textColor">@color/button_fg</item>
         <item name="android:clickable">true</item>
-        <item name="android:padding">5sp</item>
-        <item name="android:background">@drawable/button</item>
+        <item name="android:padding">4dp</item>
     </style>
 
-    <style name="button" parent="@android:style/Widget.TextView">
-        <item name="android:textSize">18sp</item>
-        <item name="android:gravity">center</item>
-        <item name="android:textColor">@color/button_fg</item>
-        <item name="android:background">@drawable/button</item>
-        <item name="android:clickable">true</item>
-        <item name="android:padding">5dp</item>
-        <item name="android:colorControlHighlight">#88FFFFFF</item>
-    </style>
-
-    <style name="icon_button" parent="@style/button">
-        <item name="android:padding">10sp</item>
+    <style name="icon_button" parent="button">
+        <item name="android:padding">8dp</item>
         <item name="android:tint">@color/button_fg</item>
     </style>
 
     <style name="config_button" parent="@style/icon_button">
-        <item name="android:padding">10sp</item>
+        <item name="android:height">42dp</item>
         <item name="android:tint">@color/button_fg</item>
     </style>
 
@@ -153,27 +165,19 @@
         <item name="android:textSize">12sp</item>
     </style>
 
-    <style name="column_label_inner">
+    <style name="column_label">
         <item name="android:gravity">center</item>
         <item name="android:paddingTop">4dp</item>
         <item name="android:paddingBottom">4dp</item>
-        <item name="android:background">@color/label_bg</item>
+        <item name="android:background">@drawable/editor_label</item>
         <item name="android:textColor">@color/label_fg</item>
-    </style>
-
-    <style name="column_label_outer">
-        <item name="android:paddingEnd">@dimen/stroke_leaf</item>
-        <item name="android:paddingStart">@dimen/stroke_leaf</item>
-        <item name="android:paddingBottom">@dimen/normal_padding</item>
-        <item name="android:gravity">center</item>
-        <item name="android:background">?attr/table_lines</item>
     </style>
 
     <style name="line_label">
         <item name="android:minWidth">41dp</item>
         <item name="android:gravity">bottom|center_horizontal</item>
         <item name="android:textColor">@color/leaf_fg</item>
-        <item name="android:background">@drawable/editor_label</item>
+        <item name="android:background">@drawable/editor_label_line</item>
         <item name="android:layout_height">@dimen/line_height</item>
     </style>
 

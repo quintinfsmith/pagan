@@ -4,10 +4,9 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:id="@+id/clA"
-    android:layout_width="match_parent"
+    android:layout_width="@dimen/config_width"
     android:layout_height="match_parent"
-    android:padding="@dimen/padding_config"
-    android:minWidth="300dp"
+    android:padding="@dimen/config_padding_outer"
     android:clickable="true"
     android:background="?attr/drawer_bg" >
 
@@ -31,10 +30,10 @@
             android:layout_height="wrap_content">
 
             <TextView
-                android:id="@+id/tvChangeProjectName"
+                android:id="@+id/btnChangeProjectName"
+                android:theme="@style/button"
                 android:text="@string/btn_cfg_change_name"
                 android:maxLines="1"
-                android:theme="@style/button"
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"/>
@@ -42,7 +41,7 @@
 
         <LinearLayout
             android:orientation="horizontal"
-            android:paddingTop="@dimen/normal_padding"
+            android:paddingTop="@dimen/config_item_padding"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
@@ -57,6 +56,7 @@
 
             <Space
                 android:layout_width="wrap_content"
+                android:minWidth="@dimen/config_item_padding"
                 android:layout_height="wrap_content"
                 android:layout_weight="1" />
 
@@ -71,6 +71,7 @@
 
             <Space
                 android:layout_width="wrap_content"
+                android:minWidth="@dimen/config_item_padding"
                 android:layout_height="wrap_content"
                 android:layout_weight="1" />
 
@@ -85,21 +86,28 @@
 
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/btnAddChannel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/btn_cfg_add_channel"
-            android:paddingStart="15dp"
-            android:paddingTop="@dimen/normal_padding"
-            android:paddingEnd="15dp"
-            android:layout_gravity="end"
-            android:theme="@style/button" />
+        <LinearLayout
+            android:orientation="horizontal"
+            android:paddingTop="@dimen/config_item_padding"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/btnAddChannel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/btn_cfg_add_channel"
+                android:paddingStart="15dp"
+                android:paddingTop="@dimen/config_item_padding"
+                android:paddingEnd="15dp"
+                android:layout_gravity="end"
+                android:theme="@style/button" />
+        </LinearLayout>
 
 
         <com.qfs.pagan.ChannelOptionRecycler
             android:id="@+id/rvActiveChannels"
-            android:paddingTop="@dimen/normal_padding"
+            android:paddingTop="@dimen/config_item_padding"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1" />
@@ -108,8 +116,8 @@
 
 
     <LinearLayout
-        android:paddingTop="@dimen/normal_padding"
-        android:paddingBottom="@dimen/normal_padding"
+        android:paddingTop="@dimen/config_item_padding"
+        android:paddingBottom="@dimen/config_item_padding"
         android:id="@+id/llProjectOptions"
         android:layout_gravity="bottom"
         android:gravity="bottom"
@@ -122,39 +130,49 @@
             android:id="@+id/btnSaveProject"
             android:maxLines="1"
             android:theme="@style/config_button"
-            android:layout_width="52dp"
-            android:layout_weight="1"
+            android:layout_width="@dimen/config_button_width"
             android:layout_height="wrap_content"
             app:srcCompat="@drawable/ic_baseline_save_24"
             android:text="@string/btn_cfg_save" />
+        <Space
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"/>
 
         <ImageView
             android:id="@+id/btnCopyProject"
             android:maxLines="1"
             android:theme="@style/config_button"
-            android:layout_width="52dp"
-            android:layout_weight="1"
+            android:layout_width="@dimen/config_button_width"
             android:layout_height="wrap_content"
             app:srcCompat="@drawable/ic_baseline_content_copy_24"
             android:text="@string/btn_cfg_copy" />
+
+        <Space
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"/>
 
         <ImageView
             android:id="@+id/btnDeleteProject"
             android:maxLines="1"
             android:theme="@style/config_button"
-            android:layout_width="52dp"
-            android:layout_weight="1"
+            android:layout_width="@dimen/config_button_width"
             android:layout_height="wrap_content"
             app:srcCompat="@drawable/ic_baseline_delete_24"
             android:text="@string/btn_cfg_delete" />
+
+        <Space
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"/>
 
         <ImageView
             android:id="@+id/btnExportProject"
             android:maxLines="1"
             android:theme="@style/icon_button"
             android:layout_height="wrap_content"
-            android:layout_width="52dp"
-            android:layout_weight="1"
+            android:layout_width="@dimen/config_button_width"
             app:srcCompat="@drawable/export"
             android:text="@string/btn_cfg_export" />
     </LinearLayout>

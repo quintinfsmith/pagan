@@ -12,12 +12,12 @@
 
         <LinearLayout
             android:orientation="horizontal"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="0dp"
             android:layout_weight="1">
 
             <LinearLayout
-                android:id="@+id/clButtons"
+                android:id="@+id/clTextViews"
                 android:orientation="vertical"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -32,7 +32,9 @@
                     android:text="Split"
                     android:contentDescription="@string/cd_split"
                     app:srcCompat="@drawable/split"/>
-
+                <Space
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/normal_padding"/>
                 <ImageView
                     android:id="@+id/btnInsert"
                     android:layout_height="wrap_content"
@@ -42,6 +44,9 @@
                     android:theme="@style/icon_button"
                     app:srcCompat="@drawable/insert" />
 
+                <Space
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/normal_padding"/>
                 <ImageView
                     android:id="@+id/btnRemove"
                     android:layout_height="wrap_content"
@@ -50,6 +55,10 @@
                     android:text="Remove"
                     android:theme="@style/icon_button"
                     app:srcCompat="@drawable/remove" />
+
+                <Space
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/normal_padding"/>
 
                 <ImageView
                     android:id="@+id/btnUnset"
@@ -60,31 +69,29 @@
                     android:theme="@style/icon_button"
                     app:srcCompat="@drawable/unset" />
 
+                <Space
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/normal_padding"/>
+
                 <TextView
                     android:id="@+id/btnDuration"
                     android:layout_height="wrap_content"
                     android:layout_width="match_parent"
-                    android:theme="@style/icon_button"
+                    android:theme="@style/button"
                     android:text="T" />
-                </LinearLayout>
-
-            <LinearLayout
-                android:background="?attr/main_fg"
-                android:paddingStart="1dp"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content">
-                <com.qfs.pagan.NumberSelector xmlns:android="http://schemas.android.com/apk/res/android"
-                    xmlns:custom="http://schemas.android.com/apk/res-auto"
-                    android:orientation="horizontal"
-                    android:background="?attr/main_bg"
-                    android:id="@+id/nsOctave"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:paddingLeft="@dimen/normal_padding"
-                    android:paddingRight="@dimen/normal_padding"
-                    custom:min="0"
-                    custom:max="7"/>
             </LinearLayout>
+
+            <com.qfs.pagan.NumberSelector xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:custom="http://schemas.android.com/apk/res-auto"
+                android:orientation="horizontal"
+                android:background="?attr/main_bg"
+                android:id="@+id/nsOctave"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingLeft="@dimen/normal_padding"
+                android:paddingRight="@dimen/normal_padding"
+                custom:min="0"
+                custom:max="7"/>
         </LinearLayout>
         <com.qfs.pagan.RelativeOptionSelector
             android:orientation="horizontal"

@@ -1,11 +1,15 @@
 package com.qfs.pagan
 
-import android.view.LayoutInflater
+import android.view.ContextThemeWrapper
+import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewGroup.LayoutParams.MATCH_PARENT
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.apres.soundfont.SoundFont
+import kotlin.math.roundToInt
 
 class ChannelOptionAdapter(
     private val _opus_manager: InterfaceLayer,
@@ -36,24 +40,29 @@ class ChannelOptionAdapter(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChannelOptionViewHolder {
-        return ChannelOptionViewHolder(
-            LayoutInflater.from(parent.context).inflate(
-                R.layout.config_active_channel,
-                parent,
-                false
-            )
-        )
+        var top_view = LinearLayout(ContextThemeWrapper(parent.context, R.style.recycler_option))
+        val btn_choose_instrument = TextView(ContextThemeWrapper(parent.context, R.style.recycler_option_instrument))
+        val btn_kill_channel = TextView(ContextThemeWrapper(parent.context, R.style.recycler_option_x))
+        top_view.addView(btn_choose_instrument)
+        top_view.addView(btn_kill_channel)
+
+        btn_choose_instrument.layoutParams.width = 0
+        (btn_choose_instrument.layoutParams as LinearLayout.LayoutParams).weight = 1F
+        (btn_choose_instrument.layoutParams as LinearLayout.LayoutParams).gravity = Gravity.START
+
+
+        return ChannelOptionViewHolder(top_view)
     }
 
     fun get_activity(): MainActivity {
         return this._recycler.context as MainActivity
     }
 
-    private fun set_text(view: View, position: Int) {
+    private fun set_text(view: ViewGroup, position: Int) {
         val activity = this.get_activity()
         val channels = this._opus_manager.channels
         val curChannel = channels[position]
-        val btnChooseInstrument: TextView = view.findViewById(R.id.btnChooseInstrument)
+
         val defaults = activity.resources.getStringArray(R.array.midi_instruments)
         val key = Pair(curChannel.midi_bank, curChannel.midi_program)
 
@@ -63,21 +72,32 @@ class ChannelOptionAdapter(
             activity.resources.getString(R.string.unknown_instrument, defaults[curChannel.midi_program])
         }
 
-        btnChooseInstrument.text = if (curChannel.midi_channel != 9) {
+        (view.getChildAt(0) as TextView).text = if (curChannel.midi_channel != 9) {
             activity.getString(R.string.label_choose_instrument, position, label)
         } else {
             activity.getString(R.string.label_choose_instrument_percussion, label)
         }
     }
 
+    override fun onViewAttachedToWindow(holder: ChannelOptionViewHolder) {
+        super.onViewAttachedToWindow(holder)
+        holder.itemView.layoutParams.width = MATCH_PARENT
+        (holder.itemView.layoutParams as ViewGroup.MarginLayoutParams).setMargins(
+            0,
+            0,
+            0,
+            holder.itemView.context.resources.getDimension(R.dimen.config_item_padding).roundToInt()
+        )
+    }
+
     override fun onBindViewHolder(holder: ChannelOptionViewHolder, position: Int) {
         this.set_text(holder.itemView as ViewGroup, position)
 
-        holder.itemView.findViewById<TextView>(R.id.btnChooseInstrument).setOnClickListener {
+        (holder.itemView as ViewGroup).getChildAt(0).setOnClickListener {
             this.interact_btnChooseInstrument(it)
         }
 
-        val remove_button = holder.itemView.findViewById<TextView>(R.id.btnRemoveChannel)
+        val remove_button = (holder.itemView as ViewGroup).getChildAt(1) as TextView
         if (this._opus_manager.is_percussion(position)) {
             remove_button.text = this.get_percussion_visibility_button_text()
             remove_button.setOnClickListener {

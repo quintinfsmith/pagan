@@ -9,10 +9,12 @@
             android:bottom="0dp" />
     </shape>
 </item>
+
 <item android:elevation="0dp" >
-    <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-        <stroke android:width="@dimen/stroke_corner" android:color="?attr/table_lines"/>
-        <solid android:color="?attr/main_bg" android:width="@dimen/stroke_corner" />
+    <shape
+        xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+        <solid android:color="@color/leaf_bg"/>
+        <stroke android:color="?attr/table_lines" android:width="@dimen/stroke_leaf"/>
     </shape>
 </item>
 </layer-list>

@@ -3,18 +3,17 @@
     <item android:elevation="5dp" >
         <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
             <padding
-                android:top="2dp"
-                android:left="2dp"
-                android:right="2dp"
-                android:bottom="2dp"
+                android:top="0dp"
+                android:left="0dp"
+                android:right="0dp"
+                android:bottom="0dp"
                 />
         </shape>
     </item>
-    <item
-        android:layout_margin="5dp"
-        android:elevation="5dp" >
+    <item>
         <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
             <solid android:color="?attr/button_bg_default"/>
+            <corners android:radius="4dp"/>
         </shape>
     </item>
 </layer-list>

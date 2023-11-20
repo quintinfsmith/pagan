@@ -641,7 +641,7 @@ class MainActivity : AppCompatActivity() {
         val rvActiveChannels: ChannelOptionRecycler = this.findViewById(R.id.rvActiveChannels)
         ChannelOptionAdapter(opus_manager, rvActiveChannels)
 
-        val tvChangeProjectName: TextView = this.findViewById(R.id.tvChangeProjectName)
+        val tvChangeProjectName: TextView = this.findViewById(R.id.btnChangeProjectName)
         tvChangeProjectName.setOnClickListener {
             this.dialog_project_name()
         }

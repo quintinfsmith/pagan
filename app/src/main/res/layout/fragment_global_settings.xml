@@ -20,7 +20,8 @@
                     android:paddingTop="@dimen/normal_padding"
                     android:paddingEnd="15dp" />
 
-                <Button
+                <TextView
+                    android:theme="@style/button"
                     android:id="@+id/btnChooseSoundFont"
                     android:text="@string/btn_settings_sfmute"
                     android:layout_weight="1"

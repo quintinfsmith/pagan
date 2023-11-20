@@ -4,7 +4,6 @@
     <dimen name="stroke_leaf">.5dp</dimen>
     <dimen name="stroke_corner">.5dp</dimen>
     <dimen name="context_menu_border">2dp</dimen>
-    <dimen name="padding_config">5dp</dimen>
     <dimen name="icon_size">42dp</dimen>
     <dimen name="relative_option_width">35dp</dimen>
     <dimen name="line_height">41dp</dimen>
@@ -13,4 +12,8 @@
     <dimen name="dropdown_item_padding_sides">16dp</dimen>
     <dimen name="dropdown_textsize">20sp</dimen>
     <dimen name="dropdown_title_textsize">18sp</dimen>
+    <dimen name="config_padding_outer">5dp</dimen>
+    <dimen name="config_button_width">62dp</dimen>
+    <dimen name="config_item_padding">2dp</dimen>
+    <dimen name="config_width">248dp</dimen>
 </resources>

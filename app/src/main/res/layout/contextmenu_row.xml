@@ -31,49 +31,42 @@
         android:id="@+id/btnChoosePercussion"
         android:theme="@style/button"
         android:layout_marginTop="@dimen/normal_padding"
+        android:layout_marginBottom="@dimen/normal_padding"
         android:gravity="center"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
         android:text="Instrument..." />
 
     <LinearLayout
         android:orientation="horizontal"
         android:layout_width="match_parent"
+        android:paddingBottom="@dimen/normal_padding"
         android:layout_height="wrap_content">
-
-        <LinearLayout
-            android:orientation="horizontal"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content">
-
+            <Space
+                android:layout_weight="1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"/>
             <ImageView
                 android:id="@+id/btnRemoveLine"
                 android:theme="@style/icon_button"
                 android:gravity="center"
                 app:srcCompat="@drawable/remove_line"
-                android:layout_width="match_parent"
+                android:layout_width="62dp"
                 android:layout_height="wrap_content"
                 android:contentDescription="Remove Line"/>
-        </LinearLayout>
 
-        <LinearLayout
-            android:orientation="horizontal"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content">
+            <Space
+                android:layout_width="@dimen/normal_padding"
+                android:layout_height="wrap_content"/>
+
             <ImageView
                 android:id="@+id/btnInsertLine"
                 android:theme="@style/icon_button"
                 android:gravity="center"
                 app:srcCompat="@drawable/insert_line"
-                android:layout_width="match_parent"
+                android:layout_width="62dp"
                 android:layout_height="wrap_content"
                 android:contentDescription="Insert Line"/>
-        </LinearLayout>
     </LinearLayout>
 
 </LinearLayout>

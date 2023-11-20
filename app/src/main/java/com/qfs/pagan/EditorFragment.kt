@@ -566,6 +566,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         if (opus_manager.is_percussion(opus_manager.cursor.channel)) {
             nsOctave.visibility = View.GONE
             nsOffset.visibility = View.GONE
+            (nsOffset.parent as View).visibility = View.GONE
             rosRelativeOption.visibility = View.GONE
 
             if (!opus_manager.get_tree().is_event()) {
@@ -586,6 +587,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             }
             nsOctave.visibility = View.VISIBLE
             nsOffset.visibility = View.VISIBLE
+            (nsOffset.parent as View).visibility = View.VISIBLE
             if (current_tree.is_event()) {
                 nsOffset.set_max(opus_manager.radix - 1)
                 val event = current_tree.get_event()!!
@@ -638,7 +640,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
 
         val channel = opus_manager.cursor.channel
         if (!opus_manager.is_percussion(channel) && current_tree.is_leaf() && !current_tree.is_event()) {
-            btnUnset.visibility = View.INVISIBLE
+            btnUnset.visibility = View.GONE
         } else {
             btnUnset.visibility = View.VISIBLE
             btnUnset.setOnClickListener {
@@ -647,7 +649,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         }
 
         if (opus_manager.cursor.get_position().isEmpty()) {
-            btnRemove.visibility = View.INVISIBLE
+            btnRemove.visibility = View.GONE
         } else {
             btnRemove.visibility = View.VISIBLE
             btnRemove.setOnClickListener {
@@ -722,7 +724,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             btnDuration.text = "x${event.duration}"
             btnDuration.visibility = View.VISIBLE
         } else {
-            btnDuration.visibility = View.INVISIBLE
+            btnDuration.visibility = View.GONE
         }
     }
 

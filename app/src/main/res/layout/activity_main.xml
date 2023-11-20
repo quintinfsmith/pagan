@@ -17,7 +17,8 @@
         android:layout_gravity="start"
         android:fitsSystemWindows="true"
         android:layout_height="match_parent"
-        android:layout_width="match_parent">
+        android:layout_width="wrap_content">
+
         <include
             android:id="@+id/drawer_config"
             layout="@layout/fragment_song_config"

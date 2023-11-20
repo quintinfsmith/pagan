@@ -37,4 +37,5 @@
     <color name="bg_light">#efefef</color>
 
     <color name="drop_down_bg">?attr/drop_down_bg</color>
+
 </resources>

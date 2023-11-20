@@ -79,7 +79,7 @@ class GlobalSettingsFragment : PaganFragment<FragmentGlobalSettingsBinding>() {
             }
         }
 
-        val btnChooseSoundFont = view.findViewById<Button>(R.id.btnChooseSoundFont)
+        val btnChooseSoundFont = view.findViewById<TextView>(R.id.btnChooseSoundFont)
         btnChooseSoundFont.setOnClickListener {
             this.interact_btnChooseSoundFont(it)
         }
@@ -169,7 +169,7 @@ class GlobalSettingsFragment : PaganFragment<FragmentGlobalSettingsBinding>() {
     }
 
     fun set_soundfont(filename: String) {
-        val btnChooseSoundFont = this.get_main().findViewById<Button>(R.id.btnChooseSoundFont)
+        val btnChooseSoundFont = this.get_main().findViewById<TextView>(R.id.btnChooseSoundFont)
         this.get_main().set_soundfont(filename)
 
         btnChooseSoundFont.text = filename

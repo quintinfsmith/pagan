@@ -27,11 +27,12 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content" >
             <LinearLayout
-                android:id="@+id/clButtons"
+                android:id="@+id/clTextViews"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:paddingEnd="-1dp"
+                android:paddingEnd="@dimen/normal_padding"
+                android:paddingStart="@dimen/normal_padding"
                 android:paddingTop="@dimen/normal_padding"
                 android:paddingBottom="@dimen/normal_padding">
 
@@ -39,69 +40,78 @@
                     android:id="@+id/btnSplit"
                     android:theme="@style/icon_button"
                     android:layout_gravity="center"
-                    android:layout_weight="1"
-                    android:layout_width="0dp"
+                    android:layout_width="62dp"
                     android:layout_height="wrap_content"
                     android:text="Split"
                     android:contentDescription="@string/cd_split"
                     app:srcCompat="@drawable/split"/>
 
+                <Space
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:layout_width="0dp"/>
+
                 <ImageView
                     android:id="@+id/btnInsert"
-                    android:layout_weight="1"
-                    android:layout_width="0dp"
+                    android:layout_width="62dp"
                     android:layout_height="wrap_content"
                     android:contentDescription="@string/cd_insert"
                     android:text="Insert"
                     android:theme="@style/icon_button"
                     app:srcCompat="@drawable/insert" />
 
+                <Space
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:layout_width="0dp"/>
+
                 <ImageView
                     android:id="@+id/btnRemove"
-                    android:layout_weight="1"
-                    android:layout_width="0dp"
+                    android:layout_width="62dp"
                     android:layout_height="wrap_content"
                     android:contentDescription="@string/cd_remove"
                     android:text="Remove"
                     android:theme="@style/icon_button"
                     app:srcCompat="@drawable/remove" />
 
+                <Space
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:layout_width="0dp"/>
+
                 <ImageView
                     android:id="@+id/btnUnset"
-                    android:layout_weight="1"
-                    android:layout_width="0dp"
+                    android:layout_width="62dp"
                     android:layout_height="wrap_content"
                     android:contentDescription="@string/cd_unset"
                     android:text="Unset"
                     android:theme="@style/icon_button"
                     app:srcCompat="@drawable/unset" />
 
+                <Space
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:layout_width="0dp"/>
+
                 <TextView
                     android:id="@+id/btnDuration"
                     android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:layout_width="0dp"
+                    android:layout_width="62dp"
                     android:theme="@style/icon_button"
                     android:text="T" />
             </LinearLayout>
 
-            <LinearLayout
-                android:background="?attr/main_fg"
-                android:paddingTop="1dp"
+            <com.qfs.pagan.NumberSelector xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:custom="http://schemas.android.com/apk/res-auto"
+                android:id="@+id/nsOctave"
+                android:background="?attr/main_bg"
+                android:orientation="vertical"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-                <com.qfs.pagan.NumberSelector xmlns:android="http://schemas.android.com/apk/res/android"
-                    xmlns:custom="http://schemas.android.com/apk/res-auto"
-                    android:id="@+id/nsOctave"
-                    android:background="?attr/main_bg"
-                    android:orientation="vertical"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:paddingLeft="@dimen/normal_padding"
-                    android:paddingRight="@dimen/normal_padding"
-                    custom:min="0"
-                    custom:max="7"/>
-            </LinearLayout>
+                android:layout_height="wrap_content"
+                android:paddingLeft="@dimen/normal_padding"
+                android:paddingRight="@dimen/normal_padding"
+                custom:min="0"
+                custom:max="7"/>
         </LinearLayout>
 
     </LinearLayout>
@@ -109,7 +119,7 @@
 
     <LinearLayout
         android:background="?attr/main_fg"
-        android:paddingTop="1dp"
+        android:paddingTop="@dimen/stroke_leaf"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
         <com.qfs.pagan.NumberSelector xmlns:android="http://schemas.android.com/apk/res/android"

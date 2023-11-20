@@ -15,19 +15,19 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <ImageButton
+    <ImageView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/btnUnLink"
-        android:background="@drawable/button"
+        android:theme="@style/icon_button"
         android:src="@drawable/unlink"
         app:layout_constraintBottom_toTopOf="@+id/btnCancelLink"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         android:contentDescription="Remove Link" />
 
-    <ImageButton
-        android:background="@drawable/button"
+    <ImageView
+        android:theme="@style/icon_button"
         android:src="@drawable/unlinkall"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -37,11 +37,12 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <Button
+    <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/btnCancelLink"
         android:text="Cancel"
+        android:theme="@style/button"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />

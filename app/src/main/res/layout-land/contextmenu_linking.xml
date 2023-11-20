@@ -12,27 +12,27 @@
         android:id="@+id/textView2"
         android:text="Tap a beat to link it"/>
 
-    <ImageButton
+    <ImageView
+        android:theme="@style/icon_button"
         android:id="@+id/btnUnLink"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/button"
         android:src="@drawable/unlink"
         android:padding="8dp"
         android:contentDescription="Remove Link" />
 
-    <ImageButton
+    <ImageView
+        android:theme="@style/icon_button"
         android:id="@+id/btnUnLinkAll"
-        android:background="@drawable/button"
         android:src="@drawable/unlinkall"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="8dp"
         android:contentDescription="Remove All Links"/>
 
-    <ImageButton
+    <ImageView
+        android:theme="@style/icon_button"
         android:id="@+id/ibtnCancelLink"
-        android:background="@drawable/button"
         android:padding="8dp"
         android:src="@drawable/baseline_arrow_back_24"
         android:layout_width="match_parent"

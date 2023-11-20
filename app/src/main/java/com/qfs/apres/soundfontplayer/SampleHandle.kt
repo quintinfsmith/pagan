@@ -95,7 +95,8 @@ class SampleHandle(
 
         if (! this.is_pressed) {
             if (this.current_release_position < this.release_size) {
-                frame = (frame * (1F - (this.current_release_position / this.release_size))).toInt()
+                var r = (this.current_release_position / this.release_size)
+                frame = (frame * (1F - r)).toInt()
                 this.current_release_position += 1
             } else {
                 this.is_dead = true

@@ -102,14 +102,16 @@ class ActiveMidiAudioPlayer(var sample_handle_manager: SampleHandleManager): Vir
             this.active_audio_track_handle?.play()
 
             while (this.is_playing) {
-                try {
-                    this.generate_timestamp = System.nanoTime()
-                    val chunk = this.wave_generator.generate()
-                    this.generate_timestamp = null
-                    this.active_audio_track_handle?.write(chunk)
+                this.generate_timestamp = System.nanoTime()
+                val chunk = try {
+                    this.wave_generator.generate()
+                } catch (e: WaveGenerator.EmptyException) {
+                    ShortArray(this.sample_handle_manager.buffer_size * 2) { 0 }
                 } catch (e: WaveGenerator.KilledException) {
                     break
                 }
+                this.generate_timestamp = null
+                this.active_audio_track_handle?.write(chunk)
             }
             this.is_playing = false
             this.active_audio_track_handle?.stop()

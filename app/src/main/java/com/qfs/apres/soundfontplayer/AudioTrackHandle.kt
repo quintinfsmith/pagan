@@ -54,6 +54,7 @@ class AudioTrackHandle(sample_rate: Int, buffer_size: Int) {
             // Shouldn't need to do anything. the audio track was released and this should stop on its own
         }
     }
+
     fun stop() {
         try {
             this.audio_track.stop()

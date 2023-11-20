@@ -507,8 +507,8 @@ class MainActivity : AppCompatActivity() {
 
         if (this._midi_playback_device != null) {
             if (!(this._midi_playback_device?.in_playable_state() ?: false)) {
-                this._midi_playback_device!!.kill()
                 this.stop_queued = true
+                this._midi_playback_device!!.kill()
             }
         }
     }
@@ -519,8 +519,8 @@ class MainActivity : AppCompatActivity() {
             this.window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             val blocker_view = this.findViewById<LinearLayout>(R.id.llClearOverlay) ?: return@runOnUiThread
             blocker_view.visibility = View.GONE
+            this.stop_queued = false
         }
-
     }
 
     fun get_new_project_path(): String {

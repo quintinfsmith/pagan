@@ -18,9 +18,10 @@ import kotlin.math.max
 
 class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
     class KilledException: Exception()
+    class EmptyException: Exception()
     class DeadException: Exception()
     var frame = 0
-    var kill_flagged = false
+    var kill_frame: Int? = null
     private var _empty_chunks_count = 0
     private var _active_sample_handles = HashMap<Pair<Int, Int>, MutableList<Pair<Int, MutableList<SampleHandle>>>>()
     private var sample_release_map = HashMap<Int, Int>() // Key = samplehandle uuid, value = Off frame
@@ -63,9 +64,6 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
 
     fun update_active_frames(initial_frame: Int, buffer_size: Int) {
         for (f in initial_frame until initial_frame + buffer_size) {
-            if (this.kill_flagged) {
-                return
-            }
             if (this._midi_events_by_frame.containsKey(f)) {
                 for (event in this._midi_events_by_frame[f]!!) {
                     when (event) {
@@ -86,8 +84,8 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
                             var key_pair = Pair(event.channel, event.get_note())
                             for ((_, handles) in this._active_sample_handles[key_pair]
                                 ?: continue) {
-                                for (handle in handles) {
-                                    if (!this.sample_release_map.containsKey(handle.uuid)) {
+                                for (handle in handles.reversed()) {
+                                    if (handle.is_pressed) {
                                         this.sample_release_map[handle.uuid] = f
                                     }
                                 }
@@ -112,17 +110,25 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
                             var key_pair = Pair(event.channel, event.index)
                             for ((_, handles) in this._active_sample_handles[key_pair]
                                 ?: continue) {
-                                for (handle in handles) {
-                                    if (!this.sample_release_map.containsKey(handle.uuid)) {
+                                for (handle in handles.reversed()) {
+                                    if (handle.is_pressed) {
                                         this.sample_release_map[handle.uuid] = f
                                     }
                                 }
-
                             }
                         }
 
                         is MIDIStop -> {
-                            this.kill_flagged = true
+                            this.kill_frame = f
+                            for ((_, buffer_handle_list) in this._active_sample_handles) {
+                                for ((_, handles) in buffer_handle_list) {
+                                    for (handle in handles) {
+                                        if (!this.sample_release_map.containsKey(handle.uuid)) {
+                                            this.sample_release_map[handle.uuid] = f
+                                        }
+                                    }
+                                }
+                            }
                         }
 
                         is AllSoundOff -> {
@@ -169,11 +175,19 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
     }
 
     fun generate(array: ShortArray) {
-        if (this.kill_flagged) {
+        if (this.kill_frame != null && this.kill_frame!! <= this.frame) {
             throw KilledException()
         }
-        var buffer_size = array.size / 2
+
+        val buffer_size = array.size / 2
+
+        val first_frame = this.frame
         this.update_active_frames(this.frame, buffer_size)
+
+
+        if (this._active_sample_handles.isEmpty()) {
+            throw EmptyException()
+        }
 
         for (i in this._working_int_array.indices) {
             this._working_int_array[i] = 0
@@ -190,15 +204,14 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
                 val (first_sample_frame, sample_handles) = pair_list[i]
                 for (j in sample_handles.indices) {
                     val sample_handle = sample_handles[j]
-                    if (sample_handle.is_dead || (first_sample_frame >= this.frame + buffer_size)) {
+                    if (sample_handle.is_dead || (first_sample_frame >= first_frame + buffer_size)) {
                         continue
                     }
 
                     is_empty = false
-                    for (f in max(first_sample_frame, this.frame) until this.frame + buffer_size) {
+                    for (f in max(first_sample_frame, first_frame) until first_frame + buffer_size) {
                         if (sample_handle.is_pressed && f == this.sample_release_map[sample_handle.uuid]) {
                             sample_handle.release_note()
-                            this.sample_release_map.remove(sample_handle.uuid)
                         }
 
                         val frame_value = sample_handle.get_next_frame()
@@ -245,7 +258,7 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
                             else -> {}
                         }
 
-                        var buffer_index = (f - this.frame) * 2
+                        var buffer_index = (f - first_frame) * 2
                         this._working_int_array[buffer_index] += right_frame
                         this._working_int_array[buffer_index + 1] += left_frame
                     }
@@ -257,7 +270,7 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
             max_frame_value = max(max_frame_value, abs(v))
         }
 
-        var ordered_killed_sample_handles = killed_sample_handles.toMutableList()
+        val ordered_killed_sample_handles = killed_sample_handles.toMutableList()
         ordered_killed_sample_handles.sortWith { quad, quad2 ->
             if (quad.third > quad2.third) {
                 -1
@@ -277,6 +290,7 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
         for (quad in ordered_killed_sample_handles) {
             this._active_sample_handles[Pair(quad.first, quad.second)]!![quad.third].second.removeAt(quad.fourth)
         }
+
         for (quad in ordered_killed_sample_handles) {
             if (this._active_sample_handles[Pair(quad.first, quad.second)]!!.size >= quad.third) {
                 continue
@@ -285,8 +299,9 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
                 this._active_sample_handles[Pair(quad.first, quad.second)]!!.removeAt(quad.third)
             }
         }
+
         for (quad in ordered_killed_sample_handles) {
-            if (this._active_sample_handles[Pair(quad.first, quad.second)]?.isEmpty() ?: continue) {
+            if (this._active_sample_handles[Pair(quad.first, quad.second)]?.isNotEmpty() ?: continue) {
                 this._active_sample_handles.remove(Pair(quad.first, quad.second))
             }
         }
@@ -307,17 +322,19 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
                 (((v + mid).toFloat() * compression_ratio).toInt() - mid).toShort()
             }
         }
-        this.frame += buffer_size
+
 
         if (is_empty) {
             this._empty_chunks_count += 1
         } else {
             this._empty_chunks_count = 0
         }
+
+        this.frame += buffer_size
     }
 
     fun clear() {
-        this.kill_flagged = false
+        this.kill_frame = null
         this._active_sample_handles.clear()
         this._midi_events_by_frame.clear()
         this.frame = 0

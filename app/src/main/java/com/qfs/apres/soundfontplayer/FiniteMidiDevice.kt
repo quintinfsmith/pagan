@@ -3,7 +3,6 @@ package com.qfs.apres.soundfontplayer
 import android.media.AudioTrack
 import com.qfs.apres.Midi
 import com.qfs.apres.event.BankSelect
-import com.qfs.apres.event.MIDIStop
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event.ProgramChange
 import com.qfs.apres.event.SetTempo
@@ -16,9 +15,7 @@ open class FiniteMidiDevice(var sample_handle_manager: SampleHandleManager, priv
     var buffer_delay = 1
     internal var wave_generator = WaveGenerator(sample_handle_manager)
     internal var active_audio_track_handle: AudioTrackHandle? = null
-    var frames_per_beat = 0
 
-    var SAMPLE_RATE_NANO = sample_handle_manager.sample_rate.toFloat() / 1_000_000_000F
     var BUFFER_NANO = sample_handle_manager.buffer_size.toLong() * 1_000_000_000.toLong() / sample_handle_manager.sample_rate.toLong()
     var play_queued = false
     var is_playing = false
@@ -54,7 +51,8 @@ open class FiniteMidiDevice(var sample_handle_manager: SampleHandleManager, priv
             var buffer_millis = this.BUFFER_NANO / 1_000_000
             var chunks = mutableListOf<ShortArray>()
             var building_chunks = true
-            var wait_delay = if (this.fill_buffer_cache) { buffer_millis / 10
+            var wait_delay = if (this.fill_buffer_cache) {
+                buffer_millis / 10
             } else {
                 buffer_millis
             }
@@ -69,6 +67,8 @@ open class FiniteMidiDevice(var sample_handle_manager: SampleHandleManager, priv
                         this.wave_generator.generate(this.sample_handle_manager.buffer_size)
                     } catch (e: WaveGenerator.KilledException) {
                         break
+                    } catch (e: WaveGenerator.EmptyException) {
+                        ShortArray(this.sample_handle_manager.buffer_size * 2) { 0 }
                     } catch (e: WaveGenerator.DeadException) {
                         break
                     }
@@ -78,6 +78,7 @@ open class FiniteMidiDevice(var sample_handle_manager: SampleHandleManager, priv
                 building_chunks = false
                 this.wave_generator.clear()
             }
+
             audio_track_handle.play(object : AudioTrack.OnPlaybackPositionUpdateListener {
                 var notification_index = 0
                 init {
@@ -94,35 +95,38 @@ open class FiniteMidiDevice(var sample_handle_manager: SampleHandleManager, priv
                 }
                 override fun onMarkerReached(p0: AudioTrack?) {
                     this@FiniteMidiDevice.on_beat(this.notification_index++)
-                    this@FiniteMidiDevice.active_audio_track_handle?.offset_next_notification_position(this@FiniteMidiDevice.get_next_beat_delay() ?: 0)
+                    var next_beat_delay = this@FiniteMidiDevice.get_next_beat_delay()
+                    if (next_beat_delay == null) {
+                        p0?.stop()
+                        this@FiniteMidiDevice.active_audio_track_handle = null
+                        this@FiniteMidiDevice.is_playing = false
+                        this@FiniteMidiDevice.on_stop()
+                    } else {
+                        this@FiniteMidiDevice.active_audio_track_handle?.offset_next_notification_position(next_beat_delay)
+                    }
                 }
                 override fun onPeriodicNotification(p0: AudioTrack?) { }
             })
 
-            while (this.is_playing && (building_chunks || chunks.isNotEmpty())) {
+            while (building_chunks || chunks.isNotEmpty()) {
                 if (chunks.isEmpty()) {
                     Thread.sleep(wait_delay)
                 } else {
                     audio_track_handle.write(chunks.removeFirst())
                 }
             }
-
-            this.on_stop()
-
-            audio_track_handle.stop()
-            this.active_audio_track_handle = null
+            // not is_playing indicates that stop was call manually by kill()
+            if (!this.is_playing) {
+                this.on_stop()
+            }
         }
     }
 
-    private fun stop() {
-        this.active_audio_track_handle?.pause()
-        this.is_playing = false
-    }
-
     fun kill() {
-        this.play_cancelled = true
-        this.active_audio_track_handle?.pause()
         this.is_playing = false
+        this.active_audio_track_handle?.stop()
+        this.active_audio_track_handle = null
+        this.play_cancelled = true
     }
 
     open fun on_start() { }
@@ -139,7 +143,6 @@ open class FiniteMidiDevice(var sample_handle_manager: SampleHandleManager, priv
         for ((tick, events) in midi.get_all_events_grouped()) {
             last_tick = tick
             val tick_frame = (tick * frames_per_tick) + start_frame
-
             this.wave_generator.place_events(events, tick_frame)
 
             // Need to handle some functions so the sample handles are created before the playback
@@ -169,8 +172,7 @@ open class FiniteMidiDevice(var sample_handle_manager: SampleHandleManager, priv
             }
         }
 
-        val tick_frame = (last_tick * frames_per_tick) + start_frame
-        this.wave_generator.place_event(MIDIStop(), tick_frame)
+        val tick_frame = ((last_tick) * frames_per_tick) + start_frame
         this.approximate_frame_count = tick_frame
     }
 

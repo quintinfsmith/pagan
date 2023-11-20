@@ -34,7 +34,6 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
     var current_relative_beat = 0
     var start_beat = 0
     override fun on_stop() {
-        this.activity.stop_queued = false
         this.activity.restore_playback_state()
     }
 
@@ -56,7 +55,6 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
     }
 
     override fun on_cancelled() {
-        this.activity.stop_queued = false
         this.activity.restore_playback_state()
     }
 

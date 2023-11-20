@@ -83,7 +83,7 @@ class LeafButton(
                         editor_table.notify_cell_change(beat_key)
                         opus_manager.cursor.is_linking = false
                         opus_manager.cursor_select(beat_key, this.position)
-                        (this.context as MainActivity).feedback_msg(context.getString(R.string.feedback_bad_range))
+                        this.get_activity().feedback_msg(context.getString(R.string.feedback_bad_range))
                     }
                     else -> {
                         throw e
@@ -235,6 +235,10 @@ class LeafButton(
     }
 
     // ------------------------------------------------------//
+    fun get_activity(): MainActivity {
+        return (this.context as ContextThemeWrapper).baseContext as MainActivity
+    }
+
     fun get_opus_manager(): OpusManager {
         return (this.parent as CellLayout).get_opus_manager()
     }

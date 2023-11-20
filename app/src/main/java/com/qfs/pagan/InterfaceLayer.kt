@@ -332,6 +332,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     override fun new_channel(channel: Int?, lines: Int, uuid: Int?) {
+        this.cursor_clear()
         val notify_index = if (channel == null) {
             if (this.channels.isEmpty()) {
                 0
@@ -530,6 +531,8 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     override fun remove_channel(channel: Int) {
+        this.cursor_clear()
+
         val y = try {
             this.get_abs_offset(channel, 0)
         } catch (e: IndexOutOfBoundsException) {

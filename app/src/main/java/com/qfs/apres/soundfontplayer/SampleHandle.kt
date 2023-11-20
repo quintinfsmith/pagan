@@ -22,10 +22,7 @@ class SampleHandle(
         var uuid_gen = 0
         val MAXIMUM_VOLUME = .8F
     }
-    var uuid: Int
-    init {
-        this.uuid = SampleHandle.uuid_gen++
-    }
+    var uuid: Int = SampleHandle.uuid_gen++
 
     constructor(original: SampleHandle): this(
         original.data,

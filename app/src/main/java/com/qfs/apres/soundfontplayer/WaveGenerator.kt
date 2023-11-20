@@ -63,9 +63,41 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
     }
 
     fun update_active_frames(initial_frame: Int, buffer_size: Int) {
+        // First check for, and remove dead sample handles
+        var empty_pairs = mutableListOf<Pair<Int, Int>>()
+        for ((key, pair_list) in this._active_sample_handles) {
+            for (i in pair_list.indices.reversed()) {
+                val (first_sample_frame, sample_handles) = pair_list[i]
+                for (j in sample_handles.indices.reversed()) {
+                    var sample_handle = sample_handles[j]
+                    if (sample_handle.is_dead) {
+                        sample_handles.removeAt(j)
+                    }
+                }
+                if (sample_handles.isEmpty()) {
+                    pair_list.removeAt(i)
+                }
+            }
+            if (pair_list.isEmpty()) {
+                empty_pairs.add(key)
+            }
+        }
+
+        for (key in empty_pairs) {
+            this._active_sample_handles.remove(key)
+        }
+
+        // then populate the next active frames with upcoming sample handles
         for (f in initial_frame until initial_frame + buffer_size) {
             if (this._midi_events_by_frame.containsKey(f)) {
-                for (event in this._midi_events_by_frame[f]!!) {
+                var events = this._midi_events_by_frame[f]!!.sortedBy {
+                    when (it) {
+                        is NoteOn -> { 2 }
+                        is NoteOff -> { 0 }
+                        else -> { 1 }
+                    }
+                }
+                for (event in events) {
                     when (event) {
                         is NoteOn -> {
                             var key_pair = Pair(event.channel, event.get_note())
@@ -85,11 +117,10 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
                             for ((_, handles) in this._active_sample_handles[key_pair]
                                 ?: continue) {
                                 for (handle in handles.reversed()) {
-                                    if (handle.is_pressed) {
+                                    if (handle.is_pressed && !this.sample_release_map.containsKey(handle.uuid)) {
                                         this.sample_release_map[handle.uuid] = f
                                     }
                                 }
-
                             }
                         }
 
@@ -111,7 +142,7 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
                             for ((_, handles) in this._active_sample_handles[key_pair]
                                 ?: continue) {
                                 for (handle in handles.reversed()) {
-                                    if (handle.is_pressed) {
+                                    if (handle.is_pressed && !this.sample_release_map.containsKey(handle.uuid)) {
                                         this.sample_release_map[handle.uuid] = f
                                     }
                                 }
@@ -163,7 +194,6 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
         }
     }
 
-    data class Quad(var first: Int, var second: Int, var third: Int, var fourth: Int)
     fun generate(buffer_size: Int): ShortArray {
         var output_array = ShortArray(buffer_size * 2)
         this.generate(output_array)
@@ -196,10 +226,7 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
         var max_frame_value = 0
         var is_empty = true
 
-        val killed_sample_handles = mutableListOf<Quad>()
-
         for ((key, pair_list) in this._active_sample_handles) {
-            // Run in reverse order to get the most recent frame
             for (i in pair_list.indices) {
                 val (first_sample_frame, sample_handles) = pair_list[i]
                 for (j in sample_handles.indices) {
@@ -216,7 +243,6 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
 
                         val frame_value = sample_handle.get_next_frame()
                         if (frame_value == null) {
-                            killed_sample_handles.add(Quad(key.first, key.second, i, j))
                             break
                         }
 
@@ -268,42 +294,6 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
 
         for (v in this._working_int_array) {
             max_frame_value = max(max_frame_value, abs(v))
-        }
-
-        val ordered_killed_sample_handles = killed_sample_handles.toMutableList()
-        ordered_killed_sample_handles.sortWith { quad, quad2 ->
-            if (quad.third > quad2.third) {
-                -1
-            } else if (quad.third == quad2.third) {
-                if (quad.fourth > quad2.fourth) {
-                    -1
-                } else if (quad.fourth == quad2.fourth) {
-                    0
-                } else {
-                    1
-                }
-            } else {
-                1
-            }
-        }
-
-        for (quad in ordered_killed_sample_handles) {
-            this._active_sample_handles[Pair(quad.first, quad.second)]!![quad.third].second.removeAt(quad.fourth)
-        }
-
-        for (quad in ordered_killed_sample_handles) {
-            if (this._active_sample_handles[Pair(quad.first, quad.second)]!!.size >= quad.third) {
-                continue
-            }
-            if ((this._active_sample_handles[Pair(quad.first, quad.second)]!![quad.third].second).isEmpty()) {
-                this._active_sample_handles[Pair(quad.first, quad.second)]!!.removeAt(quad.third)
-            }
-        }
-
-        for (quad in ordered_killed_sample_handles) {
-            if (this._active_sample_handles[Pair(quad.first, quad.second)]?.isNotEmpty() ?: continue) {
-                this._active_sample_handles.remove(Pair(quad.first, quad.second))
-            }
         }
 
         val mid = Short.MAX_VALUE / 2

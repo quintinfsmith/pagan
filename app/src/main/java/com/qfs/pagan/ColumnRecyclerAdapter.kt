@@ -60,13 +60,16 @@ class ColumnRecyclerAdapter(val recycler: ColumnRecycler, editor_table: EditorTa
     private fun apply_and_notify_remaining(callback: (Int, ColumnLayout) -> Unit) {
         var minimum_visible = this.itemCount
         var maximum_visible = 0
+        // Need to notify The recycler FIRST, since the updates may change the
+        // widths of the visible columns and therefore, the number of columns that need to be notified
+        this.notifyItemRangeChanged(0, minimum_visible)
+        this.notifyItemRangeChanged(maximum_visible + 1, this.itemCount)
+
         this.apply_to_visible_columns { beat: Int, column_layout: ColumnLayout ->
             minimum_visible = min(beat, minimum_visible)
             maximum_visible = max(beat, maximum_visible)
             callback(beat, column_layout)
         }
-        this.notifyItemRangeChanged(0, minimum_visible)
-        this.notifyItemRangeChanged(maximum_visible + 1, this.itemCount)
 
     }
 

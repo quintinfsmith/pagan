@@ -586,8 +586,8 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             }
             nsOctave.visibility = View.VISIBLE
             nsOffset.visibility = View.VISIBLE
+            nsOffset.set_max(opus_manager.radix - 1)
             if (current_tree.is_event()) {
-                nsOffset.set_max(opus_manager.radix - 1)
                 val event = current_tree.get_event()!!
                 val value = if (event.relative && ! main.configuration.relative_mode) {
                     opus_manager.get_absolute_value(opus_manager.cursor.get_beatkey(), opus_manager.cursor.get_position())!!

@@ -310,7 +310,7 @@ class MainActivity : AppCompatActivity() {
                     this._midi_feedback_device = ActiveMidiAudioPlayer(
                         SampleHandleManager(
                             this._soundfont!!,
-                            22050
+                            this.configuration.sample_rate
                         )
                     )
                     this._midi_interface.connect_virtual_output_device(this._midi_feedback_device!!)
@@ -898,7 +898,7 @@ class MainActivity : AppCompatActivity() {
         if (this._midi_feedback_device != null) {
             this._midi_interface.disconnect_virtual_output_device(this._midi_feedback_device!!)
         }
-        this._midi_feedback_device = ActiveMidiAudioPlayer(SampleHandleManager(this._soundfont!!, 11025))
+        this._midi_feedback_device = ActiveMidiAudioPlayer(SampleHandleManager(this._soundfont!!, this.configuration.sample_rate))
         this._midi_playback_device = PaganPlaybackDevice(this)
 
         this._midi_interface.connect_virtual_output_device(this._midi_feedback_device!!)

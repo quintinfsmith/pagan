@@ -113,6 +113,7 @@ class ActiveMidiAudioPlayer(var sample_handle_manager: SampleHandleManager): Vir
                 this.generate_timestamp = null
                 this.active_audio_track_handle?.write(chunk)
             }
+
             this.is_playing = false
             this.active_audio_track_handle?.stop()
             this.active_audio_track_handle = null

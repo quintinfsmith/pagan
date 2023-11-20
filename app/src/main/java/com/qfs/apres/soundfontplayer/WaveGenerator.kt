@@ -212,10 +212,12 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
         val buffer_size = array.size / 2
 
         val first_frame = this.frame
+
         this.update_active_frames(this.frame, buffer_size)
 
 
         if (this._active_sample_handles.isEmpty()) {
+            this.frame += buffer_size
             throw EmptyException()
         }
 

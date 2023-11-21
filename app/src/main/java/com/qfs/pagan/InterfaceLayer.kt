@@ -254,6 +254,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     override fun insert_line(channel: Int, line_offset: Int, line: OpusChannel.OpusLine) {
         // Need to clear cursor before change since the way the editor_table updates
         // Cursors doesn't take into account changes to row count
+        val bkp_cursor = this.cursor.copy()
         this.cursor_clear()
 
         super.insert_line(channel, line_offset, line)
@@ -269,6 +270,10 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                 this.get_editor_table()?.new_row(abs_offset, line, true)
             }
             UI_LOCK_FULL -> { }
+        }
+
+        if (bkp_cursor.mode == OpusManagerCursor.CursorMode.Row) {
+            this.cursor_select_row(bkp_cursor.channel, bkp_cursor.line_offset)
         }
     }
 
@@ -303,6 +308,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     override fun remove_line(channel: Int, line_offset: Int): OpusChannel.OpusLine {
         // Need to clear cursor before change since the way the editor_table updates
         // Cursors doesn't take into account changes to row count
+        val bkp_cursor = this.cursor.copy()
         this.cursor_clear()
 
         val abs_line = this.get_abs_offset(channel, line_offset)
@@ -327,6 +333,19 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
         // TODO: SHould be behind ui lock?
         this.activity.update_channel_instruments()
+
+        if (bkp_cursor.mode == OpusManagerCursor.CursorMode.Row) {
+            if (bkp_cursor.channel < this.channels.size) {
+                if (bkp_cursor.line_offset < this.channels[bkp_cursor.channel].size) {
+                    this.cursor_select_row(bkp_cursor.channel, bkp_cursor.line_offset)
+                } else {
+                    this.cursor_select_row(bkp_cursor.channel, this.channels[bkp_cursor.channel].size - 1)
+                }
+            } else {
+                this.cursor_select_row(this.channels.size - 1, this.channels.last().size - 1)
+            }
+        }
+
 
         return output
     }
@@ -375,6 +394,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     override fun remove_beat(beat_index: Int) {
         // Need to clear cursor before change since the way the editor_table updates
         // Cursors doesn't take into account changes to column count
+        var bkp_cursor = this.cursor.copy()
         this.cursor_clear()
 
         super.remove_beat(beat_index)
@@ -394,11 +414,20 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                 }
             }
         }
+
+        if (bkp_cursor.mode == OpusManagerCursor.CursorMode.Column) {
+            if (bkp_cursor.beat < this.beat_count) {
+                this.cursor_select_column(bkp_cursor.beat)
+            } else {
+                this.cursor_select_column(this.beat_count - 1)
+            }
+        }
     }
 
     override fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<OpusEvent>>?) {
         // Need to clear cursor before change since the way the editor_table updates
         // Cursors doesn't take into account changes to column count
+        var bkp_cursor = this.cursor.copy()
         this.cursor_clear()
 
         super.insert_beat(beat_index, beats_in_column)
@@ -417,6 +446,10 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                     editor_table.update_cursor(this.cursor)
                 }
             }
+        }
+
+        if (bkp_cursor.mode == OpusManagerCursor.CursorMode.Column) {
+            this.cursor_select_column(beat_index + 1)
         }
     }
 

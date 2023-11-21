@@ -410,6 +410,8 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
 
         if (opus_manager.beat_count == 1) {
             btnRemoveBeat.visibility = View.GONE
+        } else {
+            btnRemoveBeat.visibility = View.VISIBLE
         }
     }
 

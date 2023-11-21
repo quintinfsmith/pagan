@@ -41,10 +41,10 @@
         <item name="leaf_bg_active">@color/purple</item>
         <item name="leaf_bg_active_focused">@color/purple_plum</item>
 
-        <item name="leaf_bg_linked">#FFDE7B</item>
-        <item name="leaf_bg_focused_linked">#8BC34A</item>
-        <item name="leaf_bg_active_linked">#FF9800</item>
-        <item name="leaf_bg_active_focused_linked">#009688</item>
+        <item name="leaf_bg_linked">#B07419</item>
+        <item name="leaf_bg_focused_linked">#D8944B</item>
+        <item name="leaf_bg_active_linked">#A79C35</item>
+        <item name="leaf_bg_active_focused_linked">#D8BA1D</item>
         <!-- END OF LEAF COLORS -->
 
         <item name="label_bg">?attr/leaf_bg_default</item>

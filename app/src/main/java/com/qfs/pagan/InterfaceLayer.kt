@@ -736,6 +736,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             }
             else -> { }
         }
+
         super.apply_history_node(current_node, depth)
     }
 
@@ -1242,6 +1243,28 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             this.link_beats(beat_key, this.cursor.get_beatkey())
         } else {
             // TODO: Raise Error
+        }
+    }
+
+    override fun batch_link_beats(beat_key_pairs: List<Pair<BeatKey, BeatKey>>) {
+        super.batch_link_beats(beat_key_pairs)
+
+        when (this.get_ui_lock_level()) {
+            UI_LOCK_FULL -> { }
+            UI_LOCK_PARTIAL -> {
+                for ((beat_key_a, beat_key_b) in beat_key_pairs) {
+                    this.get_editor_table()?.notify_cell_change(beat_key_a, true)
+                    this.get_editor_table()?.notify_cell_change(beat_key_b, true)
+                }
+            }
+            null -> {
+                this.runOnUiThread {
+                    for ((beat_key_a, beat_key_b) in beat_key_pairs) {
+                        this.get_editor_table()?.notify_cell_change(beat_key_a)
+                        this.get_editor_table()?.notify_cell_change(beat_key_b)
+                    }
+                }
+            }
         }
     }
 

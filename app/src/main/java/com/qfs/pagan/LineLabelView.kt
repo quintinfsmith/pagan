@@ -159,6 +159,11 @@ class LineLabelView(context: Context, var channel: Int, var line_offset: Int): A
         }
     }
 
+    fun get_activity(): MainActivity {
+        return (this.context as ContextThemeWrapper).baseContext as MainActivity
+    }
+
+
     private fun on_click() {
         val opus_manager = this.get_opus_manager()
         val (channel, line_offset) = this.get_row()
@@ -167,12 +172,21 @@ class LineLabelView(context: Context, var channel: Int, var line_offset: Int): A
         if (cursor.is_linking_range()) {
             val first_key = cursor.range!!.first
             try {
-                opus_manager.link_beat_range_horizontally(
-                    channel,
-                    line_offset,
-                    first_key,
-                    cursor.range!!.second
-                )
+                if (this.get_activity().configuration.link_mode) {
+                    opus_manager.link_beat_range_horizontally(
+                        channel,
+                        line_offset,
+                        first_key,
+                        cursor.range!!.second
+                    )
+                } else {
+                    opus_manager.overwrite_beat_range_horizontally(
+                        channel,
+                        line_offset,
+                        first_key,
+                        cursor.range!!.second
+                    )
+                }
             } catch (e: LinksLayer.BadRowLink) {
                 // TODO: Feedback
                 //(this.context as MainActivity).feedback_msg("Can only row-link from first beat")
@@ -182,7 +196,11 @@ class LineLabelView(context: Context, var channel: Int, var line_offset: Int): A
         } else if (cursor.is_linking) {
             val beat_key = opus_manager.cursor.get_beatkey()
             try {
-                opus_manager.link_row(channel, line_offset, beat_key)
+                if (this.get_activity().configuration.link_mode) {
+                    opus_manager.link_row(channel, line_offset, beat_key)
+                } else {
+                    opus_manager.overwrite_row(channel, line_offset, beat_key)
+                }
             } catch (e: LinksLayer.BadRowLink) {
                 // TODO: Feedback
                 //(this.context as MainActivity).feedback_msg("Can only row-link from first beat")

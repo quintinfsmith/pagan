@@ -317,6 +317,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         } else {
             return
         }
+
         if (is_networked) {
             btnUnLink.visibility = View.VISIBLE
             btnUnLink.setOnClickListener {
@@ -334,6 +335,8 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             btnUnLink.visibility = View.GONE
             btnUnLinkAll.visibility = View.GONE
         }
+
+
 
         btnCancelLink?.setOnClickListener {
             this.interact_btnCancelLink()

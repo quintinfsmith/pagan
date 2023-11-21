@@ -69,7 +69,11 @@ class LeafButton(
         val editor_table = this.get_editor_table() // Will need if overflow exception is passed
         if (opus_manager.cursor.is_linking) {
             try {
-                opus_manager.link_beat(beat_key)
+                if (this.get_activity().configuration.link_mode) {
+                    opus_manager.link_beat(beat_key)
+                } else {
+                    opus_manager.copy_to_beat(beat_key)
+                }
                 opus_manager.cursor_select(beat_key, opus_manager.get_first_position(beat_key))
             } catch (e: Exception) {
                 when (e) {

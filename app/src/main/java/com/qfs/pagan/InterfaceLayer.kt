@@ -1268,6 +1268,17 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         }
     }
 
+    fun copy_to_beat(beat_key: BeatKey) {
+        if (this.cursor.is_linking_range()) {
+            val (first, second) = this.cursor.range!!
+            this.overwrite_beat_range(beat_key, first, second)
+        } else if (this.cursor.is_linking) {
+            this.overwrite_beat(beat_key, this.cursor.get_beatkey())
+        } else {
+            // TODO: Raise Error
+        }
+    }
+
     override fun link_beats(beat_key: BeatKey, target: BeatKey) {
         super.link_beats(beat_key, target)
         when (this.get_ui_lock_level()) {

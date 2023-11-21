@@ -1,4 +1,5 @@
 package com.qfs.pagan.opusmanager
+import android.util.Log
 import com.qfs.apres.Midi
 import com.qfs.apres.event.BankSelect
 import com.qfs.apres.event.NoteOff
@@ -771,6 +772,7 @@ open class BaseLayer {
     }
 
     open fun overwrite_beat(old_beat: BeatKey, new_beat: BeatKey) {
+        Log.d("AAA", "OVERWRITE $old_beat W $new_beat")
         val new_tree = this.channels[new_beat.channel].get_line(new_beat.line_offset).beats[new_beat.beat].copy()
 
         this.replace_tree(old_beat, listOf(), new_tree)
@@ -1909,6 +1911,37 @@ open class BaseLayer {
                 var keypair = Pair(channel_index, line_offset)
                 this._cached_abs_line_map.add(keypair)
                 this._cached_std_line_map[keypair] = y++
+            }
+        }
+    }
+
+    open fun overwrite_beat_range_horizontally(channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey) {
+        val (from_key, to_key) = this.get_ordered_beat_key_pair(first_key, second_key)
+        if (from_key.beat != 0) {
+            return // TODO: throw error
+        }
+
+        var width = (to_key.beat - from_key.beat) + 1
+        var count = this.beat_count / width
+        var beatkeys = this.get_beatkeys_in_range(from_key, to_key)
+        for (beatkey in beatkeys) {
+            for (i in 1 until count) {
+                var to_overwrite = beatkey.copy()
+                to_overwrite.beat += (i * width)
+                this.overwrite_beat(to_overwrite, beatkey)
+            }
+        }
+    }
+
+    open fun overwrite_row(channel: Int, line_offset: Int, beat_key: BeatKey) {
+        if (beat_key.channel != channel || beat_key.line_offset != line_offset) {
+            return // TODO Throw Error
+        }
+        val working_key = BeatKey(channel, line_offset, 0)
+        for (x in 0 until this.beat_count) {
+            working_key.beat = x
+            if (working_key != beat_key) {
+                this.overwrite_beat(working_key, beat_key)
             }
         }
     }

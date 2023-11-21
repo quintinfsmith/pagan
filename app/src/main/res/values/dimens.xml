@@ -4,6 +4,7 @@
     <dimen name="stroke_leaf">.5dp</dimen>
     <dimen name="stroke_button">1dp</dimen>
     <dimen name="stroke_corner">.5dp</dimen>
+    <dimen name="anti_margin_editor">-0.5dp</dimen>
     <dimen name="context_menu_border">2dp</dimen>
     <dimen name="icon_size">42dp</dimen>
     <dimen name="relative_option_width">35dp</dimen>

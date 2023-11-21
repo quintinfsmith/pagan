@@ -1268,27 +1268,25 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         }
     }
 
-    override fun batch_link_beats(beat_key_pairs: List<Pair<BeatKey, BeatKey>>) {
-        super.batch_link_beats(beat_key_pairs)
-
+    override fun link_beats(beat_key: BeatKey, target: BeatKey) {
+        super.link_beats(beat_key, target)
         when (this.get_ui_lock_level()) {
             UI_LOCK_FULL -> { }
             UI_LOCK_PARTIAL -> {
-                for ((beat_key_a, beat_key_b) in beat_key_pairs) {
-                    this.get_editor_table()?.notify_cell_change(beat_key_a, true)
-                    this.get_editor_table()?.notify_cell_change(beat_key_b, true)
+                for (linked_key in this.get_all_linked(beat_key)) {
+                    this.get_editor_table()?.notify_cell_change(linked_key)
                 }
             }
             null -> {
                 this.runOnUiThread {
-                    for ((beat_key_a, beat_key_b) in beat_key_pairs) {
-                        this.get_editor_table()?.notify_cell_change(beat_key_a)
-                        this.get_editor_table()?.notify_cell_change(beat_key_b)
+                    for (linked_key in this.get_all_linked(beat_key)) {
+                        this.get_editor_table()?.notify_cell_change(linked_key)
                     }
                 }
             }
         }
     }
+
 
     fun get_visible_channels(): List<OpusChannel> {
         return if (this.activity.configuration.show_percussion) {

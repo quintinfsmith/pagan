@@ -302,16 +302,17 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         when (opusManagerCursor.mode) {
             OpusManagerCursor.CursorMode.Single -> {
                 val beat_key = opusManagerCursor.get_beatkey()
+                for (linked_key in opus_manager.get_all_linked(beat_key)) {
+                    val y = try {
+                        opus_manager.get_abs_offset(linked_key.channel, linked_key.line_offset)
+                    } catch (e: IndexOutOfBoundsException) {
+                        return
+                    }
 
-                val y = try {
-                    opus_manager.get_abs_offset(beat_key.channel, beat_key.line_offset)
-                } catch (e: IndexOutOfBoundsException) {
-                    return
+                    this.line_label_layout.notify_item_changed(y)
+                    column_label_adapter.notifyItemChanged(linked_key.beat)
+                    (this.main_recycler.adapter as ColumnRecyclerAdapter).notifyCellChanged(y, linked_key.beat, true)
                 }
-
-                this.line_label_layout.notify_item_changed(y)
-                column_label_adapter.notifyItemChanged(beat_key.beat)
-                (this.main_recycler.adapter as ColumnRecyclerAdapter).notifyCellChanged(y, beat_key.beat, true)
             }
             OpusManagerCursor.CursorMode.Range -> {
                 val (top_left, bottom_right) = opusManagerCursor.range!!

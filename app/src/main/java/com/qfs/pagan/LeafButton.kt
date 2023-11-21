@@ -76,7 +76,7 @@ class LeafButton(
                     is LinksLayer.SelfLinkError -> { }
                     is LinksLayer.MixedLinkException -> {
                         editor_table.notify_cell_change(beat_key)
-                        (this.context as MainActivity).feedback_msg(context.getString(R.string.feedback_mixed_link))
+                        (this.get_activity()).feedback_msg(context.getString(R.string.feedback_mixed_link))
                     }
                     is LinksLayer.LinkRangeOverlap,
                     is LinksLayer.LinkRangeOverflow -> {

@@ -59,7 +59,7 @@
         <item name="numberselector_fg_selected">?attr/leaf_fg_active</item>
 
         <item name="colorIconFG">@attr/button_fg_default</item>
-        <item name="table_lines">#5a5a5a</item>
+        <item name="table_lines">#808080</item>
 
         <item name="soundfont_warning_background">@color/blue_sky</item>
         <item name="soundfont_warning_frame">@color/white</item>

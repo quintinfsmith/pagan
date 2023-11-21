@@ -71,6 +71,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
 
     override fun onResume() {
         this.get_main().update_title_text()
+        this.get_main().setup_project_config_drawer()
         super.onResume()
     }
 

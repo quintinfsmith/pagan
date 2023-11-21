@@ -84,6 +84,10 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     override fun replace_tree(beat_key: BeatKey, position: List<Int>, tree: OpusTree<OpusEvent>) {
+        if (!this.activity.configuration.show_percussion && this.is_percussion(beat_key.channel)) {
+            this.make_percussion_visible()
+        }
+
         super.replace_tree(beat_key, position, tree)
 
         when (this.get_ui_lock_level()) {
@@ -99,7 +103,12 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         }
     }
 
+
     override fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEvent) {
+        if (!this.activity.configuration.show_percussion && this.is_percussion(beat_key.channel)) {
+            this.make_percussion_visible()
+        }
+
         super.set_event(beat_key, position, event)
 
         // If the OM is applying history, change the relative mode, otherwise leave it.
@@ -252,6 +261,9 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     override fun insert_line(channel: Int, line_offset: Int, line: OpusChannel.OpusLine) {
+        if (!this.activity.configuration.show_percussion && this.is_percussion(channel)) {
+            this.make_percussion_visible()
+        }
         // Need to clear cursor before change since the way the editor_table updates
         // Cursors doesn't take into account changes to row count
         val bkp_cursor = this.cursor.copy()
@@ -306,6 +318,9 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     override fun remove_line(channel: Int, line_offset: Int): OpusChannel.OpusLine {
+        if (!this.activity.configuration.show_percussion && this.is_percussion(channel)) {
+            this.make_percussion_visible()
+        }
         // Need to clear cursor before change since the way the editor_table updates
         // Cursors doesn't take into account changes to row count
         val bkp_cursor = this.cursor.copy()
@@ -736,7 +751,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             }
             else -> { }
         }
-
         super.apply_history_node(current_node, depth)
     }
 
@@ -945,6 +959,10 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     fun cursor_select_row(channel: Int, line_offset: Int) {
+        if (!this.activity.configuration.show_percussion && this.is_percussion(channel)) {
+            this.make_percussion_visible()
+        }
+
         this.cursor.select_row(channel, line_offset)
 
         if (this.get_ui_lock_level() != null) {
@@ -980,6 +998,10 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     fun cursor_select(beat_key: BeatKey, position: List<Int>) {
+        if (!this.activity.configuration.show_percussion && this.is_percussion(beat_key.channel)) {
+            this.make_percussion_visible()
+        }
+
         this.cursor.select(beat_key, position)
 
         if (this.get_ui_lock_level() != null) {
@@ -1305,5 +1327,19 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                 main.setup_project_config_drawer_export_button()
             }
         }
+    }
+
+    fun make_percussion_visible() {
+        var main = this.activity
+        main.configuration.show_percussion = true
+        main.save_configuration()
+
+        val channel_option_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
+        val adapter = channel_option_recycler.adapter!! as ChannelOptionAdapter
+        adapter.notifyItemChanged(adapter.itemCount - 1)
+
+        val editor_table = main.findViewById<EditorTable>(R.id.etEditorTable)
+        editor_table.update_percussion_visibility()
+
     }
 }

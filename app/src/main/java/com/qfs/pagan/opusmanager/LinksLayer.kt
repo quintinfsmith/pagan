@@ -486,6 +486,7 @@ open class LinksLayer : BaseLayer() {
         this.create_link_pool(new_pool)
     }
 
+
     open fun link_beat_range_horizontally(channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey) {
         val (from_key, to_key) = this.get_ordered_beat_key_pair(first_key, second_key)
         // from_key -> to_key need to be first beat. it's a bit arbitrary but from a ui perspective makes it cleaner

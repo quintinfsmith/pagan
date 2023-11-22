@@ -1027,4 +1027,21 @@ open class HistoryLayer : LinksLayer() {
             super.set_radix(radix, mod_events)
         }
     }
+
+    override fun overwrite_row(channel: Int, line_offset: Int, beat_key: BeatKey) {
+        this.remember {
+            super.overwrite_row(channel, line_offset, beat_key)
+        }
+    }
+
+    override fun overwrite_beat_range_horizontally(
+        channel: Int,
+        line_offset: Int,
+        first_key: BeatKey,
+        second_key: BeatKey
+    ) {
+        this.remember {
+            super.overwrite_beat_range_horizontally(channel, line_offset, first_key, second_key)
+        }
+    }
 }

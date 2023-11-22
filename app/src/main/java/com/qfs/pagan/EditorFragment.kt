@@ -71,6 +71,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
 
     override fun onResume() {
         this.get_main().update_title_text()
+        this.get_main().setup_project_config_drawer()
         super.onResume()
     }
 
@@ -290,7 +291,10 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         val btnCancelLink = llContextLink.findViewById<View?>(R.id.btnCancelLink)
         val ibtnCancelLink = llContextLink.findViewById<View?>(R.id.ibtnCancelLink)
 
+        val label = llContextLink.findViewById<TextView>(R.id.tvLinkLabel)
+
         val (is_networked, many_links) = if (opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Range) {
+            label?.text = resources.getString(R.string.label_link_range)
             var output = false
             for (beat_key in opus_manager.get_beatkeys_in_range(opus_manager.cursor.range!!.first, opus_manager.cursor.range!!.second)) {
                 if (opus_manager.is_networked(beat_key)) {
@@ -304,6 +308,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
                 true
             )
         } else if (opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Single) {
+            label?.text = resources.getString(R.string.label_link_beat)
             val cursor_key = opus_manager.cursor.get_beatkey()
             Pair(
                 opus_manager.is_networked(cursor_key),
@@ -312,6 +317,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         } else {
             return
         }
+
         if (is_networked) {
             btnUnLink.visibility = View.VISIBLE
             btnUnLink.setOnClickListener {
@@ -329,6 +335,8 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             btnUnLink.visibility = View.GONE
             btnUnLinkAll.visibility = View.GONE
         }
+
+
 
         btnCancelLink?.setOnClickListener {
             this.interact_btnCancelLink()

@@ -11,7 +11,8 @@ data class PaganConfiguration(
     var soundfont: String? = null,
     var relative_mode: Boolean = false,
     var sample_rate: Int = 22100,
-    var show_percussion: Boolean = true
+    var show_percussion: Boolean = true,
+    var link_mode: Boolean = false
 ) {
     companion object {
         fun from_path(path: String): PaganConfiguration {

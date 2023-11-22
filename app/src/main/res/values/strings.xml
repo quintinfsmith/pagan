@@ -109,6 +109,8 @@
     <string name="desc_column_label">Column %1d</string>
     <string name="dropdown_choose_percussion">Choose Percussion</string>
     <string name="dropdown_choose_instrument">Choose Instrument</string>
+    <string name="label_link_beat">Tap a beat to link it. *Tap and hold* to group link.</string>
+    <string name="label_link_range">Tap top left corner of range to link</string>
     <string-array name="relative">
         <item>@string/pfx_add</item>
         <item>@string/pfx_subtract</item>

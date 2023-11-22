@@ -3,13 +3,17 @@
     android:id="@+id/llContextLink"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:padding="8dp"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/textView2"
-        android:text="Tap a beat to link it"
+
+        android:id="@+id/tvLinkLabel"
+        android:text="@string/label_link_beat"
+        android:paddingTop="16dp"
+        android:paddingBottom="16dp"
         app:layout_constraintBottom_toTopOf="@+id/btnUnLink"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

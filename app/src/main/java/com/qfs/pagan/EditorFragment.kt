@@ -3,6 +3,7 @@ package com.qfs.pagan
 import android.app.AlertDialog
 import android.content.res.Configuration
 import android.os.Bundle
+import android.util.Log
 import android.view.*
 import android.widget.CompoundButton
 import android.widget.ImageView
@@ -42,12 +43,14 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
 
     override fun onStop() {
         val editor_table = this.get_main().findViewById<EditorTable>(R.id.etEditorTable)
+        Log.d("AAA", "STOPPE")
         if (editor_table != null) {
             val (scroll_x, scroll_y) = editor_table.get_scroll_offset()
             this.view_model.coarse_x = scroll_x.first
             this.view_model.fine_x = scroll_x.second
             this.view_model.coarse_y = scroll_y.first
             this.view_model.fine_y = scroll_y.second
+            this.view_model.backup_undo_stack = this.get_main().get_opus_manager().history_cache.copy()
         }
         super.onStop()
     }
@@ -102,6 +105,11 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
                 savedInstanceState.getInt("coarse_y"),
                 savedInstanceState.getInt("fine_y")
             )
+
+            if (this.view_model.backup_undo_stack != null) {
+                opus_manager.history_cache = this.view_model.backup_undo_stack!!
+                this.view_model.backup_undo_stack = null
+            }
         }
         super.onViewStateRestored(savedInstanceState)
     }
@@ -133,6 +141,12 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
                     this.view_model.fine_y = null
                     this.view_model.fine_x = null
                 }
+            }
+
+            // So the history stack is kept when cancelling a load
+            if (this.view_model.backup_undo_stack != null) {
+                opus_manager.history_cache = this.view_model.backup_undo_stack!!
+                this.view_model.backup_undo_stack = null
             }
             editor_table.visibility = View.VISIBLE
         } else {

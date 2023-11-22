@@ -2,6 +2,7 @@ package com.qfs.pagan
 
 import android.os.Bundle
 import androidx.lifecycle.ViewModel
+import com.qfs.pagan.opusmanager.HistoryLayer
 
 class EditorViewModel: ViewModel() {
     var coarse_x: Int? = null
@@ -16,4 +17,5 @@ class EditorViewModel: ViewModel() {
      so if that happens, it can be checked onResume
      */
     var backup_fragment_intent: Pair<IntentFragmentToken, Bundle?>? = null
+    var backup_undo_stack: HistoryLayer.HistoryCache? = null
 }

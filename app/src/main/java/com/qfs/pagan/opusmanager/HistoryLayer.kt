@@ -136,6 +136,13 @@ open class HistoryLayer : LinksLayer() {
                 this._history.last()
             }
         }
+
+        fun copy(): HistoryCache {
+            var c = HistoryCache()
+            c._history = this._history.toMutableList()
+            c._working_node = this._working_node
+            return c
+        }
     }
     var history_cache = HistoryCache()
     private var save_point_popped = false

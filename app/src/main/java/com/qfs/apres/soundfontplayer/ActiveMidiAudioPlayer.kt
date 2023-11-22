@@ -17,8 +17,8 @@ import kotlin.concurrent.thread
 class ActiveMidiAudioPlayer(var sample_handle_manager: SampleHandleManager): VirtualMidiOutputDevice {
     internal var active_audio_track_handle: AudioTrackHandle? = null
     internal var wave_generator = WaveGenerator(sample_handle_manager)
-    var SAMPLE_RATE_NANO = sample_handle_manager.sample_rate.toFloat() / 1_000_000_000F
-    var buffer_delay = 1
+    var SAMPLE_RATE_MILLIS = sample_handle_manager.sample_rate.toFloat() / 1_000F
+    var buffer_delay = 2
     var is_playing = false
     var generate_timestamp: Long? = null
 
@@ -69,14 +69,11 @@ class ActiveMidiAudioPlayer(var sample_handle_manager: SampleHandleManager): Vir
     }
 
     private fun process_event(event: MIDIEvent) {
-        var gts = this.generate_timestamp
-        val (delta_nano, start_frame) = if (gts != null) {
-            Pair((System.currentTimeMillis() - gts).toFloat(), this.wave_generator.frame + this.sample_handle_manager.buffer_size)
-        } else {
-           Pair(0f, this.wave_generator.frame)
-        }
+        val now = System.currentTimeMillis()
+        var gts = this.generate_timestamp ?: now
+        val delta = (now - gts).toFloat()
+        val frame = (this.SAMPLE_RATE_MILLIS * delta).toInt() + (this.sample_handle_manager.buffer_size * this.buffer_delay)
 
-        val frame = start_frame + (this.SAMPLE_RATE_NANO * delta_nano).toInt() + (this.sample_handle_manager.buffer_size * this.buffer_delay)
         this.wave_generator.place_event(event, frame)
     }
 
@@ -101,8 +98,8 @@ class ActiveMidiAudioPlayer(var sample_handle_manager: SampleHandleManager): Vir
 
             this.active_audio_track_handle?.play()
 
+            this.generate_timestamp = System.currentTimeMillis()
             while (this.is_playing) {
-                this.generate_timestamp = System.nanoTime()
                 val chunk = try {
                     this.wave_generator.generate()
                 } catch (e: WaveGenerator.EmptyException) {
@@ -110,9 +107,9 @@ class ActiveMidiAudioPlayer(var sample_handle_manager: SampleHandleManager): Vir
                 } catch (e: WaveGenerator.KilledException) {
                     break
                 }
-                this.generate_timestamp = null
                 this.active_audio_track_handle?.write(chunk)
             }
+            this.generate_timestamp = null
 
             this.is_playing = false
             this.active_audio_track_handle?.stop()

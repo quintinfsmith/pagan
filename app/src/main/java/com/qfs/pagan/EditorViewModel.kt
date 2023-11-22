@@ -17,5 +17,10 @@ class EditorViewModel: ViewModel() {
      so if that happens, it can be checked onResume
      */
     var backup_fragment_intent: Pair<IntentFragmentToken, Bundle?>? = null
+
+    /*
+        Otherwise the history stack gets forgotten when changing orientation, putting the app in the
+        background or navigating back to the editor from the load menu
+     */
     var backup_undo_stack: HistoryLayer.HistoryCache? = null
 }

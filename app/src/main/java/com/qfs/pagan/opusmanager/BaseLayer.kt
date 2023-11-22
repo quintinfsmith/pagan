@@ -1259,7 +1259,9 @@ open class BaseLayer {
 
             for (j in 0 until channel_data.lines.size) {
                 parsed[i][j].forEachIndexed { b: Int, beat_tree: OpusTree<OpusEvent> ->
-                    this.replace_tree(BeatKey(y, j, b), listOf(), beat_tree)
+                    if (!beat_tree.is_leaf() || beat_tree.is_event()) {
+                        this.replace_tree(BeatKey(y, j, b), listOf(), beat_tree)
+                    }
                     for ((_, event) in beat_tree.get_events_mapped()) {
                         this.set_percussion_instrument(j, event.note)
                         break

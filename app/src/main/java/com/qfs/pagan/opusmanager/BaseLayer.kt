@@ -1,5 +1,4 @@
 package com.qfs.pagan.opusmanager
-import android.util.Log
 import com.qfs.apres.Midi
 import com.qfs.apres.event.BankSelect
 import com.qfs.apres.event.NoteOff
@@ -772,7 +771,6 @@ open class BaseLayer {
     }
 
     open fun overwrite_beat(old_beat: BeatKey, new_beat: BeatKey) {
-        Log.d("AAA", "OVERWRITE $old_beat W $new_beat")
         val new_tree = this.channels[new_beat.channel].get_line(new_beat.line_offset).beats[new_beat.beat].copy()
 
         this.replace_tree(old_beat, listOf(), new_tree)
@@ -1480,6 +1478,7 @@ open class BaseLayer {
 
         val percussion_map = HashMap<Int, Int>()
 
+        // Calculate the number of lines needed per channel
         for ((_, event_set) in mapped_events) {
             val tmp_channel_counts = HashMap<Int, Int>()
             event_set.forEachIndexed { _: Int, event: OpusEvent ->
@@ -1553,8 +1552,14 @@ open class BaseLayer {
                     percussion_channel = midi_channel_map[9]
                 }
 
-                val line_offset = tmp_channel_counts[channel_index] ?: 0
+                val line_offset = if (event.channel == 9) {
+                    percussion_map[event.note]!!
+                } else {
+                    tmp_channel_counts[channel_index] ?: 0
+                }
                 tmp_channel_counts[channel_index] = line_offset + 1
+
+
 
                 val working_position = mutableListOf<Int>()
                 var working_beatkey: BeatKey? = null
@@ -1586,6 +1591,7 @@ open class BaseLayer {
             }
         }
 
+        // Attempt to remove redundant trailing subdivisions
         this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
             for (j in channel.lines.indices) {
                 for (k in 0 until this.beat_count) {

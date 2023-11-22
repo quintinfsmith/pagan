@@ -1,53 +1,73 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
     android:id="@+id/llContextLink"
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="8dp"
+    android:orientation="vertical"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <TextView
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-
+        android:textAlignment="center"
         android:id="@+id/tvLinkLabel"
         android:text="@string/label_link_beat"
         android:paddingTop="16dp"
-        android:paddingBottom="16dp"
-        app:layout_constraintBottom_toTopOf="@+id/btnUnLink"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:paddingBottom="16dp"/>
 
-    <ImageView
+    <LinearLayout
+        android:orientation="horizontal"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/btnUnLink"
-        android:theme="@style/icon_button"
-        android:src="@drawable/unlink"
-        app:layout_constraintBottom_toTopOf="@+id/btnCancelLink"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        android:contentDescription="Remove Link" />
+        android:layout_height="wrap_content">
 
-    <ImageView
-        android:theme="@style/icon_button"
-        android:src="@drawable/unlinkall"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/btnUnLinkAll"
-        android:contentDescription="Remove All Links"
-        app:layout_constraintBottom_toTopOf="@+id/btnUnLink"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        <Switch
+            android:id="@+id/sLinkMode"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:textOff="Copy"
+            android:textOn="Link" />
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/btnCancelLink"
-        android:text="Cancel"
-        android:theme="@style/button"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
-</androidx.constraintlayout.widget.ConstraintLayout>
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"/>
+
+        <ImageView
+            android:layout_width="62dp"
+            android:layout_height="wrap_content"
+            android:id="@+id/btnUnLink"
+            android:theme="@style/icon_button"
+            android:src="@drawable/unlink"
+            android:contentDescription="Remove Link" />
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"/>
+
+        <ImageView
+            android:layout_width="62dp"
+            android:layout_height="wrap_content"
+            android:theme="@style/icon_button"
+            android:src="@drawable/unlinkall"
+            android:id="@+id/btnUnLinkAll"
+            android:contentDescription="Remove All Links"/>
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"/>
+
+        <ImageView
+            android:theme="@style/icon_button"
+            android:id="@+id/ibtnCancelLink"
+            android:padding="8dp"
+            android:src="@drawable/baseline_arrow_back_24"
+            android:layout_width="62dp"
+            android:layout_height="wrap_content"
+            android:text="Cancel"/>
+
+    </LinearLayout>
+</LinearLayout>

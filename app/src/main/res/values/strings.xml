@@ -111,6 +111,8 @@
     <string name="dropdown_choose_instrument">Choose Instrument</string>
     <string name="label_link_beat">Tap a beat to link it. *Tap and hold* to group link.</string>
     <string name="label_link_range">Tap top left corner of range to link</string>
+    <string name="label_copy_beat">Tap a beat to copy it. *Tap and hold* to group copy.</string>
+    <string name="label_copy_range">Tap top left corner of range to copy</string>
     <string-array name="relative">
         <item>@string/pfx_add</item>
         <item>@string/pfx_subtract</item>

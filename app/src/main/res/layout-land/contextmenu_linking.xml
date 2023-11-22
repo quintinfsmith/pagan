@@ -38,4 +38,19 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Cancel"/>
+    <Space
+        android:layout_height="0dp"
+        android:layout_width="match_parent"
+        android:layout_weight="1"/>
+    <Switch
+        android:theme="@style/Widget.Material3.CompoundButton.MaterialSwitch"
+        android:id="@+id/sLinkMode"
+        android:showText="true"
+        android:textAlignment="center"
+        android:textOff="Copy"
+        android:textOn="Link"
+        android:paddingBottom="16dp"
+        android:paddingTop="16dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
 </LinearLayout>

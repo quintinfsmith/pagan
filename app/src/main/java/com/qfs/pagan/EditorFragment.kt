@@ -4,9 +4,11 @@ import android.app.AlertDialog
 import android.content.res.Configuration
 import android.os.Bundle
 import android.view.*
+import android.widget.CompoundButton
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.SeekBar
+import android.widget.Switch
 import android.widget.TextView
 import androidx.fragment.app.setFragmentResult
 import androidx.fragment.app.setFragmentResultListener
@@ -287,14 +289,35 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         val btnUnLink = llContextLink.findViewById<ImageView>(R.id.btnUnLink)
         val btnUnLinkAll = llContextLink.findViewById<ImageView>(R.id.btnUnLinkAll)
 
-        // Double btnCancel Link due to different View Types needing different ids
-        val btnCancelLink = llContextLink.findViewById<View?>(R.id.btnCancelLink)
-        val ibtnCancelLink = llContextLink.findViewById<View?>(R.id.ibtnCancelLink)
-
         val label = llContextLink.findViewById<TextView>(R.id.tvLinkLabel)
+        val ibtnCancelLink = llContextLink.findViewById<View?>(R.id.ibtnCancelLink)
+        val sLinkMode = llContextLink.findViewById<Switch?>(R.id.sLinkMode)
+        sLinkMode.isChecked = main.configuration.link_mode
+
+        sLinkMode?.setOnCheckedChangeListener { _: CompoundButton, is_checked: Boolean ->
+            main.configuration.link_mode = is_checked
+            main.save_configuration()
+            label?.text = if (main.configuration.link_mode) {
+                if (opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Range) {
+                    resources.getString(R.string.label_link_range)
+                } else {
+                    resources.getString(R.string.label_link_beat)
+                }
+            } else {
+                if (opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Range) {
+                    resources.getString(R.string.label_copy_range)
+                } else {
+                    resources.getString(R.string.label_copy_beat)
+                }
+            }
+        }
 
         val (is_networked, many_links) = if (opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Range) {
-            label?.text = resources.getString(R.string.label_link_range)
+            label?.text = if (main.configuration.link_mode) {
+                resources.getString(R.string.label_link_range)
+            } else {
+                resources.getString(R.string.label_copy_range)
+            }
             var output = false
             for (beat_key in opus_manager.get_beatkeys_in_range(opus_manager.cursor.range!!.first, opus_manager.cursor.range!!.second)) {
                 if (opus_manager.is_networked(beat_key)) {
@@ -308,7 +331,11 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
                 true
             )
         } else if (opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Single) {
-            label?.text = resources.getString(R.string.label_link_beat)
+            label?.text = if (main.configuration.link_mode) {
+                resources.getString(R.string.label_link_beat)
+            } else {
+                resources.getString(R.string.label_copy_beat)
+            }
             val cursor_key = opus_manager.cursor.get_beatkey()
             Pair(
                 opus_manager.is_networked(cursor_key),
@@ -337,13 +364,10 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         }
 
 
-
-        btnCancelLink?.setOnClickListener {
-            this.interact_btnCancelLink()
-        }
         ibtnCancelLink?.setOnClickListener {
             this.interact_btnCancelLink()
         }
+
     }
 
     fun setContextMenu_column() {

@@ -89,14 +89,38 @@ open class FiniteMidiDevice(var sample_handle_manager: SampleHandleManager, priv
                     } else {
                         this@FiniteMidiDevice.on_start()
                         this@FiniteMidiDevice.on_beat(this.notification_index++)
-                        this@FiniteMidiDevice.active_audio_track_handle?.offset_next_notification_position(this@FiniteMidiDevice.get_next_beat_delay() ?: 0)
+                        this@FiniteMidiDevice.active_audio_track_handle?.offset_next_notification_position(this@FiniteMidiDevice.pop_next_beat_delay() ?: 0)
                     }
 
                 }
                 override fun onMarkerReached(p0: AudioTrack?) {
-                    this@FiniteMidiDevice.on_beat(this.notification_index++)
-                    var next_beat_delay = this@FiniteMidiDevice.get_next_beat_delay()
-                    if (next_beat_delay == null) {
+                    var frame_delay = if (p0 != null) {
+                        if (p0!!.playState == AudioTrack.PLAYSTATE_STOPPED) {
+                            0
+                        } else {
+                            p0!!.notificationMarkerPosition - p0!!.playbackHeadPosition
+                        }
+                    } else {
+                        0
+                    }
+                    var next_beat_delay = 0
+                    var kill_flag = false
+                    var this_index = this.notification_index
+                    while (frame_delay <= 0) {
+                        var next_delay = this@FiniteMidiDevice.pop_next_beat_delay()
+
+                        if (next_delay == null) {
+                            kill_flag = true
+                            break
+                        }
+
+                        next_beat_delay += next_delay
+                        frame_delay += next_delay
+                        this.notification_index += 1
+                    }
+
+                    this@FiniteMidiDevice.on_beat(this_index)
+                    if (kill_flag) {
                         p0?.stop()
                         this@FiniteMidiDevice.active_audio_track_handle = null
                         this@FiniteMidiDevice.is_playing = false
@@ -176,7 +200,15 @@ open class FiniteMidiDevice(var sample_handle_manager: SampleHandleManager, priv
         this.approximate_frame_count = tick_frame
     }
 
-    fun get_next_beat_delay(): Int? {
+    fun peek_next_beat_delay(): Int? {
+        return if (this.beat_delays.isEmpty()) {
+            null
+        } else {
+            this.beat_delays.removeFirst()
+        }
+    }
+
+    fun pop_next_beat_delay(): Int? {
         return if (this.beat_delays.isEmpty()) {
             null
         } else {

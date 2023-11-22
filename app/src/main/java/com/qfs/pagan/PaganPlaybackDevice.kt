@@ -31,7 +31,6 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
     var notification_channel: NotificationChannel? = null
     var active_notification: NotificationCompat.Builder? = null
     var export_wav_thread: Job? = null
-    var current_relative_beat = 0
     var start_beat = 0
     override fun on_stop() {
         this.activity.restore_playback_state()
@@ -45,8 +44,8 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
         }
     }
 
-    override fun on_beat(i: Int) {
-        var i = this.current_relative_beat++ + this.start_beat
+    override fun on_beat(x: Int) {
+        var i = x + this.start_beat
         var opus_manager = this.activity.get_opus_manager()
         if (i >= opus_manager.beat_count) {
             return
@@ -61,7 +60,6 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
     fun play_opus(start_beat: Int) {
         var midi = this.activity.get_opus_manager().get_midi(start_beat)
         this.start_beat = start_beat
-        this.current_relative_beat = 0
         this.play_midi(midi)
     }
 

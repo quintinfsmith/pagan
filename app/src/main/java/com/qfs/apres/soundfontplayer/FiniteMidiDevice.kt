@@ -88,12 +88,17 @@ open class FiniteMidiDevice(var sample_handle_manager: SampleHandleManager, priv
                         this@FiniteMidiDevice.on_cancelled()
                     } else {
                         this@FiniteMidiDevice.on_start()
-                        this@FiniteMidiDevice.on_beat(this.notification_index++)
+                        this@FiniteMidiDevice.on_beat(this.notification_index)
                         this@FiniteMidiDevice.active_audio_track_handle?.offset_next_notification_position(this@FiniteMidiDevice.pop_next_beat_delay() ?: 0)
                     }
 
                 }
                 override fun onMarkerReached(p0: AudioTrack?) {
+                    /*
+                     On Slower devices, the MarkerReached Callback can take a bit to fire,
+                      Therefore we need to try to compensate for that and check the position it was
+                      fired at vs the current position
+                     */
                     var frame_delay = if (p0 != null) {
                         if (p0!!.playState == AudioTrack.PLAYSTATE_STOPPED) {
                             0
@@ -105,7 +110,6 @@ open class FiniteMidiDevice(var sample_handle_manager: SampleHandleManager, priv
                     }
                     var next_beat_delay = 0
                     var kill_flag = false
-                    var this_index = this.notification_index
                     while (frame_delay <= 0) {
                         var next_delay = this@FiniteMidiDevice.pop_next_beat_delay()
 
@@ -119,7 +123,7 @@ open class FiniteMidiDevice(var sample_handle_manager: SampleHandleManager, priv
                         this.notification_index += 1
                     }
 
-                    this@FiniteMidiDevice.on_beat(this_index)
+                    this@FiniteMidiDevice.on_beat(this.notification_index)
                     if (kill_flag) {
                         p0?.stop()
                         this@FiniteMidiDevice.active_audio_track_handle = null

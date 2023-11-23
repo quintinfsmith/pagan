@@ -48,7 +48,8 @@ open class HistoryLayer : LinksLayer() {
                 this.close_multi()
                 return output
             } catch (e: Exception) {
-                throw HistoryError(e, this.cancel_multi())
+                throw e
+                //throw HistoryError(e, this.cancel_multi())
             }
         }
 
@@ -634,7 +635,9 @@ open class HistoryLayer : LinksLayer() {
 
     override fun clear() {
         this.clear_history()
-        super.clear()
+        this.forget {
+            super.clear()
+        }
     }
 
     fun clear_history() {

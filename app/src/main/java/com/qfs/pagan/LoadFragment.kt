@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.os.bundleOf
+import androidx.fragment.app.clearFragmentResult
 import androidx.fragment.app.setFragmentResult
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -57,6 +58,7 @@ class LoadFragment : PaganFragment<FragmentLoadBinding>() {
     }
 
     fun load_project(path: String) {
+        clearFragmentResult(IntentFragmentToken.Resume.name)
         setFragmentResult(IntentFragmentToken.Load.name, bundleOf(Pair("PATH", path)))
         this.get_main().navigate(R.id.EditorFragment)
     }

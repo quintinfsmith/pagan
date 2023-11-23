@@ -5,11 +5,6 @@ import androidx.lifecycle.ViewModel
 import com.qfs.pagan.opusmanager.HistoryLayer
 
 class EditorViewModel: ViewModel() {
-    var coarse_x: Int? = null
-    var coarse_y: Int? = null
-    var fine_x: Int? = null
-    var fine_y: Int? = null
-
     /*
      backup_fragment_intent exists BECAUSE i need to run imports on a thread
      so the user can have visual feedback BUT that fucks up if the orientation is

@@ -36,8 +36,8 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     var active_cursor: OpusManagerCursor = OpusManagerCursor(OpusManagerCursor.CursorMode.Unset)
 
     // Scroll Locks
-    private var _label_scroll_locked = false
-    private var _main_scroll_locked = false
+    var _label_scroll_locked = false
+    var _main_scroll_locked = false
 
     init {
         this.top_row.addView(this.spacer)
@@ -213,8 +213,12 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                 )
             }
         }
+
         for (j in 0 until this.get_opus_manager().beat_count) {
             if (this.column_width_map.size <= j) {
+                while (this.column_width_maxes.size <= j) {
+                    this.column_width_maxes.add(1)
+                }
                 this.column_width_maxes[j] = 1
             } else {
                 this.column_width_maxes[j] = this.column_width_map[j].max()
@@ -534,11 +538,16 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     }
 
     fun precise_scroll(x_coarse: Int = 0, x_fine: Int = 0, y_coarse: Int = 0, y_fine: Int = 0) {
+        /*
+            KLUDGE ALERT
+            There's a wierd bug that returns the main lm to the first position if the x_fine == 0.
+            so we force it to be 1 if that's the case.
+         */
         val main_lm = (this.main_recycler.layoutManager!! as LinearLayoutManager)
-        main_lm.scrollToPositionWithOffset(x_coarse, x_fine)
+        main_lm.scrollToPositionWithOffset(x_coarse, if (x_fine == 0) { 1 } else { x_fine })
 
         val column_label_lm = (this.column_label_recycler.layoutManager!! as LinearLayoutManager)
-        column_label_lm.scrollToPositionWithOffset(x_coarse, x_fine)
+        column_label_lm.scrollToPositionWithOffset(x_coarse, if (x_fine == 0) { 1 } else { x_fine })
 
         val line_height = (resources.getDimension(R.dimen.line_height)).toInt()
         this.scroll_view.scrollTo(0, (line_height * y_coarse) + y_fine)

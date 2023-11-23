@@ -3,7 +3,6 @@ package com.qfs.pagan
 import android.app.AlertDialog
 import android.content.res.Configuration
 import android.os.Bundle
-import android.util.Log
 import android.view.*
 import android.widget.CompoundButton
 import android.widget.ImageView
@@ -43,35 +42,24 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
 
     override fun onStop() {
         val editor_table = this.get_main().findViewById<EditorTable>(R.id.etEditorTable)
-        Log.d("AAA", "STOPPE")
+        val main = this.get_main()
+        main.save_to_backup()
         if (editor_table != null) {
             val (scroll_x, scroll_y) = editor_table.get_scroll_offset()
-            this.view_model.coarse_x = scroll_x.first
-            this.view_model.fine_x = scroll_x.second
-            this.view_model.coarse_y = scroll_y.first
-            this.view_model.fine_y = scroll_y.second
-            this.view_model.backup_undo_stack = this.get_main().get_opus_manager().history_cache.copy()
-        }
-        super.onStop()
-    }
-    override fun onSaveInstanceState(outState: Bundle) {
-        val editor_table = this.get_main().findViewById<EditorTable>(R.id.etEditorTable)
-        if (editor_table != null) {
-            val (scroll_x, scroll_y) = editor_table.get_scroll_offset()
+            var bundle = Bundle()
+            bundle.putInt("coarse_x", scroll_x.first)
+            bundle.putInt("fine_x", scroll_x.second)
+            bundle.putInt("coarse_y", scroll_y.first)
+            bundle.putInt("fine_y", scroll_y.second)
 
-            outState.putInt("coarse_x", scroll_x.first)
-            outState.putInt("fine_x", scroll_x.second)
-            outState.putInt("coarse_y", scroll_y.first)
-            outState.putInt("fine_y", scroll_y.second)
-
-
-            val main = this.get_main()
             val opus_manager = main.get_opus_manager()
             if (opus_manager.path != null) {
-                outState.putString("path", opus_manager.path)
+                bundle.putString("path", opus_manager.path)
             }
+            this.setFragmentResult(IntentFragmentToken.Resume.name, bundle)
         }
-        super.onSaveInstanceState(outState)
+        this.view_model.backup_undo_stack = this.get_main().get_opus_manager().history_cache.copy()
+        super.onStop()
     }
 
     override fun onResume() {
@@ -81,77 +69,17 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
     }
 
     override fun onViewStateRestored(savedInstanceState: Bundle?) {
+        super.onViewStateRestored(savedInstanceState)
         val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
         editor_table.visibility = View.VISIBLE
-        if (savedInstanceState != null) {
-            // TODO: When 'don't keep apps' is enabled, this path will be followed even when importing a midi or project
-            val main = this.get_main()
-            val opus_manager = main.get_opus_manager()
-            val bkp_path = "${main.applicationInfo.dataDir}/.bkp.json"
-            val bytes = FileInputStream(bkp_path).readBytes()
-
-            val new_path = if (savedInstanceState.containsKey("path")) {
-                savedInstanceState.getString("path")
-            } else {
-                null
-            }
-            opus_manager.clear()
-            opus_manager.load(bytes, new_path)
-
-
-            editor_table.precise_scroll(
-                savedInstanceState.getInt("coarse_x"),
-                savedInstanceState.getInt("fine_x"),
-                savedInstanceState.getInt("coarse_y"),
-                savedInstanceState.getInt("fine_y")
-            )
-
-            if (this.view_model.backup_undo_stack != null) {
-                opus_manager.history_cache = this.view_model.backup_undo_stack!!
-                this.view_model.backup_undo_stack = null
-            }
-        }
-        super.onViewStateRestored(savedInstanceState)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
         this.clearContextMenu()
-        val main = this.get_main()
-        val opus_manager = main.get_opus_manager()
 
-        if (this.view_model.coarse_x != null && opus_manager.first_load_done) {
-            opus_manager.cursor_clear()
-            editor_table.setup()
-            this.get_main().drawer_unlock()
-            thread {
-                Thread.sleep(100)
-
-                this.activity!!.runOnUiThread {
-                    editor_table.precise_scroll(
-                        this.view_model.coarse_x!!,
-                        this.view_model.fine_x!!,
-                        this.view_model.coarse_y!!,
-                        this.view_model.fine_y!!
-                    )
-
-                    this.view_model.coarse_y = null
-                    this.view_model.coarse_x = null
-                    this.view_model.fine_y = null
-                    this.view_model.fine_x = null
-                }
-            }
-
-            // So the history stack is kept when cancelling a load
-            if (this.view_model.backup_undo_stack != null) {
-                opus_manager.history_cache = this.view_model.backup_undo_stack!!
-                this.view_model.backup_undo_stack = null
-            }
-            editor_table.visibility = View.VISIBLE
-        } else {
-            editor_table.visibility = View.GONE
-        }
+        val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
+        editor_table.visibility = View.GONE
 
         if (this.view_model.backup_fragment_intent != null) {
             var (token, bundle) = this.view_model.backup_fragment_intent!!
@@ -160,6 +88,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             }
             this.view_model.backup_fragment_intent = null
         }
+
         this.set_result_listeners()
     }
 
@@ -169,7 +98,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             val main = this.get_main()
             main.loading_reticle_show()
             main.runOnUiThread {
-                editor_table?.visibility = View.GONE
+                //editor_table?.visibility = View.GONE
             }
             thread {
                 val path = bundle?.getString("PATH")
@@ -216,9 +145,9 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         setFragmentResultListener(IntentFragmentToken.ImportProject.name) { _, bundle: Bundle? ->
             val main = this.get_main()
             main.loading_reticle_show()
-            main.runOnUiThread {
-                editor_table?.visibility = View.GONE
-            }
+            //main.runOnUiThread {
+            //    editor_table?.visibility = View.GONE
+            //}
             thread {
                 try {
                     bundle!!.getString("URI")?.let { path ->
@@ -252,6 +181,40 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
                     editor_table?.visibility = View.VISIBLE
                 }
                 main.loading_reticle_hide()
+            }
+        }
+
+        setFragmentResultListener(IntentFragmentToken.Resume.name) { _, savedInstanceState: Bundle? ->
+            if (savedInstanceState != null) {
+                val main = this.get_main()
+                this.get_main().drawer_unlock()
+
+                // TODO: When 'don't keep apps' is enabled, this path will be followed even when importing a midi or project
+                val bkp_path = "${main.applicationInfo.dataDir}/.bkp.json"
+                val bytes = FileInputStream(bkp_path).readBytes()
+
+                val new_path = if (savedInstanceState.containsKey("path")) {
+                    savedInstanceState.getString("path")
+                } else {
+                    null
+                }
+
+                val opus_manager = main.get_opus_manager()
+                opus_manager.load(bytes, new_path)
+
+                editor_table.visibility = View.VISIBLE
+
+                editor_table.precise_scroll(
+                    savedInstanceState.getInt("coarse_x"),
+                    savedInstanceState.getInt("fine_x"),
+                    savedInstanceState.getInt("coarse_y"),
+                    savedInstanceState.getInt("fine_y")
+                )
+
+                if (this.view_model.backup_undo_stack != null) {
+                    opus_manager.history_cache = this.view_model.backup_undo_stack!!
+                    this.view_model.backup_undo_stack = null
+                }
             }
         }
     }
@@ -1071,7 +1034,6 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         this.reset_context_menu()
     }
 
-
     private fun interact_btnChoosePercussion() {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
@@ -1088,17 +1050,6 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
 
         main.dialog_popup_menu(getString(R.string.dropdown_choose_percussion), options, default_instrument) { index: Int, value: Int ->
             opus_manager.set_percussion_instrument(value)
-        }
-    }
-
-    fun scroll_to_beat(beat: Int, select: Boolean = false) {
-        val main = this.get_main()
-        val editor_table = this.get_main().findViewById<EditorTable>(R.id.etEditorTable)
-        editor_table.scroll_to_position(x = beat)
-
-        if (select) {
-            val opus_manager = main.get_opus_manager()
-            opus_manager.cursor_select_column(beat)
         }
     }
 

@@ -32,6 +32,7 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
     var active_notification: NotificationCompat.Builder? = null
     var export_wav_thread: Job? = null
     var start_beat = 0
+
     override fun on_stop() {
         this.activity.restore_playback_state()
     }
@@ -45,6 +46,9 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
     }
 
     override fun on_beat(x: Int) {
+        if (!this.is_playing || this.play_cancelled) {
+            return
+        }
         var i = x + this.start_beat
         var opus_manager = this.activity.get_opus_manager()
         if (i >= opus_manager.beat_count) {

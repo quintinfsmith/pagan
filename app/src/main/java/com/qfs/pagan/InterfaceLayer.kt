@@ -387,7 +387,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         val y = this.get_abs_offset(notify_index, 0)
 
         // TODO: Should be behind ui lock?
-        this.activity.update_channel_instruments()
+        this.activity.update_channel_instruments(notify_index)
 
         if (this.is_percussion(notify_index) && !this.activity.configuration.show_percussion) {
             return
@@ -472,7 +472,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         try {
             this.surpress_ui {
                 super.new()
-                this.cursor_clear()
             }
         } catch (e: Exception) {
             throw e
@@ -480,6 +479,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         this.first_load_done = true
         val new_path = this.activity.get_new_project_path()
         this.path = new_path
+
         this.runOnUiThread { main: MainActivity ->
             main.validate_percussion_visibility()
             main.update_menu_options()
@@ -499,7 +499,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     override fun import_midi(midi: Midi) {
         try {
             this.surpress_ui {
-                this.cursor_clear()
                 super.import_midi(midi)
             }
         } catch (e: Exception) {
@@ -513,7 +512,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             main.setup_project_config_drawer()
 
             val editor_table = this.get_editor_table()
-            editor_table?.clear()
             editor_table?.setup()
 
             main.update_channel_instruments()
@@ -526,12 +524,12 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     override fun load(bytes: ByteArray, new_path: String?) {
         try {
             this.surpress_ui {
-                this.cursor_clear()
                 super.load(bytes, new_path)
             }
         } catch (e: Exception) {
             throw e
         }
+
         this.first_load_done = true
         this.runOnUiThread { main: MainActivity ->
             main.validate_percussion_visibility()
@@ -539,36 +537,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             main.setup_project_config_drawer()
 
             val editor_table = this.get_editor_table()
-            editor_table?.clear()
-            editor_table?.setup()
-
-            main.update_channel_instruments()
-            this.withFragment {
-                it.clearContextMenu()
-            }
-        }
-    }
-
-    override fun load(path: String) {
-        val editor_table = this.get_editor_table()
-        editor_table?.clear()
-
-        try {
-            this.surpress_ui {
-                super.load(path)
-                this.cursor_clear()
-            }
-        } catch (e: Exception) {
-            throw e
-        }
-
-        this.first_load_done = true
-        this.runOnUiThread { main: MainActivity ->
-            main.validate_percussion_visibility()
-            main.update_menu_options()
-            main.setup_project_config_drawer()
-
-            editor_table?.clear()
             editor_table?.setup()
 
             main.update_channel_instruments()
@@ -620,6 +588,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         }
         this.cursor.clear()
         this.get_editor_table()?.clear()
+        this.cursor_clear()
     }
 
     override fun unlink_beat(beat_key: BeatKey) {
@@ -789,7 +758,10 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                 }
                 HistoryToken.REMOVE_LINE -> {
                     val channel = args[0] as Int
-                    val line_offset = min(args[1] as Int, this.channels[channel].size - 1)
+                    val line_offset = min(
+                        args[1] as Int,
+                        this.channels[channel].size - 1
+                    )
                     this.push_to_history_stack(
                         HistoryToken.CURSOR_SELECT_ROW,
                         listOf(
@@ -1349,6 +1321,5 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
         val editor_table = main.findViewById<EditorTable>(R.id.etEditorTable)
         editor_table.update_percussion_visibility()
-
     }
 }

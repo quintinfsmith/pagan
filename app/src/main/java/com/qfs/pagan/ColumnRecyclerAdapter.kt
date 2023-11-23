@@ -40,6 +40,7 @@ class ColumnRecyclerAdapter(val recycler: ColumnRecycler, editor_table: EditorTa
     }
 
     override fun onViewAttachedToWindow(holder: ColumnRecyclerViewHolder) {
+        super.onViewAttachedToWindow(holder)
         holder.itemView.layoutParams.height = MATCH_PARENT
     }
 

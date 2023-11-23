@@ -41,6 +41,7 @@ import androidx.core.os.bundleOf
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.clearFragmentResult
 import androidx.fragment.app.setFragmentResult
 import androidx.media3.common.MimeTypes
 import androidx.navigation.findNavController
@@ -134,6 +135,7 @@ class MainActivity : AppCompatActivity() {
             if (result.resultCode == Activity.RESULT_OK) {
                 result?.data?.data?.also { uri ->
                     val fragment = this.get_active_fragment()
+                    fragment?.clearFragmentResult(IntentFragmentToken.Resume.name)
                     fragment?.setFragmentResult(
                         IntentFragmentToken.ImportProject.name,
                         bundleOf(Pair("URI", uri.toString()))
@@ -161,6 +163,7 @@ class MainActivity : AppCompatActivity() {
         if (result.resultCode == Activity.RESULT_OK) {
             result?.data?.data?.also { uri ->
                 val fragment = this.get_active_fragment()
+                fragment?.clearFragmentResult(IntentFragmentToken.Resume.name)
                 fragment?.setFragmentResult(
                     IntentFragmentToken.ImportMidi.name,
                     bundleOf(Pair("URI", uri.toString()))
@@ -183,12 +186,15 @@ class MainActivity : AppCompatActivity() {
         super.onPause()
     }
 
-    override fun onSaveInstanceState(outState: Bundle) {
+    fun save_to_backup() {
         val path = this.get_opus_manager().path
         this.get_opus_manager().save("${applicationInfo.dataDir}/.bkp.json")
         // saving changes the path, need to change it back
         this.get_opus_manager().path = path
+    }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        this.save_to_backup()
         super.onSaveInstanceState(outState)
     }
 
@@ -372,6 +378,7 @@ class MainActivity : AppCompatActivity() {
             R.id.itmNewProject -> {
                 this.dialog_save_project {
                     val fragment = this.get_active_fragment()
+                    fragment?.clearFragmentResult(IntentFragmentToken.Resume.name)
                     fragment?.setFragmentResult(IntentFragmentToken.New.name, bundleOf())
                     if (fragment !is EditorFragment) {
                         this.navigate(R.id.EditorFragment)

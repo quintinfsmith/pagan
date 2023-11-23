@@ -94,6 +94,7 @@ open class FiniteMidiDevice(var sample_handle_manager: SampleHandleManager, priv
 
                 }
                 override fun onMarkerReached(p0: AudioTrack?) {
+                    var kill_flag = false
                     /*
                      On Slower devices, the MarkerReached Callback can take a bit to fire,
                       Therefore we need to try to compensate for that and check the position it was
@@ -101,35 +102,41 @@ open class FiniteMidiDevice(var sample_handle_manager: SampleHandleManager, priv
                      */
                     var frame_delay = if (p0 != null) {
                         if (p0!!.playState == AudioTrack.PLAYSTATE_STOPPED) {
+                            kill_flag = true
                             0
                         } else {
                             p0!!.notificationMarkerPosition - p0!!.playbackHeadPosition
                         }
                     } else {
+                        kill_flag = true
                         0
                     }
+
                     var next_beat_delay = 0
-                    var kill_flag = false
-                    while (frame_delay <= 0) {
-                        var next_delay = this@FiniteMidiDevice.pop_next_beat_delay()
+                    if (!kill_flag) {
+                        while (frame_delay <= 0) {
+                            var next_delay = this@FiniteMidiDevice.pop_next_beat_delay()
 
-                        if (next_delay == null) {
-                            kill_flag = true
-                            break
+                            if (next_delay == null) {
+                                kill_flag = true
+                                break
+                            }
+
+                            next_beat_delay += next_delay
+                            frame_delay += next_delay
+                            this.notification_index += 1
                         }
-
-                        next_beat_delay += next_delay
-                        frame_delay += next_delay
-                        this.notification_index += 1
                     }
 
-                    this@FiniteMidiDevice.on_beat(this.notification_index)
                     if (kill_flag) {
-                        p0?.stop()
+                        if (p0?.state != AudioTrack.STATE_UNINITIALIZED) {
+                            p0?.stop()
+                        }
                         this@FiniteMidiDevice.active_audio_track_handle = null
                         this@FiniteMidiDevice.is_playing = false
                         this@FiniteMidiDevice.on_stop()
                     } else {
+                        this@FiniteMidiDevice.on_beat(this.notification_index)
                         this@FiniteMidiDevice.active_audio_track_handle?.offset_next_notification_position(next_beat_delay)
                     }
                 }

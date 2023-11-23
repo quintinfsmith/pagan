@@ -34,10 +34,7 @@ class ColumnLabelAdapter(editor_table: EditorTable) : RecyclerView.Adapter<Colum
     }
 
     override fun onBindViewHolder(holder: ColumnLabelViewHolder, position: Int) {
-        val weight = this.get_editor_table()!!.get_column_width(position)
-        val resources = this.recycler.resources
-        val width = weight * resources.getDimension(R.dimen.base_leaf_width).toInt()
-        ColumnLabelPlaceHolder(holder, width)
+        ColumnLabelView(holder)
     }
 
     override fun getItemCount(): Int {

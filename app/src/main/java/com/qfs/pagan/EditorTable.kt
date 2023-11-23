@@ -49,6 +49,10 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                 fragment.shortcut_dialog()
             }
         }
+        this.spacer.setOnLongClickListener {
+            this.get_opus_manager().cursor_select_column(0, true)
+            true
+        }
 
         this.bottom_row.addView(LinearLayout(ContextThemeWrapper(context, R.style.column)))
 

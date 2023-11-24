@@ -163,7 +163,6 @@ class MainActivity : AppCompatActivity() {
         if (result.resultCode == Activity.RESULT_OK) {
             result?.data?.data?.also { uri ->
                 val fragment = this.get_active_fragment()
-                fragment?.clearFragmentResult(IntentFragmentToken.Resume.name)
                 fragment?.setFragmentResult(
                     IntentFragmentToken.ImportMidi.name,
                     bundleOf(Pair("URI", uri.toString()))
@@ -756,7 +755,6 @@ class MainActivity : AppCompatActivity() {
         } else {
             export_button.visibility = View.GONE
         }
-
     }
 
     fun get_exportable_options(): List<Pair<Int, String>> {
@@ -1190,6 +1188,10 @@ class MainActivity : AppCompatActivity() {
         val intent = Intent()
             .setType(MimeTypes.AUDIO_MIDI)
             .setAction(Intent.ACTION_GET_CONTENT)
+        val fragment = this.get_active_fragment()
+        if (fragment is EditorFragment) {
+            fragment.view_model.resume_block = true
+        }
         this._import_midi_intent_launcher.launch(intent)
     }
 

@@ -9,7 +9,7 @@ import androidx.viewbinding.ViewBinding
 
 abstract class PaganFragment<T: ViewBinding>: Fragment() {
     // Boiler Plate //
-    private var _binding: T? = null
+    internal var _binding: T? = null
     internal val binding get() = _binding!!
 
     override fun onCreateView(

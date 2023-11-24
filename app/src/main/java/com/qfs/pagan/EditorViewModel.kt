@@ -18,4 +18,21 @@ class EditorViewModel: ViewModel() {
         background or navigating back to the editor from the load menu
      */
     var backup_undo_stack: HistoryLayer.HistoryCache? = null
+
+    var backup_path: String? = null
+
+    var resume_block: Boolean = false
+    var coarse_x: Int = 0
+    var fine_x: Int = 0
+    var coarse_y: Int = 0
+    var fine_y: Int = 0
+
+    fun clear() {
+        this.backup_path = null
+        this.coarse_y = 0
+        this.fine_y = 0
+        this.coarse_x = 0
+        this.fine_x = 0
+        this.backup_fragment_intent = null
+    }
 }

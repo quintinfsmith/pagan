@@ -575,7 +575,6 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             opus_manager.set_relative_mode(event)
         }
 
-        rosRelativeOption.setState(opus_manager.relative_mode, true)
 
         if (opus_manager.is_percussion(opus_manager.cursor.channel)) {
             nsOctave.visibility = View.GONE
@@ -626,6 +625,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             nsOctave.setOnChange(this::interact_nsOctave)
             rosRelativeOption.setOnChange(this::interact_rosRelativeOption)
         }
+        rosRelativeOption.setState(opus_manager.relative_mode, true)
 
         btnSplit.setOnClickListener {
             val beatkey = opus_manager.cursor.get_beatkey()

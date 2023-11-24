@@ -9,6 +9,7 @@ import com.qfs.pagan.opusmanager.HistoryLayer
 import com.qfs.pagan.opusmanager.HistoryToken
 import com.qfs.pagan.opusmanager.OpusChannel
 import com.qfs.pagan.opusmanager.OpusEvent
+import com.qfs.pagan.opusmanager.LoadedJSONData
 import com.qfs.pagan.structure.OpusTree
 import java.lang.Integer.max
 import java.lang.Integer.min
@@ -521,10 +522,10 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         }
     }
 
-    override fun load(bytes: ByteArray, new_path: String?) {
+    override fun load_json(json_data: LoadedJSONData) {
         try {
             this.surpress_ui {
-                super.load(bytes, new_path)
+                super.load_json(json_data)
             }
         } catch (e: Exception) {
             throw e
@@ -585,10 +586,9 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     override fun clear() {
         this.surpress_ui {
             super.clear()
+            this.cursor_clear()
         }
-        this.cursor.clear()
         this.get_editor_table()?.clear()
-        this.cursor_clear()
     }
 
     override fun unlink_beat(beat_key: BeatKey) {

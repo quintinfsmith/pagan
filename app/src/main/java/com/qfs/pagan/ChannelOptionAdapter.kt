@@ -60,8 +60,11 @@ class ChannelOptionAdapter(
 
     private fun set_text(view: ViewGroup, position: Int) {
         val activity = this.get_activity()
-        val channels = this._opus_manager.channels
-        val curChannel = channels[position]
+        val opus_manager = activity.get_opus_manager()
+
+        val (channel_index, _) = opus_manager.get_std_offset(position)
+        //val curChannel = opus_manager.channels[channel_index]
+        val curChannel = opus_manager.channels[position]
 
         val defaults = activity.resources.getStringArray(R.array.midi_instruments)
         val key = Pair(curChannel.midi_bank, curChannel.midi_program)

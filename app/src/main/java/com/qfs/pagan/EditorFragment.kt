@@ -21,7 +21,6 @@ import java.io.FileInputStream
 import java.lang.Integer.max
 import java.lang.Integer.min
 import kotlin.concurrent.thread
-
 /**
  *
  */
@@ -101,7 +100,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             main.loading_reticle_show()
 
             main.runOnUiThread {
-                //editor_table?.visibility = View.GONE
+                editor_table?.visibility = View.GONE
             }
 
             thread {

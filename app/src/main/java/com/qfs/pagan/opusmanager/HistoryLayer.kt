@@ -609,15 +609,9 @@ open class HistoryLayer : LinksLayer() {
         }
     }
 
-    override fun load(path: String) {
+    override fun load_json(json_data: LoadedJSONData) {
         this.history_cache.forget {
-            super.load(path)
-        }
-    }
-
-    override fun load(bytes: ByteArray, new_path: String?) {
-        this.history_cache.forget {
-            super.load(bytes, new_path)
+            super.load_json(json_data)
         }
     }
 

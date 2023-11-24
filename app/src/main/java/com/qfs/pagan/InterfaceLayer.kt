@@ -9,6 +9,7 @@ import com.qfs.pagan.opusmanager.HistoryLayer
 import com.qfs.pagan.opusmanager.HistoryToken
 import com.qfs.pagan.opusmanager.OpusChannel
 import com.qfs.pagan.opusmanager.OpusEvent
+import com.qfs.pagan.opusmanager.LoadedJSONData
 import com.qfs.pagan.structure.OpusTree
 import java.lang.Integer.max
 import java.lang.Integer.min
@@ -395,8 +396,13 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
         when (this.get_ui_lock_level()) {
             null -> {
-                this.runOnUiThread {
+                this.runOnUiThread { main ->
                     editor_table?.new_channel_rows(y, line_list)
+                    val rvActiveChannels: RecyclerView = main.findViewById(R.id.rvActiveChannels)
+                    if (rvActiveChannels.adapter != null) {
+                        val rvActiveChannels_adapter = rvActiveChannels.adapter as ChannelOptionAdapter
+                        rvActiveChannels_adapter.notifyDataSetChanged()
+                    }
                 }
             }
             UI_LOCK_PARTIAL -> {
@@ -521,10 +527,10 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         }
     }
 
-    override fun load(bytes: ByteArray, new_path: String?) {
+    override fun load_json(json_data: LoadedJSONData) {
         try {
             this.surpress_ui {
-                super.load(bytes, new_path)
+                super.load_json(json_data)
             }
         } catch (e: Exception) {
             throw e
@@ -559,14 +565,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
         super.remove_channel(channel)
 
-        this.runOnUiThread { main: MainActivity ->
-            val rvActiveChannels: RecyclerView = main.findViewById(R.id.rvActiveChannels)
-            if (rvActiveChannels.adapter != null) {
-                val rvActiveChannels_adapter = rvActiveChannels.adapter as ChannelOptionAdapter
-                rvActiveChannels_adapter.notifyItemRemoved(channel)
-            }
-
-        }
 
         val editor_table = this.get_editor_table() ?: return
         when (this.get_ui_lock_level()) {
@@ -575,8 +573,13 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                 editor_table.remove_channel_rows(y, lines, true)
             }
             null -> {
-                this.runOnUiThread {
+                this.runOnUiThread { main ->
                     editor_table.remove_channel_rows(y, lines)
+                    val rvActiveChannels: RecyclerView = main.findViewById(R.id.rvActiveChannels)
+                    if (rvActiveChannels.adapter != null) {
+                        val rvActiveChannels_adapter = rvActiveChannels.adapter as ChannelOptionAdapter
+                        rvActiveChannels_adapter.notifyDataSetChanged()
+                    }
                 }
             }
         }
@@ -585,10 +588,16 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     override fun clear() {
         this.surpress_ui {
             super.clear()
+            this.cursor_clear()
         }
-        this.cursor.clear()
         this.get_editor_table()?.clear()
-        this.cursor_clear()
+        this.runOnUiThread { main ->
+            val rvActiveChannels: RecyclerView = main.findViewById(R.id.rvActiveChannels)
+            if (rvActiveChannels.adapter != null) {
+                val rvActiveChannels_adapter = rvActiveChannels.adapter as ChannelOptionAdapter
+                rvActiveChannels_adapter.notifyItemRangeRemoved(0, rvActiveChannels_adapter.itemCount)
+            }
+        }
     }
 
     override fun unlink_beat(beat_key: BeatKey) {

@@ -21,10 +21,6 @@ import java.io.FileInputStream
 import java.lang.Integer.max
 import java.lang.Integer.min
 import kotlin.concurrent.thread
-
-/**
- *
- */
 class EditorFragment : PaganFragment<FragmentMainBinding>() {
     val view_model: EditorViewModel by viewModels()
     private var active_context_menu_index: ContextMenu? = null
@@ -167,9 +163,11 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
             val main = this.get_main()
             main.loading_reticle_show()
+
             main.runOnUiThread {
-                //editor_table?.visibility = View.GONE
+                editor_table?.visibility = View.GONE
             }
+
             thread {
                 val path = bundle?.getString("PATH")
                 if (path != null) {
@@ -611,7 +609,6 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             opus_manager.set_relative_mode(event)
         }
 
-        rosRelativeOption.setState(opus_manager.relative_mode, true)
 
         if (opus_manager.is_percussion(opus_manager.cursor.channel)) {
             nsOctave.visibility = View.GONE
@@ -662,6 +659,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             nsOctave.setOnChange(this::interact_nsOctave)
             rosRelativeOption.setOnChange(this::interact_rosRelativeOption)
         }
+        rosRelativeOption.setState(opus_manager.relative_mode, true)
 
         btnSplit.setOnClickListener {
             val beatkey = opus_manager.cursor.get_beatkey()

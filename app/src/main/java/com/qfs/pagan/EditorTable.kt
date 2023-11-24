@@ -2,6 +2,7 @@ package com.qfs.pagan
 
 import android.content.Context
 import android.util.AttributeSet
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
@@ -101,6 +102,59 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                 }
             }
         })
+
+        /* Allow Scrolling on the y axis when scrolling in the main_recycler */
+        var last_y_position: Float? = null
+        this.main_recycler.setOnTouchListener { _, motionEvent ->
+            if (motionEvent.action == 1) {
+                last_y_position = null
+                return@setOnTouchListener false
+            }
+
+            if (motionEvent.action != MotionEvent.ACTION_MOVE) {
+                return@setOnTouchListener false
+            }
+
+            if (last_y_position == null) {
+                last_y_position = (motionEvent.y - this.scroll_view.y) - this.scroll_view.scrollY.toFloat()
+            }
+
+            var rel_y = (motionEvent.y - this.scroll_view.y)  - this.scroll_view.scrollY
+            var delta_y = last_y_position!! - rel_y
+
+
+            this.scroll_view.scrollBy(0, delta_y.toInt())
+            last_y_position = rel_y
+
+            false
+        }
+
+        /* Allow Scrolling on the x axis when scrolling in the vertical scroll_view */
+        var last_x_position: Float? = null
+        this.scroll_view.setOnTouchListener { _, motionEvent ->
+            if (motionEvent.action == 1) {
+                last_x_position = null
+                return@setOnTouchListener false
+            }
+
+            if (motionEvent.action != MotionEvent.ACTION_MOVE) {
+                return@setOnTouchListener false
+            }
+
+            if (last_x_position == null) {
+                last_x_position = (motionEvent.x - this.main_recycler.x) - this.main_recycler.scrollY.toFloat()
+            }
+
+            var rel_x = (motionEvent.x - this.main_recycler.x)  - this.main_recycler.scrollY
+            var delta_x = last_x_position!! - rel_x
+
+
+            this.main_recycler.scrollBy(delta_x.toInt(), 0)
+            last_x_position = rel_x
+
+            false
+        }
+
         this.column_label_recycler.addOnScrollListener(object : OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, x: Int, y: Int) {
                 if (! this@EditorTable._label_scroll_locked) {
@@ -541,13 +595,13 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         /*
             KLUDGE ALERT
             There's a wierd bug that returns the main lm to the first position if the x_fine == 0.
-            so we force it to be 1 if that's the case.
+            so we force it to be -1 if that's the case.
          */
         val main_lm = (this.main_recycler.layoutManager!! as LinearLayoutManager)
-        main_lm.scrollToPositionWithOffset(x_coarse, if (x_fine == 0) { 1 } else { x_fine })
+        main_lm.scrollToPositionWithOffset(x_coarse, if (x_fine == 0) { -1 } else { x_fine })
 
         val column_label_lm = (this.column_label_recycler.layoutManager!! as LinearLayoutManager)
-        column_label_lm.scrollToPositionWithOffset(x_coarse, if (x_fine == 0) { 1 } else { x_fine })
+        column_label_lm.scrollToPositionWithOffset(x_coarse, if (x_fine == 0) { -1 } else { x_fine })
 
         val line_height = (resources.getDimension(R.dimen.line_height)).toInt()
         this.scroll_view.scrollTo(0, (line_height * y_coarse) + y_fine)

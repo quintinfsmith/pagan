@@ -56,8 +56,10 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             if (opus_manager.path != null) {
                 bundle.putString("path", opus_manager.path)
             }
+
             this.setFragmentResult(IntentFragmentToken.Resume.name, bundle)
         }
+
         this.view_model.backup_undo_stack = this.get_main().get_opus_manager().history_cache.copy()
         super.onStop()
     }
@@ -97,9 +99,11 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         setFragmentResultListener(IntentFragmentToken.Load.name) { _, bundle: Bundle? ->
             val main = this.get_main()
             main.loading_reticle_show()
+
             main.runOnUiThread {
                 //editor_table?.visibility = View.GONE
             }
+
             thread {
                 val path = bundle?.getString("PATH")
                 if (path != null) {

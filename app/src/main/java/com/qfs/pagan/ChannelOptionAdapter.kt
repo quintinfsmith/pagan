@@ -62,9 +62,14 @@ class ChannelOptionAdapter(
         val activity = this.get_activity()
         val opus_manager = activity.get_opus_manager()
 
-        val (channel_index, _) = opus_manager.get_std_offset(position)
-        //val curChannel = opus_manager.channels[channel_index]
-        val curChannel = opus_manager.channels[position]
+        val (channel_index, _) = try {
+            opus_manager.get_std_offset(position)
+        } catch (e: IndexOutOfBoundsException) {
+            // Not attached
+            return
+        }
+
+        val curChannel = opus_manager.channels[channel_index]
 
         val defaults = activity.resources.getStringArray(R.array.midi_instruments)
         val key = Pair(curChannel.midi_bank, curChannel.midi_program)

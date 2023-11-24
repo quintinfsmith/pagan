@@ -2,6 +2,7 @@ package com.qfs.pagan
 
 import android.content.Context
 import android.util.AttributeSet
+import android.util.Log
 import android.view.Gravity.CENTER
 import android.view.View
 import android.view.ViewGroup
@@ -78,6 +79,7 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
 
     fun setState(new_state: Int, manual: Boolean = false, surpress_callback: Boolean = false) {
         if (new_state < this.min || new_state > this.max) {
+            Log.d("AAA", "$min -> $new_state -> $max")
             throw IndexOutOfBoundsException()
         }
 

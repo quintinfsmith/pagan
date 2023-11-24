@@ -396,8 +396,13 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
         when (this.get_ui_lock_level()) {
             null -> {
-                this.runOnUiThread {
+                this.runOnUiThread { main ->
                     editor_table?.new_channel_rows(y, line_list)
+                    val rvActiveChannels: RecyclerView = main.findViewById(R.id.rvActiveChannels)
+                    if (rvActiveChannels.adapter != null) {
+                        val rvActiveChannels_adapter = rvActiveChannels.adapter as ChannelOptionAdapter
+                        rvActiveChannels_adapter.notifyDataSetChanged()
+                    }
                 }
             }
             UI_LOCK_PARTIAL -> {
@@ -560,14 +565,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
         super.remove_channel(channel)
 
-        this.runOnUiThread { main: MainActivity ->
-            val rvActiveChannels: RecyclerView = main.findViewById(R.id.rvActiveChannels)
-            if (rvActiveChannels.adapter != null) {
-                val rvActiveChannels_adapter = rvActiveChannels.adapter as ChannelOptionAdapter
-                rvActiveChannels_adapter.notifyItemRemoved(channel)
-            }
-
-        }
 
         val editor_table = this.get_editor_table() ?: return
         when (this.get_ui_lock_level()) {
@@ -576,8 +573,13 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                 editor_table.remove_channel_rows(y, lines, true)
             }
             null -> {
-                this.runOnUiThread {
+                this.runOnUiThread { main ->
                     editor_table.remove_channel_rows(y, lines)
+                    val rvActiveChannels: RecyclerView = main.findViewById(R.id.rvActiveChannels)
+                    if (rvActiveChannels.adapter != null) {
+                        val rvActiveChannels_adapter = rvActiveChannels.adapter as ChannelOptionAdapter
+                        rvActiveChannels_adapter.notifyDataSetChanged()
+                    }
                 }
             }
         }
@@ -589,6 +591,13 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             this.cursor_clear()
         }
         this.get_editor_table()?.clear()
+        this.runOnUiThread { main ->
+            val rvActiveChannels: RecyclerView = main.findViewById(R.id.rvActiveChannels)
+            if (rvActiveChannels.adapter != null) {
+                val rvActiveChannels_adapter = rvActiveChannels.adapter as ChannelOptionAdapter
+                rvActiveChannels_adapter.notifyItemRangeRemoved(0, rvActiveChannels_adapter.itemCount)
+            }
+        }
     }
 
     override fun unlink_beat(beat_key: BeatKey) {

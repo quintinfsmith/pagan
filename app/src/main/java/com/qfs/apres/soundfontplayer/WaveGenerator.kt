@@ -20,6 +20,7 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
     class KilledException: Exception()
     class EmptyException: Exception()
     class DeadException: Exception()
+    class EventInPastException: Exception()
     var frame = 0
     var kill_frame: Int? = null
     var last_frame: Int = 0
@@ -31,6 +32,7 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
     private var _event_mutex = Mutex()
 
     private var _working_int_array = IntArray(sample_handle_manager.buffer_size * 2)
+    private var active_event_queue = mutableListOf<Pair<Int, MIDIEvent>>()
 
     fun place_events(events: List<MIDIEvent>, frame: Int) {
         if (frame < this.frame) {
@@ -49,14 +51,17 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
         }
     }
 
-    fun place_event(event: MIDIEvent, frame: Int) {
-        if (frame < this.frame) {
+    fun place_event(event: MIDIEvent, frame: Int, relative: Boolean = false) {
+        if (relative) {
+            this.active_event_queue.add(Pair(frame, event))
             return
         }
-
-        this.last_frame = max(frame, this.last_frame)
+        if (!relative && frame < this.frame) {
+            throw EventInPastException()
+        }
         runBlocking {
             this@WaveGenerator._event_mutex.withLock {
+                this@WaveGenerator.last_frame = max(frame, this@WaveGenerator.last_frame)
                 if (!this@WaveGenerator._midi_events_by_frame.containsKey(frame)) {
                     this@WaveGenerator._midi_events_by_frame[frame] = mutableListOf()
                 }
@@ -66,6 +71,18 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
     }
 
     fun update_active_frames(initial_frame: Int, buffer_size: Int) {
+        /*
+            KLUDGE ALERT
+            This active_event_queue is processed to guarantee Midi events are processed from
+            the active midi player.
+         */
+        if (this.active_event_queue.isNotEmpty()) {
+            for (i in 0 until this.active_event_queue.size) {
+                var (f, event) = this.active_event_queue.removeFirst()
+                this.place_event(event, f + initial_frame + buffer_size)
+            }
+        }
+
         // First check for, and remove dead sample handles
         var empty_pairs = mutableListOf<Pair<Int, Int>>()
         for ((key, pair_list) in this._active_sample_handles) {
@@ -213,9 +230,7 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
         }
 
         val buffer_size = array.size / 2
-
         val first_frame = this.frame
-
         this.update_active_frames(this.frame, buffer_size)
 
 
@@ -250,10 +265,7 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
                             sample_handle.release_note()
                         }
 
-                        val frame_value = sample_handle.get_next_frame()
-                        if (frame_value == null) {
-                            break
-                        }
+                        val frame_value = sample_handle.get_next_frame() ?: break
 
                         var left_frame: Int = 0
                         var right_frame: Int = 0
@@ -333,6 +345,7 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
     }
 
     fun clear() {
+        this.active_event_queue.clear()
         this.kill_frame = null
         this._active_sample_handles.clear()
         this.sample_release_map.clear()

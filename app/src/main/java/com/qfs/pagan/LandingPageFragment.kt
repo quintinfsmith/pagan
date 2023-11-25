@@ -26,7 +26,6 @@ class LandingPageFragment : PaganFragment<FragmentLandingBinding>() {
         val btn_settings = view.findViewById<View>(R.id.btnFrontSettings)
         val linkSource = view.findViewById<View>(R.id.linkSource)
         val btn_linkLicense = view.findViewById<View>(R.id.linkLicense)
-        val btn_linkSFLicense = view.findViewById<View>(R.id.linkSFLicense)
 
         btn_settings.setOnClickListener {
             this.get_main().navigate(R.id.SettingsFragment)
@@ -87,26 +86,6 @@ class LandingPageFragment : PaganFragment<FragmentLandingBinding>() {
                 val intent = Intent(Intent.ACTION_VIEW)
                 intent.data = Uri.parse(url)
                 startActivity(intent)
-            }
-        }
-
-        if (!main.is_fluid_soundfont_available()) {
-            btn_linkSFLicense.visibility = View.GONE
-        } else {
-            btn_linkSFLicense.setOnClickListener {
-                val stream = this.activity!!.assets.open("SFLicense.txt")
-                val bytes = ByteArray(stream.available())
-                stream.read(bytes)
-                stream.close()
-                val text_body = bytes.toString(charset = Charsets.UTF_8)
-                this.setFragmentResult(
-                    "LICENSE",
-                    bundleOf(
-                        Pair("TEXT", text_body),
-                        Pair("TITLE", "FluidR3_GM License")
-                    )
-                )
-                this.get_main().navigate(R.id.LicenseFragment)
             }
         }
     }

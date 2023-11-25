@@ -127,15 +127,6 @@
             android:text="@string/source_code_location"
             android:theme="@style/front_text" />
 
-        <TextView
-            android:clickable="true"
-            android:id="@+id/linkSFLicense"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:text="@string/soundfont_disclaimer"
-            android:theme="@style/front_text" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

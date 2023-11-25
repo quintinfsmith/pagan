@@ -69,12 +69,7 @@ class ActiveMidiAudioPlayer(var sample_handle_manager: SampleHandleManager): Vir
     }
 
     private fun process_event(event: MIDIEvent) {
-        val now = System.currentTimeMillis()
-        var gts = this.generate_timestamp ?: now
-        val delta = (now - gts).toFloat()
-        val frame = (this.SAMPLE_RATE_MILLIS * delta).toInt() + (this.sample_handle_manager.buffer_size * this.buffer_delay)
-
-        this.wave_generator.place_event(event, frame)
+        this.wave_generator.place_event(event, 0, true)
     }
 
     fun start_playback() {
@@ -98,8 +93,8 @@ class ActiveMidiAudioPlayer(var sample_handle_manager: SampleHandleManager): Vir
 
             this.active_audio_track_handle?.play()
 
-            this.generate_timestamp = System.currentTimeMillis()
             while (this.is_playing) {
+                this.generate_timestamp = System.currentTimeMillis()
                 val chunk = try {
                     this.wave_generator.generate()
                 } catch (e: WaveGenerator.EmptyException) {

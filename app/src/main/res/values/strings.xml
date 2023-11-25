@@ -113,6 +113,11 @@
     <string name="label_link_range">Tap top left corner of range to link</string>
     <string name="label_copy_beat">Tap a beat to copy it. *Tap and hold* to group copy.</string>
     <string name="label_copy_range">Tap top left corner of range to copy</string>
+    <string name="reticle_msg_import_project">Importing Project...</string>
+    <string name="reticle_msg_new">Setting up new project...</string>
+    <string name="reticle_msg_load_project">Loading Project...</string>
+    <string name="reticle_msg_import_midi">Importing Midi File...</string>
+    <string name="reticle_msg_start_playback">Starting Playback...</string>
     <string-array name="relative">
         <item>@string/pfx_add</item>
         <item>@string/pfx_subtract</item>

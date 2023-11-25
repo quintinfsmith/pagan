@@ -163,7 +163,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
 
             val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
             val main = this.get_main()
-            main.loading_reticle_show()
+            main.loading_reticle_show(getString(R.string.reticle_msg_load_project))
 
             main.runOnUiThread {
                 editor_table?.visibility = View.GONE
@@ -186,7 +186,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
             this.view_model.backup_fragment_intent = Pair(IntentFragmentToken.ImportMidi, bundle)
             val main = this.get_main()
-            main.loading_reticle_show()
+            main.loading_reticle_show(getString(R.string.reticle_msg_import_midi))
             main.runOnUiThread {
                 editor_table?.visibility = View.GONE
                 this@EditorFragment.clearContextMenu()
@@ -216,7 +216,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         setFragmentResultListener(IntentFragmentToken.ImportProject.name) { _, bundle: Bundle? ->
             val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
             val main = this.get_main()
-            main.loading_reticle_show()
+            main.loading_reticle_show(getString(R.string.reticle_msg_import_project))
             main.runOnUiThread {
                 editor_table?.visibility = View.GONE
             }
@@ -244,7 +244,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         setFragmentResultListener(IntentFragmentToken.New.name) { _, _: Bundle? ->
             val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
             val main = this.get_main()
-            main.loading_reticle_show()
+            main.loading_reticle_show(getString(R.string.reticle_msg_new))
             main.runOnUiThread {
                 editor_table?.visibility = View.GONE
             }

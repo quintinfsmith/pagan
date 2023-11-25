@@ -99,6 +99,7 @@ class MainActivity : AppCompatActivity() {
     private var _progress_bar: ProgressBar? = null
     var playback_queued: Boolean = false
     var stop_queued: Boolean = false
+    private var forced_title_text: String? = null
 
     private var _exporting_wav_handle: PaganPlaybackDevice? = null
 
@@ -451,7 +452,8 @@ class MainActivity : AppCompatActivity() {
         if (this.playback_queued || this.stop_queued || this.in_playback()) {
             return
         }
-        this.loading_reticle_show()
+        this.loading_reticle_show(getString(R.string.reticle_msg_start_playback))
+
         this.playback_queued = true
 
         val blocker_view = this.findViewById<LinearLayout>(R.id.llClearOverlay)
@@ -560,7 +562,10 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun loading_reticle_show() {
+    fun loading_reticle_show(title_msg: String? = null) {
+        if (title_msg != null) {
+            this.force_title_text(title_msg!!)
+        }
         this.runOnUiThread {
             if (this@MainActivity._progress_bar == null) {
                 this@MainActivity._progress_bar =
@@ -579,6 +584,7 @@ class MainActivity : AppCompatActivity() {
     fun loading_reticle_hide() {
         thread {
             this.runOnUiThread {
+                this.clear_forced_title()
                 val progressBar = this._progress_bar ?: return@runOnUiThread
                 if (progressBar.parent != null) {
                     (progressBar.parent as ViewGroup).removeView(progressBar)
@@ -604,7 +610,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun update_title_text() {
-        this.set_title_text(this.get_opus_manager().project_name)
+        if (this.forced_title_text != null) {
+            this.set_title_text(this.forced_title_text!!)
+        } else {
+            this.set_title_text(this.get_opus_manager().project_name)
+        }
     }
 
     fun set_title_text(new_text: String) {
@@ -612,6 +622,16 @@ class MainActivity : AppCompatActivity() {
         if (this.get_active_fragment() is EditorFragment) {
             this.binding.appBarMain.toolbar.setNavigationIcon(R.drawable.hamburger_32)
         }
+    }
+
+    fun force_title_text(msg: String) {
+        this.forced_title_text = msg
+        this.update_title_text()
+    }
+
+    fun clear_forced_title() {
+        this.forced_title_text = null
+        this.update_title_text()
     }
 
     fun update_menu_options() {

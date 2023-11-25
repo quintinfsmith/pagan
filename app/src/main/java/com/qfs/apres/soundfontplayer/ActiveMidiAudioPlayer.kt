@@ -104,6 +104,8 @@ class ActiveMidiAudioPlayer(var sample_handle_manager: SampleHandleManager): Vir
                     this.wave_generator.generate()
                 } catch (e: WaveGenerator.EmptyException) {
                     ShortArray(this.sample_handle_manager.buffer_size * 2) { 0 }
+                } catch (e: WaveGenerator.DeadException) {
+                    break
                 } catch (e: WaveGenerator.KilledException) {
                     break
                 }

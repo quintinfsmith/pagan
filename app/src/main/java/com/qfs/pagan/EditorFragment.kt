@@ -159,6 +159,8 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
 
     fun set_result_listeners() {
         setFragmentResultListener(IntentFragmentToken.Load.name) { _, bundle: Bundle? ->
+            this.view_model.backup_fragment_intent = Pair(IntentFragmentToken.ImportMidi, bundle)
+
             val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
             val main = this.get_main()
             main.loading_reticle_show()
@@ -175,6 +177,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
                 main.runOnUiThread {
                     editor_table?.visibility = View.VISIBLE
                 }
+                this.view_model.backup_fragment_intent = null
                 main.loading_reticle_hide()
             }
         }

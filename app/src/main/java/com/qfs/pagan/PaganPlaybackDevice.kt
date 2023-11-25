@@ -10,6 +10,7 @@ import androidx.core.app.NotificationManagerCompat
 import com.qfs.apres.Midi
 import com.qfs.apres.soundfontplayer.FiniteMidiDevice
 import com.qfs.apres.soundfontplayer.SampleHandleManager
+import com.qfs.apres.soundfontplayer.WaveGenerator
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
@@ -164,8 +165,12 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
                     ensureActive()
                     try {
                         val g_ts = System.currentTimeMillis()
-                        val chunk =
+
+                        val chunk = try {
                             this@PaganPlaybackDevice.wave_generator.generate(this@PaganPlaybackDevice.sample_handle_manager.buffer_size)
+                        } catch (e: WaveGenerator.EmptyException) {
+                            ShortArray(this@PaganPlaybackDevice.sample_handle_manager.buffer_size * 2)
+                        }
                         ts_deltas.add((System.currentTimeMillis() - g_ts).toInt())
                         chunk_count += 1
 

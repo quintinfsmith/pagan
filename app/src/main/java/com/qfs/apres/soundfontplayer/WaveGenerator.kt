@@ -22,6 +22,7 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
     class DeadException: Exception()
     var frame = 0
     var kill_frame: Int? = null
+    var last_frame: Int = 0
     private var _empty_chunks_count = 0
     private var _active_sample_handles = HashMap<Pair<Int, Int>, MutableList<Pair<Int, MutableList<SampleHandle>>>>()
     private var sample_release_map = HashMap<Int, Int>() // Key = samplehandle uuid, value = Off frame
@@ -35,6 +36,7 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
         if (frame < this.frame) {
             return
         }
+        this.last_frame = max(frame, this.last_frame)
         runBlocking {
             this@WaveGenerator._event_mutex.withLock {
                 if (!this@WaveGenerator._midi_events_by_frame.containsKey(frame)) {
@@ -52,6 +54,7 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
             return
         }
 
+        this.last_frame = max(frame, this.last_frame)
         runBlocking {
             this@WaveGenerator._event_mutex.withLock {
                 if (!this@WaveGenerator._midi_events_by_frame.containsKey(frame)) {
@@ -217,8 +220,12 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
 
 
         if (this._active_sample_handles.isEmpty()) {
-            this.frame += buffer_size
-            throw EmptyException()
+            if (this.last_frame <= this.frame) {
+                throw DeadException()
+            } else {
+                this.frame += buffer_size
+                throw EmptyException()
+            }
         }
 
         for (i in this._working_int_array.indices) {

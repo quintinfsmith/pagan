@@ -23,12 +23,12 @@ class ChannelOptionAdapter(
         this.registerAdapterDataObserver(
             object: RecyclerView.AdapterDataObserver() {
                 override fun onItemRangeRemoved(start: Int, count: Int) {
-                    for (i in start until this@ChannelOptionAdapter._recycler.childCount) {
-                        this@ChannelOptionAdapter.notifyItemChanged(i)
-                    }
+                    this@ChannelOptionAdapter.notifyItemRangeChanged(start, this@ChannelOptionAdapter.itemCount - start)
                 }
                 override fun onItemRangeChanged(start: Int, count: Int) { }
-                override fun onItemRangeInserted(start: Int, count: Int) { }
+                override fun onItemRangeInserted(start: Int, count: Int) {
+                    this@ChannelOptionAdapter.notifyItemRangeChanged(start + count, this@ChannelOptionAdapter.itemCount - (start + count))
+                }
             }
         )
         val soundfont = this.get_activity().get_soundfont()
@@ -62,25 +62,17 @@ class ChannelOptionAdapter(
         val activity = this.get_activity()
         val opus_manager = activity.get_opus_manager()
 
-        val (channel_index, _) = try {
-            opus_manager.get_std_offset(position)
-        } catch (e: IndexOutOfBoundsException) {
-            // Not attached
-            return
-        }
-
-        val curChannel = opus_manager.channels[channel_index]
+        val curChannel = opus_manager.channels[position]
 
         val defaults = activity.resources.getStringArray(R.array.midi_instruments)
         val key = Pair(curChannel.midi_bank, curChannel.midi_program)
-
-        val label = this._supported_instruments[key] ?: if (curChannel.midi_channel == 9) {
+        val label = this._supported_instruments[key] ?: if (this._opus_manager.is_percussion(position)) {
             activity.resources.getString(R.string.unknown_percussion)
         } else {
             activity.resources.getString(R.string.unknown_instrument, defaults[curChannel.midi_program])
         }
 
-        (view.getChildAt(0) as TextView).text = if (curChannel.midi_channel != 9) {
+        (view.getChildAt(0) as TextView).text = if (!this._opus_manager.is_percussion(position)) {
             activity.getString(R.string.label_choose_instrument, position, label)
         } else {
             activity.getString(R.string.label_choose_instrument_percussion, label)
@@ -106,6 +98,7 @@ class ChannelOptionAdapter(
         }
 
         val remove_button = (holder.itemView as ViewGroup).getChildAt(1) as TextView
+
         if (this._opus_manager.is_percussion(position)) {
             remove_button.text = this.get_percussion_visibility_button_text()
             remove_button.setOnClickListener {
@@ -180,8 +173,10 @@ class ChannelOptionAdapter(
 
                 editor_table.update_percussion_visibility()
             }
+
             val x = this.get_view_channel(view)
             this._opus_manager.remove_channel(x)
+            this.notifyDataSetChanged()
         }
     }
 

@@ -13,6 +13,8 @@
     <style name="recycler_option_text">
         <item name="android:textColor">@color/button_fg</item>
         <item name="android:textSize">18sp</item>
+        <item name="android:paddingTop">2dp</item>
+        <item name="android:paddingBottom">2dp</item>
     </style>
 
     <style name="recycler_option_instrument" parent="recycler_option_text">
@@ -20,6 +22,8 @@
 
     <style name="recycler_option_x" parent="recycler_option_text">
         <item name="android:gravity">center</item>
+        <item name="android:paddingStart">8dp</item>
+        <item name="android:paddingEnd">8dp</item>
     </style>
 
     <style name="button" parent="Widget.AppCompat.TextView">

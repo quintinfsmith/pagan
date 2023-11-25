@@ -2,7 +2,6 @@ package com.qfs.pagan
 import android.content.res.Configuration
 import android.view.View
 import android.widget.TextView
-import androidx.recyclerview.widget.RecyclerView
 import com.qfs.apres.Midi
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.HistoryLayer
@@ -398,11 +397,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             null -> {
                 this.runOnUiThread { main ->
                     editor_table?.new_channel_rows(y, line_list)
-                    val rvActiveChannels: RecyclerView = main.findViewById(R.id.rvActiveChannels)
-                    if (rvActiveChannels.adapter != null) {
-                        val rvActiveChannels_adapter = rvActiveChannels.adapter as ChannelOptionAdapter
-                        rvActiveChannels_adapter.notifyDataSetChanged()
-                    }
                 }
             }
             UI_LOCK_PARTIAL -> {
@@ -489,7 +483,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         this.runOnUiThread { main: MainActivity ->
             main.validate_percussion_visibility()
             main.update_menu_options()
-            main.setup_project_config_drawer()
+            //main.setup_project_config_drawer()
 
             val editor_table = this.get_editor_table()
             editor_table?.clear()
@@ -516,7 +510,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         this.runOnUiThread { main: MainActivity ->
             main.validate_percussion_visibility()
             main.update_menu_options()
-            main.setup_project_config_drawer()
+            //main.setup_project_config_drawer()
 
             val editor_table = this.get_editor_table()
             editor_table?.setup()
@@ -542,7 +536,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         this.runOnUiThread { main: MainActivity ->
             main.validate_percussion_visibility()
             main.update_menu_options()
-            main.setup_project_config_drawer()
+            //main.setup_project_config_drawer()
 
             val editor_table = this.get_editor_table()
             editor_table?.setup()
@@ -578,11 +572,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             null -> {
                 this.runOnUiThread { main ->
                     editor_table.remove_channel_rows(y, lines)
-                    val rvActiveChannels: RecyclerView = main.findViewById(R.id.rvActiveChannels)
-                    if (rvActiveChannels.adapter != null) {
-                        val rvActiveChannels_adapter = rvActiveChannels.adapter as ChannelOptionAdapter
-                        rvActiveChannels_adapter.notifyDataSetChanged()
-                    }
                 }
             }
         }
@@ -594,13 +583,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             this.cursor_clear()
         }
         this.get_editor_table()?.clear()
-        this.runOnUiThread { main ->
-            val rvActiveChannels: RecyclerView = main.findViewById(R.id.rvActiveChannels)
-            if (rvActiveChannels.adapter != null) {
-                val rvActiveChannels_adapter = rvActiveChannels.adapter as ChannelOptionAdapter
-                rvActiveChannels_adapter.notifyItemRangeRemoved(0, rvActiveChannels_adapter.itemCount)
-            }
-        }
     }
 
     override fun unlink_beat(beat_key: BeatKey) {
@@ -668,35 +650,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                 )
             }
             else -> {}
-        }
-    }
-
-    override fun set_transpose(new_transpose: Int)  {
-        super.set_transpose(new_transpose)
-
-        if (this.get_ui_lock_level() == UI_LOCK_FULL) {
-            return
-        }
-
-        this.runOnUiThread { main: MainActivity ->
-            val btnTranspose: TextView = main.findViewById(R.id.btnTranspose)
-            btnTranspose.text = main.getString(
-                R.string.label_transpose,
-                get_number_string(new_transpose, this.radix, 2)
-            )
-        }
-    }
-
-    override fun set_tempo(new_tempo: Float) {
-        super.set_tempo(new_tempo)
-
-        if (this.get_ui_lock_level() == UI_LOCK_FULL) {
-            return
-        }
-
-        this.runOnUiThread { main: MainActivity ->
-            val tvTempo = main.findViewById<TextView>(R.id.tvTempo)
-            tvTempo.text = main.getString(R.string.label_bpm, this.tempo.toInt())
         }
     }
 
@@ -1309,15 +1262,8 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         }
 
         this.runOnUiThread { main: MainActivity ->
-            val btnTranspose: TextView = main.findViewById(R.id.btnRadix)
-            btnTranspose.text = main.getString(
-                R.string.label_radix,
-                radix
-            )
-
             this.withFragment {
                 it.reset_context_menu()
-                main.setup_project_config_drawer_export_button()
             }
         }
     }

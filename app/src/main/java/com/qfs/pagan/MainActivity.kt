@@ -662,23 +662,22 @@ class MainActivity : AppCompatActivity() {
                 opus_manager.tempo.toInt()
             ) { tempo: Int ->
                 opus_manager.set_tempo(tempo.toFloat())
+                tvTempo.text = this.getString(R.string.label_bpm, tempo)
             }
         }
 
         val btnTranspose: TextView = this.findViewById(R.id.btnTranspose)
-        btnTranspose.text = this.getString(
-            R.string.label_transpose,
-            get_number_string(opus_manager.transpose, opus_manager.radix, 1)
-        )
+        btnTranspose.text = this.getString(R.string.label_transpose, opus_manager.transpose)
 
         btnTranspose.setOnClickListener {
             this.dialog_number_input("Transpose", 0, this.get_opus_manager().radix - 1) { value: Int ->
                 opus_manager.set_transpose(value)
+                btnTranspose.text = this.getString(R.string.label_transpose, value)
             }
         }
 
         val btnRadix: TextView = this.findViewById(R.id.btnRadix)
-        btnRadix.text = this.getString( R.string.label_radix, opus_manager.radix )
+        btnRadix.text = this.getString(R.string.label_radix, opus_manager.radix)
         btnRadix.setOnClickListener {
             this.dialog_number_input(
                 getString(R.string.dlg_set_radix),
@@ -687,12 +686,17 @@ class MainActivity : AppCompatActivity() {
                 opus_manager.radix
             ) { radix: Int ->
                 opus_manager.set_radix(radix)
-
+                btnRadix.text = this.getString(R.string.label_radix, radix)
             }
         }
 
         this.findViewById<View>(R.id.btnAddChannel).setOnClickListener {
             opus_manager.new_channel()
+            val rvActiveChannels: RecyclerView = this.findViewById(R.id.rvActiveChannels)
+            if (rvActiveChannels.adapter != null) {
+                val rvActiveChannels_adapter = rvActiveChannels.adapter as ChannelOptionAdapter
+                rvActiveChannels_adapter.notifyDataSetChanged()
+            }
         }
 
         this.setup_project_config_drawer_export_button()
@@ -729,6 +733,7 @@ class MainActivity : AppCompatActivity() {
             R.string.drawer_close
         ) {
             override fun onDrawerOpened(drawerView: View) {
+                this@MainActivity.setup_project_config_drawer()
                 super.onDrawerOpened(drawerView)
                 this@MainActivity.playback_stop()
             }

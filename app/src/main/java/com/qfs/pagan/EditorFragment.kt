@@ -91,7 +91,6 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
     override fun onViewStateRestored(savedInstanceState: Bundle?) {
         super.onViewStateRestored(savedInstanceState)
         val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
-        editor_table.visibility = View.VISIBLE
         val path: String?
         val coarse_x: Int
         val fine_x: Int
@@ -105,13 +104,13 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             path = savedInstanceState.getString("path")
 
         } else if (this.view_model.backup_path != null) {
-            editor_table.visibility = View.VISIBLE
             coarse_x = this.view_model.coarse_x
             fine_x = this.view_model.fine_x
             coarse_y = this.view_model.coarse_y
             fine_y = this.view_model.fine_y
             path = this.view_model.backup_path
         } else {
+            editor_table.visibility = View.VISIBLE
             return
         }
 
@@ -124,8 +123,8 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
 
         val opus_manager = main.get_opus_manager()
         opus_manager.load(bytes, path)
-
         editor_table.visibility = View.VISIBLE
+
         editor_table.precise_scroll(coarse_x, fine_x, coarse_y, fine_y)
 
         if (this.view_model.backup_undo_stack != null) {

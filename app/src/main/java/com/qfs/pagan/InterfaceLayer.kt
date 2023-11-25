@@ -7,9 +7,9 @@ import com.qfs.apres.Midi
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.HistoryLayer
 import com.qfs.pagan.opusmanager.HistoryToken
+import com.qfs.pagan.opusmanager.LoadedJSONData
 import com.qfs.pagan.opusmanager.OpusChannel
 import com.qfs.pagan.opusmanager.OpusEvent
-import com.qfs.pagan.opusmanager.LoadedJSONData
 import com.qfs.pagan.structure.OpusTree
 import java.lang.Integer.max
 import java.lang.Integer.min
@@ -494,6 +494,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             val editor_table = this.get_editor_table()
             editor_table?.clear()
             editor_table?.setup()
+            editor_table?.precise_scroll(0, 0, 0, 0)
 
             main.update_channel_instruments()
             this.withFragment {
@@ -519,6 +520,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
             val editor_table = this.get_editor_table()
             editor_table?.setup()
+            editor_table?.precise_scroll(0, 0, 0, 0)
 
             main.update_channel_instruments()
             this.withFragment {
@@ -544,6 +546,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
             val editor_table = this.get_editor_table()
             editor_table?.setup()
+            editor_table?.precise_scroll(0, 0, 0, 0)
 
             main.update_channel_instruments()
             this.withFragment {

@@ -210,4 +210,9 @@
         <item name="android:background">@drawable/leaf_facade</item>
         <item name="android:tileMode">repeat</item>
     </style>
+    <style name="link_mode_button">
+        <item name="android:paddingTop">0dp</item>
+        <item name="android:paddingBottom">0dp</item>
+
+    </style>
 </resources>

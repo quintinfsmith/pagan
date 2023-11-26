@@ -17,17 +17,51 @@
         android:paddingTop="16dp"
         android:paddingBottom="16dp"/>
 
+    <RadioGroup
+        android:id="@+id/rgLinkMode"
+        android:orientation="horizontal"
+        android:checkedButton="@id/rbLinkModeLink"
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent">
+        <RadioButton
+            android:id="@+id/rbLinkModeCopy"
+            android:layout_margin="0dp"
+            android:theme="@style/link_mode_button"
+            android:text="Copy"
+            android:minHeight="24dp"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"/>
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"/>
+        <RadioButton
+            android:id="@+id/rbLinkModeMove"
+            android:layout_margin="0dp"
+            android:theme="@style/link_mode_button"
+            android:text="Move"
+            android:minHeight="24dp"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"/>
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"/>
+        <RadioButton
+            android:id="@+id/rbLinkModeLink"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="0dp"
+            android:minHeight="24dp"
+            android:text="Link"
+            android:theme="@style/link_mode_button" />
+    </RadioGroup>
+
     <LinearLayout
         android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
-
-        <Switch
-            android:id="@+id/sLinkMode"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:textOff="Copy"
-            android:textOn="Link" />
 
         <Space
             android:layout_width="0dp"
@@ -43,9 +77,8 @@
             android:contentDescription="Remove Link" />
 
         <Space
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"/>
+            android:layout_width="4dp"
+            android:layout_height="match_parent"/>
 
         <ImageView
             android:layout_width="62dp"
@@ -54,20 +87,5 @@
             android:src="@drawable/unlinkall"
             android:id="@+id/btnUnLinkAll"
             android:contentDescription="Remove All Links"/>
-
-        <Space
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"/>
-
-        <ImageView
-            android:theme="@style/icon_button"
-            android:id="@+id/ibtnCancelLink"
-            android:padding="8dp"
-            android:src="@drawable/baseline_arrow_back_24"
-            android:layout_width="62dp"
-            android:layout_height="wrap_content"
-            android:text="Cancel"/>
-
     </LinearLayout>
 </LinearLayout>

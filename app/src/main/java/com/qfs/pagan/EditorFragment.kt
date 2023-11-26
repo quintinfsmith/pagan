@@ -4,11 +4,10 @@ import android.app.AlertDialog
 import android.content.res.Configuration
 import android.os.Bundle
 import android.view.*
-import android.widget.CompoundButton
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.RadioGroup
 import android.widget.SeekBar
-import android.widget.Switch
 import android.widget.TextView
 import androidx.fragment.app.setFragmentResult
 import androidx.fragment.app.setFragmentResultListener
@@ -306,34 +305,54 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         val btnUnLinkAll = llContextLink.findViewById<ImageView>(R.id.btnUnLinkAll)
 
         val label = llContextLink.findViewById<TextView>(R.id.tvLinkLabel)
-        val ibtnCancelLink = llContextLink.findViewById<View?>(R.id.ibtnCancelLink)
-        val sLinkMode = llContextLink.findViewById<Switch?>(R.id.sLinkMode)
-        sLinkMode.isChecked = main.configuration.link_mode
-
-        sLinkMode?.setOnCheckedChangeListener { _: CompoundButton, is_checked: Boolean ->
-            main.configuration.link_mode = is_checked
+        val rgLinkMode = llContextLink.findViewById<RadioGroup?>(R.id.rgLinkMode)
+        rgLinkMode.check(when (main.configuration.link_mode) {
+            PaganConfiguration.LinkMode.LINK -> R.id.rbLinkModeLink
+            PaganConfiguration.LinkMode.MOVE -> R.id.rbLinkModeMove
+            PaganConfiguration.LinkMode.COPY -> R.id.rbLinkModeCopy
+        })
+        rgLinkMode?.setOnCheckedChangeListener { radioGroup: RadioGroup, button_id: Int ->
+            main.configuration.link_mode = when (button_id) {
+                R.id.rbLinkModeLink -> PaganConfiguration.LinkMode.LINK
+                R.id.rbLinkModeMove -> PaganConfiguration.LinkMode.MOVE
+                R.id.rbLinkModeCopy -> PaganConfiguration.LinkMode.COPY
+                else -> PaganConfiguration.LinkMode.COPY
+            }
             main.save_configuration()
-            label?.text = if (main.configuration.link_mode) {
-                if (opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Range) {
-                    resources.getString(R.string.label_link_range)
-                } else {
-                    resources.getString(R.string.label_link_beat)
+
+            label?.text = when (button_id) {
+                R.id.rbLinkModeLink -> {
+                    if (opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Range) {
+                        resources.getString(R.string.label_link_range)
+                    } else {
+                        resources.getString(R.string.label_link_beat)
+                    }
                 }
-            } else {
-                if (opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Range) {
-                    resources.getString(R.string.label_copy_range)
-                } else {
-                    resources.getString(R.string.label_copy_beat)
+                R.id.rbLinkModeMove -> {
+                    if (opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Range) {
+                        resources.getString(R.string.label_move_range)
+                    } else {
+                        resources.getString(R.string.label_move_beat)
+                    }
+                }
+                // R.id.rbLinkModeCopy,
+                else -> {
+                    if (opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Range) {
+                        resources.getString(R.string.label_copy_range)
+                    } else {
+                        resources.getString(R.string.label_copy_beat)
+                    }
                 }
             }
         }
 
         val (is_networked, many_links) = if (opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Range) {
-            label?.text = if (main.configuration.link_mode) {
-                resources.getString(R.string.label_link_range)
-            } else {
-                resources.getString(R.string.label_copy_range)
+            label?.text = when (main.configuration.link_mode) {
+                PaganConfiguration.LinkMode.LINK -> resources.getString(R.string.label_link_range)
+                PaganConfiguration.LinkMode.MOVE -> resources.getString(R.string.label_move_range)
+                PaganConfiguration.LinkMode.COPY ->  resources.getString(R.string.label_copy_range)
             }
+
             var output = false
             for (beat_key in opus_manager.get_beatkeys_in_range(opus_manager.cursor.range!!.first, opus_manager.cursor.range!!.second)) {
                 if (opus_manager.is_networked(beat_key)) {
@@ -347,11 +366,12 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
                 true
             )
         } else if (opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Single) {
-            label?.text = if (main.configuration.link_mode) {
-                resources.getString(R.string.label_link_beat)
-            } else {
-                resources.getString(R.string.label_copy_beat)
+            label?.text = when (main.configuration.link_mode) {
+                PaganConfiguration.LinkMode.LINK -> resources.getString(R.string.label_link_beat)
+                PaganConfiguration.LinkMode.MOVE -> resources.getString(R.string.label_move_beat)
+                PaganConfiguration.LinkMode.COPY ->  resources.getString(R.string.label_copy_beat)
             }
+
             val cursor_key = opus_manager.cursor.get_beatkey()
             Pair(
                 opus_manager.is_networked(cursor_key),
@@ -377,11 +397,6 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         } else {
             btnUnLink.visibility = View.GONE
             btnUnLinkAll.visibility = View.GONE
-        }
-
-
-        ibtnCancelLink?.setOnClickListener {
-            this.interact_btnCancelLink()
         }
 
     }

@@ -339,8 +339,12 @@ class MainActivity : AppCompatActivity() {
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 if (navController.currentDestination?.id == R.id.EditorFragment) {
-                    this@MainActivity.dialog_save_project {
-                        finish()
+                    if (this@MainActivity.get_opus_manager().cursor.mode != OpusManagerCursor.CursorMode.Unset) {
+                        this@MainActivity.get_opus_manager().cursor_clear()
+                    } else {
+                        this@MainActivity.dialog_save_project {
+                            finish()
+                        }
                     }
                 } else {
                     navController.popBackStack()

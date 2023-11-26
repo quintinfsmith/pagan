@@ -172,20 +172,24 @@ class LineLabelView(context: Context, var channel: Int, var line_offset: Int): A
         if (cursor.is_linking_range()) {
             val first_key = cursor.range!!.first
             try {
-                if (this.get_activity().configuration.link_mode) {
-                    opus_manager.link_beat_range_horizontally(
-                        channel,
-                        line_offset,
-                        first_key,
-                        cursor.range!!.second
-                    )
-                } else {
-                    opus_manager.overwrite_beat_range_horizontally(
-                        channel,
-                        line_offset,
-                        first_key,
-                        cursor.range!!.second
-                    )
+                when (this.get_activity().configuration.link_mode) {
+                    PaganConfiguration.LinkMode.LINK -> {
+                        opus_manager.link_beat_range_horizontally(
+                            channel,
+                            line_offset,
+                            first_key,
+                            cursor.range!!.second
+                        )
+                    }
+
+                    else -> {
+                        opus_manager.overwrite_beat_range_horizontally(
+                            channel,
+                            line_offset,
+                            first_key,
+                            cursor.range!!.second
+                        )
+                    }
                 }
             } catch (e: LinksLayer.BadRowLink) {
                 // TODO: Feedback
@@ -196,10 +200,13 @@ class LineLabelView(context: Context, var channel: Int, var line_offset: Int): A
         } else if (cursor.is_linking) {
             val beat_key = opus_manager.cursor.get_beatkey()
             try {
-                if (this.get_activity().configuration.link_mode) {
-                    opus_manager.link_row(channel, line_offset, beat_key)
-                } else {
-                    opus_manager.overwrite_row(channel, line_offset, beat_key)
+                when (this.get_activity().configuration.link_mode) {
+                    PaganConfiguration.LinkMode.LINK -> {
+                        opus_manager.link_row(channel, line_offset, beat_key)
+                    }
+                    else -> {
+                        opus_manager.overwrite_row(channel, line_offset, beat_key)
+                    }
                 }
             } catch (e: LinksLayer.BadRowLink) {
                 // TODO: Feedback

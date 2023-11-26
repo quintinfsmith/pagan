@@ -561,6 +561,18 @@ open class HistoryLayer : LinksLayer() {
         }
     }
 
+    override fun move_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
+        this.remember {
+            super.move_beat_range(beat_key, first_corner, second_corner)
+        }
+    }
+
+    override fun unset_range(first_corner: BeatKey, second_corner: BeatKey) {
+        this.remember {
+            super.unset_range(first_corner, second_corner)
+        }
+    }
+
     override fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEvent) {
         this.remember {
             val tree = this.get_tree(beat_key, position).copy()

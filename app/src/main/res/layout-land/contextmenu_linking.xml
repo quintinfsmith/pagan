@@ -1,56 +1,64 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/llContextLink"
-    android:layout_width="match_parent"
+    android:layout_width="wrap_content"
     android:layout_height="match_parent"
-    android:orientation="vertical"
+    android:orientation="horizontal"
     xmlns:app="http://schemas.android.com/apk/res-auto">
-    <TextView
+    <RadioGroup
+        android:padding="8dp"
+        android:id="@+id/rgLinkMode"
+        android:checkedButton="@id/rbLinkModeLink"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content">
+        <RadioButton
+            android:id="@+id/rbLinkModeCopy"
+            android:text="Copy"
+            android:theme="@style/link_mode_button"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"/>
+        <RadioButton
+            android:id="@+id/rbLinkModeMove"
+            android:text="Move"
+            android:theme="@style/link_mode_button"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"/>
+        <RadioButton
+            android:id="@+id/rbLinkModeLink"
+            android:text="Link"
+            android:theme="@style/link_mode_button"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"/>
+    </RadioGroup>
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:visibility="gone"
-        android:id="@+id/textView2"
-        android:text="Tap a beat to link it"/>
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        xmlns:app="http://schemas.android.com/apk/res-auto">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            android:id="@+id/textView2"
+            android:text="Tap a beat to link it"/>
 
-    <ImageView
-        android:theme="@style/icon_button"
-        android:id="@+id/btnUnLink"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:src="@drawable/unlink"
-        android:padding="8dp"
-        android:contentDescription="Remove Link" />
+        <ImageView
+            android:theme="@style/icon_button"
+            android:id="@+id/btnUnLink"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:src="@drawable/unlink"
+            android:padding="8dp"
+            android:contentDescription="Remove Link" />
 
-    <ImageView
-        android:theme="@style/icon_button"
-        android:id="@+id/btnUnLinkAll"
-        android:src="@drawable/unlinkall"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="8dp"
-        android:contentDescription="Remove All Links"/>
+        <ImageView
+            android:theme="@style/icon_button"
+            android:id="@+id/btnUnLinkAll"
+            android:src="@drawable/unlinkall"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="8dp"
+            android:contentDescription="Remove All Links"/>
 
-    <ImageView
-        android:theme="@style/icon_button"
-        android:id="@+id/ibtnCancelLink"
-        android:padding="8dp"
-        android:src="@drawable/baseline_arrow_back_24"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Cancel"/>
-    <Space
-        android:layout_height="0dp"
-        android:layout_width="match_parent"
-        android:layout_weight="1"/>
-    <Switch
-        android:theme="@style/Widget.Material3.CompoundButton.MaterialSwitch"
-        android:id="@+id/sLinkMode"
-        android:showText="true"
-        android:textAlignment="center"
-        android:textOff="Copy"
-        android:textOn="Link"
-        android:paddingBottom="16dp"
-        android:paddingTop="16dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+    </LinearLayout>
 </LinearLayout>

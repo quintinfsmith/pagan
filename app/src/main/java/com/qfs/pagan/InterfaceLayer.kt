@@ -1205,6 +1205,17 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         }
     }
 
+    fun move_to_beat(beat_key: BeatKey) {
+        if (this.cursor.is_linking_range()) {
+            val (first, second) = this.cursor.range!!
+            this.move_beat_range(beat_key, first, second)
+        } else if (this.cursor.is_linking) {
+            this.move_leaf(this.cursor.get_beatkey(), listOf(), beat_key, listOf())
+        } else {
+            // TODO: Raise Error
+        }
+    }
+
     fun copy_to_beat(beat_key: BeatKey) {
         if (this.cursor.is_linking_range()) {
             val (first, second) = this.cursor.range!!

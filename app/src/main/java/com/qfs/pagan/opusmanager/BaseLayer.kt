@@ -20,7 +20,6 @@ import java.lang.Integer.min
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.pow
-import android.util.Log
 
 /**
  * The logic of the Opus Manager.
@@ -1761,6 +1760,18 @@ open class BaseLayer {
             )
         }
     }
+
+    open fun move_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
+        this.overwrite_beat_range(beat_key, first_corner, second_corner)
+        this.unset_range(first_corner, second_corner)
+    }
+
+    open fun unset_range(first_corner: BeatKey, second_corner: BeatKey) {
+        for (selected_key in this.get_beatkeys_in_range(first_corner, second_corner)) {
+            this.unset(selected_key, listOf())
+        }
+    }
+
 
     open fun set_duration(beat_key: BeatKey, position: List<Int>, duration: Int) {
         val tree = this.get_tree(beat_key, position)

@@ -34,11 +34,11 @@ class LeafButton(
         this.isClickable = false
         this.minimumHeight = resources.getDimension(R.dimen.line_height).toInt()
         this.minimumWidth = resources.getDimension(R.dimen.base_leaf_width).toInt()
-
         this.set_text(is_percussion)
         this.setOnClickListener {
             this.callback_click()
         }
+        this.animate().alpha(1f)
 
         this.setOnLongClickListener {
             val opus_manager = this.get_opus_manager()
@@ -69,10 +69,16 @@ class LeafButton(
         val editor_table = this.get_editor_table() // Will need if overflow exception is passed
         if (opus_manager.cursor.is_linking) {
             try {
-                if (this.get_activity().configuration.link_mode) {
-                    opus_manager.link_beat(beat_key)
-                } else {
-                    opus_manager.copy_to_beat(beat_key)
+                when (this.get_activity().configuration.link_mode) {
+                    PaganConfiguration.LinkMode.LINK -> {
+                        opus_manager.link_beat(beat_key)
+                    }
+                    PaganConfiguration.LinkMode.COPY -> {
+                        opus_manager.copy_to_beat(beat_key)
+                    }
+                    PaganConfiguration.LinkMode.MOVE -> {
+                        opus_manager.move_to_beat(beat_key)
+                    }
                 }
                 opus_manager.cursor_select(beat_key, opus_manager.get_first_position(beat_key))
             } catch (e: Exception) {

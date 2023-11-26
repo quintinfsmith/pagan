@@ -1696,6 +1696,7 @@ open class BaseLayer {
 
     open fun overwrite_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
         val (from_key, to_key) = this.get_ordered_beat_key_pair(first_corner, second_corner)
+        val overwrite_map = HashMap<BeatKey, OpusTree<OpusEvent>>()
 
         // Start OverFlow Check ////
         var lines_in_range = 0
@@ -1729,10 +1730,8 @@ open class BaseLayer {
         while (from_key.channel != to_key.channel || from_key.line_offset != to_key.line_offset) {
             // INCLUSIVE
             for (b in 0 .. to_key.beat - from_key.beat) {
-                this.overwrite_beat(
-                    BeatKey(working_beat.channel, working_beat.line_offset, working_beat.beat + b),
-                    BeatKey(from_key.channel, from_key.line_offset, from_key.beat + b)
-                )
+                overwrite_map[BeatKey(working_beat.channel, working_beat.line_offset, working_beat.beat + b)] =
+                    this.get_beat_tree( BeatKey(from_key.channel, from_key.line_offset, from_key.beat + b))
             }
             if (this.channels[from_key.channel].size - 1 > from_key.line_offset) {
                 from_key.line_offset += 1
@@ -1754,16 +1753,54 @@ open class BaseLayer {
         }
 
         for (b in 0 .. to_key.beat - from_key.beat) {
-            this.overwrite_beat(
-                BeatKey(working_beat.channel, working_beat.line_offset, working_beat.beat + b),
-                BeatKey(from_key.channel, from_key.line_offset, from_key.beat + b)
-            )
+            overwrite_map[BeatKey(working_beat.channel, working_beat.line_offset, working_beat.beat + b)] =
+                this.get_beat_tree( BeatKey(from_key.channel, from_key.line_offset, from_key.beat + b))
+        }
+
+        for ((target_key, tree) in overwrite_map) {
+            this.replace_beat_tree(target_key, tree)
         }
     }
 
     open fun move_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
         this.overwrite_beat_range(beat_key, first_corner, second_corner)
-        this.unset_range(first_corner, second_corner)
+        val (from_key, to_key) = this.get_ordered_beat_key_pair(first_corner, second_corner)
+        var from_keys = mutableSetOf<BeatKey>()
+        var to_keys = mutableSetOf<BeatKey>()
+
+        val working_beat = beat_key.copy()
+        while (from_key.channel != to_key.channel || from_key.line_offset != to_key.line_offset) {
+            // INCLUSIVE
+            for (b in 0 .. to_key.beat - from_key.beat) {
+                to_keys.add(BeatKey(working_beat.channel, working_beat.line_offset, working_beat.beat + b))
+                from_keys.add(BeatKey(from_key.channel, from_key.line_offset, from_key.beat + b))
+            }
+            if (this.channels[from_key.channel].size - 1 > from_key.line_offset) {
+                from_key.line_offset += 1
+            } else if (this.channels.size - 1 > from_key.channel) {
+                from_key.channel += 1
+                from_key.line_offset = 0
+            } else {
+                break
+            }
+
+            if (this.channels[working_beat.channel].size - 1 > working_beat.line_offset) {
+                working_beat.line_offset += 1
+            } else if (this.channels.size - 1 > working_beat.channel) {
+                working_beat.channel += 1
+                working_beat.line_offset = 0
+            } else {
+                break
+            }
+        }
+
+        for (b in 0 .. to_key.beat - from_key.beat) {
+            to_keys.add(BeatKey(working_beat.channel, working_beat.line_offset, working_beat.beat + b))
+            from_keys.add(BeatKey(from_key.channel, from_key.line_offset, from_key.beat + b))
+        }
+        for (clear_key in (from_keys - to_keys)) {
+            this.unset(clear_key, listOf())
+        }
     }
 
     open fun unset_range(first_corner: BeatKey, second_corner: BeatKey) {

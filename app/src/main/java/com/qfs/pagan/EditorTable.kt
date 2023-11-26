@@ -616,8 +616,10 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         var opus_manager = this.get_opus_manager()
         val percussion_channel = opus_manager.channels.last()
         if (main.configuration.show_percussion) {
-            for (i in 0 until percussion_channel.size) {
-                this.new_row(this.line_label_layout.get_count(), percussion_channel.lines[i])
+            if (this.column_width_map.isNotEmpty()) {
+                for (i in 0 until percussion_channel.size) {
+                    this.new_row(this.line_label_layout.get_count(), percussion_channel.lines[i])
+                }
             }
         } else {
             var target_line_count = opus_manager.get_visible_line_count()

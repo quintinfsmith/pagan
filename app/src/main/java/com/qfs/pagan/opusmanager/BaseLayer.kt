@@ -37,6 +37,7 @@ open class BaseLayer {
     class BadInsertPosition : Exception("Can't insert tree at top level")
     class RemovingLastBeatException : Exception("OpusManager requires at least 1 beat")
     class IncompatibleChannelException(channel_old: Int, channel_new: Int) : Exception("Can't move lines into or out of the percussion channel ($channel_old -> $channel_new)")
+    class RangeOverflow(from_key: BeatKey, to_key: BeatKey, startkey: BeatKey): Exception("Range($from_key .. $to_key) @ $startkey overflows")
 
     companion object {
         var DEFAULT_PERCUSSION: Int = 0
@@ -1755,6 +1756,13 @@ open class BaseLayer {
         for (b in 0 .. to_key.beat - from_key.beat) {
             overwrite_map[BeatKey(working_beat.channel, working_beat.line_offset, working_beat.beat + b)] =
                 this.get_beat_tree( BeatKey(from_key.channel, from_key.line_offset, from_key.beat + b))
+        }
+
+        // Before we start overwriting, check overflow
+        for ((target_key, tree) in overwrite_map) {
+            if (target_key.beat >= this.beat_count || target_key.channel >= this.channels.size || target_key.line_offset >= this.channels[target_key.channel].size) {
+                throw RangeOverflow(from_key, to_key, target_key)
+            }
         }
 
         for ((target_key, tree) in overwrite_map) {

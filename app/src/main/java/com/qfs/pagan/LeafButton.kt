@@ -7,6 +7,7 @@ import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import androidx.appcompat.view.ContextThemeWrapper
+import com.qfs.pagan.opusmanager.BaseLayer
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.LinksLayer
 import com.qfs.pagan.opusmanager.OpusEvent
@@ -89,6 +90,7 @@ class LeafButton(
                         (this.get_activity()).feedback_msg(context.getString(R.string.feedback_mixed_link))
                     }
                     is LinksLayer.LinkRangeOverlap,
+                    is BaseLayer.RangeOverflow,
                     is LinksLayer.LinkRangeOverflow -> {
                         editor_table.notify_cell_change(beat_key)
                         opus_manager.cursor.is_linking = false

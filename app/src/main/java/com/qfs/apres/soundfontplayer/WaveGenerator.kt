@@ -30,6 +30,7 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
 
     private var _midi_events_by_frame = HashMap<Int, MutableList<MIDIEvent>>()
     private var _event_mutex = Mutex()
+    private var event_queue_mutex = Mutex()
 
     private var _working_int_array = IntArray(sample_handle_manager.buffer_size * 2)
     private var active_event_queue = mutableListOf<Pair<Int, MIDIEvent>>()
@@ -76,10 +77,15 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
             This active_event_queue is processed to guarantee Midi events are processed from
             the active midi player.
          */
-        if (this.active_event_queue.isNotEmpty()) {
-            for (i in 0 until this.active_event_queue.size) {
-                var (f, event) = this.active_event_queue.removeFirst()
-                this.place_event(event, f + initial_frame + buffer_size)
+        runBlocking {
+            this@WaveGenerator.event_queue_mutex.withLock {
+
+                if (this@WaveGenerator.active_event_queue.isNotEmpty()) {
+                    for (i in 0 until this@WaveGenerator.active_event_queue.size) {
+                        var (f, event) = this@WaveGenerator.active_event_queue.removeFirst()
+                        this@WaveGenerator.place_event(event, f + initial_frame + buffer_size)
+                    }
+                }
             }
         }
 
@@ -345,11 +351,13 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
     }
 
     fun clear() {
-        this.active_event_queue.clear()
         this.kill_frame = null
         this._active_sample_handles.clear()
         this.sample_release_map.clear()
         runBlocking {
+            this@WaveGenerator.event_queue_mutex.withLock {
+                this@WaveGenerator.active_event_queue.clear()
+            }
             this@WaveGenerator._event_mutex.withLock {
                 this@WaveGenerator._midi_events_by_frame.clear()
             }

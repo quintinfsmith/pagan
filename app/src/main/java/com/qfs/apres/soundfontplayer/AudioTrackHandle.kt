@@ -28,8 +28,14 @@ class AudioTrackHandle(sample_rate: Int, buffer_size: Int) {
 
     fun offset_next_notification_position(next: Int) {
         try {
-            this.audio_track.notificationMarkerPosition =
-                next + (this.audio_track.notificationMarkerPosition ?: 0)
+            this.audio_track.notificationMarkerPosition = next + (this.audio_track.notificationMarkerPosition)
+        } catch (e: IllegalStateException) {
+            // pass
+        }
+    }
+    fun set_next_notification_position(next: Int) {
+        try {
+            this.audio_track.notificationMarkerPosition = next
         } catch (e: IllegalStateException) {
             // pass
         }

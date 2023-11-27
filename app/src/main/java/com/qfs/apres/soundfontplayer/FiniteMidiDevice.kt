@@ -9,6 +9,7 @@ import com.qfs.apres.event.SetTempo
 import com.qfs.apres.event.SongPositionPointer
 import com.qfs.apres.event2.NoteOn79
 import kotlin.concurrent.thread
+import kotlin.math.min
 
 // Ended up needing to split the active and cache Midi Players due to different fundemental requirements
 open class FiniteMidiDevice(var sample_handle_manager: SampleHandleManager, private var cache_size_limit: Int = 10) {
@@ -51,6 +52,7 @@ open class FiniteMidiDevice(var sample_handle_manager: SampleHandleManager, priv
             var buffer_millis = this.BUFFER_NANO / 1_000_000
             var chunks = mutableListOf<ShortArray>()
             var building_chunks = true
+            var final_frame: Int? = null
             var wait_delay = if (this.fill_buffer_cache) {
                 buffer_millis / 10
             } else {
@@ -75,6 +77,9 @@ open class FiniteMidiDevice(var sample_handle_manager: SampleHandleManager, priv
 
                     chunks.add(chunk)
                 }
+
+                final_frame = this.wave_generator.frame
+
                 building_chunks = false
                 this.wave_generator.clear()
             }
@@ -93,6 +98,7 @@ open class FiniteMidiDevice(var sample_handle_manager: SampleHandleManager, priv
                     }
 
                 }
+
                 override fun onMarkerReached(p0: AudioTrack?) {
                     var kill_flag = false
                     /*
@@ -137,9 +143,16 @@ open class FiniteMidiDevice(var sample_handle_manager: SampleHandleManager, priv
                         this@FiniteMidiDevice.on_stop()
                     } else {
                         this@FiniteMidiDevice.on_beat(this.notification_index)
-                        this@FiniteMidiDevice.active_audio_track_handle?.offset_next_notification_position(next_beat_delay)
+                        var target_next_position = p0!!.notificationMarkerPosition + next_beat_delay
+                        val next_position = if (final_frame != null) {
+                            min(final_frame!!, target_next_position)
+                        } else {
+                            target_next_position
+                        }
+                        this@FiniteMidiDevice.active_audio_track_handle?.set_next_notification_position(next_position)
                     }
                 }
+
                 override fun onPeriodicNotification(p0: AudioTrack?) { }
             })
 

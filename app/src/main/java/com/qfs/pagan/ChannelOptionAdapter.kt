@@ -175,7 +175,6 @@ class ChannelOptionAdapter(
 
             val x = view.view_holder?.bindingAdapterPosition ?: return
             this._opus_manager.remove_channel(x)
-            this.remove_channel(x)
         }
     }
 
@@ -205,7 +204,6 @@ class ChannelOptionAdapter(
 
     private fun set_channel_instrument(channel: Int, bank: Int, program: Int) {
         this._opus_manager.set_channel_instrument(channel, Pair(bank, program))
-        this.notifyItemChanged(channel)
     }
 
     override fun getItemCount(): Int {

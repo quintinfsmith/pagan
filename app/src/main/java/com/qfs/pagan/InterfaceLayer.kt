@@ -56,6 +56,10 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         this.runOnUiThread { main: MainActivity ->
             main.update_channel_instruments()
             main.populate_active_percussion_names()
+            var channel_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
+            if (channel_recycler.adapter != null) {
+                (channel_recycler.adapter as ChannelOptionAdapter).notifyItemChanged(channel)
+            }
         }
     }
 
@@ -63,6 +67,21 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         super.set_project_name(new_name)
         this.runOnUiThread { main: MainActivity ->
             main.update_title_text()
+        }
+    }
+
+    override fun set_transpose(new_transpose: Int) {
+        super.set_transpose(new_transpose)
+
+        this.runOnUiThread {main ->
+            main.findViewById<TextView>(R.id.btnTranspose).text = main.getString(R.string.label_transpose, new_transpose)
+        }
+    }
+
+    override fun set_tempo(new_tempo: Float) {
+        super.set_tempo(new_tempo)
+        this.runOnUiThread {main ->
+            main.findViewById<TextView>(R.id.tvTempo).text = main.getString(R.string.label_bpm, new_tempo.toInt())
         }
     }
 
@@ -389,6 +408,20 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         // TODO: Should be behind ui lock?
         this.activity.update_channel_instruments(notify_index)
 
+        when (this.get_ui_lock_level()) {
+            null,
+            UI_LOCK_PARTIAL -> {
+                this.runOnUiThread { main ->
+                    var channel_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
+                    if (channel_recycler.adapter != null) {
+                        var channel_adapter = (channel_recycler.adapter as ChannelOptionAdapter)
+                        channel_adapter.add_channel()
+                    }
+                }
+            }
+            UI_LOCK_FULL -> {}
+        }
+
         if (this.is_percussion(notify_index) && !this.activity.configuration.show_percussion) {
             return
         }
@@ -481,6 +514,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         this.path = new_path
 
         this.runOnUiThread { main: MainActivity ->
+            main.setup_project_config_drawer()
             main.validate_percussion_visibility()
             main.update_menu_options()
 
@@ -507,6 +541,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
         this.first_load_done = true
         this.runOnUiThread { main: MainActivity ->
+            main.setup_project_config_drawer()
             main.validate_percussion_visibility()
             main.update_menu_options()
 
@@ -532,6 +567,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
         this.first_load_done = true
         this.runOnUiThread { main: MainActivity ->
+            main.setup_project_config_drawer()
             main.validate_percussion_visibility()
             main.update_menu_options()
 
@@ -559,6 +595,19 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
         super.remove_channel(channel)
 
+        when (this.get_ui_lock_level()) {
+            null,
+            UI_LOCK_PARTIAL -> {
+                this.runOnUiThread { main ->
+                    var channel_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
+                    if (channel_recycler.adapter != null) {
+                        var channel_adapter = (channel_recycler.adapter as ChannelOptionAdapter)
+                        channel_adapter.remove_channel(channel)
+                    }
+                }
+            }
+            UI_LOCK_FULL -> {}
+        }
 
         val editor_table = this.get_editor_table() ?: return
         when (this.get_ui_lock_level()) {
@@ -580,8 +629,9 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             this.cursor_clear()
         }
         this.get_editor_table()?.clear()
-        val rvActiveChannels: ChannelOptionRecycler = this.activity.findViewById(R.id.rvActiveChannels)
-        //(rvActiveChannels.adapter as ChannelOptionAdapter).clear()
+        this.runOnUiThread { main ->
+            main.teardown_project_config_drawer()
+        }
     }
 
     override fun unlink_beat(beat_key: BeatKey) {
@@ -1272,6 +1322,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         }
 
         this.runOnUiThread { main: MainActivity ->
+            main.findViewById<TextView>(R.id.btnRadix).text = main.getString(R.string.label_radix, radix)
             this.withFragment {
                 it.reset_context_menu()
             }

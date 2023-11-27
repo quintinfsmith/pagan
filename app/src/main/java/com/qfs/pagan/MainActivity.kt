@@ -363,14 +363,8 @@ class MainActivity : AppCompatActivity() {
             R.string.drawer_close
         ) {
             override fun onDrawerOpened(drawerView: View) {
-                this@MainActivity.setup_project_config_drawer()
                 super.onDrawerOpened(drawerView)
                 this@MainActivity.playback_stop()
-            }
-
-            override fun onDrawerClosed(drawerView: View) {
-                this@MainActivity.teardown_project_config_drawer()
-                super.onDrawerClosed(drawerView)
             }
         })
 
@@ -731,7 +725,6 @@ class MainActivity : AppCompatActivity() {
                 opus_manager.tempo.toInt()
             ) { tempo: Int ->
                 opus_manager.set_tempo(tempo.toFloat())
-                tvTempo.text = this.getString(R.string.label_bpm, tempo)
             }
         }
 
@@ -745,7 +738,6 @@ class MainActivity : AppCompatActivity() {
                 this.get_opus_manager().radix - 1
             ) { value: Int ->
                 opus_manager.set_transpose(value)
-                btnTranspose.text = this.getString(R.string.label_transpose, value)
             }
         }
 
@@ -759,13 +751,11 @@ class MainActivity : AppCompatActivity() {
                 opus_manager.radix
             ) { radix: Int ->
                 opus_manager.set_radix(radix)
-                btnRadix.text = this.getString(R.string.label_radix, radix)
             }
         }
 
         this.findViewById<View>(R.id.btnAddChannel).setOnClickListener {
             opus_manager.new_channel()
-            (channel_option_adapter as ChannelOptionAdapter).add_channel()
         }
 
         this.setup_project_config_drawer_export_button()
@@ -969,6 +959,15 @@ class MainActivity : AppCompatActivity() {
             this.populate_active_percussion_names()
         }
         this.setup_project_config_drawer_export_button()
+
+        var channel_recycler = this.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
+        var channel_adapter = channel_recycler.adapter as ChannelOptionAdapter
+        if (this._soundfont != null) {
+            channel_adapter.set_soundfont(this._soundfont!!)
+        } else {
+            channel_adapter.unset_soundfont()
+        }
+
     }
 
     fun get_soundfont(): SoundFont? {

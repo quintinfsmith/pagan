@@ -8,7 +8,6 @@ import android.view.ContextThemeWrapper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.PopupMenu
 import android.widget.SeekBar
@@ -162,7 +161,7 @@ class GlobalSettingsFragment : PaganFragment<FragmentGlobalSettingsBinding>() {
     }
 
     fun disable_soundfont() {
-        val btnChooseSoundFont = this.get_main().findViewById<Button>(R.id.btnChooseSoundFont)
+        val btnChooseSoundFont = this.get_main().findViewById<TextView>(R.id.btnChooseSoundFont)
         btnChooseSoundFont.text = getString(R.string.no_soundfont)
         this.get_main().disable_soundfont()
         this.get_main().save_configuration()

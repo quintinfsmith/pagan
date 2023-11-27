@@ -1,5 +1,6 @@
 package com.qfs.pagan
 
+import android.content.Context
 import android.view.ContextThemeWrapper
 import android.view.Gravity
 import android.view.View
@@ -17,7 +18,12 @@ class ChannelOptionAdapter(
 ) : RecyclerView.Adapter<ChannelOptionAdapter.ChannelOptionViewHolder>() {
     class OutOfSyncException : Exception("Channel Option list out of sync with OpusManager")
     class ChannelOptionViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
+    class BackLinkView(context: Context): LinearLayout(context) {
+        var view_holder: ChannelOptionViewHolder? = null
+    }
+
     private var _supported_instruments = HashMap<Pair<Int, Int>, String>()
+    var channel_count = 0
     init {
         this._recycler.adapter = this
         this.registerAdapterDataObserver(
@@ -26,9 +32,7 @@ class ChannelOptionAdapter(
                     this@ChannelOptionAdapter.notifyItemRangeChanged(start, this@ChannelOptionAdapter.itemCount - start)
                 }
                 override fun onItemRangeChanged(start: Int, count: Int) { }
-                override fun onItemRangeInserted(start: Int, count: Int) {
-                    this@ChannelOptionAdapter.notifyItemRangeChanged(start + count, this@ChannelOptionAdapter.itemCount - (start + count))
-                }
+                override fun onItemRangeInserted(start: Int, count: Int) { }
             }
         )
         val soundfont = this.get_activity().get_soundfont()
@@ -39,8 +43,24 @@ class ChannelOptionAdapter(
         }
     }
 
+    override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
+        super.onAttachedToRecyclerView(recyclerView)
+        this.setup()
+    }
+
+    fun setup() {
+        for (i in this.itemCount until this.get_activity().get_opus_manager().channels.size) {
+            this.add_channel()
+        }
+    }
+
+    override fun onDetachedFromRecyclerView(recyclerView: RecyclerView) {
+        this.clear()
+        super.onDetachedFromRecyclerView(recyclerView)
+    }
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChannelOptionViewHolder {
-        var top_view = LinearLayout(ContextThemeWrapper(parent.context, R.style.recycler_option))
+        var top_view = BackLinkView(ContextThemeWrapper(parent.context, R.style.recycler_option))
         val btn_choose_instrument = TextView(ContextThemeWrapper(parent.context, R.style.recycler_option_instrument))
         val btn_kill_channel = TextView(ContextThemeWrapper(parent.context, R.style.recycler_option_x))
         top_view.addView(btn_choose_instrument)
@@ -58,7 +78,7 @@ class ChannelOptionAdapter(
         return this._recycler.context as MainActivity
     }
 
-    private fun set_text(view: ViewGroup, position: Int) {
+    private fun set_text(view: BackLinkView, position: Int) {
         val activity = this.get_activity()
         val opus_manager = activity.get_opus_manager()
 
@@ -91,10 +111,11 @@ class ChannelOptionAdapter(
     }
 
     override fun onBindViewHolder(holder: ChannelOptionViewHolder, position: Int) {
-        this.set_text(holder.itemView as ViewGroup, position)
+        (holder.itemView as BackLinkView).view_holder = holder
+        this.set_text(holder.itemView as BackLinkView, position)
 
         (holder.itemView as ViewGroup).getChildAt(0).setOnClickListener {
-            this.interact_btnChooseInstrument(it)
+            this.interact_btnChooseInstrument(holder.itemView as BackLinkView)
         }
 
         val remove_button = (holder.itemView as ViewGroup).getChildAt(1) as TextView
@@ -102,37 +123,14 @@ class ChannelOptionAdapter(
         if (this._opus_manager.is_percussion(position)) {
             remove_button.text = this.get_percussion_visibility_button_text()
             remove_button.setOnClickListener {
-                this.interact_btnTogglePercussionVisibility(remove_button)
+                this.interact_btnTogglePercussionVisibility(holder.itemView as BackLinkView)
             }
         } else {
             remove_button.text = holder.itemView.context.resources.getString(R.string.percussion_label)
             remove_button.setOnClickListener {
-                this.interact_btnRemoveChannel(it)
+                this.interact_btnRemoveChannel(holder.itemView as BackLinkView)
             }
         }
-    }
-
-    private fun get_view_channel(view: View): Int {
-        var parent = view.parent
-        var check = view
-        while (parent !is RecyclerView) {
-            check = parent as View
-            parent = (parent as View).parent
-        }
-
-        var x: Int? = null
-        for (i in 0 until this._recycler.childCount) {
-            if (this._recycler.getChildAt(i) == check) {
-                x = i
-                break
-            }
-        }
-
-        if (x == null) {
-            throw OutOfSyncException()
-        }
-
-        return x
     }
 
     private fun get_percussion_visibility_button_text(): String {
@@ -144,7 +142,7 @@ class ChannelOptionAdapter(
         }
     }
 
-    private fun interact_btnTogglePercussionVisibility(view: TextView) {
+    private fun interact_btnTogglePercussionVisibility(view: BackLinkView) {
         val main = this.get_activity()
         val opus_manager = main.get_opus_manager()
         if (main.configuration.show_percussion) {
@@ -159,12 +157,13 @@ class ChannelOptionAdapter(
         }
 
         main.save_configuration()
-        view.text = this.get_percussion_visibility_button_text()
+        val remove_button = (view as ViewGroup).getChildAt(1) as TextView
+        remove_button.text = this.get_percussion_visibility_button_text()
         val editor_table = main.findViewById<EditorTable>(R.id.etEditorTable)
         editor_table.update_percussion_visibility()
     }
 
-    private fun interact_btnRemoveChannel(view: View) {
+    private fun interact_btnRemoveChannel(view: BackLinkView) {
         if (this._opus_manager.channels.size > 1) {
             if (this._opus_manager.channels.size == 2 && !this.get_activity().configuration.show_percussion) {
                 this.get_activity().configuration.show_percussion = true
@@ -174,14 +173,14 @@ class ChannelOptionAdapter(
                 editor_table.update_percussion_visibility()
             }
 
-            val x = this.get_view_channel(view)
+            val x = view.view_holder?.bindingAdapterPosition ?: return
             this._opus_manager.remove_channel(x)
-            this.notifyDataSetChanged()
+            this.remove_channel(x)
         }
     }
 
-    private fun interact_btnChooseInstrument(view: View) {
-        val channel = this.get_view_channel(view)
+    private fun interact_btnChooseInstrument(view: BackLinkView) {
+        val channel = view.view_holder?.bindingAdapterPosition ?: return
 
         val sorted_keys = this._supported_instruments.keys.toList().sortedBy {
             it.first + (it.second * 128)
@@ -206,10 +205,17 @@ class ChannelOptionAdapter(
 
     private fun set_channel_instrument(channel: Int, bank: Int, program: Int) {
         this._opus_manager.set_channel_instrument(channel, Pair(bank, program))
+        this.notifyItemChanged(channel)
     }
 
     override fun getItemCount(): Int {
-        return this.get_activity().get_opus_manager().channels.size
+        return this.channel_count
+    }
+
+    fun clear() {
+        var count = this.channel_count
+        this.channel_count = 0
+        this.notifyItemRangeRemoved(0, count)
     }
 
     fun set_soundfont(soundfont: SoundFont) {
@@ -223,5 +229,15 @@ class ChannelOptionAdapter(
     fun unset_soundfont() {
         this._supported_instruments.clear()
         this.notifyItemRangeChanged(0, this._opus_manager.channels.size)
+    }
+
+    fun add_channel() {
+        this.channel_count += 1
+        this.notifyDataSetChanged()
+    }
+
+    fun remove_channel(channel: Int) {
+        this.channel_count -= 1
+        this.notifyItemRemoved(channel)
     }
 }

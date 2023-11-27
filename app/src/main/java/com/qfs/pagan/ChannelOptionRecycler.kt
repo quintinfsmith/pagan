@@ -8,7 +8,6 @@ import androidx.recyclerview.widget.RecyclerView
 class ChannelOptionRecycler(context: Context, attrs: AttributeSet): RecyclerView(context, attrs) {
     init {
         this.layoutManager = LinearLayoutManager(this.context as MainActivity)
-        ChannelOptionAdapter((this.context as MainActivity).get_opus_manager(), this)
         this.itemAnimator = null
     }
 }

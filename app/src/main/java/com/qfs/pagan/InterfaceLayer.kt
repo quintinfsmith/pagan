@@ -483,7 +483,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         this.runOnUiThread { main: MainActivity ->
             main.validate_percussion_visibility()
             main.update_menu_options()
-            //main.setup_project_config_drawer()
 
             val editor_table = this.get_editor_table()
             editor_table?.clear()
@@ -510,7 +509,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         this.runOnUiThread { main: MainActivity ->
             main.validate_percussion_visibility()
             main.update_menu_options()
-            //main.setup_project_config_drawer()
 
             val editor_table = this.get_editor_table()
             editor_table?.setup()
@@ -536,7 +534,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         this.runOnUiThread { main: MainActivity ->
             main.validate_percussion_visibility()
             main.update_menu_options()
-            //main.setup_project_config_drawer()
 
             val editor_table = this.get_editor_table()
             editor_table?.setup()
@@ -583,6 +580,8 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             this.cursor_clear()
         }
         this.get_editor_table()?.clear()
+        val rvActiveChannels: ChannelOptionRecycler = this.activity.findViewById(R.id.rvActiveChannels)
+        //(rvActiveChannels.adapter as ChannelOptionAdapter).clear()
     }
 
     override fun unlink_beat(beat_key: BeatKey) {

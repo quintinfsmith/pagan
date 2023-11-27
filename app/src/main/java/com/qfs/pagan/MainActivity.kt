@@ -354,6 +354,7 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
+
         val drawer_layout = this.findViewById<DrawerLayout>(R.id.drawer_layout) ?: return
         drawer_layout.addDrawerListener(object : ActionBarDrawerToggle(
             this,
@@ -365,6 +366,11 @@ class MainActivity : AppCompatActivity() {
                 this@MainActivity.setup_project_config_drawer()
                 super.onDrawerOpened(drawerView)
                 this@MainActivity.playback_stop()
+            }
+
+            override fun onDrawerClosed(drawerView: View) {
+                this@MainActivity.teardown_project_config_drawer()
+                super.onDrawerClosed(drawerView)
             }
         })
 
@@ -534,7 +540,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         if (this._midi_playback_device != null) {
-            if (!(this._midi_playback_device?.in_playable_state() ?: false)) {
+            if (this._midi_playback_device?.in_playable_state() != true) {
                 this.stop_queued = true
                 this._midi_playback_device!!.kill()
             }
@@ -694,10 +700,21 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    fun teardown_project_config_drawer() {
+        val rvActiveChannels: ChannelOptionRecycler = this.findViewById(R.id.rvActiveChannels)
+        var adapter: RecyclerView.Adapter<*>? = rvActiveChannels.adapter ?: return
+        (adapter as ChannelOptionAdapter).clear()
+    }
+
     fun setup_project_config_drawer() {
         val opus_manager = this.get_opus_manager()
         val rvActiveChannels: ChannelOptionRecycler = this.findViewById(R.id.rvActiveChannels)
-        ChannelOptionAdapter(opus_manager, rvActiveChannels)
+        var channel_option_adapter: RecyclerView.Adapter<*>? = rvActiveChannels.adapter
+        if (channel_option_adapter == null) {
+            channel_option_adapter = ChannelOptionAdapter(opus_manager, rvActiveChannels)
+        } else {
+            (channel_option_adapter as ChannelOptionAdapter).setup()
+        }
 
         val tvChangeProjectName: TextView = this.findViewById(R.id.btnChangeProjectName)
         tvChangeProjectName.setOnClickListener {
@@ -748,11 +765,7 @@ class MainActivity : AppCompatActivity() {
 
         this.findViewById<View>(R.id.btnAddChannel).setOnClickListener {
             opus_manager.new_channel()
-            val rvActiveChannels: RecyclerView = this.findViewById(R.id.rvActiveChannels)
-            if (rvActiveChannels.adapter != null) {
-                val rvActiveChannels_adapter = rvActiveChannels.adapter as ChannelOptionAdapter
-                rvActiveChannels_adapter.notifyDataSetChanged()
-            }
+            (channel_option_adapter as ChannelOptionAdapter).add_channel()
         }
 
         this.setup_project_config_drawer_export_button()
@@ -855,11 +868,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun update_channel_instruments(index: Int? = null) {
-        this.runOnUiThread {
-            val rvActiveChannels: RecyclerView = this.findViewById(R.id.rvActiveChannels)
-            rvActiveChannels.adapter?.notifyDataSetChanged()
-        }
-
         if (index == null) {
             for (channel in this._opus_manager.channels) {
                 this._midi_interface.broadcast_event(BankSelect(channel.midi_channel, channel.midi_bank))
@@ -956,10 +964,7 @@ class MainActivity : AppCompatActivity() {
         this._midi_interface.connect_virtual_output_device(this._midi_feedback_device!!)
 
         this.update_channel_instruments()
-        val rvActiveChannels: ChannelOptionRecycler = this.findViewById(R.id.rvActiveChannels)
-        if (rvActiveChannels.adapter != null) {
-            (rvActiveChannels.adapter as ChannelOptionAdapter).set_soundfont(this._soundfont!!)
-        }
+
         if (this.get_opus_manager().channels.size > 0) {
             this.populate_active_percussion_names()
         }
@@ -972,9 +977,6 @@ class MainActivity : AppCompatActivity() {
 
     fun disable_soundfont() {
         val rvActiveChannels: ChannelOptionRecycler = this.findViewById(R.id.rvActiveChannels)
-        if (rvActiveChannels.adapter != null) {
-            (rvActiveChannels.adapter as ChannelOptionAdapter).unset_soundfont()
-        }
         this.update_channel_instruments()
         this._soundfont = null
         this.configuration.soundfont = null

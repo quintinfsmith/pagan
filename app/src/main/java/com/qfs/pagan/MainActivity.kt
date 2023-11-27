@@ -35,6 +35,7 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.graphics.drawable.DrawerArrowDrawable
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
@@ -650,7 +651,7 @@ class MainActivity : AppCompatActivity() {
 
     fun set_title_text(new_text: String) {
         this.binding.appBarMain.toolbar.title = new_text
-        if (this.get_active_fragment() is EditorFragment) {
+        if (this.binding.appBarMain.toolbar.navigationIcon !is DrawerArrowDrawable && this.get_active_fragment() !is LandingPageFragment) {
             this.binding.appBarMain.toolbar.setNavigationIcon(R.drawable.hamburger_32)
         }
     }

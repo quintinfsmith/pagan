@@ -29,11 +29,6 @@ class LoadFragment : PaganFragment<FragmentLoadBinding>() {
         return FragmentLoadBinding.inflate(inflater, container, false)
     }
 
-    override fun onStart() {
-        super.onStart()
-        this.get_main().set_title_text(getString(R.string.load_fragment_label))
-    }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         setFragmentResult("RETURNED", bundleOf())
         super.onViewCreated(view, savedInstanceState)

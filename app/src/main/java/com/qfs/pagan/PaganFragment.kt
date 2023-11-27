@@ -30,6 +30,7 @@ abstract class PaganFragment<T: ViewBinding>: Fragment() {
 
     override fun onResume() {
         this.get_main().update_menu_options()
+        this.get_main().update_title_text()
         super.onResume()
     }
 

@@ -614,11 +614,23 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun update_title_text() {
-        if (this.forced_title_text != null) {
-            this.set_title_text(this.forced_title_text!!)
-        } else {
-            this.set_title_text(this.get_opus_manager().project_name)
-        }
+        this.set_title_text(
+            if (this.forced_title_text != null) {
+                this.forced_title_text!!
+            } else {
+                when (this.get_active_fragment()) {
+                    is GlobalSettingsFragment -> {
+                        "Settings"
+                    }
+                    is LoadFragment -> {
+                        "Load Project"
+                    }
+                    else -> {
+                        this.get_opus_manager().project_name
+                    }
+                }
+            }
+        )
     }
 
     fun set_title_text(new_text: String) {

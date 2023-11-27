@@ -60,12 +60,6 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         super.onStop()
     }
 
-    override fun onResume() {
-        this.get_main().update_title_text()
-        this.get_main().setup_project_config_drawer()
-        super.onResume()
-    }
-
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         if (this._binding == null) {

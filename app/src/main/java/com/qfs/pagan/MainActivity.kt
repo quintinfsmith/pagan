@@ -352,6 +352,21 @@ class MainActivity : AppCompatActivity() {
 
             }
         })
+
+        val drawer_layout = this.findViewById<DrawerLayout>(R.id.drawer_layout) ?: return
+        drawer_layout.addDrawerListener(object : ActionBarDrawerToggle(
+            this,
+            drawer_layout,
+            R.string.drawer_open,
+            R.string.drawer_close
+        ) {
+            override fun onDrawerOpened(drawerView: View) {
+                this@MainActivity.setup_project_config_drawer()
+                super.onDrawerOpened(drawerView)
+                this@MainActivity.playback_stop()
+            }
+        })
+
     }
 
     override fun onSupportNavigateUp(): Boolean {
@@ -706,7 +721,11 @@ class MainActivity : AppCompatActivity() {
         btnTranspose.text = this.getString(R.string.label_transpose, opus_manager.transpose)
 
         btnTranspose.setOnClickListener {
-            this.dialog_number_input("Transpose", 0, this.get_opus_manager().radix - 1) { value: Int ->
+            this.dialog_number_input(
+                "Transpose",
+                0,
+                this.get_opus_manager().radix - 1
+            ) { value: Int ->
                 opus_manager.set_transpose(value)
                 btnTranspose.text = this.getString(R.string.label_transpose, value)
             }
@@ -760,20 +779,6 @@ class MainActivity : AppCompatActivity() {
             this.project_move_to_copy()
             this.drawer_close()
         }
-
-        val drawer_layout = this.findViewById<DrawerLayout>(R.id.drawer_layout) ?: return
-        drawer_layout.addDrawerListener(object : ActionBarDrawerToggle(
-            this,
-            drawer_layout,
-            R.string.drawer_open,
-            R.string.drawer_close
-        ) {
-            override fun onDrawerOpened(drawerView: View) {
-                this@MainActivity.setup_project_config_drawer()
-                super.onDrawerOpened(drawerView)
-                this@MainActivity.playback_stop()
-            }
-        })
     }
 
     fun setup_project_config_drawer_export_button() {

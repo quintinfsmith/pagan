@@ -73,10 +73,6 @@ import kotlin.math.max
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
 
-/**
- * Device Scanning
- * Methods are called by the system whenever the set of attached devices changes.
- */
 class MainActivity : AppCompatActivity() {
     // flag to indicate that the landing page has been navigated away from for navigation management
     private var _has_seen_front_page = false

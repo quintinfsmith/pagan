@@ -1,6 +1,7 @@
 package com.qfs.pagan
-
 import android.app.AlertDialog
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.encodeToString
 import android.content.res.Configuration
 import android.os.Bundle
 import android.view.*
@@ -40,8 +41,8 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         this.set_result_listeners()
     }
     override fun onPause() {
-        super.onPause()
         var main = this.get_main()
+        super.onPause()
         var channel_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
         if (channel_recycler.adapter != null) {
             (channel_recycler.adapter as ChannelOptionAdapter).clear()
@@ -60,11 +61,9 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         this.view_model.fine_y = scroll_y.second
 
         val opus_manager = this.get_main().get_opus_manager()
-        if (opus_manager.path != null) {
-            this.view_model.backup_path = opus_manager.path
-        }
-        val main = this.get_main()
-        main.save_to_backup()
+        this.view_model.backup_json = Json.encodeToString(opus_manager.to_json()).toByteArray()
+        this.view_model.backup_path = opus_manager.path
+
         super.onStop()
     }
 
@@ -73,20 +72,12 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         if (this._binding == null) {
             return
         }
-
-        val editor_table = this.binding.root.findViewById<EditorTable?>(R.id.etEditorTable)
-        if (editor_table != null) {
-            val (scroll_x, scroll_y) = editor_table.get_scroll_offset()
-            outState.putInt("coarse_x", scroll_x.first)
-            outState.putInt("fine_x", scroll_x.second)
-            outState.putInt("coarse_y", scroll_y.first)
-            outState.putInt("fine_y", scroll_y.second)
-
-            val opus_manager = this.get_main().get_opus_manager()
-            if (opus_manager.path != null) {
-                outState.putString("path", opus_manager.path)
-            }
-        }
+        outState.putInt("coarse_x", this.view_model.coarse_x)
+        outState.putInt("fine_x", this.view_model.fine_x)
+        outState.putInt("coarse_y", this.view_model.coarse_y)
+        outState.putInt("fine_y", this.view_model.fine_y)
+        outState.putByteArray("backup_json", this.view_model.backup_json)
+        outState.putString("backup_path", this.view_model.backup_path)
     }
 
     override fun onViewStateRestored(savedInstanceState: Bundle?) {
@@ -97,42 +88,61 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         val fine_x: Int
         val coarse_y: Int
         val fine_y: Int
+        val backup_json: ByteArray?
+        val backup_path: String?
         if (savedInstanceState != null) {
+            // Orientation Change/Brought back from background
             coarse_x = savedInstanceState.getInt("coarse_x")
             fine_x = savedInstanceState.getInt("fine_x")
             coarse_y = savedInstanceState.getInt("coarse_y")
             fine_y = savedInstanceState.getInt("fine_y")
-            path = savedInstanceState.getString("path")
-        } else if (this.view_model.backup_path != null) {
+            backup_json = savedInstanceState.getByteArray("backup_json")
+            backup_path = savedInstanceState.getString("backup_path")
+        } else if (this.view_model.backup_json != null) {
+            // Navigate Back,
             coarse_x = this.view_model.coarse_x
             fine_x = this.view_model.fine_x
             coarse_y = this.view_model.coarse_y
             fine_y = this.view_model.fine_y
-            path = this.view_model.backup_path
+            backup_json = this.view_model.backup_json
+            backup_path = this.view_model.backup_path
         } else {
+            // Navigate to (import / load/new)
             editor_table.visibility = View.VISIBLE
             return
         }
 
         val main = this.get_main()
-        this.get_main().drawer_unlock()
-
-        // TODO: When 'don't keep apps' is enabled, this path will be followed even when importing a midi or project
-        val bkp_path = "${main.applicationInfo.dataDir}/.bkp.json"
-        val bytes = FileInputStream(bkp_path).readBytes()
+        main.drawer_unlock()
 
         val opus_manager = main.get_opus_manager()
-        opus_manager.load(bytes, path)
+        opus_manager.load(backup_json!!, backup_path)
         editor_table.visibility = View.VISIBLE
 
         editor_table.precise_scroll(coarse_x, fine_x, coarse_y, fine_y)
 
+        // At the moment, can't save the history cache into a bundle, so restore it if
+        // it exists, if not, too bad i guess
         if (this.view_model.backup_undo_stack != null) {
             opus_manager.history_cache = this.view_model.backup_undo_stack!!
             this.view_model.backup_undo_stack = null
         }
 
         this.view_model.clear()
+
+
+        main.setup_project_config_drawer()
+        // Loading / importing use intents which cause a load from
+        if (savedInstanceState != null) {
+            var channel_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
+            if (channel_recycler.adapter == null) {
+                ChannelOptionAdapter(opus_manager, channel_recycler)
+            }
+            var channel_adapter = (channel_recycler.adapter as ChannelOptionAdapter)
+            if (channel_adapter.itemCount == 0) {
+                channel_adapter.setup()
+            }
+        }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -257,6 +267,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             }
         }
     }
+
 
     fun reset_context_menu() {
         when (this.active_context_menu_index) {

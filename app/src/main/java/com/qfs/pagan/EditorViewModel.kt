@@ -1,5 +1,4 @@
 package com.qfs.pagan
-
 import android.os.Bundle
 import androidx.lifecycle.ViewModel
 import com.qfs.pagan.opusmanager.HistoryLayer
@@ -18,16 +17,16 @@ class EditorViewModel: ViewModel() {
         background or navigating back to the editor from the load menu
      */
     var backup_undo_stack: HistoryLayer.HistoryCache? = null
-
-    var backup_path: String? = null
-
     var resume_block: Boolean = false
     var coarse_x: Int = 0
     var fine_x: Int = 0
     var coarse_y: Int = 0
     var fine_y: Int = 0
+    var backup_json: ByteArray? = null
+    var backup_path: String? = null
 
     fun clear() {
+        this.backup_json = null
         this.backup_path = null
         this.coarse_y = 0
         this.fine_y = 0

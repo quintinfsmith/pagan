@@ -573,7 +573,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     // Ui Wrappers ////////////////////////////////////////////
-    private fun drawer_close() {
+    fun drawer_close() {
         findViewById<DrawerLayout>(R.id.drawer_layout).closeDrawers()
     }
 

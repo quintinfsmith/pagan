@@ -10,4 +10,5 @@ class ChannelOptionRecycler(context: Context, attrs: AttributeSet): RecyclerView
         this.layoutManager = LinearLayoutManager(this.context as MainActivity)
         this.itemAnimator = null
     }
+
 }

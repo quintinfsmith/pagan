@@ -23,7 +23,7 @@ import kotlin.concurrent.thread
 class EditorFragment : PaganFragment<FragmentMainBinding>() {
     val view_model: EditorViewModel by viewModels()
     private var active_context_menu_index: ContextMenu? = null
-
+    var test_flag = false
     enum class ContextMenu {
         Leaf,
         Line,
@@ -38,6 +38,14 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
     override fun onStart() {
         super.onStart()
         this.set_result_listeners()
+    }
+    override fun onPause() {
+        super.onPause()
+        var main = this.get_main()
+        var channel_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
+        if (channel_recycler.adapter != null) {
+            (channel_recycler.adapter as ChannelOptionAdapter).clear()
+        }
     }
 
     override fun onStop() {
@@ -95,7 +103,6 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             coarse_y = savedInstanceState.getInt("coarse_y")
             fine_y = savedInstanceState.getInt("fine_y")
             path = savedInstanceState.getString("path")
-
         } else if (this.view_model.backup_path != null) {
             coarse_x = this.view_model.coarse_x
             fine_x = this.view_model.fine_x

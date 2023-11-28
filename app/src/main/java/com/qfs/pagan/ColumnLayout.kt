@@ -75,7 +75,11 @@ class ColumnLayout(var view_holder: ColumnRecyclerViewHolder): LinearLayout((vie
         }
     }
 
-    fun rebind(index: Int) {
+    private fun rebind(index: Int) {
+        if (index >= this.childCount) {
+            return
+        }
+
         this.removeViewAt(index)
         this.addView(CellLayout(this, index), index)
     }

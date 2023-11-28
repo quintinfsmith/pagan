@@ -165,6 +165,9 @@ class MainActivity : AppCompatActivity() {
         if (result.resultCode == Activity.RESULT_OK) {
             result?.data?.data?.also { uri ->
                 val fragment = this.get_active_fragment()
+                if (fragment is EditorFragment) {
+                    fragment.test_flag = true
+                }
                 fragment?.setFragmentResult(
                     IntentFragmentToken.ImportMidi.name,
                     bundleOf(Pair("URI", uri.toString()))
@@ -324,6 +327,12 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             this.update_channel_instruments()
+
+            var channel_recycler = this@MainActivity.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
+            var soundfont = this@MainActivity.get_soundfont()
+            if (channel_recycler != null && channel_recycler.adapter != null && soundfont != null) {
+                (channel_recycler.adapter as ChannelOptionAdapter).set_soundfont(soundfont)
+            }
         }
         ///////////////////////////////////////////
 
@@ -363,6 +372,14 @@ class MainActivity : AppCompatActivity() {
             R.string.drawer_close
         ) {
             override fun onDrawerOpened(drawerView: View) {
+                var channel_recycler = this@MainActivity.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
+                if (channel_recycler.adapter == null) {
+                    ChannelOptionAdapter(this@MainActivity._opus_manager, channel_recycler)
+                }
+                var channel_adapter = (channel_recycler.adapter as ChannelOptionAdapter)
+                if (channel_adapter.itemCount == 0) {
+                    channel_adapter.setup()
+                }
                 super.onDrawerOpened(drawerView)
                 this@MainActivity.playback_stop()
             }
@@ -694,22 +711,8 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun teardown_project_config_drawer() {
-        val rvActiveChannels: ChannelOptionRecycler = this.findViewById(R.id.rvActiveChannels)
-        var adapter: RecyclerView.Adapter<*>? = rvActiveChannels.adapter ?: return
-        (adapter as ChannelOptionAdapter).clear()
-    }
-
     fun setup_project_config_drawer() {
         val opus_manager = this.get_opus_manager()
-        val rvActiveChannels: ChannelOptionRecycler = this.findViewById(R.id.rvActiveChannels)
-        var channel_option_adapter: RecyclerView.Adapter<*>? = rvActiveChannels.adapter
-        if (channel_option_adapter == null) {
-            channel_option_adapter = ChannelOptionAdapter(opus_manager, rvActiveChannels)
-        } else {
-            (channel_option_adapter as ChannelOptionAdapter).setup()
-        }
-
         val tvChangeProjectName: TextView = this.findViewById(R.id.btnChangeProjectName)
         tvChangeProjectName.setOnClickListener {
             this.dialog_project_name()

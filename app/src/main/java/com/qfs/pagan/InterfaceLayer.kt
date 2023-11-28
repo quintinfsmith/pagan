@@ -630,7 +630,11 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         }
         this.get_editor_table()?.clear()
         this.runOnUiThread { main ->
-            main.teardown_project_config_drawer()
+            var channel_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
+            if (channel_recycler.adapter != null) {
+                var channel_adapter = (channel_recycler.adapter as ChannelOptionAdapter)
+                channel_adapter.clear()
+            }
         }
     }
 

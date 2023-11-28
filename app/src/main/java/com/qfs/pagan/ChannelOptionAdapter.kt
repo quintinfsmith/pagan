@@ -22,8 +22,8 @@ class ChannelOptionAdapter(
         var view_holder: ChannelOptionViewHolder? = null
     }
 
+    private var channel_count = 0
     private var _supported_instruments = HashMap<Pair<Int, Int>, String>()
-    var channel_count = 0
     init {
         this._recycler.adapter = this
         this.registerAdapterDataObserver(
@@ -43,22 +43,6 @@ class ChannelOptionAdapter(
         }
     }
 
-    override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
-        super.onAttachedToRecyclerView(recyclerView)
-        this.setup()
-    }
-
-    fun setup() {
-        for (i in this.itemCount until this.get_activity().get_opus_manager().channels.size) {
-            this.add_channel()
-        }
-    }
-
-    override fun onDetachedFromRecyclerView(recyclerView: RecyclerView) {
-        this.clear()
-        super.onDetachedFromRecyclerView(recyclerView)
-    }
-
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChannelOptionViewHolder {
         var top_view = BackLinkView(ContextThemeWrapper(parent.context, R.style.recycler_option))
         val btn_choose_instrument = TextView(ContextThemeWrapper(parent.context, R.style.recycler_option_instrument))
@@ -69,7 +53,6 @@ class ChannelOptionAdapter(
         btn_choose_instrument.layoutParams.width = 0
         (btn_choose_instrument.layoutParams as LinearLayout.LayoutParams).weight = 1F
         (btn_choose_instrument.layoutParams as LinearLayout.LayoutParams).gravity = Gravity.START
-
 
         return ChannelOptionViewHolder(top_view)
     }
@@ -210,12 +193,6 @@ class ChannelOptionAdapter(
         return this.channel_count
     }
 
-    fun clear() {
-        var count = this.channel_count
-        this.channel_count = 0
-        this.notifyItemRangeRemoved(0, count)
-    }
-
     fun set_soundfont(soundfont: SoundFont) {
         this._supported_instruments.clear()
         for ((name, program, bank) in soundfont.get_available_presets()) {
@@ -237,5 +214,14 @@ class ChannelOptionAdapter(
     fun remove_channel(channel: Int) {
         this.channel_count -= 1
         this.notifyItemRemoved(channel)
+    }
+
+    fun clear() {
+        this.channel_count = 0
+        this.notifyDataSetChanged()
+    }
+    fun setup() {
+        this.channel_count = this._opus_manager.channels.size
+        this.notifyDataSetChanged()
     }
 }

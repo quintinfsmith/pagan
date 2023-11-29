@@ -1,12 +1,16 @@
-# Pagan Opus Editor
-An experimental Radix-notation based MIDI editor
+# Pagan
+A music sequencer
 
 [Manual](/manual/pagan)
 
 [![fdroid](https://img.shields.io/f-droid/v/com.qfs.pagan.svg?logo=F-Droid)](https://f-droid.org/en/packages/com.qfs.pagan/)
 
 ## What is it?
-Pagan is an opus editor that can read/write midi files. It exists because I wanted to be able to write music in a way that represents how I look at music rather than try to translate musical ideas to and from a different structure, like a game of broken telephone.
+Pagan is a music sequencer built around 2 main features:
+    1. N-tone tuning. I was curious to see what was possible and what musical vocabulary could develop around different sized octaves.
+    2. Beat-centric visualization. No more time signatures or measures.
+
+Essentially, tt exists because I wanted to be able to write music in a way that represents how I look at music rather than try to translate musical ideas to and from a different structure, like a game of broken telephone.
 It may be for you, it may not. You do you.
 
 ## Usage
@@ -24,7 +28,6 @@ At the moment it's only available (as a package) on Fdroid.
 
 ### Manual Build
 The `master` branch should always be the most stable. I use android studio to build and if you don't, you probably don't need any direction from me.
-
 
 ## Licensing
 - Pagan Licenced under the GNU GPLv3 [(Read Here)](https://burnsomni.net/git/pagan?branch=master&path=LICENSE)

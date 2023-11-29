@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Pagan Opus Editor</string>
+    <string name="app_name">Pagan Music Sequencer</string>
     <string name="app_version">v1.3.1</string>
     <string name="drawer_open">Open Drawer</string>
     <string name="drawer_close">Close Drawer</string>

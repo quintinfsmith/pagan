@@ -1,1 +1,1 @@
-An Esoteric Notation Editor
+An Esoteric Music Sequencer

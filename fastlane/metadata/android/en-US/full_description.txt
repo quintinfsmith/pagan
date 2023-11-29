@@ -1,12 +1,15 @@
-It's esoteric and it's *probably* not for you, but give it a try if you have ever thought:
-    1. Notation should be expressed in numerals, specifically in radix-12 numerals
-    2. Sharps and flats are arbitrary
-    3. Rhythms that aren't divisible by 2 should be more legible
-    4. You'd just prefer to work in spreadsheets wherever possible
+N-tonal tuning
+    Pagan supports N-tone tuning. Change your radix to 24 for microtones or something else just to see what happens.
 
-Export to MIDI or import and reorchestrate an existing midi file.
-Absolute & Relative notes, input a difference up or down from the previous note.
-Easy polyrhythms.
-Link repeated sections for efficiency's sake.
-It's a song editor. Use it to make songs.
+A Divisive Interface
+    Pagan completely ignores measures like any other sequencer but instead of laying out notes based on absolute timing, uses beats. Each column represents one beat and can be split up easily to show rhythm.
+
+Midi Support
+    Import a midi file to resequence it. Export a midi to share it. Plug your midi instrument in to play your music through it. (not currently applicable with the N-tonal tuning)
+
+Repitition without Repitition
+    Single beats and full selections can be linked together to save copy/pasting
+
+Bigger than Midi
+    Pagan isn't only a midi sequencer. Use whatever (.sf2) soundfont you want and export the audio data.
 

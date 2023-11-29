@@ -2,3 +2,4 @@
 - Export to .wav
 - UI no longer uses N-Radix display. Instead uses Decimal for all numbers. (eg, 4B becomes 4 - 11. Octave four. offset 11)
 - Changed Odometer-style number inputs to more standard number input.
+- can now select and move or copy beats instead of just linking

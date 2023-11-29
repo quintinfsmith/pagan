@@ -7,7 +7,7 @@ A Divisive Interface
 Midi Support
     Import a midi file to resequence it. Export a midi to share it. Plug your midi instrument in to play your music through it. (not currently applicable with the N-tonal tuning)
 
-Repitition without Repitition
+Repetition without Repetition
     Single beats and full selections can be linked together to save copy/pasting
 
 Bigger than Midi

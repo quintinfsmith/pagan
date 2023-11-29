@@ -7,10 +7,11 @@ A music sequencer
 
 ## What is it?
 Pagan is a music sequencer built around 2 main features:
+
     1. N-tone tuning. I was curious to see what was possible and what musical vocabulary could develop around different sized octaves.
     2. Beat-centric visualization. No more time signatures or measures.
 
-Essentially, tt exists because I wanted to be able to write music in a way that represents how I look at music rather than try to translate musical ideas to and from a different structure, like a game of broken telephone.
+Essentially, it exists because I wanted to be able to write music in a way that represents how I look at music rather than try to translate musical ideas to and from a different structure, like a game of broken telephone.
 It may be for you, it may not. You do you.
 
 ## Usage

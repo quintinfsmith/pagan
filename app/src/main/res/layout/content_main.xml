@@ -18,6 +18,7 @@
         app:navGraph="@navigation/nav_graph" />
 
     <LinearLayout
+        android:clickable="true"
         android:id="@+id/llClearOverlay"
         android:visibility="gone"
         android:background="#00000000"

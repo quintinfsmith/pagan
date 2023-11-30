@@ -179,7 +179,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
             val main = this.get_main()
             main.loading_reticle_show(getString(R.string.reticle_msg_load_project))
-
+            main.drawer_lock()
             main.runOnUiThread {
                 editor_table?.visibility = View.GONE
             }
@@ -194,13 +194,15 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
                 }
                 this.view_model.backup_fragment_intent = null
                 main.loading_reticle_hide()
+                main.drawer_unlock()
             }
         }
 
         setFragmentResultListener(IntentFragmentToken.ImportMidi.name) { _, bundle: Bundle? ->
+            val main = this.get_main()
+            main.drawer_lock()
             val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
             this.view_model.backup_fragment_intent = Pair(IntentFragmentToken.ImportMidi, bundle)
-            val main = this.get_main()
             main.loading_reticle_show(getString(R.string.reticle_msg_import_midi))
             main.runOnUiThread {
                 editor_table?.visibility = View.GONE
@@ -224,6 +226,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
                     editor_table?.visibility = View.VISIBLE
                 }
                 this.view_model.backup_fragment_intent = null
+                main.drawer_unlock()
                 main.loading_reticle_hide()
             }
         }

@@ -215,4 +215,7 @@
         <item name="android:paddingBottom">0dp</item>
 
     </style>
+    <style name="progress_bar">
+        <item name="android:background">#33000000</item>
+    </style>
 </resources>

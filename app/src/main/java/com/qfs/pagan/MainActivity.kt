@@ -18,6 +18,7 @@ import android.text.Editable
 import android.text.InputFilter
 import android.text.Spanned
 import android.text.TextWatcher
+import android.view.ContextThemeWrapper
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.Menu
@@ -404,7 +405,7 @@ class MainActivity : AppCompatActivity() {
         when (item.itemId) {
             android.R.id.home -> {
                 val fragment = this.get_active_fragment()
-                if (fragment is EditorFragment) {
+                if (fragment is EditorFragment && this.binding.root.getDrawerLockMode(this.findViewById(R.id.config_drawer)) != DrawerLayout.LOCK_MODE_LOCKED_CLOSED) {
                     this.drawer_open()
                 }
             }
@@ -601,15 +602,16 @@ class MainActivity : AppCompatActivity() {
         }
         this.runOnUiThread {
             if (this@MainActivity._progress_bar == null) {
-                this@MainActivity._progress_bar =
-                    ProgressBar(this@MainActivity, null, android.R.attr.progressBarStyleLarge)
+                this@MainActivity._progress_bar = ProgressBar(ContextThemeWrapper(this@MainActivity, R.style.progress_bar), null, android.R.attr.progressBarStyleLarge)
             }
+            this@MainActivity._progress_bar!!.isClickable = true
             val params: RelativeLayout.LayoutParams = RelativeLayout.LayoutParams(50, 50)
             params.addRule(RelativeLayout.CENTER_IN_PARENT)
             val parent = this@MainActivity._progress_bar!!.parent
             if (parent != null) {
                 (parent as ViewGroup).removeView(this@MainActivity._progress_bar)
             }
+
             this@MainActivity.binding.root.addView(this@MainActivity._progress_bar, params)
         }
     }

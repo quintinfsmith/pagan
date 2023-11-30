@@ -1,7 +1,5 @@
 package com.qfs.pagan
 import android.app.AlertDialog
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.encodeToString
 import android.content.res.Configuration
 import android.os.Bundle
 import android.view.*
@@ -17,7 +15,8 @@ import com.qfs.pagan.databinding.FragmentMainBinding
 import com.qfs.pagan.opusmanager.BaseLayer
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.OpusEvent
-import java.io.FileInputStream
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import java.lang.Integer.max
 import java.lang.Integer.min
 import kotlin.concurrent.thread
@@ -36,17 +35,27 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         return FragmentMainBinding.inflate(inflater, container, false)
     }
 
+    override fun onResume() {
+        super.onResume()
+
+        var main = this.get_main()
+        val opus_manager = main.get_opus_manager()
+        var channel_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
+        if (channel_recycler.adapter == null) {
+            ChannelOptionAdapter(opus_manager, channel_recycler)
+        }
+        var channel_adapter = (channel_recycler.adapter as ChannelOptionAdapter)
+        if (channel_adapter.itemCount == 0) {
+            channel_adapter.setup()
+        }
+    }
+
     override fun onStart() {
         super.onStart()
         this.set_result_listeners()
     }
     override fun onPause() {
-        var main = this.get_main()
         super.onPause()
-        var channel_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
-        if (channel_recycler.adapter != null) {
-            (channel_recycler.adapter as ChannelOptionAdapter).clear()
-        }
     }
 
     override fun onStop() {
@@ -63,6 +72,12 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         val opus_manager = this.get_main().get_opus_manager()
         this.view_model.backup_json = Json.encodeToString(opus_manager.to_json()).toByteArray()
         this.view_model.backup_path = opus_manager.path
+
+        var main = this.get_main()
+        var channel_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
+        if (channel_recycler.adapter != null) {
+            (channel_recycler.adapter as ChannelOptionAdapter).clear()
+        }
 
         super.onStop()
     }
@@ -132,17 +147,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
 
 
         main.setup_project_config_drawer()
-        // Loading / importing use intents which cause a load from
-        if (savedInstanceState != null) {
-            var channel_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
-            if (channel_recycler.adapter == null) {
-                ChannelOptionAdapter(opus_manager, channel_recycler)
-            }
-            var channel_adapter = (channel_recycler.adapter as ChannelOptionAdapter)
-            if (channel_adapter.itemCount == 0) {
-                channel_adapter.setup()
-            }
-        }
+
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

@@ -116,8 +116,7 @@ class LeafButton(
                                 opus_manager.get_percussion_instrument(beat_key.line_offset)
                             } else {
                                 opus_manager.get_absolute_value(beat_key, position) ?: return@thread
-                            },
-                            opus_manager.get_line_volume(beat_key.channel, beat_key.line_offset)
+                            }
                         )
                     }
                 }

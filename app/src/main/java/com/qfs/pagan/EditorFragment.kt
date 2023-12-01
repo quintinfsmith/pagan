@@ -37,13 +37,13 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
     override fun onResume() {
         super.onResume()
 
-        var main = this.get_main()
+        val main = this.get_main()
         val opus_manager = main.get_opus_manager()
-        var channel_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
+        val channel_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
         if (channel_recycler.adapter == null) {
             ChannelOptionAdapter(opus_manager, channel_recycler)
         }
-        var channel_adapter = (channel_recycler.adapter as ChannelOptionAdapter)
+        val channel_adapter = (channel_recycler.adapter as ChannelOptionAdapter)
         if (channel_adapter.itemCount == 0) {
             channel_adapter.setup()
         }
@@ -70,8 +70,8 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         //this.view_model.backup_json = Json.encodeToString(opus_manager.to_json()).toByteArray()
         this.view_model.backup_path = opus_manager.path
 
-        var main = this.get_main()
-        var channel_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
+        val main = this.get_main()
+        val channel_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
         if (channel_recycler.adapter != null) {
             (channel_recycler.adapter as ChannelOptionAdapter).clear()
         }
@@ -95,7 +95,6 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
     override fun onViewStateRestored(savedInstanceState: Bundle?) {
         super.onViewStateRestored(savedInstanceState)
         val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
-        val path: String?
         val coarse_x: Int
         val fine_x: Int
         val coarse_y: Int
@@ -162,7 +161,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             So this is how we re-pass any incomplete calls
          */
         if (this.view_model.backup_fragment_intent != null) {
-            var (token, bundle) = this.view_model.backup_fragment_intent!!
+            val (token, bundle) = this.view_model.backup_fragment_intent!!
             if (bundle != null) {
                 this.setFragmentResult(token.name, bundle)
             }
@@ -889,11 +888,9 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             return
         }
 
-        val volume = opus_manager.channels[beat_key.channel].get_line_volume(beat_key.line_offset)
         main.play_event(
             beat_key.channel,
-            event_note,
-            volume
+            event_note
         )
     }
 
@@ -946,24 +943,6 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         }
 
     }
-
-    private fun interact_btnCancelLink() {
-        val opus_manager = this.get_main().get_opus_manager()
-        opus_manager.cursor.is_linking = false
-        if (opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Range) {
-            val beat_key = opus_manager.cursor.range!!.first
-            opus_manager.cursor_select(
-                beat_key,
-                opus_manager.get_first_position(beat_key)
-            )
-        } else {
-            opus_manager.cursor_select(
-                opus_manager.cursor.get_beatkey(),
-                opus_manager.cursor.get_position()
-            )
-        }
-    }
-
 
     private fun interact_nsOffset(view: NumberSelector) {
         val main = this.get_main()
@@ -1160,7 +1139,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
 
     fun get_start_column(): Int {
         val opus_manager = this.get_main().get_opus_manager()
-        var cursor = opus_manager.cursor
+        val cursor = opus_manager.cursor
         return when (cursor.mode) {
             OpusManagerCursor.CursorMode.Single,
             OpusManagerCursor.CursorMode.Column -> {

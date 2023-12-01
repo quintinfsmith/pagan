@@ -16,8 +16,7 @@ class MidiFeedbackDispatcher: VirtualMidiInputDevice() {
     // channel 17 for midi2 devices
     private var _active_handles = HashMap<Triple<Int, Int, Boolean>, Int>()
     private var _index_gen = HashMap<Int, Int>()
-    val timeout = 3000
-    val note_duration: Long = 400
+    private val _note_duration: Long = 400
 
     private fun gen_index(channel: Int): Int {
         return runBlocking {
@@ -30,8 +29,8 @@ class MidiFeedbackDispatcher: VirtualMidiInputDevice() {
     }
 
     fun play_note(channel: Int, note: Int, bend: Int = 0, midi2: Boolean = true) {
-        var handle = if (midi2) {
-            var index = this.gen_index(channel)
+        val handle = if (midi2) {
+            val index = this.gen_index(channel)
             this.send_event(
                 NoteOn79(
                     index = index,
@@ -53,16 +52,16 @@ class MidiFeedbackDispatcher: VirtualMidiInputDevice() {
             Triple(channel, note, false)
         }
 
-        var initial_count = runBlocking {
+        val initial_count = runBlocking {
             this@MidiFeedbackDispatcher._handle_mutex.withLock {
-                var count = this@MidiFeedbackDispatcher._active_handles[handle] ?: 0
+                val count = this@MidiFeedbackDispatcher._active_handles[handle] ?: 0
                 this@MidiFeedbackDispatcher._active_handles[handle] = count + 1
                 count + 1
             }
         }
 
         thread {
-            Thread.sleep(this.note_duration)
+            Thread.sleep(this._note_duration)
             val do_cancel = runBlocking {
                 this@MidiFeedbackDispatcher._handle_mutex.withLock {
                     val active_count = this@MidiFeedbackDispatcher._active_handles[handle] ?: 1

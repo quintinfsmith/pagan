@@ -119,8 +119,8 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                 last_y_position = (motionEvent.y - this.scroll_view.y) - this.scroll_view.scrollY.toFloat()
             }
 
-            var rel_y = (motionEvent.y - this.scroll_view.y)  - this.scroll_view.scrollY
-            var delta_y = last_y_position!! - rel_y
+            val rel_y = (motionEvent.y - this.scroll_view.y)  - this.scroll_view.scrollY
+            val delta_y = last_y_position!! - rel_y
 
 
             this.scroll_view.scrollBy(0, delta_y.toInt())
@@ -145,8 +145,8 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                 last_x_position = (motionEvent.x - this.main_recycler.x) - this.main_recycler.scrollY.toFloat()
             }
 
-            var rel_x = (motionEvent.x - this.main_recycler.x)  - this.main_recycler.scrollY
-            var delta_x = last_x_position!! - rel_x
+            val rel_x = (motionEvent.x - this.main_recycler.x)  - this.main_recycler.scrollY
+            val delta_x = last_x_position!! - rel_x
 
 
             this.main_recycler.scrollBy(delta_x.toInt(), 0)
@@ -242,7 +242,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         }
 
         if (!ignore_ui) {
-            var adapter = (this.main_recycler.adapter as ColumnRecyclerAdapter)
+            val adapter = (this.main_recycler.adapter as ColumnRecyclerAdapter)
             adapter.insert_row(y)
             (this.column_label_recycler.adapter as ColumnLabelAdapter).notifyDataSetChanged()
 
@@ -281,7 +281,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
         if (! ignore_ui) {
             this.line_label_layout.insert_labels(y, opus_lines.size)
-            var adapter = (this.main_recycler.adapter as ColumnRecyclerAdapter)
+            val adapter = (this.main_recycler.adapter as ColumnRecyclerAdapter)
             adapter.insert_rows(y, opus_lines.size)
             (this.column_label_recycler.adapter as ColumnLabelAdapter).notifyDataSetChanged()
         }
@@ -413,7 +413,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     fun notify_cell_change(beat_key: BeatKey, ignore_ui: Boolean = false) {
         val opus_manager = this.get_opus_manager()
         val main_recycler_adapter = (this.main_recycler.adapter!! as ColumnRecyclerAdapter)
-        var percussion_visible = this.get_activity().configuration.show_percussion
+        val percussion_visible = this.get_activity().configuration.show_percussion
 
         // Only one tree needs to be checked, since links are all the same
         val new_tree = opus_manager.get_beat_tree(beat_key)
@@ -423,8 +423,8 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             new_tree.get_max_child_weight() * new_tree.size
         }
 
-        var changed_beats = mutableSetOf<Int>()
-        var changed_beat_keys = mutableSetOf<BeatKey>()
+        val changed_beats = mutableSetOf<Int>()
+        val changed_beat_keys = mutableSetOf<BeatKey>()
         for (linked_beat_key in opus_manager.get_all_linked(beat_key)) {
             if (!percussion_visible && opus_manager.is_percussion(linked_beat_key.channel)) {
                 continue
@@ -452,12 +452,12 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                 this.column_label_recycler.adapter!!.notifyItemChanged(beat)
                 main_recycler_adapter.notifyItemChanged(beat)
             }
-            for (beat_key in changed_beat_keys) {
+            for (changed_key in changed_beat_keys) {
                 // Don't bother notifying beat changed, was handled in column notification
-                if (beat_key.beat in changed_beats) {
+                if (changed_key.beat in changed_beats) {
                     continue
                 }
-                main_recycler_adapter.notifyCellChanged(beat_key)
+                main_recycler_adapter.notifyCellChanged(changed_key)
             }
         }
     }
@@ -529,14 +529,14 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     }
 
     fun is_x_visible(x: Int): Boolean {
-        var first_visible = (this.column_label_recycler.layoutManager as LinearLayoutManager).findFirstCompletelyVisibleItemPosition()
-        var last_visible = (this.column_label_recycler.layoutManager as LinearLayoutManager).findLastCompletelyVisibleItemPosition()
+        val first_visible = (this.column_label_recycler.layoutManager as LinearLayoutManager).findFirstCompletelyVisibleItemPosition()
+        val last_visible = (this.column_label_recycler.layoutManager as LinearLayoutManager).findLastCompletelyVisibleItemPosition()
         return x in (first_visible .. last_visible)
     }
     fun is_y_visible(y: Int): Boolean {
         val line_height = (resources.getDimension(R.dimen.line_height)).toInt()
-        var scroll_offset = this.line_label_layout.scrollY / line_height
-        var height = this.scroll_view.measuredHeight / line_height
+        val scroll_offset = this.line_label_layout.scrollY / line_height
+        val height = this.scroll_view.measuredHeight / line_height
         return y >= scroll_offset && y <= (scroll_offset + height)
     }
 
@@ -613,7 +613,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
     fun update_percussion_visibility() {
         val main = this.get_activity()
-        var opus_manager = this.get_opus_manager()
+        val opus_manager = this.get_opus_manager()
         val percussion_channel = opus_manager.channels.last()
         if (main.configuration.show_percussion) {
             if (this.column_width_map.isNotEmpty()) {
@@ -622,8 +622,8 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                 }
             }
         } else {
-            var target_line_count = opus_manager.get_visible_line_count()
-            var current_line_count = opus_manager.get_total_line_count()
+            val target_line_count = opus_manager.get_visible_line_count()
+            val current_line_count = opus_manager.get_total_line_count()
             for (i in target_line_count until current_line_count) {
                 this.remove_row(target_line_count)
             }

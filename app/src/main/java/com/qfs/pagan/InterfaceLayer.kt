@@ -32,7 +32,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         }
     }
     private fun runOnUiThread(callback: (MainActivity) -> Unit) {
-        var main = this.activity
+        val main = this.activity
         main.runOnUiThread {
             callback(main)
         }
@@ -56,7 +56,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         this.runOnUiThread { main: MainActivity ->
             main.update_channel_instruments()
             main.populate_active_percussion_names()
-            var channel_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
+            val channel_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
             if (channel_recycler.adapter != null) {
                 (channel_recycler.adapter as ChannelOptionAdapter).notifyItemChanged(channel)
             }
@@ -412,9 +412,9 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             null,
             UI_LOCK_PARTIAL -> {
                 this.runOnUiThread { main ->
-                    var channel_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
+                    val channel_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
                     if (channel_recycler.adapter != null) {
-                        var channel_adapter = (channel_recycler.adapter as ChannelOptionAdapter)
+                        val channel_adapter = (channel_recycler.adapter as ChannelOptionAdapter)
                         channel_adapter.add_channel()
                     }
                 }
@@ -442,7 +442,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     override fun remove_beat(beat_index: Int) {
         // Need to clear cursor before change since the way the editor_table updates
         // Cursors doesn't take into account changes to column count
-        var bkp_cursor = this.cursor.copy()
+        val bkp_cursor = this.cursor.copy()
         this.cursor_clear()
 
         super.remove_beat(beat_index)
@@ -475,7 +475,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     override fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<OpusEvent>>?) {
         // Need to clear cursor before change since the way the editor_table updates
         // Cursors doesn't take into account changes to column count
-        var bkp_cursor = this.cursor.copy()
+        val bkp_cursor = this.cursor.copy()
         this.cursor_clear()
 
         super.insert_beat(beat_index, beats_in_column)
@@ -599,9 +599,9 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             null,
             UI_LOCK_PARTIAL -> {
                 this.runOnUiThread { main ->
-                    var channel_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
+                    val channel_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
                     if (channel_recycler.adapter != null) {
-                        var channel_adapter = (channel_recycler.adapter as ChannelOptionAdapter)
+                        val channel_adapter = (channel_recycler.adapter as ChannelOptionAdapter)
                         channel_adapter.remove_channel(channel)
                     }
                 }
@@ -630,9 +630,9 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         }
         this.get_editor_table()?.clear()
         this.runOnUiThread { main ->
-            var channel_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
+            val channel_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
             if (channel_recycler.adapter != null) {
-                var channel_adapter = (channel_recycler.adapter as ChannelOptionAdapter)
+                val channel_adapter = (channel_recycler.adapter as ChannelOptionAdapter)
                 channel_adapter.clear()
             }
         }
@@ -1334,7 +1334,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     fun make_percussion_visible() {
-        var main = this.activity
+        val main = this.activity
         main.configuration.show_percussion = true
         main.save_configuration()
 

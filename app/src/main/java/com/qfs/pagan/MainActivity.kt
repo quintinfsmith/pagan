@@ -325,8 +325,8 @@ class MainActivity : AppCompatActivity() {
             }
             this.update_channel_instruments()
 
-            var channel_recycler = this@MainActivity.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
-            var soundfont = this@MainActivity.get_soundfont()
+            val channel_recycler = this@MainActivity.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
+            val soundfont = this@MainActivity.get_soundfont()
             if (channel_recycler != null && channel_recycler.adapter != null && soundfont != null) {
                 (channel_recycler.adapter as ChannelOptionAdapter).set_soundfont(soundfont)
             }
@@ -369,11 +369,11 @@ class MainActivity : AppCompatActivity() {
             R.string.drawer_close
         ) {
             override fun onDrawerOpened(drawerView: View) {
-                var channel_recycler = this@MainActivity.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
+                val channel_recycler = this@MainActivity.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
                 if (channel_recycler.adapter == null) {
                     ChannelOptionAdapter(this@MainActivity._opus_manager, channel_recycler)
                 }
-                var channel_adapter = (channel_recycler.adapter as ChannelOptionAdapter)
+                val channel_adapter = (channel_recycler.adapter as ChannelOptionAdapter)
                 if (channel_adapter.itemCount == 0) {
                     channel_adapter.setup()
                 }
@@ -496,7 +496,7 @@ class MainActivity : AppCompatActivity() {
         }
         this.runOnUiThread {
             if (blocker_view != null) {
-                blocker_view?.visibility = View.VISIBLE
+                blocker_view.visibility = View.VISIBLE
             }
             this.set_playback_button(R.drawable.baseline_play_disabled_24)
         }
@@ -519,7 +519,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun playback_start_midi_device(start_point: Int = 0) {
-        var opus_manager = this.get_opus_manager()
+        val opus_manager = this.get_opus_manager()
         val midi = opus_manager.get_midi(start_point)
 
         thread {
@@ -570,7 +570,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     // Ui Wrappers ////////////////////////////////////////////
-    fun drawer_close() {
+    private fun drawer_close() {
         findViewById<DrawerLayout>(R.id.drawer_layout).closeDrawers()
     }
 
@@ -598,7 +598,7 @@ class MainActivity : AppCompatActivity() {
 
     fun loading_reticle_show(title_msg: String? = null) {
         if (title_msg != null) {
-            this.force_title_text(title_msg!!)
+            this.force_title_text(title_msg)
         }
         this.runOnUiThread {
             if (this@MainActivity._progress_bar == null) {
@@ -786,9 +786,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun setup_project_config_drawer_export_button() {
-        var export_options = this.get_exportable_options()
-        var export_button: View = this.findViewById<View>(R.id.btnExportProject) ?: return
+    private fun setup_project_config_drawer_export_button() {
+        val export_options = this.get_exportable_options()
+        val export_button: View = this.findViewById<View>(R.id.btnExportProject) ?: return
         if (export_options.isNotEmpty()) {
             export_button.setOnClickListener {
                 this.dialog_popup_menu(
@@ -808,8 +808,8 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun get_exportable_options(): List<Pair<Int, String>> {
-        var export_options = mutableListOf<Pair<Int, String>>()
+    private fun get_exportable_options(): List<Pair<Int, String>> {
+        val export_options = mutableListOf<Pair<Int, String>>()
         if (this.get_opus_manager().radix == 12) {
             export_options.add( Pair(0, getString(R.string.export_option_midi)) )
         }
@@ -875,7 +875,7 @@ class MainActivity : AppCompatActivity() {
         return this._opus_manager
     }
 
-    fun play_event(channel: Int, event_value: Int, velocity: Int = 64) {
+    fun play_event(channel: Int, event_value: Int) {
         val midi_channel = this._opus_manager.channels[channel].midi_channel
 
         val radix = this._opus_manager.radix
@@ -917,7 +917,7 @@ class MainActivity : AppCompatActivity() {
         val new_path = this.project_manager.get_new_path()
 
         this._opus_manager.path = new_path
-        this._opus_manager.set_project_name(filename?.substring(0, filename?.lastIndexOf(".") ?: filename.length) ?: getString(R.string.default_imported_midi_title))
+        this._opus_manager.set_project_name(filename?.substring(0, filename.lastIndexOf(".")) ?: getString(R.string.default_imported_midi_title))
         this._opus_manager.clear_history()
     }
 
@@ -961,8 +961,8 @@ class MainActivity : AppCompatActivity() {
         }
         this.setup_project_config_drawer_export_button()
 
-        var channel_recycler = this.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
-        var channel_adapter = channel_recycler.adapter as ChannelOptionAdapter
+        val channel_recycler = this.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
+        val channel_adapter = channel_recycler.adapter as ChannelOptionAdapter
         if (this._soundfont != null) {
             channel_adapter.set_soundfont(this._soundfont!!)
         } else {
@@ -976,7 +976,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun disable_soundfont() {
-        val rvActiveChannels: ChannelOptionRecycler = this.findViewById(R.id.rvActiveChannels)
         this.update_channel_instruments()
         this._soundfont = null
         this.configuration.soundfont = null
@@ -1165,8 +1164,7 @@ class MainActivity : AppCompatActivity() {
                 try {
                     "${dest.substring(0, dstart)}$source${dest.substring(dend)}".toInt()
                     return null
-                } catch (nfe: NumberFormatException) {
-                }
+                } catch (_: NumberFormatException) { }
                 return ""
             }
         })
@@ -1261,7 +1259,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun export_wav() {
-        var name = this.get_export_name()
+        val name = this.get_export_name()
 
         val intent = Intent(Intent.ACTION_CREATE_DOCUMENT)
         intent.addCategory(Intent.CATEGORY_OPENABLE)
@@ -1279,8 +1277,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun export_midi() {
-        val opus_manager = this.get_opus_manager()
-        var name = this.get_export_name()
+        val name = this.get_export_name()
 
         val intent = Intent(Intent.ACTION_CREATE_DOCUMENT)
         intent.addCategory(Intent.CATEGORY_OPENABLE)
@@ -1291,7 +1288,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun export_project() {
-        var name = this.get_export_name()
+        val name = this.get_export_name()
 
         val intent = Intent(Intent.ACTION_CREATE_DOCUMENT)
         intent.addCategory(Intent.CATEGORY_OPENABLE)

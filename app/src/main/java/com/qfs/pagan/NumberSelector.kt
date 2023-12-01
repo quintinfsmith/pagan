@@ -42,7 +42,7 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
         override fun onCreateDrawableState(extraSpace: Int): IntArray? {
             val drawableState = super.onCreateDrawableState(extraSpace + 1)
             if (this._state_active) {
-                mergeDrawableStates(drawableState, NumberSelectorButton.STATE_ACTIVE)
+                mergeDrawableStates(drawableState, STATE_ACTIVE)
             }
             return drawableState
         }
@@ -132,9 +132,9 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
 
     private fun populate() {
         val orientation = this.orientation
-        var margin = resources.getDimension(R.dimen.normal_padding).roundToInt()
+        val margin = resources.getDimension(R.dimen.normal_padding).roundToInt()
         for (i in 0 .. ((this.max - this.min) / 12)) {
-            var new_linear_layout = LinearLayout(this.context)
+            val new_linear_layout = LinearLayout(this.context)
             this.addView(new_linear_layout)
 
             if (this.orientation == HORIZONTAL) {
@@ -183,7 +183,7 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
 
         this.children.forEachIndexed { i: Int, row: View ->
             (row as ViewGroup).children.forEachIndexed { j: Int, button: View ->
-                var layout_params = button.layoutParams
+                val layout_params = button.layoutParams
                 if (orientation == HORIZONTAL) {
                     (layout_params as MarginLayoutParams).setMargins(
                         0,

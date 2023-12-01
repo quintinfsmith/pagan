@@ -47,7 +47,7 @@ class RelativeOptionSelector(context: Context, attrs: AttributeSet) : LinearLayo
         override fun onCreateDrawableState(extraSpace: Int): IntArray? {
             val drawableState = super.onCreateDrawableState(extraSpace + 1)
             if (this._state_active) {
-                mergeDrawableStates(drawableState, RelativeOptionSelectorButton.STATE_ACTIVE)
+                mergeDrawableStates(drawableState, STATE_ACTIVE)
             }
             return drawableState
         }

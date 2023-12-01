@@ -153,7 +153,7 @@ class ColumnRecyclerAdapter(val recycler: ColumnRecycler, editor_table: EditorTa
     fun notifyCellChanged(beat_key: BeatKey, state_only: Boolean = false) {
         val x = beat_key.beat
         val y = this.get_opus_manager().get_abs_offset(beat_key.channel, beat_key.line_offset)
-        var column_layout = this.get_column_layout(x)
+        val column_layout = this.get_column_layout(x)
         //this.notifyItemChanged(x)
         if (column_layout == null) {
             this.notifyItemChanged(x)
@@ -163,7 +163,7 @@ class ColumnRecyclerAdapter(val recycler: ColumnRecycler, editor_table: EditorTa
     }
 
     fun notifyCellChanged(y: Int, x: Int, state_only: Boolean = false) {
-        var column_layout = this.get_column_layout(x)
+        val column_layout = this.get_column_layout(x)
         if (column_layout == null) {
             this.notifyItemChanged(x)
         } else {
@@ -176,7 +176,7 @@ class ColumnRecyclerAdapter(val recycler: ColumnRecycler, editor_table: EditorTa
         }
     }
     fun notifyColumnStateChanged(x: Int) {
-        var column_layout = this.get_column_layout(x) ?: return
+        val column_layout = this.get_column_layout(x) ?: return
         column_layout.notifyItemRangeChanged(0, column_layout.childCount, true)
     }
 }

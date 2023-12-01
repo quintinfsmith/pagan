@@ -5,7 +5,6 @@ import android.view.ContextThemeWrapper
 import android.view.DragEvent
 import android.view.MotionEvent
 import android.view.View
-import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import androidx.appcompat.widget.AppCompatTextView
 import com.qfs.pagan.opusmanager.LinksLayer
@@ -93,20 +92,20 @@ class LineLabelView(context: Context, var channel: Int, var line_offset: Int): A
         }
         val opus_manager = this.get_opus_manager()
         if (this.channel % 2 == 0) {
-            mergeDrawableStates(drawableState, LineLabelView.STATE_CHANNEL_EVEN)
+            mergeDrawableStates(drawableState, STATE_CHANNEL_EVEN)
         }
 
         when (opus_manager.cursor.mode) {
             OpusManagerCursor.CursorMode.Single,
             OpusManagerCursor.CursorMode.Row -> {
                 if (opus_manager.cursor.channel == this.channel && opus_manager.cursor.line_offset == this.line_offset) {
-                    mergeDrawableStates(drawableState, LineLabelView.STATE_FOCUSED)
+                    mergeDrawableStates(drawableState, STATE_FOCUSED)
                 }
             }
             OpusManagerCursor.CursorMode.Range -> {
                 val (first, second) = opus_manager.cursor.range!!
                 if ((this.channel > first.channel && this.channel < second.channel) || (this.channel == first.channel && this.line_offset >= first.line_offset) || (this.channel == second.channel && this.line_offset <= second.line_offset)) {
-                    mergeDrawableStates(drawableState, LineLabelView.STATE_FOCUSED)
+                    mergeDrawableStates(drawableState, STATE_FOCUSED)
                 }
             }
             else -> { }
@@ -127,11 +126,6 @@ class LineLabelView(context: Context, var channel: Int, var line_offset: Int): A
 
     fun get_row(): Pair<Int, Int> {
         return Pair(this.channel, this.line_offset)
-    }
-
-    fun get_position(): Int {
-        var parent = this.parent as ViewGroup
-        return parent.indexOfChild(this)
     }
 
     override fun onTouch(view: View?, touchEvent: MotionEvent?): Boolean {

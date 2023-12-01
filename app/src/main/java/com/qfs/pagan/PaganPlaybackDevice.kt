@@ -50,8 +50,8 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
         if (!this.is_playing || this.play_cancelled) {
             return
         }
-        var i = x + this.start_beat
-        var opus_manager = this.activity.get_opus_manager()
+        val i = x + this.start_beat
+        val opus_manager = this.activity.get_opus_manager()
         if (i >= opus_manager.beat_count) {
             return
         }
@@ -63,13 +63,13 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
     }
 
     fun play_opus(start_beat: Int) {
-        var midi = this.activity.get_opus_manager().get_midi(start_beat)
+        val midi = this.activity.get_opus_manager().get_midi(start_beat)
         this.start_beat = start_beat
         this.play_midi(midi)
     }
 
     fun export_wav_cancel() {
-        var builder = this.get_notification()
+        val builder = this.get_notification()
         if (builder != null) {
             builder.setContentText(this.activity.getString(R.string.export_cancelled))
                 .setProgress(0, 0, false)
@@ -109,15 +109,15 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
 
         if (this.active_notification == null) {
             this.get_notification_channel()
-            var cancel_export_flag = "com.qfs.pagan.CANCEL_EXPORT_WAV"
-            var pending_cancel_intent = PendingIntent.getBroadcast(
+            val cancel_export_flag = "com.qfs.pagan.CANCEL_EXPORT_WAV"
+            val pending_cancel_intent = PendingIntent.getBroadcast(
                 this.activity,
                 0,
                 Intent( cancel_export_flag),
                 PendingIntent.FLAG_IMMUTABLE
             )
 
-            var builder = NotificationCompat.Builder(this.activity, CHANNEL_ID)
+            val builder = NotificationCompat.Builder(this.activity, CHANNEL_ID)
                 .setContentTitle(this.activity.getString(R.string.export_wav_notification_title, this.activity.get_opus_manager().project_name))
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setSmallIcon(R.mipmap.logo_round)
@@ -133,10 +133,10 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
     fun export_wav(midi: Midi, file_descriptor: ParcelFileDescriptor) {
         this.activity.feedback_msg(this.activity.getString(R.string.export_wav_feedback))
 
-        var original_delay = this.buffer_delay
+        val original_delay = this.buffer_delay
         this.buffer_delay = 0
         this.parse_midi(midi)
-        var tmp_file = File("${this.activity.filesDir}/.tmp_wav_data")
+        val tmp_file = File("${this.activity.filesDir}/.tmp_wav_data")
         if (tmp_file.exists()) {
             tmp_file.delete()
         }
@@ -145,14 +145,14 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
         var buffered_output_stream = BufferedOutputStream(output_stream)
         var data_output_stream = DataOutputStream(buffered_output_stream)
 
-        var notification_manager = NotificationManagerCompat.from(this@PaganPlaybackDevice.activity)
-        var builder = this@PaganPlaybackDevice.get_notification()
+        val notification_manager = NotificationManagerCompat.from(this@PaganPlaybackDevice.activity)
+        val builder = this@PaganPlaybackDevice.get_notification()
 
         runBlocking {
             this@PaganPlaybackDevice.export_wav_thread = launch {
                 var data_byte_count = 0
-                var ts_deltas = mutableListOf<Int>()
-                var est_chunk_count = (this@PaganPlaybackDevice.approximate_frame_count / this@PaganPlaybackDevice.sample_handle_manager.buffer_size)
+                val ts_deltas = mutableListOf<Int>()
+                val est_chunk_count = (this@PaganPlaybackDevice.approximate_frame_count / this@PaganPlaybackDevice.sample_handle_manager.buffer_size)
                 var chunk_count = 0
 
                 if (builder != null) {

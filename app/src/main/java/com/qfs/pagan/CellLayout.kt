@@ -32,9 +32,9 @@ class CellLayout(val column_layout: ColumnLayout, val y: Int): LinearLayout(colu
 
 
     fun invalidate_all() {
-        var view_stack = mutableListOf<View>(this)
+        val view_stack = mutableListOf<View>(this)
         while (view_stack.isNotEmpty()) {
-            var current_view = view_stack.removeAt(0)
+            val current_view = view_stack.removeAt(0)
             if (current_view is ViewGroup) {
                 for (child in current_view.children) {
                     view_stack.add(child)
@@ -98,8 +98,8 @@ class CellLayout(val column_layout: ColumnLayout, val y: Int): LinearLayout(colu
     }
 
     fun get_beat_key(): BeatKey {
-        var opus_manager = this.get_opus_manager()
-        var (channel, line_offset) = opus_manager.get_std_offset(this.y)
+        val opus_manager = this.get_opus_manager()
+        val (channel, line_offset) = opus_manager.get_std_offset(this.y)
         return BeatKey(channel, line_offset, this.get_beat())
     }
 

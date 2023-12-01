@@ -33,7 +33,7 @@ class LineLabelColumnLayout(editor_table: EditorTable): ScrollView(editor_table.
     }
 
     fun insert_labels(y: Int, count: Int) {
-        var opus_manager = this.get_opus_manager()
+        val opus_manager = this.get_opus_manager()
         var (channel, line_offset) = opus_manager.get_std_offset(y)
         for (i in 0 until count) {
             val label_view = LineLabelView(this.context, channel, line_offset)
@@ -101,13 +101,13 @@ class LineLabelColumnLayout(editor_table: EditorTable): ScrollView(editor_table.
             return
         }
 
-        var view_stack = mutableListOf<View>()
-        var opus_manager = this.get_opus_manager()
+        val view_stack = mutableListOf<View>()
+        val opus_manager = this.get_opus_manager()
 
         // calculate the new channel/line_offset by it's previous neighbour
         var (channel, line_offset) = if (y > 0) {
-            var prev_label = this.inner_wrapper.getChildAt(y - 1) as LineLabelView
-            var prev = prev_label.get_row()
+            val prev_label = this.inner_wrapper.getChildAt(y - 1) as LineLabelView
+            val prev = prev_label.get_row()
             if (prev.second < opus_manager.channels[prev.first].size - 1) {
                 Pair(prev.first, prev.second + 1)
             } else {
@@ -119,7 +119,7 @@ class LineLabelColumnLayout(editor_table: EditorTable): ScrollView(editor_table.
 
         for (i in 0 until count) {
             if (i + y < this.inner_wrapper.childCount) {
-                var label = this.inner_wrapper.getChildAt(i + y) as LineLabelView
+                val label = this.inner_wrapper.getChildAt(i + y) as LineLabelView
                 label.channel = channel
                 label.line_offset = line_offset
 
@@ -140,9 +140,9 @@ class LineLabelColumnLayout(editor_table: EditorTable): ScrollView(editor_table.
         }
 
         while (view_stack.isNotEmpty()) {
-            var current_view = view_stack.removeAt(0)
+            val current_view = view_stack.removeAt(0)
             if (current_view is ViewGroup) {
-                for (child in (current_view as ViewGroup).children) {
+                for (child in current_view.children) {
                     view_stack.add(child)
                 }
             }

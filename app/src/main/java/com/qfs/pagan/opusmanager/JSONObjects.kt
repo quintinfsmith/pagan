@@ -18,7 +18,7 @@ data class LoadedJSONData(
     var channels: List<ChannelJSONData>,
     var reflections: List<List<BeatKey>>? = null,
     var transpose: Int = 0,
-    var name: String = "New Opus"
+    var name: String = BaseLayer.DEFAULT_NAME
 )
 
 @Serializable
@@ -43,5 +43,5 @@ data class LoadedJSONData0(
     var channels: List<ChannelJSONData0>,
     var reflections: List<List<BeatKey>>? = null,
     var transpose: Int = 0,
-    var name: String = "New Opus"
+    var name: String = BaseLayer.DEFAULT_NAME
 )

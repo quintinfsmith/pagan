@@ -170,9 +170,9 @@ class LeafButton(
             label_offset.layoutParams.height = MATCH_PARENT
 
             label_prefix.text = if (event.note < 0) {
-                "-"
+                context.getString(R.string.pfx_subtract)
             } else {
-                "+"
+                context.getString(R.string.pfx_add)
             }
             label_octave.text = "${abs(event.note) / event.radix}"
             label_offset.text = "${abs(event.note) % event.radix}"

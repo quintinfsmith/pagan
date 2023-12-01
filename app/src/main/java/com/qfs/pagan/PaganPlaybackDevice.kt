@@ -71,7 +71,7 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
     fun export_wav_cancel() {
         var builder = this.get_notification()
         if (builder != null) {
-            builder.setContentText("Cancelled")
+            builder.setContentText(this.activity.getString(R.string.export_cancelled))
                 .setProgress(0, 0, false)
                 .setAutoCancel(true)
                 .setTimeoutAfter(5000)
@@ -88,8 +88,8 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
         } else if (this.notification_channel == null) {
             val notification_manager = NotificationManagerCompat.from(this.activity)
             // Create the NotificationChannel.
-            val name = "Export Wav File Progress"
-            val descriptionText = "Converting Pagan project to .wav"
+            val name = this.activity.getString(R.string.export_wav_file_progress)
+            val descriptionText = this.activity.getString(R.string.export_wav_notification_description)
             val importance = NotificationManager.IMPORTANCE_DEFAULT
             val mChannel = NotificationChannel(CHANNEL_ID, name, importance)
             mChannel.description = descriptionText
@@ -118,11 +118,11 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
             )
 
             var builder = NotificationCompat.Builder(this.activity, CHANNEL_ID)
-                .setContentTitle("Exporting ${this.activity.get_opus_manager().project_name}")
+                .setContentTitle(this.activity.getString(R.string.export_wav_notification_title, this.activity.get_opus_manager().project_name))
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setSmallIcon(R.mipmap.logo_round)
                 .setSilent(true)
-                .addAction(R.drawable.baseline_cancel_24, "Cancel", pending_cancel_intent)
+                .addAction(R.drawable.baseline_cancel_24, this.activity.getString(android.R.string.cancel), pending_cancel_intent)
 
             this.active_notification = builder
         }
@@ -131,7 +131,7 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
     }
 
     fun export_wav(midi: Midi, file_descriptor: ParcelFileDescriptor) {
-        this.activity.feedback_msg("Exporting to wav")
+        this.activity.feedback_msg(this.activity.getString(R.string.export_wav_feedback))
 
         var original_delay = this.buffer_delay
         this.buffer_delay = 0
@@ -238,7 +238,7 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
                 input_stream.close()
 
                 if (builder != null) {
-                    builder.setContentText("Done")
+                    builder.setContentText(this@PaganPlaybackDevice.activity.getString(R.string.export_wav_notification_complete))
                         .setProgress(0, 0, false)
                         .setAutoCancel(true)
                         .clearActions()
@@ -247,7 +247,7 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
 
                     notification_manager.notify(NOTIFICATION_ID, builder.build())
                 }
-                (this@PaganPlaybackDevice.activity).feedback_msg("Done Export")
+                (this@PaganPlaybackDevice.activity).feedback_msg(this@PaganPlaybackDevice.activity.getString(R.string.export_wav_feedback_complete))
             }
         }
 

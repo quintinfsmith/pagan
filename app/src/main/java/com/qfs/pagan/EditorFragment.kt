@@ -550,7 +550,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
                 btnChoosePercussion.text = main.getString(
                     R.string.label_choose_percussion,
                     instrument,
-                    main.get_drum_name(instrument) ?: "Drum Not Found"
+                    main.get_drum_name(instrument) ?: getString(R.string.drum_not_found)
                 )
             }
         }
@@ -785,7 +785,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         if (current_tree.is_event()) {
             val event = current_tree.get_event()!!
             btnDuration.setOnClickListener {
-                main.dialog_number_input("Duration", 1, 99, default=event.duration) { value: Int ->
+                main.dialog_number_input(getString(R.string.dlg_duration), 1, 99, default=event.duration) { value: Int ->
                     val adj_value = max(value, 1)
                     val cursor = opus_manager.cursor
                     val beat_key = cursor.get_beatkey()

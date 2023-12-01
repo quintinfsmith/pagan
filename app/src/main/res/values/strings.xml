@@ -120,6 +120,21 @@
     <string name="reticle_msg_load_project">Loading Project...</string>
     <string name="reticle_msg_import_midi">Importing Midi File...</string>
     <string name="reticle_msg_start_playback">Starting Playback...</string>
+    <string name="dlg_export">Export Project to...</string>
+    <string name="export_option_midi">Midi File</string>
+    <string name="export_option_wav">Wav File</string>
+    <string name="fluid_font_filename">FluidR3_GM_GS.sf2</string>
+    <string name="drum_not_found">Drum Not Found</string>
+    <string name="dlg_duration">Duration</string>
+    <string name="btn_percussion_visible">☑</string>
+    <string name="btn_percussion_hidden">☐</string>
+    <string name="export_cancelled">Export Cancelled</string>
+    <string name="export_wav_file_progress">Export Wav File Progress</string>
+    <string name="export_wav_notification_description">Converting Pagan project to .wav</string>
+    <string name="export_wav_notification_title">Exporting %1$s</string>
+    <string name="export_wav_feedback">Exporting to wav</string>
+    <string name="export_wav_feedback_complete">Done Export</string>
+    <string name="export_wav_notification_complete">Done</string>
     <string-array name="relative">
         <item>@string/pfx_add</item>
         <item>@string/pfx_subtract</item>

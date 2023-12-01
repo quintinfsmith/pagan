@@ -119,9 +119,9 @@ class ChannelOptionAdapter(
     private fun get_percussion_visibility_button_text(): String {
         val main = this.get_activity()
         return if (main.configuration.show_percussion) {
-            "\u2611"
+            main.getString(R.string.btn_percussion_visible)
         } else {
-            "\u2610"
+            main.getString(R.string.btn_percussion_hidden)
         }
     }
 

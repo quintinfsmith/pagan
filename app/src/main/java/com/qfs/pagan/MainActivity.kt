@@ -651,10 +651,10 @@ class MainActivity : AppCompatActivity() {
             } else {
                 when (this.get_active_fragment()) {
                     is GlobalSettingsFragment -> {
-                        "Settings"
+                        resources.getString(R.string.settings_fragment_label)
                     }
                     is LoadFragment -> {
-                        "Load Project"
+                        resources.getString(R.string.load_fragment_label)
                     }
                     else -> {
                         this.get_opus_manager().project_name
@@ -734,7 +734,7 @@ class MainActivity : AppCompatActivity() {
 
         btnTranspose.setOnClickListener {
             this.dialog_number_input(
-                "Transpose",
+                resources.getString(R.string.dlg_transpose),
                 0,
                 this.get_opus_manager().radix - 1
             ) { value: Int ->
@@ -792,7 +792,7 @@ class MainActivity : AppCompatActivity() {
         if (export_options.isNotEmpty()) {
             export_button.setOnClickListener {
                 this.dialog_popup_menu(
-                    "Export Project to...",
+                    getString(R.string.dlg_export),
                     export_options,
                     default = null
                 ) { index: Int, value: Int ->
@@ -811,11 +811,11 @@ class MainActivity : AppCompatActivity() {
     fun get_exportable_options(): List<Pair<Int, String>> {
         var export_options = mutableListOf<Pair<Int, String>>()
         if (this.get_opus_manager().radix == 12) {
-            export_options.add( Pair(0, "Midi File") )
+            export_options.add( Pair(0, getString(R.string.export_option_midi)) )
         }
 
         if (this.get_soundfont() != null) {
-            export_options.add( Pair(1, "Wav File") )
+            export_options.add( Pair(1, getString(R.string.export_option_wav)) )
         }
 
         return export_options
@@ -926,7 +926,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun is_fluid_soundfont_available(): Boolean {
-        val filename = "FluidR3_GM_GS.sf2"
+        val filename = getString(R.string.fluid_font_filename)
         val soundfont_dir = this.get_soundfont_directory()
         val fluid_file = File("${soundfont_dir.path}/$filename")
         return fluid_file.exists()

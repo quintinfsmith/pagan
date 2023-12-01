@@ -41,6 +41,7 @@ open class BaseLayer {
 
     companion object {
         var DEFAULT_PERCUSSION: Int = 0
+        val DEFAULT_NAME = "New Opus"
         fun from_midi(midi: Midi): BaseLayer {
             var new = BaseLayer()
             new.import_midi(midi)
@@ -54,7 +55,7 @@ open class BaseLayer {
     var beat_count: Int = 1
     var channels: MutableList<OpusChannel> = mutableListOf()
     var path: String? = null
-    var project_name: String = "New Opus"
+    var project_name: String = DEFAULT_NAME
     var radix: Int = 12
     var tempo: Float = 120F
     var transpose: Int = 0
@@ -1071,7 +1072,7 @@ open class BaseLayer {
             this.remove_channel(i)
         }
         this.path = null
-        this.project_name = "New Opus"
+        this.project_name = BaseLayer.DEFAULT_NAME
         this.tempo = 120F
         this.radix = 12
         this.transpose = 0

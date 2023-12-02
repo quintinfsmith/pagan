@@ -1,0 +1,5 @@
+Bugfixes:
+    - Fixed crash on new/import sometimes
+    - Fixed crash on new column from last column
+    - Fixed crash onResume on lower powered devices and larger projects
+    - Fixed scrolling to start of beat when selecting exceptionally wide divisions

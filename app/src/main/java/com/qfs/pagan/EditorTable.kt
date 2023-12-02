@@ -19,6 +19,7 @@ import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.OpusChannel
 import com.qfs.pagan.structure.OpusTree
 import kotlin.math.max
+import kotlin.math.roundToInt
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
 class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, attrs) {
@@ -39,6 +40,15 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     // Scroll Locks
     var _label_scroll_locked = false
     var _main_scroll_locked = false
+
+    companion object {
+        val SECTION_OUT_OF_VIEW = 0
+        val SECTION_VIEW_PARTIAL_LEFT = 1
+        val SECTION_VIEW_PARTIAL_RIGHT = 2
+        val SECTION_VIEW_PARTIAL_OVERSIZED = 3
+        val SECTION_VIEW_COMPLETE = 4
+
+    }
 
     init {
         this.top_row.addView(this.spacer)
@@ -480,8 +490,11 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     }
 
     fun scroll_to_position(x: Int? = null, y: Int? = null, position: List<Int>? = null, force: Boolean = false) {
-        if (x != null && (force || ! this.is_x_visible(x))) {
-            this.scroll_to_x(x)
+        if (x != null) {
+            var position_visibility = this.get_position_visibility(x)
+            if (force || position_visibility < SECTION_VIEW_PARTIAL_OVERSIZED) {
+                this.scroll_to_x(x)
+            }
         }
         if (y != null && (force || ! this.is_y_visible(y))) {
             this.scroll_to_y(y)
@@ -514,12 +527,43 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             new_position.add(0)
         }
 
-        if (! this.is_x_visible(beat_key.beat)) {
-            this.scroll_to_x(beat_key.beat)
+        val y = opus_manager.get_abs_offset(beat_key.channel, beat_key.line_offset)
+        if (position == null) {
+            if (this.get_position_visibility(beat_key.beat) < SECTION_VIEW_PARTIAL_OVERSIZED) {
+                this.scroll_to_x(beat_key.beat)
+            }
+        } else {
+            var leaf_offset = 0
+            tree = this.get_opus_manager().get_beat_tree(beat_key)
+            var sibling_weight = tree.get_max_child_weight()
+            val max_cell_weight = if (tree.is_leaf()) {
+                1f
+            } else {
+                (sibling_weight * tree.size).toFloat()
+            }
+
+            position.forEachIndexed { i: Int, x: Int ->
+                leaf_offset += sibling_weight * x
+                tree = tree[x]
+                if (i < position.size - 1) {
+                    sibling_weight /= max(tree.size, 1)
+                }
+            }
+
+            val max_column_weight = this.column_width_maxes[beat_key.beat].toFloat()
+            val position_offset = leaf_offset / max_cell_weight
+
+            var position_visibility = this.get_position_visibility(beat_key.beat, Pair(position_offset, sibling_weight.toFloat() / max_cell_weight))
+            if (position_visibility < SECTION_VIEW_PARTIAL_OVERSIZED) {
+                val leaf_width = resources.getDimension(R.dimen.base_leaf_width)
+                this.precise_scroll(
+                    beat_key.beat,
+                    0 - (leaf_width * (leaf_offset * max_column_weight / max_cell_weight)).toInt()
+                )
+            }
         }
 
-        val y = opus_manager.get_abs_offset(beat_key.channel, beat_key.line_offset )
-        if (! this.is_y_visible(y)) {
+        if (!this.is_y_visible(y)) {
             this.scroll_to_y(y)
         }
 
@@ -528,11 +572,73 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         // this.main_recycler.scrollBy(leaf.x.toInt(), 0)
     }
 
-    fun is_x_visible(x: Int): Boolean {
-        val first_visible = (this.column_label_recycler.layoutManager as LinearLayoutManager).findFirstCompletelyVisibleItemPosition()
-        val last_visible = (this.column_label_recycler.layoutManager as LinearLayoutManager).findLastCompletelyVisibleItemPosition()
-        return x in (first_visible .. last_visible)
+    fun get_position_visibility(beat: Int, section: Pair<Float, Float> = Pair(0f,1f)): Int {
+        val column_lm = this.column_label_recycler.layoutManager!! as LinearLayoutManager
+        val first_visible = column_lm.findFirstVisibleItemPosition()
+        val last_visible = column_lm.findLastVisibleItemPosition()
+
+        return if (beat in (first_visible + 1) until last_visible) {
+            SECTION_VIEW_COMPLETE
+        } else {
+            val visible_width = this.column_label_recycler.measuredWidth
+            val leaf_width = resources.getDimension(R.dimen.base_leaf_width)
+            val beat_leaf_count = this.column_width_maxes[beat]
+            val beat_width = beat_leaf_count * leaf_width
+
+            val section_start = (section.first * beat_width).roundToInt()
+            val section_end = ((section.first + section.second) * beat_width).roundToInt()
+
+            if (first_visible == last_visible) {
+                val first_column = column_lm.findViewByPosition(first_visible)
+                val fine_x = (first_column?.x ?: 0f).roundToInt()
+
+                val beat_start_proceeds_view_start = section_start + fine_x > 0
+                val beat_end_precedes_view_end = section_end + fine_x < visible_width
+                val start_visible = beat_start_proceeds_view_start && (section_start + fine_x < visible_width)
+                val end_visible = (section_end + fine_x > 0) && beat_end_precedes_view_end
+
+                if (!beat_start_proceeds_view_start && !beat_end_precedes_view_end) {
+                    SECTION_VIEW_PARTIAL_OVERSIZED
+                } else if (start_visible && end_visible) {
+                    SECTION_VIEW_COMPLETE
+                } else if (start_visible && ! end_visible) {
+                    SECTION_VIEW_PARTIAL_LEFT
+                } else if (!start_visible && end_visible) {
+                    SECTION_VIEW_PARTIAL_RIGHT
+                } else {
+                    SECTION_OUT_OF_VIEW
+                }
+            } else {
+                val column = column_lm.findViewByPosition(beat)
+                val fine_x = (column?.x ?: 0f).roundToInt()
+
+                when (beat) {
+                    first_visible -> {
+                        if (section_start + fine_x > 0) {
+                            SECTION_VIEW_COMPLETE
+                        } else if (section_end + fine_x > 0) {
+                            SECTION_VIEW_PARTIAL_RIGHT
+                        } else {
+                            SECTION_OUT_OF_VIEW
+                        }
+                    }
+                    last_visible -> {
+                        if (section_end + fine_x < visible_width) {
+                            SECTION_VIEW_COMPLETE
+                        } else if (section_start + fine_x < visible_width) {
+                            SECTION_VIEW_PARTIAL_LEFT
+                        } else {
+                            SECTION_OUT_OF_VIEW
+                        }
+                    }
+                    else -> {
+                        SECTION_OUT_OF_VIEW
+                    }
+                }
+            }
+        }
     }
+
     fun is_y_visible(y: Int): Boolean {
         val line_height = (resources.getDimension(R.dimen.line_height)).toInt()
         val scroll_offset = this.line_label_layout.scrollY / line_height
@@ -591,7 +697,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         )
     }
 
-    fun precise_scroll(x_coarse: Int = 0, x_fine: Int = 0, y_coarse: Int = 0, y_fine: Int = 0) {
+    fun precise_scroll(x_coarse: Int = 0, x_fine: Int = 0, y_coarse: Int? = null, y_fine: Int? = null) {
         /*
             KLUDGE ALERT
             There's a wierd bug that returns the main lm to the first position if the x_fine == 0.
@@ -603,8 +709,10 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         val column_label_lm = (this.column_label_recycler.layoutManager!! as LinearLayoutManager)
         column_label_lm.scrollToPositionWithOffset(x_coarse, if (x_fine == 0) { -1 } else { x_fine })
 
-        val line_height = (resources.getDimension(R.dimen.line_height)).toInt()
-        this.scroll_view.scrollTo(0, (line_height * y_coarse) + y_fine)
+        if (y_coarse != null) {
+            val line_height = (resources.getDimension(R.dimen.line_height)).toInt()
+            this.scroll_view.scrollTo(0, (line_height * y_coarse) + (y_fine ?: 0))
+        }
     }
 
     fun get_first_visible_column_index(): Int {

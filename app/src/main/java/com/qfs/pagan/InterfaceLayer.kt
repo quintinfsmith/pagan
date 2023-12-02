@@ -497,7 +497,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         }
 
         if (bkp_cursor.mode == OpusManagerCursor.CursorMode.Column) {
-            this.cursor_select_column(beat_index + 1)
+            this.cursor_select_column(beat_index)
         }
     }
 

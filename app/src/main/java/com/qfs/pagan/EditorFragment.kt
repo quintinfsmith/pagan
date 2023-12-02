@@ -105,7 +105,6 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         val fine_x: Int
         val coarse_y: Int
         val fine_y: Int
-        //val backup_json: ByteArray?
         val backup_path: String?
         if (savedInstanceState != null) {
             // Orientation Change/Brought back from background
@@ -113,7 +112,6 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             fine_x = savedInstanceState.getInt("fine_x")
             coarse_y = savedInstanceState.getInt("coarse_y")
             fine_y = savedInstanceState.getInt("fine_y")
-            //backup_json = savedInstanceState.getByteArray("backup_json")
             backup_path = savedInstanceState.getString("backup_path")
         } else if (this.view_model.backup_path != null) {
             // Navigate Back,
@@ -121,7 +119,6 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             fine_x = this.view_model.fine_x
             coarse_y = this.view_model.coarse_y
             fine_y = this.view_model.fine_y
-            //backup_json = this.view_model.backup_json
             backup_path = this.view_model.backup_path
         } else {
             // Navigate to (import / load/new)

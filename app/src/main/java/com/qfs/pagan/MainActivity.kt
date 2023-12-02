@@ -962,11 +962,14 @@ class MainActivity : AppCompatActivity() {
         this.setup_project_config_drawer_export_button()
 
         val channel_recycler = this.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
-        val channel_adapter = channel_recycler.adapter as ChannelOptionAdapter
-        if (this._soundfont != null) {
-            channel_adapter.set_soundfont(this._soundfont!!)
-        } else {
-            channel_adapter.unset_soundfont()
+        // Should always be null since this can only be changed from a different menu
+        if (channel_recycler.adapter != null) {
+            val channel_adapter = channel_recycler.adapter as ChannelOptionAdapter
+            if (this._soundfont != null) {
+                channel_adapter.set_soundfont(this._soundfont!!)
+            } else {
+                channel_adapter.unset_soundfont()
+            }
         }
 
     }

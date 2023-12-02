@@ -8,6 +8,7 @@ import android.widget.LinearLayout
 import android.widget.RadioGroup
 import android.widget.SeekBar
 import android.widget.TextView
+import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.setFragmentResult
 import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
@@ -39,14 +40,18 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
 
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
-        val channel_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
-        if (channel_recycler.adapter == null) {
-            ChannelOptionAdapter(opus_manager, channel_recycler)
+        var drawer = main.findViewById<DrawerLayout>(R.id.drawer_layout)
+        if (!drawer.isDrawerOpen(Gravity.LEFT)) {
+            return
         }
-        val channel_adapter = (channel_recycler.adapter as ChannelOptionAdapter)
-        if (channel_adapter.itemCount == 0) {
-            channel_adapter.setup()
-        }
+       val channel_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
+       if (channel_recycler.adapter == null) {
+           ChannelOptionAdapter(opus_manager, channel_recycler)
+       }
+       val channel_adapter = (channel_recycler.adapter as ChannelOptionAdapter)
+       if (channel_adapter.itemCount == 0) {
+           channel_adapter.setup()
+       }
     }
 
     override fun onStart() {
@@ -74,6 +79,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         val channel_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
         if (channel_recycler.adapter != null) {
             (channel_recycler.adapter as ChannelOptionAdapter).clear()
+            channel_recycler.adapter =null
         }
 
         super.onStop()

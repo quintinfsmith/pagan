@@ -39,6 +39,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         super.onResume()
 
         val main = this.get_main()
+        main.setup_project_config_drawer()
         val opus_manager = main.get_opus_manager()
         var drawer = main.findViewById<DrawerLayout>(R.id.drawer_layout)
         if (!drawer.isDrawerOpen(Gravity.LEFT)) {

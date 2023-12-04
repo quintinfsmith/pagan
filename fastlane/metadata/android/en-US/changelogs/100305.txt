@@ -1,0 +1,2 @@
+bugfix:
+    couldn't add beats when no soundfont loaded

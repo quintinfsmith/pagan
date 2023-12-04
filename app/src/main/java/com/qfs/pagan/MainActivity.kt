@@ -1322,7 +1322,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun in_playback(): Boolean {
-        return (this._midi_interface.output_devices_connected() && this._virtual_input_device.playing) || !(this._midi_playback_device?.in_playable_state() ?: false)
+        return (
+            (this._midi_interface.output_devices_connected() && this._virtual_input_device.playing)
+            || !(this._midi_playback_device?.in_playable_state() ?: true)
+        )
     }
 
     fun has_notification_permission(): Boolean {

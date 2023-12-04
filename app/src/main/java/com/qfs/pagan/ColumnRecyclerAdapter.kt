@@ -49,7 +49,7 @@ class ColumnRecyclerAdapter(val recycler: ColumnRecycler, editor_table: EditorTa
     }
 
     fun insert_rows(index: Int, count: Int) {
-        this.apply_and_notify_remaining { beat: Int, column_layout: ColumnLayout ->
+        this.apply_and_notify_remaining { _: Int, column_layout: ColumnLayout ->
             column_layout.insert_cells(index, count)
         }
     }
@@ -75,7 +75,7 @@ class ColumnRecyclerAdapter(val recycler: ColumnRecycler, editor_table: EditorTa
     }
 
     fun remove_rows(index: Int, count: Int) {
-        this.apply_and_notify_remaining { beat: Int, column_layout: ColumnLayout ->
+        this.apply_and_notify_remaining { _: Int, column_layout: ColumnLayout ->
             column_layout.remove_cells(index, count)
         }
     }
@@ -171,7 +171,7 @@ class ColumnRecyclerAdapter(val recycler: ColumnRecycler, editor_table: EditorTa
         }
     }
     fun notifyRowChanged(y: Int, state_only: Boolean = false) {
-        this.apply_and_notify_remaining { i: Int, column_layout: ColumnLayout ->
+        this.apply_and_notify_remaining { _: Int, column_layout: ColumnLayout ->
             column_layout.notifyItemChanged(y, state_only)
         }
     }

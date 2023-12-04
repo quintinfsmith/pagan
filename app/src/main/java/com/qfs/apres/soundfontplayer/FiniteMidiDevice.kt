@@ -99,19 +99,19 @@ open class FiniteMidiDevice(var sample_handle_manager: SampleHandleManager, priv
 
                 }
 
-                override fun onMarkerReached(p0: AudioTrack?) {
+                override fun onMarkerReached(audio_track: AudioTrack?) {
                     var kill_flag = false
                     /*
                      On Slower devices, the MarkerReached Callback can take a bit to fire,
                       Therefore we need to try to compensate for that and check the position it was
                       fired at vs the current position
                      */
-                    var frame_delay = if (p0 != null) {
-                        if (p0!!.playState == AudioTrack.PLAYSTATE_STOPPED) {
+                    var frame_delay = if (audio_track != null) {
+                        if (audio_track.playState == AudioTrack.PLAYSTATE_STOPPED) {
                             kill_flag = true
                             0
                         } else {
-                            p0!!.notificationMarkerPosition - p0!!.playbackHeadPosition
+                            audio_track.notificationMarkerPosition - audio_track!!.playbackHeadPosition
                         }
                     } else {
                         kill_flag = true
@@ -135,15 +135,15 @@ open class FiniteMidiDevice(var sample_handle_manager: SampleHandleManager, priv
                     }
 
                     if (kill_flag) {
-                        if (p0?.state != AudioTrack.STATE_UNINITIALIZED) {
-                            p0?.stop()
+                        if (audio_track?.state != AudioTrack.STATE_UNINITIALIZED) {
+                            audio_track?.stop()
                         }
                         this@FiniteMidiDevice.active_audio_track_handle = null
                         this@FiniteMidiDevice.is_playing = false
                         this@FiniteMidiDevice.on_stop()
                     } else {
                         this@FiniteMidiDevice.on_beat(this.notification_index)
-                        var target_next_position = p0!!.notificationMarkerPosition + next_beat_delay
+                        var target_next_position = audio_track!!.notificationMarkerPosition + next_beat_delay
                         val next_position = if (final_frame != null) {
                             min(final_frame!!, target_next_position)
                         } else {

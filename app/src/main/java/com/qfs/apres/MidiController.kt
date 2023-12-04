@@ -138,7 +138,6 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
         }
         val output_devices = mutableListOf<MidiDeviceInfo>()
         for (device_info in devices_info) {
-            var device_name = device_info.properties.getString(MidiDeviceInfo.PROPERTY_NAME)
             if (device_info.inputPortCount > 0) {
                 output_devices.add(device_info)
             }
@@ -154,7 +153,6 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
         }
         val input_devices = mutableListOf<MidiDeviceInfo>()
         for (device_info in devices_info) {
-            var device_name = device_info.properties.getString(MidiDeviceInfo.PROPERTY_NAME)
             if (device_info.outputPortCount > 0) {
                 input_devices.add(device_info)
             }

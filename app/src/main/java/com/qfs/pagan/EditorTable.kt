@@ -175,7 +175,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             }
         })
 
-        this.scroll_view.setOnScrollChangeListener { scroll_view: View, x: Int, y: Int, old_x: Int, old_y: Int ->
+        this.scroll_view.setOnScrollChangeListener { _: View, x: Int, y: Int, _: Int, _: Int ->
             this.line_label_layout.scrollTo(x, y)
         }
     }

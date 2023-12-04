@@ -332,7 +332,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             PaganConfiguration.LinkMode.MOVE -> R.id.rbLinkModeMove
             PaganConfiguration.LinkMode.COPY -> R.id.rbLinkModeCopy
         })
-        rgLinkMode?.setOnCheckedChangeListener { radioGroup: RadioGroup, button_id: Int ->
+        rgLinkMode?.setOnCheckedChangeListener { _: RadioGroup, button_id: Int ->
             main.configuration.link_mode = when (button_id) {
                 R.id.rbLinkModeLink -> PaganConfiguration.LinkMode.LINK
                 R.id.rbLinkModeMove -> PaganConfiguration.LinkMode.MOVE

@@ -683,28 +683,26 @@ class MainActivity : AppCompatActivity() {
 
     fun update_menu_options() {
         val navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main)
-        if (this._options_menu == null) {
-            return
-        }
-        this._options_menu?.setGroupDividerEnabled(true)
+        val options_menu = this._options_menu ?: return
+        options_menu.setGroupDividerEnabled(true)
         when (navHost?.childFragmentManager?.fragments?.get(0)) {
             is EditorFragment -> {
-                this._options_menu!!.findItem(R.id.itmLoadProject).isVisible = this.has_projects_saved()
-                this._options_menu!!.findItem(R.id.itmUndo).isVisible = true
-                this._options_menu!!.findItem(R.id.itmNewProject).isVisible = true
-                this._options_menu!!.findItem(R.id.itmPlay).isVisible = (this._soundfont != null || (this._midi_interface.output_devices_connected() && this.get_opus_manager().radix == 12))
-                this._options_menu!!.findItem(R.id.itmImportMidi).isVisible = true
-                this._options_menu!!.findItem(R.id.itmImportProject).isVisible = true
-                this._options_menu!!.findItem(R.id.itmSettings).isVisible = true
+                options_menu.findItem(R.id.itmLoadProject).isVisible = this.has_projects_saved()
+                options_menu.findItem(R.id.itmUndo).isVisible = true
+                options_menu.findItem(R.id.itmNewProject).isVisible = true
+                options_menu.findItem(R.id.itmPlay).isVisible = (this._soundfont != null || (this._midi_interface.output_devices_connected() && this.get_opus_manager().radix == 12))
+                options_menu.findItem(R.id.itmImportMidi).isVisible = true
+                options_menu.findItem(R.id.itmImportProject).isVisible = true
+                options_menu.findItem(R.id.itmSettings).isVisible = true
             }
             else -> {
-                this._options_menu!!.findItem(R.id.itmLoadProject).isVisible = false
-                this._options_menu!!.findItem(R.id.itmUndo).isVisible = false
-                this._options_menu!!.findItem(R.id.itmNewProject).isVisible = false
-                this._options_menu!!.findItem(R.id.itmPlay).isVisible = false
-                this._options_menu!!.findItem(R.id.itmImportMidi).isVisible = false
-                this._options_menu!!.findItem(R.id.itmImportProject).isVisible = false
-                this._options_menu!!.findItem(R.id.itmSettings).isVisible = false
+                options_menu.findItem(R.id.itmLoadProject).isVisible = false
+                options_menu.findItem(R.id.itmUndo).isVisible = false
+                options_menu.findItem(R.id.itmNewProject).isVisible = false
+                options_menu.findItem(R.id.itmPlay).isVisible = false
+                options_menu.findItem(R.id.itmImportMidi).isVisible = false
+                options_menu.findItem(R.id.itmImportProject).isVisible = false
+                options_menu.findItem(R.id.itmSettings).isVisible = false
             }
         }
     }
@@ -795,7 +793,7 @@ class MainActivity : AppCompatActivity() {
                     getString(R.string.dlg_export),
                     export_options,
                     default = null
-                ) { index: Int, value: Int ->
+                ) { _: Int, value: Int ->
                     when (value) {
                         0 -> this.export_midi()
                         1 -> this.export_wav()
@@ -1140,7 +1138,7 @@ class MainActivity : AppCompatActivity() {
             number_input.selectAll()
         }
 
-        number_input.setOnEditorActionListener { text_view: TextView?, action_id: Int?, key_event: KeyEvent? ->
+        number_input.setOnEditorActionListener { _: TextView?, action_id: Int?, _: KeyEvent? ->
             if (action_id != null) {
                 submit_wrapper()
                 dialog.dismiss()

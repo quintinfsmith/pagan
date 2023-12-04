@@ -90,7 +90,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
         when (this.get_ui_lock_level()) {
             null -> {
-                this.runOnUiThread { main: MainActivity ->
+                this.runOnUiThread { _: MainActivity ->
                     this.get_editor_table()?.notify_cell_change(beat_key)
                 }
             }
@@ -111,7 +111,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
         when (this.get_ui_lock_level()) {
             null -> {
-                this.runOnUiThread { main: MainActivity ->
+                this.runOnUiThread { _: MainActivity ->
                     this.get_editor_table()?.notify_cell_change(beat_key)
                 }
             }
@@ -136,7 +136,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         }
         when (this.get_ui_lock_level()) {
             null -> {
-                this.runOnUiThread { main: MainActivity ->
+                this.runOnUiThread { _: MainActivity ->
                     this.get_editor_table()?.notify_cell_change(beat_key)
                 }
             }
@@ -151,7 +151,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         super.set_percussion_event(beat_key, position)
         when (this.get_ui_lock_level()) {
             null -> {
-                this.runOnUiThread { main: MainActivity ->
+                this.runOnUiThread { _: MainActivity ->
                     this.get_editor_table()?.notify_cell_change(beat_key)
                 }
             }
@@ -202,7 +202,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
         when (this.get_ui_lock_level()) {
             null -> {
-                this.runOnUiThread { main: MainActivity ->
+                this.runOnUiThread { _: MainActivity ->
                     this.get_editor_table()?.notify_cell_change(beat_key)
                 }
             }
@@ -218,7 +218,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
         when (this.get_ui_lock_level()) {
             null -> {
-                this.runOnUiThread { main: MainActivity ->
+                this.runOnUiThread { _: MainActivity ->
                     this.get_editor_table()?.notify_cell_change(beat_key)
                 }
             }
@@ -233,7 +233,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         super.insert(beat_key, position)
         when (this.get_ui_lock_level()) {
             null -> {
-                this.runOnUiThread { main: MainActivity ->
+                this.runOnUiThread { _: MainActivity ->
                     this.get_editor_table()?.notify_cell_change(beat_key)
                 }
             }
@@ -248,7 +248,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         super.remove(beat_key, position)
         when (this.get_ui_lock_level()) {
             null -> {
-                this.runOnUiThread { main: MainActivity ->
+                this.runOnUiThread { _: MainActivity ->
                     this.get_editor_table()?.notify_cell_change(beat_key)
                 }
             }
@@ -267,7 +267,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         )
         when (this.get_ui_lock_level()) {
             null -> {
-                this.runOnUiThread { main: MainActivity ->
+                this.runOnUiThread { _: MainActivity ->
                     this.get_editor_table()?.new_row(abs_offset, output)
                 }
             }
@@ -293,7 +293,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         val abs_offset = this.get_abs_offset( channel, line_offset )
         when (this.get_ui_lock_level()) {
             null -> {
-                this.runOnUiThread { main: MainActivity ->
+                this.runOnUiThread { _: MainActivity ->
                     this.get_editor_table()?.new_row(abs_offset, line)
                 }
             }
@@ -355,7 +355,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
         when (this.get_ui_lock_level()) {
             null -> {
-                this.runOnUiThread { main: MainActivity ->
+                this.runOnUiThread { _: MainActivity ->
                     this.get_editor_table()?.remove_row(abs_line)
                 }
             }

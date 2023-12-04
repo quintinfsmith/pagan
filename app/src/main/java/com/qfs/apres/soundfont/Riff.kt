@@ -166,7 +166,6 @@ class Riff(private var file_path: String, init_callback: ((riff: Riff) -> Unit)?
     }
 
     private fun get_bytes(offset: Int, size: Int): ByteArray {
-        val stream: InputStream = this._input_stream ?: throw InputStreamClosed()
         this.move_to_offset(offset.toLong())
         val output = ByteArray(size)
         this._input_stream?.read(output)

@@ -1023,6 +1023,7 @@ open class HistoryLayer : LinksLayer() {
                 node = tmp_error.failed_node
                 tmp_error = tmp_error.e
             }
+
             if (node != null) {
                 this.history_cache.forget {
                     this.apply_history_node(node)

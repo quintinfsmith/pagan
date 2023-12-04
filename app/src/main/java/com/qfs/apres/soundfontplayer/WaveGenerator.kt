@@ -93,7 +93,7 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
         var empty_pairs = mutableListOf<Pair<Int, Int>>()
         for ((key, pair_list) in this._active_sample_handles) {
             for (i in pair_list.indices.reversed()) {
-                val (first_sample_frame, sample_handles) = pair_list[i]
+                val (_, sample_handles) = pair_list[i]
                 for (j in sample_handles.indices.reversed()) {
                     var sample_handle = sample_handles[j]
                     if (sample_handle.is_dead) {
@@ -256,7 +256,7 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
         var max_frame_value = 0
         var is_empty = true
 
-        for ((key, pair_list) in this._active_sample_handles) {
+        for ((_, pair_list) in this._active_sample_handles) {
             for (i in pair_list.indices) {
                 val (first_sample_frame, sample_handles) = pair_list[i]
                 for (j in sample_handles.indices) {

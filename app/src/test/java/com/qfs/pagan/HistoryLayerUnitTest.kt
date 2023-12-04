@@ -380,6 +380,8 @@ class HistoryCacheUnitTest {
         manager.split_tree(BeatKey(0,0,0), listOf(), 3)
 
         manager.apply_undo()
+
+
         var new = manager.to_json()
         assertEquals(
             "undo split_tree broken",

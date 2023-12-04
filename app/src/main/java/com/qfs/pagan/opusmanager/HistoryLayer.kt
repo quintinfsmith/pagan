@@ -48,8 +48,7 @@ open class HistoryLayer : LinksLayer() {
                 this.close_multi()
                 return output
             } catch (e: Exception) {
-                throw e
-                //throw HistoryError(e, this.cancel_multi())
+                throw HistoryError(e, this.cancel_multi())
             }
         }
 
@@ -1019,11 +1018,11 @@ open class HistoryLayer : LinksLayer() {
             val real_exception = history_error.e
             var tmp_error: Exception = history_error
             var node: HistoryCache.HistoryNode? = null
+
             while (tmp_error is HistoryCache.HistoryError) {
                 node = tmp_error.failed_node
                 tmp_error = tmp_error.e
             }
-
             if (node != null) {
                 this.history_cache.forget {
                     this.apply_history_node(node)

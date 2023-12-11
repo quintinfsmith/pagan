@@ -17,15 +17,19 @@ It may be for you, it may not. You do you.
 ## Usage
 
 ### Download
-At the moment it's only available (as a package) on Fdroid.
 
-<div style="height: 4em; display: block; text-align: center;">
-<a href="https://f-droid.org/en/packages/com.qfs.pagan/">
-<img src="https://f-droid.org/badge/get-it-on.png" style="display: inline-block; height: 100%;" />
-</a>
+<div style="height: 4em; display: flex; text-align: center;">
+    <div style="flex: 1 1 auto;">
+        <a href="https://f-droid.org/en/packages/com.qfs.pagan/">
+            <img src="https://f-droid.org/badge/get-it-on.png" style="display: inline-block; height: 100%;" />
+        </a>
+    </div>
+    <div style="flex: 1 1 auto;">
+        <a href='https://play.google.com/store/apps/details?id=com.qfs.pagan'>
+            <img alt='Get it on Google Play' src='https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png' style="display: inline-block; height: 100%;"/>
+        </a>
+    </div>
 </div>
-
-...it should be available soon through Google Play, I'm just waiting until I'm satisfied all the serious bugs have been worked out to save being buried under bad reviews.
 
 ### Manual Build
 The `master` branch should always be the most stable. I use android studio to build and if you don't, you probably don't need any direction from me.

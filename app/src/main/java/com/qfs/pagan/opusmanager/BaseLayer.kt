@@ -43,7 +43,7 @@ open class BaseLayer {
         var DEFAULT_PERCUSSION: Int = 0
         val DEFAULT_NAME = "New Opus"
         fun from_midi(midi: Midi): BaseLayer {
-            var new = BaseLayer()
+            val new = BaseLayer()
             new.import_midi(midi)
             return new
         }
@@ -697,7 +697,7 @@ open class BaseLayer {
         if (this.channels.isNotEmpty()) {
             // Always insert new channels BEFORE the percussion channel
             if (channel != null) {
-                var new_channel_index = min(channel, this.channels.size - 1)
+                val new_channel_index = min(channel, this.channels.size - 1)
                 this.channels.add(new_channel_index, new_channel)
 
             } else {
@@ -1760,7 +1760,7 @@ open class BaseLayer {
         }
 
         // Before we start overwriting, check overflow
-        for ((target_key, tree) in overwrite_map) {
+        for ((target_key, _) in overwrite_map) {
             if (target_key.beat >= this.beat_count || target_key.channel >= this.channels.size || target_key.line_offset >= this.channels[target_key.channel].size) {
                 throw RangeOverflow(from_key, to_key, target_key)
             }
@@ -1774,8 +1774,8 @@ open class BaseLayer {
     open fun move_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
         this.overwrite_beat_range(beat_key, first_corner, second_corner)
         val (from_key, to_key) = this.get_ordered_beat_key_pair(first_corner, second_corner)
-        var from_keys = mutableSetOf<BeatKey>()
-        var to_keys = mutableSetOf<BeatKey>()
+        val from_keys = mutableSetOf<BeatKey>()
+        val to_keys = mutableSetOf<BeatKey>()
 
         val working_beat = beat_key.copy()
         while (from_key.channel != to_key.channel || from_key.line_offset != to_key.line_offset) {
@@ -1872,12 +1872,11 @@ open class BaseLayer {
         }
     }
 
-    fun get_press_breakdown(): List<Pair<Double, Int>> {
+    private fun get_press_breakdown(): List<Pair<Double, Int>> {
         val tick_map = mutableListOf<Pair<Double, Boolean>>()
         this.channels.forEach { channel: OpusChannel ->
             channel.lines.forEach { line: OpusChannel.OpusLine ->
                 line.beats.forEachIndexed { beat_index: Int, beat_tree: OpusTree<OpusEvent> ->
-                    var previous_value = 0
                     beat_tree.traverse { tree: OpusTree<OpusEvent>, event: OpusEvent? ->
                         if (event == null) {
                             return@traverse
@@ -1975,8 +1974,8 @@ open class BaseLayer {
         this._cached_std_line_map.clear()
         var y = 0
         this.channels.forEachIndexed { channel_index: Int, channel: OpusChannel ->
-            channel.lines.forEachIndexed { line_offset: Int, line: OpusChannel.OpusLine ->
-                var keypair = Pair(channel_index, line_offset)
+            for (line_offset in channel.lines.indices) {
+                val keypair = Pair(channel_index, line_offset)
                 this._cached_abs_line_map.add(keypair)
                 this._cached_std_line_map[keypair] = y++
             }
@@ -1989,12 +1988,12 @@ open class BaseLayer {
             return // TODO: throw error
         }
 
-        var width = (to_key.beat - from_key.beat) + 1
-        var count = this.beat_count / width
-        var beatkeys = this.get_beatkeys_in_range(from_key, to_key)
+        val width = (to_key.beat - from_key.beat) + 1
+        val count = this.beat_count / width
+        val beatkeys = this.get_beatkeys_in_range(from_key, to_key)
         for (beatkey in beatkeys) {
             for (i in 1 until count) {
-                var to_overwrite = beatkey.copy()
+                val to_overwrite = beatkey.copy()
                 to_overwrite.beat += (i * width)
                 this.overwrite_beat(to_overwrite, beatkey)
             }

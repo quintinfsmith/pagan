@@ -383,7 +383,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
                     this.line_label_layout.notify_item_changed(y)
                     column_label_adapter.notifyItemChanged(linked_key.beat)
-                    (this.main_recycler.adapter as ColumnRecyclerAdapter).notifyCellChanged(y, linked_key.beat, true)
+                    (this.main_recycler.adapter as ColumnRecyclerAdapter).notify_cell_changed(y, linked_key.beat, true)
                 }
             }
             OpusManagerCursor.CursorMode.Range -> {
@@ -399,7 +399,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
                     this.line_label_layout.notify_item_changed(y)
                     column_label_adapter.notifyItemChanged(beat_key.beat)
-                    (this.main_recycler.adapter as ColumnRecyclerAdapter).notifyCellChanged(y, beat_key.beat, true)
+                    (this.main_recycler.adapter as ColumnRecyclerAdapter).notify_cell_changed(y, beat_key.beat, true)
                 }
             }
             OpusManagerCursor.CursorMode.Row -> {
@@ -409,11 +409,11 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                     return
                 }
 
-                (this.main_recycler.adapter as ColumnRecyclerAdapter).notifyRowChanged(y, true)
+                (this.main_recycler.adapter as ColumnRecyclerAdapter).notify_row_changed(y, true)
                 this.line_label_layout.notify_item_changed(y)
             }
             OpusManagerCursor.CursorMode.Column -> {
-                (this.main_recycler.adapter as ColumnRecyclerAdapter).notifyColumnStateChanged(opusManagerCursor.beat)
+                (this.main_recycler.adapter as ColumnRecyclerAdapter).notify_column_state_changed(opusManagerCursor.beat)
                 column_label_adapter.notifyItemChanged(opusManagerCursor.beat)
             }
             OpusManagerCursor.CursorMode.Unset -> { }
@@ -467,7 +467,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                 if (changed_key.beat in changed_beats) {
                     continue
                 }
-                main_recycler_adapter.notifyCellChanged(changed_key)
+                main_recycler_adapter.notify_cell_changed(changed_key)
             }
         }
     }

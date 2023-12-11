@@ -11,7 +11,7 @@ import com.qfs.pagan.InterfaceLayer as OpusManager
 
 class ColumnRecyclerAdapter(val recycler: ColumnRecycler, editor_table: EditorTable): RecyclerView.Adapter<ColumnRecyclerViewHolder>() {
     val column_label_recycler: ColumnLabelRecycler
-    var column_count = 0
+    private var _column_count = 0
     init {
         this.column_label_recycler = editor_table.column_label_recycler
 
@@ -20,9 +20,7 @@ class ColumnRecyclerAdapter(val recycler: ColumnRecycler, editor_table: EditorTa
                 override fun onItemRangeInserted(start: Int, count: Int) {
                     this@ColumnRecyclerAdapter.notifyItemChanged(start + count - 1)
                 }
-                override fun onItemRangeChanged(start: Int, count: Int) {
-                    //this@ColumnRecyclerAdapter.column_label_recycler.adapter?.notifyItemRangeChanged(start, count)
-                }
+                override fun onItemRangeChanged(start: Int, count: Int) { }
             }
         )
     }
@@ -32,7 +30,7 @@ class ColumnRecyclerAdapter(val recycler: ColumnRecycler, editor_table: EditorTa
     }
 
     override fun getItemCount(): Int {
-        return this.column_count
+        return this._column_count
     }
 
     override fun onBindViewHolder(holder: ColumnRecyclerViewHolder, position: Int) {
@@ -66,7 +64,7 @@ class ColumnRecyclerAdapter(val recycler: ColumnRecycler, editor_table: EditorTa
         this.notifyItemRangeChanged(0, minimum_visible)
         this.notifyItemRangeChanged(maximum_visible + 1, this.itemCount)
 
-        this.apply_to_visible_columns { beat: Int, column_layout: ColumnLayout ->
+        this._apply_to_visible_columns { beat: Int, column_layout: ColumnLayout ->
             minimum_visible = min(beat, minimum_visible)
             maximum_visible = max(beat, maximum_visible)
             callback(beat, column_layout)
@@ -81,7 +79,7 @@ class ColumnRecyclerAdapter(val recycler: ColumnRecycler, editor_table: EditorTa
     }
 
     //-------------------------------------------------------//
-    fun apply_to_visible_columns(callback: (Int, ColumnLayout) -> Unit) {
+    private fun _apply_to_visible_columns(callback: (Int, ColumnLayout) -> Unit) {
         for (i in 0 until this.itemCount) {
             val viewHolder = this.recycler.findViewHolderForAdapterPosition(i) ?: continue
             if ((viewHolder.itemView as ViewGroup).childCount == 0) {
@@ -99,23 +97,23 @@ class ColumnRecyclerAdapter(val recycler: ColumnRecycler, editor_table: EditorTa
         this.add_columns(index, 1)
     }
     fun add_columns(index: Int, count: Int) {
-        this.column_count += count
+        this._column_count += count
         this.notifyItemRangeInserted(index, count)
 
     }
 
     fun remove_column(index: Int) {
-        this.column_count -= 1
+        this._column_count -= 1
         this.notifyItemRemoved(index)
     }
 
     //-------------------------------------------------------//
-    fun get_activity(): MainActivity {
+    private fun _get_activity(): MainActivity {
         return this.recycler.context as MainActivity
     }
 
     fun get_opus_manager(): OpusManager {
-        return this.get_activity().get_opus_manager()
+        return this._get_activity().get_opus_manager()
     }
 
     fun get_editor_table(): EditorTable? {
@@ -135,25 +133,25 @@ class ColumnRecyclerAdapter(val recycler: ColumnRecycler, editor_table: EditorTa
         }
     }
 
-    fun get_column_layout(beat: Int): ColumnLayout? {
+    private fun _get_column_layout(beat: Int): ColumnLayout? {
         val view_holder = this.recycler.findViewHolderForAdapterPosition(beat) ?: return null
         return (view_holder as ColumnRecyclerViewHolder).get_column_layout()
     }
 
     fun clear() {
-        val count = this.column_count
+        val count = this._column_count
         for (x in 0 until count) {
-            val column_layout = this.get_column_layout(x) ?: continue
+            val column_layout = this._get_column_layout(x) ?: continue
             column_layout.clear()
         }
-        this.column_count = 0
+        this._column_count = 0
         this.notifyItemRangeRemoved(0, count)
     }
 
-    fun notifyCellChanged(beat_key: BeatKey, state_only: Boolean = false) {
+    fun notify_cell_changed(beat_key: BeatKey, state_only: Boolean = false) {
         val x = beat_key.beat
         val y = this.get_opus_manager().get_abs_offset(beat_key.channel, beat_key.line_offset)
-        val column_layout = this.get_column_layout(x)
+        val column_layout = this._get_column_layout(x)
         //this.notifyItemChanged(x)
         if (column_layout == null) {
             this.notifyItemChanged(x)
@@ -162,21 +160,21 @@ class ColumnRecyclerAdapter(val recycler: ColumnRecycler, editor_table: EditorTa
         }
     }
 
-    fun notifyCellChanged(y: Int, x: Int, state_only: Boolean = false) {
-        val column_layout = this.get_column_layout(x)
+    fun notify_cell_changed(y: Int, x: Int, state_only: Boolean = false) {
+        val column_layout = this._get_column_layout(x)
         if (column_layout == null) {
             this.notifyItemChanged(x)
         } else {
             column_layout.notifyItemChanged(y, state_only)
         }
     }
-    fun notifyRowChanged(y: Int, state_only: Boolean = false) {
+    fun notify_row_changed(y: Int, state_only: Boolean = false) {
         this.apply_and_notify_remaining { _: Int, column_layout: ColumnLayout ->
             column_layout.notifyItemChanged(y, state_only)
         }
     }
-    fun notifyColumnStateChanged(x: Int) {
-        val column_layout = this.get_column_layout(x) ?: return
+    fun notify_column_state_changed(x: Int) {
+        val column_layout = this._get_column_layout(x) ?: return
         column_layout.notifyItemRangeChanged(0, column_layout.childCount, true)
     }
 }

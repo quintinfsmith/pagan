@@ -3,149 +3,9 @@ import com.qfs.apres.Midi
 import com.qfs.pagan.structure.OpusTree
 import kotlin.math.min
 
-
 open class HistoryLayer : LinksLayer() {
-    class HistoryCache {
-        class HistoryError(val e: Exception, val failed_node: HistoryNode?): Exception()
-        class HistoryNode(var token: HistoryToken, var args: List<Any>) {
-            var children: MutableList<HistoryNode> = mutableListOf()
-            var parent: HistoryNode? = null
-        }
-        private val _max_history_size = 100
-        private var _history_lock = 0
-        private var _history: MutableList<HistoryNode> = mutableListOf()
-        private var _working_node: HistoryNode? = null
-
-        fun isLocked(): Boolean {
-            return this._history_lock != 0
-        }
-
-        fun isEmpty(): Boolean {
-            return this._history.isEmpty()
-        }
-
-        fun append_undoer(token: HistoryToken, args: List<Any>) {
-            if (this.isLocked()) {
-                return
-            }
-            val new_node = HistoryNode(token, args)
-
-            if (this._working_node != null) {
-                new_node.parent = this._working_node
-                this._working_node!!.children.add(new_node)
-            } else {
-                this._history.add(new_node)
-            }
-
-            this.check_size()
-        }
-
-        // Keep track of all history as one group
-        fun <T> remember(callback: () -> T): T {
-            this.open_multi()
-            try {
-                val output = callback()
-                this.close_multi()
-                return output
-            } catch (e: Exception) {
-                throw HistoryError(e, this.cancel_multi())
-            }
-        }
-
-        // Run a callback with logging history
-        fun <T> forget(callback: () -> T): T {
-            this.lock()
-            try {
-                val output = callback()
-                this.unlock()
-                return output
-            } catch (e: Exception) {
-                this.unlock()
-                throw e
-            }
-        }
-
-        fun open_multi() {
-            if (this.isLocked()) {
-                return
-            }
-
-            val next_node = HistoryNode(HistoryToken.MULTI, listOf())
-
-            if (this._working_node != null) {
-                next_node.parent = this._working_node
-                this._working_node!!.children.add(next_node)
-            } else {
-                this._history.add(next_node)
-            }
-            this._working_node = next_node
-        }
-
-        fun close_multi() {
-            if (this.isLocked()) {
-                return
-            }
-
-            if (this._working_node != null) {
-                this._working_node = this._working_node!!.parent
-            }
-        }
-
-        private fun cancel_multi(): HistoryNode? {
-            if (this.isLocked()) {
-                return null
-            }
-            this.close_multi()
-            return if (this._working_node != null) {
-                this._working_node!!.children.removeLast()
-            } else {
-                this._history.removeLast()
-            }
-        }
-        fun check_size() {
-            while (this._history.size > this._max_history_size) {
-                this._history.removeFirst()
-            }
-        }
-
-
-        fun clear() {
-            this._history.clear()
-        }
-
-        fun lock() {
-            this._history_lock += 1
-        }
-
-        fun unlock() {
-            this._history_lock -= 1
-        }
-
-        fun pop(): HistoryNode? {
-            return if (this._history.isEmpty()) {
-                null
-            } else {
-                this._history.removeLast()
-            }
-        }
-
-        fun peek(): HistoryNode? {
-            return if (this._history.isEmpty()) {
-                null
-            } else {
-                this._history.last()
-            }
-        }
-
-        fun copy(): HistoryCache {
-            var c = HistoryCache()
-            c._history = this._history.toMutableList()
-            c._working_node = this._working_node
-            return c
-        }
-    }
     var history_cache = HistoryCache()
-    private var save_point_popped = false
+    private var _save_point_popped = false
 
     inline fun <reified T> checked_cast(value: Any): T {
         if (value is T) {
@@ -371,7 +231,7 @@ open class HistoryLayer : LinksLayer() {
 
         // Skip special case HistoryToken.SAVE_POINT
         if (node.token == HistoryToken.SAVE_POINT) {
-            this.save_point_popped = true
+            this._save_point_popped = true
             this.history_cache.unlock()
             this.apply_undo()
             return
@@ -647,7 +507,7 @@ open class HistoryLayer : LinksLayer() {
 
     fun clear_history() {
         this.history_cache.clear()
-        this.save_point_popped = false
+        this._save_point_popped = false
     }
 
     private fun <T> push_replace_tree(beat_key: BeatKey, position: List<Int>, tree: OpusTree<OpusEvent>? = null, callback: () -> T): T {
@@ -814,7 +674,7 @@ open class HistoryLayer : LinksLayer() {
 
     override fun save(path: String?) {
         super.save(path)
-        this.save_point_popped = false
+        this._save_point_popped = false
         if (this.has_changed_since_save()) {
             this.push_to_history_stack(HistoryToken.SAVE_POINT, listOf())
         }
@@ -822,7 +682,7 @@ open class HistoryLayer : LinksLayer() {
 
     fun has_changed_since_save(): Boolean {
         val node = this.history_cache.peek()
-        return (this.save_point_popped || (node != null && node.token != HistoryToken.SAVE_POINT))
+        return (this._save_point_popped || (node != null && node.token != HistoryToken.SAVE_POINT))
     }
 
     override fun set_line_volume(channel: Int, line_offset: Int, volume: Int) {

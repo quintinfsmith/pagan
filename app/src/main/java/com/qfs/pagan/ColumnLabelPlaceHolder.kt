@@ -12,11 +12,11 @@ class ColumnLabelPlaceHolder(var view_holder: ColumnLabelViewHolder, column_widt
         this.layoutParams.height = resources.getDimension(R.dimen.line_height).toInt()
 
     }
-    fun replace() {
+    private fun _replace() {
         ColumnLabelView(this.view_holder)
     }
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
-        this.replace()
+        this._replace()
     }
 }

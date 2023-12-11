@@ -4,6 +4,7 @@ import android.view.View
 import android.widget.TextView
 import com.qfs.apres.Midi
 import com.qfs.pagan.opusmanager.BeatKey
+import com.qfs.pagan.opusmanager.HistoryCache
 import com.qfs.pagan.opusmanager.HistoryLayer
 import com.qfs.pagan.opusmanager.HistoryToken
 import com.qfs.pagan.opusmanager.LoadedJSONData
@@ -15,9 +16,10 @@ import java.lang.Integer.min
 
 class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     companion object {
-        val UI_LOCK_FULL = 0
-        val UI_LOCK_PARTIAL = 1
+        const val UI_LOCK_FULL = 0
+        const val UI_LOCK_PARTIAL = 1
     }
+
     private var _ui_lock_stack = mutableListOf<Int>()
     private var _queued_cursor_selection: Pair<HistoryToken, List<Int>>? = null
     var relative_mode: Int = 0

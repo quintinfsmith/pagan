@@ -221,7 +221,7 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
     }
 
     fun generate(buffer_size: Int): ShortArray {
-        var output_array = ShortArray(buffer_size * 2)
+        val output_array = ShortArray(buffer_size * 2)
         this.generate(output_array)
         return output_array
     }

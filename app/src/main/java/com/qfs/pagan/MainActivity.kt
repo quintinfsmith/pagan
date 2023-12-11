@@ -92,12 +92,12 @@ class MainActivity : AppCompatActivity() {
     private var _midi_feedback_dispatcher = MidiFeedbackDispatcher()
 
     private lateinit var _app_bar_configuration: AppBarConfiguration
-    private lateinit var binding: ActivityMainBinding
+    private lateinit var _binding: ActivityMainBinding
     private var _options_menu: Menu? = null
     private var _progress_bar: ProgressBar? = null
     var playback_queued: Boolean = false
     var stop_queued: Boolean = false
-    private var forced_title_text: String? = null
+    private var _forced_title_text: String? = null
 
     private var _exporting_wav_handle: PaganPlaybackDevice? = null
 
@@ -288,9 +288,9 @@ class MainActivity : AppCompatActivity() {
         }
 
         this.configuration = PaganConfiguration.from_path(this._config_path)
-        this.binding = ActivityMainBinding.inflate(this.layoutInflater)
-        setContentView(this.binding.root)
-        setSupportActionBar(this.binding.appBarMain.toolbar)
+        this._binding = ActivityMainBinding.inflate(this.layoutInflater)
+        setContentView(this._binding.root)
+        setSupportActionBar(this._binding.appBarMain.toolbar)
 
         /*
             TODO: I think this setOf may be making my navigation more complicated
@@ -405,7 +405,7 @@ class MainActivity : AppCompatActivity() {
         when (item.itemId) {
             android.R.id.home -> {
                 val fragment = this.get_active_fragment()
-                if (fragment is EditorFragment && this.binding.root.getDrawerLockMode(this.findViewById(R.id.config_drawer)) != DrawerLayout.LOCK_MODE_LOCKED_CLOSED) {
+                if (fragment is EditorFragment && this._binding.root.getDrawerLockMode(this.findViewById(R.id.config_drawer)) != DrawerLayout.LOCK_MODE_LOCKED_CLOSED) {
                     this.drawer_open()
                 }
             }
@@ -579,12 +579,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun drawer_lock() {
-        this.binding.root.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
+        this._binding.root.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
     }
 
     fun drawer_unlock() {
         try {
-            this.binding.root.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)
+            this._binding.root.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)
         } catch (e: UninitializedPropertyAccessException) {
             // pass, if it's not initialized, it's not locked
         }
@@ -612,7 +612,7 @@ class MainActivity : AppCompatActivity() {
                 (parent as ViewGroup).removeView(this@MainActivity._progress_bar)
             }
 
-            this@MainActivity.binding.root.addView(this@MainActivity._progress_bar, params)
+            this@MainActivity._binding.root.addView(this@MainActivity._progress_bar, params)
         }
     }
 
@@ -646,8 +646,8 @@ class MainActivity : AppCompatActivity() {
 
     fun update_title_text() {
         this.set_title_text(
-            if (this.forced_title_text != null) {
-                this.forced_title_text!!
+            if (this._forced_title_text != null) {
+                this._forced_title_text!!
             } else {
                 when (this.get_active_fragment()) {
                     is GlobalSettingsFragment -> {
@@ -665,19 +665,19 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun set_title_text(new_text: String) {
-        this.binding.appBarMain.toolbar.title = new_text
-        if (this.binding.appBarMain.toolbar.navigationIcon !is DrawerArrowDrawable && this.get_active_fragment() !is LandingPageFragment) {
-            this.binding.appBarMain.toolbar.setNavigationIcon(R.drawable.hamburger_32)
+        this._binding.appBarMain.toolbar.title = new_text
+        if (this._binding.appBarMain.toolbar.navigationIcon !is DrawerArrowDrawable && this.get_active_fragment() !is LandingPageFragment) {
+            this._binding.appBarMain.toolbar.setNavigationIcon(R.drawable.hamburger_32)
         }
     }
 
     fun force_title_text(msg: String) {
-        this.forced_title_text = msg
+        this._forced_title_text = msg
         this.update_title_text()
     }
 
     fun clear_forced_title() {
-        this.forced_title_text = null
+        this._forced_title_text = null
         this.update_title_text()
     }
 
@@ -1331,6 +1331,7 @@ class MainActivity : AppCompatActivity() {
     fun has_notification_permission(): Boolean {
         return (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU || ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED )
     }
+
     private fun getNotificationPermission(): Boolean {
         if (! this.has_notification_permission()) {
             ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 100)
@@ -1345,6 +1346,7 @@ class MainActivity : AppCompatActivity() {
             play_pause_button.icon = ContextCompat.getDrawable(this, drawable)
         }
     }
+
     fun get_working_column(): Int {
         val cursor = this.get_opus_manager().cursor
         return when (cursor.mode) {

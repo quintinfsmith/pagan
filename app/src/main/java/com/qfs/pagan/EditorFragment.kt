@@ -8,6 +8,7 @@ import android.widget.LinearLayout
 import android.widget.RadioGroup
 import android.widget.SeekBar
 import android.widget.TextView
+import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.setFragmentResult
 import androidx.fragment.app.setFragmentResultListener
@@ -22,7 +23,7 @@ import java.lang.Integer.min
 import kotlin.concurrent.thread
 class EditorFragment : PaganFragment<FragmentMainBinding>() {
     val view_model: EditorViewModel by viewModels()
-    private var active_context_menu_index: ContextMenu? = null
+    private var _active_context_menu_index: ContextMenu? = null
     var test_flag = false
     enum class ContextMenu {
         Leaf,
@@ -41,8 +42,8 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         val main = this.get_main()
         main.setup_project_config_drawer()
         val opus_manager = main.get_opus_manager()
-        var drawer = main.findViewById<DrawerLayout>(R.id.drawer_layout)
-        if (!drawer.isDrawerOpen(Gravity.LEFT)) {
+        val drawer = main.findViewById<DrawerLayout>(R.id.drawer_layout)
+        if (!drawer.isDrawerOpen(GravityCompat.START)) {
             return
         }
        val channel_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
@@ -57,7 +58,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
 
     override fun onStart() {
         super.onStart()
-        this.set_result_listeners()
+        this._set_result_listeners()
     }
 
     override fun onStop() {
@@ -173,7 +174,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         }
     }
 
-    fun set_result_listeners() {
+    private fun _set_result_listeners() {
         setFragmentResultListener(IntentFragmentToken.Load.name) { _, bundle: Bundle? ->
             this.view_model.backup_fragment_intent = Pair(IntentFragmentToken.ImportMidi, bundle)
 
@@ -279,7 +280,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
 
 
     fun reset_context_menu() {
-        when (this.active_context_menu_index) {
+        when (this._active_context_menu_index) {
             ContextMenu.Leaf -> {
                 this.setContextMenu_leaf()
             }
@@ -297,7 +298,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
     }
 
     fun clearContextMenu() {
-        this.active_context_menu_index = null
+        this._active_context_menu_index = null
         val llContextCell = this.activity!!.findViewById<LinearLayout?>(R.id.llContextCell)
         val llContextRow = this.activity!!.findViewById<LinearLayout?>(R.id.llContextRow)
         val llContextCol = this.activity!!.findViewById<LinearLayout?>(R.id.llContextCol)
@@ -309,7 +310,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
     }
 
     internal fun setContextMenu_linking() {
-        this.active_context_menu_index = ContextMenu.Linking
+        this._active_context_menu_index = ContextMenu.Linking
         val llContextCell = this.activity!!.findViewById<LinearLayout>(R.id.llContextCell)
         val llContextRow = this.activity!!.findViewById<LinearLayout>(R.id.llContextRow)
         val llContextCol = this.activity!!.findViewById<LinearLayout>(R.id.llContextCol)
@@ -423,7 +424,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
     }
 
     fun setContextMenu_column() {
-        this.active_context_menu_index = ContextMenu.Column
+        this._active_context_menu_index = ContextMenu.Column
         val llContextCell = this.activity!!.findViewById<LinearLayout>(R.id.llContextCell)
         val llContextRow = this.activity!!.findViewById<LinearLayout>(R.id.llContextRow)
         val llContextCol = this.activity!!.findViewById<LinearLayout>(R.id.llContextCol)
@@ -500,7 +501,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
     }
 
     fun setContextMenu_line() {
-        this.active_context_menu_index = ContextMenu.Line
+        this._active_context_menu_index = ContextMenu.Line
         val llContextCell = this.activity!!.findViewById<LinearLayout>(R.id.llContextCell)
         val llContextRow = this.activity!!.findViewById<LinearLayout>(R.id.llContextRow)
         val llContextCol = this.activity!!.findViewById<LinearLayout>(R.id.llContextCol)
@@ -615,7 +616,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
     }
 
     internal fun setContextMenu_leaf() {
-        this.active_context_menu_index = ContextMenu.Leaf
+        this._active_context_menu_index = ContextMenu.Leaf
         val llContextCell = this.activity!!.findViewById<LinearLayout>(R.id.llContextCell)
         val llContextRow = this.activity!!.findViewById<LinearLayout>(R.id.llContextRow)
         val llContextCol = this.activity!!.findViewById<LinearLayout>(R.id.llContextCol)
@@ -884,7 +885,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         }
     }
 
-    fun play_event(beat_key: BeatKey, position: List<Int>) {
+    private fun _play_event(beat_key: BeatKey, position: List<Int>) {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
         val event_note = opus_manager.get_absolute_value(beat_key, position) ?: return
@@ -1016,7 +1017,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         )
 
         opus_manager.set_event(event)
-        this.play_event(opus_manager.cursor.get_beatkey(), opus_manager.cursor.get_position())
+        this._play_event(opus_manager.cursor.get_beatkey(), opus_manager.cursor.get_position())
         this.reset_context_menu()
     }
 
@@ -1085,7 +1086,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         )
 
         opus_manager.set_event(event)
-        this.play_event(opus_manager.cursor.get_beatkey(), opus_manager.cursor.get_position())
+        this._play_event(opus_manager.cursor.get_beatkey(), opus_manager.cursor.get_position())
         this.reset_context_menu()
     }
 
@@ -1103,7 +1104,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             options.add(Pair(note - 27, "${note - 27}: $name"))
         }
 
-        main.dialog_popup_menu(getString(R.string.dropdown_choose_percussion), options, default_instrument) { index: Int, value: Int ->
+        main.dialog_popup_menu(getString(R.string.dropdown_choose_percussion), options, default_instrument) { _: Int, value: Int ->
             opus_manager.set_percussion_instrument(value)
         }
     }
@@ -1121,7 +1122,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
 
         val opus_manager = this.get_main().get_opus_manager()
         scroll_bar.max = opus_manager.beat_count - 1
-        scroll_bar.progress = this.get_start_column()
+        scroll_bar.progress = this._get_start_column()
 
         title_text.text = resources.getString(R.string.label_shortcut_scrollbar, scroll_bar.progress)
         title_text.contentDescription = resources.getString(R.string.label_shortcut_scrollbar, scroll_bar.progress)
@@ -1141,7 +1142,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         dialog.show()
     }
 
-    fun get_start_column(): Int {
+    private fun _get_start_column(): Int {
         val opus_manager = this.get_main().get_opus_manager()
         val cursor = opus_manager.cursor
         return when (cursor.mode) {

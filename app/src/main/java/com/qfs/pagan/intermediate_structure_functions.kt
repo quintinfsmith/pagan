@@ -53,7 +53,7 @@ fun to_string(node: OpusTree<OpusEvent>, depth: Int = 0): String {
     } else {
         output = ""
         for (i in 0 until node.size) {
-            val child = node.get(i)
+            val child = node[i]
             output += to_string(child, depth+1)
             if (i < node.size - 1) {
                 output += CH_NEXT
@@ -105,7 +105,7 @@ fun from_string(input_string: String, radix: Int, channel: Int): OpusTree<OpusEv
                 last.set_size(1)
             }
 
-            val new_tree = last.get(last.size - 1)
+            val new_tree = last[last.size - 1]
             if (! new_tree.is_leaf() && ! new_tree.is_event()) {
                 throw Exception("MISSING COMMA")
             }

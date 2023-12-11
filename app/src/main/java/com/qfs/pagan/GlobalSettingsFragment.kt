@@ -22,7 +22,7 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 
 class GlobalSettingsFragment : PaganFragment<FragmentGlobalSettingsBinding>() {
-    var import_soundfont_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+    private var _import_soundfont_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             result?.data?.data?.also { uri ->
                 if (uri.path != null) {
@@ -41,7 +41,7 @@ class GlobalSettingsFragment : PaganFragment<FragmentGlobalSettingsBinding>() {
 
                     try {
                         SoundFont(new_file.path)
-                        this.set_soundfont(new_file.name)
+                        this._set_soundfont(new_file.name)
                     } catch (e: Exception) {
                         this.get_main().feedback_msg(getString(R.string.feedback_invalid_sf2_file))
                         new_file.delete()
@@ -140,17 +140,17 @@ class GlobalSettingsFragment : PaganFragment<FragmentGlobalSettingsBinding>() {
         popupMenu.setOnMenuItemClickListener {
             when (it.groupId) {
                 0 -> {
-                    this.disable_soundfont()
+                    this._disable_soundfont()
                 }
                 1 -> {
                     try {
-                        this.set_soundfont(file_list[it.order].name)
+                        this._set_soundfont(file_list[it.order].name)
                     } catch (e: Riff.InvalidRiff) {
                         this.get_main().feedback_msg(getString(R.string.feedback_invalid_sf2_file))
                     }
                 }
                 2 -> {
-                    this.import_soundfont()
+                    this._import_soundfont()
                 }
                 else -> { }
             }
@@ -160,14 +160,14 @@ class GlobalSettingsFragment : PaganFragment<FragmentGlobalSettingsBinding>() {
         popupMenu.show()
     }
 
-    fun disable_soundfont() {
+    private fun _disable_soundfont() {
         val btnChooseSoundFont = this.get_main().findViewById<TextView>(R.id.btnChooseSoundFont)
         btnChooseSoundFont.text = getString(R.string.no_soundfont)
         this.get_main().disable_soundfont()
         this.get_main().save_configuration()
     }
 
-    fun set_soundfont(filename: String) {
+    private fun _set_soundfont(filename: String) {
         val btnChooseSoundFont = this.get_main().findViewById<TextView>(R.id.btnChooseSoundFont)
         this.get_main().set_soundfont(filename)
 
@@ -175,10 +175,10 @@ class GlobalSettingsFragment : PaganFragment<FragmentGlobalSettingsBinding>() {
         this.get_main().save_configuration()
     }
 
-    fun import_soundfont() {
+    private fun _import_soundfont() {
         val intent = Intent()
             .setType("*/*")
             .setAction(Intent.ACTION_GET_CONTENT)
-        this.import_soundfont_launcher.launch(intent)
+        this._import_soundfont_launcher.launch(intent)
     }
 }

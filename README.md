@@ -26,7 +26,7 @@ It may be for you, it may not. You do you.
     </div>
     <div style="flex: 1 1 auto;">
         <a href='https://play.google.com/store/apps/details?id=com.qfs.pagan'>
-            <img alt='Get it on Google Play' src='https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png' style="display: inline-block; height: 100%;"/>
+            <img alt='Get it on Google Play' src='/content/google-play-badge.png' style="display: inline-block; height: 100%;"/>
         </a>
     </div>
 </div>

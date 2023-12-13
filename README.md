@@ -2,6 +2,7 @@
 A music sequencer
 
 [Manual](/manual/pagan)
+[Issues](/issues/pagan)
 
 [![fdroid](https://img.shields.io/f-droid/v/com.qfs.pagan.svg?logo=F-Droid)](https://f-droid.org/en/packages/com.qfs.pagan/)
 

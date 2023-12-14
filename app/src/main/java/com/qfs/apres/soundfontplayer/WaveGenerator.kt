@@ -81,8 +81,10 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
             this@WaveGenerator.event_queue_mutex.withLock {
 
                 if (this@WaveGenerator.active_event_queue.isNotEmpty()) {
-                    for (i in 0 until this@WaveGenerator.active_event_queue.size) {
-                        var (f, event) = this@WaveGenerator.active_event_queue.removeFirst()
+                    val size = this@WaveGenerator.active_event_queue.size
+                    for (i in 0 until size) {
+                        val pair = this@WaveGenerator.active_event_queue.removeFirst() ?: break
+                        var (f, event) = pair
                         this@WaveGenerator.place_event(event, f + initial_frame + buffer_size)
                     }
                 }

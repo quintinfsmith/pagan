@@ -40,13 +40,21 @@
         android:gravity="center"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingTop="4dp"
-        android:paddingBottom="4dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
         android:text="Instrument..." />
 
     <Space
         android:layout_height="@dimen/normal_padding"
         android:layout_width="wrap_content"/>
+
+    <ImageView
+        android:id="@+id/btnLineVolumePopup"
+        android:theme="@style/icon_button"
+        app:srcCompat="@drawable/volume"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:contentDescription="Line Volume"/>
 
     <SeekBar
         android:id="@+id/sbLineVolume"

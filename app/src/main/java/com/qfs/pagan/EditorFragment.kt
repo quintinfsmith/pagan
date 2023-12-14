@@ -519,6 +519,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         }
 
         val sbLineVolume =  llContextRow.findViewById<SeekBar>(R.id.sbLineVolume)
+        val btnLineVolumePopup =  llContextRow.findViewById<ImageView>(R.id.btnLineVolumePopup)
         val btnRemoveLine = llContextRow.findViewById<ImageView>(R.id.btnRemoveLine)
         val btnInsertLine = llContextRow.findViewById<ImageView>(R.id.btnInsertLine)
         val btnChoosePercussion: TextView = llContextRow.findViewById(R.id.btnChoosePercussion)
@@ -603,16 +604,20 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         //}
 
         sbLineVolume.progress = opus_manager.get_line_volume(channel, line_offset)
-        sbLineVolume.contentDescription = resources.getString(R.string.label_volume_scrollbar, sbLineVolume.progress / sbLineVolume.max)
+        sbLineVolume.contentDescription = resources.getString(R.string.label_volume_scrollbar, sbLineVolume.progress  * 100 / 96)
         sbLineVolume.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(p0: SeekBar, p1: Int, p2: Boolean) {
-                p0.contentDescription = resources.getString(R.string.label_volume_scrollbar, (p1 / p0.max))
+                p0.contentDescription = resources.getString(R.string.label_volume_scrollbar, (p1 * 100 / 96))
             }
             override fun onStartTrackingTouch(p0: SeekBar?) { }
             override fun onStopTrackingTouch(seekbar: SeekBar) {
                 opus_manager.set_line_volume(channel, line_offset, seekbar.progress)
             }
         })
+
+        btnLineVolumePopup.setOnClickListener {
+            line_volume_dialog(channel, line_offset)
+        }
     }
 
     internal fun setContextMenu_leaf() {
@@ -1107,6 +1112,36 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         main.dialog_popup_menu(getString(R.string.dropdown_choose_percussion), options, default_instrument) { _: Int, value: Int ->
             opus_manager.set_percussion_instrument(value)
         }
+    }
+    fun line_volume_dialog(channel: Int, line_offset: Int) {
+        val view = LayoutInflater.from(this.context)
+            .inflate(
+                R.layout.dialog_line_volume,
+                this.view as ViewGroup,
+                false
+            )
+        val opus_manager = this.get_main().get_opus_manager()
+        val line_volume = opus_manager.get_line_volume(channel, line_offset)
+
+        val scroll_bar = view.findViewById<SeekBar>(R.id.line_volume_scrollbar)!!
+        scroll_bar.progress = line_volume
+        val title_text = view.findViewById<TextView>(R.id.line_volume_title)!!
+        title_text.text = resources.getString(R.string.label_volume_scrollbar, line_volume * 100 / 96)
+        title_text.contentDescription = resources.getString(R.string.label_volume_scrollbar, line_volume * 100 / 96)
+
+        scroll_bar.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
+                title_text.text = resources.getString(R.string.label_volume_scrollbar, p1 * 100 / 96)
+                title_text.contentDescription = resources.getString(R.string.label_volume_scrollbar, p1 * 100 / 96)
+                opus_manager.set_line_volume(channel, line_offset, p1)
+            }
+            override fun onStartTrackingTouch(p0: SeekBar?) { }
+            override fun onStopTrackingTouch(seekbar: SeekBar?) { }
+        })
+
+        val dialog = AlertDialog.Builder(this.activity)
+        dialog.setView(view)
+        dialog.show()
     }
 
     fun shortcut_dialog() {

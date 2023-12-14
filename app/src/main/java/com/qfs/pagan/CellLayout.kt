@@ -22,14 +22,15 @@ class CellLayout(val column_layout: ColumnLayout, val y: Int): LinearLayout(colu
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
         this.layoutParams.height = resources.getDimension(R.dimen.line_height).toInt()
-        this.layoutParams.width = (column_layout.column_width_factor * resources.getDimension(R.dimen.base_leaf_width).roundToInt())
-        val base_leaf_width = resources.getDimension(R.dimen.base_leaf_width).roundToInt()
+        var width = (column_layout.column_width_factor * resources.getDimension(R.dimen.base_leaf_width).roundToInt())
+        this.layoutParams.width = width
 
         val beat_key = this.get_beat_key()
         val tree = this.get_beat_tree(beat_key)
-        this.build(tree, this.get_editor_table().get_column_width(beat_key.beat) * base_leaf_width)
-    }
 
+        this.removeAllViews()
+        this.buildTreeView(tree, listOf(), width.toFloat())
+    }
 
     fun invalidate_all() {
         val view_stack = mutableListOf<View>(this)
@@ -57,16 +58,6 @@ class CellLayout(val column_layout: ColumnLayout, val y: Int): LinearLayout(colu
         return this.get_activity().findViewById(R.id.etEditorTable)
     }
 
-    fun build(tree: OpusTree<OpusEvent>, max_width: Int) {
-        if (!tree.is_leaf()) {
-            for (i in 0 until tree.size) {
-                this.buildTreeView(tree[i], listOf(i), max_width.toFloat() / tree.size.toFloat())
-            }
-        } else {
-            this.buildTreeView(tree, listOf(), max_width.toFloat())
-        }
-   }
-
    private fun buildTreeView(tree: OpusTree<OpusEvent>, position: List<Int>, new_width: Float) {
        if (tree.is_leaf()) {
            val tvLeaf = LeafButton(
@@ -81,14 +72,23 @@ class CellLayout(val column_layout: ColumnLayout, val y: Int): LinearLayout(colu
            (tvLeaf.layoutParams as LayoutParams).gravity = Gravity.CENTER
            (tvLeaf.layoutParams as LayoutParams).height = MATCH_PARENT
            (tvLeaf.layoutParams as LayoutParams).width = new_width.toInt()
-
-           tvLeaf.minimumWidth = resources.getDimension(R.dimen.base_leaf_width).toInt()
+           tvLeaf.minimumWidth = resources.getDimension(R.dimen.base_leaf_width).roundToInt()
        } else {
            val next_width = new_width / tree.size
+           var remainder = next_width % tree.size
            for (i in 0 until tree.size) {
                val new_position = position.toMutableList()
                new_position.add(i)
-               this.buildTreeView(tree[i], new_position, next_width)
+               this.buildTreeView(
+                   tree[i],
+                   new_position,
+                   next_width + if (remainder > 0) {
+                       remainder -= 1
+                       1
+                   } else {
+                       0
+                   }
+               )
            }
        }
    }

@@ -79,7 +79,6 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
          */
         runBlocking {
             this@WaveGenerator.event_queue_mutex.withLock {
-
                 if (this@WaveGenerator.active_event_queue.isNotEmpty()) {
                     val size = this@WaveGenerator.active_event_queue.size
                     for (i in 0 until size) {
@@ -92,7 +91,7 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
         }
 
         // First check for, and remove dead sample handles
-        var empty_pairs = mutableListOf<Pair<Int, Int>>()
+        val empty_pairs = mutableListOf<Pair<Int, Int>>()
         for ((key, pair_list) in this._active_sample_handles) {
             for (i in pair_list.indices.reversed()) {
                 val (_, sample_handles) = pair_list[i]

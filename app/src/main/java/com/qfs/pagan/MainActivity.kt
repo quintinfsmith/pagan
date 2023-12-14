@@ -1075,6 +1075,7 @@ class MainActivity : AppCompatActivity() {
                 window.decorView.rootView as ViewGroup,
                 false
             )
+
         val recycler = viewInflated.findViewById<RecyclerView>(R.id.rvOptions)
         val title_view = viewInflated.findViewById<TextView>(R.id.tvTitle)
         val close_button = viewInflated.findViewById<TextView>(R.id.btnClose)
@@ -1089,16 +1090,15 @@ class MainActivity : AppCompatActivity() {
             dialog.dismiss()
         }
 
-        val adapter =
-            PopupMenuRecyclerAdapter<T>(recycler, options, default) { index: Int, value: T ->
-                dialog.dismiss()
-                callback(index, value)
-            }
+        val adapter = PopupMenuRecyclerAdapter<T>(recycler, options, default) { index: Int, value: T ->
+            dialog.dismiss()
+            callback(index, value)
+        }
 
         adapter.notifyDataSetChanged()
 
         val windowMetrics = this.windowManager.currentWindowMetrics
-        val max_width: Int = (windowMetrics.bounds.width().toFloat() * .9).toInt()
+        val max_width: Int = (windowMetrics.bounds.width().toFloat() * .8).toInt()
         val max_height: Int = (windowMetrics.bounds.height().toFloat() * .8).toInt()
 
         dialog.window!!.setLayout(max_width, max_height)

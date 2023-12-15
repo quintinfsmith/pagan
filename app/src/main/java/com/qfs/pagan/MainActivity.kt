@@ -546,7 +546,6 @@ class MainActivity : AppCompatActivity() {
             this.stop_queued = true
             this._virtual_input_device.stop()
         }
-
         if (this._midi_playback_device != null) {
             if (this._midi_playback_device?.in_playable_state() != true) {
                 this.stop_queued = true

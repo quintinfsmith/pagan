@@ -48,12 +48,15 @@ open class FiniteMidiDevice(var sample_handle_manager: SampleHandleManager, priv
 
         this.play_queued = false
         this.is_playing = true
+        val DEAD = 1
+        val KILLED = 2
+        var reason = 0
         thread {
-            var buffer_millis = this.BUFFER_NANO / 1_000_000
-            var chunks = mutableListOf<ShortArray>()
+            val buffer_millis = this.BUFFER_NANO / 1_000_000
+            val chunks = mutableListOf<ShortArray>()
             var building_chunks = true
             var final_frame: Int? = null
-            var wait_delay = if (this.fill_buffer_cache) {
+            val wait_delay = if (this.fill_buffer_cache) {
                 buffer_millis / 10
             } else {
                 buffer_millis
@@ -68,10 +71,12 @@ open class FiniteMidiDevice(var sample_handle_manager: SampleHandleManager, priv
                     val chunk = try {
                         this.wave_generator.generate(this.sample_handle_manager.buffer_size)
                     } catch (e: WaveGenerator.KilledException) {
+                        reason = KILLED
                         break
                     } catch (e: WaveGenerator.EmptyException) {
                         ShortArray(this.sample_handle_manager.buffer_size * 2) { 0 }
                     } catch (e: WaveGenerator.DeadException) {
+                        reason = DEAD
                         break
                     }
 
@@ -96,7 +101,6 @@ open class FiniteMidiDevice(var sample_handle_manager: SampleHandleManager, priv
                         this@FiniteMidiDevice.on_beat(this.notification_index)
                         this@FiniteMidiDevice.active_audio_track_handle?.offset_next_notification_position(this@FiniteMidiDevice.pop_next_beat_delay() ?: 0)
                     }
-
                 }
 
                 override fun onMarkerReached(audio_track: AudioTrack?) {
@@ -111,7 +115,7 @@ open class FiniteMidiDevice(var sample_handle_manager: SampleHandleManager, priv
                             kill_flag = true
                             0
                         } else {
-                            audio_track.notificationMarkerPosition - audio_track!!.playbackHeadPosition
+                            audio_track.notificationMarkerPosition - audio_track.playbackHeadPosition
                         }
                     } else {
                         kill_flag = true
@@ -121,7 +125,7 @@ open class FiniteMidiDevice(var sample_handle_manager: SampleHandleManager, priv
                     var next_beat_delay = 0
                     if (!kill_flag) {
                         while (frame_delay <= 0) {
-                            var next_delay = this@FiniteMidiDevice.pop_next_beat_delay()
+                            val next_delay = this@FiniteMidiDevice.pop_next_beat_delay()
 
                             if (next_delay == null) {
                                 kill_flag = true
@@ -143,12 +147,13 @@ open class FiniteMidiDevice(var sample_handle_manager: SampleHandleManager, priv
                         this@FiniteMidiDevice.on_stop()
                     } else {
                         this@FiniteMidiDevice.on_beat(this.notification_index)
-                        var target_next_position = audio_track!!.notificationMarkerPosition + next_beat_delay
+                        val target_next_position = audio_track!!.notificationMarkerPosition + next_beat_delay
                         val next_position = if (final_frame != null) {
                             min(final_frame!!, target_next_position)
                         } else {
                             target_next_position
                         }
+
                         this@FiniteMidiDevice.active_audio_track_handle?.set_next_notification_position(next_position)
                     }
                 }
@@ -160,19 +165,18 @@ open class FiniteMidiDevice(var sample_handle_manager: SampleHandleManager, priv
                 if (chunks.isEmpty()) {
                     Thread.sleep(wait_delay)
                 } else {
-                    audio_track_handle.write(chunks.removeFirst())
+                    val chunk = chunks.removeFirst()
+                    audio_track_handle.write(chunk)
                 }
             }
-            // not is_playing indicates that stop was call manually by kill()
-            if (!this.is_playing) {
-                this.on_stop()
-            }
+
         }
     }
 
     fun kill() {
         this.is_playing = false
         this.active_audio_track_handle?.stop()
+        this.on_stop()
         this.active_audio_track_handle = null
         this.play_cancelled = true
     }

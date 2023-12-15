@@ -34,14 +34,11 @@
 
     <TextView
         android:id="@+id/btnChoosePercussion"
-        android:theme="@style/button"
-        android:textSize="12sp"
+        android:theme="@style/choose_percussion_button"
         android:layout_marginTop="@dimen/normal_padding"
         android:gravity="center"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp"
+        android:layout_height="42dp"
         android:text="Instrument..." />
 
     <Space

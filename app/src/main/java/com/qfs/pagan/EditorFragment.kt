@@ -530,7 +530,6 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             btnRemoveLine.visibility = View.VISIBLE
         }
 
-
         val channel = opus_manager.cursor.channel
         val line_offset = opus_manager.cursor.line_offset
 

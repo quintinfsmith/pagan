@@ -9,6 +9,9 @@
         <item name="android:background">@drawable/button</item>
         <item name="android:layout_marginBottom">@dimen/config_item_padding</item>
     </style>
+    <style name="choose_percussion_button" parent="button">
+        <item name="android:textSize">18sp</item>
+    </style>
 
     <style name="recycler_option_text">
         <item name="android:textColor">@color/button_fg</item>

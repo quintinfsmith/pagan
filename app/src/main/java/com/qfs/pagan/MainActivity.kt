@@ -244,8 +244,8 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onDeviceRemoved(device_info: MidiDeviceInfo) {
-                this@MainActivity.runOnUiThread {
-                    if (!this@MainActivity._midi_interface.output_devices_connected()) {
+                if (!this@MainActivity._midi_interface.output_devices_connected()) {
+                    this@MainActivity.runOnUiThread {
                         this@MainActivity.update_menu_options()
                         this@MainActivity.playback_stop()
                         if (this@MainActivity.configuration.soundfont != null) {
@@ -548,6 +548,7 @@ class MainActivity : AppCompatActivity() {
         if (this._virtual_input_device.playing) {
             this.stop_queued = true
             this._virtual_input_device.stop()
+            this.restore_playback_state()
         }
 
         if (this._midi_playback_device != null) {
@@ -556,7 +557,6 @@ class MainActivity : AppCompatActivity() {
                 this._midi_playback_device!!.kill()
             }
         }
-
     }
 
     fun restore_playback_state() {
@@ -659,6 +659,9 @@ class MainActivity : AppCompatActivity() {
                     }
                     is LoadFragment -> {
                         resources.getString(R.string.load_fragment_label)
+                    }
+                    is LandingPageFragment -> {
+                        "${getString(R.string.app_name)} ${getString(R.string.app_version)}"
                     }
                     else -> {
                         this.get_opus_manager().project_name

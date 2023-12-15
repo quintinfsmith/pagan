@@ -165,7 +165,7 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
         var port_number = port ?: (device_info.ports.filter { it.type == TYPE_INPUT }).first().portNumber
 
         this.midi_manager.openDevice(device_info, {
-            val input_port = it.openInputPort(port_number) // TODO: check open ports?
+            val input_port = it.openInputPort(port_number) ?: return@openDevice // TODO: check open ports?
             this.connected_input_ports.add(input_port)
             if (!this.mapped_input_ports.containsKey(device_info.id)) {
                 this.mapped_input_ports[device_info.id] = mutableListOf()

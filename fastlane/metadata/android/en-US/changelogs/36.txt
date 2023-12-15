@@ -1,3 +1,4 @@
 Bugfixes:
     - Line volume can now be set from landscape view
     - Playback button getting stuck if you pressed stop just before end.
+    - Midi Device playback now functional

@@ -225,7 +225,6 @@ class MainActivity : AppCompatActivity() {
             RECEIVER_NOT_EXPORTED
         )
 
-
         this._midi_interface = object: MidiController(this) {
             override fun onDeviceAdded(device_info: MidiDeviceInfo) {
                 thread {
@@ -243,6 +242,7 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             }
+
             override fun onDeviceRemoved(device_info: MidiDeviceInfo) {
                 this@MainActivity.runOnUiThread {
                     if (!this@MainActivity._midi_interface.output_devices_connected()) {
@@ -521,6 +521,11 @@ class MainActivity : AppCompatActivity() {
     private fun playback_start_midi_device(start_point: Int = 0) {
         val opus_manager = this.get_opus_manager()
         val midi = opus_manager.get_midi(start_point)
+        this.playback_queued = false
+        this.runOnUiThread {
+            this.loading_reticle_hide()
+            this.set_playback_button(R.drawable.ic_baseline_pause_24)
+        }
 
         thread {
             try {
@@ -538,20 +543,20 @@ class MainActivity : AppCompatActivity() {
     }
 
     internal fun playback_stop() {
-        //if (this.playback_queued || this.stop_queued || !this.in_playback()) {
-        //    return
-        //}
         this.loading_reticle_hide()
+
         if (this._virtual_input_device.playing) {
             this.stop_queued = true
             this._virtual_input_device.stop()
         }
+
         if (this._midi_playback_device != null) {
             if (this._midi_playback_device?.in_playable_state() != true) {
                 this.stop_queued = true
                 this._midi_playback_device!!.kill()
             }
         }
+
     }
 
     fun restore_playback_state() {

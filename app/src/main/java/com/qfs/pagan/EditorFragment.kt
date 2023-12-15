@@ -530,11 +530,18 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             btnRemoveLine.visibility = View.VISIBLE
         }
 
+
         val channel = opus_manager.cursor.channel
         val line_offset = opus_manager.cursor.line_offset
 
-        if (!opus_manager.is_percussion(channel)) {
+        if (!opus_manager.is_percussion(channel) || main.get_soundfont() == null) {
             btnChoosePercussion.visibility = View.GONE
+            btnLineVolumePopup.visibility = View.GONE
+            if (this.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                sbLineVolume.visibility = View.GONE
+            } else {
+                (sbLineVolume.parent as View).visibility = View.GONE
+            }
         } else {
             btnChoosePercussion.visibility = View.VISIBLE
             val instrument = opus_manager.get_percussion_instrument(line_offset)

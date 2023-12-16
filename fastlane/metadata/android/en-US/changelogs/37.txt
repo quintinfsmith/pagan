@@ -1,0 +1,3 @@
+Bugfixes:
+    - Transposition now handled correctly when Radix != 12
+    - Line Volume controls *actually* display correctly

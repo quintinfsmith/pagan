@@ -557,7 +557,12 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
                 } else {
                     btnChoosePercussion.text = "!$instrument"
                 }
+                sbLineVolume.visibility = View.GONE
+                btnLineVolumePopup.visibility = View.VISIBLE
             } else {
+                (sbLineVolume.parent as View).visibility = View.VISIBLE
+                btnLineVolumePopup.visibility = View.GONE
+
                 btnChoosePercussion.text = main.getString(
                     R.string.label_choose_percussion,
                     instrument,

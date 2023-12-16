@@ -887,12 +887,12 @@ class MainActivity : AppCompatActivity() {
         val (note, bend) = if (this._opus_manager.is_percussion(channel)) { // Ignore the event data and use percussion map
             Pair(event_value + 27, 0)
         } else {
-            val octave = (event_value + this._opus_manager.transpose) / radix
-            val offset = (event_value + this._opus_manager.transpose) % radix
+            val octave = event_value / radix
+            val offset = event_value % radix
 
             val std_offset = (offset.toDouble() * 12.0 / radix.toDouble())
             val bend = ((std_offset - floor(std_offset)) * 512.0).toInt()
-            val new_note = (octave * 12) + std_offset.toInt() + 21
+            val new_note = (octave * 12) + std_offset.toInt() + 21 + this._opus_manager.transpose
 
             Pair(new_note, bend)
         }

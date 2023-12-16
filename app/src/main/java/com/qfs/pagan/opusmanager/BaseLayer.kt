@@ -892,15 +892,15 @@ open class BaseLayer {
                                     event.note
                                 }
 
-                                val octave = current_note / event.radix
-                                val offset = current_note % event.radix
+                                val octave = (current_note + this.transpose) / event.radix
+                                val offset = (current_note + this.transpose) % event.radix
                                 val std_offset = (offset.toDouble() * 12.0 / event.radix.toDouble())
                                 val bend = ((std_offset - floor(std_offset)) * 512.0).toInt()
 
                                 prev_note = current_note
 
                                 Pair(
-                                    (octave * 12) + std_offset.toInt() + 21 + this.transpose,
+                                    (octave * 12) + std_offset.toInt() + 21,
                                     bend
                                 )
                             }

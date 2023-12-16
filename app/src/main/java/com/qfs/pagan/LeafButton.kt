@@ -109,7 +109,7 @@ class LeafButton(
             thread {
                 if (tree.is_event()) {
                     val abs_value = opus_manager.get_absolute_value(beat_key, position)
-                    if ((abs_value != null) && abs_value in (0 .. 90)) {
+                    if ((abs_value != null) && abs_value >= 0) {
                         (editor_table.context as MainActivity).play_event(
                             beat_key.channel,
                             if (opus_manager.is_percussion(beat_key.channel)) {

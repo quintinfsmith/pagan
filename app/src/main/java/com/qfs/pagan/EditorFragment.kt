@@ -532,15 +532,21 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
 
         val channel = opus_manager.cursor.channel
         val line_offset = opus_manager.cursor.line_offset
+        if (main.get_soundfont() == null) {
+            btnLineVolumePopup.visibility = View.GONE
+            (sbLineVolume.parent as View).visibility = View.GONE
+        } else {
+            if (this.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                (sbLineVolume.parent as View).visibility = View.GONE
+                btnLineVolumePopup.visibility = View.VISIBLE
+            } else {
+                (sbLineVolume.parent as View).visibility = View.VISIBLE
+                btnLineVolumePopup.visibility = View.GONE
+            }
+        }
 
         if (!opus_manager.is_percussion(channel) || main.get_soundfont() == null) {
             btnChoosePercussion.visibility = View.GONE
-            btnLineVolumePopup.visibility = View.GONE
-            if (this.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                sbLineVolume.visibility = View.GONE
-            } else {
-                (sbLineVolume.parent as View).visibility = View.GONE
-            }
         } else {
             btnChoosePercussion.visibility = View.VISIBLE
             val instrument = opus_manager.get_percussion_instrument(line_offset)
@@ -557,12 +563,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
                 } else {
                     btnChoosePercussion.text = "!$instrument"
                 }
-                sbLineVolume.visibility = View.GONE
-                btnLineVolumePopup.visibility = View.VISIBLE
             } else {
-                (sbLineVolume.parent as View).visibility = View.VISIBLE
-                btnLineVolumePopup.visibility = View.GONE
-
                 btnChoosePercussion.text = main.getString(
                     R.string.label_choose_percussion,
                     instrument,

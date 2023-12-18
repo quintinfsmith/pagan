@@ -28,7 +28,7 @@ class MidiFeedbackDispatcher: VirtualMidiInputDevice() {
         }
     }
 
-    fun play_note(channel: Int, note: Int, bend: Int = 0, midi2: Boolean = true) {
+    fun play_note(channel: Int, note: Int, bend: Int = 0, velocity: Int = 64, midi2: Boolean = true) {
         val handle = if (midi2) {
             val index = this.gen_index(channel)
             this.send_event(
@@ -37,7 +37,7 @@ class MidiFeedbackDispatcher: VirtualMidiInputDevice() {
                     channel = channel,
                     note = note,
                     bend = bend,
-                    velocity = 64 shl 8
+                    velocity = velocity shl 8
                 )
             )
             Triple(channel, index, true)
@@ -46,7 +46,7 @@ class MidiFeedbackDispatcher: VirtualMidiInputDevice() {
                 NoteOn(
                     channel = channel,
                     note = note,
-                    velocity = 64
+                    velocity = velocity
                 )
             )
             Triple(channel, note, false)

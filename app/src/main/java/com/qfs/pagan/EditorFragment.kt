@@ -911,7 +911,8 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
 
         main.play_event(
             beat_key.channel,
-            event_note
+            event_note,
+            opus_manager.get_line_volume(beat_key.channel, beat_key.line_offset)
         )
     }
 

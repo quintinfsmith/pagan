@@ -880,7 +880,7 @@ class MainActivity : AppCompatActivity() {
         return this._opus_manager
     }
 
-    fun play_event(channel: Int, event_value: Int) {
+    fun play_event(channel: Int, event_value: Int, velocity: Int) {
         val midi_channel = this._opus_manager.channels[channel].midi_channel
 
         val radix = this._opus_manager.radix
@@ -897,7 +897,7 @@ class MainActivity : AppCompatActivity() {
             Pair(new_note, bend)
         }
 
-        this._midi_feedback_dispatcher.play_note(midi_channel, note, bend, !this._midi_interface.output_devices_connected() && this.get_opus_manager().radix != 12)
+        this._midi_feedback_dispatcher.play_note(midi_channel, note, bend, velocity, !this._midi_interface.output_devices_connected() && this.get_opus_manager().radix != 12)
     }
 
     fun import_project(path: String) {

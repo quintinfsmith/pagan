@@ -1,6 +1,7 @@
 package com.qfs.pagan
 
 import android.content.Context
+import android.util.Log
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
@@ -18,6 +19,7 @@ import com.qfs.pagan.InterfaceLayer as OpusManager
 
 class LeafButton(
     context: Context,
+    initial_radix: Int,
     private var _event: OpusEvent?,
     var position: List<Int>,
     is_percussion: Boolean
@@ -35,7 +37,7 @@ class LeafButton(
         this.isClickable = false
         this.minimumHeight = resources.getDimension(R.dimen.line_height).toInt()
         this.minimumWidth = resources.getDimension(R.dimen.base_leaf_width).toInt()
-        this.set_text(is_percussion)
+        this.set_text(is_percussion, initial_radix)
         this.setOnClickListener {
             this.callback_click()
         }
@@ -129,9 +131,13 @@ class LeafButton(
         return true
     }
 
-    private fun set_text(is_percussion: Boolean) {
+    private fun set_text(is_percussion: Boolean, _radix: Int? = null) {
         val event = this._event
         var base_context = (this.context as ContextThemeWrapper).baseContext
+        val radix = _radix ?: this.get_opus_manager().radix
+        if (event!= null) {
+            Log.d("AAA", "SET TEXT: $radix -> ${event!!.note} | $_radix")
+        }
         this.removeAllViews()
         if (event == null) {
         } else if (is_percussion) {
@@ -173,8 +179,8 @@ class LeafButton(
             } else {
                 context.getString(R.string.pfx_add)
             }
-            label_octave.text = "${abs(event.note) / event.radix}"
-            label_offset.text = "${abs(event.note) % event.radix}"
+            label_octave.text = "${abs(event.note) / radix}"
+            label_offset.text = "${abs(event.note) % radix}"
         } else {
             val sub_wrapper = LinearLayout(base_context)
             val label_octave = LeafText(ContextThemeWrapper(base_context, R.style.leaf_value_octave))
@@ -192,8 +198,8 @@ class LeafButton(
             sub_wrapper.addView(label_offset)
             label_offset.layoutParams.height = MATCH_PARENT
 
-            label_octave.text = "${event.note / event.radix}"
-            label_offset.text = "${event.note % event.radix}"
+            label_octave.text = "${event.note / radix}"
+            label_offset.text = "${event.note % radix}"
         }
     }
 

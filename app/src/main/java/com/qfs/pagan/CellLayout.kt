@@ -62,6 +62,7 @@ class CellLayout(val column_layout: ColumnLayout, val y: Int): LinearLayout(colu
        if (tree.is_leaf()) {
            val tvLeaf = LeafButton(
                this.context,
+               this.get_opus_manager().radix,
                tree.get_event(),
                position,
                this.is_percussion()

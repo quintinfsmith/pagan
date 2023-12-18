@@ -23,30 +23,30 @@ const val CH_HOLD = '~'
 val REL_CHARS = listOf(CH_ADD, CH_SUBTRACT, CH_UP, CH_DOWN, CH_HOLD)
 val SPECIAL_CHARS = listOf(CH_OPEN, CH_CLOSE, CH_NEXT, CH_ADD, CH_SUBTRACT, CH_UP, CH_DOWN, CH_HOLD)
 
-fun to_string(node: OpusTree<OpusEvent>, depth: Int = 0): String {
+fun to_string(radix: Int, node: OpusTree<OpusEvent>, depth: Int = 0): String {
     var output: String
     if (node.is_event()) {
         val opus_event = node.get_event()!!
         output = if (opus_event.relative) {
             var new_string: String
-            if (opus_event.note == 0 || opus_event.note % opus_event.radix != 0) {
+            if (opus_event.note == 0 || opus_event.note % radix != 0) {
                 new_string = if (opus_event.note < 0) {
                     CH_SUBTRACT.toString()
                 } else {
                     CH_ADD.toString()
                 }
-                new_string += get_number_string(abs(opus_event.note), opus_event.radix, 1)
+                new_string += get_number_string(abs(opus_event.note), radix, 1)
             } else {
                 new_string = if (opus_event.note < 0) {
                     CH_DOWN.toString()
                 } else {
                     CH_UP.toString()
                 }
-                new_string += get_number_string(abs(opus_event.note) / opus_event.radix, opus_event.radix, 1)
+                new_string += get_number_string(abs(opus_event.note) / radix, radix, 1)
             }
             new_string
         } else {
-            get_number_string(opus_event.note, opus_event.radix, 2)
+            get_number_string(opus_event.note, radix, 2)
         }
     } else if (node.is_leaf()) {
         output = "__"
@@ -54,7 +54,7 @@ fun to_string(node: OpusTree<OpusEvent>, depth: Int = 0): String {
         output = ""
         for (i in 0 until node.size) {
             val child = node[i]
-            output += to_string(child, depth+1)
+            output += to_string(radix, child, depth+1)
             if (i < node.size - 1) {
                 output += CH_NEXT
             }
@@ -136,7 +136,6 @@ fun from_string(input_string: String, radix: Int, channel: Int): OpusTree<OpusEv
                 leaf.set_event(
                     OpusEvent(
                         odd_note,
-                        radix,
                         channel,
                         true
                     )
@@ -157,7 +156,6 @@ fun from_string(input_string: String, radix: Int, channel: Int): OpusTree<OpusEv
                 leaf.set_event(
                     OpusEvent(
                         odd_note,
-                        radix,
                         channel,
                         false
                     )
@@ -242,7 +240,6 @@ fun tree_from_midi(midi: Midi): OpusTree<Set<OpusEvent>> {
                     } else {
                         event.get_note() - 21
                     },
-                    12,
                     event.channel,
                     false
                 )

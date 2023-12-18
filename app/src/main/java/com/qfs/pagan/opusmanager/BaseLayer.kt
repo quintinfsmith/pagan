@@ -123,6 +123,7 @@ open class BaseLayer {
                     }
                 }
             }
+
             for (j in start .. end) {
                 for (k in top_left_key.beat .. bottom_right_key.beat) {
                     output.add(BeatKey(i,j,k))
@@ -433,7 +434,6 @@ open class BaseLayer {
             this.set_event(
                 beat_key, position, OpusEvent(
                     event.note,
-                    event.radix,
                     event.channel,
                     true,
                     event.duration
@@ -443,7 +443,6 @@ open class BaseLayer {
             this.set_event(
                 beat_key, position, OpusEvent(
                     event.note - preceding_value,
-                    event.radix,
                     event.channel,
                     true,
                     event.duration
@@ -476,7 +475,6 @@ open class BaseLayer {
         }
         this.set_event(beat_key, position, OpusEvent(
             value,
-            event.radix,
             event.channel,
             false,
             event.duration
@@ -551,10 +549,12 @@ open class BaseLayer {
     }
 
     open fun set_radix(radix: Int, mod_events: Boolean = true) {
+        val previous_radix = this.radix
         this.radix = radix
         if (!mod_events) {
             return
         }
+
         this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
             if (this.is_percussion(i)) {
                 return@forEachIndexed
@@ -569,12 +569,15 @@ open class BaseLayer {
 
                         val position = tree.get_path()
                         val new_event = event.copy()
-                        val octave = (event.note / event.radix)
+                        val octave = (event.note / previous_radix)
 
-                        new_event.radix = radix
-                        new_event.note = (octave * radix) + ((event.note % event.radix) * radix / event.radix)
+                        new_event.note = (octave * radix) + ((event.note % previous_radix) * radix / previous_radix)
 
-                        this.set_event(BeatKey(i, j, k), position, new_event)
+                        this.set_event(
+                            BeatKey(i, j, k),
+                            position,
+                            new_event
+                        )
                     }
                 }
             }
@@ -595,7 +598,6 @@ open class BaseLayer {
         val instrument = this.get_percussion_instrument(beat_key.line_offset)
         tree.set_event(OpusEvent(
             instrument,
-            this.radix,
             9,
             false
         ))
@@ -892,9 +894,9 @@ open class BaseLayer {
                                     event.note
                                 }
 
-                                val octave = (current_note + this.transpose) / event.radix
-                                val offset = (current_note + this.transpose) % event.radix
-                                val std_offset = (offset.toDouble() * 12.0 / event.radix.toDouble())
+                                val octave = (current_note + this.transpose) / this.radix
+                                val offset = (current_note + this.transpose) % this.radix
+                                val std_offset = (offset.toDouble() * 12.0 / this.radix.toDouble())
                                 val bend = ((std_offset - floor(std_offset)) * 512.0).toInt()
 
                                 prev_note = current_note
@@ -1321,7 +1323,6 @@ open class BaseLayer {
                     } else {
                         note - 21
                     },
-                    12,
                     channel,
                     false,
                     tick

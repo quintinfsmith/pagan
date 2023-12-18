@@ -899,8 +899,9 @@ open class HistoryLayer : LinksLayer() {
 
     override fun set_radix(radix: Int, mod_events: Boolean) {
         this.remember {
-            this.push_to_history_stack(HistoryToken.SET_RADIX, listOf(this.radix))
+            val previous_radix = this.radix
             super.set_radix(radix, mod_events)
+            this.push_to_history_stack(HistoryToken.SET_RADIX, listOf(previous_radix))
         }
     }
 

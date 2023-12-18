@@ -56,9 +56,9 @@ open class BaseLayer {
     var channels: MutableList<OpusChannel> = mutableListOf()
     var path: String? = null
     var project_name: String = DEFAULT_NAME
-    var radix: Int = 12
     var tempo: Float = 120F
     var transpose: Int = 0
+    var tuning_map: Array<Pair<Int, Int>> = Array(12) { i: Int -> Pair(i,12) }
 
     private var _cached_abs_line_map = mutableListOf<Pair<Int, Int>>()
     private var _cached_std_line_map = HashMap<Pair<Int, Int>, Int>()
@@ -549,8 +549,12 @@ open class BaseLayer {
     }
 
     open fun set_radix(radix: Int, mod_events: Boolean = true) {
-        val previous_radix = this.radix
-        this.radix = radix
+        val previous_radix = this.tuning_map.size
+
+        this.tuning_map = Array(radix) { i: Int ->
+            Pair(i, radix)
+        }
+
         if (!mod_events) {
             return
         }
@@ -581,7 +585,6 @@ open class BaseLayer {
                     }
                 }
             }
-
         }
     }
 
@@ -864,6 +867,7 @@ open class BaseLayer {
 
         val pseudo_midi_map = mutableListOf<Triple<Int, PseudoMidiEvent, Boolean>>()
         val max_tick = midi.get_ppqn() * (this.beat_count + 1)
+        val radix = this.tuning_map.size
 
         this.channels.forEachIndexed { c: Int, channel: OpusChannel ->
             midi.insert_event(
@@ -894,9 +898,9 @@ open class BaseLayer {
                                     event.note
                                 }
 
-                                val octave = (current_note + this.transpose) / this.radix
-                                val offset = (current_note + this.transpose) % this.radix
-                                val std_offset = (offset.toDouble() * 12.0 / this.radix.toDouble())
+                                val octave = (current_note + this.transpose) / radix
+                                val offset = this.tuning_map[(current_note + this.transpose) % radix]
+                                val std_offset = (offset.first.toDouble() * 12.0 / offset.second.toDouble())
                                 val bend = ((std_offset - floor(std_offset)) * 512.0).toInt()
 
                                 prev_note = current_note
@@ -953,12 +957,13 @@ open class BaseLayer {
         }
 
         val index_map = HashMap<PseudoMidiEvent, Int>()
+
         for ((tick, pseudo_event, is_on) in pseudo_midi_map) {
             midi.insert_event(
                 0,
                 tick,
                 if (is_on) {
-                    if (this.radix != 12) {
+                    if (!this.is_tuning_standard()) {
                         var current_index = 0
                         while (index_map.containsValue(current_index)) {
                             current_index += 1
@@ -979,7 +984,7 @@ open class BaseLayer {
                         )
                     }
                 } else {
-                    if (this.radix != 12) {
+                    if (!this.is_tuning_standard()) {
                         NoteOff79(
                             index = index_map.remove(pseudo_event)!!,
                             note = pseudo_event.note,
@@ -1047,7 +1052,7 @@ open class BaseLayer {
         return LoadedJSONData(
             name = this.project_name,
             tempo = this.tempo,
-            radix = this.radix,
+            tuning_map = this.tuning_map,
             channels = channels,
             transpose = this.transpose
         )
@@ -1076,7 +1081,9 @@ open class BaseLayer {
         this.path = null
         this.project_name = BaseLayer.DEFAULT_NAME
         this.tempo = 120F
-        this.radix = 12
+        this.tuning_map = Array(12) {
+            i: Int -> Pair(i, 12)
+        }
         this.transpose = 0
     }
 
@@ -1123,7 +1130,9 @@ open class BaseLayer {
         }
         return LoadedJSONData(
             tempo = old_data.tempo,
-            radix = old_data.radix,
+            tuning_map = Array(old_data.radix) { i: Int ->
+                Pair(i, old_data.radix)
+            },
             channels = new_channels,
             reflections = old_data.reflections,
             transpose = old_data.transpose,
@@ -2012,6 +2021,20 @@ open class BaseLayer {
                 this.overwrite_beat(working_key, beat_key)
             }
         }
+    }
+
+    fun is_tuning_standard(): Boolean {
+        if (this.tuning_map.size != 12) {
+            return false
+        }
+
+        for (i in 0 until 12) {
+            if (this.tuning_map[i] != Pair(i, 12)) {
+                return false
+            }
+        }
+
+        return true
     }
 
 }

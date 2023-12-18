@@ -14,11 +14,12 @@ data class ChannelJSONData(
 @Serializable
 data class LoadedJSONData(
     var tempo: Float,
-    var radix: Int,
     var channels: List<ChannelJSONData>,
     var reflections: List<List<BeatKey>>? = null,
     var transpose: Int = 0,
-    var name: String = BaseLayer.DEFAULT_NAME
+    var name: String = BaseLayer.DEFAULT_NAME,
+    var tuning_map: Array<Pair<Int, Int>> = Array(12) { i: Int -> Pair(i, 12) },
+    var radix: Int = tuning_map.size
 )
 
 @Serializable

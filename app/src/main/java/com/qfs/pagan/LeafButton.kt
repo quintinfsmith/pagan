@@ -136,9 +136,6 @@ class LeafButton(
         val event = this._event
         var base_context = (this.context as ContextThemeWrapper).baseContext
         val radix = _radix ?: this.get_opus_manager().radix
-        if (event!= null) {
-            Log.d("AAA", "SET TEXT: $radix -> ${event!!.note} | $_radix")
-        }
         this.removeAllViews()
         if (event == null) {
         } else if (is_percussion) {

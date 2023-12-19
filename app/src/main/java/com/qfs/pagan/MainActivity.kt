@@ -287,7 +287,11 @@ class MainActivity : AppCompatActivity() {
             old_config_file.delete()
         }
 
-        this.configuration = PaganConfiguration.from_path(this._config_path)
+        this.configuration = try {
+            PaganConfiguration.from_path(this._config_path)
+        } catch (e: Exception) {
+            PaganConfiguration()
+        }
         this._binding = ActivityMainBinding.inflate(this.layoutInflater)
         setContentView(this._binding.root)
         setSupportActionBar(this._binding.appBarMain.toolbar)

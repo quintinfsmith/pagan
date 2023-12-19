@@ -25,6 +25,7 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.WindowManager
 import android.widget.EditText
 import android.widget.LinearLayout
@@ -63,6 +64,7 @@ import com.qfs.apres.soundfont.SoundFont
 import com.qfs.apres.soundfontplayer.ActiveMidiAudioPlayer
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.pagan.databinding.ActivityMainBinding
+import com.qfs.pagan.structure.TuningMapRecycler
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
@@ -751,19 +753,47 @@ class MainActivity : AppCompatActivity() {
                 opus_manager.set_transpose(value)
             }
         }
-
+        //-------------------------------------------
         val btnRadix: TextView = this.findViewById(R.id.btnRadix)
-        btnRadix.text = this.getString(R.string.label_radix, radix)
         btnRadix.setOnClickListener {
-            this.dialog_number_input(
-                getString(R.string.dlg_set_radix),
-                2,
-                24,
-                radix
-            ) { radix: Int ->
-                opus_manager.set_radix(radix)
-            }
+            val main_fragment = this.get_active_fragment() ?: return@setOnClickListener
+            val viewInflated = LinearLayout(this)
+
+            val tuning_map_recycler = TuningMapRecycler(this)
+
+
+            viewInflated.addView(tuning_map_recycler)
+            tuning_map_recycler.layoutParams.height = MATCH_PARENT
+            tuning_map_recycler.layoutParams.width = MATCH_PARENT
+
+
+
+
+            AlertDialog.Builder(main_fragment.context, R.style.AlertDialog)
+                .setTitle("Tuning")
+                .setView(viewInflated)
+                .setPositiveButton(android.R.string.ok) { dialog, _ ->
+                    dialog.dismiss()
+                }
+                .setNegativeButton(android.R.string.cancel) { dialog, _ ->
+                    dialog.cancel()
+                }
+                .show()
+
         }
+        //-------------------------------------------
+
+        //btnRadix.text = this.getString(R.string.label_radix, radix)
+        //btnRadix.setOnClickListener {
+        //    this.dialog_number_input(
+        //        getString(R.string.dlg_set_radix),
+        //        2,
+        //        24,
+        //        radix
+        //    ) { radix: Int ->
+        //        opus_manager.set_radix(radix)
+        //    }
+        //}
 
         this.findViewById<View>(R.id.btnAddChannel).setOnClickListener {
             opus_manager.new_channel()

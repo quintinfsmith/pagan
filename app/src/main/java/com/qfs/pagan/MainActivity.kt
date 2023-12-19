@@ -505,7 +505,7 @@ class MainActivity : AppCompatActivity() {
 
         this.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         // Currently, Midi2.0 output is not supported. will be needed for N-radix projects
-        if (this._midi_interface.output_devices_connected() && this.get_opus_manager().radix == 12) {
+        if (this._midi_interface.output_devices_connected() && this.get_opus_manager().is_tuning_standard()) {
             this.playback_start_midi_device(start_point)
         } else if (this._midi_playback_device != null) {
             this.playback_start_precached(start_point)
@@ -697,7 +697,7 @@ class MainActivity : AppCompatActivity() {
                 options_menu.findItem(R.id.itmLoadProject).isVisible = this.has_projects_saved()
                 options_menu.findItem(R.id.itmUndo).isVisible = true
                 options_menu.findItem(R.id.itmNewProject).isVisible = true
-                options_menu.findItem(R.id.itmPlay).isVisible = (this._soundfont != null || (this._midi_interface.output_devices_connected() && this.get_opus_manager().radix == 12))
+                options_menu.findItem(R.id.itmPlay).isVisible = (this._soundfont != null || (this._midi_interface.output_devices_connected() && this.get_opus_manager().is_tuning_standard()))
                 options_menu.findItem(R.id.itmImportMidi).isVisible = true
                 options_menu.findItem(R.id.itmImportProject).isVisible = true
                 options_menu.findItem(R.id.itmSettings).isVisible = true
@@ -736,25 +736,26 @@ class MainActivity : AppCompatActivity() {
 
         val btnTranspose: TextView = this.findViewById(R.id.btnTranspose)
         btnTranspose.text = this.getString(R.string.label_transpose, opus_manager.transpose)
+        val radix = this.get_opus_manager().tuning_map.size
 
         btnTranspose.setOnClickListener {
             this.dialog_number_input(
                 resources.getString(R.string.dlg_transpose),
                 0,
-                this.get_opus_manager().radix - 1
+                radix - 1
             ) { value: Int ->
                 opus_manager.set_transpose(value)
             }
         }
 
         val btnRadix: TextView = this.findViewById(R.id.btnRadix)
-        btnRadix.text = this.getString(R.string.label_radix, opus_manager.radix)
+        btnRadix.text = this.getString(R.string.label_radix, radix)
         btnRadix.setOnClickListener {
             this.dialog_number_input(
                 getString(R.string.dlg_set_radix),
                 2,
                 24,
-                opus_manager.radix
+                radix
             ) { radix: Int ->
                 opus_manager.set_radix(radix)
             }
@@ -815,7 +816,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun get_exportable_options(): List<Pair<Int, String>> {
         val export_options = mutableListOf<Pair<Int, String>>()
-        if (this.get_opus_manager().radix == 12) {
+        if (this.get_opus_manager().is_tuning_standard()) {
             export_options.add( Pair(0, getString(R.string.export_option_midi)) )
         }
 
@@ -883,7 +884,7 @@ class MainActivity : AppCompatActivity() {
     fun play_event(channel: Int, event_value: Int, velocity: Int) {
         val midi_channel = this._opus_manager.channels[channel].midi_channel
 
-        val radix = this._opus_manager.radix
+        val radix = this._opus_manager.tuning_map.size
         val (note, bend) = if (this._opus_manager.is_percussion(channel)) { // Ignore the event data and use percussion map
             Pair(event_value + 27, 0)
         } else {
@@ -897,7 +898,7 @@ class MainActivity : AppCompatActivity() {
             Pair(new_note, bend)
         }
 
-        this._midi_feedback_dispatcher.play_note(midi_channel, note, bend, velocity, !this._midi_interface.output_devices_connected() && this.get_opus_manager().radix != 12)
+        this._midi_feedback_dispatcher.play_note(midi_channel, note, bend, velocity, !this._midi_interface.output_devices_connected() && !this.get_opus_manager().is_tuning_standard())
     }
 
     fun import_project(path: String) {

@@ -688,7 +688,8 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             }
             nsOctave.visibility = View.VISIBLE
             nsOffset.visibility = View.VISIBLE
-            nsOffset.set_max(opus_manager.radix - 1)
+            val radix = opus_manager.tuning_map.size
+            nsOffset.set_max(radix - 1)
             if (current_tree.is_event()) {
                 val event = current_tree.get_event()!!
                 val value = if (event.relative && ! main.configuration.relative_mode) {
@@ -701,8 +702,8 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
                     }
                 }
                 if (value >= 0) {
-                    nsOffset.setState(value % opus_manager.radix, manual = true, surpress_callback = true)
-                    nsOctave.setState(value / opus_manager.radix, manual = true, surpress_callback = true)
+                    nsOffset.setState(value % radix, manual = true, surpress_callback = true)
+                    nsOctave.setState(value / radix, manual = true, surpress_callback = true)
                 }
                 btnUnset.setImageResource(R.drawable.unset)
             } else {
@@ -836,7 +837,9 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
 
         opus_manager.relative_mode = view.getState()!!
 
+
         var event = current_tree.get_event() ?: return
+        val radix = opus_manager.tuning_map.size
 
         val nsOctave: NumberSelector = main.findViewById(R.id.nsOctave)
         val nsOffset: NumberSelector = main.findViewById(R.id.nsOffset)
@@ -853,8 +856,8 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
                         opus_manager.set_event(event.copy())
                     }
                 }
-                nsOctave.setState(event.note / opus_manager.radix, manual = true, surpress_callback = true)
-                nsOffset.setState(event.note % opus_manager.radix, manual = true, surpress_callback = true)
+                nsOctave.setState(event.note / radix, manual = true, surpress_callback = true)
+                nsOffset.setState(event.note % radix, manual = true, surpress_callback = true)
             }
             1 -> {
                 if (!event.relative) {
@@ -866,11 +869,11 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
                     nsOctave.unset_active_button()
                     nsOffset.unset_active_button()
                 } else {
-                    nsOctave.setState(event.note / opus_manager.radix,
+                    nsOctave.setState(event.note / radix,
                         manual = true,
                         surpress_callback = true
                     )
-                    nsOffset.setState(event.note % opus_manager.radix,
+                    nsOffset.setState(event.note % radix,
                         manual = true,
                         surpress_callback = true
                     )
@@ -887,12 +890,12 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
                     nsOffset.unset_active_button()
                 } else {
                     nsOctave.setState(
-                        (0 - event.note) / opus_manager.radix,
+                        (0 - event.note) / radix,
                         manual = true,
                         surpress_callback = true
                     )
                     nsOffset.setState(
-                        (0 - event.note) % opus_manager.radix,
+                        (0 - event.note) % radix,
                         manual = true,
                         surpress_callback = true
                     )
@@ -979,6 +982,8 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             1
         }
 
+        val radix = opus_manager.tuning_map.size
+
         val value = if (current_tree.is_event()) {
             val event = current_tree.get_event()!!
             var prev_note = if (opus_manager.relative_mode != 0) {
@@ -998,10 +1003,10 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
                     if (prev_note > 0) {
                         prev_note *= -1
                     }
-                    ((prev_note / opus_manager.radix) * opus_manager.radix) - progress
+                    ((prev_note / radix) * radix) - progress
                 }
                 else -> {
-                    ((prev_note / opus_manager.radix) * opus_manager.radix) + progress
+                    ((prev_note / radix) * radix) + progress
                 }
             }
         } else {
@@ -1017,7 +1022,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
                     val position = opus_manager.cursor.get_position()
                     val preceding_event = opus_manager.get_preceding_event(beat_key, position)
                     if (preceding_event != null && !preceding_event.relative) {
-                        ((preceding_event.note / opus_manager.radix) * opus_manager.radix) + progress
+                        ((preceding_event.note / radix) * radix) + progress
                     } else {
                         progress
                     }
@@ -1040,6 +1045,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
     private fun interact_nsOctave(view: NumberSelector) {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
+        val radix = opus_manager.tuning_map.size
         val progress = view.getState() ?: return
 
         val current_tree = opus_manager.get_tree()
@@ -1066,28 +1072,28 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
 
             when (opus_manager.relative_mode) {
                 2 -> {
-                    0 - (((0 - prev_note) % opus_manager.radix) + (progress * opus_manager.radix))
+                    0 - (((0 - prev_note) % radix) + (progress * radix))
                 }
                 else -> {
-                    ((prev_note % opus_manager.radix) + (progress * opus_manager.radix))
+                    ((prev_note % radix) + (progress * radix))
                 }
             }
         } else {
             when (opus_manager.relative_mode) {
                 2 -> {
-                    (0 - progress) * opus_manager.radix
+                    (0 - progress) * radix
                 }
                 1 -> {
-                    progress * opus_manager.radix
+                    progress * radix
                 }
                 else -> {
                     val beat_key = opus_manager.cursor.get_beatkey()
                     val position = opus_manager.cursor.get_position()
                     val preceding_event = opus_manager.get_preceding_event(beat_key, position)
                     if (preceding_event != null && !preceding_event.relative) {
-                        (progress * opus_manager.radix) + (preceding_event.note % opus_manager.radix)
+                        (progress * radix) + (preceding_event.note % radix)
                     } else {
-                        (progress * opus_manager.radix)
+                        (progress * radix)
                     }
                 }
             }

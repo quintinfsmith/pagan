@@ -1204,7 +1204,7 @@ open class BaseLayer {
         val parsed = this.parse_line_data(json_data)
         this.clear()
 
-        this.radix = json_data.radix
+        this.tuning_map = json_data.tuning_map.clone()
         this.tempo = json_data.tempo
         this.transpose = json_data.transpose
         this.set_project_name(json_data.name)
@@ -1232,7 +1232,6 @@ open class BaseLayer {
             }
         }
 
-
         this.insert_beat(0, beat_count)
         y = 0
         json_data.channels.forEachIndexed { i, channel_data ->
@@ -1240,7 +1239,6 @@ open class BaseLayer {
             if (channel_data.midi_channel == 9) {
                 return@forEachIndexed
             }
-
 
             this.channels[y].midi_channel = channel_data.midi_channel
             this.channels[y].midi_bank = channel_data.midi_bank
@@ -1473,7 +1471,7 @@ open class BaseLayer {
         this.channels = other.channels
         this.path = other.path
         this.project_name = other.project_name
-        this.radix = other.radix
+        this.tuning_map = other.tuning_map.clone()
         this.transpose = other.transpose
         this._cached_abs_line_map = other._cached_abs_line_map
         this._cached_std_line_map = other._cached_std_line_map

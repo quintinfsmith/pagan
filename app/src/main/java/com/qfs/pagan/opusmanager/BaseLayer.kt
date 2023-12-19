@@ -1063,7 +1063,10 @@ open class BaseLayer {
         }
 
         val file_obj = File(this.path!!)
-        val json_string = Json.encodeToString(this.to_json())
+        val json = Json {
+            ignoreUnknownKeys = true
+        }
+        val json_string = json.encodeToString(this.to_json())
         file_obj.writeText(json_string)
     }
 
@@ -1086,10 +1089,13 @@ open class BaseLayer {
 
     open fun load(bytes: ByteArray, new_path: String? = null) {
         val json_content = bytes.toString(Charsets.UTF_8)
+        val json = Json {
+            ignoreUnknownKeys = true
+        }
         val json_data: LoadedJSONData = try {
-            Json.decodeFromString<LoadedJSONData>(json_content)
+            json.decodeFromString<LoadedJSONData>(json_content)
         } catch (e: Exception) {
-            val old_data = Json.decodeFromString<LoadedJSONData0>(json_content)
+            val old_data = json.decodeFromString<LoadedJSONData0>(json_content)
             this.convert_old_fmt(old_data)
         }
 
@@ -1141,10 +1147,13 @@ open class BaseLayer {
 
     open fun load_json_file(path: String) {
         val json_content = File(path).readText(Charsets.UTF_8)
+        val json = Json {
+            ignoreUnknownKeys = true
+        }
         val json_data: LoadedJSONData = try {
-            Json.decodeFromString<LoadedJSONData>(json_content)
+            json.decodeFromString<LoadedJSONData>(json_content)
         } catch (e: Exception) {
-            val old_data = Json.decodeFromString<LoadedJSONData0>(json_content)
+            val old_data = json.decodeFromString<LoadedJSONData0>(json_content)
             this.convert_old_fmt(old_data)
         }
         this.load_json(json_data)

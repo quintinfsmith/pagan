@@ -893,9 +893,10 @@ class MainActivity : AppCompatActivity() {
             Pair(event_value + 27, 0)
         } else {
             val octave = (event_value + this._opus_manager.transpose) / radix
-            val offset = (event_value + this._opus_manager.transpose) % radix
 
-            val std_offset = (offset.toDouble() * 12.0 / radix.toDouble())
+            val offset = this._opus_manager.tuning_map[(event_value + this._opus_manager.transpose) % radix]
+
+            val std_offset = (offset.first.toDouble() * 12.0 / offset.second.toDouble())
             val bend = ((std_offset - floor(std_offset)) * 512.0).toInt()
             val new_note = (octave * 12) + std_offset.toInt() + 21
 

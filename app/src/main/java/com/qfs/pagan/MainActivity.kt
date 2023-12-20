@@ -14,19 +14,14 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.OpenableColumns
-import android.text.Editable
-import android.text.InputFilter
-import android.text.Spanned
-import android.text.TextWatcher
 import android.view.ContextThemeWrapper
-import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.WindowManager
+import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.ProgressBar
@@ -64,7 +59,6 @@ import com.qfs.apres.soundfont.SoundFont
 import com.qfs.apres.soundfontplayer.ActiveMidiAudioPlayer
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.pagan.databinding.ActivityMainBinding
-import com.qfs.pagan.structure.TuningMapRecycler
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
@@ -72,7 +66,6 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import kotlin.concurrent.thread
 import kotlin.math.floor
-import kotlin.math.max
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
 
@@ -757,28 +750,49 @@ class MainActivity : AppCompatActivity() {
         val btnRadix: TextView = this.findViewById(R.id.btnRadix)
         btnRadix.setOnClickListener {
             val main_fragment = this.get_active_fragment() ?: return@setOnClickListener
-            val viewInflated = LinearLayout(this)
+            val viewInflated: View = LayoutInflater.from(main_fragment.context)
+                .inflate(
+                    R.layout.dialog_tuning_map,
+                    main_fragment.view as ViewGroup,
+                    false
+                )
 
-            val tuning_map_recycler = TuningMapRecycler(this)
+            val btnResetTuning = viewInflated.findViewById<Button>(R.id.btnResetTuning)
+            val etRadix = viewInflated.findViewById<RangedNumberInput>(R.id.etRadix)
+            val rvTuningMap = viewInflated.findViewById<TuningMapRecycler>(R.id.rvTuningMap)
+            rvTuningMap.adapter = TuningMapRecyclerAdapter(rvTuningMap, opus_manager.tuning_map.clone())
 
+            btnResetTuning.setOnClickListener {
+                rvTuningMap.reset_tuning_map()
+            }
 
-            viewInflated.addView(tuning_map_recycler)
-            tuning_map_recycler.layoutParams.height = MATCH_PARENT
-            tuning_map_recycler.layoutParams.width = MATCH_PARENT
-
-
-
-
-            AlertDialog.Builder(main_fragment.context, R.style.AlertDialog)
+            val dialog = AlertDialog.Builder(main_fragment.context, R.style.AlertDialog)
                 .setTitle("Tuning")
                 .setView(viewInflated)
                 .setPositiveButton(android.R.string.ok) { dialog, _ ->
+                    opus_manager.set_tuning_map(
+                        (rvTuningMap.adapter as TuningMapRecyclerAdapter).tuning_map
+                    )
                     dialog.dismiss()
                 }
                 .setNegativeButton(android.R.string.cancel) { dialog, _ ->
                     dialog.cancel()
                 }
                 .show()
+
+            val default_value = opus_manager.tuning_map.size
+
+            etRadix.setText("$default_value")
+            etRadix.setOnClickListener {
+                etRadix.selectAll()
+            }
+
+            etRadix.value_set_callback = {
+                rvTuningMap.reset_tuning_map(it.get_value())
+            }
+
+            etRadix.requestFocus()
+            etRadix.selectAll()
 
         }
         //-------------------------------------------
@@ -1155,89 +1169,33 @@ class MainActivity : AppCompatActivity() {
                 window.decorView.rootView as ViewGroup,
                 false
             )
-        val number_input = viewInflated.findViewById<EditText>(R.id.etNumber)
-        fun submit_wrapper() {
-            val value = try {
-                max(min_value, number_input.text.toString().toInt())
-            } catch (nfe: NumberFormatException) {
-                coerced_default_value
-            }
-            this._number_selector_defaults[title] = value
-            callback(value)
-        }
+
+        val number_input = viewInflated.findViewById<RangedNumberInput>(R.id.etNumber)
 
         val dialog = AlertDialog.Builder(this, R.style.AlertDialog)
             .setTitle(title)
             .setView(viewInflated)
             .setPositiveButton(android.R.string.ok) { _, _ ->
-                submit_wrapper()
+                callback(number_input.get_value() ?: coerced_default_value)
             }
-            .setNegativeButton(android.R.string.cancel) { _, _ ->
-            }
+            .setNegativeButton(android.R.string.cancel) { _, _ -> }
             .show()
 
+        number_input.set_range(min_value, max_value)
         number_input.setText("$coerced_default_value")
         number_input.setOnClickListener {
             number_input.selectAll()
         }
 
-        number_input.setOnEditorActionListener { _: TextView?, action_id: Int?, _: KeyEvent? ->
-            if (action_id != null) {
-                submit_wrapper()
-                dialog.dismiss()
-                false
-            } else {
-                true
-            }
+        number_input.value_set_callback = {
+            callback(it.get_value() ?: coerced_default_value)
+            dialog.dismiss()
         }
-
-        /*
-            Use filters to ensure a number is input
-            Then the listener to ensure the value is <= the maximum_value
-            THEN on close, return the max(min_value, output)
-         */
-        number_input.filters = arrayOf(object: InputFilter {
-            override fun filter(
-                source: CharSequence,
-                start: Int,
-                end: Int,
-                dest: Spanned,
-                dstart: Int,
-                dend: Int
-            ): CharSequence? {
-                try {
-                    "${dest.substring(0, dstart)}$source${dest.substring(dend)}".toInt()
-                    return null
-                } catch (_: NumberFormatException) { }
-                return ""
-            }
-        })
-
-        number_input.addTextChangedListener( object : TextWatcher {
-            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
-                if (p0 =="\n") {
-                    dialog.dismiss()
-                }
-            }
-            override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
-
-            override fun afterTextChanged(p0: Editable?) {
-                if (p0 == null || p0.toString() == "") {
-                    number_input.setText("$min_value")
-                    number_input.selectAll()
-                } else {
-                    val value = p0.toString().toInt()
-                    if (value > max_value) {
-                        number_input.setText("$max_value")
-                        number_input.selectAll()
-                    }
-                }
-            }
-        })
 
         number_input.requestFocus()
         number_input.selectAll()
     }
+
     private fun dialog_save_project(callback: () -> Unit) {
         if (this.get_opus_manager().has_changed_since_save()) {
             AlertDialog.Builder(this, R.style.AlertDialog)
@@ -1257,6 +1215,7 @@ class MainActivity : AppCompatActivity() {
             callback()
         }
     }
+
     private fun dialog_delete_project() {
         val main_fragment = this.get_active_fragment()
 

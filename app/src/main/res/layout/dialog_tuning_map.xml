@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <TextView
+            android:text="Radix"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content" />
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="match_parent"/>
+
+        <com.qfs.pagan.RangedNumberInput
+            xmlns:custom="http://schemas.android.com/apk/res-auto"
+            android:id="@+id/etRadix"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            custom:min="2"
+            custom:max="36"
+            android:text="12"
+            android:inputType="number" />
+
+        <Space
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"/>
+
+        <Button
+            android:id="@+id/btnResetTuning"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="reset tuning"/>
+    </LinearLayout>
+
+    <com.qfs.pagan.TuningMapRecycler
+        android:id="@+id/rvTuningMap"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+</LinearLayout>

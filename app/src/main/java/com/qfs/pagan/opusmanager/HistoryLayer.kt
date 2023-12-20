@@ -185,6 +185,12 @@ open class HistoryLayer : LinksLayer() {
                     this.set_tempo(current_node.args[0] as Float)
                 }
 
+                HistoryToken.SET_TUNING_MAP -> {
+                    this.set_tuning_map(
+                        this.checked_cast<Array<Pair<Int, Int>>>(current_node.args[0])
+                    )
+                }
+
                 HistoryToken.SET_CHANNEL_INSTRUMENT -> {
                     this.set_channel_instrument(
                         current_node.args[0] as Int,
@@ -920,5 +926,10 @@ open class HistoryLayer : LinksLayer() {
         this.remember {
             super.overwrite_beat_range_horizontally(channel, line_offset, first_key, second_key)
         }
+    }
+
+    override fun set_tuning_map(new_map: Array<Pair<Int, Int>>) {
+        this.push_to_history_stack(HistoryToken.SET_TUNING_MAP, listOf(this.tuning_map))
+        super.set_tuning_map(new_map)
     }
 }

@@ -1,7 +1,9 @@
 <resources>
-    <declare-styleable name="NumberSelector">
+    <declare-styleable name="Ranged">
         <attr name="min" format="integer" />
         <attr name="max" format="integer" />
+    </declare-styleable>
+    <declare-styleable name="NumberSelector">
         <attr name="button_theme" format="integer" />
         <attr name="radix" format="integer" />
         <attr name="numberselector_bg_default" format="color"/>

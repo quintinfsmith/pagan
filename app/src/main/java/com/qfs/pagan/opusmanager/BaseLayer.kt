@@ -2035,4 +2035,7 @@ open class BaseLayer {
         return true
     }
 
+    open fun set_tuning_map(new_map: Array<Pair<Int, Int>>) {
+        this.tuning_map = new_map
+    }
 }

@@ -54,15 +54,20 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
     }
 
     init {
-        val styled_attributes = context.theme.obtainStyledAttributes(attrs, R.styleable.NumberSelector, 0, 0)
+        var styled_attributes = context.theme.obtainStyledAttributes(attrs, R.styleable.NumberSelector, 0, 0)
         try {
             this.button_theme = when (styled_attributes.getInteger(R.styleable.NumberSelector_button_theme, 0)) {
                 1 -> R.style.numberSelectorButtonB
                 else -> R.style.numberSelectorButtonA
             }
+        } finally {
+            styled_attributes.recycle()
+        }
 
-            this.max = styled_attributes.getInteger(R.styleable.NumberSelector_max, 2)
-            this.min = styled_attributes.getInteger(R.styleable.NumberSelector_min, 0)
+        styled_attributes = context.theme.obtainStyledAttributes(attrs, R.styleable.Ranged, 0, 0)
+        try {
+            this.max = styled_attributes.getInteger(R.styleable.Ranged_max, 2)
+            this.min = styled_attributes.getInteger(R.styleable.Ranged_min, 0)
         } finally {
            styled_attributes.recycle()
         }

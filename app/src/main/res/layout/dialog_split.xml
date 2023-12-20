@@ -10,11 +10,14 @@
         android:layout_width="wrap_content"
         android:layout_height="match_parent">
 
-        <EditText
+        <com.qfs.pagan.RangedNumberInput
+            xmlns:custom="http://schemas.android.com/apk/res-auto"
             android:id="@+id/etNumber"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            custom:min="0"
+            custom:max="128"
             android:ems="3"
             android:textAlignment="textEnd"
             android:inputType="number" />

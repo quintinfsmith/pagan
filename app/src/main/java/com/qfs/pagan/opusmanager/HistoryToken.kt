@@ -25,6 +25,7 @@ enum class HistoryToken {
     SET_PROJECT_NAME,
     SET_TEMPO,
     SET_TRANSPOSE,
+    SET_TUNING_MAP,
     SPLIT_TREE,
     UNSET,
     // Links

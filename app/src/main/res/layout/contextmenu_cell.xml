@@ -101,7 +101,8 @@
                     android:text="T" />
             </LinearLayout>
 
-            <com.qfs.pagan.NumberSelector xmlns:android="http://schemas.android.com/apk/res/android"
+            <com.qfs.pagan.NumberSelector
+                xmlns:android="http://schemas.android.com/apk/res/android"
                 xmlns:custom="http://schemas.android.com/apk/res-auto"
                 android:id="@+id/nsOctave"
                 android:background="?attr/main_bg"

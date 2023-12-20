@@ -1,23 +1,27 @@
 package com.qfs.pagan
 
 import android.content.Context
+import android.text.InputType
 import android.util.AttributeSet
 import android.view.KeyEvent
 import android.widget.TextView
 import kotlin.math.max
 
-class RangedNumberInput(context: Context, attrs: AttributeSet): androidx.appcompat.widget.AppCompatEditText(context, attrs) {
+class RangedNumberInput(context: Context, attrs: AttributeSet? = null): androidx.appcompat.widget.AppCompatEditText(context, attrs) {
     var max: Int
     var min: Int
     var value_set_callback: ((RangedNumberInput) -> Unit)? = null
     var watcher: RangedTextWatcher
+    var confirm_required = true
     init {
         /*
             Use filters to ensure a number is input
             Then the listener to ensure the value is <= the maximum_value
             THEN on close, return the max(min_value, output)
          */
+        this.inputType = InputType.TYPE_CLASS_NUMBER
         this.filters = arrayOf(NumeralFilter())
+        this.setSelectAllOnFocus(true)
 
         val styled_attributes = context.theme.obtainStyledAttributes(attrs, R.styleable.Ranged, 0, 0)
         try {
@@ -34,8 +38,11 @@ class RangedNumberInput(context: Context, attrs: AttributeSet): androidx.appcomp
         }
 
         this.setOnEditorActionListener { _: TextView?, action_id: Int?, _: KeyEvent? ->
-            if (action_id != null) {
-                if (this.value_set_callback != null) {
+            if (action_id != null)                 if (this.value_set_callback != null) {
+                    this.value_set_callback!!(this)
+                }
+{
+                if (this.confirm_required && this.value_set_callback != null) {
                     this.value_set_callback!!(this)
                 }
                 false
@@ -58,6 +65,12 @@ class RangedNumberInput(context: Context, attrs: AttributeSet): androidx.appcomp
         } catch (nfe: NumberFormatException) {
             null
         }
+    }
+
+    fun set_value(new_value: Int) {
+        this.watcher.lockout = true
+        this.setText(new_value.toString())
+        this.watcher.lockout = false
     }
 
 }

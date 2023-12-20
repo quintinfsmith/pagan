@@ -8,7 +8,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
-
         <TextView
             android:text="Radix"
             android:layout_height="wrap_content"
@@ -26,19 +25,7 @@
             android:layout_height="wrap_content"
             custom:min="2"
             custom:max="36"
-            android:text="12"
-            android:inputType="number" />
-
-        <Space
-            android:layout_weight="1"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"/>
-
-        <Button
-            android:id="@+id/btnResetTuning"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="reset tuning"/>
+            android:text="12"/>
     </LinearLayout>
 
     <com.qfs.pagan.TuningMapRecycler

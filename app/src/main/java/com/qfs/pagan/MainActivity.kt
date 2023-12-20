@@ -21,7 +21,6 @@ import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
-import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.ProgressBar
@@ -757,14 +756,10 @@ class MainActivity : AppCompatActivity() {
                     false
                 )
 
-            val btnResetTuning = viewInflated.findViewById<Button>(R.id.btnResetTuning)
             val etRadix = viewInflated.findViewById<RangedNumberInput>(R.id.etRadix)
+
             val rvTuningMap = viewInflated.findViewById<TuningMapRecycler>(R.id.rvTuningMap)
             rvTuningMap.adapter = TuningMapRecyclerAdapter(rvTuningMap, opus_manager.tuning_map.clone())
-
-            btnResetTuning.setOnClickListener {
-                rvTuningMap.reset_tuning_map()
-            }
 
             val dialog = AlertDialog.Builder(main_fragment.context, R.style.AlertDialog)
                 .setTitle("Tuning")
@@ -782,17 +777,10 @@ class MainActivity : AppCompatActivity() {
 
             val default_value = opus_manager.tuning_map.size
 
-            etRadix.setText("$default_value")
-            etRadix.setOnClickListener {
-                etRadix.selectAll()
-            }
-
+            etRadix.set_value(default_value)
             etRadix.value_set_callback = {
                 rvTuningMap.reset_tuning_map(it.get_value())
             }
-
-            etRadix.requestFocus()
-            etRadix.selectAll()
 
         }
         //-------------------------------------------

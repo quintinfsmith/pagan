@@ -1,2 +1,3 @@
 Bugfix:
     - Line Volume controls show up on all channels, not just percussion
+    - Midi output stability improvements

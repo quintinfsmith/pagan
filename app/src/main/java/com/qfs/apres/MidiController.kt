@@ -82,6 +82,13 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
         }
     }
 
+    fun close_connected_devices() {
+        for (connected_input_port in this.connected_input_ports) {
+            connected_input_port.close()
+        }
+        this.connected_input_ports.clear()
+    }
+
     fun connect_virtual_input_device(device: VirtualMidiInputDevice) {
         this.virtual_input_devices.add(device)
         device.set_midi_controller(this)

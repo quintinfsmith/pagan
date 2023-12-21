@@ -182,8 +182,13 @@ class MainActivity : AppCompatActivity() {
         this.recreate()
     }
 
+    override fun onResume() {
+        super.onResume()
+    }
+
     override fun onPause() {
         this.playback_stop()
+        this._midi_interface.close_connected_devices()
         super.onPause()
     }
 

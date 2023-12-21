@@ -18,6 +18,7 @@ import android.text.Editable
 import android.text.InputFilter
 import android.text.Spanned
 import android.text.TextWatcher
+import android.util.Log
 import android.view.ContextThemeWrapper
 import android.view.KeyEvent
 import android.view.LayoutInflater
@@ -182,14 +183,14 @@ class MainActivity : AppCompatActivity() {
         this.recreate()
     }
 
-    override fun onResume() {
-        super.onResume()
-    }
-
     override fun onPause() {
         this.playback_stop()
         this._midi_interface.close_connected_devices()
         super.onPause()
+    }
+    override fun onResume() {
+        super.onResume()
+        this._midi_interface.open_connected_devices()
     }
 
     fun save_to_backup() {
@@ -253,8 +254,8 @@ class MainActivity : AppCompatActivity() {
             override fun onDeviceRemoved(device_info: MidiDeviceInfo) {
                 if (!this@MainActivity._midi_interface.output_devices_connected()) {
                     this@MainActivity.runOnUiThread {
-                        this@MainActivity.update_menu_options()
                         this@MainActivity.playback_stop()
+                        this@MainActivity.update_menu_options()
                         if (this@MainActivity.configuration.soundfont != null) {
                             this@MainActivity.set_soundfont(this@MainActivity.configuration.soundfont)
                         }
@@ -505,6 +506,7 @@ class MainActivity : AppCompatActivity() {
         blocker_view?.setOnClickListener {
             this.playback_stop()
         }
+
         this.runOnUiThread {
             if (blocker_view != null) {
                 blocker_view.visibility = View.VISIBLE
@@ -516,10 +518,13 @@ class MainActivity : AppCompatActivity() {
 
         this.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         // Currently, Midi2.0 output is not supported. will be needed for N-radix projects
+        this._midi_interface.open_connected_devices()
         if (this._midi_interface.output_devices_connected() && this.get_opus_manager().radix == 12) {
             this.playback_start_midi_device(start_point)
         } else if (this._midi_playback_device != null) {
             this.playback_start_precached(start_point)
+        } else {
+            Log.d("AAA", "FAIL!!!")
         }
     }
 
@@ -555,7 +560,6 @@ class MainActivity : AppCompatActivity() {
 
     internal fun playback_stop(force: Boolean = false) {
         this.loading_reticle_hide()
-
         if (this._virtual_input_device.playing || force) {
             this.stop_queued = true
             this._virtual_input_device.stop()
@@ -578,6 +582,7 @@ class MainActivity : AppCompatActivity() {
             blocker_view.visibility = View.GONE
             this.stop_queued = false
         }
+        this._midi_interface.close_output_devices()
     }
 
     fun get_new_project_path(): String {
@@ -892,6 +897,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun play_event(channel: Int, event_value: Int, velocity: Int) {
+        this._midi_interface.open_output_devices()
         val midi_channel = this._opus_manager.channels[channel].midi_channel
 
         val radix = this._opus_manager.radix

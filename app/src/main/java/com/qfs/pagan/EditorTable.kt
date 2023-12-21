@@ -491,6 +491,9 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
     fun scroll_to_position(x: Int? = null, y: Int? = null, position: List<Int>? = null, force: Boolean = false) {
         if (x != null) {
+            if (x >= this.get_opus_manager().beat_count) {
+                return
+            }
             var position_visibility = this.get_position_visibility(x)
             if (force || position_visibility < SECTION_VIEW_PARTIAL_OVERSIZED) {
                 this.scroll_to_x(x)

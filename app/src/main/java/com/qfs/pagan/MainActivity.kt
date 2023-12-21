@@ -535,21 +535,21 @@ class MainActivity : AppCompatActivity() {
             try {
                 this._virtual_input_device.play_midi(midi) {
                     this.runOnUiThread {
-                        this.playback_stop()
+                        this.playback_stop(true)
                     }
                 }
             } catch (e: java.io.IOException) {
                 this.runOnUiThread {
-                    this.playback_stop()
+                    this.playback_stop(true)
                 }
             }
         }
     }
 
-    internal fun playback_stop() {
+    internal fun playback_stop(force: Boolean = false) {
         this.loading_reticle_hide()
 
-        if (this._virtual_input_device.playing) {
+        if (this._virtual_input_device.playing || force) {
             this.stop_queued = true
             this._virtual_input_device.stop()
             this.restore_playback_state()

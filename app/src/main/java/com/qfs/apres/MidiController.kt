@@ -126,7 +126,11 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
 
         for (input_port in this.connected_input_ports) {
             var bytes = event.as_bytes()
-            input_port.send(bytes, 0, bytes.size)
+            try {
+                input_port.send(bytes, 0, bytes.size)
+            } catch (e: java.io.IOException) {
+                continue
+            }
         }
     }
 

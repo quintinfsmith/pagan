@@ -153,4 +153,9 @@ class SampleHandleManager(
             Pair(0,0)
         }
     }
+
+    fun clear() {
+        this.loaded_presets.clear()
+        this.sample_handle_generator.clear()
+    }
 }

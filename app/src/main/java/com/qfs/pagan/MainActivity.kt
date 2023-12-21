@@ -973,10 +973,10 @@ class MainActivity : AppCompatActivity() {
 
         this.configuration.soundfont = filename
         val path = "${this.getExternalFilesDir(null)}/SoundFonts/$filename"
-        this._soundfont = SoundFont(path)
         if (this._midi_feedback_device != null) {
             this._midi_interface.disconnect_virtual_output_device(this._midi_feedback_device!!)
         }
+        this._soundfont = SoundFont(path)
         this._midi_feedback_device = ActiveMidiAudioPlayer(SampleHandleManager(this._soundfont!!, this.configuration.sample_rate))
         this._midi_playback_device = PaganPlaybackDevice(this)
 
@@ -1008,6 +1008,9 @@ class MainActivity : AppCompatActivity() {
 
     fun disable_soundfont() {
         this.update_channel_instruments()
+        if (this._midi_feedback_device != null) {
+            this._midi_interface.disconnect_virtual_output_device(this._midi_feedback_device!!)
+        }
         this._soundfont = null
         this.configuration.soundfont = null
         this._midi_playback_device = null

@@ -24,7 +24,9 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
             val msg_list = msg!!.toMutableList()
             msg_list.removeFirst()
             val event = event_from_bytes(msg_list, 0x90.toByte()) ?: return
-            broadcast_event(event)
+            if (! this@MidiController.block_physical_devices) {
+                broadcast_event(event)
+            }
         }
     }
 
@@ -34,6 +36,7 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
     private val mapped_input_ports = HashMap<Int, MutableList<MidiInputPort>>()
     private val mapped_output_ports = HashMap<Int, MutableList<MidiOutputPort>>()
     private val virtual_output_mutex = Mutex()
+    var block_physical_devices = false
 
     init {
         val midi_manager_callback = object: MidiManager.DeviceCallback() {
@@ -113,7 +116,7 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
 
     fun broadcast_event(event: MIDIEvent) {
         // Rebroadcast to listening devices
-        var devices = runBlocking {
+        val devices = runBlocking {
             this@MidiController.virtual_output_mutex.withLock {
                 this@MidiController.virtual_output_devices.toList()
             }
@@ -124,12 +127,14 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
             }
         }
 
-        for (input_port in this.connected_input_ports) {
-            var bytes = event.as_bytes()
-            try {
-                input_port.send(bytes, 0, bytes.size)
-            } catch (e: java.io.IOException) {
-                continue
+        if (! this.block_physical_devices) {
+            for (input_port in this.connected_input_ports) {
+                val bytes = event.as_bytes()
+                try {
+                    input_port.send(bytes, 0, bytes.size)
+                } catch (e: java.io.IOException) {
+                    continue
+                }
             }
         }
     }
@@ -212,5 +217,9 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
             }
             this.mapped_output_ports.remove(device_info.id)
         }
+    }
+
+    fun is_connected(output_device: VirtualMidiOutputDevice): Boolean {
+        return this.virtual_output_devices.contains(output_device)
     }
 }

@@ -1325,7 +1325,20 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     }
 
     override fun set_radix(radix: Int, mod_events: Boolean) {
+        var original_radix = this.radix
         super.set_radix(radix, mod_events)
+
+        if (this.radix == 12 && original_radix != 12) {
+            this.activity.enable_physical_midi_output()
+            if (this.activity.is_connected_to_physical_device()) {
+                this.activity.disconnect_feedback_device()
+            }
+        } else if (this.radix != 12 && original_radix == 12) {
+            this.activity.block_physical_midi_output()
+            if (this.activity.is_connected_to_physical_device()) {
+                this.activity.connect_feedback_device()
+            }
+        }
 
         if (this.get_ui_lock_level() != null) {
             return

@@ -232,9 +232,11 @@ class MainActivity : AppCompatActivity() {
 
                     if (this@MainActivity._midi_feedback_device != null) {
                         this@MainActivity.playback_stop()
-                        this@MainActivity._midi_interface.disconnect_virtual_output_device(
-                            this@MainActivity._midi_feedback_device!!
-                        )
+                        if (this@MainActivity.get_opus_manager().radix == 12) {
+                            this@MainActivity._midi_interface.disconnect_virtual_output_device(
+                                this@MainActivity._midi_feedback_device!!
+                            )
+                        }
                     }
 
                     this@MainActivity.runOnUiThread {
@@ -901,7 +903,13 @@ class MainActivity : AppCompatActivity() {
             Pair(new_note, bend)
         }
 
-        this._midi_feedback_dispatcher.play_note(midi_channel, note, bend, velocity, !this._midi_interface.output_devices_connected() && this.get_opus_manager().radix != 12)
+        this._midi_feedback_dispatcher.play_note(
+            midi_channel,
+            note,
+            bend,
+            velocity,
+            radix != 12 || ! this.is_connected_to_physical_device()
+        )
     }
 
     fun import_project(path: String) {
@@ -992,6 +1000,8 @@ class MainActivity : AppCompatActivity() {
         this._soundfont = null
         this.configuration.soundfont = null
         this._midi_playback_device = null
+        this._midi_feedback_device = null
+
         this.populate_active_percussion_names()
     }
 
@@ -1374,4 +1384,41 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
+    fun is_connected_to_physical_device(): Boolean {
+        return this._midi_interface.output_devices_connected()
+    }
+
+    fun disconnect_feedback_device() {
+        if (this._midi_feedback_device == null || !this._midi_interface.is_connected(this._midi_feedback_device!!)) {
+            return
+        }
+
+        this._midi_interface.disconnect_virtual_output_device(
+            this._midi_feedback_device!!
+        )
+    }
+
+    fun connect_feedback_device() {
+        if (this._midi_feedback_device == null && this.configuration.soundfont != null) {
+            this.set_soundfont(this.configuration.soundfont)
+        }
+
+        if (this._midi_feedback_device == null || this._midi_interface.is_connected(this._midi_feedback_device!!)) {
+            return
+        }
+
+        this._midi_interface.connect_virtual_output_device(
+            this._midi_feedback_device!!
+        )
+    }
+
+    fun block_physical_midi_output() {
+        this._midi_interface.block_physical_devices = true
+
+    }
+    fun enable_physical_midi_output() {
+        this._midi_interface.block_physical_devices = false
+    }
+
 }

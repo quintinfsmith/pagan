@@ -1324,30 +1324,20 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         return total
     }
 
-    override fun set_radix(radix: Int, mod_events: Boolean) {
-        var original_radix = this.radix
-        super.set_radix(radix, mod_events)
+    override fun set_tuning_map(new_map: Array<Pair<Int, Int>>) {
+        val was_tuning_standard = this.is_tuning_standard()
+        super.set_tuning_map(new_map)
+        val is_tuning_standard = this.is_tuning_standard()
 
-        if (this.radix == 12 && original_radix != 12) {
+        if (is_tuning_standard && !was_tuning_standard) {
             this.activity.enable_physical_midi_output()
             if (this.activity.is_connected_to_physical_device()) {
                 this.activity.disconnect_feedback_device()
             }
-        } else if (this.radix != 12 && original_radix == 12) {
+        } else if (!is_tuning_standard && was_tuning_standard) {
             this.activity.block_physical_midi_output()
             if (this.activity.is_connected_to_physical_device()) {
                 this.activity.connect_feedback_device()
-            }
-        }
-
-        if (this.get_ui_lock_level() != null) {
-            return
-        }
-
-        this.runOnUiThread { main: MainActivity ->
-            main.findViewById<TextView>(R.id.btnRadix).text = main.getString(R.string.label_radix, radix)
-            this.withFragment {
-                it.reset_context_menu()
             }
         }
     }

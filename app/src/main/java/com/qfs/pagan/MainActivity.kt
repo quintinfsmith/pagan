@@ -14,7 +14,6 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.OpenableColumns
-import android.util.Log
 import android.view.ContextThemeWrapper
 import android.view.LayoutInflater
 import android.view.Menu
@@ -517,8 +516,6 @@ class MainActivity : AppCompatActivity() {
             this.playback_start_midi_device(start_point)
         } else if (this._midi_playback_device != null) {
             this.playback_start_precached(start_point)
-        } else {
-            Log.d("AAA", "FAIL!!!")
         }
     }
 
@@ -931,19 +928,24 @@ class MainActivity : AppCompatActivity() {
 
     fun play_event(channel: Int, event_value: Int, velocity: Int) {
         this._midi_interface.open_output_devices()
-        val midi_channel = this._opus_manager.channels[channel].midi_channel
+        val opus_manager = this._opus_manager
+        val midi_channel = opus_manager.channels[channel].midi_channel
 
-        val radix = this._opus_manager.tuning_map.size
-        val (note, bend) = if (this._opus_manager.is_percussion(channel)) { // Ignore the event data and use percussion map
+        val radix = opus_manager.tuning_map.size
+        val (note, bend) = if (opus_manager.is_percussion(channel)) { // Ignore the event data and use percussion map
             Pair(event_value + 27, 0)
         } else {
-            val octave = (event_value + this._opus_manager.transpose) / radix
+            val octave = event_value/ radix
+            val offset = opus_manager.tuning_map[event_value % radix]
 
-            val offset = this._opus_manager.tuning_map[(event_value + this._opus_manager.transpose) % radix]
+            // This offset is calculated so the tuning map always reflects correctly
+            val transpose_pair = opus_manager.tuning_map[opus_manager.transpose % radix]
+            val transpose_offset = 12 * transpose_pair.first.toDouble() / transpose_pair.second.toDouble()
 
-            val std_offset = (offset.first.toDouble() * 12.0 / offset.second.toDouble())
-            val bend = ((std_offset - floor(std_offset)) * 512.0).toInt()
-            val new_note = (octave * 12) + std_offset.toInt() + 21
+            val std_offset = 12.0 * offset.first.toDouble() / offset.second.toDouble()
+
+            val bend = (((std_offset - floor(std_offset)) + (transpose_offset - floor(transpose_offset))) * 512.0).toInt()
+            val new_note = (octave * 12) + std_offset.toInt() + transpose_offset.toInt() + 21
 
             Pair(new_note, bend)
         }
@@ -953,7 +955,7 @@ class MainActivity : AppCompatActivity() {
             note,
             bend,
             velocity,
-            !this.get_opus_manager().is_tuning_standard() || ! this.is_connected_to_physical_device()
+            !opus_manager.is_tuning_standard() || ! this.is_connected_to_physical_device()
         )
     }
 

@@ -38,10 +38,7 @@ class RangedNumberInput(context: Context, attrs: AttributeSet? = null): androidx
         }
 
         this.setOnEditorActionListener { _: TextView?, action_id: Int?, _: KeyEvent? ->
-            if (action_id != null)                 if (this.value_set_callback != null) {
-                    this.value_set_callback!!(this)
-                }
-{
+            if (action_id != null) {
                 if (this.confirm_required && this.value_set_callback != null) {
                     this.value_set_callback!!(this)
                 }

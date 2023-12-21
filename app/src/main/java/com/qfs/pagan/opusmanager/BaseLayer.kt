@@ -892,21 +892,27 @@ open class BaseLayer {
                             val (note, bend) = if (this.is_percussion(c)) { // Ignore the event data and use percussion map
                                 Pair(this.get_percussion_instrument(l) + 27, 0)
                             } else {
+
                                 val current_note = if (event.relative) {
                                     event.note + prev_note
                                 } else {
                                     event.note
                                 }
 
-                                val octave = (current_note + this.transpose) / radix
-                                val offset = this.tuning_map[(current_note + this.transpose) % radix]
-                                val std_offset = (offset.first.toDouble() * 12.0 / offset.second.toDouble())
-                                val bend = ((std_offset - floor(std_offset)) * 512.0).toInt()
+                                val octave = current_note / radix
+                                val offset = this.tuning_map[current_note % radix]
+
+                                // This offset is calculated so the tuning map always reflects correctly
+                                val transpose_pair = this.tuning_map[this.transpose % radix]
+                                val transpose_offset = 12 * transpose_pair.first.toDouble() / transpose_pair.second.toDouble()
+
+                                val std_offset = (this.transpose.toDouble() * 12.0 / radix.toDouble()) + (offset.first.toDouble() * 12.0 / offset.second.toDouble())
+                                val bend = (((std_offset - floor(std_offset)) + (transpose_offset - floor(transpose_offset))) * 512.0).toInt()
 
                                 prev_note = current_note
 
                                 Pair(
-                                    (octave * 12) + std_offset.toInt() + 21,
+                                    (octave * 12) + std_offset.toInt() + transpose_offset.toInt() + 21,
                                     bend
                                 )
                             }

@@ -11,7 +11,6 @@ import android.media.midi.MidiManager.TRANSPORT_MIDI_BYTE_STREAM
 import android.media.midi.MidiOutputPort
 import android.media.midi.MidiReceiver
 import android.os.Build
-import android.util.Log
 import com.qfs.apres.event.MIDIEvent
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
@@ -24,9 +23,7 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
         override fun onSend(msg: ByteArray?, offset: Int, count: Int, timestamp: Long) {
             val msg_list = msg!!.toMutableList()
             msg_list.removeFirst()
-            Log.d("AAA", "$msg_list")
             val event = event_from_bytes(msg_list, 0x90.toByte()) ?: return
-            Log.d("AAA","$event")
             if (! this@MidiController.block_physical_devices) {
                 broadcast_event(event)
             }

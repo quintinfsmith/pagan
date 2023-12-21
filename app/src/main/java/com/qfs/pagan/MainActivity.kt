@@ -14,6 +14,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.OpenableColumns
+import android.util.Log
 import android.view.ContextThemeWrapper
 import android.view.LayoutInflater
 import android.view.Menu
@@ -178,7 +179,12 @@ class MainActivity : AppCompatActivity() {
 
     override fun onPause() {
         this.playback_stop()
+        this._midi_interface.close_connected_devices()
         super.onPause()
+    }
+    override fun onResume() {
+        super.onResume()
+        this._midi_interface.open_connected_devices()
     }
 
     fun save_to_backup() {
@@ -226,9 +232,11 @@ class MainActivity : AppCompatActivity() {
 
                     if (this@MainActivity._midi_feedback_device != null) {
                         this@MainActivity.playback_stop()
-                        this@MainActivity._midi_interface.disconnect_virtual_output_device(
-                            this@MainActivity._midi_feedback_device!!
-                        )
+                        if (this@MainActivity.get_opus_manager().is_tuning_standard()) {
+                            this@MainActivity._midi_interface.disconnect_virtual_output_device(
+                                this@MainActivity._midi_feedback_device!!
+                            )
+                        }
                     }
 
                     this@MainActivity.runOnUiThread {
@@ -240,8 +248,8 @@ class MainActivity : AppCompatActivity() {
             override fun onDeviceRemoved(device_info: MidiDeviceInfo) {
                 if (!this@MainActivity._midi_interface.output_devices_connected()) {
                     this@MainActivity.runOnUiThread {
-                        this@MainActivity.update_menu_options()
                         this@MainActivity.playback_stop()
+                        this@MainActivity.update_menu_options()
                         if (this@MainActivity.configuration.soundfont != null) {
                             this@MainActivity.set_soundfont(this@MainActivity.configuration.soundfont)
                         }
@@ -492,6 +500,7 @@ class MainActivity : AppCompatActivity() {
         blocker_view?.setOnClickListener {
             this.playback_stop()
         }
+
         this.runOnUiThread {
             if (blocker_view != null) {
                 blocker_view.visibility = View.VISIBLE
@@ -503,10 +512,13 @@ class MainActivity : AppCompatActivity() {
 
         this.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         // Currently, Midi2.0 output is not supported. will be needed for N-radix projects
+        this._midi_interface.open_connected_devices()
         if (this._midi_interface.output_devices_connected() && this.get_opus_manager().is_tuning_standard()) {
             this.playback_start_midi_device(start_point)
         } else if (this._midi_playback_device != null) {
             this.playback_start_precached(start_point)
+        } else {
+            Log.d("AAA", "FAIL!!!")
         }
     }
 
@@ -529,21 +541,20 @@ class MainActivity : AppCompatActivity() {
             try {
                 this._virtual_input_device.play_midi(midi) {
                     this.runOnUiThread {
-                        this.playback_stop()
+                        this.playback_stop(true)
                     }
                 }
             } catch (e: java.io.IOException) {
                 this.runOnUiThread {
-                    this.playback_stop()
+                    this.playback_stop(true)
                 }
             }
         }
     }
 
-    internal fun playback_stop() {
+    internal fun playback_stop(force: Boolean = false) {
         this.loading_reticle_hide()
-
-        if (this._virtual_input_device.playing) {
+        if (this._virtual_input_device.playing || force) {
             this.stop_queued = true
             this._virtual_input_device.stop()
             this.restore_playback_state()
@@ -565,6 +576,7 @@ class MainActivity : AppCompatActivity() {
             blocker_view.visibility = View.GONE
             this.stop_queued = false
         }
+        this._midi_interface.close_output_devices()
     }
 
     fun get_new_project_path(): String {
@@ -918,6 +930,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun play_event(channel: Int, event_value: Int, velocity: Int) {
+        this._midi_interface.open_output_devices()
         val midi_channel = this._opus_manager.channels[channel].midi_channel
 
         val radix = this._opus_manager.tuning_map.size
@@ -935,7 +948,13 @@ class MainActivity : AppCompatActivity() {
             Pair(new_note, bend)
         }
 
-        this._midi_feedback_dispatcher.play_note(midi_channel, note, bend, velocity, !this._midi_interface.output_devices_connected() && !this.get_opus_manager().is_tuning_standard())
+        this._midi_feedback_dispatcher.play_note(
+            midi_channel,
+            note,
+            bend,
+            velocity,
+            !this.get_opus_manager().is_tuning_standard() || ! this.is_connected_to_physical_device()
+        )
     }
 
     fun import_project(path: String) {
@@ -988,10 +1007,10 @@ class MainActivity : AppCompatActivity() {
 
         this.configuration.soundfont = filename
         val path = "${this.getExternalFilesDir(null)}/SoundFonts/$filename"
-        this._soundfont = SoundFont(path)
         if (this._midi_feedback_device != null) {
             this._midi_interface.disconnect_virtual_output_device(this._midi_feedback_device!!)
         }
+        this._soundfont = SoundFont(path)
         this._midi_feedback_device = ActiveMidiAudioPlayer(SampleHandleManager(this._soundfont!!, this.configuration.sample_rate))
         this._midi_playback_device = PaganPlaybackDevice(this)
 
@@ -1023,9 +1042,14 @@ class MainActivity : AppCompatActivity() {
 
     fun disable_soundfont() {
         this.update_channel_instruments()
+        if (this._midi_feedback_device != null) {
+            this._midi_interface.disconnect_virtual_output_device(this._midi_feedback_device!!)
+        }
         this._soundfont = null
         this.configuration.soundfont = null
         this._midi_playback_device = null
+        this._midi_feedback_device = null
+
         this.populate_active_percussion_names()
     }
 
@@ -1353,4 +1377,41 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
+    fun is_connected_to_physical_device(): Boolean {
+        return this._midi_interface.output_devices_connected()
+    }
+
+    fun disconnect_feedback_device() {
+        if (this._midi_feedback_device == null || !this._midi_interface.is_connected(this._midi_feedback_device!!)) {
+            return
+        }
+
+        this._midi_interface.disconnect_virtual_output_device(
+            this._midi_feedback_device!!
+        )
+    }
+
+    fun connect_feedback_device() {
+        if (this._midi_feedback_device == null && this.configuration.soundfont != null) {
+            this.set_soundfont(this.configuration.soundfont)
+        }
+
+        if (this._midi_feedback_device == null || this._midi_interface.is_connected(this._midi_feedback_device!!)) {
+            return
+        }
+
+        this._midi_interface.connect_virtual_output_device(
+            this._midi_feedback_device!!
+        )
+    }
+
+    fun block_physical_midi_output() {
+        this._midi_interface.block_physical_devices = true
+
+    }
+    fun enable_physical_midi_output() {
+        this._midi_interface.block_physical_devices = false
+    }
+
 }

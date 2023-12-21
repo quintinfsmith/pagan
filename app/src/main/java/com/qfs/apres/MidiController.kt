@@ -11,6 +11,7 @@ import android.media.midi.MidiManager.TRANSPORT_MIDI_BYTE_STREAM
 import android.media.midi.MidiOutputPort
 import android.media.midi.MidiReceiver
 import android.os.Build
+import android.util.Log
 import com.qfs.apres.event.MIDIEvent
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
@@ -23,8 +24,12 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
         override fun onSend(msg: ByteArray?, offset: Int, count: Int, timestamp: Long) {
             val msg_list = msg!!.toMutableList()
             msg_list.removeFirst()
+            Log.d("AAA", "$msg_list")
             val event = event_from_bytes(msg_list, 0x90.toByte()) ?: return
-            broadcast_event(event)
+            Log.d("AAA","$event")
+            if (! this@MidiController.block_physical_devices) {
+                broadcast_event(event)
+            }
         }
     }
 
@@ -34,14 +39,12 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
     private val mapped_input_ports = HashMap<Int, MutableList<MidiInputPort>>()
     private val mapped_output_ports = HashMap<Int, MutableList<MidiOutputPort>>()
     private val virtual_output_mutex = Mutex()
+    var block_physical_devices = false
 
     init {
         val midi_manager_callback = object: MidiManager.DeviceCallback() {
             override fun onDeviceAdded(device_info: MidiDeviceInfo) {
                 if (this@MidiController.auto_connect) {
-                    if (device_info.inputPortCount > 0) {
-                        this@MidiController.open_output_device(device_info)
-                    }
                     if (device_info.outputPortCount > 0) {
                         this@MidiController.open_input_device(device_info)
                     }
@@ -68,15 +71,31 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
     }
 
     open fun onDeviceAdded(device_info: MidiDeviceInfo) { }
-    open fun onDeviceRemoved(device_info: MidiDeviceInfo) { }
+    open fun onDeviceRemoved(device_info: MidiDeviceInfo) {
+    }
 
-    fun open_connected_devices() {
+    fun open_output_devices() {
         for (device_info in this.poll_output_devices()) {
             this.open_output_device(device_info)
         }
+    }
+    fun close_output_devices() {
+        for (connected_input_port in this.connected_input_ports) {
+            connected_input_port.close()
+        }
+        this.connected_input_ports.clear()
+    }
+
+    fun open_connected_devices() {
+        this.open_output_devices()
+
         for (device_info in this.poll_input_devices()) {
             this.open_input_device(device_info)
         }
+    }
+
+    fun close_connected_devices() {
+        this.close_output_devices()
     }
 
     fun connect_virtual_input_device(device: VirtualMidiInputDevice) {
@@ -113,7 +132,7 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
 
     fun broadcast_event(event: MIDIEvent) {
         // Rebroadcast to listening devices
-        var devices = runBlocking {
+        val devices = runBlocking {
             this@MidiController.virtual_output_mutex.withLock {
                 this@MidiController.virtual_output_devices.toList()
             }
@@ -124,9 +143,15 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
             }
         }
 
-        for (input_port in this.connected_input_ports) {
-            var bytes = event.as_bytes()
-            input_port.send(bytes, 0, bytes.size)
+        if (! this.block_physical_devices) {
+            for (input_port in this.connected_input_ports) {
+                val bytes = event.as_bytes()
+                try {
+                    input_port.send(bytes, 0, bytes.size)
+                } catch (e: java.io.IOException) {
+                    continue
+                }
+            }
         }
     }
 
@@ -181,6 +206,7 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
         this.midi_manager.openDevice(device_info, {
             val output_port = it.openOutputPort(port_number)
             output_port.connect(this.receiver)
+
             if (!this.mapped_output_ports.containsKey(device_info.id)) {
                 this.mapped_output_ports[device_info.id] = mutableListOf()
             }
@@ -208,5 +234,9 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
             }
             this.mapped_output_ports.remove(device_info.id)
         }
+    }
+
+    fun is_connected(output_device: VirtualMidiOutputDevice): Boolean {
+        return this.virtual_output_devices.contains(output_device)
     }
 }

@@ -19,6 +19,10 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
 
     var sample_data_map = HashMap<MapKey, SampleHandle>()
 
+    fun clear() {
+        this.sample_data_map.clear()
+    }
+
     fun get(event: NoteOn, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset): SampleHandle {
         // set the key index to some hash of the note to allow for indexing byte note AS WELL as indexing by index
         val map_key = this.cache_new(event.get_note(), 0, sample, instrument, preset)

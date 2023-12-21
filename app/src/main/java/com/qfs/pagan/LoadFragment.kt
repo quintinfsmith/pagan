@@ -39,12 +39,15 @@ class LoadFragment : PaganFragment<FragmentLoadBinding>() {
 
         val main = this.get_main()
 
+        val json = Json {
+            ignoreUnknownKeys = true
+        }
         for (json_file in main.get_project_directory().listFiles()!!) {
             val content = json_file.readText(Charsets.UTF_8)
             val json_obj: LoadedJSONData = try {
-                Json.decodeFromString(content)
+                json.decodeFromString(content)
             } catch (e: Exception) {
-                val old_data = Json.decodeFromString<LoadedJSONData0>(content)
+                val old_data = json.decodeFromString<LoadedJSONData0>(content)
                 main.get_opus_manager().convert_old_fmt(old_data)
             }
             (rvProjectList.adapter as ProjectToLoadAdapter).addProject(Pair(json_obj.name, json_file.path))

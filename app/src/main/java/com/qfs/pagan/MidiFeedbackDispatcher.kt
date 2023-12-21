@@ -14,7 +14,7 @@ class MidiFeedbackDispatcher: VirtualMidiInputDevice() {
     private var _handle_mutex = Mutex()
     private var _index_mutex = Mutex()
     // channel 17 for midi2 devices
-    private var _active_handles = HashMap<Triple<Int, Int, Boolean>, Int>()
+    private var _active_handles = HashMap<Triple<Int, Int, Boolean>, Long>()
     private var _index_gen = HashMap<Int, Int>()
     private val _note_duration: Long = 400
 
@@ -29,18 +29,48 @@ class MidiFeedbackDispatcher: VirtualMidiInputDevice() {
     }
 
     fun play_note(channel: Int, note: Int, bend: Int = 0, velocity: Int = 64, midi2: Boolean = true) {
+
+
         val handle = if (midi2) {
             val index = this.gen_index(channel)
+            Triple(channel, index, true)
+        } else {
+            Triple(channel, note, false)
+        }
+
+        if (this._active_handles.containsKey(handle)) {
+            if (handle.third) {
+                this.send_event(
+                    NoteOff79(
+                        index = handle.second,
+                        channel = channel,
+                        note = note,
+                        bend = bend,
+                        velocity = velocity shl 8
+                    )
+                )
+            } else {
+                this.send_event(
+                    NoteOff(
+                        channel = channel,
+                        note = note,
+                        velocity = velocity
+                    )
+                )
+
+            }
+        }
+
+        if (handle.third) {
             this.send_event(
                 NoteOn79(
-                    index = index,
+                    index = handle.second,
                     channel = channel,
                     note = note,
                     bend = bend,
                     velocity = velocity shl 8
                 )
             )
-            Triple(channel, index, true)
         } else {
             this.send_event(
                 NoteOn(
@@ -49,14 +79,13 @@ class MidiFeedbackDispatcher: VirtualMidiInputDevice() {
                     velocity = velocity
                 )
             )
-            Triple(channel, note, false)
+
         }
 
-        val initial_count = runBlocking {
+        val now = System.nanoTime()
+        runBlocking {
             this@MidiFeedbackDispatcher._handle_mutex.withLock {
-                val count = this@MidiFeedbackDispatcher._active_handles[handle] ?: 0
-                this@MidiFeedbackDispatcher._active_handles[handle] = count + 1
-                count + 1
+                this@MidiFeedbackDispatcher._active_handles[handle] = now
             }
         }
 
@@ -64,10 +93,7 @@ class MidiFeedbackDispatcher: VirtualMidiInputDevice() {
             Thread.sleep(this._note_duration)
             val do_cancel = runBlocking {
                 this@MidiFeedbackDispatcher._handle_mutex.withLock {
-                    val active_count = this@MidiFeedbackDispatcher._active_handles[handle] ?: 1
-                    // If another note on the same handle has been pressed during the sleep,
-                    // don't bother turning this one off
-                    if (active_count == initial_count) {
+                    if (this@MidiFeedbackDispatcher._active_handles[handle] == now) {
                         this@MidiFeedbackDispatcher._active_handles.remove(handle)
                         false
                     } else {

@@ -218,8 +218,18 @@
         <item name="android:paddingTop">0dp</item>
         <item name="android:paddingBottom">0dp</item>
 
-    </style>
+    </style>1G
     <style name="progress_bar">
         <item name="android:background">#33000000</item>
     </style>
+
+    <style name="tuning_map_item">
+        <item name="android:gravity">center</item>
+        <item name="android:textColor">@color/button_fg</item>
+        <item name="android:paddingStart">8dp</item>
+        <item name="android:paddingEnd">8dp</item>
+        <item name="android:background">@color/numberselector_bg</item>
+        <item name="android:layout_marginBottom">@dimen/config_item_padding</item>
+    </style>
+
 </resources>

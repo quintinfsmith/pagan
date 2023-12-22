@@ -741,19 +741,8 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        val btnTranspose: TextView = this.findViewById(R.id.btnTranspose)
-        btnTranspose.text = this.getString(R.string.label_transpose, opus_manager.transpose)
         val radix = this.get_opus_manager().tuning_map.size
 
-        btnTranspose.setOnClickListener {
-            this.dialog_number_input(
-                resources.getString(R.string.dlg_transpose),
-                0,
-                radix - 1
-            ) { value: Int ->
-                opus_manager.set_transpose(value)
-            }
-        }
         //-------------------------------------------
         val btnRadix: TextView = this.findViewById(R.id.btnRadix)
         btnRadix.setOnClickListener {
@@ -766,17 +755,25 @@ class MainActivity : AppCompatActivity() {
                 )
 
             val etRadix = viewInflated.findViewById<RangedNumberInput>(R.id.etRadix)
+            val etTranspose = viewInflated.findViewById<RangedNumberInput>(R.id.etTranspose)
+            etTranspose.set_range(0, radix - 1)
+            etTranspose.set_value(opus_manager.transpose)
 
             val rvTuningMap = viewInflated.findViewById<TuningMapRecycler>(R.id.rvTuningMap)
             rvTuningMap.adapter = TuningMapRecyclerAdapter(rvTuningMap, opus_manager.tuning_map.clone())
 
-            val dialog = AlertDialog.Builder(main_fragment.context, R.style.AlertDialog)
-                .setTitle("Tuning")
+            AlertDialog.Builder(main_fragment.context, R.style.AlertDialog)
+                .setTitle(resources.getString(R.string.dlg_tuning))
                 .setView(viewInflated)
                 .setPositiveButton(android.R.string.ok) { dialog, _ ->
-                    opus_manager.set_tuning_map(
-                        (rvTuningMap.adapter as TuningMapRecyclerAdapter).tuning_map
-                    )
+
+                    opus_manager.remember {
+                        opus_manager.set_tuning_map(
+                            (rvTuningMap.adapter as TuningMapRecyclerAdapter).tuning_map
+                        )
+                        opus_manager.set_transpose(etTranspose.get_value() ?: 0)
+                    }
+
                     dialog.dismiss()
                 }
                 .setNegativeButton(android.R.string.cancel) { dialog, _ ->
@@ -788,9 +785,11 @@ class MainActivity : AppCompatActivity() {
 
             etRadix.set_value(default_value)
             etRadix.value_set_callback = {
-                rvTuningMap.reset_tuning_map(it.get_value())
+                val new_radix = it.get_value()
+                rvTuningMap.reset_tuning_map(new_radix)
+                etTranspose.set_value(0)
+                etTranspose.set_range(0, (new_radix ?: 12) - 1)
             }
-
         }
         //-------------------------------------------
 
@@ -938,10 +937,7 @@ class MainActivity : AppCompatActivity() {
             val octave = event_value/ radix
             val offset = opus_manager.tuning_map[event_value % radix]
 
-            // This offset is calculated so the tuning map always reflects correctly
-            val transpose_pair = opus_manager.tuning_map[opus_manager.transpose % radix]
-            val transpose_offset = 12 * transpose_pair.first.toDouble() / transpose_pair.second.toDouble()
-
+            val transpose_offset = 12.0 * opus_manager.transpose.toDouble() / radix.toDouble()
             val std_offset = 12.0 * offset.first.toDouble() / offset.second.toDouble()
 
             val bend = (((std_offset - floor(std_offset)) + (transpose_offset - floor(transpose_offset))) * 512.0).toInt()

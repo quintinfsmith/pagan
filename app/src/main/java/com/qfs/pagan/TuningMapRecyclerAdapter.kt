@@ -1,14 +1,17 @@
 package com.qfs.pagan
 
+import android.view.ContextThemeWrapper
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
+import android.view.ViewGroup.MarginLayoutParams
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import kotlin.math.roundToInt
 
 class TuningMapRecyclerAdapter(val recycler: TuningMapRecycler, var tuning_map: Array<Pair<Int, Int>>): RecyclerView.Adapter<TuningMapRecycler.TuningMapViewHolder>() {
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TuningMapRecycler.TuningMapViewHolder {
-        val item_view = LinearLayout(parent.context)
+        val item_view = LinearLayout(ContextThemeWrapper(parent.context, R.style.tuning_map_item))
         item_view.orientation = LinearLayout.HORIZONTAL
         return TuningMapRecycler.TuningMapViewHolder(item_view)
     }
@@ -16,23 +19,29 @@ class TuningMapRecyclerAdapter(val recycler: TuningMapRecycler, var tuning_map: 
     override fun onViewAttachedToWindow(holder: TuningMapRecycler.TuningMapViewHolder) {
         super.onViewAttachedToWindow(holder)
         holder.itemView.layoutParams.width = MATCH_PARENT
+
+        (holder.itemView.layoutParams as MarginLayoutParams).setMargins(0, holder.itemView.context.resources.getDimension(R.dimen.normal_padding).roundToInt(),0,0)
+
     }
     override fun onBindViewHolder(holder: TuningMapRecycler.TuningMapViewHolder, position: Int) {
+        val use_context = (holder.itemView.context as ContextThemeWrapper).baseContext
+
         val wrapper = holder.itemView as ViewGroup
         wrapper.removeAllViews()
+
         val pair = this.tuning_map[position]
-        val number_label_view = TextView(holder.itemView.context)
+        val number_label_view = TextView(use_context)
         number_label_view.text = "$position:"
 
-        val numerator_view = RangedNumberInput(holder.itemView.context)
+        val numerator_view = RangedNumberInput(use_context)
         numerator_view.set_range(0, 99999)
         numerator_view.set_value(pair.first)
         numerator_view.confirm_required = false
 
-        val slash_view = TextView(holder.itemView.context)
+        val slash_view = TextView(use_context)
         slash_view.text = "/"
 
-        val denominator_view = RangedNumberInput(holder.itemView.context)
+        val denominator_view = RangedNumberInput(use_context)
         denominator_view.set_range(2, 99999)
         denominator_view.set_value(pair.second)
         denominator_view.confirm_required = false

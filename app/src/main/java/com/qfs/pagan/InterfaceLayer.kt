@@ -72,14 +72,6 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         }
     }
 
-    override fun set_transpose(new_transpose: Int) {
-        super.set_transpose(new_transpose)
-
-        this.runOnUiThread { main ->
-            main.findViewById<TextView>(R.id.btnTranspose).text = main.getString(R.string.label_transpose, new_transpose)
-        }
-    }
-
     override fun set_tempo(new_tempo: Float) {
         super.set_tempo(new_tempo)
         this.runOnUiThread { main ->

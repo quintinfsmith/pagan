@@ -49,22 +49,7 @@
                 android:id="@+id/btnRadix"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/btn_cfg_radix"
-                android:paddingStart="15dp"
-                android:paddingEnd="15dp"
-                android:theme="@style/button" />
-
-            <Space
-                android:layout_width="wrap_content"
-                android:minWidth="@dimen/config_item_padding"
-                android:layout_height="wrap_content"
-                android:layout_weight="1" />
-
-            <TextView
-                android:id="@+id/btnTranspose"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/btn_cfg_transpose"
+                android:text="@string/label_tuning"
                 android:paddingStart="15dp"
                 android:paddingEnd="15dp"
                 android:theme="@style/button" />

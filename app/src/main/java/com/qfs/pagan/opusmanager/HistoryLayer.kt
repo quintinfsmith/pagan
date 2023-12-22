@@ -870,7 +870,7 @@ open class HistoryLayer : LinksLayer() {
 
     }
 
-    private fun <T> remember(callback: () -> T): T {
+    fun <T> remember(callback: () -> T): T {
         return try {
             this.history_cache.remember {
                 callback()

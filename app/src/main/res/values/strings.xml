@@ -10,8 +10,7 @@
     <string name="label_shortcut_scrollbar">Jump to beat %1$d</string>
     <string name="label_shortcut">Jump to beat</string>
     <string name="label_volume_scrollbar">Line Volume: %1$d%%</string>
-    <string name="label_transpose">T: %1$d</string>
-    <string name="label_radix">R: %1$d</string>
+    <string name="dlg_tuning">Tuning</string>
     <string name="pfx_subtract">-</string>
     <string name="pfx_add">+</string>
     <string name="pfx_log">\u2193</string>
@@ -57,7 +56,7 @@
 
     <string name="btn_cfg_change_name">Change Project Name…</string>
     <string name="btn_cfg_transpose">T:</string>
-    <string name="btn_cfg_radix">R:</string>
+    <string name="label_tuning">Tuning</string>
     <string name="btn_cfg_add_channel">Add Channel</string>
     <string name="btn_cfg_save">Save</string>
     <string name="btn_cfg_copy">Copy</string>
@@ -85,7 +84,7 @@
     <string name="dlg_confirm">Yes</string>
     <string name="dlg_decline">No</string>
     <string name="dlg_set_tempo">Set Tempo (BPM)</string>
-    <string name="dlg_set_radix">Set Radix</string>
+    <string name="dlg_set_radix">Radix</string>
     <string name="dlg_change_name">Change Project Name</string>
     <string name="feedback_project_saved">Project Saved</string>
     <string name="dlg_transpose">Transpose</string>

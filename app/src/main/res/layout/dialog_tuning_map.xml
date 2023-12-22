@@ -5,11 +5,38 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
     <LinearLayout
+        android:paddingEnd="4dp"
+        android:paddingStart="4dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
         <TextView
-            android:text="Radix"
+            android:text="@string/dlg_transpose"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content" />
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="match_parent"/>
+
+        <com.qfs.pagan.RangedNumberInput
+            xmlns:custom="http://schemas.android.com/apk/res-auto"
+            android:id="@+id/etTranspose"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            custom:min="0"
+            custom:max="36"
+            android:text="0"/>
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="match_parent"/>
+
+
+        <TextView
+            android:text="@string/dlg_set_radix"
             android:layout_height="wrap_content"
             android:layout_width="wrap_content" />
 
@@ -26,6 +53,8 @@
             custom:min="2"
             custom:max="36"
             android:text="12"/>
+
+
     </LinearLayout>
 
     <com.qfs.pagan.TuningMapRecycler

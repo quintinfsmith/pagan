@@ -863,9 +863,7 @@ open class BaseLayer {
                                 val offset = this.tuning_map[current_note % radix]
 
                                 // This offset is calculated so the tuning map always reflects correctly
-                                val transpose_pair = this.tuning_map[this.transpose % radix]
-                                val transpose_offset = 12 * transpose_pair.first.toDouble() / transpose_pair.second.toDouble()
-
+                                val transpose_offset = 12.0 * this.transpose.toDouble() / radix.toDouble()
                                 val std_offset = (this.transpose.toDouble() * 12.0 / radix.toDouble()) + (offset.first.toDouble() * 12.0 / offset.second.toDouble())
                                 val bend = (((std_offset - floor(std_offset)) + (transpose_offset - floor(transpose_offset))) * 512.0).toInt()
 

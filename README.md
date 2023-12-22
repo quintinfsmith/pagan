@@ -16,6 +16,7 @@ Essentially, it exists because I wanted to be able to write music in a way that 
 It may be for you, it may not. You do you.
 
 ## Usage
+Pagan requires Android version >= 11
 
 ### Download
 

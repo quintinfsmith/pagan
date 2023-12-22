@@ -548,46 +548,6 @@ open class BaseLayer {
         }
     }
 
-    open fun set_radix(radix: Int, mod_events: Boolean = true) {
-        val previous_radix = this.tuning_map.size
-
-        this.tuning_map = Array(radix) { i: Int ->
-            Pair(i, radix)
-        }
-
-        if (!mod_events) {
-            return
-        }
-
-        this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
-            if (this.is_percussion(i)) {
-                return@forEachIndexed
-            }
-
-            channel.lines.forEachIndexed { j: Int, line: OpusChannel.OpusLine ->
-                line.beats.forEachIndexed { k: Int, beat_tree: OpusTree<OpusEvent> ->
-                    beat_tree.traverse { tree: OpusTree<OpusEvent>, event: OpusEvent? ->
-                        if (event == null) {
-                            return@traverse
-                        }
-
-                        val position = tree.get_path()
-                        val new_event = event.copy()
-                        val octave = (event.note / previous_radix)
-
-                        new_event.note = (octave * radix) + ((event.note % previous_radix) * radix / previous_radix)
-
-                        this.set_event(
-                            BeatKey(i, j, k),
-                            position,
-                            new_event
-                        )
-                    }
-                }
-            }
-        }
-    }
-
     open fun set_percussion_event(beat_key: BeatKey, position: List<Int>) {
         if (!this.is_percussion(beat_key.channel)) {
             throw PercussionEventSet()
@@ -2050,7 +2010,43 @@ open class BaseLayer {
         return true
     }
 
-    open fun set_tuning_map(new_map: Array<Pair<Int, Int>>) {
+    open fun set_tuning_map(new_map: Array<Pair<Int, Int>>, mod_events: Boolean = true) {
+        val previous_radix = this.tuning_map.size
+
         this.tuning_map = new_map
+
+        if (! mod_events) {
+            return
+        }
+
+        val radix = new_map.size
+
+        this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
+            if (this.is_percussion(i)) {
+                return@forEachIndexed
+            }
+
+            channel.lines.forEachIndexed { j: Int, line: OpusChannel.OpusLine ->
+                line.beats.forEachIndexed { k: Int, beat_tree: OpusTree<OpusEvent> ->
+                    beat_tree.traverse { tree: OpusTree<OpusEvent>, event: OpusEvent? ->
+                        if (event == null) {
+                            return@traverse
+                        }
+
+                        val position = tree.get_path()
+                        val new_event = event.copy()
+                        val octave = (event.note / previous_radix)
+
+                        new_event.note = (octave * radix) + ((event.note % previous_radix) * radix / previous_radix)
+
+                        this.set_event(
+                            BeatKey(i, j, k),
+                            position,
+                            new_event
+                        )
+                    }
+                }
+            }
+        }
     }
 }

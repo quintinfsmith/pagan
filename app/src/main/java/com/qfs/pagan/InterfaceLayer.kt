@@ -691,9 +691,11 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             HistoryToken.CURSOR_SELECT_ROW -> {
                 this.cursor_select_row(args[0], args[1])
             }
+
             HistoryToken.CURSOR_SELECT_COLUMN -> {
                 this.cursor_select_column(args[0])
             }
+
             HistoryToken.CURSOR_SELECT -> {
                 this.cursor_select(
                     BeatKey(
@@ -1324,9 +1326,9 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         return total
     }
 
-    override fun set_tuning_map(new_map: Array<Pair<Int, Int>>) {
+    override fun set_tuning_map(new_map: Array<Pair<Int, Int>>, mod_events: Boolean) {
         val was_tuning_standard = this.is_tuning_standard()
-        super.set_tuning_map(new_map)
+        super.set_tuning_map(new_map, mod_events)
         val is_tuning_standard = this.is_tuning_standard()
 
         if (is_tuning_standard && !was_tuning_standard) {
@@ -1340,6 +1342,15 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                 this.activity.connect_feedback_device()
             }
         }
+
+        if (this.get_ui_lock_level() != null) {
+            return
+        }
+
+        this.withFragment { fragment ->
+            fragment.reset_context_menu()
+        }
+
     }
 
     fun make_percussion_visible() {

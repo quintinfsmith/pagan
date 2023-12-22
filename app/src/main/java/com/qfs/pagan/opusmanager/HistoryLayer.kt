@@ -85,12 +85,6 @@ open class HistoryLayer : LinksLayer() {
                     )
                 }
 
-                HistoryToken.SET_RADIX -> {
-                    // don't use 'set_radix()' since it will try to set the events
-                    // which is already handled in the history stack
-                    this.set_radix(current_node.args[0] as Int, false)
-                }
-
                 HistoryToken.SET_PERCUSSION_EVENT -> {
                     this.set_percussion_event(
                         current_node.args[0] as BeatKey,
@@ -187,7 +181,8 @@ open class HistoryLayer : LinksLayer() {
 
                 HistoryToken.SET_TUNING_MAP -> {
                     this.set_tuning_map(
-                        this.checked_cast<Array<Pair<Int, Int>>>(current_node.args[0])
+                        this.checked_cast<Array<Pair<Int, Int>>>(current_node.args[0]),
+                        false
                     )
                 }
 
@@ -903,14 +898,6 @@ open class HistoryLayer : LinksLayer() {
         }
     }
 
-    override fun set_radix(radix: Int, mod_events: Boolean) {
-        this.remember {
-            val previous_radix = this.tuning_map.size
-            super.set_radix(radix, mod_events)
-            this.push_to_history_stack(HistoryToken.SET_RADIX, listOf(previous_radix))
-        }
-    }
-
     override fun overwrite_row(channel: Int, line_offset: Int, beat_key: BeatKey) {
         this.remember {
             super.overwrite_row(channel, line_offset, beat_key)
@@ -928,8 +915,11 @@ open class HistoryLayer : LinksLayer() {
         }
     }
 
-    override fun set_tuning_map(new_map: Array<Pair<Int, Int>>) {
-        this.push_to_history_stack(HistoryToken.SET_TUNING_MAP, listOf(this.tuning_map))
-        super.set_tuning_map(new_map)
+    override fun set_tuning_map(new_map: Array<Pair<Int, Int>>, mod_events: Boolean) {
+        this.remember {
+            val original_map = this.tuning_map.clone()
+            super.set_tuning_map(new_map, mod_events)
+            this.push_to_history_stack(HistoryToken.SET_TUNING_MAP, listOf(original_map))
+        }
     }
 }

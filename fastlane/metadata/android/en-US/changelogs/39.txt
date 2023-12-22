@@ -1,1 +1,3 @@
 Manual Tuning
+Bugfix:
+    - Beats copied from non-percussion to percussion channel no longer get changed by setting the percussion instrument

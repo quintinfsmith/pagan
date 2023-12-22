@@ -161,16 +161,12 @@ class OpusTree<T> {
         }
     }
 
-    fun copy(): OpusTree<T> {
-        return this.copy(null)
-    }
-
-    fun copy(copy_func: ((tree: OpusTree<T>) -> T?)?): OpusTree<T> {
+    fun copy(copy_func: ((tree: OpusTree<T>) -> T?)? = null): OpusTree<T> {
         val copied = OpusTree<T>()
         copied.size = this.size
         for (key in this.divisions.keys) {
             val subdivision: OpusTree<T> = this.divisions[key] as OpusTree<T>
-            val subcopy: OpusTree<T> = subdivision.copy()
+            val subcopy: OpusTree<T> = subdivision.copy(copy_func)
             subcopy.set_parent(copied)
             copied.divisions[key] = subcopy
         }

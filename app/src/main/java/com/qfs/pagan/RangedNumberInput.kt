@@ -22,6 +22,7 @@ class RangedNumberInput(context: Context, attrs: AttributeSet? = null): androidx
         this.inputType = InputType.TYPE_CLASS_NUMBER
         this.filters = arrayOf(NumeralFilter())
         this.setSelectAllOnFocus(true)
+        this.textAlignment = TEXT_ALIGNMENT_TEXT_END
 
         val styled_attributes = context.theme.obtainStyledAttributes(attrs, R.styleable.Ranged, 0, 0)
         try {

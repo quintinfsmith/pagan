@@ -27,6 +27,7 @@
             android:layout_height="wrap_content"
             custom:min="0"
             custom:max="36"
+            android:minEms="2"
             android:text="0"/>
 
         <Space
@@ -52,6 +53,7 @@
             android:layout_height="wrap_content"
             custom:min="2"
             custom:max="36"
+            android:minEms="2"
             android:text="12"/>
 
 

@@ -37,6 +37,7 @@ class TuningMapRecyclerAdapter(val recycler: TuningMapRecycler, var tuning_map: 
         numerator_view.set_range(0, 99999)
         numerator_view.set_value(pair.first)
         numerator_view.confirm_required = false
+        numerator_view.minEms = 2
 
         val slash_view = TextView(use_context)
         slash_view.text = "/"
@@ -45,6 +46,7 @@ class TuningMapRecyclerAdapter(val recycler: TuningMapRecycler, var tuning_map: 
         denominator_view.set_range(2, 99999)
         denominator_view.set_value(pair.second)
         denominator_view.confirm_required = false
+        denominator_view.minEms = 2
 
         wrapper.addView(number_label_view)
         number_label_view.layoutParams.width = 0

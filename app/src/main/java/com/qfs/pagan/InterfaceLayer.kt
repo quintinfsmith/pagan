@@ -1335,7 +1335,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             }
         }
 
-        if (this.get_ui_lock_level() != null) {
+        if (this.get_ui_lock_level() != null || !mod_events) {
             return
         }
 

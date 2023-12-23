@@ -1,0 +1,2 @@
+Bugfix:
+    - Crash when undoing a radix change to a smaller radix.

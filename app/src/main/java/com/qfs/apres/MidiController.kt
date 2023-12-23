@@ -18,7 +18,12 @@ import kotlinx.coroutines.sync.withLock
 import kotlin.concurrent.thread
 
 open class MidiController(var context: Context, var auto_connect: Boolean = true) {
-    var midi_manager: MidiManager = this.context.getSystemService(Context.MIDI_SERVICE) as MidiManager
+
+    var midi_manager: MidiManager? = try {
+        this.context.getSystemService(Context.MIDI_SERVICE) as MidiManager
+    } catch (e: java.lang.NullPointerException) {
+        null
+    }
     var receiver = object: MidiReceiver() {
         override fun onSend(msg: ByteArray?, offset: Int, count: Int, timestamp: Long) {
             val msg_list = msg!!.toMutableList()
@@ -55,11 +60,17 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
             override fun onDeviceStatusChanged(status: MidiDeviceStatus) {
             }
         }
-        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.TIRAMISU) {
-            this.midi_manager.registerDeviceCallback( TRANSPORT_MIDI_BYTE_STREAM, { }, midi_manager_callback)
-        } else {
-            @Suppress("DEPRECATION")
-            this.midi_manager.registerDeviceCallback(midi_manager_callback, null)
+        if (this.midi_manager != null) {
+            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.TIRAMISU) {
+                this.midi_manager!!.registerDeviceCallback(
+                    TRANSPORT_MIDI_BYTE_STREAM,
+                    { },
+                    midi_manager_callback
+                )
+            } else {
+                @Suppress("DEPRECATION")
+                this.midi_manager!!.registerDeviceCallback(midi_manager_callback, null)
+            }
         }
 
         if (this.auto_connect) {
@@ -153,10 +164,14 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
     }
 
     fun poll_output_devices(): List<MidiDeviceInfo> {
+        if (this.midi_manager == null) {
+            return listOf()
+        }
+
         val devices_info = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            this.midi_manager.getDevicesForTransport(MidiManager.TRANSPORT_MIDI_BYTE_STREAM)
+            this.midi_manager!!.getDevicesForTransport(MidiManager.TRANSPORT_MIDI_BYTE_STREAM)
         } else {
-            this.midi_manager.devices.toList()
+            this.midi_manager!!.devices.toList()
         }
         val output_devices = mutableListOf<MidiDeviceInfo>()
         for (device_info in devices_info) {
@@ -168,10 +183,14 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
     }
 
     fun poll_input_devices(): List<MidiDeviceInfo> {
+        if (this.midi_manager == null) {
+            return listOf()
+        }
+
         val devices_info = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            this.midi_manager.getDevicesForTransport(MidiManager.TRANSPORT_MIDI_BYTE_STREAM)
+            this.midi_manager!!.getDevicesForTransport(MidiManager.TRANSPORT_MIDI_BYTE_STREAM)
         } else {
-            this.midi_manager.devices.toList()
+            this.midi_manager!!.devices.toList()
         }
         val input_devices = mutableListOf<MidiDeviceInfo>()
         for (device_info in devices_info) {
@@ -184,9 +203,13 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
 
     // NOTE: output device has input port
     fun open_output_device(device_info: MidiDeviceInfo, port: Int? = null) {
+        if (this.midi_manager == null) {
+            return
+        }
+
         var port_number = port ?: (device_info.ports.filter { it.type == TYPE_INPUT }).first().portNumber
 
-        this.midi_manager.openDevice(device_info, {
+        this.midi_manager!!.openDevice(device_info, {
             val input_port = it.openInputPort(port_number) ?: return@openDevice // TODO: check open ports?
             this.connected_input_ports.add(input_port)
             if (!this.mapped_input_ports.containsKey(device_info.id)) {
@@ -198,9 +221,13 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
 
     // NOTE: input device has output port
     fun open_input_device(device_info: MidiDeviceInfo, port: Int? = null) {
+        if (this.midi_manager == null) {
+            return
+        }
+
         var port_number = port ?: (device_info.ports.filter { it.type == TYPE_OUTPUT }).first().portNumber
 
-        this.midi_manager.openDevice(device_info, {
+        this.midi_manager!!.openDevice(device_info, {
             val output_port = it.openOutputPort(port_number)
             output_port.connect(this.receiver)
 

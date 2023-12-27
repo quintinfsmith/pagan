@@ -61,7 +61,6 @@ class MidiPlayer: VirtualMidiInputDevice() {
                     is NoteOff -> {
                         notes_on.remove(Triple(event.channel, event.get_note(), false))
                     }
-
                     is NoteOn79 -> {
                         val elm = Triple(event.channel, event.index, true)
                         notes_on.add(elm)
@@ -70,11 +69,11 @@ class MidiPlayer: VirtualMidiInputDevice() {
                         val elm = Triple(event.channel, event.index, true)
                         notes_on.remove(elm)
                     }
-
                     is SetTempo -> {
                         us_per_tick = event.get_uspqn() / ppqn
                     }
                 }
+
                 if (this@MidiPlayer.playing) {
                     this@MidiPlayer.send_event(event)
                 }

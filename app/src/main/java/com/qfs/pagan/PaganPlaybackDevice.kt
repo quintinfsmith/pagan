@@ -39,7 +39,7 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
     }
 
     override fun on_start() {
-        this.activity.playback_queued = false
+        this.activity.update_playback_state_soundfont(MainActivity.PlaybackState.Playing)
         this.activity.runOnUiThread {
             this.activity.loading_reticle_hide()
             this.activity.set_playback_button(R.drawable.ic_baseline_pause_24)

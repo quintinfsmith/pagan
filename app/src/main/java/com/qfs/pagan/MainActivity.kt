@@ -247,7 +247,7 @@ class MainActivity : AppCompatActivity() {
             override fun onDeviceRemoved(device_info: MidiDeviceInfo) {
                 if (!this@MainActivity._midi_interface.output_devices_connected()) {
                     this@MainActivity.runOnUiThread {
-                        this@MainActivity.playback_stop()
+                        this@MainActivity.playback_stop(true)
                         this@MainActivity.update_menu_options()
                         if (this@MainActivity.configuration.soundfont != null) {
                             this@MainActivity.set_soundfont(this@MainActivity.configuration.soundfont)

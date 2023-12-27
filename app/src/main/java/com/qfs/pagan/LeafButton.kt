@@ -133,7 +133,7 @@ class LeafButton(
 
     private fun set_text(is_percussion: Boolean, _radix: Int? = null) {
         val event = this._event
-        var base_context = (this.context as ContextThemeWrapper).baseContext
+        val base_context = (this.context as ContextThemeWrapper).baseContext
         val radix = _radix ?: this.get_opus_manager().tuning_map.size
         this.removeAllViews()
         if (event == null) {

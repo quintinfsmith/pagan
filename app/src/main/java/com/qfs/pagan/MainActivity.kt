@@ -55,6 +55,8 @@ import com.qfs.apres.event.BankSelect
 import com.qfs.apres.event.ProgramChange
 import com.qfs.apres.event.SongPositionPointer
 import com.qfs.apres.soundfont.SoundFont
+import com.qfs.apres.soundfontplayer.ActiveMidiAudioPlayer
+import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.pagan.databinding.ActivityMainBinding
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -88,7 +90,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var _midi_interface: MidiController
     private var _soundfont: SoundFont? = null
     private var _midi_playback_device: PaganPlaybackDevice? = null
-    //private var _midi_feedback_device: ActiveMidiAudioPlayer? = null
+    private var _midi_feedback_device: ActiveMidiAudioPlayer? = null
     private var _midi_feedback_dispatcher = MidiFeedbackDispatcher()
 
     private lateinit var _app_bar_configuration: AppBarConfiguration
@@ -184,6 +186,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onPause() {
         this.playback_stop()
+        this.playback_stop_midi_output()
         this._midi_interface.close_connected_devices()
         super.onPause()
     }
@@ -255,12 +258,9 @@ class MainActivity : AppCompatActivity() {
                     this@MainActivity.update_menu_options()
                 }
 
-
-                //if (this@MainActivity.get_opus_manager().is_tuning_standard()) {
-                //    this@MainActivity._midi_interface.disconnect_virtual_output_device(
-                //        this@MainActivity._midi_feedback_device!!
-                //    )
-                //}
+                if (this@MainActivity.get_opus_manager().is_tuning_standard()) {
+                    this@MainActivity.disconnect_feedback_device()
+                }
             }
 
             override fun onDeviceRemoved(device_info: MidiDeviceInfo) {
@@ -278,13 +278,10 @@ class MainActivity : AppCompatActivity() {
 
                 if (!this@MainActivity._midi_interface.output_devices_connected()) {
                     this@MainActivity.update_playback_state_midi(PlaybackState.NotReady)
+                    this@MainActivity._midi_interface.connect_virtual_output_device(
+                        this@MainActivity._midi_feedback_device!!
+                    )
                 }
-
-                //if (!this@MainActivity._midi_interface.output_devices_connected()) {
-                //    this@MainActivity._midi_interface.connect_virtual_output_device(
-                //        this@MainActivity._midi_feedback_device!!
-                //    )
-                //}
             }
         }
 
@@ -352,15 +349,15 @@ class MainActivity : AppCompatActivity() {
             if (sf_file.exists()) {
                 this._soundfont = SoundFont(path)
                 this._midi_playback_device = PaganPlaybackDevice(this)
-                //if (!this._midi_interface.output_devices_connected()) {
-                //    //this._midi_feedback_device = ActiveMidiAudioPlayer(
-                //    //    SampleHandleManager(
-                //    //        this._soundfont!!,
-                //    //        this.configuration.sample_rate
-                //    //    )
-                //    //)
-                //    //this._midi_interface.connect_virtual_output_device(this._midi_feedback_device!!)
-                //}
+                if (!this._midi_interface.output_devices_connected()) {
+                    this._midi_feedback_device = ActiveMidiAudioPlayer(
+                        SampleHandleManager(
+                            this._soundfont!!,
+                            this.configuration.sample_rate
+                        )
+                    )
+                    this._midi_interface.connect_virtual_output_device(this._midi_feedback_device!!)
+                }
             }
             this.update_channel_instruments()
 
@@ -1084,9 +1081,9 @@ class MainActivity : AppCompatActivity() {
             //TODO("Handle Fail")
         }
 
-        //if (this._midi_feedback_device != null) {
-        //    this._midi_interface.disconnect_virtual_output_device(this._midi_feedback_device!!)
-        //}
+        if (this._midi_feedback_device != null) {
+            this.disconnect_feedback_device()
+        }
 
         val path = "${this.getExternalFilesDir(null)}/SoundFonts/$filename"
         this.configuration.soundfont = filename
@@ -1094,14 +1091,14 @@ class MainActivity : AppCompatActivity() {
 
         this._midi_playback_device = PaganPlaybackDevice(this)
 
-        // TODO: Handle Feedback Device
-        //this._midi_feedback_device = ActiveMidiAudioPlayer(
-        //    SampleHandleManager(
-        //        this._soundfont!!,
-        //        this.configuration.sample_rate
-        //    )
-        //)
-        //this._midi_interface.connect_virtual_output_device(this._midi_feedback_device!!)
+        this._midi_feedback_device = ActiveMidiAudioPlayer(
+            SampleHandleManager(
+                this._soundfont!!,
+                this.configuration.sample_rate
+            )
+        )
+
+        this._midi_interface.connect_virtual_output_device(this._midi_feedback_device!!)
 
         this.update_channel_instruments()
 
@@ -1177,13 +1174,13 @@ class MainActivity : AppCompatActivity() {
         this.update_playback_state_soundfont(PlaybackState.NotReady)
 
         this.update_channel_instruments()
-        //if (this._midi_feedback_device != null) {
-        //    this._midi_interface.disconnect_virtual_output_device(this._midi_feedback_device!!)
-        //}
+        if (this._midi_feedback_device != null) {
+            this.disconnect_feedback_device()
+        }
         this._soundfont = null
         this.configuration.soundfont = null
         this._midi_playback_device = null
-        //this._midi_feedback_device = null
+        this._midi_feedback_device = null
 
         this.populate_active_percussion_names()
     }
@@ -1489,17 +1486,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun set_playback_button(drawable: Int) {
-        val play_pause_button = this._options_menu!!.findItem(R.id.itmPlay)
-        if (play_pause_button != null) {
-            play_pause_button.icon = ContextCompat.getDrawable(this, drawable)
-        }
+        val play_pause_button = this._options_menu?.findItem(R.id.itmPlay) ?: return
+        play_pause_button.icon = ContextCompat.getDrawable(this, drawable)
     }
 
     fun set_midi_playback_button(drawable: Int) {
-        val play_pause_button = this._options_menu!!.findItem(R.id.itmPlayMidiOutput)
-        if (play_pause_button != null) {
-            play_pause_button.icon = ContextCompat.getDrawable(this, drawable)
-        }
+        val play_pause_button = this._options_menu?.findItem(R.id.itmPlayMidiOutput) ?: return
+        play_pause_button.icon = ContextCompat.getDrawable(this, drawable)
     }
 
     fun get_working_column(): Int {
@@ -1524,27 +1517,24 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun disconnect_feedback_device() {
-        //if (this._midi_feedback_device == null || !this._midi_interface.is_connected(this._midi_feedback_device!!)) {
-        //    return
-        //}
+        if (this._midi_feedback_device == null || !this._midi_interface.is_connected(this._midi_feedback_device!!)) {
+            return
+        }
 
-        //this._midi_interface.disconnect_virtual_output_device(
-        //    this._midi_feedback_device!!
-        //)
+        this._midi_feedback_dispatcher.close()
+        this._midi_interface.disconnect_virtual_output_device( this._midi_feedback_device!! )
     }
 
     fun connect_feedback_device() {
-        //if (this._midi_feedback_device == null && this.configuration.soundfont != null) {
-        //    this.set_soundfont(this.configuration.soundfont)
-        //}
+        if (this._midi_feedback_device == null && this.configuration.soundfont != null) {
+            this.set_soundfont(this.configuration.soundfont)
+        }
 
-        //if (this._midi_feedback_device == null || this._midi_interface.is_connected(this._midi_feedback_device!!)) {
-        //    return
-        //}
+        if (this._midi_feedback_device == null || this._midi_interface.is_connected(this._midi_feedback_device!!)) {
+            return
+        }
 
-        //this._midi_interface.connect_virtual_output_device(
-        //    this._midi_feedback_device!!
-        //)
+        this._midi_interface.connect_virtual_output_device( this._midi_feedback_device!! )
     }
 
     fun block_physical_midi_output() {

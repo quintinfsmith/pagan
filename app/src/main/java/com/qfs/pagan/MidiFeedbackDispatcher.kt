@@ -28,9 +28,18 @@ class MidiFeedbackDispatcher: VirtualMidiInputDevice() {
         }
     }
 
+    fun close() {
+        runBlocking {
+            this@MidiFeedbackDispatcher._handle_mutex.withLock {
+                for ((handle, stamp) in this@MidiFeedbackDispatcher._active_handles) {
+                    this@MidiFeedbackDispatcher.note_off(handle)
+                }
+                this@MidiFeedbackDispatcher._active_handles.clear()
+            }
+        }
+    }
+
     fun play_note(channel: Int, note: Int, bend: Int = 0, velocity: Int = 64, midi2: Boolean = true) {
-
-
         val handle = if (midi2) {
             val index = this.gen_index(channel)
             Triple(channel, index, true)
@@ -106,24 +115,31 @@ class MidiFeedbackDispatcher: VirtualMidiInputDevice() {
                 return@thread
             }
 
-            if (midi2) {
-                this@MidiFeedbackDispatcher.send_event(
-                    NoteOff79(
-                        index = handle.second,
-                        channel = channel,
-                        note = 0,
-                        velocity = 64 shl 8
-                    )
-                )
-            } else {
-                this@MidiFeedbackDispatcher.send_event(
-                    NoteOff(
-                        channel = channel,
-                        note = note,
-                        velocity = 64
-                    )
-                )
-            }
+            this.note_off(handle)
         }
     }
+
+    fun note_off(handle: Triple<Int, Int, Boolean>) {
+        val (channel, note, midi2) = handle
+        if (midi2) {
+            this@MidiFeedbackDispatcher.send_event(
+                NoteOff79(
+                    index = handle.second,
+                    channel = channel,
+                    note = 0,
+                    velocity = 64 shl 8
+                )
+            )
+        } else {
+            this@MidiFeedbackDispatcher.send_event(
+                NoteOff(
+                    channel = channel,
+                    note = note,
+                    velocity = 64
+                )
+            )
+        }
+
+    }
+
 }

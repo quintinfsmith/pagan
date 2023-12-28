@@ -239,7 +239,7 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
     }
 
     fun output_devices_connected(): Boolean {
-        return this.connected_input_ports.isNotEmpty()
+        return this.poll_output_devices().isNotEmpty()
     }
 
     fun close_device(device_info: MidiDeviceInfo) {

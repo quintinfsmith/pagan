@@ -276,7 +276,7 @@ class MainActivity : AppCompatActivity() {
                     this@MainActivity.update_menu_options()
                 }
 
-                if (this@MainActivity._midi_interface.poll_output_devices().isEmpty()) {
+                if (!this@MainActivity._midi_interface.output_devices_connected()) {
                     this@MainActivity.update_playback_state_midi(PlaybackState.NotReady)
                 }
 
@@ -351,16 +351,16 @@ class MainActivity : AppCompatActivity() {
             val sf_file = File(path)
             if (sf_file.exists()) {
                 this._soundfont = SoundFont(path)
-                if (!this._midi_interface.output_devices_connected()) {
-                    this._midi_playback_device = PaganPlaybackDevice(this)
-                    //this._midi_feedback_device = ActiveMidiAudioPlayer(
-                    //    SampleHandleManager(
-                    //        this._soundfont!!,
-                    //        this.configuration.sample_rate
-                    //    )
-                    //)
-                    //this._midi_interface.connect_virtual_output_device(this._midi_feedback_device!!)
-                }
+                this._midi_playback_device = PaganPlaybackDevice(this)
+                //if (!this._midi_interface.output_devices_connected()) {
+                //    //this._midi_feedback_device = ActiveMidiAudioPlayer(
+                //    //    SampleHandleManager(
+                //    //        this._soundfont!!,
+                //    //        this.configuration.sample_rate
+                //    //    )
+                //    //)
+                //    //this._midi_interface.connect_virtual_output_device(this._midi_feedback_device!!)
+                //}
             }
             this.update_channel_instruments()
 
@@ -440,6 +440,8 @@ class MainActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.itemId != R.id.itmPlay) {
             this.playback_stop()
+        }
+        if (item.itemId != R.id.itmPlayMidiOutput) {
             this.playback_stop_midi_output()
         }
 
@@ -450,6 +452,7 @@ class MainActivity : AppCompatActivity() {
                     this.drawer_open()
                 }
             }
+
             R.id.itmNewProject -> {
                 this.dialog_save_project {
                     val fragment = this.get_active_fragment()
@@ -497,7 +500,7 @@ class MainActivity : AppCompatActivity() {
                     }
                     PlaybackState.Queued,
                     PlaybackState.Playing -> {
-                        this.playback_stop()
+                        this.playback_stop_midi_output()
                     }
                     else -> { /* pass */ }
                 }
@@ -567,11 +570,9 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        this.loading_reticle_show(getString(R.string.reticle_msg_start_playback))
-
         this._enable_blocker_view()
-
         this.runOnUiThread {
+            this.loading_reticle_show(getString(R.string.reticle_msg_start_playback))
             this.set_playback_button(R.drawable.baseline_play_disabled_24)
         }
 
@@ -583,7 +584,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun playback_start_midi_output() {
-        this.update_playback_state_midi(PlaybackState.Queued)
+        if (!this.update_playback_state_midi(PlaybackState.Queued)) {
+            this.feedback_msg("Playback Failed")
+            return
+        }
 
         this.loading_reticle_show(getString(R.string.reticle_msg_start_playback))
         this._enable_blocker_view()
@@ -597,10 +601,9 @@ class MainActivity : AppCompatActivity() {
             this.set_midi_playback_button(R.drawable.ic_baseline_pause_24)
         }
 
+        this.update_playback_state_midi(PlaybackState.Playing)
         thread {
             try {
-                this.update_playback_state_midi(PlaybackState.Playing)
-
                 this._midi_interface.open_connected_devices()
                 this._virtual_input_device.play_midi(midi) {
                     this.runOnUiThread {
@@ -618,7 +621,7 @@ class MainActivity : AppCompatActivity() {
     internal fun playback_stop() {
         this.loading_reticle_hide()
         this.update_playback_state_soundfont(PlaybackState.Stopping)
-        this._midi_playback_device!!.kill()
+        this._midi_playback_device?.kill()
     }
 
     internal fun playback_stop_midi_output() {
@@ -771,11 +774,12 @@ class MainActivity : AppCompatActivity() {
         options_menu.setGroupDividerEnabled(true)
         when (navHost?.childFragmentManager?.fragments?.get(0)) {
             is EditorFragment -> {
+                val play_midi_visible = (this._midi_interface.output_devices_connected() && this.get_opus_manager().is_tuning_standard())
                 options_menu.findItem(R.id.itmLoadProject).isVisible = this.has_projects_saved()
                 options_menu.findItem(R.id.itmUndo).isVisible = true
                 options_menu.findItem(R.id.itmNewProject).isVisible = true
-                options_menu.findItem(R.id.itmPlay).isVisible = this._soundfont != null
-                options_menu.findItem(R.id.itmPlayMidiOutput).isVisible = (this._midi_interface.output_devices_connected() && this.get_opus_manager().is_tuning_standard())
+                options_menu.findItem(R.id.itmPlay).isVisible = this._soundfont != null && ! play_midi_visible
+                options_menu.findItem(R.id.itmPlayMidiOutput).isVisible = play_midi_visible
                 options_menu.findItem(R.id.itmImportMidi).isVisible = true
                 options_menu.findItem(R.id.itmImportProject).isVisible = true
                 options_menu.findItem(R.id.itmSettings).isVisible = true
@@ -1151,6 +1155,7 @@ class MainActivity : AppCompatActivity() {
             }
             PlaybackState.Queued -> {
                 when (next_state) {
+                    PlaybackState.Ready,
                     PlaybackState.Playing -> next_state
                     else -> null
                 }
@@ -1544,10 +1549,9 @@ class MainActivity : AppCompatActivity() {
 
     fun block_physical_midi_output() {
         this._midi_interface.block_physical_devices = true
-
     }
+
     fun enable_physical_midi_output() {
         this._midi_interface.block_physical_devices = false
     }
-
 }

@@ -15,7 +15,6 @@ import com.qfs.apres.event.MIDIEvent
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlin.concurrent.thread
 
 open class MidiController(var context: Context, var auto_connect: Boolean = true) {
 
@@ -146,9 +145,7 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
             }
         }
         for (device in devices) {
-            thread {
-                device.receiveMessage(event)
-            }
+            device.receiveMessage(event)
         }
 
         if (! this.block_physical_devices) {

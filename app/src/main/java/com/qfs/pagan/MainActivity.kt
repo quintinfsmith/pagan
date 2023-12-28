@@ -244,7 +244,9 @@ class MainActivity : AppCompatActivity() {
 
         this._midi_interface = object: MidiController(this) {
             override fun onDeviceAdded(device_info: MidiDeviceInfo) {
-                this@MainActivity.update_playback_state_midi(PlaybackState.Ready)
+                if (!this@MainActivity.update_playback_state_midi(PlaybackState.Ready)) {
+                    return
+                }
 
                 when (this@MainActivity.playback_state_soundfont) {
                     PlaybackState.Playing,
@@ -272,16 +274,19 @@ class MainActivity : AppCompatActivity() {
                     else -> { /* pass */ }
                 }
 
+                // Kludge. need a sleep to give output devices a chance to disconnect
+                Thread.sleep(1000)
+
                 this@MainActivity.runOnUiThread {
                     this@MainActivity.update_menu_options()
                 }
 
-                if (!this@MainActivity._midi_interface.output_devices_connected()) {
-                    this@MainActivity.update_playback_state_midi(PlaybackState.NotReady)
-                    this@MainActivity._midi_interface.connect_virtual_output_device(
-                        this@MainActivity._midi_feedback_device!!
-                    )
-                }
+                //if (!this@MainActivity._midi_interface.output_devices_connected()) {
+                //    this@MainActivity.update_playback_state_midi(PlaybackState.NotReady)
+                //    this@MainActivity._midi_interface.connect_virtual_output_device(
+                //        this@MainActivity._midi_feedback_device!!
+                //    )
+                //}
             }
         }
 
@@ -435,10 +440,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if (item.itemId != R.id.itmPlay) {
+        if (item.itemId != R.id.itmPlay && item.itemId != R.id.itmPlayMidiOutput) {
             this.playback_stop()
-        }
-        if (item.itemId != R.id.itmPlayMidiOutput) {
             this.playback_stop_midi_output()
         }
 
@@ -569,8 +572,8 @@ class MainActivity : AppCompatActivity() {
 
         this._enable_blocker_view()
         this.runOnUiThread {
-            this.loading_reticle_show(getString(R.string.reticle_msg_start_playback))
             this.set_playback_button(R.drawable.baseline_play_disabled_24)
+            this.loading_reticle_show(getString(R.string.reticle_msg_start_playback))
         }
 
         val start_point = this.get_working_column()
@@ -598,7 +601,10 @@ class MainActivity : AppCompatActivity() {
             this.set_midi_playback_button(R.drawable.ic_baseline_pause_24)
         }
 
-        this.update_playback_state_midi(PlaybackState.Playing)
+        if (!this.update_playback_state_midi(PlaybackState.Playing)) {
+            this.restore_midi_playback_state()
+            return
+        }
         thread {
             try {
                 this._midi_interface.open_connected_devices()
@@ -616,34 +622,36 @@ class MainActivity : AppCompatActivity() {
     }
 
     internal fun playback_stop() {
-        this.loading_reticle_hide()
-        this.update_playback_state_soundfont(PlaybackState.Stopping)
-        this._midi_playback_device?.kill()
+        if (this.update_playback_state_soundfont(PlaybackState.Stopping)) {
+            this.loading_reticle_hide()
+            this._midi_playback_device?.kill()
+        }
     }
 
     internal fun playback_stop_midi_output() {
-        this.update_playback_state_midi(PlaybackState.Stopping)
-        this.loading_reticle_hide()
-        this._virtual_input_device.stop()
-        this.restore_midi_playback_state()
+        if (this.update_playback_state_midi(PlaybackState.Stopping)) {
+            this.loading_reticle_hide()
+            this._virtual_input_device.stop()
+            this.restore_midi_playback_state()
+        }
     }
 
     fun restore_playback_state() {
-        this.update_playback_state_soundfont(PlaybackState.Ready)
-        this.runOnUiThread {
-            this.set_playback_button(R.drawable.ic_baseline_play_arrow_24)
-            this._disable_blocker_view()
+        if (this.update_playback_state_soundfont(PlaybackState.Ready)) {
+            this.runOnUiThread {
+                this.set_playback_button(R.drawable.ic_baseline_play_arrow_24)
+                this._disable_blocker_view()
+            }
         }
     }
 
     fun restore_midi_playback_state() {
-        this.update_playback_state_midi(PlaybackState.Ready)
-        this.runOnUiThread {
-            this.set_midi_playback_button(R.drawable.ic_baseline_play_arrow_24)
-            this._disable_blocker_view()
+        if (this.update_playback_state_midi(PlaybackState.Ready)) {
+            this.runOnUiThread {
+                this.set_midi_playback_button(R.drawable.ic_baseline_play_arrow_24)
+                this._disable_blocker_view()
+            }
         }
-
-        this._midi_interface.close_output_devices()
     }
 
     fun get_new_project_path(): String {
@@ -999,7 +1007,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun play_event(channel: Int, event_value: Int, velocity: Int) {
-        this._midi_interface.open_output_devices()
+
+        if (!this._midi_interface.output_devices_connected()) {
+            this.connect_feedback_device()
+        } else {
+            this.disconnect_feedback_device()
+            this._midi_interface.open_output_devices()
+        }
+
         val opus_manager = this._opus_manager
         val midi_channel = opus_manager.channels[channel].midi_channel
 
@@ -1078,7 +1093,7 @@ class MainActivity : AppCompatActivity() {
 
         if (!this.update_playback_state_soundfont(PlaybackState.Ready)) {
             // Failed to change playback_state
-            //TODO("Handle Fail")
+            return
         }
 
         if (this._midi_feedback_device != null) {
@@ -1171,7 +1186,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun disable_soundfont() {
-        this.update_playback_state_soundfont(PlaybackState.NotReady)
+        if (!this.update_playback_state_soundfont(PlaybackState.NotReady)) {
+            return
+        }
 
         this.update_channel_instruments()
         if (this._midi_feedback_device != null) {

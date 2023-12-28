@@ -1,7 +1,6 @@
 package com.qfs.apres
 
 import com.qfs.apres.event.MIDIEvent
-import kotlin.concurrent.thread
 
 abstract class VirtualMidiInputDevice {
     private var midi_controller: MidiController? = null
@@ -20,9 +19,7 @@ abstract class VirtualMidiInputDevice {
     fun send_event(event: MIDIEvent) {
         // TODO: Throw error?
         if (is_connected()) {
-            thread {
-                this.midi_controller!!.broadcast_event(event)
-            }
+            this.midi_controller!!.broadcast_event(event)
         }
     }
 }

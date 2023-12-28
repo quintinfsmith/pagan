@@ -33,11 +33,11 @@ class MidiPlayer: VirtualMidiInputDevice() {
         var delay_accum = 0
 
         for ((tick, events) in midi.get_all_events_grouped()) {
-            if (!this.playing) {
+            if (!this.playing && notes_on.isEmpty()) {
                 break
             }
 
-            if ((tick - previous_tick) > 0) {
+            if (this.playing && (tick - previous_tick) > 0) {
                 val delay = ((tick - previous_tick) * us_per_tick) / 1000
                 val drift = delay_accum - (System.currentTimeMillis() - start_time)
                 delay_accum += delay
@@ -49,34 +49,49 @@ class MidiPlayer: VirtualMidiInputDevice() {
             }
 
             for (event in events) {
-                when (event) {
-                    is NoteOn -> {
-                        val elm = Triple(event.channel, event.get_note(), false)
-                        if (event.get_velocity() > 0) {
-                            notes_on.add(elm)
-                        } else {
+                if (!this.playing) {
+                    when (event) {
+                        is NoteOff -> {
+                            notes_on.remove(Triple(event.channel, event.get_note(), false))
+                        }
+
+                        is NoteOff79 -> {
+                            val elm = Triple(event.channel, event.index, true)
                             notes_on.remove(elm)
                         }
+                        else -> continue
                     }
-                    is NoteOff -> {
-                        notes_on.remove(Triple(event.channel, event.get_note(), false))
-                    }
-                    is NoteOn79 -> {
-                        val elm = Triple(event.channel, event.index, true)
-                        notes_on.add(elm)
-                    }
-                    is NoteOff79 -> {
-                        val elm = Triple(event.channel, event.index, true)
-                        notes_on.remove(elm)
-                    }
-                    is SetTempo -> {
-                        us_per_tick = event.get_uspqn() / ppqn
-                    }
-                }
+                } else {
+                    when (event) {
+                        is NoteOn -> {
+                            val elm = Triple(event.channel, event.get_note(), false)
+                            if (event.get_velocity() > 0) {
+                                notes_on.add(elm)
+                            } else {
+                                notes_on.remove(elm)
+                            }
+                        }
 
-                if (this@MidiPlayer.playing) {
-                    this@MidiPlayer.send_event(event)
+                        is NoteOff -> {
+                            notes_on.remove(Triple(event.channel, event.get_note(), false))
+                        }
+
+                        is NoteOn79 -> {
+                            val elm = Triple(event.channel, event.index, true)
+                            notes_on.add(elm)
+                        }
+
+                        is NoteOff79 -> {
+                            val elm = Triple(event.channel, event.index, true)
+                            notes_on.remove(elm)
+                        }
+
+                        is SetTempo -> {
+                            us_per_tick = event.get_uspqn() / ppqn
+                        }
+                    }
                 }
+                this@MidiPlayer.send_event(event)
             }
         }
 
@@ -97,13 +112,13 @@ class MidiPlayer: VirtualMidiInputDevice() {
         // if the song wasn't manually stopped, return to the start
         if (this.playing) {
             this.send_event(SongPositionPointer(0))
-            this.send_event(MIDIStop())
         }
-
 
         for (i in 0 until 16) {
             this.send_event(AllSoundOff(i))
         }
+
+        this.send_event(MIDIStop())
 
         this.playing = false
 
@@ -113,7 +128,6 @@ class MidiPlayer: VirtualMidiInputDevice() {
     }
 
     fun stop() {
-        this.send_event(MIDIStop())
         this.playing = false
     }
 }

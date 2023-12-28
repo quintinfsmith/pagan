@@ -94,7 +94,6 @@ open class FiniteMidiDevice(var sample_handle_manager: SampleHandleManager, priv
 
                 audio_track_handle.play(object : AudioTrack.OnPlaybackPositionUpdateListener {
                     var notification_index = 0
-
                     init {
                         if (this@FiniteMidiDevice.play_cancelled) {
                             throw java.lang.IllegalStateException()

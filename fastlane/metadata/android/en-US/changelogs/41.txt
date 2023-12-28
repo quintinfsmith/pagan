@@ -1,1 +1,2 @@
 - Improved note alignment
+- Improved Midi Device stability

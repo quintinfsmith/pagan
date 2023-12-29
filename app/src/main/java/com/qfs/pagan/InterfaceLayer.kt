@@ -1060,11 +1060,18 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         )
     }
 
+
     fun unset() {
-        this.unset(
-            this.cursor.get_beatkey(),
-            this.cursor.get_position()
-        )
+        if (this.cursor.mode == OpusManagerCursor.CursorMode.Range) {
+            val beat_key = this.cursor.range!!.first
+            this.unset_range(beat_key, this.cursor.range!!.second)
+            this.cursor_select(beat_key, listOf())
+        } else {
+            this.unset(
+                this.cursor.get_beatkey(),
+                this.cursor.get_position()
+            )
+        }
     }
 
     fun convert_event_to_absolute() {

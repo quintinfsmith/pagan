@@ -325,6 +325,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
 
         val btnUnLink = llContextLink.findViewById<ImageView>(R.id.btnUnLink)
         val btnUnLinkAll = llContextLink.findViewById<ImageView>(R.id.btnUnLinkAll)
+        val btnEraseSelection = llContextLink.findViewById<ImageView>(R.id.btnEraseSelection)
 
         val label = llContextLink.findViewById<TextView>(R.id.tvLinkLabel)
         val rgLinkMode = llContextLink.findViewById<RadioGroup?>(R.id.rgLinkMode)
@@ -419,6 +420,12 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         } else {
             btnUnLink.visibility = View.GONE
             btnUnLinkAll.visibility = View.GONE
+        }
+
+        btnEraseSelection.setOnClickListener {
+            val opus_manager = this.get_main().get_opus_manager()
+            val goto_key = opus_manager.cursor.range!!.first
+            opus_manager.unset()
         }
 
     }

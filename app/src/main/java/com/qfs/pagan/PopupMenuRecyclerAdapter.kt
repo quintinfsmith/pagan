@@ -38,7 +38,7 @@ class PopupMenuRecyclerAdapter<T>(
         }
 
         text_view.setOnClickListener {
-            this._callback( position, this._options[position].first )
+            this._callback( position, this._options[position].first)
         }
     }
 

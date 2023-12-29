@@ -4,17 +4,14 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.view.ContextThemeWrapper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
-import android.widget.PopupMenu
 import android.widget.SeekBar
 import android.widget.Switch
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
-import com.qfs.apres.soundfont.Riff
 import com.qfs.apres.soundfont.SoundFont
 import com.qfs.pagan.databinding.FragmentGlobalSettingsBinding
 import java.io.File
@@ -82,6 +79,10 @@ class GlobalSettingsFragment : PaganFragment<FragmentGlobalSettingsBinding>() {
         btnChooseSoundFont.setOnClickListener {
             this.interact_btnChooseSoundFont(it)
         }
+        btnChooseSoundFont.setOnLongClickListener {
+            this.dialog_remove_soundfont()
+            false
+        }
 
         val soundfont_filename = main.configuration.soundfont
 
@@ -123,41 +124,54 @@ class GlobalSettingsFragment : PaganFragment<FragmentGlobalSettingsBinding>() {
     }
 
     private fun interact_btnChooseSoundFont(view: View) {
-        val wrapper = ContextThemeWrapper(this.activity, R.style.PopupMenu)
-        val popupMenu = PopupMenu(wrapper, view)
-
         val soundfont_dir = this.get_main().get_soundfont_directory()
-        popupMenu.menu.add(0, 0, 0, getString(R.string.no_soundfont))
-
         val file_list = soundfont_dir.listFiles()?.toList() ?: listOf<File>()
+
+        val soundfonts = mutableListOf<Pair<Pair<Int, String?>, String>>( Pair(Pair(0, null), "No SoundFont") )
+
         file_list.forEachIndexed { i: Int, file: File ->
-            popupMenu.menu.add(1, i, i, file.name)
+            soundfonts.add(Pair(Pair(1, file.name), file.name))
         }
 
-        // +3 to the order to account for preceding menu entries
-        popupMenu.menu.add(2, 0, file_list.size + 3, getString(R.string.option_import_soundfont))
+        soundfonts.add(Pair(Pair(2, null), getString(R.string.option_import_soundfont)))
 
-        popupMenu.setOnMenuItemClickListener {
-            when (it.groupId) {
-                0 -> {
-                    this._disable_soundfont()
-                }
-                1 -> {
-                    try {
-                        this._set_soundfont(file_list[it.order].name)
-                    } catch (e: Riff.InvalidRiff) {
-                        this.get_main().feedback_msg(getString(R.string.feedback_invalid_sf2_file))
-                    }
-                }
-                2 -> {
-                    this._import_soundfont()
-                }
-                else -> { }
+        this.get_main().dialog_popup_menu("Select Soundfont", soundfonts) { index: Int, pair: Pair<Int, String?> ->
+            val (mode, path) = pair
+            when (mode) {
+                0 -> this._disable_soundfont()
+                1 -> this._set_soundfont(path!!)
+                2 -> this._import_soundfont()
             }
-            false
         }
+    }
 
-        popupMenu.show()
+    private fun dialog_remove_soundfont() {
+        val main = this.get_main()
+        val soundfont_dir = main.get_soundfont_directory()
+        val file_list = soundfont_dir.listFiles()?.toList() ?: listOf<File>()
+
+        val soundfonts = mutableListOf<Pair<String, String>>( )
+
+        file_list.forEachIndexed { i: Int, file: File ->
+            soundfonts.add(Pair(file.name, file.name))
+        }
+        main.dialog_popup_menu("Choose Soundfont to Remove", soundfonts) { i: Int, filename: String ->
+            main.dialog_confirm("Really Delete $filename?") {
+                this._delete_soundfont(filename)
+            }
+        }
+    }
+
+    private fun _delete_soundfont(filename: String) {
+        val main = this.get_main()
+        if (main.configuration.soundfont != null && main.configuration.soundfont!! == filename) {
+            this._disable_soundfont()
+        }
+        val soundfont_dir = main.get_soundfont_directory()
+        val file = File("${soundfont_dir.absolutePath}/${filename}")
+        if (file.exists()) {
+            file.delete()
+        }
     }
 
     private fun _disable_soundfont() {

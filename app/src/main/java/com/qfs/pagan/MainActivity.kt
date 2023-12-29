@@ -1283,7 +1283,7 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
-    internal fun <T> dialog_popup_menu(title: String, options: List<Pair<T, String>>, default: T? = null, callback: (index: Int, value: T) -> Unit ) {
+    internal fun <T> dialog_popup_menu(title: String, options: List<Pair<T, String>>, default: T? = null, callback: (index: Int, value: T) -> Unit) {
         if (options.isEmpty()) {
             return
         }
@@ -1341,10 +1341,12 @@ class MainActivity : AppCompatActivity() {
         this.dialog_popup_menu("Load Project", project_list) { index: Int, path: String ->
             val fragment = this.get_active_fragment() ?: return@dialog_popup_menu
             this.loading_reticle_show(getString(R.string.reticle_msg_load_project))
+
             fragment.setFragmentResult(
                 IntentFragmentToken.Load.name,
                 bundleOf(Pair("PATH", path))
             )
+
             if (fragment !is EditorFragment) {
                 this.navigate(R.id.EditorFragment)
             }
@@ -1387,6 +1389,21 @@ class MainActivity : AppCompatActivity() {
         number_input.requestFocus()
         number_input.selectAll()
     }
+
+    fun dialog_confirm(title: String, callback: () -> Unit) {
+        AlertDialog.Builder(this, R.style.AlertDialog)
+            .setTitle(title)
+            .setCancelable(true)
+            .setPositiveButton(getString(R.string.dlg_confirm)) { dialog, _ ->
+                dialog.dismiss()
+                callback()
+            }
+            .setNegativeButton(getString(R.string.dlg_decline)) { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
+    }
+
 
     private fun dialog_save_project(callback: () -> Unit) {
         if (this.get_opus_manager().has_changed_since_save()) {

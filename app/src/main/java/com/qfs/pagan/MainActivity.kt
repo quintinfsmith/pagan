@@ -58,6 +58,9 @@ import com.qfs.apres.soundfont.SoundFont
 import com.qfs.apres.soundfontplayer.ActiveMidiAudioPlayer
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.pagan.databinding.ActivityMainBinding
+import com.qfs.pagan.opusmanager.LoadedJSONData
+import com.qfs.pagan.opusmanager.LoadedJSONData0
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
@@ -466,7 +469,7 @@ class MainActivity : AppCompatActivity() {
 
             R.id.itmLoadProject -> {
                 this.dialog_save_project {
-                    this.navigate(R.id.LoadFragment)
+                    this.dialog_load_project()
                 }
             }
 
@@ -741,9 +744,6 @@ class MainActivity : AppCompatActivity() {
                 when (this.get_active_fragment()) {
                     is GlobalSettingsFragment -> {
                         resources.getString(R.string.settings_fragment_label)
-                    }
-                    is LoadFragment -> {
-                        resources.getString(R.string.load_fragment_label)
                     }
                     is LandingPageFragment -> {
                         "${getString(R.string.app_name)} ${getString(R.string.app_version)}"
@@ -1320,6 +1320,35 @@ class MainActivity : AppCompatActivity() {
         val max_height: Int = (windowMetrics.bounds.height().toFloat() * .8).toInt()
 
         dialog.window!!.setLayout(max_width, max_height)
+    }
+
+    internal fun dialog_load_project() {
+        val json = Json {
+            ignoreUnknownKeys = true
+        }
+        val project_list = mutableListOf<Pair<String, String>>()
+        for (json_file in this.get_project_directory().listFiles()!!) {
+            val content = json_file.readText(Charsets.UTF_8)
+            val json_obj: LoadedJSONData = try {
+                json.decodeFromString(content)
+            } catch (e: Exception) {
+                val old_data = json.decodeFromString<LoadedJSONData0>(content)
+                this.get_opus_manager().convert_old_fmt(old_data)
+            }
+            project_list.add(Pair(json_file.path, json_obj.name))
+        }
+        project_list.sortBy { it.second }
+        this.dialog_popup_menu("Load Project", project_list) { index: Int, path: String ->
+            val fragment = this.get_active_fragment() ?: return@dialog_popup_menu
+            this.loading_reticle_show(getString(R.string.reticle_msg_load_project))
+            fragment.setFragmentResult(
+                IntentFragmentToken.Load.name,
+                bundleOf(Pair("PATH", path))
+            )
+            if (fragment !is EditorFragment) {
+                this.navigate(R.id.EditorFragment)
+            }
+        }
     }
 
     internal fun dialog_number_input(title: String, min_value: Int, max_value: Int, default: Int? = null, callback: (value: Int) -> Unit ) {

@@ -54,7 +54,7 @@ class LandingPageFragment : PaganFragment<FragmentLandingBinding>() {
 
         if (this.get_main().has_projects_saved()) {
             btn_loadProject.setOnClickListener {
-                this.get_main().navigate(R.id.LoadFragment)
+                this.get_main().dialog_load_project()
             }
 
             btn_loadProject.setOnLongClickListener {

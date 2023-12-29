@@ -1337,7 +1337,9 @@ class MainActivity : AppCompatActivity() {
             .setTitle(title)
             .setView(viewInflated)
             .setPositiveButton(android.R.string.ok) { _, _ ->
-                callback(number_input.get_value() ?: coerced_default_value)
+                val output_value = number_input.get_value() ?: coerced_default_value
+                this._number_selector_defaults[title] = output_value
+                callback(output_value)
             }
             .setNegativeButton(android.R.string.cancel) { _, _ -> }
             .show()

@@ -735,7 +735,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         }
 
         btnSplit.setOnLongClickListener {
-            main.dialog_number_input(getString(R.string.dlg_split), 2, 29) { splits: Int ->
+            main.dialog_number_input(getString(R.string.dlg_split), 2, 32) { splits: Int ->
                 val beatkey = opus_manager.cursor.get_beatkey()
                 val position = opus_manager.cursor.get_position().toMutableList()
 

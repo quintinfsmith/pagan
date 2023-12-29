@@ -12,31 +12,8 @@
         tools:layout="@layout/fragment_main" >
 
         <action
-            android:id="@+id/action_EditorFragment_to_LoadFragment"
-            app:destination="@id/LoadFragment" />
-
-        <action
             android:id="@+id/action_EditorFragment_to_SettingsFragment"
             app:destination="@id/SettingsFragment"/>
-    </fragment>
-
-    <fragment
-        android:id="@+id/LoadFragment"
-        android:name="com.qfs.pagan.LoadFragment"
-        android:label="@string/load_fragment_label"
-        tools:layout="@layout/fragment_load">
-
-        <action
-            android:id="@+id/action_LoadFragment_to_EditorFragment"
-            app:popUpTo="@id/FrontFragment"
-            app:popUpToInclusive="true"
-            app:destination="@id/EditorFragment" />
-
-        <action
-            android:id="@+id/action_LoadFragment_to_EditorFragment2"
-            app:popUpTo="@id/EditorFragment"
-            app:popUpToInclusive="true"
-            app:destination="@id/EditorFragment" />
     </fragment>
 
 
@@ -52,9 +29,6 @@
             app:popUpTo="@id/FrontFragment"
             app:popUpToInclusive="true" />
 
-        <action
-            android:id="@+id/action_FrontFragment_to_LoadFragment"
-            app:destination="@id/LoadFragment" />
         <action
             android:id="@+id/action_FrontFragment_to_LicenseFragment"
             app:destination="@id/LicenseFragment" />

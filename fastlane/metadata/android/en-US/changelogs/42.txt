@@ -1,0 +1,2 @@
+- Soundfonts can be deleted in settings menu
+- Can erase by selection

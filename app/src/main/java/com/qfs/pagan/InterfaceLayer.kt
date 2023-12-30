@@ -1067,10 +1067,10 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             this.unset_range(beat_key, this.cursor.range!!.second)
             this.cursor_select(beat_key, listOf())
         } else {
-            this.unset(
-                this.cursor.get_beatkey(),
-                this.cursor.get_position()
-            )
+            val beat_key = this.cursor.get_beatkey()
+            val position = this.cursor.get_position()
+            this.unset(beat_key, position)
+            this.cursor_select(beat_key, position)
         }
     }
 

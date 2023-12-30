@@ -423,9 +423,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         }
 
         btnEraseSelection.setOnClickListener {
-            val opus_manager = this.get_main().get_opus_manager()
-            val goto_key = opus_manager.cursor.range!!.first
-            opus_manager.unset()
+            this.get_main().get_opus_manager().unset()
         }
 
     }

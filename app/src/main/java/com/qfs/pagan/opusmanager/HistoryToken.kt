@@ -27,6 +27,7 @@ enum class HistoryToken {
     SET_TRANSPOSE,
     SET_TUNING_MAP,
     SPLIT_TREE,
+    SWAP_LINES,
     UNSET,
     // Links
     CREATE_LINK_POOL,

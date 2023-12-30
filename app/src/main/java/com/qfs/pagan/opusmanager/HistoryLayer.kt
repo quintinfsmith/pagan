@@ -208,6 +208,15 @@ open class HistoryLayer : LinksLayer() {
                     )
                 }
 
+                HistoryToken.SWAP_LINES -> {
+                    this.swap_lines(
+                        current_node.args[0] as Int,
+                        current_node.args[1] as Int,
+                        current_node.args[2] as Int,
+                        current_node.args[3] as Int
+                    )
+                }
+
                 else -> {}
             }
         } catch (e: ClassCastException) {
@@ -280,6 +289,11 @@ open class HistoryLayer : LinksLayer() {
             this.push_remove_line(channel, line_offset)
             super.insert_line(channel, line_offset, line)
         }
+    }
+
+    override fun swap_lines(channel_a: Int, line_a: Int, channel_b: Int, line_b: Int) {
+        super.swap_lines(channel_a, line_a, channel_b, line_b)
+        this.push_to_history_stack(HistoryToken.SWAP_LINES, listOf(channel_a, line_a, channel_b, line_b))
     }
 
     open fun remove_line(channel: Int, line_offset: Int, count: Int) {

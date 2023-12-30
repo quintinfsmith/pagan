@@ -1,2 +1,3 @@
 - Soundfonts can be deleted in settings menu
 - Can erase by selection
+- Changed Line drag behaviour. Now Swaps 2 lines instead of moving 1.

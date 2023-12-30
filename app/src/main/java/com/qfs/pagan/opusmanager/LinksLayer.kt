@@ -658,4 +658,18 @@ open class LinksLayer : BaseLayer() {
             }
         }
     }
+
+    override fun swap_lines(channel_a: Int, line_a: Int, channel_b: Int, line_b: Int) {
+        super.swap_lines(channel_a, line_a, channel_b, line_b)
+
+        this.remap_links { beat_key: BeatKey ->
+            if (beat_key.channel == channel_a && beat_key.line_offset == line_a) {
+                BeatKey(channel_b, line_b, beat_key.beat)
+            } else if (beat_key.channel == channel_b && beat_key.line_offset == line_b) {
+                BeatKey(channel_a, line_a, beat_key.beat)
+            } else {
+                beat_key
+            }
+        }
+    }
 }

@@ -7,6 +7,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import androidx.appcompat.widget.AppCompatTextView
+import com.qfs.pagan.opusmanager.BaseLayer
 import com.qfs.pagan.opusmanager.LinksLayer
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
@@ -38,12 +39,22 @@ class LineLabelView(context: Context, var channel: Int, var line_offset: Int): A
                         val (to_channel, to_line) = (view as LineLabelView).get_row()
                         val opus_manager = this.get_opus_manager()
                         if (from_channel != to_channel || from_line != to_line) {
-                            opus_manager.move_line(
-                                from_channel,
-                                from_line,
-                                to_channel,
-                                to_line
-                            )
+                            try {
+                                opus_manager.swap_lines(
+                                    from_channel,
+                                    from_line,
+                                    to_channel,
+                                    to_line
+                                )
+                            } catch (e: BaseLayer.IncompatibleChannelException) {
+                                this.get_activity().feedback_msg("Can't swap percussion with other instruments")
+                            }
+                            //opus_manager.move_line(
+                            //    from_channel,
+                            //    from_line,
+                            //    to_channel,
+                            //    to_line
+                            //)
                         }
                     }
                     adapter.stop_dragging()

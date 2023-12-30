@@ -302,6 +302,14 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         }
     }
 
+    override fun swap_lines(channel_a: Int, line_a: Int, channel_b: Int, line_b: Int) {
+        // Need to clear cursor before change since the way the editor_table updates
+        // Cursors doesn't take into account changes to row count
+        super.swap_lines(channel_a, line_a, channel_b, line_b)
+        this.cursor_select_row(channel_b, line_b)
+
+    }
+
     /*
      TODO: move cursor_select_row out of here. it won't break anything right now since move_line
         is built out of multiple other remembered function but i'd like to get some consistency and not

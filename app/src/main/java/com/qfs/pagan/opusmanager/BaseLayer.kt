@@ -678,6 +678,21 @@ open class BaseLayer {
         this.recache_line_maps()
     }
 
+    open fun swap_lines(channel_a: Int, line_a: Int, channel_b: Int, line_b: Int) {
+        if (this.is_percussion(channel_a) != this.is_percussion(channel_b)) {
+            throw IncompatibleChannelException(channel_a, channel_b)
+        }
+
+        val tmp_line = this.channels[channel_a].lines[line_a]
+        this.channels[channel_a].lines[line_a] = this.channels[channel_b].lines[line_b]
+        this.channels[channel_b].lines[line_b] = tmp_line
+        if (this.is_percussion(channel_a)) {
+            val tmp_value = this.channels[channel_a].lines[line_a].static_value
+            this.channels[channel_a].lines[line_a].static_value = this.channels[channel_b].lines[line_b].static_value
+            this.channels[channel_b].lines[line_b].static_value = tmp_value
+        }
+    }
+
     open fun move_line(channel_old: Int, line_old: Int, channel_new: Int, line_new: Int) {
         if (this.is_percussion(channel_old) != this.is_percussion(channel_new)) {
             throw IncompatibleChannelException(channel_old, channel_new)

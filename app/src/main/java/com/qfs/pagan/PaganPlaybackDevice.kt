@@ -5,6 +5,8 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
 import android.os.ParcelFileDescriptor
+import android.view.View
+import android.widget.TextView
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.qfs.apres.Midi
@@ -33,6 +35,7 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
     var active_notification: NotificationCompat.Builder? = null
     var export_wav_thread: Job? = null
     var start_beat = 0
+    var is_exporting = false
 
     override fun on_stop() {
         this.activity.restore_playback_state()
@@ -69,6 +72,7 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
     }
 
     fun export_wav_cancel() {
+        this.is_exporting = false
         val builder = this.get_notification()
         if (builder != null) {
             builder.setContentText(this.activity.getString(R.string.export_cancelled))
@@ -132,6 +136,10 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
 
     fun export_wav(midi: Midi, file_descriptor: ParcelFileDescriptor) {
         this.activity.feedback_msg(this.activity.getString(R.string.export_wav_feedback))
+        this.is_exporting = true
+        this.activity.runOnUiThread {
+            this.activity.findViewById<View>(R.id.llExportProgress).visibility = View.VISIBLE
+        }
 
         val original_delay = this.buffer_delay
         this.buffer_delay = 0
@@ -186,7 +194,16 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
                                 min(est_chunk_count, chunk_count),
                                 false
                             )
-                            notification_manager.notify(NOTIFICATION_ID, builder.build())
+                            try {
+                                notification_manager.notify(NOTIFICATION_ID, builder.build())
+                            } catch (e: Exception) {
+                                TODO()
+                            }
+
+                            this@PaganPlaybackDevice.activity.runOnUiThread {
+                                this@PaganPlaybackDevice.activity.findViewById<TextView>(R.id.tvExportProgress).text =
+                                    "${(chunk_count * 100 / est_chunk_count)}%"
+                            }
                             notification_ts = System.currentTimeMillis()
                         }
 
@@ -256,6 +273,10 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
 
         this.buffer_delay = original_delay
         this.wave_generator.frame = 0
+        this.is_exporting = false
+        this.activity.runOnUiThread {
+            this.activity.findViewById<View>(R.id.llExportProgress).visibility = View.GONE
+        }
     }
 
 }

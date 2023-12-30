@@ -134,6 +134,7 @@
     <string name="export_wav_feedback">Exporting to wav</string>
     <string name="export_wav_feedback_complete">Done Export</string>
     <string name="export_wav_notification_complete">Done</string>
+    <string name="already_exporting">Already Exporting</string>
     <string-array name="relative">
         <item>@string/pfx_add</item>
         <item>@string/pfx_subtract</item>

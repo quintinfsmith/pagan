@@ -161,4 +161,25 @@
             app:srcCompat="@drawable/export"
             android:text="@string/btn_cfg_export" />
     </LinearLayout>
+    <LinearLayout
+        android:paddingTop="@dimen/config_item_padding"
+        android:paddingBottom="@dimen/config_item_padding"
+        android:id="@+id/llExportProgress"
+        android:visibility="gone"
+        android:layout_gravity="bottom"
+        android:gravity="bottom"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
+        <TextView
+            android:text="Export Progress:"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+        <TextView
+            android:id="@+id/tvExportProgress"
+            android:text="0%"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+    </LinearLayout>
+
 </LinearLayout>

@@ -922,15 +922,19 @@ class MainActivity : AppCompatActivity() {
         val export_button: View = this.findViewById<View>(R.id.btnExportProject) ?: return
         if (export_options.isNotEmpty()) {
             export_button.setOnClickListener {
-                this.dialog_popup_menu(
-                    getString(R.string.dlg_export),
-                    export_options,
-                    default = null
-                ) { _: Int, value: Int ->
-                    when (value) {
-                        0 -> this.export_midi()
-                        1 -> this.export_wav()
+                if (!(this._midi_playback_device?.is_exporting ?: false)) {
+                    this.dialog_popup_menu(
+                        getString(R.string.dlg_export),
+                        export_options,
+                        default = null
+                    ) { _: Int, value: Int ->
+                        when (value) {
+                            0 -> this.export_midi()
+                            1 -> this.export_wav()
+                        }
                     }
+                } else {
+                    this.feedback_msg(getString(R.string.already_exporting))
                 }
             }
             export_button.visibility = View.VISIBLE

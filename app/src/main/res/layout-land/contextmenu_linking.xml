@@ -3,7 +3,7 @@
     android:id="@+id/llContextLink"
     android:layout_width="wrap_content"
     android:layout_height="match_parent"
-    android:orientation="horizontal"
+    android:orientation="vertical"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <RadioGroup
         android:padding="8dp"
@@ -30,43 +30,38 @@
             android:layout_height="wrap_content"
             android:layout_width="wrap_content"/>
     </RadioGroup>
-    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:theme="@style/icon_button"
+        android:src="@drawable/unset"
+        android:id="@+id/btnEraseSelection"
+        android:contentDescription="Clear Selection"/>
+
+    <TextView
         android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:orientation="vertical"
-        xmlns:app="http://schemas.android.com/apk/res-auto">
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:visibility="gone"
-            android:id="@+id/textView2"
-            android:text="Tap a beat to link it"/>
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:id="@+id/textView2"
+        android:text="Tap a beat to link it"/>
 
-        <ImageView
-            android:theme="@style/icon_button"
-            android:id="@+id/btnUnLink"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:src="@drawable/unlink"
-            android:padding="8dp"
-            android:contentDescription="Remove Link" />
+    <ImageView
+        android:theme="@style/icon_button"
+        android:id="@+id/btnUnLink"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:src="@drawable/unlink"
+        android:padding="8dp"
+        android:contentDescription="Remove Link" />
 
-        <ImageView
-            android:theme="@style/icon_button"
-            android:id="@+id/btnUnLinkAll"
-            android:src="@drawable/unlinkall"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="8dp"
-            android:contentDescription="Remove All Links"/>
+    <ImageView
+        android:theme="@style/icon_button"
+        android:id="@+id/btnUnLinkAll"
+        android:src="@drawable/unlinkall"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="8dp"
+        android:contentDescription="Remove All Links"/>
 
-        <ImageView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:theme="@style/icon_button"
-            android:src="@drawable/unset"
-            android:id="@+id/btnEraseSelection"
-            android:contentDescription="Clear Selection"/>
-
-    </LinearLayout>
 </LinearLayout>

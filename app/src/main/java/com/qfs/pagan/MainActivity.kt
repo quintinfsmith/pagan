@@ -2,6 +2,9 @@ package com.qfs.pagan
 
 import android.app.Activity
 import android.app.AlertDialog
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -22,6 +25,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.RelativeLayout
@@ -29,10 +33,13 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.graphics.drawable.DrawerArrowDrawable
 import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
 import androidx.core.view.GravityCompat
@@ -40,6 +47,7 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.clearFragmentResult
 import androidx.fragment.app.setFragmentResult
+import androidx.lifecycle.ViewModel
 import androidx.media3.common.MimeTypes
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
@@ -56,6 +64,7 @@ import com.qfs.apres.event.ProgramChange
 import com.qfs.apres.event.SongPositionPointer
 import com.qfs.apres.soundfont.SoundFont
 import com.qfs.apres.soundfontplayer.ActiveMidiAudioPlayer
+import com.qfs.apres.soundfontplayer.MidiConverter
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.pagan.databinding.ActivityMainBinding
 import com.qfs.pagan.opusmanager.LoadedJSONData
@@ -63,11 +72,13 @@ import com.qfs.pagan.opusmanager.LoadedJSONData0
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import kotlin.concurrent.thread
 import kotlin.math.floor
+import kotlin.math.roundToInt
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
 
@@ -80,6 +91,26 @@ class MainActivity : AppCompatActivity() {
         Stopping
     }
 
+    class MainViewModel: ViewModel() {
+        var export_handle: MidiConverter? = null
+        fun export_wav(activity: MainActivity, midi: Midi, target_file: File, handler: MidiConverter.ExporterEventHandler) {
+            this.export_handle = MidiConverter(SampleHandleManager(activity.get_soundfont()!!, 44100))
+            this.export_handle?.export_wav(midi, target_file, handler)
+            this.export_handle = null
+        }
+
+        fun cancel() {
+            val handle = this.export_handle ?: return
+            handle.cancel_flagged = true
+        }
+
+        fun is_exporting(): Boolean {
+            return this.export_handle != null
+        }
+    }
+
+
+    val view_model: MainViewModel by viewModels()
     // flag to indicate that the landing page has been navigated away from for navigation management
     private var _has_seen_front_page = false
     private var _opus_manager = OpusManager(this)
@@ -104,19 +135,117 @@ class MainActivity : AppCompatActivity() {
     var playback_state_midi: PlaybackState = PlaybackState.NotReady
     private var _forced_title_text: String? = null
 
-    private var _exporting_wav_handle: PaganPlaybackDevice? = null
+    // Notification shiz -------------------------------------------------
+    var NOTIFICATION_ID = 0
+    val CHANNEL_ID = "com.qfs.pagan"
+    var notification_channel: NotificationChannel? = null
+    var active_notification: NotificationCompat.Builder? = null
+    // -------------------------------------------------------------------
 
     private var _export_wav_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         this.getNotificationPermission()
         thread {
-            if (result.resultCode == Activity.RESULT_OK && this._exporting_wav_handle == null) {
+            if (result.resultCode == Activity.RESULT_OK) {
                 val opus_manager = this.get_opus_manager()
                 result?.data?.data?.also { uri ->
-                    applicationContext.contentResolver.openFileDescriptor(uri, "w")?.use {
-                        this._exporting_wav_handle = PaganPlaybackDevice(this, 44100)
-                        this._exporting_wav_handle!!.export_wav(opus_manager.get_midi(), it)
-                        this._exporting_wav_handle = null
+                    if (this.view_model.export_handle != null) {
+                        return@thread
                     }
+
+                    val tmp_file = File("${this.filesDir}/.tmp_wav_data")
+                    if (tmp_file.exists()) {
+                        tmp_file.delete()
+                    }
+                    tmp_file.deleteOnExit()
+
+                    this.view_model.export_wav(this, opus_manager.get_midi(), tmp_file, object : MidiConverter.ExporterEventHandler {
+                        val notification_manager = NotificationManagerCompat.from(this@MainActivity)
+
+                        override fun on_start() {
+                            this@MainActivity.runOnUiThread {
+                                val btnExportProject = this@MainActivity.findViewById<ImageView>(R.id.btnExportProject) ?: return@runOnUiThread
+                                btnExportProject.setImageResource(R.drawable.baseline_cancel_42)
+                                val llExportProgress = this@MainActivity.findViewById<View>(R.id.llExportProgress) ?: return@runOnUiThread
+                                llExportProgress.visibility = View.VISIBLE
+
+                                val tvExportProgress = this@MainActivity.findViewById<TextView>(R.id.tvExportProgress) ?: return@runOnUiThread
+                                tvExportProgress.text = "0%"
+                            }
+                            this@MainActivity.feedback_msg(this@MainActivity.getString(R.string.export_wav_feedback))
+                            val builder = this@MainActivity.get_notification() ?: return
+                            this.notification_manager.notify(this@MainActivity.NOTIFICATION_ID, builder.build())
+
+                        }
+
+                        override fun on_complete() {
+                            val parcel_file_descriptor = applicationContext.contentResolver.openFileDescriptor(uri, "w") ?: return
+                            val output_stream = FileOutputStream(parcel_file_descriptor.fileDescriptor)
+                            val buffered_output_stream = BufferedOutputStream(output_stream)
+
+                            val input_stream = tmp_file.inputStream()
+                            input_stream.copyTo(buffered_output_stream)
+                            input_stream.close()
+
+                            buffered_output_stream.close()
+                            output_stream.close()
+                            parcel_file_descriptor.close()
+                            val builder = this@MainActivity.get_notification()
+                            if (builder != null) {
+                                builder.setContentText(this@MainActivity.getString(R.string.export_wav_notification_complete))
+                                    .setProgress(0, 0, false)
+                                    .setAutoCancel(true)
+                                    .clearActions()
+                                    .setTimeoutAfter(5000)
+                                    .setSilent(false)
+
+                                this.notification_manager.notify(this@MainActivity.NOTIFICATION_ID, builder.build())
+                            }
+
+                            this@MainActivity.feedback_msg(this@MainActivity.getString(R.string.export_wav_feedback_complete))
+
+                            this@MainActivity.runOnUiThread {
+                                val llExportProgress =
+                                    this@MainActivity.findViewById<View>(R.id.llExportProgress)
+                                        ?: return@runOnUiThread
+                                llExportProgress.visibility = View.GONE
+                                val btnExportProject = this@MainActivity.findViewById<ImageView>(R.id.btnExportProject) ?: return@runOnUiThread
+                                btnExportProject.setImageResource(R.drawable.export)
+                            }
+                        }
+
+                        override fun on_cancel() {
+                            this@MainActivity.feedback_msg(this@MainActivity.getString(R.string.export_cancelled))
+                            this@MainActivity.runOnUiThread {
+                                val llExportProgress = this@MainActivity.findViewById<View>(R.id.llExportProgress)
+                                        ?: return@runOnUiThread
+                                llExportProgress.visibility = View.GONE
+                                val btnExportProject = this@MainActivity.findViewById<ImageView>(R.id.btnExportProject) ?: return@runOnUiThread
+                                btnExportProject.setImageResource(R.drawable.export)
+                            }
+
+                            val builder = this@MainActivity.get_notification() ?: return
+                            builder.setContentText(this@MainActivity.getString(R.string.export_cancelled))
+                                .setProgress(0, 0, false)
+                                .setAutoCancel(true)
+                                .setTimeoutAfter(5000)
+                                .clearActions()
+                            val notification_manager = NotificationManagerCompat.from(this@MainActivity)
+                            notification_manager.notify(this@MainActivity.NOTIFICATION_ID, builder.build())
+                        }
+
+                        override fun on_progress_update(progress: Double) {
+                            val progress_rounded = (progress * 100.0).roundToInt()
+                            this@MainActivity.runOnUiThread {
+                                val tvExportProgress = this@MainActivity.findViewById<TextView>(R.id.tvExportProgress) ?: return@runOnUiThread
+                                tvExportProgress.text = "$progress_rounded%"
+                            }
+
+                            val builder = this@MainActivity.get_notification() ?: return
+                            builder.setProgress(100, progress_rounded, false)
+                            this.notification_manager.notify(this@MainActivity.NOTIFICATION_ID, builder.build())
+                        }
+
+                    })
                 }
             }
         }
@@ -217,14 +346,6 @@ class MainActivity : AppCompatActivity() {
     override fun onSaveInstanceState(outState: Bundle) {
         this.save_to_backup()
         super.onSaveInstanceState(outState)
-    }
-
-    override fun onDestroy() {
-        if (this._exporting_wav_handle != null) {
-            this._exporting_wav_handle!!.export_wav_cancel()
-            this._exporting_wav_handle = null
-        }
-        super.onDestroy()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -919,10 +1040,19 @@ class MainActivity : AppCompatActivity() {
 
     private fun setup_project_config_drawer_export_button() {
         val export_options = this.get_exportable_options()
-        val export_button: View = this.findViewById<View>(R.id.btnExportProject) ?: return
+        val export_button = this.findViewById<ImageView>(R.id.btnExportProject) ?: return
+        val export_progress_wrapper = this.findViewById<LinearLayout>(R.id.llExportProgress) ?: return
+        if (!this.view_model.is_exporting()) {
+            export_button.setImageResource(R.drawable.export)
+            export_progress_wrapper.visibility = View.GONE
+        } else {
+            export_button.setImageResource(R.drawable.baseline_cancel_42)
+            export_progress_wrapper.visibility = View.VISIBLE
+        }
+
         if (export_options.isNotEmpty()) {
             export_button.setOnClickListener {
-                if (!(this._midi_playback_device?.is_exporting ?: false)) {
+                if (!this.view_model.is_exporting()) {
                     this.dialog_popup_menu(
                         getString(R.string.dlg_export),
                         export_options,
@@ -934,7 +1064,7 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
                 } else {
-                    this.feedback_msg(getString(R.string.already_exporting))
+                    this.export_wav_cancel()
                 }
             }
             export_button.visibility = View.VISIBLE
@@ -1476,7 +1606,6 @@ class MainActivity : AppCompatActivity() {
 
     fun export_wav() {
         val name = this.get_export_name()
-
         val intent = Intent(Intent.ACTION_CREATE_DOCUMENT)
         intent.addCategory(Intent.CATEGORY_OPENABLE)
         intent.type = MimeTypes.AUDIO_WAV
@@ -1485,11 +1614,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun export_wav_cancel() {
-        if (this._exporting_wav_handle == null) {
-            return
-        }
-        this._exporting_wav_handle!!.export_wav_cancel()
-        this.feedback_msg("Export Cancelled")
+        this.view_model.cancel()
     }
 
     fun export_midi() {
@@ -1613,4 +1738,53 @@ class MainActivity : AppCompatActivity() {
     fun enable_physical_midi_output() {
         this._midi_interface.block_physical_devices = false
     }
+
+    fun get_notification(): NotificationCompat.Builder? {
+        if (!this.has_notification_permission()) {
+            return null
+        }
+
+        if (this.active_notification == null) {
+            this.get_notification_channel()
+            val cancel_export_flag = "com.qfs.pagan.CANCEL_EXPORT_WAV"
+            val pending_cancel_intent = PendingIntent.getBroadcast(
+                this,
+                0,
+                Intent( cancel_export_flag),
+                PendingIntent.FLAG_IMMUTABLE
+            )
+
+            val builder = NotificationCompat.Builder(this, CHANNEL_ID)
+                .setContentTitle(this.getString(R.string.export_wav_notification_title, this.get_opus_manager().project_name))
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setSmallIcon(R.mipmap.logo_round)
+                .setSilent(true)
+                .addAction(R.drawable.baseline_cancel_24, this.getString(android.R.string.cancel), pending_cancel_intent)
+
+            this.active_notification = builder
+        }
+
+        return this.active_notification!!
+    }
+
+    fun get_notification_channel(): NotificationChannel? {
+        return if (this.has_notification_permission()) {
+            null
+        } else if (this.notification_channel == null) {
+            val notification_manager = NotificationManagerCompat.from(this)
+            // Create the NotificationChannel.
+            val name = this.getString(R.string.export_wav_file_progress)
+            val descriptionText = this.getString(R.string.export_wav_notification_description)
+            val importance = NotificationManager.IMPORTANCE_DEFAULT
+            val mChannel = NotificationChannel(CHANNEL_ID, name, importance)
+            mChannel.description = descriptionText
+            // Register the channel with the system. You can't change the importance
+            // or other notification behaviors after this.
+            notification_manager.createNotificationChannel(mChannel)
+            mChannel
+        } else {
+            this.notification_channel!!
+        }
+    }
+
 }

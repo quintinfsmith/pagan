@@ -425,7 +425,6 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         btnEraseSelection.setOnClickListener {
             this.get_main().get_opus_manager().unset()
         }
-
     }
 
     fun setContextMenu_column() {
@@ -615,10 +614,6 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             }
             true
         }
-
-        //if (this.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-        //    sbLineVolume.layoutParams.width = ((llContextMenu.measuredHeight - (btnRemoveLine.measuredHeight + btnInsertLine.measuredHeight)) * .6).toInt()
-        //}
 
         sbLineVolume.progress = opus_manager.get_line_volume(channel, line_offset)
         sbLineVolume.contentDescription = resources.getString(R.string.label_volume_scrollbar, sbLineVolume.progress  * 100 / 96)
@@ -1134,6 +1129,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             opus_manager.set_percussion_instrument(value)
         }
     }
+
     fun line_volume_dialog(channel: Int, line_offset: Int) {
         val view = LayoutInflater.from(this.context)
             .inflate(

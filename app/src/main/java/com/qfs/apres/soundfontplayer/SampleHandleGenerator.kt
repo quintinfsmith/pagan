@@ -4,8 +4,10 @@ import com.qfs.apres.event2.NoteOn79
 import com.qfs.apres.soundfont.InstrumentSample
 import com.qfs.apres.soundfont.Preset
 import com.qfs.apres.soundfont.PresetInstrument
+import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.pow
+import kotlin.math.sin
 
 class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
     // Hash ignores velocity since velocity isn't baked into sample data
@@ -98,27 +100,26 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
             ?: sample.vol_env_release
             ?: 0.0
 
-        // TODO: Commenting out for now. lfo's aren't current being used
-        //val freq_mod_lfo: Double? = preset.global_zone?.mod_lfo_freq
-        //    ?: instrument.instrument?.global_sample?.mod_lfo_freq
-        //    ?: instrument.mod_lfo_freq
-        //    ?: sample.mod_lfo_freq
-        //val lfo_data: ShortArray? = if (freq_mod_lfo is Double) {
-        //    //val lfo_vol: Int = preset.global_zone?.mod_lfo_volume
-        //    //    ?: instrument.instrument?.global_sample?.mod_lfo_volume
-        //    //    ?: instrument.mod_lfo_volume
-        //    //    ?: sample.mod_lfo_volume
-        //    //    ?: 0
-        //    val level = .2
+        val freq_mod_lfo: Double? = preset.global_zone?.mod_lfo_freq
+            ?: instrument.instrument?.global_sample?.mod_lfo_freq
+            ?: instrument.mod_lfo_freq
+            ?: sample.mod_lfo_freq
 
-        //    val wave_length = this.sample_rate.toDouble() / freq_mod_lfo
-        //    ShortArray(wave_length.toInt()) { i: Int ->
-        //        val p = (i.toDouble() / wave_length)
-        //        (sin(p * PI) * level * 0x7FFF.toDouble()).toInt().toShort()
-        //    }
-        //} else {
-        //    null
-        //}
+        val lfo_data: ShortArray? = if (freq_mod_lfo is Double) {
+            val lfo_vol: Int = preset.global_zone?.mod_lfo_volume
+                ?: instrument.instrument?.global_sample?.mod_lfo_volume
+                ?: instrument.mod_lfo_volume
+                ?: sample.mod_lfo_volume
+                ?: 0
+
+            val wave_length = this.sample_rate.toDouble() / freq_mod_lfo
+            ShortArray(wave_length.toInt()) { i: Int ->
+                val p = (i.toDouble() / wave_length)
+                (sin(p * PI) * lfo_vol * 0x7FFF.toDouble()).toInt().toShort()
+            }
+        } else {
+            null
+        }
 
 
         val max_values = mutableListOf<Short>()
@@ -139,8 +140,8 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
 
         return SampleHandle(
             data = data,
-            //lfo_data = lfo_data,
-            lfo_data = null,
+            sample_rate = sample_rate,
+            lfo_data = lfo_data,
             pan = (sample.pan ?: instrument.pan ?: preset.global_zone?.pan ?: 0.0) * 100.0/ 500.0,
             pitch_shift = pitch_shift,
             attenuation = (10.0).pow(attenuation / -20.0).toFloat(),

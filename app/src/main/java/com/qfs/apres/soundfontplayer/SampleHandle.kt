@@ -1,9 +1,13 @@
 package com.qfs.apres.soundfontplayer
 
 import java.nio.ShortBuffer
+import kotlin.math.PI
+import kotlin.math.roundToInt
+import kotlin.math.tan
 
 class SampleHandle(
     var data: ShortArray,
+    var sample_rate: Int,
     var attenuation: Float = 0.0F,
     val loop_points: Pair<Int, Int>?,
     var stereo_mode: Int,
@@ -26,6 +30,7 @@ class SampleHandle(
 
     constructor(original: SampleHandle): this(
         original.data,
+        original.sample_rate,
         original.attenuation,
         original.loop_points,
         original.stereo_mode,
@@ -52,8 +57,8 @@ class SampleHandle(
     var data_buffer = PitchedBuffer(this.data, this.pitch_shift)
     var lfo_buffer: ShortBuffer? = if (this.lfo_data == null) { null } else { ShortBuffer.wrap(this.lfo_data) }
     var lpf_previous: Double = 0.0
+    var current_delay_position: Int = 0
     // TODO: Unimplimented
-    // var current_delay_position: Int = 0
     // var decay_position: Int? = null
     // var sustain_volume: Int = 0
     // var release_delay: Int? = null
@@ -64,11 +69,10 @@ class SampleHandle(
             return null
         }
 
-        //if (this.current_delay_position < this.delay_frames) {
-        //    var output = 0.toShort()
-        //    this.current_delay_position += 1
-        //    return output
-        //}
+        if (this.current_delay_position < this.delay_frames) {
+            this.current_delay_position += 1
+            return 0
+        }
 
         if (this.data_buffer.position() >= this.data_buffer.size) {
             this.is_dead = true
@@ -107,13 +111,13 @@ class SampleHandle(
         }
 
         // low pass filter
-        //if (this.filter_cutoff != null) {
-        //    val tan_val = tan(PI * this.filter_cutoff!!.toFloat() / AudioTrackHandle.sample_rate.toFloat())
-        //    val lpf_tmp = frame.toDouble()
-        //    val a = ((tan_val - 1) / (tan_val + 1))
-        //    frame = (a * frame.toDouble() + this.lpf_previous).roundToInt().toShort()
-        //    this.lpf_previous = lpf_tmp - (a * frame.toDouble())
-        //}
+        if (this.filter_cutoff != null) {
+            val tan_val = tan(PI * this.filter_cutoff!!.toFloat() / this.sample_rate.toFloat())
+            val lpf_tmp = frame.toDouble()
+            val a = ((tan_val - 1) / (tan_val + 1))
+            frame = (a * frame.toDouble() + this.lpf_previous).roundToInt()
+            this.lpf_previous = lpf_tmp - (a * frame.toDouble())
+        }
 
         return frame
     }

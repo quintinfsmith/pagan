@@ -712,4 +712,29 @@ class OpusTree<T> {
         }
         return !has_event
     }
+
+    override fun equals(other: Any?): Boolean {
+        return if (other is OpusTree<*>) {
+            if (this.is_event() != other.is_event()) {
+                false
+            } else if (this.is_event() && other.is_event()) {
+                this.get_event() == other.get_event()
+            } else if (this.is_leaf() && other.is_leaf()) {
+                true
+            } else if (other.size == this.size) {
+                var is_match = true
+                for (i in 0 until this.size) {
+                    if (this[i] != other[i]) {
+                        is_match = false
+                        break
+                    }
+                }
+                is_match
+            } else {
+                false
+            }
+        } else {
+            super.equals(other)
+        }
+    }
 }

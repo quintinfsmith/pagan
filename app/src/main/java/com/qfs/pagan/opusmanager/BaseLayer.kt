@@ -2063,8 +2063,15 @@ open class BaseLayer {
         }
     }
 
+    /* Not Currently In Use. */
     fun find_like_range(top_left: BeatKey, bottom_right: BeatKey): List<Pair<BeatKey, BeatKey>> {
         val match_box = this.get_abs_difference(top_left, bottom_right)
+
+        val matched_keys = this.get_beatkeys_in_range(top_left, bottom_right).toMutableList()
+        val match_values = mutableListOf<OpusTree<OpusEvent>>()
+        for (key in matched_keys) {
+            match_values.add(this.get_beat_tree(key))
+        }
 
         val possible_corners = mutableListOf<BeatKey>()
         val top_corner_value = this.get_beat_tree(top_left)
@@ -2073,6 +2080,10 @@ open class BaseLayer {
             channel.lines.forEachIndexed { j: Int, line: OpusChannel.OpusLine ->
                 line.beats.forEachIndexed { k: Int, beat_tree: OpusTree<OpusEvent> ->
                     val working_key = BeatKey(i, j, k)
+                    if (working_key in matched_keys) {
+                        return@forEachIndexed
+                    }
+
                     if (top_corner_value == this.get_beat_tree(working_key)) {
                         try {
                             this.get_std_offset(this.get_abs_offset(i, j) + match_box.first)
@@ -2087,19 +2098,14 @@ open class BaseLayer {
         }
 
         val output = mutableListOf<Pair<BeatKey, BeatKey>>()
-        val matched_keys = this.get_beatkeys_in_range(top_left, bottom_right).toMutableList()
-        val match_values = mutableListOf<OpusTree<OpusEvent>>()
-        for (key in matched_keys) {
-            match_values.add(this.get_beat_tree(key))
-        }
 
 
         for (working_top_corner in possible_corners) {
-            val bottom_corner_pair = this.get_std_offset(this.get_abs_offset(working_top_corner.channel, working_top_corner.line_offset) + match_box.second)
+            val bottom_corner_pair = this.get_std_offset(this.get_abs_offset(working_top_corner.channel, working_top_corner.line_offset) + match_box.first)
             val working_bottom_corner = BeatKey(
                 bottom_corner_pair.first,
                 bottom_corner_pair.second,
-                working_top_corner.beat + match_box.first
+                working_top_corner.beat + match_box.second
             )
             val working_keys = this.get_beatkeys_in_range(working_top_corner, working_bottom_corner)
             var is_match = true

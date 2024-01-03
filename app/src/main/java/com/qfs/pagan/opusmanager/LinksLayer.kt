@@ -672,4 +672,16 @@ open class LinksLayer : BaseLayer() {
             }
         }
     }
+
+    /* Not Currently In Use. */
+    open fun link_alike(corner_top: BeatKey, corner_bottom: BeatKey) {
+        var alike_ranges = this.find_like_range(corner_top, corner_bottom)
+        for (range in alike_ranges) {
+            try {
+                this.link_beat_range(range.first, corner_top, corner_bottom)
+            } catch (e: LinksLayer.MixedLinkException) {
+                //pass
+            }
+        }
+    }
 }

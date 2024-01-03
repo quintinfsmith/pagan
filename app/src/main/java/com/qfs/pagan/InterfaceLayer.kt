@@ -1374,4 +1374,11 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             editor_table.update_percussion_visibility()
         }
     }
+
+    /* Not Currently In Use. */
+    fun link_alike() {
+        if (this.cursor.mode == OpusManagerCursor.CursorMode.Range) {
+            this.link_alike(this.cursor.range!!.first, this.cursor.range!!.second)
+        }
+    }
 }

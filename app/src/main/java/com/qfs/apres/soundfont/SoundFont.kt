@@ -4,6 +4,7 @@ import com.qfs.apres.toUInt
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import kotlin.math.max
+import kotlin.math.min
 
 //class SoundFont(input_stream: InputStream) {
 class SoundFont(file_path: String) {
@@ -445,7 +446,7 @@ class SoundFont(file_path: String) {
                 working_generated.mod_env_filter = generator.asIntSigned()
             }
             0x0D -> {
-                working_generated.mod_lfo_volume = generator.asInt()
+                working_generated.mod_lfo_volume =  generator.asIntSigned()
             }
             0x0E -> { } // Unused
             0x0F -> {
@@ -485,7 +486,7 @@ class SoundFont(file_path: String) {
                 working_generated.mod_env_decay = generator.asTimecent()
             }
             0x1D -> {
-                working_generated.mod_env_sustain = max(1000, generator.asInt()).toDouble() / 10.0
+                working_generated.mod_env_sustain = min(1000, max(generator.asIntSigned(), 0)).toDouble() / 10.0
             }
             0x1E -> {
                 working_generated.mod_env_release = generator.asTimecent()
@@ -509,7 +510,7 @@ class SoundFont(file_path: String) {
                 working_generated.vol_env_decay = generator.asTimecent()
             }
             0x25 -> {
-                working_generated.vol_env_sustain = max(1000, generator.asInt()).toDouble() / 10.0
+                working_generated.vol_env_sustain = min(1000, max(generator.asIntSigned(), 0)).toDouble() / 10.0
             }
             0x26 -> {
                 working_generated.vol_env_release = generator.asTimecent()
@@ -528,7 +529,7 @@ class SoundFont(file_path: String) {
                 working_generated.velocity_range = generator.asPair()
             }
             0x30 -> {
-                working_generated.attenuation = generator.asInt().toDouble() / 10
+                working_generated.attenuation = generator.asIntSigned().toDouble() / 10
             }
             0x31 -> {} //reserved 2
             0x33 -> {

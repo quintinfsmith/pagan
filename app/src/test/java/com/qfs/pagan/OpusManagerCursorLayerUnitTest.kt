@@ -2,8 +2,9 @@ package com.qfs.pagan
 
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.OpusEvent
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Test
-import org.junit.Assert.*
 import com.qfs.pagan.opusmanager.BaseLayer as OpusManager
 
 /**
@@ -230,7 +231,7 @@ class OpusManagerCursorLayerUnitTest {
         // split an event
         var position = mutableListOf(split_count - 1, 0)
 
-        manager.set_event(beat_key, position, OpusEvent(30, 0, 0, false))
+        manager.set_event(beat_key, position, OpusEvent(30,  0, false))
 
         manager.split_tree(beat_key, position, split_count)
         var subtree = manager.get_tree(beat_key, position)

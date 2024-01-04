@@ -22,7 +22,7 @@ class HistoryCacheUnitTest {
    @Test
    fun test_remove() {
        var key = BeatKey(0,0,0)
-       var test_event = OpusEvent(12,12,0,false)
+       var test_event = OpusEvent(12,0,false)
 
        var manager = OpusManager()
        manager.new()
@@ -87,8 +87,8 @@ class HistoryCacheUnitTest {
 
     @Test
     fun test_set_event() {
-        var event = OpusEvent(12, 12, 0, false)
-        var event_b = OpusEvent(5, 12, 0, false)
+        var event = OpusEvent(12,  0, false)
+        var event_b = OpusEvent(5, 0, false)
         var manager = OpusManager()
         manager.new()
 
@@ -115,7 +115,7 @@ class HistoryCacheUnitTest {
 
     @Test
     fun test_unset() {
-        var event = OpusEvent(12, 12, 0, false)
+        var event = OpusEvent(12, 0, false)
         var manager = OpusManager()
         manager.new()
         manager.set_event(BeatKey(0,0,0), listOf(), event)

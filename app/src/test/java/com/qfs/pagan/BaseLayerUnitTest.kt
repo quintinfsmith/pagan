@@ -169,9 +169,9 @@ class BaseLayerUnitTest {
         val manager = OpusManager()
         manager.new()
 
-        val first_event = OpusEvent(25, 12, 0, false)
-        val second_event = OpusEvent(1, 12, 0, true)
-        val third_event = OpusEvent(-6, 12, 0, true)
+        val first_event = OpusEvent(25, 0, false)
+        val second_event = OpusEvent(1, 0, true)
+        val third_event = OpusEvent(-6, 0, true)
 
         manager.set_event( BeatKey(0,0,1), listOf(), first_event )
         manager.set_event( BeatKey(0,0,2), listOf(), second_event )
@@ -219,7 +219,7 @@ class BaseLayerUnitTest {
         val manager = OpusManager()
         manager.new()
 
-        val absolute_event = OpusEvent(25, 12, 0, false)
+        val absolute_event = OpusEvent(25, 0, false)
 
         assertEquals(
             "False positive on has_preceding_absolute_event()",
@@ -247,21 +247,21 @@ class BaseLayerUnitTest {
 
         assertThrows(Exception::class.java) { manager.convert_event_to_relative(BeatKey(0,0,0), listOf()) }
 
-        manager.set_event(BeatKey(0,0,0), listOf(), OpusEvent(12,12,0,false))
+        manager.set_event(BeatKey(0,0,0), listOf(), OpusEvent(12,0,false))
 
-        manager.set_event(BeatKey(0,0,1), listOf(), OpusEvent(24,12,0, false))
+        manager.set_event(BeatKey(0,0,1), listOf(), OpusEvent(24,0, false))
         manager.convert_event_to_relative(BeatKey(0,0,1), listOf())
         assertEquals(
             "Failed to convert absolute event to relative",
-            OpusEvent(12, 12, 0, true),
+            OpusEvent(12, 0, true),
             manager.get_tree(BeatKey(0,0,1), listOf()).get_event()!!
         )
 
-        manager.set_event(BeatKey(0,0,1), listOf(), OpusEvent(+12,12,0, true))
+        manager.set_event(BeatKey(0,0,1), listOf(), OpusEvent(12,0, true))
         manager.convert_event_to_relative(BeatKey(0,0,1), listOf())
         assertEquals(
             "Somehow broke an existing relative event",
-            OpusEvent(+12, 12, 0, true),
+            OpusEvent(+12, 0, true),
             manager.get_tree(BeatKey(0,0,1), listOf()).get_event()!!
         )
     }
@@ -273,22 +273,22 @@ class BaseLayerUnitTest {
 
         assertThrows(Exception::class.java) { manager.convert_event_to_absolute(BeatKey(0,0,0), listOf()) }
 
-        manager.set_event(BeatKey(0,0,0), listOf(), OpusEvent(12, 12, 0, false))
+        manager.set_event(BeatKey(0,0,0), listOf(), OpusEvent(12, 0, false))
 
-        manager.set_event(BeatKey(0,0,1), listOf(), OpusEvent(12, 12, 0, true))
+        manager.set_event(BeatKey(0,0,1), listOf(), OpusEvent(12, 0, true))
 
         manager.convert_event_to_absolute(BeatKey(0,0,1), listOf())
         assertEquals(
             "Failed to convert absolute_event_to_absolute",
-            OpusEvent(24, 12, 0, false),
+            OpusEvent(24, 0, false),
             manager.get_tree(BeatKey(0,0,1), listOf()).get_event()!!
         )
 
-        manager.set_event(BeatKey(0,0,1), listOf(), OpusEvent(12, 12, 0, false))
+        manager.set_event(BeatKey(0,0,1), listOf(), OpusEvent(12, 0, false))
         manager.convert_event_to_absolute(BeatKey(0,0,1), listOf())
         assertEquals(
             "Somehow broke an existing absolute event",
-            OpusEvent(12, 12, 0, false),
+            OpusEvent(12, 0, false),
             manager.get_tree(BeatKey(0,0,1), listOf()).get_event()!!
         )
     }
@@ -303,7 +303,7 @@ class BaseLayerUnitTest {
         val position: List<Int> = listOf()
 
 
-        manager.set_event(beatkey, position, OpusEvent(10, 12, 0, false))
+        manager.set_event(beatkey, position, OpusEvent(10, 0, false))
         val tree = manager.get_tree(beatkey, position)
         assertEquals(
             "Failed to set event",
@@ -313,7 +313,7 @@ class BaseLayerUnitTest {
         assertEquals(
             "Set event, but set it wrong",
             tree.get_event(),
-            OpusEvent(10, 12, 0, false)
+            OpusEvent(10, 0, false)
         )
 
         manager.unset(beatkey, position)
@@ -516,7 +516,7 @@ class BaseLayerUnitTest {
         // split an event
         val position = mutableListOf(split_count - 1, 0)
 
-        manager.set_event(beat_key, position, OpusEvent(30, 0, 0, false))
+        manager.set_event(beat_key, position, OpusEvent(30,  0, false))
 
         manager.split_tree(beat_key, position, split_count)
         val subtree = manager.get_tree(beat_key, position)
@@ -549,7 +549,7 @@ class BaseLayerUnitTest {
         val manager = OpusManager()
         manager.new()
         val beat_key = BeatKey(0, 0, 0)
-        val event = OpusEvent(20,12, 0, false, 1)
+        val event = OpusEvent(20, 0, false, 1)
         manager.set_event(beat_key, listOf(), event)
 
         val new_duration = 2

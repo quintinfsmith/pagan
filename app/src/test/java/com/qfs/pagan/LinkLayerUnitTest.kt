@@ -4,7 +4,6 @@ import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.OpusEvent
 import com.qfs.pagan.structure.OpusTree
 import junit.framework.TestCase.assertEquals
-import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertTrue
 import org.junit.Test
 import com.qfs.pagan.opusmanager.LinksLayer as OpusManager
@@ -244,7 +243,7 @@ class LinkLayerUnitTest {
         val (manager, main_key) = this.setup_linked_manager()
 
         val new_duration = 12
-        manager.set_event(main_key, listOf(), OpusEvent(20, 12, 0, false, 1))
+        manager.set_event(main_key, listOf(), OpusEvent(20,  0, false, 1))
         manager.set_duration(main_key, listOf(), new_duration)
 
         this.batch_link_test(manager, main_key) {
@@ -273,7 +272,7 @@ class LinkLayerUnitTest {
     @Test
     fun test_set_event() {
         val (manager, main_key) = this.setup_linked_manager()
-        val event = OpusEvent(20, 12, 0, false, 1)
+        val event = OpusEvent(20, 0, false, 1)
         manager.set_event(main_key, listOf(), event)
 
         this.batch_link_test(manager, main_key) {
@@ -287,7 +286,7 @@ class LinkLayerUnitTest {
     @Test
     fun test_unset() {
         val (manager, main_key) = this.setup_linked_manager()
-        val event = OpusEvent(20, 12, 0, false, 1)
+        val event = OpusEvent(20, 0, false, 1)
         manager.set_event(main_key, listOf(), event)
         manager.unset(main_key, listOf())
 

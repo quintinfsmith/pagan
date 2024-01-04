@@ -1,9 +1,6 @@
 package com.qfs.apres.soundfontplayer
 
-import java.nio.ShortBuffer
-import kotlin.math.PI
-import kotlin.math.roundToInt
-import kotlin.math.tan
+import kotlin.math.min
 
 class SampleHandle(
     var data: ShortArray,
@@ -12,16 +9,19 @@ class SampleHandle(
     val loop_points: Pair<Int, Int>?,
     var stereo_mode: Int,
     var delay_frames: Int = 0,
-    var attack_frame_count: Int = 0,
+    var attack_frame_count: Double = 0.0,
     var hold_frame_count: Int = 0,
-    var decay_frame_count: Int = 0,
+    var decay_frame_count: Double = 0.0,
     var release_size: Float, // Is actually integer, but is only ever used in calculations as Float
     var max_values: Array<Float> = Array<Float>(0) { 0F },
     var pitch_shift: Float = 1F,
-    var lfo_data: ShortArray?,
+    var lfo_data: DoubleArray?,
     var filter_cutoff: Int? = null,
-    var pan: Double = 0.0
+    var pan: Double = 0.0,
+    var sustain_volume: Float,
+    var lfo_volume: Double = 0.0
 ) {
+
     companion object {
         var uuid_gen = 0
         val MAXIMUM_VOLUME = .8F
@@ -43,26 +43,26 @@ class SampleHandle(
         original.pitch_shift,
         original.lfo_data,
         original.filter_cutoff,
-        original.pan
+        original.pan,
+        original.sustain_volume
     )
 
     var is_pressed = true
     var is_dead = false
-    private var current_attack_position: Int = 0
+    private var current_attack_position: Double = 0.0
     private var current_hold_position: Int = 0
-    private var current_decay_position: Int = 0
+    private var current_decay_position: Double = 0.0
 
     private var current_release_position: Float = 0F // Is actually integer, but is only ever used in calculations as Float
     var current_volume: Double = 0.5
     var data_buffer = PitchedBuffer(this.data, this.pitch_shift)
-    var lfo_buffer: ShortBuffer? = if (this.lfo_data == null) { null } else { ShortBuffer.wrap(this.lfo_data) }
-    var lpf_previous: Double = 0.0
     var current_delay_position: Int = 0
     // TODO: Unimplimented
-    // var decay_position: Int? = null
-    // var sustain_volume: Int = 0
     // var release_delay: Int? = null
     // var remove_delay: Int? = null
+
+    //var lfo_buffer: DoubleBuffer? = if (this.lfo_data == null) { null } else { DoubleBuffer.wrap(this.lfo_data) }
+    //var lpf_previous: Double = 0.0
 
     fun get_next_frame(): Int? {
         if (this.is_dead) {
@@ -80,19 +80,30 @@ class SampleHandle(
         }
         var frame = (this.data_buffer.get().toDouble() * this.attenuation * this.current_volume).toInt()
 
-        val lfo_frame = this.lfo_buffer?.get() ?: 0
-        if (this.lfo_buffer != null && this.lfo_buffer!!.position() >= this.lfo_data!!.size) {
-            this.lfo_buffer!!.position(0)
-        }
-        frame += lfo_frame
+        if (this.is_pressed) {
+            if (this.current_attack_position < this.attack_frame_count) {
+                val r = (this.current_attack_position / this.attack_frame_count)
+                frame = (frame * r).toInt()
+                this.current_attack_position += 1
+            } else if (this.current_hold_position < this.hold_frame_count) {
+                this.current_hold_position += 1
+            } else if (this.sustain_volume < 1F) {
+                val r = min(1.0, (this.current_decay_position / this.decay_frame_count))
+                val factor = 1.0 - r + (this.sustain_volume * r)
 
-        if (this.current_attack_position < this.attack_frame_count) {
-            this.current_attack_position += 1
-        } else if (this.current_hold_position < this.hold_frame_count) {
-            this.current_hold_position += 1
-        } else if (this.current_decay_position < this.decay_frame_count) {
-            this.current_decay_position += 1
+                frame = (frame * factor).toInt()
+                this.current_decay_position += 1
+            }
         }
+
+        //if (this.lfo_buffer != null) {
+        //    val lfo_frame = this.lfo_buffer?.get()
+        //    if (this.lfo_buffer != null && this.lfo_buffer!!.position() >= this.lfo_data!!.size) {
+        //        this.lfo_buffer!!.position(0)
+        //    }
+        //    frame = (frame * (lfo_frame * this.lfo_volume)).toInt()
+        //}
+
 
         if (! this.is_pressed) {
             if (this.current_release_position < this.release_size) {
@@ -111,13 +122,13 @@ class SampleHandle(
         }
 
         // low pass filter
-        if (this.filter_cutoff != null) {
-            val tan_val = tan(PI * this.filter_cutoff!!.toFloat() / this.sample_rate.toFloat())
-            val lpf_tmp = frame.toDouble()
-            val a = ((tan_val - 1) / (tan_val + 1))
-            frame = (a * frame.toDouble() + this.lpf_previous).roundToInt()
-            this.lpf_previous = lpf_tmp - (a * frame.toDouble())
-        }
+        //if (this.filter_cutoff != null) {
+        //    val tan_val = tan(PI * this.filter_cutoff!!.toFloat() / this.sample_rate.toFloat())
+        //    val lpf_tmp = frame.toDouble()
+        //    val a = ((tan_val - 1) / (tan_val + 1))
+        //    frame = (a * frame.toDouble() + this.lpf_previous).roundToInt()
+        //    this.lpf_previous = lpf_tmp - (a * frame.toDouble())
+        //}
 
         return frame
     }

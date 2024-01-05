@@ -88,7 +88,11 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
     }
     fun close_output_devices() {
         for (connected_input_port in this.connected_input_ports) {
-            connected_input_port.close()
+            try {
+                connected_input_port.close()
+            } catch (e: IllegalArgumentException) {
+                // Pass
+            }
         }
         this.connected_input_ports.clear()
     }
@@ -139,13 +143,12 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
 
     fun broadcast_event(event: MIDIEvent) {
         // Rebroadcast to listening devices
-        val devices = runBlocking {
+        runBlocking {
             this@MidiController.virtual_output_mutex.withLock {
-                this@MidiController.virtual_output_devices.toList()
+                for (device in this@MidiController.virtual_output_devices) {
+                    device.receiveMessage(event)
+                }
             }
-        }
-        for (device in devices) {
-            device.receiveMessage(event)
         }
 
         if (! this.block_physical_devices) {

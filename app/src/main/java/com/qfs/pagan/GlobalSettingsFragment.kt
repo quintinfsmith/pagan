@@ -16,6 +16,7 @@ import com.qfs.apres.soundfont.SoundFont
 import com.qfs.pagan.databinding.FragmentGlobalSettingsBinding
 import java.io.File
 import java.io.FileInputStream
+import java.io.FileNotFoundException
 import java.io.FileOutputStream
 
 class GlobalSettingsFragment : PaganFragment<FragmentGlobalSettingsBinding>() {
@@ -29,10 +30,14 @@ class GlobalSettingsFragment : PaganFragment<FragmentGlobalSettingsBinding>() {
 
                     val new_file = File("${soundfont_dir}/$file_name")
                     main.applicationContext.contentResolver.openFileDescriptor(uri, "r")?.use {
-                        new_file.outputStream().use { output_stream: FileOutputStream ->
-                            FileInputStream(it.fileDescriptor).use { input_stream: FileInputStream ->
-                                input_stream.copyTo(output_stream, 4096 * 4)
+                        try {
+                            new_file.outputStream().use { output_stream: FileOutputStream ->
+                                FileInputStream(it.fileDescriptor).use { input_stream: FileInputStream ->
+                                    input_stream.copyTo(output_stream, 4096 * 4)
+                                }
                             }
+                        } catch (e: FileNotFoundException) {
+                            // TODO:  Feedback? Only breaks on devices without properly implementation (realme RE549c)
                         }
                     }
 

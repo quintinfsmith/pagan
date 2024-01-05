@@ -75,6 +75,7 @@ import kotlinx.serialization.json.Json
 import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileInputStream
+import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import kotlin.concurrent.thread
 import kotlin.math.floor
@@ -1345,7 +1346,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun save_configuration() {
-        this.configuration.save(this._config_path)
+        try {
+            this.configuration.save(this._config_path)
+        } catch (e: FileNotFoundException) {
+            // TODO: ?Feedback? only happens on devices not properly put together (realme)
+        }
     }
 
     fun get_drum_name(index: Int): String? {

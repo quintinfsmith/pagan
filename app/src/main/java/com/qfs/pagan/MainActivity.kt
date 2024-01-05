@@ -1141,7 +1141,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun play_event(channel: Int, event_value: Int, velocity: Int) {
-
         if (!this._midi_interface.output_devices_connected()) {
             this.connect_feedback_device()
         } else {

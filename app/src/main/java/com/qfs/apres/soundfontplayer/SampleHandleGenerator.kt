@@ -45,6 +45,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
     fun generate_new(note: Int, bend: Int, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset): SampleHandle {
         var pitch_shift = 1F
         val original_note = sample.root_key ?: sample.sample!!.originalPitch
+        // TODO: Why did I do this check? I vaguely remember needing it but I need a note
         if (original_note != 255) {
             val tuning_cent: Int = (sample.tuning_cent
                 ?: instrument.instrument?.global_sample?.tuning_cent
@@ -130,10 +131,12 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
                 max_values[d] = abs_frame.toShort()
             }
         }
+
         val max_values_floats = Array(max_values.size) {
             max_values[it].toFloat() / Short.MAX_VALUE.toFloat()
         }
-        var filter_cutoff: Int = (sample.filter_cutoff
+
+        val filter_cutoff: Int = (sample.filter_cutoff
             ?: instrument.instrument?.global_sample?.filter_cutoff
             ?: 13500
         ) + (instrument.filter_cutoff ?: 0) + (preset.global_zone?.filter_cutoff ?: 0)

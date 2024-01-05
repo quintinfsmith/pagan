@@ -8,7 +8,7 @@ abstract class Generated {
     var tuning_semi: Int? = null
     var tuning_cent: Int? = null
     var scale_tuning: Int? = null
-    var filter_cutoff: Int? = null
+    var filter_cutoff: Double? = null
     var filter_resonance: Double? = null
     var vol_env_delay: Double? = null
     var vol_env_attack: Double? = null

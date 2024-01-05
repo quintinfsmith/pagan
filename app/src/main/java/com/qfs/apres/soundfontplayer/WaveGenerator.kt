@@ -341,7 +341,6 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
             }
         }
 
-
         if (is_empty) {
             this._empty_chunks_count += 1
         } else {

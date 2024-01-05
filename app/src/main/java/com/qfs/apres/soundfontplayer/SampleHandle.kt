@@ -2,7 +2,6 @@ package com.qfs.apres.soundfontplayer
 
 import kotlin.math.PI
 import kotlin.math.min
-import kotlin.math.roundToInt
 import kotlin.math.tan
 
 class SampleHandle(
@@ -18,9 +17,9 @@ class SampleHandle(
     var release_size: Float, // Is actually integer, but is only ever used in calculations as Float
     var max_values: Array<Float> = Array<Float>(0) { 0F },
     var pitch_shift: Float = 1F,
-    var filter_cutoff: Float? = null,
+    var filter_cutoff: Double = 13500.0,
     var pan: Double = 0.0,
-    var sustain_volume: Float,
+    var sustain_attenuation: Float,
 ) {
 
     companion object {
@@ -44,14 +43,10 @@ class SampleHandle(
         original.pitch_shift,
         original.filter_cutoff,
         original.pan,
-        original.sustain_volume
+        original.sustain_attenuation
     )
 
-    private val tan_val = if (this.filter_cutoff != null) {
-        tan(PI * this.filter_cutoff!! / this.sample_rate.toFloat())
-    } else {
-        null
-    }
+    private val lpf_factor: Double
 
     var is_pressed = true
     var is_dead = false
@@ -67,7 +62,12 @@ class SampleHandle(
     // var release_delay: Int? = null
     // var remove_delay: Int? = null
 
-    var lpf_previous: Float = 0F
+    var lpf_previous: Double = 0.0
+
+    init {
+        val tmp_tan = tan(PI * this.filter_cutoff / this.sample_rate.toDouble())
+        this.lpf_factor = (tmp_tan - 1) / (tmp_tan + 1)
+    }
 
     fun get_next_frame(): Int? {
         if (this.is_dead) {
@@ -83,20 +83,19 @@ class SampleHandle(
             this.is_dead = true
             return null
         }
-
-        var frame = (this.data_buffer.get().toDouble() * this.attenuation * this.current_volume).toInt()
+        var frame = this.data_buffer.get().toDouble()
 
         if (this.is_pressed) {
             if (this.current_attack_position < this.attack_frame_count) {
                 val r = (this.current_attack_position / this.attack_frame_count)
-                frame = (frame * r).toInt()
+                frame *= r
                 this.current_attack_position += 1
             } else if (this.current_hold_position < this.hold_frame_count) {
                 this.current_hold_position += 1
-            } else if (this.sustain_volume < 1F) {
+            } else if (this.sustain_attenuation < 1F) {
                 val r = min(1.0, (this.current_decay_position / this.decay_frame_count))
-                val factor = 1.0 - r + (this.sustain_volume * r)
-                frame = (frame * factor).toInt()
+                val factor = 1.0 - r + (this.sustain_attenuation * r)
+                frame *= factor
                 this.current_decay_position += 1
             }
         }
@@ -104,7 +103,7 @@ class SampleHandle(
         if (! this.is_pressed) {
             if (this.current_release_position < this.release_size) {
                 var r = (this.current_release_position / this.release_size)
-                frame = (frame * (1F - r)).toInt()
+                frame *= (1F - r)
                 this.current_release_position += 1
             } else {
                 this.is_dead = true
@@ -117,15 +116,15 @@ class SampleHandle(
             }
         }
 
-        // low pass filter
-        if (this.filter_cutoff != null) {
-            val lpf_tmp = frame.toFloat()
-            val a = ((this.tan_val!! - 1) / (this.tan_val!! + 1))
-            frame = (a * frame.toDouble() + this.lpf_previous).roundToInt()
-            this.lpf_previous = lpf_tmp - (a.toFloat() * lpf_tmp)
-        }
+        // TODO: low pass filter. I can't get this to work atm
+        //if (this.filter_cutoff <= this.sample_rate / 2.0) {
+        //    var input = frame / Double.MAX_VALUE
+        //    val allpass_value = (this.lpf_factor * input) + this.lpf_previous
+        //    this.lpf_previous = input - (this.lpf_factor * allpass_value)
+        //    frame *= (input + allpass_value) / 2.0
+        //}
 
-        return frame
+        return (frame * this.attenuation * this.current_volume).toInt()
     }
 
     fun release_note() {

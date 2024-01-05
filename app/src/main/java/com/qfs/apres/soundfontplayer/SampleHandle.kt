@@ -1,14 +1,11 @@
 package com.qfs.apres.soundfontplayer
 
-import kotlin.math.PI
 import kotlin.math.min
-import kotlin.math.roundToInt
-import kotlin.math.tan
 
 class SampleHandle(
     var data: ShortArray,
     var sample_rate: Int,
-    var attenuation: Float = 0.0F,
+    var initial_attenuation: Float = 0.0F,
     val loop_points: Pair<Int, Int>?,
     var stereo_mode: Int,
     var delay_frames: Int = 0,
@@ -32,7 +29,7 @@ class SampleHandle(
     constructor(original: SampleHandle): this(
         original.data,
         original.sample_rate,
-        original.attenuation,
+        original.initial_attenuation,
         original.loop_points,
         original.stereo_mode,
         original.delay_frames,
@@ -77,12 +74,12 @@ class SampleHandle(
             this.is_dead = true
             return null
         }
-        var frame = (this.data_buffer.get().toDouble() * this.attenuation * this.current_volume).toInt()
+        var frame = (this.data_buffer.get().toDouble() * this.current_volume).toInt()
 
         if (this.is_pressed) {
             if (this.current_attack_position < this.attack_frame_count) {
                 val r = (this.current_attack_position / this.attack_frame_count)
-                frame = (frame * r).toInt()
+                frame = (frame * ((r * (1 - this.initial_attenuation)) + this.initial_attenuation)).toInt()
                 this.current_attack_position += 1
             } else if (this.current_hold_position < this.hold_frame_count) {
                 this.current_hold_position += 1
@@ -112,13 +109,13 @@ class SampleHandle(
         }
 
         // low pass filter
-        if (this.filter_cutoff != null) {
-            val tan_val = tan(2 * PI * this.filter_cutoff!!.toFloat() / this.sample_rate.toFloat())
-            val lpf_tmp = frame.toDouble()
-            val a = ((tan_val - 1) / (tan_val + 1))
-            frame = (a * frame.toDouble() + this.lpf_previous).roundToInt()
-            this.lpf_previous = lpf_tmp - (a * frame.toDouble())
-        }
+        //if (this.filter_cutoff != 0) {
+        //    val tan_val = tan(2 * PI * this.filter_cutoff!!.toFloat() / this.sample_rate.toFloat())
+        //    val lpf_tmp = frame.toDouble()
+        //    val a = ((tan_val - 1) / (tan_val + 1))
+        //    frame = (a * frame.toDouble() + this.lpf_previous).roundToInt()
+        //    this.lpf_previous = lpf_tmp - (a * frame.toDouble())
+        //}
 
         return frame
     }

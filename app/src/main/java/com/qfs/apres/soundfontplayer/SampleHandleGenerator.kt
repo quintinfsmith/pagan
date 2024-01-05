@@ -141,7 +141,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
             pan = (sample.pan ?: instrument.pan ?: preset.global_zone?.pan ?: 0.0) * 100.0/ 500.0,
             pitch_shift = pitch_shift,
             sustain_volume = (10.0).pow(vol_env_sustain / -20.0).toFloat(),
-            attenuation = (10.0).pow(attenuation / -20.0).toFloat(),
+            initial_attenuation = (10.0).pow(attenuation / -20.0).toFloat(),
             stereo_mode = sample.sample!!.sampleType,
             loop_points = if (sample.sampleMode != null && sample.sampleMode!! and 1 == 1) {
                 val start = (sample.sample!!.loopStart.toFloat() / pitch_shift)

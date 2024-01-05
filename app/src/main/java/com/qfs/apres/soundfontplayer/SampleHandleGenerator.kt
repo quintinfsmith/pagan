@@ -87,22 +87,21 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
 
         val vol_env_attack: Double = (sample.vol_env_attack
             ?: instrument.instrument?.global_sample?.vol_env_attack
-            ?: 0.0
+            ?: -12000.0
         ) + (instrument.vol_env_attack ?: 0.0) + (preset.global_zone?.vol_env_attack ?: 0.0)
-
         val vol_env_hold: Double = (sample.vol_env_hold
             ?: instrument.instrument?.global_sample?.vol_env_hold
-            ?: 0.0
+            ?: -12000.0
         ) + (instrument.vol_env_hold ?: 0.0) + (preset.global_zone?.vol_env_hold ?: 0.0)
 
         val vol_env_decay: Double = (sample.vol_env_decay
             ?: instrument.instrument?.global_sample?.vol_env_decay
-            ?: 0.0
+            ?: -12000.0
         ) + (instrument.vol_env_decay ?: 0.0) + (preset.global_zone?.vol_env_decay ?: 0.0)
 
         val vol_env_release: Double = (sample.vol_env_release
             ?: instrument.instrument?.global_sample?.vol_env_release
-            ?: 0.0
+            ?: -12000.0
         ) + (instrument.vol_env_release ?: 0.0) + (preset.global_zone?.vol_env_release ?: 0.0)
 
         val vol_env_sustain: Double = (sample.vol_env_sustain
@@ -134,6 +133,10 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
         val max_values_floats = Array(max_values.size) {
             max_values[it].toFloat() / Short.MAX_VALUE.toFloat()
         }
+        var filter_cutoff: Int = (sample.filter_cutoff
+            ?: instrument.instrument?.global_sample?.filter_cutoff
+            ?: 13500
+        ) + (instrument.filter_cutoff ?: 0) + (preset.global_zone?.filter_cutoff ?: 0)
 
         return SampleHandle(
             data = data,
@@ -141,7 +144,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
             pan = (sample.pan ?: instrument.pan ?: preset.global_zone?.pan ?: 0.0) * 100.0/ 500.0,
             pitch_shift = pitch_shift,
             sustain_volume = (10.0).pow(vol_env_sustain / -20.0).toFloat(),
-            initial_attenuation = (10.0).pow(attenuation / -20.0).toFloat(),
+            attenuation = (10.0).pow(attenuation / -20.0).toFloat(),
             stereo_mode = sample.sample!!.sampleType,
             loop_points = if (sample.sampleMode != null && sample.sampleMode!! and 1 == 1) {
                 val start = (sample.sample!!.loopStart.toFloat() / pitch_shift)
@@ -157,10 +160,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
             decay_frame_count = (this.sample_rate.toDouble() * vol_env_decay),
             release_size = ((this.sample_rate.toDouble() * vol_env_release)).toFloat(),
             max_values = max_values_floats,
-            filter_cutoff = (sample.filter_cutoff
-                ?: instrument.instrument?.global_sample?.filter_cutoff
-                ?: 0
-            ) + (instrument.filter_cutoff ?: 0) + (preset.global_zone?.filter_cutoff ?: 0)
+            filter_cutoff = filter_cutoff.toFloat()
         )
     }
 

@@ -1,11 +1,14 @@
 package com.qfs.apres.soundfontplayer
 
+import kotlin.math.PI
 import kotlin.math.min
+import kotlin.math.roundToInt
+import kotlin.math.tan
 
 class SampleHandle(
     var data: ShortArray,
     var sample_rate: Int,
-    var initial_attenuation: Float = 0.0F,
+    var attenuation: Float = 0.0F,
     val loop_points: Pair<Int, Int>?,
     var stereo_mode: Int,
     var delay_frames: Int = 0,
@@ -15,7 +18,7 @@ class SampleHandle(
     var release_size: Float, // Is actually integer, but is only ever used in calculations as Float
     var max_values: Array<Float> = Array<Float>(0) { 0F },
     var pitch_shift: Float = 1F,
-    var filter_cutoff: Int? = null,
+    var filter_cutoff: Float? = null,
     var pan: Double = 0.0,
     var sustain_volume: Float,
 ) {
@@ -29,7 +32,7 @@ class SampleHandle(
     constructor(original: SampleHandle): this(
         original.data,
         original.sample_rate,
-        original.initial_attenuation,
+        original.attenuation,
         original.loop_points,
         original.stereo_mode,
         original.delay_frames,
@@ -43,6 +46,12 @@ class SampleHandle(
         original.pan,
         original.sustain_volume
     )
+
+    private val tan_val = if (this.filter_cutoff != null) {
+        tan(PI * this.filter_cutoff!! / this.sample_rate.toFloat())
+    } else {
+        null
+    }
 
     var is_pressed = true
     var is_dead = false
@@ -58,7 +67,7 @@ class SampleHandle(
     // var release_delay: Int? = null
     // var remove_delay: Int? = null
 
-    var lpf_previous: Double = 0.0
+    var lpf_previous: Float = 0F
 
     fun get_next_frame(): Int? {
         if (this.is_dead) {
@@ -74,19 +83,19 @@ class SampleHandle(
             this.is_dead = true
             return null
         }
-        var frame = (this.data_buffer.get().toDouble() * this.current_volume).toInt()
+
+        var frame = (this.data_buffer.get().toDouble() * this.attenuation * this.current_volume).toInt()
 
         if (this.is_pressed) {
             if (this.current_attack_position < this.attack_frame_count) {
                 val r = (this.current_attack_position / this.attack_frame_count)
-                frame = (frame * ((r * (1 - this.initial_attenuation)) + this.initial_attenuation)).toInt()
+                frame = (frame * r).toInt()
                 this.current_attack_position += 1
             } else if (this.current_hold_position < this.hold_frame_count) {
                 this.current_hold_position += 1
             } else if (this.sustain_volume < 1F) {
                 val r = min(1.0, (this.current_decay_position / this.decay_frame_count))
                 val factor = 1.0 - r + (this.sustain_volume * r)
-
                 frame = (frame * factor).toInt()
                 this.current_decay_position += 1
             }
@@ -109,13 +118,12 @@ class SampleHandle(
         }
 
         // low pass filter
-        //if (this.filter_cutoff != 0) {
-        //    val tan_val = tan(2 * PI * this.filter_cutoff!!.toFloat() / this.sample_rate.toFloat())
-        //    val lpf_tmp = frame.toDouble()
-        //    val a = ((tan_val - 1) / (tan_val + 1))
-        //    frame = (a * frame.toDouble() + this.lpf_previous).roundToInt()
-        //    this.lpf_previous = lpf_tmp - (a * frame.toDouble())
-        //}
+        if (this.filter_cutoff != null) {
+            val lpf_tmp = frame.toFloat()
+            val a = ((this.tan_val!! - 1) / (this.tan_val!! + 1))
+            frame = (a * frame.toDouble() + this.lpf_previous).roundToInt()
+            this.lpf_previous = lpf_tmp - (a.toFloat() * lpf_tmp)
+        }
 
         return frame
     }

@@ -3,10 +3,10 @@ package com.qfs.apres.soundfontplayer
 import java.nio.ShortBuffer
 import kotlin.math.min
 
-class PitchedBuffer(data: ShortArray, private var pitch: Float) {
+class PitchedBuffer(data: ShortArray, private var pitch: Double) {
     private val buffer: ShortBuffer = ShortBuffer.wrap(data)
     private val data_size = data.size
-    var size = (data.size.toFloat() / this.pitch).toInt()
+    var size = (data.size.toDouble() / this.pitch).toInt()
     private var cached_value: Short? = null
     private var cached_position = 0
     private var virtual_position: Int = 0
@@ -14,15 +14,16 @@ class PitchedBuffer(data: ShortArray, private var pitch: Float) {
     init {
         this.cached_position = 0
         this.virtual_position = 0
-        if (this.pitch < 1F) {
+        if (this.pitch < 1.0) {
             this.cached_value = this.buffer.get()
         }
     }
 
-    fun repitch(pitch_factor: Float) {
+    fun repitch(pitch_factor: Double) {
         this.pitch *= pitch_factor
-        this.size = (this.data_size.toFloat() / this.pitch).toInt()
-        this.virtual_position = (this.virtual_position.toFloat() / pitch_factor).toInt()
+        this.size = (this.data_size.toDouble() / this.pitch).toInt()
+        this.virtual_position = (this.virtual_position.toDouble() / pitch_factor).toInt()
+
     }
 
     fun position(): Int {
@@ -32,9 +33,9 @@ class PitchedBuffer(data: ShortArray, private var pitch: Float) {
     fun position(index: Int) {
         this.virtual_position = index
 
-        val pos = min((index.toFloat() * this.pitch).toInt(), this.size - 1)
+        val pos = min((index * this.pitch).toInt(), this.size - 1)
         this.buffer.position(pos)
-        if (this.pitch < 1F) {
+        if (this.pitch < 1.0) {
             this.cached_value = this.buffer.get()
             this.buffer.position(pos)
             this.cached_position = pos
@@ -42,7 +43,7 @@ class PitchedBuffer(data: ShortArray, private var pitch: Float) {
     }
 
     fun get(): Short {
-        return if (this.pitch >= 1F) {
+        return if (this.pitch >= 1.0) {
             this.get_high()
         } else {
             this.get_low()

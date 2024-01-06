@@ -10,59 +10,61 @@ class SampleHandle(
     var attenuation: Float = 0.0F,
     val loop_points: Pair<Int, Int>?,
     var stereo_mode: Int,
-    var delay_frames: Int = 0,
-    var attack_frame_count: Double = 0.0,
-    var hold_frame_count: Int = 0,
-    var decay_frame_count: Double = 0.0,
-    var release_size: Float, // Is actually integer, but is only ever used in calculations as Float
+    var frame_count_delay: Int = 0,
+    var frame_count_attack: Int = 0,
+    var frame_count_hold: Int = 0,
+    var frame_count_decay: Int = 0,
+    var frame_count_release: Int = 0,
     var max_values: Array<Float> = Array<Float>(0) { 0F },
-    var pitch_shift: Float = 1F,
+    var pitch_shift: Double = 1.0,
     var filter_cutoff: Double = 13500.0,
     var pan: Double = 0.0,
-    var sustain_attenuation: Float,
+    var sustain_attenuation: Double = 1.0,
 ) {
-
     companion object {
         var uuid_gen = 0
         val MAXIMUM_VOLUME = .8F
     }
+
     var uuid: Int = SampleHandle.uuid_gen++
 
     constructor(original: SampleHandle): this(
-        original.data,
-        original.sample_rate,
-        original.attenuation,
-        original.loop_points,
-        original.stereo_mode,
-        original.delay_frames,
-        original.attack_frame_count,
-        original.hold_frame_count,
-        original.decay_frame_count,
-        original.release_size,
-        original.max_values,
-        original.pitch_shift,
-        original.filter_cutoff,
-        original.pan,
-        original.sustain_attenuation
+        data = original.data,
+        sample_rate = original.sample_rate,
+        attenuation = original.attenuation,
+        loop_points = original.loop_points,
+        stereo_mode = original.stereo_mode,
+        frame_count_delay = original.frame_count_delay,
+        frame_count_attack = original.frame_count_attack,
+        frame_count_hold = original.frame_count_hold,
+        frame_count_decay = original.frame_count_decay,
+        frame_count_release = original.frame_count_release,
+        max_values = original.max_values,
+        pitch_shift = original.pitch_shift,
+        filter_cutoff = original.filter_cutoff,
+        pan = original.pan,
+        sustain_attenuation = original.sustain_attenuation
     )
 
     private val lpf_factor: Double
 
     var is_pressed = true
     var is_dead = false
-    private var current_attack_position: Double = 0.0
-    private var current_hold_position: Int = 0
-    private var current_decay_position: Double = 0.0
-
-    private var current_release_position: Float = 0F // Is actually integer, but is only ever used in calculations as Float
     var current_volume: Double = 0.5
     var data_buffer = PitchedBuffer(this.data, this.pitch_shift)
-    var current_delay_position: Int = 0
+
+    private var current_position_attack: Double = 0.0
+    private var current_position_hold: Double = 0.0
+    private var current_position_decay: Double = 0.0
+    private var current_position_release: Double = 0.0
+    private var current_position_delay: Double = 0.0
+
+
     // TODO: Unimplimented
     // var release_delay: Int? = null
     // var remove_delay: Int? = null
+    //var lpf_previous: Double = 0.0
 
-    var lpf_previous: Double = 0.0
 
     init {
         val tmp_tan = tan(PI * this.filter_cutoff / this.sample_rate.toDouble())
@@ -74,8 +76,8 @@ class SampleHandle(
             return null
         }
 
-        if (this.current_delay_position < this.delay_frames) {
-            this.current_delay_position += 1
+        if (this.current_position_delay < this.frame_count_delay) {
+            this.current_position_delay += 1
             return 0
         }
 
@@ -83,28 +85,31 @@ class SampleHandle(
             this.is_dead = true
             return null
         }
-        var frame = this.data_buffer.get().toDouble()
+
+        var frame_factor = this.attenuation * this.current_volume
 
         if (this.is_pressed) {
-            if (this.current_attack_position < this.attack_frame_count) {
-                val r = (this.current_attack_position / this.attack_frame_count)
-                frame *= r
-                this.current_attack_position += 1
-            } else if (this.current_hold_position < this.hold_frame_count) {
-                this.current_hold_position += 1
-            } else if (this.sustain_attenuation < 1F) {
-                val r = min(1.0, (this.current_decay_position / this.decay_frame_count))
-                val factor = 1.0 - r + (this.sustain_attenuation * r)
-                frame *= factor
-                this.current_decay_position += 1
+            if (this.current_position_attack < this.frame_count_attack) {
+                val r = (this.current_position_attack / this.frame_count_attack)
+                frame_factor *= r
+
+                this.current_position_attack += 1.0
+            } else if (this.current_position_hold < this.frame_count_hold) {
+                this.current_position_hold += 1.0
+
+            } else if (this.sustain_attenuation < 1.0) {
+                val r = min(1.0, (this.current_position_decay / this.frame_count_decay))
+                frame_factor *= (1.0 - r) + (this.sustain_attenuation * r)
+
+                this.current_position_decay += 1.0
             }
         }
 
         if (! this.is_pressed) {
-            if (this.current_release_position < this.release_size) {
-                var r = (this.current_release_position / this.release_size)
-                frame *= (1F - r)
-                this.current_release_position += 1
+            if (this.current_position_release < this.frame_count_release) {
+                frame_factor *= 1.0 - (this.current_position_release / this.frame_count_release)
+
+                this.current_position_release += 1.0
             } else {
                 this.is_dead = true
                 return null
@@ -124,7 +129,7 @@ class SampleHandle(
         //    frame *= (input + allpass_value) / 2.0
         //}
 
-        return (frame * this.attenuation * this.current_volume).toInt()
+        return (this.data_buffer.get().toDouble() * frame_factor).toInt()
     }
 
     fun release_note() {

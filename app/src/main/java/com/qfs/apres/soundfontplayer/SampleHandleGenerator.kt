@@ -43,7 +43,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
     }
 
     fun generate_new(note: Int, bend: Int, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset): SampleHandle {
-        var pitch_shift = 1F
+        var pitch_shift = 1.0
         val original_note = sample.root_key ?: sample.sample!!.originalPitch
         // TODO: Why did I do this check? I vaguely remember needing it but I need a note
         if (original_note != 255) {
@@ -53,25 +53,25 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
             ) + (instrument.tuning_cent ?: 0) + (preset.global_zone?.tuning_cent ?: 0)
 
             // Kludge: modulators arent implemented yet, so this is still needed for tuning
-            val mod_env_pitch: Float = ((sample.mod_env_pitch
+            val mod_env_pitch: Double = ((sample.mod_env_pitch
                 ?: instrument.instrument?.global_sample?.mod_env_pitch
                 ?: 0
-            ) + (instrument.mod_env_pitch ?: 0) + (preset.global_zone?.mod_env_pitch ?: 0)).toFloat()
+            ) + (instrument.mod_env_pitch ?: 0) + (preset.global_zone?.mod_env_pitch ?: 0)).toDouble()
 
-            var tuning_semi: Float = ((sample.tuning_semi
+            var tuning_semi: Double = ((sample.tuning_semi
                 ?: instrument.instrument?.global_sample?.tuning_semi
                 ?: 0
-            ) + (instrument.tuning_semi ?: 0) + (preset.global_zone?.tuning_semi ?: 0)).toFloat()
+            ) + (instrument.tuning_semi ?: 0) + (preset.global_zone?.tuning_semi ?: 0)).toDouble()
 
-            tuning_semi += (tuning_cent + mod_env_pitch) / 100F
+            tuning_semi += (tuning_cent + mod_env_pitch) / 100.0
 
-            val original_pitch = 2F.pow(original_note.toFloat() / 12F)
-            val required_pitch = 2F.pow((note.toFloat() + tuning_semi + (bend.toFloat() / 512F)) / 12F)
+            val original_pitch = 2.0.pow(original_note.toFloat() / 12.0)
+            val required_pitch = 2.0.pow((note.toFloat() + tuning_semi + (bend.toFloat() / 512.0)) / 12.0)
             pitch_shift = required_pitch / original_pitch
         }
 
         if (sample.sample!!.sampleRate != this.sample_rate) {
-            pitch_shift *= (sample.sample!!.sampleRate.toFloat() / this.sample_rate.toFloat())
+            pitch_shift *= (sample.sample!!.sampleRate.toDouble() / this.sample_rate.toDouble())
         }
 
         val data = sample.sample!!.data!!
@@ -144,9 +144,9 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
         return SampleHandle(
             data = data,
             sample_rate = sample_rate,
-            pan = (sample.pan ?: instrument.pan ?: preset.global_zone?.pan ?: 0.0) * 100.0/ 500.0,
+            pan = (sample.pan ?: instrument.pan ?: preset.global_zone?.pan ?: 0.0) * 100.0 / 500.0,
             pitch_shift = pitch_shift,
-            sustain_attenuation = (10.0).pow(vol_env_sustain / -20.0).toFloat(),
+            sustain_attenuation = (10.0).pow(vol_env_sustain / -20.0),
             attenuation = (10.0).pow(attenuation / -20.0).toFloat(),
             stereo_mode = sample.sample!!.sampleType,
             loop_points = if (sample.sampleMode != null && sample.sampleMode!! and 1 == 1) {
@@ -157,11 +157,11 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
             } else {
                 null
             },
-            delay_frames = ((this.sample_rate.toDouble() * vol_env_delay)).toInt(),
-            attack_frame_count = (this.sample_rate.toDouble() * vol_env_attack ),
-            hold_frame_count = ((this.sample_rate.toDouble() * vol_env_hold )).toInt(),
-            decay_frame_count = (this.sample_rate.toDouble() * vol_env_decay),
-            release_size = ((this.sample_rate.toDouble() * vol_env_release)).toFloat(),
+            frame_count_delay = (this.sample_rate.toDouble() * vol_env_delay).toInt(),
+            frame_count_attack = (this.sample_rate.toDouble() * vol_env_attack).toInt(),
+            frame_count_hold = (this.sample_rate.toDouble() * vol_env_hold ).toInt(),
+            frame_count_decay = (this.sample_rate.toDouble() * vol_env_decay).toInt(),
+            frame_count_release = (this.sample_rate.toDouble() * vol_env_release).toInt(),
             max_values = max_values_floats,
             filter_cutoff = filter_cutoff
         )

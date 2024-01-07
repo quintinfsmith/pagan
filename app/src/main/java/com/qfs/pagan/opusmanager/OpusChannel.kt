@@ -25,9 +25,15 @@ class OpusChannel(var uuid: Int) {
                 working_beat.insert(b % factor, this.beats[b])
             }
 
-            while (this.beats.last().size < factor) {
-                this.beats.last().insert(this.beats.last().size, OpusTree())
+            if (this.beats.size % factor != 0) {
+                while (new_beats.last().size < factor) {
+                    new_beats.last().insert(
+                        new_beats.last().size,
+                        OpusTree()
+                    )
+                }
             }
+
             for (beat in new_beats) {
                 var is_empty = true
                 for (i in 0 until beat.size) {

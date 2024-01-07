@@ -2134,5 +2134,6 @@ open class BaseLayer {
             channel.squish(factor)
         }
         this.beat_count = this.beat_count / factor
+        this.tempo /= 3
     }
 }

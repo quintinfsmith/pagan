@@ -27,7 +27,7 @@ class OpusTree<T> {
         }
 
         for ((i, node) in this.parent!!.divisions) {
-            if (node == this) {
+            if (node === this) {
                 return i
             }
         }
@@ -209,7 +209,6 @@ class OpusTree<T> {
             this.divisions[index] = output
         }
 
-
         return output
     }
 
@@ -337,7 +336,7 @@ class OpusTree<T> {
         if (this.parent != null) {
             val parent = this.parent!!
             for (i in parent.divisions.keys) {
-                if (parent.divisions[i] != this) {
+                if (parent.divisions[i] !== this) {
                     continue
                 }
                 parent.divisions[i] = new_node
@@ -372,7 +371,6 @@ class OpusTree<T> {
 
     fun pop(x: Int?=null): OpusTree<T> {
         val index = x ?: (this.size - 1)
-
         val output = this.divisions[index]!!
         val new_divisions = HashMap<Int, OpusTree<T>>()
         for (i in this.divisions.keys) {
@@ -393,9 +391,8 @@ class OpusTree<T> {
 
         var index: Int? = null
 
-        for (i in parent.divisions.keys) {
-            val node = parent.divisions[i]
-            if (this == node) {
+        for ((i, node) in parent.divisions) {
+            if (this === node) {
                 index = i
                 break
             }

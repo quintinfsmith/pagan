@@ -1,5 +1,4 @@
 package com.qfs.pagan.opusmanager
-import android.util.Log
 import com.qfs.apres.Midi
 import com.qfs.apres.event.BankSelect
 import com.qfs.apres.event.NoteOff
@@ -1643,7 +1642,6 @@ open class BaseLayer {
                 this.set_channel_program(opus_channel, program)
             }
         }
-
     }
 
     open fun set_line_volume(channel: Int, line_offset: Int, volume: Int) {

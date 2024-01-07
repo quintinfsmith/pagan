@@ -16,16 +16,29 @@ class OpusChannel(var uuid: Int) {
         var static_value: Int? = null
         fun squish(factor: Int) {
             val new_beats = mutableListOf<OpusTree<OpusEvent>>()
+
             for (b in 0 until this.beats.size) {
                 if (b % factor == 0) {
                     new_beats.add(OpusTree<OpusEvent>())
                 }
-
                 val working_beat = new_beats.last()
                 working_beat.insert(b % factor, this.beats[b])
             }
+
             while (this.beats.last().size < factor) {
                 this.beats.last().insert(this.beats.last().size, OpusTree())
+            }
+            for (beat in new_beats) {
+                var is_empty = true
+                for (i in 0 until beat.size) {
+                    if (!(beat[i].is_leaf() && beat[i].is_eventless())) {
+                        is_empty = false
+                        break
+                    }
+                }
+                if (is_empty) {
+                    beat.set_size(0)
+                }
             }
             this.beats = new_beats
         }

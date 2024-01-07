@@ -24,8 +24,10 @@ class OpusChannel(var uuid: Int) {
                 val working_beat = new_beats.last()
                 working_beat.insert(b % factor, this.beats[b])
             }
-            for (b in 0 until (this.beats.size % factor)) {
-                this.beats.last().insert(b % factor, OpusTree())
+            if (this.beats.size % factor != 0) {
+                for (b in 0 until factor - (this.beats.size % factor)) {
+                    this.beats.last().insert(b % factor, OpusTree())
+                }
             }
             this.beats = new_beats
         }

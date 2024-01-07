@@ -2130,10 +2130,16 @@ open class BaseLayer {
     }
 
     fun squish(factor: Int) {
+        val original_beat_count = this.beat_count
         this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
             channel.squish(factor)
         }
+
         this.beat_count = this.beat_count / factor
-        this.tempo /= 3
+        if (original_beat_count % factor != 0) {
+            this.beat_count += factor - (original_beat_count % factor)
+        }
+
+        this.tempo /= factor
     }
 }

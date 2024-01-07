@@ -2128,4 +2128,11 @@ open class BaseLayer {
 
         return output
     }
+
+    fun squish(factor: Int) {
+        this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
+            channel.squish(factor)
+        }
+        this.beat_count = this.beat_count / factor
+    }
 }

@@ -14,6 +14,21 @@ class OpusChannel(var uuid: Int) {
         constructor(beat_count: Int) : this(Array<OpusTree<OpusEvent>>(beat_count) { OpusTree() }.toMutableList())
         var volume = 96
         var static_value: Int? = null
+        fun squish(factor: Int) {
+            val new_beats = mutableListOf<OpusTree<OpusEvent>>()
+            for (b in 0 until this.beats.size) {
+                if (b % factor == 0) {
+                    new_beats.add(OpusTree<OpusEvent>())
+                }
+
+                val working_beat = new_beats.last()
+                working_beat.insert(b % factor, this.beats[b])
+            }
+            for (b in 0 until (this.beats.size % factor)) {
+                this.beats.last().insert(b % factor, OpusTree())
+            }
+            this.beats = new_beats
+        }
     }
 
     class LastLineException: Exception("Can't remove final line in channel")
@@ -184,5 +199,11 @@ class OpusChannel(var uuid: Int) {
     }
     fun get_line_volume(line_offset: Int): Int {
         return this.lines[line_offset].volume
+    }
+
+    fun squish(factor: Int) {
+        this.lines.forEachIndexed { i: Int, line: OpusLine ->
+            line.squish(factor)
+        }
     }
 }

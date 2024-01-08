@@ -20,7 +20,7 @@ class LinkLayerUnitTest {
                 continue
             }
 
-            callback(manager.get_beat_tree(linked_key))
+            callback(manager.get_tree(linked_key))
         }
     }
 
@@ -162,7 +162,7 @@ class LinkLayerUnitTest {
         val (manager, main_key) = this.setup_linked_manager()
         val test_tree = OpusTree<OpusEvent>()
         test_tree.set_size(12)
-        manager.replace_beat_tree(main_key, test_tree)
+        manager.replace_tree(main_key, null, test_tree)
 
         this.batch_link_test(manager, main_key) {
             assertEquals(

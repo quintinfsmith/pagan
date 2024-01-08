@@ -96,7 +96,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
 
     }
 
-    override fun replace_tree(beat_key: BeatKey, position: List<Int>, tree: OpusTree<OpusEvent>) {
+    override fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<OpusEvent>) {
         if (!this.activity.configuration.show_percussion && this.is_percussion(beat_key.channel)) {
             this.make_percussion_visible()
         }
@@ -1289,7 +1289,14 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
             val (first, second) = this.cursor.range!!
             this.overwrite_beat_range(beat_key, first, second)
         } else if (this.cursor.is_linking) {
-            this.overwrite_beat(beat_key, this.cursor.get_beatkey())
+            this.replace_tree(
+                beat_key,
+                listOf(),
+                this.get_tree(
+                    this.cursor.get_beatkey(),
+                    listOf()
+                )
+            )
         } else {
             // TODO: Raise Error
         }

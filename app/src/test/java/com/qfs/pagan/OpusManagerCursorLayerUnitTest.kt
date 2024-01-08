@@ -179,7 +179,7 @@ class OpusManagerCursorLayerUnitTest {
         var manager = OpusManager()
         manager.new()
         var beat_key = BeatKey(0, 0, 0)
-        var beat_tree = manager.get_beat_tree(beat_key)
+        var beat_tree = manager.get_tree(beat_key)
         beat_tree.set_size(1)
         var initial_length = beat_tree.size
         manager.insert_after(beat_key, listOf(0))
@@ -193,7 +193,7 @@ class OpusManagerCursorLayerUnitTest {
         var manager = OpusManager()
         manager.new()
         var beat_key = BeatKey(0, 0, 0)
-        var beat_tree = manager.get_beat_tree(beat_key)
+        var beat_tree = manager.get_tree(beat_key)
         beat_tree.set_size(2)
         // Insert empty tree in the first beat
         manager.insert_after(beat_key, listOf(0))
@@ -220,12 +220,12 @@ class OpusManagerCursorLayerUnitTest {
 
         // split a beat
         manager.split_tree(beat_key, listOf(), split_count)
-        var beat_tree = manager.get_beat_tree(beat_key)
+        var beat_tree = manager.get_tree(beat_key)
         assertEquals(beat_tree.size, split_count)
 
         // Split an open leaf
         manager.split_tree(beat_key, listOf(split_count - 1), split_count)
-        beat_tree = manager.get_beat_tree(beat_key)
+        beat_tree = manager.get_tree(beat_key)
         assertEquals(beat_tree.get(split_count - 1).size, split_count)
 
         // split an event

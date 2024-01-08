@@ -9,10 +9,12 @@ import io.mockk.every
 import io.mockk.mockkStatic
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import java.io.File
 
 class SoundFontPlayerUnitTest {
     fun get_soundfont(): SoundFont {
         val sffont = "FluidR3_GM_GS.sf2"
+        println( File(sffont).absolutePath)
         return SoundFont(sffont)
     }
     @Test

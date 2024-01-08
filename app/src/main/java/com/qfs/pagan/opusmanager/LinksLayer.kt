@@ -91,7 +91,7 @@ open class LinksLayer : BaseLayer() {
         val beat_pool_index = this.link_pool_map[beat_key]
         val target_pool_index = this.link_pool_map[target]
         if (beat_pool_index != null && target_pool_index != null) {
-            this.overwrite_beat(beat_key, target)
+            this.replace_tree(beat_key, null, this.get_tree(target, listOf()))
             if (beat_pool_index != target_pool_index) {
                 this.merge_link_pools(beat_pool_index, target_pool_index)
             }
@@ -100,7 +100,7 @@ open class LinksLayer : BaseLayer() {
         } else if (target_pool_index != null) {
             this.link_beat_into_pool(beat_key, target_pool_index, false)
         } else {
-            this.overwrite_beat(beat_key, target)
+            this.replace_tree(beat_key, null, this.get_tree(target, listOf()))
             this.create_link_pool(listOf(beat_key, target))
         }
     }
@@ -146,9 +146,9 @@ open class LinksLayer : BaseLayer() {
     open fun link_beat_into_pool(beat_key: BeatKey, index: Int, overwrite_pool: Boolean = false) {
         if (overwrite_pool) {
             // Will overwrite all linked
-            this.overwrite_beat(this.link_pools[index].first(), beat_key)
+            this.replace_tree(this.link_pools[index].first(), null, this.get_tree(beat_key))
         } else {
-            this.overwrite_beat(beat_key, this.link_pools[index].first())
+            this.replace_tree(beat_key, null, this.get_tree(this.link_pools[index].first()))
         }
         this.link_pool_map[beat_key] = index
         this.link_pools[index].add(beat_key)
@@ -185,7 +185,7 @@ open class LinksLayer : BaseLayer() {
         return this.link_pools[pool_index]
     }
 
-    override fun replace_tree(beat_key: BeatKey, position: List<Int>, tree: OpusTree<OpusEvent>) {
+    override fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<OpusEvent>) {
         this.lock_links {
             for (linked_key in this.get_all_linked(beat_key)) {
                 super.replace_tree(linked_key, position, tree)
@@ -462,7 +462,7 @@ open class LinksLayer : BaseLayer() {
             for (j in 0 until channel.size) {
                 val working_key = BeatKey(i, j, column)
                 if (working_key != beat_key) {
-                    this.overwrite_beat(working_key, beat_key)
+                    this.replace_tree(working_key, listOf(), this.get_tree(beat_key, listOf()))
                 }
                 new_pool.add(working_key)
             }
@@ -479,7 +479,7 @@ open class LinksLayer : BaseLayer() {
         for (x in 0 until this.beat_count) {
             working_key.beat = x
             if (working_key != beat_key) {
-                this.overwrite_beat(working_key, beat_key)
+                this.replace_tree(working_key, listOf(), this.get_tree(beat_key, listOf()))
             }
             new_pool.add(working_key.copy())
         }

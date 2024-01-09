@@ -1,0 +1,1 @@
+Fixed undo action causing hang when applying an action with *many* steps

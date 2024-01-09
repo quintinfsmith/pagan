@@ -103,7 +103,6 @@ open class HistoryLayer : LinksLayer() {
                     val beatkey = current_node.args[0] as BeatKey
                     val position = this.checked_cast<List<Int>>(current_node.args[1])
                     val tree = this.checked_cast<OpusTree<OpusEvent>>(current_node.args[2])
-
                     this.replace_tree(beatkey, position, tree)
                 }
 
@@ -335,6 +334,7 @@ open class HistoryLayer : LinksLayer() {
             this.push_remove(beat_key, remove_position)
         }
     }
+
     override fun insert(beat_key: BeatKey, position: List<Int>) {
         this.remember {
             super.insert(beat_key, position)
@@ -444,18 +444,18 @@ open class HistoryLayer : LinksLayer() {
     override fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEvent) {
         this.remember {
             val tree = this.get_tree(beat_key, position).copy()
-            super.set_event(beat_key, position, event)
-            this.push_replace_tree(beat_key, position, tree) {}
+            this.push_replace_tree(beat_key, position, tree) {
+                super.set_event(beat_key, position, event)
+            }
         }
     }
 
     override fun set_percussion_event(beat_key: BeatKey, position: List<Int>) {
         this.remember {
-            val tree = this.get_tree(beat_key, position)
-
             super.set_percussion_event(beat_key, position)
 
-            if (tree.is_event()) {
+            val tree = this.get_tree(beat_key, position)
+            if (!tree.is_event()) {
                 this.push_set_percussion_event(beat_key, position)
             } else {
                 this.push_unset(beat_key, position)

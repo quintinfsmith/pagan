@@ -713,6 +713,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
     override fun apply_undo() {
         super.apply_undo()
         this.apply_queued_cursor_select()
+        this.get_editor_table()?.apply_queued_cell_changes()
     }
 
     override fun apply_history_node(current_node: HistoryCache.HistoryNode, depth: Int)  {
@@ -723,6 +724,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                     this.checked_cast<List<Int>>(current_node.args)
                 )
             }
+
             HistoryToken.CURSOR_SELECT -> {
                 val beat_key = current_node.args[0] as BeatKey
                 val args = mutableListOf<Int>(beat_key.channel, beat_key.line_offset, beat_key.beat)
@@ -734,6 +736,7 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
                     args
                 )
             }
+
             HistoryToken.CURSOR_SELECT_COLUMN -> {
                 this.queue_cursor_select(
                     current_node.token,

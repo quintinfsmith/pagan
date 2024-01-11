@@ -33,6 +33,8 @@ Pagan requires Android version >= 11
     </div>
 </div>
 
+[Atom Feed](https://burnsomni.net/releases/pagan.atom)
+
 ### Manual Build
 The `master` branch should always be the most stable. I use android studio to build and if you don't, you probably don't need any direction from me.
 

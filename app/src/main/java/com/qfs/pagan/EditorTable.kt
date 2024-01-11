@@ -219,7 +219,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             this.column_width_map.add(mutableListOf<Int>())
             opus_manager.get_visible_channels().forEachIndexed { i: Int, channel: OpusChannel ->
                 for (j in channel.lines.indices) {
-                    val tree = opus_manager.get_beat_tree(BeatKey(i, j, beat))
+                    val tree = opus_manager.get_tree(BeatKey(i, j, beat))
                     if (tree.is_leaf()) {
                         this.column_width_map[beat].add(1)
                     } else {
@@ -330,7 +330,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         val column = mutableListOf<Int>()
         opus_manager.get_visible_channels().forEachIndexed { i: Int, channel: OpusChannel ->
             channel.lines.forEachIndexed { j: Int, line: OpusChannel.OpusLine ->
-                val tree = opus_manager.get_beat_tree(BeatKey(i, j, index))
+                val tree = opus_manager.get_tree(BeatKey(i, j, index))
                 if (tree.is_leaf()) {
                     column.add(1)
                 } else {
@@ -450,7 +450,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         val percussion_visible = this.get_activity().configuration.show_percussion
 
         // Only one tree needs to be checked, since links are all the same
-        val new_tree = opus_manager.get_beat_tree(beat_key)
+        val new_tree = opus_manager.get_tree(beat_key)
         val new_cell_width = if (new_tree.is_leaf()) {
             1
         } else {
@@ -561,7 +561,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             }
         } else {
             var leaf_offset = 0
-            tree = this.get_opus_manager().get_beat_tree(beat_key)
+            tree = this.get_opus_manager().get_tree(beat_key)
             var sibling_weight = tree.get_max_child_weight()
             val max_cell_weight = if (tree.is_leaf()) {
                 1f

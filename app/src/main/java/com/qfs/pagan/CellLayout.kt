@@ -108,7 +108,7 @@ class CellLayout(val column_layout: ColumnLayout, val y: Int): LinearLayout(colu
 
     fun get_beat_tree(beat_key: BeatKey? = null): OpusTree<OpusEvent> {
         val opus_manager = this.get_opus_manager()
-        return opus_manager.get_beat_tree(beat_key ?: this.get_beat_key())
+        return opus_manager.get_tree(beat_key ?: this.get_beat_key())
     }
 
     fun is_percussion(): Boolean {

@@ -170,9 +170,10 @@ open class BaseLayer {
     }
 
     /**
-     * Get the tree structure found at the BeatKey [beat_key]
+     * Get the tree structure found within the BeatKey [beat_key] at [position]
+     * [position] defaults to null, indicating the root tree of the beat
      */
-    fun get_beat_tree(beat_key: BeatKey): OpusTree<OpusEvent> {
+    fun get_tree(beat_key: BeatKey, position: List<Int>? = null): OpusTree<OpusEvent> {
         if (beat_key.channel >= this.channels.size) {
             throw BadBeatKey(beat_key)
         }
@@ -187,18 +188,11 @@ open class BaseLayer {
             throw BadBeatKey(beat_key)
         }
 
-        return this.channels[beat_key.channel].get_tree(line_offset, beat_key.beat)
-    }
-
-    /**
-     * Get the tree structure found within the BeatKey [beat_key] at [position]
-     */
-    fun get_tree(beat_key: BeatKey, position: List<Int>): OpusTree<OpusEvent> {
         try {
             return this.channels[beat_key.channel].get_tree(
                 beat_key.line_offset,
                 beat_key.beat,
-                position
+                position ?: listOf()
             )
         } catch (e: OpusTree.InvalidGetCall) {
             throw e
@@ -751,12 +745,6 @@ open class BaseLayer {
         return output
     }
 
-    open fun overwrite_beat(old_beat: BeatKey, new_beat: BeatKey) {
-        val new_tree = this.channels[new_beat.channel].get_line(new_beat.line_offset).beats[new_beat.beat].copy()
-
-        this.replace_tree(old_beat, listOf(), new_tree)
-    }
-
     open fun remove_beat(beat_index: Int) {
         if (this.beat_count == 1) {
             throw RemovingLastBeatException()
@@ -807,13 +795,9 @@ open class BaseLayer {
         }
     }
 
-    open fun replace_tree(beat_key: BeatKey, position: List<Int>, tree: OpusTree<OpusEvent>) {
+    open fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<OpusEvent>) {
         val tree_copy = tree.copy(this::copy_func)
         this.channels[beat_key.channel].replace_tree(beat_key.line_offset, beat_key.beat, position, tree_copy)
-    }
-
-    open fun replace_beat_tree(beat_key: BeatKey, tree: OpusTree<OpusEvent>) {
-        this.replace_tree(beat_key, listOf(), tree)
     }
 
     open fun set_beat_count(new_count: Int) {
@@ -1596,7 +1580,7 @@ open class BaseLayer {
             for (j in channel.lines.indices) {
                 for (k in 0 until this.beat_count) {
                     val beat_key = BeatKey(i, j, k)
-                    val beat_tree = this.get_beat_tree(beat_key)
+                    val beat_tree = this.get_tree(beat_key)
                     beat_tree.traverse { tree: OpusTree<OpusEvent>, event: OpusEvent? ->
                         if (event != null || tree.size <= 1 || !tree[0].is_event() || tree[0].event!!.duration < tree.size) {
                             return@traverse
@@ -1614,7 +1598,7 @@ open class BaseLayer {
                         tree[0].event!!.duration = max(1, tree[0].event!!.duration / tree.size)
 
                         if (tree == beat_tree) {
-                            this.replace_beat_tree(beat_key, tree[0])
+                            this.replace_tree(beat_key, null, tree[0])
                         } else {
                             tree.replace_with(tree[0])
                         }
@@ -1729,7 +1713,7 @@ open class BaseLayer {
             // INCLUSIVE
             for (b in 0 .. to_key.beat - from_key.beat) {
                 overwrite_map[BeatKey(working_beat.channel, working_beat.line_offset, working_beat.beat + b)] =
-                    this.get_beat_tree( BeatKey(from_key.channel, from_key.line_offset, from_key.beat + b))
+                    this.get_tree( BeatKey(from_key.channel, from_key.line_offset, from_key.beat + b))
             }
             if (this.channels[from_key.channel].size - 1 > from_key.line_offset) {
                 from_key.line_offset += 1
@@ -1752,7 +1736,7 @@ open class BaseLayer {
 
         for (b in 0 .. to_key.beat - from_key.beat) {
             overwrite_map[BeatKey(working_beat.channel, working_beat.line_offset, working_beat.beat + b)] =
-                this.get_beat_tree( BeatKey(from_key.channel, from_key.line_offset, from_key.beat + b))
+                this.get_tree( BeatKey(from_key.channel, from_key.line_offset, from_key.beat + b))
         }
 
         // Before we start overwriting, check overflow
@@ -1763,7 +1747,7 @@ open class BaseLayer {
         }
 
         for ((target_key, tree) in overwrite_map) {
-            this.replace_beat_tree(target_key, tree)
+            this.replace_tree(target_key, null, tree)
         }
     }
 
@@ -1935,29 +1919,6 @@ open class BaseLayer {
         return breakdown
     }
 
-    fun get_maximum_simultaneous_notes(): Int {
-        return (this.get_press_breakdown().sortedBy { it.second }).last().second
-    }
-
-    /*
-        Get the most usually active number of notes
-     */
-    fun get_mode_simultaneous_notes(): Pair<Int, Double> {
-        val merged_counts = HashMap<Int, Double>()
-        for ((percentage, press_count) in this.get_press_breakdown()) {
-            merged_counts[press_count] = merged_counts.getOrDefault(press_count, 0.0) + percentage
-        }
-        var mode_press_count = 0
-        var mode_percentage = 0.0
-        for ((press_count, percentage) in merged_counts) {
-            if ((percentage == mode_percentage && mode_press_count < press_count) || percentage > mode_percentage) {
-                mode_press_count = press_count
-                mode_percentage = percentage
-            }
-        }
-        return Pair(mode_press_count, mode_percentage)
-    }
-
     fun has_percussion(): Boolean {
         val channel = this.channels[this.channels.size - 1]
         return !channel.is_empty()
@@ -1991,7 +1952,7 @@ open class BaseLayer {
             for (i in 1 until count) {
                 val to_overwrite = beatkey.copy()
                 to_overwrite.beat += (i * width)
-                this.overwrite_beat(to_overwrite, beatkey)
+                this.replace_tree(to_overwrite, null, this.get_tree(beatkey))
             }
         }
     }
@@ -2004,7 +1965,7 @@ open class BaseLayer {
         for (x in 0 until this.beat_count) {
             working_key.beat = x
             if (working_key != beat_key) {
-                this.overwrite_beat(working_key, beat_key)
+                this.replace_tree(working_key, null, this.get_tree(beat_key))
             }
         }
     }
@@ -2063,6 +2024,45 @@ open class BaseLayer {
         }
     }
 
+
+    // Experimental/ not in use -yet ----------vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+    /*
+        Reduce the number of beats in a project without losing any information.
+     */
+    fun squish(factor: Int) {
+        val original_beat_count = this.beat_count
+        this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
+            channel.squish(factor)
+        }
+
+        this.beat_count = ceil(this.beat_count.toDouble() / factor.toDouble()).toInt()
+
+        this.tempo /= factor
+    }
+
+    fun get_maximum_simultaneous_notes(): Int {
+        return (this.get_press_breakdown().sortedBy { it.second }).last().second
+    }
+
+    /*
+        Get the most usually active number of notes
+     */
+    fun get_mode_simultaneous_notes(): Pair<Int, Double> {
+        val merged_counts = HashMap<Int, Double>()
+        for ((percentage, press_count) in this.get_press_breakdown()) {
+            merged_counts[press_count] = merged_counts.getOrDefault(press_count, 0.0) + percentage
+        }
+        var mode_press_count = 0
+        var mode_percentage = 0.0
+        for ((press_count, percentage) in merged_counts) {
+            if ((percentage == mode_percentage && mode_press_count < press_count) || percentage > mode_percentage) {
+                mode_press_count = press_count
+                mode_percentage = percentage
+            }
+        }
+        return Pair(mode_press_count, mode_percentage)
+    }
+
     /* Not Currently In Use. */
     fun find_like_range(top_left: BeatKey, bottom_right: BeatKey): List<Pair<BeatKey, BeatKey>> {
         val match_box = this.get_abs_difference(top_left, bottom_right)
@@ -2070,11 +2070,11 @@ open class BaseLayer {
         val matched_keys = this.get_beatkeys_in_range(top_left, bottom_right).toMutableList()
         val match_values = mutableListOf<OpusTree<OpusEvent>>()
         for (key in matched_keys) {
-            match_values.add(this.get_beat_tree(key))
+            match_values.add(this.get_tree(key))
         }
 
         val possible_corners = mutableListOf<BeatKey>()
-        val top_corner_value = this.get_beat_tree(top_left)
+        val top_corner_value = this.get_tree(top_left)
         // First get keys that *could* be matches of the top corner
         this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
             channel.lines.forEachIndexed { j: Int, line: OpusChannel.OpusLine ->
@@ -2084,7 +2084,7 @@ open class BaseLayer {
                         return@forEachIndexed
                     }
 
-                    if (top_corner_value == this.get_beat_tree(working_key)) {
+                    if (top_corner_value == this.get_tree(working_key)) {
                         try {
                             this.get_std_offset(this.get_abs_offset(i, j) + match_box.first)
                             if (k + match_box.second < this.beat_count) {
@@ -2111,7 +2111,7 @@ open class BaseLayer {
             var is_match = true
 
             working_keys.forEachIndexed { i: Int, key: BeatKey ->
-                is_match = (key !in matched_keys) && (this.get_beat_tree(key) == match_values[i])
+                is_match = (key !in matched_keys) && (this.get_tree(key) == match_values[i])
                 if (!is_match) {
                     return@forEachIndexed
                 }
@@ -2126,16 +2126,5 @@ open class BaseLayer {
         }
 
         return output
-    }
-
-    fun squish(factor: Int) {
-        val original_beat_count = this.beat_count
-        this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
-            channel.squish(factor)
-        }
-
-        this.beat_count = ceil(this.beat_count.toDouble() / factor.toDouble()).toInt()
-
-        this.tempo /= factor
     }
 }

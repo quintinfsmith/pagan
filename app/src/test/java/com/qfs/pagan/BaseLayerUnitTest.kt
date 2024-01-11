@@ -63,14 +63,14 @@ class BaseLayerUnitTest {
         val beatkey = BeatKey(0,0,0)
         manager.split_tree(beatkey, listOf(), 12)
 
-        var tree = manager.get_beat_tree(beatkey)
+        var tree = manager.get_tree(beatkey)
         assertEquals(
             "Got wrong beat tree",
             12,
             tree.size
         )
 
-        assertThrows(Exception::class.java) { manager.get_beat_tree(BeatKey(2,0,0)) }
+        assertThrows(Exception::class.java) { manager.get_tree(BeatKey(2,0,0)) }
     }
 
     @Test
@@ -391,7 +391,7 @@ class BaseLayerUnitTest {
         val beatkey_b = BeatKey(0, 0, 1)
 
         manager.split_tree(beatkey_a, listOf(), 5)
-        manager.overwrite_beat(beatkey_b, beatkey_a)
+        manager.replace_tree(beatkey_b, null, manager.get_tree(beatkey_a))
 
         assertEquals(
             "Failed to overwrite beat",
@@ -464,7 +464,7 @@ class BaseLayerUnitTest {
         val manager = OpusManager()
         manager.new()
         val beat_key = BeatKey(0, 0, 0)
-        val beat_tree = manager.get_beat_tree(beat_key)
+        val beat_tree = manager.get_tree(beat_key)
         beat_tree.set_size(1)
         val initial_length = beat_tree.size
         manager.insert_after(beat_key, listOf(0))
@@ -478,7 +478,7 @@ class BaseLayerUnitTest {
         val manager = OpusManager()
         manager.new()
         val beat_key = BeatKey(0, 0, 0)
-        val beat_tree = manager.get_beat_tree(beat_key)
+        val beat_tree = manager.get_tree(beat_key)
         beat_tree.set_size(2)
         // Insert empty tree in the first beat
         manager.insert_after(beat_key, listOf(0))
@@ -505,12 +505,12 @@ class BaseLayerUnitTest {
 
         // split a beat
         manager.split_tree(beat_key, listOf(), split_count)
-        var beat_tree = manager.get_beat_tree(beat_key)
+        var beat_tree = manager.get_tree(beat_key)
         assertEquals(beat_tree.size, split_count)
 
         // Split an open leaf
         manager.split_tree(beat_key, listOf(split_count - 1), split_count)
-        beat_tree = manager.get_beat_tree(beat_key)
+        beat_tree = manager.get_tree(beat_key)
         assertEquals(beat_tree.get(split_count - 1).size, split_count)
 
         // split an event
@@ -557,7 +557,7 @@ class BaseLayerUnitTest {
         assertEquals(
             "Failed to set event duration",
             new_duration,
-            manager.get_beat_tree(beat_key).get_event()!!.duration
+            manager.get_tree(beat_key).get_event()!!.duration
         )
     }
 }

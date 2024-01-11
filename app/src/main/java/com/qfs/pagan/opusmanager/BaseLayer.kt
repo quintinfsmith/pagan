@@ -28,16 +28,16 @@ import kotlin.math.pow
  * @constructor Creates an unusably empty object. new() / load() / import() need to be called still
  */
 open class BaseLayer {
-    class BadBeatKey(beat_key: BeatKey): Exception("BeatKey $beat_key doesn't exist")
-    class NonEventConversion(beat_key: BeatKey, position: List<Int>): Exception("Attempting to convert non-event @ $beat_key:$position")
-    class NoteOutOfRange(n: Int): Exception("Attempting to use unsupported note $n")
+    class BadBeatKey(beat_key: BeatKey) : Exception("BeatKey $beat_key doesn't exist")
+    class NonEventConversion(beat_key: BeatKey, position: List<Int>) : Exception("Attempting to convert non-event @ $beat_key:$position")
+    class NoteOutOfRange(n: Int) : Exception("Attempting to use unsupported note $n")
     class NonPercussionEventSet : Exception("Attempting to set normal event on percussion channel")
     class PercussionEventSet : Exception("Attempting to set percussion event on non-percussion channel")
     class EmptyPath : Exception("Path Required but not given")
     class BadInsertPosition : Exception("Can't insert tree at top level")
     class RemovingLastBeatException : Exception("OpusManager requires at least 1 beat")
     class IncompatibleChannelException(channel_old: Int, channel_new: Int) : Exception("Can't move lines into or out of the percussion channel ($channel_old -> $channel_new)")
-    class RangeOverflow(from_key: BeatKey, to_key: BeatKey, startkey: BeatKey): Exception("Range($from_key .. $to_key) @ $startkey overflows")
+    class RangeOverflow(from_key: BeatKey, to_key: BeatKey, startkey: BeatKey) : Exception("Range($from_key .. $to_key) @ $startkey overflows")
 
     companion object {
         var DEFAULT_PERCUSSION: Int = 0
@@ -58,7 +58,7 @@ open class BaseLayer {
     var project_name: String = DEFAULT_NAME
     var tempo: Float = 120F
     var transpose: Int = 0
-    var tuning_map: Array<Pair<Int, Int>> = Array(12) { i: Int -> Pair(i,12) }
+    var tuning_map: Array<Pair<Int, Int>> = Array(12) { i: Int -> Pair(i, 12) }
 
     private var _cached_abs_line_map = mutableListOf<Pair<Int, Int>>()
     private var _cached_std_line_map = HashMap<Pair<Int, Int>, Int>()
@@ -126,7 +126,7 @@ open class BaseLayer {
 
             for (j in start .. end) {
                 for (k in top_left_key.beat .. bottom_right_key.beat) {
-                    output.add(BeatKey(i,j,k))
+                    output.add(BeatKey(i, j, k))
                 }
             }
         }
@@ -664,7 +664,6 @@ open class BaseLayer {
             if (channel != null) {
                 val new_channel_index = min(channel, this.channels.size - 1)
                 this.channels.add(new_channel_index, new_channel)
-
             } else {
                 this.channels.add(this.channels.size - 1, new_channel)
             }

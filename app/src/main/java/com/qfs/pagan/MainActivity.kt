@@ -29,6 +29,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.RelativeLayout
+import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
@@ -1790,5 +1791,62 @@ class MainActivity : AppCompatActivity() {
             this.notification_channel!!
         }
     }
+
+    fun dialog_color_picker(red: Int, green: Int, blue: Int, callback: (Int, Int, Int) -> Unit) {
+        val main_fragment = this.get_active_fragment()
+
+        val sbRed = this.findViewById<SeekBar>(R.id.sbRed)
+        val sbGreen = this.findViewById<SeekBar>(R.id.sbGreen)
+        val sbBlue = this.findViewById<SeekBar>(R.id.sbBlue)
+        val rniRed = this.findViewById<RangedNumberInput>(R.id.rniRed)
+        val rniGreen = this.findViewById<RangedNumberInput>(R.id.rniGreen)
+        val rniBlue = this.findViewById<RangedNumberInput>(R.id.rniBlue)
+        val hex_view = this.findViewById<EditText>(R.id.etHexView)
+
+        rniRed.set_value(red)
+        rniGreen.set_value(green)
+        rniBlue.set_value(blue)
+
+        sbRed.progress = red
+        sbGreen.progress = green
+        sbBlue.progress = blue
+
+        fun update_hex_view() {
+            val hex_r = Integer.toHexString(sbRed.progress)
+            val hex_g = Integer.toHexString(sbGreen.progress)
+            val hex_b = Integer.toHexString(sbBlue.progress)
+            hex_view.setText("#$hex_r$hex_g$hex_b")
+        }
+
+        val change_listener = object: SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(p0: SeekBar, p1: Int, p2: Boolean) {
+                when (p0) {
+                    sbRed -> rniRed.set_value(p1)
+                    sbGreen -> rniGreen.set_value(p1)
+                    sbBlue -> rniBlue.set_value(p1)
+                }
+            }
+            override fun onStartTrackingTouch(p0: SeekBar?) {}
+            override fun onStopTrackingTouch(seekbar: SeekBar) {
+                update_hex_view()
+            }
+        }
+
+        sbRed.setOnSeekBarChangeListener(change_listener)
+        sbGreen.setOnSeekBarChangeListener(change_listener)
+        sbBlue.setOnSeekBarChangeListener(change_listener)
+
+
+        AlertDialog.Builder(main_fragment!!.context, R.style.AlertDialog)
+            .setPositiveButton(android.R.string.ok) { dialog, _ ->
+                callback(rniRed.get_value()!!, rniGreen.get_value()!!, rniBlue.get_value()!!)
+                dialog.dismiss()
+            }
+            .setNegativeButton(android.R.string.cancel) { dialog, _ ->
+                dialog.cancel()
+            }
+            .show()
+    }
+
 
 }

@@ -8,6 +8,7 @@
         <item name="colorSecondaryVariant">@color/blue_dark</item>
         <item name="colorOnSecondary">#1A1a1a</item>
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+
         <!-- Customize your theme here. -->
         <item name="android:popupMenuStyle">@style/PopupMenu</item>
 

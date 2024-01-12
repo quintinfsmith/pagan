@@ -354,13 +354,14 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         this.registerReceiver(
-            object: BroadcastReceiver() {
+            object : BroadcastReceiver() {
                 override fun onReceive(context: Context?, intent: Intent?) {
                     when (intent?.action) {
                         "com.qfs.pagan.CANCEL_EXPORT_WAV" -> {
                             this@MainActivity.export_wav_cancel()
                         }
-                        else -> { }
+
+                        else -> {}
                     }
                 }
             },
@@ -368,7 +369,7 @@ class MainActivity : AppCompatActivity() {
             RECEIVER_NOT_EXPORTED
         )
 
-        this._midi_interface = object: MidiController(this) {
+        this._midi_interface = object : MidiController(this) {
             override fun onDeviceAdded(device_info: MidiDeviceInfo) {
                 if (!this@MainActivity.update_playback_state_midi(PlaybackState.Ready)) {
                     return
@@ -379,7 +380,9 @@ class MainActivity : AppCompatActivity() {
                     PlaybackState.Queued -> {
                         this@MainActivity.playback_stop()
                     }
-                    else -> { /* pass */ }
+
+                    else -> { /* pass */
+                    }
                 }
 
                 this@MainActivity.runOnUiThread {
@@ -397,7 +400,9 @@ class MainActivity : AppCompatActivity() {
                     PlaybackState.Queued -> {
                         this@MainActivity.playback_stop_midi_output()
                     }
-                    else -> { /* pass */ }
+
+                    else -> { /* pass */
+                    }
                 }
 
                 // Kludge. need a sleep to give output devices a chance to disconnect

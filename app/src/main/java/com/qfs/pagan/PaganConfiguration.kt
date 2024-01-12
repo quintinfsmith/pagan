@@ -12,7 +12,8 @@ data class PaganConfiguration(
     var relative_mode: Boolean = false,
     var sample_rate: Int = 22100,
     var show_percussion: Boolean = true,
-    var link_mode: LinkMode = LinkMode.COPY
+    var link_mode: LinkMode = LinkMode.COPY,
+    var palette: ColorPalette? = null
 ) {
     enum class LinkMode {
         MOVE,

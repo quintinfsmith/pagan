@@ -12,6 +12,7 @@ import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.database.Cursor
+import android.graphics.Color
 import android.media.midi.MidiDeviceInfo
 import android.net.Uri
 import android.os.Build
@@ -118,6 +119,7 @@ class MainActivity : AppCompatActivity() {
     private var _opus_manager = OpusManager(this)
     private lateinit var project_manager: ProjectManager
     lateinit var configuration: PaganConfiguration
+    lateinit var palette: ColorPalette
     private lateinit var _config_path: String
     private var _number_selector_defaults = HashMap<String, Int>()
     var active_percussion_names = HashMap<Int, String>()
@@ -463,6 +465,8 @@ class MainActivity : AppCompatActivity() {
         this._binding = ActivityMainBinding.inflate(this.layoutInflater)
         setContentView(this._binding.root)
         setSupportActionBar(this._binding.appBarMain.toolbar)
+
+        this.palette = this.configuration.palette ?: this.get_default_palette()
 
         /*
             TODO: I think this setOf may be making my navigation more complicated
@@ -1853,5 +1857,27 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
+    fun get_default_palette(): ColorPalette {
+        //return ColorPalette(
+        //    "Default",
+        //    background = this.getColor(R.id.background_dark),
+        //    lines =  Int = Color.parseColor("#000000"),
+        //selection =  Int = Color.parseColor("#000000"),
+        //leaf =  Int = Color.parseColor("#aa00ff"),
+        //leaf_text =  Int = Color.parseColor("#000000"),
+        //leaf_selected =  Int = Color.parseColor("#000000"),
+        //leaf_selected_text =  Int = Color.parseColor("#000000"),
+        //link =  Int = Color.parseColor("#000000"),
+        //link_text =  Int = Color.parseColor("#000000"),
+        //link_selected =  Int = Color.parseColor("#000000"),
+        //link_selected_text =  Int = Color.parseColor("#000000"),
+        //label_selected =  Int = Color.parseColor("#000000"),
+        //label_selected_text =  Int = Color.parseColor("#000000"),
+        //channel_even =  Int = Color.parseColor("#000000"),
+        //channel_even_text =  Int = Color.parseColor("#000000"),
+        //channel_odd =  Int = Color.parseColor("#000000"),
+        //channel_odd_text = this.getColor(
+        //)
+    }
 
 }

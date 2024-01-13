@@ -1,6 +1,7 @@
 package com.qfs.pagan
 
 import android.content.Context
+import android.graphics.drawable.LayerDrawable
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
@@ -23,14 +24,6 @@ class LeafButton(
     var position: List<Int>,
     is_percussion: Boolean
 ) : LinearLayout(ContextThemeWrapper(context, R.style.leaf)) {
-
-    companion object {
-        private val STATE_LINKED = intArrayOf(R.attr.state_linked)
-        private val STATE_ACTIVE = intArrayOf(R.attr.state_active)
-        private val STATE_FOCUSED = intArrayOf(R.attr.state_focused)
-        private val STATE_INVALID = intArrayOf(R.attr.state_invalid)
-        private val STATE_CHANNEL_EVEN = intArrayOf(R.attr.state_channel_even)
-    }
 
     init {
         this.isClickable = false
@@ -62,8 +55,6 @@ class LeafButton(
             true
         }
     }
-
-
 
     private fun callback_click() {
         val beat_key = this.get_beat_key()
@@ -138,6 +129,7 @@ class LeafButton(
         val base_context = (this.context as ContextThemeWrapper).baseContext
         val radix = _radix ?: this.get_opus_manager().tuning_map.size
         this.removeAllViews()
+
         if (event == null) {
         } else if (is_percussion) {
             val label_percussion = LeafText(ContextThemeWrapper(base_context, R.style.leaf_value))
@@ -224,30 +216,83 @@ class LeafButton(
             return drawableState
         }
 
+        val new_state = mutableListOf<Int>()
         if (tree.is_event()) {
-            mergeDrawableStates(drawableState, LeafButton.STATE_ACTIVE)
+            new_state.add(R.attr.state_active)
             val abs_value = opus_manager.get_absolute_value(beat_key, position)
             if (abs_value == null || abs_value < 0) {
-                mergeDrawableStates(drawableState, LeafButton.STATE_INVALID)
+                new_state.add(R.attr.state_invalid)
             }
         }
 
         if (opus_manager.is_networked(beat_key)) {
-            mergeDrawableStates(drawableState, LeafButton.STATE_LINKED)
+            new_state.add(R.attr.state_linked)
         }
         if (opus_manager.is_selected(beat_key, position)) {
-            mergeDrawableStates(drawableState, LeafButton.STATE_FOCUSED)
+            new_state.add(R.attr.state_focused)
         }
         if (beat_key.channel % 2 == 0) {
-            mergeDrawableStates(drawableState, LeafButton.STATE_CHANNEL_EVEN)
+            new_state.add(R.attr.state_channel_even)
         }
 
+        mergeDrawableStates(drawableState, new_state.toIntArray())
         return drawableState
     }
 
     override fun onCreateDrawableState(extraSpace: Int): IntArray? {
         val drawableState = super.onCreateDrawableState(extraSpace + 5)
         return this.build_drawable_state(drawableState)
+    }
+
+    override fun drawableStateChanged() {
+        super.drawableStateChanged()
+        var state = 0
+        for (item in this.drawableState) {
+            state += when (item) {
+                R.attr.state_invalid -> 1
+                R.attr.state_active -> 2
+                R.attr.state_focused -> 4
+                R.attr.state_linked -> 8
+                R.attr.state_channel_even -> 16
+                else -> 0
+            }
+        }
+        val activity = this.get_activity()
+        val background = (this.background as LayerDrawable).findDrawableByLayerId(R.id.leaf_background)
+        val foreground =
+        when (state) {
+            0 -> {
+                // Default
+                background.setTint(activity.get_palette_color("leaf_empty"))
+            }
+            2,18 -> {
+                // Active
+            }
+            4,20 -> {
+                //Focused
+            }
+            6,22 -> {
+                // Active & Focus
+            }
+            8,24 -> {
+                // Linked
+            }
+            10,26 -> {
+                //Linked active
+            }
+            12, 28 -> {
+                // Linked Focused
+            }
+            14, 30 -> {
+                // Linked Focused Active
+            }
+            30 -> {
+                //Channel Event
+            }
+            else -> {
+                // INVALID
+            }
+        }
     }
 
     // ------------------------------------------------------//

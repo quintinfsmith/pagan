@@ -16,6 +16,7 @@
     <color name="leaf">@color/purple</color>
     <color name="leaf_pressed">@color/purple_dark</color>
     <color name="leaf_selected">@color/purple_dark</color>
+    <color name="empty_focused">@color/blue_sky</color>
 
     <color name="column_even">#cccccc</color>
     <color name="column_odd">#aaaaaa</color>

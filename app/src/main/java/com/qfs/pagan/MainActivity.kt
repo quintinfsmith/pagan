@@ -1868,24 +1868,14 @@ class MainActivity : AppCompatActivity() {
 
     fun get_default_palette(): ColorPalette {
         val night_mode = this.is_night_mode()
-        return if (night_mode) {
-            ColorPalette(
-                "Default",
-                background = this.getColor(R.color.dark_main_bg),
-                lines = this.getColor(R.color.dark_table_lines),
-                leaf = this.getColor(R.color.leaf),
-                leaf_selected = this.getColor(R.color.leaf_selected)
-            )
-        } else {
-            ColorPalette(
-                "Default",
-                background = this.getColor(R.color.light_main_bg),
-                lines = this.getColor(R.color.light_table_lines),
-                leaf = this.getColor(R.color.leaf),
-                leaf_selected = this.getColor(R.color.leaf_selected)
-            )
-        }
-        //    selection = Color.parseColor("#000000"),
+        return ColorPalette(
+            "Default",
+            background = this.getColor(if (night_mode) R.color.dark_main_bg else R.color.light_main_bg),
+            lines = this.getColor(if (night_mode) R.color.dark_table_lines else R.color.light_table_lines),
+            leaf = this.getColor(R.color.leaf),
+            leaf_selected = this.getColor(R.color.leaf_selected),
+            selection = this.getColor(R.color.empty_focused),
+        )
         //    leaf = Color.parseColor("#aa00ff"),
         //    leaf_text = Color.parseColor("#000000"),
         //    leaf_selected = Color.parseColor("#000000"),

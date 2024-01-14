@@ -13,8 +13,7 @@ tools:context=".EditorFragment">
         android:layout_marginTop="@dimen/anti_margin_editor"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:background="?attr/main_bg"/>
+        android:layout_weight="1"/>
 
     <LinearLayout
         android:id="@+id/llContextMenu"

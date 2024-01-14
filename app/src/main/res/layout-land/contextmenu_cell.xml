@@ -84,7 +84,6 @@
             <com.qfs.pagan.NumberSelector xmlns:android="http://schemas.android.com/apk/res/android"
                 xmlns:custom="http://schemas.android.com/apk/res-auto"
                 android:orientation="horizontal"
-                android:background="?attr/main_bg"
                 android:id="@+id/nsOctave"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

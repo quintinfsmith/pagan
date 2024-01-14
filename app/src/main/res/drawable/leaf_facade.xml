@@ -6,11 +6,9 @@
   <path
       android:pathData="M0,0h24v24h-24z"
       android:strokeWidth="0"
-      android:fillColor="?attr/main_bg"
       android:strokeColor="#00000000"/>
   <path
       android:pathData="M0,0h24v24h-24z"
       android:strokeWidth=".5"
-      android:fillColor="#00000000"
-      android:strokeColor="?attr/table_lines"/>
+      android:fillColor="#00000000"/>
 </vector>

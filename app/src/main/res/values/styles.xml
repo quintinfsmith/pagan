@@ -160,8 +160,8 @@
 
     <style name="AlertDialog" >
         <item name="android:windowIsFloating">true</item>
-        <item name="android:popupBackground">?attr/main_bg</item>
-        <item name="android:colorBackground">?attr/main_bg</item>
+        <item name="android:popupBackground">@color/dark_main_bg</item>
+        <item name="android:colorBackground">@color/dark_main_bg</item>
         <item name="android:buttonBarPositiveButtonStyle">@style/AlertDialog.PositiveButton</item>
         <item name="android:buttonBarNegativeButtonStyle">@style/AlertDialog.NegativeButton</item>
     </style>
@@ -198,7 +198,7 @@
 
     <style name="column">
         <item name="android:paddingBottom">@dimen/stroke_leaf</item>
-        <item name="android:background">?attr/main_bg</item>
+        <item name="android:background">@color/dark_main_bg</item>
     </style>
 
     <style name="corner_view">
@@ -208,7 +208,7 @@
     </style>
 
     <style name="placeholder_outer">
-        <item name="android:background">?attr/main_bg</item>
+        <item name="android:background">@color/dark_main_bg</item>
     </style>
     <style name="cell_placeholder">
         <item name="android:background">@drawable/leaf_facade</item>

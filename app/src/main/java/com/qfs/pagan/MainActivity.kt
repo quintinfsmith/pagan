@@ -12,7 +12,6 @@ import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.database.Cursor
-import android.graphics.Color
 import android.media.midi.MidiDeviceInfo
 import android.net.Uri
 import android.os.Build
@@ -467,6 +466,7 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(this._binding.appBarMain.toolbar)
 
         this.palette = this.configuration.palette ?: this.get_default_palette()
+        this._binding.drawerLayout.setBackgroundColor(this.palette.background)
 
         /*
             TODO: I think this setOf may be making my navigation more complicated
@@ -1857,26 +1857,49 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
+    fun is_night_mode(): Boolean {
+        // defaults to night mode since it's better
+        return when (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) {
+            Configuration.UI_MODE_NIGHT_NO -> false
+            Configuration.UI_MODE_NIGHT_YES -> true
+            else -> true
+        }
+    }
+
     fun get_default_palette(): ColorPalette {
-        //return ColorPalette(
-        //    "Default",
-        //    background = this.getColor(R.id.background_dark),
-        //    lines =  Int = Color.parseColor("#000000"),
-        //selection =  Int = Color.parseColor("#000000"),
-        //leaf =  Int = Color.parseColor("#aa00ff"),
-        //leaf_text =  Int = Color.parseColor("#000000"),
-        //leaf_selected =  Int = Color.parseColor("#000000"),
-        //leaf_selected_text =  Int = Color.parseColor("#000000"),
-        //link =  Int = Color.parseColor("#000000"),
-        //link_text =  Int = Color.parseColor("#000000"),
-        //link_selected =  Int = Color.parseColor("#000000"),
-        //link_selected_text =  Int = Color.parseColor("#000000"),
-        //label_selected =  Int = Color.parseColor("#000000"),
-        //label_selected_text =  Int = Color.parseColor("#000000"),
-        //channel_even =  Int = Color.parseColor("#000000"),
-        //channel_even_text =  Int = Color.parseColor("#000000"),
-        //channel_odd =  Int = Color.parseColor("#000000"),
-        //channel_odd_text = this.getColor(
+        val night_mode = this.is_night_mode()
+        return if (night_mode) {
+            ColorPalette(
+                "Default",
+                background = this.getColor(R.color.dark_main_bg),
+                lines = this.getColor(R.color.dark_table_lines),
+                leaf = this.getColor(R.color.leaf),
+                leaf_selected = this.getColor(R.color.leaf_selected)
+            )
+        } else {
+            ColorPalette(
+                "Default",
+                background = this.getColor(R.color.light_main_bg),
+                lines = this.getColor(R.color.light_table_lines),
+                leaf = this.getColor(R.color.leaf),
+                leaf_selected = this.getColor(R.color.leaf_selected)
+            )
+        }
+        //    selection = Color.parseColor("#000000"),
+        //    leaf = Color.parseColor("#aa00ff"),
+        //    leaf_text = Color.parseColor("#000000"),
+        //    leaf_selected = Color.parseColor("#000000"),
+        //    leaf_selected_text = Color.parseColor("#000000"),
+        //    link = Color.parseColor("#000000"),
+        //    link_text = Color.parseColor("#000000"),
+        //    link_selected = Color.parseColor("#000000"),
+        //    link_selected_text = Color.parseColor("#000000"),
+        //    label_selected = Color.parseColor("#000000"),
+        //    label_selected_text = Color.parseColor("#000000"),
+        //    channel_even = Color.parseColor("#000000"),
+        //    channel_even_text = Color.parseColor("#000000"),
+        //    channel_odd = Color.parseColor("#000000"),
+        //    channel_odd_text = Color.parseColor("#000000")
         //)
     }
 

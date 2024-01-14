@@ -105,7 +105,6 @@
                 xmlns:android="http://schemas.android.com/apk/res/android"
                 xmlns:custom="http://schemas.android.com/apk/res-auto"
                 android:id="@+id/nsOctave"
-                android:background="?attr/main_bg"
                 android:orientation="vertical"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

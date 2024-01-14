@@ -14,7 +14,6 @@
 
         <item name="alert_fg">?attr/colorPrimary</item>
         <item name="drawer_bg">#E0E0E0</item>
-        <item name="main_bg">#E0E0E0</item>
         <item name="main_fg">#2d2d2d</item>
         <item name="label_fg">#1d1d1d</item>
         <item name="label_fg_focused">#000000</item>
@@ -34,7 +33,7 @@
         <item name="leaf_fg_active_pressed">@color/white</item>
         <item name="leaf_fg_active_focused_pressed">?attr/colorOnSecondary</item>
 
-        <item name="leaf_bg_default">?attr/main_bg</item>
+        <item name="leaf_bg_default">@color/light_main_bg</item>
         <item name="leaf_bg_focused">@color/blue_sky</item>
 
         <item name="leaf_bg_invalid">#aa4433</item>
@@ -60,7 +59,6 @@
         <item name="numberselector_fg_selected">?attr/leaf_fg_active</item>
 
         <item name="colorIconFG">@attr/button_fg_default</item>
-        <item name="table_lines">#DE191A1F</item>
 
         <item name="soundfont_warning_background">@color/blue_sky</item>
         <item name="soundfont_warning_frame">@color/blue_dark</item>

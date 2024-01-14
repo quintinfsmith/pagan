@@ -13,13 +13,12 @@
 
         <item name="alert_fg">@color/white</item>
         <item name="drawer_bg">#2D2D2D</item>
-        <item name="main_bg">#2D2D2D</item>
         <item name="main_fg">#efefef</item>
         <item name="label_fg">@color/white</item>
         <item name="label_fg_focused">#000000</item>
         <item name="popup_fg">?attr/colorOnPrimary</item>
         <item name="popup_bg">?attr/colorPrimaryVariant</item>
-        <item name="context_menu_bg">?attr/main_bg</item>
+        <item name="context_menu_bg">@color/dark_main_bg</item>
 
         <item name="button_fg_default">?attr/colorOnPrimary</item>
         <item name="button_fg_pressed">?attr/colorOnPrimary</item>
@@ -33,7 +32,7 @@
         <item name="leaf_fg_active_pressed">@color/white</item>
         <item name="leaf_fg_active_focused_pressed">?attr/colorOnSecondary</item>
 
-        <item name="leaf_bg_default">?attr/main_bg</item>
+        <item name="leaf_bg_default">@color/dark_main_bg</item>
         <item name="leaf_bg_focused">@color/blue_sky</item>
 
         <item name="leaf_bg_invalid">#aa4433</item>
@@ -59,7 +58,6 @@
         <item name="numberselector_fg_selected">?attr/leaf_fg_active</item>
 
         <item name="colorIconFG">@attr/button_fg_default</item>
-        <item name="table_lines">#808080</item>
 
         <item name="soundfont_warning_background">@color/blue_sky</item>
         <item name="soundfont_warning_frame">@color/white</item>

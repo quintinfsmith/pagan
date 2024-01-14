@@ -247,6 +247,7 @@ class LeafButton(
     override fun drawableStateChanged() {
         super.drawableStateChanged()
         var state = 0
+
         for (item in this.drawableState) {
             state += when (item) {
                 R.attr.state_invalid -> 1
@@ -257,40 +258,41 @@ class LeafButton(
                 else -> 0
             }
         }
+
         val activity = this.get_activity()
         val background = (this.background as LayerDrawable).findDrawableByLayerId(R.id.leaf_background)
-        val foreground =
+        (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_lines).setTint(activity.palette.lines)
         when (state) {
             0 -> {
-                // Default
-                background.setTint(activity.get_palette_color("leaf_empty"))
+                background.setTint(activity.palette.channel_odd)
             }
             2,18 -> {
-                // Active
+                background.setTint(activity.palette.leaf)
             }
             4,20 -> {
-                //Focused
+                background.setTint(activity.palette.selection)
             }
             6,22 -> {
-                // Active & Focus
+                background.setTint(activity.palette.leaf_selected)
+
             }
             8,24 -> {
-                // Linked
+                background.setTint(activity.palette.link_empty)
             }
             10,26 -> {
-                //Linked active
+                background.setTint(activity.palette.link)
             }
             12, 28 -> {
-                // Linked Focused
+                background.setTint(activity.palette.link_empty_selected)
             }
             14, 30 -> {
-                // Linked Focused Active
+                background.setTint(activity.palette.link_selected)
             }
             30 -> {
-                //Channel Event
+                background.setTint(activity.palette.channel_even)
             }
             else -> {
-                // INVALID
+                background.setTint(activity.palette.leaf_invalid)
             }
         }
     }

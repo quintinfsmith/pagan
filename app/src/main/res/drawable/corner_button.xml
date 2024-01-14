@@ -9,10 +9,15 @@
             android:bottom="0dp" />
     </shape>
 </item>
-<item android:elevation="0dp" >
+<item android:elevation="0dp" android:id="@+id/tintable_lines">
     <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-        <stroke android:width="@dimen/stroke_corner" android:color="?attr/table_lines"/>
-        <solid android:color="?attr/main_bg" android:width="@dimen/stroke_corner" />
+        <solid android:color="#00000000"/>
+        <stroke android:width="@dimen/stroke_corner" android:color="#000000"/>
+    </shape>
+</item>
+<item android:elevation="0dp" android:id="@+id/tintable_background">
+    <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+        <solid android:color="#000000" android:width="@dimen/stroke_corner" />
     </shape>
 </item>
 </layer-list>

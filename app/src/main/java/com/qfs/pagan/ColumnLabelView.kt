@@ -1,5 +1,6 @@
 package com.qfs.pagan
 
+import android.graphics.drawable.LayerDrawable
 import android.view.ContextThemeWrapper
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
@@ -8,9 +9,6 @@ import kotlin.math.roundToInt
 import com.qfs.pagan.InterfaceLayer as OpusManager
 
 class ColumnLabelView(val view_holder: RecyclerView.ViewHolder): AppCompatTextView(ContextThemeWrapper(view_holder.itemView.context, R.style.column_label)) {
-    companion object {
-        private val STATE_FOCUSED = intArrayOf(R.attr.state_focused)
-    }
     /*
      * update_queued exists to handle the liminal state between being detached and being destroyed
      * If the cursor is pointed to a location in this space, but changed, then the recycler view doesn't handle it normally
@@ -49,27 +47,53 @@ class ColumnLabelView(val view_holder: RecyclerView.ViewHolder): AppCompatTextVi
         if (this.parent == null) {
             return drawableState
         }
+
         val opus_manager = this.get_opus_manager()
         val beat = this.view_holder.bindingAdapterPosition
+
+        val new_state = mutableSetOf<Int>()
         when (opus_manager.cursor.mode) {
             OpusManagerCursor.CursorMode.Single,
             OpusManagerCursor.CursorMode.Column -> {
                 if (opus_manager.cursor.beat == beat) {
-                    mergeDrawableStates(drawableState, ColumnLabelView.STATE_FOCUSED)
+                    new_state.add(R.attr.state_focused)
                 }
             }
             OpusManagerCursor.CursorMode.Range -> {
                 val (first, second) = opus_manager.cursor.range!!
                 if (first.beat <= beat && second.beat >= beat) {
-                    mergeDrawableStates(drawableState, ColumnLabelView.STATE_FOCUSED)
+                    new_state.add(R.attr.state_focused)
                 }
             }
             else -> {}
         }
+        mergeDrawableStates(drawableState, new_state.toIntArray())
         return drawableState
     }
 
     fun get_opus_manager(): OpusManager {
         return (this.view_holder.bindingAdapter as ColumnLabelAdapter).get_opus_manager()
+    }
+
+    override fun drawableStateChanged() {
+        super.drawableStateChanged()
+        var state = 0
+
+        for (item in this.drawableState) {
+            state += when (item) {
+                R.attr.state_focused -> 1
+                else -> 0
+            }
+        }
+
+        val activity = (this.view_holder.bindingAdapter as ColumnLabelAdapter).get_activity()
+        (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_lines)
+            .setTint(activity.palette.lines)
+        (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_background).setTint(
+            when (state) {
+                1 -> activity.palette.selection
+                else -> activity.palette.column_labels
+            }
+        )
     }
 }

@@ -274,7 +274,6 @@ class LeafButton(
             }
             6,22 -> {
                 background.setTint(activity.palette.leaf_selected)
-
             }
             8,24 -> {
                 background.setTint(activity.palette.link_empty)
@@ -288,7 +287,7 @@ class LeafButton(
             14, 30 -> {
                 background.setTint(activity.palette.link_selected)
             }
-            30 -> {
+            16 -> {
                 background.setTint(activity.palette.channel_even)
             }
             else -> {

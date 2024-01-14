@@ -8,20 +8,31 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 
-    <color name="light_main_bg">#2D2D2D</color>
+    <color name="light_main_bg">#d2d2d2</color>
+    <color name="light_main_fg">#2D2d2d</color>
     <color name="light_table_lines">#DE191A1F</color>
+    <color name="light_channel_odd">#BBCFCF</color>
+    <color name="light_channel_even">@color/light_main_bg</color>
+    <color name="light_channel_odd_text">@color/light_main_fg</color>
+    <color name="light_channel_even_text">@color/light_main_fg</color>
+
     <color name="dark_main_bg">#2D2D2D</color>
+    <color name="dark_main_fg">#e1e1e1</color>
     <color name="dark_table_lines">#808080</color>
+    <color name="dark_channel_odd">#232323</color>
+    <color name="dark_channel_even">@color/dark_main_bg</color>
+    <color name="dark_channel_odd_text">@color/dark_main_fg</color>
+    <color name="dark_channel_even_text">@color/dark_main_fg</color>
 
     <color name="leaf">@color/purple</color>
     <color name="leaf_pressed">@color/purple_dark</color>
     <color name="leaf_selected">@color/purple_dark</color>
-    <color name="empty_focused">@color/blue_sky</color>
+    <color name="leaf_linked">#A79C35</color>
+    <color name="leaf_linked_selected">#D8BA1D</color>
 
-    <color name="column_even">#cccccc</color>
-    <color name="column_odd">#aaaaaa</color>
-    <color name="column_label_even">#888888</color>
-    <color name="column_label_odd">#555555</color>
+    <color name="empty_selected">@color/blue_sky</color>
+    <color name="empty_linked">#B07419</color>
+    <color name="empty_linked_selected">#D8944B</color>
 
     <color name="focus_leaf">#f0f0f0</color>
     <color name="focus_leaf_pressed">#c0c0c0</color>

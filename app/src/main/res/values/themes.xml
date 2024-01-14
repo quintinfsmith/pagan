@@ -48,8 +48,6 @@
         <!-- END OF LEAF COLORS -->
 
         <item name="label_bg">?attr/leaf_bg_default</item>
-        <item name="label_bg_channel_even">?attr/leaf_bg_default</item>
-        <item name="label_bg_channel_odd">#BBCFCF</item>
         <item name="label_bg_focused">?attr/leaf_bg_focused</item>
 
         <item name="numberselector_bg_default">?attr/button_bg_default</item>

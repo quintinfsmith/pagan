@@ -1,6 +1,7 @@
 package com.qfs.pagan
 
 import android.content.Context
+import android.graphics.drawable.LayerDrawable
 import android.view.ContextThemeWrapper
 import android.view.DragEvent
 import android.view.MotionEvent
@@ -102,26 +103,27 @@ class LineLabelView(context: Context, var channel: Int, var line_offset: Int): A
             return drawableState
         }
         val opus_manager = this.get_opus_manager()
+        val new_state = mutableListOf<Int>()
         if (this.channel % 2 == 0) {
-            mergeDrawableStates(drawableState, STATE_CHANNEL_EVEN)
+            new_state.add(R.attr.state_channel_even)
         }
 
         when (opus_manager.cursor.mode) {
             OpusManagerCursor.CursorMode.Single,
             OpusManagerCursor.CursorMode.Row -> {
                 if (opus_manager.cursor.channel == this.channel && opus_manager.cursor.line_offset == this.line_offset) {
-                    mergeDrawableStates(drawableState, STATE_FOCUSED)
+                    new_state.add(R.attr.state_focused)
                 }
             }
             OpusManagerCursor.CursorMode.Range -> {
                 val (first, second) = opus_manager.cursor.range!!
                 if ((this.channel > first.channel && this.channel < second.channel) || (this.channel == first.channel && this.line_offset >= first.line_offset) || (this.channel == second.channel && this.line_offset <= second.line_offset)) {
-                    mergeDrawableStates(drawableState, STATE_FOCUSED)
+                    new_state.add(R.attr.state_focused)
                 }
             }
             else -> { }
         }
-
+        mergeDrawableStates(drawableState, new_state.toIntArray())
         return drawableState
     }
 
@@ -223,4 +225,40 @@ class LineLabelView(context: Context, var channel: Int, var line_offset: Int): A
             opus_manager.cursor_select_row(channel, line_offset)
         }
     }
+
+    override fun drawableStateChanged() {
+        super.drawableStateChanged()
+        var state = 0
+
+        for (item in this.drawableState) {
+            state += when (item) {
+                R.attr.state_focused -> 1
+                R.attr.state_channel_even -> 2
+                else -> 0
+            }
+        }
+
+        val activity = this.get_activity()
+        (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_lines).setTint(activity.palette.lines)
+        val background = (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)
+        when (state) {
+            1 -> {
+                this.setTextColor(activity.palette.label_selected_text)
+                background.setTint(activity.palette.selection)
+            }
+            2 -> {
+                this.setTextColor(activity.palette.channel_even_text)
+                background.setTint(activity.palette.channel_even)
+            }
+            3 -> {
+                this.setTextColor(activity.palette.label_selected_text)
+                background.setTint(activity.palette.selection)
+            }
+            else -> {
+                this.setTextColor(activity.palette.channel_odd_text)
+                background.setTint(activity.palette.channel_odd)
+            }
+        }
+    }
+
 }

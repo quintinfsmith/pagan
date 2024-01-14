@@ -28,7 +28,8 @@ data class ColorPalette(
     val channel_even: Int = Color.parseColor("#000000"),
     val channel_even_text: Int = Color.parseColor("#000000"),
     val channel_odd: Int = Color.parseColor("#000000"),
-    val channel_odd_text: Int = Color.parseColor("#000000")
+    val channel_odd_text: Int = Color.parseColor("#000000"),
+    val column_labels: Int = Color.parseColor("#000000")
 
 //    val colorPrimaryVariant: Int = Color.parseColor("#171717"),
 //    val colorOnPrimary: Int = Color.parseColor("#EFEFEF"),

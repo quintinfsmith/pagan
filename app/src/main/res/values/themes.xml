@@ -27,26 +27,6 @@
         <item name="button_stroke_color">#00423B2D</item>
         <item name="context_menu_bg">#225B2E04</item>
 
-        <!-- LEAF COLORS -->
-        <item name="leaf_fg_active">?attr/colorOnSecondary</item>
-        <item name="leaf_fg_active_focused">@color/white</item>
-        <item name="leaf_fg_active_pressed">@color/white</item>
-        <item name="leaf_fg_active_focused_pressed">?attr/colorOnSecondary</item>
-
-        <item name="leaf_bg_default">@color/light_main_bg</item>
-        <item name="leaf_bg_focused">@color/blue_sky</item>
-
-        <item name="leaf_bg_invalid">#aa4433</item>
-        <!-- Active Leaf colors are same between dark/light -->
-        <item name="leaf_bg_active">@color/purple</item>
-        <item name="leaf_bg_active_focused">@color/purple_plum</item>
-
-        <item name="leaf_bg_linked">#B07419</item>
-        <item name="leaf_bg_focused_linked">#D8944B</item>
-        <item name="leaf_bg_active_linked">#A79C35</item>
-        <item name="leaf_bg_active_focused_linked">#D8BA1D</item>
-        <!-- END OF LEAF COLORS -->
-
         <item name="label_bg">?attr/leaf_bg_default</item>
         <item name="label_bg_focused">?attr/leaf_bg_focused</item>
 

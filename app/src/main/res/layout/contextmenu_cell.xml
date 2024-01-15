@@ -36,9 +36,9 @@
                 android:paddingTop="@dimen/normal_padding"
                 android:paddingBottom="@dimen/normal_padding">
 
-                <ImageView
-                    android:id="@+id/btnSplit"
+                <com.qfs.pagan.IconButton
                     android:theme="@style/icon_button"
+                    android:id="@+id/btnSplit"
                     android:layout_gravity="center"
                     android:layout_width="62dp"
                     android:layout_height="wrap_content"
@@ -51,13 +51,13 @@
                     android:layout_weight="1"
                     android:layout_width="0dp"/>
 
-                <ImageView
+                <com.qfs.pagan.IconButton
+                    android:theme="@style/icon_button"
                     android:id="@+id/btnInsert"
                     android:layout_width="62dp"
                     android:layout_height="wrap_content"
                     android:contentDescription="@string/cd_insert"
                     android:text="Insert"
-                    android:theme="@style/icon_button"
                     app:srcCompat="@drawable/insert" />
 
                 <Space
@@ -65,13 +65,13 @@
                     android:layout_weight="1"
                     android:layout_width="0dp"/>
 
-                <ImageView
+                <com.qfs.pagan.IconButton
+                    android:theme="@style/icon_button"
                     android:id="@+id/btnRemove"
                     android:layout_width="62dp"
                     android:layout_height="wrap_content"
                     android:contentDescription="@string/cd_remove"
                     android:text="Remove"
-                    android:theme="@style/icon_button"
                     app:srcCompat="@drawable/remove" />
 
                 <Space
@@ -79,13 +79,13 @@
                     android:layout_weight="1"
                     android:layout_width="0dp"/>
 
-                <ImageView
+                <com.qfs.pagan.IconButton
+                    android:theme="@style/icon_button"
                     android:id="@+id/btnUnset"
                     android:layout_width="62dp"
                     android:layout_height="wrap_content"
                     android:contentDescription="@string/cd_unset"
                     android:text="Unset"
-                    android:theme="@style/icon_button"
                     app:srcCompat="@drawable/unset" />
 
                 <Space
@@ -93,16 +93,15 @@
                     android:layout_weight="1"
                     android:layout_width="0dp"/>
 
-                <TextView
+                <com.qfs.pagan.StdButton
+                    android:theme="@style/icon_button"
                     android:id="@+id/btnDuration"
                     android:layout_height="match_parent"
                     android:layout_width="62dp"
-                    android:theme="@style/icon_button"
                     android:text="T" />
             </LinearLayout>
 
             <com.qfs.pagan.NumberSelector
-                xmlns:android="http://schemas.android.com/apk/res/android"
                 xmlns:custom="http://schemas.android.com/apk/res-auto"
                 android:id="@+id/nsOctave"
                 android:orientation="vertical"
@@ -118,7 +117,7 @@
     </LinearLayout>
 
 
-    <com.qfs.pagan.NumberSelector xmlns:android="http://schemas.android.com/apk/res/android"
+    <com.qfs.pagan.NumberSelector
         xmlns:custom="http://schemas.android.com/apk/res-auto"
         android:id="@+id/nsOffset"
         android:layout_marginTop="@dimen/normal_padding"

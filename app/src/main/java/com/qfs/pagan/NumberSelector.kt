@@ -1,6 +1,7 @@
 package com.qfs.pagan
 
 import android.content.Context
+import android.graphics.drawable.LayerDrawable
 import android.util.AttributeSet
 import android.view.Gravity.CENTER
 import android.view.View
@@ -15,14 +16,14 @@ import kotlin.math.roundToInt
 class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(context, attrs) {
     var min: Int = 0
     var max: Int = 1
-    var button_theme: Int = R.style.numberSelectorButtonA
+    var button_theme: Int = 0
     var radix: Int = 10
     private var _button_map = HashMap<NumberSelectorButton, Int>()
     private var _active_button: NumberSelectorButton? = null
     private var _on_change_hook: ((NumberSelector) -> Unit)? = null
 
-    class NumberSelectorButton(private var _number_selector: NumberSelector, var value: Int, theme: Int):
-        androidx.appcompat.widget.AppCompatTextView(ContextThemeWrapper(_number_selector.context, theme)) {
+    class NumberSelectorButton(private var _number_selector: NumberSelector, var value: Int):
+        androidx.appcompat.widget.AppCompatTextView(ContextThemeWrapper(_number_selector.context, R.style.numberSelectorButton)) {
         companion object {
             private val STATE_ACTIVE = intArrayOf(R.attr.state_active)
         }
@@ -47,6 +48,40 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
             return drawableState
         }
 
+        override fun drawableStateChanged() {
+            super.drawableStateChanged()
+            var state = this._number_selector.button_theme
+
+            for (item in this.drawableState) {
+                state += when (item) {
+                    R.attr.state_active -> 2
+                    else -> 0
+                }
+            }
+
+            val activity = (this.context as ContextThemeWrapper).baseContext as MainActivity
+            val palette = activity.view_model.palette!!
+            val background = (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)
+            val stroke = (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_stroke)
+            when (state) {
+                0 -> {
+                    background.setTint(palette.button)
+                    stroke.setTint(palette.button_stroke)
+                    this.setTextColor(palette.button_text)
+                }
+                1 -> {
+                    background.setTint(palette.button_alt)
+                    stroke.setTint(palette.button_alt_stroke)
+                    this.setTextColor(palette.button_alt_text)
+                }
+                else -> {
+                    background.setTint(palette.button_selected)
+                    stroke.setTint(palette.button_selected_stroke)
+                    this.setTextColor(palette.button_selected_text)
+                }
+            }
+        }
+
         fun setActive(value: Boolean) {
             this._state_active = value
             refreshDrawableState()
@@ -56,10 +91,7 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
     init {
         var styled_attributes = context.theme.obtainStyledAttributes(attrs, R.styleable.NumberSelector, 0, 0)
         try {
-            this.button_theme = when (styled_attributes.getInteger(R.styleable.NumberSelector_button_theme, 0)) {
-                1 -> R.style.numberSelectorButtonB
-                else -> R.style.numberSelectorButtonA
-            }
+            this.button_theme = styled_attributes.getInteger(R.styleable.NumberSelector_button_theme, 0)
         } finally {
             styled_attributes.recycle()
         }
@@ -166,7 +198,7 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
                 ((i - this.min) % this.childCount)
             }
 
-            val currentView = NumberSelectorButton(this, i, this.button_theme)
+            val currentView = NumberSelectorButton(this, i)
             if (this.orientation == HORIZONTAL) {
                 (this.getChildAt(j) as ViewGroup).addView(currentView, 0)
             } else {

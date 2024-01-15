@@ -68,11 +68,11 @@
             android:layout_height="match_parent"
             android:layout_weight="1"/>
 
-        <ImageView
+        <com.qfs.pagan.IconButton
+            android:theme="@style/icon_button"
             android:layout_width="62dp"
             android:layout_height="wrap_content"
             android:id="@+id/btnUnLink"
-            android:theme="@style/icon_button"
             android:src="@drawable/unlink"
             android:contentDescription="Remove Link" />
 
@@ -80,10 +80,10 @@
             android:layout_width="4dp"
             android:layout_height="match_parent"/>
 
-        <ImageView
+        <com.qfs.pagan.IconButton
+            android:theme="@style/icon_button"
             android:layout_width="62dp"
             android:layout_height="wrap_content"
-            android:theme="@style/icon_button"
             android:src="@drawable/unlinkall"
             android:id="@+id/btnUnLinkAll"
             android:contentDescription="Remove All Links"/>
@@ -92,10 +92,10 @@
             android:layout_width="4dp"
             android:layout_height="match_parent"/>
 
-        <ImageView
+        <com.qfs.pagan.IconButton
+            android:theme="@style/icon_button"
             android:layout_width="62dp"
             android:layout_height="wrap_content"
-            android:theme="@style/icon_button"
             android:src="@drawable/unset"
             android:id="@+id/btnEraseSelection"
             android:contentDescription="Clear Selection"/>

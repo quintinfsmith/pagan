@@ -95,13 +95,15 @@ class MainActivity : AppCompatActivity() {
 
     class MainViewModel: ViewModel() {
         var export_handle: MidiConverter? = null
+        var palette: ColorPalette? = null
+
         fun export_wav(activity: MainActivity, midi: Midi, target_file: File, handler: MidiConverter.ExporterEventHandler) {
             this.export_handle = MidiConverter(SampleHandleManager(activity.get_soundfont()!!, 44100))
             this.export_handle?.export_wav(midi, target_file, handler)
             this.export_handle = null
         }
 
-        fun cancel() {
+        fun cancel_export() {
             val handle = this.export_handle ?: return
             handle.cancel_flagged = true
         }
@@ -111,14 +113,12 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
     val view_model: MainViewModel by viewModels()
     // flag to indicate that the landing page has been navigated away from for navigation management
     private var _has_seen_front_page = false
     private var _opus_manager = OpusManager(this)
     private lateinit var project_manager: ProjectManager
     lateinit var configuration: PaganConfiguration
-    lateinit var palette: ColorPalette
     private lateinit var _config_path: String
     private var _number_selector_defaults = HashMap<String, Int>()
     var active_percussion_names = HashMap<Int, String>()
@@ -412,13 +412,6 @@ class MainActivity : AppCompatActivity() {
                 this@MainActivity.runOnUiThread {
                     this@MainActivity.update_menu_options()
                 }
-
-                //if (!this@MainActivity._midi_interface.output_devices_connected()) {
-                //    this@MainActivity.update_playback_state_midi(PlaybackState.NotReady)
-                //    this@MainActivity._midi_interface.connect_virtual_output_device(
-                //        this@MainActivity._midi_feedback_device!!
-                //    )
-                //}
             }
         }
 
@@ -465,8 +458,8 @@ class MainActivity : AppCompatActivity() {
         setContentView(this._binding.root)
         setSupportActionBar(this._binding.appBarMain.toolbar)
 
-        this.palette = this.configuration.palette ?: this.get_default_palette()
-        this._binding.drawerLayout.setBackgroundColor(this.palette.background)
+        this.view_model.palette = this.configuration.palette ?: this.get_default_palette()
+        this._binding.drawerLayout.setBackgroundColor(this.view_model.palette!!.background)
 
         /*
             TODO: I think this setOf may be making my navigation more complicated
@@ -1628,7 +1621,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun export_wav_cancel() {
-        this.view_model.cancel()
+        this.view_model.cancel_export()
     }
 
     fun export_midi() {
@@ -1873,9 +1866,13 @@ class MainActivity : AppCompatActivity() {
             background = this.getColor(if (night_mode) R.color.dark_main_bg else R.color.light_main_bg),
             lines = this.getColor(if (night_mode) R.color.dark_table_lines else R.color.light_table_lines),
             leaf = this.getColor(R.color.leaf),
+            leaf_text = this.getColor(R.color.leaf_text),
             leaf_selected = this.getColor(R.color.leaf_selected),
+            leaf_selected_text = this.getColor(R.color.leaf_selected_text),
             link = this.getColor(R.color.leaf_linked),
+            link_text = this.getColor(R.color.leaf_linked_text),
             link_selected = this.getColor(R.color.leaf_linked_selected),
+            link_selected_text = this.getColor(R.color.leaf_linked_selected_text),
             link_empty = this.getColor(R.color.empty_linked),
             link_empty_selected = this.getColor(R.color.empty_linked_selected),
             selection = this.getColor(R.color.empty_selected),
@@ -1883,6 +1880,18 @@ class MainActivity : AppCompatActivity() {
             channel_odd = this.getColor(if (night_mode) R.color.dark_channel_odd else R.color.light_channel_odd),
             channel_even_text = this.getColor(if (night_mode) R.color.dark_channel_even_text else R.color.light_channel_even_text),
             channel_odd_text = this.getColor(if (night_mode) R.color.dark_channel_odd_text else R.color.light_channel_odd_text),
+            column_label = this.getColor(if (night_mode) R.color.dark_channel_even else R.color.light_channel_even),
+            column_label_text = this.getColor(if (night_mode) R.color.dark_channel_even_text else R.color.light_channel_even_text),
+            button = this.getColor(if (night_mode) R.color.dark_button else R.color.light_button),
+            button_alt = this.getColor(if (night_mode) R.color.dark_button_alt else R.color.light_button_alt),
+            button_selected = this.getColor(if (night_mode) R.color.dark_button_selected else R.color.light_button_selected),
+            button_stroke = this.getColor(if (night_mode) R.color.dark_button_stroke else R.color.light_button_stroke),
+            button_alt_stroke = this.getColor(if (night_mode) R.color.dark_button_alt_stroke else R.color.light_button_alt_stroke),
+            button_selected_stroke = this.getColor(if (night_mode) R.color.dark_button_selected_stroke else R.color.light_button_selected_stroke),
+            button_text = this.getColor(if (night_mode) R.color.dark_button_text else R.color.light_button_text),
+            button_alt_text = this.getColor(if (night_mode) R.color.dark_button_alt_text else R.color.light_button_alt_text),
+            button_selected_text = this.getColor(if (night_mode) R.color.dark_button_selected_text else R.color.light_button_selected_text),
+
         )
 
         //    leaf_text = Color.parseColor("#000000"),

@@ -17,10 +17,15 @@ class CornerView(context: Context, attrs: AttributeSet? = null): LinearLayout(Co
         inner_view.setImageResource(R.drawable.baseline_shortcut_24)
         inner_view.contentDescription = resources.getString(R.string.label_shortcut)
 
+    }
 
+    override fun drawableStateChanged() {
+        super.drawableStateChanged()
+        val activity = (this.context as ContextThemeWrapper).baseContext as MainActivity
+        val palette = activity.view_model.palette!!
         val background = (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)
-        background.setTint((context as MainActivity).palette.background)
+        background.setTint(palette.background)
         val table_lines = (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_lines)
-        table_lines.setTint((context as MainActivity).palette.lines)
+        table_lines.setTint(palette.lines)
     }
 }

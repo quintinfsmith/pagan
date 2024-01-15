@@ -29,7 +29,17 @@ data class ColorPalette(
     val channel_even_text: Int = Color.parseColor("#000000"),
     val channel_odd: Int = Color.parseColor("#000000"),
     val channel_odd_text: Int = Color.parseColor("#000000"),
-    val column_labels: Int = Color.parseColor("#000000")
+    val column_label: Int = Color.parseColor("#000000"),
+    val column_label_text: Int = Color.parseColor("#000000"),
+    val button: Int = 0,
+    val button_alt: Int = 0,
+    val button_selected: Int = 0,
+    val button_stroke: Int = 0,
+    val button_alt_stroke: Int = 0,
+    val button_selected_stroke: Int = 0,
+    val button_text: Int = 0,
+    val button_alt_text: Int = 0,
+    val button_selected_text: Int = 0
 
 //    val colorPrimaryVariant: Int = Color.parseColor("#171717"),
 //    val colorOnPrimary: Int = Color.parseColor("#EFEFEF"),

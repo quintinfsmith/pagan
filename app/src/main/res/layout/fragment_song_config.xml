@@ -29,7 +29,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-            <TextView
+            <com.qfs.pagan.StdButton
                 android:id="@+id/btnChangeProjectName"
                 android:theme="@style/button"
                 android:text="@string/btn_cfg_change_name"
@@ -45,7 +45,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-            <TextView
+            <com.qfs.pagan.StdButton
                 android:id="@+id/btnRadix"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -60,7 +60,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1" />
 
-            <TextView
+            <com.qfs.pagan.StdButton
                 android:id="@+id/tvTempo"
                 android:paddingStart="15dp"
                 android:paddingEnd="15dp"
@@ -77,7 +77,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-            <TextView
+            <com.qfs.pagan.StdButton
                 android:id="@+id/btnAddChannel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -110,7 +110,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content" >
 
-        <ImageView
+        <com.qfs.pagan.IconButton
             android:layout_margin="-3dp"
             android:id="@+id/btnSaveProject"
             android:maxLines="1"
@@ -124,7 +124,7 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"/>
 
-        <ImageView
+        <com.qfs.pagan.IconButton
             android:id="@+id/btnCopyProject"
             android:maxLines="1"
             android:theme="@style/config_button"
@@ -138,7 +138,7 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"/>
 
-        <ImageView
+        <com.qfs.pagan.IconButton
             android:id="@+id/btnDeleteProject"
             android:maxLines="1"
             android:theme="@style/config_button"
@@ -152,7 +152,7 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"/>
 
-        <ImageView
+        <com.qfs.pagan.IconButton
             android:id="@+id/btnExportProject"
             android:maxLines="1"
             android:theme="@style/icon_button"

@@ -12,9 +12,9 @@
         android:layout_weight="1"
         android:layout_height="wrap_content"/>
 
-    <ImageView
-        android:id="@+id/btnRemoveBeat"
+    <com.qfs.pagan.IconButton
         android:theme="@style/icon_button"
+        android:id="@+id/btnRemoveBeat"
         android:layout_gravity="center"
         android:layout_width="62dp"
         android:layout_height="wrap_content"
@@ -25,9 +25,9 @@
         android:layout_width="@dimen/normal_padding"
         android:layout_height="wrap_content"/>
 
-    <ImageView
-        android:id="@+id/btnInsertBeat"
+    <com.qfs.pagan.IconButton
         android:theme="@style/icon_button"
+        android:id="@+id/btnInsertBeat"
         android:layout_gravity="center"
         android:layout_width="62dp"
         android:layout_height="wrap_content"

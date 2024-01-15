@@ -8,7 +8,7 @@
     android:paddingEnd="@dimen/normal_padding"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <ImageView
+    <com.qfs.pagan.IconButton
         android:id="@+id/btnInsertLine"
         android:theme="@style/icon_button"
         app:srcCompat="@drawable/insert_line"
@@ -20,7 +20,7 @@
         android:layout_height="@dimen/normal_padding"
         android:layout_width="wrap_content"/>
 
-    <ImageView
+    <com.qfs.pagan.IconButton
         android:id="@+id/btnRemoveLine"
         android:theme="@style/icon_button"
         app:srcCompat="@drawable/remove_line"
@@ -32,7 +32,7 @@
         android:layout_height="@dimen/normal_padding"
         android:layout_width="wrap_content"/>
 
-    <TextView
+    <com.qfs.pagan.StdButton
         android:id="@+id/btnChoosePercussion"
         android:theme="@style/choose_percussion_button"
         android:layout_marginTop="@dimen/normal_padding"
@@ -45,7 +45,7 @@
         android:layout_height="@dimen/normal_padding"
         android:layout_width="wrap_content"/>
 
-    <ImageView
+    <com.qfs.pagan.IconButton
         android:id="@+id/btnLineVolumePopup"
         android:theme="@style/icon_button"
         app:srcCompat="@drawable/volume"

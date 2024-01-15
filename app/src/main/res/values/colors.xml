@@ -7,6 +7,10 @@
     <color name="blue_dark">#34688F</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="primary">#171717</color>
+    <color name="primary_text">#e1e1e1</color>
+    <color name="alternate">#575A62</color>
+    <color name="alternate_text">#000000</color>
 
     <color name="light_main_bg">#d2d2d2</color>
     <color name="light_main_fg">#2D2d2d</color>
@@ -15,6 +19,15 @@
     <color name="light_channel_even">@color/light_main_bg</color>
     <color name="light_channel_odd_text">@color/light_main_fg</color>
     <color name="light_channel_even_text">@color/light_main_fg</color>
+    <color name="light_button">@color/primary</color>
+    <color name="light_button_text">@color/primary_text</color>
+    <color name="light_button_stroke">#00000000</color>
+    <color name="light_button_alt">#222633</color>
+    <color name="light_button_alt_text">#d1d1d1</color>
+    <color name="light_button_alt_stroke">#00000000</color>
+    <color name="light_button_selected">@color/leaf</color>
+    <color name="light_button_selected_text">@color/leaf_text</color>
+    <color name="light_button_selected_stroke">#00000000</color>
 
     <color name="dark_main_bg">#2D2D2D</color>
     <color name="dark_main_fg">#e1e1e1</color>
@@ -23,21 +36,31 @@
     <color name="dark_channel_even">@color/dark_main_bg</color>
     <color name="dark_channel_odd_text">@color/dark_main_fg</color>
     <color name="dark_channel_even_text">@color/dark_main_fg</color>
+    <color name="dark_button">@color/primary</color>
+    <color name="dark_button_alt">@color/alternate</color>
+    <color name="dark_button_selected">@color/leaf</color>
+    <color name="dark_button_stroke">#3dFFFFFF</color>
+    <color name="dark_button_alt_stroke">#3d000000</color>
+    <color name="dark_button_selected_stroke">#3d000000</color>
+    <color name="dark_button_text">@color/primary_text</color>
+    <color name="dark_button_alt_text">@color/alternate_text</color>
+    <color name="dark_button_selected_text">@color/leaf_text</color>
 
     <color name="leaf">@color/purple</color>
-    <color name="leaf_pressed">@color/purple_dark</color>
-    <color name="leaf_selected">@color/purple_dark</color>
+    <color name="leaf_text">@color/black</color>
+    <color name="leaf_pressed">@color/purple_plum</color>
+    <color name="leaf_pressed_text">@color/black</color>
+    <color name="leaf_selected">@color/purple_plum</color>
+    <color name="leaf_selected_text">@color/white</color>
     <color name="leaf_linked">#A79C35</color>
+    <color name="leaf_linked_text">@color/black</color>
     <color name="leaf_linked_selected">#D8BA1D</color>
+    <color name="leaf_linked_selected_text">@color/black</color>
 
     <color name="empty_selected">@color/blue_sky</color>
     <color name="empty_linked">#B07419</color>
     <color name="empty_linked_selected">#D8944B</color>
 
-    <color name="focus_leaf">#f0f0f0</color>
-    <color name="focus_leaf_pressed">#c0c0c0</color>
-    <color name="focus_leaf_active">#c0c0c0</color>
-    <color name="focus_leaf_active_pressed">#808080</color>
 
     <color name="channel_button_bg">#BABABA</color>
     <color name="channel_button_fg">#2E2E2E</color>
@@ -45,14 +68,5 @@
     <color name="interface_bg">#f0f0f0</color>
     <color name="interface_fg">#2a2a2a</color>
 
-    <color name="line_label_channel_even_line_odd">#4d4d4d</color>
-    <color name="line_label_channel_even_line_even">#5d5d5d</color>
-    <color name="line_label_channel_odd_line_odd">#acacac</color>
-    <color name="line_label_channel_odd_line_even">#bcbcbc</color>
-
-    <color name="bg_dark">#2d2d2d</color>
-    <color name="bg_light">#efefef</color>
-
     <color name="drop_down_bg">?attr/drop_down_bg</color>
-
 </resources>

@@ -260,39 +260,20 @@ class LeafButton(
         }
 
         val activity = this.get_activity()
+        val palette = activity.view_model.palette!!
         val background = (this.background as LayerDrawable).findDrawableByLayerId(R.id.leaf_background)
-        (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_lines).setTint(activity.palette.lines)
+        (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_lines).setTint(palette.lines)
         when (state) {
-            0 -> {
-                background.setTint(activity.palette.channel_odd)
-            }
-            2,18 -> {
-                background.setTint(activity.palette.leaf)
-            }
-            4,20 -> {
-                background.setTint(activity.palette.selection)
-            }
-            6,22 -> {
-                background.setTint(activity.palette.leaf_selected)
-            }
-            8,24 -> {
-                background.setTint(activity.palette.link_empty)
-            }
-            10,26 -> {
-                background.setTint(activity.palette.link)
-            }
-            12, 28 -> {
-                background.setTint(activity.palette.link_empty_selected)
-            }
-            14, 30 -> {
-                background.setTint(activity.palette.link_selected)
-            }
-            16 -> {
-                background.setTint(activity.palette.channel_even)
-            }
-            else -> {
-                background.setTint(activity.palette.leaf_invalid)
-            }
+            0 -> background.setTint(palette.channel_odd)
+            2,18 -> background.setTint(palette.leaf)
+            4,20 -> background.setTint(palette.selection)
+            6,22 -> background.setTint(palette.leaf_selected)
+            8,24 -> background.setTint(palette.link_empty)
+            10,26 -> background.setTint(palette.link)
+            12, 28 -> background.setTint(palette.link_empty_selected)
+            14, 30 -> background.setTint(palette.link_selected)
+            16 -> background.setTint(palette.channel_even)
+            else -> background.setTint(palette.leaf_invalid)
         }
     }
 

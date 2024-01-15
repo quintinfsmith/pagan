@@ -27,9 +27,9 @@
             android:layout_height="wrap_content" />
     </LinearLayout>
 
-    <TextView
-        android:id="@+id/btnChoosePercussion"
+    <com.qfs.pagan.StdButton
         android:theme="@style/button"
+        android:id="@+id/btnChoosePercussion"
         android:layout_marginTop="@dimen/normal_padding"
         android:layout_marginBottom="@dimen/normal_padding"
         android:gravity="center"
@@ -46,7 +46,7 @@
                 android:layout_weight="1"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"/>
-            <ImageView
+            <com.qfs.pagan.IconButton
                 android:id="@+id/btnRemoveLine"
                 android:theme="@style/icon_button"
                 android:gravity="center"
@@ -59,19 +59,19 @@
                 android:layout_width="@dimen/normal_padding"
                 android:layout_height="wrap_content"/>
 
-            <ImageView
-                android:id="@+id/btnInsertLine"
+            <com.qfs.pagan.IconButton
                 android:theme="@style/icon_button"
+                android:id="@+id/btnInsertLine"
                 android:gravity="center"
                 app:srcCompat="@drawable/insert_line"
                 android:layout_width="62dp"
                 android:layout_height="wrap_content"
                 android:contentDescription="Insert Line"/>
 
-        <ImageView
+        <com.qfs.pagan.IconButton
             android:visibility="gone"
-            android:id="@+id/btnLineVolumePopup"
             android:theme="@style/icon_button"
+            android:id="@+id/btnLineVolumePopup"
             app:srcCompat="@drawable/volume"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

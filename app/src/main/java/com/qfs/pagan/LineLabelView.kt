@@ -14,10 +14,6 @@ import com.qfs.pagan.InterfaceLayer as OpusManager
 
 class LineLabelView(context: Context, var channel: Int, var line_offset: Int): AppCompatTextView(ContextThemeWrapper(context, R.style.line_label)),
     View.OnTouchListener {
-    companion object {
-        private val STATE_FOCUSED = intArrayOf(R.attr.state_focused)
-        private val STATE_CHANNEL_EVEN = intArrayOf(R.attr.state_channel_even)
-    }
 
     /*
      * update_queued exists to handle the liminal state between being detached and being destroyed
@@ -239,24 +235,25 @@ class LineLabelView(context: Context, var channel: Int, var line_offset: Int): A
         }
 
         val activity = this.get_activity()
-        (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_lines).setTint(activity.palette.lines)
+        val palette = activity.view_model.palette!!
+        (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_lines).setTint(palette.lines)
         val background = (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)
         when (state) {
             1 -> {
-                this.setTextColor(activity.palette.label_selected_text)
-                background.setTint(activity.palette.selection)
+                this.setTextColor(palette.label_selected_text)
+                background.setTint(palette.selection)
             }
             2 -> {
-                this.setTextColor(activity.palette.channel_even_text)
-                background.setTint(activity.palette.channel_even)
+                this.setTextColor(palette.channel_even_text)
+                background.setTint(palette.channel_even)
             }
             3 -> {
-                this.setTextColor(activity.palette.label_selected_text)
-                background.setTint(activity.palette.selection)
+                this.setTextColor(palette.label_selected_text)
+                background.setTint(palette.selection)
             }
             else -> {
-                this.setTextColor(activity.palette.channel_odd_text)
-                background.setTint(activity.palette.channel_odd)
+                this.setTextColor(palette.channel_odd_text)
+                background.setTint(palette.channel_odd)
             }
         }
     }

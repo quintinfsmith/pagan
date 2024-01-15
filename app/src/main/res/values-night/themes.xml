@@ -18,7 +18,6 @@
         <item name="label_fg_focused">#000000</item>
         <item name="popup_fg">?attr/colorOnPrimary</item>
         <item name="popup_bg">?attr/colorPrimaryVariant</item>
-        <item name="context_menu_bg">@color/dark_main_bg</item>
 
         <item name="button_fg_default">?attr/colorOnPrimary</item>
         <item name="button_fg_pressed">?attr/colorOnPrimary</item>

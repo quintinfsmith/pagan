@@ -25,7 +25,6 @@
         <item name="button_bg_default">?attr/colorPrimary</item>
         <item name="button_bg_pressed">?attr/colorPrimaryVariant</item>
         <item name="button_stroke_color">#00423B2D</item>
-        <item name="context_menu_bg">#225B2E04</item>
 
         <item name="label_bg">?attr/leaf_bg_default</item>
         <item name="label_bg_focused">?attr/leaf_bg_focused</item>

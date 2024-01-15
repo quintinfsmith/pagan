@@ -117,9 +117,9 @@
         <item name="android:paddingLeft">5dp</item>
         <item name="android:paddingRight">5dp</item>
 
-        <item name="android:background">@color/numberselector_bg</item>
-        <item name="android:textColor">@color/numberselector_fg</item>
+        <item name="android:background">@drawable/button</item>
     </style>
+
 
     <style name="load_option" parent="@android:style/Widget.TextView">
         <item name="android:gravity">center_vertical|center_horizontal</item>

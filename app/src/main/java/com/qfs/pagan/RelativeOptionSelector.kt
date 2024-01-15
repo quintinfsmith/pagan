@@ -1,6 +1,7 @@
 package com.qfs.pagan
 
 import android.content.Context
+import android.graphics.drawable.LayerDrawable
 import android.util.AttributeSet
 import android.view.Gravity.CENTER
 import android.view.View
@@ -61,6 +62,35 @@ class RelativeOptionSelector(context: Context, attrs: AttributeSet) : LinearLayo
             super.onLayout(isChanged, left, top, right, bottom)
             this.text = resources.getString(this._value)
             this.gravity = CENTER
+        }
+
+        override fun drawableStateChanged() {
+            super.drawableStateChanged()
+            var state = 0
+
+            for (item in this.drawableState) {
+                state += when (item) {
+                    R.attr.state_active -> 1
+                    else -> 0
+                }
+            }
+
+            val activity = (this.context as ContextThemeWrapper).baseContext as MainActivity
+            val palette = activity.view_model.palette!!
+            val background = (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)
+            val stroke = (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_stroke)
+            when (state) {
+                0 -> {
+                    background.setTint(palette.button)
+                    stroke.setTint(palette.button_stroke)
+                    this.setTextColor(palette.button_text)
+                }
+                else -> {
+                    background.setTint(palette.button_selected)
+                    stroke.setTint(palette.button_selected_stroke)
+                    this.setTextColor(palette.button_selected_text)
+                }
+            }
         }
     }
 

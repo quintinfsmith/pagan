@@ -17,7 +17,6 @@
 
     <LinearLayout
         android:id="@+id/llContextMenu"
-        android:background="?attr/context_menu_bg"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"

@@ -7,11 +7,14 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.DialogInterface
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.database.Cursor
+import android.graphics.Color
+import android.graphics.drawable.LayerDrawable
 import android.media.midi.MidiDeviceInfo
 import android.net.Uri
 import android.os.Build
@@ -968,11 +971,10 @@ class MainActivity : AppCompatActivity() {
             val rvTuningMap = viewInflated.findViewById<TuningMapRecycler>(R.id.rvTuningMap)
             rvTuningMap.adapter = TuningMapRecyclerAdapter(rvTuningMap, opus_manager.tuning_map.clone())
 
-            AlertDialog.Builder(main_fragment.context, R.style.AlertDialog)
+            val dialog = AlertDialog.Builder(main_fragment.context, R.style.AlertDialog)
                 .setTitle(resources.getString(R.string.dlg_tuning))
                 .setView(viewInflated)
                 .setPositiveButton(android.R.string.ok) { dialog, _ ->
-
                     opus_manager.remember {
                         opus_manager.set_tuning_map(
                             (rvTuningMap.adapter as TuningMapRecyclerAdapter).tuning_map
@@ -982,10 +984,13 @@ class MainActivity : AppCompatActivity() {
 
                     dialog.dismiss()
                 }
-                .setNegativeButton(android.R.string.cancel) { dialog, _ ->
+                .setNeutralButton(android.R.string.cancel) { dialog, _ ->
                     dialog.cancel()
                 }
                 .show()
+
+            this._adjust_dialog_colors(dialog)
+
 
             val default_value = opus_manager.tuning_map.size
 
@@ -1041,6 +1046,29 @@ class MainActivity : AppCompatActivity() {
             this.drawer_close()
         }
     }
+    private fun _adjust_dialog_colors(dialog: AlertDialog) {
+        val palette = this.view_model.palette!!
+        //val neutral_button = dialog.getButton(DialogInterface.BUTTON_NEUTRAL)
+        //neutral_button.foreground = this.getDrawable(R.drawable.button)
+        //(neutral_button.foreground as LayerDrawable).findDrawableByLayerId(R.id.tintable_background).setTint(palette.button)
+        //(neutral_button.foreground as LayerDrawable).findDrawableByLayerId(R.id.tintable_stroke).setTint(palette.button_stroke)
+        //neutral_button.setTextColor(palette.button_text)
+
+        val neutral_button = dialog.getButton(DialogInterface.BUTTON_NEUTRAL)
+        neutral_button.foreground = this.getDrawable(R.drawable.button)
+        (neutral_button.foreground as LayerDrawable).findDrawableByLayerId(R.id.tintable_background).setTint(palette.button)
+        (neutral_button.foreground as LayerDrawable).findDrawableByLayerId(R.id.tintable_stroke).setTint(palette.button_stroke)
+        neutral_button.setTextColor(palette.button_text)
+
+        val positive_button = dialog.getButton(DialogInterface.BUTTON_POSITIVE)
+        positive_button.setBackgroundColor(Color.BLACK)
+        positive_button.background = this.getDrawable(R.drawable.button)
+
+        (positive_button.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_background).setTint(palette.button)
+        (positive_button.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_stroke).setTint(palette.button_stroke)
+        positive_button.setTextColor(Color.RED)
+    }
+
 
     private fun setup_project_config_drawer_export_button() {
         val export_options = this.get_exportable_options()
@@ -1410,18 +1438,19 @@ class MainActivity : AppCompatActivity() {
         input.setText(this.get_opus_manager().project_name)
 
         val opus_manager = this.get_opus_manager()
-
-        AlertDialog.Builder(main_fragment.context, R.style.AlertDialog)
-            .setTitle(getString(R.string.dlg_change_name))
-            .setView(viewInflated)
-            .setPositiveButton(android.R.string.ok) { dialog, _ ->
-                opus_manager.set_project_name(input.text.toString())
-                dialog.dismiss()
-            }
-            .setNegativeButton(android.R.string.cancel) { dialog, _ ->
-                dialog.cancel()
-            }
-            .show()
+        this._adjust_dialog_colors(
+            AlertDialog.Builder(main_fragment.context, R.style.AlertDialog)
+                .setTitle(getString(R.string.dlg_change_name))
+                .setView(viewInflated)
+                .setPositiveButton(android.R.string.ok) { dialog, _ ->
+                    opus_manager.set_project_name(input.text.toString())
+                    dialog.dismiss()
+                }
+                .setNegativeButton(android.R.string.cancel) { dialog, _ ->
+                    dialog.cancel()
+                }
+                .show()
+        )
     }
 
     internal fun <T> dialog_popup_menu(title: String, options: List<Pair<T, String>>, default: T? = null, callback: (index: Int, value: T) -> Unit) {
@@ -1444,6 +1473,7 @@ class MainActivity : AppCompatActivity() {
         val dialog = AlertDialog.Builder(this, R.style.AlertDialog)
             .setView(viewInflated)
             .show()
+        this._adjust_dialog_colors(dialog)
 
         close_button.setOnClickListener {
             dialog.dismiss()
@@ -1513,8 +1543,9 @@ class MainActivity : AppCompatActivity() {
                 this._number_selector_defaults[title] = output_value
                 callback(output_value)
             }
-            .setNegativeButton(android.R.string.cancel) { _, _ -> }
+            .setNeutralButton(android.R.string.cancel) { _, _ -> }
             .show()
+        this._adjust_dialog_colors(dialog)
 
         number_input.set_range(min_value, max_value)
         number_input.setText("$coerced_default_value")
@@ -1532,6 +1563,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun dialog_confirm(title: String, callback: () -> Unit) {
+        this._adjust_dialog_colors(
         AlertDialog.Builder(this, R.style.AlertDialog)
             .setTitle(title)
             .setCancelable(true)
@@ -1543,24 +1575,27 @@ class MainActivity : AppCompatActivity() {
                 dialog.dismiss()
             }
             .show()
+        )
     }
 
 
     private fun dialog_save_project(callback: () -> Unit) {
         if (this.get_opus_manager().has_changed_since_save()) {
-            AlertDialog.Builder(this, R.style.AlertDialog)
-                .setTitle(getString(R.string.dialog_save_warning_title))
-                .setCancelable(true)
-                .setPositiveButton(getString(R.string.dlg_confirm)) { dialog, _ ->
-                    this@MainActivity.project_save()
-                    dialog.dismiss()
-                    callback()
-                }
-                .setNegativeButton(getString(R.string.dlg_decline)) { dialog, _ ->
-                    dialog.dismiss()
-                    callback()
-                }
-                .show()
+            this._adjust_dialog_colors(
+                AlertDialog.Builder(this, R.style.AlertDialog)
+                    .setTitle(getString(R.string.dialog_save_warning_title))
+                    .setCancelable(true)
+                    .setPositiveButton(getString(R.string.dlg_confirm)) { dialog, _ ->
+                        this@MainActivity.project_save()
+                        dialog.dismiss()
+                        callback()
+                    }
+                    .setNegativeButton(getString(R.string.dlg_decline)) { dialog, _ ->
+                        dialog.dismiss()
+                        callback()
+                    }
+                    .show()
+            )
         } else {
             callback()
         }
@@ -1570,18 +1605,19 @@ class MainActivity : AppCompatActivity() {
         val main_fragment = this.get_active_fragment()
 
         val title = this.get_opus_manager().project_name
-
-        AlertDialog.Builder(main_fragment!!.context, R.style.AlertDialog)
-            .setTitle(resources.getString(R.string.dlg_delete_title, title))
-            .setPositiveButton(android.R.string.ok) { dialog, _ ->
-                this@MainActivity.project_delete()
-                dialog.dismiss()
-                this@MainActivity.drawer_close()
-            }
-            .setNegativeButton(android.R.string.cancel) { dialog, _ ->
-                dialog.cancel()
-            }
-            .show()
+        this._adjust_dialog_colors(
+            AlertDialog.Builder(main_fragment!!.context, R.style.AlertDialog)
+                .setTitle(resources.getString(R.string.dlg_delete_title, title))
+                .setPositiveButton(android.R.string.ok) { dialog, _ ->
+                    this@MainActivity.project_delete()
+                    dialog.dismiss()
+                    this@MainActivity.drawer_close()
+                }
+                .setNegativeButton(android.R.string.cancel) { dialog, _ ->
+                    dialog.cancel()
+                }
+                .show()
+        )
     }
 
     fun select_midi_file() {
@@ -1864,6 +1900,7 @@ class MainActivity : AppCompatActivity() {
         return ColorPalette(
             "Default",
             background = this.getColor(if (night_mode) R.color.dark_main_bg else R.color.light_main_bg),
+            foreground = this.getColor(if (night_mode) R.color.dark_main_fg else R.color.light_main_fg),
             lines = this.getColor(if (night_mode) R.color.dark_table_lines else R.color.light_table_lines),
             leaf = this.getColor(R.color.leaf),
             leaf_text = this.getColor(R.color.leaf_text),

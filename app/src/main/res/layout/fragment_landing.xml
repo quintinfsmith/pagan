@@ -107,7 +107,7 @@
             android:layout_width="match_parent"
             android:layout_height="@dimen/normal_padding" />
 
-        <TextView
+        <com.qfs.pagan.PaganTextView
             android:clickable="true"
             android:id="@+id/linkLicense"
             android:layout_width="match_parent"
@@ -117,7 +117,7 @@
             android:text="@string/license_brief"
             android:theme="@style/front_text" />
 
-        <TextView
+        <com.qfs.pagan.PaganTextView
             android:clickable="true"
             android:id="@+id/linkSource"
             android:layout_width="match_parent"

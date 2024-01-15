@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<com.qfs.pagan.PaganDrawerLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
@@ -7,14 +7,12 @@
     android:layout_width="@dimen/config_width"
     android:layout_height="match_parent"
     android:padding="@dimen/config_padding_outer"
-    android:clickable="true"
-    android:background="?attr/drawer_bg" >
+    android:clickable="true">
 
-    <ImageView
+    <com.qfs.pagan.ConfigImage
         android:id="@+id/imageView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:tint="?attr/button_bg_default"
         app:srcCompat="@drawable/settings_50" />
 
     <LinearLayout
@@ -183,4 +181,4 @@
             android:layout_height="wrap_content"/>
     </LinearLayout>
 
-</LinearLayout>
+</com.qfs.pagan.PaganDrawerLayout>

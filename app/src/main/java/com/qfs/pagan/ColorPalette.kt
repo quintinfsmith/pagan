@@ -9,6 +9,7 @@ import kotlinx.serialization.Serializable
 data class ColorPalette(
     val alias: String,
     val background: Int = Color.parseColor("#1d1d1d"),
+    val foreground: Int = 0,
     val lines: Int = Color.parseColor("#000000"),
     val leaf_invalid: Int = Color.parseColor("#000000"),
     val leaf_invalid_text: Int = Color.parseColor("#000000"),

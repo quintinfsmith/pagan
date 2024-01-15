@@ -24,8 +24,8 @@ class LandingPageFragment : PaganFragment<FragmentLandingBinding>() {
         val btn_loadProject = view.findViewById<View>(R.id.btnFrontLoad)
         val btn_importMidi = view.findViewById<View>(R.id.btnFrontImport)
         val btn_settings = view.findViewById<View>(R.id.btnFrontSettings)
-        val linkSource = view.findViewById<View>(R.id.linkSource)
-        val btn_linkLicense = view.findViewById<View>(R.id.linkLicense)
+        val linkSource = view.findViewById<TextView>(R.id.linkSource)
+        val btn_linkLicense = view.findViewById<TextView>(R.id.linkLicense)
 
         btn_settings.setOnClickListener {
             this.get_main().navigate(R.id.SettingsFragment)

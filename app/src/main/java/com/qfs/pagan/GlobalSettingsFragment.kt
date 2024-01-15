@@ -126,6 +126,7 @@ class GlobalSettingsFragment : PaganFragment<FragmentGlobalSettingsBinding>() {
                 main.save_configuration()
             }
         })
+
     }
 
     private fun interact_btnChooseSoundFont(view: View) {

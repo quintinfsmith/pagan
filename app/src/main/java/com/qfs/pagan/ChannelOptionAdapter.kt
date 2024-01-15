@@ -1,6 +1,7 @@
 package com.qfs.pagan
 
 import android.content.Context
+import android.graphics.drawable.LayerDrawable
 import android.view.ContextThemeWrapper
 import android.view.Gravity
 import android.view.View
@@ -8,6 +9,7 @@ import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.apres.soundfont.SoundFont
 import kotlin.math.roundToInt
@@ -20,6 +22,23 @@ class ChannelOptionAdapter(
     class ChannelOptionViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
     class BackLinkView(context: Context): LinearLayout(context) {
         var view_holder: ChannelOptionViewHolder? = null
+        init {
+            this.background = AppCompatResources.getDrawable(context, R.drawable.button)
+        }
+
+        override fun drawableStateChanged() {
+            super.drawableStateChanged()
+            var context = this.context
+            while (context !is MainActivity) {
+                context = (context as ContextThemeWrapper).baseContext
+            }
+
+            val palette = context.view_model.palette!!
+            val background = (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)
+            val stroke = (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_stroke)
+            background.setTint(palette.button)
+            stroke.setTint(palette.button_stroke)
+        }
     }
 
     private var channel_count = 0

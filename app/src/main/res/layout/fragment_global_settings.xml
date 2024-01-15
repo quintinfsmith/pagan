@@ -9,10 +9,11 @@
     android:layout_height="match_parent"
     tools:ignore="MissingDefaultResource">
         <LinearLayout
+            android:paddingTop="@dimen/normal_padding"
             android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
-                <TextView
+                <com.qfs.pagan.PaganTextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/label_settings_sf"
@@ -26,6 +27,8 @@
                     android:text="@string/btn_settings_sfmute"
                     android:layout_weight="1"
                     android:layout_width="0dp"
+                    android:maxLines="1"
+                    android:ellipsize="end"
                     android:layout_height="wrap_content" />
 
         </LinearLayout>
@@ -66,7 +69,7 @@
             android:paddingBottom="8dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
-                <TextView
+                <com.qfs.pagan.PaganTextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/label_settings_playback_quality"
@@ -87,7 +90,7 @@
             android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
-                <TextView
+                <com.qfs.pagan.PaganTextView
                     android:text="@string/label_settings_relative"
                     android:paddingStart="15dp"
                     android:layout_weight="1"

@@ -135,7 +135,7 @@ class ChannelOptionAdapter(
                 this.interact_btnTogglePercussionVisibility(holder.itemView as BackLinkView)
             }
         } else {
-            remove_button.text = holder.itemView.context.resources.getString(R.string.percussion_label)
+            remove_button.text = holder.itemView.context.resources.getString(R.string.remove_channel)
             remove_button.setOnClickListener {
                 this.interact_btnRemoveChannel(holder.itemView as BackLinkView)
             }

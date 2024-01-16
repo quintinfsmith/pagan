@@ -22,7 +22,7 @@
         android:checkedButton="@id/rbLinkModeLink"
         android:layout_height="wrap_content"
         android:layout_width="match_parent">
-        <RadioButton
+        <com.qfs.pagan.PaganRadioButton
             android:id="@+id/rbLinkModeCopy"
             android:layout_margin="0dp"
             android:theme="@style/link_mode_button"
@@ -34,7 +34,7 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"/>
-        <RadioButton
+        <com.qfs.pagan.PaganRadioButton
             android:id="@+id/rbLinkModeMove"
             android:layout_margin="0dp"
             android:theme="@style/link_mode_button"
@@ -47,7 +47,7 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"/>
-        <RadioButton
+        <com.qfs.pagan.PaganRadioButton
             android:id="@+id/rbLinkModeLink"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

@@ -3,7 +3,6 @@ package com.qfs.pagan
 import android.content.Context
 import android.util.AttributeSet
 import android.view.ContextThemeWrapper
-import android.widget.TextView
 
 class PaganTextView(context: Context, attrs: AttributeSet? = null): androidx.appcompat.widget.AppCompatTextView(context, attrs) {
     override fun drawableStateChanged() {
@@ -14,6 +13,7 @@ class PaganTextView(context: Context, attrs: AttributeSet? = null): androidx.app
         }
 
         val palette = context.view_model.palette!!
+
         this.setTextColor(palette.foreground)
     }
 }

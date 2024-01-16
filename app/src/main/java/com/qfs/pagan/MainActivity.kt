@@ -468,7 +468,6 @@ class MainActivity : AppCompatActivity() {
         this._binding.appBarMain.toolbar.overflowIcon?.setTint(this.view_model.palette!!.title_bar_text)
         this._binding.drawerLayout.setBackgroundColor(this.view_model.palette!!.background)
 
-
         /*
             TODO: I think this setOf may be making my navigation more complicated
             than it needs to be. Needs investigation.

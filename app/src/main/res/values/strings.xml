@@ -80,7 +80,7 @@
     <string name="feedback_on_copy">Now working on copy</string>
     <string name="default_imported_midi_title">Imported Midi</string>
     <string name="feedback_exported_to_midi">Exported to midi</string>
-    <string name="dialog_save_warning_title">Save Current Project First?</string>
+    <string name="dialog_save_warning_title">Save Current Project?</string>
     <string name="dlg_confirm">Yes</string>
     <string name="dlg_decline">No</string>
     <string name="dlg_set_tempo">Set Tempo (BPM)</string>

@@ -17,7 +17,7 @@ open class PaganSeekBar(context: Context, attrs: AttributeSet? = null): androidx
             intArrayOf(android.R.attr.state_enabled)
         )
 
-        val colors = intArrayOf( palette.selection )
+        val colors = intArrayOf( palette.leaf )
         this.thumbTintList = ColorStateList( states, colors )
         this.progressDrawable.setTintList(ColorStateList( states, colors ))
 

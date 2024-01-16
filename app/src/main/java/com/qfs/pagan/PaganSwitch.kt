@@ -22,15 +22,23 @@ open class PaganSwitch(context: Context, attrs: AttributeSet? = null): SwitchCom
 
         val fg = Color.valueOf(palette.foreground)
         val bg = Color.valueOf(palette.background)
-        val colors = intArrayOf(
-            palette.selection,
+        val colors_track = intArrayOf(
+            palette.leaf,
             Color.valueOf(
-                (fg.red() + bg.red()) / 2f,
-                (fg.green() + bg.green()) / 2f,
-                (fg.blue() + bg.blue()) / 2f
+                (fg.red() * .4f) + (bg.red() * .6f),
+                (fg.green() * .4f) + (bg.green() * .6f),
+                (fg.blue() * .4f) + (bg.blue() * .6f)
             ).toArgb()
         )
-        this.thumbTintList = ColorStateList( states, colors )
-        this.trackDrawable.setTintList(ColorStateList( states, colors ))
+        val colors_thumb = intArrayOf(
+            palette.leaf,
+            Color.valueOf(
+                (fg.red() * .6f) + (bg.red() * .4f),
+                (fg.green() * .6f) + (bg.green() * .4f),
+                (fg.blue() * .6f) + (bg.blue() * .4f),
+            ).toArgb()
+        )
+        this.thumbTintList = ColorStateList( states, colors_thumb )
+        this.trackDrawable.setTintList(ColorStateList( states, colors_track ))
     }
 }

@@ -1,6 +1,7 @@
 package com.qfs.pagan
 
 import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -40,6 +41,11 @@ class PopupMenuRecyclerAdapter<T>(
         text_view.setOnClickListener {
             this._callback( position, this._options[position].first)
         }
+        val palette = (holder.itemView.context as MainActivity).view_model.palette!!
+        val new_bg = GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, intArrayOf(palette.background, palette.foreground,palette.background))
+        new_bg.innerRadiusRatio = 1.7f
+        holder.itemView.background = new_bg
+        text_view.background.setTint(palette.background)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PopupMenuRecyclerViewHolder {

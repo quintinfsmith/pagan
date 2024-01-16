@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item>
+    <item android:id="@+id/tintable_gradient">
         <shape>
             <gradient
                 android:angle="0"
-                android:startColor="@null"
-                android:endColor="@null"
+                android:startColor="#000000"
+                android:centerColor="#000000"
+                android:endColor="#000000"
                 android:type="linear" />
         </shape>
     </item>

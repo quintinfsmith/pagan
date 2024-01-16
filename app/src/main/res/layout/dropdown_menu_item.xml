@@ -6,6 +6,7 @@
     android:layout_height="wrap_content">
     <com.qfs.pagan.PaganTextView
         android:id="@+id/tvTextView"
+        android:background="#000000"
         android:textSize="@dimen/dropdown_textsize"
         android:paddingTop="@dimen/dropdown_item_padding_top"
         android:paddingBottom="@dimen/dropdown_item_padding_top"

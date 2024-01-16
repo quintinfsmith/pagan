@@ -25,6 +25,7 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewGroup.MarginLayoutParams
 import android.view.WindowManager
 import android.widget.EditText
 import android.widget.ImageView
@@ -1068,8 +1069,11 @@ class MainActivity : AppCompatActivity() {
 
         dialog.window!!.decorView.background.setTint(palette.background)
         dialog.window!!.decorView.background.setTint(palette.background)
+        val padding = this.resources.getDimension(R.dimen.alert_padding).roundToInt()
+        dialog.window!!.decorView.setPadding(padding, padding, padding, padding)
 
         dialog.getButton(DialogInterface.BUTTON_NEGATIVE).apply {
+            (this.layoutParams as MarginLayoutParams).marginEnd = this@MainActivity.resources.getDimension(R.dimen.alert_padding).toInt()
             this.backgroundTintList = null
             this.background = this@MainActivity.getDrawable(R.drawable.button)
             (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)

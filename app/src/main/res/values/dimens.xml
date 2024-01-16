@@ -19,4 +19,5 @@
     <dimen name="config_item_padding">2dp</dimen>
     <dimen name="config_width">248dp</dimen>
     <dimen name="number_selector_spacing">2dp</dimen>
+    <dimen name="alert_padding">6dp</dimen>
 </resources>

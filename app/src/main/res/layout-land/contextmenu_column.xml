@@ -1,32 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
-xmlns:android="http://schemas.android.com/apk/res/android"
-android:id="@+id/llContextCol"
-android:layout_width="wrap_content"
-android:layout_height="match_parent"
-android:paddingStart="@dimen/normal_padding"
-android:paddingEnd="@dimen/normal_padding"
-android:orientation="vertical"
-xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/llContextCol"
+    android:orientation="vertical"
+    android:layout_width="wrap_content"
+    android:layout_height="match_parent">
+
     <com.qfs.pagan.IconButton
-        android:theme="@style/icon_button"
         android:id="@+id/btnInsertBeat"
-        android:layout_gravity="center"
+        android:theme="@style/icon_button"
+        app:srcCompat="@drawable/insert_beat"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:srcCompat="@drawable/insert_beat"
         android:contentDescription="Insert Beat" />
 
-    <Space
-        android:layout_height="@dimen/normal_padding"
-        android:layout_width="match_parent"/>
-
     <com.qfs.pagan.IconButton
-        android:theme="@style/icon_button"
         android:id="@+id/btnRemoveBeat"
-        android:layout_gravity="center"
+        android:theme="@style/icon_button"
+        app:srcCompat="@drawable/remove_beat"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:srcCompat="@drawable/remove_beat"
+        android:layout_marginTop="@dimen/number_selector_spacing"
         android:contentDescription="Remove Beat" />
+
 </LinearLayout>

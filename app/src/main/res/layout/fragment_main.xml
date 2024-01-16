@@ -20,7 +20,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingTop="@dimen/normal_padding">
+        android:padding="@dimen/number_selector_spacing">
         <include
             android:id="@+id/llContextCell"
             layout="@layout/contextmenu_cell"/>

@@ -14,9 +14,8 @@
         <com.qfs.pagan.RelativeOptionSelector
             android:orientation="vertical"
             android:id="@+id/rosRelativeOption"
-            android:layout_marginEnd="@dimen/normal_padding"
-            android:layout_marginStart="@dimen/normal_padding"
-            android:layout_marginTop="5px"
+            android:paddingEnd="@dimen/number_selector_spacing"
+            android:paddingBottom="@dimen/number_selector_spacing"
             android:minWidth="@dimen/relative_option_width"
             android:layout_width="wrap_content"
             android:layout_height="match_parent" />
@@ -30,11 +29,7 @@
                 android:id="@+id/clTextViews"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:paddingEnd="@dimen/normal_padding"
-                android:paddingStart="@dimen/normal_padding"
-                android:paddingTop="@dimen/normal_padding"
-                android:paddingBottom="@dimen/normal_padding">
+                android:layout_weight="1">
 
                 <com.qfs.pagan.IconButton
                     android:theme="@style/icon_button"
@@ -103,12 +98,12 @@
 
             <com.qfs.pagan.NumberSelector
                 xmlns:custom="http://schemas.android.com/apk/res-auto"
+                android:paddingBottom="@dimen/number_selector_spacing"
+                android:paddingTop="@dimen/number_selector_spacing"
                 android:id="@+id/nsOctave"
                 android:orientation="vertical"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:paddingLeft="@dimen/normal_padding"
-                android:paddingRight="@dimen/normal_padding"
                 custom:button_theme="1"
                 custom:min="0"
                 custom:max="7"/>
@@ -120,12 +115,9 @@
     <com.qfs.pagan.NumberSelector
         xmlns:custom="http://schemas.android.com/apk/res-auto"
         android:id="@+id/nsOffset"
-        android:layout_marginTop="@dimen/normal_padding"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:paddingLeft="@dimen/normal_padding"
-        android:paddingRight="@dimen/normal_padding"
         android:orientation="vertical"
         custom:min="0"
         custom:max="11"/>

@@ -21,8 +21,7 @@
                 android:orientation="vertical"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:paddingEnd="@dimen/normal_padding"
-                android:paddingStart="@dimen/normal_padding">
+                android:paddingStart="@dimen/number_selector_spacing">
 
                 <com.qfs.pagan.IconButton
                     android:theme="@style/icon_button"
@@ -32,33 +31,26 @@
                     android:text="Split"
                     android:contentDescription="@string/cd_split"
                     app:srcCompat="@drawable/split"/>
-                <Space
-                    android:layout_width="match_parent"
-                    android:layout_height="@dimen/normal_padding"/>
+
                 <com.qfs.pagan.IconButton
                     android:theme="@style/icon_button"
                     android:id="@+id/btnInsert"
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
+                    android:layout_marginTop="@dimen/number_selector_spacing"
                     android:contentDescription="@string/cd_insert"
                     android:text="Insert"
                     app:srcCompat="@drawable/insert" />
 
-                <Space
-                    android:layout_width="match_parent"
-                    android:layout_height="@dimen/normal_padding"/>
                 <com.qfs.pagan.IconButton
                     android:theme="@style/icon_button"
                     android:id="@+id/btnRemove"
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
                     android:contentDescription="@string/cd_remove"
+                    android:layout_marginTop="@dimen/number_selector_spacing"
                     android:text="Remove"
                     app:srcCompat="@drawable/remove" />
-
-                <Space
-                    android:layout_width="match_parent"
-                    android:layout_height="@dimen/normal_padding"/>
 
                 <com.qfs.pagan.IconButton
                     android:theme="@style/icon_button"
@@ -66,29 +58,29 @@
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
                     android:contentDescription="@string/cd_unset"
+                    android:layout_marginTop="@dimen/number_selector_spacing"
                     android:text="Unset"
                     app:srcCompat="@drawable/unset" />
-
-                <Space
-                    android:layout_width="match_parent"
-                    android:layout_height="@dimen/normal_padding"/>
 
                 <com.qfs.pagan.StdButton
                     android:theme="@style/icon_button"
                     android:id="@+id/btnDuration"
-                    android:layout_height="wrap_content"
+                    android:layout_height="58dp"
+                    android:paddingTop="0dp"
+                    android:paddingBottom="0dp"
                     android:layout_width="match_parent"
+                    android:layout_marginTop="@dimen/number_selector_spacing"
                     android:text="T" />
             </LinearLayout>
 
-            <com.qfs.pagan.NumberSelector xmlns:android="http://schemas.android.com/apk/res/android"
+            <com.qfs.pagan.NumberSelector
                 xmlns:custom="http://schemas.android.com/apk/res-auto"
                 android:orientation="horizontal"
                 android:id="@+id/nsOctave"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:paddingLeft="@dimen/normal_padding"
-                android:paddingRight="@dimen/normal_padding"
+                android:paddingStart="@dimen/number_selector_spacing"
+                android:paddingEnd="@dimen/number_selector_spacing"
                 custom:button_theme="1"
                 custom:min="0"
                 custom:max="7"/>
@@ -103,14 +95,12 @@
 
     </LinearLayout>
 
-    <com.qfs.pagan.NumberSelector xmlns:android="http://schemas.android.com/apk/res/android"
+    <com.qfs.pagan.NumberSelector
         xmlns:custom="http://schemas.android.com/apk/res-auto"
         android:orientation="horizontal"
         android:id="@+id/nsOffset"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:paddingLeft="@dimen/normal_padding"
-        android:paddingRight="@dimen/normal_padding"
         custom:min="0"
         custom:max="11"/>
 </LinearLayout>

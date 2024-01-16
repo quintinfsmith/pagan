@@ -119,6 +119,7 @@
             android:text="@string/btn_cfg_save" />
         <Space
             android:layout_weight="1"
+            android:minWidth="4dp"
             android:layout_width="0dp"
             android:layout_height="match_parent"/>
 
@@ -133,6 +134,7 @@
 
         <Space
             android:layout_weight="1"
+            android:minWidth="4dp"
             android:layout_width="0dp"
             android:layout_height="match_parent"/>
 
@@ -147,6 +149,7 @@
 
         <Space
             android:layout_weight="1"
+            android:minWidth="4dp"
             android:layout_width="0dp"
             android:layout_height="match_parent"/>
 

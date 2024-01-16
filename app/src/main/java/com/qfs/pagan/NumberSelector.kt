@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.LinearLayout
+import android.widget.Space
 import androidx.appcompat.view.ContextThemeWrapper
 import androidx.core.view.children
 import kotlin.math.roundToInt
@@ -169,7 +170,7 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
 
     private fun populate() {
         val orientation = this.orientation
-        val margin = resources.getDimension(R.dimen.normal_padding).roundToInt()
+        val margin = resources.getDimension(R.dimen.number_selector_spacing).roundToInt()
         for (i in 0 .. ((this.max - this.min) / 12)) {
             val new_linear_layout = LinearLayout(this.context)
             this.addView(new_linear_layout)
@@ -219,30 +220,16 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
         }
 
         this.children.forEachIndexed { i: Int, row: View ->
-            (row as ViewGroup).children.forEachIndexed { j: Int, button: View ->
-                val layout_params = button.layoutParams
-                if (orientation == HORIZONTAL) {
-                    (layout_params as MarginLayoutParams).setMargins(
-                        0,
-                        if (j != 0) {
-                            margin
-                        } else {
-                            0
-                        },
-                        0,
-                       0
-                    )
+            for (j in (row as ViewGroup).childCount - 1 downTo 1) {
+                val space = Space(row.context)
+                row.addView(space, j)
+
+                if (this.orientation == HORIZONTAL) {
+                    space.layoutParams.height = context.resources.getDimension(R.dimen.number_selector_spacing).roundToInt()
+                    space.layoutParams.width = MATCH_PARENT
                 } else {
-                    (layout_params as MarginLayoutParams).setMargins(
-                        if (j != 0) {
-                            margin
-                        } else {
-                            0
-                        },
-                        0,
-                        0,
-                        0
-                    )
+                    space.layoutParams.width = context.resources.getDimension(R.dimen.number_selector_spacing).roundToInt()
+                    space.layoutParams.height = MATCH_PARENT
                 }
             }
         }

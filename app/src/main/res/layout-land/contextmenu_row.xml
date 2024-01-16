@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/llContextRow"
     android:orientation="vertical"
     android:layout_width="wrap_content"
-    android:layout_height="match_parent"
-    android:paddingStart="@dimen/normal_padding"
-    android:paddingEnd="@dimen/normal_padding"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    android:layout_height="match_parent">
 
     <com.qfs.pagan.IconButton
         android:id="@+id/btnInsertLine"
@@ -14,11 +13,7 @@
         app:srcCompat="@drawable/insert_line"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:contentDescription="Insert Line"/>
-
-    <Space
-        android:layout_height="@dimen/normal_padding"
-        android:layout_width="wrap_content"/>
+        android:contentDescription="Insert Line" />
 
     <com.qfs.pagan.IconButton
         android:id="@+id/btnRemoveLine"
@@ -26,24 +21,16 @@
         app:srcCompat="@drawable/remove_line"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:contentDescription="Remove Line"/>
-
-    <Space
-        android:layout_height="@dimen/normal_padding"
-        android:layout_width="wrap_content"/>
+        android:layout_marginTop="@dimen/number_selector_spacing"
+        android:contentDescription="Remove Line" />
 
     <com.qfs.pagan.StdButton
         android:id="@+id/btnChoosePercussion"
         android:theme="@style/choose_percussion_button"
-        android:layout_marginTop="@dimen/normal_padding"
-        android:gravity="center"
         android:layout_width="match_parent"
-        android:layout_height="42dp"
+        android:layout_height="58dp"
+        android:layout_marginTop="@dimen/number_selector_spacing"
         android:text="Instrument..." />
-
-    <Space
-        android:layout_height="@dimen/normal_padding"
-        android:layout_width="wrap_content"/>
 
     <com.qfs.pagan.IconButton
         android:id="@+id/btnLineVolumePopup"
@@ -51,10 +38,11 @@
         app:srcCompat="@drawable/volume"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/number_selector_spacing"
         android:contentDescription="Line Volume"/>
 
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:visibility="gone">
         <com.qfs.pagan.PaganSeekBar
@@ -62,7 +50,7 @@
             android:visibility="gone"
             android:max="127"
             android:min="0"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content" />
     </LinearLayout>
 

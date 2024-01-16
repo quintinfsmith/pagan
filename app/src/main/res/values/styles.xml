@@ -10,6 +10,8 @@
     </style>
     <style name="choose_percussion_button" parent="button">
         <item name="android:textSize">18sp</item>
+        <item name="android:paddingTop">0dp</item>
+        <item name="android:paddingBottom">0dp</item>
     </style>
 
     <style name="recycler_option_text">

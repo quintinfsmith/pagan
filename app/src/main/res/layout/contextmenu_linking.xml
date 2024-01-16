@@ -4,7 +4,6 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="8dp"
     android:orientation="vertical"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
@@ -76,26 +75,20 @@
             android:src="@drawable/unlink"
             android:contentDescription="Remove Link" />
 
-        <Space
-            android:layout_width="4dp"
-            android:layout_height="match_parent"/>
-
         <com.qfs.pagan.IconButton
             android:theme="@style/icon_button"
-            android:layout_width="62dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/number_selector_spacing"
             android:src="@drawable/unlinkall"
             android:id="@+id/btnUnLinkAll"
             android:contentDescription="Remove All Links"/>
 
-        <Space
-            android:layout_width="4dp"
-            android:layout_height="match_parent"/>
-
         <com.qfs.pagan.IconButton
             android:theme="@style/icon_button"
-            android:layout_width="62dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/number_selector_spacing"
             android:src="@drawable/unset"
             android:id="@+id/btnEraseSelection"
             android:contentDescription="Clear Selection"/>

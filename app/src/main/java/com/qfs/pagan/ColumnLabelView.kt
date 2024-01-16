@@ -89,11 +89,16 @@ class ColumnLabelView(val view_holder: RecyclerView.ViewHolder): AppCompatTextVi
         val activity = (this.view_holder.bindingAdapter as ColumnLabelAdapter).get_activity()
         val palette = activity.view_model.palette!!
         (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_lines).setTint(palette.lines)
-        (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_background).setTint(
-            when (state) {
-                1 -> palette.selection
-                else -> palette.column_label
+        val background = (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)
+        when (state) {
+            1 -> {
+                background.setTint(palette.selection)
+                this.setTextColor(palette.label_selected_text)
             }
-        )
+            else -> {
+                background.setTint(palette.column_label)
+                this.setTextColor(palette.column_label_text)
+            }
+        }
     }
 }

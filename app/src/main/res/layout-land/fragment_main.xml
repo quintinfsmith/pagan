@@ -17,7 +17,6 @@ tools:context=".EditorFragment">
 
     <LinearLayout
         android:id="@+id/llContextMenu"
-        android:background="?attr/context_menu_bg"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:orientation="horizontal"

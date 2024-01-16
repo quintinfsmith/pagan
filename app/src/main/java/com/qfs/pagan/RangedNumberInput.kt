@@ -7,7 +7,7 @@ import android.view.KeyEvent
 import android.widget.TextView
 import kotlin.math.max
 
-class RangedNumberInput(context: Context, attrs: AttributeSet? = null): androidx.appcompat.widget.AppCompatEditText(context, attrs) {
+class RangedNumberInput(context: Context, attrs: AttributeSet? = null): PaganEditText(context, attrs) {
     var max: Int
     var min: Int
     var value_set_callback: ((RangedNumberInput) -> Unit)? = null

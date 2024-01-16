@@ -4,7 +4,7 @@
     android:background="@drawable/dropdown_line_gradient"
     android:paddingBottom="@dimen/stroke_leaf"
     android:layout_height="wrap_content">
-    <TextView
+    <com.qfs.pagan.PaganTextView
         android:id="@+id/tvTextView"
         android:textSize="@dimen/dropdown_textsize"
         android:paddingTop="@dimen/dropdown_item_padding_top"

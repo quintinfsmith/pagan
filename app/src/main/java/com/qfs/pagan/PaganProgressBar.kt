@@ -3,10 +3,10 @@ package com.qfs.pagan
 import android.content.Context
 import android.util.AttributeSet
 import android.view.ContextThemeWrapper
-import android.widget.TextView
+import android.widget.ProgressBar
 
-class PaganTextView(context: Context, attrs: AttributeSet? = null): androidx.appcompat.widget.AppCompatTextView(context, attrs) {
-    override fun drawableStateChanged() {
+open class PaganProgressBar(context: Context, attrs: AttributeSet? = null): ProgressBar(ContextThemeWrapper(context, R.style.progress_bar), attrs, android.R.attr.progressBarStyle) {
+    init {
         super.drawableStateChanged()
         var context = this.context
         while (context !is MainActivity) {
@@ -14,6 +14,6 @@ class PaganTextView(context: Context, attrs: AttributeSet? = null): androidx.app
         }
 
         val palette = context.view_model.palette!!
-        this.setTextColor(palette.foreground)
+        this.indeterminateDrawable.setTint(palette.leaf)
     }
 }

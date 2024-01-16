@@ -10,6 +10,7 @@ import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.content.res.AppCompatResources
+import androidx.core.view.children
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.apres.soundfont.SoundFont
 import kotlin.math.roundToInt
@@ -38,6 +39,12 @@ class ChannelOptionAdapter(
             val stroke = (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_stroke)
             background.setTint(palette.button)
             stroke.setTint(palette.button_stroke)
+            for (child in this.children) {
+                if (child !is TextView) {
+                    continue
+                }
+                child.setTextColor(palette.button_text)
+            }
         }
     }
 

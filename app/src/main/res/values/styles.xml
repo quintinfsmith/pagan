@@ -141,8 +141,12 @@
 
     <style name="AlertDialog" >
         <item name="android:windowIsFloating">true</item>
-        <item name="android:popupBackground">@color/dark_main_bg</item>
-        <item name="android:colorBackground">@color/dark_main_bg</item>
+    </style>
+    <style name="dialog_title">
+        <item name="android:textSize">22sp</item>
+        <item name="android:textFontWeight">300</item>
+        <item name="android:padding">5dp</item>
+        <item name="android:textAlignment">center</item>
     </style>
 
     <style name="PopupMenu" parent="Widget.AppCompat.PopupMenu">
@@ -204,10 +208,8 @@
 
     <style name="tuning_map_item">
         <item name="android:gravity">center</item>
-        <item name="android:textColor">@color/button_fg</item>
         <item name="android:paddingStart">8dp</item>
         <item name="android:paddingEnd">8dp</item>
-        <item name="android:background">@color/numberselector_bg</item>
         <item name="android:layout_marginBottom">@dimen/config_item_padding</item>
     </style>
 

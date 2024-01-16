@@ -5,7 +5,6 @@ import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.MarginLayoutParams
 import android.widget.LinearLayout
-import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import kotlin.math.roundToInt
 
@@ -19,7 +18,6 @@ class TuningMapRecyclerAdapter(val recycler: TuningMapRecycler, var tuning_map: 
     override fun onViewAttachedToWindow(holder: TuningMapRecycler.TuningMapViewHolder) {
         super.onViewAttachedToWindow(holder)
         holder.itemView.layoutParams.width = MATCH_PARENT
-
         (holder.itemView.layoutParams as MarginLayoutParams).setMargins(0, holder.itemView.context.resources.getDimension(R.dimen.normal_padding).roundToInt(),0,0)
 
     }
@@ -30,7 +28,7 @@ class TuningMapRecyclerAdapter(val recycler: TuningMapRecycler, var tuning_map: 
         wrapper.removeAllViews()
 
         val pair = this.tuning_map[position]
-        val number_label_view = TextView(use_context)
+        val number_label_view = PaganTextView(use_context)
         number_label_view.text = "$position:"
 
         val numerator_view = RangedNumberInput(use_context)
@@ -39,7 +37,7 @@ class TuningMapRecyclerAdapter(val recycler: TuningMapRecycler, var tuning_map: 
         numerator_view.confirm_required = false
         numerator_view.minEms = 2
 
-        val slash_view = TextView(use_context)
+        val slash_view = PaganTextView(use_context)
         slash_view.text = "/"
 
         val denominator_view = RangedNumberInput(use_context)
@@ -79,6 +77,7 @@ class TuningMapRecyclerAdapter(val recycler: TuningMapRecycler, var tuning_map: 
                 )
             }
         }
+
     }
 
     override fun getItemCount(): Int {

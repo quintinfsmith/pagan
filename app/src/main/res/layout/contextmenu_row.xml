@@ -18,7 +18,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:text="@string/line_volume"/>
-        <SeekBar
+        <com.qfs.pagan.PaganSeekBar
             android:id="@+id/sbLineVolume"
             android:layout_weight="1"
             android:max="127"

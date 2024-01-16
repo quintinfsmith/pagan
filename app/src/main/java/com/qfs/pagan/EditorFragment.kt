@@ -1191,7 +1191,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
 
         val dialog = AlertDialog.Builder(this.activity)
         dialog.setView(view)
-        dialog.show()
+        this.get_main()._adjust_dialog_colors(dialog.show())
     }
 
     private fun _get_start_column(): Int {

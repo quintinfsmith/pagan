@@ -57,7 +57,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:visibility="gone">
-        <SeekBar
+        <com.qfs.pagan.PaganSeekBar
             android:id="@+id/sbLineVolume"
             android:visibility="gone"
             android:max="127"

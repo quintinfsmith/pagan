@@ -7,10 +7,16 @@
     <color name="blue_dark">#34688F</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="primary">#171717</color>
-    <color name="primary_text">#e1e1e1</color>
-    <color name="alternate">#575A62</color>
-    <color name="alternate_text">#000000</color>
+
+    <color name="dark_primary">#171717</color>
+    <color name="dark_primary_text">#e1e1e1</color>
+    <color name="dark_alternate">#575A62</color>
+    <color name="dark_alternate_text">#000000</color>
+
+    <color name="light_primary">#112030</color>
+    <color name="light_primary_text">#e1e1e1</color>
+    <color name="light_alternate">#575A62</color>
+    <color name="light_alternate_text">#000000</color>
 
     <color name="light_main_bg">#d2d2d2</color>
     <color name="light_main_fg">#2D2d2d</color>
@@ -19,8 +25,8 @@
     <color name="light_channel_even">@color/light_main_bg</color>
     <color name="light_channel_odd_text">@color/light_main_fg</color>
     <color name="light_channel_even_text">@color/light_main_fg</color>
-    <color name="light_button">@color/primary</color>
-    <color name="light_button_text">@color/primary_text</color>
+    <color name="light_button">#44112030</color>
+    <color name="light_button_text">#112030</color>
     <color name="light_button_stroke">#00000000</color>
     <color name="light_button_alt">#222633</color>
     <color name="light_button_alt_text">#d1d1d1</color>
@@ -29,21 +35,21 @@
     <color name="light_button_selected_text">@color/leaf_text</color>
     <color name="light_button_selected_stroke">#00000000</color>
 
-    <color name="dark_main_bg">#2D2D2D</color>
+    <color name="dark_main_bg">#2d2d2d</color>
     <color name="dark_main_fg">#e1e1e1</color>
     <color name="dark_table_lines">#808080</color>
-    <color name="dark_channel_odd">#232323</color>
-    <color name="dark_channel_even">@color/dark_main_bg</color>
+    <color name="dark_channel_odd">#3d3d3d</color>
+    <color name="dark_channel_even">#232323</color>
     <color name="dark_channel_odd_text">@color/dark_main_fg</color>
     <color name="dark_channel_even_text">@color/dark_main_fg</color>
-    <color name="dark_button">@color/primary</color>
-    <color name="dark_button_alt">@color/alternate</color>
+    <color name="dark_button">@color/dark_primary</color>
+    <color name="dark_button_alt">@color/dark_alternate</color>
     <color name="dark_button_selected">@color/leaf</color>
     <color name="dark_button_stroke">#3dFFFFFF</color>
     <color name="dark_button_alt_stroke">#3d000000</color>
     <color name="dark_button_selected_stroke">#3d000000</color>
-    <color name="dark_button_text">@color/primary_text</color>
-    <color name="dark_button_alt_text">@color/alternate_text</color>
+    <color name="dark_button_text">@color/dark_primary_text</color>
+    <color name="dark_button_alt_text">@color/dark_alternate_text</color>
     <color name="dark_button_selected_text">@color/leaf_text</color>
 
     <color name="leaf">@color/purple</color>

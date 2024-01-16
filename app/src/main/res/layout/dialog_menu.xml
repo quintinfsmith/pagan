@@ -10,14 +10,15 @@
         android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
-        <TextView
+        <com.qfs.pagan.PaganTextView
             android:id="@+id/tvTitle"
+            android:theme="@style/dialog_title"
             android:layout_width="0dp"
             android:layout_weight="1"
             android:gravity="top|center_horizontal"
             android:textSize="@dimen/dropdown_title_textsize"
             android:layout_height="wrap_content"/>
-        <TextView
+        <com.qfs.pagan.PaganTextView
             android:id="@+id/btnClose"
             android:clickable="true"
             android:textSize="@dimen/dropdown_title_textsize"

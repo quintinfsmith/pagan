@@ -13,7 +13,6 @@ import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.database.Cursor
-import android.graphics.Color
 import android.graphics.drawable.LayerDrawable
 import android.media.midi.MidiDeviceInfo
 import android.net.Uri
@@ -462,6 +461,7 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(this._binding.appBarMain.toolbar)
 
         this.view_model.palette = this.configuration.palette ?: this.get_default_palette()
+        this._binding.appBarMain.toolbar.setBackgroundColor(this.view_model.palette!!.button)
         this._binding.drawerLayout.setBackgroundColor(this.view_model.palette!!.background)
 
         /*
@@ -822,7 +822,7 @@ class MainActivity : AppCompatActivity() {
         }
         this.runOnUiThread {
             if (this@MainActivity._progress_bar == null) {
-                this@MainActivity._progress_bar = ProgressBar(ContextThemeWrapper(this@MainActivity, R.style.progress_bar), null, android.R.attr.progressBarStyleLarge)
+                this@MainActivity._progress_bar = PaganProgressBar(this@MainActivity)
             }
             this@MainActivity._progress_bar!!.isClickable = true
             val params: RelativeLayout.LayoutParams = RelativeLayout.LayoutParams(50, 50)
@@ -971,8 +971,11 @@ class MainActivity : AppCompatActivity() {
             val rvTuningMap = viewInflated.findViewById<TuningMapRecycler>(R.id.rvTuningMap)
             rvTuningMap.adapter = TuningMapRecyclerAdapter(rvTuningMap, opus_manager.tuning_map.clone())
 
+
             val dialog = AlertDialog.Builder(main_fragment.context, R.style.AlertDialog)
-                .setTitle(resources.getString(R.string.dlg_tuning))
+                .setCustomTitle(this._build_dialog_title_view(
+                     resources.getString(R.string.dlg_tuning)
+                ))
                 .setView(viewInflated)
                 .setPositiveButton(android.R.string.ok) { dialog, _ ->
                     opus_manager.remember {
@@ -1046,27 +1049,41 @@ class MainActivity : AppCompatActivity() {
             this.drawer_close()
         }
     }
-    private fun _adjust_dialog_colors(dialog: AlertDialog) {
+    private fun _build_dialog_title_view(text: String): TextView {
+        val output = PaganTextView(ContextThemeWrapper(this, R.style.dialog_title))
+        output.text = text
+        return output
+    }
+    internal fun _adjust_dialog_colors(dialog: AlertDialog) {
         val palette = this.view_model.palette!!
-        //val neutral_button = dialog.getButton(DialogInterface.BUTTON_NEUTRAL)
-        //neutral_button.foreground = this.getDrawable(R.drawable.button)
-        //(neutral_button.foreground as LayerDrawable).findDrawableByLayerId(R.id.tintable_background).setTint(palette.button)
-        //(neutral_button.foreground as LayerDrawable).findDrawableByLayerId(R.id.tintable_stroke).setTint(palette.button_stroke)
-        //neutral_button.setTextColor(palette.button_text)
 
-        val neutral_button = dialog.getButton(DialogInterface.BUTTON_NEUTRAL)
-        neutral_button.foreground = this.getDrawable(R.drawable.button)
-        (neutral_button.foreground as LayerDrawable).findDrawableByLayerId(R.id.tintable_background).setTint(palette.button)
-        (neutral_button.foreground as LayerDrawable).findDrawableByLayerId(R.id.tintable_stroke).setTint(palette.button_stroke)
-        neutral_button.setTextColor(palette.button_text)
+        dialog.window!!.decorView.background.setTint(palette.background)
+        dialog.window!!.decorView.background.setTint(palette.background)
 
-        val positive_button = dialog.getButton(DialogInterface.BUTTON_POSITIVE)
-        positive_button.setBackgroundColor(Color.BLACK)
-        positive_button.background = this.getDrawable(R.drawable.button)
+        dialog.getButton(DialogInterface.BUTTON_NEGATIVE).apply {
+            this.backgroundTintList = null
+            this.background = this@MainActivity.getDrawable(R.drawable.button)
+            (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)
+                .setTint(palette.button_alt)
+            (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_stroke)
+                .setTint(palette.button_alt_stroke)
+            this.setTextColor(palette.button_alt_text)
+        }
 
-        (positive_button.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_background).setTint(palette.button)
-        (positive_button.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_stroke).setTint(palette.button_stroke)
-        positive_button.setTextColor(Color.RED)
+        dialog.getButton(DialogInterface.BUTTON_NEUTRAL).apply {
+            this.background = null
+            this.setTextColor(palette.foreground)
+        }
+
+        dialog.getButton(DialogInterface.BUTTON_POSITIVE).apply {
+            this.backgroundTintList = null
+            this.background = this@MainActivity.getDrawable(R.drawable.button)
+            (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)
+                .setTint(palette.button)
+            (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_stroke)
+                .setTint(palette.button_stroke)
+            this.setTextColor(palette.button_text)
+        }
     }
 
 
@@ -1440,13 +1457,13 @@ class MainActivity : AppCompatActivity() {
         val opus_manager = this.get_opus_manager()
         this._adjust_dialog_colors(
             AlertDialog.Builder(main_fragment.context, R.style.AlertDialog)
-                .setTitle(getString(R.string.dlg_change_name))
+                .setCustomTitle(this._build_dialog_title_view(getString(R.string.dlg_change_name)))
                 .setView(viewInflated)
                 .setPositiveButton(android.R.string.ok) { dialog, _ ->
                     opus_manager.set_project_name(input.text.toString())
                     dialog.dismiss()
                 }
-                .setNegativeButton(android.R.string.cancel) { dialog, _ ->
+                .setNeutralButton(android.R.string.cancel) { dialog, _ ->
                     dialog.cancel()
                 }
                 .show()
@@ -1536,7 +1553,7 @@ class MainActivity : AppCompatActivity() {
         val number_input = viewInflated.findViewById<RangedNumberInput>(R.id.etNumber)
 
         val dialog = AlertDialog.Builder(this, R.style.AlertDialog)
-            .setTitle(title)
+            .setCustomTitle(this._build_dialog_title_view(title))
             .setView(viewInflated)
             .setPositiveButton(android.R.string.ok) { _, _ ->
                 val output_value = number_input.get_value() ?: coerced_default_value
@@ -1565,7 +1582,7 @@ class MainActivity : AppCompatActivity() {
     fun dialog_confirm(title: String, callback: () -> Unit) {
         this._adjust_dialog_colors(
         AlertDialog.Builder(this, R.style.AlertDialog)
-            .setTitle(title)
+            .setCustomTitle(this._build_dialog_title_view(title))
             .setCancelable(true)
             .setPositiveButton(getString(R.string.dlg_confirm)) { dialog, _ ->
                 dialog.dismiss()
@@ -1583,7 +1600,7 @@ class MainActivity : AppCompatActivity() {
         if (this.get_opus_manager().has_changed_since_save()) {
             this._adjust_dialog_colors(
                 AlertDialog.Builder(this, R.style.AlertDialog)
-                    .setTitle(getString(R.string.dialog_save_warning_title))
+                    .setCustomTitle(this._build_dialog_title_view(getString(R.string.dialog_save_warning_title)))
                     .setCancelable(true)
                     .setPositiveButton(getString(R.string.dlg_confirm)) { dialog, _ ->
                         this@MainActivity.project_save()
@@ -1607,7 +1624,7 @@ class MainActivity : AppCompatActivity() {
         val title = this.get_opus_manager().project_name
         this._adjust_dialog_colors(
             AlertDialog.Builder(main_fragment!!.context, R.style.AlertDialog)
-                .setTitle(resources.getString(R.string.dlg_delete_title, title))
+                .setCustomTitle(this._build_dialog_title_view(resources.getString(R.string.dlg_delete_title, title)))
                 .setPositiveButton(android.R.string.ok) { dialog, _ ->
                     this@MainActivity.project_delete()
                     dialog.dismiss()
@@ -1917,8 +1934,8 @@ class MainActivity : AppCompatActivity() {
             channel_odd = this.getColor(if (night_mode) R.color.dark_channel_odd else R.color.light_channel_odd),
             channel_even_text = this.getColor(if (night_mode) R.color.dark_channel_even_text else R.color.light_channel_even_text),
             channel_odd_text = this.getColor(if (night_mode) R.color.dark_channel_odd_text else R.color.light_channel_odd_text),
-            column_label = this.getColor(if (night_mode) R.color.dark_channel_even else R.color.light_channel_even),
-            column_label_text = this.getColor(if (night_mode) R.color.dark_channel_even_text else R.color.light_channel_even_text),
+            column_label = this.getColor(if (night_mode) R.color.dark_channel_odd else R.color.light_channel_odd),
+            column_label_text = this.getColor(if (night_mode) R.color.dark_channel_odd_text else R.color.light_channel_odd_text),
             button = this.getColor(if (night_mode) R.color.dark_button else R.color.light_button),
             button_alt = this.getColor(if (night_mode) R.color.dark_button_alt else R.color.light_button_alt),
             button_selected = this.getColor(if (night_mode) R.color.dark_button_selected else R.color.light_button_selected),

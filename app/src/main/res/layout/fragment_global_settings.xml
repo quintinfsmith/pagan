@@ -76,7 +76,7 @@
                     android:paddingStart="15dp"
                     android:paddingEnd="15dp" />
 
-                <SeekBar
+                <com.qfs.pagan.PaganSeekBar
                     android:id="@+id/sbPlaybackQuality"
                     android:text="@string/label_settings_playback_quality"
                     android:max="12"
@@ -96,7 +96,7 @@
                     android:layout_weight="1"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"/>
-                <Switch
+                <com.qfs.pagan.PaganSwitch
                     android:id="@+id/sRelativeEnabled"
                     android:layout_width="wrap_content"
                     android:layout_height="48dp"/>

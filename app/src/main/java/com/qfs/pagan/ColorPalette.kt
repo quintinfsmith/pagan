@@ -40,7 +40,9 @@ data class ColorPalette(
     val button_selected_stroke: Int = 0,
     val button_text: Int = 0,
     val button_alt_text: Int = 0,
-    val button_selected_text: Int = 0
+    val button_selected_text: Int = 0,
+    val title_bar: Int = 0,
+    val title_bar_text: Int = 0
 
 //    val colorPrimaryVariant: Int = Color.parseColor("#171717"),
 //    val colorOnPrimary: Int = Color.parseColor("#EFEFEF"),

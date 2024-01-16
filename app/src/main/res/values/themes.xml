@@ -2,7 +2,7 @@
     <!-- Base application theme. -->
     <style name="Theme.Pagan" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
         <item name="colorPrimary">#1d1d1d</item>
-        <item name="colorPrimaryVariant">#1d1d1d</item>
+        <item name="colorPrimaryVariant">#000000</item>
         <item name="colorOnPrimary">@color/white</item>
         <item name="colorSecondary">@color/blue_sky</item>
         <item name="colorSecondaryVariant">@color/blue_dark</item>
@@ -10,15 +10,12 @@
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
 
         <!-- Customize your theme here. -->
-        <item name="android:popupMenuStyle">@style/PopupMenu</item>
 
         <item name="alert_fg">?attr/colorPrimary</item>
         <item name="drawer_bg">#E0E0E0</item>
         <item name="main_fg">#2d2d2d</item>
         <item name="label_fg">#1d1d1d</item>
         <item name="label_fg_focused">#000000</item>
-        <item name="popup_fg">?attr/colorPrimary</item>
-        <item name="popup_bg">#FFFFFF</item>
 
         <item name="button_fg_default">@color/white</item>
         <item name="button_fg_pressed">#CCCCCC</item>
@@ -49,16 +46,6 @@
     <style name="Theme.Pagan.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
-    </style>
-
-    <style name="Theme.Pagan.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
-
-    <style name="Theme.Pagan.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
-    <style name="Theme.Pagan.AlertDialog" parent="@style/AlertDialog">
-    </style>
-
-    <style name="Theme.Pagan.PopupMenu" parent="ThemeOverlay.AppCompat.Light">
-        <item name="android:textColor">@color/purple_plum</item>
     </style>
 
 </resources>

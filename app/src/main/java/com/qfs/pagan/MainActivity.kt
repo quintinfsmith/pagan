@@ -461,8 +461,13 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(this._binding.appBarMain.toolbar)
 
         this.view_model.palette = this.configuration.palette ?: this.get_default_palette()
-        this._binding.appBarMain.toolbar.setBackgroundColor(this.view_model.palette!!.button)
+        this._binding.appBarMain.toolbar.background = null
+        this._binding.appBarMain.toolbar.setTitleTextColor(this.view_model.palette!!.title_bar_text)
+        this._binding.appBarMain.toolbar.setBackgroundColor(this.view_model.palette!!.title_bar)
+        this._binding.appBarMain.toolbar.setSubtitleTextColor(this.view_model.palette!!.title_bar_text)
+        this._binding.appBarMain.toolbar.overflowIcon?.setTint(this.view_model.palette!!.title_bar_text)
         this._binding.drawerLayout.setBackgroundColor(this.view_model.palette!!.background)
+
 
         /*
             TODO: I think this setOf may be making my navigation more complicated
@@ -886,8 +891,13 @@ class MainActivity : AppCompatActivity() {
 
     fun set_title_text(new_text: String) {
         this._binding.appBarMain.toolbar.title = new_text
-        if (this._binding.appBarMain.toolbar.navigationIcon !is DrawerArrowDrawable && this.get_active_fragment() !is LandingPageFragment) {
-            this._binding.appBarMain.toolbar.setNavigationIcon(R.drawable.hamburger_32)
+        if (this._binding.appBarMain.toolbar.navigationIcon !is DrawerArrowDrawable) {
+            if (this.get_active_fragment() !is LandingPageFragment) {
+                this._binding.appBarMain.toolbar.setNavigationIcon(R.drawable.hamburger_32)
+                this._binding.appBarMain.toolbar.navigationIcon?.setTint(this.view_model.palette!!.title_bar_text)
+            }
+        } else {
+            (this._binding.appBarMain.toolbar.navigationIcon as DrawerArrowDrawable).color = this.view_model.palette!!.title_bar_text
         }
     }
 
@@ -1945,6 +1955,8 @@ class MainActivity : AppCompatActivity() {
             button_text = this.getColor(if (night_mode) R.color.dark_button_text else R.color.light_button_text),
             button_alt_text = this.getColor(if (night_mode) R.color.dark_button_alt_text else R.color.light_button_alt_text),
             button_selected_text = this.getColor(if (night_mode) R.color.dark_button_selected_text else R.color.light_button_selected_text),
+            title_bar = this.getColor(if (night_mode) R.color.dark_primary else R.color.light_primary),
+            title_bar_text = this.getColor(if (night_mode) R.color.dark_primary_text else R.color.light_primary_text),
 
         )
 

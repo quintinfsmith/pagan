@@ -9,7 +9,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.SeekBar
-import android.widget.Switch
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import com.qfs.apres.soundfont.SoundFont
@@ -106,7 +105,7 @@ class GlobalSettingsFragment : PaganFragment<FragmentGlobalSettingsBinding>() {
             }
         }
 
-        val switch_relative_mode = view.findViewById<Switch>(R.id.sRelativeEnabled)
+        val switch_relative_mode = view.findViewById<PaganSwitch>(R.id.sRelativeEnabled)
         switch_relative_mode.isChecked = main.configuration.relative_mode
         switch_relative_mode.setOnCheckedChangeListener { _, enabled: Boolean ->
             main.configuration.relative_mode = enabled

@@ -1943,12 +1943,14 @@ class MainActivity : AppCompatActivity() {
             link_empty = this.getColor(R.color.empty_linked),
             link_empty_selected = this.getColor(R.color.empty_linked_selected),
             selection = this.getColor(R.color.empty_selected),
+            label_selected = this.getColor(R.color.empty_selected),
+            label_selected_text = this.getColor(R.color.empty_selected_text),
             channel_even = this.getColor(if (night_mode) R.color.dark_channel_even else R.color.light_channel_even),
             channel_odd = this.getColor(if (night_mode) R.color.dark_channel_odd else R.color.light_channel_odd),
             channel_even_text = this.getColor(if (night_mode) R.color.dark_channel_even_text else R.color.light_channel_even_text),
             channel_odd_text = this.getColor(if (night_mode) R.color.dark_channel_odd_text else R.color.light_channel_odd_text),
-            column_label = this.getColor(if (night_mode) R.color.dark_channel_odd else R.color.light_channel_odd),
-            column_label_text = this.getColor(if (night_mode) R.color.dark_channel_odd_text else R.color.light_channel_odd_text),
+            column_label = this.getColor(if (night_mode) R.color.dark_main_bg else R.color.light_main_bg),
+            column_label_text = this.getColor(if (night_mode) R.color.dark_main_fg else R.color.light_main_fg),
             button = this.getColor(if (night_mode) R.color.dark_button else R.color.light_button),
             button_alt = this.getColor(if (night_mode) R.color.dark_button_alt else R.color.light_button_alt),
             button_selected = this.getColor(if (night_mode) R.color.dark_button_selected else R.color.light_button_selected),
@@ -1960,6 +1962,7 @@ class MainActivity : AppCompatActivity() {
             button_selected_text = this.getColor(if (night_mode) R.color.dark_button_selected_text else R.color.light_button_selected_text),
             title_bar = this.getColor(if (night_mode) R.color.dark_primary else R.color.light_primary),
             title_bar_text = this.getColor(if (night_mode) R.color.dark_primary_text else R.color.light_primary_text),
+
 
         )
 

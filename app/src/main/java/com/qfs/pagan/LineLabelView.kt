@@ -1,6 +1,7 @@
 package com.qfs.pagan
 
 import android.content.Context
+import android.content.res.ColorStateList
 import android.graphics.drawable.LayerDrawable
 import android.view.ContextThemeWrapper
 import android.view.DragEvent
@@ -21,6 +22,8 @@ class LineLabelView(context: Context, var channel: Int, var line_offset: Int): A
      */
     private var _update_queued = false
     init {
+        this._set_colors()
+
         this.setOnClickListener {
             this.on_click()
         }
@@ -222,40 +225,43 @@ class LineLabelView(context: Context, var channel: Int, var line_offset: Int): A
         }
     }
 
-    override fun drawableStateChanged() {
-        super.drawableStateChanged()
-        var state = 0
-
-        for (item in this.drawableState) {
-            state += when (item) {
-                R.attr.state_focused -> 1
-                R.attr.state_channel_even -> 2
-                else -> 0
-            }
-        }
-
+    private fun _set_colors() {
         val activity = this.get_activity()
         val palette = activity.view_model.palette!!
         (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_lines).setTint(palette.lines)
-        val background = (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)
-        when (state) {
-            1 -> {
-                this.setTextColor(palette.label_selected_text)
-                background.setTint(palette.selection)
-            }
-            2 -> {
-                this.setTextColor(palette.channel_even_text)
-                background.setTint(palette.channel_even)
-            }
-            3 -> {
-                this.setTextColor(palette.label_selected_text)
-                background.setTint(palette.selection)
-            }
-            else -> {
-                this.setTextColor(palette.channel_odd_text)
-                background.setTint(palette.channel_odd)
-            }
-        }
-    }
+        val states = arrayOf<IntArray>(
+            intArrayOf(
+                R.attr.state_focused,
+            ),
+            intArrayOf(
+                -R.attr.state_focused,
+                -R.attr.state_channel_even
+            ),
+            intArrayOf(
+                -R.attr.state_focused,
+                R.attr.state_channel_even
+            )
+        )
 
+        (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_background).setTintList(
+            ColorStateList(
+                states,
+                intArrayOf(
+                    palette.label_selected,
+                    palette.channel_odd,
+                    palette.channel_even
+                )
+            )
+        )
+        this.setTextColor(
+            ColorStateList(
+                states,
+                intArrayOf(
+                    palette.label_selected_text,
+                    palette.channel_odd_text,
+                    palette.channel_even_text
+                )
+            )
+        )
+    }
 }

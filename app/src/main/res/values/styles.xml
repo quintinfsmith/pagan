@@ -36,6 +36,9 @@
 
     <style name="icon_button" parent="button">
         <item name="android:padding">8dp</item>
+        <item name="android:elevation">2dp</item>
+        <item name="android:shadowColor">#000000</item>
+        <item name="android:shadowRadius">2</item>
     </style>
 
     <style name="config_button" parent="@style/icon_button">

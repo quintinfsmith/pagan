@@ -13,23 +13,23 @@
     <color name="dark_alternate">#575A62</color>
     <color name="dark_alternate_text">#000000</color>
 
-    <color name="light_primary">#112030</color>
+    <color name="light_primary">#302111</color>
     <color name="light_primary_text">#e1e1e1</color>
-    <color name="light_alternate">#575A62</color>
+    <color name="light_alternate">#625B57</color>
     <color name="light_alternate_text">#000000</color>
 
     <color name="light_main_bg">#d2d2d2</color>
     <color name="light_main_fg">#2D2d2d</color>
     <color name="light_table_lines">#DE191A1F</color>
-    <color name="light_channel_odd">#BBCFCF</color>
-    <color name="light_channel_even">@color/light_main_bg</color>
-    <color name="light_channel_odd_text">@color/light_main_fg</color>
+    <color name="light_channel_even">#C8C0B8</color>
+    <color name="light_channel_odd">@color/light_main_bg</color>
     <color name="light_channel_even_text">@color/light_main_fg</color>
-    <color name="light_button">#44112030</color>
-    <color name="light_button_text">#112030</color>
+    <color name="light_channel_odd_text">@color/light_main_fg</color>
+    <color name="light_button">#B7B7B7</color>
+    <color name="light_button_text">#1d1d1d</color>
     <color name="light_button_stroke">#00000000</color>
-    <color name="light_button_alt">#222633</color>
-    <color name="light_button_alt_text">#d1d1d1</color>
+    <color name="light_button_alt">#959595</color>
+    <color name="light_button_alt_text">#1d1d1d</color>
     <color name="light_button_alt_stroke">#00000000</color>
     <color name="light_button_selected">@color/leaf</color>
     <color name="light_button_selected_text">@color/leaf_text</color>
@@ -64,6 +64,7 @@
     <color name="leaf_linked_selected_text">@color/black</color>
 
     <color name="empty_selected">@color/blue_sky</color>
+    <color name="empty_selected_text">#000000</color>
     <color name="empty_linked">#B07419</color>
     <color name="empty_linked_selected">#D8944B</color>
 

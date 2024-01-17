@@ -1,5 +1,6 @@
 package com.qfs.pagan
 
+import android.content.res.ColorStateList
 import android.graphics.drawable.LayerDrawable
 import android.view.ContextThemeWrapper
 import android.view.ViewGroup
@@ -29,6 +30,34 @@ class ColumnLabelView(val view_holder: RecyclerView.ViewHolder): AppCompatTextVi
             val opus_manager = this.get_opus_manager()
             opus_manager.cursor_select_column(this.view_holder.bindingAdapterPosition)
         }
+
+        val activity = (this.view_holder.bindingAdapter as ColumnLabelAdapter).get_activity()
+        val palette = activity.view_model.palette!!
+
+        val states = arrayOf<IntArray>(
+            intArrayOf(R.attr.state_focused),
+            intArrayOf(-R.attr.state_focused)
+        )
+
+        (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_lines).setTint(palette.lines)
+        (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_background).setTintList(
+            ColorStateList(
+                states,
+                intArrayOf(
+                    palette.selection,
+                    palette.column_label
+                )
+            )
+        )
+        this.setTextColor(
+            ColorStateList(
+                states,
+                intArrayOf(
+                    palette.label_selected_text,
+                    palette.column_label_text
+                )
+            )
+        )
     }
 
     override fun onCreateDrawableState(extraSpace: Int): IntArray? {
@@ -73,32 +102,5 @@ class ColumnLabelView(val view_holder: RecyclerView.ViewHolder): AppCompatTextVi
 
     fun get_opus_manager(): OpusManager {
         return (this.view_holder.bindingAdapter as ColumnLabelAdapter).get_opus_manager()
-    }
-
-    override fun drawableStateChanged() {
-        super.drawableStateChanged()
-        var state = 0
-
-        for (item in this.drawableState) {
-            state += when (item) {
-                R.attr.state_focused -> 1
-                else -> 0
-            }
-        }
-
-        val activity = (this.view_holder.bindingAdapter as ColumnLabelAdapter).get_activity()
-        val palette = activity.view_model.palette!!
-        (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_lines).setTint(palette.lines)
-        val background = (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)
-        when (state) {
-            1 -> {
-                background.setTint(palette.selection)
-                this.setTextColor(palette.label_selected_text)
-            }
-            else -> {
-                background.setTint(palette.column_label)
-                this.setTextColor(palette.column_label_text)
-            }
-        }
     }
 }

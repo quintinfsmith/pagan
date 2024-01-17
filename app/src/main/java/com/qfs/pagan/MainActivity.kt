@@ -14,6 +14,7 @@ import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.database.Cursor
 import android.graphics.drawable.LayerDrawable
+import android.graphics.drawable.StateListDrawable
 import android.media.midi.MidiDeviceInfo
 import android.net.Uri
 import android.os.Build
@@ -1076,10 +1077,10 @@ class MainActivity : AppCompatActivity() {
             (this.layoutParams as MarginLayoutParams).marginEnd = this@MainActivity.resources.getDimension(R.dimen.alert_padding).toInt()
             this.backgroundTintList = null
             this.background = this@MainActivity.getDrawable(R.drawable.button)
-            (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)
-                .setTint(palette.button_alt)
-            (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_stroke)
-                .setTint(palette.button_alt_stroke)
+            for (i in 0 until (this.background as StateListDrawable).stateCount) {
+                val background = ((this.background as StateListDrawable).getStateDrawable(i) as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)
+                background?.setTint(palette.button_alt)
+            }
             this.setTextColor(palette.button_alt_text)
         }
 
@@ -1091,10 +1092,10 @@ class MainActivity : AppCompatActivity() {
         dialog.getButton(DialogInterface.BUTTON_POSITIVE).apply {
             this.backgroundTintList = null
             this.background = this@MainActivity.getDrawable(R.drawable.button)
-            (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)
-                .setTint(palette.button)
-            (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_stroke)
-                .setTint(palette.button_stroke)
+            for (i in 0 until (this.background as StateListDrawable).stateCount) {
+                val background = ((this.background as StateListDrawable).getStateDrawable(i) as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)
+                background?.setTint(palette.button)
+            }
             this.setTextColor(palette.button_text)
         }
     }

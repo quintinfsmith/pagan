@@ -82,6 +82,7 @@ class ColumnLabelView(val view_holder: RecyclerView.ViewHolder): AppCompatTextVi
         } catch (e: NullPointerException) {
             return drawableState
         }
+
         val opus_manager = this.get_opus_manager()
 
         val new_state = mutableSetOf<Int>()
@@ -100,6 +101,7 @@ class ColumnLabelView(val view_holder: RecyclerView.ViewHolder): AppCompatTextVi
             }
             else -> {}
         }
+
         mergeDrawableStates(drawableState, new_state.toIntArray())
         return drawableState
     }

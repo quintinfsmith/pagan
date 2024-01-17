@@ -1,26 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-<item android:elevation="5dp" >
-    <shape android:shape="rectangle">
-        <padding
-            android:top="0dp"
-            android:left="0dp"
-            android:right="0dp"
-            android:bottom="0dp"
-            />
-    </shape>
-</item>
-<item android:id="@+id/tintable_background">
-    <shape android:shape="rectangle" >
-        <solid android:color="#000000"/>
-        <corners android:radius="4dp"/>
-    </shape>
-</item>
-<item android:id="@+id/tintable_stroke">
-    <shape android:shape="rectangle">
-        <solid android:color="#00000000"/>
-        <corners android:radius="4dp"/>
-        <stroke android:color="#000000" android:width="@dimen/stroke_button" />
-    </shape>
-</item>
-</layer-list>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:state_pressed="true"
+        android:drawable="@drawable/button_pressed"/>
+    <item
+        android:state_pressed="false"
+        android:drawable="@drawable/button_default"/>
+</selector>

@@ -46,7 +46,7 @@
         </shape>
     </item>
     <item android:id="@+id/tintable_background">
-        <shape android:shape="rectangle" >
+        <shape android:shape="rectangle">
             <solid android:color="#000000"/>
             <corners android:radius="4dp"/>
         </shape>

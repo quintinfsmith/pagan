@@ -2,6 +2,7 @@ package com.qfs.pagan
 
 import android.content.Context
 import android.graphics.drawable.LayerDrawable
+import android.graphics.drawable.StateListDrawable
 import android.view.ContextThemeWrapper
 import android.view.Gravity
 import android.view.View
@@ -10,7 +11,6 @@ import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.content.res.AppCompatResources
-import androidx.core.view.children
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.apres.soundfont.SoundFont
 import kotlin.math.roundToInt
@@ -25,25 +25,15 @@ class ChannelOptionAdapter(
         var view_holder: ChannelOptionViewHolder? = null
         init {
             this.background = AppCompatResources.getDrawable(context, R.drawable.button)
-        }
-
-        override fun drawableStateChanged() {
-            super.drawableStateChanged()
             var context = this.context
             while (context !is MainActivity) {
                 context = (context as ContextThemeWrapper).baseContext
             }
 
             val palette = context.view_model.palette!!
-            val background = (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)
-            val stroke = (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_stroke)
-            background.setTint(palette.button)
-            stroke.setTint(palette.button_stroke)
-            for (child in this.children) {
-                if (child !is TextView) {
-                    continue
-                }
-                child.setTextColor(palette.button_text)
+            for (i in 0 until (this.background as StateListDrawable).stateCount) {
+                val background = ((this.background as StateListDrawable).getStateDrawable(i) as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)
+                background?.setTint(palette.button)
             }
         }
     }
@@ -70,11 +60,19 @@ class ChannelOptionAdapter(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChannelOptionViewHolder {
+        var context = parent.context
+        while (context !is MainActivity) {
+            context = (context as ContextThemeWrapper).baseContext
+        }
+        val palette = context.view_model.palette!!
+
         val top_view = BackLinkView(ContextThemeWrapper(parent.context, R.style.recycler_option))
         val btn_choose_instrument = TextView(ContextThemeWrapper(parent.context, R.style.recycler_option_instrument))
         val btn_kill_channel = TextView(ContextThemeWrapper(parent.context, R.style.recycler_option_x))
         top_view.addView(btn_choose_instrument)
         top_view.addView(btn_kill_channel)
+        btn_choose_instrument.setTextColor(palette.button_text)
+        btn_kill_channel.setTextColor(palette.button_text)
 
         btn_choose_instrument.layoutParams.width = 0
         (btn_choose_instrument.layoutParams as LinearLayout.LayoutParams).weight = 1F

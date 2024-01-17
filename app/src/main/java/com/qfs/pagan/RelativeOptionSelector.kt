@@ -78,16 +78,13 @@ class RelativeOptionSelector(context: Context, attrs: AttributeSet) : LinearLayo
             val activity = (this.context as ContextThemeWrapper).baseContext as MainActivity
             val palette = activity.view_model.palette!!
             val background = (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)
-            val stroke = (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_stroke)
             when (state) {
                 0 -> {
                     background.setTint(palette.button)
-                    stroke.setTint(palette.button_stroke)
                     this.setTextColor(palette.button_text)
                 }
                 else -> {
                     background.setTint(palette.button_selected)
-                    stroke.setTint(palette.button_selected_stroke)
                     this.setTextColor(palette.button_selected_text)
                 }
             }

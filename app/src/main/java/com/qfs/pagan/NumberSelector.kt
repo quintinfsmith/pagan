@@ -63,21 +63,17 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
             val activity = (this.context as ContextThemeWrapper).baseContext as MainActivity
             val palette = activity.view_model.palette!!
             val background = (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)
-            val stroke = (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_stroke)
             when (state) {
                 0 -> {
                     background.setTint(palette.button)
-                    stroke.setTint(palette.button_stroke)
                     this.setTextColor(palette.button_text)
                 }
                 1 -> {
                     background.setTint(palette.button_alt)
-                    stroke.setTint(palette.button_alt_stroke)
                     this.setTextColor(palette.button_alt_text)
                 }
                 else -> {
                     background.setTint(palette.button_selected)
-                    stroke.setTint(palette.button_selected_stroke)
                     this.setTextColor(palette.button_selected_text)
                 }
             }

@@ -2,6 +2,7 @@ package com.qfs.pagan
 
 import android.content.Context
 import android.graphics.drawable.LayerDrawable
+import android.graphics.drawable.StateListDrawable
 import android.util.AttributeSet
 import android.view.ContextThemeWrapper
 import androidx.appcompat.content.res.AppCompatResources
@@ -10,6 +11,8 @@ class StdButton(context: Context, attrs: AttributeSet?): androidx.appcompat.widg
     init {
         this.background = AppCompatResources.getDrawable(context, R.drawable.button)
     }
+    // NOTE: this logic exists in drawableStateChanged() rather than init since palette isn't guaranteed
+    // to exist on init()
     override fun drawableStateChanged() {
         super.drawableStateChanged()
         var context = this.context
@@ -18,10 +21,9 @@ class StdButton(context: Context, attrs: AttributeSet?): androidx.appcompat.widg
         }
 
         val palette = context.view_model.palette!!
-        val background = (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)
-        val stroke = (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_stroke)
-        background.setTint(palette.button)
-        stroke.setTint(palette.button_stroke)
+        val index = (this.background as StateListDrawable).findStateDrawableIndex(this.drawableState)
+        val background = ((this.background as StateListDrawable).getStateDrawable(index) as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)
+        background?.setTint(palette.button)
         this.setTextColor(palette.button_text)
     }
 }

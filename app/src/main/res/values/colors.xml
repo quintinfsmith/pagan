@@ -10,8 +10,8 @@
 
     <color name="dark_primary">#171717</color>
     <color name="dark_primary_text">#e1e1e1</color>
-    <color name="dark_alternate">#575A62</color>
-    <color name="dark_alternate_text">#000000</color>
+    <color name="dark_alternate">#4D5058</color>
+    <color name="dark_alternate_text">#e1e1e1</color>
 
     <color name="light_primary">#302111</color>
     <color name="light_primary_text">#e1e1e1</color>
@@ -46,7 +46,7 @@
     <color name="dark_button_alt">@color/dark_alternate</color>
     <color name="dark_button_selected">@color/leaf</color>
     <color name="dark_button_stroke">#3dFFFFFF</color>
-    <color name="dark_button_alt_stroke">#3d000000</color>
+    <color name="dark_button_alt_stroke">#191A1A</color>
     <color name="dark_button_selected_stroke">#3d000000</color>
     <color name="dark_button_text">@color/dark_primary_text</color>
     <color name="dark_button_alt_text">@color/dark_alternate_text</color>

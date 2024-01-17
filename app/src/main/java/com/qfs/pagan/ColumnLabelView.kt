@@ -49,6 +49,7 @@ class ColumnLabelView(val view_holder: RecyclerView.ViewHolder): AppCompatTextVi
                 )
             )
         )
+
         this.setTextColor(
             ColorStateList(
                 states,
@@ -58,6 +59,9 @@ class ColumnLabelView(val view_holder: RecyclerView.ViewHolder): AppCompatTextVi
                 )
             )
         )
+
+        // Kludge: Needs to be called here or else will be unreliable
+        this.refreshDrawableState()
     }
 
     override fun onCreateDrawableState(extraSpace: Int): IntArray? {
@@ -73,12 +77,12 @@ class ColumnLabelView(val view_holder: RecyclerView.ViewHolder): AppCompatTextVi
     }
 
     fun build_drawable_state(drawableState: IntArray?): IntArray? {
-        if (this.parent == null) {
+        val beat = try {
+            this.view_holder.bindingAdapterPosition
+        } catch (e: NullPointerException) {
             return drawableState
         }
-
         val opus_manager = this.get_opus_manager()
-        val beat = this.view_holder.bindingAdapterPosition
 
         val new_state = mutableSetOf<Int>()
         when (opus_manager.cursor.mode) {

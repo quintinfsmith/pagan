@@ -5,8 +5,6 @@
     android:layout_height="wrap_content"
     android:paddingTop="4dp"
     android:paddingBottom="4dp"
-    android:background="?attr/label_bg"
-    android:textColor="?attr/label_fg"
     android:layout_marginStart="@dimen/normal_padding"
     android:layout_marginEnd="@dimen/normal_padding"
     android:id="@+id/textView"

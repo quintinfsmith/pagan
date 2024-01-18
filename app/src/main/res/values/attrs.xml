@@ -6,41 +6,8 @@
     <declare-styleable name="NumberSelector">
         <attr name="button_theme" format="integer" />
         <attr name="radix" format="integer" />
-        <attr name="numberselector_bg_default" format="color"/>
-        <attr name="numberselector_bg_second" format="color"/>
-        <attr name="numberselector_fg_default" format="color"/>
-        <attr name="numberselector_bg_pressed" format="color"/>
-        <attr name="numberselector_fg_pressed" format="color"/>
-        <attr name="numberselector_bg_selected" format="color"/>
-        <attr name="numberselector_fg_selected" format="color"/>
-        <attr name="numberselector_bg_selected_pressed" format="color"/>
-        <attr name="numberselector_fg_selected_pressed" format="color"/>
     </declare-styleable>
 
-    <declare-styleable name="leaf">
-
-        <!-- No foreground to color on inactive leafs
-        <attr name="leaf_fg_default" format="color" />
-        <attr name="leaf_fg_focused" format="color" />
-        <attr name="leaf_fg_pressed" format="color" />
-        <attr name="leaf_fg_focused_pressed" format="color" />
-        -->
-
-        <attr name="leaf_fg_active" format="color" />
-        <attr name="leaf_fg_active_focused" format="color" />
-        <attr name="leaf_fg_active_pressed" format="color" />
-        <attr name="leaf_fg_active_focused_pressed" format="color" />
-
-        <attr name="leaf_bg_invalid" format="color" />
-        <attr name="leaf_bg_default" format="color" />
-        <attr name="leaf_bg_active" format="color" />
-        <attr name="leaf_bg_focused" format="color" />
-        <attr name="leaf_bg_linked" format="color" />
-        <attr name="leaf_bg_active_focused" format="color" />
-        <attr name="leaf_bg_active_linked" format="color" />
-        <attr name="leaf_bg_focused_linked" format="color" />
-        <attr name="leaf_bg_active_focused_linked" format="color" />
-    </declare-styleable>
 
     <declare-styleable name="states">
         <attr name="state_active" format="boolean"/>
@@ -52,32 +19,7 @@
     </declare-styleable>
 
 
-    <attr name="main_bg" format="color" />
-    <attr name="main_fg" format="color" />
-    <attr name="popup_bg" format="color" />
-    <attr name="popup_fg" format="color" />
-    <attr name="drawer_bg" format="color" />
-    <attr name="label_bg" format="color" />
-    <attr name="label_bg_focused" format="color" />
-    <attr name="label_bg_channel_even" format="color"/>
-    <attr name="label_bg_channel_odd" format="color"/>
-    <attr name="context_menu_bg" format="color" />
-
-
-    <attr name="label_fg" format="color" />
-    <attr name="label_fg_focused" format="color" />
-    <attr name="alert_fg" format="color" />
-    <attr name="color_hyperlink" format="color" />
-
-    <attr name="button_fg_default" format="color" />
-    <attr name="button_fg_pressed" format="color" />
-    <attr name="button_bg_default" format="color" />
-    <attr name="button_bg_pressed" format="color" />
-    <attr name="button_stroke_color" format="color" />
-
-    <attr name="colorIconFG" format="color" />
     <attr name="icon_size" format="dimension" />
-    <attr name="table_lines" format="color" />
 
     <attr name="soundfont_warning_frame" format="color" />
     <attr name="soundfont_warning_background" format="color" />

@@ -62,8 +62,6 @@
     </style>
 
     <style name="toggle_button" parent="@style/icon_button">
-        <item name="android:colorButtonNormal">?attr/button_bg_default</item>
-        <item name="android:colorControlHighlight">?attr/button_bg_pressed</item>
         <item name="android:padding">5sp</item>
         <item name="android:textSize">18sp</item>
     </style>
@@ -71,7 +69,6 @@
     <style name="edittext" parent="@android:style/Widget.EditText">
         <item name="android:textSize">24sp</item>
         <item name="android:gravity">center</item>
-        <item name="android:textColor">@attr/colorPrimary</item>
         <item name="android:clickable">true</item>
         <item name="android:padding">0dp</item>
         <item name="android:background">@null</item>
@@ -79,12 +76,10 @@
 
     <style name="leaf">
         <item name="android:gravity">center_vertical|center_horizontal</item>
-        <item name="android:textColor">@color/leaf_fg</item>
         <item name="android:background">@drawable/leaf</item>
     </style>
 
     <style name="leaf_value" parent="@android:style/Widget.TextView">
-        <item name="android:textColor">@color/leaf_fg</item>
         <item name="android:gravity">center_vertical|center_horizontal</item>
         <item name="android:background">@null</item>
         <item name="android:textSize">16sp</item>
@@ -109,15 +104,8 @@
         <item name="android:textSize">18sp</item>
     </style>
 
-
     <style name="load_option" parent="@android:style/Widget.TextView">
         <item name="android:gravity">center_vertical|center_horizontal</item>
-        <item name="android:textColor">?attr/colorOnPrimary</item>
-        <item name="android:background">?attr/colorPrimaryVariant</item>
-        <item name="android:shadowColor">#FF000000</item>
-        <item name="android:shadowDx">0</item>
-        <item name="android:shadowDy">0</item>
-        <item name="android:shadowRadius">0</item>
         <item name="android:textSize">18sp</item>
         <item name="android:textStyle">normal</item>
         <item name="android:padding">8dp</item>
@@ -148,30 +136,25 @@
         <item name="android:paddingTop">4dp</item>
         <item name="android:paddingBottom">4dp</item>
         <item name="android:background">@drawable/editor_label</item>
-        <item name="android:textColor">@color/label_fg</item>
     </style>
 
     <style name="line_label">
         <item name="android:minWidth">41dp</item>
         <item name="android:gravity">bottom|center_horizontal</item>
-        <item name="android:textColor">@color/leaf_fg</item>
         <item name="android:background">@drawable/editor_label_line</item>
         <item name="android:layout_height">@dimen/line_height</item>
     </style>
 
     <style name="column">
         <item name="android:paddingBottom">@dimen/stroke_leaf</item>
-        <item name="android:background">@color/dark_main_bg</item>
     </style>
 
     <style name="corner_view">
         <item name="android:background">@drawable/corner_button</item>
         <item name="android:padding">8dp</item>
-        <item name="android:colorControlHighlight">#88FFFFFF</item>
     </style>
 
     <style name="placeholder_outer">
-        <item name="android:background">@color/dark_main_bg</item>
     </style>
     <style name="cell_placeholder">
         <item name="android:background">@drawable/leaf_facade</item>

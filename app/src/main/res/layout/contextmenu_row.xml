@@ -29,6 +29,9 @@
     <com.qfs.pagan.StdButton
         android:theme="@style/button"
         android:id="@+id/btnChoosePercussion"
+        android:textSize="18sp"
+        android:paddingTop="5dp"
+        android:paddingBottom="8dp"
         android:layout_marginTop="@dimen/number_selector_spacing"
         android:layout_marginBottom="@dimen/number_selector_spacing"
         android:layout_width="match_parent"

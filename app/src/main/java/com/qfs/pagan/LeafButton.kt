@@ -1,6 +1,7 @@
 package com.qfs.pagan
 
 import android.content.Context
+import android.content.res.ColorStateList
 import android.graphics.drawable.LayerDrawable
 import android.view.Gravity
 import android.view.MotionEvent
@@ -54,6 +55,97 @@ class LeafButton(
             }
             true
         }
+        this._setup_colors()
+    }
+
+    private fun _setup_colors() {
+        val activity = this.get_activity()
+        val palette = activity.view_model.palette!!
+
+        val states = arrayOf(
+            //------------------------------
+            intArrayOf(R.attr.state_invalid),
+            //------------------------------
+            intArrayOf(
+                -R.attr.state_invalid,
+                -R.attr.state_linked,
+                -R.attr.state_active,
+                -R.attr.state_focused,
+                R.attr.state_alternate
+            ),
+            intArrayOf(
+                -R.attr.state_invalid,
+                -R.attr.state_linked,
+                -R.attr.state_active,
+                -R.attr.state_focused,
+                -R.attr.state_alternate
+            ),
+            //----------------------------
+            intArrayOf(
+                -R.attr.state_invalid,
+                -R.attr.state_linked,
+                R.attr.state_active,
+                R.attr.state_focused
+            ),
+            intArrayOf(
+                -R.attr.state_invalid,
+                -R.attr.state_linked,
+                R.attr.state_active,
+                -R.attr.state_focused
+            ),
+            intArrayOf(
+                -R.attr.state_invalid,
+                -R.attr.state_linked,
+                -R.attr.state_active,
+                R.attr.state_focused
+            ),
+            // ------------------------
+            intArrayOf(
+                -R.attr.state_invalid,
+                R.attr.state_linked,
+                R.attr.state_active,
+                R.attr.state_focused
+            ),
+            intArrayOf(
+                -R.attr.state_invalid,
+                R.attr.state_linked,
+                R.attr.state_active,
+                -R.attr.state_focused
+            ),
+            intArrayOf(
+                -R.attr.state_invalid,
+                R.attr.state_linked,
+                -R.attr.state_active,
+                R.attr.state_focused
+            ),
+            intArrayOf(
+                -R.attr.state_invalid,
+                R.attr.state_linked,
+                -R.attr.state_active,
+                -R.attr.state_focused
+            ),
+        )
+
+        (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_lines).setTint(palette.lines)
+        (this.background as LayerDrawable).findDrawableByLayerId(R.id.leaf_background).setTintList(
+            ColorStateList(
+                states,
+                intArrayOf(
+                    palette.leaf_invalid,
+                    palette.channel_even,
+                    palette.channel_odd,
+
+                    palette.leaf_selected,
+                    palette.leaf,
+                    palette.selection,
+
+                    palette.link_selected,
+                    palette.link,
+                    palette.link_empty_selected,
+                    palette.link_empty
+                )
+            )
+        )
     }
 
     private fun callback_click() {
@@ -232,7 +324,7 @@ class LeafButton(
             new_state.add(R.attr.state_focused)
         }
         if (beat_key.channel % 2 == 0) {
-            new_state.add(R.attr.state_channel_even)
+            new_state.add(R.attr.state_alternate)
         }
 
         mergeDrawableStates(drawableState, new_state.toIntArray())
@@ -242,39 +334,6 @@ class LeafButton(
     override fun onCreateDrawableState(extraSpace: Int): IntArray? {
         val drawableState = super.onCreateDrawableState(extraSpace + 5)
         return this.build_drawable_state(drawableState)
-    }
-
-    override fun drawableStateChanged() {
-        super.drawableStateChanged()
-        var state = 0
-
-        for (item in this.drawableState) {
-            state += when (item) {
-                R.attr.state_invalid -> 1
-                R.attr.state_active -> 2
-                R.attr.state_focused -> 4
-                R.attr.state_linked -> 8
-                R.attr.state_channel_even -> 16
-                else -> 0
-            }
-        }
-
-        val activity = this.get_activity()
-        val palette = activity.view_model.palette!!
-        val background = (this.background as LayerDrawable).findDrawableByLayerId(R.id.leaf_background)
-        (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_lines).setTint(palette.lines)
-        when (state) {
-            0 -> background.setTint(palette.channel_odd)
-            2,18 -> background.setTint(palette.leaf)
-            4,20 -> background.setTint(palette.selection)
-            6,22 -> background.setTint(palette.leaf_selected)
-            8,24 -> background.setTint(palette.link_empty)
-            10,26 -> background.setTint(palette.link)
-            12, 28 -> background.setTint(palette.link_empty_selected)
-            14, 30 -> background.setTint(palette.link_selected)
-            16 -> background.setTint(palette.channel_even)
-            else -> background.setTint(palette.leaf_invalid)
-        }
     }
 
     // ------------------------------------------------------//

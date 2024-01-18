@@ -1,10 +1,14 @@
 package com.qfs.pagan
 
 import android.content.Context
+import android.content.res.ColorStateList
 import android.util.AttributeSet
 import androidx.appcompat.view.ContextThemeWrapper
 
 class LeafText(context: Context, attrs: AttributeSet? = null): androidx.appcompat.widget.AppCompatTextView(context, attrs) {
+    init {
+        this._setup_colors()
+    }
     override fun onCreateDrawableState(extraSpace: Int): IntArray? {
         val drawableState = super.onCreateDrawableState(extraSpace + 5)
         var parent = this.parent ?: return drawableState
@@ -14,36 +18,53 @@ class LeafText(context: Context, attrs: AttributeSet? = null): androidx.appcompa
         return parent.drawableState
     }
 
-    override fun drawableStateChanged() {
-        super.drawableStateChanged()
-        var state = 0
-
-        for (item in this.drawableState) {
-            state += when (item) {
-                R.attr.state_invalid -> 1
-                R.attr.state_active -> 2
-                R.attr.state_focused -> 4
-                R.attr.state_linked -> 8
-                R.attr.state_channel_even -> 16
-                else -> 0
-            }
-        }
-
+    private fun _setup_colors() {
         val activity = this.get_activity()
         val palette = activity.view_model.palette!!
 
-        this.setTextColor(when (state) {
-            0 -> palette.channel_odd
-            2,18 -> palette.leaf_text
-            4,20 -> 0 // No text
-            6,22 -> palette.leaf_selected_text
-            8,24 -> 0 // No Text
-            10,26 -> palette.link_text
-            12, 28 -> 0 // No Text
-            14, 30 -> palette.link_selected_text
-            16 ->  0 // No Text
-            else -> palette.leaf_invalid
-        })
+        val states = arrayOf(
+            //------------------------------
+            intArrayOf(R.attr.state_invalid),
+            //----------------------------
+            intArrayOf(
+                -R.attr.state_invalid,
+                -R.attr.state_linked,
+                R.attr.state_active,
+                R.attr.state_focused
+            ),
+            intArrayOf(
+                -R.attr.state_invalid,
+                -R.attr.state_linked,
+                R.attr.state_active,
+                -R.attr.state_focused
+            ),
+            // ------------------------
+            intArrayOf(
+                -R.attr.state_invalid,
+                R.attr.state_linked,
+                R.attr.state_active,
+                R.attr.state_focused
+            ),
+            intArrayOf(
+                -R.attr.state_invalid,
+                R.attr.state_linked,
+                R.attr.state_active,
+                -R.attr.state_focused
+            )
+        )
+
+        this.setTextColor(
+            ColorStateList(
+                states,
+                intArrayOf(
+                    palette.leaf_invalid_text,
+                    palette.leaf_selected_text,
+                    palette.leaf_text,
+                    palette.link_selected_text,
+                    palette.link_text
+                )
+            )
+        )
     }
 
     fun get_activity(): MainActivity {

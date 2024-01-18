@@ -34,13 +34,13 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
 
         init {
             this.text = this._bkp_text
-
             this.setOnClickListener {
                 this._number_selector.set_active_button(this)
                 this.setActive(true)
             }
             this._setup_colors()
         }
+
         private fun _setup_colors() {
             var context = this.context
             while (context !is MainActivity) {
@@ -61,8 +61,7 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
             )
 
             for (i in 0 until (this.background as StateListDrawable).stateCount) {
-                val background = ((this.background as StateListDrawable).getStateDrawable(i) as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)
-                background?.setTintList(
+                ((this.background as StateListDrawable).getStateDrawable(i) as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)?.setTintList(
                     ColorStateList(
                         states,
                         intArrayOf(

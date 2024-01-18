@@ -41,6 +41,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.appcompat.graphics.drawable.DrawerArrowDrawable
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
@@ -1073,10 +1074,19 @@ class MainActivity : AppCompatActivity() {
         val padding = this.resources.getDimension(R.dimen.alert_padding).roundToInt()
         dialog.window!!.decorView.setPadding(padding, padding, padding, padding)
 
+        val resources = this.resources
+
         dialog.getButton(DialogInterface.BUTTON_NEGATIVE).apply {
             (this.layoutParams as MarginLayoutParams).marginEnd = this@MainActivity.resources.getDimension(R.dimen.alert_padding).toInt()
+            this.layoutParams.height = resources.getDimension(R.dimen.alert_button_height).roundToInt()
             this.backgroundTintList = null
-            this.background = this@MainActivity.getDrawable(R.drawable.button)
+            this.background = AppCompatResources.getDrawable(this@MainActivity, R.drawable.button)
+            this.setPadding(
+                resources.getDimension(R.dimen.alert_button_padding_left).roundToInt(),
+                resources.getDimension(R.dimen.alert_button_padding_top).roundToInt(),
+                resources.getDimension(R.dimen.alert_button_padding_right).roundToInt(),
+                resources.getDimension(R.dimen.alert_button_padding_bottom).roundToInt()
+            )
             for (i in 0 until (this.background as StateListDrawable).stateCount) {
                 val background = ((this.background as StateListDrawable).getStateDrawable(i) as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)
                 background?.setTint(palette.button_alt)
@@ -1091,7 +1101,14 @@ class MainActivity : AppCompatActivity() {
 
         dialog.getButton(DialogInterface.BUTTON_POSITIVE).apply {
             this.backgroundTintList = null
-            this.background = this@MainActivity.getDrawable(R.drawable.button)
+            this.background = AppCompatResources.getDrawable(this@MainActivity, R.drawable.button)
+            this.layoutParams.height = resources.getDimension(R.dimen.alert_button_height).roundToInt()
+            this.setPadding(
+                resources.getDimension(R.dimen.alert_button_padding_left).roundToInt(),
+                resources.getDimension(R.dimen.alert_button_padding_top).roundToInt(),
+                resources.getDimension(R.dimen.alert_button_padding_right).roundToInt(),
+                resources.getDimension(R.dimen.alert_button_padding_bottom).roundToInt()
+            )
             for (i in 0 until (this.background as StateListDrawable).stateCount) {
                 val background = ((this.background as StateListDrawable).getStateDrawable(i) as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)
                 background?.setTint(palette.button)

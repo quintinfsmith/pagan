@@ -11,24 +11,24 @@
         android:id="@+id/btnInsertLine"
         android:theme="@style/icon_button"
         app:srcCompat="@drawable/insert_line"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="@dimen/icon_button_size"
+        android:layout_height="@dimen/icon_button_size"
         android:contentDescription="Insert Line" />
 
     <com.qfs.pagan.IconButton
         android:id="@+id/btnRemoveLine"
         android:theme="@style/icon_button"
         app:srcCompat="@drawable/remove_line"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="@dimen/icon_button_size"
+        android:layout_height="@dimen/icon_button_size"
         android:layout_marginTop="@dimen/number_selector_spacing"
         android:contentDescription="Remove Line" />
 
     <com.qfs.pagan.StdButton
         android:id="@+id/btnChoosePercussion"
         android:theme="@style/choose_percussion_button"
-        android:layout_width="match_parent"
-        android:layout_height="58dp"
+        android:layout_width="@dimen/icon_button_size"
+        android:layout_height="@dimen/icon_button_size"
         android:layout_marginTop="@dimen/number_selector_spacing"
         android:text="Instrument..." />
 
@@ -36,8 +36,8 @@
         android:id="@+id/btnLineVolumePopup"
         android:theme="@style/icon_button"
         app:srcCompat="@drawable/volume"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="@dimen/icon_button_size"
+        android:layout_height="@dimen/icon_button_size"
         android:layout_marginTop="@dimen/number_selector_spacing"
         android:contentDescription="Line Volume"/>
 

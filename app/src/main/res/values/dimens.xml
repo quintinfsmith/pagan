@@ -7,6 +7,7 @@
     <dimen name="anti_margin_editor">-0.5dp</dimen>
     <dimen name="context_menu_border">2dp</dimen>
     <dimen name="icon_size">42dp</dimen>
+    <dimen name="icon_button_size">58dp</dimen>
     <dimen name="relative_option_width">35dp</dimen>
     <dimen name="line_height">41dp</dimen>
     <dimen name="base_leaf_width">41dp</dimen>
@@ -20,4 +21,10 @@
     <dimen name="config_width">248dp</dimen>
     <dimen name="number_selector_spacing">2dp</dimen>
     <dimen name="alert_padding">6dp</dimen>
+    <dimen name="alert_button_height">41dp</dimen>
+    <dimen name="alert_button_padding_top">5dp</dimen>
+    <dimen name="alert_button_padding_bottom">8dp</dimen>
+    <dimen name="alert_button_padding_left">5dp</dimen>
+    <dimen name="alert_button_padding_right">8dp</dimen>
+
 </resources>

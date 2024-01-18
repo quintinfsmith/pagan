@@ -1,7 +1,9 @@
 package com.qfs.pagan
 
 import android.content.Context
+import android.content.res.ColorStateList
 import android.graphics.drawable.LayerDrawable
+import android.graphics.drawable.StateListDrawable
 import android.util.AttributeSet
 import android.view.Gravity.CENTER
 import android.view.View
@@ -31,25 +33,62 @@ class RelativeOptionSelector(context: Context, attrs: AttributeSet) : LinearLayo
             R.style.relativeSelector
         )
     ) {
-        companion object {
-            private val STATE_ACTIVE = intArrayOf(R.attr.state_active)
-        }
         private var _state_active: Boolean = false
 
         init {
             this.text = resources.getString(this._value)
-            this.gravity = CENTER
             this.setOnClickListener {
                 this._relative_option_selector.set_active_button(this)
                 this.setActive(true)
             }
+            this._setup_colors()
+        }
+
+        private fun _setup_colors() {
+            var context = this.context
+            while (context !is MainActivity) {
+                context = (context as ContextThemeWrapper).baseContext
+            }
+            val palette = context.view_model.palette!!
+
+            val states = arrayOf<IntArray>(
+                intArrayOf(R.attr.state_active),
+                intArrayOf(-R.attr.state_active)
+            )
+
+            for (i in 0 until (this.background as StateListDrawable).stateCount) {
+                val background = ((this.background as StateListDrawable).getStateDrawable(i) as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)
+                background?.setTintList(
+                    ColorStateList(
+                        states,
+                        intArrayOf(
+                            palette.button_selected,
+                            palette.button
+                        )
+                    )
+                )
+            }
+
+            this.setTextColor(
+                ColorStateList(
+                    states,
+                    intArrayOf(
+                        palette.button_selected_text,
+                        palette.button_text
+                    )
+                )
+            )
         }
 
         override fun onCreateDrawableState(extraSpace: Int): IntArray? {
             val drawableState = super.onCreateDrawableState(extraSpace + 1)
+            val new_state = mutableListOf<Int>()
+
             if (this._state_active) {
-                mergeDrawableStates(drawableState, STATE_ACTIVE)
+                new_state.add(R.attr.state_active)
             }
+
+            mergeDrawableStates(drawableState, new_state.toIntArray())
             return drawableState
         }
 
@@ -64,31 +103,6 @@ class RelativeOptionSelector(context: Context, attrs: AttributeSet) : LinearLayo
             this.gravity = CENTER
         }
 
-        override fun drawableStateChanged() {
-            super.drawableStateChanged()
-            var state = 0
-
-            for (item in this.drawableState) {
-                state += when (item) {
-                    R.attr.state_active -> 1
-                    else -> 0
-                }
-            }
-
-            val activity = (this.context as ContextThemeWrapper).baseContext as MainActivity
-            val palette = activity.view_model.palette!!
-            val background = (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)
-            when (state) {
-                0 -> {
-                    background.setTint(palette.button)
-                    this.setTextColor(palette.button_text)
-                }
-                else -> {
-                    background.setTint(palette.button_selected)
-                    this.setTextColor(palette.button_selected_text)
-                }
-            }
-        }
     }
 
     init {

@@ -6,8 +6,8 @@
     android:orientation="vertical"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <com.qfs.pagan.IconButton
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="@dimen/icon_button_size"
+        android:layout_height="@dimen/icon_button_size"
         android:layout_gravity="end"
         android:theme="@style/icon_button"
         android:src="@drawable/unset"
@@ -24,8 +24,8 @@
     <com.qfs.pagan.IconButton
         android:theme="@style/icon_button"
         android:id="@+id/btnUnLink"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="@dimen/icon_button_size"
+        android:layout_height="@dimen/icon_button_size"
         android:layout_gravity="end"
         android:src="@drawable/unlink"
         android:layout_marginTop="@dimen/number_selector_spacing"
@@ -35,8 +35,8 @@
         android:theme="@style/icon_button"
         android:id="@+id/btnUnLinkAll"
         android:src="@drawable/unlinkall"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="@dimen/icon_button_size"
+        android:layout_height="@dimen/icon_button_size"
         android:layout_gravity="end"
         android:layout_marginTop="@dimen/number_selector_spacing"
         android:contentDescription="Remove All Links"/>

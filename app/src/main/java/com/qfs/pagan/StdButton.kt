@@ -5,12 +5,8 @@ import android.graphics.drawable.LayerDrawable
 import android.graphics.drawable.StateListDrawable
 import android.util.AttributeSet
 import android.view.ContextThemeWrapper
-import androidx.appcompat.content.res.AppCompatResources
 
 class StdButton(context: Context, attrs: AttributeSet?): androidx.appcompat.widget.AppCompatTextView(context, attrs) {
-    init {
-        this.background = AppCompatResources.getDrawable(context, R.drawable.button)
-    }
     // NOTE: this logic exists in drawableStateChanged() rather than init since palette isn't guaranteed
     // to exist on init()
     override fun drawableStateChanged() {

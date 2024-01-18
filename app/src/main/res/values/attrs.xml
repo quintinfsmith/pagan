@@ -17,15 +17,7 @@
         <attr name="numberselector_fg_selected_pressed" format="color"/>
     </declare-styleable>
 
-    <declare-styleable name="NumberSelectorButton">
-        <attr name="state_active" format="boolean"/>
-    </declare-styleable>
-
     <declare-styleable name="leaf">
-        <attr name="state_focused" format="boolean" />
-        <attr name="state_linked" format="boolean" />
-        <attr name="state_invalid" format="boolean" />
-        <attr name="state_channel_even" format="boolean" />
 
         <!-- No foreground to color on inactive leafs
         <attr name="leaf_fg_default" format="color" />
@@ -49,6 +41,16 @@
         <attr name="leaf_bg_focused_linked" format="color" />
         <attr name="leaf_bg_active_focused_linked" format="color" />
     </declare-styleable>
+
+    <declare-styleable name="states">
+        <attr name="state_active" format="boolean"/>
+        <attr name="state_alternate" format="boolean"/>
+        <attr name="state_focused" format="boolean" />
+        <attr name="state_linked" format="boolean" />
+        <attr name="state_invalid" format="boolean" />
+        <attr name="state_channel_even" format="boolean" />
+    </declare-styleable>
+
 
     <attr name="main_bg" format="color" />
     <attr name="main_fg" format="color" />

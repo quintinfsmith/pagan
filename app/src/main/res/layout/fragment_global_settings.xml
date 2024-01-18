@@ -22,7 +22,7 @@
                     android:paddingEnd="15dp" />
 
                 <com.qfs.pagan.StdButton
-                    android:theme="@style/button"
+                    android:theme="@style/song_config_button"
                     android:id="@+id/btnChooseSoundFont"
                     android:text="@string/btn_settings_sfmute"
                     android:layout_weight="1"

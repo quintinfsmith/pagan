@@ -10,7 +10,6 @@ import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.appcompat.content.res.AppCompatResources
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.apres.soundfont.SoundFont
 import kotlin.math.roundToInt
@@ -21,10 +20,9 @@ class ChannelOptionAdapter(
 ) : RecyclerView.Adapter<ChannelOptionAdapter.ChannelOptionViewHolder>() {
     class OutOfSyncException : Exception("Channel Option list out of sync with OpusManager")
     class ChannelOptionViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
-    class BackLinkView(context: Context): LinearLayout(context) {
+    class BackLinkView(context: Context): LinearLayout(ContextThemeWrapper(context, R.style.song_config_button)) {
         var view_holder: ChannelOptionViewHolder? = null
         init {
-            this.background = AppCompatResources.getDrawable(context, R.drawable.button)
             var context = this.context
             while (context !is MainActivity) {
                 context = (context as ContextThemeWrapper).baseContext

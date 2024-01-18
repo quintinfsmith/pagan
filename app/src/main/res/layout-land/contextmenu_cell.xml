@@ -20,14 +20,14 @@
                 android:id="@+id/clTextViews"
                 android:orientation="vertical"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:paddingStart="@dimen/number_selector_spacing">
 
                 <com.qfs.pagan.IconButton
                     android:theme="@style/icon_button"
                     android:id="@+id/btnSplit"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_width="@dimen/icon_button_size"
+                    android:layout_height="@dimen/icon_button_size"
                     android:text="Split"
                     android:contentDescription="@string/cd_split"
                     app:srcCompat="@drawable/split"/>
@@ -35,8 +35,8 @@
                 <com.qfs.pagan.IconButton
                     android:theme="@style/icon_button"
                     android:id="@+id/btnInsert"
-                    android:layout_height="wrap_content"
-                    android:layout_width="wrap_content"
+                    android:layout_width="@dimen/icon_button_size"
+                    android:layout_height="@dimen/icon_button_size"
                     android:layout_marginTop="@dimen/number_selector_spacing"
                     android:contentDescription="@string/cd_insert"
                     android:text="Insert"
@@ -45,8 +45,8 @@
                 <com.qfs.pagan.IconButton
                     android:theme="@style/icon_button"
                     android:id="@+id/btnRemove"
-                    android:layout_height="wrap_content"
-                    android:layout_width="wrap_content"
+                    android:layout_width="@dimen/icon_button_size"
+                    android:layout_height="@dimen/icon_button_size"
                     android:contentDescription="@string/cd_remove"
                     android:layout_marginTop="@dimen/number_selector_spacing"
                     android:text="Remove"
@@ -55,8 +55,8 @@
                 <com.qfs.pagan.IconButton
                     android:theme="@style/icon_button"
                     android:id="@+id/btnUnset"
-                    android:layout_height="wrap_content"
-                    android:layout_width="wrap_content"
+                    android:layout_width="@dimen/icon_button_size"
+                    android:layout_height="@dimen/icon_button_size"
                     android:contentDescription="@string/cd_unset"
                     android:layout_marginTop="@dimen/number_selector_spacing"
                     android:text="Unset"
@@ -65,12 +65,11 @@
                 <com.qfs.pagan.StdButton
                     android:theme="@style/icon_button"
                     android:id="@+id/btnDuration"
-                    android:layout_height="58dp"
-                    android:paddingTop="0dp"
-                    android:paddingBottom="0dp"
-                    android:layout_width="match_parent"
-                    android:layout_marginTop="@dimen/number_selector_spacing"
-                    android:text="T" />
+                    android:minHeight="@dimen/icon_button_size"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_width="@dimen/icon_button_size"
+                    android:layout_marginTop="@dimen/number_selector_spacing"/>
             </LinearLayout>
 
             <com.qfs.pagan.NumberSelector

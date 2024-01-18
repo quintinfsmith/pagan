@@ -1,7 +1,9 @@
 package com.qfs.pagan
 
 import android.content.Context
+import android.content.res.ColorStateList
 import android.graphics.drawable.LayerDrawable
+import android.graphics.drawable.StateListDrawable
 import android.util.AttributeSet
 import android.view.Gravity.CENTER
 import android.view.View
@@ -23,14 +25,12 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
     private var _active_button: NumberSelectorButton? = null
     private var _on_change_hook: ((NumberSelector) -> Unit)? = null
 
-    class NumberSelectorButton(private var _number_selector: NumberSelector, var value: Int):
-        androidx.appcompat.widget.AppCompatTextView(ContextThemeWrapper(_number_selector.context, R.style.numberSelectorButton)) {
-        companion object {
-            private val STATE_ACTIVE = intArrayOf(R.attr.state_active)
-        }
+    class NumberSelectorButton(private var _number_selector: NumberSelector, var value: Int, var alt_style: Boolean = false):
+        androidx.appcompat.widget.AppCompatTextView(ContextThemeWrapper(_number_selector.context, R.style.button_number_selector)) {
 
         private var _bkp_text: String = get_number_string(this.value, this._number_selector.radix,1)
         private var _state_active: Boolean = false
+
 
         init {
             this.text = this._bkp_text
@@ -39,44 +39,67 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
                 this._number_selector.set_active_button(this)
                 this.setActive(true)
             }
+            this._setup_colors()
+        }
+        private fun _setup_colors() {
+            var context = this.context
+            while (context !is MainActivity) {
+                context = (context as ContextThemeWrapper).baseContext
+            }
+            val palette = context.view_model.palette!!
+
+            val states = arrayOf<IntArray>(
+                intArrayOf(R.attr.state_active),
+                intArrayOf(
+                    -R.attr.state_active,
+                    R.attr.state_alternate
+                ),
+                intArrayOf(
+                    -R.attr.state_active,
+                    -R.attr.state_alternate
+                )
+            )
+
+            for (i in 0 until (this.background as StateListDrawable).stateCount) {
+                val background = ((this.background as StateListDrawable).getStateDrawable(i) as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)
+                background?.setTintList(
+                    ColorStateList(
+                        states,
+                        intArrayOf(
+                            palette.button_selected,
+                            palette.button_alt,
+                            palette.button
+                        )
+                    )
+                )
+            }
+
+            this.setTextColor(
+                ColorStateList(
+                    states,
+                    intArrayOf(
+                        palette.button_selected_text,
+                        palette.button_alt_text,
+                        palette.button_text
+                    )
+                )
+            )
         }
 
         override fun onCreateDrawableState(extraSpace: Int): IntArray? {
-            val drawableState = super.onCreateDrawableState(extraSpace + 1)
+            val drawableState = super.onCreateDrawableState(extraSpace + 2)
+            val new_state = mutableListOf<Int>()
+
+            if (this.alt_style) {
+                new_state.add(R.attr.state_alternate)
+            }
+
             if (this._state_active) {
-                mergeDrawableStates(drawableState, STATE_ACTIVE)
+                new_state.add(R.attr.state_active)
             }
+
+            mergeDrawableStates(drawableState, new_state.toIntArray())
             return drawableState
-        }
-
-        override fun drawableStateChanged() {
-            super.drawableStateChanged()
-            var state = this._number_selector.button_theme
-
-            for (item in this.drawableState) {
-                state += when (item) {
-                    R.attr.state_active -> 2
-                    else -> 0
-                }
-            }
-
-            val activity = (this.context as ContextThemeWrapper).baseContext as MainActivity
-            val palette = activity.view_model.palette!!
-            val background = (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)
-            when (state) {
-                0 -> {
-                    background.setTint(palette.button)
-                    this.setTextColor(palette.button_text)
-                }
-                1 -> {
-                    background.setTint(palette.button_alt)
-                    this.setTextColor(palette.button_alt_text)
-                }
-                else -> {
-                    background.setTint(palette.button_selected)
-                    this.setTextColor(palette.button_selected_text)
-                }
-            }
         }
 
         fun setActive(value: Boolean) {
@@ -195,7 +218,7 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
                 ((i - this.min) % this.childCount)
             }
 
-            val currentView = NumberSelectorButton(this, i)
+            val currentView = NumberSelectorButton(this, i, this.button_theme == 1)
             if (this.orientation == HORIZONTAL) {
                 (this.getChildAt(j) as ViewGroup).addView(currentView, 0)
             } else {

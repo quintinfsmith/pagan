@@ -48,8 +48,8 @@
                 android:id="@+id/btnRemoveLine"
                 android:theme="@style/icon_button"
                 app:srcCompat="@drawable/remove_line"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="@dimen/icon_button_size"
+                android:layout_height="@dimen/icon_button_size"
                 android:layout_marginStart="@dimen/number_selector_spacing"
                 android:contentDescription="Remove Line"/>
 
@@ -57,8 +57,8 @@
                 android:theme="@style/icon_button"
                 android:id="@+id/btnInsertLine"
                 app:srcCompat="@drawable/insert_line"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="@dimen/icon_button_size"
+                android:layout_height="@dimen/icon_button_size"
                 android:layout_marginStart="@dimen/number_selector_spacing"
                 android:contentDescription="Insert Line"/>
 
@@ -67,8 +67,8 @@
                 android:theme="@style/icon_button"
                 android:id="@+id/btnLineVolumePopup"
                 app:srcCompat="@drawable/volume"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="@dimen/icon_button_size"
+                android:layout_height="@dimen/icon_button_size"
                 android:layout_marginStart="@dimen/number_selector_spacing"
                 android:contentDescription="Line Volume"/>
     </LinearLayout>

@@ -4,7 +4,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:id="@+id/clA"
-    android:layout_width="@dimen/config_width"
+    android:minWidth="@dimen/config_width"
+    android:layout_width="wrap_content"
     android:layout_height="match_parent"
     android:padding="@dimen/config_padding_outer"
     android:clickable="true">
@@ -29,7 +30,7 @@
 
             <com.qfs.pagan.StdButton
                 android:id="@+id/btnChangeProjectName"
-                android:theme="@style/button"
+                android:theme="@style/song_config_button"
                 android:text="@string/btn_cfg_change_name"
                 android:maxLines="1"
                 android:layout_width="0dp"
@@ -45,12 +46,10 @@
 
             <com.qfs.pagan.StdButton
                 android:id="@+id/btnRadix"
+                android:theme="@style/song_config_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/label_tuning"
-                android:paddingStart="15dp"
-                android:paddingEnd="15dp"
-                android:theme="@style/button" />
+                android:text="@string/label_tuning"/>
 
             <Space
                 android:layout_width="wrap_content"
@@ -60,13 +59,10 @@
 
             <com.qfs.pagan.StdButton
                 android:id="@+id/tvTempo"
-                android:paddingStart="15dp"
-                android:paddingEnd="15dp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="end"
-                android:theme="@style/button" />
-
+                android:theme="@style/song_config_button"/>
         </LinearLayout>
 
         <LinearLayout
@@ -80,11 +76,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/btn_cfg_add_channel"
-                android:paddingStart="15dp"
-                android:paddingTop="@dimen/config_item_padding"
-                android:paddingEnd="15dp"
                 android:layout_gravity="end"
-                android:theme="@style/button" />
+                android:theme="@style/song_config_button"/>
         </LinearLayout>
 
 
@@ -112,9 +105,8 @@
             android:layout_margin="-3dp"
             android:id="@+id/btnSaveProject"
             android:maxLines="1"
-            android:theme="@style/config_button"
+            android:layout_height="@dimen/config_button_width"
             android:layout_width="@dimen/config_button_width"
-            android:layout_height="wrap_content"
             app:srcCompat="@drawable/ic_baseline_save_24"
             android:text="@string/btn_cfg_save" />
         <Space
@@ -126,9 +118,8 @@
         <com.qfs.pagan.IconButton
             android:id="@+id/btnCopyProject"
             android:maxLines="1"
-            android:theme="@style/config_button"
+            android:layout_height="@dimen/config_button_width"
             android:layout_width="@dimen/config_button_width"
-            android:layout_height="wrap_content"
             app:srcCompat="@drawable/ic_baseline_content_copy_24"
             android:text="@string/btn_cfg_copy" />
 
@@ -141,9 +132,8 @@
         <com.qfs.pagan.IconButton
             android:id="@+id/btnDeleteProject"
             android:maxLines="1"
-            android:theme="@style/config_button"
+            android:layout_height="@dimen/config_button_width"
             android:layout_width="@dimen/config_button_width"
-            android:layout_height="wrap_content"
             app:srcCompat="@drawable/ic_baseline_delete_24"
             android:text="@string/btn_cfg_delete" />
 
@@ -156,11 +146,11 @@
         <com.qfs.pagan.IconButton
             android:id="@+id/btnExportProject"
             android:maxLines="1"
-            android:theme="@style/icon_button"
-            android:layout_height="wrap_content"
+            android:layout_height="@dimen/config_button_width"
             android:layout_width="@dimen/config_button_width"
             app:srcCompat="@drawable/export"
             android:text="@string/btn_cfg_export" />
+
     </LinearLayout>
     <LinearLayout
         android:paddingTop="@dimen/config_item_padding"

@@ -9,7 +9,7 @@ import androidx.appcompat.content.res.AppCompatResources
 
 class IconButton(context: Context, attrs: AttributeSet?): androidx.appcompat.widget.AppCompatImageView(context, attrs) {
     init {
-        this.background = AppCompatResources.getDrawable(context, R.drawable.button)
+        this.background = AppCompatResources.getDrawable(context, R.drawable.button_icon)
     }
     // NOTE: this logic exists in drawableStateChanged() rather than init since palette isn't guaranteed
     // to exist on init()

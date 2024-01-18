@@ -69,16 +69,16 @@
 
         <com.qfs.pagan.IconButton
             android:theme="@style/icon_button"
-            android:layout_width="62dp"
-            android:layout_height="wrap_content"
+            android:layout_width="@dimen/icon_button_size"
+            android:layout_height="@dimen/icon_button_size"
             android:id="@+id/btnUnLink"
             android:src="@drawable/unlink"
             android:contentDescription="Remove Link" />
 
         <com.qfs.pagan.IconButton
             android:theme="@style/icon_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="@dimen/icon_button_size"
+            android:layout_height="@dimen/icon_button_size"
             android:layout_marginStart="@dimen/number_selector_spacing"
             android:src="@drawable/unlinkall"
             android:id="@+id/btnUnLinkAll"
@@ -86,8 +86,8 @@
 
         <com.qfs.pagan.IconButton
             android:theme="@style/icon_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="@dimen/icon_button_size"
+            android:layout_height="@dimen/icon_button_size"
             android:layout_marginStart="@dimen/number_selector_spacing"
             android:src="@drawable/unset"
             android:id="@+id/btnEraseSelection"

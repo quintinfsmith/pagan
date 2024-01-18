@@ -43,7 +43,6 @@ class RelativeOptionSelector(context: Context, attrs: AttributeSet) : LinearLayo
             }
             this._setup_colors()
         }
-
         private fun _setup_colors() {
             var context = this.context
             while (context !is MainActivity) {
@@ -53,16 +52,23 @@ class RelativeOptionSelector(context: Context, attrs: AttributeSet) : LinearLayo
 
             val states = arrayOf<IntArray>(
                 intArrayOf(R.attr.state_active),
-                intArrayOf(-R.attr.state_active)
+                intArrayOf(
+                    -R.attr.state_active,
+                    R.attr.state_alternate
+                ),
+                intArrayOf(
+                    -R.attr.state_active,
+                    -R.attr.state_alternate
+                )
             )
 
             for (i in 0 until (this.background as StateListDrawable).stateCount) {
-                val background = ((this.background as StateListDrawable).getStateDrawable(i) as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)
-                background?.setTintList(
+                ((this.background as StateListDrawable).getStateDrawable(i) as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)?.setTintList(
                     ColorStateList(
                         states,
                         intArrayOf(
                             palette.button_selected,
+                            palette.button_alt,
                             palette.button
                         )
                     )
@@ -74,11 +80,13 @@ class RelativeOptionSelector(context: Context, attrs: AttributeSet) : LinearLayo
                     states,
                     intArrayOf(
                         palette.button_selected_text,
+                        palette.button_alt_text,
                         palette.button_text
                     )
                 )
             )
         }
+
 
         override fun onCreateDrawableState(extraSpace: Int): IntArray? {
             val drawableState = super.onCreateDrawableState(extraSpace + 1)

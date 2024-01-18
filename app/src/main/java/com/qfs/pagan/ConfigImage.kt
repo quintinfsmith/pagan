@@ -13,6 +13,6 @@ class ConfigImage(context: Context, attrs: AttributeSet?): androidx.appcompat.wi
         }
 
         val palette = context.view_model.palette!!
-        this.setColorFilter(palette.button)
+        this.setColorFilter(palette.foreground)
     }
 }

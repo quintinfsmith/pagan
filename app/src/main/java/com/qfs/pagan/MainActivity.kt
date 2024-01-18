@@ -1018,19 +1018,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
         //-------------------------------------------
-
-        //btnRadix.text = this.getString(R.string.label_radix, radix)
-        //btnRadix.setOnClickListener {
-        //    this.dialog_number_input(
-        //        getString(R.string.dlg_set_radix),
-        //        2,
-        //        24,
-        //        radix
-        //    ) { radix: Int ->
-        //        opus_manager.set_radix(radix)
-        //    }
-        //}
-
         this.findViewById<View>(R.id.btnAddChannel).setOnClickListener {
             opus_manager.new_channel()
         }
@@ -1061,6 +1048,7 @@ class MainActivity : AppCompatActivity() {
             this.drawer_close()
         }
     }
+
     private fun _build_dialog_title_view(text: String): TextView {
         val output = PaganTextView(ContextThemeWrapper(this, R.style.dialog_title))
         output.text = text
@@ -1116,7 +1104,6 @@ class MainActivity : AppCompatActivity() {
             this.setTextColor(palette.button_text)
         }
     }
-
 
     private fun setup_project_config_drawer_export_button() {
         val export_options = this.get_exportable_options()
@@ -1972,16 +1959,11 @@ class MainActivity : AppCompatActivity() {
             button = this.getColor(if (night_mode) R.color.dark_button else R.color.light_button),
             button_alt = this.getColor(if (night_mode) R.color.dark_button_alt else R.color.light_button_alt),
             button_selected = this.getColor(if (night_mode) R.color.dark_button_selected else R.color.light_button_selected),
-            button_stroke = this.getColor(if (night_mode) R.color.dark_button_stroke else R.color.light_button_stroke),
-            button_alt_stroke = this.getColor(if (night_mode) R.color.dark_button_alt_stroke else R.color.light_button_alt_stroke),
-            button_selected_stroke = this.getColor(if (night_mode) R.color.dark_button_selected_stroke else R.color.light_button_selected_stroke),
             button_text = this.getColor(if (night_mode) R.color.dark_button_text else R.color.light_button_text),
             button_alt_text = this.getColor(if (night_mode) R.color.dark_button_alt_text else R.color.light_button_alt_text),
             button_selected_text = this.getColor(if (night_mode) R.color.dark_button_selected_text else R.color.light_button_selected_text),
             title_bar = this.getColor(if (night_mode) R.color.dark_primary else R.color.light_primary),
             title_bar_text = this.getColor(if (night_mode) R.color.dark_primary_text else R.color.light_primary_text),
-
-
         )
 
         //    leaf_text = Color.parseColor("#000000"),

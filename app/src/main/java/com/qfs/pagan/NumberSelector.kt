@@ -28,9 +28,21 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
     class NumberSelectorButton(private var _number_selector: NumberSelector, var value: Int, var alt_style: Boolean = false):
         androidx.appcompat.widget.AppCompatTextView(ContextThemeWrapper(_number_selector.context, R.style.button_number_selector)) {
 
-        private var _bkp_text: String = get_number_string(this.value, this._number_selector.radix,1)
+        private var _bkp_text: String = get_number_string(this.value, this._number_selector.radix, 1)
         private var _state_active: Boolean = false
+        private val _state_list: Array<IntArray> = arrayOf<IntArray>(
+            intArrayOf(R.attr.state_active),
+            intArrayOf(
+                -R.attr.state_active,
+                R.attr.state_alternate
+            ),
+            intArrayOf(
+                -R.attr.state_active,
+                -R.attr.state_alternate
+            )
+        )
 
+        private var _colors_have_been_set = false
 
         init {
             this.text = this._bkp_text
@@ -38,6 +50,19 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
                 this._number_selector.set_active_button(this)
                 this.setActive(true)
             }
+
+            this._setup_colors()
+            // alt_style doesn't automatically refreshDrawableState like focus or active,
+            // So we need to manually call it here
+            if (this.alt_style) {
+                this.refreshDrawableState()
+            }
+        }
+
+        // setup_colors needs to be called here AND in init, otherwise changing between night/day
+        // will cause alt_style buttons to remain in the wrong palette
+        override fun onAttachedToWindow() {
+            super.onAttachedToWindow()
             this._setup_colors()
         }
 
@@ -48,22 +73,11 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
             }
             val palette = context.view_model.palette!!
 
-            val states = arrayOf<IntArray>(
-                intArrayOf(R.attr.state_active),
-                intArrayOf(
-                    -R.attr.state_active,
-                    R.attr.state_alternate
-                ),
-                intArrayOf(
-                    -R.attr.state_active,
-                    -R.attr.state_alternate
-                )
-            )
-
             for (i in 0 until (this.background as StateListDrawable).stateCount) {
-                ((this.background as StateListDrawable).getStateDrawable(i) as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)?.setTintList(
+                val background = ((this.background as StateListDrawable).getStateDrawable(i) as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)
+                background?.setTintList(
                     ColorStateList(
-                        states,
+                        this._state_list,
                         intArrayOf(
                             palette.button_selected,
                             palette.button_alt,
@@ -75,7 +89,7 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
 
             this.setTextColor(
                 ColorStateList(
-                    states,
+                    this._state_list,
                     intArrayOf(
                         palette.button_selected_text,
                         palette.button_alt_text,
@@ -88,7 +102,6 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
         override fun onCreateDrawableState(extraSpace: Int): IntArray? {
             val drawableState = super.onCreateDrawableState(extraSpace + 2)
             val new_state = mutableListOf<Int>()
-
             if (this.alt_style) {
                 new_state.add(R.attr.state_alternate)
             }

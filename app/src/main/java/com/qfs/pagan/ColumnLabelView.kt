@@ -44,7 +44,7 @@ class ColumnLabelView(val view_holder: RecyclerView.ViewHolder): AppCompatTextVi
             ColorStateList(
                 states,
                 intArrayOf(
-                    color_map[Palette.LabelSelected],
+                    color_map[Palette.Selection],
                     color_map[Palette.ColumnLabel]
                 )
             )
@@ -54,7 +54,7 @@ class ColumnLabelView(val view_holder: RecyclerView.ViewHolder): AppCompatTextVi
             ColorStateList(
                 states,
                 intArrayOf(
-                    color_map[Palette.LabelSelectedText],
+                    color_map[Palette.SelectionText],
                     color_map[Palette.ColumnLabelText]
                 )
             )

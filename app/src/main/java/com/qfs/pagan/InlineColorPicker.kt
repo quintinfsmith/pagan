@@ -6,7 +6,6 @@ import android.view.Gravity
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
-import android.widget.Space
 import androidx.appcompat.widget.LinearLayoutCompat
 
 class InlineColorPicker(private val activity: MainActivity, label: String, key: Palette): LinearLayoutCompat(activity, null) {
@@ -15,18 +14,16 @@ class InlineColorPicker(private val activity: MainActivity, label: String, key: 
 
     init {
         this.orientation = HORIZONTAL
+        this.gravity = Gravity.END
         val label_view = PaganTextView(activity)
-        val space = Space(activity)
 
         this.addView(label_view)
         label_view.text = label
         (label_view.layoutParams as LinearLayout.LayoutParams).gravity = Gravity.CENTER_VERTICAL
-        this.addView(space)
-        space.layoutParams.width = 0
-        (space.layoutParams as LinearLayout.LayoutParams).weight = 1f
 
-        this.addView(this.hex_input)
         this.addView(this.color_button)
+        this.addView(this.hex_input)
+
 
         this.hex_input.setText(this.color_button.get_string())
 
@@ -43,7 +40,7 @@ class InlineColorPicker(private val activity: MainActivity, label: String, key: 
                 try {
                     val button = this@InlineColorPicker.color_button
                     button.set_color("#${p0.toString()}", true)
-                    this@InlineColorPicker.activity.view_model.color_map[key] = button.get_color()
+                    this@InlineColorPicker.set_activity_color(key, button.get_color())
                 } catch (_: IllegalArgumentException) { }
             }
 
@@ -58,8 +55,24 @@ class InlineColorPicker(private val activity: MainActivity, label: String, key: 
         this.color_button.set_on_change { new_color: Int ->
             lock_callback = true
             this.hex_input.setText(this.color_button.get_string())
-            this@InlineColorPicker.activity.view_model.color_map[key] = new_color
+            this.set_activity_color(key, new_color)
             lock_callback = false
+        }
+    }
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+    }
+
+    fun set_activity_color(key: Palette, new_color: Int) {
+        this.activity.view_model.color_map[key] = new_color
+        this.activity.save_configuration()
+        when (key) {
+            Palette.TitleBar,
+            Palette.TitleBarText -> {
+                this.activity.refresh_toolbar()
+            }
+            else -> {}
         }
     }
 }

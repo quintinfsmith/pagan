@@ -1,6 +1,7 @@
 package com.qfs.pagan
 
 import android.content.Context
+import android.graphics.Typeface
 import android.text.InputType
 import android.util.AttributeSet
 import android.view.KeyEvent
@@ -21,6 +22,7 @@ class RangedNumberInput(context: Context, attrs: AttributeSet? = null): PaganEdi
          */
         this.inputType = InputType.TYPE_CLASS_NUMBER
         this.filters = arrayOf(NumeralFilter())
+        this.typeface = Typeface.MONOSPACE
         this.setSelectAllOnFocus(true)
         this.textAlignment = TEXT_ALIGNMENT_TEXT_END
 
@@ -71,5 +73,4 @@ class RangedNumberInput(context: Context, attrs: AttributeSet? = null): PaganEdi
         this.setText(new_value.toString())
         this.watcher.lockout = false
     }
-
 }

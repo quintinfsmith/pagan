@@ -341,7 +341,6 @@ class MainActivity : AppCompatActivity() {
         if (this._midi_interface.output_devices_connected()) {
             this.playback_state_midi = PlaybackState.Ready
         }
-
     }
 
     fun save_to_backup() {
@@ -1061,7 +1060,7 @@ class MainActivity : AppCompatActivity() {
         return output
     }
     internal fun _adjust_dialog_colors(dialog: AlertDialog) {
-        val color_map = this.view_model.color_map!!
+        val color_map = this.view_model.color_map
 
         dialog.window!!.decorView.background.setTint(color_map[Palette.Background])
         val padding = this.resources.getDimension(R.dimen.alert_padding).roundToInt()
@@ -1418,6 +1417,7 @@ class MainActivity : AppCompatActivity() {
 
     fun save_configuration() {
         try {
+            this.configuration.palette = this.view_model.color_map.get_palette()
             this.configuration.save(this._config_path)
         } catch (e: FileNotFoundException) {
             // TODO: ?Feedback? only happens on devices not properly put together (realme)
@@ -1933,5 +1933,13 @@ class MainActivity : AppCompatActivity() {
             Configuration.UI_MODE_NIGHT_YES -> true
             else -> true
         }
+    }
+
+    fun refresh_toolbar() {
+        val color_map = this.view_model.color_map
+        this._binding.appBarMain.toolbar.setTitleTextColor(color_map[Palette.TitleBarText])
+        this._binding.appBarMain.toolbar.setBackgroundColor(color_map[Palette.TitleBar])
+        this._binding.appBarMain.toolbar.setSubtitleTextColor(color_map[Palette.TitleBarText])
+        this._binding.appBarMain.toolbar.overflowIcon?.setTint(color_map[Palette.TitleBarText])
     }
 }

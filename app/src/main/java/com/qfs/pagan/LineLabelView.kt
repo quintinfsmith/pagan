@@ -247,7 +247,7 @@ class LineLabelView(context: Context, var channel: Int, var line_offset: Int): A
             ColorStateList(
                 states,
                 intArrayOf(
-                    color_map[Palette.LabelSelected],
+                    color_map[Palette.Selection],
                     color_map[Palette.ChannelOdd],
                     color_map[Palette.ChannelEven]
                 )
@@ -257,7 +257,7 @@ class LineLabelView(context: Context, var channel: Int, var line_offset: Int): A
             ColorStateList(
                 states,
                 intArrayOf(
-                    color_map[Palette.LabelSelectedText],
+                    color_map[Palette.SelectionText],
                     color_map[Palette.ChannelOddText],
                     color_map[Palette.ChannelEvenText]
                 )

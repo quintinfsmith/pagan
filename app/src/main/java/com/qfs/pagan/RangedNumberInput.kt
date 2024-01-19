@@ -25,6 +25,7 @@ class RangedNumberInput(context: Context, attrs: AttributeSet? = null): PaganEdi
         this.textAlignment = TEXT_ALIGNMENT_TEXT_END
 
         val styled_attributes = context.theme.obtainStyledAttributes(attrs, R.styleable.Ranged, 0, 0)
+
         try {
             this.max = styled_attributes.getInteger(R.styleable.Ranged_max, 2)
             this.min = styled_attributes.getInteger(R.styleable.Ranged_min, 0)

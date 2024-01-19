@@ -122,20 +122,10 @@
                     android:layout_height="48dp"/>
         </LinearLayout>
         <LinearLayout
-            android:orientation="horizontal"
+            android:id="@+id/llColorPalette"
+            android:orientation="vertical"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
-            <com.qfs.pagan.PaganTextView
-                android:text="Background"
-                android:paddingStart="15dp"
-                android:layout_weight="1"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
-
-            <com.qfs.pagan.ColorButton
-                android:id="@+id/cbBackground"
-                android:layout_width="24dp"
-                android:layout_height="24dp"/>
         </LinearLayout>
     </LinearLayout>
 </ScrollView>

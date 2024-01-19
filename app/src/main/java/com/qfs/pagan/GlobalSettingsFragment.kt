@@ -126,6 +126,17 @@ class GlobalSettingsFragment : PaganFragment<FragmentGlobalSettingsBinding>() {
             }
         })
 
+        // Palette Shiz ----------------------------
+        val llColorPalette = view.findViewById<LinearLayout>(R.id.llColorPalette)
+        llColorPalette.addView(
+            InlineColorPicker(
+                main,
+                "Background",
+                main.view_model.palette!!.background
+            ) { new_color: Int ->
+                main.view_model.palette!!.background = new_color
+            }
+        )
     }
 
     private fun interact_btnChooseSoundFont(view: View) {

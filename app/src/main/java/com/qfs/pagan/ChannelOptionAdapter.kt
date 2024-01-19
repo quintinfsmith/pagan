@@ -28,10 +28,10 @@ class ChannelOptionAdapter(
                 context = (context as ContextThemeWrapper).baseContext
             }
 
-            val palette = context.view_model.palette!!
+            val color_map = context.view_model.color_map
             for (i in 0 until (this.background as StateListDrawable).stateCount) {
                 val background = ((this.background as StateListDrawable).getStateDrawable(i) as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)
-                background?.setTint(palette.button)
+                background?.setTint(color_map[Palette.Button])
             }
         }
     }
@@ -62,15 +62,15 @@ class ChannelOptionAdapter(
         while (context !is MainActivity) {
             context = (context as ContextThemeWrapper).baseContext
         }
-        val palette = context.view_model.palette!!
+        val color_map = context.view_model.color_map
 
         val top_view = BackLinkView(ContextThemeWrapper(parent.context, R.style.recycler_option))
         val btn_choose_instrument = TextView(ContextThemeWrapper(parent.context, R.style.recycler_option_instrument))
         val btn_kill_channel = TextView(ContextThemeWrapper(parent.context, R.style.recycler_option_x))
         top_view.addView(btn_choose_instrument)
         top_view.addView(btn_kill_channel)
-        btn_choose_instrument.setTextColor(palette.button_text)
-        btn_kill_channel.setTextColor(palette.button_text)
+        btn_choose_instrument.setTextColor(color_map[Palette.ButtonText])
+        btn_kill_channel.setTextColor(color_map[Palette.ButtonText])
 
         btn_choose_instrument.layoutParams.width = 0
         (btn_choose_instrument.layoutParams as LinearLayout.LayoutParams).weight = 1F

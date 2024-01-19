@@ -12,8 +12,6 @@ class PaganTextView(context: Context, attrs: AttributeSet? = null): androidx.app
             context = (context as ContextThemeWrapper).baseContext
         }
 
-        val palette = context.view_model.palette!!
-
-        this.setTextColor(palette.foreground)
+        this.setTextColor(context.view_model.color_map[Palette.Foreground])
     }
 }

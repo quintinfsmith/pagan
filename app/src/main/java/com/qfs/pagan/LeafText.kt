@@ -20,7 +20,7 @@ class LeafText(context: Context, attrs: AttributeSet? = null): androidx.appcompa
 
     private fun _setup_colors() {
         val activity = this.get_activity()
-        val palette = activity.view_model.palette!!
+        val color_map = activity.view_model.color_map
 
         val states = arrayOf(
             //------------------------------
@@ -57,11 +57,11 @@ class LeafText(context: Context, attrs: AttributeSet? = null): androidx.appcompa
             ColorStateList(
                 states,
                 intArrayOf(
-                    palette.leaf_invalid_text,
-                    palette.leaf_selected_text,
-                    palette.leaf_text,
-                    palette.link_selected_text,
-                    palette.link_text
+                    color_map[Palette.LeafInvalidText],
+                    color_map[Palette.LeafSelectedText],
+                    color_map[Palette.LeafText],
+                    color_map[Palette.LinkSelectedText],
+                    color_map[Palette.LinkText]
                 )
             )
         )

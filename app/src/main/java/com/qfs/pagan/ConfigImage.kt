@@ -12,7 +12,6 @@ class ConfigImage(context: Context, attrs: AttributeSet?): androidx.appcompat.wi
             context = (context as ContextThemeWrapper).baseContext
         }
 
-        val palette = context.view_model.palette!!
-        this.setColorFilter(palette.foreground)
+        this.setColorFilter(context.view_model.color_map[Palette.Foreground])
     }
 }

@@ -71,7 +71,7 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
             while (context !is MainActivity) {
                 context = (context as ContextThemeWrapper).baseContext
             }
-            val palette = context.view_model.palette!!
+            val color_map = context.view_model.color_map
 
             for (i in 0 until (this.background as StateListDrawable).stateCount) {
                 val background = ((this.background as StateListDrawable).getStateDrawable(i) as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)
@@ -79,9 +79,9 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
                     ColorStateList(
                         this._state_list,
                         intArrayOf(
-                            palette.button_selected,
-                            palette.button_alt,
-                            palette.button
+                            color_map[Palette.ButtonSelected],
+                            color_map[Palette.ButtonAlt],
+                            color_map[Palette.Button]
                         )
                     )
                 )
@@ -91,9 +91,9 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
                 ColorStateList(
                     this._state_list,
                     intArrayOf(
-                        palette.button_selected_text,
-                        palette.button_alt_text,
-                        palette.button_text
+                        color_map[Palette.ButtonSelectedText],
+                        color_map[Palette.ButtonAltText],
+                        color_map[Palette.ButtonText]
                     )
                 )
             )

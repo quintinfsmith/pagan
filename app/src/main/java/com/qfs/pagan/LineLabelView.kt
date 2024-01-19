@@ -227,8 +227,8 @@ class LineLabelView(context: Context, var channel: Int, var line_offset: Int): A
 
     private fun _set_colors() {
         val activity = this.get_activity()
-        val palette = activity.view_model.palette!!
-        (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_lines).setTint(palette.lines)
+        val color_map = activity.view_model.color_map
+        (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_lines).setTint(color_map[Palette.Lines])
         val states = arrayOf<IntArray>(
             intArrayOf(
                 R.attr.state_focused,
@@ -247,9 +247,9 @@ class LineLabelView(context: Context, var channel: Int, var line_offset: Int): A
             ColorStateList(
                 states,
                 intArrayOf(
-                    palette.label_selected,
-                    palette.channel_odd,
-                    palette.channel_even
+                    color_map[Palette.LabelSelected],
+                    color_map[Palette.ChannelOdd],
+                    color_map[Palette.ChannelEven]
                 )
             )
         )
@@ -257,9 +257,9 @@ class LineLabelView(context: Context, var channel: Int, var line_offset: Int): A
             ColorStateList(
                 states,
                 intArrayOf(
-                    palette.label_selected_text,
-                    palette.channel_odd_text,
-                    palette.channel_even_text
+                    color_map[Palette.LabelSelectedText],
+                    color_map[Palette.ChannelOddText],
+                    color_map[Palette.ChannelEvenText]
                 )
             )
         )

@@ -100,7 +100,7 @@ class MainActivity : AppCompatActivity() {
 
     class MainViewModel: ViewModel() {
         var export_handle: MidiConverter? = null
-        var palette: ColorPalette? = null
+        lateinit var color_map: ColorMap
 
         fun export_wav(activity: MainActivity, midi: Midi, target_file: File, handler: MidiConverter.ExporterEventHandler) {
             this.export_handle = MidiConverter(SampleHandleManager(activity.get_soundfont()!!, 44100))
@@ -463,12 +463,18 @@ class MainActivity : AppCompatActivity() {
         setContentView(this._binding.root)
         setSupportActionBar(this._binding.appBarMain.toolbar)
 
-        this.view_model.palette = this.configuration.palette ?: this.get_default_palette()
+        this.view_model.color_map = if (this.configuration.palette != null) {
+            ColorMap(this, this.configuration.palette)
+        } else {
+            ColorMap(this)
+        }
+
+        val color_map = this.view_model.color_map
         this._binding.appBarMain.toolbar.background = null
-        this._binding.appBarMain.toolbar.setTitleTextColor(this.view_model.palette!!.title_bar_text)
-        this._binding.appBarMain.toolbar.setBackgroundColor(this.view_model.palette!!.title_bar)
-        this._binding.appBarMain.toolbar.setSubtitleTextColor(this.view_model.palette!!.title_bar_text)
-        this._binding.appBarMain.toolbar.overflowIcon?.setTint(this.view_model.palette!!.title_bar_text)
+        this._binding.appBarMain.toolbar.setTitleTextColor(color_map[Palette.TitleBarText])
+        this._binding.appBarMain.toolbar.setBackgroundColor(color_map[Palette.TitleBar])
+        this._binding.appBarMain.toolbar.setSubtitleTextColor(color_map[Palette.TitleBarText])
+        this._binding.appBarMain.toolbar.overflowIcon?.setTint(color_map[Palette.TitleBarText])
 
         /*
             TODO: I think this setOf may be making my navigation more complicated
@@ -896,10 +902,10 @@ class MainActivity : AppCompatActivity() {
         if (this._binding.appBarMain.toolbar.navigationIcon !is DrawerArrowDrawable) {
             if (this.get_active_fragment() !is LandingPageFragment) {
                 this._binding.appBarMain.toolbar.setNavigationIcon(R.drawable.hamburger_32)
-                this._binding.appBarMain.toolbar.navigationIcon?.setTint(this.view_model.palette!!.title_bar_text)
+                this._binding.appBarMain.toolbar.navigationIcon?.setTint(this.view_model.color_map[Palette.TitleBarText])
             }
         } else {
-            (this._binding.appBarMain.toolbar.navigationIcon as DrawerArrowDrawable).color = this.view_model.palette!!.title_bar_text
+            (this._binding.appBarMain.toolbar.navigationIcon as DrawerArrowDrawable).color = this.view_model.color_map[Palette.TitleBarText]
         }
     }
 
@@ -1055,10 +1061,9 @@ class MainActivity : AppCompatActivity() {
         return output
     }
     internal fun _adjust_dialog_colors(dialog: AlertDialog) {
-        val palette = this.view_model.palette!!
+        val color_map = this.view_model.color_map!!
 
-        dialog.window!!.decorView.background.setTint(palette.background)
-        dialog.window!!.decorView.background.setTint(palette.background)
+        dialog.window!!.decorView.background.setTint(color_map[Palette.Background])
         val padding = this.resources.getDimension(R.dimen.alert_padding).roundToInt()
         dialog.window!!.decorView.setPadding(padding, padding, padding, padding)
 
@@ -1077,14 +1082,14 @@ class MainActivity : AppCompatActivity() {
             )
             for (i in 0 until (this.background as StateListDrawable).stateCount) {
                 val background = ((this.background as StateListDrawable).getStateDrawable(i) as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)
-                background?.setTint(palette.button_alt)
+                background?.setTint(color_map[Palette.ButtonAlt])
             }
-            this.setTextColor(palette.button_alt_text)
+            this.setTextColor(color_map[Palette.ButtonAltText])
         }
 
         dialog.getButton(DialogInterface.BUTTON_NEUTRAL).apply {
             this.background = null
-            this.setTextColor(palette.foreground)
+            this.setTextColor(color_map[Palette.Foreground])
         }
 
         dialog.getButton(DialogInterface.BUTTON_POSITIVE).apply {
@@ -1099,9 +1104,9 @@ class MainActivity : AppCompatActivity() {
             )
             for (i in 0 until (this.background as StateListDrawable).stateCount) {
                 val background = ((this.background as StateListDrawable).getStateDrawable(i) as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)
-                background?.setTint(palette.button)
+                background?.setTint(color_map[Palette.Button])
             }
-            this.setTextColor(palette.button_text)
+            this.setTextColor(color_map[Palette.ButtonText])
         }
     }
 
@@ -1929,57 +1934,4 @@ class MainActivity : AppCompatActivity() {
             else -> true
         }
     }
-
-    fun get_default_palette(): ColorPalette {
-        val night_mode = this.is_night_mode()
-        return ColorPalette(
-            "Default",
-            background = this.getColor(if (night_mode) R.color.dark_main_bg else R.color.light_main_bg),
-            foreground = this.getColor(if (night_mode) R.color.dark_main_fg else R.color.light_main_fg),
-            lines = this.getColor(if (night_mode) R.color.dark_table_lines else R.color.light_table_lines),
-            leaf = this.getColor(R.color.leaf),
-            leaf_text = this.getColor(R.color.leaf_text),
-            leaf_selected = this.getColor(R.color.leaf_selected),
-            leaf_selected_text = this.getColor(R.color.leaf_selected_text),
-            link = this.getColor(R.color.leaf_linked),
-            link_text = this.getColor(R.color.leaf_linked_text),
-            link_selected = this.getColor(R.color.leaf_linked_selected),
-            link_selected_text = this.getColor(R.color.leaf_linked_selected_text),
-            link_empty = this.getColor(R.color.empty_linked),
-            link_empty_selected = this.getColor(R.color.empty_linked_selected),
-            selection = this.getColor(R.color.empty_selected),
-            label_selected = this.getColor(R.color.empty_selected),
-            label_selected_text = this.getColor(R.color.empty_selected_text),
-            channel_even = this.getColor(if (night_mode) R.color.dark_channel_even else R.color.light_channel_even),
-            channel_odd = this.getColor(if (night_mode) R.color.dark_channel_odd else R.color.light_channel_odd),
-            channel_even_text = this.getColor(if (night_mode) R.color.dark_channel_even_text else R.color.light_channel_even_text),
-            channel_odd_text = this.getColor(if (night_mode) R.color.dark_channel_odd_text else R.color.light_channel_odd_text),
-            column_label = this.getColor(if (night_mode) R.color.dark_main_bg else R.color.light_main_bg),
-            column_label_text = this.getColor(if (night_mode) R.color.dark_main_fg else R.color.light_main_fg),
-            button = this.getColor(if (night_mode) R.color.dark_button else R.color.light_button),
-            button_alt = this.getColor(if (night_mode) R.color.dark_button_alt else R.color.light_button_alt),
-            button_selected = this.getColor(if (night_mode) R.color.dark_button_selected else R.color.light_button_selected),
-            button_text = this.getColor(if (night_mode) R.color.dark_button_text else R.color.light_button_text),
-            button_alt_text = this.getColor(if (night_mode) R.color.dark_button_alt_text else R.color.light_button_alt_text),
-            button_selected_text = this.getColor(if (night_mode) R.color.dark_button_selected_text else R.color.light_button_selected_text),
-            title_bar = this.getColor(if (night_mode) R.color.dark_primary else R.color.light_primary),
-            title_bar_text = this.getColor(if (night_mode) R.color.dark_primary_text else R.color.light_primary_text),
-        )
-
-        //    leaf_text = Color.parseColor("#000000"),
-        //    leaf_selected = Color.parseColor("#000000"),
-        //    leaf_selected_text = Color.parseColor("#000000"),
-        //    link = Color.parseColor("#000000"),
-        //    link_text = Color.parseColor("#000000"),
-        //    link_selected = Color.parseColor("#000000"),
-        //    link_selected_text = Color.parseColor("#000000"),
-        //    label_selected = Color.parseColor("#000000"),
-        //    label_selected_text = Color.parseColor("#000000"),
-        //    channel_even = Color.parseColor("#000000"),
-        //    channel_even_text = Color.parseColor("#000000"),
-        //    channel_odd = Color.parseColor("#000000"),
-        //    channel_odd_text = Color.parseColor("#000000")
-        //)
-    }
-
 }

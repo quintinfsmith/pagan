@@ -35,8 +35,12 @@ abstract class PaganFragment<T: ViewBinding>: Fragment() {
     override fun onStart() {
         super.onStart()
         this.get_main().update_title_text()
-        val palette = this.get_main().view_model.palette!!
-        this.view?.setBackgroundColor(palette.background)
+        this.refresh_background()
+    }
+
+    fun refresh_background() {
+        val color_map = this.get_main().view_model.color_map
+        this.view?.setBackgroundColor(color_map[Palette.Background])
     }
 
     override fun onDestroyView() {

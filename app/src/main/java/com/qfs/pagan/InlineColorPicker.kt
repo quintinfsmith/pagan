@@ -1,6 +1,5 @@
 package com.qfs.pagan
 
-import android.content.Context
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.Gravity
@@ -10,14 +9,14 @@ import android.widget.LinearLayout
 import android.widget.Space
 import androidx.appcompat.widget.LinearLayoutCompat
 
-class InlineColorPicker(context: Context, label: String, default: Int, val callback: (Int) -> Unit): LinearLayoutCompat(context, null) {
-    private val color_button = ColorButton(context, null, default)
-    private val hex_input = HexEditText(context)
+class InlineColorPicker(private val activity: MainActivity, label: String, key: Palette): LinearLayoutCompat(activity, null) {
+    private val color_button = ColorButton(activity, null, activity.view_model.color_map[key])
+    private val hex_input = HexEditText(activity)
 
     init {
         this.orientation = HORIZONTAL
-        val label_view = PaganTextView(context)
-        val space = Space(context)
+        val label_view = PaganTextView(activity)
+        val space = Space(activity)
 
         this.addView(label_view)
         label_view.text = label
@@ -44,7 +43,7 @@ class InlineColorPicker(context: Context, label: String, default: Int, val callb
                 try {
                     val button = this@InlineColorPicker.color_button
                     button.set_color("#${p0.toString()}", true)
-                    this@InlineColorPicker.callback(color_button.get_color())
+                    this@InlineColorPicker.activity.view_model.color_map[key] = button.get_color()
                 } catch (_: IllegalArgumentException) { }
             }
 
@@ -59,7 +58,7 @@ class InlineColorPicker(context: Context, label: String, default: Int, val callb
         this.color_button.set_on_change { new_color: Int ->
             lock_callback = true
             this.hex_input.setText(this.color_button.get_string())
-            this.callback(new_color)
+            this@InlineColorPicker.activity.view_model.color_map[key] = new_color
             lock_callback = false
         }
     }

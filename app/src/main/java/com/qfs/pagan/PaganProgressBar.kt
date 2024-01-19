@@ -13,7 +13,6 @@ open class PaganProgressBar(context: Context, attrs: AttributeSet? = null): Prog
             context = (context as ContextThemeWrapper).baseContext
         }
 
-        val palette = context.view_model.palette!!
-        this.indeterminateDrawable.setTint(palette.leaf)
+        this.indeterminateDrawable.setTint(context.view_model.color_map[Palette.Leaf])
     }
 }

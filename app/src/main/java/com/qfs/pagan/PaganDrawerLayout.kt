@@ -13,7 +13,6 @@ class PaganDrawerLayout(context: Context, attrs: AttributeSet?): LinearLayout(co
             context = (context as ContextThemeWrapper).baseContext
         }
 
-        val palette = context.view_model.palette!!
-        this.setBackgroundColor(palette.background)
+        this.setBackgroundColor(context.view_model.color_map[Palette.Background])
     }
 }

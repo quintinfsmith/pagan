@@ -41,11 +41,18 @@ class PopupMenuRecyclerAdapter<T>(
         text_view.setOnClickListener {
             this._callback( position, this._options[position].first)
         }
-        val palette = (holder.itemView.context as MainActivity).view_model.palette!!
-        val new_bg = GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, intArrayOf(palette.background, palette.foreground,palette.background))
+        val color_map = (holder.itemView.context as MainActivity).view_model.color_map
+        val new_bg = GradientDrawable(
+            GradientDrawable.Orientation.LEFT_RIGHT,
+            intArrayOf(
+                color_map[Palette.Background],
+                color_map[Palette.Foreground],
+                color_map[Palette.Background]
+            )
+        )
         new_bg.innerRadiusRatio = 1.7f
         holder.itemView.background = new_bg
-        text_view.background.setTint(palette.background)
+        text_view.background.setTint(color_map[Palette.Background])
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PopupMenuRecyclerViewHolder {

@@ -13,17 +13,17 @@ open class PaganSwitch(context: Context, attrs: AttributeSet? = null): SwitchCom
         while (working_context !is MainActivity) {
             working_context = (working_context as ContextThemeWrapper).baseContext
         }
-        val palette = working_context.view_model.palette!!
+        val color_map = working_context.view_model.color_map
 
         val states = arrayOf<IntArray>(
             intArrayOf(android.R.attr.state_checked),
             intArrayOf(-android.R.attr.state_checked)
         )
 
-        val fg = Color.valueOf(palette.foreground)
-        val bg = Color.valueOf(palette.background)
+        val fg = Color.valueOf(color_map[Palette.Foreground])
+        val bg = Color.valueOf(color_map[Palette.Background])
         val colors_track = intArrayOf(
-            palette.leaf,
+            color_map[Palette.Leaf],
             Color.valueOf(
                 (fg.red() * .4f) + (bg.red() * .6f),
                 (fg.green() * .4f) + (bg.green() * .6f),
@@ -31,7 +31,7 @@ open class PaganSwitch(context: Context, attrs: AttributeSet? = null): SwitchCom
             ).toArgb()
         )
         val colors_thumb = intArrayOf(
-            palette.leaf,
+            color_map[Palette.Leaf],
             Color.valueOf(
                 (fg.red() * .6f) + (bg.red() * .4f),
                 (fg.green() * .6f) + (bg.green() * .4f),

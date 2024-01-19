@@ -16,8 +16,8 @@ class CornerView(context: Context, attrs: AttributeSet? = null): LinearLayout(Co
                 while (context !is MainActivity) {
                     context = (context as ContextThemeWrapper).baseContext
                 }
-                val palette = context.view_model.palette!!
-                this.setColorFilter(palette.foreground)
+                val color_map = context.view_model.color_map
+                this.setColorFilter(color_map[Palette.Foreground])
             }
         }
 
@@ -32,10 +32,10 @@ class CornerView(context: Context, attrs: AttributeSet? = null): LinearLayout(Co
     override fun drawableStateChanged() {
         super.drawableStateChanged()
         val activity = (this.context as ContextThemeWrapper).baseContext as MainActivity
-        val palette = activity.view_model.palette!!
+        val color_map = activity.view_model.color_map
         val background = (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)
-        background.setTint(palette.background)
+        background.setTint(color_map[Palette.Background])
         val table_lines = (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_lines)
-        table_lines.setTint(palette.lines)
+        table_lines.setTint(color_map[Palette.Lines])
     }
 }

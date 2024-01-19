@@ -12,26 +12,26 @@ open class PaganEditText(context: Context, attrs: AttributeSet? = null): android
         while (context !is MainActivity) {
             context = (context as ContextThemeWrapper).baseContext
         }
-        val palette = context.view_model.palette!!
+        val color_map = context.view_model.color_map
 
         val states = arrayOf<IntArray>(
             intArrayOf(android.R.attr.state_focused),
             intArrayOf(-android.R.attr.state_focused)
         )
         val colors = intArrayOf(
-            palette.selection,
-            palette.foreground
+            color_map[Palette.Selection],
+            color_map[Palette.Foreground]
         )
 
-        this.setTextColor(palette.foreground)
+        this.setTextColor(color_map[Palette.Foreground])
 
         this.background.setTintList(ColorStateList(states, colors))
-        this.textCursorDrawable?.setTint(palette.selection)
-        this.textSelectHandle?.setTint(palette.selection)
-        this.textSelectHandleLeft?.setTint(palette.selection)
-        this.textSelectHandleRight?.setTint(palette.selection)
-        val selection_color = Color.valueOf(palette.selection)
-        val bg = Color.valueOf(palette.background)
+        this.textCursorDrawable?.setTint(color_map[Palette.Selection])
+        this.textSelectHandle?.setTint(color_map[Palette.Selection])
+        this.textSelectHandleLeft?.setTint(color_map[Palette.Selection])
+        this.textSelectHandleRight?.setTint(color_map[Palette.Selection])
+        val selection_color = Color.valueOf(color_map[Palette.Selection])
+        val bg = Color.valueOf(color_map[Palette.Background])
         this.highlightColor = Color.valueOf(
             (selection_color.red() * .4f) + (bg.red() * .6f),
             (selection_color.green() * .4f) + (bg.green() * .6f),

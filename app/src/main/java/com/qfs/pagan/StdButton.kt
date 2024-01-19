@@ -16,10 +16,10 @@ class StdButton(context: Context, attrs: AttributeSet?): androidx.appcompat.widg
             context = (context as ContextThemeWrapper).baseContext
         }
 
-        val palette = context.view_model.palette!!
+        val color_map = context.view_model.color_map
         val index = (this.background as StateListDrawable).findStateDrawableIndex(this.drawableState)
         val background = ((this.background as StateListDrawable).getStateDrawable(index) as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)
-        background?.setTint(palette.button)
-        this.setTextColor(palette.button_text)
+        background?.setTint(color_map[Palette.Button])
+        this.setTextColor(color_map[Palette.ButtonText])
     }
 }

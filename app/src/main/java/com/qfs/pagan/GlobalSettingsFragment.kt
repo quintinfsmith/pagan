@@ -128,15 +128,21 @@ class GlobalSettingsFragment : PaganFragment<FragmentGlobalSettingsBinding>() {
 
         // Palette Shiz ----------------------------
         val llColorPalette = view.findViewById<LinearLayout>(R.id.llColorPalette)
-        llColorPalette.addView(
-            InlineColorPicker(
-                main,
-                "Background",
-                main.view_model.palette!!.background
-            ) { new_color: Int ->
-                main.view_model.palette!!.background = new_color
-            }
-        )
+        val palette = main.view_model.color_map
+        llColorPalette.addView(InlineColorPicker(main, "Background", Palette.Background))
+        llColorPalette.addView(InlineColorPicker(main, "Foreground", Palette.Foreground))
+        llColorPalette.addView(InlineColorPicker(main, "Table Lines", Palette.Lines))
+        llColorPalette.addView(InlineColorPicker(main, "Channel Background", Palette.ChannelEven))
+        llColorPalette.addView(InlineColorPicker(main, "Channel Foreground", Palette.ChannelEvenText))
+        llColorPalette.addView(InlineColorPicker(main, "Channel Alt. Background", Palette.ChannelOdd))
+        llColorPalette.addView(InlineColorPicker(main, "Channel Alt. Foreground", Palette.ChannelOddText))
+        llColorPalette.addView(InlineColorPicker(main, "Active Notes", Palette.Leaf))
+        llColorPalette.addView(InlineColorPicker(main, "Active Notes Text", Palette.LeafText))
+        llColorPalette.addView(InlineColorPicker(main, "Active Linked Notes", Palette.Link))
+        llColorPalette.addView(InlineColorPicker(main, "Active Linked Notes Text", Palette.LinkText))
+        llColorPalette.addView(InlineColorPicker(main, "Active Selected Notes", Palette.LeafSelected))
+        llColorPalette.addView(InlineColorPicker(main, "Active Selected Notes Text", Palette.LeafSelectedText))
+
     }
 
     private fun interact_btnChooseSoundFont(view: View) {

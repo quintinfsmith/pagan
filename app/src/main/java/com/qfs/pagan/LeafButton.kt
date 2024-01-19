@@ -60,7 +60,7 @@ class LeafButton(
 
     private fun _setup_colors() {
         val activity = this.get_activity()
-        val palette = activity.view_model.palette!!
+        val color_map = activity.view_model.color_map
 
         val states = arrayOf(
             //------------------------------
@@ -126,23 +126,23 @@ class LeafButton(
             ),
         )
 
-        (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_lines).setTint(palette.lines)
+        (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_lines).setTint(color_map[Palette.Lines])
         (this.background as LayerDrawable).findDrawableByLayerId(R.id.leaf_background).setTintList(
             ColorStateList(
                 states,
                 intArrayOf(
-                    palette.leaf_invalid,
-                    palette.channel_even,
-                    palette.channel_odd,
+                    color_map[Palette.LeafInvalid],
+                    color_map[Palette.ChannelEven],
+                    color_map[Palette.ChannelOdd],
 
-                    palette.leaf_selected,
-                    palette.leaf,
-                    palette.selection,
+                    color_map[Palette.LeafSelected],
+                    color_map[Palette.Leaf],
+                    color_map[Palette.Selection],
 
-                    palette.link_selected,
-                    palette.link,
-                    palette.link_empty_selected,
-                    palette.link_empty
+                    color_map[Palette.LinkSelected],
+                    color_map[Palette.Link],
+                    color_map[Palette.LinkEmptySelected],
+                    color_map[Palette.LinkEmpty]
                 )
             )
         )

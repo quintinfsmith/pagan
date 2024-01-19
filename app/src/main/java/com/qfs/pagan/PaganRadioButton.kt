@@ -12,24 +12,24 @@ open class PaganRadioButton(context: Context, attrs: AttributeSet? = null): andr
         while (working_context !is MainActivity) {
             working_context = (working_context as ContextThemeWrapper).baseContext
         }
-        val palette = working_context.view_model.palette!!
+        val color_map = working_context.view_model.color_map
 
         val states = arrayOf<IntArray>(
             intArrayOf(android.R.attr.state_checked),
             intArrayOf(-android.R.attr.state_checked),
 
         )
-        val fg = Color.valueOf(palette.foreground)
-        val bg = Color.valueOf(palette.background)
+        val fg = Color.valueOf(color_map[Palette.Foreground])
+        val bg = Color.valueOf(color_map[Palette.Background])
         val unchecked_color = Color.valueOf(
             (fg.red() * .4f) + (bg.red() * .6f),
             (fg.green() * .4f) + (bg.green() * .6f),
             (fg.blue() * .4f) + (bg.blue() * .6f)
         ).toArgb()
 
-        val colors = intArrayOf( palette.leaf, unchecked_color )
+        val colors = intArrayOf( color_map[Palette.Leaf], unchecked_color )
         this.buttonTintList = ColorStateList( states, colors )
-        this.setTextColor(palette.foreground)
+        this.setTextColor(color_map[Palette.Foreground])
 
     }
 }

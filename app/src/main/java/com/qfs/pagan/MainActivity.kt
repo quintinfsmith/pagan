@@ -11,6 +11,7 @@ import android.content.DialogInterface
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.database.Cursor
 import android.graphics.Color
@@ -56,6 +57,7 @@ import androidx.core.graphics.green
 import androidx.core.graphics.red
 import androidx.core.os.bundleOf
 import androidx.core.view.GravityCompat
+import androidx.core.view.iterator
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.clearFragmentResult
@@ -844,7 +846,7 @@ class MainActivity : AppCompatActivity() {
                 this@MainActivity._progress_bar = PaganProgressBar(this@MainActivity)
             }
             this@MainActivity._progress_bar!!.isClickable = true
-            val params: RelativeLayout.LayoutParams = RelativeLayout.LayoutParams(50, 50)
+            val params: RelativeLayout.LayoutParams = RelativeLayout.LayoutParams(100, 100)
             params.addRule(RelativeLayout.CENTER_IN_PARENT)
             val parent = this@MainActivity._progress_bar!!.parent
             if (parent != null) {
@@ -2000,5 +2002,11 @@ class MainActivity : AppCompatActivity() {
         this._binding.appBarMain.toolbar.setBackgroundColor(color_map[Palette.TitleBar])
         this._binding.appBarMain.toolbar.setSubtitleTextColor(color_map[Palette.TitleBarText])
         this._binding.appBarMain.toolbar.overflowIcon?.setTint(color_map[Palette.TitleBarText])
+        for (item in this._binding.appBarMain.toolbar.menu.iterator()) {
+            item.setIconTintList(ColorStateList(
+                arrayOf(intArrayOf(android.R.attr.state_enabled)),
+                intArrayOf(color_map[Palette.TitleBarText])
+            ))
+        }
     }
 }

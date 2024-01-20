@@ -136,6 +136,37 @@
     <string name="export_wav_feedback_complete">Done Export</string>
     <string name="export_wav_notification_complete">Done</string>
     <string name="already_exporting">Already Exporting</string>
+    <string name="palette_title_bar">App Bar Background</string>
+    <string name="palette_title_bar_text">App Bar Foreground</string>
+    <string name="palette_background">Background</string>
+    <string name="palette_foreground">Foreground</string>
+    <string name="palette_button">Buttons Background</string>
+    <string name="palette_button_text">Buttons Foreground</string>
+    <string name="palette_button_alt">Buttons Alt Background</string>
+    <string name="palette_button_alt_text">Buttons Alt Foreground</string>
+    <string name="palette_button_selected">Buttons Selected Background</string>
+    <string name="palette_button_selected_text">Buttons Selected Foreground</string>
+    <string name="palette_lines">Table Lines</string>
+    <string name="palette_column_label">Column Labels</string>
+    <string name="palette_column_label_text">Column Label Text</string>
+    <string name="palette_channel_even">Channel Background</string>
+    <string name="palette_channel_even_text">Channel Foreground</string>
+    <string name="palette_channel_odd">Channel Alt. Background</string>
+    <string name="palette_channel_odd_text">Channel Alt. Foreground</string>
+    <string name="palette_selection">Selection</string>
+    <string name="palette_selection_text">Selection Text</string>
+    <string name="palette_leaf">Notes</string>
+    <string name="palette_leaf_text">Notes Text</string>
+    <string name="palette_leaf_selected">Selected Notes</string>
+    <string name="palette_leaf_selected_text">Selected Notes Text</string>
+    <string name="palette_link">Linked Notes</string>
+    <string name="palette_link_text">Linked Notes Text</string>
+    <string name="palette_link_empty">Linked Rests</string>
+    <string name="palette_link_selected">Selected Linked Notes</string>
+    <string name="palette_link_selected_text">Selected Linked Notes Text</string>
+    <string name="palette_link_empty_selected">Selected Linked Rests</string>
+    <string name="palette_leaf_invalid">Invalid Notes</string>
+    <string name="palette_leaf_invalid_text">Invalid Notes Text</string>
     <string-array name="relative">
         <item>@string/pfx_add</item>
         <item>@string/pfx_subtract</item>

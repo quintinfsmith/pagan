@@ -6,25 +6,17 @@ import android.util.AttributeSet
 import android.view.ContextThemeWrapper
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.LinearLayout
+import androidx.appcompat.content.res.AppCompatResources
 import com.qfs.pagan.ColorMap.Palette
 
 class CornerView(context: Context, attrs: AttributeSet? = null): LinearLayout(ContextThemeWrapper(context, R.style.corner_view), attrs) {
     init {
-        val inner_view = object:androidx.appcompat.widget.AppCompatImageView(context) {
-            override fun drawableStateChanged() {
-                super.drawableStateChanged()
-                var context = this.context
-                while (context !is MainActivity) {
-                    context = (context as ContextThemeWrapper).baseContext
-                }
-                val color_map = context.view_model.color_map
-                this.setColorFilter(color_map[Palette.Foreground])
-            }
-        }
+        val inner_view = IconButton(context, null)
 
         this.addView(inner_view)
         inner_view.layoutParams.width = MATCH_PARENT
         inner_view.layoutParams.height = MATCH_PARENT
+        inner_view.background = AppCompatResources.getDrawable(context, R.drawable.button)
         inner_view.setImageResource(R.drawable.baseline_shortcut_24)
         inner_view.contentDescription = resources.getString(R.string.label_shortcut)
 

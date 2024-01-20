@@ -151,7 +151,10 @@
 
     <style name="corner_view">
         <item name="android:background">@drawable/corner_button</item>
-        <item name="android:padding">8dp</item>
+        <item name="android:paddingTop">5dp</item>
+        <item name="android:paddingLeft">5dp</item>
+        <item name="android:paddingRight">2dp</item>
+        <item name="android:paddingBottom">2dp</item>
     </style>
 
     <style name="placeholder_outer">

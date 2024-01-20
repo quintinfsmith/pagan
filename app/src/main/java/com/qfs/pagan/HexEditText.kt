@@ -18,8 +18,12 @@ open class HexEditText(context: Context, attrs: AttributeSet? = null): PaganEdit
             dend: Int
         ): CharSequence? {
             try {
-                "$source".toInt(16)
-                return if (dest.length < 6) {
+                val new_pre = dest.substring(0,dstart)
+                val new_post = dest.substring(dend)
+                val new_val = "$new_pre$source$new_post"
+
+                new_val.toInt(16)
+                return if (new_val.length <= 6) {
                     null
                 } else {
                     ""

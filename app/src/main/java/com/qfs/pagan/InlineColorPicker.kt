@@ -3,10 +3,10 @@ package com.qfs.pagan
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.Gravity
-import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import androidx.appcompat.widget.LinearLayoutCompat
+import kotlin.math.roundToInt
 
 class InlineColorPicker(private val activity: MainActivity, label: String, key: Palette): LinearLayoutCompat(activity, null) {
     private val color_button = ColorButton(activity, null, activity.view_model.color_map[key])
@@ -19,6 +19,7 @@ class InlineColorPicker(private val activity: MainActivity, label: String, key: 
 
         this.addView(label_view)
         label_view.text = label
+        label_view.setPadding(0,0, this.resources.getDimension(R.dimen.inline_color_picker_label_padding).roundToInt(), 0)
         (label_view.layoutParams as LinearLayout.LayoutParams).gravity = Gravity.CENTER_VERTICAL
 
         this.addView(this.color_button)
@@ -46,11 +47,10 @@ class InlineColorPicker(private val activity: MainActivity, label: String, key: 
 
             override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
             override fun afterTextChanged(p0: Editable?) { }
-
         })
 
-        this.color_button.layoutParams.height = MATCH_PARENT
-        this.color_button.layoutParams.width = 124
+        this.color_button.layoutParams.height = this.resources.getDimension(R.dimen.inline_color_picker_button_size).roundToInt()
+        this.color_button.layoutParams.width = this.resources.getDimension(R.dimen.inline_color_picker_button_size).roundToInt()
         (this.color_button.layoutParams as LinearLayout.LayoutParams).gravity = Gravity.CENTER
         this.color_button.set_on_change { new_color: Int ->
             lock_callback = true

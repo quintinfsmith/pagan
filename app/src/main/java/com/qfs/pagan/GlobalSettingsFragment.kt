@@ -131,58 +131,68 @@ class GlobalSettingsFragment : PaganFragment<FragmentGlobalSettingsBinding>() {
         val color_map = main.view_model.color_map
 
         val sCustomPalette = view.findViewById<PaganSwitch>(R.id.sCustomPalette)
+        val btnClearPalette = view.findViewById<StdButton>(R.id.btnClearPalette)
+        btnClearPalette.setOnClickListener {
+            main.dialog_confirm("Really Reset Custom Colors?") {
+                main.view_model.color_map.unpopulate()
+                btnClearPalette.visibility = View.GONE
+                sCustomPalette.isChecked = false
+                sCustomPalette.isChecked = true
+            }
+        }
+
         val llColorPalette = view.findViewById<LinearLayout>(R.id.llColorPalette)
-        sCustomPalette.isChecked = color_map.is_set()
+
         sCustomPalette.setOnCheckedChangeListener { button: CompoundButton, is_checked: Boolean ->
             if (is_checked) {
-                main.view_model.color_map.populate()
+                btnClearPalette.visibility = View.VISIBLE
+                main.configuration.use_palette = true
+                if (!main.view_model.color_map.is_set()) {
+                    main.view_model.color_map.populate()
+                }
+                btnClearPalette.visibility = View.VISIBLE
                 llColorPalette.visibility = View.VISIBLE
+
+                llColorPalette.addView(InlineColorPicker(main, "App Bar Background", Palette.TitleBar))
+                llColorPalette.addView(InlineColorPicker(main, "App Bar Foreground", Palette.TitleBarText))
+                llColorPalette.addView(InlineColorPicker(main, "Background", Palette.Background))
+                llColorPalette.addView(InlineColorPicker(main, "Foreground", Palette.Foreground))
+                llColorPalette.addView(InlineColorPicker(main, "Buttons Background", Palette.Button))
+                llColorPalette.addView(InlineColorPicker(main, "Buttons Foreground", Palette.ButtonText))
+                llColorPalette.addView(InlineColorPicker(main, "Buttons Alt Background", Palette.ButtonAlt))
+                llColorPalette.addView(InlineColorPicker(main, "Buttons Alt Foreground", Palette.ButtonAltText))
+                llColorPalette.addView(InlineColorPicker(main, "Buttons Selected Background", Palette.ButtonSelected))
+                llColorPalette.addView(InlineColorPicker(main, "Buttons Selected Foreground", Palette.ButtonSelectedText))
+                llColorPalette.addView(InlineColorPicker(main, "Table Lines", Palette.Lines))
+                llColorPalette.addView(InlineColorPicker(main, "Column Labels", Palette.ColumnLabel))
+                llColorPalette.addView(InlineColorPicker(main, "Column Label Text", Palette.ColumnLabelText))
+                llColorPalette.addView(InlineColorPicker(main, "Channel Background", Palette.ChannelEven))
+                llColorPalette.addView(InlineColorPicker(main, "Channel Foreground", Palette.ChannelEvenText))
+                llColorPalette.addView(InlineColorPicker(main, "Channel Alt. Background", Palette.ChannelOdd))
+                llColorPalette.addView(InlineColorPicker(main, "Channel Alt. Foreground", Palette.ChannelOddText))
+                llColorPalette.addView(InlineColorPicker(main, "Selection", Palette.Selection))
+                llColorPalette.addView(InlineColorPicker(main, "Selection Text", Palette.SelectionText))
+                llColorPalette.addView(InlineColorPicker(main, "Notes", Palette.Leaf))
+                llColorPalette.addView(InlineColorPicker(main, "Notes Text", Palette.LeafText))
+                llColorPalette.addView(InlineColorPicker(main, "Selected Notes", Palette.LeafSelected))
+                llColorPalette.addView(InlineColorPicker(main, "Selected Notes Text", Palette.LeafSelectedText))
+                llColorPalette.addView(InlineColorPicker(main, "Linked Notes", Palette.Link))
+                llColorPalette.addView(InlineColorPicker(main, "Linked Notes Text", Palette.LinkText))
+                llColorPalette.addView(InlineColorPicker(main, "Linked Rests", Palette.LinkEmpty))
+                llColorPalette.addView(InlineColorPicker(main, "Selected Linked Notes", Palette.LinkSelected))
+                llColorPalette.addView(InlineColorPicker(main, "Selected Linked Notes Text", Palette.LinkSelectedText))
+                llColorPalette.addView(InlineColorPicker(main, "Selected Linked Rests", Palette.LinkEmptySelected))
+                llColorPalette.addView(InlineColorPicker(main, "Invalid Notes", Palette.LeafInvalid))
+                llColorPalette.addView(InlineColorPicker(main, "Invalid Notes Text", Palette.LeafInvalidText))
             } else {
+                main.configuration.use_palette = false
                 llColorPalette.visibility = View.GONE
-                main.view_model.color_map.unpopulate()
+                llColorPalette.removeAllViews()
+                btnClearPalette.visibility = View.GONE
             }
             main.save_configuration()
         }
-
-        if (sCustomPalette.isChecked) {
-            llColorPalette.visibility = View.VISIBLE
-        } else {
-            llColorPalette.visibility = View.GONE
-        }
-
-        llColorPalette.addView(InlineColorPicker(main, "App Bar Background", Palette.TitleBar))
-        llColorPalette.addView(InlineColorPicker(main, "App Bar Foreground", Palette.TitleBarText))
-        llColorPalette.addView(InlineColorPicker(main, "Background", Palette.Background))
-        llColorPalette.addView(InlineColorPicker(main, "Foreground", Palette.Foreground))
-        llColorPalette.addView(InlineColorPicker(main, "Buttons Background", Palette.Button))
-        llColorPalette.addView(InlineColorPicker(main, "Buttons Foreground", Palette.ButtonText))
-        llColorPalette.addView(InlineColorPicker(main, "Buttons Alt Background", Palette.ButtonAlt))
-        llColorPalette.addView(InlineColorPicker(main, "Buttons Alt Foreground", Palette.ButtonAltText))
-        llColorPalette.addView(InlineColorPicker(main, "Buttons Selected Background", Palette.ButtonSelected))
-        llColorPalette.addView(InlineColorPicker(main, "Buttons Selected Foreground", Palette.ButtonSelectedText))
-        llColorPalette.addView(InlineColorPicker(main, "Table Lines", Palette.Lines))
-        llColorPalette.addView(InlineColorPicker(main, "Column Labels", Palette.ColumnLabel))
-        llColorPalette.addView(InlineColorPicker(main, "Column Label Text", Palette.ColumnLabelText))
-        llColorPalette.addView(InlineColorPicker(main, "Channel Background", Palette.ChannelEven))
-        llColorPalette.addView(InlineColorPicker(main, "Channel Foreground", Palette.ChannelEvenText))
-        llColorPalette.addView(InlineColorPicker(main, "Channel Alt. Background", Palette.ChannelOdd))
-        llColorPalette.addView(InlineColorPicker(main, "Channel Alt. Foreground", Palette.ChannelOddText))
-        llColorPalette.addView(InlineColorPicker(main, "Selection", Palette.Selection))
-        llColorPalette.addView(InlineColorPicker(main, "Selection Text", Palette.SelectionText))
-        llColorPalette.addView(InlineColorPicker(main, "Notes", Palette.Leaf))
-        llColorPalette.addView(InlineColorPicker(main, "Notes Text", Palette.LeafText))
-        llColorPalette.addView(InlineColorPicker(main, "Selected Notes", Palette.LeafSelected))
-        llColorPalette.addView(InlineColorPicker(main, "Selected Notes Text", Palette.LeafSelectedText))
-        llColorPalette.addView(InlineColorPicker(main, "Linked Notes", Palette.Link))
-        llColorPalette.addView(InlineColorPicker(main, "Linked Notes Text", Palette.LinkText))
-        llColorPalette.addView(InlineColorPicker(main, "Linked Rests", Palette.LinkEmpty))
-        llColorPalette.addView(InlineColorPicker(main, "Selected Linked Notes", Palette.LinkSelected))
-        llColorPalette.addView(InlineColorPicker(main, "Selected Linked Notes Text", Palette.LinkSelectedText))
-        llColorPalette.addView(InlineColorPicker(main, "Selected Linked Rests", Palette.LinkEmptySelected))
-        llColorPalette.addView(InlineColorPicker(main, "Invalid Notes", Palette.LeafInvalid))
-        llColorPalette.addView(InlineColorPicker(main, "Invalid Notes Text", Palette.LeafInvalidText))
-
-
+        sCustomPalette.isChecked = color_map.is_set() && main.configuration.use_palette
     }
 
     private fun interact_btnChooseSoundFont(view: View) {

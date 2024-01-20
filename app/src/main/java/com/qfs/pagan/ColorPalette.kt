@@ -67,14 +67,13 @@ class ColorMap(val activity: MainActivity, initial_palette: HashMap<Palette, Int
     }
 
     operator fun get(key: Palette): Int {
-        return this.palette.getOrDefault(
-            key,
-            if (this.activity.is_night_mode()) {
-                this._palette_night.getOrDefault(key, this.default)
-            } else {
-                this._palette_day.getOrDefault(key, this.default)
-            }
-        )
+        return if (this.activity.configuration.use_palette && this.palette.containsKey(key)) {
+            this.palette[key]!!
+        } else if (this.activity.is_night_mode()) {
+            this._palette_night.getOrDefault(key, this.default)
+        } else {
+            this._palette_day.getOrDefault(key, this.default)
+        }
     }
 
     operator fun set(key: Palette, value: Int) {

@@ -62,10 +62,12 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
     }
 
     override fun onStop() {
+
         // Assign to view model on stop, will be destroyed onDestroy, so need to
         // essentially dup this in onSaveInstanceState
         val editor_table = this.get_main().findViewById<EditorTable>(R.id.etEditorTable)
         val (scroll_x, scroll_y) = editor_table.get_scroll_offset()
+
         this.view_model.backup_undo_stack = this.get_main().get_opus_manager().history_cache.copy()
         this.view_model.coarse_x = scroll_x.first
         this.view_model.fine_x = scroll_x.second
@@ -74,6 +76,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
 
         val opus_manager = this.get_main().get_opus_manager()
         this.get_main().save_to_backup()
+
         //this.view_model.backup_json = Json.encodeToString(opus_manager.to_json()).toByteArray()
         this.view_model.backup_path = opus_manager.path
 
@@ -81,7 +84,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         val channel_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
         if (channel_recycler.adapter != null) {
             (channel_recycler.adapter as ChannelOptionAdapter).clear()
-            channel_recycler.adapter =null
+            channel_recycler.adapter = null
         }
 
         super.onStop()
@@ -108,7 +111,10 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         val coarse_y: Int
         val fine_y: Int
         val backup_path: String?
-        if (savedInstanceState != null) {
+
+        // SavedInstanceState may be created when the fragment isn't active, and save an empty state.
+        // *NEED* to make sure it isn't empty before traversing this branch
+        if (savedInstanceState != null && savedInstanceState.getString("backup_path") != null) {
             // Orientation Change/Brought back from background
             coarse_x = savedInstanceState.getInt("coarse_x")
             fine_x = savedInstanceState.getInt("fine_x")
@@ -147,9 +153,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
 
         this.view_model.clear()
 
-
         main.setup_project_config_drawer()
-
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -176,6 +180,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
 
     private fun _set_result_listeners() {
         setFragmentResultListener(IntentFragmentToken.Load.name) { _, bundle: Bundle? ->
+
             this.view_model.backup_fragment_intent = Pair(IntentFragmentToken.ImportMidi, bundle)
 
             val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)

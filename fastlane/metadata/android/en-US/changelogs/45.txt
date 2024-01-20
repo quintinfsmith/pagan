@@ -1,0 +1,3 @@
+Color customization
+- Fixed bug that could cause columns to be incorrectly sized after swapping 2 lines with different numbers of subdivisions
+- Fixed bug that caused the project to forget its own location by changing orientation in the settings menu

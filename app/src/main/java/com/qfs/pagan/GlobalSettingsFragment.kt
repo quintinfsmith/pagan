@@ -134,7 +134,7 @@ class GlobalSettingsFragment : PaganFragment<FragmentGlobalSettingsBinding>() {
         val sCustomPalette = view.findViewById<PaganSwitch>(R.id.sCustomPalette)
         val btnClearPalette = view.findViewById<StdButton>(R.id.btnClearPalette)
         btnClearPalette.setOnClickListener {
-            main.dialog_confirm("Really Reset Custom Colors?") {
+            main.dialog_confirm(getString(R.string.dialog_reset_colors)) {
                 main.view_model.color_map.unpopulate()
                 btnClearPalette.visibility = View.GONE
                 sCustomPalette.isChecked = false
@@ -200,7 +200,7 @@ class GlobalSettingsFragment : PaganFragment<FragmentGlobalSettingsBinding>() {
         val soundfont_dir = this.get_main().get_soundfont_directory()
         val file_list = soundfont_dir.listFiles()?.toList() ?: listOf<File>()
 
-        val soundfonts = mutableListOf<Pair<Pair<Int, String?>, String>>( Pair(Pair(0, null), "No SoundFont") )
+        val soundfonts = mutableListOf<Pair<Pair<Int, String?>, String>>( Pair(Pair(0, null), this.resources.getString(R.string.no_soundfont)) )
 
         file_list.forEachIndexed { i: Int, file: File ->
             soundfonts.add(Pair(Pair(1, file.name), file.name))
@@ -208,7 +208,7 @@ class GlobalSettingsFragment : PaganFragment<FragmentGlobalSettingsBinding>() {
 
         soundfonts.add(Pair(Pair(2, null), getString(R.string.option_import_soundfont)))
 
-        this.get_main().dialog_popup_menu("Select Soundfont", soundfonts) { index: Int, pair: Pair<Int, String?> ->
+        this.get_main().dialog_popup_menu(getString(R.string.dialog_select_soundfont), soundfonts) { index: Int, pair: Pair<Int, String?> ->
             val (mode, path) = pair
             when (mode) {
                 0 -> this._disable_soundfont()
@@ -228,8 +228,8 @@ class GlobalSettingsFragment : PaganFragment<FragmentGlobalSettingsBinding>() {
         file_list.forEachIndexed { i: Int, file: File ->
             soundfonts.add(Pair(file.name, file.name))
         }
-        main.dialog_popup_menu("Choose Soundfont to Remove", soundfonts) { i: Int, filename: String ->
-            main.dialog_confirm("Really Delete $filename?") {
+        main.dialog_popup_menu(getString(R.string.dialog_remove_soundfont_title), soundfonts) { i: Int, filename: String ->
+            main.dialog_confirm(getString(R.string.dialog_remove_soundfont_text, filename)) {
                 this._delete_soundfont(filename)
             }
         }

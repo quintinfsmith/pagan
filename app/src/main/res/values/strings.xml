@@ -167,6 +167,10 @@
     <string name="palette_link_empty_selected">Selected Linked Rests</string>
     <string name="palette_leaf_invalid">Invalid Notes</string>
     <string name="palette_leaf_invalid_text">Invalid Notes Text</string>
+    <string name="dialog_remove_soundfont_title">Choose Soundfont to Remove</string>
+    <string name="dialog_select_soundfont">Select Soundfont</string>
+    <string name="dialog_remove_soundfont_text">Really Delete %1$s?</string>
+    <string name="dialog_reset_colors">Really Reset Custom Colors?</string>
     <string-array name="relative">
         <item>@string/pfx_add</item>
         <item>@string/pfx_subtract</item>

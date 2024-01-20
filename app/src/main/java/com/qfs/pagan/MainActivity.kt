@@ -87,7 +87,7 @@ import kotlin.concurrent.thread
 import kotlin.math.floor
 import kotlin.math.roundToInt
 import com.qfs.pagan.InterfaceLayer as OpusManager
-
+import com.qfs.pagan.ColorMap.Palette
 
 class MainActivity : AppCompatActivity() {
     enum class PlaybackState {

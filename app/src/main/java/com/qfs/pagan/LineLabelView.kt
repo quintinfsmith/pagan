@@ -12,6 +12,7 @@ import androidx.appcompat.widget.AppCompatTextView
 import com.qfs.pagan.opusmanager.BaseLayer
 import com.qfs.pagan.opusmanager.LinksLayer
 import com.qfs.pagan.InterfaceLayer as OpusManager
+import com.qfs.pagan.ColorMap.Palette
 
 class LineLabelView(context: Context, var channel: Int, var line_offset: Int): AppCompatTextView(ContextThemeWrapper(context, R.style.line_label)),
     View.OnTouchListener {

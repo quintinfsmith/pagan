@@ -5,6 +5,7 @@ import android.content.res.ColorStateList
 import android.graphics.Color
 import android.util.AttributeSet
 import android.view.ContextThemeWrapper
+import com.qfs.pagan.ColorMap.Palette
 
 open class PaganRadioButton(context: Context, attrs: AttributeSet? = null): androidx.appcompat.widget.AppCompatRadioButton(context, attrs) {
     init {

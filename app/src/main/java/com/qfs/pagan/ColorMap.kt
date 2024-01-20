@@ -1,41 +1,41 @@
 package com.qfs.pagan
 
 import android.graphics.Color
-enum class Palette {
-    Background,
-    Foreground,
-    Lines,
-    LeafInvalid,
-    LeafInvalidText,
-    Selection,
-    SelectionText,
-    Leaf,
-    LeafText,
-    LeafSelected,
-    LeafSelectedText,
-    LinkEmpty,
-    LinkEmptySelected,
-    Link,
-    LinkText,
-    LinkSelected,
-    LinkSelectedText,
-    ChannelEven,
-    ChannelEvenText,
-    ChannelOdd,
-    ChannelOddText,
-    ColumnLabel,
-    ColumnLabelText,
-    Button,
-    ButtonAlt,
-    ButtonSelected,
-    ButtonText,
-    ButtonAltText,
-    ButtonSelectedText,
-    TitleBar,
-    TitleBarText
-}
 
 class ColorMap(val activity: MainActivity, initial_palette: HashMap<Palette, Int>? = null) {
+    enum class Palette {
+        Background,
+        Foreground,
+        Lines,
+        LeafInvalid,
+        LeafInvalidText,
+        Selection,
+        SelectionText,
+        Leaf,
+        LeafText,
+        LeafSelected,
+        LeafSelectedText,
+        LinkEmpty,
+        LinkEmptySelected,
+        Link,
+        LinkText,
+        LinkSelected,
+        LinkSelectedText,
+        ChannelEven,
+        ChannelEvenText,
+        ChannelOdd,
+        ChannelOddText,
+        ColumnLabel,
+        ColumnLabelText,
+        Button,
+        ButtonAlt,
+        ButtonSelected,
+        ButtonText,
+        ButtonAltText,
+        ButtonSelectedText,
+        TitleBar,
+        TitleBarText
+    }
     private val default = Color.parseColor("#FF00FF")
     private val palette = HashMap<Palette, Int>()
     init {

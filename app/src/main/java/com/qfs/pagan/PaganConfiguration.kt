@@ -5,6 +5,7 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
+import com.qfs.pagan.ColorMap.Palette
 
 @Serializable
 data class PaganConfiguration(

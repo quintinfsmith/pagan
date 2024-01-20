@@ -14,7 +14,7 @@ import android.widget.Space
 import androidx.appcompat.view.ContextThemeWrapper
 import androidx.core.view.children
 import kotlin.math.roundToInt
-
+import com.qfs.pagan.ColorMap.Palette
 
 class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(context, attrs) {
     var min: Int = 0

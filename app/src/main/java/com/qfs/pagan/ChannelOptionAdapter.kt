@@ -13,6 +13,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.apres.soundfont.SoundFont
 import kotlin.math.roundToInt
+import com.qfs.pagan.ColorMap.Palette
 
 class ChannelOptionAdapter(
     private val _opus_manager: InterfaceLayer,

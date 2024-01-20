@@ -6,6 +6,9 @@ import android.graphics.drawable.StateListDrawable
 import android.util.AttributeSet
 import android.view.ContextThemeWrapper
 import androidx.appcompat.content.res.AppCompatResources
+import com.qfs.pagan.ColorMap.Palette
+
+
 
 class IconButton(context: Context, attrs: AttributeSet?): androidx.appcompat.widget.AppCompatImageView(context, attrs) {
     init {

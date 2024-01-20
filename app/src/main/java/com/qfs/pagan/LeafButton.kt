@@ -17,6 +17,7 @@ import com.qfs.pagan.structure.OpusTree
 import kotlin.concurrent.thread
 import kotlin.math.abs
 import com.qfs.pagan.InterfaceLayer as OpusManager
+import com.qfs.pagan.ColorMap.Palette
 
 class LeafButton(
     context: Context,

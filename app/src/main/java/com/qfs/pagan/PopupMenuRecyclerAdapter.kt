@@ -9,6 +9,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
+import com.qfs.pagan.ColorMap.Palette
 
 class PopupMenuRecyclerAdapter<T>(
     private val _recycler: RecyclerView,

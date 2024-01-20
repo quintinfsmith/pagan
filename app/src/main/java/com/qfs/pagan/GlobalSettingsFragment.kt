@@ -18,6 +18,7 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
+import com.qfs.pagan.ColorMap.Palette
 
 class GlobalSettingsFragment : PaganFragment<FragmentGlobalSettingsBinding>() {
     private var _import_soundfont_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->

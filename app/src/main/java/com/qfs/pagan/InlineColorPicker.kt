@@ -7,6 +7,7 @@ import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import androidx.appcompat.widget.LinearLayoutCompat
 import kotlin.math.roundToInt
+import com.qfs.pagan.ColorMap.Palette
 
 class InlineColorPicker(private val activity: MainActivity, label: String, key: Palette): LinearLayoutCompat(activity, null) {
     private val color_button = ColorButton(activity, null, activity.view_model.color_map[key])

@@ -5,6 +5,7 @@ import android.graphics.drawable.LayerDrawable
 import android.graphics.drawable.StateListDrawable
 import android.util.AttributeSet
 import android.view.ContextThemeWrapper
+import com.qfs.pagan.ColorMap.Palette
 
 class StdButton(context: Context, attrs: AttributeSet?): androidx.appcompat.widget.AppCompatTextView(context, attrs) {
     // NOTE: this logic exists in drawableStateChanged() rather than init since palette isn't guaranteed

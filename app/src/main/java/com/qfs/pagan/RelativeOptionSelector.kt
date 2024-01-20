@@ -10,6 +10,7 @@ import android.view.View
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.LinearLayout
 import androidx.appcompat.view.ContextThemeWrapper
+import com.qfs.pagan.ColorMap.Palette
 
 
 class RelativeOptionSelector(context: Context, attrs: AttributeSet) : LinearLayout(context, attrs) {

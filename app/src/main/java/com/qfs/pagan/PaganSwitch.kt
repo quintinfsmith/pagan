@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.util.AttributeSet
 import android.view.ContextThemeWrapper
 import androidx.appcompat.widget.SwitchCompat
+import com.qfs.pagan.ColorMap.Palette
 
 open class PaganSwitch(context: Context, attrs: AttributeSet? = null): SwitchCompat(context, attrs) {
     init {

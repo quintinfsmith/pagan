@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.res.ColorStateList
 import android.util.AttributeSet
 import android.view.ContextThemeWrapper
+import com.qfs.pagan.ColorMap.Palette
 
 open class PaganSeekBar(context: Context, attrs: AttributeSet? = null): androidx.appcompat.widget.AppCompatSeekBar(context, attrs) {
     init {

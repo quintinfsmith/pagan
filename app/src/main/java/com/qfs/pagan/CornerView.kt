@@ -6,6 +6,7 @@ import android.util.AttributeSet
 import android.view.ContextThemeWrapper
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.LinearLayout
+import com.qfs.pagan.ColorMap.Palette
 
 class CornerView(context: Context, attrs: AttributeSet? = null): LinearLayout(ContextThemeWrapper(context, R.style.corner_view), attrs) {
     init {

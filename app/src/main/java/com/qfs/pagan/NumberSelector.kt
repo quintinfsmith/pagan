@@ -2,6 +2,7 @@ package com.qfs.pagan
 
 import android.content.Context
 import android.content.res.ColorStateList
+import android.graphics.Typeface
 import android.graphics.drawable.LayerDrawable
 import android.graphics.drawable.StateListDrawable
 import android.util.AttributeSet
@@ -13,8 +14,8 @@ import android.widget.LinearLayout
 import android.widget.Space
 import androidx.appcompat.view.ContextThemeWrapper
 import androidx.core.view.children
-import kotlin.math.roundToInt
 import com.qfs.pagan.ColorMap.Palette
+import kotlin.math.roundToInt
 
 class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(context, attrs) {
     var min: Int = 0
@@ -46,6 +47,7 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
 
         init {
             this.text = this._bkp_text
+            this.typeface = Typeface.MONOSPACE
             this.setOnClickListener {
                 this._number_selector.set_active_button(this)
                 this.setActive(true)

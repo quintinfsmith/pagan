@@ -68,19 +68,8 @@ class InlineColorPicker(private val activity: MainActivity, label: String, key: 
     }
 
 
-    override fun onAttachedToWindow() {
-        super.onAttachedToWindow()
-    }
-
     fun set_activity_color(key: Palette, new_color: Int) {
         this.activity.view_model.color_map[key] = new_color
         this.activity.save_configuration()
-        when (key) {
-            Palette.TitleBar,
-            Palette.TitleBarText -> {
-                this.activity.refresh_toolbar()
-            }
-            else -> {}
-        }
     }
 }

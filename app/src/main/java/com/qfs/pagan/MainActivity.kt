@@ -901,6 +901,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         )
+        this.refresh_toolbar()
     }
 
     fun set_title_text(new_text: String) {

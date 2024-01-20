@@ -39,6 +39,12 @@ abstract class PaganFragment<T: ViewBinding>: Fragment() {
         this.refresh_background()
     }
 
+   // override fun onPrimaryNavigationFragmentChanged(isPrimaryNavigationFragment: Boolean) {
+   //     super.onPrimaryNavigationFragmentChanged(isPrimaryNavigationFragment)
+   //     this.get_main().update_title_text()
+
+   // }
+
     fun refresh_background() {
         val color_map = this.get_main().view_model.color_map
         this.view?.setBackgroundColor(color_map[Palette.Background])

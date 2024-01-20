@@ -145,7 +145,7 @@ class MainActivity : AppCompatActivity() {
     private var _midi_feedback_dispatcher = MidiFeedbackDispatcher()
 
     private lateinit var _app_bar_configuration: AppBarConfiguration
-    private lateinit var _binding: ActivityMainBinding
+    lateinit var _binding: ActivityMainBinding
     private var _options_menu: Menu? = null
     private var _progress_bar: ProgressBar? = null
     var playback_state_soundfont: PlaybackState = PlaybackState.NotReady
@@ -471,6 +471,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(this._binding.root)
         setSupportActionBar(this._binding.appBarMain.toolbar)
 
+
         this.view_model.color_map = if (this.configuration.palette != null) {
             ColorMap(this, this.configuration.palette)
         } else {
@@ -478,25 +479,26 @@ class MainActivity : AppCompatActivity() {
         }
 
         val color_map = this.view_model.color_map
-        this._binding.appBarMain.toolbar.background = null
-        this._binding.appBarMain.toolbar.setTitleTextColor(color_map[Palette.TitleBarText])
-        this._binding.appBarMain.toolbar.setBackgroundColor(color_map[Palette.TitleBar])
-        this._binding.appBarMain.toolbar.setSubtitleTextColor(color_map[Palette.TitleBarText])
-        this._binding.appBarMain.toolbar.overflowIcon?.setTint(color_map[Palette.TitleBarText])
+        val toolbar = this._binding.appBarMain.toolbar
 
+        toolbar.background = null
+        toolbar.setTitleTextColor(color_map[Palette.TitleBarText])
+        toolbar.setBackgroundColor(color_map[Palette.TitleBar])
+        toolbar.setSubtitleTextColor(color_map[Palette.TitleBarText])
+        toolbar.overflowIcon?.setTint(color_map[Palette.TitleBarText])
         /*
             TODO: I think this setOf may be making my navigation more complicated
             than it needs to be. Needs investigation.
          */
-        this._app_bar_configuration = AppBarConfiguration(
-            setOf(
-                R.id.FrontFragment,
-                R.id.EditorFragment
-            )
-        )
+        //this._app_bar_configuration = AppBarConfiguration(
+        //    setOf(
+        //        R.id.FrontFragment,
+        //        R.id.EditorFragment
+        //    )
+        //)
 
         val navController = findNavController(R.id.nav_host_fragment_content_main)
-        setupActionBarWithNavController(navController, this._app_bar_configuration)
+        //setupActionBarWithNavController(navController, this._app_bar_configuration)
 
         //////////////////////////////////////////
         if (this.configuration.soundfont != null) {
@@ -601,6 +603,9 @@ class MainActivity : AppCompatActivity() {
                 val fragment = this.get_active_fragment()
                 if (fragment is EditorFragment && this._binding.root.getDrawerLockMode(this.findViewById(R.id.config_drawer)) != DrawerLayout.LOCK_MODE_LOCKED_CLOSED) {
                     this.drawer_open()
+                }  else if (fragment !is EditorFragment) {
+                    val navController = findNavController(R.id.nav_host_fragment_content_main)
+                    navController.popBackStack()
                 }
             }
 
@@ -877,8 +882,10 @@ class MainActivity : AppCompatActivity() {
         } else {
             this.drawer_lock()
         }
+
         navController.navigate(fragment)
     }
+
 
     fun get_active_fragment(): Fragment? {
         val navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main)
@@ -908,14 +915,6 @@ class MainActivity : AppCompatActivity() {
 
     fun set_title_text(new_text: String) {
         this._binding.appBarMain.toolbar.title = new_text
-        if (this._binding.appBarMain.toolbar.navigationIcon !is DrawerArrowDrawable) {
-            if (this.get_active_fragment() !is LandingPageFragment) {
-                this._binding.appBarMain.toolbar.setNavigationIcon(R.drawable.hamburger_32)
-                this._binding.appBarMain.toolbar.navigationIcon?.setTint(this.view_model.color_map[Palette.TitleBarText])
-            }
-        } else {
-            (this._binding.appBarMain.toolbar.navigationIcon as DrawerArrowDrawable).color = this.view_model.color_map[Palette.TitleBarText]
-        }
     }
 
     fun force_title_text(msg: String) {
@@ -1998,15 +1997,34 @@ class MainActivity : AppCompatActivity() {
 
     fun refresh_toolbar() {
         val color_map = this.view_model.color_map
-        this._binding.appBarMain.toolbar.setTitleTextColor(color_map[Palette.TitleBarText])
-        this._binding.appBarMain.toolbar.setBackgroundColor(color_map[Palette.TitleBar])
-        this._binding.appBarMain.toolbar.setSubtitleTextColor(color_map[Palette.TitleBarText])
-        this._binding.appBarMain.toolbar.overflowIcon?.setTint(color_map[Palette.TitleBarText])
-        for (item in this._binding.appBarMain.toolbar.menu.iterator()) {
+        val toolbar = this._binding.appBarMain.toolbar
+        val text_color = color_map[Palette.TitleBarText]
+        toolbar.setTitleTextColor(text_color)
+        toolbar.setBackgroundColor(color_map[Palette.TitleBar])
+        toolbar.setSubtitleTextColor(text_color)
+        toolbar.overflowIcon?.setTint(text_color)
+
+
+        when (this.get_active_fragment()) {
+            is EditorFragment -> {
+                toolbar.setNavigationIcon(R.drawable.hamburger_32)
+                toolbar.navigationIcon?.setTint(text_color)
+            }
+            is LandingPageFragment -> {
+                toolbar.navigationIcon = null
+            }
+            else -> {
+                toolbar.setNavigationIcon(R.drawable.baseline_arrow_back_24)
+                toolbar.navigationIcon?.setTint(text_color)
+            }
+        }
+
+        for (item in toolbar.menu.iterator()) {
             item.setIconTintList(ColorStateList(
                 arrayOf(intArrayOf(android.R.attr.state_enabled)),
-                intArrayOf(color_map[Palette.TitleBarText])
+                intArrayOf(text_color)
             ))
         }
     }
+
 }

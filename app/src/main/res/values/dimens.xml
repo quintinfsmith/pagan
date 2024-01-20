@@ -28,5 +28,8 @@
     <dimen name="alert_button_padding_right">8dp</dimen>
     <dimen name="inline_color_picker_label_padding">12dp</dimen>
     <dimen name="inline_color_picker_button_size">41dp</dimen>
+    <dimen name="color_picker_display_height">82dp</dimen>
+    <dimen name="color_picker_display_padding">8dp</dimen>
+    <dimen name="color_picker_popup_width">400dp</dimen>
 
 </resources>

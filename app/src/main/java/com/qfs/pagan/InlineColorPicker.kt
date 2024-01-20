@@ -6,8 +6,9 @@ import android.view.Gravity
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import androidx.appcompat.widget.LinearLayoutCompat
-import kotlin.math.roundToInt
+import androidx.core.graphics.toColorLong
 import com.qfs.pagan.ColorMap.Palette
+import kotlin.math.roundToInt
 
 class InlineColorPicker(private val activity: MainActivity, label: String, key: Palette): LinearLayoutCompat(activity, null) {
     private val color_button = ColorButton(activity, null, activity.view_model.color_map[key])
@@ -59,7 +60,13 @@ class InlineColorPicker(private val activity: MainActivity, label: String, key: 
             this.set_activity_color(key, new_color)
             lock_callback = false
         }
+        this.color_button.setOnClickListener {
+            this.activity.dialog_color_picker(this.color_button.get_color().toColorLong()) { new_color: Int ->
+                this.color_button.set_color(new_color)
+            }
+        }
     }
+
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()

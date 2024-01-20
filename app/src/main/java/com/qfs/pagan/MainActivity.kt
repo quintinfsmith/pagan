@@ -13,6 +13,7 @@ import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.database.Cursor
+import android.graphics.Color
 import android.graphics.drawable.LayerDrawable
 import android.graphics.drawable.StateListDrawable
 import android.media.midi.MidiDeviceInfo
@@ -20,6 +21,8 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.OpenableColumns
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.ContextThemeWrapper
 import android.view.LayoutInflater
 import android.view.Menu
@@ -29,6 +32,7 @@ import android.view.ViewGroup
 import android.view.ViewGroup.MarginLayoutParams
 import android.view.WindowManager
 import android.widget.EditText
+import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ProgressBar
@@ -47,6 +51,9 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.blue
+import androidx.core.graphics.green
+import androidx.core.graphics.red
 import androidx.core.os.bundleOf
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
@@ -72,6 +79,7 @@ import com.qfs.apres.soundfont.SoundFont
 import com.qfs.apres.soundfontplayer.ActiveMidiAudioPlayer
 import com.qfs.apres.soundfontplayer.MidiConverter
 import com.qfs.apres.soundfontplayer.SampleHandleManager
+import com.qfs.pagan.ColorMap.Palette
 import com.qfs.pagan.databinding.ActivityMainBinding
 import com.qfs.pagan.opusmanager.LoadedJSONData
 import com.qfs.pagan.opusmanager.LoadedJSONData0
@@ -87,7 +95,6 @@ import kotlin.concurrent.thread
 import kotlin.math.floor
 import kotlin.math.roundToInt
 import com.qfs.pagan.InterfaceLayer as OpusManager
-import com.qfs.pagan.ColorMap.Palette
 
 class MainActivity : AppCompatActivity() {
     enum class PlaybackState {
@@ -1054,7 +1061,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun _build_dialog_title_view(text: String): TextView {
+    internal fun _build_dialog_title_view(text: String): TextView {
         val output = PaganTextView(ContextThemeWrapper(this, R.style.dialog_title))
         output.text = text
         return output
@@ -1870,60 +1877,111 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun dialog_color_picker(red: Int, green: Int, blue: Int, callback: (Int, Int, Int) -> Unit) {
+    fun dialog_color_picker(initial_color: Long, callback: (Int) -> Unit) {
         val main_fragment = this.get_active_fragment()
+        val c = Color.toArgb(initial_color)
 
-        val sbRed = this.findViewById<SeekBar>(R.id.sbRed)
-        val sbGreen = this.findViewById<SeekBar>(R.id.sbGreen)
-        val sbBlue = this.findViewById<SeekBar>(R.id.sbBlue)
-        val rniRed = this.findViewById<RangedNumberInput>(R.id.rniRed)
-        val rniGreen = this.findViewById<RangedNumberInput>(R.id.rniGreen)
-        val rniBlue = this.findViewById<RangedNumberInput>(R.id.rniBlue)
-        val hex_view = this.findViewById<EditText>(R.id.etHexView)
+        val viewInflated: View = LayoutInflater.from(this)
+            .inflate(
+                R.layout.color_picker,
+                main_fragment!!.view as ViewGroup,
+                false
+            )
+        val flColorDisplay = viewInflated.findViewById<FrameLayout>(R.id.flColorDisplay)
+        val sbRed = viewInflated.findViewById<SeekBar>(R.id.sbRed)
+        val sbGreen = viewInflated.findViewById<SeekBar>(R.id.sbGreen)
+        val sbBlue = viewInflated.findViewById<SeekBar>(R.id.sbBlue)
+        val rniRed = viewInflated.findViewById<RangedNumberInput>(R.id.rniRed)
+        val rniGreen = viewInflated.findViewById<RangedNumberInput>(R.id.rniGreen)
+        val rniBlue = viewInflated.findViewById<RangedNumberInput>(R.id.rniBlue)
 
-        rniRed.set_value(red)
-        rniGreen.set_value(green)
-        rniBlue.set_value(blue)
+        rniRed.set_value(c.red)
+        rniGreen.set_value(c.green)
+        rniBlue.set_value(c.blue)
 
-        sbRed.progress = red
-        sbGreen.progress = green
-        sbBlue.progress = blue
+        sbRed.progress = c.red
+        sbGreen.progress = c.green
+        sbBlue.progress = c.blue
 
-        fun update_hex_view() {
-            val hex_r = Integer.toHexString(sbRed.progress)
-            val hex_g = Integer.toHexString(sbGreen.progress)
-            val hex_b = Integer.toHexString(sbBlue.progress)
-            hex_view.setText("#$hex_r$hex_g$hex_b")
-        }
+        rniRed.addTextChangedListener(object: TextWatcher {
+            var lockout = false
+            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
+            override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
+            override fun afterTextChanged(p0: Editable?) {
+                if (this.lockout) {
+                    return
+                }
+                this.lockout = true
+                sbRed.progress = p0.toString().toInt()
+                this.lockout = false
+            }
+        })
+        rniGreen.addTextChangedListener(object: TextWatcher {
+            var lockout = false
+            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
+            override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
+            override fun afterTextChanged(p0: Editable?) {
+                if (this.lockout) {
+                    return
+                }
+                this.lockout = true
+                sbGreen.progress = p0.toString().toInt()
+                this.lockout = false
+            }
+        })
+        rniBlue.addTextChangedListener(object: TextWatcher {
+            var lockout = false
+            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
+            override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
+            override fun afterTextChanged(p0: Editable?) {
+                if (this.lockout) {
+                    return
+                }
+                this.lockout = true
+                sbBlue.progress = p0.toString().toInt()
+                this.lockout = false
+            }
+        })
 
-        val change_listener = object: SeekBar.OnSeekBarChangeListener {
+        val seekbar_listener = object: SeekBar.OnSeekBarChangeListener {
+            var lockout = false
             override fun onProgressChanged(p0: SeekBar, p1: Int, p2: Boolean) {
+                if (this.lockout) {
+                    return
+                }
+                this.lockout = true
                 when (p0) {
                     sbRed -> rniRed.set_value(p1)
                     sbGreen -> rniGreen.set_value(p1)
                     sbBlue -> rniBlue.set_value(p1)
                 }
+                flColorDisplay.setBackgroundColor(Color.rgb(rniRed.get_value() ?: 0, rniGreen.get_value() ?: 0, rniBlue.get_value() ?: 0))
+                this.lockout = false
             }
             override fun onStartTrackingTouch(p0: SeekBar?) {}
-            override fun onStopTrackingTouch(seekbar: SeekBar) {
-                update_hex_view()
-            }
+            override fun onStopTrackingTouch(seekbar: SeekBar) { }
         }
 
-        sbRed.setOnSeekBarChangeListener(change_listener)
-        sbGreen.setOnSeekBarChangeListener(change_listener)
-        sbBlue.setOnSeekBarChangeListener(change_listener)
+        sbRed.setOnSeekBarChangeListener(seekbar_listener)
+        sbGreen.setOnSeekBarChangeListener(seekbar_listener)
+        sbBlue.setOnSeekBarChangeListener(seekbar_listener)
 
 
-        AlertDialog.Builder(main_fragment!!.context, R.style.AlertDialog)
-            .setPositiveButton(android.R.string.ok) { dialog, _ ->
-                callback(rniRed.get_value()!!, rniGreen.get_value()!!, rniBlue.get_value()!!)
-                dialog.dismiss()
-            }
-            .setNegativeButton(android.R.string.cancel) { dialog, _ ->
-                dialog.cancel()
-            }
-            .show()
+        flColorDisplay.setBackgroundColor(Color.rgb(rniRed.get_value() ?: 0, rniGreen.get_value() ?: 0, rniBlue.get_value() ?: 0))
+
+        this._adjust_dialog_colors(
+            AlertDialog.Builder(main_fragment.context, R.style.AlertDialog)
+                .setView(viewInflated)
+                .setPositiveButton(android.R.string.ok) { dialog, _ ->
+                    val new_color = Color.argb(255, rniRed.get_value()!!, rniGreen.get_value()!!, rniBlue.get_value()!!)
+                    callback(new_color)
+                    dialog.dismiss()
+                }
+                .setNegativeButton(android.R.string.cancel) { dialog, _ ->
+                    dialog.cancel()
+                }
+                .show()
+        )
     }
 
     fun is_night_mode(): Boolean {

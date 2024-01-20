@@ -49,7 +49,6 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         val SECTION_VIEW_PARTIAL_RIGHT = 2
         val SECTION_VIEW_PARTIAL_OVERSIZED = 3
         val SECTION_VIEW_COMPLETE = 4
-
     }
 
     init {
@@ -762,6 +761,14 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             for (i in target_line_count until current_line_count) {
                 this.remove_row(target_line_count)
             }
+        }
+    }
+
+    fun swap_lines(line_a: Int, line_b: Int) {
+        for (i in 0 until this.column_width_map.size) {
+            val tmp = this.column_width_map[i][line_a]
+            this.column_width_map[i][line_a] = this.column_width_map[i][line_b]
+            this.column_width_map[i][line_b] = tmp
         }
     }
 }

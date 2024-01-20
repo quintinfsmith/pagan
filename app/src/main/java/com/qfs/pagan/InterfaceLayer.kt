@@ -308,6 +308,10 @@ class InterfaceLayer(var activity: MainActivity): HistoryLayer() {
         super.swap_lines(channel_a, line_a, channel_b, line_b)
         this.cursor_select_row(channel_b, line_b)
 
+        this.get_editor_table()?.swap_lines(
+            this.get_abs_offset(channel_a, line_a),
+            this.get_abs_offset(channel_b, line_b),
+        )
     }
 
     /*

@@ -9,7 +9,8 @@ import androidx.appcompat.widget.SwitchCompat
 import com.qfs.pagan.ColorMap.Palette
 
 open class PaganSwitch(context: Context, attrs: AttributeSet? = null): SwitchCompat(context, attrs) {
-    init {
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
         var working_context = context
         while (working_context !is MainActivity) {
             working_context = (working_context as ContextThemeWrapper).baseContext

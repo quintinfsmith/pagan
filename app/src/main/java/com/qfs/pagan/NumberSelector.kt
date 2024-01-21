@@ -53,12 +53,6 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
                 this.setActive(true)
             }
 
-            this._setup_colors()
-            // alt_style doesn't automatically refreshDrawableState like focus or active,
-            // So we need to manually call it here
-            if (this.alt_style) {
-                this.refreshDrawableState()
-            }
         }
 
         // setup_colors needs to be called here AND in init, otherwise changing between night/day
@@ -66,6 +60,11 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
         override fun onAttachedToWindow() {
             super.onAttachedToWindow()
             this._setup_colors()
+            // alt_style doesn't automatically refreshDrawableState like focus or active,
+            // So we need to manually call it here
+            if (this.alt_style) {
+                this.refreshDrawableState()
+            }
         }
 
         private fun _setup_colors() {

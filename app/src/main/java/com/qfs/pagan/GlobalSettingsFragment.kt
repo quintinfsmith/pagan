@@ -1,6 +1,7 @@
 package com.qfs.pagan
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -12,6 +13,8 @@ import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.fragment.app.clearFragmentResult
+import androidx.fragment.app.setFragmentResult
 import com.qfs.apres.soundfont.SoundFont
 import com.qfs.pagan.ColorMap.Palette
 import com.qfs.pagan.databinding.FragmentGlobalSettingsBinding
@@ -19,7 +22,6 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
-import kotlin.concurrent.thread
 
 class GlobalSettingsFragment : PaganFragment<FragmentGlobalSettingsBinding>() {
     private var _import_soundfont_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -73,7 +75,7 @@ class GlobalSettingsFragment : PaganFragment<FragmentGlobalSettingsBinding>() {
 
         if (main.is_soundfont_available()) {
             this.binding.root.findViewById<LinearLayout>(R.id.llSFWarning).visibility = View.GONE
-        }  else {
+        } else {
             this.binding.root.findViewById<TextView>(R.id.tvFluidUrl).setOnClickListener {
                 val url = getString(R.string.url_fluid)
                 val intent = Intent(Intent.ACTION_VIEW)
@@ -97,6 +99,7 @@ class GlobalSettingsFragment : PaganFragment<FragmentGlobalSettingsBinding>() {
             null -> {
                 getString(R.string.no_soundfont)
             }
+
             else -> {
                 val soundfont_dir = main.get_soundfont_directory()
                 val filecheck = File("${soundfont_dir}/$soundfont_filename")
@@ -118,12 +121,15 @@ class GlobalSettingsFragment : PaganFragment<FragmentGlobalSettingsBinding>() {
         val slider_playback_quality = view.findViewById<SeekBar>(R.id.sbPlaybackQuality)
         val min_sample_rate = 11025
         val max_sample_rate = 44100
-        slider_playback_quality.progress = (main.configuration.sample_rate - min_sample_rate) * slider_playback_quality.max / (max_sample_rate - min_sample_rate)
-        slider_playback_quality.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) { }
-            override fun onStartTrackingTouch(p0: SeekBar?) { }
+        slider_playback_quality.progress =
+            (main.configuration.sample_rate - min_sample_rate) * slider_playback_quality.max / (max_sample_rate - min_sample_rate)
+        slider_playback_quality.setOnSeekBarChangeListener(object :
+            SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {}
+            override fun onStartTrackingTouch(p0: SeekBar?) {}
             override fun onStopTrackingTouch(seekbar: SeekBar?) {
-                main.configuration.sample_rate = (seekbar!!.progress * (max_sample_rate - min_sample_rate) / seekbar.max) + min_sample_rate
+                main.configuration.sample_rate =
+                    (seekbar!!.progress * (max_sample_rate - min_sample_rate) / seekbar.max) + min_sample_rate
                 main.set_sample_rate(main.configuration.sample_rate)
                 main.save_configuration()
             }
@@ -131,77 +137,71 @@ class GlobalSettingsFragment : PaganFragment<FragmentGlobalSettingsBinding>() {
 
         // Palette Shiz ----------------------------
         main.loading_reticle_show()
-        thread {
-            main.runOnUiThread {
-
-                val color_map = main.view_model.color_map
-
-                val sCustomPalette = view.findViewById<PaganSwitch>(R.id.sCustomPalette)
-                val btnClearPalette = view.findViewById<StdButton>(R.id.btnClearPalette)
-                btnClearPalette.setOnClickListener {
-                    main.dialog_confirm(getString(R.string.dialog_reset_colors)) {
-                        main.view_model.color_map.unpopulate()
-                        btnClearPalette.visibility = View.GONE
-                        sCustomPalette.isChecked = false
-                        sCustomPalette.isChecked = true
-                    }
-                }
-
-                val llColorPalette = view.findViewById<LinearLayout>(R.id.llColorPalette)
-
-                sCustomPalette.setOnCheckedChangeListener { button: CompoundButton, is_checked: Boolean ->
-                    if (is_checked) {
-                        btnClearPalette.visibility = View.VISIBLE
-                        main.configuration.use_palette = true
-                        if (!main.view_model.color_map.is_set()) {
-                            main.view_model.color_map.populate()
-                        }
-                        btnClearPalette.visibility = View.VISIBLE
-                        llColorPalette.visibility = View.VISIBLE
-
-                        llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_title_bar), Palette.TitleBar))
-                        llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_title_bar_text), Palette.TitleBarText))
-                        llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_background), Palette.Background))
-                        llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_foreground), Palette.Foreground))
-                        llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_button), Palette.Button))
-                        llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_button_text), Palette.ButtonText))
-                        llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_button_alt), Palette.ButtonAlt))
-                        llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_button_alt_text), Palette.ButtonAltText))
-                        llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_button_selected), Palette.ButtonSelected))
-                        llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_button_selected_text), Palette.ButtonSelectedText))
-                        llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_lines), Palette.Lines))
-                        llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_column_label), Palette.ColumnLabel))
-                        llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_column_label_text), Palette.ColumnLabelText))
-                        llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_channel_even), Palette.ChannelEven))
-                        llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_channel_even_text), Palette.ChannelEvenText))
-                        llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_channel_odd), Palette.ChannelOdd))
-                        llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_channel_odd_text), Palette.ChannelOddText))
-                        llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_selection), Palette.Selection))
-                        llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_selection_text), Palette.SelectionText))
-                        llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_leaf), Palette.Leaf))
-                        llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_leaf_text), Palette.LeafText))
-                        llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_leaf_selected), Palette.LeafSelected))
-                        llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_leaf_selected_text), Palette.LeafSelectedText))
-                        llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_link), Palette.Link))
-                        llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_link_text), Palette.LinkText))
-                        llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_link_empty), Palette.LinkEmpty))
-                        llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_link_selected), Palette.LinkSelected))
-                        llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_link_selected_text), Palette.LinkSelectedText))
-                        llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_link_empty_selected), Palette.LinkEmptySelected))
-                        llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_leaf_invalid), Palette.LeafInvalid))
-                        llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_leaf_invalid_text), Palette.LeafInvalidText))
-                    } else {
-                        main.configuration.use_palette = false
-                        llColorPalette.visibility = View.GONE
-                        llColorPalette.removeAllViews()
-                        btnClearPalette.visibility = View.GONE
-                    }
-                    main.save_configuration()
-                }
-                sCustomPalette.isChecked = color_map.is_set() && main.configuration.use_palette
-                main.loading_reticle_hide()
+        val color_map = main.view_model.color_map
+        val sCustomPalette = view.findViewById<PaganSwitch>(R.id.sCustomPalette)
+        val btnClearPalette = view.findViewById<StdButton>(R.id.btnClearPalette)
+        btnClearPalette.setOnClickListener {
+            main.dialog_confirm(getString(R.string.dialog_reset_colors)) {
+                main.view_model.color_map.unpopulate()
+                btnClearPalette.visibility = View.GONE
+                sCustomPalette.isChecked = false
+                sCustomPalette.isChecked = true
             }
         }
+
+        val llColorPalette = view.findViewById<LinearLayout>(R.id.llColorPalette)
+
+        sCustomPalette.setOnCheckedChangeListener { button: CompoundButton, is_checked: Boolean ->
+            if (is_checked) {
+                btnClearPalette.visibility = View.VISIBLE
+                color_map.use_palette = true
+                if (!main.view_model.color_map.is_set()) {
+                    main.view_model.color_map.populate()
+                }
+                btnClearPalette.visibility = View.VISIBLE
+                llColorPalette.visibility = View.VISIBLE
+
+                llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_title_bar), Palette.TitleBar))
+                llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_title_bar_text), Palette.TitleBarText))
+                llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_background), Palette.Background))
+                llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_foreground), Palette.Foreground))
+                llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_button), Palette.Button))
+                llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_button_text), Palette.ButtonText))
+                llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_button_alt), Palette.ButtonAlt))
+                llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_button_alt_text), Palette.ButtonAltText))
+                llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_button_selected), Palette.ButtonSelected))
+                llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_button_selected_text), Palette.ButtonSelectedText))
+                llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_lines), Palette.Lines))
+                llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_column_label), Palette.ColumnLabel))
+                llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_column_label_text), Palette.ColumnLabelText))
+                llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_channel_even), Palette.ChannelEven))
+                llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_channel_even_text), Palette.ChannelEvenText))
+                llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_channel_odd), Palette.ChannelOdd))
+                llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_channel_odd_text), Palette.ChannelOddText))
+                llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_selection), Palette.Selection))
+                llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_selection_text), Palette.SelectionText))
+                llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_leaf), Palette.Leaf))
+                llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_leaf_text), Palette.LeafText))
+                llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_leaf_selected), Palette.LeafSelected))
+                llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_leaf_selected_text), Palette.LeafSelectedText))
+                llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_link), Palette.Link))
+                llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_link_text), Palette.LinkText))
+                llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_link_empty), Palette.LinkEmpty))
+                llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_link_selected), Palette.LinkSelected))
+                llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_link_selected_text), Palette.LinkSelectedText))
+                llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_link_empty_selected), Palette.LinkEmptySelected))
+                llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_leaf_invalid), Palette.LeafInvalid))
+                llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_leaf_invalid_text), Palette.LeafInvalidText))
+            } else {
+                color_map.use_palette = false
+                llColorPalette.visibility = View.GONE
+                llColorPalette.removeAllViews()
+                btnClearPalette.visibility = View.GONE
+            }
+            main.save_configuration()
+        }
+        sCustomPalette.isChecked = color_map.is_set() && main.configuration.use_palette
+        main.loading_reticle_hide()
     }
 
     private fun interact_btnChooseSoundFont(view: View) {

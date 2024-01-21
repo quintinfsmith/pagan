@@ -42,7 +42,6 @@ class RelativeOptionSelector(context: Context, attrs: AttributeSet) : LinearLayo
                 this._relative_option_selector.set_active_button(this)
                 this.setActive(true)
             }
-            this._setup_colors()
         }
         private fun _setup_colors() {
             var context = this.context
@@ -115,6 +114,11 @@ class RelativeOptionSelector(context: Context, attrs: AttributeSet) : LinearLayo
             super.onLayout(isChanged, left, top, right, bottom)
             this.text = resources.getString(this._value)
             this.gravity = CENTER
+        }
+
+        override fun onAttachedToWindow() {
+            super.onAttachedToWindow()
+            this._setup_colors()
         }
 
     }

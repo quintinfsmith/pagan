@@ -8,7 +8,8 @@ import android.view.ContextThemeWrapper
 import com.qfs.pagan.ColorMap.Palette
 
 open class PaganRadioButton(context: Context, attrs: AttributeSet? = null): androidx.appcompat.widget.AppCompatRadioButton(context, attrs) {
-    init {
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
         var working_context = context
         while (working_context !is MainActivity) {
             working_context = (working_context as ContextThemeWrapper).baseContext

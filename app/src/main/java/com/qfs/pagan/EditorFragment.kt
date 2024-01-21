@@ -63,10 +63,6 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         this._set_result_listeners()
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-    }
-
     override fun onStop() {
 
         // Assign to view model on stop, will be destroyed onDestroy, so need to
@@ -96,20 +92,19 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         super.onStop()
     }
 
-
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        outState.putInt("coarse_x", this.view_model.coarse_x)
-        outState.putInt("fine_x", this.view_model.fine_x)
-        outState.putInt("coarse_y", this.view_model.coarse_y)
-        outState.putInt("fine_y", this.view_model.fine_y)
-        outState.putString("backup_path", this.view_model.backup_path)
-        val opus_manager = this.get_main().get_opus_manager()
-        // Can't reliably put json in outstate. there is a size limit
-        opus_manager.save( "${this.get_main().applicationInfo.dataDir}/.bkp.json")
+    override fun onDestroy() {
+        super.onDestroy()
     }
-
+    override fun onSaveInstanceState(outState: Bundle) {
+        val opus_manager = this.get_main().get_opus_manager()
+        if (opus_manager.path != null) {
+            outState.putInt("coarse_x", this.view_model.coarse_x)
+            outState.putInt("fine_x", this.view_model.fine_x)
+            outState.putInt("coarse_y", this.view_model.coarse_y)
+            outState.putInt("fine_y", this.view_model.fine_y)
+        }
+        super.onSaveInstanceState(outState)
+    }
     override fun onViewStateRestored(savedInstanceState: Bundle?) {
         super.onViewStateRestored(savedInstanceState)
         val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
@@ -122,7 +117,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
 
         // SavedInstanceState may be created when the fragment isn't active, and save an empty state.
         // *NEED* to make sure it isn't empty before traversing this branch
-        if (savedInstanceState != null && savedInstanceState.getString("backup_path") != null) {
+        if (savedInstanceState?.getString("backup_path") != null) {
             // Orientation Change/Brought back from background
             coarse_x = savedInstanceState.getInt("coarse_x")
             fine_x = savedInstanceState.getInt("fine_x")
@@ -192,7 +187,6 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
 
     private fun _set_result_listeners() {
         setFragmentResultListener(IntentFragmentToken.Load.name) { _, bundle: Bundle? ->
-
             this.view_model.backup_fragment_intent = Pair(IntentFragmentToken.ImportMidi, bundle)
 
             val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
@@ -293,6 +287,9 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
                 main.loading_reticle_hide()
             }
         }
+        //setFragmentResultListener(IntentFragmentToken.Resume.name) { _, bundle: Bundle? ->
+        //    // TODO:
+        //}
     }
 
 

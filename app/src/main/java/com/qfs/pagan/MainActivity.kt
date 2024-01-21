@@ -109,7 +109,8 @@ class MainActivity : AppCompatActivity() {
 
     class MainViewModel: ViewModel() {
         var export_handle: MidiConverter? = null
-        lateinit var color_map: ColorMap
+        var color_map = ColorMap()
+        lateinit var opus_manager: OpusManager
 
         fun export_wav(activity: MainActivity, midi: Midi, target_file: File, handler: MidiConverter.ExporterEventHandler) {
             this.export_handle = MidiConverter(SampleHandleManager(activity.get_soundfont()!!, 44100))
@@ -130,7 +131,6 @@ class MainActivity : AppCompatActivity() {
     val view_model: MainViewModel by viewModels()
     // flag to indicate that the landing page has been navigated away from for navigation management
     private var _has_seen_front_page = false
-    private var _opus_manager = OpusManager(this)
     private lateinit var project_manager: ProjectManager
     lateinit var configuration: PaganConfiguration
     private lateinit var _config_path: String
@@ -342,6 +342,13 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        this.view_model.color_map.set_fallback_palette(
+            if (this.is_night_mode()) {
+                this.get_night_palette()
+            } else {
+                this.get_day_palette()
+            }
+        )
 
         if (this._midi_playback_device != null) {
             this.playback_state_soundfont = PlaybackState.Ready
@@ -360,6 +367,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
+        // Can't reliably put json in outstate. there is a size limit
+        outState.putString("backup_path", this.view_model.backup_path)
         this.save_to_backup()
         super.onSaveInstanceState(outState)
     }
@@ -471,11 +480,19 @@ class MainActivity : AppCompatActivity() {
         setContentView(this._binding.root)
         setSupportActionBar(this._binding.appBarMain.toolbar)
 
+        this.view_model.opus_manager = OpusManager(this)
 
-        this.view_model.color_map = if (this.configuration.palette != null) {
-            ColorMap(this, this.configuration.palette)
-        } else {
-            ColorMap(this)
+        this.view_model.color_map.use_palette = this.configuration.use_palette
+        this.view_model.color_map.set_fallback_palette(
+            if (this.is_night_mode()) {
+                this.get_night_palette()
+            } else {
+                this.get_day_palette()
+            }
+        )
+
+        if (this.configuration.palette != null) {
+            this.view_model.color_map.set_palette(this.configuration.palette!!)
         }
 
         val color_map = this.view_model.color_map
@@ -486,19 +503,8 @@ class MainActivity : AppCompatActivity() {
         toolbar.setBackgroundColor(color_map[Palette.TitleBar])
         toolbar.setSubtitleTextColor(color_map[Palette.TitleBarText])
         toolbar.overflowIcon?.setTint(color_map[Palette.TitleBarText])
-        /*
-            TODO: I think this setOf may be making my navigation more complicated
-            than it needs to be. Needs investigation.
-         */
-        //this._app_bar_configuration = AppBarConfiguration(
-        //    setOf(
-        //        R.id.FrontFragment,
-        //        R.id.EditorFragment
-        //    )
-        //)
 
         val navController = findNavController(R.id.nav_host_fragment_content_main)
-        //setupActionBarWithNavController(navController, this._app_bar_configuration)
 
         //////////////////////////////////////////
         if (this.configuration.soundfont != null) {
@@ -564,7 +570,7 @@ class MainActivity : AppCompatActivity() {
             override fun onDrawerOpened(drawerView: View) {
                 val channel_recycler = this@MainActivity.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
                 if (channel_recycler.adapter == null) {
-                    ChannelOptionAdapter(this@MainActivity._opus_manager, channel_recycler)
+                    ChannelOptionAdapter(this@MainActivity.get_opus_manager(), channel_recycler)
                 }
                 val channel_adapter = (channel_recycler.adapter as ChannelOptionAdapter)
                 if (channel_adapter.itemCount == 0) {
@@ -677,13 +683,13 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun project_save() {
-        this.project_manager.save(this._opus_manager)
+        this.project_manager.save(this.get_opus_manager())
         this.feedback_msg(getString(R.string.feedback_project_saved))
         this.update_menu_options()
     }
 
     private fun project_delete() {
-        this.project_manager.delete(this._opus_manager)
+        this.project_manager.delete(this.get_opus_manager())
 
         val fragment = this.get_active_fragment()
         fragment?.setFragmentResult(IntentFragmentToken.New.name, bundleOf())
@@ -693,7 +699,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun project_move_to_copy() {
-        this.project_manager.move_to_copy(this._opus_manager)
+        this.project_manager.move_to_copy(this.get_opus_manager())
         this.feedback_msg(getString(R.string.feedback_on_copy))
     }
 
@@ -1209,7 +1215,7 @@ class MainActivity : AppCompatActivity() {
 
     fun update_channel_instruments(index: Int? = null) {
         if (index == null) {
-            for (channel in this._opus_manager.channels) {
+            for (channel in this.get_opus_manager().channels) {
                 this._midi_interface.broadcast_event(BankSelect(channel.midi_channel, channel.midi_bank))
                 this._midi_interface.broadcast_event(ProgramChange(channel.midi_channel, channel.midi_program))
             }
@@ -1221,7 +1227,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun get_opus_manager(): OpusManager {
-        return this._opus_manager
+        return this.view_model.opus_manager
     }
 
     fun play_event(channel: Int, event_value: Int, velocity: Int) {
@@ -1232,7 +1238,7 @@ class MainActivity : AppCompatActivity() {
             this._midi_interface.open_output_devices()
         }
 
-        val opus_manager = this._opus_manager
+        val opus_manager = this.get_opus_manager()
         val midi_channel = opus_manager.channels[channel].midi_channel
 
         val radix = opus_manager.tuning_map.size
@@ -1263,7 +1269,7 @@ class MainActivity : AppCompatActivity() {
     fun import_project(path: String) {
         this.applicationContext.contentResolver.openFileDescriptor(Uri.parse(path), "r")?.use {
             val bytes = FileInputStream(it.fileDescriptor).readBytes()
-            this._opus_manager.load(bytes, this.project_manager.get_new_path())
+            this.get_opus_manager().load(bytes, this.project_manager.get_new_path())
         }
     }
 
@@ -1277,13 +1283,14 @@ class MainActivity : AppCompatActivity() {
         } catch (e: Exception) {
             throw InvalidMIDIFile(path)
         }
-        this._opus_manager.import_midi(midi)
+        val opus_manager = this.get_opus_manager()
+        opus_manager.import_midi(midi)
         val filename = this.parse_file_name(Uri.parse(path))
         val new_path = this.project_manager.get_new_path()
 
-        this._opus_manager.path = new_path
-        this._opus_manager.set_project_name(filename?.substring(0, filename.lastIndexOf(".")) ?: getString(R.string.default_imported_midi_title))
-        this._opus_manager.clear_history()
+        opus_manager.path = new_path
+        opus_manager.set_project_name(filename?.substring(0, filename.lastIndexOf(".")) ?: getString(R.string.default_imported_midi_title))
+        opus_manager.clear_history()
     }
 
     fun has_projects_saved(): Boolean {
@@ -1431,6 +1438,7 @@ class MainActivity : AppCompatActivity() {
     fun save_configuration() {
         try {
             this.configuration.palette = this.view_model.color_map.get_palette()
+            this.configuration.use_palette = this.view_model.color_map.use_palette
             this.configuration.save(this._config_path)
         } catch (e: FileNotFoundException) {
             // TODO: ?Feedback? only happens on devices not properly put together (realme)
@@ -2031,4 +2039,75 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    fun get_night_palette(): HashMap<Palette, Int> {
+        return hashMapOf<Palette, Int>(
+            Pair(Palette.Background, this.getColor(R.color.dark_main_bg)),
+            Pair(Palette.Foreground, this.getColor(R.color.dark_main_fg)),
+            Pair(Palette.Lines, this.getColor(R.color.dark_table_lines)),
+            Pair(Palette.Leaf, this.getColor(R.color.leaf)),
+            Pair(Palette.LeafText, this.getColor(R.color.leaf_text)),
+            Pair(Palette.LeafInvalid, this.getColor(R.color.leaf_invalid)),
+            Pair(Palette.LeafInvalidText, this.getColor(R.color.leaf_invalid_text)),
+            Pair(Palette.LeafSelected, this.getColor(R.color.leaf_selected)),
+            Pair(Palette.LeafSelectedText, this.getColor(R.color.leaf_selected_text)),
+            Pair(Palette.Link, this.getColor(R.color.leaf_linked)),
+            Pair(Palette.LinkText, this.getColor(R.color.leaf_linked_text)),
+            Pair(Palette.LinkSelected, this.getColor(R.color.leaf_linked_selected)),
+            Pair( Palette.LinkSelectedText, this.getColor(R.color.leaf_linked_selected_text) ),
+            Pair(Palette.LinkEmpty, this.getColor(R.color.empty_linked)),
+            Pair(Palette.LinkEmptySelected, this.getColor(R.color.empty_linked_selected)),
+            Pair(Palette.Selection, this.getColor(R.color.empty_selected)),
+            Pair(Palette.SelectionText, this.getColor(R.color.empty_selected_text)),
+            Pair(Palette.ChannelEven, this.getColor(R.color.dark_channel_even)),
+            Pair(Palette.ChannelEvenText, this.getColor(R.color.dark_channel_even_text)),
+            Pair(Palette.ChannelOdd, this.getColor(R.color.dark_channel_odd)),
+            Pair(Palette.ChannelOddText, this.getColor(R.color.dark_channel_odd_text)),
+            Pair(Palette.ColumnLabel, this.getColor(R.color.dark_main_bg)),
+            Pair(Palette.ColumnLabelText, this.getColor(R.color.dark_main_fg)),
+            Pair(Palette.Button, this.getColor(R.color.dark_button)),
+            Pair(Palette.ButtonText, this.getColor(R.color.dark_button_text)),
+            Pair(Palette.ButtonAlt, this.getColor(R.color.dark_button_alt)),
+            Pair(Palette.ButtonAltText, this.getColor(R.color.dark_button_alt_text)),
+            Pair(Palette.ButtonSelected, this.getColor(R.color.dark_button_selected)),
+            Pair( Palette.ButtonSelectedText, this.getColor(R.color.dark_button_selected_text) ),
+            Pair(Palette.TitleBar, this.getColor(R.color.dark_primary)),
+            Pair(Palette.TitleBarText, this.getColor(R.color.dark_primary_text))
+        )
+    }
+
+    private fun get_day_palette(): HashMap<Palette, Int> {
+        return hashMapOf<Palette, Int>(
+            Pair(Palette.Background, this.getColor(R.color.light_main_bg)),
+            Pair(Palette.Foreground, this.getColor(R.color.light_main_fg)),
+            Pair(Palette.Lines, this.getColor(R.color.light_table_lines)),
+            Pair(Palette.Leaf, this.getColor(R.color.leaf)),
+            Pair(Palette.LeafText, this.getColor(R.color.leaf_text)),
+            Pair(Palette.LeafInvalid, this.getColor(R.color.leaf_invalid)),
+            Pair(Palette.LeafInvalidText, this.getColor(R.color.leaf_invalid_text)),
+            Pair(Palette.LeafSelected, this.getColor(R.color.leaf_selected)),
+            Pair(Palette.LeafSelectedText, this.getColor(R.color.leaf_selected_text)),
+            Pair(Palette.Link, this.getColor(R.color.leaf_linked)),
+            Pair(Palette.LinkText, this.getColor(R.color.leaf_linked_text)),
+            Pair(Palette.LinkSelected, this.getColor(R.color.leaf_linked_selected_text)),
+            Pair( Palette.LinkSelectedText, this.getColor(R.color.leaf_linked_selected_text) ),
+            Pair(Palette.LinkEmpty, this.getColor(R.color.empty_linked)),
+            Pair(Palette.LinkEmptySelected, this.getColor(R.color.empty_linked_selected)),
+            Pair(Palette.Selection, this.getColor(R.color.empty_selected)),
+            Pair(Palette.SelectionText, this.getColor(R.color.empty_selected_text)),
+            Pair(Palette.ChannelEven, this.getColor(R.color.light_channel_even)),
+            Pair(Palette.ChannelEvenText, this.getColor(R.color.light_channel_even_text)),
+            Pair(Palette.ChannelOdd, this.getColor(R.color.light_channel_odd)),
+            Pair(Palette.ChannelOddText, this.getColor(R.color.light_channel_odd_text)),
+            Pair(Palette.ColumnLabel, this.getColor(R.color.light_main_bg)),
+            Pair(Palette.ColumnLabelText, this.getColor(R.color.light_main_fg)),
+            Pair(Palette.Button, this.getColor(R.color.light_button)),
+            Pair(Palette.ButtonText, this.getColor(R.color.light_button_text)),
+            Pair(Palette.ButtonAlt, this.getColor(R.color.light_button_alt)),
+            Pair(Palette.ButtonAltText, this.getColor(R.color.light_button_alt_text)),
+            Pair(Palette.ButtonSelected, this.getColor(R.color.light_button_selected)),
+            Pair( Palette.ButtonSelectedText, this.getColor(R.color.light_button_selected_text) ),
+            Pair(Palette.TitleBar, this.getColor(R.color.light_primary)),
+            Pair(Palette.TitleBarText, this.getColor(R.color.light_primary_text))
+        )
+    }
 }

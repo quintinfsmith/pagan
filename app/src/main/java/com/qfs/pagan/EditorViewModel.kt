@@ -33,5 +33,7 @@ class EditorViewModel: ViewModel() {
         this.coarse_x = 0
         this.fine_x = 0
         this.backup_fragment_intent = null
+        this.backup_path = null
+        this.backup_json = null
     }
 }

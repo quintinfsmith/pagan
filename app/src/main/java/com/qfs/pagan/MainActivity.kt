@@ -858,7 +858,11 @@ class MainActivity : AppCompatActivity() {
                 (parent as ViewGroup).removeView(this@MainActivity._progress_bar)
             }
 
-            this@MainActivity._binding.root.addView(this@MainActivity._progress_bar, params)
+            try {
+                this@MainActivity._binding.root.addView(this@MainActivity._progress_bar, params)
+            } catch (e: UninitializedPropertyAccessException) {
+                // pass
+            }
         }
     }
 

@@ -17,7 +17,8 @@ import com.qfs.pagan.databinding.FragmentMainBinding
 import com.qfs.pagan.opusmanager.BaseLayer
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.OpusEvent
-import java.io.FileInputStream
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import java.lang.Integer.max
 import java.lang.Integer.min
 import kotlin.concurrent.thread
@@ -61,6 +62,10 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         this._set_result_listeners()
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+    }
+
     override fun onStop() {
 
         // Assign to view model on stop, will be destroyed onDestroy, so need to
@@ -77,7 +82,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         val opus_manager = this.get_main().get_opus_manager()
         this.get_main().save_to_backup()
 
-        //this.view_model.backup_json = Json.encodeToString(opus_manager.to_json()).toByteArray()
+        this.view_model.backup_json = Json.encodeToString(opus_manager.to_json()).toByteArray()
         this.view_model.backup_path = opus_manager.path
 
         val main = this.get_main()
@@ -90,11 +95,10 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         super.onStop()
     }
 
+
+
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        if (this._binding == null) {
-            return
-        }
         outState.putInt("coarse_x", this.view_model.coarse_x)
         outState.putInt("fine_x", this.view_model.fine_x)
         outState.putInt("coarse_y", this.view_model.coarse_y)
@@ -111,6 +115,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         val coarse_y: Int
         val fine_y: Int
         val backup_path: String?
+        val bytes: ByteArray
 
         // SavedInstanceState may be created when the fragment isn't active, and save an empty state.
         // *NEED* to make sure it isn't empty before traversing this branch
@@ -121,6 +126,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             coarse_y = savedInstanceState.getInt("coarse_y")
             fine_y = savedInstanceState.getInt("fine_y")
             backup_path = savedInstanceState.getString("backup_path")
+            bytes = savedInstanceState.getByteArray("backup_json")!!
         } else if (this.view_model.backup_path != null) {
             // Navigate Back,
             coarse_x = this.view_model.coarse_x
@@ -128,6 +134,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             coarse_y = this.view_model.coarse_y
             fine_y = this.view_model.fine_y
             backup_path = this.view_model.backup_path
+            bytes = this.view_model.backup_json!!
         } else {
             // Navigate to (import / load/new)
             editor_table.visibility = View.VISIBLE
@@ -138,10 +145,9 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         main.drawer_unlock()
 
         val opus_manager = main.get_opus_manager()
-        val bytes = FileInputStream("${main.applicationInfo.dataDir}/.bkp.json").readBytes()
-        opus_manager.load(bytes, backup_path)
+        //val bytes = FileInputStream("${main.applicationInfo.dataDir}/.bkp.json").readBytes()
         editor_table.visibility = View.VISIBLE
-
+        opus_manager.load(bytes, backup_path)
         editor_table.precise_scroll(coarse_x, fine_x, coarse_y, fine_y)
 
         // At the moment, can't save the history cache into a bundle, so restore it if

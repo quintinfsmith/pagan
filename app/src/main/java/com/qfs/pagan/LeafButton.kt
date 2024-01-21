@@ -9,6 +9,7 @@ import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import androidx.appcompat.view.ContextThemeWrapper
+import com.qfs.pagan.ColorMap.Palette
 import com.qfs.pagan.opusmanager.BaseLayer
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.LinksLayer
@@ -17,7 +18,6 @@ import com.qfs.pagan.structure.OpusTree
 import kotlin.concurrent.thread
 import kotlin.math.abs
 import com.qfs.pagan.InterfaceLayer as OpusManager
-import com.qfs.pagan.ColorMap.Palette
 
 class LeafButton(
     context: Context,
@@ -288,7 +288,7 @@ class LeafButton(
     }
 
     fun build_drawable_state(drawableState: IntArray?): IntArray? {
-        if (this.parent == null) {
+        if (this.parent == null || this.get_editor_table().needs_setup) {
             return drawableState
         }
 
@@ -306,6 +306,8 @@ class LeafButton(
         val tree = try {
             opus_manager.get_tree(beat_key, position)
         } catch (e: OpusTree.InvalidGetCall) {
+            return drawableState
+        } catch (e: IndexOutOfBoundsException) {
             return drawableState
         }
 

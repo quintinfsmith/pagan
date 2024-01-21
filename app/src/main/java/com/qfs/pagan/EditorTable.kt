@@ -41,6 +41,8 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     var _label_scroll_locked = false
     var _main_scroll_locked = false
 
+    var needs_setup = true
+
     private val _queued_cell_notifications = mutableListOf<BeatKey>()
 
     companion object {
@@ -182,6 +184,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     }
 
     fun clear() {
+        this.needs_setup = true
         this.column_width_map.clear()
         this.column_width_maxes.clear()
 
@@ -209,6 +212,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             }
         }
         main_adapter.add_columns(0, opus_manager.beat_count)
+        this.needs_setup = false
     }
 
     fun init_column_width_map() {

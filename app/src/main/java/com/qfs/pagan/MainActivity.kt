@@ -83,6 +83,7 @@ import com.qfs.apres.soundfontplayer.MidiConverter
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.pagan.ColorMap.Palette
 import com.qfs.pagan.databinding.ActivityMainBinding
+import com.qfs.pagan.opusmanager.LinksLayer
 import com.qfs.pagan.opusmanager.LoadedJSONData
 import com.qfs.pagan.opusmanager.LoadedJSONData0
 import kotlinx.serialization.decodeFromString
@@ -368,7 +369,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onSaveInstanceState(outState: Bundle) {
         // Can't reliably put json in outstate. there is a size limit
-        outState.putString("backup_path", this.view_model.backup_path)
+        outState.putString("backup_path", this.view_model.opus_manager.path)
         this.save_to_backup()
         super.onSaveInstanceState(outState)
     }
@@ -1639,9 +1640,19 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
+    private fun needs_save(): Boolean {
+        val opus_manager = this.get_opus_manager()
+        if (opus_manager.path == null || !File(opus_manager.path!!).exists()) {
+            return true
+        }
+        val other = LinksLayer()
+        other.load(opus_manager.path!!)
+
+        return opus_manager != other
+    }
 
     private fun dialog_save_project(callback: () -> Unit) {
-        if (this.get_opus_manager().has_changed_since_save()) {
+        if (this.needs_save()) {
             this._adjust_dialog_colors(
                 AlertDialog.Builder(this, R.style.AlertDialog)
                     .setCustomTitle(this._build_dialog_title_view(getString(R.string.dialog_save_warning_title)))

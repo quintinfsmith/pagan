@@ -49,6 +49,28 @@ class OpusChannel(var uuid: Int) {
             }
             this.beats = new_beats
         }
+
+        override fun equals(other: Any?): Boolean {
+            if (other !is OpusLine) {
+                return false
+            }
+
+            if (this.volume != other.volume) {
+                return false
+            }
+
+            if (this.static_value != other.static_value) {
+                return false
+            }
+
+            for (i in 0 until this.beats.size) {
+                if (this.beats[i] != other.beats[i]) {
+                    return false
+                }
+            }
+
+            return true
+        }
     }
 
     class LastLineException: Exception("Can't remove final line in channel")
@@ -222,6 +244,7 @@ class OpusChannel(var uuid: Int) {
     fun set_line_volume(line_offset: Int, volume: Int) {
         this.lines[line_offset].volume = volume
     }
+
     fun get_line_volume(line_offset: Int): Int {
         return this.lines[line_offset].volume
     }
@@ -230,5 +253,23 @@ class OpusChannel(var uuid: Int) {
         this.lines.forEachIndexed { i: Int, line: OpusLine ->
             line.squish(factor)
         }
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (other !is OpusChannel) {
+            return false
+        }
+
+        if (this.lines.size != other.lines.size) {
+            return false
+        }
+
+        for (i in 0 until this.lines.size) {
+            if (this.lines[i] != other.lines[i]) {
+                return false
+            }
+        }
+
+        return true
     }
 }

@@ -2127,4 +2127,26 @@ open class BaseLayer {
 
         return output
     }
+
+    override fun equals(other: Any?): Boolean {
+
+        if (other !is BaseLayer
+        || this.beat_count != other.beat_count
+        || this.path != other.path
+        || this.project_name != other.project_name
+        || this.tempo != other.tempo
+        || this.transpose != other.transpose
+        || !this.tuning_map.contentEquals(other.tuning_map)
+        || this.channels.size != other.channels.size) {
+            return false
+        }
+
+        for (i in 0 until this.channels.size) {
+            if (this.channels[i] != other.channels[i]) {
+                return false
+            }
+        }
+
+        return true
+    }
 }

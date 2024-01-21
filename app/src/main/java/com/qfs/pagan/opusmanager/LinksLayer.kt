@@ -684,4 +684,25 @@ open class LinksLayer : BaseLayer() {
             }
         }
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (other !is LinksLayer)  {
+            return false
+        }
+
+        for (pool in this.link_pools) {
+            var has_match = false
+            for (i in 0 until other.link_pools.size) {
+                if (other.link_pools == pool) {
+                    has_match = true
+                    break
+                }
+            }
+            if (!has_match) {
+                return false
+            }
+        }
+
+        return super.equals(other)
+    }
 }

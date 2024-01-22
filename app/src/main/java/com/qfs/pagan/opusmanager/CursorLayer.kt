@@ -377,6 +377,9 @@ open class CursorLayer(): HistoryLayer() {
     }
 
     override fun apply_undo() {
+        if (!this.history_cache.isEmpty()) {
+            this.cursor_clear()
+        }
         super.apply_undo()
         this.apply_queued_cursor_select()
     }

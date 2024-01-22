@@ -23,8 +23,8 @@ class ColumnLayout(var view_holder: ColumnRecyclerViewHolder): LinearLayout((vie
         this.column_width_factor = this.get_editor_table().get_column_width(this.view_holder.bindingAdapterPosition)
 
         // first, populate with placeholders that have minimal overhead...
-        //this.placeholder_populate()
-       // // ...Then populate with real cells after checking that the layout is still attached (ie quick scrolling)
+        // this.placeholder_populate()
+        // ...Then populate with real cells after checking that the layout is still attached (ie quick scrolling)
         this.populate()
     }
 

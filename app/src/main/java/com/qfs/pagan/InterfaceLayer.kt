@@ -1,5 +1,6 @@
 package com.qfs.pagan
 import android.content.res.Configuration
+import android.util.Log
 import android.view.View
 import android.widget.TextView
 import com.qfs.apres.Midi
@@ -9,6 +10,8 @@ import com.qfs.pagan.opusmanager.LoadedJSONData
 import com.qfs.pagan.opusmanager.OpusChannel
 import com.qfs.pagan.opusmanager.OpusEvent
 import com.qfs.pagan.structure.OpusTree
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Semaphore
 import java.lang.Integer.max
 import java.lang.Integer.min
 
@@ -46,6 +49,16 @@ class InterfaceLayer(): CursorLayer() {
         val main = this.activity ?: return
         main.runOnUiThread {
             callback(main)
+        }
+    }
+    private fun runOnUiThreadBlocking(callback: (MainActivity) -> Unit) {
+        val main = this.activity ?: return
+        runBlocking {
+            val mutex = Semaphore(1)
+            main.runOnUiThread {
+                callback(main)
+            }
+            mutex.acquire()
         }
     }
 
@@ -109,7 +122,7 @@ class InterfaceLayer(): CursorLayer() {
     }
 
     override fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<OpusEvent>) {
-        val activity = this.get_activity() ?: return super.replace_tree(beat_key, position, tree)
+        this.get_activity() ?: return super.replace_tree(beat_key, position, tree)
 
         super.replace_tree(beat_key, position, tree)
 
@@ -128,7 +141,7 @@ class InterfaceLayer(): CursorLayer() {
 
 
     override fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEvent) {
-        val activity = this.get_activity() ?: return super.set_event(beat_key, position, event)
+        this.get_activity() ?: return super.set_event(beat_key, position, event)
 
         super.set_event(beat_key, position, event)
 
@@ -346,7 +359,6 @@ class InterfaceLayer(): CursorLayer() {
     }
 
     override fun remove_line(channel: Int, line_offset: Int): OpusChannel.OpusLine {
-
         val abs_line = this.get_abs_offset(channel, line_offset)
 
         val output = super.remove_line(channel, line_offset)
@@ -451,6 +463,7 @@ class InterfaceLayer(): CursorLayer() {
     }
 
     override fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<OpusEvent>>?) {
+        val bkp_cursor = this.cursor.copy()
         super.insert_beat(beat_index, beats_in_column)
 
         val editor_table = this.get_editor_table() ?: return
@@ -458,11 +471,13 @@ class InterfaceLayer(): CursorLayer() {
         when (this.get_ui_lock_level()) {
             UI_LOCK_FULL -> { }
             UI_LOCK_PARTIAL -> {
+                editor_table.update_cursor(bkp_cursor)
                 editor_table.new_column(beat_index, true)
                 editor_table.update_cursor(this.cursor)
             }
             else -> {
                 this.runOnUiThread {
+                    editor_table.update_cursor(bkp_cursor)
                     editor_table.new_column(beat_index)
                     editor_table.update_cursor(this.cursor)
                 }
@@ -473,12 +488,9 @@ class InterfaceLayer(): CursorLayer() {
     override fun new() {
         val activity = this.get_activity() ?: return super.new()
 
-        try {
-            this.surpress_ui {
-                super.new()
-            }
-        } catch (e: Exception) {
-            throw e
+        this.ui_clear()
+        this.surpress_ui {
+            super.new()
         }
 
         val new_path = activity.get_new_project_path()
@@ -486,38 +498,49 @@ class InterfaceLayer(): CursorLayer() {
         this.initial_setup()
     }
 
+
+    override fun import_midi(midi: Midi) {
+        Log.d("AAA", "A")
+        this.ui_clear()
+        Log.d("AAA", "B")
+        Log.d("AAA", "C")
+        this.surpress_ui {
+            Log.d("AAA", "D")
+            super.import_midi(midi)
+            Log.d("AAA", "E")
+        }
+        Log.d("AAA", "F")
+        this.initial_setup()
+        Log.d("AAA", "G")
+    }
+
+    override fun load_json(json_data: LoadedJSONData) {
+        this.ui_clear()
+        this.surpress_ui {
+            super.load_json(json_data)
+        }
+        this.initial_setup()
+    }
+
     private fun initial_setup() {
         this.first_load_done = true
+
         this.runOnUiThread { main: MainActivity ->
+            val editor_table = this.get_editor_table()
+            editor_table?.clear()
+            editor_table?.precise_scroll(0, 0, 0, 0)
+
             main.setup_project_config_drawer()
             main.validate_percussion_visibility()
             main.update_menu_options()
 
-            val editor_table = this.get_editor_table()
-            editor_table?.clear()
             editor_table?.setup()
-            editor_table?.precise_scroll(0, 0, 0, 0)
 
             main.update_channel_instruments()
             this.withFragment {
                 it.clearContextMenu()
             }
         }
-
-    }
-
-    override fun import_midi(midi: Midi) {
-        this.surpress_ui {
-            super.import_midi(midi)
-        }
-        this.initial_setup()
-    }
-
-    override fun load_json(json_data: LoadedJSONData) {
-        this.surpress_ui {
-            super.load_json(json_data)
-        }
-        this.initial_setup()
     }
 
     override fun remove_channel(channel: Int) {
@@ -559,11 +582,13 @@ class InterfaceLayer(): CursorLayer() {
         }
     }
 
-    override fun clear() {
-        this.surpress_ui {
-            super.clear()
-        }
+    //override fun clear() {
+    //    this.surpress_ui {
+    //        super.clear()
+    //    }
+    //}
 
+    fun ui_clear() {
         this.get_editor_table()?.clear()
         this.runOnUiThread { main ->
             val channel_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
@@ -609,8 +634,6 @@ class InterfaceLayer(): CursorLayer() {
             null
         }
     }
-
-
 
     override fun apply_undo() {
         super.apply_undo()

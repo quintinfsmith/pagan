@@ -21,10 +21,8 @@ class EditorViewModel: ViewModel() {
     var fine_x: Int = 0
     var coarse_y: Int = 0
     var fine_y: Int = 0
-    var flag = false
 
     fun clear() {
-        this.flag = false
         this.coarse_y = 0
         this.fine_y = 0
         this.coarse_x = 0

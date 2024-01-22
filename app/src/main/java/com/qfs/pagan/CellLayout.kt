@@ -22,7 +22,7 @@ class CellLayout(val column_layout: ColumnLayout, val y: Int): LinearLayout(colu
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
         this.layoutParams.height = resources.getDimension(R.dimen.line_height).toInt()
-        var width = (this.column_layout.column_width_factor * resources.getDimension(R.dimen.base_leaf_width).roundToInt())
+        val width = (this.column_layout.column_width_factor * resources.getDimension(R.dimen.base_leaf_width).roundToInt())
         this.layoutParams.width = width
 
         val beat_key = this.get_beat_key()

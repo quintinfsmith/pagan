@@ -23,15 +23,19 @@
         android:padding="@dimen/number_selector_spacing">
         <include
             android:id="@+id/llContextCell"
+            android:visibility="gone"
             layout="@layout/contextmenu_cell"/>
         <include
             android:id="@+id/llContextCol"
+            android:visibility="gone"
             layout="@layout/contextmenu_column"/>
         <include
             android:id="@+id/llContextRow"
+            android:visibility="gone"
             layout="@layout/contextmenu_row"/>
         <include
             android:id="@+id/llContextLink"
+            android:visibility="gone"
             layout="@layout/contextmenu_linking"/>
     </LinearLayout>
 </LinearLayout>

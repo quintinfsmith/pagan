@@ -75,7 +75,6 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         this.view_model.fine_x = scroll_x.second
         this.view_model.coarse_y = scroll_y.first
         this.view_model.fine_y = scroll_y.second
-        this.view_model.flag = true
 
         this.get_main().save_to_backup()
 
@@ -90,7 +89,6 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
-        Log.d("AAA", "FRAG OSIS")
         outState.putInt("coarse_x", this.view_model.coarse_x)
         outState.putInt("fine_x", this.view_model.fine_x)
         outState.putInt("coarse_y", this.view_model.coarse_y)
@@ -99,32 +97,37 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
     }
 
     override fun onViewStateRestored(savedInstanceState: Bundle?) {
-        Log.d("AAA", "RES: FRAGMENT ${savedInstanceState == null}, ${this.get_main().get_opus_manager().first_load_done}, ${this.view_model}")
         super.onViewStateRestored(savedInstanceState)
 
         val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
+        Log.d("AAA", "RESTOREING A")
 
+        val main = this.get_main()
+        val opus_manager = main.get_opus_manager()
         // SavedInstanceState may be created when the fragment isn't active, and save an empty state.
         // *NEED* to make sure it isn't empty before traversing this branch
-        if (!this.view_model.flag) {
-            this.view_model.coarse_x = savedInstanceState?.getInt("coarse_x") ?: 0
-            this.view_model.fine_x = savedInstanceState?.getInt("fine_x") ?: 0
-            this.view_model.coarse_y = savedInstanceState?.getInt("coarse_y") ?: 0
-            this.view_model.fine_y = savedInstanceState?.getInt("fine_y") ?: 0
-        } else {
+        if (savedInstanceState != null) {
+            this.view_model.coarse_x = savedInstanceState.getInt("coarse_x") ?: 0
+            this.view_model.fine_x = savedInstanceState.getInt("fine_x") ?: 0
+            this.view_model.coarse_y = savedInstanceState.getInt("coarse_y") ?: 0
+            this.view_model.fine_y = savedInstanceState.getInt("fine_y") ?: 0
+        } else if (!opus_manager.first_load_done) {
             // Navigate to (import / load/new)
             editor_table.visibility = View.VISIBLE
             return
         }
+        Log.d("AAA", "RESTOREING B")
 
-        val main = this.get_main()
         main.drawer_unlock()
 
-        val opus_manager = main.get_opus_manager()
-        val bytes = FileInputStream("${main.applicationInfo.dataDir}/.bkp.json").readBytes()
-        val backup_path: String = File("${main.applicationInfo.dataDir}/.bkp_path").readText()
-
-        opus_manager.load(bytes, backup_path)
+        // TODO: Don't load on import
+        Log.d("AAA", "RESTOREING C ${savedInstanceState == null}")
+        if (savedInstanceState != null) {
+            val bytes = FileInputStream("${main.applicationInfo.dataDir}/.bkp.json").readBytes()
+            val backup_path: String = File("${main.applicationInfo.dataDir}/.bkp_path").readText()
+            opus_manager.load(bytes, backup_path)
+        }
+        Log.d("AAA", "RESTOREING D")
         editor_table.visibility = View.VISIBLE
         editor_table.precise_scroll(
             this.view_model.coarse_x,
@@ -133,6 +136,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             this.view_model.fine_y
         )
 
+        Log.d("AAA", "RESTOREING E")
         // At the moment, can't save the history cache into a bundle, so restore it if
         // it exists, if not, too bad i guess
         if (this.view_model.backup_undo_stack != null) {
@@ -140,9 +144,12 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             this.view_model.backup_undo_stack = null
         }
 
-        this.view_model.clear()
+        Log.d("AAA", "RESTOREING F")
+        //this.view_model.clear()
 
+        Log.d("AAA", "RESTOREING G")
         main.setup_project_config_drawer()
+        Log.d("AAA", "RESTOREING H")
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -150,7 +157,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         this.clearContextMenu()
 
         val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
-        editor_table.visibility = View.GONE
+        editor_table.visibility = View.INVISIBLE
 
         /*
             KLUDGE ALERT.
@@ -176,7 +183,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             main.loading_reticle_show(getString(R.string.reticle_msg_load_project))
             main.drawer_lock()
             main.runOnUiThread {
-                editor_table?.visibility = View.GONE
+                editor_table?.visibility = View.INVISIBLE
             }
 
             thread {
@@ -200,7 +207,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             this.view_model.backup_fragment_intent = Pair(IntentFragmentToken.ImportMidi, bundle)
             main.loading_reticle_show(getString(R.string.reticle_msg_import_midi))
             main.runOnUiThread {
-                editor_table?.visibility = View.GONE
+                editor_table?.visibility = View.INVISIBLE
                 this@EditorFragment.clearContextMenu()
             }
             thread {
@@ -208,7 +215,6 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
                 if (path != null) {
                     try {
                         main.import_midi(path)
-                        //} catch (e: InvalidMIDIFile) {
                     } catch (e: Exception) {
                         val opus_manager = main.get_opus_manager()
                         if (!opus_manager.first_load_done) {
@@ -231,7 +237,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             val main = this.get_main()
             main.loading_reticle_show(getString(R.string.reticle_msg_import_project))
             main.runOnUiThread {
-                editor_table?.visibility = View.GONE
+                editor_table?.visibility = View.INVISIBLE
             }
             thread {
                 try {
@@ -259,7 +265,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             val main = this.get_main()
             main.loading_reticle_show(getString(R.string.reticle_msg_new))
             main.runOnUiThread {
-                editor_table?.visibility = View.GONE
+                editor_table?.visibility = View.INVISIBLE
             }
             thread {
                 main.get_opus_manager().new()
@@ -269,6 +275,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
                 main.loading_reticle_hide()
             }
         }
+
         setFragmentResultListener(IntentFragmentToken.EditorResume.name) { _, bundle: Bundle? ->
             // TODO:
             Log.d("AAA", "FR RESUME!")

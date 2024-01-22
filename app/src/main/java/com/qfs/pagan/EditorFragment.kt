@@ -66,11 +66,12 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
     override fun onStop() {
         // Assign to view model on stop, will be destroyed onDestroy, so need to
         // essentially dup this in onSaveInstanceState
-        val editor_table = this.get_main().findViewById<EditorTable>(R.id.etEditorTable)
-        val (scroll_x, scroll_y) = editor_table.get_scroll_offset()
         val main = this.get_main()
+        val editor_table = main.findViewById<EditorTable>(R.id.etEditorTable)
+        val (scroll_x, scroll_y) = editor_table.get_scroll_offset()
 
-        this.view_model.backup_undo_stack = main.get_opus_manager().history_cache.copy()
+        val opus_manager = main.get_opus_manager()
+        this.view_model.backup_undo_stack = opus_manager.history_cache.copy()
         this.view_model.coarse_x = scroll_x.first
         this.view_model.fine_x = scroll_x.second
         this.view_model.coarse_y = scroll_y.first
@@ -83,6 +84,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             (channel_recycler.adapter as ChannelOptionAdapter).clear()
             channel_recycler.adapter = null
         }
+
         editor_table.clear()
 
         super.onStop()
@@ -127,6 +129,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             val backup_path: String = File("${main.applicationInfo.dataDir}/.bkp_path").readText()
             opus_manager.load(bytes, backup_path)
         } else {
+            opus_manager.cursor_clear()
             editor_table.setup()
         }
         editor_table.visibility = View.VISIBLE

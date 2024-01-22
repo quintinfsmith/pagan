@@ -4,6 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/llContextRow"
     android:orientation="vertical"
+    android:padding="@dimen/number_selector_spacing"
     android:layout_width="wrap_content"
     android:layout_height="match_parent">
 

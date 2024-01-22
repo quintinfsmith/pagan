@@ -52,7 +52,6 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
                 this._number_selector.set_active_button(this)
                 this.setActive(true)
             }
-
         }
 
         // setup_colors needs to be called here AND in init, otherwise changing between night/day

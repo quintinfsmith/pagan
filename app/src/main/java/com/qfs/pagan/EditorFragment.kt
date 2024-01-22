@@ -2,7 +2,6 @@ package com.qfs.pagan
 import android.app.AlertDialog
 import android.content.res.Configuration
 import android.os.Bundle
-import android.util.Log
 import android.view.*
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -27,7 +26,7 @@ import kotlin.concurrent.thread
 class EditorFragment : PaganFragment<FragmentMainBinding>() {
     val view_model: EditorViewModel by viewModels()
     private var _active_context_menu_index: ContextMenu? = null
-    var test_flag = false
+    var project_change_flagged = false
     enum class ContextMenu {
         Leaf,
         Line,
@@ -69,21 +68,22 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         // essentially dup this in onSaveInstanceState
         val editor_table = this.get_main().findViewById<EditorTable>(R.id.etEditorTable)
         val (scroll_x, scroll_y) = editor_table.get_scroll_offset()
+        val main = this.get_main()
 
-        this.view_model.backup_undo_stack = this.get_main().get_opus_manager().history_cache.copy()
+        this.view_model.backup_undo_stack = main.get_opus_manager().history_cache.copy()
         this.view_model.coarse_x = scroll_x.first
         this.view_model.fine_x = scroll_x.second
         this.view_model.coarse_y = scroll_y.first
         this.view_model.fine_y = scroll_y.second
 
-        this.get_main().save_to_backup()
+        main.save_to_backup()
 
-        val main = this.get_main()
         val channel_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
         if (channel_recycler.adapter != null) {
             (channel_recycler.adapter as ChannelOptionAdapter).clear()
             channel_recycler.adapter = null
         }
+        editor_table.clear()
 
         super.onStop()
     }
@@ -98,9 +98,11 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
 
     override fun onViewStateRestored(savedInstanceState: Bundle?) {
         super.onViewStateRestored(savedInstanceState)
+        if (this.project_change_flagged) {
+            return
+        }
 
         val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
-        Log.d("AAA", "RESTOREING A")
 
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
@@ -116,18 +118,17 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             editor_table.visibility = View.VISIBLE
             return
         }
-        Log.d("AAA", "RESTOREING B")
 
         main.drawer_unlock()
 
         // TODO: Don't load on import
-        Log.d("AAA", "RESTOREING C ${savedInstanceState == null}")
         if (savedInstanceState != null) {
             val bytes = FileInputStream("${main.applicationInfo.dataDir}/.bkp.json").readBytes()
             val backup_path: String = File("${main.applicationInfo.dataDir}/.bkp_path").readText()
             opus_manager.load(bytes, backup_path)
+        } else {
+            editor_table.setup()
         }
-        Log.d("AAA", "RESTOREING D")
         editor_table.visibility = View.VISIBLE
         editor_table.precise_scroll(
             this.view_model.coarse_x,
@@ -136,7 +137,6 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             this.view_model.fine_y
         )
 
-        Log.d("AAA", "RESTOREING E")
         // At the moment, can't save the history cache into a bundle, so restore it if
         // it exists, if not, too bad i guess
         if (this.view_model.backup_undo_stack != null) {
@@ -144,12 +144,8 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             this.view_model.backup_undo_stack = null
         }
 
-        Log.d("AAA", "RESTOREING F")
-        //this.view_model.clear()
 
-        Log.d("AAA", "RESTOREING G")
         main.setup_project_config_drawer()
-        Log.d("AAA", "RESTOREING H")
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -197,6 +193,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
                 this.view_model.backup_fragment_intent = null
                 main.loading_reticle_hide()
                 main.drawer_unlock()
+                this.project_change_flagged = false
             }
         }
 
@@ -229,6 +226,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
                 this.view_model.backup_fragment_intent = null
                 main.drawer_unlock()
                 main.loading_reticle_hide()
+                this.project_change_flagged = false
             }
         }
 
@@ -257,6 +255,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
                     editor_table?.visibility = View.VISIBLE
                 }
                 main.loading_reticle_hide()
+                this.project_change_flagged = false
             }
         }
 
@@ -273,12 +272,8 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
                     editor_table?.visibility = View.VISIBLE
                 }
                 main.loading_reticle_hide()
+                this.project_change_flagged = false
             }
-        }
-
-        setFragmentResultListener(IntentFragmentToken.EditorResume.name) { _, bundle: Bundle? ->
-            // TODO:
-            Log.d("AAA", "FR RESUME!")
         }
     }
 

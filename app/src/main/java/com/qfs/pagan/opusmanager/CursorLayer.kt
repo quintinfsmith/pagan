@@ -1,10 +1,4 @@
-package com.qfs.pagan
-import com.qfs.pagan.opusmanager.BeatKey
-import com.qfs.pagan.opusmanager.HistoryCache
-import com.qfs.pagan.opusmanager.HistoryLayer
-import com.qfs.pagan.opusmanager.HistoryToken
-import com.qfs.pagan.opusmanager.OpusChannel
-import com.qfs.pagan.opusmanager.OpusEvent
+package com.qfs.pagan.opusmanager
 import com.qfs.pagan.structure.OpusTree
 import java.lang.Integer.max
 import java.lang.Integer.min
@@ -30,34 +24,6 @@ open class CursorLayer(): HistoryLayer() {
     override fun swap_lines(channel_a: Int, line_a: Int, channel_b: Int, line_b: Int) {
         super.swap_lines(channel_a, line_a, channel_b, line_b)
         this.cursor_select_row(channel_b, line_b)
-    }
-
-    /*
-     TODO: move cursor_select_row out of here. it won't break anything right now since move_line
-        is built out of multiple other remembered function but i'd like to get some consistency and not
-        have any cursor selection inside of context-independent functions()
-     */
-    override fun move_line(channel_old: Int, line_old: Int, channel_new: Int, line_new: Int) {
-        try {
-            super.move_line(channel_old, line_old, channel_new, line_new)
-
-            this.cursor_select_row(
-                channel_new,
-                if (channel_old == channel_new) {
-                    if (line_old < line_new) {
-                        line_new - 1
-                    } else {
-                        line_new
-                    }
-                } else if (this.channels[channel_new].size == 1) {
-                    0
-                } else {
-                    line_new
-                }
-            )
-        } catch (exception: IncompatibleChannelException) {
-            // pass
-        }
     }
 
     override fun remove_line(channel: Int, line_offset: Int): OpusChannel.OpusLine {
@@ -369,10 +335,6 @@ open class CursorLayer(): HistoryLayer() {
 
             OpusManagerCursor.CursorMode.Unset -> { }
         }
-
-        if (bkp_cursor.mode == OpusManagerCursor.CursorMode.Column) {
-            this.cursor_select_column(beat_index)
-        }
     }
 
     override fun clear() {
@@ -640,7 +602,11 @@ open class CursorLayer(): HistoryLayer() {
         this.cursor.select_row(channel, line_offset)
     }
 
-    open fun cursor_select_column(beat: Int, force_scroll: Boolean = false) {
+    open fun cursor_select_column(beat: Int) {
+        if (beat >= this.beat_count) {
+            return
+        }
+
         this.cursor.select_column(beat)
     }
 
@@ -794,7 +760,7 @@ open class CursorLayer(): HistoryLayer() {
         this.remove_beat(this.cursor.beat, count)
     }
 
-    fun insert_beat_at_cursor(count: Int) {
+    fun insert_beat_after_cursor(count: Int) {
         this.insert_beat(this.cursor.beat + 1, count)
     }
 

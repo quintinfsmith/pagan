@@ -2,6 +2,7 @@ package com.qfs.pagan
 import android.app.AlertDialog
 import android.content.res.Configuration
 import android.os.Bundle
+import android.util.Log
 import android.view.*
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -17,8 +18,8 @@ import com.qfs.pagan.databinding.FragmentMainBinding
 import com.qfs.pagan.opusmanager.BaseLayer
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.OpusEvent
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
+import com.qfs.pagan.opusmanager.OpusManagerCursor
+import java.io.File
 import java.io.FileInputStream
 import java.lang.Integer.max
 import java.lang.Integer.min
@@ -64,7 +65,6 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
     }
 
     override fun onStop() {
-
         // Assign to view model on stop, will be destroyed onDestroy, so need to
         // essentially dup this in onSaveInstanceState
         val editor_table = this.get_main().findViewById<EditorTable>(R.id.etEditorTable)
@@ -75,12 +75,9 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         this.view_model.fine_x = scroll_x.second
         this.view_model.coarse_y = scroll_y.first
         this.view_model.fine_y = scroll_y.second
+        this.view_model.flag = true
 
-        val opus_manager = this.get_main().get_opus_manager()
         this.get_main().save_to_backup()
-
-        this.view_model.backup_json = Json.encodeToString(opus_manager.to_json()).toByteArray()
-        this.view_model.backup_path = opus_manager.path
 
         val main = this.get_main()
         val channel_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
@@ -92,47 +89,28 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         super.onStop()
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-    }
     override fun onSaveInstanceState(outState: Bundle) {
-        val opus_manager = this.get_main().get_opus_manager()
-        if (opus_manager.path != null) {
-            outState.putInt("coarse_x", this.view_model.coarse_x)
-            outState.putInt("fine_x", this.view_model.fine_x)
-            outState.putInt("coarse_y", this.view_model.coarse_y)
-            outState.putInt("fine_y", this.view_model.fine_y)
-        }
+        Log.d("AAA", "FRAG OSIS")
+        outState.putInt("coarse_x", this.view_model.coarse_x)
+        outState.putInt("fine_x", this.view_model.fine_x)
+        outState.putInt("coarse_y", this.view_model.coarse_y)
+        outState.putInt("fine_y", this.view_model.fine_y)
         super.onSaveInstanceState(outState)
     }
+
     override fun onViewStateRestored(savedInstanceState: Bundle?) {
+        Log.d("AAA", "RES: FRAGMENT ${savedInstanceState == null}, ${this.get_main().get_opus_manager().first_load_done}, ${this.view_model}")
         super.onViewStateRestored(savedInstanceState)
+
         val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
-        val coarse_x: Int
-        val fine_x: Int
-        val coarse_y: Int
-        val fine_y: Int
-        val backup_path: String?
-        var bytes: ByteArray? = null
 
         // SavedInstanceState may be created when the fragment isn't active, and save an empty state.
         // *NEED* to make sure it isn't empty before traversing this branch
-        if (savedInstanceState?.getString("backup_path") != null) {
-            // Orientation Change/Brought back from background
-            coarse_x = savedInstanceState.getInt("coarse_x")
-            fine_x = savedInstanceState.getInt("fine_x")
-            coarse_y = savedInstanceState.getInt("coarse_y")
-            fine_y = savedInstanceState.getInt("fine_y")
-            backup_path = savedInstanceState.getString("backup_path")
-            bytes = savedInstanceState.getByteArray("backup_json")
-        } else if (this.view_model.backup_path != null) {
-            // Navigate Back,
-            coarse_x = this.view_model.coarse_x
-            fine_x = this.view_model.fine_x
-            coarse_y = this.view_model.coarse_y
-            fine_y = this.view_model.fine_y
-            backup_path = this.view_model.backup_path
-            bytes = this.view_model.backup_json
+        if (!this.view_model.flag) {
+            this.view_model.coarse_x = savedInstanceState?.getInt("coarse_x") ?: 0
+            this.view_model.fine_x = savedInstanceState?.getInt("fine_x") ?: 0
+            this.view_model.coarse_y = savedInstanceState?.getInt("coarse_y") ?: 0
+            this.view_model.fine_y = savedInstanceState?.getInt("fine_y") ?: 0
         } else {
             // Navigate to (import / load/new)
             editor_table.visibility = View.VISIBLE
@@ -143,13 +121,17 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         main.drawer_unlock()
 
         val opus_manager = main.get_opus_manager()
-        if (bytes == null) {
-            bytes = FileInputStream("${main.applicationInfo.dataDir}/.bkp.json").readBytes()
-        }
+        val bytes = FileInputStream("${main.applicationInfo.dataDir}/.bkp.json").readBytes()
+        val backup_path: String = File("${main.applicationInfo.dataDir}/.bkp_path").readText()
 
         opus_manager.load(bytes, backup_path)
         editor_table.visibility = View.VISIBLE
-        editor_table.precise_scroll(coarse_x, fine_x, coarse_y, fine_y)
+        editor_table.precise_scroll(
+            this.view_model.coarse_x,
+            this.view_model.fine_x,
+            this.view_model.coarse_y,
+            this.view_model.fine_y
+        )
 
         // At the moment, can't save the history cache into a bundle, so restore it if
         // it exists, if not, too bad i guess
@@ -287,9 +269,10 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
                 main.loading_reticle_hide()
             }
         }
-        //setFragmentResultListener(IntentFragmentToken.Resume.name) { _, bundle: Bundle? ->
-        //    // TODO:
-        //}
+        setFragmentResultListener(IntentFragmentToken.EditorResume.name) { _, bundle: Bundle? ->
+            // TODO:
+            Log.d("AAA", "FR RESUME!")
+        }
     }
 
 
@@ -467,14 +450,14 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
 
         btnInsertBeat.setOnClickListener {
             val beat = opus_manager.cursor.beat
-            opus_manager.insert_beat_at_cursor(1)
+            opus_manager.insert_beat_after_cursor(1)
             opus_manager.cursor_select_column(beat + 1)
         }
 
         btnInsertBeat.setOnLongClickListener {
             main.dialog_number_input( getString(R.string.dlg_insert_beats), 1, 99) { count: Int ->
                 val beat = opus_manager.cursor.beat
-                opus_manager.insert_beat_at_cursor(count)
+                opus_manager.insert_beat_after_cursor(count)
                 opus_manager.cursor_select_column(beat + count)
             }
             true
@@ -1197,7 +1180,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
                 title_text.text = resources.getString(R.string.label_shortcut_scrollbar, p1)
                 title_text.contentDescription = resources.getString(R.string.label_shortcut_scrollbar, p1)
-                opus_manager.cursor_select_column(p1, true)
+                opus_manager.cursor_select_column(p1)
             }
             override fun onStartTrackingTouch(p0: SeekBar?) { }
             override fun onStopTrackingTouch(seekbar: SeekBar?) { }
@@ -1224,5 +1207,18 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
                 editor_table.get_first_visible_column_index()
             }
         }
+    }
+
+    fun make_percussion_visible() {
+        val main = this.get_main()
+        main.configuration.show_percussion = true
+        main.save_configuration()
+
+        val channel_option_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
+        val adapter = channel_option_recycler.adapter!! as ChannelOptionAdapter
+        adapter.notifyItemChanged(adapter.itemCount - 1)
+
+        val editor_table = main.findViewById<EditorTable>(R.id.etEditorTable)
+        editor_table.update_percussion_visibility()
     }
 }

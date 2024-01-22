@@ -1,4 +1,5 @@
 package com.qfs.pagan.opusmanager
+import android.util.Log
 import com.qfs.apres.Midi
 import com.qfs.apres.event.BankSelect
 import com.qfs.apres.event.NoteOff
@@ -684,30 +685,6 @@ open class BaseLayer {
             this.channels[channel_a].lines[line_a].static_value = this.channels[channel_b].lines[line_b].static_value
             this.channels[channel_b].lines[line_b].static_value = tmp_value
         }
-    }
-
-    open fun move_line(channel_old: Int, line_old: Int, channel_new: Int, line_new: Int) {
-        if (this.is_percussion(channel_old) != this.is_percussion(channel_new)) {
-            throw IncompatibleChannelException(channel_old, channel_new)
-        }
-
-        val line = try {
-            this.remove_line(channel_old, line_old)
-        } catch (_: OpusChannel.LastLineException) {
-            this.new_line(channel_old, 1)
-            this.remove_line(channel_old, line_old)
-        }
-
-        if (channel_old == channel_new) {
-            if (line_old < line_new) {
-                this.insert_line(channel_new, line_new - 1, line)
-            } else {
-                this.insert_line(channel_new, line_new, line)
-            }
-        } else {
-            this.insert_line(channel_new, line_new, line)
-        }
-        this.recache_line_maps()
     }
 
     open fun insert_beat(beat_index: Int, count: Int) {

@@ -31,7 +31,7 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
         if (i >= opus_manager.beat_count) {
             return
         }
-        opus_manager.cursor_select_column(i, true)
+        opus_manager.cursor_select_column(i)
     }
 
     override fun on_cancelled() {

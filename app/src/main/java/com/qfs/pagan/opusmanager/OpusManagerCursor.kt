@@ -1,6 +1,4 @@
-package com.qfs.pagan
-
-import com.qfs.pagan.opusmanager.BeatKey
+package com.qfs.pagan.opusmanager
 
 data class OpusManagerCursor(
     var mode: CursorMode = CursorMode.Unset,

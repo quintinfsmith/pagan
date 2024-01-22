@@ -113,14 +113,14 @@ open class HistoryLayer : LinksLayer() {
                     )
                 }
 
-                HistoryToken.MOVE_LINE -> {
-                    this.move_line(
-                        current_node.args[0] as Int,
-                        current_node.args[1] as Int,
-                        current_node.args[2] as Int,
-                        current_node.args[3] as Int
-                    )
-                }
+                //HistoryToken.MOVE_LINE -> {
+                //    this.move_line(
+                //        current_node.args[0] as Int,
+                //        current_node.args[1] as Int,
+                //        current_node.args[2] as Int,
+                //        current_node.args[3] as Int
+                //    )
+                //}
 
                 HistoryToken.INSERT_TREE -> {
                     val beat_key = current_node.args[0] as BeatKey
@@ -713,50 +713,6 @@ open class HistoryLayer : LinksLayer() {
     override fun set_tempo(new_tempo: Float) {
         this.push_to_history_stack(HistoryToken.SET_TEMPO, listOf(this.tempo))
         super.set_tempo(new_tempo)
-    }
-
-    override fun move_line(channel_old: Int, line_old: Int, channel_new: Int, line_new: Int) {
-        this.push_move_line_back(channel_old, line_old, channel_new, line_new)
-        this.history_cache.forget {
-            super.move_line(channel_old, line_old, channel_new, line_new)
-        }
-    }
-
-    private fun push_move_line_back(channel_old: Int, line_old: Int, channel_new: Int, line_new: Int) {
-        if (this.history_cache.isLocked()) {
-            return
-        }
-
-        this.remember {
-            var restore_old_line = false
-            val return_from_line = if (channel_old == channel_new) {
-                if (line_old < line_new) {
-                    line_new - 1
-                } else {
-                    line_new
-                }
-            } else {
-                line_new
-            }
-
-            val return_to_line = if (channel_old == channel_new) {
-                if (line_old < line_new) {
-                    line_old
-                } else {
-                    line_old + 1
-                }
-            } else if (this.channels[channel_old].size == 1) {
-                restore_old_line = true
-                0
-            } else {
-                line_old
-            }
-
-            if (restore_old_line) {
-                this.push_to_history_stack(HistoryToken.REMOVE_LINE, listOf(channel_old, line_old + 1))
-            }
-            this.push_to_history_stack(HistoryToken.MOVE_LINE, listOf(channel_new, return_from_line, channel_old, return_to_line))
-        }
     }
 
     override fun set_channel_instrument(channel: Int, instrument: Pair<Int, Int>) {

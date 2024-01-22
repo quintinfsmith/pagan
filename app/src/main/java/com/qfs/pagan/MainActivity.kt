@@ -24,6 +24,7 @@ import android.os.Bundle
 import android.provider.OpenableColumns
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.view.ContextThemeWrapper
 import android.view.LayoutInflater
 import android.view.Menu
@@ -47,7 +48,6 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
-import androidx.appcompat.graphics.drawable.DrawerArrowDrawable
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -67,7 +67,6 @@ import androidx.media3.common.MimeTypes
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
-import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.apres.InvalidMIDIFile
 import com.qfs.apres.Midi
@@ -86,6 +85,7 @@ import com.qfs.pagan.databinding.ActivityMainBinding
 import com.qfs.pagan.opusmanager.LinksLayer
 import com.qfs.pagan.opusmanager.LoadedJSONData
 import com.qfs.pagan.opusmanager.LoadedJSONData0
+import com.qfs.pagan.opusmanager.OpusManagerCursor
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -111,7 +111,7 @@ class MainActivity : AppCompatActivity() {
     class MainViewModel: ViewModel() {
         var export_handle: MidiConverter? = null
         var color_map = ColorMap()
-        lateinit var opus_manager: OpusManager
+        var opus_manager = OpusManager()
 
         fun export_wav(activity: MainActivity, midi: Midi, target_file: File, handler: MidiConverter.ExporterEventHandler) {
             this.export_handle = MidiConverter(SampleHandleManager(activity.get_soundfont()!!, 44100))
@@ -361,17 +361,33 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun save_to_backup() {
-        val path = this.get_opus_manager().path
-        this.get_opus_manager().save("${applicationInfo.dataDir}/.bkp.json")
+        val opus_manager = this.get_opus_manager()
+        val path = opus_manager.path
+        if (path != null) {
+            val path_file = File("${applicationInfo.dataDir}/.bkp_path")
+            path_file.writeText(path)
+        }
+        opus_manager.save("${applicationInfo.dataDir}/.bkp.json")
+
         // saving changes the path, need to change it back
-        this.get_opus_manager().path = path
+        opus_manager.path = path
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
+        Log.d("AAA", "ACT OSIS")
         // Can't reliably put json in outstate. there is a size limit
-        outState.putString("backup_path", this.view_model.opus_manager.path)
         this.save_to_backup()
         super.onSaveInstanceState(outState)
+    }
+
+    override fun onRestoreInstanceState(savedInstanceState: Bundle) {
+        Log.d("AAA", "RES: ACT")
+        super.onRestoreInstanceState(savedInstanceState)
+        val fragment = this.get_active_fragment()
+
+
+        fragment?.setFragmentResult(IntentFragmentToken.EditorResume.name, Bundle())
+        // TODO: Create 'Restore' ResultFragment and set it
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -381,10 +397,7 @@ class MainActivity : AppCompatActivity() {
             object : BroadcastReceiver() {
                 override fun onReceive(context: Context?, intent: Intent?) {
                     when (intent?.action) {
-                        "com.qfs.pagan.CANCEL_EXPORT_WAV" -> {
-                            this@MainActivity.export_wav_cancel()
-                        }
-
+                        "com.qfs.pagan.CANCEL_EXPORT_WAV" -> this@MainActivity.export_wav_cancel()
                         else -> {}
                     }
                 }
@@ -443,7 +456,7 @@ class MainActivity : AppCompatActivity() {
         // Listens for SongPositionPointer (provided by midi) and scrolls to that beat
         this._midi_interface.connect_virtual_output_device(object : VirtualMidiOutputDevice {
             override fun onSongPositionPointer(event: SongPositionPointer) {
-                this@MainActivity.get_opus_manager().cursor_select_column(event.get_beat(), true)
+                this@MainActivity.get_opus_manager().cursor_select_column(event.get_beat())
             }
         })
 
@@ -481,7 +494,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(this._binding.root)
         setSupportActionBar(this._binding.appBarMain.toolbar)
 
-        this.view_model.opus_manager = OpusManager(this)
+        this.view_model.opus_manager.attach_activity(this)
 
         this.view_model.color_map.use_palette = this.configuration.use_palette
         this.view_model.color_map.set_fallback_palette(
@@ -1228,7 +1241,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun get_opus_manager(): OpusManager {
-        return this.view_model.opus_manager
+        return this.view_model.opus_manager!!
     }
 
     fun play_event(channel: Int, event_value: Int, velocity: Int) {
@@ -1696,10 +1709,6 @@ class MainActivity : AppCompatActivity() {
         val intent = Intent()
             .setType(MimeTypes.AUDIO_MIDI)
             .setAction(Intent.ACTION_GET_CONTENT)
-        val fragment = this.get_active_fragment()
-        if (fragment is EditorFragment) {
-            fragment.view_model.resume_block = true
-        }
         this._import_midi_intent_launcher.launch(intent)
     }
 
@@ -2121,4 +2130,5 @@ class MainActivity : AppCompatActivity() {
             Pair(Palette.TitleBarText, this.getColor(R.color.light_primary_text))
         )
     }
+
 }

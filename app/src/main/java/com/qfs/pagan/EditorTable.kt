@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.OnScrollListener
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.OpusChannel
+import com.qfs.pagan.opusmanager.OpusManagerCursor
 import com.qfs.pagan.structure.OpusTree
 import kotlin.math.max
 import kotlin.math.roundToInt
@@ -64,7 +65,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             }
         }
         this.spacer.setOnLongClickListener {
-            this.get_opus_manager().cursor_select_column(0, true)
+            this.get_opus_manager().cursor_select_column(0)
             true
         }
 

@@ -1211,16 +1211,4 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         }
     }
 
-    fun make_percussion_visible() {
-        val main = this.get_main()
-        main.configuration.show_percussion = true
-        main.save_configuration()
-
-        val channel_option_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
-        val adapter = channel_option_recycler.adapter!! as ChannelOptionAdapter
-        adapter.notifyItemChanged(adapter.itemCount - 1)
-
-        val editor_table = main.findViewById<EditorTable>(R.id.etEditorTable)
-        editor_table.update_percussion_visibility()
-    }
 }

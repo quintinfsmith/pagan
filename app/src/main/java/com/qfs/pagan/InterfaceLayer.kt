@@ -122,7 +122,11 @@ class InterfaceLayer(): CursorLayer() {
     }
 
     override fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<OpusEvent>) {
-        this.get_activity() ?: return super.replace_tree(beat_key, position, tree)
+
+        val activity = this.get_activity() ?: return super.replace_tree(beat_key, position, tree)
+        if (!activity.configuration.show_percussion && this.is_percussion(beat_key.channel)) {
+            this.make_percussion_visible()
+        }
 
         super.replace_tree(beat_key, position, tree)
 
@@ -141,8 +145,10 @@ class InterfaceLayer(): CursorLayer() {
 
 
     override fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEvent) {
-        this.get_activity() ?: return super.set_event(beat_key, position, event)
-
+        val activity = this.get_activity() ?: return super.set_event(beat_key, position, event)
+        if (!activity.configuration.show_percussion && this.is_percussion(beat_key.channel)) {
+            this.make_percussion_visible()
+        }
         super.set_event(beat_key, position, event)
 
         // If the OM is applying history, change the relative mode, otherwise leave it.
@@ -329,10 +335,15 @@ class InterfaceLayer(): CursorLayer() {
     }
 
     override fun insert_line(channel: Int, line_offset: Int, line: OpusChannel.OpusLine) {
+        val activity = this.get_activity()
+        if (activity != null && !activity.configuration.show_percussion && this.is_percussion(channel)) {
+            this.make_percussion_visible()
+        }
+
         super.insert_line(channel, line_offset, line)
 
-        if (this.activity == null) {
-            return
+        if (activity == null) {
+            return 
         }
 
         val abs_offset = this.get_abs_offset( channel, line_offset )
@@ -359,11 +370,15 @@ class InterfaceLayer(): CursorLayer() {
     }
 
     override fun remove_line(channel: Int, line_offset: Int): OpusChannel.OpusLine {
+        val activity = this.get_activity()
+        if (activity != null && !activity.configuration.show_percussion && this.is_percussion(channel)) {
+            this.make_percussion_visible()
+        }
+
         val abs_line = this.get_abs_offset(channel, line_offset)
 
         val output = super.remove_line(channel, line_offset)
 
-        val activity = this.get_activity()
         if (activity != null) {
             when (this.get_ui_lock_level()) {
                 null -> {
@@ -671,6 +686,11 @@ class InterfaceLayer(): CursorLayer() {
     override fun cursor_select_row(channel: Int, line_offset: Int) {
         super.cursor_select_row(channel, line_offset)
 
+        val activity = this.get_activity() ?: return
+        if (!activity.configuration.show_percussion && this.is_percussion(channel)) {
+            this.make_percussion_visible()
+        }
+
         if (this.get_ui_lock_level() != null) {
             return
         }
@@ -699,6 +719,11 @@ class InterfaceLayer(): CursorLayer() {
     }
 
     override fun cursor_select(beat_key: BeatKey, position: List<Int>) {
+        val activity = this.get_activity()
+        if (activity != null && !activity.configuration.show_percussion && this.is_percussion(beat_key.channel)) {
+            this.make_percussion_visible()
+        }
+
         super.cursor_select(beat_key, position)
 
         if (this.get_ui_lock_level() != null) {
@@ -860,5 +885,18 @@ class InterfaceLayer(): CursorLayer() {
         this.withFragment { fragment ->
             fragment.reset_context_menu()
         }
+    }
+
+    fun make_percussion_visible() {
+        val main = this.activity ?: return
+        main.configuration.show_percussion = true
+        main.save_configuration()
+
+        val channel_option_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
+        val adapter = channel_option_recycler.adapter!! as ChannelOptionAdapter
+        adapter.notifyItemChanged(adapter.itemCount - 1)
+
+        val editor_table = main.findViewById<EditorTable>(R.id.etEditorTable)
+        editor_table.update_percussion_visibility()
     }
 }

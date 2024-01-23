@@ -56,7 +56,6 @@ import androidx.core.graphics.green
 import androidx.core.graphics.red
 import androidx.core.os.bundleOf
 import androidx.core.view.GravityCompat
-import androidx.core.view.iterator
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.clearFragmentResult
@@ -477,9 +476,6 @@ class MainActivity : AppCompatActivity() {
         this._binding = ActivityMainBinding.inflate(this.layoutInflater)
         setContentView(this._binding.root)
         setSupportActionBar(this._binding.appBarMain.toolbar)
-        this._binding.appBarMain.toolbar.addOnLayoutChangeListener { view, i, i2, i3, i4, i5, i6, i7, i8 ->
-            this.refresh_toolbar()
-        }
 
         this.view_model.opus_manager.attach_activity(this)
 
@@ -920,7 +916,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         )
-       // this.refresh_toolbar()
+        this.refresh_toolbar()
     }
 
     fun set_title_text(new_text: String) {
@@ -941,14 +937,29 @@ class MainActivity : AppCompatActivity() {
         val navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main)
         val options_menu = this._options_menu ?: return
         options_menu.setGroupDividerEnabled(true)
+        val text_color = this.view_model.color_map[Palette.TitleBarText]
+
         when (navHost?.childFragmentManager?.fragments?.get(0)) {
             is EditorFragment -> {
                 val play_midi_visible = (this._midi_interface.output_devices_connected() && this.get_opus_manager().is_tuning_standard())
                 options_menu.findItem(R.id.itmLoadProject).isVisible = this.has_projects_saved()
                 options_menu.findItem(R.id.itmUndo).isVisible = true
+                options_menu.findItem(R.id.itmUndo).setIconTintList(ColorStateList(
+                    arrayOf(intArrayOf(android.R.attr.state_enabled)),
+                    intArrayOf(text_color)
+                ))
                 options_menu.findItem(R.id.itmNewProject).isVisible = true
                 options_menu.findItem(R.id.itmPlay).isVisible = this._soundfont != null && ! play_midi_visible
+                options_menu.findItem(R.id.itmPlay).setIconTintList(ColorStateList(
+                    arrayOf(intArrayOf(android.R.attr.state_enabled)),
+                    intArrayOf(text_color)
+                ))
                 options_menu.findItem(R.id.itmPlayMidiOutput).isVisible = play_midi_visible
+                options_menu.findItem(R.id.itmPlayMidiOutput).setIconTintList(ColorStateList(
+                    arrayOf(intArrayOf(android.R.attr.state_enabled)),
+                    intArrayOf(text_color)
+                ))
+
                 options_menu.findItem(R.id.itmImportMidi).isVisible = true
                 options_menu.findItem(R.id.itmImportProject).isVisible = true
                 options_menu.findItem(R.id.itmSettings).isVisible = true
@@ -2022,13 +2033,6 @@ class MainActivity : AppCompatActivity() {
                 toolbar.setNavigationIcon(R.drawable.baseline_arrow_back_24)
                 toolbar.navigationIcon?.setTint(text_color)
             }
-        }
-
-        for (item in toolbar.menu.iterator()) {
-            item.setIconTintList(ColorStateList(
-                arrayOf(intArrayOf(android.R.attr.state_enabled)),
-                intArrayOf(text_color)
-            ))
         }
     }
 

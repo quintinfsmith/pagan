@@ -82,10 +82,7 @@ import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.pagan.ColorMap.Palette
 import com.qfs.pagan.databinding.ActivityMainBinding
 import com.qfs.pagan.opusmanager.LinksLayer
-import com.qfs.pagan.opusmanager.LoadedJSONData
-import com.qfs.pagan.opusmanager.LoadedJSONData0
 import com.qfs.pagan.opusmanager.OpusManagerCursor
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.BufferedOutputStream
@@ -131,7 +128,7 @@ class MainActivity : AppCompatActivity() {
     val view_model: MainViewModel by viewModels()
     // flag to indicate that the landing page has been navigated away from for navigation management
     private var _has_seen_front_page = false
-    private lateinit var project_manager: ProjectManager
+    lateinit var project_manager: ProjectManager
     lateinit var configuration: PaganConfiguration
     private lateinit var _config_path: String
     private var _number_selector_defaults = HashMap<String, Int>()
@@ -1564,21 +1561,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     internal fun dialog_load_project() {
-        val json = Json {
-            ignoreUnknownKeys = true
-        }
-        val project_list = mutableListOf<Pair<String, String>>()
-        for (json_file in this.get_project_directory().listFiles()!!) {
-            val content = json_file.readText(Charsets.UTF_8)
-            val json_obj: LoadedJSONData = try {
-                json.decodeFromString(content)
-            } catch (e: Exception) {
-                val old_data = json.decodeFromString<LoadedJSONData0>(content)
-                this.get_opus_manager().convert_old_fmt(old_data)
-            }
-            project_list.add(Pair(json_file.path, json_obj.name))
-        }
-        project_list.sortBy { it.second }
+        val project_list = this.project_manager.get_project_list()
+
         this.dialog_popup_menu("Load Project", project_list) { index: Int, path: String ->
             val fragment = this.get_active_fragment() ?: return@dialog_popup_menu
             this.loading_reticle_show(getString(R.string.reticle_msg_load_project))

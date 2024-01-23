@@ -19,8 +19,7 @@
         android:id="@+id/llContextMenu"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="@dimen/number_selector_spacing">
+        android:orientation="vertical">
         <include
             android:id="@+id/llContextCell"
             android:visibility="gone"

@@ -26,7 +26,7 @@ import kotlin.concurrent.thread
 class EditorFragment : PaganFragment<FragmentMainBinding>() {
     val view_model: EditorViewModel by viewModels()
     private var _active_context_menu_index: ContextMenu? = null
-    var test_flag = false
+    var project_change_flagged = false
     enum class ContextMenu {
         Leaf,
         Line,
@@ -66,23 +66,26 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
     override fun onStop() {
         // Assign to view model on stop, will be destroyed onDestroy, so need to
         // essentially dup this in onSaveInstanceState
-        val editor_table = this.get_main().findViewById<EditorTable>(R.id.etEditorTable)
+        val main = this.get_main()
+        val editor_table = main.findViewById<EditorTable>(R.id.etEditorTable)
         val (scroll_x, scroll_y) = editor_table.get_scroll_offset()
 
-        this.view_model.backup_undo_stack = this.get_main().get_opus_manager().history_cache.copy()
+        val opus_manager = main.get_opus_manager()
+        this.view_model.backup_undo_stack = opus_manager.history_cache.copy()
         this.view_model.coarse_x = scroll_x.first
         this.view_model.fine_x = scroll_x.second
         this.view_model.coarse_y = scroll_y.first
         this.view_model.fine_y = scroll_y.second
 
-        this.get_main().save_to_backup()
+        main.save_to_backup()
 
-        val main = this.get_main()
         val channel_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
         if (channel_recycler.adapter != null) {
             (channel_recycler.adapter as ChannelOptionAdapter).clear()
             channel_recycler.adapter = null
         }
+
+        editor_table.clear()
 
         super.onStop()
     }
@@ -97,6 +100,9 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
 
     override fun onViewStateRestored(savedInstanceState: Bundle?) {
         super.onViewStateRestored(savedInstanceState)
+        if (this.project_change_flagged) {
+            return
+        }
 
         val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
 
@@ -122,6 +128,9 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             val bytes = FileInputStream("${main.applicationInfo.dataDir}/.bkp.json").readBytes()
             val backup_path: String = File("${main.applicationInfo.dataDir}/.bkp_path").readText()
             opus_manager.load(bytes, backup_path)
+        } else {
+            opus_manager.cursor_clear()
+            editor_table.setup()
         }
         editor_table.visibility = View.VISIBLE
         editor_table.precise_scroll(
@@ -138,7 +147,6 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             this.view_model.backup_undo_stack = null
         }
 
-        //this.view_model.clear()
 
         main.setup_project_config_drawer()
     }
@@ -188,6 +196,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
                 this.view_model.backup_fragment_intent = null
                 main.loading_reticle_hide()
                 main.drawer_unlock()
+                this.project_change_flagged = false
             }
         }
 
@@ -220,6 +229,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
                 this.view_model.backup_fragment_intent = null
                 main.drawer_unlock()
                 main.loading_reticle_hide()
+                this.project_change_flagged = false
             }
         }
 
@@ -248,6 +258,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
                     editor_table?.visibility = View.VISIBLE
                 }
                 main.loading_reticle_hide()
+                this.project_change_flagged = false
             }
         }
 
@@ -264,6 +275,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
                     editor_table?.visibility = View.VISIBLE
                 }
                 main.loading_reticle_hide()
+                this.project_change_flagged = false
             }
         }
     }
@@ -1202,16 +1214,4 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         }
     }
 
-    fun make_percussion_visible() {
-        val main = this.get_main()
-        main.configuration.show_percussion = true
-        main.save_configuration()
-
-        val channel_option_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
-        val adapter = channel_option_recycler.adapter!! as ChannelOptionAdapter
-        adapter.notifyItemChanged(adapter.itemCount - 1)
-
-        val editor_table = main.findViewById<EditorTable>(R.id.etEditorTable)
-        editor_table.update_percussion_visibility()
-    }
 }

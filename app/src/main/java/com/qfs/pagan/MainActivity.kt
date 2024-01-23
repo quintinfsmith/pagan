@@ -314,7 +314,7 @@ class MainActivity : AppCompatActivity() {
             result?.data?.data?.also { uri ->
                 val fragment = this.get_active_fragment()
                 if (fragment is EditorFragment) {
-                    fragment.test_flag = true
+                    fragment.project_change_flagged = true
                 }
                 fragment?.setFragmentResult(
                     IntentFragmentToken.ImportMidi.name,

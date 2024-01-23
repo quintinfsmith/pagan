@@ -19,8 +19,7 @@ tools:context=".EditorFragment">
         android:id="@+id/llContextMenu"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
-        android:orientation="horizontal"
-        android:padding="@dimen/number_selector_spacing">
+        android:orientation="horizontal">
         <include
             android:id="@+id/llContextCell"
             layout="@layout/contextmenu_cell"/>

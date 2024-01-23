@@ -1,7 +1,6 @@
 package com.qfs.pagan
 
 import android.app.Activity
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -13,8 +12,6 @@ import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.fragment.app.clearFragmentResult
-import androidx.fragment.app.setFragmentResult
 import com.qfs.apres.soundfont.SoundFont
 import com.qfs.pagan.ColorMap.Palette
 import com.qfs.pagan.databinding.FragmentGlobalSettingsBinding

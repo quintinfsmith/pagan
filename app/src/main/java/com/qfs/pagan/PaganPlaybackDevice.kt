@@ -32,6 +32,14 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
             return
         }
         opus_manager.cursor_select_column(i)
+
+        // Force scroll here, cursor_select_column doesn't scroll if the column is already visible
+        this.activity.runOnUiThread {
+            val editor_table = this.activity?.findViewById<EditorTable>(R.id.etEditorTable)
+            if (editor_table != null) {
+                editor_table.scroll_to_position(x = i, force = true)
+            }
+        }
     }
 
     override fun on_cancelled() {

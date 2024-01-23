@@ -477,6 +477,9 @@ class MainActivity : AppCompatActivity() {
         this._binding = ActivityMainBinding.inflate(this.layoutInflater)
         setContentView(this._binding.root)
         setSupportActionBar(this._binding.appBarMain.toolbar)
+        this._binding.appBarMain.toolbar.addOnLayoutChangeListener { view, i, i2, i3, i4, i5, i6, i7, i8 ->
+            this.refresh_toolbar()
+        }
 
         this.view_model.opus_manager.attach_activity(this)
 
@@ -917,7 +920,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         )
-        this.refresh_toolbar()
+       // this.refresh_toolbar()
     }
 
     fun set_title_text(new_text: String) {
@@ -2038,6 +2041,8 @@ class MainActivity : AppCompatActivity() {
             Pair(Palette.LeafText, this.getColor(R.color.leaf_text)),
             Pair(Palette.LeafInvalid, this.getColor(R.color.leaf_invalid)),
             Pair(Palette.LeafInvalidText, this.getColor(R.color.leaf_invalid_text)),
+            Pair(Palette.LeafInvalidSelected, this.getColor(R.color.leaf_invalid_selected)),
+            Pair(Palette.LeafInvalidSelectedText, this.getColor(R.color.leaf_invalid_selected_text)),
             Pair(Palette.LeafSelected, this.getColor(R.color.leaf_selected)),
             Pair(Palette.LeafSelectedText, this.getColor(R.color.leaf_selected_text)),
             Pair(Palette.Link, this.getColor(R.color.leaf_linked)),
@@ -2058,8 +2063,6 @@ class MainActivity : AppCompatActivity() {
             Pair(Palette.ButtonText, this.getColor(R.color.dark_button_text)),
             Pair(Palette.ButtonAlt, this.getColor(R.color.dark_button_alt)),
             Pair(Palette.ButtonAltText, this.getColor(R.color.dark_button_alt_text)),
-            Pair(Palette.ButtonSelected, this.getColor(R.color.dark_button_selected)),
-            Pair( Palette.ButtonSelectedText, this.getColor(R.color.dark_button_selected_text) ),
             Pair(Palette.TitleBar, this.getColor(R.color.dark_primary)),
             Pair(Palette.TitleBarText, this.getColor(R.color.dark_primary_text))
         )
@@ -2074,6 +2077,8 @@ class MainActivity : AppCompatActivity() {
             Pair(Palette.LeafText, this.getColor(R.color.leaf_text)),
             Pair(Palette.LeafInvalid, this.getColor(R.color.leaf_invalid)),
             Pair(Palette.LeafInvalidText, this.getColor(R.color.leaf_invalid_text)),
+            Pair(Palette.LeafInvalidSelected, this.getColor(R.color.leaf_invalid_selected)),
+            Pair(Palette.LeafInvalidSelectedText, this.getColor(R.color.leaf_invalid_selected_text)),
             Pair(Palette.LeafSelected, this.getColor(R.color.leaf_selected)),
             Pair(Palette.LeafSelectedText, this.getColor(R.color.leaf_selected_text)),
             Pair(Palette.Link, this.getColor(R.color.leaf_linked)),
@@ -2094,11 +2099,8 @@ class MainActivity : AppCompatActivity() {
             Pair(Palette.ButtonText, this.getColor(R.color.light_button_text)),
             Pair(Palette.ButtonAlt, this.getColor(R.color.light_button_alt)),
             Pair(Palette.ButtonAltText, this.getColor(R.color.light_button_alt_text)),
-            Pair(Palette.ButtonSelected, this.getColor(R.color.light_button_selected)),
-            Pair( Palette.ButtonSelectedText, this.getColor(R.color.light_button_selected_text) ),
             Pair(Palette.TitleBar, this.getColor(R.color.light_primary)),
             Pair(Palette.TitleBarText, this.getColor(R.color.light_primary_text))
         )
     }
-
 }

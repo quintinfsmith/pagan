@@ -79,7 +79,7 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
                     ColorStateList(
                         this._state_list,
                         intArrayOf(
-                            color_map[Palette.ButtonSelected],
+                            color_map[Palette.Selection],
                             color_map[Palette.ButtonAlt],
                             color_map[Palette.Button]
                         )
@@ -91,7 +91,7 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
                 ColorStateList(
                     this._state_list,
                     intArrayOf(
-                        color_map[Palette.ButtonSelectedText],
+                        color_map[Palette.SelectionText],
                         color_map[Palette.ButtonAltText],
                         color_map[Palette.ButtonText]
                     )

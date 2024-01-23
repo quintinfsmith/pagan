@@ -25,7 +25,14 @@ class LeafText(context: Context, attrs: AttributeSet? = null): androidx.appcompa
 
         val states = arrayOf(
             //------------------------------
-            intArrayOf(R.attr.state_invalid),
+            intArrayOf(
+                R.attr.state_invalid,
+                R.attr.state_focused
+            ),
+            intArrayOf(
+                R.attr.state_invalid,
+                -R.attr.state_focused
+            ),
             //----------------------------
             intArrayOf(
                 -R.attr.state_invalid,
@@ -58,6 +65,7 @@ class LeafText(context: Context, attrs: AttributeSet? = null): androidx.appcompa
             ColorStateList(
                 states,
                 intArrayOf(
+                    color_map[Palette.LeafInvalidSelectedText],
                     color_map[Palette.LeafInvalidText],
                     color_map[Palette.LeafSelectedText],
                     color_map[Palette.LeafText],

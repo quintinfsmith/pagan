@@ -65,7 +65,14 @@ class LeafButton(
 
         val states = arrayOf(
             //------------------------------
-            intArrayOf(R.attr.state_invalid),
+            intArrayOf(
+                R.attr.state_invalid,
+                R.attr.state_focused
+            ),
+            intArrayOf(
+                R.attr.state_invalid,
+                -R.attr.state_focused
+            ),
             //------------------------------
             intArrayOf(
                 -R.attr.state_invalid,
@@ -132,6 +139,7 @@ class LeafButton(
             ColorStateList(
                 states,
                 intArrayOf(
+                    color_map[Palette.LeafInvalidSelected],
                     color_map[Palette.LeafInvalid],
                     color_map[Palette.ChannelEven],
                     color_map[Palette.ChannelOdd],

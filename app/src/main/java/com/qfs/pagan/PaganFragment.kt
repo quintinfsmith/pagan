@@ -31,9 +31,9 @@ abstract class PaganFragment<T: ViewBinding>: Fragment() {
 
     override fun onResume() {
         super.onResume()
+        this.refresh_background()
         this.get_main().update_menu_options()
         this.get_main().update_title_text()
-        this.refresh_background()
     }
 
     fun refresh_background() {

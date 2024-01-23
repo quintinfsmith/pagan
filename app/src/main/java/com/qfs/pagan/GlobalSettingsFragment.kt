@@ -166,8 +166,6 @@ class GlobalSettingsFragment : PaganFragment<FragmentGlobalSettingsBinding>() {
                 llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_button_text), Palette.ButtonText))
                 llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_button_alt), Palette.ButtonAlt))
                 llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_button_alt_text), Palette.ButtonAltText))
-                llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_button_selected), Palette.ButtonSelected))
-                llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_button_selected_text), Palette.ButtonSelectedText))
                 llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_lines), Palette.Lines))
                 llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_column_label), Palette.ColumnLabel))
                 llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_column_label_text), Palette.ColumnLabelText))
@@ -189,6 +187,8 @@ class GlobalSettingsFragment : PaganFragment<FragmentGlobalSettingsBinding>() {
                 llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_link_empty_selected), Palette.LinkEmptySelected))
                 llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_leaf_invalid), Palette.LeafInvalid))
                 llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_leaf_invalid_text), Palette.LeafInvalidText))
+                llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_leaf_invalid_selected), Palette.LeafInvalidSelected))
+                llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_leaf_invalid_selected_text), Palette.LeafInvalidSelectedText))
             } else {
                 color_map.use_palette = false
                 llColorPalette.visibility = View.GONE

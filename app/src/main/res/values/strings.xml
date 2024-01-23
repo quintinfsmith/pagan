@@ -144,8 +144,6 @@
     <string name="palette_button_text">Buttons Foreground</string>
     <string name="palette_button_alt">Buttons Alt Background</string>
     <string name="palette_button_alt_text">Buttons Alt Foreground</string>
-    <string name="palette_button_selected">Buttons Selected Background</string>
-    <string name="palette_button_selected_text">Buttons Selected Foreground</string>
     <string name="palette_lines">Table Lines</string>
     <string name="palette_column_label">Column Labels</string>
     <string name="palette_column_label_text">Column Label Text</string>
@@ -165,6 +163,8 @@
     <string name="palette_link_selected">Selected Linked Notes</string>
     <string name="palette_link_selected_text">Selected Linked Notes Text</string>
     <string name="palette_link_empty_selected">Selected Linked Rests</string>
+    <string name="palette_leaf_invalid_selected">Selected Invalid Notes</string>
+    <string name="palette_leaf_invalid_selected_text">Selected Invalid Notes Text</string>
     <string name="palette_leaf_invalid">Invalid Notes</string>
     <string name="palette_leaf_invalid_text">Invalid Notes Text</string>
     <string name="dialog_remove_soundfont_title">Choose Soundfont to Remove</string>

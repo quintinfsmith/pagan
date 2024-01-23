@@ -61,18 +61,12 @@ class RelativeOptionSelector(context: Context, attrs: AttributeSet) : LinearLayo
                     -R.attr.state_alternate
                 )
             )
-            val colors = intArrayOf(
-                color_map[Palette.ButtonSelected],
-                color_map[Palette.ButtonAlt],
-                color_map[Palette.Button]
-            )
-
             for (i in 0 until (this.background as StateListDrawable).stateCount) {
                 ((this.background as StateListDrawable).getStateDrawable(i) as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)?.setTintList(
                     ColorStateList(
                         states,
                         intArrayOf(
-                            color_map[Palette.ButtonSelected],
+                            color_map[Palette.Selection],
                             color_map[Palette.ButtonAlt],
                             color_map[Palette.Button]
                         )
@@ -84,7 +78,7 @@ class RelativeOptionSelector(context: Context, attrs: AttributeSet) : LinearLayo
                 ColorStateList(
                     states,
                     intArrayOf(
-                        color_map[Palette.ButtonSelectedText],
+                        color_map[Palette.SelectionText],
                         color_map[Palette.ButtonAltText],
                         color_map[Palette.ButtonText]
                     )

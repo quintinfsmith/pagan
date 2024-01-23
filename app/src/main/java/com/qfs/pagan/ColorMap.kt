@@ -9,6 +9,8 @@ class ColorMap(initial_palette: HashMap<Palette, Int>? = null) {
         Lines,
         LeafInvalid,
         LeafInvalidText,
+        LeafInvalidSelected,
+        LeafInvalidSelectedText,
         Selection,
         SelectionText,
         Leaf,
@@ -29,10 +31,8 @@ class ColorMap(initial_palette: HashMap<Palette, Int>? = null) {
         ColumnLabelText,
         Button,
         ButtonAlt,
-        ButtonSelected,
         ButtonText,
         ButtonAltText,
-        ButtonSelectedText,
         TitleBar,
         TitleBarText
     }

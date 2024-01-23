@@ -11,6 +11,7 @@ import android.widget.TextView
 import androidx.core.os.bundleOf
 import androidx.fragment.app.setFragmentResult
 import com.qfs.pagan.databinding.FragmentLandingBinding
+import kotlin.concurrent.thread
 
 class LandingPageFragment : PaganFragment<FragmentLandingBinding>() {
     override fun inflate( inflater: LayoutInflater, container: ViewGroup?): FragmentLandingBinding {
@@ -53,8 +54,19 @@ class LandingPageFragment : PaganFragment<FragmentLandingBinding>() {
         }
 
         if (this.get_main().has_projects_saved()) {
+            //  KLUDGE Lockout prevents accidentally double clicking. need a better general solution,
+            // but right now i  think this is the only place this is a problem
+            var lockout = false
             btn_loadProject.setOnClickListener {
+                if (lockout) {
+                    return@setOnClickListener
+                }
+                lockout = true
                 this.get_main().dialog_load_project()
+                thread {
+                    Thread.sleep(1000)
+                    lockout = false
+                }
             }
 
             btn_loadProject.setOnLongClickListener {

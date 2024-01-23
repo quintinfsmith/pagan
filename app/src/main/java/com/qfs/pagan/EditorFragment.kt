@@ -2,7 +2,6 @@ package com.qfs.pagan
 import android.app.AlertDialog
 import android.content.res.Configuration
 import android.os.Bundle
-import android.util.Log
 import android.view.*
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -100,7 +99,6 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         super.onViewStateRestored(savedInstanceState)
 
         val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
-        Log.d("AAA", "RESTOREING A")
 
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
@@ -116,18 +114,15 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             editor_table.visibility = View.VISIBLE
             return
         }
-        Log.d("AAA", "RESTOREING B")
 
         main.drawer_unlock()
 
         // TODO: Don't load on import
-        Log.d("AAA", "RESTOREING C ${savedInstanceState == null}")
         if (savedInstanceState != null) {
             val bytes = FileInputStream("${main.applicationInfo.dataDir}/.bkp.json").readBytes()
             val backup_path: String = File("${main.applicationInfo.dataDir}/.bkp_path").readText()
             opus_manager.load(bytes, backup_path)
         }
-        Log.d("AAA", "RESTOREING D")
         editor_table.visibility = View.VISIBLE
         editor_table.precise_scroll(
             this.view_model.coarse_x,
@@ -136,7 +131,6 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             this.view_model.fine_y
         )
 
-        Log.d("AAA", "RESTOREING E")
         // At the moment, can't save the history cache into a bundle, so restore it if
         // it exists, if not, too bad i guess
         if (this.view_model.backup_undo_stack != null) {
@@ -144,12 +138,9 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             this.view_model.backup_undo_stack = null
         }
 
-        Log.d("AAA", "RESTOREING F")
         //this.view_model.clear()
 
-        Log.d("AAA", "RESTOREING G")
         main.setup_project_config_drawer()
-        Log.d("AAA", "RESTOREING H")
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -274,11 +265,6 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
                 }
                 main.loading_reticle_hide()
             }
-        }
-
-        setFragmentResultListener(IntentFragmentToken.EditorResume.name) { _, bundle: Bundle? ->
-            // TODO:
-            Log.d("AAA", "FR RESUME!")
         }
     }
 

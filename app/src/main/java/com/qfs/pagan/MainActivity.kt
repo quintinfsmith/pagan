@@ -24,7 +24,6 @@ import android.os.Bundle
 import android.provider.OpenableColumns
 import android.text.Editable
 import android.text.TextWatcher
-import android.util.Log
 import android.view.ContextThemeWrapper
 import android.view.LayoutInflater
 import android.view.Menu
@@ -374,14 +373,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
-        Log.d("AAA", "ACT OSIS")
         // Can't reliably put json in outstate. there is a size limit
         this.save_to_backup()
         super.onSaveInstanceState(outState)
     }
 
     override fun onRestoreInstanceState(savedInstanceState: Bundle) {
-        Log.d("AAA", "RES: ACT")
         super.onRestoreInstanceState(savedInstanceState)
         val fragment = this.get_active_fragment()
 

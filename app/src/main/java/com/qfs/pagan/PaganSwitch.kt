@@ -43,4 +43,5 @@ open class PaganSwitch(context: Context, attrs: AttributeSet? = null): SwitchCom
         this.thumbTintList = ColorStateList( states, colors_thumb )
         this.trackDrawable.setTintList(ColorStateList( states, colors_track ))
     }
+
 }

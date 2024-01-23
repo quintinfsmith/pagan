@@ -1,6 +1,5 @@
 package com.qfs.pagan
 import android.content.res.Configuration
-import android.util.Log
 import android.view.View
 import android.widget.TextView
 import com.qfs.apres.Midi
@@ -500,18 +499,11 @@ class InterfaceLayer(): CursorLayer() {
 
 
     override fun import_midi(midi: Midi) {
-        Log.d("AAA", "A")
         this.ui_clear()
-        Log.d("AAA", "B")
-        Log.d("AAA", "C")
         this.surpress_ui {
-            Log.d("AAA", "D")
             super.import_midi(midi)
-            Log.d("AAA", "E")
         }
-        Log.d("AAA", "F")
         this.initial_setup()
-        Log.d("AAA", "G")
     }
 
     override fun load_json(json_data: LoadedJSONData) {

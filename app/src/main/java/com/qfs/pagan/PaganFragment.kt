@@ -30,13 +30,12 @@ abstract class PaganFragment<T: ViewBinding>: Fragment() {
     }
 
     override fun onResume() {
-        this.get_main().update_menu_options()
         super.onResume()
+        this.get_main().update_menu_options()
+        this.get_main().update_title_text()
     }
     override fun onStart() {
         super.onStart()
-        this.get_main().update_title_text()
-        this.refresh_background()
     }
 
    // override fun onPrimaryNavigationFragmentChanged(isPrimaryNavigationFragment: Boolean) {

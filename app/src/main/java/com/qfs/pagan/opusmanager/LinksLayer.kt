@@ -1,4 +1,5 @@
 package com.qfs.pagan.opusmanager
+import android.util.Log
 import com.qfs.pagan.structure.OpusTree
 import java.lang.Integer.max
 import java.lang.Integer.min
@@ -626,11 +627,12 @@ open class LinksLayer : BaseLayer() {
         for (pool in this.link_pools) {
             var has_match = false
             for (i in 0 until other.link_pools.size) {
-                if (other.link_pools == pool) {
+                if (other.link_pools[i] == pool) {
                     has_match = true
                     break
                 }
             }
+
             if (!has_match) {
                 return false
             }

@@ -378,15 +378,6 @@ class MainActivity : AppCompatActivity() {
         super.onSaveInstanceState(outState)
     }
 
-    override fun onRestoreInstanceState(savedInstanceState: Bundle) {
-        super.onRestoreInstanceState(savedInstanceState)
-        val fragment = this.get_active_fragment()
-
-
-        fragment?.setFragmentResult(IntentFragmentToken.EditorResume.name, Bundle())
-        // TODO: Create 'Restore' ResultFragment and set it
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 

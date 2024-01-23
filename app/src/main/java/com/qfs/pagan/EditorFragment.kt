@@ -85,10 +85,21 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             channel_recycler.adapter = null
         }
 
-        editor_table.clear()
 
         super.onStop()
     }
+
+    override fun onDestroy() {
+        // Editor table gets clears onDestroy because the fragment
+        // can be stopped and started without destroying
+        // and if it's not destroyed onViewStateRestored won't be called
+        val main = this.get_main()
+        val editor_table = main.findViewById<EditorTable?>(R.id.etEditorTable)
+        editor_table?.clear()
+
+        super.onDestroy()
+    }
+
 
     override fun onSaveInstanceState(outState: Bundle) {
         outState.putInt("coarse_x", this.view_model.coarse_x)
@@ -100,14 +111,14 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
 
     override fun onViewStateRestored(savedInstanceState: Bundle?) {
         super.onViewStateRestored(savedInstanceState)
+        val main = this.get_main()
+        val opus_manager = main.get_opus_manager()
         if (this.project_change_flagged) {
             return
         }
 
         val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
 
-        val main = this.get_main()
-        val opus_manager = main.get_opus_manager()
         // SavedInstanceState may be created when the fragment isn't active, and save an empty state.
         // *NEED* to make sure it isn't empty before traversing this branch
         if (savedInstanceState != null) {
@@ -1112,6 +1123,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         this._play_event(opus_manager.cursor.get_beatkey(), opus_manager.cursor.get_position())
         this.reset_context_menu()
     }
+
 
     private fun interact_btnChoosePercussion() {
         val main = this.get_main()

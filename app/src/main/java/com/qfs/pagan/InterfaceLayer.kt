@@ -23,6 +23,7 @@ class InterfaceLayer(): CursorLayer() {
     private var _ui_lock_stack = mutableListOf<Int>()
     var relative_mode: Int = 0
     var first_load_done = false
+    var in_reload = false
     private var activity: MainActivity? = null
 
     fun attach_activity(activity: MainActivity) {
@@ -514,19 +515,40 @@ class InterfaceLayer(): CursorLayer() {
 
 
     override fun import_midi(midi: Midi) {
+        val activity = this.get_activity() ?: return super.import_midi(midi)
+
         this.ui_clear()
         this.surpress_ui {
             super.import_midi(midi)
         }
+        if (!this.has_percussion() && activity.configuration.show_percussion) {
+            activity.configuration.show_percussion = false
+        }
+
         this.initial_setup()
     }
 
     override fun load_json(json_data: LoadedJSONData) {
+        val activity = this.get_activity() ?: return super.load_json(json_data)
+
         this.ui_clear()
         this.surpress_ui {
             super.load_json(json_data)
         }
+
+        if (! this.in_reload) {
+            if (!this.has_percussion() && activity.configuration.show_percussion) {
+                activity.configuration.show_percussion = false
+            }
+        }
+
         this.initial_setup()
+    }
+
+    fun reload(bytes: ByteArray, path: String) {
+        this.in_reload = true
+        this.load(bytes, path)
+        this.in_reload = false
     }
 
     private fun initial_setup() {
@@ -588,12 +610,6 @@ class InterfaceLayer(): CursorLayer() {
             }
         }
     }
-
-    //override fun clear() {
-    //    this.surpress_ui {
-    //        super.clear()
-    //    }
-    //}
 
     fun ui_clear() {
         this.get_editor_table()?.clear()

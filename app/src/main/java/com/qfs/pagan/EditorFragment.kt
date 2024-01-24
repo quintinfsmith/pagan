@@ -138,7 +138,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         if (savedInstanceState != null) {
             val bytes = FileInputStream("${main.applicationInfo.dataDir}/.bkp.json").readBytes()
             val backup_path: String = File("${main.applicationInfo.dataDir}/.bkp_path").readText()
-            opus_manager.load(bytes, backup_path)
+            opus_manager.reload(bytes, backup_path)
         } else {
             opus_manager.cursor_clear()
             editor_table.setup()

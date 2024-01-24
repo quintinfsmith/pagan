@@ -47,7 +47,7 @@
     <color name="leaf_pressed_text">@color/black</color>
     <color name="leaf_selected">@color/purple_plum</color>
     <color name="leaf_selected_text">@color/white</color>
-    <color name="leaf_linked">#A79C35</color>
+    <color name="leaf_linked">#A6669B</color>
     <color name="leaf_linked_text">@color/black</color>
     <color name="leaf_linked_selected">#D8BA1D</color>
     <color name="leaf_linked_selected_text">@color/black</color>
@@ -58,7 +58,7 @@
 
     <color name="empty_selected">@color/blue_sky</color>
     <color name="empty_selected_text">#000000</color>
-    <color name="empty_linked">#B07419</color>
+    <color name="empty_linked">#4C313C</color>
     <color name="empty_linked_selected">#D8944B</color>
 
 

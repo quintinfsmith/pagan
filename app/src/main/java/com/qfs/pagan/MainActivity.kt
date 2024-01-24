@@ -1926,7 +1926,7 @@ class MainActivity : AppCompatActivity() {
             override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
             override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
             override fun afterTextChanged(p0: Editable?) {
-                if (lockout) {
+                if (lockout || p0.toString().isEmpty()) {
                     return
                 }
                 lockout = true
@@ -1938,7 +1938,7 @@ class MainActivity : AppCompatActivity() {
             override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
             override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
             override fun afterTextChanged(p0: Editable?) {
-                if (lockout) {
+                if (lockout || p0.toString().isEmpty()) {
                     return
                 }
                 lockout = true
@@ -1951,7 +1951,7 @@ class MainActivity : AppCompatActivity() {
             override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
             override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
             override fun afterTextChanged(p0: Editable?) {
-                if (lockout) {
+                if (lockout || p0.toString().isEmpty()) {
                     return
                 }
                 lockout = true

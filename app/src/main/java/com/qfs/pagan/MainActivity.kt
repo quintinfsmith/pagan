@@ -1921,60 +1921,58 @@ class MainActivity : AppCompatActivity() {
         sbGreen.progress = c.green
         sbBlue.progress = c.blue
 
+        var lockout = false
         rniRed.addTextChangedListener(object: TextWatcher {
-            var lockout = false
             override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
             override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
             override fun afterTextChanged(p0: Editable?) {
-                if (this.lockout) {
+                if (lockout) {
                     return
                 }
-                this.lockout = true
+                lockout = true
                 sbRed.progress = p0.toString().toInt()
-                this.lockout = false
+                lockout = false
             }
         })
         rniGreen.addTextChangedListener(object: TextWatcher {
-            var lockout = false
             override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
             override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
             override fun afterTextChanged(p0: Editable?) {
-                if (this.lockout) {
+                if (lockout) {
                     return
                 }
-                this.lockout = true
+                lockout = true
                 sbGreen.progress = p0.toString().toInt()
-                this.lockout = false
+                lockout = false
             }
         })
+
         rniBlue.addTextChangedListener(object: TextWatcher {
-            var lockout = false
             override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
             override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
             override fun afterTextChanged(p0: Editable?) {
-                if (this.lockout) {
+                if (lockout) {
                     return
                 }
-                this.lockout = true
+                lockout = true
                 sbBlue.progress = p0.toString().toInt()
-                this.lockout = false
+                lockout = false
             }
         })
 
         val seekbar_listener = object: SeekBar.OnSeekBarChangeListener {
-            var lockout = false
             override fun onProgressChanged(p0: SeekBar, p1: Int, p2: Boolean) {
-                if (this.lockout) {
+                if (lockout) {
                     return
                 }
-                this.lockout = true
+                lockout = true
                 when (p0) {
                     sbRed -> rniRed.set_value(p1)
                     sbGreen -> rniGreen.set_value(p1)
                     sbBlue -> rniBlue.set_value(p1)
                 }
                 flColorDisplay.setBackgroundColor(Color.rgb(rniRed.get_value() ?: 0, rniGreen.get_value() ?: 0, rniBlue.get_value() ?: 0))
-                this.lockout = false
+                lockout = false
             }
             override fun onStartTrackingTouch(p0: SeekBar?) {}
             override fun onStopTrackingTouch(seekbar: SeekBar) { }

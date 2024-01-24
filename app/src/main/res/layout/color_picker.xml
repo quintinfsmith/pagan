@@ -26,6 +26,7 @@
             android:layout_height="wrap_content"/>
         <com.qfs.pagan.RangedNumberInput
             android:id="@+id/rniRed"
+            android:textAlignment="textEnd"
             custom:max="255"
             custom:min="0"
             android:layout_width="wrap_content"

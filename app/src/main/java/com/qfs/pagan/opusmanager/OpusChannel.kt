@@ -1,5 +1,6 @@
 package com.qfs.pagan.opusmanager
 
+import android.util.Log
 import com.qfs.pagan.structure.OpusTree
 import kotlinx.serialization.Serializable
 
@@ -60,6 +61,7 @@ class OpusChannel(var uuid: Int) {
             }
 
             if (this.static_value != other.static_value) {
+                Log.d("AAA", "${this.static_value} || ${other.static_value}")
                 return false
             }
 

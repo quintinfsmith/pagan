@@ -134,7 +134,6 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
 
         main.drawer_unlock()
 
-        // TODO: Don't load on import
         if (savedInstanceState != null) {
             val bytes = FileInputStream("${main.applicationInfo.dataDir}/.bkp.json").readBytes()
             val backup_path: String = File("${main.applicationInfo.dataDir}/.bkp_path").readText()

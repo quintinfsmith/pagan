@@ -8,7 +8,8 @@ data class ChannelJSONData(
     var midi_bank: Int,
     var midi_program: Int,
     var lines: List<OpusTreeJSON>,
-    var line_volumes: List<Int>
+    var line_volumes: List<Int>,
+    var line_static_values: List<Int?> = listOf()
 )
 
 @Serializable

@@ -1,5 +1,4 @@
 package com.qfs.pagan.opusmanager
-import android.util.Log
 import com.qfs.apres.Midi
 import com.qfs.apres.event.BankSelect
 import com.qfs.apres.event.NoteOff
@@ -959,6 +958,7 @@ open class BaseLayer {
         for (channel in this.channels) {
             val lines: MutableList<OpusTreeJSON> = mutableListOf()
             val line_volumes: MutableList<Int> = mutableListOf()
+            val line_static_values: MutableList<Int?> = mutableListOf()
             for (i in 0 until channel.size) {
                 val line = channel.get_line(i)
                 val tree_children = mutableListOf<OpusTreeJSON?>()
@@ -976,6 +976,7 @@ open class BaseLayer {
                     OpusTreeJSON( null, tree_children )
                 )
                 line_volumes.add(line.volume)
+                line_static_values.add(line.static_value)
             }
 
             channels.add(
@@ -984,7 +985,8 @@ open class BaseLayer {
                     midi_bank = channel.midi_bank,
                     midi_program = channel.midi_program,
                     lines = lines,
-                    line_volumes = line_volumes
+                    line_volumes = line_volumes,
+                    line_static_values = line_static_values
                 )
             )
         }
@@ -1070,7 +1072,8 @@ open class BaseLayer {
                     midi_bank = channel.midi_bank,
                     midi_program = channel.midi_program,
                     lines = new_lines,
-                    line_volumes = channel.line_volumes
+                    line_volumes = channel.line_volumes,
+                    line_static_values = List(channel.line_volumes.size) { null }
                 )
             )
         }
@@ -1204,6 +1207,9 @@ open class BaseLayer {
             channel_data.line_volumes.forEachIndexed { j: Int, volume: Int ->
                 this.channels[y].lines[j].volume = volume
             }
+            channel_data.line_static_values.forEachIndexed { j: Int, value: Int? ->
+                this.channels[y].lines[j].static_value = value
+            }
             y += 1
         }
 
@@ -1216,15 +1222,21 @@ open class BaseLayer {
             channel_data.line_volumes.forEachIndexed { j: Int, volume: Int ->
                 this.channels[y].lines[j].volume = volume
             }
+            channel_data.line_static_values.forEachIndexed { j: Int, value: Int? ->
+                this.channels[y].lines[j].static_value = value
+            }
 
             for (j in 0 until channel_data.lines.size) {
                 parsed[i][j].forEachIndexed { b: Int, beat_tree: OpusTree<OpusEvent> ->
                     if (!beat_tree.is_leaf() || beat_tree.is_event()) {
                         this.replace_tree(BeatKey(y, j, b), listOf(), beat_tree)
                     }
-                    for ((_, event) in beat_tree.get_events_mapped()) {
-                        this.set_percussion_instrument(j, event.note)
-                        break
+                    // If static value isn't set, figure it out (an artifact from static_values weren't saved)
+                    if (this.channels[i].lines[j].static_value == null) {
+                        for ((_, event) in beat_tree.get_events_mapped()) {
+                            this.set_percussion_instrument(j, event.note)
+                            break
+                        }
                     }
                 }
             }

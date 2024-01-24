@@ -3,6 +3,7 @@ package com.qfs.apres.soundfont
 import com.qfs.apres.toUInt
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 
@@ -533,7 +534,11 @@ class SoundFont(file_path: String) {
                 working_generated.velocity_range = generator.asPair()
             }
             0x30 -> {
-                working_generated.attenuation = generator.asIntSigned().toDouble() / 10
+                // The spec appears to indicate a value range of 0 -> 1440 centibels,
+                // but looking at the fluid font, it has some samples with negative attenuation
+                // I'll treat the data type as signed, but still use the absolute value since that sounds right
+                // when I listen to the samples
+                working_generated.attenuation = abs(generator.asIntSigned().toDouble() / 10)
             }
             0x31 -> {} //reserved 2
             0x33 -> {

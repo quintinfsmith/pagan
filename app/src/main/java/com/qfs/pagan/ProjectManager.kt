@@ -45,6 +45,8 @@ class ProjectManager(data_dir: String) {
     fun save(opus_manager: OpusManager) {
         this.get_directory()
         opus_manager.save()
+        // Untrack then track in order to update the project title in the cache
+        this.untrack_path(opus_manager.path!!)
         this.track_path(opus_manager.path!!)
     }
 
@@ -144,7 +146,7 @@ class ProjectManager(data_dir: String) {
         }
         val project_name = this.get_file_project_name(File(path)) ?: return
 
-        project_list.add(Pair(project_name, path))
+        project_list.add(Pair(path, project_name))
         project_list.sortBy { it.second }
 
         val json = Json {

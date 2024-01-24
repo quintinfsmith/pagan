@@ -2085,7 +2085,7 @@ class MainActivity : AppCompatActivity() {
             Pair(Palette.LeafSelectedText, this.getColor(R.color.leaf_selected_text)),
             Pair(Palette.Link, this.getColor(R.color.leaf_linked)),
             Pair(Palette.LinkText, this.getColor(R.color.leaf_linked_text)),
-            Pair(Palette.LinkSelected, this.getColor(R.color.leaf_linked_selected_text)),
+            Pair(Palette.LinkSelected, this.getColor(R.color.leaf_linked_selected)),
             Pair( Palette.LinkSelectedText, this.getColor(R.color.leaf_linked_selected_text) ),
             Pair(Palette.LinkEmpty, this.getColor(R.color.empty_linked)),
             Pair(Palette.LinkEmptySelected, this.getColor(R.color.empty_linked_selected)),

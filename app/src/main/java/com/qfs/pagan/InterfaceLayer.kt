@@ -523,6 +523,7 @@ class InterfaceLayer(): CursorLayer() {
         }
         if (!this.has_percussion() && activity.configuration.show_percussion) {
             activity.configuration.show_percussion = false
+            activity.save_configuration()
         }
 
         this.initial_setup()
@@ -539,6 +540,7 @@ class InterfaceLayer(): CursorLayer() {
         if (! this.in_reload) {
             if (!this.has_percussion() && activity.configuration.show_percussion) {
                 activity.configuration.show_percussion = false
+                activity.save_configuration()
             }
         }
 
@@ -848,6 +850,41 @@ class InterfaceLayer(): CursorLayer() {
         }
     }
 
+    override fun batch_link_beats(beat_key_pairs: List<Pair<BeatKey, BeatKey>>) {
+        this.surpress_ui {
+            super.batch_link_beats(beat_key_pairs)
+        }
+
+        val all_keys = mutableSetOf<BeatKey>()
+        for ((from_key, _) in beat_key_pairs) {
+            if (all_keys.contains(from_key)) {
+                continue
+            }
+
+            for (linked_key in this.get_all_linked(from_key)) {
+                all_keys.add(linked_key)
+            }
+        }
+
+        when (this.get_ui_lock_level()) {
+            UI_LOCK_FULL -> { }
+            UI_LOCK_PARTIAL -> {
+                val editor_table = this.get_editor_table() ?: return
+                for (linked_key in all_keys) {
+                    editor_table.notify_cell_change(linked_key)
+                }
+            }
+            null -> {
+                this.runOnUiThread {
+                    val editor_table = this.get_editor_table() ?: return@runOnUiThread
+                    for (linked_key in all_keys) {
+                        editor_table.notify_cell_change(linked_key)
+                    }
+                }
+            }
+        }
+    }
+
     fun get_visible_channels(): List<OpusChannel> {
         val activity = this.get_activity()
         return if (activity == null || activity.configuration.show_percussion) {
@@ -895,7 +932,7 @@ class InterfaceLayer(): CursorLayer() {
         }
     }
 
-    fun make_percussion_visible() {
+    private fun make_percussion_visible() {
         val main = this.activity ?: return
         main.configuration.show_percussion = true
         main.save_configuration()

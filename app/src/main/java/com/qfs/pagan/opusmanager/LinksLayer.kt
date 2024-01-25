@@ -22,6 +22,7 @@ open class LinksLayer : BaseLayer() {
         this.link_pool_map.clear()
         this._link_locker = 0
     }
+
     private fun <T> lock_links(callback: () -> T): T {
         this._link_locker += 1
         try {
@@ -43,6 +44,7 @@ open class LinksLayer : BaseLayer() {
             this.remove_link_pool(index)
         }
     }
+
     open fun unlink_range(first_key: BeatKey, second_key: BeatKey) {
         for (beat_key in this.get_beatkeys_in_range(first_key, second_key)) {
             if (!this.link_pool_map.contains(beat_key)) {
@@ -77,7 +79,6 @@ open class LinksLayer : BaseLayer() {
                 }
             }
         }
-
     }
 
     open fun link_beats(beat_key: BeatKey, target: BeatKey) {
@@ -127,6 +128,7 @@ open class LinksLayer : BaseLayer() {
             }
         }
     }
+
     open fun create_link_pool(beat_keys: List<BeatKey>) {
         val pool_index = this.link_pools.size
         this.link_pools.add(beat_keys.toMutableSet())
@@ -608,7 +610,7 @@ open class LinksLayer : BaseLayer() {
 
     /* Not Currently In Use. */
     open fun link_alike(corner_top: BeatKey, corner_bottom: BeatKey) {
-        var alike_ranges = this.find_like_range(corner_top, corner_bottom)
+        val alike_ranges = this.find_like_range(corner_top, corner_bottom)
         for (range in alike_ranges) {
             try {
                 this.link_beat_range(range.first, corner_top, corner_bottom)

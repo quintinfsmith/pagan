@@ -135,8 +135,13 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         main.drawer_unlock()
 
         if (savedInstanceState != null) {
-            val bytes = FileInputStream("${main.applicationInfo.dataDir}/.bkp.json").readBytes()
+            val bkp_json_path = "${main.applicationInfo.dataDir}/.bkp.json"
+            if (!File(bkp_json_path).exists()) {
+               return
+            }
+            val bytes = FileInputStream(bkp_json_path).readBytes()
             val backup_path: String = File("${main.applicationInfo.dataDir}/.bkp_path").readText()
+
             opus_manager.reload(bytes, backup_path)
         } else {
             opus_manager.cursor_clear()

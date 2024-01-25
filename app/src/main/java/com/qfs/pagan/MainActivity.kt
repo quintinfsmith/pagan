@@ -333,6 +333,7 @@ class MainActivity : AppCompatActivity() {
         this.playback_stop()
         this.playback_stop_midi_output()
         this._midi_interface.close_connected_devices()
+        this._binding.appBarMain.toolbar.hideOverflowMenu()
         super.onPause()
     }
 

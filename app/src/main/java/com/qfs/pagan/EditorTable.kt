@@ -451,7 +451,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         }
 
         val main_recycler_adapter = (this.main_recycler.adapter!! as ColumnRecyclerAdapter)
-        val percussion_visible = this.get_activity().configuration.show_percussion
+        val percussion_visible = this.get_activity().view_model.show_percussion
 
         // Only one tree needs to be checked, since links are all the same
 
@@ -772,7 +772,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         val main = this.get_activity()
         val opus_manager = this.get_opus_manager()
         val percussion_channel = opus_manager.channels.last()
-        if (main.configuration.show_percussion) {
+        if (main.view_model.show_percussion) {
             if (this.column_width_map.isNotEmpty()) {
                 for (i in 0 until percussion_channel.size) {
                     this.new_row(this.line_label_layout.get_count(), percussion_channel.lines[i])

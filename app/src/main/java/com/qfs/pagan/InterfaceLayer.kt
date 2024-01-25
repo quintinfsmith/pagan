@@ -124,7 +124,7 @@ class InterfaceLayer(): CursorLayer() {
     override fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<OpusEvent>) {
 
         val activity = this.get_activity() ?: return super.replace_tree(beat_key, position, tree)
-        if (!activity.configuration.show_percussion && this.is_percussion(beat_key.channel)) {
+        if (!activity.view_model.show_percussion && this.is_percussion(beat_key.channel)) {
             this.make_percussion_visible()
         }
 
@@ -146,7 +146,7 @@ class InterfaceLayer(): CursorLayer() {
 
     override fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEvent) {
         val activity = this.get_activity() ?: return super.set_event(beat_key, position, event)
-        if (!activity.configuration.show_percussion && this.is_percussion(beat_key.channel)) {
+        if (!activity.view_model.show_percussion && this.is_percussion(beat_key.channel)) {
             this.make_percussion_visible()
         }
         super.set_event(beat_key, position, event)
@@ -231,7 +231,7 @@ class InterfaceLayer(): CursorLayer() {
             return
         }
 
-        if (this.is_percussion(beat_key.channel) && !this.activity!!.configuration.show_percussion) {
+        if (this.is_percussion(beat_key.channel) && !this.activity!!.view_model.show_percussion) {
             return
         }
 
@@ -336,7 +336,7 @@ class InterfaceLayer(): CursorLayer() {
 
     override fun insert_line(channel: Int, line_offset: Int, line: OpusChannel.OpusLine) {
         val activity = this.get_activity()
-        if (activity != null && !activity.configuration.show_percussion && this.is_percussion(channel)) {
+        if (activity != null && !activity.view_model.show_percussion && this.is_percussion(channel)) {
             this.make_percussion_visible()
         }
 
@@ -371,7 +371,7 @@ class InterfaceLayer(): CursorLayer() {
 
     override fun remove_line(channel: Int, line_offset: Int): OpusChannel.OpusLine {
         val activity = this.get_activity()
-        if (activity != null && !activity.configuration.show_percussion && this.is_percussion(channel)) {
+        if (activity != null && !activity.view_model.show_percussion && this.is_percussion(channel)) {
             this.make_percussion_visible()
         }
 
@@ -440,7 +440,7 @@ class InterfaceLayer(): CursorLayer() {
             UI_LOCK_FULL -> {}
         }
 
-        if (this.is_percussion(notify_index) && activity.configuration.show_percussion) {
+        if (this.is_percussion(notify_index) && activity.view_model.show_percussion) {
             return
         }
 
@@ -508,6 +508,8 @@ class InterfaceLayer(): CursorLayer() {
             super.new()
         }
 
+        activity.view_model.show_percussion = true
+
         val new_path = activity.get_new_project_path()
         this.path = new_path
         this.initial_setup()
@@ -521,9 +523,8 @@ class InterfaceLayer(): CursorLayer() {
         this.surpress_ui {
             super.import_midi(midi)
         }
-        if (!this.has_percussion() && activity.configuration.show_percussion) {
-            activity.configuration.show_percussion = false
-            activity.save_configuration()
+        if (!this.has_percussion() && activity.view_model.show_percussion) {
+            activity.view_model.show_percussion = false
         }
 
         this.initial_setup()
@@ -538,9 +539,8 @@ class InterfaceLayer(): CursorLayer() {
         }
 
         if (! this.in_reload) {
-            if (!this.has_percussion() && activity.configuration.show_percussion) {
-                activity.configuration.show_percussion = false
-                activity.save_configuration()
+            if (!this.has_percussion() && activity.view_model.show_percussion) {
+                activity.view_model.show_percussion = false
             }
         }
 
@@ -697,7 +697,7 @@ class InterfaceLayer(): CursorLayer() {
         super.cursor_select_row(channel, line_offset)
 
         val activity = this.get_activity() ?: return
-        if (!activity.configuration.show_percussion && this.is_percussion(channel)) {
+        if (!activity.view_model.show_percussion && this.is_percussion(channel)) {
             this.make_percussion_visible()
         }
 
@@ -730,7 +730,7 @@ class InterfaceLayer(): CursorLayer() {
 
     override fun cursor_select(beat_key: BeatKey, position: List<Int>) {
         val activity = this.get_activity()
-        if (activity != null && !activity.configuration.show_percussion && this.is_percussion(beat_key.channel)) {
+        if (activity != null && !activity.view_model.show_percussion && this.is_percussion(beat_key.channel)) {
             this.make_percussion_visible()
         }
 
@@ -875,7 +875,7 @@ class InterfaceLayer(): CursorLayer() {
 
     fun get_visible_channels(): List<OpusChannel> {
         val activity = this.get_activity()
-        return if (activity == null || activity.configuration.show_percussion) {
+        return if (activity == null || activity.view_model.show_percussion) {
             this.channels
         } else {
             this.channels.subList(0, max(this.channels.size - 1, 0))
@@ -922,8 +922,7 @@ class InterfaceLayer(): CursorLayer() {
 
     private fun make_percussion_visible() {
         val main = this.activity ?: return
-        main.configuration.show_percussion = true
-        main.save_configuration()
+        main.view_model.show_percussion = true
 
         val channel_option_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
         if (channel_option_recycler.adapter != null) {

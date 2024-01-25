@@ -107,6 +107,7 @@ class MainActivity : AppCompatActivity() {
         var export_handle: MidiConverter? = null
         var color_map = ColorMap()
         var opus_manager = OpusManager()
+        var show_percussion = false
 
         fun export_wav(activity: MainActivity, midi: Midi, target_file: File, handler: MidiConverter.ExporterEventHandler) {
             this.export_handle = MidiConverter(SampleHandleManager(activity.get_soundfont()!!, 44100))
@@ -1766,9 +1767,8 @@ class MainActivity : AppCompatActivity() {
 
     fun validate_percussion_visibility() {
         val opus_manager = this.get_opus_manager()
-        if (!this.configuration.show_percussion && opus_manager.has_percussion()) {
-            this.configuration.show_percussion = true
-            this.save_configuration()
+        if (!this.view_model.show_percussion && opus_manager.has_percussion()) {
+            this.view_model.show_percussion = true
         }
     }
 

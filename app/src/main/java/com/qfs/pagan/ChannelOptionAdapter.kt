@@ -12,8 +12,8 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.apres.soundfont.SoundFont
-import kotlin.math.roundToInt
 import com.qfs.pagan.ColorMap.Palette
+import kotlin.math.roundToInt
 
 class ChannelOptionAdapter(
     private val _opus_manager: InterfaceLayer,
@@ -141,7 +141,7 @@ class ChannelOptionAdapter(
 
     private fun get_percussion_visibility_button_text(): String {
         val main = this.get_activity()
-        return if (main.configuration.show_percussion) {
+        return if (main.view_model.show_percussion) {
             main.getString(R.string.btn_percussion_visible)
         } else {
             main.getString(R.string.btn_percussion_hidden)
@@ -151,18 +151,17 @@ class ChannelOptionAdapter(
     private fun interact_btnTogglePercussionVisibility(view: BackLinkView) {
         val main = this.get_activity()
         val opus_manager = main.get_opus_manager()
-        if (main.configuration.show_percussion) {
+        if (main.view_model.show_percussion) {
             if (!opus_manager.has_percussion() && opus_manager.channels.size > 1) {
-                main.configuration.show_percussion = false
+                main.view_model.show_percussion = false
                 opus_manager.cursor_clear()
             } else {
                 return
             }
         } else {
-            main.configuration.show_percussion = true
+            main.view_model.show_percussion = true
         }
 
-        main.save_configuration()
         val remove_button = (view as ViewGroup).getChildAt(1) as TextView
         remove_button.text = this.get_percussion_visibility_button_text()
         val editor_table = main.findViewById<EditorTable>(R.id.etEditorTable)
@@ -171,9 +170,9 @@ class ChannelOptionAdapter(
 
     private fun interact_btnRemoveChannel(view: BackLinkView) {
         if (this._opus_manager.channels.size > 1) {
-            if (this._opus_manager.channels.size == 2 && !this.get_activity().configuration.show_percussion) {
-                this.get_activity().configuration.show_percussion = true
-                this.get_activity().save_configuration()
+            val activity = this.get_activity()
+            if (this._opus_manager.channels.size == 2 && !activity.view_model.show_percussion) {
+                activity.view_model.show_percussion = true
                 val editor_table = this.get_activity().findViewById<EditorTable>(R.id.etEditorTable)
 
                 editor_table.update_percussion_visibility()

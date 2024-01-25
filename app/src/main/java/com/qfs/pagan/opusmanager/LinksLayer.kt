@@ -139,8 +139,12 @@ open class LinksLayer : BaseLayer() {
 
     open fun batch_link_beats(beat_key_pairs: List<Pair<BeatKey, BeatKey>>) {
         this.lock_links {
-            for ((from_key, to_key) in beat_key_pairs) {
-                this.link_beats(from_key, to_key)
+            // dependent gets overridden with independent
+            for ((dependent_key, independent_key) in beat_key_pairs) {
+                if (this.is_networked(dependent_key)) {
+                    this.unlink_beat(dependent_key)
+                }
+                this.link_beats(dependent_key, independent_key)
             }
         }
     }

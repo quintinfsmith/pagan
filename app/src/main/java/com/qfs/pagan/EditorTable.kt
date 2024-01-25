@@ -443,10 +443,10 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         }
     }
 
-    fun notify_cell_change(beat_key: BeatKey, ignore_ui: Boolean = false) {
+    fun notify_cell_changes(beat_keys: List<BeatKey>, ignore_ui: Boolean = false) {
         val opus_manager = this.get_opus_manager()
         if (opus_manager.history_cache.isLocked()) {
-            this._queued_cell_notifications.add(beat_key)
+            this._queued_cell_notifications.addAll(beat_keys)
             return
         }
 
@@ -454,33 +454,41 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         val percussion_visible = this.get_activity().configuration.show_percussion
 
         // Only one tree needs to be checked, since links are all the same
-        val new_tree = opus_manager.get_tree(beat_key)
-        val new_cell_width = if (new_tree.is_leaf()) {
-            1
-        } else {
-            new_tree.get_max_child_weight() * new_tree.size
-        }
 
         val changed_beats = mutableSetOf<Int>()
         val changed_beat_keys = mutableSetOf<BeatKey>()
-        for (linked_beat_key in opus_manager.get_all_linked(beat_key)) {
-            if (!percussion_visible && opus_manager.is_percussion(linked_beat_key.channel)) {
+        val done_keys = mutableSetOf<BeatKey>()
+        for (beat_key in beat_keys) {
+            if (done_keys.contains(beat_key)) {
+                continue
+            }
+            done_keys.add(beat_key)
+
+            if (!percussion_visible && opus_manager.is_percussion(beat_key.channel)) {
                 continue
             }
             val y = try {
-                opus_manager.get_abs_offset(linked_beat_key.channel, linked_beat_key.line_offset)
+                opus_manager.get_abs_offset(beat_key.channel, beat_key.line_offset)
             } catch (e: IndexOutOfBoundsException) {
                 continue
             }
 
-            val original_width = this.column_width_maxes[linked_beat_key.beat]
-            this.column_width_map[linked_beat_key.beat][y] = new_cell_width
-            this.column_width_maxes[linked_beat_key.beat] = this.column_width_map[linked_beat_key.beat].max()
+            val original_width = this.column_width_maxes[beat_key.beat]
 
-            if (original_width != this.column_width_maxes[linked_beat_key.beat]) {
-                changed_beats.add(linked_beat_key.beat)
+            val new_tree = opus_manager.get_tree(beat_key)
+            val new_cell_width = if (new_tree.is_leaf()) {
+                1
             } else {
-                changed_beat_keys.add(linked_beat_key)
+                new_tree.get_max_child_weight() * new_tree.size
+            }
+
+            this.column_width_map[beat_key.beat][y] = new_cell_width
+            this.column_width_maxes[beat_key.beat] = this.column_width_map[beat_key.beat].max()
+
+            if (original_width != this.column_width_maxes[beat_key.beat]) {
+                changed_beats.add(beat_key.beat)
+            } else {
+                changed_beat_keys.add(beat_key)
             }
         }
 
@@ -497,6 +505,16 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                 }
                 main_recycler_adapter.notify_cell_changed(changed_key)
             }
+        }
+    }
+
+    fun notify_cell_change(beat_key: BeatKey, ignore_ui: Boolean = false) {
+        val opus_manager = this.get_opus_manager()
+        val all_keys = opus_manager.get_all_linked(beat_key).toList()
+        if (opus_manager.history_cache.isLocked()) {
+            this._queued_cell_notifications.addAll(all_keys)
+        } else {
+            this.notify_cell_changes(all_keys, ignore_ui)
         }
     }
 

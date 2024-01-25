@@ -636,14 +636,14 @@ class InterfaceLayer(): CursorLayer() {
                     // Need to run update on both the beat_key and *any* of its former link pool
                     editor_table.notify_cell_change(beat_key)
                     if (update_keys.isNotEmpty()) {
-                        editor_table.notify_cell_change(update_keys.first())
+                        editor_table.notify_cell_changes(update_keys)
                     }
                 }
             }
             UI_LOCK_PARTIAL -> {
                 editor_table.notify_cell_change(beat_key, true)
                 if (update_keys.isNotEmpty()) {
-                    editor_table.notify_cell_change(update_keys.first(), true)
+                    editor_table.notify_cell_changes(update_keys, true)
                 }
             }
             UI_LOCK_FULL -> {}
@@ -806,15 +806,11 @@ class InterfaceLayer(): CursorLayer() {
            null -> {
                this.runOnUiThread {
                    // Need to run update on both the beat_key and *any* of its former link pool
-                   for (unlinked in update_keys) {
-                       editor_table.notify_cell_change(unlinked)
-                   }
+                   editor_table.notify_cell_changes(update_keys)
                }
            }
            UI_LOCK_PARTIAL -> {
-               for (unlinked in update_keys) {
-                   editor_table.notify_cell_change(unlinked, true)
-               }
+               editor_table.notify_cell_changes(update_keys, true)
            }
            UI_LOCK_FULL -> {}
        }
@@ -836,15 +832,11 @@ class InterfaceLayer(): CursorLayer() {
         when (this.get_ui_lock_level()) {
             UI_LOCK_FULL -> { }
             UI_LOCK_PARTIAL -> {
-                for (linked_key in this.get_all_linked(beat_key)) {
-                    this.get_editor_table()?.notify_cell_change(linked_key)
-                }
+                this.get_editor_table()?.notify_cell_change(beat_key)
             }
             null -> {
                 this.runOnUiThread {
-                    for (linked_key in this.get_all_linked(beat_key)) {
-                        this.get_editor_table()?.notify_cell_change(linked_key)
-                    }
+                    this.get_editor_table()?.notify_cell_change(beat_key)
                 }
             }
         }
@@ -855,7 +847,7 @@ class InterfaceLayer(): CursorLayer() {
             super.batch_link_beats(beat_key_pairs)
         }
 
-        val all_keys = mutableSetOf<BeatKey>()
+        val all_keys = mutableListOf<BeatKey>()
         for ((from_key, _) in beat_key_pairs) {
             if (all_keys.contains(from_key)) {
                 continue
@@ -870,16 +862,12 @@ class InterfaceLayer(): CursorLayer() {
             UI_LOCK_FULL -> { }
             UI_LOCK_PARTIAL -> {
                 val editor_table = this.get_editor_table() ?: return
-                for (linked_key in all_keys) {
-                    editor_table.notify_cell_change(linked_key)
-                }
+                editor_table.notify_cell_changes(all_keys)
             }
             null -> {
                 this.runOnUiThread {
                     val editor_table = this.get_editor_table() ?: return@runOnUiThread
-                    for (linked_key in all_keys) {
-                        editor_table.notify_cell_change(linked_key)
-                    }
+                    editor_table.notify_cell_changes(all_keys)
                 }
             }
         }
@@ -938,8 +926,10 @@ class InterfaceLayer(): CursorLayer() {
         main.save_configuration()
 
         val channel_option_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
-        val adapter = channel_option_recycler.adapter!! as ChannelOptionAdapter
-        adapter.notifyItemChanged(adapter.itemCount - 1)
+        if (channel_option_recycler.adapter != null) {
+            val adapter = channel_option_recycler.adapter!! as ChannelOptionAdapter
+            adapter.notifyItemChanged(adapter.itemCount - 1)
+        }
 
         val editor_table = main.findViewById<EditorTable>(R.id.etEditorTable)
         editor_table.update_percussion_visibility()

@@ -59,12 +59,13 @@ open class CursorLayer(): HistoryLayer() {
 
         super.new_channel(channel, lines, uuid)
 
+        val compare_channel = channel ?: (this.channels.size - 2)
         when (bkp_cursor.mode) {
             OpusManagerCursor.CursorMode.Column -> {
                 this.cursor_select_column(bkp_cursor.beat)
             }
             OpusManagerCursor.CursorMode.Row -> {
-                val new_channel = if (channel != null && bkp_cursor.channel >= channel) {
+                val new_channel = if (compare_channel <= bkp_cursor.channel) {
                     bkp_cursor.channel + 1
                 } else {
                     bkp_cursor.channel
@@ -72,16 +73,18 @@ open class CursorLayer(): HistoryLayer() {
                 this.cursor_select_row(new_channel, bkp_cursor.line_offset)
             }
             OpusManagerCursor.CursorMode.Range -> {
-                val new_first = if (channel != null && bkp_cursor.range!!.first.channel >= channel) {
+                val new_first = if (bkp_cursor.range!!.first.channel >= compare_channel) {
                     bkp_cursor.range!!.first.channel + 1
                 } else {
                     bkp_cursor.range!!.first.channel
                 }
-                val new_second = if (channel != null && bkp_cursor.range!!.second.channel >= channel) {
+
+                val new_second = if (bkp_cursor.range!!.second.channel >= compare_channel) {
                     bkp_cursor.range!!.second.channel + 1
                 } else {
                     bkp_cursor.range!!.second.channel
                 }
+
                 this.cursor_select_range(
                     BeatKey(
                         new_first,
@@ -96,7 +99,7 @@ open class CursorLayer(): HistoryLayer() {
                 )
             }
             OpusManagerCursor.CursorMode.Single -> {
-                val new_channel = if (channel != null && channel <= bkp_cursor.channel) {
+                val new_channel = if (compare_channel <= bkp_cursor.channel) {
                     bkp_cursor.channel + 1
                 } else {
                     bkp_cursor.channel

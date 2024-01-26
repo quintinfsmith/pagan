@@ -1,12 +1,6 @@
 package com.qfs.apres.soundfontplayer
 
-import android.util.Log
-import com.qfs.apres.Complex
-import com.qfs.apres.FFT
-import com.qfs.apres.IFFT
 import kotlin.math.PI
-import kotlin.math.ceil
-import kotlin.math.log
 import kotlin.math.min
 import kotlin.math.tan
 
@@ -75,48 +69,7 @@ class SampleHandle(
     init {
         val tmp_tan = tan(PI * this.filter_cutoff / this.sample_rate.toDouble())
         this.lpf_factor = (tmp_tan - 1) / (tmp_tan + 1)
-        if (this.is_tiny() && this.pitch_shift != 1.0) {
-            this.data = this.resample(this.data, this.pitch_shift)
-            this.pitch_shift = 1.0
-        }
-
         this.data_buffer = PitchedBuffer(this.data, this.pitch_shift)
-    }
-
-    fun resample(input_data: ShortArray, pitch_shift: Double): ShortArray {
-        val new_size = ceil(log(input_data.size.toDouble(), 2.0))
-        val complex_sample = Array<Complex>(new_size.toInt()) { i: Int ->
-            Complex(
-                if (i < input_data.size) {
-                    input_data[i].toDouble() / Double.MAX_VALUE.toDouble()
-                } else {
-                    0.0
-                },
-                0.0
-            )
-        }
-        Log.d("AAA", "SIZE: ${input_data.size}")
-        val transformed = FFT(complex_sample)
-        val shifted = Array<Complex>(transformed.size) { i: Int ->
-            val j = (i * pitch_shift).toInt()
-            Complex(
-                if (j > transformed.size || j < 0) {
-                    0.0
-                } else {
-                    transformed[j].real
-                },
-                transformed[i].imaginary
-            )
-        }
-        val reverted = IFFT(shifted)
-
-        return ShortArray((input_data.size.toDouble() / pitch_shift).toInt()) { i: Int ->
-            (reverted[i].real * Double.MAX_VALUE).toInt().toShort()
-        }
-    }
-
-    fun is_tiny(): Boolean {
-        return this.data.size < 512
     }
 
     fun get_next_frame(): Int? {

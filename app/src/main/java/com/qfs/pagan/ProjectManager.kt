@@ -72,7 +72,6 @@ class ProjectManager(data_dir: String) {
         }
 
         val directory = File(this.path)
-
         val json = Json {
             ignoreUnknownKeys = true
         }
@@ -82,6 +81,7 @@ class ProjectManager(data_dir: String) {
             val project_name = this.get_file_project_name(json_file) ?: continue
             project_list.add(Pair(json_file.path, project_name))
         }
+
         project_list.sortBy { it.second }
 
         val json_string = json.encodeToString(project_list)
@@ -121,7 +121,7 @@ class ProjectManager(data_dir: String) {
 
         return try {
             json.decodeFromString(string_content)
-        } catch (e: Exception) { // TODO: Figure out how to precisely catch json error (JsonDecodingException not found)
+        } catch (e: Exception) {// TODO: Figure out how to precisely catch json error (JsonDecodingException not found)
             // Corruption Protection: if the cache file is bad json, delete and rebuild
             File(this.cache_path).delete()
             this.cache_project_list()
@@ -134,8 +134,11 @@ class ProjectManager(data_dir: String) {
     fun track_path(path: String) {
         var project_list = this.get_project_list().toMutableList()
         var is_tracking = false
+
+        // use File object to clean up path
+        var project_file = File(path)
         for ((check_path, _name) in project_list) {
-            if (check_path == path) {
+            if (check_path == project_file.path) {
                 is_tracking = true
                 break
             }
@@ -144,8 +147,8 @@ class ProjectManager(data_dir: String) {
         if (is_tracking) {
             return
         }
-        val project_name = this.get_file_project_name(File(path)) ?: return
 
+        val project_name = this.get_file_project_name(project_file) ?: return
         project_list.add(Pair(path, project_name))
         project_list.sortBy { it.second }
 
@@ -159,7 +162,7 @@ class ProjectManager(data_dir: String) {
     }
 
     fun untrack_path(path: String) {
-        var project_list = this.get_project_list().toMutableList()
+        val project_list = this.get_project_list().toMutableList()
         var index_to_pop = 0
         for ((check_path, _name) in project_list) {
             if (check_path == path) {

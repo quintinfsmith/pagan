@@ -7,6 +7,7 @@
         <item name="android:paddingEnd">8dp</item>
         <item name="android:layout_marginBottom">@dimen/config_item_padding</item>
     </style>
+
     <style name="choose_percussion_button" parent="button">
         <item name="android:textSize">18sp</item>
         <item name="android:paddingTop">0dp</item>

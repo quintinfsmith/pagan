@@ -11,8 +11,9 @@
     <dimen name="relative_option_width">35dp</dimen>
     <dimen name="line_height">41dp</dimen>
     <dimen name="base_leaf_width">41dp</dimen>
-    <dimen name="dropdown_item_padding_top">4dp</dimen>
+    <dimen name="dropdown_item_padding_top">8dp</dimen>
     <dimen name="dropdown_item_padding_sides">16dp</dimen>
+    <dimen name="dropdown_item_min_width">248dp</dimen>
     <dimen name="dropdown_textsize">20sp</dimen>
     <dimen name="dropdown_title_textsize">18sp</dimen>
     <dimen name="config_padding_outer">5dp</dimen>

@@ -17,8 +17,6 @@ class ColorMap(initial_palette: HashMap<Palette, Int>? = null) {
         LeafText,
         LeafSelected,
         LeafSelectedText,
-        LinkEmpty,
-        LinkEmptySelected,
         Link,
         LinkText,
         LinkSelected,

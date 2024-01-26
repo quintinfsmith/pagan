@@ -76,14 +76,12 @@ class LeafButton(
             //------------------------------
             intArrayOf(
                 -R.attr.state_invalid,
-                -R.attr.state_linked,
                 -R.attr.state_active,
                 -R.attr.state_focused,
                 R.attr.state_alternate
             ),
             intArrayOf(
                 -R.attr.state_invalid,
-                -R.attr.state_linked,
                 -R.attr.state_active,
                 -R.attr.state_focused,
                 -R.attr.state_alternate
@@ -103,7 +101,6 @@ class LeafButton(
             ),
             intArrayOf(
                 -R.attr.state_invalid,
-                -R.attr.state_linked,
                 -R.attr.state_active,
                 R.attr.state_focused
             ),
@@ -119,19 +116,7 @@ class LeafButton(
                 R.attr.state_linked,
                 R.attr.state_active,
                 -R.attr.state_focused
-            ),
-            intArrayOf(
-                -R.attr.state_invalid,
-                R.attr.state_linked,
-                -R.attr.state_active,
-                R.attr.state_focused
-            ),
-            intArrayOf(
-                -R.attr.state_invalid,
-                R.attr.state_linked,
-                -R.attr.state_active,
-                -R.attr.state_focused
-            ),
+            )
         )
 
         (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_lines).setTint(color_map[Palette.Lines])
@@ -149,9 +134,7 @@ class LeafButton(
                     color_map[Palette.Selection],
 
                     color_map[Palette.LinkSelected],
-                    color_map[Palette.Link],
-                    color_map[Palette.LinkEmptySelected],
-                    color_map[Palette.LinkEmpty]
+                    color_map[Palette.Link]
                 )
             )
         )

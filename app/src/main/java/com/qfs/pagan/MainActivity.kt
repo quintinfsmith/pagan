@@ -1540,18 +1540,18 @@ class MainActivity : AppCompatActivity() {
 
         val recycler = viewInflated.findViewById<RecyclerView>(R.id.rvOptions)
         val title_view = viewInflated.findViewById<TextView>(R.id.tvTitle)
-        val close_button = viewInflated.findViewById<TextView>(R.id.btnClose)
 
         title_view.text = title
 
         val dialog = AlertDialog.Builder(this, R.style.AlertDialog)
             .setView(viewInflated)
+            .setNegativeButton(getString(android.R.string.cancel)) { dialog, _ ->
+                dialog.dismiss()
+            }
             .show()
+
         this._adjust_dialog_colors(dialog)
 
-        close_button.setOnClickListener {
-            dialog.dismiss()
-        }
 
         val adapter = PopupMenuRecyclerAdapter<T>(recycler, options, default) { index: Int, value: T ->
             dialog.dismiss()
@@ -1559,12 +1559,6 @@ class MainActivity : AppCompatActivity() {
         }
 
         adapter.notifyDataSetChanged()
-
-        val windowMetrics = this.windowManager.currentWindowMetrics
-        val max_width: Int = (windowMetrics.bounds.width().toFloat() * .8).toInt()
-        val max_height: Int = (windowMetrics.bounds.height().toFloat() * .8).toInt()
-
-        dialog.window!!.setLayout(max_width, max_height)
     }
 
     internal fun dialog_load_project() {
@@ -2051,9 +2045,7 @@ class MainActivity : AppCompatActivity() {
             Pair(Palette.Link, this.getColor(R.color.leaf_linked)),
             Pair(Palette.LinkText, this.getColor(R.color.leaf_linked_text)),
             Pair(Palette.LinkSelected, this.getColor(R.color.leaf_linked_selected)),
-            Pair( Palette.LinkSelectedText, this.getColor(R.color.leaf_linked_selected_text) ),
-            Pair(Palette.LinkEmpty, this.getColor(R.color.dark_empty_linked)),
-            Pair(Palette.LinkEmptySelected, this.getColor(R.color.empty_linked_selected)),
+            Pair(Palette.LinkSelectedText, this.getColor(R.color.leaf_linked_selected_text) ),
             Pair(Palette.Selection, this.getColor(R.color.empty_selected)),
             Pair(Palette.SelectionText, this.getColor(R.color.empty_selected_text)),
             Pair(Palette.ChannelEven, this.getColor(R.color.dark_channel_even)),
@@ -2088,8 +2080,6 @@ class MainActivity : AppCompatActivity() {
             Pair(Palette.LinkText, this.getColor(R.color.leaf_linked_text)),
             Pair(Palette.LinkSelected, this.getColor(R.color.leaf_linked_selected)),
             Pair( Palette.LinkSelectedText, this.getColor(R.color.leaf_linked_selected_text) ),
-            Pair(Palette.LinkEmpty, this.getColor(R.color.light_empty_linked)),
-            Pair(Palette.LinkEmptySelected, this.getColor(R.color.empty_linked_selected)),
             Pair(Palette.Selection, this.getColor(R.color.empty_selected)),
             Pair(Palette.SelectionText, this.getColor(R.color.empty_selected_text)),
             Pair(Palette.ChannelEven, this.getColor(R.color.light_channel_even)),

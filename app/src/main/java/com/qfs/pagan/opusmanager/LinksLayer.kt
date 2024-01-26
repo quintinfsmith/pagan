@@ -645,4 +645,57 @@ open class LinksLayer : BaseLayer() {
 
         return super.equals(other)
     }
+
+    override fun move_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
+        val keys_in_range = this.get_beatkeys_in_range(first_corner, second_corner)
+
+        val difference = this.get_abs_difference(first_corner, second_corner)
+        val abs_offset = this.get_abs_offset(beat_key.channel, beat_key.line_offset)
+        val (new_channel, new_line_offset) = this.get_std_offset(abs_offset + difference.first)
+
+        val keys_to_forget = this.get_beatkeys_in_range(
+            beat_key,
+            BeatKey(
+                new_channel,
+                new_line_offset,
+                beat_key.beat + difference.second
+            )
+        )
+
+        this.remap_links { working_key: BeatKey ->
+            if (keys_to_forget.contains(working_key)) {
+                null
+            } else if (keys_in_range.contains(working_key)) {
+                val (y_diff, x_diff) = this.get_abs_difference(first_corner, working_key)
+                val (to_channel, to_line_offset) = this.get_std_offset(abs_offset + y_diff)
+                BeatKey(
+                    to_channel,
+                    to_line_offset,
+                    beat_key.beat + x_diff
+                )
+            } else {
+                working_key
+            }
+        }
+        super.move_beat_range(beat_key, first_corner, second_corner)
+    }
+
+
+    override fun move_leaf(
+        beatkey_from: BeatKey,
+        position_from: List<Int>,
+        beatkey_to: BeatKey,
+        position_to: List<Int>
+    ) {
+        if (position_from.isEmpty()) {
+            this.remap_links { beat_key: BeatKey ->
+                when (beat_key) {
+                    beatkey_from -> beatkey_to
+                    beatkey_to -> null
+                    else -> beat_key
+                }
+            }
+        }
+        super.move_leaf(beatkey_from, position_from, beatkey_to, position_to)
+    }
 }

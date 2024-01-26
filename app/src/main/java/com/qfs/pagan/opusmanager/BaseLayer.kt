@@ -753,8 +753,8 @@ open class BaseLayer {
 
     open fun move_leaf(beatkey_from: BeatKey, position_from: List<Int>, beatkey_to: BeatKey, position_to: List<Int>) {
         val from_tree = this.get_tree(beatkey_from, position_from).copy()
-        this.replace_tree(beatkey_to, position_to, from_tree)
         this.unset(beatkey_from, position_from)
+        this.replace_tree(beatkey_to, position_to, from_tree)
     }
 
     open fun remove_line(channel: Int, line_offset: Int): OpusChannel.OpusLine {
@@ -1753,6 +1753,7 @@ open class BaseLayer {
                 to_keys.add(BeatKey(working_beat.channel, working_beat.line_offset, working_beat.beat + b))
                 from_keys.add(BeatKey(from_key.channel, from_key.line_offset, from_key.beat + b))
             }
+
             if (this.channels[from_key.channel].size - 1 > from_key.line_offset) {
                 from_key.line_offset += 1
             } else if (this.channels.size - 1 > from_key.channel) {

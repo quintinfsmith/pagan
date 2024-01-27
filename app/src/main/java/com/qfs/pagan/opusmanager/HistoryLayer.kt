@@ -1,5 +1,4 @@
 package com.qfs.pagan.opusmanager
-import android.util.Log
 import com.qfs.apres.Midi
 import com.qfs.pagan.structure.OpusTree
 import kotlin.math.min
@@ -21,7 +20,6 @@ open class HistoryLayer : LinksLayer() {
     }
 
     open fun apply_history_node(current_node: HistoryCache.HistoryNode, depth: Int = 0) {
-        Log.d("AAA", "${current_node.token}")
         try {
             when (current_node.token) {
                 HistoryToken.SPLIT_TREE -> {
@@ -141,6 +139,7 @@ open class HistoryLayer : LinksLayer() {
                 }
 
                 HistoryToken.REMOVE_CHANNEL -> {
+
                     val uuid = current_node.args[0] as Int
                     this.remove_channel_by_uuid(uuid)
                 }
@@ -622,13 +621,6 @@ open class HistoryLayer : LinksLayer() {
         )
     }
 
-    private fun push_remove_channel(channel: Int) {
-        this.push_to_history_stack(
-            HistoryToken.REMOVE_CHANNEL,
-            listOf(this.channels[channel].uuid)
-        )
-    }
-
     private fun push_remove_line(channel: Int, index: Int) {
         this.push_to_history_stack( HistoryToken.REMOVE_LINE, listOf(channel, index) )
     }
@@ -693,14 +685,18 @@ open class HistoryLayer : LinksLayer() {
 
     override fun new_channel(channel: Int?, lines: Int, uuid: Int?) {
         this.remember {
-            super.new_channel(channel, lines, uuid)
-            val channel_to_remove = channel ?: if (this.channels.size > 1) {
-                this.channels.size - 2
-            } else {
+            val channel_to_remove = channel ?: if (this.channels.isNotEmpty()) {
                 this.channels.size - 1
+            } else {
+                0
             }
 
-            this.push_remove_channel(channel_to_remove)
+            super.new_channel(channel, lines, uuid)
+
+            this.push_to_history_stack(
+                HistoryToken.REMOVE_CHANNEL,
+                listOf(this.channels[channel_to_remove].uuid)
+            )
         }
     }
 

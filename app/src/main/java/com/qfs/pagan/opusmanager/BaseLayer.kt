@@ -756,7 +756,7 @@ open class BaseLayer {
         val channel = this._channel_uuid_map[uuid] ?: throw OpusChannel.InvalidChannelUUID(uuid)
         var channel_index: Int? = null
         for (i in 0 until this.channels.size) {
-            if (this.channels[i] == channel) {
+            if (this.channels[i] === channel) {
                 channel_index = i
                 break
             }

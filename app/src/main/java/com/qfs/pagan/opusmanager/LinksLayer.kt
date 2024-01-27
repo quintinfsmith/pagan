@@ -1,5 +1,4 @@
 package com.qfs.pagan.opusmanager
-import android.util.Log
 import com.qfs.pagan.structure.OpusTree
 import java.lang.Integer.max
 import java.lang.Integer.min
@@ -224,7 +223,6 @@ open class LinksLayer : BaseLayer() {
         }
     }
     override fun remove(beat_key: BeatKey, position: List<Int>) {
-        Log.d("AAA", "Removing $beat_key, $position")
         this.lock_links {
             super.remove(beat_key, position)
             for (linked_key in this.get_all_others_linked(beat_key)) {

@@ -154,8 +154,8 @@ class HistoryCacheUnitTest {
 
         assertEquals(
             "Failed to undo new_channel",
-            manager.to_json(),
-            original
+            original,
+            manager.to_json()
         )
     }
 

@@ -651,6 +651,26 @@ class InterfaceLayer(): CursorLayer() {
 
     }
 
+    override fun remap_links(remap_hook: (beat_key: BeatKey) -> BeatKey?) {
+        val originally_mapped = this.link_pool_map.keys
+        super.remap_links(remap_hook)
+        val unmapped = originally_mapped - this.link_pool_map.keys
+
+        val editor_table = this.get_editor_table() ?: return
+
+        when (this.get_ui_lock_level()) {
+            null -> {
+                this.runOnUiThread {
+                    editor_table.notify_cell_changes(unmapped.toList())
+                }
+            }
+            UI_LOCK_PARTIAL -> {
+                editor_table.notify_cell_changes(unmapped.toList(), true)
+            }
+            UI_LOCK_FULL -> {}
+        }
+    }
+
     private fun <T> withFragment(callback: (EditorFragment) -> T): T? {
         val fragment = this.activity?.get_active_fragment()
         return if (fragment is EditorFragment) {

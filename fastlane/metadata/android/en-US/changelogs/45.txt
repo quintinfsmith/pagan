@@ -1,3 +1,9 @@
 Color customization
-- Fixed bug that could cause columns to be incorrectly sized after swapping 2 lines with different numbers of subdivisions
-- Fixed bug that caused the project to forget its own location by changing orientation in the settings menu
+Improved UI
+Improved logic when moving/copying linked beats.
+Minors improvement to soundfont support.
+Fixed lag when viewing 'Load Project' menu with many projects.
+Fixed lag when linking already linked beats.
+Fixed bug that could cause columns to be incorrectly sized after swapping 2 lines with different numbers of subdivisions.
+Fixed bug that caused the project to forget its own location by changing orientation in the settings menu.
+Fixed bug that caused the editor to dissappear under very specific conditions.

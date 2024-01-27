@@ -443,6 +443,11 @@ class MainActivity : AppCompatActivity() {
         this._midi_interface.connect_virtual_output_device(object : VirtualMidiOutputDevice {
             override fun onSongPositionPointer(event: SongPositionPointer) {
                 this@MainActivity.get_opus_manager().cursor_select_column(event.get_beat())
+                // Force scroll here, cursor_select_column doesn't scroll if the column is already visible
+                this@MainActivity.runOnUiThread {
+                    this@MainActivity.findViewById<EditorTable>(R.id.etEditorTable)
+                        ?.scroll_to_position(x = event.get_beat(), force = true)
+                }
             }
         })
 

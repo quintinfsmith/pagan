@@ -824,7 +824,7 @@ open class BaseLayer {
         val max_tick = midi.get_ppqn() * (this.beat_count + 1)
         val radix = this.tuning_map.size
 
-        this.channels.forEachIndexed { c: Int, channel: OpusChannel ->
+        this.channels.forEachIndexed outer@{ c: Int, channel: OpusChannel ->
             midi.insert_event(
                 0,
                 0,
@@ -835,7 +835,10 @@ open class BaseLayer {
                 0,
                 ProgramChange(channel.midi_channel, channel.midi_program)
             )
-            channel.lines.forEachIndexed { l: Int, line: OpusChannel.OpusLine ->
+            channel.lines.forEachIndexed inner@{ l: Int, line: OpusChannel.OpusLine ->
+                if (line.volume == 0) {
+                    return@inner
+                }
                 var current_tick = 0
                 var prev_note = 0
                 line.beats.forEachIndexed { b: Int, beat: OpusTree<OpusEvent> ->

@@ -1,4 +1,5 @@
 package com.qfs.pagan.opusmanager
+import android.util.Log
 import com.qfs.pagan.structure.OpusTree
 import java.lang.Integer.max
 import java.lang.Integer.min
@@ -23,7 +24,7 @@ open class LinksLayer : BaseLayer() {
         this._link_locker = 0
     }
 
-    private fun <T> lock_links(callback: () -> T): T {
+    internal fun <T> lock_links(callback: () -> T): T {
         this._link_locker += 1
         try {
             val output = callback()
@@ -182,6 +183,12 @@ open class LinksLayer : BaseLayer() {
         }
     }
 
+    fun get_all_others_linked(beat_key: BeatKey): Set<BeatKey> {
+        val output = this.get_all_linked(beat_key).toMutableSet()
+        output.remove(beat_key)
+        return output
+    }
+
     fun get_all_linked(beat_key: BeatKey): Set<BeatKey> {
         if (this._link_locker > 1) {
             return setOf(beat_key)
@@ -193,59 +200,68 @@ open class LinksLayer : BaseLayer() {
 
     override fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<OpusEvent>) {
         this.lock_links {
-            for (linked_key in this.get_all_linked(beat_key)) {
-                super.replace_tree(linked_key, position, tree)
+            for (linked_key in this.get_all_others_linked(beat_key)) {
+                this.replace_tree(linked_key, position, tree)
             }
+            super.replace_tree(beat_key, position, tree)
         }
     }
 
     override fun insert(beat_key: BeatKey, position: List<Int>) {
         this.lock_links {
-            for (linked_key in this.get_all_linked(beat_key)) {
-                super.insert(linked_key, position)
+            for (linked_key in this.get_all_others_linked(beat_key)) {
+                this.insert(linked_key, position)
             }
+            super.insert(beat_key, position)
         }
     }
     override fun insert_after(beat_key: BeatKey, position: List<Int>) {
         this.lock_links {
-            for (linked_key in this.get_all_linked(beat_key)) {
-                super.insert_after(linked_key, position)
+            for (linked_key in this.get_all_others_linked(beat_key)) {
+                this.insert_after(linked_key, position)
             }
+            super.insert_after(beat_key, position)
         }
     }
     override fun remove(beat_key: BeatKey, position: List<Int>) {
+        Log.d("AAA", "Removing $beat_key, $position")
         this.lock_links {
-            for (linked_key in this.get_all_linked(beat_key)) {
-                super.remove(linked_key, position)
+            super.remove(beat_key, position)
+            for (linked_key in this.get_all_others_linked(beat_key)) {
+                this.remove(linked_key, position)
             }
         }
     }
     override fun set_percussion_event(beat_key: BeatKey, position: List<Int>) {
         this.lock_links {
-            for (linked_key in this.get_all_linked(beat_key)) {
-                super.set_percussion_event(linked_key, position)
+            for (linked_key in this.get_all_others_linked(beat_key)) {
+                this.set_percussion_event(linked_key, position)
             }
+            super.set_percussion_event(beat_key, position)
         }
     }
     override fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEvent) {
         this.lock_links {
-            for (linked_key in this.get_all_linked(beat_key)) {
-                super.set_event(linked_key, position, event.copy())
+            for (linked_key in this.get_all_others_linked(beat_key)) {
+                this.set_event(linked_key, position, event.copy())
             }
+            super.set_event(beat_key, position, event.copy())
         }
     }
     override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
         this.lock_links {
-            for (linked_key in this.get_all_linked(beat_key)) {
-                super.split_tree(linked_key, position, splits)
+            for (linked_key in this.get_all_others_linked(beat_key)) {
+                this.split_tree(linked_key, position, splits)
             }
+            super.split_tree(beat_key, position, splits)
         }
     }
     override fun unset(beat_key: BeatKey, position: List<Int>) {
         this.lock_links {
-            for (linked_key in this.get_all_linked(beat_key)) {
-                super.unset(linked_key, position)
+            for (linked_key in this.get_all_others_linked(beat_key)) {
+                this.unset(linked_key, position)
             }
+            super.unset(beat_key, position)
         }
     }
 
@@ -592,9 +608,10 @@ open class LinksLayer : BaseLayer() {
 
     override fun set_duration(beat_key: BeatKey, position: List<Int>, duration: Int) {
         this.lock_links {
-            for (linked_key in this.get_all_linked(beat_key)) {
-                super.set_duration(linked_key, position, duration)
+            for (linked_key in this.get_all_others_linked(beat_key)) {
+                this.set_duration(linked_key, position, duration)
             }
+            super.set_duration(beat_key, position, duration)
         }
     }
 
@@ -696,6 +713,9 @@ open class LinksLayer : BaseLayer() {
                 }
             }
         }
-        super.move_leaf(beatkey_from, position_from, beatkey_to, position_to)
+
+        this.lock_links {
+            super.move_leaf(beatkey_from, position_from, beatkey_to, position_to)
+        }
     }
 }

@@ -522,24 +522,45 @@ open class BaseLayer {
 
         when (parent_tree.size) {
             1 -> {
-                val next_position = position.toMutableList()
-                next_position.removeLast()
-                if (next_position.isNotEmpty()) {
-                    this.remove(beat_key, next_position)
-                }
-                tree.detach()
+                this.remove_only(beat_key, position)
             }
             2 -> {
-                tree.detach()
-                val prev_position = position.toMutableList()
-                prev_position.removeLast()
-                val to_replace = parent_tree[0]
-                this.replace_tree(beat_key, prev_position, to_replace)
+                this.remove_one_of_two(beat_key, position)
             }
             else -> {
-                tree.detach()
+                this.remove_standard(beat_key, position)
             }
         }
+    }
+    // remove_only, remove_one_of_two and remove_standard all exist so I could separate
+    // them and use the "forget" wrapper at the History layer, while not breaking the LinksLayer
+    open fun remove_only(beat_key: BeatKey, position: List<Int>) {
+        val tree = this.get_tree(beat_key, position)
+        val next_position = position.toMutableList()
+        next_position.removeLast()
+        if (next_position.isNotEmpty()) {
+            this.remove(beat_key, next_position)
+        }
+        tree.detach()
+    }
+
+    // remove_only, remove_one_of_two and remove_standard all exist so I could separate
+    // them and use the "forget" wrapper at the History layer, while not breaking the LinksLayer
+    open fun remove_one_of_two(beat_key: BeatKey, position: List<Int>) {
+        val tree = this.get_tree(beat_key, position)
+        val parent_tree = tree.parent!!
+        tree.detach()
+        val prev_position = position.toMutableList()
+        prev_position.removeLast()
+        val to_replace = parent_tree[0]
+        this.replace_tree(beat_key, prev_position, to_replace)
+    }
+
+    // remove_only, remove_one_of_two and remove_standard all exist so I could separate
+    // them and use the "forget" wrapper at the History layer, while not breaking the LinksLayer
+    open fun remove_standard(beat_key: BeatKey, position: List<Int>) {
+        val tree = this.get_tree(beat_key, position)
+        tree.detach()
     }
 
     open fun set_percussion_event(beat_key: BeatKey, position: List<Int>) {

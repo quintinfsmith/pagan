@@ -1,4 +1,5 @@
 package com.qfs.pagan.opusmanager
+import android.util.Log
 import com.qfs.apres.Midi
 import com.qfs.pagan.structure.OpusTree
 import kotlin.math.min
@@ -20,6 +21,7 @@ open class HistoryLayer : LinksLayer() {
     }
 
     open fun apply_history_node(current_node: HistoryCache.HistoryNode, depth: Int = 0) {
+        Log.d("AAA", "${current_node.token}")
         try {
             when (current_node.token) {
                 HistoryToken.SPLIT_TREE -> {
@@ -230,30 +232,33 @@ open class HistoryLayer : LinksLayer() {
     }
 
     open fun apply_undo() {
-        this.history_cache.lock()
+        this.lock_links {
+            this.history_cache.lock()
 
-        val node = this.history_cache.pop()
-        if (node == null) {
+
+            val node = this.history_cache.pop()
+            if (node == null) {
+                this.history_cache.unlock()
+                return@lock_links
+            }
+
+            // Skip special case HistoryToken.SAVE_POINT
+            if (node.token == HistoryToken.SAVE_POINT) {
+                this._save_point_popped = true
+                this.history_cache.unlock()
+                this.apply_undo()
+                return@lock_links
+            } else if (node.token == HistoryToken.MULTI && node.children.isEmpty()) {
+                // If the node was an empty 'multi'  node, try the next one
+                this.history_cache.unlock()
+                this.apply_undo()
+                return@lock_links
+            }
+
+            this.apply_history_node(node)
+
             this.history_cache.unlock()
-            return
         }
-
-        // Skip special case HistoryToken.SAVE_POINT
-        if (node.token == HistoryToken.SAVE_POINT) {
-            this._save_point_popped = true
-            this.history_cache.unlock()
-            this.apply_undo()
-            return
-        } else if (node.token == HistoryToken.MULTI && node.children.isEmpty()) {
-            // If the node was an empty 'multi'  node, try the next one
-            this.history_cache.unlock()
-            this.apply_undo()
-            return
-        }
-
-        this.apply_history_node(node)
-
-        this.history_cache.unlock()
     }
 
 
@@ -361,9 +366,27 @@ open class HistoryLayer : LinksLayer() {
     override fun remove(beat_key: BeatKey, position: List<Int>) {
         val old_tree = this.get_tree(beat_key, position.subList(0, position.size - 1)).copy()
         this.push_replace_tree(beat_key, position.subList(0, position.size - 1), old_tree) {
-            this.forget {
+            this.remember {
                 super.remove(beat_key, position)
             }
+        }
+    }
+
+    override fun remove_one_of_two(beat_key: BeatKey, position: List<Int>) {
+        this.forget {
+            super.remove_one_of_two(beat_key, position)
+        }
+    }
+
+    override fun remove_only(beat_key: BeatKey, position: List<Int>) {
+        this.forget {
+            super.remove_only(beat_key, position)
+        }
+    }
+
+    override fun remove_standard(beat_key: BeatKey, position: List<Int>) {
+        this.forget {
+            super.remove_standard(beat_key, position)
         }
     }
 

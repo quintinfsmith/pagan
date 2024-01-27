@@ -49,9 +49,9 @@
     <color name="leaf_pressed_text">@color/black</color>
     <color name="leaf_selected">#2636b2</color>
     <color name="leaf_selected_text">@color/white</color>
-    <color name="leaf_linked">#A6669B</color>
+    <color name="leaf_linked">#426f52</color>
     <color name="leaf_linked_text">@color/black</color>
-    <color name="leaf_linked_selected">#383d81</color>
+    <color name="leaf_linked_selected">#174336</color>
     <color name="leaf_linked_selected_text">#FFFFFF</color>
     <color name="leaf_invalid">#E51C3A</color>
     <color name="leaf_invalid_text">#FFFFFF</color>

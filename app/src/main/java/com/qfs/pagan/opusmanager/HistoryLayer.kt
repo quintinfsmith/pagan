@@ -5,7 +5,6 @@ import kotlin.math.min
 
 open class HistoryLayer : LinksLayer() {
     var history_cache = HistoryCache()
-    private var _save_point_popped = false
 
     inline fun <reified T> checked_cast(value: Any): T {
         if (value is T) {
@@ -112,15 +111,6 @@ open class HistoryLayer : LinksLayer() {
                         current_node.args[1] as Int
                     )
                 }
-
-                //HistoryToken.MOVE_LINE -> {
-                //    this.move_line(
-                //        current_node.args[0] as Int,
-                //        current_node.args[1] as Int,
-                //        current_node.args[2] as Int,
-                //        current_node.args[3] as Int
-                //    )
-                //}
 
                 HistoryToken.INSERT_TREE -> {
                     val beat_key = current_node.args[0] as BeatKey
@@ -241,13 +231,7 @@ open class HistoryLayer : LinksLayer() {
                 return@lock_links
             }
 
-            // Skip special case HistoryToken.SAVE_POINT
-            if (node.token == HistoryToken.SAVE_POINT) {
-                this._save_point_popped = true
-                this.history_cache.unlock()
-                this.apply_undo()
-                return@lock_links
-            } else if (node.token == HistoryToken.MULTI && node.children.isEmpty()) {
+            if (node.token == HistoryToken.MULTI && node.children.isEmpty()) {
                 // If the node was an empty 'multi'  node, try the next one
                 this.history_cache.unlock()
                 this.apply_undo()
@@ -538,7 +522,6 @@ open class HistoryLayer : LinksLayer() {
 
     fun clear_history() {
         this.history_cache.clear()
-        this._save_point_popped = false
     }
 
     private fun <T> push_replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<OpusEvent>? = null, callback: () -> T): T {
@@ -698,19 +681,6 @@ open class HistoryLayer : LinksLayer() {
                 listOf(this.channels[channel_to_remove].uuid)
             )
         }
-    }
-
-    override fun save(path: String?) {
-        super.save(path)
-        this._save_point_popped = false
-        if (this.has_changed_since_save()) {
-            this.push_to_history_stack(HistoryToken.SAVE_POINT, listOf())
-        }
-    }
-
-    fun has_changed_since_save(): Boolean {
-        val node = this.history_cache.peek()
-        return (this._save_point_popped || (node != null && node.token != HistoryToken.SAVE_POINT))
     }
 
     override fun set_line_volume(channel: Int, line_offset: Int, volume: Int) {

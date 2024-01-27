@@ -25,7 +25,7 @@
     <color name="light_button_selected">@color/leaf</color>
     <color name="light_button_selected_text">@color/leaf_text</color>
     <color name="light_empty_linked">#929E96</color>
-    <color name="light_empty_linked_selected">#30627d</color>
+    <color name="light_empty_linked_selected">#4884ae</color>
 
     <color name="dark_primary">#171717</color>
     <color name="dark_primary_text">#e1e1e1</color>

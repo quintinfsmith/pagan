@@ -523,9 +523,7 @@ class InterfaceLayer(): CursorLayer() {
         this.surpress_ui {
             super.import_midi(midi)
         }
-        if (!this.has_percussion() && activity.view_model.show_percussion) {
-            activity.view_model.show_percussion = false
-        }
+        activity.view_model.show_percussion = !(!this.has_percussion() && this.channels.size > 1)
 
         this.initial_setup()
     }
@@ -539,9 +537,7 @@ class InterfaceLayer(): CursorLayer() {
         }
 
         if (! this.in_reload) {
-            if (!this.has_percussion() && activity.view_model.show_percussion) {
-                activity.view_model.show_percussion = false
-            }
+            activity.view_model.show_percussion = !(!this.has_percussion() && this.channels.size > 1)
         }
 
         this.initial_setup()

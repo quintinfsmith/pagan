@@ -1376,9 +1376,16 @@ open class BaseLayer {
         }
 
         total_beat_offset += (max_tick - last_ts_change) / beat_size
-
         val opus = OpusTree<Set<OpusEvent>>()
+
+        if (beat_values.isEmpty()) {
+            for (i in 0 until 4) {
+                beat_values.add(OpusTree())
+            }
+        }
+
         opus.set_size(beat_values.size)
+
 
         var overflow_events = mutableSetOf<OpusEvent>()
         beat_values.forEachIndexed { i, beat_tree ->
@@ -1445,6 +1452,8 @@ open class BaseLayer {
             }
             opus.set(i, quantized_tree)
         }
+
+
 
         return Triple(opus, tempo, instrument_map)
     }

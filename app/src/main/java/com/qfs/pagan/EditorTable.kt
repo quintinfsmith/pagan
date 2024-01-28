@@ -427,20 +427,9 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     }
 
     fun apply_queued_cell_changes() {
-        val done_set = mutableSetOf<BeatKey>()
-        while (this._queued_cell_notifications.isNotEmpty()) {
-            val beat_key = this._queued_cell_notifications.removeFirst()
-            if (beat_key in done_set) {
-                continue
-            }
-
-            val opus_manager = this.get_opus_manager()
-            for (linked_beat_key in opus_manager.get_all_linked(beat_key)) {
-                done_set.add(linked_beat_key)
-            }
-
-            this.notify_cell_change(beat_key)
-        }
+        val queued = this._queued_cell_notifications.toList()
+        this._queued_cell_notifications.clear()
+        this.notify_cell_changes(queued)
     }
 
     fun notify_cell_changes(beat_keys: List<BeatKey>, ignore_ui: Boolean = false) {

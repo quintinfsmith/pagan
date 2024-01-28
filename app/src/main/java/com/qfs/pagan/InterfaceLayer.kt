@@ -916,6 +916,8 @@ class InterfaceLayer(): CursorLayer() {
             }
         }
 
+        activity.setup_project_config_drawer_export_button()
+
         if (this.get_ui_lock_level() != null || !mod_events) {
             return
         }

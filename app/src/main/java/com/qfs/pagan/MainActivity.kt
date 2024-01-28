@@ -1032,12 +1032,10 @@ class MainActivity : AppCompatActivity() {
                 ))
                 .setView(viewInflated)
                 .setPositiveButton(android.R.string.ok) { dialog, _ ->
-                    opus_manager.remember {
-                        opus_manager.set_tuning_map(
-                            (rvTuningMap.adapter as TuningMapRecyclerAdapter).tuning_map
-                        )
-                        opus_manager.set_transpose(etTranspose.get_value() ?: 0)
-                    }
+                    opus_manager.set_tuning_map_and_transpose(
+                        (rvTuningMap.adapter as TuningMapRecyclerAdapter).tuning_map,
+                        etTranspose.get_value() ?: 0
+                    )
 
                     dialog.dismiss()
                 }
@@ -1146,7 +1144,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun setup_project_config_drawer_export_button() {
+    internal fun setup_project_config_drawer_export_button() {
         val export_options = this.get_exportable_options()
         val export_button = this.findViewById<ImageView>(R.id.btnExportProject) ?: return
         val export_progress_wrapper = this.findViewById<LinearLayout>(R.id.llExportProgress) ?: return

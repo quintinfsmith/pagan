@@ -13,26 +13,42 @@ open class LinksLayer : BaseLayer() {
 
     var link_pools = mutableListOf<MutableSet<BeatKey>>()
     var link_pool_map = HashMap<BeatKey, Int>()
-    // Indicates that links are being calculated to prevent recursion
-    private var _link_locker: Int = 0
+    // Indicates that the initial function has been called, and that links shouldn't be traversed
+    // as they'll be handled later
+    internal var link_lock: Int = 0
+    // indicates that the current logic is being applied to a linked beat, rather than the original target
+    internal var _link_deviation_count: Int = 0
 
     override fun clear() {
         super.clear()
         this.link_pools.clear()
         this.link_pool_map.clear()
-        this._link_locker = 0
+        this.link_lock = 0
     }
-
     internal fun <T> lock_links(callback: () -> T): T {
-        this._link_locker += 1
-        try {
+        this.link_lock += 1
+        return try {
             val output = callback()
-            this._link_locker -= 1
-            return output
+            this.link_lock -= 1
+            output
         } catch (e: Exception) {
-            this._link_locker -= 1
+            this.link_lock -= 1
             throw e
         }
+    }
+
+    fun apply_to_linked(beat_key: BeatKey, callback: (BeatKey) -> Unit) {
+        this._link_deviation_count += 1
+        try {
+            for (linked_key in this.get_all_others_linked(beat_key)) {
+                callback(linked_key)
+            }
+            this._link_deviation_count -= 1
+        } catch (e: Exception) {
+            this._link_deviation_count -= 1
+            throw e
+        }
+
     }
 
     open fun unlink_beat(beat_key: BeatKey) {
@@ -189,7 +205,7 @@ open class LinksLayer : BaseLayer() {
     }
 
     fun get_all_linked(beat_key: BeatKey): Set<BeatKey> {
-        if (this._link_locker > 1) {
+        if (this.link_lock > 1) {
             return setOf(beat_key)
         }
 
@@ -199,7 +215,7 @@ open class LinksLayer : BaseLayer() {
 
     override fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<OpusEvent>) {
         this.lock_links {
-            for (linked_key in this.get_all_others_linked(beat_key)) {
+            this.apply_to_linked(beat_key) { linked_key: BeatKey ->
                 this.replace_tree(linked_key, position, tree)
             }
             super.replace_tree(beat_key, position, tree)
@@ -208,31 +224,31 @@ open class LinksLayer : BaseLayer() {
 
     override fun insert(beat_key: BeatKey, position: List<Int>) {
         this.lock_links {
-            for (linked_key in this.get_all_others_linked(beat_key)) {
+            super.insert(beat_key, position)
+            this.apply_to_linked(beat_key) { linked_key: BeatKey ->
                 this.insert(linked_key, position)
             }
-            super.insert(beat_key, position)
         }
     }
     override fun insert_after(beat_key: BeatKey, position: List<Int>) {
         this.lock_links {
-            for (linked_key in this.get_all_others_linked(beat_key)) {
+            super.insert_after(beat_key, position)
+            this.apply_to_linked(beat_key) { linked_key: BeatKey ->
                 this.insert_after(linked_key, position)
             }
-            super.insert_after(beat_key, position)
         }
     }
     override fun remove(beat_key: BeatKey, position: List<Int>) {
         this.lock_links {
             super.remove(beat_key, position)
-            for (linked_key in this.get_all_others_linked(beat_key)) {
+            this.apply_to_linked(beat_key) { linked_key: BeatKey ->
                 this.remove(linked_key, position)
             }
         }
     }
     override fun set_percussion_event(beat_key: BeatKey, position: List<Int>) {
         this.lock_links {
-            for (linked_key in this.get_all_others_linked(beat_key)) {
+            this.apply_to_linked(beat_key) { linked_key: BeatKey ->
                 this.set_percussion_event(linked_key, position)
             }
             super.set_percussion_event(beat_key, position)
@@ -240,7 +256,7 @@ open class LinksLayer : BaseLayer() {
     }
     override fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEvent) {
         this.lock_links {
-            for (linked_key in this.get_all_others_linked(beat_key)) {
+            this.apply_to_linked(beat_key) { linked_key: BeatKey ->
                 this.set_event(linked_key, position, event.copy())
             }
             super.set_event(beat_key, position, event.copy())
@@ -248,7 +264,7 @@ open class LinksLayer : BaseLayer() {
     }
     override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
         this.lock_links {
-            for (linked_key in this.get_all_others_linked(beat_key)) {
+            this.apply_to_linked(beat_key) { linked_key: BeatKey ->
                 this.split_tree(linked_key, position, splits)
             }
             super.split_tree(beat_key, position, splits)
@@ -256,7 +272,7 @@ open class LinksLayer : BaseLayer() {
     }
     override fun unset(beat_key: BeatKey, position: List<Int>) {
         this.lock_links {
-            for (linked_key in this.get_all_others_linked(beat_key)) {
+            this.apply_to_linked(beat_key) { linked_key: BeatKey ->
                 this.unset(linked_key, position)
             }
             super.unset(beat_key, position)
@@ -307,8 +323,6 @@ open class LinksLayer : BaseLayer() {
         super.remove_channel(channel)
     }
 
-
-
     fun is_networked(beat_key: BeatKey): Boolean {
         return this.link_pool_map.contains(beat_key)
     }
@@ -326,7 +340,6 @@ open class LinksLayer : BaseLayer() {
     }
 
     override fun remove_beat(beat_index: Int) {
-        super.remove_beat(beat_index)
         this.remap_links { beat_key: BeatKey ->
             if (beat_key.beat > beat_index) {
                 BeatKey(beat_key.channel, beat_key.line_offset, beat_key.beat - 1)
@@ -336,7 +349,7 @@ open class LinksLayer : BaseLayer() {
                 null
             }
         }
-
+        super.remove_beat(beat_index)
     }
 
     override fun load_json(json_data: LoadedJSONData) {
@@ -614,7 +627,6 @@ open class LinksLayer : BaseLayer() {
     }
 
     override fun swap_lines(channel_a: Int, line_a: Int, channel_b: Int, line_b: Int) {
-        super.swap_lines(channel_a, line_a, channel_b, line_b)
 
         this.remap_links { beat_key: BeatKey ->
             if (beat_key.channel == channel_a && beat_key.line_offset == line_a) {
@@ -625,6 +637,8 @@ open class LinksLayer : BaseLayer() {
                 beat_key
             }
         }
+
+        super.swap_lines(channel_a, line_a, channel_b, line_b)
     }
 
     /* Not Currently In Use. */

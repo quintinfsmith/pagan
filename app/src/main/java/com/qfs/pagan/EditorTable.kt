@@ -473,7 +473,11 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                 continue
             }
 
-            val original_width = this.column_width_maxes[beat_key.beat]
+            val original_width = try {
+                this.column_width_maxes[beat_key.beat]
+            } catch (e: java.lang.IndexOutOfBoundsException) {
+                continue
+            }
 
             val new_tree = opus_manager.get_tree(beat_key)
             val new_cell_width = if (new_tree.is_leaf()) {
@@ -506,13 +510,19 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                 main_recycler_adapter.notify_cell_changed(changed_key)
             }
         }
+        if (this._queued_cell_notifications.isNotEmpty()) {
+            this.apply_queued_cell_changes()
+        }
     }
 
+    fun queue_cell_changes(beat_keys: List<BeatKey>) {
+        this._queued_cell_notifications.addAll(beat_keys)
+    }
     fun notify_cell_change(beat_key: BeatKey, ignore_ui: Boolean = false) {
         val opus_manager = this.get_opus_manager()
         val all_keys = opus_manager.get_all_linked(beat_key).toList()
         if (opus_manager.history_cache.isLocked()) {
-            this._queued_cell_notifications.addAll(all_keys)
+            this.queue_cell_changes(all_keys)
         } else {
             this.notify_cell_changes(all_keys, ignore_ui)
         }

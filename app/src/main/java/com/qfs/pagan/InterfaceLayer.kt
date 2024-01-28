@@ -9,8 +9,6 @@ import com.qfs.pagan.opusmanager.LoadedJSONData
 import com.qfs.pagan.opusmanager.OpusChannel
 import com.qfs.pagan.opusmanager.OpusEvent
 import com.qfs.pagan.structure.OpusTree
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.sync.Semaphore
 import java.lang.Integer.max
 import java.lang.Integer.min
 
@@ -38,7 +36,9 @@ class InterfaceLayer(): CursorLayer() {
     }
 
     private fun get_ui_lock_level(): Int? {
-        return if (this._ui_lock_stack.isEmpty()) {
+        return if (this._link_deviation_count > 0) {
+            UI_LOCK_FULL
+        } else if (this._ui_lock_stack.isEmpty()) {
             null
         } else {
             this._ui_lock_stack.max()
@@ -49,16 +49,6 @@ class InterfaceLayer(): CursorLayer() {
         val main = this.activity ?: return
         main.runOnUiThread {
             callback(main)
-        }
-    }
-    private fun runOnUiThreadBlocking(callback: (MainActivity) -> Unit) {
-        val main = this.activity ?: return
-        runBlocking {
-            val mutex = Semaphore(1)
-            main.runOnUiThread {
-                callback(main)
-            }
-            mutex.acquire()
         }
     }
 
@@ -651,17 +641,16 @@ class InterfaceLayer(): CursorLayer() {
         val originally_mapped = this.link_pool_map.keys
         super.remap_links(remap_hook)
         val unmapped = originally_mapped - this.link_pool_map.keys
+        val changed = (this.link_pool_map.keys - originally_mapped) + unmapped
 
         val editor_table = this.get_editor_table() ?: return
 
+        // Because remap_links isn't an end-function, we use queue_cell_changes instead
+        // of notify_cell_changes
         when (this.get_ui_lock_level()) {
+            UI_LOCK_PARTIAL,
             null -> {
-                this.runOnUiThread {
-                    editor_table.notify_cell_changes(unmapped.toList())
-                }
-            }
-            UI_LOCK_PARTIAL -> {
-                editor_table.notify_cell_changes(unmapped.toList(), true)
+                    editor_table.queue_cell_changes(changed.toList())
             }
             UI_LOCK_FULL -> {}
         }
@@ -937,6 +926,10 @@ class InterfaceLayer(): CursorLayer() {
     }
 
     private fun make_percussion_visible() {
+        if (this.get_ui_lock_level() == UI_LOCK_FULL) {
+            return
+        }
+
         val main = this.activity ?: return
         main.view_model.show_percussion = true
 

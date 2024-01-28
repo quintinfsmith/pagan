@@ -271,8 +271,14 @@ open class HistoryLayer : LinksLayer() {
     }
 
     override fun swap_lines(channel_a: Int, line_a: Int, channel_b: Int, line_b: Int) {
-        super.swap_lines(channel_a, line_a, channel_b, line_b)
-        this.push_to_history_stack(HistoryToken.SWAP_LINES, listOf(channel_a, line_a, channel_b, line_b))
+
+        this.remember {
+            super.swap_lines(channel_a, line_a, channel_b, line_b)
+            this.push_to_history_stack(
+                HistoryToken.SWAP_LINES,
+                listOf(channel_a, line_a, channel_b, line_b)
+            )
+        }
     }
 
     open fun remove_line(channel: Int, line_offset: Int, count: Int) {

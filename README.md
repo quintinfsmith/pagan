@@ -23,7 +23,12 @@ Pagan requires Android version >= 11
 <div style="text-align: center; display: block;">
     <div style="display: inline-block; height: 4em;">
         <a href="https://f-droid.org/en/packages/com.qfs.pagan/">
-            <img src="https://f-droid.org/badge/get-it-on.png" style="display: inline-block; height: 100%;" />
+            <img alt="Get it on FDroid" src="https://f-droid.org/badge/get-it-on.png" style="display: inline-block; height: 100%;" />
+        </a>
+    </div>
+    <div style="display: inline-block; height: 4em;">
+        <a href="https://burnsomni.net/releases/pagan.atom">
+            <img alt="Get it over RSS" src="https://burnsomni.net/content/get-it-on-rss.png" style="display: inline-block; height: 100%;" />
         </a>
     </div>
     <div style="display: inline-block; height: 4em;">
@@ -32,8 +37,6 @@ Pagan requires Android version >= 11
         </a>
     </div>
 </div>
-
-[Atom Feed](https://burnsomni.net/releases/pagan.atom)
 
 ### Manual Build
 The `master` branch should always be the most stable. I use android studio to build and if you don't, you probably don't need any direction from me.

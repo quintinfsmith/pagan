@@ -347,7 +347,6 @@ class BaseLayerUnitTest {
         manager.insert_beat(manager.beat_count)
         assertEquals(beats + 2, manager.beat_count)
 
-        beats = manager.beat_count
         assertThrows(Exception::class.java) { manager.insert_beat(manager.beat_count + 1) }
         assertThrows(Exception::class.java) { manager.remove_beat(manager.beat_count + 1) }
     }

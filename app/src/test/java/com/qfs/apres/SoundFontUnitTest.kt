@@ -4,8 +4,9 @@ import com.qfs.apres.soundfont.Instrument
 import com.qfs.apres.soundfont.InstrumentSample
 import com.qfs.apres.soundfont.Preset
 import com.qfs.apres.soundfont.SoundFont
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Test
-import org.junit.Assert.*
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
@@ -157,7 +158,7 @@ class SoundFontUnitTest {
         assertEquals(
             "Filter cutoff is wrong",
             11998,
-            (2F.pow(glob!!.filter_cutoff!!.toFloat()  / 1200F) * 8.176).toInt()
+            (2F.pow(glob.filter_cutoff!!.toFloat()  / 1200F) * 8.176).toInt()
         )
     }
 

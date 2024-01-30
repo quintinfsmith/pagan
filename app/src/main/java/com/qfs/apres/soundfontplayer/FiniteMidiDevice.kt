@@ -48,12 +48,10 @@ open class FiniteMidiDevice(var sample_handle_manager: SampleHandleManager, priv
         this.play_queued = false
         this.is_playing = true
 
-        val DEAD = 1
-        val KILLED = 2
-
         thread {
             val buffer_millis = this.BUFFER_NANO / 1_000_000
             val chunks = mutableListOf<ShortArray>()
+            var working_cache_size = 1
             var building_chunks = true
             var final_frame: Int? = null
             val wait_delay = if (this.fill_buffer_cache) {
@@ -61,9 +59,15 @@ open class FiniteMidiDevice(var sample_handle_manager: SampleHandleManager, priv
             } else {
                 buffer_millis
             }
+            var fill_flagged = false
+
             thread {
                 while (this.is_playing) {
-                    if (chunks.size >= this.cache_size_limit) {
+                    if (chunks.size >= working_cache_size) {
+                        if (fill_flagged) {
+                            fill_flagged = false
+                            this.on_buffer_done()
+                        }
                         Thread.sleep(wait_delay)
                         continue
                     }
@@ -174,6 +178,13 @@ open class FiniteMidiDevice(var sample_handle_manager: SampleHandleManager, priv
 
             while (building_chunks || chunks.isNotEmpty()) {
                 if (chunks.isEmpty()) {
+                    if (!fill_flagged) {
+                        working_cache_size = min(2 * working_cache_size, this.cache_size_limit)
+                        fill_flagged = true
+                        this.on_buffer()
+                    }
+                    Thread.sleep(wait_delay)
+                } else if (fill_flagged && building_chunks) {
                     Thread.sleep(wait_delay)
                 } else {
                     val chunk = chunks.removeFirst()
@@ -192,6 +203,8 @@ open class FiniteMidiDevice(var sample_handle_manager: SampleHandleManager, priv
         this.play_cancelled = true
     }
 
+    open fun on_buffer() { }
+    open fun on_buffer_done() { }
     open fun on_start() { }
     open fun on_stop() { }
     open fun on_cancelled() { }

@@ -69,7 +69,6 @@ class SampleHandle(
     // var remove_delay: Int? = null
     //var lpf_previous: Double = 0.0
 
-
     init {
         val tmp_tan = tan(PI * this.filter_cutoff / this.sample_rate.toDouble())
         this.lpf_factor = (tmp_tan - 1) / (tmp_tan + 1)

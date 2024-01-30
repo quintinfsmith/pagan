@@ -920,13 +920,14 @@ open class BaseLayer {
         }
 
         val index_map = HashMap<PseudoMidiEvent, Int>()
+        val std_tuning = this.is_tuning_standard()
 
         for ((tick, pseudo_event, is_on) in pseudo_midi_map) {
             midi.insert_event(
                 0,
                 tick,
                 if (is_on) {
-                    if (!this.is_tuning_standard()) {
+                    if (!std_tuning) {
                         var current_index = 0
                         while (index_map.containsValue(current_index)) {
                             current_index += 1
@@ -947,7 +948,7 @@ open class BaseLayer {
                         )
                     }
                 } else {
-                    if (!this.is_tuning_standard()) {
+                    if (!std_tuning) {
                         NoteOff79(
                             index = index_map.remove(pseudo_event)!!,
                             note = pseudo_event.note,
@@ -1994,12 +1995,11 @@ open class BaseLayer {
     }
 
     fun is_tuning_standard(): Boolean {
-        if (this.tuning_map.size != 12) {
-            return false
+        val actuals = List<Double>(12) { i: Int ->
+            i.toDouble() / 12.0
         }
-
-        for (i in 0 until 12) {
-            if (this.tuning_map[i] != Pair(i, 12)) {
+        for ((numerator, denominator) in this.tuning_map) {
+            if (!actuals.contains(numerator.toDouble() / denominator.toDouble())) {
                 return false
             }
         }

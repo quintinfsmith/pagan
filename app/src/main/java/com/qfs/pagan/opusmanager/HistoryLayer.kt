@@ -881,4 +881,12 @@ open class HistoryLayer : LinksLayer() {
             this.push_to_history_stack(HistoryToken.SET_TUNING_MAP, listOf(original_map))
         }
     }
+
+    // Need a compound function so history can manage both at the same time
+    open fun set_tuning_map_and_transpose(tuning_map: Array<Pair<Int, Int>>, transpose: Int) {
+            this.remember {
+                this.set_tuning_map(tuning_map)
+                this.set_transpose(transpose)
+            }
+    }
 }

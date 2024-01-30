@@ -12,8 +12,7 @@ import kotlin.concurrent.thread
 import kotlin.math.min
 
 // Ended up needing to split the active and cache Midi Players due to different fundemental requirements
-open class FiniteMidiDevice(var sample_handle_manager: SampleHandleManager, private var cache_size_limit: Int = 10) {
-    var buffer_delay = 1
+open class FiniteMidiDevice(var sample_handle_manager: SampleHandleManager) {
     internal var wave_generator = WaveGenerator(sample_handle_manager)
     internal var active_audio_track_handle: AudioTrackHandle? = null
 
@@ -25,6 +24,10 @@ open class FiniteMidiDevice(var sample_handle_manager: SampleHandleManager, priv
 
     var approximate_frame_count: Int = 0
     var beat_delays = mutableListOf<Int>()
+    // precache 3 seconds when buffering
+    val minimum_buffer_cache_size: Int = this.sample_handle_manager.sample_rate * 3 / this.sample_handle_manager.buffer_size
+    // allow up to 1 minute to be cached during playback
+    val buffer_cache_size_limit: Int = this.sample_handle_manager.sample_rate * 60 / this.sample_handle_manager.buffer_size
 
     fun start_playback() {
         if (!this.is_playing && this.active_audio_track_handle == null) {
@@ -51,7 +54,6 @@ open class FiniteMidiDevice(var sample_handle_manager: SampleHandleManager, priv
         thread {
             val buffer_millis = this.BUFFER_NANO / 1_000_000
             val chunks = mutableListOf<ShortArray>()
-            var working_cache_size = 1
             var building_chunks = true
             var final_frame: Int? = null
             val wait_delay = if (this.fill_buffer_cache) {
@@ -63,13 +65,15 @@ open class FiniteMidiDevice(var sample_handle_manager: SampleHandleManager, priv
 
             thread {
                 while (this.is_playing) {
-                    if (chunks.size >= working_cache_size) {
+                    if (chunks.size >= this.minimum_buffer_cache_size) {
                         if (fill_flagged) {
                             fill_flagged = false
                             this.on_buffer_done()
                         }
-                        Thread.sleep(wait_delay)
-                        continue
+                        if (chunks.size >= this.buffer_cache_size_limit) {
+                            Thread.sleep(wait_delay)
+                            continue
+                        }
                     }
 
                     val chunk = try {
@@ -167,7 +171,6 @@ open class FiniteMidiDevice(var sample_handle_manager: SampleHandleManager, priv
                             )
                         }
                     }
-
                     override fun onPeriodicNotification(p0: AudioTrack?) {}
                 })
             } catch (e: IllegalStateException) {
@@ -179,9 +182,10 @@ open class FiniteMidiDevice(var sample_handle_manager: SampleHandleManager, priv
             while (building_chunks || chunks.isNotEmpty()) {
                 if (chunks.isEmpty()) {
                     if (!fill_flagged) {
-                        working_cache_size = min(2 * working_cache_size, this.cache_size_limit)
                         fill_flagged = true
-                        this.on_buffer()
+                        if (this.is_playing) {
+                            this.on_buffer()
+                        }
                     }
                     Thread.sleep(wait_delay)
                 } else if (fill_flagged && building_chunks) {

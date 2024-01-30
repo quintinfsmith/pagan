@@ -9,6 +9,19 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
         handle anything more.
      */
     var start_beat = 0
+    override fun on_buffer() {
+        super.on_buffer()
+        this.activity.runOnUiThread {
+            this.activity.loading_reticle_show("BUFFERING...")
+        }
+    }
+
+    override fun on_buffer_done() {
+        super.on_buffer_done()
+        this.activity.runOnUiThread {
+            this.activity.loading_reticle_hide()
+        }
+    }
 
     override fun on_stop() {
         this.activity.restore_playback_state()

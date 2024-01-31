@@ -5,6 +5,7 @@ import com.qfs.apres.event.NoteOff
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event2.NoteOff79
 import com.qfs.apres.event2.NoteOn79
+import com.qfs.apres.soundfontplayer.MidiFrameMap
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.CursorLayer
 import com.qfs.pagan.opusmanager.OpusChannel
@@ -13,11 +14,21 @@ import com.qfs.pagan.structure.OpusTree
 import kotlin.math.floor
 
 open class WaveGeneratorLayer(var sample_rate: Int): CursorLayer() {
-    private val _midi_events_by_frame = HashMap<Int, Array<Array<MutableList<MIDIEvent>?>>>()
+    class OpusManagerMidiFrameMap: MidiFrameMap() {
+        private val _midi_events_by_frame = HashMap<Int, Array<Array<MutableList<MIDIEvent>?>>>()
+        override fun get_events(frame: Int): List<MIDIEvent> {
+        }
+        fun clear() {
+            this._midi_events_by_frame.clear()
+        }
+    }
     private val note_index_map = mutableListOf<MutableSet<Pair<Double, Double>>>()
     private var frame_end_map = HashMap<Pair<BeatKey, Int>, Int>() // (beatKey/first frame, end frame)
 
     override fun clear() {
+        this.frame_end_map.clear()
+        this.note_index_map.clear()
+        this._midi_events_by_frame.clear()
         super.clear()
     }
 
@@ -41,10 +52,15 @@ open class WaveGeneratorLayer(var sample_rate: Int): CursorLayer() {
         return output
     }
 
-    fun get_abs_position(beat_key: BeatKey, position: List<Int>, duration: Int = 1): Pair<Double, Double> {
-        var working_tree = this.get_tree(beat_key, position)
+    fun get_frame_range(beat_key: BeatKey, position: List<Int>, duration: Int = 1): Pair<Double, Double> {
+        var working_tree = this.get_tree(beat_key)
         var offset = 1.0
+
         for (p in position) {
+            if (working_tree.is_leaf()) {
+                break
+            }
+
             offset = offset * p / working_tree.size
             working_tree = working_tree[p]
         }
@@ -109,21 +125,24 @@ open class WaveGeneratorLayer(var sample_rate: Int): CursorLayer() {
     }
 
     fun unmap_events(beat_key: BeatKey, position: List<Int>) {
-        val position_pair = this.get_abs_position(beat_key, position, 1)
+        val position_pair = this.get_frame_range(beat_key, position, 1)
         val ratio_beats_to_frames = (60.0 / this.tempo) * this.sample_rate
         val first_frame = (position_pair.first * ratio_beats_to_frames).toInt()
         val second_frame = (position_pair.second * ratio_beats_to_frames).toInt()
 
         val events_to_remove = mutableListOf<Pair<Int, Int>>()
         for (i in first_frame .. second_frame) {
-            this._midi_events_by_frame[i]!![beat_key.channel][beat_key.line_offset]!!.forEachIndexed outer@{ j: Int, event: MIDIEvent ->
+            if (!this._midi_events_by_frame.containsKey(i)) {
+                continue
+            }
+            this._midi_events_by_frame[i]!![beat_key.channel][beat_key.line_offset]?.forEachIndexed outer@{ j: Int, event: MIDIEvent ->
                 if (event !is NoteOn && event !is NoteOn79) {
                     return@outer
                 }
 
                 events_to_remove.add(Pair(i, j))
                 val f = this.frame_end_map.remove(Pair(beat_key, j)) ?: return@outer
-                this._midi_events_by_frame[f]!![beat_key.channel][beat_key.line_offset]!!.forEachIndexed inner@{ k: Int, event_b: MIDIEvent ->
+                this._midi_events_by_frame[f]!![beat_key.channel][beat_key.line_offset]?.forEachIndexed inner@{ k: Int, event_b: MIDIEvent ->
                     if (event is NoteOn && event_b is NoteOff && event.get_note() == event_b.get_note()) {
                         events_to_remove.add(Pair(f, k))
                         return@outer
@@ -158,7 +177,7 @@ open class WaveGeneratorLayer(var sample_rate: Int): CursorLayer() {
 
         val event = tree.get_event()!!
         val midi_event_pair = this.calc_midi_events_from_opus_event(beat_key, position, event)
-        val position_pair = this.get_abs_position(beat_key, position, event.duration)
+        val position_pair = this.get_frame_range(beat_key, position, event.duration)
 
         if (midi_event_pair.first is NoteOn79) {
             val note_index = this.calc_note_index(position_pair.first, position_pair.second)
@@ -302,10 +321,24 @@ open class WaveGeneratorLayer(var sample_rate: Int): CursorLayer() {
         this.map_event(beat_key, position)
     }
 
-    override fun remove(beat_key: BeatKey, position: List<Int>) {
-        this.unmap_events(beat_key, position.subList(0, -1))
-        super.remove(beat_key, position)
-        this.map_event(beat_key, position.subList(0, -1))
+
+    override fun remove_standard(beat_key: BeatKey, position: List<Int>) {
+        val parent_position = position.subList(0, position.size - 1)
+        this.unmap_events(beat_key, parent_position)
+        super.remove_standard(beat_key, position)
+        this.map_event(beat_key, parent_position)
+    }
+
+    override fun remove_only(beat_key: BeatKey, position: List<Int>) {
+        this.unmap_events(beat_key, position)
+        super.remove_only(beat_key, position)
+    }
+
+    override fun remove_one_of_two(beat_key: BeatKey, position: List<Int>) {
+        val parent_position = position.subList(0, position.size - 1)
+        this.unmap_events(beat_key, parent_position)
+        super.remove_one_of_two(beat_key, position)
+        this.map_event(beat_key, parent_position)
     }
 
     override fun insert(beat_key: BeatKey, position: List<Int>) {
@@ -319,14 +352,42 @@ open class WaveGeneratorLayer(var sample_rate: Int): CursorLayer() {
     }
 
     override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
-        this.unmap_events(beat_key, position.subList(0, -1))
+        this.unmap_events(beat_key, position)
         super.split_tree(beat_key, position, splits)
-        this.map_event(beat_key, position.subList(0, -1))
+        this.map_event(beat_key, position)
     }
 
     override fun new_channel(channel: Int?, lines: Int, uuid: Int?) {
-        TODO("NEW CHANNEL")
         super.new_channel(channel, lines, uuid)
+        val adj_channel = channel ?: this.channels.size - 1
+
+        for ((frame, channel_array) in this._midi_events_by_frame) {
+            this._midi_events_by_frame[frame] = Array(this.channels.size) { i ->
+                if (adj_channel > i) {
+                    channel_array[i]
+                } else if (adj_channel == i) {
+                    Array(this.channels[i].size) { null }
+                } else {
+                    channel_array[i - 1]
+                }
+            }
+        }
+
+        val new_frame_end_map = HashMap<Pair<BeatKey, Int>, Int>()
+        for ((key, frame) in this.frame_end_map) {
+            val new_beat_key = BeatKey(
+                if (adj_channel > key.first.line_offset) {
+                    key.first.channel
+                } else {
+                    key.first.channel + 1
+                },
+                key.first.line_offset,
+                key.first.beat
+            )
+            new_frame_end_map[Pair(new_beat_key, key.second)] = frame
+        }
+
+        this.frame_end_map = new_frame_end_map
     }
 
     override fun remove_channel(channel: Int) {
@@ -431,4 +492,36 @@ open class WaveGeneratorLayer(var sample_rate: Int): CursorLayer() {
         }
     }
 
+    override fun swap_lines(channel_a: Int, line_a: Int, channel_b: Int, line_b: Int) {
+        super.swap_lines(channel_a, line_a, channel_b, line_b)
+
+        for ((frame, channel_array) in this._midi_events_by_frame) {
+            val tmp = channel_array[channel_a][line_a]
+            channel_array[channel_a][line_a] = channel_array[channel_b][line_b]
+            channel_array[channel_b][line_b] = tmp
+        }
+
+        val new_frame_end_map = HashMap<Pair<BeatKey, Int>, Int>()
+        for ((key, frame) in this.frame_end_map) {
+            val new_beat_key = BeatKey(
+                if (key.first.channel == channel_a && key.first.line_offset == line_a) {
+                    channel_b
+                } else if (key.first.channel == channel_b && key.first.line_offset == line_b) {
+                    channel_a
+                } else {
+                    key.first.channel
+                },
+                if (key.first.channel == channel_a && key.first.line_offset == line_a) {
+                    line_b
+                } else if (key.first.channel == channel_b && key.first.line_offset == line_b) {
+                    line_a
+                } else {
+                    key.first.line_offset
+                },
+                key.first.beat
+            )
+            new_frame_end_map[Pair(new_beat_key, key.second)] = frame
+        }
+        this.frame_end_map = new_frame_end_map
+    }
 }

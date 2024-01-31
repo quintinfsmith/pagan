@@ -106,7 +106,7 @@ class MainActivity : AppCompatActivity() {
     class MainViewModel: ViewModel() {
         var export_handle: MidiConverter? = null
         var color_map = ColorMap()
-        var opus_manager = OpusManager()
+        var opus_manager = OpusManager(44100)
         var show_percussion = false
 
         fun export_wav(activity: MainActivity, midi: Midi, target_file: File, handler: MidiConverter.ExporterEventHandler) {

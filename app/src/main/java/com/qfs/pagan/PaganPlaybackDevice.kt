@@ -1,8 +1,8 @@
 package com.qfs.pagan
 
-import com.qfs.apres.soundfontplayer.FiniteMidiDevice
+import com.qfs.apres.soundfontplayer.MappedMidiDevice
 import com.qfs.apres.soundfontplayer.SampleHandleManager
-class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activity.configuration.sample_rate): FiniteMidiDevice(SampleHandleManager(activity.get_soundfont()!!, sample_rate, buffer_size = sample_rate)) {
+class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activity.configuration.sample_rate): MappedMidiDevice(SampleHandleManager(activity.get_soundfont()!!, sample_rate, buffer_size = sample_rate), this.get_opus_manager().midi_event_map) {
     /*
         All of this notification stuff is used with the understanding that the PaganPlaybackDevice
         used to export wavs will be discarded after a single use. It'll need to be cleaned up to

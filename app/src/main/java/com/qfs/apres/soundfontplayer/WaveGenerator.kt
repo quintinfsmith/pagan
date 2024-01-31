@@ -2,7 +2,6 @@ package com.qfs.apres.soundfontplayer
 
 import com.qfs.apres.event.AllSoundOff
 import com.qfs.apres.event.BankSelect
-import com.qfs.apres.event.MIDIEvent
 import com.qfs.apres.event.MIDIStop
 import com.qfs.apres.event.NoteOff
 import com.qfs.apres.event.NoteOn
@@ -10,13 +9,10 @@ import com.qfs.apres.event.ProgramChange
 import com.qfs.apres.event.SongPositionPointer
 import com.qfs.apres.event2.NoteOff79
 import com.qfs.apres.event2.NoteOn79
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlin.math.abs
 import kotlin.math.max
 
-class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
+class WaveGenerator(var sample_handle_manager: SampleHandleManager, var midi_frame_map: MidiFrameMap) {
     class KilledException: Exception()
     class EmptyException: Exception()
     class DeadException: Exception()
@@ -27,199 +23,7 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
     private var _empty_chunks_count = 0
     private var _active_sample_handles = HashMap<Pair<Int, Int>, MutableList<Pair<Int, MutableList<SampleHandle>>>>()
     private var sample_release_map = HashMap<Int, Int>() // Key = samplehandle uuid, value = Off frame
-
-    private var _midi_events_by_frame = HashMap<Int, MutableList<MIDIEvent>>()
-    private var _event_mutex = Mutex()
-    private var event_queue_mutex = Mutex()
-
     private var _working_int_array = IntArray(sample_handle_manager.buffer_size * 2)
-    private var active_event_queue = mutableListOf<Pair<Int, MIDIEvent>>()
-
-    fun place_events(events: List<MIDIEvent>, frame: Int) {
-        if (frame < this.frame) {
-            return
-        }
-        this.last_frame = max(frame, this.last_frame)
-        runBlocking {
-            this@WaveGenerator._event_mutex.withLock {
-                if (!this@WaveGenerator._midi_events_by_frame.containsKey(frame)) {
-                    this@WaveGenerator._midi_events_by_frame[frame] = mutableListOf()
-                }
-                for (event in events) {
-                    this@WaveGenerator._midi_events_by_frame[frame]!!.add(event)
-                }
-            }
-        }
-    }
-
-    fun place_event(event: MIDIEvent, frame: Int, relative: Boolean = false) {
-        if (relative) {
-            this.active_event_queue.add(Pair(frame, event))
-            return
-        }
-        if (!relative && frame < this.frame) {
-            throw EventInPastException()
-        }
-        runBlocking {
-            this@WaveGenerator._event_mutex.withLock {
-                this@WaveGenerator.last_frame = max(frame, this@WaveGenerator.last_frame)
-                if (!this@WaveGenerator._midi_events_by_frame.containsKey(frame)) {
-                    this@WaveGenerator._midi_events_by_frame[frame] = mutableListOf()
-                }
-                this@WaveGenerator._midi_events_by_frame[frame]!!.add(event)
-            }
-        }
-    }
-
-    fun update_active_frames(initial_frame: Int, buffer_size: Int) {
-        /*
-            KLUDGE ALERT
-            This active_event_queue is processed to guarantee Midi events are processed from
-            the active midi player.
-         */
-        runBlocking {
-            this@WaveGenerator.event_queue_mutex.withLock {
-                if (this@WaveGenerator.active_event_queue.isNotEmpty()) {
-                    val size = this@WaveGenerator.active_event_queue.size
-                    for (i in 0 until size) {
-                        val pair = this@WaveGenerator.active_event_queue.removeFirst() ?: break
-                        var (f, event) = pair
-                        this@WaveGenerator.place_event(event, f + initial_frame + buffer_size)
-                    }
-                }
-            }
-        }
-
-        // First check for, and remove dead sample handles
-        val empty_pairs = mutableListOf<Pair<Int, Int>>()
-        for ((key, pair_list) in this._active_sample_handles) {
-            for (i in pair_list.indices.reversed()) {
-                val (_, sample_handles) = pair_list[i]
-                for (j in sample_handles.indices.reversed()) {
-                    var sample_handle = sample_handles[j]
-                    if (sample_handle.is_dead) {
-                        sample_handles.removeAt(j)
-                    }
-                }
-                if (sample_handles.isEmpty()) {
-                    pair_list.removeAt(i)
-                }
-            }
-            if (pair_list.isEmpty()) {
-                empty_pairs.add(key)
-            }
-        }
-
-        for (key in empty_pairs) {
-            this._active_sample_handles.remove(key)
-        }
-
-        // then populate the next active frames with upcoming sample handles
-        for (f in initial_frame until initial_frame + buffer_size) {
-            if (this._midi_events_by_frame.containsKey(f)) {
-                var events = this._midi_events_by_frame[f]!!.sortedBy {
-                    when (it) {
-                        is NoteOn -> { 2 }
-                        is NoteOff -> { 0 }
-                        else -> { 1 }
-                    }
-                }
-                for (event in events) {
-                    when (event) {
-                        is NoteOn -> {
-                            var key_pair = Pair(event.channel, event.get_note())
-                            if (!this._active_sample_handles.containsKey(key_pair)) {
-                                this._active_sample_handles[key_pair] = mutableListOf()
-                            }
-                            this._active_sample_handles[key_pair]!!.add(
-                                Pair(
-                                    f,
-                                    this.sample_handle_manager.gen_sample_handles(event).toMutableList()
-                                )
-                            )
-                        }
-
-                        is NoteOff -> {
-                            var key_pair = Pair(event.channel, event.get_note())
-                            for ((_, handles) in this._active_sample_handles[key_pair]
-                                ?: continue) {
-                                for (handle in handles.reversed()) {
-                                    if (handle.is_pressed && !this.sample_release_map.containsKey(handle.uuid)) {
-                                        this.sample_release_map[handle.uuid] = f
-                                    }
-                                }
-                            }
-                        }
-
-                        is NoteOn79 -> {
-                            var key_pair = Pair(event.channel, event.index)
-                            if (!this._active_sample_handles.containsKey(key_pair)) {
-                                this._active_sample_handles[key_pair] = mutableListOf()
-                            }
-                            this._active_sample_handles[key_pair]!!.add(
-                                Pair(
-                                    f,
-                                    this.sample_handle_manager.gen_sample_handles(event).toMutableList()
-                                )
-                            )
-                        }
-
-                        is NoteOff79 -> {
-                            var key_pair = Pair(event.channel, event.index)
-                            for ((_, handles) in this._active_sample_handles[key_pair]
-                                ?: continue) {
-                                for (handle in handles.reversed()) {
-                                    if (handle.is_pressed && !this.sample_release_map.containsKey(handle.uuid)) {
-                                        this.sample_release_map[handle.uuid] = f
-                                    }
-                                }
-                            }
-                        }
-
-                        is MIDIStop -> {
-                            this.kill_frame = f
-                            for ((_, buffer_handle_list) in this._active_sample_handles) {
-                                for ((_, handles) in buffer_handle_list) {
-                                    for (handle in handles) {
-                                        if (!this.sample_release_map.containsKey(handle.uuid)) {
-                                            this.sample_release_map[handle.uuid] = f
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        is AllSoundOff -> {
-                            for ((_, buffer_handle_list) in this._active_sample_handles) {
-                                for ((_, handles) in buffer_handle_list) {
-                                    for (handle in handles) {
-                                        if (!this.sample_release_map.containsKey(handle.uuid)) {
-                                            this.sample_release_map[handle.uuid] = f
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        is ProgramChange -> {
-                            this.sample_handle_manager.change_program(
-                                event.channel,
-                                event.get_program()
-                            )
-                        }
-
-                        is BankSelect -> {
-                            this.sample_handle_manager.select_bank(event.channel, event.value)
-                        }
-
-                        is SongPositionPointer -> {
-
-                        }
-                    }
-                }
-            }
-        }
-    }
 
     fun generate(buffer_size: Int): ShortArray {
         val output_array = ShortArray(buffer_size * 2)
@@ -239,7 +43,6 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
         val buffer_size = array.size / 2
         val first_frame = this.frame
         this.update_active_frames(this.frame, buffer_size)
-
 
         if (this._active_sample_handles.isEmpty()) {
             if (this.last_frame <= this.frame) {
@@ -350,18 +153,132 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
         this.frame += buffer_size
     }
 
+    fun update_active_frames(initial_frame: Int, buffer_size: Int) {
+        // First check for, and remove dead sample handles
+        val empty_pairs = mutableListOf<Pair<Int, Int>>()
+        for ((key, pair_list) in this._active_sample_handles) {
+            for (i in pair_list.indices.reversed()) {
+                val (_, sample_handles) = pair_list[i]
+                for (j in sample_handles.indices.reversed()) {
+                    var sample_handle = sample_handles[j]
+                    if (sample_handle.is_dead) {
+                        sample_handles.removeAt(j)
+                    }
+                }
+                if (sample_handles.isEmpty()) {
+                    pair_list.removeAt(i)
+                }
+            }
+            if (pair_list.isEmpty()) {
+                empty_pairs.add(key)
+            }
+        }
+
+        for (key in empty_pairs) {
+            this._active_sample_handles.remove(key)
+        }
+
+        // then populate the next active frames with upcoming sample handles
+        for (f in initial_frame until initial_frame + buffer_size) {
+            val events = this.midi_frame_map.get_events(f)
+            for (event in events) {
+                when (event) {
+                    is NoteOn -> {
+                        var key_pair = Pair(event.channel, event.get_note())
+                        if (!this._active_sample_handles.containsKey(key_pair)) {
+                            this._active_sample_handles[key_pair] = mutableListOf()
+                        }
+                        this._active_sample_handles[key_pair]!!.add(
+                            Pair(
+                                f,
+                                this.sample_handle_manager.gen_sample_handles(event).toMutableList()
+                            )
+                        )
+                    }
+
+                    is NoteOff -> {
+                        var key_pair = Pair(event.channel, event.get_note())
+                        for ((_, handles) in this._active_sample_handles[key_pair]
+                            ?: continue) {
+                            for (handle in handles.reversed()) {
+                                if (handle.is_pressed && !this.sample_release_map.containsKey(handle.uuid)) {
+                                    this.sample_release_map[handle.uuid] = f
+                                }
+                            }
+                        }
+                    }
+
+                    is NoteOn79 -> {
+                        var key_pair = Pair(event.channel, event.index)
+                        if (!this._active_sample_handles.containsKey(key_pair)) {
+                            this._active_sample_handles[key_pair] = mutableListOf()
+                        }
+                        this._active_sample_handles[key_pair]!!.add(
+                            Pair(
+                                f,
+                                this.sample_handle_manager.gen_sample_handles(event).toMutableList()
+                            )
+                        )
+                    }
+
+                    is NoteOff79 -> {
+                        var key_pair = Pair(event.channel, event.index)
+                        for ((_, handles) in this._active_sample_handles[key_pair]
+                            ?: continue) {
+                            for (handle in handles.reversed()) {
+                                if (handle.is_pressed && !this.sample_release_map.containsKey(handle.uuid)) {
+                                    this.sample_release_map[handle.uuid] = f
+                                }
+                            }
+                        }
+                    }
+
+                    is MIDIStop -> {
+                        this.kill_frame = f
+                        for ((_, buffer_handle_list) in this._active_sample_handles) {
+                            for ((_, handles) in buffer_handle_list) {
+                                for (handle in handles) {
+                                    if (!this.sample_release_map.containsKey(handle.uuid)) {
+                                        this.sample_release_map[handle.uuid] = f
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    is AllSoundOff -> {
+                        for ((_, buffer_handle_list) in this._active_sample_handles) {
+                            for ((_, handles) in buffer_handle_list) {
+                                for (handle in handles) {
+                                    if (!this.sample_release_map.containsKey(handle.uuid)) {
+                                        this.sample_release_map[handle.uuid] = f
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    is ProgramChange -> {
+                        this.sample_handle_manager.change_program(
+                            event.channel,
+                            event.get_program()
+                        )
+                    }
+
+                    is BankSelect -> {
+                        this.sample_handle_manager.select_bank(event.channel, event.value)
+                    }
+
+                    is SongPositionPointer -> { }
+                }
+            }
+        }
+    }
+
     fun clear() {
         this.kill_frame = null
         this._active_sample_handles.clear()
         this.sample_release_map.clear()
-        runBlocking {
-            this@WaveGenerator.event_queue_mutex.withLock {
-                this@WaveGenerator.active_event_queue.clear()
-            }
-            this@WaveGenerator._event_mutex.withLock {
-                this@WaveGenerator._midi_events_by_frame.clear()
-            }
-        }
         this.frame = 0
         this._empty_chunks_count = 0
     }

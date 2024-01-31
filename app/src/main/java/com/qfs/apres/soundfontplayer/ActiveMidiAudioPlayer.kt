@@ -16,7 +16,7 @@ import kotlin.concurrent.thread
 // Ended up needing to split the active and cache Midi Players due to different fundemental requirements
 class ActiveMidiAudioPlayer(var sample_handle_manager: SampleHandleManager): VirtualMidiOutputDevice {
     internal var active_audio_track_handle: AudioTrackHandle? = null
-    internal var wave_generator = WaveGenerator(sample_handle_manager)
+    internal var wave_generator = ActiveWaveGenerator(sample_handle_manager)
     var SAMPLE_RATE_MILLIS = sample_handle_manager.sample_rate.toFloat() / 1_000F
     var buffer_delay = 2
     var is_playing = false

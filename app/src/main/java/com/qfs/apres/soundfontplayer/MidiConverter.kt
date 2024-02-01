@@ -23,7 +23,8 @@ open class MidiConverter(var sample_handle_manager: SampleHandleManager) {
         handler.on_start()
         this.generating = true
         this.cancel_flagged = false
-        val wave_generator = WaveGenerator(sample_handle_manager, midi_frame_map)
+        val wave_generator = WaveGenerator(sample_handle_manager)
+        wave_generator.set_midi_frame_map(midi_frame_map)
         val data_chunks = mutableListOf<ShortArray>()
         val total_chunk_count = this@MidiConverter.approximate_frame_count.toDouble() / this@MidiConverter.sample_handle_manager.buffer_size
         var chunk_count = 0.0

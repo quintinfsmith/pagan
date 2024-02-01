@@ -2,7 +2,9 @@ package com.qfs.pagan
 
 import com.qfs.apres.soundfontplayer.MappedMidiDevice
 import com.qfs.apres.soundfontplayer.SampleHandleManager
-class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activity.configuration.sample_rate): MappedMidiDevice(SampleHandleManager(activity.get_soundfont()!!, sample_rate, buffer_size = sample_rate), activity.get_opus_manager().frame_map) {
+class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activity.configuration.sample_rate): MappedMidiDevice(
+    SampleHandleManager(activity.get_soundfont()!!, sample_rate, buffer_size = sample_rate),
+) {
     /*
         All of this notification stuff is used with the understanding that the PaganPlaybackDevice
         used to export wavs will be discarded after a single use. It'll need to be cleaned up to
@@ -62,6 +64,7 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
         this.start_beat = start_beat
         val opus_manager = this.activity.get_opus_manager()
         val start_frame = ((60.0 / opus_manager.tempo) * sample_handle_manager.sample_rate) * start_beat
-        this.play(start_frame.toInt())
+        val frame_map = OpusManagerMidiFrameMap(opus_manager, sample_handle_manager.sample_rate)
+        this.play(start_frame.toInt(), frame_map)
     }
 }

@@ -5,9 +5,10 @@ import kotlin.concurrent.thread
 import kotlin.math.min
 
 // Ended up needing to split the active and cache Midi Players due to different fundemental requirements
-open class MappedMidiDevice(var sample_handle_manager: SampleHandleManager, val midi_frame_map: MidiFrameMap) {
-    internal var wave_generator = WaveGenerator(sample_handle_manager, midi_frame_map)
+open class MappedMidiDevice(var sample_handle_manager: SampleHandleManager) {
+    internal var wave_generator = WaveGenerator(sample_handle_manager)
     internal var active_audio_track_handle: AudioTrackHandle? = null
+    var frame_map: MidiFrameMap? = null
 
     var BUFFER_NANO = sample_handle_manager.buffer_size.toLong() * 1_000_000_000.toLong() / sample_handle_manager.sample_rate.toLong()
     var play_queued = false
@@ -29,10 +30,10 @@ open class MappedMidiDevice(var sample_handle_manager: SampleHandleManager, val 
     open fun on_beat(i :Int) { }
 
 
-    fun start_playback(start_frame: Int = 0) {
+    fun start_playback(start_frame: Int = 0, midi_frame_map: MidiFrameMap) {
         if (!this.is_playing && this.active_audio_track_handle == null) {
             this.active_audio_track_handle = AudioTrackHandle(sample_handle_manager.sample_rate, sample_handle_manager.buffer_size)
-            this._start_play_loop(start_frame)
+            this._start_play_loop(start_frame, midi_frame_map)
         }
     }
 
@@ -40,7 +41,7 @@ open class MappedMidiDevice(var sample_handle_manager: SampleHandleManager, val 
         return !this.is_playing && this.active_audio_track_handle == null && !this.play_queued
     }
 
-    private fun _start_play_loop(start_frame: Int = 0) {
+    private fun _start_play_loop(start_frame: Int = 0, midi_frame_map: MidiFrameMap) {
         /*
             This loop will attempt to play a chunk, and while it's playing, generate the next chunk.
             Any time the generate() call takes longer than the buffer takes to play and empties the queue,
@@ -50,6 +51,10 @@ open class MappedMidiDevice(var sample_handle_manager: SampleHandleManager, val 
         val audio_track_handle = this.active_audio_track_handle!!
         this.play_queued = false
         this.is_playing = true
+
+        this.wave_generator.set_midi_frame_map(midi_frame_map)
+        this.setup_beat_frames(start_frame, midi_frame_map)
+
         this.wave_generator.frame = start_frame
 
         thread {
@@ -207,11 +212,10 @@ open class MappedMidiDevice(var sample_handle_manager: SampleHandleManager, val 
         this.play_cancelled = true
     }
 
-    fun play(start_frame: Int = 0) {
+    fun play(start_frame: Int = 0, frame_map: MidiFrameMap) {
         this.play_cancelled = false
         this.play_queued = true
-        this.setup_beat_frames(start_frame)
-        this.start_playback(start_frame)
+        this.start_playback(start_frame, frame_map)
     }
 
     fun pop_next_beat_delay(): Int? {
@@ -222,13 +226,14 @@ open class MappedMidiDevice(var sample_handle_manager: SampleHandleManager, val 
         }
     }
 
-    fun setup_beat_frames(first_frame: Int) {
+    fun setup_beat_frames(first_frame: Int, frame_map: MidiFrameMap) {
         this.beat_frames.clear()
         var prev: Int? = null
-        for (frame in this.midi_frame_map.get_beat_frames()) {
-            if (frame < first_frame) {
+        for (frame in frame_map.get_beat_frames()) {
+            if (frame <= first_frame) {
                 continue
             }
+
             prev = if (prev == null) {
                 first_frame
             } else {

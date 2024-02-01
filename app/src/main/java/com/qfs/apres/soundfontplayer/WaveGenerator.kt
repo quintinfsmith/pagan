@@ -12,7 +12,7 @@ import com.qfs.apres.event2.NoteOn79
 import kotlin.math.abs
 import kotlin.math.max
 
-class WaveGenerator(var sample_handle_manager: SampleHandleManager, var midi_frame_map: MidiFrameMap) {
+class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
     class KilledException: Exception()
     class EmptyException: Exception()
     class DeadException: Exception()
@@ -24,6 +24,11 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager, var midi_fra
     private var _active_sample_handles = HashMap<Pair<Int, Int>, MutableList<Pair<Int, MutableList<SampleHandle>>>>()
     private var sample_release_map = HashMap<Int, Int>() // Key = samplehandle uuid, value = Off frame
     private var _working_int_array = IntArray(sample_handle_manager.buffer_size * 2)
+
+    var midi_frame_map: MidiFrameMap? = null
+    fun set_midi_frame_map(midi_frame_map: MidiFrameMap) {
+        this.midi_frame_map = midi_frame_map
+    }
 
     fun generate(buffer_size: Int): ShortArray {
         val output_array = ShortArray(buffer_size * 2)
@@ -180,7 +185,7 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager, var midi_fra
 
         // then populate the next active frames with upcoming sample handles
         for (f in initial_frame until initial_frame + buffer_size) {
-            val events = this.midi_frame_map.get_events(f) ?: continue
+            val events = this.midi_frame_map?.get_events(f) ?: continue
             for (event in events) {
                 when (event) {
                     is NoteOn -> {

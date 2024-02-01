@@ -4,6 +4,7 @@ import android.view.View
 import android.widget.TextView
 import com.qfs.apres.Midi
 import com.qfs.pagan.opusmanager.BeatKey
+import com.qfs.pagan.opusmanager.CursorLayer
 import com.qfs.pagan.opusmanager.LoadedJSONData
 import com.qfs.pagan.opusmanager.OpusChannel
 import com.qfs.pagan.opusmanager.OpusEvent
@@ -11,7 +12,7 @@ import com.qfs.pagan.structure.OpusTree
 import java.lang.Integer.max
 import java.lang.Integer.min
 
-class InterfaceLayer(): WaveGeneratorLayer() {
+class InterfaceLayer(): CursorLayer() {
     companion object {
         const val UI_LOCK_FULL = 0
         const val UI_LOCK_PARTIAL = 1

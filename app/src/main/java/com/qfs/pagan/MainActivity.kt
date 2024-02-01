@@ -173,8 +173,8 @@ class MainActivity : AppCompatActivity() {
                         tmp_file.delete()
                     }
                     tmp_file.deleteOnExit()
-
-                    this.view_model.export_wav(this, opus_manager.frame_map, tmp_file, object : MidiConverter.ExporterEventHandler {
+                    val frame_map = OpusManagerMidiFrameMap(opus_manager, 44100)
+                    this.view_model.export_wav(this, frame_map, tmp_file, object : MidiConverter.ExporterEventHandler {
                         val notification_manager = NotificationManagerCompat.from(this@MainActivity)
 
                         override fun on_start() {
@@ -487,7 +487,6 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(this._binding.appBarMain.toolbar)
 
         this.view_model.opus_manager.attach_activity(this)
-        this.view_model.opus_manager.frame_map.set_sample_rate(this.configuration.sample_rate)
 
         this.view_model.color_map.use_palette = this.configuration.use_palette
         this.view_model.color_map.set_fallback_palette(
@@ -1769,7 +1768,6 @@ class MainActivity : AppCompatActivity() {
         } else {
            this._midi_playback_device = null
         }
-        this.get_opus_manager().frame_map.set_sample_rate(new_sample_rate)
     }
 
     fun validate_percussion_visibility() {

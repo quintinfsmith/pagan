@@ -59,15 +59,12 @@ class SampleHandle(
     private var current_position_release: Double = 0.0
     private var current_position_delay: Double = 0.0
 
-    private var increment_attack: Double = 1.0 / this.frame_count_attack
-    private var increment_decay: Double = 1.0 / this.frame_count_decay
-    private var increment_release: Double = 1.0 / this.frame_count_release
-
 
     // TODO: Unimplimented
     // var release_delay: Int? = null
     // var remove_delay: Int? = null
     //var lpf_previous: Double = 0.0
+
 
     init {
         val tmp_tan = tan(PI * this.filter_cutoff / this.sample_rate.toDouble())
@@ -93,22 +90,27 @@ class SampleHandle(
         var frame_factor = this.attenuation * this.current_volume
 
         if (this.is_pressed) {
-            if (this.current_position_attack < 1.0) {
-                frame_factor *= this.current_position_attack
-                this.current_position_attack += this.increment_attack
+            if (this.current_position_attack < this.frame_count_attack) {
+                val r = (this.current_position_attack / this.frame_count_attack)
+                frame_factor *= r
+
+                this.current_position_attack += 1.0
             } else if (this.current_position_hold < this.frame_count_hold) {
                 this.current_position_hold += 1.0
+
             } else if (this.sustain_attenuation < 1.0) {
-                val r = min(1.0, this.current_position_decay)
+                val r = min(1.0, (this.current_position_decay / this.frame_count_decay))
                 frame_factor *= (1.0 - r) + (this.sustain_attenuation * r)
-                this.current_position_decay += this.increment_decay
+
+                this.current_position_decay += 1.0
             }
         }
 
         if (! this.is_pressed) {
-            if (this.current_position_release < 1.0) {
-                frame_factor *= 1.0 - this.current_position_release
-                this.current_position_release += this.increment_release
+            if (this.current_position_release < this.frame_count_release) {
+                frame_factor *= 1.0 - (this.current_position_release / this.frame_count_release)
+
+                this.current_position_release += 1.0
             } else {
                 this.is_dead = true
                 return null

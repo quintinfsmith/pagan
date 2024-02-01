@@ -11,7 +11,7 @@ import com.qfs.pagan.structure.OpusTree
 import java.lang.Integer.max
 import java.lang.Integer.min
 
-class InterfaceLayer(sample_rate: Int): WaveGeneratorLayer(sample_rate) {
+class InterfaceLayer(): WaveGeneratorLayer() {
     companion object {
         const val UI_LOCK_FULL = 0
         const val UI_LOCK_PARTIAL = 1

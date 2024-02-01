@@ -180,11 +180,11 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager, var midi_fra
 
         // then populate the next active frames with upcoming sample handles
         for (f in initial_frame until initial_frame + buffer_size) {
-            val events = this.midi_frame_map.get_events(f)
+            val events = this.midi_frame_map.get_events(f) ?: continue
             for (event in events) {
                 when (event) {
                     is NoteOn -> {
-                        var key_pair = Pair(event.channel, event.get_note())
+                        val key_pair = Pair(event.channel, event.get_note())
                         if (!this._active_sample_handles.containsKey(key_pair)) {
                             this._active_sample_handles[key_pair] = mutableListOf()
                         }

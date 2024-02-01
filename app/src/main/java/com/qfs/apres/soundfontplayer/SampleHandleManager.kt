@@ -6,9 +6,6 @@ import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event2.NoteOn79
 import com.qfs.apres.soundfont.Preset
 import com.qfs.apres.soundfont.SoundFont
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 
 class SampleHandleManager(
     var soundfont: SoundFont,
@@ -18,10 +15,8 @@ class SampleHandleManager(
         AudioFormat.ENCODING_PCM_16BIT,
         AudioFormat.CHANNEL_OUT_STEREO
     )) {
-    private val loaded_presets_mutex = Mutex()
     private val loaded_presets = HashMap<Pair<Int, Int>, Preset>()
     private val preset_channel_map = HashMap<Int, Pair<Int, Int>>()
-    private val preset_channel_map_mutex = Mutex()
     private val sample_handle_generator = SampleHandleGenerator(sample_rate, buffer_size)
 
     fun select_bank(channel: Int, bank: Int) {
@@ -43,34 +38,30 @@ class SampleHandleManager(
         }
 
         val key = Pair(bank, program)
-        runBlocking {
-            this@SampleHandleManager.loaded_presets_mutex.withLock {
-                if (this@SampleHandleManager.loaded_presets[key] == null) {
-                    this@SampleHandleManager.loaded_presets[key] = try {
-                        this@SampleHandleManager.soundfont.get_preset(program, bank)
-                    } catch (e: SoundFont.InvalidPresetIndex) {
-                        if (channel == 9) {
-                            if (Pair(bank, 0) in this@SampleHandleManager.loaded_presets) {
-                                this@SampleHandleManager.loaded_presets[Pair(bank, 0)]!!
-                            } else {
-                                return@withLock
-                            }
-                        } else {
-                            if (Pair(0, program) in this@SampleHandleManager.loaded_presets) {
-                                this@SampleHandleManager.loaded_presets[Pair(0, program)]!!
-                            } else if (Pair(0, 0) in this@SampleHandleManager.loaded_presets) {
-                                this@SampleHandleManager.loaded_presets[Pair(0, 0)]!!
-                            } else {
-                                return@withLock
-                            }
-                        }
+        if (this.loaded_presets[key] == null) {
+            this.loaded_presets[key] = try {
+                this.soundfont.get_preset(program, bank)
+            } catch (e: SoundFont.InvalidPresetIndex) {
+                if (channel == 9) {
+                    if (Pair(bank, 0) in this.loaded_presets) {
+                        this.loaded_presets[Pair(bank, 0)]!!
+                    } else {
+                        return
+                    }
+                } else {
+                    if (Pair(0, program) in this.loaded_presets) {
+                        this.loaded_presets[Pair(0, program)]!!
+                    } else if (Pair(0, 0) in this.loaded_presets) {
+                        this.loaded_presets[Pair(0, 0)]!!
+                    } else {
+                        return
                     }
                 }
             }
-            this@SampleHandleManager.preset_channel_map_mutex.withLock {
-                this@SampleHandleManager.preset_channel_map[channel] = key
-            }
         }
+
+        this.preset_channel_map[channel] = key
+
         this.decache_unused_presets()
     }
 
@@ -118,25 +109,17 @@ class SampleHandleManager(
     }
 
     private fun decache_unused_presets() {
-        runBlocking {
-            val loaded_preset_keys = this@SampleHandleManager.loaded_presets_mutex.withLock {
-                this@SampleHandleManager.loaded_presets.keys.toMutableSet()
+        val loaded_preset_keys = this.loaded_presets.keys.toMutableSet()
+        for ((_, key) in this.preset_channel_map) {
+            if (loaded_preset_keys.contains(key)) {
+                loaded_preset_keys.remove(key)
             }
-            this@SampleHandleManager.preset_channel_map_mutex.withLock {
-                for ((_, key) in this@SampleHandleManager.preset_channel_map) {
-                    if (loaded_preset_keys.contains(key)) {
-                        loaded_preset_keys.remove(key)
-                    }
-                }
-            }
+        }
 
-            this@SampleHandleManager.loaded_presets_mutex.withLock {
-                for (key in loaded_preset_keys) {
-                    val preset = this@SampleHandleManager.loaded_presets[key] ?: continue
-                    this@SampleHandleManager.sample_handle_generator.decache_sample_data(preset)
-                    this@SampleHandleManager.loaded_presets.remove(key)
-                }
-            }
+        for (key in loaded_preset_keys) {
+            val preset = this.loaded_presets[key] ?: continue
+            this.sample_handle_generator.decache_sample_data(preset)
+            this.loaded_presets.remove(key)
         }
     }
 

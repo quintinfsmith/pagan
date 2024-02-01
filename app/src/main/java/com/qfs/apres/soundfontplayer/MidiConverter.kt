@@ -1,12 +1,5 @@
 package com.qfs.apres.soundfontplayer
 
-import com.qfs.apres.Midi
-import com.qfs.apres.event.BankSelect
-import com.qfs.apres.event.NoteOn
-import com.qfs.apres.event.ProgramChange
-import com.qfs.apres.event.SetTempo
-import com.qfs.apres.event.SongPositionPointer
-import com.qfs.apres.event2.NoteOn79
 import java.io.BufferedOutputStream
 import java.io.DataOutputStream
 import java.io.File
@@ -20,56 +13,17 @@ open class MidiConverter(var sample_handle_manager: SampleHandleManager) {
         abstract fun on_cancel()
         abstract fun on_progress_update(progress: Double)
     }
-    internal var wave_generator = WaveGenerator(sample_handle_manager)
     var cancel_flagged = false
     var generating = false
     var approximate_frame_count: Int = 0
 
-    internal fun parse_midi(midi: Midi) {
-        var start_frame = this.wave_generator.frame
-        var ticks_per_beat = (500_000 / midi.get_ppqn())
-        var frames_per_tick = (ticks_per_beat * this.sample_handle_manager.sample_rate) / 1_000_000
-        var last_tick = 0
-        for ((tick, events) in midi.get_all_events_grouped()) {
-            last_tick = tick
-            val tick_frame = (tick * frames_per_tick) + start_frame
-            this.wave_generator.place_events(events, tick_frame)
-
-            // Need to handle some functions so the sample handles are created before the playback
-            // & Need to set Tempo
-            for (event in events) {
-                when (event) {
-                    is ProgramChange -> {
-                        this.sample_handle_manager.change_program(event.channel, event.get_program())
-                    }
-                    is BankSelect -> {
-                        this.sample_handle_manager.select_bank(event.channel, event.value)
-                    }
-                    is NoteOn -> {
-                        this.sample_handle_manager.gen_sample_handles(event)
-                    }
-                    is NoteOn79 -> {
-                        this.sample_handle_manager.gen_sample_handles(event)
-                    }
-                    is SetTempo -> {
-                        ticks_per_beat = (event.get_uspqn() / midi.get_ppqn())
-                        frames_per_tick = (ticks_per_beat * this.sample_handle_manager.sample_rate) / 1_000_000
-                    }
-                    is SongPositionPointer -> { }
-                }
-            }
-        }
-
-        val tick_frame = ((last_tick) * frames_per_tick) + start_frame
-        this.approximate_frame_count = tick_frame
-    }
 
     // Tmp_file is a Kludge until I can figure out how to quickly precalculate file sizes
-    fun export_wav(midi: Midi, target_file: File, handler: ExporterEventHandler) {
+    fun export_wav(midi_frame_map: MidiFrameMap, target_file: File, handler: ExporterEventHandler) {
         handler.on_start()
         this.generating = true
         this.cancel_flagged = false
-        this.parse_midi(midi)
+        val wave_generator = WaveGenerator(sample_handle_manager, midi_frame_map)
         val data_chunks = mutableListOf<ShortArray>()
         val total_chunk_count = this@MidiConverter.approximate_frame_count.toDouble() / this@MidiConverter.sample_handle_manager.buffer_size
         var chunk_count = 0.0
@@ -95,7 +49,7 @@ open class MidiConverter(var sample_handle_manager: SampleHandleManager) {
             }
         }
 
-        this.wave_generator.frame = 0
+        wave_generator.frame = 0
 
         val output_stream = FileOutputStream(target_file)
         val buffered_output_stream = BufferedOutputStream(output_stream)

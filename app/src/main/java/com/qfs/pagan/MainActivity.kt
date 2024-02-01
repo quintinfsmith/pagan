@@ -77,10 +77,12 @@ import com.qfs.apres.event.SongPositionPointer
 import com.qfs.apres.soundfont.SoundFont
 import com.qfs.apres.soundfontplayer.ActiveMidiAudioPlayer
 import com.qfs.apres.soundfontplayer.MidiConverter
+import com.qfs.apres.soundfontplayer.MidiFrameMap
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.pagan.ColorMap.Palette
 import com.qfs.pagan.databinding.ActivityMainBinding
 import com.qfs.pagan.opusmanager.LinksLayer
+import com.qfs.pagan.opusmanager.OpusChannel
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -106,12 +108,12 @@ class MainActivity : AppCompatActivity() {
     class MainViewModel: ViewModel() {
         var export_handle: MidiConverter? = null
         var color_map = ColorMap()
-        var opus_manager = OpusManager(44100)
+        var opus_manager = OpusManager()
         var show_percussion = false
 
-        fun export_wav(activity: MainActivity, midi: Midi, target_file: File, handler: MidiConverter.ExporterEventHandler) {
+        fun export_wav(activity: MainActivity, midi_frame_map: MidiFrameMap, target_file: File, handler: MidiConverter.ExporterEventHandler) {
             this.export_handle = MidiConverter(SampleHandleManager(activity.get_soundfont()!!, 44100))
-            this.export_handle?.export_wav(midi, target_file, handler)
+            this.export_handle?.export_wav(midi_frame_map, target_file, handler)
             this.export_handle = null
         }
 
@@ -172,7 +174,7 @@ class MainActivity : AppCompatActivity() {
                     }
                     tmp_file.deleteOnExit()
 
-                    this.view_model.export_wav(this, opus_manager.get_midi(), tmp_file, object : MidiConverter.ExporterEventHandler {
+                    this.view_model.export_wav(this, opus_manager.frame_map, tmp_file, object : MidiConverter.ExporterEventHandler {
                         val notification_manager = NotificationManagerCompat.from(this@MainActivity)
 
                         override fun on_start() {
@@ -485,6 +487,7 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(this._binding.appBarMain.toolbar)
 
         this.view_model.opus_manager.attach_activity(this)
+        this.view_model.opus_manager.frame_map.set_sample_rate(this.configuration.sample_rate)
 
         this.view_model.color_map.use_palette = this.configuration.use_palette
         this.view_model.color_map.set_fallback_palette(
@@ -744,6 +747,12 @@ class MainActivity : AppCompatActivity() {
         val start_point = this.get_working_column()
         // Currently, Midi2.0 output is not supported. will be needed for N-radix projects
         thread {
+            val opus_manager = this.get_opus_manager()
+            opus_manager.channels.forEachIndexed { i: Int, channel: OpusChannel ->
+                val (bank, program) = channel.get_instrument()
+                this._midi_playback_device?.sample_handle_manager?.select_bank(channel.midi_channel, bank)
+                this._midi_playback_device?.sample_handle_manager?.change_program(channel.midi_channel, program)
+            }
             this._midi_playback_device?.play_opus(start_point)
         }
     }
@@ -1760,6 +1769,7 @@ class MainActivity : AppCompatActivity() {
         } else {
            this._midi_playback_device = null
         }
+        this.get_opus_manager().frame_map.set_sample_rate(new_sample_rate)
     }
 
     fun validate_percussion_visibility() {

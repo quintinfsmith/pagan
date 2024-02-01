@@ -26,6 +26,7 @@ class ActiveMidiAudioPlayer(var sample_handle_manager: SampleHandleManager): Vir
         this.process_event(event)
         this.start_playback() // Only starts if not already started
     }
+
     override fun onNoteOn(event: NoteOn) {
         this.process_event(event)
         this.start_playback() // Only starts if not already started
@@ -97,11 +98,11 @@ class ActiveMidiAudioPlayer(var sample_handle_manager: SampleHandleManager): Vir
                 this.generate_timestamp = System.currentTimeMillis()
                 val chunk = try {
                     this.wave_generator.generate()
-                } catch (e: WaveGenerator.EmptyException) {
+                } catch (e: ActiveWaveGenerator.EmptyException) {
                     ShortArray(this.sample_handle_manager.buffer_size * 2) { 0 }
-                } catch (e: WaveGenerator.DeadException) {
+                } catch (e: ActiveWaveGenerator.DeadException) {
                     break
-                } catch (e: WaveGenerator.KilledException) {
+                } catch (e: ActiveWaveGenerator.KilledException) {
                     break
                 }
                 this.active_audio_track_handle?.write(chunk)

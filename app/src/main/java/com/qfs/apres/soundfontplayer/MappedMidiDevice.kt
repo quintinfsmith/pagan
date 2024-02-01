@@ -14,8 +14,8 @@ open class MappedMidiDevice(var sample_handle_manager: SampleHandleManager, val 
     var is_playing = false
     var play_cancelled = false // need a away to cancel between parsing and playing
     var fill_buffer_cache = true
+    val beat_frames = mutableListOf<Int>()
 
-    var beat_delays = mutableListOf<Int>()
     // precache 3 seconds when buffering
     val minimum_buffer_cache_size: Int = this.sample_handle_manager.sample_rate * 3 / this.sample_handle_manager.buffer_size
     // allow up to 1 minute to be cached during playback
@@ -27,6 +27,7 @@ open class MappedMidiDevice(var sample_handle_manager: SampleHandleManager, val 
     open fun on_stop() { }
     open fun on_cancelled() { }
     open fun on_beat(i :Int) { }
+
 
     fun start_playback(start_frame: Int = 0) {
         if (!this.is_playing && this.active_audio_track_handle == null) {
@@ -206,59 +207,35 @@ open class MappedMidiDevice(var sample_handle_manager: SampleHandleManager, val 
         this.play_cancelled = true
     }
 
-    //internal fun parse_midi(midi: Midi) {
-    //    this.beat_delays.clear()
-    //    var start_frame = this.wave_generator.frame
-    //    var ticks_per_beat = (500_000 / midi.get_ppqn())
-    //    var frames_per_tick = (ticks_per_beat * this.sample_handle_manager.sample_rate) / 1_000_000
-    //    var last_tick = 0
-    //    for ((tick, events) in midi.get_all_events_grouped()) {
-    //        last_tick = tick
-    //        val tick_frame = (tick * frames_per_tick) + start_frame
-    //        //this.wave_generator.place_events(events, tick_frame)
-
-    //        // Need to handle some functions so the sample handles are created before the playback
-    //        // & Need to set Tempo
-    //        for (event in events) {
-    //            when (event) {
-    //                is ProgramChange -> {
-    //                    this.sample_handle_manager.change_program(event.channel, event.get_program())
-    //                }
-    //                is BankSelect -> {
-    //                    this.sample_handle_manager.select_bank(event.channel, event.value)
-    //                }
-    //                is NoteOn -> {
-    //                    this.sample_handle_manager.gen_sample_handles(event)
-    //                }
-    //                is NoteOn79 -> {
-    //                    this.sample_handle_manager.gen_sample_handles(event)
-    //                }
-    //                is SetTempo -> {
-    //                    ticks_per_beat = (event.get_uspqn() / midi.get_ppqn())
-    //                    frames_per_tick = (ticks_per_beat * this.sample_handle_manager.sample_rate) / 1_000_000
-    //                }
-    //                is SongPositionPointer -> {
-    //                    this.beat_delays.add(midi.get_ppqn() * frames_per_tick)
-    //                }
-    //            }
-    //        }
-    //    }
-
-    //    val tick_frame = ((last_tick) * frames_per_tick) + start_frame
-    //    this.approximate_frame_count = tick_frame
-    //}
-
     fun play(start_frame: Int = 0) {
         this.play_cancelled = false
         this.play_queued = true
+        this.setup_beat_frames(start_frame)
         this.start_playback(start_frame)
     }
 
     fun pop_next_beat_delay(): Int? {
-        return if (this.beat_delays.isEmpty()) {
+        return if (this.beat_frames.isEmpty()) {
             null
         } else {
-            this.beat_delays.removeFirst()
+            this.beat_frames.removeFirst()
         }
     }
+
+    fun setup_beat_frames(first_frame: Int) {
+        this.beat_frames.clear()
+        var prev: Int? = null
+        for (frame in this.midi_frame_map.get_beat_frames()) {
+            if (frame < first_frame) {
+                continue
+            }
+            prev = if (prev == null) {
+                first_frame
+            } else {
+                this.beat_frames.add(frame - prev)
+                frame
+            }
+        }
+    }
+
 }

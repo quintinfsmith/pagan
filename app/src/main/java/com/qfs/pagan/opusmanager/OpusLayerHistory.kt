@@ -3,7 +3,7 @@ import com.qfs.apres.Midi
 import com.qfs.pagan.structure.OpusTree
 import kotlin.math.min
 
-open class HistoryLayer : LinksLayer() {
+open class OpusLayerHistory : LinksLayer() {
     var history_cache = HistoryCache()
 
     inline fun <reified T> checked_cast(value: Any): T {

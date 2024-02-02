@@ -9,7 +9,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.qfs.pagan.ColorMap.Palette
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import kotlin.math.roundToInt
-import com.qfs.pagan.InterfaceLayer as OpusManager
+import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 class ColumnLabelView(val view_holder: RecyclerView.ViewHolder): AppCompatTextView(ContextThemeWrapper(view_holder.itemView.context, R.style.column_label)) {
     /*

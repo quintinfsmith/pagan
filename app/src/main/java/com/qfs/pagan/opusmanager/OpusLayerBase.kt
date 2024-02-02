@@ -27,7 +27,7 @@ import kotlin.math.pow
  * This is completely separated from user interface or state.
  * @constructor Creates an unusably empty object. new() / load() / import() need to be called still
  */
-open class BaseLayer {
+open class OpusLayerBase {
     class BadBeatKey(beat_key: BeatKey) : Exception("BeatKey $beat_key doesn't exist")
     class NonEventConversion(beat_key: BeatKey, position: List<Int>) : Exception("Attempting to convert non-event @ $beat_key:$position")
     class NoteOutOfRange(n: Int) : Exception("Attempting to use unsupported note $n")
@@ -42,8 +42,8 @@ open class BaseLayer {
     companion object {
         var DEFAULT_PERCUSSION: Int = 0
         val DEFAULT_NAME = "New Opus"
-        fun from_midi(midi: Midi): BaseLayer {
-            val new = BaseLayer()
+        fun from_midi(midi: Midi): OpusLayerBase {
+            val new = OpusLayerBase()
             new.import_midi(midi)
             return new
         }
@@ -166,7 +166,7 @@ open class BaseLayer {
      */
     open fun get_percussion_instrument(line_offset: Int): Int {
         val channel = this.channels.last()
-        return channel.get_mapped_line_offset(line_offset) ?: BaseLayer.DEFAULT_PERCUSSION
+        return channel.get_mapped_line_offset(line_offset) ?: OpusLayerBase.DEFAULT_PERCUSSION
     }
 
     /**
@@ -991,7 +991,7 @@ open class BaseLayer {
                     if (channel.midi_channel == 9) {
                         beat.traverse { _: OpusTree<OpusEvent>, event: OpusEvent? ->
                             if (event != null) {
-                                event.note = channel.get_mapped_line_offset(i) ?: BaseLayer.DEFAULT_PERCUSSION
+                                event.note = channel.get_mapped_line_offset(i) ?: OpusLayerBase.DEFAULT_PERCUSSION
                             }
                         }
                     }
@@ -1049,7 +1049,7 @@ open class BaseLayer {
             this.remove_channel(i)
         }
         this.path = null
-        this.project_name = BaseLayer.DEFAULT_NAME
+        this.project_name = OpusLayerBase.DEFAULT_NAME
         this.tempo = 120F
         this.tuning_map = Array(12) {
             i: Int -> Pair(i, 12)
@@ -1459,7 +1459,7 @@ open class BaseLayer {
         return Triple(opus, tempo, instrument_map)
     }
 
-    open fun import_from_other(other: BaseLayer) {
+    open fun import_from_other(other: OpusLayerBase) {
         this.clear()
         this.beat_count = other.beat_count
         this.tempo = other.tempo
@@ -2153,7 +2153,7 @@ open class BaseLayer {
 
     override fun equals(other: Any?): Boolean {
 
-        if (other !is BaseLayer
+        if (other !is OpusLayerBase
         || this.beat_count != other.beat_count
         || this.path != other.path
         || this.project_name != other.project_name

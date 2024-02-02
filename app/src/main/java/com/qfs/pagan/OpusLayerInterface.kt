@@ -4,7 +4,6 @@ import android.view.View
 import android.widget.TextView
 import com.qfs.apres.Midi
 import com.qfs.pagan.opusmanager.BeatKey
-import com.qfs.pagan.opusmanager.CursorLayer
 import com.qfs.pagan.opusmanager.LoadedJSONData
 import com.qfs.pagan.opusmanager.OpusChannel
 import com.qfs.pagan.opusmanager.OpusEvent
@@ -12,7 +11,7 @@ import com.qfs.pagan.structure.OpusTree
 import java.lang.Integer.max
 import java.lang.Integer.min
 
-class InterfaceLayer(): CursorLayer() {
+class OpusLayerInterface(): OpusLayerFrameMap() {
     companion object {
         const val UI_LOCK_FULL = 0
         const val UI_LOCK_PARTIAL = 1
@@ -52,7 +51,7 @@ class InterfaceLayer(): CursorLayer() {
         }
     }
 
-    private fun <T> surpress_ui(level: Int = UI_LOCK_FULL, callback:(InterfaceLayer) -> T): T {
+    private fun <T> surpress_ui(level: Int = UI_LOCK_FULL, callback:(OpusLayerInterface) -> T): T {
         this._ui_lock_stack.add(level)
         try {
             val output = callback(this)

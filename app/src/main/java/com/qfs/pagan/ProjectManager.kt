@@ -5,7 +5,7 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
-import com.qfs.pagan.opusmanager.BaseLayer as OpusManager
+import com.qfs.pagan.opusmanager.OpusLayerBase as OpusManager
 
 class ProjectManager(data_dir: String) {
     class MKDirFailedException(dir: String): Exception("Failed to create directory $dir")

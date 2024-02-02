@@ -94,7 +94,7 @@ import java.io.FileOutputStream
 import kotlin.concurrent.thread
 import kotlin.math.floor
 import kotlin.math.roundToInt
-import com.qfs.pagan.InterfaceLayer as OpusManager
+import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 class MainActivity : AppCompatActivity() {
     enum class PlaybackState {
@@ -518,6 +518,9 @@ class MainActivity : AppCompatActivity() {
             val sf_file = File(path)
             if (sf_file.exists()) {
                 this._soundfont = SoundFont(path)
+                this.get_opus_manager().set_sample_handle_manager(
+                    SampleHandleManager(this._soundfont!!, this.configuration.sample_rate)
+                )
                 this._midi_playback_device = PaganPlaybackDevice(this)
                 if (!this._midi_interface.output_devices_connected()) {
                     this._midi_feedback_device = ActiveMidiAudioPlayer(
@@ -1352,7 +1355,16 @@ class MainActivity : AppCompatActivity() {
         this.configuration.soundfont = filename
         this._soundfont = SoundFont(path)
 
+
+        this.get_opus_manager().set_sample_handle_manager(
+            SampleHandleManager(
+                this._soundfont!!,
+                this.configuration.sample_rate
+            )
+        )
+
         this._midi_playback_device = PaganPlaybackDevice(this)
+
 
         this._midi_feedback_device = ActiveMidiAudioPlayer(
             SampleHandleManager(
@@ -1442,10 +1454,13 @@ class MainActivity : AppCompatActivity() {
         if (this._midi_feedback_device != null) {
             this.disconnect_feedback_device()
         }
+
         this._soundfont = null
         this.configuration.soundfont = null
         this._midi_playback_device = null
         this._midi_feedback_device = null
+
+        this.get_opus_manager().unset_sample_handle_manager()
 
         this.populate_active_percussion_names()
     }

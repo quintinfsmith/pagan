@@ -5,7 +5,7 @@ import com.qfs.pagan.opusmanager.OpusEvent
 import com.qfs.pagan.structure.OpusTree
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import com.qfs.pagan.opusmanager.HistoryLayer as OpusManager
+import com.qfs.pagan.opusmanager.OpusLayerHistory as OpusManager
 
 class HistoryCacheUnitTest {
     @Test

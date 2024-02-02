@@ -10,14 +10,14 @@ import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import androidx.appcompat.view.ContextThemeWrapper
 import com.qfs.pagan.ColorMap.Palette
-import com.qfs.pagan.opusmanager.BaseLayer
+import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.LinksLayer
 import com.qfs.pagan.opusmanager.OpusEvent
 import com.qfs.pagan.structure.OpusTree
 import kotlin.concurrent.thread
 import kotlin.math.abs
-import com.qfs.pagan.InterfaceLayer as OpusManager
+import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 class LeafButton(
     context: Context,
@@ -185,7 +185,7 @@ class LeafButton(
                         (this.get_activity()).feedback_msg(context.getString(R.string.feedback_mixed_link))
                     }
                     is LinksLayer.LinkRangeOverlap,
-                    is BaseLayer.RangeOverflow,
+                    is OpusLayerBase.RangeOverflow,
                     is LinksLayer.LinkRangeOverflow -> {
                         editor_table.notify_cell_change(beat_key)
                         opus_manager.cursor.is_linking = false

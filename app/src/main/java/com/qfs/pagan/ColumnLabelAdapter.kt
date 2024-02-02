@@ -3,7 +3,7 @@ package com.qfs.pagan
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.qfs.pagan.InterfaceLayer as OpusManager
+import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 class ColumnLabelAdapter(editor_table: EditorTable) : RecyclerView.Adapter<ColumnLabelViewHolder>() {
     var recycler: ColumnLabelRecycler

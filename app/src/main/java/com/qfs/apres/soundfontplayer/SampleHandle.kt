@@ -72,6 +72,14 @@ class SampleHandle(
         this.data_buffer = PitchedBuffer(this.data, this.pitch_shift)
     }
 
+    fun set_position(frame: Int) {
+        this.data_buffer.position(frame)
+    }
+
+    fun get_release_duration(): Int {
+        return this.frame_count_release
+    }
+
     fun get_next_frame(): Int? {
         if (this.is_dead) {
             return null

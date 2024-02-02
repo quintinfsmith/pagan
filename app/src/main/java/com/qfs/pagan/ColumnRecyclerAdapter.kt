@@ -7,7 +7,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.qfs.pagan.opusmanager.BeatKey
 import kotlin.math.max
 import kotlin.math.min
-import com.qfs.pagan.InterfaceLayer as OpusManager
+import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 class ColumnRecyclerAdapter(val recycler: ColumnRecycler, editor_table: EditorTable): RecyclerView.Adapter<ColumnRecyclerViewHolder>() {
     val column_label_recycler: ColumnLabelRecycler

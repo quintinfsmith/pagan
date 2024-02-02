@@ -10,7 +10,7 @@ import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.OpusChannel
 import com.qfs.pagan.opusmanager.OpusEvent
 import kotlin.math.floor
-import com.qfs.pagan.opusmanager.BaseLayer as OpusManager
+import com.qfs.pagan.opusmanager.OpusLayerBase as OpusManager
 
 class OpusManagerMidiFrameMap(opus_manager: OpusManager, sample_rate: Int = 22050): MidiFrameMap() {
     var _midi_events_by_frame = HashMap<Int, MutableList<MIDIEvent>>()
@@ -52,7 +52,24 @@ class OpusManagerMidiFrameMap(opus_manager: OpusManager, sample_rate: Int = 2205
         }
     }
 
-    fun get_frame_range(opus_manager: OpusManager, beat_key: BeatKey, position: List<Int>, duration: Int = 1): Pair<Double, Double> {
+    fun get_frame(opus_manager: OpusManager, beat_key: BeatKey, position: List<Int>): Double {
+        var working_tree = opus_manager.get_tree(beat_key)
+        var offset = 0.0
+        var w = 1.0
+
+        for (p in position) {
+            if (working_tree.is_leaf()) {
+                break
+            }
+            w /= working_tree.size
+            offset += (w * p)
+            working_tree = working_tree[p]
+        }
+
+        return offset + beat_key.beat.toDouble()
+    }
+
+    fun get_range(opus_manager: OpusManager, beat_key: BeatKey, position: List<Int>, duration: Int = 1): Pair<Double, Double> {
         var working_tree = opus_manager.get_tree(beat_key)
         var offset = 0.0
         var w = 1.0
@@ -151,7 +168,7 @@ class OpusManagerMidiFrameMap(opus_manager: OpusManager, sample_rate: Int = 2205
 
         val event = tree.get_event()!!
         val midi_event_pair = this.calc_midi_events_from_opus_event(opus_manager, beat_key, event)
-        val position_pair = this.get_frame_range(opus_manager, beat_key, position, event.duration)
+        val position_pair = this.get_range(opus_manager, beat_key, position, event.duration)
 
         if (midi_event_pair.first is NoteOn79) {
             val note_index = this.calc_note_index(position_pair.first, position_pair.second)
@@ -179,24 +196,5 @@ class OpusManagerMidiFrameMap(opus_manager: OpusManager, sample_rate: Int = 2205
         this._midi_events_by_frame[second_frame]?.add(midi_event_pair.second)
     }
 
-    // Calculate midi2.0 note index
-    fun calc_note_index(start: Double, end: Double): Int {
-        var output = 0
-        for (i in 0 until this.note_index_map.size) {
-            var index_in_use = false
-            for ((w_start, w_end) in this.note_index_map[i]) {
-                if ((start <= w_start && w_start <= end) || (start <= w_end && w_end <= end)) {
-                    index_in_use = true
-                    break
-                }
-            }
-
-            if (!index_in_use) {
-                break
-            }
-            output += 1
-        }
-        return output
-    }
 }
 

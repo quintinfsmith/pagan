@@ -10,7 +10,7 @@ import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.OpusEvent
 import com.qfs.pagan.structure.OpusTree
 import kotlin.math.roundToInt
-import com.qfs.pagan.InterfaceLayer as OpusManager
+import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 class CellLayout(val column_layout: ColumnLayout, val y: Int): LinearLayout(column_layout.context) {
     class BeatKeyNotSet: Exception()

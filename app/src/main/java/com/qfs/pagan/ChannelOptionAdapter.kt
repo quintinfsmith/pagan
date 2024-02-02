@@ -16,7 +16,7 @@ import com.qfs.pagan.ColorMap.Palette
 import kotlin.math.roundToInt
 
 class ChannelOptionAdapter(
-    private val _opus_manager: InterfaceLayer,
+    private val _opus_manager: OpusLayerInterface,
     private val _recycler: RecyclerView
 ) : RecyclerView.Adapter<ChannelOptionAdapter.ChannelOptionViewHolder>() {
     class OutOfSyncException : Exception("Channel Option list out of sync with OpusManager")

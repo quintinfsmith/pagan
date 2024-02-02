@@ -3,7 +3,7 @@ import com.qfs.pagan.structure.OpusTree
 import java.lang.Integer.max
 import java.lang.Integer.min
 
-open class CursorLayer(): HistoryLayer() {
+open class OpusLayerCursor(): OpusLayerHistory() {
     var cursor = OpusManagerCursor()
     private var _queued_cursor_selection: Pair<HistoryToken, List<Int>>? = null
 

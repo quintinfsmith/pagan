@@ -1,9 +1,8 @@
 package com.qfs.pagan
 
 import com.qfs.apres.soundfontplayer.MappedMidiDevice
-import com.qfs.apres.soundfontplayer.SampleHandleManager
 class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activity.configuration.sample_rate): MappedMidiDevice(
-    SampleHandleManager(activity.get_soundfont()!!, sample_rate, buffer_size = sample_rate),
+    activity.get_opus_manager().sample_handle_manager!!
 ) {
     /*
         All of this notification stuff is used with the understanding that the PaganPlaybackDevice

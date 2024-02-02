@@ -14,7 +14,7 @@ import androidx.fragment.app.setFragmentResult
 import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
 import com.qfs.pagan.databinding.FragmentMainBinding
-import com.qfs.pagan.opusmanager.BaseLayer
+import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.OpusEvent
 import com.qfs.pagan.opusmanager.OpusManagerCursor
@@ -490,7 +490,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
                 if (beat >= opus_manager.beat_count) {
                     opus_manager.cursor_select_column(opus_manager.beat_count - 1)
                 }
-            } catch (e: BaseLayer.RemovingLastBeatException) {
+            } catch (e: OpusLayerBase.RemovingLastBeatException) {
                 this.get_main().feedback_msg(getString(R.string.feedback_rm_lastbeat))
             }
 

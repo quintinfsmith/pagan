@@ -7,7 +7,7 @@ import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import androidx.core.view.children
-import com.qfs.pagan.InterfaceLayer as OpusManager
+import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 class LineLabelColumnLayout(editor_table: EditorTable): ScrollView(editor_table.context) {
     // BackLink so I can get the x offset from a view in the view holder

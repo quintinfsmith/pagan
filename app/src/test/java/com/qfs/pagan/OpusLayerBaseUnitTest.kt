@@ -7,14 +7,14 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertThrows
 import org.junit.Test
-import com.qfs.pagan.opusmanager.BaseLayer as OpusManager
+import com.qfs.pagan.opusmanager.OpusLayerBase as OpusManager
 
 /**
  * Example local unit test, which will execute on the development machine (host).
  *
  * See [testing documentation](http://d.android.com/tools/testing).
  */
-class BaseLayerUnitTest {
+class OpusLayerBaseUnitTest {
     @Test
     fun test_new() {
         val manager = OpusManager()

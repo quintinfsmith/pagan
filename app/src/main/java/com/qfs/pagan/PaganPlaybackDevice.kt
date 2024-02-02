@@ -10,7 +10,6 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
         used to export wavs will be discarded after a single use. It'll need to be cleaned up to
         handle anything more.
      */
-    var start_beat = 0
     override fun on_buffer() {
         super.on_buffer()
         this.activity.runOnUiThread {
@@ -37,16 +36,16 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
         }
     }
 
-    override fun on_beat(x: Int) {
+    override fun on_beat(i: Int) {
         if (!this.is_playing || this.play_cancelled) {
             return
         }
 
-        val i = x + this.start_beat
         val opus_manager = this.activity.get_opus_manager()
         if (i >= opus_manager.beat_count) {
             return
         }
+
         opus_manager.cursor_select_column(i)
 
         // Force scroll here, cursor_select_column doesn't scroll if the column is already visible
@@ -61,7 +60,6 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
     }
 
     fun play_opus(start_beat: Int) {
-        this.start_beat = start_beat
         val opus_manager = this.activity.get_opus_manager()
         val start_frame = ((60.0 / opus_manager.tempo) * sample_handle_manager.sample_rate) * start_beat
         val frame_map = OpusManagerMidiFrameMap(opus_manager, sample_handle_manager.sample_rate)

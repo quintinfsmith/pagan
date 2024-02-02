@@ -8,7 +8,6 @@ import kotlin.math.min
 open class MappedMidiDevice(var sample_handle_manager: SampleHandleManager) {
     internal var wave_generator = WaveGenerator(sample_handle_manager)
     internal var active_audio_track_handle: AudioTrackHandle? = null
-    var frame_map: MidiFrameMap? = null
 
     var BUFFER_NANO = sample_handle_manager.buffer_size.toLong() * 1_000_000_000.toLong() / sample_handle_manager.sample_rate.toLong()
     var play_queued = false
@@ -28,7 +27,6 @@ open class MappedMidiDevice(var sample_handle_manager: SampleHandleManager) {
     open fun on_stop() { }
     open fun on_cancelled() { }
     open fun on_beat(i :Int) { }
-
 
     fun start_playback(start_frame: Int = 0, midi_frame_map: MidiFrameMap) {
         if (!this.is_playing && this.active_audio_track_handle == null) {
@@ -107,15 +105,20 @@ open class MappedMidiDevice(var sample_handle_manager: SampleHandleManager) {
                 }
 
                 audio_track_handle.play(object : AudioTrack.OnPlaybackPositionUpdateListener {
-                    var notification_index = 0
+                    var current_beat = 0
                     init {
+                        while (this.current_beat < this@MappedMidiDevice.beat_frames.size && this@MappedMidiDevice.beat_frames[this.current_beat] <= start_frame) {
+                            this.current_beat += 1
+                        }
+
                         if (this@MappedMidiDevice.play_cancelled) {
                             throw java.lang.IllegalStateException()
                         } else {
                             this@MappedMidiDevice.on_start()
-                            this@MappedMidiDevice.on_beat(this.notification_index)
-                            this@MappedMidiDevice.active_audio_track_handle?.offset_next_notification_position(
-                                this@MappedMidiDevice.pop_next_beat_delay() ?: 0
+
+                            this@MappedMidiDevice.on_beat(this.current_beat)
+                            this@MappedMidiDevice.active_audio_track_handle?.set_next_notification_position(
+                                this@MappedMidiDevice.beat_frames[this.current_beat] - start_frame
                             )
                         }
                     }
@@ -139,19 +142,11 @@ open class MappedMidiDevice(var sample_handle_manager: SampleHandleManager) {
                             0
                         }
 
-                        var next_beat_delay = 0
                         if (!kill_flag) {
-                            while (frame_delay <= 0) {
-                                val next_delay = this@MappedMidiDevice.pop_next_beat_delay()
-
-                                if (next_delay == null) {
-                                    kill_flag = true
-                                    break
-                                }
-
-                                next_beat_delay += next_delay
-                                frame_delay += next_delay
-                                this.notification_index += 1
+                            if (this.current_beat < this@MappedMidiDevice.beat_frames.size - 1) {
+                                this.current_beat += 1
+                            } else {
+                                kill_flag = true
                             }
                         }
 
@@ -163,17 +158,16 @@ open class MappedMidiDevice(var sample_handle_manager: SampleHandleManager) {
                             this@MappedMidiDevice.is_playing = false
                             this@MappedMidiDevice.on_stop()
                         } else {
-                            this@MappedMidiDevice.on_beat(this.notification_index)
-                            val target_next_position =
-                                audio_track!!.notificationMarkerPosition + next_beat_delay
+                            this@MappedMidiDevice.on_beat(this.current_beat)
+
                             val next_position = if (final_frame != null) {
-                                min(final_frame!!, target_next_position)
+                                min(final_frame!!, this@MappedMidiDevice.beat_frames[this.current_beat])
                             } else {
-                                target_next_position
+                                this@MappedMidiDevice.beat_frames[this.current_beat]
                             }
 
                             this@MappedMidiDevice.active_audio_track_handle?.set_next_notification_position(
-                                next_position
+                                next_position - start_frame + frame_delay
                             )
                         }
                     }
@@ -228,19 +222,7 @@ open class MappedMidiDevice(var sample_handle_manager: SampleHandleManager) {
 
     fun setup_beat_frames(first_frame: Int, frame_map: MidiFrameMap) {
         this.beat_frames.clear()
-        var prev: Int? = null
-        for (frame in frame_map.get_beat_frames()) {
-            if (frame <= first_frame) {
-                continue
-            }
-
-            prev = if (prev == null) {
-                first_frame
-            } else {
-                this.beat_frames.add(frame - prev)
-                frame
-            }
-        }
+        this.beat_frames.addAll(frame_map.get_beat_frames())
     }
 
 }

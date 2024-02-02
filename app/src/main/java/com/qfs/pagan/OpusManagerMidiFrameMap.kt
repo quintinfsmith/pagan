@@ -19,7 +19,7 @@ class OpusManagerMidiFrameMap(opus_manager: OpusManager, sample_rate: Int = 2205
     val beat_frames : List<Int>
 
     init {
-        val frames_per_beat = (60.0 / opus_manager.tempo) * sample_rate
+        val frames_per_beat = 60.0 * sample_rate / opus_manager.tempo
         opus_manager.channels.forEachIndexed { i: Int, channel: OpusChannel ->
             for (j in 0 until channel.lines.size) {
                 this.previous_note = 0
@@ -30,7 +30,7 @@ class OpusManagerMidiFrameMap(opus_manager: OpusManager, sample_rate: Int = 2205
         }
 
         this.beat_frames = List<Int>(opus_manager.beat_count + 1) { i ->
-            (frames_per_beat * i).toInt()
+            (frames_per_beat * (i + 1)).toInt()
         }
     }
 

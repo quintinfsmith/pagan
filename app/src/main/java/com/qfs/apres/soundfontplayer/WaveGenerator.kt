@@ -76,7 +76,7 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
 
                     is_empty = false
                     for (f in max(first_sample_frame, first_frame) until first_frame + buffer_size) {
-                        if (sample_handle.is_pressed && f == this.sample_release_map[sample_handle.uuid]) {
+                        if (sample_handle.is_pressed() && f == this.sample_release_map[sample_handle.uuid]) {
                             sample_handle.release_note()
                         }
 
@@ -206,7 +206,7 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
                         for ((_, handles) in this._active_sample_handles[key_pair]
                             ?: continue) {
                             for (handle in handles.reversed()) {
-                                if (handle.is_pressed && !this.sample_release_map.containsKey(handle.uuid)) {
+                                if (handle.is_pressed() && !this.sample_release_map.containsKey(handle.uuid)) {
                                     this.sample_release_map[handle.uuid] = f
                                 }
                             }
@@ -231,7 +231,7 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
                         for ((_, handles) in this._active_sample_handles[key_pair]
                             ?: continue) {
                             for (handle in handles.reversed()) {
-                                if (handle.is_pressed && !this.sample_release_map.containsKey(handle.uuid)) {
+                                if (handle.is_pressed() && !this.sample_release_map.containsKey(handle.uuid)) {
                                     this.sample_release_map[handle.uuid] = f
                                 }
                             }

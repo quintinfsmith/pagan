@@ -48,17 +48,13 @@ class SampleHandle(
 
     private val lpf_factor: Double
 
-    var is_pressed = true
+    var working_frame: Int = 0
+    var release_frame: Int? = null
     var is_dead = false
     var current_volume: Double = 0.5
     var data_buffer: PitchedBuffer
 
-    private var current_position_attack: Double = 0.0
-    private var current_position_hold: Double = 0.0
-    private var current_position_decay: Double = 0.0
     private var current_position_release: Double = 0.0
-    private var current_position_delay: Double = 0.0
-
 
     // TODO: Unimplimented
     // var release_delay: Int? = null
@@ -72,8 +68,28 @@ class SampleHandle(
         this.data_buffer = PitchedBuffer(this.data, this.pitch_shift)
     }
 
-    fun set_position(frame: Int) {
-        this.data_buffer.position(frame)
+    fun set_release_frame(frame: Int) {
+        this.release_frame = frame
+    }
+
+    fun set_working_frame(frame: Int) {
+        this.working_frame = frame
+
+        // TODO: Improve this. This is slow and my brain doesn't wont to let me see the algebra here right now
+        var tmp_frame = 0
+        for (f in 0 until frame) {
+            if (this.release_frame == null || this.release_frame!! > f) {
+                if (this.loop_points == null || tmp_frame < this.loop_points!!.second) {
+                    tmp_frame += 1
+                } else if (tmp_frame == this.loop_points!!.second) {
+                    tmp_frame = this.loop_points!!.second
+                }
+            } else {
+                tmp_frame += 1
+            }
+        }
+
+        this.data_buffer.position(tmp_frame)
     }
 
     fun get_release_duration(): Int {
@@ -85,8 +101,8 @@ class SampleHandle(
             return null
         }
 
-        if (this.current_position_delay < this.frame_count_delay) {
-            this.current_position_delay += 1
+        if (this.working_frame < this.frame_count_delay) {
+            this.working_frame += 1
             return 0
         }
 
@@ -97,27 +113,24 @@ class SampleHandle(
 
         var frame_factor = this.attenuation * this.current_volume
 
-        if (this.is_pressed) {
-            if (this.current_position_attack < this.frame_count_attack) {
-                val r = (this.current_position_attack / this.frame_count_attack)
+        val is_pressed = this.release_frame == null || this.working_frame < this.release_frame!!
+
+        if (is_pressed) {
+            if (this.working_frame < this.frame_count_attack + this.frame_count_delay) {
+                val r = (this.working_frame - this.frame_count_delay) / this.frame_count_attack
                 frame_factor *= r
-
-                this.current_position_attack += 1.0
-            } else if (this.current_position_hold < this.frame_count_hold) {
-                this.current_position_hold += 1.0
-
+            } else if (this.working_frame < this.frame_count_hold + this.frame_count_delay + this.frame_count_attack) {
+                // pass
             } else if (this.sustain_attenuation < 1.0) {
-                val r = min(1.0, (this.current_position_decay / this.frame_count_decay))
+                val r = min(1.0, (this.working_frame - (this.frame_count_hold + this.frame_count_delay + this.frame_count_attack).toDouble() / this.frame_count_decay.toDouble()))
                 frame_factor *= (1.0 - r) + (this.sustain_attenuation * r)
-
-                this.current_position_decay += 1.0
             }
         }
 
-        if (! this.is_pressed) {
-            if (this.current_position_release < this.frame_count_release) {
-                frame_factor *= 1.0 - (this.current_position_release / this.frame_count_release)
-
+        if (! is_pressed) {
+            val current_position_release = (this.working_frame - this.release_frame!!)
+            if (current_position_release < this.frame_count_release) {
+                frame_factor *= 1.0 - (current_position_release / this.frame_count_release)
                 this.current_position_release += 1.0
             } else {
                 this.is_dead = true
@@ -138,11 +151,16 @@ class SampleHandle(
         //    frame *= (input + allpass_value) / 2.0
         //}
 
+        this.working_frame += 1
         return (this.data_buffer.get().toDouble() * frame_factor).toInt()
     }
 
     fun release_note() {
-        this.is_pressed = false
+        this.release_frame = this.working_frame
+    }
+
+    fun is_pressed(): Boolean {
+        return this.release_frame == null || this.release_frame!! < this.working_frame
     }
 }
 

@@ -6,6 +6,7 @@ import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event2.NoteOff79
 import com.qfs.apres.event2.NoteOn79
 import com.qfs.apres.soundfontplayer.MidiFrameMap
+import com.qfs.apres.soundfontplayer.SampleHandle
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.OpusEvent
@@ -14,8 +15,8 @@ import kotlin.math.floor
 
 open class OpusLayerFrameMap: OpusLayerCursor(), MidiFrameMap {
     var sample_handle_manager: SampleHandleManager? = null
-    var quick_map_midi_events =  HashMap<Pair<BeatKey, List<Int>>, Pair<MIDIEvent, MIDIEvent>>()
-    var frame_map = HashMap<Int, MutableList<MIDIEvent>>()
+    var quick_map_midi_events =  HashMap<Pair<BeatKey, List<Int>>, List<SampleHandle>>()
+    var frame_map = HashMap<Int, MutableList<SampleHandle>>()
     private val note_index_map = mutableListOf<MutableSet<Pair<Int, Int>>>()
 
 
@@ -248,5 +249,13 @@ open class OpusLayerFrameMap: OpusLayerCursor(), MidiFrameMap {
 
     override fun import_midi(path: String) {
         super.import_midi(path)
+    }
+
+    override fun get_events(frame: Int): List<MIDIEvent>? {
+        return this.frame_map.getOrDefault(frame, null)
+    }
+
+    override fun get_beat_frames(): List<Int> {
+        TODO("Not yet implemented")
     }
 }

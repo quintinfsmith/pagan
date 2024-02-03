@@ -14,6 +14,7 @@ import com.qfs.pagan.opusmanager.OpusLayerCursor
 import com.qfs.pagan.structure.OpusTree
 import kotlin.math.floor
 import kotlin.math.max
+import kotlin.math.min
 
 open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
     var sample_handle_manager: SampleHandleManager? = null
@@ -102,12 +103,15 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
                 new_position.add(i)
                 this.unmap_frames(beat_key, new_position)
             }
-        } else if (!working_tree.is_event()) {
             return
         }
 
-        val sample_handles = this.quick_map_sample_handles.remove(Pair(beat_key, position)) ?: return
+        val sample_handles = this.quick_map_sample_handles.remove(Pair(beat_key, position))
+        if (sample_handles == null) {
+            return
+        }
         for (uuid in sample_handles) {
+            this.handle_map.remove(uuid)
             val (start_frame, _) = this.handle_range_map.remove(uuid) ?: continue
             if (this.frame_map.containsKey(start_frame)) {
                 this.frame_map[start_frame]!!.remove(uuid)
@@ -123,13 +127,14 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
                 new_position.add(i)
                 this.map_frames(beat_key, new_position)
             }
+            return
         } else if (!working_tree.is_event()) {
             return
         }
 
         val (start_frame, end_frame) = this.get_frame_range(beat_key, position)
 
-        val start_event = gen_midi_event(beat_key, position) ?: return
+        val start_event = gen_midi_event(beat_key, position)!!
         val handles = when (start_event) {
             is NoteOn -> {
                 this.sample_handle_manager!!.gen_sample_handles(start_event)
@@ -163,9 +168,6 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
         var w = 1.0
 
         for (p in position) {
-            if (working_tree.is_leaf()) {
-                break
-            }
             w /= working_tree.size
             offset += (w * p)
             working_tree = working_tree[p]
@@ -272,11 +274,15 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
     override fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<OpusEvent>>?) {
         super.insert_beat(beat_index, beats_in_column)
 
+        val frames_per_beat = 60.0 * this.sample_handle_manager!!.sample_rate / this.tempo
+
         val sorted_keys = this.quick_map_sample_handles.keys.sortedByDescending { it.first.beat }
+        val samples_to_move = mutableSetOf<Int>()
         for ((beat_key, position) in sorted_keys) {
             if (beat_key.beat < beat_index) {
                 break
             }
+
             val new_key = Pair(
                 BeatKey(
                     beat_key.channel,
@@ -287,46 +293,42 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
             )
 
             this.quick_map_sample_handles[new_key] = this.quick_map_sample_handles.remove(Pair(beat_key, position))!!
+            samples_to_move.addAll(this.quick_map_sample_handles[new_key]!!)
         }
 
-        val frames_per_beat = 60.0 * this.sample_handle_manager!!.sample_rate / this.tempo
-        val first_frame = beat_index * frames_per_beat
+        var first_frame = ((this.beat_count + 1) * frames_per_beat).toInt()
+        for (uuid in samples_to_move) {
+            val pair = this.handle_range_map[uuid] ?: continue
+            this.handle_range_map[uuid] = Pair(
+                pair.first + frames_per_beat.toInt(),
+                pair.second + frames_per_beat.toInt()
+            )
+
+            first_frame = min(first_frame, pair.first)
+        }
+
         for (frame in this.frame_map.keys.sortedByDescending { it }) {
             if (frame < first_frame) {
-                break
+                continue
             }
             this.frame_map[frame + frames_per_beat.toInt()] = this.frame_map.remove(frame)!!
         }
 
-        for ((uuid, pair) in this.handle_range_map) {
-            if (pair.first < first_frame) {
-                continue
-            }
-
-            this.handle_range_map[uuid] = Pair(
-                if (pair.first < first_frame) {
-                    pair.first
-                } else {
-                    pair.first + frames_per_beat.toInt()
-                },
-                if (pair.first < first_frame) {
-                    pair.second
-                } else {
-                    pair.second + frames_per_beat.toInt()
-                }
-            )
-        }
     }
 
     override fun remove_beat(beat_index: Int) {
         super.remove_beat(beat_index)
+
+        val frames_per_beat = 60.0 * this.sample_handle_manager!!.sample_rate / this.tempo
+        val samples_to_move = mutableSetOf<Int>()
+        val samples_to_remove = mutableSetOf<Int>()
 
         val sorted_keys = this.quick_map_sample_handles.keys.sortedBy { it.first.beat }
         for ((beat_key, position) in sorted_keys) {
             if (beat_key.beat < beat_index) {
                 continue
             } else if (beat_key.beat == beat_index) {
-                this.quick_map_sample_handles.remove(Pair(beat_key, position))
+                samples_to_remove.addAll(this.quick_map_sample_handles.remove(Pair(beat_key, position))!!)
                 continue
             }
 
@@ -340,95 +342,92 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
             )
 
             this.quick_map_sample_handles[new_key] = this.quick_map_sample_handles.remove(Pair(beat_key, position))!!
+            samples_to_move.addAll(this.quick_map_sample_handles[new_key]!!)
         }
 
-        val frames_per_beat = 60.0 * this.sample_handle_manager!!.sample_rate / this.tempo
-        val first_frame = beat_index * frames_per_beat
-        val del_range = (first_frame.toInt() until frames_per_beat.toInt())
-        val sample_uuids_to_delete = mutableSetOf<Int>()
-
-        for (frame in this.frame_map.keys.sortedBy { it }) {
-            if (frame < first_frame) {
-                continue
-            } else if (del_range.contains(frame)) {
-                for (uuid in this.frame_map.remove(frame)!!) {
-                    sample_uuids_to_delete.add(uuid)
-                }
-                continue
-            }
-
-            this.frame_map[frame - frames_per_beat.toInt()] = this.frame_map.remove(frame)!!
+        var first_frame = ((this.beat_count + 1) * frames_per_beat).toInt()
+        var last_frame = 0
+        for (uuid in samples_to_move) {
+            val pair = this.handle_range_map[uuid]!!
+            this.handle_range_map[uuid] = Pair(
+                pair.first - frames_per_beat.toInt(),
+                pair.second - frames_per_beat.toInt()
+            )
+            first_frame = min(first_frame, pair.first)
+            last_frame = max(last_frame, pair.second)
         }
 
-        for (uuid in sample_uuids_to_delete) {
+        var move_frames = (first_frame .. last_frame).intersect(this.frame_map.keys)
+
+        first_frame = ((this.beat_count + 1) * frames_per_beat).toInt()
+        last_frame = 0
+        for (uuid in samples_to_remove) {
+            val pair = this.handle_range_map[uuid]!!
             this.handle_range_map.remove(uuid)
             this.handle_map.remove(uuid)
+            first_frame = min(first_frame, pair.first)
+            last_frame = max(last_frame, pair.second)
         }
 
-        for ((uuid, pair) in this.handle_range_map) {
-            if (pair.first < first_frame) {
-                continue
-            }
-            this.handle_range_map[uuid] = Pair(
-                if (pair.first < first_frame) {
-                    pair.first
-                } else {
-                   pair.first - frames_per_beat.toInt()
-                },
-                if (pair.first < first_frame) {
-                    pair.second
-                } else {
-                    pair.second - frames_per_beat.toInt()
-                }
-            )
+
+        var del_frames = (first_frame .. last_frame).intersect(this.frame_map.keys)
+        for (f in del_frames) {
+            this.frame_map.remove(f)
         }
+
+        for (f in move_frames.toList().sortedBy { it }) {
+            this.frame_map[f - frames_per_beat.toInt()] = this.frame_map.remove(f)!!
+        }
+
     }
 
-    override fun remove_only(beat_key: BeatKey, position: List<Int>) {
-        this.unmap_frames(beat_key, position)
-        super.remove_only(beat_key, position)
+    override fun remove(beat_key: BeatKey, position: List<Int>) {
+        this.unmap_frames(beat_key, listOf())
+        super.remove(beat_key, position)
+        this.map_frames(beat_key, listOf())
+
     }
 
-    override fun remove_standard(beat_key: BeatKey, position: List<Int>) {
-        if (position.isNotEmpty()) {
-            this.unmap_frames(
-                beat_key,
-                position.subList(0, position.size - 1)
-            )
-        }
-        super.remove_standard(beat_key, position)
+   // override fun remove_only(beat_key: BeatKey, position: List<Int>) {
+   //     Log.d("AAA", "ONLY. $position")
+   //     this.unmap_frames(beat_key, position)
+   //     super.remove_only(beat_key, position)
+   // }
 
-        if (position.isNotEmpty()) {
-            this.map_frames(beat_key, position.subList(0, position.size - 1))
-        }
-    }
+   // override fun remove_standard(beat_key: BeatKey, position: List<Int>) {
+   //     Log.d("AAA", "STD. $position")
+   //     if (position.isNotEmpty()) {
+   //         this.unmap_frames(
+   //             beat_key,
+   //             position.subList(0, position.size - 1)
+   //         )
+   //     }
+   //     super.remove_standard(beat_key, position)
 
-    override fun remove_one_of_two(beat_key: BeatKey, position: List<Int>) {
-        if (position.isNotEmpty()) {
-            this.unmap_frames(
-                beat_key,
-                position.subList(0, position.size - 1)
-            )
-        }
-        super.remove_one_of_two(beat_key, position)
-        if (position.isNotEmpty()) {
-            this.map_frames(beat_key, position.subList(0, position.size - 1))
-        }
-    }
+   //     if (position.isNotEmpty()) {
+   //         this.map_frames(beat_key, position.subList(0, position.size - 1))
+   //     }
+   // }
+
+   // override fun remove_one_of_two(beat_key: BeatKey, position: List<Int>) {
+   //     Log.d("AAA", "/2. $position")
+   //     if (position.isNotEmpty()) {
+   //         this.unmap_frames(
+   //             beat_key,
+   //             position.subList(0, position.size - 1)
+   //         )
+   //     }
+   //     super.remove_one_of_two(beat_key, position)
+   //     if (position.isNotEmpty()) {
+   //         this.map_frames(beat_key, position.subList(0, position.size - 1))
+   //     }
+   // }
 
     override fun insert(beat_key: BeatKey, position: List<Int>) {
-        if (position.isNotEmpty()) {
-            this.unmap_frames(
-                beat_key,
-                position.subList(0, position.size - 1)
-            )
-        }
-
+        this.unmap_frames(beat_key, listOf())
         super.insert(beat_key, position)
+        this.map_frames(beat_key, listOf())
 
-        if (position.isNotEmpty()) {
-            this.map_frames(beat_key, position.subList(0, position.size - 1))
-        }
     }
 
     override fun load(bytes: ByteArray, new_path: String?) {

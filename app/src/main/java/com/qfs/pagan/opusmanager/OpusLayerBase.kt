@@ -553,7 +553,12 @@ open class OpusLayerBase {
         val prev_position = position.toMutableList()
         prev_position.removeLast()
         val to_replace = parent_tree[0]
-        this.replace_tree(beat_key, prev_position, to_replace)
+        this.replace_tree(
+            beat_key,
+            prev_position,
+            to_replace
+        )
+
     }
 
     // remove_only, remove_one_of_two and remove_standard all exist so I could separate

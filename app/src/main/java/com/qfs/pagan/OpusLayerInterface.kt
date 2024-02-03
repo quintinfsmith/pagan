@@ -26,6 +26,7 @@ class OpusLayerInterface(): OpusLayerFrameMap() {
     fun attach_activity(activity: MainActivity) {
         this.activity = activity
     }
+
     fun get_activity(): MainActivity? {
         return this.activity
     }

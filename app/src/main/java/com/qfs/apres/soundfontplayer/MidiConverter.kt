@@ -19,7 +19,7 @@ open class MidiConverter(var sample_handle_manager: SampleHandleManager) {
 
 
     // Tmp_file is a Kludge until I can figure out how to quickly precalculate file sizes
-    fun export_wav(midi_frame_map: MidiFrameMap, target_file: File, handler: ExporterEventHandler) {
+    fun export_wav(midi_frame_map: FrameMap, target_file: File, handler: ExporterEventHandler) {
         handler.on_start()
         this.generating = true
         this.cancel_flagged = false

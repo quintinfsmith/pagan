@@ -76,8 +76,8 @@ import com.qfs.apres.event.ProgramChange
 import com.qfs.apres.event.SongPositionPointer
 import com.qfs.apres.soundfont.SoundFont
 import com.qfs.apres.soundfontplayer.ActiveMidiAudioPlayer
+import com.qfs.apres.soundfontplayer.FrameMap
 import com.qfs.apres.soundfontplayer.MidiConverter
-import com.qfs.apres.soundfontplayer.MidiFrameMap
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.pagan.ColorMap.Palette
 import com.qfs.pagan.databinding.ActivityMainBinding
@@ -111,7 +111,7 @@ class MainActivity : AppCompatActivity() {
         var opus_manager = OpusManager()
         var show_percussion = false
 
-        fun export_wav(activity: MainActivity, midi_frame_map: MidiFrameMap, target_file: File, handler: MidiConverter.ExporterEventHandler) {
+        fun export_wav(activity: MainActivity, midi_frame_map: FrameMap, target_file: File, handler: MidiConverter.ExporterEventHandler) {
             this.export_handle = MidiConverter(SampleHandleManager(activity.get_soundfont()!!, 44100))
             this.export_handle?.export_wav(midi_frame_map, target_file, handler)
             this.export_handle = null
@@ -173,8 +173,7 @@ class MainActivity : AppCompatActivity() {
                         tmp_file.delete()
                     }
                     tmp_file.deleteOnExit()
-                    val frame_map = OpusManagerMidiFrameMap(opus_manager, 44100)
-                    this.view_model.export_wav(this, frame_map, tmp_file, object : MidiConverter.ExporterEventHandler {
+                    this.view_model.export_wav(this, opus_manager, tmp_file, object : MidiConverter.ExporterEventHandler {
                         val notification_manager = NotificationManagerCompat.from(this@MainActivity)
 
                         override fun on_start() {

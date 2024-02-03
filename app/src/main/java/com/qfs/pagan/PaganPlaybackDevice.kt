@@ -61,7 +61,6 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
     fun play_opus(start_beat: Int) {
         val opus_manager = this.activity.get_opus_manager()
         val start_frame = ((60.0 / opus_manager.tempo) * sample_handle_manager.sample_rate) * start_beat
-        val frame_map = OpusManagerMidiFrameMap(opus_manager, sample_handle_manager.sample_rate)
-        this.play(start_frame.toInt(), frame_map)
+        this.play(start_frame.toInt(), opus_manager)
     }
 }

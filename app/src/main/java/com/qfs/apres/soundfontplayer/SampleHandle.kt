@@ -156,7 +156,7 @@ class SampleHandle(
     }
 
     fun release_note() {
-        this.release_frame = this.working_frame
+        this.set_release_frame(this.working_frame)
     }
 
     fun is_pressed(): Boolean {

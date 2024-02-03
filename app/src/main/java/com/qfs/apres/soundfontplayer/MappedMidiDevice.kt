@@ -28,7 +28,7 @@ open class MappedMidiDevice(var sample_handle_manager: SampleHandleManager) {
     open fun on_cancelled() { }
     open fun on_beat(i :Int) { }
 
-    fun start_playback(start_frame: Int = 0, midi_frame_map: MidiFrameMap) {
+    fun start_playback(start_frame: Int = 0, midi_frame_map: FrameMap) {
         if (!this.is_playing && this.active_audio_track_handle == null) {
             this.active_audio_track_handle = AudioTrackHandle(sample_handle_manager.sample_rate, sample_handle_manager.buffer_size)
             this._start_play_loop(start_frame, midi_frame_map)
@@ -39,7 +39,7 @@ open class MappedMidiDevice(var sample_handle_manager: SampleHandleManager) {
         return !this.is_playing && this.active_audio_track_handle == null && !this.play_queued
     }
 
-    private fun _start_play_loop(start_frame: Int = 0, midi_frame_map: MidiFrameMap) {
+    private fun _start_play_loop(start_frame: Int = 0, midi_frame_map: FrameMap) {
         /*
             This loop will attempt to play a chunk, and while it's playing, generate the next chunk.
             Any time the generate() call takes longer than the buffer takes to play and empties the queue,
@@ -130,7 +130,7 @@ open class MappedMidiDevice(var sample_handle_manager: SampleHandleManager) {
                           Therefore we need to try to compensate for that and check the position it was
                           fired at vs the current position
                          */
-                        var frame_delay = if (audio_track != null) {
+                        val frame_delay = if (audio_track != null) {
                             if (audio_track.playState == AudioTrack.PLAYSTATE_STOPPED) {
                                 kill_flag = true
                                 0
@@ -206,7 +206,7 @@ open class MappedMidiDevice(var sample_handle_manager: SampleHandleManager) {
         this.play_cancelled = true
     }
 
-    fun play(start_frame: Int = 0, frame_map: MidiFrameMap) {
+    fun play(start_frame: Int = 0, frame_map: FrameMap) {
         this.play_cancelled = false
         this.play_queued = true
         this.start_playback(start_frame, frame_map)
@@ -220,7 +220,7 @@ open class MappedMidiDevice(var sample_handle_manager: SampleHandleManager) {
         }
     }
 
-    fun setup_beat_frames(first_frame: Int, frame_map: MidiFrameMap) {
+    fun setup_beat_frames(first_frame: Int, frame_map: FrameMap) {
         this.beat_frames.clear()
         this.beat_frames.addAll(frame_map.get_beat_frames())
     }

@@ -1,7 +1,6 @@
 package com.qfs.apres.soundfontplayer
 
 import kotlin.math.PI
-import kotlin.math.min
 import kotlin.math.tan
 
 class SampleHandle(
@@ -73,6 +72,7 @@ class SampleHandle(
     fun set_working_frame(frame: Int) {
         this.working_frame = frame
 
+
         // TODO: Improve this. This is slow and my brain doesn't wont to let me see the algebra here right now
         var tmp_frame = 0
         for (f in 0 until frame) {
@@ -114,14 +114,14 @@ class SampleHandle(
         val is_pressed = this.release_frame == null || this.working_frame < this.release_frame!!
 
         if (is_pressed) {
-            if (this.working_frame < this.frame_count_attack + this.frame_count_delay) {
+            if (this.working_frame - this.frame_count_delay < this.frame_count_attack) {
                 val r = (this.working_frame - this.frame_count_delay).toDouble() / this.frame_count_attack.toDouble()
                 frame_factor *= r
-            } else if (this.working_frame < this.frame_count_hold + this.frame_count_delay + this.frame_count_attack) {
+            } else if (this.working_frame - this.frame_count_delay - this.frame_count_attack < this.frame_count_hold) {
                 // pass
-            } else if (this.sustain_attenuation < 1.0) {
-                val r = min(1.0, ((this.working_frame - (this.frame_count_hold + this.frame_count_delay + this.frame_count_attack)).toDouble()  / this.frame_count_decay.toDouble()))
-                frame_factor *= (1.0 - r) + (this.sustain_attenuation * r)
+            } else if (this.sustain_attenuation < 1.0 && this.working_frame - this.frame_count_delay - this.frame_count_attack - this.frame_count_hold < this.frame_count_decay) {
+                val r = ((this.working_frame - this.frame_count_hold - this.frame_count_delay - this.frame_count_attack).toDouble()  / this.frame_count_decay.toDouble())
+                frame_factor *= (1.0 - this.sustain_attenuation) * r
             }
         }
 

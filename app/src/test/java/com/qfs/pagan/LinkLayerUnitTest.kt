@@ -6,7 +6,7 @@ import com.qfs.pagan.structure.OpusTree
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertTrue
 import org.junit.Test
-import com.qfs.pagan.opusmanager.LinksLayer as OpusManager
+import com.qfs.pagan.opusmanager.OpusLayerLinks as OpusManager
 
 /**
  * Example local unit test, which will execute on the development machine (host).

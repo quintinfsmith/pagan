@@ -1062,6 +1062,9 @@ open class OpusLayerBase {
         this.transpose = 0
     }
 
+    open fun on_project_changed() {
+    }
+
     open fun load(path: String) {
         this.load_json_file(path)
     }
@@ -1125,6 +1128,7 @@ open class OpusLayerBase {
         this.new_channel()
         this.insert_beat(0, 4)
         this.set_project_name(this.project_name)
+        this.on_project_changed()
     }
 
     open fun load_json_file(path: String) {
@@ -1140,6 +1144,7 @@ open class OpusLayerBase {
         }
         this.load_json(json_data)
         this.path = path
+        this.on_project_changed()
     }
 
     private fun parse_line_data(json_data: LoadedJSONData): List<List<List<OpusTree<OpusEvent>>>> {
@@ -1271,6 +1276,7 @@ open class OpusLayerBase {
                 }
             }
         }
+        this.on_project_changed()
     }
 
     open fun import_midi(path: String) {
@@ -1653,6 +1659,7 @@ open class OpusLayerBase {
                 this.set_channel_program(opus_channel, program)
             }
         }
+        this.on_project_changed()
     }
 
     open fun set_line_volume(channel: Int, line_offset: Int, volume: Int) {

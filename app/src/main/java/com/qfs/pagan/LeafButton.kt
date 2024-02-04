@@ -12,7 +12,7 @@ import androidx.appcompat.view.ContextThemeWrapper
 import com.qfs.pagan.ColorMap.Palette
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.BeatKey
-import com.qfs.pagan.opusmanager.LinksLayer
+import com.qfs.pagan.opusmanager.OpusLayerLinks
 import com.qfs.pagan.opusmanager.OpusEvent
 import com.qfs.pagan.structure.OpusTree
 import kotlin.concurrent.thread
@@ -179,14 +179,14 @@ class LeafButton(
                 opus_manager.cursor_select(beat_key, opus_manager.get_first_position(beat_key))
             } catch (e: Exception) {
                 when (e) {
-                    is LinksLayer.SelfLinkError -> { }
-                    is LinksLayer.MixedLinkException -> {
+                    is OpusLayerLinks.SelfLinkError -> { }
+                    is OpusLayerLinks.MixedLinkException -> {
                         editor_table.notify_cell_change(beat_key)
                         (this.get_activity()).feedback_msg(context.getString(R.string.feedback_mixed_link))
                     }
-                    is LinksLayer.LinkRangeOverlap,
+                    is OpusLayerLinks.LinkRangeOverlap,
                     is OpusLayerBase.RangeOverflow,
-                    is LinksLayer.LinkRangeOverflow -> {
+                    is OpusLayerLinks.LinkRangeOverflow -> {
                         editor_table.notify_cell_change(beat_key)
                         opus_manager.cursor.is_linking = false
                         opus_manager.cursor_select(beat_key, this.position)

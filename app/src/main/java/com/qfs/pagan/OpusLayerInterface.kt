@@ -502,7 +502,6 @@ class OpusLayerInterface(): OpusLayerFrameMap() {
 
         val new_path = activity.get_new_project_path()
         this.path = new_path
-        this.initial_setup()
     }
 
 
@@ -515,7 +514,6 @@ class OpusLayerInterface(): OpusLayerFrameMap() {
         }
         activity.view_model.show_percussion = !(!this.has_percussion() && this.channels.size > 1)
 
-        this.initial_setup()
     }
 
     override fun load_json(json_data: LoadedJSONData) {
@@ -530,7 +528,6 @@ class OpusLayerInterface(): OpusLayerFrameMap() {
             activity.view_model.show_percussion = !(!this.has_percussion() && this.channels.size > 1)
         }
 
-        this.initial_setup()
     }
 
     fun reload(bytes: ByteArray, path: String) {
@@ -539,7 +536,8 @@ class OpusLayerInterface(): OpusLayerFrameMap() {
         this.in_reload = false
     }
 
-    private fun initial_setup() {
+    override fun on_project_changed() {
+        super.on_project_changed()
         this.first_load_done = true
 
         this.runOnUiThread { main: MainActivity ->

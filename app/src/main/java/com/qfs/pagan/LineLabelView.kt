@@ -10,7 +10,7 @@ import android.view.View
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import androidx.appcompat.widget.AppCompatTextView
 import com.qfs.pagan.opusmanager.OpusLayerBase
-import com.qfs.pagan.opusmanager.LinksLayer
+import com.qfs.pagan.opusmanager.OpusLayerLinks
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 import com.qfs.pagan.ColorMap.Palette
 import com.qfs.pagan.opusmanager.OpusManagerCursor
@@ -199,7 +199,7 @@ class LineLabelView(context: Context, var channel: Int, var line_offset: Int): A
                         )
                     }
                 }
-            } catch (e: LinksLayer.BadRowLink) {
+            } catch (e: OpusLayerLinks.BadRowLink) {
                 // TODO: Feedback
                 //(this.context as MainActivity).feedback_msg("Can only row-link from first beat")
             }
@@ -216,7 +216,7 @@ class LineLabelView(context: Context, var channel: Int, var line_offset: Int): A
                         opus_manager.overwrite_row(channel, line_offset, beat_key)
                     }
                 }
-            } catch (e: LinksLayer.BadRowLink) {
+            } catch (e: OpusLayerLinks.BadRowLink) {
                 // TODO: Feedback
                 //(this.context as MainActivity).feedback_msg("Can only row-link from first beat")
             }

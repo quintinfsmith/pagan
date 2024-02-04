@@ -1,6 +1,5 @@
 package com.qfs.pagan
 
-import com.qfs.apres.Midi
 import com.qfs.apres.event.MIDIEvent
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event2.NoteOn79
@@ -8,7 +7,6 @@ import com.qfs.apres.soundfontplayer.FrameMap
 import com.qfs.apres.soundfontplayer.SampleHandle
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.pagan.opusmanager.BeatKey
-import com.qfs.pagan.opusmanager.LoadedJSONData
 import com.qfs.pagan.opusmanager.OpusChannel
 import com.qfs.pagan.opusmanager.OpusEvent
 import com.qfs.pagan.opusmanager.OpusLayerCursor
@@ -197,7 +195,7 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
         } else {
             1
         }
-        val ratio = (60.0 * this.sample_handle_manager!!.sample_rate / this.tempo)
+        val ratio = (60.0 * this.sample_handle_manager!!.sample_rate.toDouble() / this.tempo)
         val initial = offset + beat_key.beat.toDouble()
         return Pair(
             (initial * ratio).toInt(),
@@ -443,20 +441,8 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
 
     }
 
-    override fun new() {
-        super.new()
-        this.setup_sample_handle_manager()
-        this.setup_frame_map()
-    }
-
-    override fun load_json(json_data: LoadedJSONData) {
-        super.load_json(json_data)
-        this.setup_sample_handle_manager()
-        this.setup_frame_map()
-    }
-
-    override fun import_midi(midi: Midi) {
-        super.import_midi(midi)
+    override fun on_project_changed() {
+        super.on_project_changed()
         this.setup_sample_handle_manager()
         this.setup_frame_map()
     }
@@ -468,10 +454,12 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
 
         val output = mutableSetOf<SampleHandle>()
         for (uuid in this.frame_map[frame]!!) {
+            // Kludge? TODO: figure out a better place for these resets
             this.handle_map[uuid]!!.set_working_frame(0)
             this.handle_map[uuid]!!.is_dead = false
             output.add(this.handle_map[uuid]!!)
         }
+
         return output
     }
 

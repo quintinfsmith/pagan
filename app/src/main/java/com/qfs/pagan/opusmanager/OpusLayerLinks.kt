@@ -3,7 +3,7 @@ import com.qfs.pagan.structure.OpusTree
 import java.lang.Integer.max
 import java.lang.Integer.min
 
-open class LinksLayer : OpusLayerBase() {
+open class OpusLayerLinks : OpusLayerBase() {
     class SelfLinkError(beat_key_a: BeatKey, beat_key_b: BeatKey): Exception("$beat_key_a is $beat_key_b")
     class LinkRangeOverlap(from_key: BeatKey, to_key: BeatKey, startkey: BeatKey): Exception("Range($from_key .. $to_key) Contains $startkey")
     class LinkRangeOverflow(from_key: BeatKey, to_key: BeatKey, startkey: BeatKey): Exception("Range($from_key .. $to_key) @ $startkey overflows")
@@ -646,14 +646,14 @@ open class LinksLayer : OpusLayerBase() {
         for (range in alike_ranges) {
             try {
                 this.link_beat_range(range.first, corner_top, corner_bottom)
-            } catch (e: LinksLayer.MixedLinkException) {
+            } catch (e: OpusLayerLinks.MixedLinkException) {
                 //pass
             }
         }
     }
 
     override fun equals(other: Any?): Boolean {
-        if (other !is LinksLayer)  {
+        if (other !is OpusLayerLinks)  {
             return false
         }
 

@@ -81,7 +81,7 @@ import com.qfs.apres.soundfontplayer.MidiConverter
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.pagan.ColorMap.Palette
 import com.qfs.pagan.databinding.ActivityMainBinding
-import com.qfs.pagan.opusmanager.LinksLayer
+import com.qfs.pagan.opusmanager.OpusLayerLinks
 import com.qfs.pagan.opusmanager.OpusChannel
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import kotlinx.serialization.encodeToString
@@ -1663,7 +1663,7 @@ class MainActivity : AppCompatActivity() {
         if (opus_manager.path == null || !File(opus_manager.path!!).exists()) {
             return true
         }
-        val other = LinksLayer()
+        val other = OpusLayerLinks()
         other.load(opus_manager.path!!)
 
         return opus_manager != other

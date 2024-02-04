@@ -71,7 +71,7 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
             return NoteOn(
                 channel=9,
                 velocity=this.get_line_volume(beat_key.channel, beat_key.line_offset),
-                note=this.get_percussion_instrument(beat_key.line_offset)
+                note=this.get_percussion_instrument(beat_key.line_offset) + 27
             )
         }
 

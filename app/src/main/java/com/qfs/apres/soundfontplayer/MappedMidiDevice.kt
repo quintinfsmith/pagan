@@ -52,7 +52,7 @@ open class MappedMidiDevice(var sample_handle_manager: SampleHandleManager) {
 
         this.wave_generator.set_midi_frame_map(midi_frame_map)
         this.setup_beat_frames(start_frame, midi_frame_map)
-
+        this.wave_generator.clear()
         this.wave_generator.frame = start_frame
 
         thread {

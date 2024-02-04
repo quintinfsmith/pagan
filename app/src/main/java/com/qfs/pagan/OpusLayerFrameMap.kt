@@ -97,6 +97,7 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
 
     fun unmap_frames(beat_key: BeatKey, position: List<Int>) {
         val working_tree = this.get_tree(beat_key, position)
+
         if (!working_tree.is_leaf()) {
             for (i in 0 until working_tree.size) {
                 val new_position = position.toMutableList()
@@ -106,15 +107,16 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
             return
         }
 
-        val sample_handles = this.quick_map_sample_handles.remove(Pair(beat_key, position))
-        if (sample_handles == null) {
-            return
-        }
+        val sample_handles = this.quick_map_sample_handles.remove(Pair(beat_key, position)) ?: return
+
         for (uuid in sample_handles) {
             this.handle_map.remove(uuid)
             val (start_frame, _) = this.handle_range_map.remove(uuid) ?: continue
             if (this.frame_map.containsKey(start_frame)) {
                 this.frame_map[start_frame]!!.remove(uuid)
+                if (this.frame_map[start_frame]!!.isEmpty()) {
+                    this.frame_map.remove(start_frame)
+                }
             }
         }
     }
@@ -130,6 +132,9 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
             return
         } else if (!working_tree.is_event()) {
             return
+        }
+        if (this.quick_map_sample_handles.containsKey(Pair(beat_key, position))) {
+            this.unmap_frames(beat_key, position)
         }
 
         val (start_frame, end_frame) = this.get_frame_range(beat_key, position)
@@ -370,7 +375,7 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
         }
 
 
-        var del_frames = (first_frame .. last_frame).intersect(this.frame_map.keys)
+        val del_frames = (first_frame .. last_frame).intersect(this.frame_map.keys)
         for (f in del_frames) {
             this.frame_map.remove(f)
         }
@@ -381,47 +386,37 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
 
     }
 
-    override fun remove(beat_key: BeatKey, position: List<Int>) {
-        this.unmap_frames(beat_key, listOf())
-        super.remove(beat_key, position)
-        this.map_frames(beat_key, listOf())
-
+    override fun remove_only(beat_key: BeatKey, position: List<Int>) {
+        this.unmap_frames(beat_key, position)
+        super.remove_only(beat_key, position)
     }
 
-   // override fun remove_only(beat_key: BeatKey, position: List<Int>) {
-   //     Log.d("AAA", "ONLY. $position")
-   //     this.unmap_frames(beat_key, position)
-   //     super.remove_only(beat_key, position)
-   // }
+    override fun remove_standard(beat_key: BeatKey, position: List<Int>) {
+        if (position.isNotEmpty()) {
+            this.unmap_frames(
+                beat_key,
+                position.subList(0, position.size - 1)
+            )
+        }
+        super.remove_standard(beat_key, position)
 
-   // override fun remove_standard(beat_key: BeatKey, position: List<Int>) {
-   //     Log.d("AAA", "STD. $position")
-   //     if (position.isNotEmpty()) {
-   //         this.unmap_frames(
-   //             beat_key,
-   //             position.subList(0, position.size - 1)
-   //         )
-   //     }
-   //     super.remove_standard(beat_key, position)
+        if (position.isNotEmpty()) {
+            this.map_frames(beat_key, position.subList(0, position.size - 1))
+        }
+    }
 
-   //     if (position.isNotEmpty()) {
-   //         this.map_frames(beat_key, position.subList(0, position.size - 1))
-   //     }
-   // }
-
-   // override fun remove_one_of_two(beat_key: BeatKey, position: List<Int>) {
-   //     Log.d("AAA", "/2. $position")
-   //     if (position.isNotEmpty()) {
-   //         this.unmap_frames(
-   //             beat_key,
-   //             position.subList(0, position.size - 1)
-   //         )
-   //     }
-   //     super.remove_one_of_two(beat_key, position)
-   //     if (position.isNotEmpty()) {
-   //         this.map_frames(beat_key, position.subList(0, position.size - 1))
-   //     }
-   // }
+    override fun remove_one_of_two(beat_key: BeatKey, position: List<Int>) {
+        if (position.isNotEmpty()) {
+            this.unmap_frames(
+                beat_key,
+                position.subList(0, position.size - 1)
+            )
+        }
+        super.remove_one_of_two(beat_key, position)
+        if (position.isNotEmpty()) {
+            this.map_frames(beat_key, position.subList(0, position.size - 1))
+        }
+    }
 
     override fun insert(beat_key: BeatKey, position: List<Int>) {
         this.unmap_frames(beat_key, listOf())

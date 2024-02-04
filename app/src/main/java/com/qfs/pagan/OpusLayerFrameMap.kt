@@ -484,4 +484,16 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
             }
         }
     }
+
+    override fun swap_lines(channel_a: Int, line_a: Int, channel_b: Int, line_b: Int) {
+        for (i in 0 until this.beat_count) {
+            this.unmap_frames(BeatKey(channel_a, line_a, i), listOf())
+            this.unmap_frames(BeatKey(channel_b, line_b, i), listOf())
+        }
+        super.swap_lines(channel_a, line_a, channel_b, line_b)
+        for (i in 0 until this.beat_count) {
+            this.map_frames(BeatKey(channel_a, line_a, i), listOf())
+            this.map_frames(BeatKey(channel_b, line_b, i), listOf())
+        }
+    }
 }

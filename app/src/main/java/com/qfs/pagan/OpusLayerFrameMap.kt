@@ -8,6 +8,7 @@ import com.qfs.apres.soundfontplayer.FrameMap
 import com.qfs.apres.soundfontplayer.SampleHandle
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.pagan.opusmanager.BeatKey
+import com.qfs.pagan.opusmanager.LoadedJSONData
 import com.qfs.pagan.opusmanager.OpusChannel
 import com.qfs.pagan.opusmanager.OpusEvent
 import com.qfs.pagan.opusmanager.OpusLayerCursor
@@ -28,8 +29,21 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
         this.sample_handle_manager = new_manager
         this.frame_map.clear()
         this.handle_map.clear()
+        this.setup_sample_handle_manager()
         this.setup_frame_map()
     }
+
+    fun setup_sample_handle_manager() {
+        if (this.sample_handle_manager == null) {
+            return
+        }
+        for (channel in this.channels.indices) {
+            val instrument = this.get_channel_instrument(channel)
+            this.sample_handle_manager!!.select_bank(this.channels[channel].midi_channel, instrument.first)
+            this.sample_handle_manager!!.change_program(this.channels[channel].midi_channel, instrument.second)
+        }
+    }
+
 
     fun unset_sample_handle_manager() {
         this.sample_handle_manager = null
@@ -191,12 +205,14 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
         )
     }
 
-    fun remap_channel_frames(channel: Int) {
+    fun unmap_channel_frames(channel: Int) {
         this.channels[channel].lines.forEachIndexed { i: Int, line: OpusChannel.OpusLine ->
             line.beats.forEachIndexed { j: Int, tree: OpusTree<OpusEvent> ->
                 this.unmap_frames(BeatKey(channel, i, j), listOf())
             }
         }
+    }
+    fun map_channel_frames(channel: Int) {
         this.channels[channel].lines.forEachIndexed { i: Int, line: OpusChannel.OpusLine ->
             line.beats.forEachIndexed { j: Int, tree: OpusTree<OpusEvent> ->
                 this.map_frames(BeatKey(channel, i, j), listOf())
@@ -207,15 +223,17 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
     //-----End Layer Functions-------//
     override fun set_channel_instrument(channel: Int, instrument: Pair<Int, Int>) {
         super.set_channel_instrument(channel, instrument)
+        this.unmap_channel_frames(channel)
         this.sample_handle_manager!!.select_bank(this.channels[channel].midi_channel, instrument.first)
         this.sample_handle_manager!!.change_program(this.channels[channel].midi_channel, instrument.second)
-        this.remap_channel_frames(channel)
+        this.map_channel_frames(channel)
     }
 
     override fun set_channel_program(channel: Int, program: Int) {
         this.sample_handle_manager!!.change_program(this.channels[channel].midi_channel, program)
+        this.unmap_channel_frames(channel)
         super.set_channel_program(channel, program)
-        this.remap_channel_frames(channel)
+        this.map_channel_frames(channel)
     }
 
     override fun set_channel_bank(channel: Int, bank: Int) {
@@ -425,13 +443,21 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
 
     }
 
-    override fun load(bytes: ByteArray, new_path: String?) {
-        super.load(bytes, new_path)
+    override fun new() {
+        super.new()
+        this.setup_sample_handle_manager()
+        this.setup_frame_map()
+    }
+
+    override fun load_json(json_data: LoadedJSONData) {
+        super.load_json(json_data)
+        this.setup_sample_handle_manager()
         this.setup_frame_map()
     }
 
     override fun import_midi(midi: Midi) {
         super.import_midi(midi)
+        this.setup_sample_handle_manager()
         this.setup_frame_map()
     }
 

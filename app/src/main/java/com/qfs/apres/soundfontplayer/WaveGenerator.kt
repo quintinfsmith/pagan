@@ -10,7 +10,6 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
     class EventInPastException: Exception()
     var frame = 0
     var kill_frame: Int? = null
-    var last_frame: Int = 0
     private var _empty_chunks_count = 0
     private var _active_sample_handles = HashMap<Int, Pair<Int, SampleHandle>>()
     private var _working_int_array = IntArray(sample_handle_manager.buffer_size * 2)
@@ -40,12 +39,8 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
         this.update_active_frames(this.frame, buffer_size)
 
         if (this._active_sample_handles.isEmpty()) {
-            if (this.last_frame <= this.frame) {
-                throw DeadException()
-            } else {
-                this.frame += buffer_size
-                throw EmptyException()
-            }
+            this.frame += buffer_size
+            throw EmptyException()
         }
 
         for (i in this._working_int_array.indices) {

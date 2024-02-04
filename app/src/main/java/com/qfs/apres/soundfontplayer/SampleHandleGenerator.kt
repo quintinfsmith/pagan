@@ -84,26 +84,29 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
         val vol_env_delay: Double = (sample.vol_env_delay
             ?: instrument.instrument?.global_sample?.vol_env_delay
             ?: 0.0
-        ) + (instrument.vol_env_delay ?: 0.0) + (preset.global_zone?.vol_env_delay ?: 0.0)
+        ) * (instrument.vol_env_delay ?: 1.0) * (preset.global_zone?.vol_env_delay ?: 1.0)
 
         val vol_env_attack: Double = (sample.vol_env_attack
             ?: instrument.instrument?.global_sample?.vol_env_attack
             ?: -12000.0
-        ) + (instrument.vol_env_attack ?: 0.0) + (preset.global_zone?.vol_env_attack ?: 0.0)
+        ) * (instrument.vol_env_attack ?: 1.0) * (preset.global_zone?.vol_env_attack ?: 1.0)
+
         val vol_env_hold: Double = (sample.vol_env_hold
             ?: instrument.instrument?.global_sample?.vol_env_hold
             ?: -12000.0
-        ) + (instrument.vol_env_hold ?: 0.0) + (preset.global_zone?.vol_env_hold ?: 0.0)
+        ) * (instrument.vol_env_hold ?: 1.0) * (preset.global_zone?.vol_env_hold ?: 1.0)
 
         val vol_env_decay: Double = (sample.vol_env_decay
             ?: instrument.instrument?.global_sample?.vol_env_decay
             ?: -12000.0
-        ) + (instrument.vol_env_decay ?: 0.0) + (preset.global_zone?.vol_env_decay ?: 0.0)
+        ) * (instrument.vol_env_decay ?: 1.0) * (preset.global_zone?.vol_env_decay ?: 1.0)
 
         val vol_env_release: Double = (sample.vol_env_release
             ?: instrument.instrument?.global_sample?.vol_env_release
             ?: -12000.0
-        ) + (instrument.vol_env_release ?: 0.0) + (preset.global_zone?.vol_env_release ?: 0.0)
+        ) * (instrument.vol_env_release ?: 1.0) * (preset.global_zone?.vol_env_release ?: 1.0)
+
+
 
         val vol_env_sustain: Double = (sample.vol_env_sustain
             ?: instrument.instrument?.global_sample?.vol_env_sustain
@@ -113,7 +116,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
         val mod_lfo_freq: Double = (sample.mod_lfo_freq
             ?: instrument.instrument?.global_sample?.mod_lfo_freq
             ?: 0.0
-        ) + (instrument.mod_lfo_freq ?: 0.0) + (preset.global_zone?.mod_lfo_freq ?: 0.0)
+        ) * (instrument.mod_lfo_freq ?: 1.0) * (preset.global_zone?.mod_lfo_freq ?: 1.0)
         val mod_lfo_volume: Int = (sample.mod_lfo_volume
             ?: instrument.instrument?.global_sample?.mod_lfo_volume
             ?: 0
@@ -147,7 +150,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
             pan = (sample.pan ?: instrument.pan ?: preset.global_zone?.pan ?: 0.0) * 100.0 / 500.0,
             pitch_shift = pitch_shift,
             sustain_attenuation = (10.0).pow(vol_env_sustain / -20.0),
-            attenuation = (10.0).pow(attenuation / -20.0).toFloat(),
+            attenuation = (10.0).pow(attenuation / -20.0),
             stereo_mode = sample.sample!!.sampleType,
             loop_points = if (sample.sampleMode != null && sample.sampleMode!! and 1 == 1) {
                 val start = (sample.sample!!.loopStart.toFloat() / pitch_shift)

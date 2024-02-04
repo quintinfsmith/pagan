@@ -7,7 +7,7 @@ import kotlin.math.tan
 class SampleHandle(
     var data: ShortArray,
     var sample_rate: Int,
-    var attenuation: Float = 0.0F,
+    var attenuation: Double = 0.0,
     val loop_points: Pair<Int, Int>?,
     var stereo_mode: Int,
     var frame_count_delay: Int = 0,
@@ -53,8 +53,6 @@ class SampleHandle(
     var is_dead = false
     var current_volume: Double = 0.5
     var data_buffer: PitchedBuffer
-
-    private var current_position_release: Double = 0.0
 
     // TODO: Unimplimented
     // var release_delay: Int? = null
@@ -117,12 +115,12 @@ class SampleHandle(
 
         if (is_pressed) {
             if (this.working_frame < this.frame_count_attack + this.frame_count_delay) {
-                val r = (this.working_frame - this.frame_count_delay) / this.frame_count_attack
+                val r = (this.working_frame - this.frame_count_delay).toDouble() / this.frame_count_attack.toDouble()
                 frame_factor *= r
             } else if (this.working_frame < this.frame_count_hold + this.frame_count_delay + this.frame_count_attack) {
                 // pass
             } else if (this.sustain_attenuation < 1.0) {
-                val r = min(1.0, (this.working_frame - (this.frame_count_hold + this.frame_count_delay + this.frame_count_attack).toDouble() / this.frame_count_decay.toDouble()))
+                val r = min(1.0, ((this.working_frame - (this.frame_count_hold + this.frame_count_delay + this.frame_count_attack)).toDouble()  / this.frame_count_decay.toDouble()))
                 frame_factor *= (1.0 - r) + (this.sustain_attenuation * r)
             }
         }
@@ -130,8 +128,7 @@ class SampleHandle(
         if (! is_pressed) {
             val current_position_release = (this.working_frame - this.release_frame!!)
             if (current_position_release < this.frame_count_release) {
-                frame_factor *= 1.0 - (current_position_release / this.frame_count_release)
-                this.current_position_release += 1.0
+                frame_factor *= 1.0 - (current_position_release.toDouble() / this.frame_count_release.toDouble())
             } else {
                 this.is_dead = true
                 return null

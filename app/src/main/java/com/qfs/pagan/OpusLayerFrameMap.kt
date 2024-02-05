@@ -35,13 +35,13 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
         if (this.sample_handle_manager == null) {
             return
         }
+
         for (channel in this.channels.indices) {
             val instrument = this.get_channel_instrument(channel)
             this.sample_handle_manager!!.select_bank(this.channels[channel].midi_channel, instrument.first)
             this.sample_handle_manager!!.change_program(this.channels[channel].midi_channel, instrument.second)
         }
     }
-
 
     fun unset_sample_handle_manager() {
         this.sample_handle_manager = null
@@ -210,14 +210,15 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
             }
         }
     }
+
     fun map_channel_frames(channel: Int) {
         this.channels[channel].lines.forEachIndexed { i: Int, line: OpusChannel.OpusLine ->
             line.beats.forEachIndexed { j: Int, tree: OpusTree<OpusEvent> ->
                 this.map_frames(BeatKey(channel, i, j), listOf())
             }
         }
-
     }
+
     //-----End Layer Functions-------//
     override fun set_channel_instrument(channel: Int, instrument: Pair<Int, Int>) {
         super.set_channel_instrument(channel, instrument)
@@ -243,6 +244,22 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
         this.unmap_frames(beat_key, position)
         super.set_event(beat_key, position, event)
         this.map_frames(beat_key, position)
+    }
+
+    override fun set_percussion_event(beat_key: BeatKey, position: List<Int>) {
+        this.unmap_frames(beat_key, position)
+        super.set_percussion_event(beat_key, position)
+        this.map_frames(beat_key, position)
+    }
+
+    override fun set_percussion_instrument(line_offset: Int, instrument: Int) {
+        for (b in 0 until this.beat_count) {
+            this.unmap_frames(BeatKey(this.channels.size - 1, line_offset, b), listOf())
+        }
+        super.set_percussion_instrument(line_offset, instrument)
+        for (b in 0 until this.beat_count) {
+            this.map_frames(BeatKey(this.channels.size - 1, line_offset, b), listOf())
+        }
     }
 
     override fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<OpusEvent>) {
@@ -434,11 +451,28 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
         }
     }
 
+    override fun unset(beat_key: BeatKey, position: List<Int>) {
+        this.unmap_frames(beat_key, listOf())
+        super.unset(beat_key, position)
+    }
+
     override fun insert(beat_key: BeatKey, position: List<Int>) {
         this.unmap_frames(beat_key, listOf())
         super.insert(beat_key, position)
         this.map_frames(beat_key, listOf())
+    }
 
+    override fun insert_after(beat_key: BeatKey, position: List<Int>) {
+        this.unmap_frames(beat_key, listOf())
+        super.insert_after(beat_key, position)
+        this.map_frames(beat_key, listOf())
+
+    }
+
+    override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
+        this.unmap_frames(beat_key, listOf())
+        super.split_tree(beat_key, position, splits)
+        this.map_frames(beat_key, listOf())
     }
 
     override fun on_project_changed() {

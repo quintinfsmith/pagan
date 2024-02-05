@@ -1,5 +1,6 @@
 package com.qfs.pagan
 import android.content.res.Configuration
+import android.util.Log
 import android.view.View
 import android.widget.TextView
 import com.qfs.apres.Midi
@@ -941,5 +942,10 @@ class OpusLayerInterface(): OpusLayerFrameMap() {
 
         val editor_table = main.findViewById<EditorTable>(R.id.etEditorTable)
         editor_table.update_percussion_visibility()
+    }
+
+    override fun on_frames_changed(frames: List<IntRange>) {
+        Log.d("AAA", "FRAMES CHANGED: $frames")
+        super.on_frames_changed(frames)
     }
 }

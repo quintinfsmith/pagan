@@ -3,7 +3,7 @@ package com.qfs.apres.soundfontplayer
 import kotlin.math.abs
 import kotlin.math.max
 
-class WaveGenerator(var sample_handle_manager: SampleHandleManager, val midi_frame_map: FrameMap) {
+class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buffer_size: Int) {
     class KilledException: Exception()
     class EmptyException: Exception()
     class DeadException: Exception()
@@ -12,7 +12,7 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager, val midi_fra
     var kill_frame: Int? = null
     private var _empty_chunks_count = 0
     private var _active_sample_handles = HashMap<Int, Pair<Int, SampleHandle>>()
-    private var _working_int_array = IntArray(sample_handle_manager.buffer_size * 2)
+    private var _working_int_array = IntArray(this.buffer_size * 2)
     val cached_chunks = HashMap<Int, ShortArray>()
 
     fun generate(buffer_size: Int): ShortArray {
@@ -22,7 +22,7 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager, val midi_fra
     }
 
     fun generate(): ShortArray {
-        return this.generate(this.sample_handle_manager.buffer_size)
+        return this.generate(this.buffer_size)
     }
 
     fun generate(array: ShortArray) {
@@ -189,9 +189,9 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager, val midi_fra
         }
 
         this.cached_chunks[start_frame] = try {
-            this.generate(this.sample_handle_manager.buffer_size)
+            this.generate(this.buffer_size)
         } catch (e: EmptyException) {
-            ShortArray(this.sample_handle_manager.buffer_size * 2) { 0 }
+            ShortArray(this.buffer_size * 2) { 0 }
         } catch (e: KilledException) {
             return
         } catch (e: DeadException) {

@@ -5,11 +5,11 @@ import kotlin.concurrent.thread
 import kotlin.math.min
 
 // Ended up needing to split the active and cache Midi Players due to different fundemental requirements
-open class MappedPlaybackDevice(var sample_handle_manager: SampleHandleManager, var sample_frame_map: FrameMap) {
-    internal var wave_generator = WaveGenerator(sample_handle_manager, this.sample_frame_map)
+open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate: Int, val buffer_size: Int) {
+    internal var wave_generator = WaveGenerator(this.sample_frame_map, sample_rate, buffer_size)
     internal var active_audio_track_handle: AudioTrackHandle? = null
 
-    var BUFFER_NANO = sample_handle_manager.buffer_size.toLong() * 1_000_000_000.toLong() / sample_handle_manager.sample_rate.toLong()
+    var BUFFER_NANO = this.buffer_size.toLong() * 1_000_000_000.toLong() / this.sample_rate.toLong()
     var play_queued = false
     var is_playing = false
     var play_cancelled = false // need a away to cancel between parsing and playing
@@ -17,9 +17,9 @@ open class MappedPlaybackDevice(var sample_handle_manager: SampleHandleManager, 
     val beat_frames = mutableListOf<Int>()
 
     // precache 3 seconds when buffering
-    val minimum_buffer_cache_size: Int = this.sample_handle_manager.sample_rate * 3 / this.sample_handle_manager.buffer_size
+    val minimum_buffer_cache_size: Int = this.sample_rate * 3 / this.buffer_size
     // allow up to 1 minute to be cached during playback
-    val buffer_cache_size_limit: Int = this.sample_handle_manager.sample_rate * 60 / this.sample_handle_manager.buffer_size
+    val buffer_cache_size_limit: Int = this.sample_rate * 60 / this.buffer_size
 
     open fun on_buffer() { }
     open fun on_buffer_done() { }
@@ -38,7 +38,7 @@ open class MappedPlaybackDevice(var sample_handle_manager: SampleHandleManager, 
 
     fun start_playback(start_frame: Int = 0) {
         if (!this.is_playing && this.active_audio_track_handle == null) {
-            this.active_audio_track_handle = AudioTrackHandle(sample_handle_manager.sample_rate, sample_handle_manager.buffer_size)
+            this.active_audio_track_handle = AudioTrackHandle(this.sample_rate, this.buffer_size)
             this._start_play_loop(start_frame)
         }
     }
@@ -88,11 +88,11 @@ open class MappedPlaybackDevice(var sample_handle_manager: SampleHandleManager, 
                     }
 
                     val chunk = try {
-                        this.wave_generator.generate(this.sample_handle_manager.buffer_size)
+                        this.wave_generator.generate(this.buffer_size)
                     } catch (e: WaveGenerator.KilledException) {
                         break
                     } catch (e: WaveGenerator.EmptyException) {
-                        ShortArray(this.sample_handle_manager.buffer_size * 2) { 0 }
+                        ShortArray(this.buffer_size * 2) { 0 }
                     } catch (e: WaveGenerator.DeadException) {
                         break
                     }

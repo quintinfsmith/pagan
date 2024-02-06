@@ -2,7 +2,8 @@ package com.qfs.pagan
 
 import com.qfs.apres.soundfontplayer.MappedMidiDevice
 class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activity.configuration.sample_rate): MappedMidiDevice(
-    activity.get_opus_manager().sample_handle_manager!!
+    activity.get_opus_manager().sample_handle_manager!!,
+    activity.get_opus_manager()
 ) {
     /*
         All of this notification stuff is used with the understanding that the PaganPlaybackDevice
@@ -61,6 +62,6 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
     fun play_opus(start_beat: Int) {
         val opus_manager = this.activity.get_opus_manager()
         val start_frame = ((60.0 / opus_manager.tempo) * sample_handle_manager.sample_rate) * start_beat
-        this.play(start_frame.toInt(), opus_manager)
+        this.play(start_frame.toInt())
     }
 }

@@ -1,6 +1,5 @@
 package com.qfs.pagan
 import android.content.res.Configuration
-import android.util.Log
 import android.view.View
 import android.widget.TextView
 import com.qfs.apres.Midi
@@ -945,7 +944,10 @@ class OpusLayerInterface(): OpusLayerFrameMap() {
     }
 
     override fun on_frames_changed(frames: List<IntRange>) {
-        Log.d("AAA", "FRAMES CHANGED: $frames")
         super.on_frames_changed(frames)
+        val activity = this.get_activity() ?: return
+        for (range in frames) {
+            activity.cache_playback_frames(range)
+        }
     }
 }

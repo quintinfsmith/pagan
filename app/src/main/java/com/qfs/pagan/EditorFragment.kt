@@ -14,9 +14,9 @@ import androidx.fragment.app.setFragmentResult
 import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
 import com.qfs.pagan.databinding.FragmentMainBinding
-import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.OpusEvent
+import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import java.io.File
 import java.io.FileInputStream
@@ -235,7 +235,8 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
                         if (!opus_manager.first_load_done) {
                             main.get_opus_manager().new()
                         }
-                        main.feedback_msg(getString(R.string.feedback_midi_fail))
+                        throw e
+                        //main.feedback_msg(getString(R.string.feedback_midi_fail))
                     }
                 }
                 main.runOnUiThread {

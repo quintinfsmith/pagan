@@ -22,7 +22,7 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
     private var handle_map = HashMap<Int, SampleHandle>()
     private var unmap_flags = HashMap<Pair<BeatKey, List<Int>>, Boolean>()
     private var changed_frames = mutableSetOf<IntRange>()
-    private val handle_range_map = HashMap<Int, Pair<Int, Int>>()
+    private val handle_range_map = HashMap<Int, IntRange>()
     private var flux_indicator: Int = 0
 
     // FrameMap Interface -------------------
@@ -47,6 +47,21 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
         return List(this.beat_count) { i ->
             (frames_per_beat * (i + 1)).toInt()
         }
+    }
+
+    override fun get_active_handles(frame: Int): Set<Pair<Int, SampleHandle>> {
+        val output = mutableSetOf<Pair<Int, SampleHandle>>()
+        for ((uuid, range) in this.handle_range_map) {
+            if (range.contains(frame)) {
+                output.add(
+                    Pair(
+                        range.first,
+                        this.handle_map[uuid]!!
+                    )
+                )
+            }
+        }
+        return output
     }
     // End FrameMap Interface --------------------------
 
@@ -218,12 +233,12 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
         for (uuid in sample_handles) {
             this.handle_map.remove(uuid)
             // reminder: 'end_frame' here is the last active frame in the sample, including decay
-            val (start_frame, end_frame) = this.handle_range_map.remove(uuid) ?: continue
-            this.changed_frames.add(start_frame .. end_frame)
-            if (this.frame_map.containsKey(start_frame)) {
-                this.frame_map[start_frame]!!.remove(uuid)
-                if (this.frame_map[start_frame]!!.isEmpty()) {
-                    this.frame_map.remove(start_frame)
+            val frame_range = this.handle_range_map.remove(uuid) ?: continue
+            this.changed_frames.add(frame_range)
+            if (this.frame_map.containsKey(frame_range.first)) {
+                this.frame_map[frame_range.first]!!.remove(uuid)
+                if (this.frame_map[frame_range.first]!!.isEmpty()) {
+                    this.frame_map.remove(frame_range.first)
                 }
             }
         }
@@ -269,7 +284,7 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
 
             handle.release_frame = end_frame - start_frame
             val sample_end_frame = start_frame + handle.release_frame!! + handle.frame_count_release
-            this.handle_range_map[handle.uuid] = Pair(start_frame, sample_end_frame)
+            this.handle_range_map[handle.uuid] = start_frame .. sample_end_frame
             this.frame_map[start_frame]!!.add(handle.uuid)
             this.handle_map[handle.uuid] = handle
             this.changed_frames.add(start_frame .. sample_end_frame)
@@ -465,10 +480,7 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
             var first_frame = ((this.beat_count + 1) * frames_per_beat).toInt()
             for (uuid in samples_to_move) {
                 val pair = this.handle_range_map[uuid] ?: continue
-                this.handle_range_map[uuid] = Pair(
-                    pair.first + frames_per_beat.toInt(),
-                    pair.second + frames_per_beat.toInt()
-                )
+                this.handle_range_map[uuid] = pair.first + frames_per_beat.toInt() .. pair.last + frames_per_beat.toInt()
 
                 first_frame = min(first_frame, pair.first)
             }
@@ -525,12 +537,9 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
             var last_frame = 0
             for (uuid in samples_to_move) {
                 val pair = this.handle_range_map[uuid]!!
-                this.handle_range_map[uuid] = Pair(
-                    pair.first - frames_per_beat.toInt(),
-                    pair.second - frames_per_beat.toInt()
-                )
+                this.handle_range_map[uuid] = (pair.first - frames_per_beat.toInt()) .. (pair.last - frames_per_beat.toInt())
                 first_frame = min(first_frame, pair.first)
-                last_frame = max(last_frame, pair.second)
+                last_frame = max(last_frame, pair.last)
             }
 
             var move_frames = (first_frame..last_frame).intersect(this.frame_map.keys)
@@ -542,7 +551,7 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
                 this.handle_range_map.remove(uuid)
                 this.handle_map.remove(uuid)
                 first_frame = min(first_frame, pair.first)
-                last_frame = max(last_frame, pair.second)
+                last_frame = max(last_frame, pair.last)
             }
 
 

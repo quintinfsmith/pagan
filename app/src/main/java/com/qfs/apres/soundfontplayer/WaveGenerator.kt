@@ -3,7 +3,7 @@ package com.qfs.apres.soundfontplayer
 import kotlin.math.abs
 import kotlin.math.max
 
-class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
+class WaveGenerator(var sample_handle_manager: SampleHandleManager, val midi_frame_map: FrameMap) {
     class KilledException: Exception()
     class EmptyException: Exception()
     class DeadException: Exception()
@@ -13,11 +13,7 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
     private var _empty_chunks_count = 0
     private var _active_sample_handles = HashMap<Int, Pair<Int, SampleHandle>>()
     private var _working_int_array = IntArray(sample_handle_manager.buffer_size * 2)
-
-    var midi_frame_map: FrameMap? = null
-    fun set_midi_frame_map(midi_frame_map: FrameMap) {
-        this.midi_frame_map = midi_frame_map
-    }
+    val cached_chunks = HashMap<Int, ShortArray>()
 
     fun generate(buffer_size: Int): ShortArray {
         val output_array = ShortArray(buffer_size * 2)
@@ -30,11 +26,19 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
     }
 
     fun generate(array: ShortArray) {
+        val buffer_size = array.size / 2
+
+        if (this.cached_chunks.containsKey(this.frame)) {
+            val cached_chunk = this.cached_chunks[this.frame]!!
+            cached_chunk.copyInto(array)
+            this.set_position(this.frame + buffer_size)
+            return
+        }
+
         if (this.kill_frame != null && this.kill_frame!! <= this.frame) {
             throw KilledException()
         }
 
-        val buffer_size = array.size / 2
         val first_frame = this.frame
         this.update_active_frames(this.frame, buffer_size)
 
@@ -150,7 +154,7 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
 
         // then populate the next active frames with upcoming sample handles
         for (f in initial_frame until initial_frame + buffer_size) {
-            val handles = this.midi_frame_map?.get_new_handles(f) ?: continue
+            val handles = this.midi_frame_map.get_new_handles(f) ?: continue
             for (handle in handles) {
                 this._active_sample_handles[handle.uuid] = Pair(f, handle)
             }
@@ -162,5 +166,42 @@ class WaveGenerator(var sample_handle_manager: SampleHandleManager) {
         this._active_sample_handles.clear()
         this.frame = 0
         this._empty_chunks_count = 0
+    }
+
+    fun set_position(frame: Int) {
+        this.clear()
+        this.frame = frame
+    }
+
+    fun set_active_handles() {
+        this._active_sample_handles.clear()
+        val new_handles = this.midi_frame_map.get_active_handles(this.frame)
+        for ((frame, handle) in new_handles) {
+            handle.set_working_frame(this.frame - frame)
+            this._active_sample_handles[handle.uuid] = Pair(frame, handle)
+        }
+    }
+
+    fun cache_chunk(start_frame: Int) {
+        if (this.frame != start_frame) {
+            this.set_position(start_frame)
+            this.set_active_handles()
+        }
+
+        this.cached_chunks[start_frame] = try {
+            this.generate(this.sample_handle_manager.buffer_size)
+        } catch (e: EmptyException) {
+            ShortArray(this.sample_handle_manager.buffer_size * 2) { 0 }
+        } catch (e: KilledException) {
+            return
+        } catch (e: DeadException) {
+            return
+        }
+    }
+
+    fun decache_range(range: IntRange) {
+        for (i in range) {
+            this.cached_chunks.remove(i)
+        }
     }
 }

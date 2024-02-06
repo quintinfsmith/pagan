@@ -5,8 +5,8 @@ import kotlin.concurrent.thread
 import kotlin.math.min
 
 // Ended up needing to split the active and cache Midi Players due to different fundemental requirements
-open class MappedMidiDevice(var sample_handle_manager: SampleHandleManager) {
-    internal var wave_generator = WaveGenerator(sample_handle_manager)
+open class MappedMidiDevice(var sample_handle_manager: SampleHandleManager, var midi_frame_map: FrameMap) {
+    internal var wave_generator = WaveGenerator(sample_handle_manager, this.midi_frame_map)
     internal var active_audio_track_handle: AudioTrackHandle? = null
 
     var BUFFER_NANO = sample_handle_manager.buffer_size.toLong() * 1_000_000_000.toLong() / sample_handle_manager.sample_rate.toLong()
@@ -28,10 +28,18 @@ open class MappedMidiDevice(var sample_handle_manager: SampleHandleManager) {
     open fun on_cancelled() { }
     open fun on_beat(i :Int) { }
 
-    fun start_playback(start_frame: Int = 0, midi_frame_map: FrameMap) {
+    fun cache_chunk(start_frame: Int) {
+        this.wave_generator.cache_chunk(start_frame)
+    }
+
+    fun decache_range(range: IntRange) {
+        this.wave_generator.decache_range(range)
+    }
+
+    fun start_playback(start_frame: Int = 0) {
         if (!this.is_playing && this.active_audio_track_handle == null) {
             this.active_audio_track_handle = AudioTrackHandle(sample_handle_manager.sample_rate, sample_handle_manager.buffer_size)
-            this._start_play_loop(start_frame, midi_frame_map)
+            this._start_play_loop(start_frame)
         }
     }
 
@@ -39,7 +47,7 @@ open class MappedMidiDevice(var sample_handle_manager: SampleHandleManager) {
         return !this.is_playing && this.active_audio_track_handle == null && !this.play_queued
     }
 
-    private fun _start_play_loop(start_frame: Int = 0, midi_frame_map: FrameMap) {
+    private fun _start_play_loop(start_frame: Int = 0) {
         /*
             This loop will attempt to play a chunk, and while it's playing, generate the next chunk.
             Any time the generate() call takes longer than the buffer takes to play and empties the queue,
@@ -50,8 +58,7 @@ open class MappedMidiDevice(var sample_handle_manager: SampleHandleManager) {
         this.play_queued = false
         this.is_playing = true
 
-        this.wave_generator.set_midi_frame_map(midi_frame_map)
-        this.setup_beat_frames(start_frame, midi_frame_map)
+        this.setup_beat_frames()
         this.wave_generator.clear()
         this.wave_generator.frame = start_frame
 
@@ -206,10 +213,10 @@ open class MappedMidiDevice(var sample_handle_manager: SampleHandleManager) {
         this.play_cancelled = true
     }
 
-    fun play(start_frame: Int = 0, frame_map: FrameMap) {
+    fun play(start_frame: Int = 0) {
         this.play_cancelled = false
         this.play_queued = true
-        this.start_playback(start_frame, frame_map)
+        this.start_playback(start_frame)
     }
 
     fun pop_next_beat_delay(): Int? {
@@ -220,9 +227,9 @@ open class MappedMidiDevice(var sample_handle_manager: SampleHandleManager) {
         }
     }
 
-    fun setup_beat_frames(first_frame: Int, frame_map: FrameMap) {
+    fun setup_beat_frames() {
         this.beat_frames.clear()
-        this.beat_frames.addAll(frame_map.get_beat_frames())
+        this.beat_frames.addAll(this.midi_frame_map.get_beat_frames())
     }
 
 }

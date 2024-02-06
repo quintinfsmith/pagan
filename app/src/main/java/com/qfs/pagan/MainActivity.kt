@@ -81,8 +81,8 @@ import com.qfs.apres.soundfontplayer.MidiConverter
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.pagan.ColorMap.Palette
 import com.qfs.pagan.databinding.ActivityMainBinding
-import com.qfs.pagan.opusmanager.OpusLayerLinks
 import com.qfs.pagan.opusmanager.OpusChannel
+import com.qfs.pagan.opusmanager.OpusLayerLinks
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -1364,7 +1364,6 @@ class MainActivity : AppCompatActivity() {
 
         this._midi_playback_device = PaganPlaybackDevice(this)
 
-
         this._midi_feedback_device = ActiveMidiAudioPlayer(
             SampleHandleManager(
                 this._soundfont!!,
@@ -2124,5 +2123,17 @@ class MainActivity : AppCompatActivity() {
             Pair(Palette.TitleBar, this.getColor(R.color.light_primary)),
             Pair(Palette.TitleBarText, this.getColor(R.color.light_primary_text))
         )
+    }
+
+    fun cache_playback_frames(range: IntRange) {
+        if (this._midi_playback_device == null) {
+            return
+        }
+        val buffer_size = this._midi_playback_device!!.sample_handle_manager.buffer_size
+        var working_frame = range.first - (range.first % buffer_size)
+        while (range.contains(working_frame)) {
+            this._midi_playback_device!!.cache_chunk(working_frame)
+            working_frame += buffer_size
+        }
     }
 }

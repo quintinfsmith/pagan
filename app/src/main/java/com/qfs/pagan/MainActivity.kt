@@ -75,7 +75,6 @@ import com.qfs.apres.event.BankSelect
 import com.qfs.apres.event.ProgramChange
 import com.qfs.apres.event.SongPositionPointer
 import com.qfs.apres.soundfont.SoundFont
-import com.qfs.apres.soundfontplayer.ActiveMidiAudioPlayer
 import com.qfs.apres.soundfontplayer.MidiConverter
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.pagan.ColorMap.Palette
@@ -139,7 +138,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var _midi_interface: MidiController
     private var _soundfont: SoundFont? = null
     private var _midi_playback_device: PaganPlaybackDevice? = null
-    private var _midi_feedback_device: ActiveMidiAudioPlayer? = null
+    private var _midi_feedback_device: PaganFeedbackDevice? = null
     private var _midi_feedback_dispatcher = MidiFeedbackDispatcher()
 
     private lateinit var _app_bar_configuration: AppBarConfiguration
@@ -521,13 +520,12 @@ class MainActivity : AppCompatActivity() {
                 )
                 this._midi_playback_device = PaganPlaybackDevice(this)
                 if (!this._midi_interface.output_devices_connected()) {
-                    this._midi_feedback_device = ActiveMidiAudioPlayer(
+                    this._midi_feedback_device = PaganFeedbackDevice(
                         SampleHandleManager(
                             this._soundfont!!,
                             this.configuration.sample_rate
                         )
                     )
-                    this._midi_interface.connect_virtual_output_device(this._midi_feedback_device!!)
                 }
             }
             this.update_channel_instruments()
@@ -1365,14 +1363,13 @@ class MainActivity : AppCompatActivity() {
 
         this._midi_playback_device = PaganPlaybackDevice(this)
 
-        this._midi_feedback_device = ActiveMidiAudioPlayer(
+        this._midi_feedback_device = PaganFeedbackDevice(
             SampleHandleManager(
                 this._soundfont!!,
                 this.configuration.sample_rate
             )
         )
 
-        this._midi_interface.connect_virtual_output_device(this._midi_feedback_device!!)
 
         this.update_channel_instruments()
 

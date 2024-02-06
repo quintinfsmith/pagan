@@ -513,7 +513,6 @@ class OpusLayerInterface(): OpusLayerFrameMap() {
             super.import_midi(midi)
         }
         activity.view_model.show_percussion = !(!this.has_percussion() && this.channels.size > 1)
-
     }
 
     override fun load_json(json_data: LoadedJSONData) {
@@ -545,6 +544,7 @@ class OpusLayerInterface(): OpusLayerFrameMap() {
             editor_table?.clear()
             editor_table?.precise_scroll(0, 0, 0, 0)
 
+            main.clear_cached_playback_frames()
             main.setup_project_config_drawer()
             main.validate_percussion_visibility()
             main.update_menu_options()

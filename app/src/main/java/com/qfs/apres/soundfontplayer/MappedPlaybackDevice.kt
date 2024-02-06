@@ -36,6 +36,10 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
         this.wave_generator.decache_range(range)
     }
 
+    fun purge_wave_generator() {
+        this.wave_generator.clear()
+    }
+
     fun start_playback(start_frame: Int = 0) {
         if (!this.is_playing && this.active_audio_track_handle == null) {
             this.active_audio_track_handle = AudioTrackHandle(this.sample_rate, this.buffer_size)

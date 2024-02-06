@@ -166,6 +166,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         this._active_sample_handles.clear()
         this.frame = 0
         this._empty_chunks_count = 0
+        this.cached_chunks.clear()
     }
 
     fun set_position(frame: Int) {
@@ -204,4 +205,5 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             this.cached_chunks.remove(i)
         }
     }
+
 }

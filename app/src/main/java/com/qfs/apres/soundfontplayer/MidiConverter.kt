@@ -6,7 +6,7 @@ import java.io.File
 import java.io.FileOutputStream
 
 // Ended up needing to split the active and cache Midi Players due to different fundemental requirements
-open class MidiConverter(var sample_handle_manager: SampleHandleManager) {
+open class MidiConverter(val sample_rate: Int, val buffer_size: Int) {
     interface ExporterEventHandler {
         abstract fun on_start()
         abstract fun on_complete()
@@ -23,9 +23,9 @@ open class MidiConverter(var sample_handle_manager: SampleHandleManager) {
         handler.on_start()
         this.generating = true
         this.cancel_flagged = false
-        val wave_generator = WaveGenerator(sample_handle_manager, midi_frame_map)
+        val wave_generator = WaveGenerator(midi_frame_map, this.sample_rate, this.buffer_size)
         val data_chunks = mutableListOf<ShortArray>()
-        val total_chunk_count = this@MidiConverter.approximate_frame_count.toDouble() / this@MidiConverter.sample_handle_manager.buffer_size
+        val total_chunk_count = this@MidiConverter.approximate_frame_count.toDouble() / this@MidiConverter.buffer_size
         var chunk_count = 0.0
         val min_delta = 500
 
@@ -33,9 +33,9 @@ open class MidiConverter(var sample_handle_manager: SampleHandleManager) {
         while (!this.cancel_flagged) {
             try {
                 val chunk = try {
-                    wave_generator.generate(sample_handle_manager.buffer_size)
+                    wave_generator.generate(this.buffer_size)
                 } catch (e: WaveGenerator.EmptyException) {
-                    ShortArray(sample_handle_manager.buffer_size * 2)
+                    ShortArray(this.buffer_size * 2)
                 }
                 data_chunks.add(chunk)
                 val now = System.currentTimeMillis()
@@ -54,7 +54,7 @@ open class MidiConverter(var sample_handle_manager: SampleHandleManager) {
         val output_stream = FileOutputStream(target_file)
         val buffered_output_stream = BufferedOutputStream(output_stream)
         val data_output_stream = DataOutputStream(buffered_output_stream)
-        val data_byte_count = data_chunks.size * sample_handle_manager.buffer_size * 4
+        val data_byte_count = data_chunks.size * this.buffer_size * 4
 
         if (!this.cancel_flagged) {
             // 00 Riff
@@ -73,9 +73,9 @@ open class MidiConverter(var sample_handle_manager: SampleHandleManager) {
             // 22 Channel Count
             data_output_stream.writeShort(0x0200)
             // 24 Sample rate
-            data_output_stream.writeInt(Integer.reverseBytes(sample_handle_manager.sample_rate))
+            data_output_stream.writeInt(Integer.reverseBytes(this.sample_rate))
             // 28 byte rate
-            data_output_stream.writeInt(Integer.reverseBytes(sample_handle_manager.sample_rate * 2))
+            data_output_stream.writeInt(Integer.reverseBytes(this.sample_rate * 2))
             // 32 Block Alignment
             data_output_stream.writeByte(0x04)
             data_output_stream.writeByte(0x00)

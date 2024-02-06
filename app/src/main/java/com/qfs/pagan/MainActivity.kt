@@ -76,12 +76,10 @@ import com.qfs.apres.event.ProgramChange
 import com.qfs.apres.event.SongPositionPointer
 import com.qfs.apres.soundfont.SoundFont
 import com.qfs.apres.soundfontplayer.ActiveMidiAudioPlayer
-import com.qfs.apres.soundfontplayer.FrameMap
 import com.qfs.apres.soundfontplayer.MidiConverter
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.pagan.ColorMap.Palette
 import com.qfs.pagan.databinding.ActivityMainBinding
-import com.qfs.pagan.opusmanager.OpusChannel
 import com.qfs.pagan.opusmanager.OpusLayerLinks
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import kotlinx.serialization.encodeToString
@@ -111,8 +109,9 @@ class MainActivity : AppCompatActivity() {
         var opus_manager = OpusManager()
         var show_percussion = false
 
-        fun export_wav(activity: MainActivity, midi_frame_map: FrameMap, target_file: File, handler: MidiConverter.ExporterEventHandler) {
-            this.export_handle = MidiConverter(SampleHandleManager(activity.get_soundfont()!!, 44100))
+        fun export_wav(midi_frame_map: OpusLayerFrameMap, target_file: File, handler: MidiConverter.ExporterEventHandler) {
+
+            this.export_handle = MidiConverter(44100, 11025) // Not accessing Cache *YET*, don't need to match buffer sizes
             this.export_handle?.export_wav(midi_frame_map, target_file, handler)
             this.export_handle = null
         }
@@ -173,7 +172,7 @@ class MainActivity : AppCompatActivity() {
                         tmp_file.delete()
                     }
                     tmp_file.deleteOnExit()
-                    this.view_model.export_wav(this, opus_manager, tmp_file, object : MidiConverter.ExporterEventHandler {
+                    this.view_model.export_wav(opus_manager, tmp_file, object : MidiConverter.ExporterEventHandler {
                         val notification_manager = NotificationManagerCompat.from(this@MainActivity)
 
                         override fun on_start() {
@@ -748,12 +747,14 @@ class MainActivity : AppCompatActivity() {
         val start_point = this.get_working_column()
         // Currently, Midi2.0 output is not supported. will be needed for N-radix projects
         thread {
-            val opus_manager = this.get_opus_manager()
-            opus_manager.channels.forEachIndexed { i: Int, channel: OpusChannel ->
-                val (bank, program) = channel.get_instrument()
-                this._midi_playback_device?.sample_handle_manager?.select_bank(channel.midi_channel, bank)
-                this._midi_playback_device?.sample_handle_manager?.change_program(channel.midi_channel, program)
-            }
+            // May Not need to set instruments at beginning of playback, commenting for now
+            //val opus_manager = this.get_opus_manager()
+            //opus_manager.channels.forEachIndexed { i: Int, channel: OpusChannel ->
+            //    val (bank, program) = channel.get_instrument()
+            //    opus_manager.sample_handle_manager?.select_bank(channel.midi_channel, bank)
+            //    opus_manager.sample_handle_manager?.change_program(channel.midi_channel, program)
+            //}
+
             this._midi_playback_device?.play_opus(start_point)
         }
     }
@@ -2126,14 +2127,18 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun cache_playback_frames(range: IntRange) {
+        return
         if (this._midi_playback_device == null) {
             return
         }
-        val buffer_size = this._midi_playback_device!!.sample_handle_manager.buffer_size
+        val buffer_size = this._midi_playback_device!!.buffer_size
         var working_frame = range.first - (range.first % buffer_size)
         while (range.contains(working_frame)) {
             this._midi_playback_device!!.cache_chunk(working_frame)
             working_frame += buffer_size
         }
+    }
+    fun clear_cached_playback_frames() {
+        this._midi_playback_device!!.purge_wave_generator()
     }
 }

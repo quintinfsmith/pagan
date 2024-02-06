@@ -318,6 +318,17 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
             ((initial + (w * duration)) * ratio).toInt()
         )
     }
+    fun unmap_line_frames(channel: Int, line_offset: Int) {
+        this.channels[channel].lines[line_offset].beats.forEachIndexed { j: Int, tree: OpusTree<OpusEvent> ->
+            this.unmap_frames(BeatKey(channel, line_offset, j), listOf())
+        }
+    }
+
+    fun map_line_frames(channel: Int, line_offset: Int) {
+        this.channels[channel].lines[line_offset].beats.forEachIndexed { j: Int, tree: OpusTree<OpusEvent> ->
+            this.map_frames(BeatKey(channel, line_offset, j), listOf())
+        }
+    }
     fun unmap_channel_frames(channel: Int) {
         this.channels[channel].lines.forEachIndexed { i: Int, line: OpusChannel.OpusLine ->
             line.beats.forEachIndexed { j: Int, tree: OpusTree<OpusEvent> ->
@@ -388,13 +399,9 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
 
     override fun set_percussion_instrument(line_offset: Int, instrument: Int) {
         this.flux_wrapper {
-            for (b in 0 until this.beat_count) {
-                this.unmap_frames(BeatKey(this.channels.size - 1, line_offset, b), listOf())
-            }
+            this.unmap_line_frames(this.channels.size - 1, line_offset)
             super.set_percussion_instrument(line_offset, instrument)
-            for (b in 0 until this.beat_count) {
-                this.map_frames(BeatKey(this.channels.size - 1, line_offset, b), listOf())
-            }
+            this.map_line_frames(this.channels.size - 1, line_offset)
         }
     }
 
@@ -717,6 +724,14 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
             for (i in 0 until this.beat_count) {
                 this.map_frames(BeatKey(channel, line_offset, i), listOf())
             }
+        }
+    }
+
+    override fun set_line_volume(channel: Int, line_offset: Int, volume: Int) {
+        this.flux_wrapper {
+            this.unmap_line_frames(channel, line_offset)
+            super.set_line_volume(channel, line_offset, volume)
+            this.map_line_frames(channel, line_offset)
         }
     }
 }

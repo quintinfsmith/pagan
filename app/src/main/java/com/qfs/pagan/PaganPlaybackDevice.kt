@@ -1,7 +1,7 @@
 package com.qfs.pagan
 
-import com.qfs.apres.soundfontplayer.MappedMidiDevice
-class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activity.configuration.sample_rate): MappedMidiDevice(
+import com.qfs.apres.soundfontplayer.MappedPlaybackDevice
+class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activity.configuration.sample_rate): MappedPlaybackDevice(
     activity.get_opus_manager().sample_handle_manager!!,
     activity.get_opus_manager()
 ) {

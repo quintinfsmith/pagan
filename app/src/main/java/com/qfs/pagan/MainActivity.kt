@@ -74,6 +74,7 @@ import com.qfs.apres.VirtualMidiOutputDevice
 import com.qfs.apres.event.BankSelect
 import com.qfs.apres.event.ProgramChange
 import com.qfs.apres.event.SongPositionPointer
+import com.qfs.apres.event2.NoteOn79
 import com.qfs.apres.soundfont.SoundFont
 import com.qfs.apres.soundfontplayer.MidiConverter
 import com.qfs.apres.soundfontplayer.SampleHandleManager
@@ -137,6 +138,7 @@ class MainActivity : AppCompatActivity() {
     private var _virtual_input_device = MidiPlayer()
     private lateinit var _midi_interface: MidiController
     private var _soundfont: SoundFont? = null
+    private var sample_handle_manager: SampleHandleManager? = null
     private var _midi_playback_device: PaganPlaybackDevice? = null
     private var _midi_feedback_device: PaganFeedbackDevice? = null
     private var _midi_feedback_dispatcher = MidiFeedbackDispatcher()
@@ -515,16 +517,18 @@ class MainActivity : AppCompatActivity() {
             val sf_file = File(path)
             if (sf_file.exists()) {
                 this._soundfont = SoundFont(path)
+                this.sample_handle_manager = SampleHandleManager(
+                    this._soundfont!!,
+                    this.configuration.sample_rate
+                )
                 this.get_opus_manager().set_sample_handle_manager(
-                    SampleHandleManager(this._soundfont!!, this.configuration.sample_rate)
+                    this.sample_handle_manager!!
                 )
                 this._midi_playback_device = PaganPlaybackDevice(this)
+
                 if (!this._midi_interface.output_devices_connected()) {
                     this._midi_feedback_device = PaganFeedbackDevice(
-                        SampleHandleManager(
-                            this._soundfont!!,
-                            this.configuration.sample_rate
-                        )
+                        this.sample_handle_manager!!
                     )
                 }
             }
@@ -563,7 +567,6 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         })
-
 
         val drawer_layout = this.findViewById<DrawerLayout>(R.id.drawer_layout) ?: return
         drawer_layout.addDrawerListener(object : ActionBarDrawerToggle(
@@ -1238,16 +1241,35 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // Update peripheral device instruments, ie feedback device and midi devices
     fun update_channel_instruments(index: Int? = null) {
+        val opus_manager = this.get_opus_manager()
         if (index == null) {
-            for (channel in this.get_opus_manager().channels) {
+            for (channel in opus_manager.channels) {
                 this._midi_interface.broadcast_event(BankSelect(channel.midi_channel, channel.midi_bank))
                 this._midi_interface.broadcast_event(ProgramChange(channel.midi_channel, channel.midi_program))
+
+                this._midi_feedback_device!!.sample_handle_manager.select_bank(
+                    channel.midi_channel,
+                    channel.midi_bank,
+                )
+                this._midi_feedback_device!!.sample_handle_manager.change_program(
+                    channel.midi_channel,
+                    channel.midi_program,
+                )
             }
         } else {
             val opus_channel = this.get_opus_manager().channels[index]
             this._midi_interface.broadcast_event(BankSelect(opus_channel.midi_channel, opus_channel.midi_bank))
             this._midi_interface.broadcast_event(ProgramChange(opus_channel.midi_channel, opus_channel.midi_program))
+            this._midi_feedback_device!!.sample_handle_manager.select_bank(
+                opus_channel.midi_channel,
+                opus_channel.midi_bank,
+            )
+            this._midi_feedback_device!!.sample_handle_manager.change_program(
+                opus_channel.midi_channel,
+                opus_channel.midi_program,
+            )
         }
     }
 
@@ -1282,13 +1304,26 @@ class MainActivity : AppCompatActivity() {
             Pair(new_note, bend)
         }
 
-        this._midi_feedback_dispatcher.play_note(
-            midi_channel,
-            note,
-            bend,
-            velocity,
-            !opus_manager.is_tuning_standard() || ! this.is_connected_to_physical_device()
-        )
+        if (this._midi_playback_device != null) {
+            this._midi_feedback_device!!.new_event(
+                NoteOn79(
+                    index=0,
+                    channel=midi_channel,
+                    note=note,
+                    bend=bend,
+                    velocity = velocity shl 8,
+                ),
+                100
+            )
+        } else {
+            this._midi_feedback_dispatcher.play_note(
+                midi_channel,
+                note,
+                bend,
+                velocity,
+                !opus_manager.is_tuning_standard() || !this.is_connected_to_physical_device()
+            )
+        }
     }
 
     fun import_project(path: String) {
@@ -1352,22 +1387,19 @@ class MainActivity : AppCompatActivity() {
         val path = "${this.getExternalFilesDir(null)}/SoundFonts/$filename"
         this.configuration.soundfont = filename
         this._soundfont = SoundFont(path)
-
+        this.sample_handle_manager = SampleHandleManager(
+            this._soundfont!!,
+            this.configuration.sample_rate
+        )
 
         this.get_opus_manager().set_sample_handle_manager(
-            SampleHandleManager(
-                this._soundfont!!,
-                this.configuration.sample_rate
-            )
+            this.sample_handle_manager!!
         )
 
         this._midi_playback_device = PaganPlaybackDevice(this)
 
         this._midi_feedback_device = PaganFeedbackDevice(
-            SampleHandleManager(
-                this._soundfont!!,
-                this.configuration.sample_rate
-            )
+            this.sample_handle_manager!!
         )
 
 
@@ -1452,6 +1484,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         this._soundfont = null
+        this.sample_handle_manager = null
         this.configuration.soundfont = null
         this._midi_playback_device = null
         this._midi_feedback_device = null
@@ -1836,24 +1869,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun disconnect_feedback_device() {
-        if (this._midi_feedback_device == null || !this._midi_interface.is_connected(this._midi_feedback_device!!)) {
-            return
-        }
-
-        this._midi_feedback_dispatcher.close()
-        this._midi_interface.disconnect_virtual_output_device( this._midi_feedback_device!! )
+        this._midi_feedback_device?.kill()
+        this._midi_feedback_device = null
     }
 
     fun connect_feedback_device() {
-        if (this._midi_feedback_device == null && this.configuration.soundfont != null) {
+        if (this.configuration.soundfont != null && this._soundfont == null) {
             this.set_soundfont(this.configuration.soundfont)
         }
-
-        if (this._midi_feedback_device == null || this._midi_interface.is_connected(this._midi_feedback_device!!)) {
-            return
-        }
-
-        this._midi_interface.connect_virtual_output_device( this._midi_feedback_device!! )
     }
 
     fun block_physical_midi_output() {

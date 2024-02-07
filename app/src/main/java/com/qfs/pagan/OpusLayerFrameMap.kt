@@ -263,7 +263,6 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
 
         val (start_frame, end_frame) = this.get_frame_range(beat_key, position)
         val start_event = gen_midi_event(beat_key, position)!!
-
         val handles = when (start_event) {
             is NoteOn -> {
                 this.sample_handle_manager!!.gen_sample_handles(start_event)

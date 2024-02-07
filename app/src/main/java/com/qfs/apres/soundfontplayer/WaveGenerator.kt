@@ -14,6 +14,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
     private var _active_sample_handles = HashMap<Int, Pair<Int, SampleHandle>>()
     private var _working_int_array = IntArray(this.buffer_size * 2)
     val cached_chunks = HashMap<Int, ShortArray>()
+    var timeout: Int? = null
 
     fun generate(buffer_size: Int): ShortArray {
         val output_array = ShortArray(buffer_size * 2)
@@ -28,6 +29,10 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
     fun generate(array: ShortArray) {
         val buffer_size = array.size / 2
 
+        if (this.kill_frame != null && this.kill_frame!! <= this.frame) {
+            throw KilledException()
+        }
+
         if (this.cached_chunks.containsKey(this.frame)) {
             val cached_chunk = this.cached_chunks[this.frame]!!
             cached_chunk.copyInto(array)
@@ -35,9 +40,6 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             return
         }
 
-        if (this.kill_frame != null && this.kill_frame!! <= this.frame) {
-            throw KilledException()
-        }
 
         val first_frame = this.frame
         this.update_active_frames(this.frame, buffer_size)
@@ -136,6 +138,10 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         }
 
         this.frame += buffer_size
+
+        if (this.timeout != null && this._empty_chunks_count >= this.timeout!!) {
+            throw DeadException()
+        }
     }
 
     private fun update_active_frames(initial_frame: Int, buffer_size: Int) {

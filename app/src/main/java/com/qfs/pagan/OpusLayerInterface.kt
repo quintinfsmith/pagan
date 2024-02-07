@@ -68,7 +68,7 @@ class OpusLayerInterface(): OpusLayerFrameMap() {
         super.set_channel_instrument(channel, instrument)
 
         this.runOnUiThread { main: MainActivity ->
-            main.update_channel_instruments()
+            main.update_channel_instruments(channel)
             main.populate_active_percussion_names()
             val channel_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
             if (channel_recycler.adapter != null) {

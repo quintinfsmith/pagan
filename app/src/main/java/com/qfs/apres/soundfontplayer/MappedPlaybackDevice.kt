@@ -1,6 +1,7 @@
 package com.qfs.apres.soundfontplayer
 
 import android.media.AudioTrack
+import android.util.Log
 import kotlin.concurrent.thread
 import kotlin.math.min
 
@@ -79,7 +80,7 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
                 }
 
                 chunk = try {
-                    this.wave_generator.generate(this.buffer_size)
+                    this.wave_generator.generate()
                 } catch (e: WaveGenerator.EmptyException) {
                     ShortArray(this.buffer_size * 2) { 0 }
                 } catch (e: WaveGenerator.DeadException) {
@@ -90,8 +91,19 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
                 val duration = System.currentTimeMillis() - ts
                 val real_delay = buffer_millis - duration
 
-                if (real_delay > 10) {
+                if (real_delay > 0) {
                     Thread.sleep(real_delay)
+                } else if (real_delay < 0) {
+                    audio_track_handle.pause()
+                    this.on_buffer()
+                    Log.d("AAA", "UNDERRUN: ${audio_track_handle.get_underrun_count()}")
+                    val bkp_frame = this.wave_generator.frame
+                    for (i in 0 until this.minimum_buffer_cache_size) {
+                        this.wave_generator.cache_chunk(this.wave_generator.frame)
+                    }
+                    this.wave_generator.set_position(bkp_frame)
+                    this.on_buffer_done()
+                    audio_track_handle.play()
                 }
             }
             // Delay while write finishes
@@ -140,7 +152,6 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
                         )
                     }
                 }
-
                 override fun onMarkerReached(audio_track: AudioTrack?) {
                     if (audio_track == null) {
                         return

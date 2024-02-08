@@ -519,7 +519,8 @@ class MainActivity : AppCompatActivity() {
                 this._soundfont = SoundFont(path)
                 this.sample_handle_manager = SampleHandleManager(
                     this._soundfont!!,
-                    this.configuration.sample_rate
+                    this.configuration.sample_rate,
+                    this.configuration.sample_rate // Use Large buffer
                 )
                 this.get_opus_manager().set_sample_handle_manager(
                     this.sample_handle_manager!!
@@ -528,7 +529,10 @@ class MainActivity : AppCompatActivity() {
 
                 if (!this._midi_interface.output_devices_connected()) {
                     this._midi_feedback_device = PaganFeedbackDevice(
-                        this.sample_handle_manager!!
+                        SampleHandleManager(
+                            this._soundfont!!,
+                            this.configuration.sample_rate
+                        )
                     )
                 }
             }
@@ -1313,7 +1317,7 @@ class MainActivity : AppCompatActivity() {
                     bend=bend,
                     velocity = velocity shl 8,
                 ),
-                100
+                250
             )
         } else {
             this._midi_feedback_dispatcher.play_note(
@@ -1389,6 +1393,7 @@ class MainActivity : AppCompatActivity() {
         this._soundfont = SoundFont(path)
         this.sample_handle_manager = SampleHandleManager(
             this._soundfont!!,
+            this.configuration.sample_rate,
             this.configuration.sample_rate
         )
 
@@ -1399,7 +1404,10 @@ class MainActivity : AppCompatActivity() {
         this._midi_playback_device = PaganPlaybackDevice(this)
 
         this._midi_feedback_device = PaganFeedbackDevice(
-            this.sample_handle_manager!!
+            SampleHandleManager(
+                this._soundfont!!,
+                this.configuration.sample_rate
+            )
         )
 
 
@@ -1810,7 +1818,8 @@ class MainActivity : AppCompatActivity() {
         if (this.get_soundfont() != null) {
             this.sample_handle_manager = SampleHandleManager(
                 this._soundfont!!,
-                this.configuration.sample_rate
+                this.configuration.sample_rate,
+                44100
             )
 
             this.get_opus_manager().set_sample_handle_manager(this.sample_handle_manager!!)

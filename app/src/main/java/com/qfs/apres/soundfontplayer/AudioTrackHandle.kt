@@ -26,19 +26,16 @@ class AudioTrackHandle(sample_rate: Int, buffer_size: Int) {
         this.audio_track.pause()
     }
 
-    fun offset_next_notification_position(next: Int) {
-        try {
-            this.audio_track.notificationMarkerPosition = next + (this.audio_track.notificationMarkerPosition)
-        } catch (e: IllegalStateException) {
-            // pass
-        }
-    }
     fun set_next_notification_position(next: Int) {
         try {
             this.audio_track.notificationMarkerPosition = next
         } catch (e: IllegalStateException) {
             // pass
         }
+    }
+
+    fun get_underrun_count(): Int {
+        return this.audio_track.underrunCount
     }
 
     fun play(update_listener: AudioTrack.OnPlaybackPositionUpdateListener? = null) {

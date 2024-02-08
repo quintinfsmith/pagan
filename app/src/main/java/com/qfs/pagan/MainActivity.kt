@@ -1808,7 +1808,14 @@ class MainActivity : AppCompatActivity() {
         this._midi_playback_device?.kill()
 
         if (this.get_soundfont() != null) {
+            this.sample_handle_manager = SampleHandleManager(
+                this._soundfont!!,
+                this.configuration.sample_rate
+            )
+
+            this.get_opus_manager().set_sample_handle_manager(this.sample_handle_manager!!)
             this._midi_playback_device = PaganPlaybackDevice(this)
+            this._midi_feedback_device = PaganFeedbackDevice(this.sample_handle_manager!!)
         } else {
            this._midi_playback_device = null
         }

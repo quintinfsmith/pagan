@@ -133,7 +133,7 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
 
                     that.on_start()
 
-                    if (this.has_beats) {
+                    if (this.has_beats && this.current_beat < that.beat_frames.size) {
                         that.on_beat(this.current_beat)
                         that.active_audio_track_handle?.set_next_notification_position(
                             that.beat_frames[this.current_beat] - start_frame
@@ -152,10 +152,10 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
                       Therefore we need to try to compensate for that and check the position it was
                       fired at vs the current position
                      */
-                    val frame_delay = if (audio_track.playState == AudioTrack.PLAYSTATE_STOPPED) {
-                        return this._stop(audio_track)
-                    } else {
+                    val frame_delay = if (audio_track.playState != AudioTrack.PLAYSTATE_STOPPED) {
                         audio_track.notificationMarkerPosition - audio_track.playbackHeadPosition
+                    } else {
+                        return this._stop(audio_track)
                     }
 
                     if (this.current_beat < that.beat_frames.size - 1) {

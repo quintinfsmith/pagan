@@ -16,6 +16,7 @@ class PaganFeedbackDevice(var sample_handle_manager: SampleHandleManager): Mappe
     class ImmediateFrameMap: FrameMap {
         val handles = mutableSetOf<SampleHandle>()
         val mutex = Mutex()
+        var max_frame = -1
         override fun get_new_handles(frame: Int): Set<SampleHandle> {
             val output = this.handles.toSet()
             runBlocking {
@@ -23,7 +24,14 @@ class PaganFeedbackDevice(var sample_handle_manager: SampleHandleManager): Mappe
                     this@ImmediateFrameMap.handles.clear()
                 }
             }
+            for (handle in output) {
+                this.max_frame =
+                    max(frame + handle.release_frame!! + handle.frame_count_release, this.max_frame)
+            }
             return output
+        }
+        override fun get_size(): Int {
+            return this.max_frame + 1
         }
 
         override fun get_beat_frames(): List<Int> {
@@ -48,6 +56,9 @@ class PaganFeedbackDevice(var sample_handle_manager: SampleHandleManager): Mappe
         this.buffer_cache_size_limit = this.buffer_size
         //this.wave_generator.timeout = 1
     }
+    override fun on_stop() {
+        (this.sample_frame_map as ImmediateFrameMap).max_frame = 0
+    }
 
     fun new_event(event: NoteOn, duration_millis: Int) {
         val handles = this.sample_handle_manager.gen_sample_handles(event)
@@ -67,10 +78,12 @@ class PaganFeedbackDevice(var sample_handle_manager: SampleHandleManager): Mappe
             kill_frame = max(kill_frame, handle.release_frame!! + handle.frame_count_release)
             (this.sample_frame_map as ImmediateFrameMap).add(handle)
         }
+
         if (this.is_playing) {
-            this.kill()
+            this.set_kill_frame(kill_frame + this.wave_generator.frame)
+        } else {
+            this.play(0, kill_frame)
         }
-        this.play(0, kill_frame)
     }
 
 }

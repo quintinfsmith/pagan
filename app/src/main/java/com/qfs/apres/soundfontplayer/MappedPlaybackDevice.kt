@@ -43,7 +43,8 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
     fun start_playback(start_frame: Int = 0, kill_frame: Int? = null) {
         if (!this.is_playing && this.active_audio_track_handle == null) {
             this.active_audio_track_handle = AudioTrackHandle(this.sample_rate, this.buffer_size)
-            this._start_play_loop(start_frame, kill_frame)
+            //this._start_play_loop(start_frame, kill_frame)
+            this.new_play_loop(start_frame, kill_frame)
         }
     }
 
@@ -65,29 +66,47 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
         this.setup_beat_frames()
         this.wave_generator.clear()
         this.wave_generator.frame = start_frame
-        if (kill_frame != null) {
-            this.wave_generator.kill_frame = kill_frame
-        }
+
         thread {
             val buffer_millis = this.BUFFER_NANO / 1_000_000
-            val wait_delay = if (this.fill_buffer_cache) {
-                buffer_millis / 10
-            } else {
-                buffer_millis
-            }
+            var chunk: ShortArray? = null
+            var ts: Long = System.currentTimeMillis()
+            var flag_dead = false
             while (this.is_playing) {
-                audio_track_handle.write(
-                    try {
-                        this.wave_generator.generate(this.buffer_size)
-                    } catch (e: WaveGenerator.KilledException) {
-                        break
-                    } catch (e: WaveGenerator.EmptyException) {
-                        ShortArray(this.buffer_size * 2) { 0 }
-                    } catch (e: WaveGenerator.DeadException) {
-                        break
-                    }
-                )
+                ts = System.currentTimeMillis()
+                if (chunk != null) {
+                    audio_track_handle.write(chunk)
+                }
+
+                chunk = try {
+                    this.wave_generator.generate(this.buffer_size)
+                } catch (e: WaveGenerator.EmptyException) {
+                    ShortArray(this.buffer_size * 2) { 0 }
+                } catch (e: WaveGenerator.DeadException) {
+                    flag_dead = true
+                    break
+                }
+
+                val duration = System.currentTimeMillis() - ts
+                val real_delay = buffer_millis - duration
+
+                if (real_delay > 10) {
+                    Thread.sleep(real_delay)
+                }
             }
+            // Delay while write finishes
+            val duration = System.currentTimeMillis() - ts
+            val real_delay = buffer_millis - duration
+
+            if (real_delay > 0) {
+                Thread.sleep(real_delay)
+            }
+
+            if (this.beat_frames.isEmpty() && flag_dead) {
+                this.kill()
+                this.on_stop()
+            }
+
             this.wave_generator.clear()
         }
 
@@ -148,8 +167,8 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
                     that.on_beat(this.current_beat)
 
                     that.active_audio_track_handle?.set_next_notification_position(
-                        if (kill_frame != null) {
-                            min(kill_frame!!, that.beat_frames[this.current_beat]) - start_frame
+                        if (that.wave_generator.kill_frame != null) {
+                            min(that.wave_generator.kill_frame!!, that.beat_frames[this.current_beat]) - start_frame
                         } else {
                             that.beat_frames[this.current_beat] - start_frame + frame_delay
                         }
@@ -157,11 +176,13 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
                 }
 
                 override fun onPeriodicNotification(audio_track: AudioTrack?) {
-                    if (kill_frame != null && audio_track != null) {
-                        if ((kill_frame - start_frame) <= audio_track.playbackHeadPosition) {
-                            this._stop(audio_track)
-                        }
-                    }
+                    // COMMENTED: Kill frame isn't redundant but it is when it's grabbed from the wave_generator
+                    //val kill_frame = this@MappedPlaybackDevice.wave_generator.kill_frame
+                    //if (kill_frame != null && audio_track != null) {
+                    //    if ((kill_frame - start_frame) <= audio_track.playbackHeadPosition) {
+                    //        this._stop(audio_track)
+                    //    }
+                    //}
                 }
 
                 private fun _stop(audio_track: AudioTrack?) {
@@ -181,11 +202,6 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
             this.is_playing = false
             this.on_cancelled()
         }
-
-        if (this.beat_frames.isEmpty()) {
-            this.kill()
-        }
-
     }
 
     private fun _start_play_loop(start_frame: Int = 0, kill_frame: Int? = null) {
@@ -202,9 +218,6 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
         this.setup_beat_frames()
         this.wave_generator.clear()
         this.wave_generator.frame = start_frame
-        if (kill_frame != null) {
-            this.wave_generator.kill_frame = kill_frame
-        }
 
         thread {
             val buffer_millis = this.BUFFER_NANO / 1_000_000
@@ -234,8 +247,6 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
                     val start_ts = System.currentTimeMillis()
                     val chunk = try {
                         this.wave_generator.generate(this.buffer_size)
-                    } catch (e: WaveGenerator.KilledException) {
-                        break
                     } catch (e: WaveGenerator.EmptyException) {
                         ShortArray(this.buffer_size * 2) { 0 }
                     } catch (e: WaveGenerator.DeadException) {

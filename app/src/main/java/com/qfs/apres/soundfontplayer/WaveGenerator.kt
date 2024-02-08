@@ -4,10 +4,8 @@ import kotlin.math.abs
 import kotlin.math.max
 
 class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buffer_size: Int) {
-    class KilledException: Exception()
     class EmptyException: Exception()
     class DeadException: Exception()
-    class EventInPastException: Exception()
     var frame = 0
     var kill_frame: Int? = null
     private var _empty_chunks_count = 0
@@ -29,10 +27,6 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
     fun generate(array: ShortArray) {
         val buffer_size = array.size / 2
 
-        if (this.kill_frame != null && this.kill_frame!! <= this.frame) {
-            throw KilledException()
-        }
-
         if (this.cached_chunks.containsKey(this.frame)) {
             val cached_chunk = this.cached_chunks[this.frame]!!
             cached_chunk.copyInto(array)
@@ -43,6 +37,11 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
 
         val first_frame = this.frame
         this.update_active_frames(this.frame, buffer_size)
+
+        if (this.frame >= this.midi_frame_map.get_size()) {
+            throw DeadException()
+        }
+
 
         if (this._active_sample_handles.isEmpty()) {
             this.frame += buffer_size
@@ -199,8 +198,6 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             this.generate(this.buffer_size)
         } catch (e: EmptyException) {
             ShortArray(this.buffer_size * 2) { 0 }
-        } catch (e: KilledException) {
-            return
         } catch (e: DeadException) {
             return
         }

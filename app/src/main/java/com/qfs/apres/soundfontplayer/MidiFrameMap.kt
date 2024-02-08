@@ -6,14 +6,17 @@ import com.qfs.apres.event.NoteOff
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event.ProgramChange
 import com.qfs.apres.event.SetTempo
+import kotlin.math.max
 
 class MidiFrameMap(val sample_handle_manager: SampleHandleManager): FrameMap {
     private val frames = HashMap<Int, MutableSet<SampleHandle>>()
     private val beat_frames = mutableListOf<Int>()
+    private var final_frame: Int = -1
 
     fun clear() {
         this.beat_frames.clear()
         this.frames.clear()
+        this.final_frame = 0
     }
 
     fun parse_midi(midi: Midi) {
@@ -37,6 +40,7 @@ class MidiFrameMap(val sample_handle_manager: SampleHandleManager): FrameMap {
                         val (handles, start_frame) = note_on_frames.remove(Pair(event.channel, event.get_note())) ?: continue
                         for (handle in handles) {
                             handle.release_frame = tick_frame - start_frame
+                            this.final_frame = max(tick_frame + handle.frame_count_release, this.final_frame)
                         }
                     }
                     is NoteOn -> {
@@ -44,6 +48,7 @@ class MidiFrameMap(val sample_handle_manager: SampleHandleManager): FrameMap {
                         if (check_pair != null) {
                             for (handle in check_pair.first) {
                                 handle.release_frame = tick_frame - check_pair.second
+                                this.final_frame = max(tick_frame + handle.frame_count_release, this.final_frame)
                             }
                         }
                         if (event.get_velocity() > 0) {
@@ -72,6 +77,10 @@ class MidiFrameMap(val sample_handle_manager: SampleHandleManager): FrameMap {
             last_frame = tick_frame
             last_tick = tick
         }
+    }
+
+    override fun get_size(): Int {
+       return this.final_frame + 1
     }
 
     override fun get_new_handles(frame: Int): Set<SampleHandle>? {

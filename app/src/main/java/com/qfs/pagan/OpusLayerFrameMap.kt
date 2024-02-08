@@ -24,6 +24,7 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
     private var changed_frames = mutableSetOf<IntRange>()
     private val handle_range_map = HashMap<Int, IntRange>()
     private var flux_indicator: Int = 0
+    private var cached_frame_count: Int? = null
 
     // FrameMap Interface -------------------
     override fun get_new_handles(frame: Int): Set<SampleHandle>? {
@@ -63,6 +64,18 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
         }
         return output
     }
+
+    override fun get_size(): Int {
+        if (this.cached_frame_count == null) {
+            this.cached_frame_count = -1
+            for (range in this.handle_range_map.values) {
+                this.cached_frame_count = max(range.last, this.cached_frame_count!!)
+            }
+            this.cached_frame_count = this.cached_frame_count!! + 1
+        }
+        return this.cached_frame_count!!
+    }
+
     // End FrameMap Interface --------------------------
 
     //-----Layer Functions-------//
@@ -210,6 +223,7 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
     }
 
     fun unmap_frames(beat_key: BeatKey, position: List<Int>) {
+
         val working_tree = this.get_tree(beat_key, position)
 
         if (!working_tree.is_leaf()) {
@@ -242,6 +256,8 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
                 }
             }
         }
+
+        this.cached_frame_count = null
     }
 
     fun map_frames(beat_key: BeatKey, position: List<Int>) {
@@ -291,7 +307,7 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
 
         this.quick_map_sample_handles[Pair(beat_key, position)] = uuids
         this.unmap_flags[Pair(beat_key, position)] = false
-
+        this.cached_frame_count = null
     }
 
     fun get_frame_range(beat_key: BeatKey, position: List<Int>): Pair<Int, Int> {
@@ -458,6 +474,7 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
     override fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<OpusEvent>>?) {
         this.flux_wrapper {
             super.insert_beat(beat_index, beats_in_column)
+            this.cached_frame_count = null
 
             val frames_per_beat = 60.0 * this.sample_handle_manager!!.sample_rate / this.tempo
 
@@ -504,6 +521,7 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
     override fun remove_beat(beat_index: Int) {
         this.flux_wrapper {
             super.remove_beat(beat_index)
+            this.cached_frame_count = null
 
             val frames_per_beat = 60.0 * this.sample_handle_manager!!.sample_rate / this.tempo
             val samples_to_move = mutableSetOf<Int>()

@@ -102,6 +102,7 @@ class SampleHandle(
             }
         }
 
+        Log.d("AAA", "Setting Frame: $frame -> $tmp_frame")
         try {
             this.data_buffer.position(tmp_frame)
         } catch (e: Exception) {

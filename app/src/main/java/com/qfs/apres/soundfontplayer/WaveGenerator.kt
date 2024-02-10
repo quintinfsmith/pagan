@@ -8,10 +8,16 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
     class EmptyException: Exception()
     class DeadException: Exception()
     class InvalidArraySize: Exception()
+    data class ActiveHandleMapItem(
+        var first_frame: Int,
+        var sample_handle_a: SampleHandle?,
+        var sample_handle_b: SampleHandle?,
+        var flipped: Boolean = false
+    )
     var frame = 0
     var kill_frame: Int? = null
     private var _empty_chunks_count = 0
-    private var _active_sample_handles = HashMap<Int, Triple<Int, SampleHandle, SampleHandle>>()
+    private var _active_sample_handles = HashMap<Int, ActiveHandleMapItem>()
     var timeout: Int? = null
 
     fun generate(): ShortArray {
@@ -41,23 +47,44 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         val first_array = IntArray(this.buffer_size)
         val second_array = IntArray(this.buffer_size)
 
-        for ((_, triple) in this._active_sample_handles) {
-            val (first_sample_frame, sample_handle_a, sample_handle_b) = triple
-            if (first_sample_frame >= first_frame + buffer_size) {
+        for ((_, item) in this._active_sample_handles) {
+            if (item.first_frame >= first_frame + buffer_size) {
                 continue
             }
 
-
-            if (!sample_handle_a.is_dead) {
-                var offset = max(0, first_sample_frame - first_frame)
-
-                this.populate_half_int_array(sample_handle_a, first_array, offset)
+            if (item.sample_handle_a != null && !item.sample_handle_a!!.is_dead) {
+                this.populate_half_int_array(
+                    item.sample_handle_a!!,
+                    if (item.flipped) {
+                        first_array
+                    } else {
+                        second_array
+                    },
+                    if ((0 until buffer_size).contains(item.first_frame - first_frame)) {
+                        item.first_frame - first_frame
+                    } else {
+                        0
+                    }
+                )
             }
 
-            if (!sample_handle_b.is_dead) {
-                var offset = first_sample_frame - first_frame
-                this.populate_half_int_array(sample_handle_b, second_array, offset)
+            if (item.sample_handle_b != null && !item.sample_handle_b!!.is_dead) {
+                this.populate_half_int_array(
+                    item.sample_handle_b!!,
+                    if (item.flipped) {
+                        second_array
+                    } else {
+                        first_array
+                    },
+                    if (item.sample_handle_a == null && (0 until buffer_size).contains(item.first_frame - first_frame)) {
+                        item.first_frame - first_frame - (buffer_size / 2)
+                    } else {
+                        0
+                    }
+                )
             }
+            // Flip items so we don't have to set_position after every generate call
+            item.flipped = !item.flipped
         }
 
         val short_array_a = this.gen_half_short_array(first_array)
@@ -125,7 +152,6 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             working_int_array[(f * 2)] += right_frame
             working_int_array[(f * 2) + 1] += left_frame
         }
-        sample_handle.set_working_frame(sample_handle.working_frame + (this.buffer_size / 2))
     }
 
     private fun gen_half_short_array(int_array: IntArray): ShortArray {
@@ -157,8 +183,8 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
     private fun update_active_frames(initial_frame: Int) {
         // First check for, and remove dead sample handles
         val remove_set = mutableSetOf<Int>()
-        for ((uuid, triple) in this._active_sample_handles) {
-            if (triple.second.is_dead && triple.third.is_dead) {
+        for ((uuid, item) in this._active_sample_handles) {
+            if ((item.sample_handle_a == null || item.sample_handle_a!!.is_dead) && (item.sample_handle_b == null || item.sample_handle_b!!.is_dead)) {
                 remove_set.add(uuid)
             }
         }
@@ -168,21 +194,45 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         }
 
         // then populate the next active frames with upcoming sample handles
-        for (f in initial_frame until initial_frame + buffer_size) {
-            val handles = this.midi_frame_map.get_new_handles(f) ?: continue
+        for (f in 0 until buffer_size / 2) {
+            val working_frame = f + initial_frame
+            val butt_offset = (this.buffer_size / 2) - f
+
+            val handles = this.midi_frame_map.get_new_handles(working_frame) ?: continue
             for (handle in handles) {
                 val new_handle_a = SampleHandle(handle)
-                val new_handle_b = SampleHandle(handle)
                 new_handle_a.release_frame = handle.release_frame
-                new_handle_b.release_frame = handle.release_frame
 
-                try {
-                    // TODO: THIS HERE!. the offsets are the problem
-                    new_handle_b.set_working_frame((this.buffer_size / 2) - (f - initial_frame))
-                } catch (e: Exception){
-                    throw e
-                }
-                this._active_sample_handles[handle.uuid] = Triple(f, new_handle_a, new_handle_b)
+                val new_handle_b = SampleHandle(handle)
+                new_handle_b.release_frame = handle.release_frame
+                new_handle_b.set_working_frame(butt_offset)
+
+                this._active_sample_handles[new_handle_a.uuid] = ActiveHandleMapItem(
+                    working_frame,
+                    new_handle_a,
+                    new_handle_b
+                )
+            }
+        }
+
+        /*
+         If a sample is activated in the second half,
+         it will be split such that the first chunk of the sample is treated as 'sample_b'
+         and the second chunk is treated as sample_a of the next iteration
+         */
+        for (f in 0 until (buffer_size / 2)) {
+            val working_frame = f + initial_frame + (buffer_size / 2)
+            val butt_offset = (this.buffer_size / 2) - f
+            val handles = this.midi_frame_map.get_new_handles(working_frame) ?: continue
+            for (handle in handles) {
+                val new_handle_a = SampleHandle(handle)
+                new_handle_a.release_frame = handle.release_frame
+                this._active_sample_handles[new_handle_a.uuid] = ActiveHandleMapItem(working_frame, null, new_handle_a)
+
+                val new_handle_b = SampleHandle(handle)
+                new_handle_b.release_frame = handle.release_frame
+                new_handle_b.set_working_frame(butt_offset)
+                this._active_sample_handles[new_handle_b.uuid] = ActiveHandleMapItem(initial_frame + buffer_size, new_handle_b, null)
             }
         }
     }

@@ -87,7 +87,12 @@ class SampleHandle(
             }
         }
 
-        this.data_buffer.position(tmp_frame)
+        try {
+            this.data_buffer.position(tmp_frame)
+            this.is_dead = false
+        } catch (e: IllegalArgumentException) {
+            this.is_dead = true
+        }
     }
 
     fun get_release_duration(): Int {

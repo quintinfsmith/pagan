@@ -33,7 +33,7 @@ open class MidiConverter(val sample_rate: Int, val buffer_size: Int) {
         while (!this.cancel_flagged) {
             try {
                 val chunk = try {
-                    wave_generator.generate(this.buffer_size)
+                    wave_generator.generate()
                 } catch (e: WaveGenerator.EmptyException) {
                     ShortArray(this.buffer_size * 2)
                 }

@@ -30,6 +30,7 @@ class PaganFeedbackDevice(var sample_handle_manager: SampleHandleManager): Mappe
             }
             return output
         }
+
         override fun get_size(): Int {
             return this.max_frame + 1
         }
@@ -50,6 +51,7 @@ class PaganFeedbackDevice(var sample_handle_manager: SampleHandleManager): Mappe
             }
         }
     }
+
     init {
         this.fill_buffer_cache = false
         this.minimum_buffer_cache_size = this.buffer_size

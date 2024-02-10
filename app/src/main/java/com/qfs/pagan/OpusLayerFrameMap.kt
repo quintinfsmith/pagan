@@ -87,9 +87,7 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
         this.setup_frame_map()
     }
 
-    open fun on_frames_changed(frames: List<IntRange>) {
-
-    }
+    open fun on_frames_changed(frames: List<IntRange>) { }
 
     fun <T> flux_wrapper(callback: () -> T): T {
         this.flux_indicator += 1

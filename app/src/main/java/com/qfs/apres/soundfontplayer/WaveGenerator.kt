@@ -1,6 +1,5 @@
 package com.qfs.apres.soundfontplayer
 
-import android.util.Log
 import kotlin.math.abs
 import kotlin.math.max
 
@@ -11,8 +10,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
     data class ActiveHandleMapItem(
         var first_frame: Int,
         var sample_handle_a: SampleHandle?,
-        var sample_handle_b: SampleHandle?,
-        var flipped: Boolean = false
+        var sample_handle_b: SampleHandle?
     )
     var frame = 0
     var kill_frame: Int? = null
@@ -55,11 +53,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             if (item.sample_handle_a != null && !item.sample_handle_a!!.is_dead) {
                 this.populate_half_int_array(
                     item.sample_handle_a!!,
-                    if (item.flipped) {
-                        first_array
-                    } else {
-                        second_array
-                    },
+                    first_array,
                     if ((0 until buffer_size).contains(item.first_frame - first_frame)) {
                         item.first_frame - first_frame
                     } else {
@@ -68,23 +62,17 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                 )
             }
 
-            if (item.sample_handle_b != null && !item.sample_handle_b!!.is_dead) {
-                this.populate_half_int_array(
-                    item.sample_handle_b!!,
-                    if (item.flipped) {
-                        second_array
-                    } else {
-                        first_array
-                    },
-                    if (item.sample_handle_a == null && (0 until buffer_size).contains(item.first_frame - first_frame)) {
-                        item.first_frame - first_frame - (buffer_size / 2)
-                    } else {
-                        0
-                    }
-                )
-            }
-            // Flip items so we don't have to set_position after every generate call
-            item.flipped = !item.flipped
+           if (item.sample_handle_b != null && !item.sample_handle_b!!.is_dead) {
+               this.populate_half_int_array(
+                   item.sample_handle_b!!,
+                   second_array,
+                   if (item.sample_handle_a == null && (0 until buffer_size).contains(item.first_frame - first_frame)) {
+                       item.first_frame - first_frame - (buffer_size / 2)
+                   } else {
+                       0
+                   }
+               )
+           }
         }
 
         val short_array_a = this.gen_half_short_array(first_array)
@@ -107,7 +95,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
 
     private fun populate_half_int_array(sample_handle: SampleHandle, working_int_array: IntArray, offset: Int) {
         // Assume working_int_array.size % 2 == 0
-        Log.d("AAA", "$offset // ${working_int_array.size / 2}")
+        val first_frame = sample_handle.working_frame
         for (f in offset until working_int_array.size / 2) {
             val frame_value = sample_handle.get_next_frame() ?: break
 
@@ -152,6 +140,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             working_int_array[(f * 2)] += right_frame
             working_int_array[(f * 2) + 1] += left_frame
         }
+        sample_handle.set_working_frame(sample_handle.working_frame + (this.buffer_size / 2))
     }
 
     private fun gen_half_short_array(int_array: IntArray): ShortArray {
@@ -184,7 +173,11 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         // First check for, and remove dead sample handles
         val remove_set = mutableSetOf<Int>()
         for ((uuid, item) in this._active_sample_handles) {
-            if ((item.sample_handle_a == null || item.sample_handle_a!!.is_dead) && (item.sample_handle_b == null || item.sample_handle_b!!.is_dead)) {
+            if (item.first_frame >= initial_frame) {
+                continue
+            }
+
+            if ((item.sample_handle_a != null && item.sample_handle_a!!.is_dead) || (item.sample_handle_b != null && item.sample_handle_b!!.is_dead)) {
                 remove_set.add(uuid)
             }
         }
@@ -196,9 +189,9 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         // then populate the next active frames with upcoming sample handles
         for (f in 0 until buffer_size / 2) {
             val working_frame = f + initial_frame
+            val handles = this.midi_frame_map.get_new_handles(working_frame) ?: continue
             val butt_offset = (this.buffer_size / 2) - f
 
-            val handles = this.midi_frame_map.get_new_handles(working_frame) ?: continue
             for (handle in handles) {
                 val new_handle_a = SampleHandle(handle)
                 new_handle_a.release_frame = handle.release_frame

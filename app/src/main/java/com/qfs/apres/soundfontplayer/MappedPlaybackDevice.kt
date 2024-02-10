@@ -80,7 +80,7 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
             var chunk: ShortArray? = null
             var ts: Long = System.currentTimeMillis()
             var flag_dead = false
-            val empty_chunk = ShortArray(this.buffer_size) { 0 }
+            val empty_chunk = ShortArray(this.buffer_size * 2) { 0 }
 
             while (this.is_playing) {
                 ts = System.currentTimeMillis()

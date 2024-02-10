@@ -1,6 +1,5 @@
 package com.qfs.apres.soundfontplayer
 
-import android.util.Log
 import kotlin.math.PI
 import kotlin.math.tan
 
@@ -80,20 +79,11 @@ class SampleHandle(
 
         // TODO: Improve this. This is slow and my brain doesn't wont to let me see the algebra here right now
         var tmp_frame = 0
-        var loops  = 0
         for (f in 0 until frame) {
-            //if (f < this.frame_count_delay) {
-            //} else if (this.loop_points == null || tmp_frame < this.loop_points!!.second) {
-            //    tmp_frame += 1
-            //} else if (tmp_frame == this.loop_points!!.second) {
-            //    tmp_frame = this.loop_points!!.second
-            //}
-
             if (this.release_frame == null || this.release_frame!! > f) {
                 if (this.loop_points == null || tmp_frame < this.loop_points!!.second) {
                     tmp_frame += 1
                 } else if (tmp_frame >= this.loop_points!!.second) {
-                    loops += 1
                     tmp_frame = this.loop_points!!.first
                 }
             } else if (f < this.frame_count_delay) {
@@ -102,13 +92,11 @@ class SampleHandle(
             }
         }
 
-        Log.d("AAA", "Setting Frame: $frame -> $tmp_frame")
-        try {
+        if (tmp_frame < this.data_buffer.size) {
             this.data_buffer.position(tmp_frame)
-        } catch (e: Exception) {
-            Log.d("Release Frame", "${this.release_frame} | ${this.data_buffer.pitch} | ${this.data_buffer.size} || ${this.data_buffer.data_size}.")
-            Log.d("Loops", "${loops * (this.loop_points!!.second - this.loop_points!!.first) + this.loop_points!!.first + (this.data_buffer.size - this.loop_points!!.second)}")
-            throw e
+            this.is_dead = false
+        } else {
+            this.is_dead = true
         }
     }
 

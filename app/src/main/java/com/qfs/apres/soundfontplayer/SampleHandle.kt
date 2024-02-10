@@ -1,5 +1,6 @@
 package com.qfs.apres.soundfontplayer
 
+import android.util.Log
 import kotlin.math.PI
 import kotlin.math.tan
 
@@ -71,27 +72,42 @@ class SampleHandle(
 
     fun set_working_frame(frame: Int) {
         this.working_frame = frame
+        if (this.release_frame != null && this.working_frame >= this.release_frame!! + this.frame_count_release) {
+            this.is_dead = true
+            return
+        }
 
 
         // TODO: Improve this. This is slow and my brain doesn't wont to let me see the algebra here right now
         var tmp_frame = 0
+        var loops  = 0
         for (f in 0 until frame) {
+            //if (f < this.frame_count_delay) {
+            //} else if (this.loop_points == null || tmp_frame < this.loop_points!!.second) {
+            //    tmp_frame += 1
+            //} else if (tmp_frame == this.loop_points!!.second) {
+            //    tmp_frame = this.loop_points!!.second
+            //}
+
             if (this.release_frame == null || this.release_frame!! > f) {
                 if (this.loop_points == null || tmp_frame < this.loop_points!!.second) {
                     tmp_frame += 1
-                } else if (tmp_frame == this.loop_points!!.second) {
-                    tmp_frame = this.loop_points!!.second
+                } else if (tmp_frame >= this.loop_points!!.second) {
+                    loops += 1
+                    tmp_frame = this.loop_points!!.first
                 }
-            } else {
+            } else if (f < this.frame_count_delay) {
+            } else if (tmp_frame < this.data_buffer.size) {
                 tmp_frame += 1
             }
         }
 
         try {
             this.data_buffer.position(tmp_frame)
-            this.is_dead = false
-        } catch (e: IllegalArgumentException) {
-            this.is_dead = true
+        } catch (e: Exception) {
+            Log.d("Release Frame", "${this.release_frame} | ${this.data_buffer.pitch} | ${this.data_buffer.size} || ${this.data_buffer.data_size}.")
+            Log.d("Loops", "${loops * (this.loop_points!!.second - this.loop_points!!.first) + this.loop_points!!.first + (this.data_buffer.size - this.loop_points!!.second)}")
+            throw e
         }
     }
 
@@ -115,7 +131,6 @@ class SampleHandle(
         }
 
         var frame_factor = this.attenuation * this.current_volume
-
         val is_pressed = this.release_frame == null || this.working_frame < this.release_frame!!
 
         if (is_pressed) {
@@ -154,6 +169,7 @@ class SampleHandle(
         //}
 
         this.working_frame += 1
+
         return (this.data_buffer.get().toDouble() * frame_factor).toInt()
     }
 

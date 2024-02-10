@@ -1,7 +1,7 @@
 package com.qfs.apres.soundfontplayer
 
+import android.util.Log
 import kotlin.math.abs
-import kotlin.math.ceil
 import kotlin.math.max
 
 class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buffer_size: Int) {
@@ -34,54 +34,54 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         }
 
         if (this._active_sample_handles.isEmpty()) {
-            this.frame += buffer_size
+            this.frame += this.buffer_size
             throw EmptyException()
         }
-        val small_array_size = ceil(this.buffer_size.toDouble() / 2.0).toInt()
-        val first_array = IntArray(small_array_size)
-        val second_array = IntArray(small_array_size)
-        val (first_size, second_size) = if (this.buffer_size % 4 == 0) {
-            Pair(small_array_size / 2, small_array_size / 2)
-        } else {
-            Pair(
-                (small_array_size / 2) + 1,
-                (small_array_size / 2)
-            )
-        }
 
+        val first_array = IntArray(this.buffer_size)
+        val second_array = IntArray(this.buffer_size)
 
-        for ((uuid, triple) in this._active_sample_handles) {
+        for ((_, triple) in this._active_sample_handles) {
             val (first_sample_frame, sample_handle_a, sample_handle_b) = triple
-            if (sample_handle_a.is_dead || sample_handle_b.is_dead || (first_sample_frame >= first_frame + buffer_size)) {
+            if (first_sample_frame >= first_frame + buffer_size) {
                 continue
             }
 
-            //:val range = max(first_sample_frame, first_frame) until first_frame + first_array.size
-            this.populate_int_array(sample_handle_a, first_array, first_size)
-            this.populate_int_array(sample_handle_b, second_array, second_size)
-        }
 
+            if (!sample_handle_a.is_dead) {
+                var offset = max(0, first_sample_frame - first_frame)
+
+                this.populate_half_int_array(sample_handle_a, first_array, offset)
+            }
+
+            if (!sample_handle_b.is_dead) {
+                var offset = first_sample_frame - first_frame
+                this.populate_half_int_array(sample_handle_b, second_array, offset)
+            }
+        }
 
         val short_array_a = this.gen_half_short_array(first_array)
         val short_array_b = this.gen_half_short_array(second_array)
+
         for (i in array.indices) {
             array[i] = if (i >= short_array_a.size) {
-                short_array_b[i - buffer_size]
+                short_array_b[i - short_array_a.size]
             } else {
                 short_array_a[i]
             }
         }
 
-        this.frame += buffer_size
+        this.frame += this.buffer_size
 
         if (this.timeout != null && this._empty_chunks_count >= this.timeout!!) {
             throw DeadException()
         }
     }
 
-
-    private fun populate_int_array(sample_handle: SampleHandle, working_int_array: IntArray, size: Int) {
-        for (f in 0 until size) {
+    private fun populate_half_int_array(sample_handle: SampleHandle, working_int_array: IntArray, offset: Int) {
+        // Assume working_int_array.size % 2 == 0
+        Log.d("AAA", "$offset // ${working_int_array.size / 2}")
+        for (f in offset until working_int_array.size / 2) {
             val frame_value = sample_handle.get_next_frame() ?: break
 
             var left_frame: Int = 0
@@ -125,6 +125,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             working_int_array[(f * 2)] += right_frame
             working_int_array[(f * 2) + 1] += left_frame
         }
+        sample_handle.set_working_frame(sample_handle.working_frame + (this.buffer_size / 2))
     }
 
     private fun gen_half_short_array(int_array: IntArray): ShortArray {
@@ -140,9 +141,9 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             (Short.MAX_VALUE - mid).toDouble() / (max_frame_value - mid).toDouble()
         }
 
-        val array = ShortArray(int_array.size)
-        int_array.forEachIndexed { i: Int, v: Int ->
-            array[i] = if (compression_ratio >= 1F || (0 - mid <= v && v <= mid)) {
+        val array = ShortArray(int_array.size) { i: Int ->
+            val v = int_array[i]
+            if (compression_ratio >= 1.0 || (0 - mid <= v && v <= mid)) {
                 v.toShort()
             } else if (v > mid) {
                 (mid + ((v - mid).toFloat() * compression_ratio).toInt()).toShort()
@@ -157,8 +158,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         // First check for, and remove dead sample handles
         val remove_set = mutableSetOf<Int>()
         for ((uuid, triple) in this._active_sample_handles) {
-            val (_, sample_handle_a, sample_handle_b) = triple
-            if (sample_handle_a.is_dead || sample_handle_b.is_dead) {
+            if (triple.second.is_dead && triple.third.is_dead) {
                 remove_set.add(uuid)
             }
         }
@@ -168,16 +168,20 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         }
 
         // then populate the next active frames with upcoming sample handles
-        for (f in initial_frame until initial_frame + this.buffer_size) {
+        for (f in initial_frame until initial_frame + buffer_size) {
             val handles = this.midi_frame_map.get_new_handles(f) ?: continue
             for (handle in handles) {
                 val new_handle_a = SampleHandle(handle)
-                new_handle_a.release_frame = handle.release_frame
-
                 val new_handle_b = SampleHandle(handle)
+                new_handle_a.release_frame = handle.release_frame
                 new_handle_b.release_frame = handle.release_frame
-                new_handle_b.set_working_frame(ceil(this.buffer_size.toDouble() / 2.0).toInt())
 
+                try {
+                    // TODO: THIS HERE!. the offsets are the problem
+                    new_handle_b.set_working_frame((this.buffer_size / 2) - (f - initial_frame))
+                } catch (e: Exception){
+                    throw e
+                }
                 this._active_sample_handles[handle.uuid] = Triple(f, new_handle_a, new_handle_b)
             }
         }

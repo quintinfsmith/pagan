@@ -1,6 +1,7 @@
 package com.qfs.apres.soundfontplayer
 
 import android.media.AudioTrack
+import android.util.Log
 import kotlin.concurrent.thread
 import kotlin.math.min
 
@@ -117,7 +118,6 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
                 this.kill()
                 this.on_stop()
             }
-
             this.wave_generator.clear()
         }
 

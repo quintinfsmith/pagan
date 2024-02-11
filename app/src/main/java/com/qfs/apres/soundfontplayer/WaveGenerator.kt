@@ -1,5 +1,9 @@
 package com.qfs.apres.soundfontplayer
 
+import android.util.Log
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
 import kotlin.math.abs
 import kotlin.math.max
 
@@ -17,6 +21,10 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
     private var _empty_chunks_count = 0
     private var _active_sample_handles = HashMap<Int, ActiveHandleMapItem>()
     var timeout: Int? = null
+    init {
+        //val cores = Runtime.getRuntime().availableProcessors()
+        //Log.d("AAA", "CORES: $cores")
+    }
 
     fun generate(): ShortArray {
         val output_array = ShortArray(this.buffer_size * 2)
@@ -42,47 +50,22 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             throw EmptyException()
         }
 
-        val first_array = IntArray(this.buffer_size)
-        val second_array = IntArray(this.buffer_size)
-
-        for ((_, item) in this._active_sample_handles) {
-            if (item.first_frame >= first_frame + buffer_size) {
-                continue
+        val start = System.currentTimeMillis()
+        var (first_array, second_array) = runBlocking {
+            val job_a = async(Dispatchers.Default) {
+                this@WaveGenerator.gen_half_short_array(first_frame, true)
             }
-
-            if (item.sample_handle_a != null && !item.sample_handle_a!!.is_dead) {
-                this.populate_half_int_array(
-                    item.sample_handle_a!!,
-                    first_array,
-                    if ((0 until buffer_size).contains(item.first_frame - first_frame)) {
-                        item.first_frame - first_frame
-                    } else {
-                        0
-                    }
-                )
+            val job_b = async(Dispatchers.Default) {
+                this@WaveGenerator.gen_half_short_array(first_frame, false)
             }
-
-           if (item.sample_handle_b != null && !item.sample_handle_b!!.is_dead) {
-               this.populate_half_int_array(
-                   item.sample_handle_b!!,
-                   second_array,
-                   if (item.sample_handle_a == null && (0 until buffer_size).contains(item.first_frame - first_frame)) {
-                       item.first_frame - first_frame - (buffer_size / 2)
-                   } else {
-                       0
-                   }
-               )
-           }
+            Pair(job_a.await(), job_b.await())
         }
 
-        val short_array_a = this.gen_half_short_array(first_array)
-        val short_array_b = this.gen_half_short_array(second_array)
-
         for (i in array.indices) {
-            array[i] = if (i >= short_array_a.size) {
-                short_array_b[i - short_array_a.size]
+            array[i] = if (i >= first_array.size) {
+                second_array[i - first_array.size]
             } else {
-                short_array_a[i]
+                first_array[i]
             }
         }
 
@@ -143,9 +126,44 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         sample_handle.set_working_frame(sample_handle.working_frame + (this.buffer_size / 2))
     }
 
-    private fun gen_half_short_array(int_array: IntArray): ShortArray {
+    private fun gen_half_short_array(first_frame: Int, first_half: Boolean = true): ShortArray {
+
+        val mid_array = IntArray(this.buffer_size)
+        for ((_, item) in this._active_sample_handles) {
+            if (item.first_frame >= first_frame + buffer_size) {
+                continue
+            }
+
+            if (first_half) {
+                if (item.sample_handle_a != null && !item.sample_handle_a!!.is_dead) {
+                    this.populate_half_int_array(
+                        item.sample_handle_a!!,
+                        mid_array,
+                        if ((0 until buffer_size).contains(item.first_frame - first_frame)) {
+                            item.first_frame - first_frame
+                        } else {
+                            0
+                        }
+                    )
+                }
+            } else {
+                if (item.sample_handle_b != null && !item.sample_handle_b!!.is_dead) {
+                    this.populate_half_int_array(
+                        item.sample_handle_b!!,
+                        mid_array,
+                        if (item.sample_handle_a == null && (0 until buffer_size).contains(item.first_frame - first_frame)) {
+                            item.first_frame - first_frame - (buffer_size / 2)
+                        } else {
+                            0
+                        }
+                    )
+                }
+            }
+
+        }
+
         var max_frame_value = 0
-        for (v in int_array) {
+        for (v in mid_array) {
             max_frame_value = max(max_frame_value, abs(v))
         }
 
@@ -156,8 +174,8 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             (Short.MAX_VALUE - mid).toDouble() / (max_frame_value - mid).toDouble()
         }
 
-        val array = ShortArray(int_array.size) { i: Int ->
-            val v = int_array[i]
+        val array = ShortArray(mid_array.size) { i: Int ->
+            val v = mid_array[i]
             if (compression_ratio >= 1.0 || (0 - mid <= v && v <= mid)) {
                 v.toShort()
             } else if (v > mid) {

@@ -109,10 +109,10 @@ class MainActivity : AppCompatActivity() {
         var opus_manager = OpusManager()
         var show_percussion = false
 
-        fun export_wav(midi_frame_map: OpusLayerFrameMap, target_file: File, handler: MidiConverter.ExporterEventHandler) {
+        fun export_wav(sample_handle_manager: SampleHandleManager, midi: Midi, target_file: File, handler: MidiConverter.ExporterEventHandler) {
 
-            this.export_handle = MidiConverter(44100, 11025) // Not accessing Cache *YET*, don't need to match buffer sizes
-            this.export_handle?.export_wav(midi_frame_map, target_file, handler)
+            this.export_handle = MidiConverter(sample_handle_manager) // Not accessing Cache *YET*, don't need to match buffer sizes
+            this.export_handle?.export_wav(midi, target_file, handler)
             this.export_handle = null
         }
 
@@ -159,6 +159,11 @@ class MainActivity : AppCompatActivity() {
     // -------------------------------------------------------------------
 
     private var _export_wav_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (this._soundfont == null) {
+            // Throw Error. Currently unreachable by ui
+            return@registerForActivityResult
+        }
+
         this.getNotificationPermission()
         thread {
             if (result.resultCode == Activity.RESULT_OK) {
@@ -168,12 +173,22 @@ class MainActivity : AppCompatActivity() {
                         return@thread
                     }
 
+                    /*
+                        TODO: Remember why i'm using a tmp file.
+                            It may not be necessary after the changes I made to the Midi Converter.
+                            (Now we can predict file size)
+                    */
                     val tmp_file = File("${this.filesDir}/.tmp_wav_data")
                     if (tmp_file.exists()) {
                         tmp_file.delete()
                     }
                     tmp_file.deleteOnExit()
-                    this.view_model.export_wav(opus_manager, tmp_file, object : MidiConverter.ExporterEventHandler {
+                    val exporter_sample_handle_manager = SampleHandleManager(
+                        this._soundfont!!,
+                        44100,
+                        44100
+                    )
+                    this.view_model.export_wav(exporter_sample_handle_manager, opus_manager.get_midi(), tmp_file, object : MidiConverter.ExporterEventHandler {
                         val notification_manager = NotificationManagerCompat.from(this@MainActivity)
 
                         override fun on_start() {

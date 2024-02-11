@@ -1,12 +1,13 @@
 package com.qfs.apres.soundfontplayer
 
+import com.qfs.apres.Midi
 import java.io.BufferedOutputStream
 import java.io.DataOutputStream
 import java.io.File
 import java.io.FileOutputStream
 
 // Ended up needing to split the active and cache Midi Players due to different fundemental requirements
-open class MidiConverter(val sample_rate: Int, val buffer_size: Int) {
+open class MidiConverter(val sample_handle_manager: SampleHandleManager) {
     interface ExporterEventHandler {
         abstract fun on_start()
         abstract fun on_complete()
@@ -19,42 +20,26 @@ open class MidiConverter(val sample_rate: Int, val buffer_size: Int) {
 
 
     // Tmp_file is a Kludge until I can figure out how to quickly precalculate file sizes
-    fun export_wav(midi_frame_map: FrameMap, target_file: File, handler: ExporterEventHandler) {
+    fun export_wav(midi: Midi, target_file: File, handler: ExporterEventHandler) {
         handler.on_start()
         this.generating = true
         this.cancel_flagged = false
-        val wave_generator = WaveGenerator(midi_frame_map, this.sample_rate, this.buffer_size)
-        val data_chunks = mutableListOf<ShortArray>()
-        val total_chunk_count = this@MidiConverter.approximate_frame_count.toDouble() / this@MidiConverter.buffer_size
-        var chunk_count = 0.0
-        val min_delta = 500
 
-        var current_ts = System.currentTimeMillis()
-        while (!this.cancel_flagged) {
-            try {
-                val chunk = try {
-                    wave_generator.generate()
-                } catch (e: WaveGenerator.EmptyException) {
-                    ShortArray(this.buffer_size * 2)
-                }
-                data_chunks.add(chunk)
-                val now = System.currentTimeMillis()
-                if (now - current_ts > min_delta) {
-                    handler.on_progress_update(chunk_count / total_chunk_count)
-                    current_ts = now
-                }
-                chunk_count += 1.0
-            } catch (e: Exception) {
-                break
-            }
-        }
+        val midi_frame_map = MidiFrameMap(this.sample_handle_manager)
+        midi_frame_map.parse_midi(midi)
 
-        wave_generator.frame = 0
+        val wave_generator = WaveGenerator(
+            midi_frame_map,
+            this.sample_handle_manager.sample_rate,
+            this.sample_handle_manager.buffer_size
+        )
+
+        val total_chunk_count = midi_frame_map.get_size().toDouble() / this.sample_handle_manager.buffer_size
 
         val output_stream = FileOutputStream(target_file)
         val buffered_output_stream = BufferedOutputStream(output_stream)
         val data_output_stream = DataOutputStream(buffered_output_stream)
-        val data_byte_count = data_chunks.size * this.buffer_size * 4
+        val data_byte_count = midi_frame_map.get_size() * 4
 
         if (!this.cancel_flagged) {
             // 00 Riff
@@ -73,9 +58,9 @@ open class MidiConverter(val sample_rate: Int, val buffer_size: Int) {
             // 22 Channel Count
             data_output_stream.writeShort(0x0200)
             // 24 Sample rate
-            data_output_stream.writeInt(Integer.reverseBytes(this.sample_rate))
+            data_output_stream.writeInt(Integer.reverseBytes(this.sample_handle_manager.sample_rate))
             // 28 byte rate
-            data_output_stream.writeInt(Integer.reverseBytes(this.sample_rate * 2))
+            data_output_stream.writeInt(Integer.reverseBytes(this.sample_handle_manager.sample_rate * 2))
             // 32 Block Alignment
             data_output_stream.writeByte(0x04)
             data_output_stream.writeByte(0x00)
@@ -88,13 +73,31 @@ open class MidiConverter(val sample_rate: Int, val buffer_size: Int) {
             data_output_stream.writeInt(Integer.reverseBytes(data_byte_count))
         }
 
-        for (chunk in data_chunks) {
-            if (this.cancel_flagged) {
+        var chunk_count = 0.0
+        val min_delta = 500
+
+        var current_ts = System.currentTimeMillis()
+        while (!this.cancel_flagged) {
+            try {
+                val chunk = try {
+                    wave_generator.generate()
+                } catch (e: WaveGenerator.EmptyException) {
+                    ShortArray(this.sample_handle_manager.buffer_size * 2)
+                }
+
+                for (b in chunk) {
+                    data_output_stream.writeByte((b.toInt() and 0xFF))
+                    data_output_stream.writeByte((b.toInt() shr 8))
+                }
+
+                val now = System.currentTimeMillis()
+                if (now - current_ts > min_delta) {
+                    handler.on_progress_update(chunk_count / total_chunk_count)
+                    current_ts = now
+                }
+                chunk_count += 1.0
+            } catch (e: Exception) {
                 break
-            }
-            for (b in chunk) {
-                data_output_stream.writeByte((b.toInt() and 0xFF))
-                data_output_stream.writeByte((b.toInt() shr 8))
             }
         }
 

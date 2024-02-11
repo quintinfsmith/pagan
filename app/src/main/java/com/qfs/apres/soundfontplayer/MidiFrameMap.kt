@@ -52,8 +52,13 @@ class MidiFrameMap(val sample_handle_manager: SampleHandleManager): FrameMap {
                             }
                         }
                         if (event.get_velocity() > 0) {
+                            val handles = this.sample_handle_manager.gen_sample_handles(event)
+                            if (!this.frames.containsKey(tick_frame)) {
+                                this.frames[tick_frame] = mutableSetOf()
+                            }
+                            this.frames[tick_frame]!!.addAll(handles)
                             note_on_frames[Pair(event.channel, event.get_note())] = Pair(
-                                this.sample_handle_manager.gen_sample_handles(event),
+                                handles,
                                 tick_frame
                             )
                         }

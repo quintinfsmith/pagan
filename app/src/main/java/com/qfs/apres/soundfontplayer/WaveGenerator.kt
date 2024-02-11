@@ -239,7 +239,6 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                     }
                 }
             }
-
         }
     }
 

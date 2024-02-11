@@ -24,6 +24,8 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
     private var changed_frames = mutableSetOf<IntRange>()
     private val handle_range_map = HashMap<Int, IntRange>()
     private var flux_indicator: Int = 0
+    private var flag_cleared_in_flux: Boolean = false
+    private var clear_and_set_lock: Int = 0 // if a function clears and reset the map, don't bother with anything in between
     private var cached_frame_count: Int? = null
 
     // FrameMap Interface -------------------
@@ -42,6 +44,7 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
 
         return output
     }
+
 
     override fun get_beat_frames(): List<Int> {
         val frames_per_beat = 60.0 * this.sample_handle_manager!!.sample_rate / this.tempo
@@ -89,6 +92,32 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
 
     open fun on_frames_changed(frames: List<IntRange>) { }
 
+    fun <T> clear_and_set_frames(callback: () -> T): T {
+        if (this.flux_indicator > 0) {
+            this.flag_cleared_in_flux = true
+        }
+
+        if (this.clear_and_set_lock == 0) {
+            this.clear_frame_map_data()
+        }
+
+        this.clear_and_set_lock += 1
+
+        val output = try {
+            callback()
+        } catch (e: Exception) {
+            this.clear_and_set_lock -= 1
+            throw e
+        }
+
+        this.clear_and_set_lock -= 1
+        if (this.clear_and_set_lock == 0) {
+            this.setup_frame_map()
+        }
+
+        return output
+    }
+
     fun <T> flux_wrapper(callback: () -> T): T {
         this.flux_indicator += 1
         val output = try {
@@ -97,7 +126,13 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
             this.flux_indicator -= 1
             throw e
         }
+
         this.flux_indicator -= 1
+
+        if (flux_indicator == 0 && this.flag_cleared_in_flux) {
+            this.flag_cleared_in_flux = false
+            this.setup_frame_map()
+        }
 
         if (flux_indicator == 0 && this.changed_frames.isNotEmpty()) {
             val sorted_list = this.changed_frames.sortedBy { it.start }
@@ -221,6 +256,9 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
     }
 
     fun unmap_frames(beat_key: BeatKey, position: List<Int>) {
+        if (this.flux_indicator > 0 && this.flag_cleared_in_flux) {
+            return
+        }
 
         val working_tree = this.get_tree(beat_key, position)
 
@@ -259,6 +297,10 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
     }
 
     fun map_frames(beat_key: BeatKey, position: List<Int>) {
+        if (this.flux_indicator > 0 && this.flag_cleared_in_flux) {
+            return
+        }
+
         val working_tree = this.get_tree(beat_key, position)
         if (!working_tree.is_leaf()) {
             for (i in 0 until working_tree.size) {
@@ -332,17 +374,29 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
         )
     }
     fun unmap_line_frames(channel: Int, line_offset: Int) {
+        if (this.flux_indicator > 0 && this.flag_cleared_in_flux) {
+            return
+        }
+
         this.channels[channel].lines[line_offset].beats.forEachIndexed { j: Int, tree: OpusTree<OpusEvent> ->
             this.unmap_frames(BeatKey(channel, line_offset, j), listOf())
         }
     }
 
     fun map_line_frames(channel: Int, line_offset: Int) {
+        if (this.flux_indicator > 0 && this.flag_cleared_in_flux) {
+            return
+        }
+
         this.channels[channel].lines[line_offset].beats.forEachIndexed { j: Int, tree: OpusTree<OpusEvent> ->
             this.map_frames(BeatKey(channel, line_offset, j), listOf())
         }
     }
     fun unmap_channel_frames(channel: Int) {
+        if (this.flux_indicator > 0 && this.flag_cleared_in_flux) {
+            return
+        }
+
         this.channels[channel].lines.forEachIndexed { i: Int, line: OpusChannel.OpusLine ->
             line.beats.forEachIndexed { j: Int, tree: OpusTree<OpusEvent> ->
                 this.unmap_frames(BeatKey(channel, i, j), listOf())
@@ -351,6 +405,10 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
     }
 
     fun map_channel_frames(channel: Int) {
+        if (this.flux_indicator > 0 && this.flag_cleared_in_flux) {
+            return
+        }
+
         this.channels[channel].lines.forEachIndexed { i: Int, line: OpusChannel.OpusLine ->
             line.beats.forEachIndexed { j: Int, tree: OpusTree<OpusEvent> ->
                 this.map_frames(BeatKey(channel, i, j), listOf())
@@ -394,7 +452,9 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
     }
 
     override fun set_channel_bank(channel: Int, bank: Int) {
-        this.sample_handle_manager!!.select_bank(this.channels[channel].midi_channel, bank)
+        if (this.flux_indicator == 0 || !this.flag_cleared_in_flux) {
+            this.sample_handle_manager!!.select_bank(this.channels[channel].midi_channel, bank)
+        }
         super.set_channel_bank(channel, bank)
     }
 
@@ -472,6 +532,11 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
     override fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<OpusEvent>>?) {
         this.flux_wrapper {
             super.insert_beat(beat_index, beats_in_column)
+
+            if (this.flag_cleared_in_flux) {
+                return@flux_wrapper
+            }
+
             this.cached_frame_count = null
 
             val frames_per_beat = 60.0 * this.sample_handle_manager!!.sample_rate / this.tempo
@@ -519,6 +584,11 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
     override fun remove_beat(beat_index: Int) {
         this.flux_wrapper {
             super.remove_beat(beat_index)
+
+            if (this.flag_cleared_in_flux) {
+                return@flux_wrapper
+            }
+
             this.cached_frame_count = null
 
             val frames_per_beat = 60.0 * this.sample_handle_manager!!.sample_rate / this.tempo
@@ -665,13 +735,17 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
     }
 
     override fun clear() {
+        this.clear_frame_map_data()
+        super.clear()
+    }
+
+    fun clear_frame_map_data() {
         this.frame_map.clear()
         this.unmap_flags.clear()
         this.handle_map.clear()
         this.quick_map_sample_handles.clear()
         this.changed_frames.clear()
         this.handle_range_map.clear()
-        super.clear()
     }
 
     override fun swap_lines(channel_a: Int, line_a: Int, channel_b: Int, line_b: Int) {
@@ -690,25 +764,28 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
 
     override fun remove_line(channel: Int, line_offset: Int): OpusChannel.OpusLine {
         return this.flux_wrapper {
-            for (i in 0 until this.beat_count) {
-                this.unmap_frames(BeatKey(channel, line_offset, i), listOf())
-            }
-
-            val sorted_keys = this.quick_map_sample_handles.keys.sortedBy { it.first.channel }
-            for ((beat_key, position) in sorted_keys) {
-                if (beat_key.channel != channel || beat_key.line_offset < line_offset) {
-                    break
+            if (!this.flag_cleared_in_flux) {
+                for (i in 0 until this.beat_count) {
+                    this.unmap_frames(BeatKey(channel, line_offset, i), listOf())
                 }
-                val new_key = Pair(
-                    BeatKey(
-                        beat_key.channel,
-                        beat_key.line_offset - 1,
-                        beat_key.beat
-                    ),
-                    position
-                )
 
-                this.quick_map_sample_handles[new_key] = this.quick_map_sample_handles.remove(Pair(beat_key, position))!!
+                val sorted_keys = this.quick_map_sample_handles.keys.sortedBy { it.first.channel }
+                for ((beat_key, position) in sorted_keys) {
+                    if (beat_key.channel != channel || beat_key.line_offset < line_offset) {
+                        break
+                    }
+                    val new_key = Pair(
+                        BeatKey(
+                            beat_key.channel,
+                            beat_key.line_offset - 1,
+                            beat_key.beat
+                        ),
+                        position
+                    )
+
+                    this.quick_map_sample_handles[new_key] =
+                        this.quick_map_sample_handles.remove(Pair(beat_key, position))!!
+                }
             }
 
             super.remove_line(channel, line_offset)
@@ -717,21 +794,25 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
 
     override fun insert_line(channel: Int, line_offset: Int, line: OpusChannel.OpusLine) {
         this.flux_wrapper {
-            val sorted_keys = this.quick_map_sample_handles.keys.sortedByDescending { it.first.channel }
-            for ((beat_key, position) in sorted_keys) {
-                if (beat_key.channel != channel || beat_key.line_offset < line_offset) {
-                    break
-                }
-                val new_key = Pair(
-                    BeatKey(
-                        beat_key.channel,
-                        beat_key.line_offset + 1,
-                        beat_key.beat
-                    ),
-                    position
-                )
+            if (!this.flag_cleared_in_flux) {
+                val sorted_keys =
+                    this.quick_map_sample_handles.keys.sortedByDescending { it.first.channel }
+                for ((beat_key, position) in sorted_keys) {
+                    if (beat_key.channel != channel || beat_key.line_offset < line_offset) {
+                        break
+                    }
+                    val new_key = Pair(
+                        BeatKey(
+                            beat_key.channel,
+                            beat_key.line_offset + 1,
+                            beat_key.beat
+                        ),
+                        position
+                    )
 
-                this.quick_map_sample_handles[new_key] = this.quick_map_sample_handles.remove(Pair(beat_key, position))!!
+                    this.quick_map_sample_handles[new_key] =
+                        this.quick_map_sample_handles.remove(Pair(beat_key, position))!!
+                }
             }
 
             super.insert_line(channel, line_offset, line)
@@ -747,6 +828,39 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
             this.unmap_line_frames(channel, line_offset)
             super.set_line_volume(channel, line_offset, volume)
             this.map_line_frames(channel, line_offset)
+        }
+    }
+
+    override fun set_tempo(new_tempo: Float) {
+        this.clear_and_set_frames {
+            super.set_tempo(new_tempo)
+        }
+    }
+
+    override fun set_tuning_map(new_map: Array<Pair<Int, Int>>, mod_events: Boolean) {
+        this.clear_and_set_frames {
+            super.set_tuning_map(new_map, mod_events)
+        }
+    }
+
+    override fun set_transpose(new_transpose: Int) {
+        this.clear_and_set_frames {
+            super.set_transpose(new_transpose)
+        }
+    }
+
+    override fun set_tuning_map_and_transpose(tuning_map: Array<Pair<Int, Int>>, transpose: Int) {
+        this.clear_and_set_frames {
+            super.set_tuning_map_and_transpose(tuning_map, transpose)
+        }
+    }
+
+
+    override fun apply_undo() {
+        // Wrapping the apply_undo in the flux wrapper will cause the flag_cleared_in_flux
+        // to be considered
+        this.flux_wrapper {
+            super.apply_undo()
         }
     }
 }

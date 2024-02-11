@@ -1,7 +1,6 @@
 package com.qfs.apres.soundfontplayer
 
 import android.media.AudioTrack
-import android.util.Log
 import kotlin.concurrent.thread
 import kotlin.math.min
 
@@ -136,19 +135,26 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
                         throw java.lang.IllegalStateException()
                     }
 
+                    that.on_start()
+
                     this.has_beats = that.beat_frames.isNotEmpty()
 
                     if (this.has_beats) {
-                        while (this.current_beat < that.beat_frames.size && that.beat_frames[this.current_beat++] <= start_frame) { }
-                    }
+                        var last_beat_frame = 0
+                        while (this.current_beat < that.beat_frames.size) {
+                            if ((last_beat_frame until that.beat_frames[this.current_beat]).contains(start_frame)) {
+                                break
+                            }
+                            last_beat_frame = that.beat_frames[this.current_beat]
+                            this.current_beat += 1
+                        }
 
-                    that.on_start()
-
-                    if (this.has_beats && this.current_beat < that.beat_frames.size) {
-                        that.on_beat(this.current_beat)
-                        that.active_audio_track_handle?.set_next_notification_position(
-                            that.beat_frames[this.current_beat] - start_frame
-                        )
+                        if (this.current_beat < that.beat_frames.size) {
+                            that.on_beat(this.current_beat)
+                            that.active_audio_track_handle?.set_next_notification_position(
+                                that.beat_frames[this.current_beat] - start_frame
+                            )
+                        }
                     }
                 }
                 override fun onMarkerReached(audio_track: AudioTrack?) {

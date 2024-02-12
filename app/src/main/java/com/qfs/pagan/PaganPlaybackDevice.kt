@@ -2,7 +2,7 @@ package com.qfs.pagan
 
 import com.qfs.apres.soundfontplayer.MappedPlaybackDevice
 class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activity.configuration.sample_rate): MappedPlaybackDevice(
-    activity.get_opus_manager(),
+    activity.get_opus_manager().get_frame_map(),
     sample_rate,
     activity.get_opus_manager().sample_handle_manager!!.buffer_size
 ) {
@@ -62,6 +62,7 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
 
     fun play_opus(start_beat: Int) {
         val opus_manager = this.activity.get_opus_manager()
+        this.sample_frame_map = opus_manager.get_frame_map()
         val start_frame = ((60.0 / opus_manager.tempo) * this.sample_rate) * start_beat
         this.play(start_frame.toInt())
     }

@@ -15,77 +15,370 @@ import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
 
-open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
+open class OpusLayerFrameMap: OpusLayerCursor() {
+    class PlaybackFrameMap: FrameMap {
+        var sample_rate: Int = 0
+        var beat_count: Int = 0
+        var tempo: Float = 0f
+
+        private var handle_map = HashMap<Int, SampleHandle>()
+        private var frame_map = HashMap<Int, MutableSet<Int>>()
+        private val handle_range_map = HashMap<Int, IntRange>()
+        private var quick_map_sample_handles =  HashMap<Pair<BeatKey, List<Int>>, Set<Int>>()
+
+        internal var changed_frames = mutableSetOf<IntRange>()
+        internal var cached_frame_count: Int? = null
+
+        // FrameMap Interface -------------------
+        override fun get_new_handles(frame: Int): Set<SampleHandle>? {
+            if (!this.frame_map.containsKey(frame)) {
+                return null
+            }
+
+            val output = mutableSetOf<SampleHandle>()
+            for (uuid in this.frame_map[frame]!!) {
+                // Kludge? TODO: figure out a better place for these resets
+                val use_handle = SampleHandle(this.handle_map[uuid]!!)
+
+                use_handle.release_frame = this.handle_map[uuid]!!.release_frame!!
+                use_handle.set_working_frame(0)
+                use_handle.is_dead = false
+
+                output.add(use_handle)
+            }
+
+            return output
+        }
+
+
+        override fun get_beat_frames(): List<Int> {
+            val frames_per_beat = 60.0 * this.sample_rate / this.tempo
+            return List(this.beat_count) { i ->
+                (frames_per_beat * (i + 1)).toInt()
+            }
+        }
+
+        override fun get_active_handles(frame: Int): Set<Pair<Int, SampleHandle>> {
+            val output = mutableSetOf<Pair<Int, SampleHandle>>()
+            for ((uuid, range) in this.handle_range_map) {
+                if (range.contains(frame)) {
+                    output.add(
+                        Pair(
+                            range.first,
+                            this.handle_map[uuid]!!
+                        )
+                    )
+                }
+            }
+            return output
+        }
+
+        override fun get_size(): Int {
+            if (this.cached_frame_count == null) {
+                this.cached_frame_count = -1
+                for (range in this.handle_range_map.values) {
+                    this.cached_frame_count = max(range.last, this.cached_frame_count!!)
+                }
+                this.cached_frame_count = this.cached_frame_count!! + 1
+            }
+            return this.cached_frame_count!!
+        }
+
+        // End FrameMap Interface --------------------------
+
+        fun clear() {
+            this.frame_map.clear()
+            this.handle_map.clear()
+            this.changed_frames.clear()
+            this.handle_range_map.clear()
+            this.quick_map_sample_handles.clear()
+            this.cached_frame_count = null
+        }
+
+        fun remove_handle(uuid: Int) {
+            this.handle_map.remove(uuid)
+            // reminder: 'end_frame' here is the last active frame in the sample, including decay
+            val frame_range = this.handle_range_map.remove(uuid) ?: return
+            this.changed_frames.add(frame_range)
+            if (this.frame_map.containsKey(frame_range.first)) {
+                this.frame_map[frame_range.first]!!.remove(uuid)
+                if (this.frame_map[frame_range.first]!!.isEmpty()) {
+                    this.frame_map.remove(frame_range.first)
+                }
+            }
+        }
+
+        fun remove_handle(key: Pair<BeatKey, List<Int>>) {
+            val sample_handles = this.quick_map_sample_handles.remove(key) ?: return
+
+            for (uuid in sample_handles) {
+                this.remove_handle(uuid)
+            }
+
+            this.cached_frame_count = null
+        }
+
+        fun add_handles(quick_key: Pair<BeatKey, List<Int>>, start_frame: Int, end_frame: Int, handles: Set<SampleHandle>) {
+            if (!this.frame_map.containsKey(start_frame)) {
+                this.frame_map[start_frame] = mutableSetOf()
+            }
+
+            val uuids = mutableSetOf<Int>()
+            var max_end_frame = 0
+            for (handle in handles) {
+                val sample_end_frame = end_frame + handle.frame_count_release
+                max_end_frame = max(max_end_frame, sample_end_frame)
+
+                handle.release_frame = end_frame - start_frame
+
+                uuids.add(handle.uuid)
+                this.frame_map[start_frame]!!.add(handle.uuid)
+                this.handle_range_map[handle.uuid] = start_frame .. sample_end_frame
+                this.handle_map[handle.uuid] = handle
+            }
+
+            this.quick_map_sample_handles[quick_key] = uuids
+            this.changed_frames.add(start_frame .. max_end_frame)
+        }
+
+        fun insert_beat(beat_index: Int) {
+            this.beat_count += 1
+            this.cached_frame_count = null
+
+            val frames_per_beat = 60.0 * this.sample_rate / this.tempo
+
+            val sorted_keys = this.quick_map_sample_handles.keys.sortedByDescending { it.first.beat }
+            val samples_to_move = mutableSetOf<Int>()
+
+            for ((beat_key, position) in sorted_keys) {
+                if (beat_key.beat < beat_index) {
+                    break
+                }
+
+                val new_key = Pair(
+                    BeatKey(
+                        beat_key.channel,
+                        beat_key.line_offset,
+                        beat_key.beat + 1
+                    ),
+                    position
+                )
+
+                this.quick_map_sample_handles[new_key] = this.quick_map_sample_handles.remove(Pair(beat_key, position))!!
+                samples_to_move.addAll(this.quick_map_sample_handles[new_key]!!)
+            }
+
+            var first_frame = ((this.beat_count + 1) * frames_per_beat).toInt()
+            for (uuid in samples_to_move) {
+                val pair = this.handle_range_map[uuid] ?: continue
+                this.handle_range_map[uuid] = pair.first + frames_per_beat.toInt() .. pair.last + frames_per_beat.toInt()
+
+                first_frame = min(first_frame, pair.first)
+            }
+
+            for (frame in this.frame_map.keys.sortedByDescending { it }) {
+                if (frame < first_frame) {
+                    continue
+                }
+                this.frame_map[frame + frames_per_beat.toInt()] = this.frame_map.remove(frame)!!
+            }
+            this.changed_frames.add((beat_index * frames_per_beat).toInt() .. (frames_per_beat * this.beat_count + 1).toInt())
+        }
+
+        fun has_quick_key(key: Pair<BeatKey, List<Int>>): Boolean {
+            return this.quick_map_sample_handles.contains(key)
+        }
+
+        fun insert_channel(channel: Int) {
+            val sorted_keys = this.quick_map_sample_handles.keys.sortedByDescending { it.first.channel }
+            for ((beat_key, position) in sorted_keys) {
+                if (beat_key.channel < channel) {
+                    break
+                }
+                val new_key = Pair(
+                    BeatKey(
+                        beat_key.channel + 1,
+                        beat_key.line_offset,
+                        beat_key.beat
+                    ),
+                    position
+                )
+
+                this.quick_map_sample_handles[new_key] = this.quick_map_sample_handles.remove(Pair(beat_key, position))!!
+            }
+        }
+
+        fun remove_channel(channel: Int) {
+            val sorted_keys = this.quick_map_sample_handles.keys.sortedBy { it.first.channel }
+            for ((beat_key, position) in sorted_keys) {
+                if (beat_key.channel < channel) {
+                    break
+                }
+                val new_key = Pair(
+                    BeatKey(
+                        beat_key.channel - 1,
+                        beat_key.line_offset,
+                        beat_key.beat
+                    ),
+                    position
+                )
+
+                this.quick_map_sample_handles[new_key] = this.quick_map_sample_handles.remove(Pair(beat_key, position))!!
+            }
+        }
+
+        fun remove_beat(beat_index: Int) {
+            this.cached_frame_count = null
+
+            val frames_per_beat = 60.0 * this.sample_rate / this.tempo
+            val samples_to_move = mutableSetOf<Int>()
+            val samples_to_remove = mutableSetOf<Int>()
+
+            val sorted_keys = this.quick_map_sample_handles.keys.sortedBy { it.first.beat }
+            for ((beat_key, position) in sorted_keys) {
+                if (beat_key.beat < beat_index) {
+                    continue
+                } else if (beat_key.beat == beat_index) {
+                    samples_to_remove.addAll(
+                        this.quick_map_sample_handles.remove(
+                            Pair(
+                                beat_key,
+                                position
+                            )
+                        )!!
+                    )
+                    continue
+                }
+
+                val new_key = Pair(
+                    BeatKey(
+                        beat_key.channel,
+                        beat_key.line_offset,
+                        beat_key.beat - 1
+                    ),
+                    position
+                )
+
+                this.quick_map_sample_handles[new_key] =
+                    this.quick_map_sample_handles.remove(Pair(beat_key, position))!!
+                samples_to_move.addAll(this.quick_map_sample_handles[new_key]!!)
+            }
+
+            var first_frame = ((this.beat_count + 1) * frames_per_beat).toInt()
+            var last_frame = 0
+            for (uuid in samples_to_move) {
+                val pair = this.handle_range_map[uuid]!!
+                this.handle_range_map[uuid] = (pair.first - frames_per_beat.toInt()) .. (pair.last - frames_per_beat.toInt())
+                first_frame = min(first_frame, pair.first)
+                last_frame = max(last_frame, pair.last)
+            }
+
+            var move_frames = (first_frame..last_frame).intersect(this.frame_map.keys)
+
+            first_frame = ((this.beat_count + 1) * frames_per_beat).toInt()
+            last_frame = 0
+            for (uuid in samples_to_remove) {
+                val pair = this.handle_range_map[uuid]!!
+                this.handle_range_map.remove(uuid)
+                this.handle_map.remove(uuid)
+                first_frame = min(first_frame, pair.first)
+                last_frame = max(last_frame, pair.last)
+            }
+
+
+            val del_frames = (first_frame..last_frame).intersect(this.frame_map.keys)
+            for (f in del_frames) {
+                this.frame_map.remove(f)
+            }
+
+            for (f in move_frames.toList().sortedBy { it }) {
+                this.frame_map[f - frames_per_beat.toInt()] = this.frame_map.remove(f)!!
+            }
+
+            this.changed_frames.add((beat_index * frames_per_beat).toInt() .. (frames_per_beat * this.beat_count + 1).toInt())
+            this.beat_count -= 1
+        }
+
+        fun remove_line(channel: Int, line_offset: Int) {
+            val sorted_keys = this.quick_map_sample_handles.keys.sortedBy { it.first.channel }
+            for ((beat_key, position) in sorted_keys) {
+                if (beat_key.channel != channel || beat_key.line_offset < line_offset) {
+                    break
+                }
+                val new_key = Pair(
+                    BeatKey(
+                        beat_key.channel,
+                        beat_key.line_offset - 1,
+                        beat_key.beat
+                    ),
+                    position
+                )
+
+                this.quick_map_sample_handles[new_key] =
+                    this.quick_map_sample_handles.remove(Pair(beat_key, position))!!
+            }
+        }
+        fun insert_line(channel: Int, line_offset: Int) {
+            val sorted_keys = this.quick_map_sample_handles.keys.sortedByDescending { it.first.channel }
+            for ((beat_key, position) in sorted_keys) {
+                if (beat_key.channel != channel || beat_key.line_offset < line_offset) {
+                    break
+                }
+                val new_key = Pair(
+                    BeatKey(
+                        beat_key.channel,
+                        beat_key.line_offset + 1,
+                        beat_key.beat
+                    ),
+                    position
+                )
+
+                this.quick_map_sample_handles[new_key] = this.quick_map_sample_handles.remove(Pair(beat_key, position))!!
+            }
+        }
+
+        //fun clone(): PlaybackFrameMap {
+        //    val new_map = PlaybackFrameMap()
+        //    new_map.sample_rate = this.sample_rate
+        //    new_map.beat_count = this.beat_count
+        //    new_map.tempo = this.tempo
+
+        //    for ((k, v) in this.handle_map) {
+        //        new_map.handle_map[k] = v
+        //    }
+        //    for ((k, v) in this.frame_map) {
+        //        new_map.frame_map[k] = v.toMutableSet()
+        //    }
+        //    for ((k, v) in this.handle_range_map) {
+        //        new_map.handle_range_map[k] = v
+        //    }
+        //    for ((k, v) in this.quick_map_sample_handles) {
+        //        new_map.quick_map_sample_handles[k.copy()] = v.toSet()
+        //    }
+
+        //    new_map.cached_frame_count = this.cached_frame_count
+
+        //    return new_map
+        //}
+    }
+
     var sample_handle_manager: SampleHandleManager? = null
-    private var quick_map_sample_handles =  HashMap<Pair<BeatKey, List<Int>>, Set<Int>>()
-    private var frame_map = HashMap<Int, MutableSet<Int>>()
-    private var handle_map = HashMap<Int, SampleHandle>()
     private var unmap_flags = HashMap<Pair<BeatKey, List<Int>>, Boolean>()
-    private var changed_frames = mutableSetOf<IntRange>()
-    private val handle_range_map = HashMap<Int, IntRange>()
     private var flux_indicator: Int = 0
     private var flag_cleared_in_flux: Boolean = false
     private var clear_and_set_lock: Int = 0 // if a function clears and reset the map, don't bother with anything in between
-    private var cached_frame_count: Int? = null
+    private var frame_map = PlaybackFrameMap()
 
-    // FrameMap Interface -------------------
-    override fun get_new_handles(frame: Int): Set<SampleHandle>? {
-        if (!this.frame_map.containsKey(frame)) {
-            return null
-        }
-
-        val output = mutableSetOf<SampleHandle>()
-        for (uuid in this.frame_map[frame]!!) {
-            // Kludge? TODO: figure out a better place for these resets
-            this.handle_map[uuid]!!.set_working_frame(0)
-            this.handle_map[uuid]!!.is_dead = false
-            output.add(this.handle_map[uuid]!!)
-        }
-
-        return output
+    fun get_frame_map(): FrameMap {
+        return this.frame_map
     }
-
-
-    override fun get_beat_frames(): List<Int> {
-        val frames_per_beat = 60.0 * this.sample_handle_manager!!.sample_rate / this.tempo
-        return List(this.beat_count) { i ->
-            (frames_per_beat * (i + 1)).toInt()
-        }
-    }
-
-    override fun get_active_handles(frame: Int): Set<Pair<Int, SampleHandle>> {
-        val output = mutableSetOf<Pair<Int, SampleHandle>>()
-        for ((uuid, range) in this.handle_range_map) {
-            if (range.contains(frame)) {
-                output.add(
-                    Pair(
-                        range.first,
-                        this.handle_map[uuid]!!
-                    )
-                )
-            }
-        }
-        return output
-    }
-
-    override fun get_size(): Int {
-        if (this.cached_frame_count == null) {
-            this.cached_frame_count = -1
-            for (range in this.handle_range_map.values) {
-                this.cached_frame_count = max(range.last, this.cached_frame_count!!)
-            }
-            this.cached_frame_count = this.cached_frame_count!! + 1
-        }
-        return this.cached_frame_count!!
-    }
-
-    // End FrameMap Interface --------------------------
 
     //-----Layer Functions-------//
     fun set_sample_handle_manager(new_manager: SampleHandleManager) {
-        this.sample_handle_manager = new_manager
         this.frame_map.clear()
-        this.handle_map.clear()
+        this.frame_map.sample_rate = new_manager.sample_rate
+
+        this.sample_handle_manager = new_manager
         this.setup_sample_handle_manager()
         this.setup_frame_map()
     }
@@ -134,8 +427,8 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
             this.setup_frame_map()
         }
 
-        if (flux_indicator == 0 && this.changed_frames.isNotEmpty()) {
-            val sorted_list = this.changed_frames.sortedBy { it.start }
+        if (flux_indicator == 0 && this.frame_map.changed_frames.isNotEmpty()) {
+            val sorted_list = this.frame_map.changed_frames.sortedBy { it.start }
             val merged_list = mutableListOf<IntRange>()
 
             var pivot_range: IntRange? = null
@@ -156,7 +449,7 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
                 pivot_range = null
             }
 
-            this.changed_frames.clear()
+            this.frame_map.changed_frames.clear()
             this.on_frames_changed(merged_list)
         }
 
@@ -165,6 +458,8 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
 
     fun setup_frame_map() {
         this.flux_wrapper {
+            this.frame_map.tempo = this.tempo
+            this.frame_map.beat_count = this.beat_count
             this.unmap_flags.clear()
             this.channels.forEachIndexed { c: Int, channel: OpusChannel ->
                 channel.lines.forEachIndexed { l: Int, line: OpusChannel.OpusLine ->
@@ -193,7 +488,6 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
     fun unset_sample_handle_manager() {
         this.sample_handle_manager = null
         this.frame_map.clear()
-        this.handle_map.clear()
         this.unmap_flags.clear()
     }
 
@@ -278,22 +572,7 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
 
         this.unmap_flags[unmap_key] = true
 
-        val sample_handles = this.quick_map_sample_handles.remove(Pair(beat_key, position)) ?: return
-
-        for (uuid in sample_handles) {
-            this.handle_map.remove(uuid)
-            // reminder: 'end_frame' here is the last active frame in the sample, including decay
-            val frame_range = this.handle_range_map.remove(uuid) ?: continue
-            this.changed_frames.add(frame_range)
-            if (this.frame_map.containsKey(frame_range.first)) {
-                this.frame_map[frame_range.first]!!.remove(uuid)
-                if (this.frame_map[frame_range.first]!!.isEmpty()) {
-                    this.frame_map.remove(frame_range.first)
-                }
-            }
-        }
-
-        this.cached_frame_count = null
+        this.frame_map.remove_handle(unmap_key)
     }
 
     fun map_frames(beat_key: BeatKey, position: List<Int>) {
@@ -312,8 +591,8 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
         } else if (!working_tree.is_event()) {
             return
         }
-
-        if (this.quick_map_sample_handles.containsKey(Pair(beat_key, position))) {
+        val quick_key = Pair(beat_key, position)
+        if (this.frame_map.has_quick_key(quick_key)) {
             this.unmap_frames(beat_key, position)
         }
 
@@ -329,25 +608,12 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
             else -> return
         }
 
-        if (!this.frame_map.containsKey(start_frame)) {
-            this.frame_map[start_frame] = mutableSetOf()
-        }
 
-        val uuids = mutableSetOf<Int>()
-        for (handle in handles) {
-            uuids.add(handle.uuid)
+        this.frame_map.add_handles(quick_key, start_frame, end_frame, handles)
 
-            handle.release_frame = end_frame - start_frame
-            val sample_end_frame = start_frame + handle.release_frame!! + handle.frame_count_release
-            this.handle_range_map[handle.uuid] = start_frame .. sample_end_frame
-            this.frame_map[start_frame]!!.add(handle.uuid)
-            this.handle_map[handle.uuid] = handle
-            this.changed_frames.add(start_frame .. sample_end_frame)
-        }
-
-        this.quick_map_sample_handles[Pair(beat_key, position)] = uuids
         this.unmap_flags[Pair(beat_key, position)] = false
-        this.cached_frame_count = null
+
+        this.frame_map.cached_frame_count = null
     }
 
     fun get_frame_range(beat_key: BeatKey, position: List<Int>): Pair<Int, Int> {
@@ -488,44 +754,15 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
         this.flux_wrapper {
             super.new_channel(channel, lines, uuid)
             val working_channel = channel ?: max(0, this.channels.size - 2)
-            val sorted_keys = this.quick_map_sample_handles.keys.sortedByDescending { it.first.channel }
-            for ((beat_key, position) in sorted_keys) {
-                if (beat_key.channel < working_channel) {
-                    break
-                }
-                val new_key = Pair(
-                    BeatKey(
-                        beat_key.channel + 1,
-                        beat_key.line_offset,
-                        beat_key.beat
-                    ),
-                    position
-                )
 
-                this.quick_map_sample_handles[new_key] = this.quick_map_sample_handles.remove(Pair(beat_key, position))!!
-            }
+            this.frame_map.insert_channel(working_channel)
         }
     }
 
     override fun remove_channel(channel: Int) {
         this.flux_wrapper {
             super.remove_channel(channel)
-            val sorted_keys = this.quick_map_sample_handles.keys.sortedBy { it.first.channel }
-            for ((beat_key, position) in sorted_keys) {
-                if (beat_key.channel < channel) {
-                    break
-                }
-                val new_key = Pair(
-                    BeatKey(
-                        beat_key.channel - 1,
-                        beat_key.line_offset,
-                        beat_key.beat
-                    ),
-                    position
-                )
-
-                this.quick_map_sample_handles[new_key] = this.quick_map_sample_handles.remove(Pair(beat_key, position))!!
-            }
+            this.frame_map.remove_channel(channel)
         }
     }
 
@@ -537,47 +774,7 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
                 return@flux_wrapper
             }
 
-            this.cached_frame_count = null
-
-            val frames_per_beat = 60.0 * this.sample_handle_manager!!.sample_rate / this.tempo
-
-            val sorted_keys =
-                this.quick_map_sample_handles.keys.sortedByDescending { it.first.beat }
-            val samples_to_move = mutableSetOf<Int>()
-            for ((beat_key, position) in sorted_keys) {
-                if (beat_key.beat < beat_index) {
-                    break
-                }
-
-                val new_key = Pair(
-                    BeatKey(
-                        beat_key.channel,
-                        beat_key.line_offset,
-                        beat_key.beat + 1
-                    ),
-                    position
-                )
-
-                this.quick_map_sample_handles[new_key] =
-                    this.quick_map_sample_handles.remove(Pair(beat_key, position))!!
-                samples_to_move.addAll(this.quick_map_sample_handles[new_key]!!)
-            }
-
-            var first_frame = ((this.beat_count + 1) * frames_per_beat).toInt()
-            for (uuid in samples_to_move) {
-                val pair = this.handle_range_map[uuid] ?: continue
-                this.handle_range_map[uuid] = pair.first + frames_per_beat.toInt() .. pair.last + frames_per_beat.toInt()
-
-                first_frame = min(first_frame, pair.first)
-            }
-
-            for (frame in this.frame_map.keys.sortedByDescending { it }) {
-                if (frame < first_frame) {
-                    continue
-                }
-                this.frame_map[frame + frames_per_beat.toInt()] = this.frame_map.remove(frame)!!
-            }
-            this.changed_frames.add((beat_index * frames_per_beat).toInt() .. (frames_per_beat * this.beat_count + 1).toInt())
+            this.frame_map.insert_beat(beat_index)
         }
     }
 
@@ -588,75 +785,6 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
             if (this.flag_cleared_in_flux) {
                 return@flux_wrapper
             }
-
-            this.cached_frame_count = null
-
-            val frames_per_beat = 60.0 * this.sample_handle_manager!!.sample_rate / this.tempo
-            val samples_to_move = mutableSetOf<Int>()
-            val samples_to_remove = mutableSetOf<Int>()
-
-            val sorted_keys = this.quick_map_sample_handles.keys.sortedBy { it.first.beat }
-            for ((beat_key, position) in sorted_keys) {
-                if (beat_key.beat < beat_index) {
-                    continue
-                } else if (beat_key.beat == beat_index) {
-                    samples_to_remove.addAll(
-                        this.quick_map_sample_handles.remove(
-                            Pair(
-                                beat_key,
-                                position
-                            )
-                        )!!
-                    )
-                    continue
-                }
-
-                val new_key = Pair(
-                    BeatKey(
-                        beat_key.channel,
-                        beat_key.line_offset,
-                        beat_key.beat - 1
-                    ),
-                    position
-                )
-
-                this.quick_map_sample_handles[new_key] =
-                    this.quick_map_sample_handles.remove(Pair(beat_key, position))!!
-                samples_to_move.addAll(this.quick_map_sample_handles[new_key]!!)
-            }
-
-            var first_frame = ((this.beat_count + 1) * frames_per_beat).toInt()
-            var last_frame = 0
-            for (uuid in samples_to_move) {
-                val pair = this.handle_range_map[uuid]!!
-                this.handle_range_map[uuid] = (pair.first - frames_per_beat.toInt()) .. (pair.last - frames_per_beat.toInt())
-                first_frame = min(first_frame, pair.first)
-                last_frame = max(last_frame, pair.last)
-            }
-
-            var move_frames = (first_frame..last_frame).intersect(this.frame_map.keys)
-
-            first_frame = ((this.beat_count + 1) * frames_per_beat).toInt()
-            last_frame = 0
-            for (uuid in samples_to_remove) {
-                val pair = this.handle_range_map[uuid]!!
-                this.handle_range_map.remove(uuid)
-                this.handle_map.remove(uuid)
-                first_frame = min(first_frame, pair.first)
-                last_frame = max(last_frame, pair.last)
-            }
-
-
-            val del_frames = (first_frame..last_frame).intersect(this.frame_map.keys)
-            for (f in del_frames) {
-                this.frame_map.remove(f)
-            }
-
-            for (f in move_frames.toList().sortedBy { it }) {
-                this.frame_map[f - frames_per_beat.toInt()] = this.frame_map.remove(f)!!
-            }
-
-            this.changed_frames.add((beat_index * frames_per_beat).toInt() .. (frames_per_beat * this.beat_count + 1).toInt())
         }
     }
 
@@ -742,10 +870,6 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
     fun clear_frame_map_data() {
         this.frame_map.clear()
         this.unmap_flags.clear()
-        this.handle_map.clear()
-        this.quick_map_sample_handles.clear()
-        this.changed_frames.clear()
-        this.handle_range_map.clear()
     }
 
     override fun swap_lines(channel_a: Int, line_a: Int, channel_b: Int, line_b: Int) {
@@ -768,24 +892,7 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
                 for (i in 0 until this.beat_count) {
                     this.unmap_frames(BeatKey(channel, line_offset, i), listOf())
                 }
-
-                val sorted_keys = this.quick_map_sample_handles.keys.sortedBy { it.first.channel }
-                for ((beat_key, position) in sorted_keys) {
-                    if (beat_key.channel != channel || beat_key.line_offset < line_offset) {
-                        break
-                    }
-                    val new_key = Pair(
-                        BeatKey(
-                            beat_key.channel,
-                            beat_key.line_offset - 1,
-                            beat_key.beat
-                        ),
-                        position
-                    )
-
-                    this.quick_map_sample_handles[new_key] =
-                        this.quick_map_sample_handles.remove(Pair(beat_key, position))!!
-                }
+                this.frame_map.remove_line(channel, line_offset)
             }
 
             super.remove_line(channel, line_offset)
@@ -794,31 +901,13 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
 
     override fun insert_line(channel: Int, line_offset: Int, line: OpusChannel.OpusLine) {
         this.flux_wrapper {
-            if (!this.flag_cleared_in_flux) {
-                val sorted_keys =
-                    this.quick_map_sample_handles.keys.sortedByDescending { it.first.channel }
-                for ((beat_key, position) in sorted_keys) {
-                    if (beat_key.channel != channel || beat_key.line_offset < line_offset) {
-                        break
-                    }
-                    val new_key = Pair(
-                        BeatKey(
-                            beat_key.channel,
-                            beat_key.line_offset + 1,
-                            beat_key.beat
-                        ),
-                        position
-                    )
-
-                    this.quick_map_sample_handles[new_key] =
-                        this.quick_map_sample_handles.remove(Pair(beat_key, position))!!
-                }
-            }
-
             super.insert_line(channel, line_offset, line)
 
-            for (i in 0 until this.beat_count) {
-                this.map_frames(BeatKey(channel, line_offset, i), listOf())
+            if (!this.flag_cleared_in_flux) {
+                this.frame_map.insert_line(channel, line_offset)
+                for (i in 0 until this.beat_count) {
+                    this.map_frames(BeatKey(channel, line_offset, i), listOf())
+                }
             }
         }
     }
@@ -833,6 +922,7 @@ open class OpusLayerFrameMap: OpusLayerCursor(), FrameMap {
 
     override fun set_tempo(new_tempo: Float) {
         this.clear_and_set_frames {
+            this.frame_map.tempo = new_tempo
             super.set_tempo(new_tempo)
         }
     }

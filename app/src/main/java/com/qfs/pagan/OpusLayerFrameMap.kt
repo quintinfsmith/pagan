@@ -28,15 +28,21 @@ open class OpusLayerFrameMap: OpusLayerCursor() {
 
         internal var changed_frames = mutableSetOf<IntRange>()
         internal var cached_frame_count: Int? = null
+        private var initial_delay_handles = HashMap<Int, Int>()
 
         // FrameMap Interface -------------------
         override fun get_new_handles(frame: Int): Set<SampleHandle>? {
-            if (!this.frame_map.containsKey(frame)) {
+            val adjusted_frame = if (this.initial_delay_handles.isEmpty()) {
+                frame
+            } else {
+                frame + this.initial_delay_handles.values.min()
+            }
+            if (!this.frame_map.containsKey(adjusted_frame)) {
                 return null
             }
 
             val output = mutableSetOf<SampleHandle>()
-            for (uuid in this.frame_map[frame]!!) {
+            for (uuid in this.frame_map[adjusted_frame]!!) {
                 // Kludge? TODO: figure out a better place for these resets
                 val use_handle = SampleHandle(this.handle_map[uuid]!!)
 
@@ -59,9 +65,15 @@ open class OpusLayerFrameMap: OpusLayerCursor() {
         }
 
         override fun get_active_handles(frame: Int): Set<Pair<Int, SampleHandle>> {
+            val adjusted_frame = if (this.initial_delay_handles.isEmpty()) {
+                frame
+            } else {
+                frame - this.initial_delay_handles.values.min()
+            }
+
             val output = mutableSetOf<Pair<Int, SampleHandle>>()
             for ((uuid, range) in this.handle_range_map) {
-                if (range.contains(frame)) {
+                if (range.contains(adjusted_frame)) {
                     output.add(
                         Pair(
                             range.first,
@@ -97,6 +109,8 @@ open class OpusLayerFrameMap: OpusLayerCursor() {
 
         fun remove_handle(uuid: Int) {
             this.handle_map.remove(uuid)
+            this.initial_delay_handles.remove(uuid)
+
             // reminder: 'end_frame' here is the last active frame in the sample, including decay
             val frame_range = this.handle_range_map.remove(uuid) ?: return
             this.changed_frames.add(frame_range)
@@ -119,26 +133,34 @@ open class OpusLayerFrameMap: OpusLayerCursor() {
         }
 
         fun add_handles(quick_key: Pair<BeatKey, List<Int>>, start_frame: Int, end_frame: Int, handles: Set<SampleHandle>) {
-            if (!this.frame_map.containsKey(start_frame)) {
-                this.frame_map[start_frame] = mutableSetOf()
-            }
-
             val uuids = mutableSetOf<Int>()
             var max_end_frame = 0
+            var min_start_frame = Int.MAX_VALUE
             for (handle in handles) {
-                val sample_end_frame = end_frame + handle.frame_count_release
+                val sample_end_frame = (end_frame + handle.frame_count_release) - handle.frame_count_delay
+                val sample_start_frame = start_frame - handle.frame_count_delay
+
                 max_end_frame = max(max_end_frame, sample_end_frame)
+                min_start_frame = min(min_start_frame, sample_start_frame)
 
                 handle.release_frame = end_frame - start_frame
 
                 uuids.add(handle.uuid)
-                this.frame_map[start_frame]!!.add(handle.uuid)
-                this.handle_range_map[handle.uuid] = start_frame .. sample_end_frame
+
+                if (!this.frame_map.containsKey(sample_start_frame)) {
+                    this.frame_map[sample_start_frame] = mutableSetOf()
+                }
+                this.frame_map[sample_start_frame]!!.add(handle.uuid)
+
+                this.handle_range_map[handle.uuid] = sample_start_frame .. sample_end_frame
                 this.handle_map[handle.uuid] = handle
+                if (sample_start_frame < 0) {
+                    this.initial_delay_handles[handle.uuid] = sample_start_frame
+                }
             }
 
             this.quick_map_sample_handles[quick_key] = uuids
-            this.changed_frames.add(start_frame .. max_end_frame)
+            this.changed_frames.add(min_start_frame .. max_end_frame)
         }
 
         fun insert_beat(beat_index: Int) {

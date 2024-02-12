@@ -86,7 +86,6 @@ class SampleHandle(
                 } else if (tmp_frame >= this.loop_points!!.second) {
                     tmp_frame = this.loop_points!!.first
                 }
-            } else if (f < this.frame_count_delay) {
             } else if (tmp_frame < this.data_buffer.size) {
                 tmp_frame += 1
             }
@@ -109,11 +108,6 @@ class SampleHandle(
             return null
         }
 
-        if (this.working_frame < this.frame_count_delay) {
-            this.working_frame += 1
-            return 0
-        }
-
         if (this.data_buffer.position() >= this.data_buffer.size) {
             this.is_dead = true
             return null
@@ -123,13 +117,13 @@ class SampleHandle(
         val is_pressed = this.release_frame == null || this.working_frame < this.release_frame!!
 
         if (is_pressed) {
-            if (this.working_frame - this.frame_count_delay < this.frame_count_attack) {
-                val r = (this.working_frame - this.frame_count_delay).toDouble() / this.frame_count_attack.toDouble()
+            if (this.working_frame < this.frame_count_attack) {
+                val r = (this.working_frame).toDouble() / this.frame_count_attack.toDouble()
                 frame_factor *= r
-            } else if (this.working_frame - this.frame_count_delay - this.frame_count_attack < this.frame_count_hold) {
+            } else if (this.working_frame - this.frame_count_attack < this.frame_count_hold) {
                 // pass
-            } else if (this.sustain_attenuation < 1.0 && this.working_frame - this.frame_count_delay - this.frame_count_attack - this.frame_count_hold < this.frame_count_decay) {
-                val r = ((this.working_frame - this.frame_count_hold - this.frame_count_delay - this.frame_count_attack).toDouble()  / this.frame_count_decay.toDouble())
+            } else if (this.sustain_attenuation < 1.0 && this.working_frame - this.frame_count_attack - this.frame_count_hold < this.frame_count_decay) {
+                val r = ((this.working_frame - this.frame_count_hold - this.frame_count_attack).toDouble()  / this.frame_count_decay.toDouble())
                 frame_factor *= (1.0 - this.sustain_attenuation) * r
             }
         }

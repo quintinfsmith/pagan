@@ -29,6 +29,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
     }
 
     fun generate(array: ShortArray) {
+        // TODO NEXT: Need to consider core offset
         val buffer_size = array.size / 2
         if (buffer_size != this.buffer_size) {
             throw InvalidArraySize()
@@ -200,44 +201,77 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             this._active_sample_handles.remove(key)
         }
 
-        // then populate the next active frames with upcoming sample handles
+
         for (i in 0 until this.core_count) {
-            for (j in 0 until buffer_size / this.core_count) {
+            for (j in 0 until this.buffer_size / this.core_count) {
                 val working_frame = j + initial_frame + (i * this.buffer_size / this.core_count)
                 val handles = this.midi_frame_map.get_new_handles(working_frame) ?: continue
-                val base_butt_offset = (this.buffer_size / this.core_count) - j
 
-                for (handle in handles) {
-                    val split_handles = Array(this.core_count - i) { k: Int ->
-                        val new_handle = SampleHandle(handle)
-                        new_handle.release_frame = handle.release_frame
-                        if (k > 0) {
-                           new_handle.set_working_frame(base_butt_offset + (this.buffer_size * (k - 1) / this.core_count))
-                        }
-                        new_handle
-                    }
-                    this._active_sample_handles[split_handles.first().uuid] = ActiveHandleMapItem(
-                        working_frame,
-                        split_handles,
-                        i
-                    )
+                this.activate_sample_handles(handles, i, j, initial_frame)
+            }
+        }
+    }
 
-                    if (i > 0) {
-                        val split_handles_b = Array(i) { k: Int ->
-                            val new_handle = SampleHandle(handle)
-                            new_handle.release_frame = handle.release_frame
-                            new_handle.set_working_frame(
-                                base_butt_offset + (this.buffer_size * ((k - 1) + (this.core_count - i)) / this.core_count)
-                            )
-                            new_handle
-                        }
-                        this._active_sample_handles[split_handles_b.first().uuid] = ActiveHandleMapItem(
-                            initial_frame + buffer_size,
-                            split_handles_b,
-                            0
-                        )
-                    }
+    /*
+        Add handles that would be active but aren't because of a jump in position
+     */
+    fun activate_active_handles(frame: Int) {
+        // TODO: handle's first frames need to line up with input frame
+        val chunk_size = this.buffer_size / this.core_count
+        val handles = this.midi_frame_map.get_active_handles(frame)
+        for ((first_frame, handle) in handles) {
+            val fine_frame = first_frame % this.buffer_size
+            val coarse_frame = (first_frame / this.buffer_size) * this.buffer_size
+            val first_core = fine_frame / chunk_size
+            val frame_in_chunk = fine_frame % chunk_size
+
+            handle.set_working_frame(frame - first_frame)
+
+            this.activate_sample_handles(
+                mutableSetOf(handle),
+                first_core,
+                frame_in_chunk,
+                coarse_frame
+            )
+        }
+    }
+
+    fun activate_sample_handles(handles: Set<SampleHandle>, core: Int, frame_in_core_chunk: Int, initial_frame: Int) {
+        val base_butt_offset = (this.buffer_size / this.core_count) - frame_in_core_chunk
+
+        // then populate the next active frames with upcoming sample handles
+        val working_frame = frame_in_core_chunk + initial_frame + (core * this.buffer_size / this.core_count)
+        for (handle in handles) {
+            val split_handles = Array(this.core_count - core) { k: Int ->
+                val new_handle = SampleHandle(handle)
+                new_handle.release_frame = handle.release_frame
+                if (k > 0) {
+                   new_handle.set_working_frame(handle.working_frame + base_butt_offset + (this.buffer_size * (k - 1) / this.core_count))
                 }
+                new_handle
+            }
+
+            this._active_sample_handles[split_handles.first().uuid] = ActiveHandleMapItem(
+                working_frame,
+                split_handles,
+                core
+            )
+
+            if (core > 0) {
+                val split_handles_b = Array(core) { k: Int ->
+                    val new_handle = SampleHandle(handle)
+                    new_handle.release_frame = handle.release_frame
+                    new_handle.set_working_frame(
+                        handle.working_frame + base_butt_offset + (this.buffer_size * ((k - 1) + (this.core_count - core)) / this.core_count)
+                    )
+                    new_handle
+                }
+
+                this._active_sample_handles[split_handles_b.first().uuid] = ActiveHandleMapItem(
+                    initial_frame + buffer_size,
+                    split_handles_b,
+                    0
+                )
             }
         }
     }
@@ -249,8 +283,11 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         this._empty_chunks_count = 0
     }
 
-    fun set_position(frame: Int) {
+    fun set_position(frame: Int, look_back: Boolean = false) {
         this.clear()
+        if (look_back) {
+            this.activate_active_handles(frame - 1)
+        }
         this.frame = frame
     }
 }

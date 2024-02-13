@@ -967,12 +967,17 @@ open class OpusLayerFrameMap: OpusLayerCursor() {
         }
     }
 
-
     override fun apply_undo() {
         // Wrapping the apply_undo in the flux wrapper will cause the flag_cleared_in_flux
         // to be considered
         this.flux_wrapper {
             super.apply_undo()
+        }
+    }
+
+    override fun set_duration(beat_key: BeatKey, position: List<Int>, duration: Int) {
+        this.unmap_wrapper(beat_key, position) {
+            super.set_duration(beat_key, position, duration)
         }
     }
 }

@@ -72,7 +72,7 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
         this.is_playing = true
 
         this.setup_beat_frames()
-        this.wave_generator.set_position(start_frame)
+        this.wave_generator.set_position(start_frame, true)
 
         thread {
             val buffer_millis = this.BUFFER_NANO / 1_000_000
@@ -250,5 +250,4 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
         this.beat_frames.clear()
         this.beat_frames.addAll(this.sample_frame_map.get_beat_frames())
     }
-
 }

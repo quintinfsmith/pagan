@@ -29,7 +29,6 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
     }
 
     fun generate(array: ShortArray) {
-        // TODO NEXT: Need to consider core offset
         val buffer_size = array.size / 2
         if (buffer_size != this.buffer_size) {
             throw InvalidArraySize()
@@ -135,7 +134,13 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
     private fun populate_half_int_array(sample_handle: SampleHandle, working_int_array: IntArray, offset: Int) {
         // Assume working_int_array.size % 2 == 0
         val first_frame = sample_handle.working_frame
-        for (f in offset until working_int_array.size / 2) {
+        val range = if (offset < 0) {
+            0 until (working_int_array.size / 2)
+        } else {
+            offset until working_int_array.size / 2
+        }
+        for (f in range) {
+
             val frame_value = sample_handle.get_next_frame() ?: break
 
             var left_frame: Int = 0
@@ -175,7 +180,6 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
 
                 else -> {}
             }
-
             working_int_array[(f * 2)] += right_frame
             working_int_array[(f * 2) + 1] += left_frame
         }
@@ -216,23 +220,14 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         Add handles that would be active but aren't because of a jump in position
      */
     fun activate_active_handles(frame: Int) {
-        // TODO: handle's first frames need to line up with input frame
-        val chunk_size = this.buffer_size / this.core_count
         val handles = this.midi_frame_map.get_active_handles(frame)
         for ((first_frame, handle) in handles) {
-            val fine_frame = first_frame % this.buffer_size
-            val coarse_frame = (first_frame / this.buffer_size) * this.buffer_size
-            val first_core = fine_frame / chunk_size
-            val frame_in_chunk = fine_frame % chunk_size
+            if (first_frame == frame) {
+                continue
+            }
 
             handle.set_working_frame(frame - first_frame)
-
-            this.activate_sample_handles(
-                mutableSetOf(handle),
-                first_core,
-                frame_in_chunk,
-                coarse_frame
-            )
+            this.activate_sample_handles( mutableSetOf(handle), 0, 0, frame )
         }
     }
 
@@ -286,7 +281,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
     fun set_position(frame: Int, look_back: Boolean = false) {
         this.clear()
         if (look_back) {
-            this.activate_active_handles(frame - 1)
+            this.activate_active_handles(frame)
         }
         this.frame = frame
     }

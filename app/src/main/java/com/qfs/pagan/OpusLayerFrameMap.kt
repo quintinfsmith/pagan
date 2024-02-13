@@ -1,5 +1,6 @@
 package com.qfs.pagan
 
+import android.util.Log
 import com.qfs.apres.event.MIDIEvent
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event2.NoteOn79
@@ -139,6 +140,9 @@ open class OpusLayerFrameMap: OpusLayerCursor() {
             for (handle in handles) {
                 val sample_end_frame = (end_frame + handle.frame_count_release) - handle.frame_count_delay
                 val sample_start_frame = start_frame - handle.frame_count_delay
+                if (handle.frame_count_delay > 0) {
+                    Log.d("DELAY", "${handle.frame_count_delay}")
+                }
 
                 max_end_frame = max(max_end_frame, sample_end_frame)
                 min_start_frame = min(min_start_frame, sample_start_frame)

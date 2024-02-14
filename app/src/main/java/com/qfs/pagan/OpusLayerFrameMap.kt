@@ -62,7 +62,6 @@ open class OpusLayerFrameMap: OpusLayerCursor() {
         }
 
         override fun get_active_handles(frame: Int): Set<Pair<Int, SampleHandle>> {
-
             val output = mutableSetOf<Pair<Int, SampleHandle>>()
             for ((uuid, range) in this.handle_range_map) {
                 if (range.contains(frame)) {
@@ -84,7 +83,8 @@ open class OpusLayerFrameMap: OpusLayerCursor() {
                     this.cached_frame_count = max(range.last, this.cached_frame_count!!)
                 }
 
-                this.cached_frame_count = this.cached_frame_count!! + 1
+                val frames_per_beat = 60.0 * this.sample_rate / this.tempo
+                this.cached_frame_count = max(this.cached_frame_count!! + 1, (this.beat_count * frames_per_beat).toInt())
             }
             return this.cached_frame_count!!
         }

@@ -76,7 +76,6 @@ class SampleHandle(
             return
         }
 
-
         // TODO: Improve this. This is slow and my brain doesn't wont to let me see the algebra here right now
         var tmp_frame = 0
         for (f in 0 until frame) {

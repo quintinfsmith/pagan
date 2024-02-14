@@ -76,10 +76,10 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
 
         thread {
             val buffer_millis = this.BUFFER_NANO / 1_000_000
-            var chunk: ShortArray? = null
             var ts: Long = System.currentTimeMillis()
             var flag_dead = false
             val empty_chunk = ShortArray(this.buffer_size * 2) { 0 }
+            var chunk: ShortArray? = null
 
             while (this.is_playing) {
                 ts = System.currentTimeMillis()

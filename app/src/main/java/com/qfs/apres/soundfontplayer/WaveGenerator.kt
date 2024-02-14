@@ -106,7 +106,6 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                     }
                 )
             }
-
         }
 
         var max_frame_value = 0
@@ -137,13 +136,14 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
     private fun populate_half_int_array(sample_handle: SampleHandle, working_int_array: IntArray, offset: Int) {
         // Assume working_int_array.size % 2 == 0
         val first_frame = sample_handle.working_frame
+
         val range = if (offset < 0) {
             0 until (working_int_array.size / 2)
         } else {
             offset until working_int_array.size / 2
         }
-        for (f in range) {
 
+        for (f in range) {
             val frame_value = sample_handle.get_next_frame() ?: break
 
             var left_frame: Int = 0
@@ -230,7 +230,9 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             if (first_frame == frame) {
                 continue
             }
+
             handle.set_working_frame(frame - first_frame)
+
             this.activate_sample_handles(mutableSetOf(handle), 0, 0, frame)
         }
     }
@@ -245,7 +247,11 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                 val new_handle = SampleHandle(handle)
                 new_handle.release_frame = handle.release_frame
                 if (k > 0) {
-                   new_handle.set_working_frame(handle.working_frame + base_butt_offset + (this.buffer_size * (k - 1) / this.core_count))
+                   new_handle.set_working_frame(
+                       handle.working_frame + base_butt_offset + (this.buffer_size * (k - 1) / this.core_count)
+                   )
+                } else {
+                    new_handle.set_working_frame(handle.working_frame)
                 }
                 new_handle
             }

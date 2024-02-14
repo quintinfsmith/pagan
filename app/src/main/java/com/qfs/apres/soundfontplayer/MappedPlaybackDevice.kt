@@ -14,7 +14,7 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
     var is_playing = false
     var play_cancelled = false // need a away to cancel between parsing and playing
     var fill_buffer_cache = true
-    val beat_frames = mutableListOf<Int>()
+    val beat_frames = HashMap<Int, IntRange>()
 
     // precache 3 seconds when buffering
     var minimum_buffer_cache_size: Int = this.sample_rate * 3 / this.buffer_size
@@ -125,7 +125,7 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
             }
 
             audio_track_handle.play(object : AudioTrack.OnPlaybackPositionUpdateListener {
-                var current_beat = 0
+                var current_beat = -1
                 var has_beats: Boolean
                 init {
                     val that = this@MappedPlaybackDevice
@@ -139,21 +139,19 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
                     this.has_beats = that.beat_frames.isNotEmpty()
 
                     if (this.has_beats) {
-                        var last_beat_frame = 0
-                        while (this.current_beat < that.beat_frames.size) {
-                            if ((last_beat_frame until that.beat_frames[this.current_beat]).contains(start_frame)) {
+                        this.current_beat = that.beat_frames.keys.min()
+                        for ((k, range) in that.beat_frames) {
+                            if (range.contains(start_frame)) {
+                                this.current_beat = k
                                 break
                             }
-                            last_beat_frame = that.beat_frames[this.current_beat]
-                            this.current_beat += 1
                         }
 
-                        if (this.current_beat < that.beat_frames.size) {
-                            that.on_beat(this.current_beat)
-                            that.active_audio_track_handle?.set_next_notification_position(
-                                that.beat_frames[this.current_beat] - start_frame
-                            )
-                        }
+                        that.on_beat(this.current_beat)
+
+                        that.active_audio_track_handle?.set_next_notification_position(
+                            that.beat_frames[this.current_beat]!!.last - start_frame
+                        )
                     }
                 }
                 override fun onMarkerReached(audio_track: AudioTrack?) {
@@ -173,19 +171,23 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
                         return this._stop(audio_track)
                     }
 
-                    if (this.current_beat < that.beat_frames.size - 1) {
+                    if (this.current_beat < that.beat_frames.keys.max()) {
                         this.current_beat += 1
+                        while (!that.beat_frames.containsKey(this.current_beat)) {
+                            this.current_beat += 1
+                        }
                     } else {
                         return this._stop(audio_track)
                     }
 
                     that.on_beat(this.current_beat)
 
+
                     that.active_audio_track_handle?.set_next_notification_position(
                         if (that.wave_generator.kill_frame != null) {
-                            min(that.wave_generator.kill_frame!!, that.beat_frames[this.current_beat]) - start_frame
+                            min(that.wave_generator.kill_frame!!, that.beat_frames[this.current_beat]!!.last) - start_frame
                         } else {
-                            that.beat_frames[this.current_beat] - start_frame + frame_delay
+                            that.beat_frames[this.current_beat]!!.last - start_frame + frame_delay
                         }
                     )
                 }
@@ -234,20 +236,14 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
         this.start_playback(start_frame, kill_frame)
     }
 
-    fun pop_next_beat_delay(): Int? {
-        return if (this.beat_frames.isEmpty()) {
-            null
-        } else {
-            this.beat_frames.removeFirst()
-        }
-    }
-
     fun set_kill_frame(frame: Int) {
         this.wave_generator.kill_frame = frame
     }
 
     fun setup_beat_frames() {
         this.beat_frames.clear()
-        this.beat_frames.addAll(this.sample_frame_map.get_beat_frames())
+        for ((k, v) in this.sample_frame_map.get_beat_frames()) {
+            this.beat_frames[k] = v
+        }
     }
 }

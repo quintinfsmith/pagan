@@ -1,6 +1,5 @@
 package com.qfs.pagan
 
-import android.util.Log
 import com.qfs.apres.event.MIDIEvent
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event2.NoteOn79
@@ -33,17 +32,12 @@ open class OpusLayerFrameMap: OpusLayerCursor() {
 
         // FrameMap Interface -------------------
         override fun get_new_handles(frame: Int): Set<SampleHandle>? {
-            val adjusted_frame = if (this.initial_delay_handles.isEmpty()) {
-                frame
-            } else {
-                frame + this.initial_delay_handles.values.min()
-            }
-            if (!this.frame_map.containsKey(adjusted_frame)) {
+            if (!this.frame_map.containsKey(frame)) {
                 return null
             }
 
             val output = mutableSetOf<SampleHandle>()
-            for (uuid in this.frame_map[adjusted_frame]!!) {
+            for (uuid in this.frame_map[frame]!!) {
                 // Kludge? TODO: figure out a better place for these resets
                 val use_handle = SampleHandle(this.handle_map[uuid]!!)
 
@@ -57,24 +51,21 @@ open class OpusLayerFrameMap: OpusLayerCursor() {
             return output
         }
 
-
-        override fun get_beat_frames(): List<Int> {
+        override fun get_beat_frames(): HashMap<Int, IntRange> {
             val frames_per_beat = 60.0 * this.sample_rate / this.tempo
-            return List(this.beat_count) { i ->
-                (frames_per_beat * (i + 1)).toInt()
+            val output = HashMap<Int, IntRange>()
+
+            for (i in 0 until this.beat_count) {
+                output[i] = (frames_per_beat * i).toInt() until (frames_per_beat * (i + 1)).toInt()
             }
+            return output
         }
 
         override fun get_active_handles(frame: Int): Set<Pair<Int, SampleHandle>> {
-            val adjusted_frame = if (this.initial_delay_handles.isEmpty()) {
-                frame
-            } else {
-                frame - this.initial_delay_handles.values.min()
-            }
 
             val output = mutableSetOf<Pair<Int, SampleHandle>>()
             for ((uuid, range) in this.handle_range_map) {
-                if (range.contains(adjusted_frame)) {
+                if (range.contains(frame)) {
                     output.add(
                         Pair(
                             range.first,
@@ -92,11 +83,11 @@ open class OpusLayerFrameMap: OpusLayerCursor() {
                 for (range in this.handle_range_map.values) {
                     this.cached_frame_count = max(range.last, this.cached_frame_count!!)
                 }
+
                 this.cached_frame_count = this.cached_frame_count!! + 1
             }
             return this.cached_frame_count!!
         }
-
         // End FrameMap Interface --------------------------
 
         fun clear() {
@@ -140,9 +131,6 @@ open class OpusLayerFrameMap: OpusLayerCursor() {
             for (handle in handles) {
                 val sample_end_frame = (end_frame + handle.frame_count_release) - handle.frame_count_delay
                 val sample_start_frame = start_frame - handle.frame_count_delay
-                if (handle.frame_count_delay > 0) {
-                    Log.d("DELAY", "${handle.frame_count_delay}")
-                }
 
                 max_end_frame = max(max_end_frame, sample_end_frame)
                 min_start_frame = min(min_start_frame, sample_start_frame)

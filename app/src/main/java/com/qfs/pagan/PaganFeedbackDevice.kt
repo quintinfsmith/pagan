@@ -35,8 +35,8 @@ class PaganFeedbackDevice(var sample_handle_manager: SampleHandleManager): Mappe
             return this.max_frame + 1
         }
 
-        override fun get_beat_frames(): List<Int> {
-            return listOf()
+        override fun get_beat_frames(): HashMap<Int, IntRange> {
+            return HashMap()
         }
 
         override fun get_active_handles(frame: Int): Set<Pair<Int, SampleHandle>> {

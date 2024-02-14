@@ -10,11 +10,13 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
     class EmptyException: Exception()
     class DeadException: Exception()
     class InvalidArraySize: Exception()
+
     data class ActiveHandleMapItem(
         var first_frame: Int,
         val sample_handles: Array<SampleHandle>,
         val first_section: Int
     )
+
     var frame = 0
     var kill_frame: Int? = null
     private var _empty_chunks_count = 0
@@ -46,12 +48,13 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             throw EmptyException()
         }
 
-        var arrays: Array<ShortArray> = runBlocking {
+        val arrays: Array<ShortArray> = runBlocking {
             val tmp = Array(this@WaveGenerator.core_count) { i: Int ->
                 async(Dispatchers.Default) {
                     this@WaveGenerator.gen_half_short_array(first_frame, i)
                 }
             }
+
             Array(tmp.size) { i: Int ->
                 tmp[i].await()
             }
@@ -193,6 +196,8 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             if (item.first_frame >= initial_frame) {
                 continue
             }
+
+
             for (handle in item.sample_handles) {
                 if (handle.is_dead) {
                     remove_set.add(uuid)
@@ -205,7 +210,6 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             this._active_sample_handles.remove(key)
         }
 
-
         for (i in 0 until this.core_count) {
             for (j in 0 until this.buffer_size / this.core_count) {
                 val working_frame = j + initial_frame + (i * this.buffer_size / this.core_count)
@@ -214,20 +218,20 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                 this.activate_sample_handles(handles, i, j, initial_frame)
             }
         }
+
     }
 
     /*
         Add handles that would be active but aren't because of a jump in position
      */
-    fun activate_active_handles(frame: Int) {
+    private fun activate_active_handles(frame: Int) {
         val handles = this.midi_frame_map.get_active_handles(frame)
         for ((first_frame, handle) in handles) {
             if (first_frame == frame) {
                 continue
             }
-
             handle.set_working_frame(frame - first_frame)
-            this.activate_sample_handles( mutableSetOf(handle), 0, 0, frame )
+            this.activate_sample_handles(mutableSetOf(handle), 0, 0, frame)
         }
     }
 
@@ -281,7 +285,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
     fun set_position(frame: Int, look_back: Boolean = false) {
         this.clear()
         if (look_back) {
-            this.activate_active_handles(frame)
+          this.activate_active_handles(frame)
         }
         this.frame = frame
     }

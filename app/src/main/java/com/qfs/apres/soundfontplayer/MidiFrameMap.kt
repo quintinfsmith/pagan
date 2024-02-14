@@ -92,9 +92,9 @@ class MidiFrameMap(val sample_handle_manager: SampleHandleManager): FrameMap {
         return this.frames[frame]
     }
 
-    override fun get_beat_frames(): List<Int> {
+    override fun get_beat_frames(): HashMap<Int, IntRange> {
         // TODO: Track Beats
-        return listOf()
+        return HashMap()
     }
 
     override fun get_active_handles(frame: Int): Set<Pair<Int, SampleHandle>> {

@@ -1,6 +1,8 @@
 package com.qfs.pagan
 
 import com.qfs.apres.soundfontplayer.MappedPlaybackDevice
+import kotlin.math.max
+
 class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activity.configuration.sample_rate): MappedPlaybackDevice(
     activity.get_opus_manager().get_frame_map(),
     sample_rate,
@@ -47,12 +49,12 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
             return
         }
 
-        opus_manager.cursor_select_column(i)
+        opus_manager.cursor_select_column(max(i, 0))
 
         // Force scroll here, cursor_select_column doesn't scroll if the column is already visible
         this.activity.runOnUiThread {
             val editor_table = this.activity.findViewById<EditorTable?>(R.id.etEditorTable)
-            editor_table?.scroll_to_position(x = i, force = true)
+            editor_table?.scroll_to_position(x = max(i, 0), force = true)
         }
     }
 
@@ -63,7 +65,7 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
     fun play_opus(start_beat: Int) {
         val opus_manager = this.activity.get_opus_manager()
         this.sample_frame_map = opus_manager.get_frame_map()
-        val start_frame = ((60.0 / opus_manager.tempo) * this.sample_rate) * start_beat
-        this.play(start_frame.toInt())
+        val start_frame = this.sample_frame_map.get_beat_frames()[start_beat]?.first ?: 0
+        this.play(start_frame)
     }
 }

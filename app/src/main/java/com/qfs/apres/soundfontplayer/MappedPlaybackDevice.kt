@@ -171,12 +171,9 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
                         return this._stop(audio_track)
                     }
 
-                    if (this.current_beat < that.beat_frames.keys.max()) {
-                        this.current_beat += 1
-                        while (!that.beat_frames.containsKey(this.current_beat)) {
-                            this.current_beat += 1
-                        }
-                    } else {
+                    this.current_beat += 1
+
+                    if (this.current_beat > that.beat_frames.keys.max()) {
                         return this._stop(audio_track)
                     }
 

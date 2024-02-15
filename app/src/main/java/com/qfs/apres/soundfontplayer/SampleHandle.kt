@@ -182,9 +182,13 @@ class SampleHandle(
                 frame_factor *= r
             } else if (this.working_frame - this.volume_envelope.frames_attack < this.volume_envelope.frames_hold) {
                 // pass
-            } else if (this.volume_envelope.sustain_attenuation < 1.0 && this.working_frame - this.volume_envelope.frames_attack - this.volume_envelope.frames_hold < this.volume_envelope.frames_decay) {
-                val r = ((this.working_frame - this.volume_envelope.frames_hold - this.volume_envelope.frames_attack).toDouble()  / this.volume_envelope.frames_decay.toDouble())
-                frame_factor *= (1.0 - this.volume_envelope.sustain_attenuation) * r
+            } else if (this.volume_envelope.sustain_attenuation < 1.0) {
+                if (this.working_frame - this.volume_envelope.frames_attack - this.volume_envelope.frames_hold < this.volume_envelope.frames_decay) {
+                    val r = 1.0 - (((this.working_frame - this.volume_envelope.frames_hold - this.volume_envelope.frames_attack).toDouble()  / this.volume_envelope.frames_decay.toDouble()))
+                    frame_factor *= this.volume_envelope.sustain_attenuation * r
+                } else {
+                    frame_factor *= this.volume_envelope.sustain_attenuation
+                }
             }
         }
 

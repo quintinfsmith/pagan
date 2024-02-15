@@ -573,7 +573,7 @@ open class OpusLayerFrameMap: OpusLayerCursor() {
         this.frame_map.remove_handle(unmap_key)
     }
 
-    fun map_frames(beat_key: BeatKey, position: List<Int>) {
+    private fun map_frames(beat_key: BeatKey, position: List<Int>) {
         if (this.sample_handle_manager == null) {
             return
         }
@@ -617,11 +617,8 @@ open class OpusLayerFrameMap: OpusLayerCursor() {
             else -> return
         }
 
-
         this.frame_map.add_handles(quick_key, start_frame, end_frame, handles)
-
         this.unmap_flags[quick_key] = false
-
         this.frame_map.cached_frame_count = null
     }
 

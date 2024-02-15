@@ -88,25 +88,23 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
 
         val vol_env_attack: Double = (sample.vol_env_attack
             ?: instrument.instrument?.global_sample?.vol_env_attack
-            ?: -12000.0
+            ?: 0.0
         ) * (instrument.vol_env_attack ?: 1.0) * (preset.global_zone?.vol_env_attack ?: 1.0)
 
         val vol_env_hold: Double = (sample.vol_env_hold
             ?: instrument.instrument?.global_sample?.vol_env_hold
-            ?: -12000.0
+            ?: 0.0
         ) * (instrument.vol_env_hold ?: 1.0) * (preset.global_zone?.vol_env_hold ?: 1.0)
 
         val vol_env_decay: Double = (sample.vol_env_decay
             ?: instrument.instrument?.global_sample?.vol_env_decay
-            ?: -12000.0
+            ?: 0.0
         ) * (instrument.vol_env_decay ?: 1.0) * (preset.global_zone?.vol_env_decay ?: 1.0)
 
         val vol_env_release: Double = (sample.vol_env_release
             ?: instrument.instrument?.global_sample?.vol_env_release
-            ?: -12000.0
+            ?: 0.0
         ) * (instrument.vol_env_release ?: 1.0) * (preset.global_zone?.vol_env_release ?: 1.0)
-
-
 
         val vol_env_sustain: Double = (sample.vol_env_sustain
             ?: instrument.instrument?.global_sample?.vol_env_sustain

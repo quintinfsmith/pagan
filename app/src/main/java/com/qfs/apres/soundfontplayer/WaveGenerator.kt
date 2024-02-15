@@ -74,7 +74,6 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         }
     }
 
-
     private fun gen_half_short_array(first_frame: Int, sample_index: Int): ShortArray {
         val int_array = IntArray(this.buffer_size * 2 / this.core_count)
         for ((_, item) in this._active_sample_handles) {
@@ -130,6 +129,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                 (((v + mid).toFloat() * compression_ratio).toInt() - mid).toShort()
             }
         }
+
         return array
     }
 
@@ -197,7 +197,6 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                 continue
             }
 
-
             for (handle in item.sample_handles) {
                 if (handle.is_dead) {
                     remove_set.add(uuid)
@@ -218,12 +217,9 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                 this.activate_sample_handles(handles, i, j, initial_frame)
             }
         }
-
     }
 
-    /*
-        Add handles that would be active but aren't because of a jump in position
-     */
+    /* Add handles that would be active but aren't because of a jump in position */
     private fun activate_active_handles(frame: Int) {
         val handles = this.midi_frame_map.get_active_handles(frame)
         for ((first_frame, handle) in handles) {

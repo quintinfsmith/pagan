@@ -1,6 +1,7 @@
 package com.qfs.apres.soundfontplayer
 
 import kotlin.math.PI
+import kotlin.math.min
 import kotlin.math.tan
 
 class SampleHandle(
@@ -76,22 +77,29 @@ class SampleHandle(
             return
         }
 
-        // TODO: Improve this. This is slow and my brain doesn't wont to let me see the algebra here right now
-        var tmp_frame = 0
-        for (f in 0 until frame) {
-            if (this.release_frame == null || this.release_frame!! > f) {
-                if (this.loop_points == null || tmp_frame < this.loop_points!!.second) {
-                    tmp_frame += 1
-                } else if (tmp_frame >= this.loop_points!!.second) {
-                    tmp_frame = this.loop_points!!.first
-                }
-            } else if (tmp_frame < this.data_buffer.size) {
-                tmp_frame += 1
+        val adj_frame = if (this.release_frame == null) {
+            if (this.loop_points == null || frame < this.loop_points.second) {
+                frame
+            } else {
+                val loop_size = (this.loop_points.second - this.loop_points.first)
+                val loops = ((frame - this.loop_points.first) / loop_size)
+                val loop_remainder = (frame - this.loop_points.first) % loop_size
+                this.loop_points.first + (loops * loop_size) + loop_remainder
+            }
+        } else {
+            if (this.loop_points == null || this.release_frame!! < this.loop_points.second) {
+                min(frame, this.release_frame!! + this.frame_count_release)
+            } else {
+                val loop_size = (this.loop_points.second - this.loop_points.first)
+                val loops = ((frame - this.loop_points.first) / loop_size)
+                val loop_remainder = (frame - this.loop_points.first) % loop_size
+
+               min(this.loop_points.first + (loops * loop_size) + loop_remainder, this.loop_points.second + this.frame_count_release)
             }
         }
 
-        if (tmp_frame < this.data_buffer.size) {
-            this.data_buffer.position(tmp_frame)
+        if (adj_frame < this.data_buffer.size) {
+            this.data_buffer.position(adj_frame)
             this.is_dead = false
         } else {
             this.is_dead = true

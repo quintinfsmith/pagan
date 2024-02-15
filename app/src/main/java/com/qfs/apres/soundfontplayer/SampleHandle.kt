@@ -10,17 +10,74 @@ class SampleHandle(
     var attenuation: Double = 0.0,
     val loop_points: Pair<Int, Int>?,
     var stereo_mode: Int,
-    var frame_count_delay: Int = 0,
-    var frame_count_attack: Int = 0,
-    var frame_count_hold: Int = 0,
-    var frame_count_decay: Int = 0,
-    var frame_count_release: Int = 0,
+
+    var volume_envelope: VolumeEnvelope,
+    var modulation_envelope: ModulationEnvelope,
+
     var max_values: Array<Float> = Array<Float>(0) { 0F },
     var pitch_shift: Double = 1.0,
     var filter_cutoff: Double = 13500.0,
     var pan: Double = 0.0,
-    var sustain_attenuation: Double = 1.0,
 ) {
+    data class VolumeEnvelope(
+        var sample_rate: Int,
+        var delay: Double = 0.0,
+        var attack: Double = 0.0,
+        var hold: Double = 0.0,
+        var decay: Double = 0.0,
+        var release: Double = 0.0,
+        var sustain_attenuation: Double = 1.0
+    ) {
+        var frames_delay: Int = 0
+        var frames_attack: Int = 0
+        var frames_hold: Int = 0
+        var frames_decay: Int = 0
+        var frames_release: Int = 0
+
+        init {
+            this.set_sample_rate(this.sample_rate)
+        }
+
+        fun set_sample_rate(sample_rate: Int) {
+            this.sample_rate = sample_rate
+            this.frames_delay = (this.sample_rate.toDouble() * this.delay).toInt()
+            this.frames_attack = (this.sample_rate.toDouble() * this.attack).toInt()
+            this.frames_hold = (this.sample_rate.toDouble() * this.hold).toInt()
+            this.frames_decay = (this.sample_rate.toDouble() * this.decay).toInt()
+            this.frames_release = (this.sample_rate.toDouble() * this.release).toInt()
+        }
+    }
+
+    class ModulationEnvelope(
+        var sample_rate: Int,
+        var delay: Double = 0.0,
+        var attack: Double = 0.0,
+        var hold: Double = 0.0,
+        var decay: Double = 0.0,
+        var release: Double = 0.0,
+        var sustain_attenuation: Double = 0.0
+    ) {
+        var frames_delay: Int = 0
+        var frames_attack: Int = 0
+        var frames_hold: Int = 0
+        var frames_decay: Int = 0
+        var frames_release: Int = 0
+
+        init {
+            this.set_sample_rate(this.sample_rate)
+        }
+
+        fun set_sample_rate(sample_rate: Int) {
+            this.sample_rate = sample_rate
+            this.frames_delay = (this.sample_rate.toDouble() * this.delay).toInt()
+            this.frames_attack = (this.sample_rate.toDouble() * this.attack).toInt()
+            this.frames_hold = (this.sample_rate.toDouble() * this.hold).toInt()
+            this.frames_decay = (this.sample_rate.toDouble() * this.decay).toInt()
+            this.frames_release = (this.sample_rate.toDouble() * this.release).toInt()
+        }
+
+    }
+
     companion object {
         var uuid_gen = 0
         val MAXIMUM_VOLUME = .8F
@@ -34,16 +91,12 @@ class SampleHandle(
         attenuation = original.attenuation,
         loop_points = original.loop_points,
         stereo_mode = original.stereo_mode,
-        frame_count_delay = original.frame_count_delay,
-        frame_count_attack = original.frame_count_attack,
-        frame_count_hold = original.frame_count_hold,
-        frame_count_decay = original.frame_count_decay,
-        frame_count_release = original.frame_count_release,
+        volume_envelope = original.volume_envelope,
+        modulation_envelope = original.modulation_envelope,
         max_values = original.max_values,
         pitch_shift = original.pitch_shift,
         filter_cutoff = original.filter_cutoff,
-        pan = original.pan,
-        sustain_attenuation = original.sustain_attenuation
+        pan = original.pan
     )
 
     private val lpf_factor: Double
@@ -72,7 +125,7 @@ class SampleHandle(
 
     fun set_working_frame(frame: Int) {
         this.working_frame = frame
-        if (this.release_frame != null && this.working_frame >= this.release_frame!! + this.frame_count_release) {
+        if (this.release_frame != null && this.working_frame >= this.release_frame!! + this.volume_envelope.frames_release) {
             this.is_dead = true
             return
         }
@@ -88,13 +141,13 @@ class SampleHandle(
             }
         } else {
             if (this.loop_points == null || this.release_frame!! < this.loop_points.second) {
-                min(frame, this.release_frame!! + this.frame_count_release)
+                min(frame, this.release_frame!! + this.volume_envelope.frames_release)
             } else {
                 val loop_size = (this.loop_points.second - this.loop_points.first)
                 val loops = ((frame - this.loop_points.first) / loop_size)
                 val loop_remainder = (frame - this.loop_points.first) % loop_size
 
-               min(this.loop_points.first + (loops * loop_size) + loop_remainder, this.loop_points.second + this.frame_count_release)
+               min(this.loop_points.first + (loops * loop_size) + loop_remainder, this.loop_points.second + this.volume_envelope.frames_release)
             }
         }
 
@@ -107,7 +160,7 @@ class SampleHandle(
     }
 
     fun get_release_duration(): Int {
-        return this.frame_count_release
+        return this.volume_envelope.frames_release
     }
 
     fun get_next_frame(): Int? {
@@ -124,21 +177,21 @@ class SampleHandle(
         val is_pressed = this.release_frame == null || this.working_frame < this.release_frame!!
 
         if (is_pressed) {
-            if (this.working_frame < this.frame_count_attack) {
-                val r = (this.working_frame).toDouble() / this.frame_count_attack.toDouble()
+            if (this.working_frame < this.volume_envelope.frames_attack) {
+                val r = (this.working_frame).toDouble() / this.volume_envelope.frames_attack.toDouble()
                 frame_factor *= r
-            } else if (this.working_frame - this.frame_count_attack < this.frame_count_hold) {
+            } else if (this.working_frame - this.volume_envelope.frames_attack < this.volume_envelope.frames_hold) {
                 // pass
-            } else if (this.sustain_attenuation < 1.0 && this.working_frame - this.frame_count_attack - this.frame_count_hold < this.frame_count_decay) {
-                val r = ((this.working_frame - this.frame_count_hold - this.frame_count_attack).toDouble()  / this.frame_count_decay.toDouble())
-                frame_factor *= (1.0 - this.sustain_attenuation) * r
+            } else if (this.volume_envelope.sustain_attenuation < 1.0 && this.working_frame - this.volume_envelope.frames_attack - this.volume_envelope.frames_hold < this.volume_envelope.frames_decay) {
+                val r = ((this.working_frame - this.volume_envelope.frames_hold - this.volume_envelope.frames_attack).toDouble()  / this.volume_envelope.frames_decay.toDouble())
+                frame_factor *= (1.0 - this.volume_envelope.sustain_attenuation) * r
             }
         }
 
         if (! is_pressed) {
             val current_position_release = (this.working_frame - this.release_frame!!)
-            if (current_position_release < this.frame_count_release) {
-                frame_factor *= 1.0 - (current_position_release.toDouble() / this.frame_count_release.toDouble())
+            if (current_position_release < this.volume_envelope.frames_release) {
+                frame_factor *= 1.0 - (current_position_release.toDouble() / this.volume_envelope.frames_release.toDouble())
             } else {
                 this.is_dead = true
                 return null

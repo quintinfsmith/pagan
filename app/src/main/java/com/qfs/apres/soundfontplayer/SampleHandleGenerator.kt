@@ -81,35 +81,73 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
             ?: 0.0
         ) + (instrument.attenuation ?: 0.0) + (preset.global_zone?.attenuation ?: 0.0)
 
-        val vol_env_delay: Double = (sample.vol_env_delay
-            ?: instrument.instrument?.global_sample?.vol_env_delay
-            ?: 0.0
-        ) * (instrument.vol_env_delay ?: 1.0) * (preset.global_zone?.vol_env_delay ?: 1.0)
-
-        val vol_env_attack: Double = (sample.vol_env_attack
-            ?: instrument.instrument?.global_sample?.vol_env_attack
-            ?: 0.0
-        ) * (instrument.vol_env_attack ?: 1.0) * (preset.global_zone?.vol_env_attack ?: 1.0)
-
-        val vol_env_hold: Double = (sample.vol_env_hold
-            ?: instrument.instrument?.global_sample?.vol_env_hold
-            ?: 0.0
-        ) * (instrument.vol_env_hold ?: 1.0) * (preset.global_zone?.vol_env_hold ?: 1.0)
-
-        val vol_env_decay: Double = (sample.vol_env_decay
-            ?: instrument.instrument?.global_sample?.vol_env_decay
-            ?: 0.0
-        ) * (instrument.vol_env_decay ?: 1.0) * (preset.global_zone?.vol_env_decay ?: 1.0)
-
-        val vol_env_release: Double = (sample.vol_env_release
-            ?: instrument.instrument?.global_sample?.vol_env_release
-            ?: 0.0
-        ) * (instrument.vol_env_release ?: 1.0) * (preset.global_zone?.vol_env_release ?: 1.0)
-
         val vol_env_sustain: Double = (sample.vol_env_sustain
             ?: instrument.instrument?.global_sample?.vol_env_sustain
             ?: 0.0
         ) + (instrument.vol_env_sustain ?: 0.0) + (preset.global_zone?.vol_env_sustain ?: 0.0)
+
+        val volume_envelope = SampleHandle.VolumeEnvelope(
+            sample_rate = this.sample_rate,
+            delay = (sample.vol_env_delay
+                ?: instrument.instrument?.global_sample?.vol_env_delay
+                ?: 0.0
+                    ) * (instrument.vol_env_delay ?: 1.0) * (preset.global_zone?.vol_env_delay
+                ?: 1.0),
+            attack = (sample.vol_env_attack
+                ?: instrument.instrument?.global_sample?.vol_env_attack
+                ?: 0.0
+                    ) * (instrument.vol_env_attack ?: 1.0) * (preset.global_zone?.vol_env_attack
+                ?: 1.0),
+            hold = (sample.vol_env_hold
+                ?: instrument.instrument?.global_sample?.vol_env_hold
+                ?: 0.0
+                    ) * (instrument.vol_env_hold ?: 1.0) * (preset.global_zone?.vol_env_hold
+                ?: 1.0),
+            decay = (sample.vol_env_decay
+                ?: instrument.instrument?.global_sample?.vol_env_decay
+                ?: 0.0
+                    ) * (instrument.vol_env_decay ?: 1.0) * (preset.global_zone?.vol_env_decay
+                ?: 1.0),
+            release = (sample.vol_env_release
+                ?: instrument.instrument?.global_sample?.vol_env_release
+                ?: 0.0
+                    ) * (instrument.vol_env_release ?: 1.0) * (preset.global_zone?.vol_env_release
+                ?: 1.0),
+            sustain_attenuation = (10.0).pow(vol_env_sustain) / -20.0
+        )
+
+
+        val modulation_envelope = SampleHandle.ModulationEnvelope(
+            sample_rate = this.sample_rate,
+            delay = (sample.mod_env_delay
+                ?: instrument.instrument?.global_sample?.mod_env_delay
+                ?: 0.0
+                    ) * (instrument.mod_env_delay ?: 1.0) * (preset.global_zone?.mod_env_delay
+                ?: 1.0),
+            attack = (sample.mod_env_attack
+                ?: instrument.instrument?.global_sample?.mod_env_attack
+                ?: 0.0
+                    ) * (instrument.mod_env_attack ?: 1.0) * (preset.global_zone?.mod_env_attack
+                ?: 1.0),
+            hold = (sample.mod_env_hold
+                ?: instrument.instrument?.global_sample?.mod_env_hold
+                ?: 0.0
+                    ) * (instrument.mod_env_hold ?: 1.0) * (preset.global_zone?.mod_env_hold
+                ?: 1.0),
+            decay = (sample.mod_env_decay
+                ?: instrument.instrument?.global_sample?.mod_env_decay
+                ?: 0.0
+                    ) * (instrument.mod_env_decay ?: 1.0) * (preset.global_zone?.mod_env_decay
+                ?: 1.0),
+            release = (sample.mod_env_release
+                ?: instrument.instrument?.global_sample?.mod_env_release
+                ?: 0.0
+                    ) * (instrument.mod_env_release ?: 1.0) * (preset.global_zone?.mod_env_release
+                ?: 1.0),
+            sustain_attenuation = (sample.mod_env_sustain ?: instrument.instrument?.global_sample?.mod_env_sustain ?: 0.0)
+                * (instrument.mod_env_sustain ?: 0.0)
+                * (preset.global_zone?.mod_env_sustain ?: 0.0)
+        )
 
         val mod_lfo_freq: Double = (sample.mod_lfo_freq
             ?: instrument.instrument?.global_sample?.mod_lfo_freq
@@ -147,7 +185,6 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
             sample_rate = sample_rate,
             pan = (sample.pan ?: instrument.pan ?: preset.global_zone?.pan ?: 0.0) * 100.0 / 500.0,
             pitch_shift = pitch_shift,
-            sustain_attenuation = (10.0).pow(vol_env_sustain / -20.0),
             attenuation = (10.0).pow(attenuation / -20.0),
             stereo_mode = sample.sample!!.sampleType,
             loop_points = if (sample.sampleMode != null && sample.sampleMode!! and 1 == 1) {
@@ -158,11 +195,8 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
             } else {
                 null
             },
-            frame_count_delay = (this.sample_rate.toDouble() * vol_env_delay).toInt(),
-            frame_count_attack = (this.sample_rate.toDouble() * vol_env_attack).toInt(),
-            frame_count_hold = (this.sample_rate.toDouble() * vol_env_hold ).toInt(),
-            frame_count_decay = (this.sample_rate.toDouble() * vol_env_decay).toInt(),
-            frame_count_release = (this.sample_rate.toDouble() * vol_env_release).toInt(),
+            volume_envelope =  volume_envelope,
+            modulation_envelope = modulation_envelope,
             max_values = max_values_floats,
             filter_cutoff = filter_cutoff
         )

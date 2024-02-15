@@ -133,8 +133,8 @@ open class OpusLayerFrameMap: OpusLayerCursor() {
             var max_end_frame = 0
             var min_start_frame = Int.MAX_VALUE
             for (handle in handles) {
-                val sample_end_frame = (end_frame + handle.frame_count_release) - handle.frame_count_delay
-                val sample_start_frame = start_frame - handle.frame_count_delay
+                val sample_end_frame = (end_frame + handle.get_release_duration()) - handle.volume_envelope.frames_delay
+                val sample_start_frame = start_frame - handle.volume_envelope.frames_delay
 
                 max_end_frame = max(max_end_frame, sample_end_frame)
                 min_start_frame = min(min_start_frame, sample_start_frame)

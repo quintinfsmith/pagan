@@ -26,7 +26,7 @@ class PaganFeedbackDevice(var sample_handle_manager: SampleHandleManager): Mappe
             }
             for (handle in output) {
                 this.max_frame =
-                    max(frame + handle.release_frame!! + handle.frame_count_release, this.max_frame)
+                    max(frame + handle.release_frame!! + handle.get_release_duration(), this.max_frame)
             }
             return output
         }
@@ -77,7 +77,7 @@ class PaganFeedbackDevice(var sample_handle_manager: SampleHandleManager): Mappe
         var kill_frame = 0
         for (handle in handles) {
             handle.release_frame = duration_millis * this.sample_rate / 1000
-            kill_frame = max(kill_frame, handle.release_frame!! + handle.frame_count_release)
+            kill_frame = max(kill_frame, handle.release_frame!! + handle.get_release_duration())
             (this.sample_frame_map as ImmediateFrameMap).add(handle)
         }
 

@@ -1771,7 +1771,7 @@ open class OpusLayerBase {
 
         for (b in 0 .. to_key.beat - from_key.beat) {
             overwrite_map[BeatKey(working_beat.channel, working_beat.line_offset, working_beat.beat + b)] =
-                this.get_tree( BeatKey(from_key.channel, from_key.line_offset, from_key.beat + b))
+                this.get_tree(BeatKey(from_key.channel, from_key.line_offset, from_key.beat + b))
         }
 
         // Before we start overwriting, check overflow

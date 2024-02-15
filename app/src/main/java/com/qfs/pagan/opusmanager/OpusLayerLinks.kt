@@ -108,7 +108,7 @@ open class OpusLayerLinks : OpusLayerBase() {
         val beat_pool_index = this.link_pool_map[beat_key]
         val target_pool_index = this.link_pool_map[target]
         if (beat_pool_index != null && target_pool_index != null) {
-            this.replace_tree(beat_key, null, this.get_tree(target, listOf()))
+            this.replace_tree(beat_key, null, this.get_tree(target))
             if (beat_pool_index != target_pool_index) {
                 this.merge_link_pools(beat_pool_index, target_pool_index)
             }
@@ -181,6 +181,7 @@ open class OpusLayerLinks : OpusLayerBase() {
         if (index_first == index_second) {
             return
         }
+
         // First merge the beat's pool into the targets
         for (key in this.link_pools[index_first]) {
             this.link_pool_map[key] = index_second
@@ -539,12 +540,25 @@ open class OpusLayerLinks : OpusLayerBase() {
 
         from_key.beat = 0
         to_key.beat = range_width - 1
-        for (i in 1 until this.beat_count / range_width) {
-            this.link_beat_range(
-                BeatKey(channel, line_offset, i * range_width),
-                from_key,
-                to_key
-            )
+
+        val abs_from_line_offset = this.get_abs_offset(from_key.channel, from_key.line_offset)
+        val abs_to_line_offset = this.get_abs_offset(to_key.channel, to_key.line_offset)
+
+        for (c in abs_from_line_offset .. abs_to_line_offset) {
+            val (working_channel, working_line_offset) = this.get_std_offset(c)
+            for (i in 0 until range_width) {
+                val beat_key_list = mutableListOf<BeatKey>()
+                for (j in 0 until this.beat_count / range_width) {
+                    beat_key_list.add(
+                        BeatKey(
+                            working_channel,
+                            working_line_offset,
+                            (from_key.beat + i) + (j * range_width)
+                        )
+                    )
+                }
+                this.create_link_pool(beat_key_list)
+            }
         }
     }
 

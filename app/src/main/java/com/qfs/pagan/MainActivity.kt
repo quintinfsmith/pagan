@@ -546,7 +546,9 @@ class MainActivity : AppCompatActivity() {
                     this._midi_feedback_device = PaganFeedbackDevice(
                         SampleHandleManager(
                             this._soundfont!!,
-                            this.configuration.sample_rate
+                            this.configuration.sample_rate,
+                            this.configuration.sample_rate / 4,
+
                         )
                     )
                 }
@@ -1426,7 +1428,8 @@ class MainActivity : AppCompatActivity() {
         this._midi_feedback_device = PaganFeedbackDevice(
             SampleHandleManager(
                 this._soundfont!!,
-                this.configuration.sample_rate
+                this.configuration.sample_rate,
+                this.configuration.sample_rate / 4,
             )
         )
 
@@ -1844,7 +1847,13 @@ class MainActivity : AppCompatActivity() {
 
             this.get_opus_manager().set_sample_handle_manager(this.sample_handle_manager!!)
             this._midi_playback_device = PaganPlaybackDevice(this)
-            this._midi_feedback_device = PaganFeedbackDevice(this.sample_handle_manager!!)
+            this._midi_feedback_device = PaganFeedbackDevice(
+                SampleHandleManager(
+                    this._soundfont!!,
+                    this.configuration.sample_rate,
+                    this.configuration.sample_rate / 4
+                )
+            )
         } else {
            this._midi_playback_device = null
         }

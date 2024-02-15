@@ -54,8 +54,8 @@ class PaganFeedbackDevice(var sample_handle_manager: SampleHandleManager): Mappe
 
     init {
         this.fill_buffer_cache = false
-        this.minimum_buffer_cache_size = this.buffer_size
-        this.buffer_cache_size_limit = this.buffer_size
+        this.minimum_buffer_cache_size = 1
+        this.buffer_cache_size_limit = 2
         //this.wave_generator.timeout = 1
     }
     override fun on_stop() {

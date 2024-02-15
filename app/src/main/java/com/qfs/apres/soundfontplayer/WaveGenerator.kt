@@ -1,6 +1,5 @@
 package com.qfs.apres.soundfontplayer
 
-import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
@@ -224,7 +223,6 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
     private fun activate_active_handles(frame: Int) {
         val start_ts = System.currentTimeMillis()
         val handles = this.midi_frame_map.get_active_handles(frame)
-        Log.d("AAA", "HANDLE GEN: ${System.currentTimeMillis() - start_ts}")
         for ((first_frame, handle) in handles) {
             if (first_frame == frame) {
                 continue

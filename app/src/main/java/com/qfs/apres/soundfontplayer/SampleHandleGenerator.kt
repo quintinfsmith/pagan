@@ -141,7 +141,6 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
             ?: instrument.instrument?.global_sample?.filter_cutoff
             ?: 13500.0
         ) + (instrument.filter_cutoff ?: 0.0) + (preset.global_zone?.filter_cutoff ?: 0.0)
-
         return SampleHandle(
             data = data,
             sample_rate = sample_rate,

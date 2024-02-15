@@ -13,13 +13,7 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
     var play_queued = false
     var is_playing = false
     var play_cancelled = false // need a away to cancel between parsing and playing
-    var fill_buffer_cache = true
     val beat_frames = HashMap<Int, IntRange>()
-
-    // precache 3 seconds when buffering
-    var minimum_buffer_cache_size: Int = this.sample_rate * 3 / this.buffer_size
-    // allow up to 1 minute to be cached during playback
-    var buffer_cache_size_limit: Int = this.sample_rate * 60 / this.buffer_size
 
     var cached_chunks = HashMap<Int, ShortArray>()
 

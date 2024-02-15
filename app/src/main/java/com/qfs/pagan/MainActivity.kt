@@ -766,7 +766,10 @@ class MainActivity : AppCompatActivity() {
             this.loading_reticle_show(getString(R.string.reticle_msg_start_playback))
         }
 
-        val start_point = this.get_working_column()
+        var start_point = this.get_working_column()
+        if (start_point >= this.get_opus_manager().beat_count - 1) {
+            start_point = 0
+        }
         // Currently, Midi2.0 output is not supported. will be needed for N-radix projects
         thread {
             // May Not need to set instruments at beginning of playback, commenting for now
@@ -790,8 +793,12 @@ class MainActivity : AppCompatActivity() {
         this.loading_reticle_show(getString(R.string.reticle_msg_start_playback))
         this._enable_blocker_view()
 
-        val start_point = this.get_working_column()
+        var start_point = this.get_working_column()
         val opus_manager = this.get_opus_manager()
+        if (start_point >= opus_manager.beat_count - 1) {
+            start_point = 0
+        }
+
         val midi = opus_manager.get_midi(start_point)
 
         this.runOnUiThread {

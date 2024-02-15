@@ -1268,27 +1268,32 @@ class MainActivity : AppCompatActivity() {
                 this._midi_interface.broadcast_event(BankSelect(channel.midi_channel, channel.midi_bank))
                 this._midi_interface.broadcast_event(ProgramChange(channel.midi_channel, channel.midi_program))
 
-                this._midi_feedback_device!!.sample_handle_manager.select_bank(
-                    channel.midi_channel,
-                    channel.midi_bank,
-                )
-                this._midi_feedback_device!!.sample_handle_manager.change_program(
-                    channel.midi_channel,
-                    channel.midi_program,
-                )
+
+                if (this._midi_feedback_device != null) {
+                    this._midi_feedback_device!!.sample_handle_manager.select_bank(
+                        channel.midi_channel,
+                        channel.midi_bank,
+                    )
+                    this._midi_feedback_device!!.sample_handle_manager.change_program(
+                        channel.midi_channel,
+                        channel.midi_program,
+                    )
+                }
             }
         } else {
             val opus_channel = this.get_opus_manager().channels[index]
             this._midi_interface.broadcast_event(BankSelect(opus_channel.midi_channel, opus_channel.midi_bank))
             this._midi_interface.broadcast_event(ProgramChange(opus_channel.midi_channel, opus_channel.midi_program))
-            this._midi_feedback_device!!.sample_handle_manager.select_bank(
-                opus_channel.midi_channel,
-                opus_channel.midi_bank,
-            )
-            this._midi_feedback_device!!.sample_handle_manager.change_program(
-                opus_channel.midi_channel,
-                opus_channel.midi_program,
-            )
+            if (this._midi_feedback_device != null) {
+                this._midi_feedback_device!!.sample_handle_manager.select_bank(
+                    opus_channel.midi_channel,
+                    opus_channel.midi_bank,
+                )
+                this._midi_feedback_device!!.sample_handle_manager.change_program(
+                    opus_channel.midi_channel,
+                    opus_channel.midi_program,
+                )
+            }
         }
     }
 
@@ -2190,6 +2195,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
     fun clear_cached_playback_frames() {
-        this._midi_playback_device!!.purge_wave_generator()
+        this._midi_playback_device?.purge_wave_generator()
     }
 }

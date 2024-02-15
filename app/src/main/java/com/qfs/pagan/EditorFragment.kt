@@ -235,8 +235,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
                         if (!opus_manager.first_load_done) {
                             main.get_opus_manager().new()
                         }
-                        throw e
-                        //main.feedback_msg(getString(R.string.feedback_midi_fail))
+                        main.feedback_msg(getString(R.string.feedback_midi_fail))
                     }
                 }
                 main.runOnUiThread {

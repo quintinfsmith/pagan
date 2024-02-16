@@ -1,7 +1,9 @@
 package com.qfs.apres.soundfontplayer
 
 import kotlin.math.PI
+import kotlin.math.abs
 import kotlin.math.min
+import kotlin.math.pow
 import kotlin.math.tan
 
 class SampleHandle(
@@ -13,6 +15,7 @@ class SampleHandle(
 
     var volume_envelope: VolumeEnvelope,
     var modulation_envelope: ModulationEnvelope,
+    var modulation_lfo: LFO,
 
     var max_values: Array<Float> = Array<Float>(0) { 0F },
     var pitch_shift: Double = 1.0,
@@ -75,8 +78,29 @@ class SampleHandle(
             this.frames_decay = (this.sample_rate.toDouble() * this.decay).toInt()
             this.frames_release = (this.sample_rate.toDouble() * this.release).toInt()
         }
-
     }
+
+    class LFO(
+        var sample_rate: Int,
+        val frequency: Double,
+        val delay: Double,
+        val pitch: Int,
+        val filter: Int,
+        val volume: Double
+    ) {
+        val wave_length = sample_rate.toDouble() / this.frequency
+        val frames_delay = (this.sample_rate.toDouble() * this.delay)
+
+        fun get_frame(i: Int): Double {
+            return if (i < this.frames_delay) {
+                0.0
+            } else {
+                val x = (i - this.frames_delay)
+                (abs((x % this.wave_length) - this.wave_length) - (this.wave_length / 2)) / this.wave_length
+            }
+        }
+    }
+
 
     companion object {
         var uuid_gen = 0
@@ -205,6 +229,10 @@ class SampleHandle(
             if (offset >= 0) {
                 this.data_buffer.position(this.loop_points.first + offset)
             }
+        }
+
+        if (this.modulation_lfo.delay <= this.working_frame) {
+            //frame_factor *= (2.0).pow(this.modulation_lfo.get_frame(this.working_frame) * this.modulation_lfo.volume)
         }
 
         // TODO: low pass filter. I can't get this to work atm

@@ -153,10 +153,20 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
             ?: instrument.instrument?.global_sample?.mod_lfo_freq
             ?: 0.0
         ) * (instrument.mod_lfo_freq ?: 1.0) * (preset.global_zone?.mod_lfo_freq ?: 1.0)
-        val mod_lfo_volume: Int = (sample.mod_lfo_volume
-            ?: instrument.instrument?.global_sample?.mod_lfo_volume
+
+        val mod_lfo_to_volume: Int = (sample.mod_lfo_to_volume
+            ?: instrument.instrument?.global_sample?.mod_lfo_to_volume
             ?: 0
-        ) + (instrument.mod_lfo_volume ?: 0) + (preset.global_zone?.mod_lfo_volume ?: 0)
+        ) + (instrument.mod_lfo_to_volume ?: 0) + (preset.global_zone?.mod_lfo_to_volume ?: 0)
+
+        val mod_lfo_pitch: Int = (sample.mod_lfo_pitch
+            ?: instrument.instrument?.global_sample?.mod_lfo_pitch
+            ?: 0
+        ) + (instrument.mod_lfo_pitch ?: 0) + (preset.global_zone?.mod_lfo_pitch ?: 0)
+        val mod_lfo_filter: Int = (sample.mod_lfo_filter
+            ?: instrument.instrument?.global_sample?.mod_lfo_filter
+            ?: 0
+        ) + (instrument.mod_lfo_filter ?: 0) + (preset.global_zone?.mod_lfo_filter ?: 0)
 
         val max_values = mutableListOf<Short>()
         data.forEachIndexed { i: Int, frame: Short ->
@@ -194,6 +204,13 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
             } else {
                 null
             },
+            modulation_lfo = SampleHandle.LFO(
+                sample_rate = this.sample_rate,
+                frequency = mod_lfo_freq,
+                volume = mod_lfo_to_volume,
+                pitch = mod_lfo_pitch,
+                filter = mod_lfo_filter
+            ),
             volume_envelope =  volume_envelope,
             modulation_envelope = modulation_envelope,
             max_values = max_values_floats,

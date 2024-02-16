@@ -451,7 +451,7 @@ class SoundFont(file_path: String) {
                 working_generated.mod_env_filter = generator.asIntSigned()
             }
             0x0D -> {
-                working_generated.mod_lfo_volume =  generator.asIntSigned()
+                working_generated.mod_lfo_to_volume = min(1000, max(generator.asIntSigned(), 0)).toDouble() / 10.0
             }
             0x0E -> { } // Unused
             0x0F -> {

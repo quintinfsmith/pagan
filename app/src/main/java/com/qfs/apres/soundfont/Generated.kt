@@ -32,7 +32,7 @@ abstract class Generated {
     var mod_lfo_freq: Double? = null
     var mod_lfo_pitch: Int? = null
     var mod_lfo_filter: Int? = null
-    var mod_lfo_volume: Int? = null
+    var mod_lfo_to_volume: Double? = null
     var vib_lfo_delay: Double? = null
     var vib_lfo_freq: Double? = null
     var vib_lfo_pitch: Int? = null

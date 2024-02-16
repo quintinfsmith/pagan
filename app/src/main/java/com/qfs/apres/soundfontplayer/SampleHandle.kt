@@ -84,7 +84,7 @@ class SampleHandle(
         var sample_rate: Int,
         val frequency: Double,
         val delay: Double,
-        val pitch: Int,
+        val pitch: Double,
         val filter: Int,
         val volume: Double
     ) {
@@ -210,9 +210,9 @@ class SampleHandle(
             } else if (this.volume_envelope.sustain_attenuation < 1.0) {
                 frame_factor *= if (this.working_frame - this.volume_envelope.frames_attack - this.volume_envelope.frames_hold < this.volume_envelope.frames_decay) {
                     val r = 1.0 - ((this.working_frame - this.volume_envelope.frames_hold - this.volume_envelope.frames_attack).toDouble() / this.volume_envelope.frames_decay.toDouble())
-                    this.volume_envelope.sustain_attenuation + (r * (1.0 - this.volume_envelope.sustain_attenuation))
+                    1.0 - (r * this.volume_envelope.sustain_attenuation)
                 } else {
-                    this.volume_envelope.sustain_attenuation
+                    1.0 - this.volume_envelope.sustain_attenuation
                 }
             }
         }
@@ -233,10 +233,12 @@ class SampleHandle(
         }
 
         if (this.modulation_lfo.delay <= this.working_frame) {
+            val lfo_frame = this.modulation_lfo.get_frame(this.working_frame)
             if (this.modulation_lfo.volume != 0.0) {
-                frame_factor *= this.modulation_lfo.volume.pow(
-                    this.modulation_lfo.get_frame(this.working_frame)
-                )
+                frame_factor *= this.modulation_lfo.volume.pow(lfo_frame)
+            }
+            if (this.modulation_lfo.pitch != 1.0) {
+                this.data_buffer.repitch(this.modulation_lfo.pitch.pow(lfo_frame))
             }
         }
 

@@ -5,6 +5,8 @@ import com.qfs.apres.soundfont.InstrumentSample
 import com.qfs.apres.soundfont.Preset
 import com.qfs.apres.soundfont.PresetInstrument
 import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.min
 import kotlin.math.pow
 
 class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
@@ -45,8 +47,9 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
     fun generate_new(note: Int, bend: Int, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset): SampleHandle {
         var pitch_shift = 1.0
         val original_note = sample.root_key ?: sample.sample!!.originalPitch
+
         // TODO: Why did I do this check? I vaguely remember needing it but I need a note
-        if (original_note != 255) {
+        val target_pitch = if (original_note != 255) {
             val tuning_cent: Int = (sample.tuning_cent
                 ?: instrument.instrument?.global_sample?.tuning_cent
                 ?: 0
@@ -65,9 +68,12 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
 
             tuning_semi += (tuning_cent + mod_env_pitch) / 100.0
 
-            val original_pitch = 2.0.pow(original_note.toFloat() / 12.0)
-            val required_pitch = 2.0.pow((note.toFloat() + tuning_semi + (bend.toFloat() / 512.0)) / 12.0)
+            val original_pitch = (2.0).pow(original_note.toFloat() / 12.0)
+            val required_pitch = (2.0).pow((note.toFloat() + tuning_semi + (bend.toFloat() / 512.0)) / 12.0)
             pitch_shift = required_pitch / original_pitch
+            required_pitch
+        } else {
+            1.0
         }
 
         if (sample.sample!!.sampleRate != this.sample_rate) {
@@ -113,7 +119,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
                 ?: 0.0
                     ) * (instrument.vol_env_release ?: 1.0) * (preset.global_zone?.vol_env_release
                 ?: 1.0),
-            sustain_attenuation = (10.0).pow(vol_env_sustain / -20.0)
+            sustain_attenuation = max(0.0, min(vol_env_sustain, 1000.0)) / 1000.0
         )
 
 
@@ -210,7 +216,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
                 sample_rate = this.sample_rate,
                 frequency = mod_lfo_freq,
                 volume = mod_lfo_to_volume,
-                pitch = mod_lfo_pitch,
+                pitch = target_pitch.pow((1200.0 + mod_lfo_pitch.toDouble()) / 1200.0) / target_pitch,
                 filter = mod_lfo_filter,
                 delay = mod_lfo_delay
             ),

@@ -1,5 +1,6 @@
 package com.qfs.apres.soundfontplayer
 
+import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
@@ -51,7 +52,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         val arrays: Array<ShortArray> = runBlocking {
             val tmp = Array(this@WaveGenerator.core_count) { i: Int ->
                 async(Dispatchers.Default) {
-                    this@WaveGenerator.gen_half_short_array(first_frame, i)
+                    this@WaveGenerator.gen_partial_short_array(first_frame, i)
                 }
             }
 
@@ -74,8 +75,21 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         }
     }
 
-    private fun gen_half_short_array(first_frame: Int, sample_index: Int): ShortArray {
+    private fun gen_partial_short_array(first_frame: Int, sample_index: Int): ShortArray {
         val int_array = IntArray(this.buffer_size * 2 / this.core_count)
+        var sample_count_map = mutableListOf<Triple<Int, Int, Boolean>>()
+        for ((_, item) in this._active_sample_handles) {
+            if (item.first_frame >= first_frame + this.buffer_size) {
+                continue
+            }
+
+            for (handle in item.sample_handles) {
+                sample_count_map.add(Triple(item.first_frame - first_frame, handle.uuid, true))
+                sample_count_map.add(Triple(item.first_frame - first_frame + handle.get_duration()!!, handle.uuid, false))
+            }
+        }
+        sample_count_map.sortBy { it.first }
+
         for ((_, item) in this._active_sample_handles) {
             if (item.first_frame >= first_frame + this.buffer_size) {
                 continue
@@ -95,14 +109,15 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
 
             val sample_handle = item.sample_handles[real_index]
             if (!sample_handle.is_dead) {
-                this.populate_half_int_array(
+                this.populate_partial_int_array(
                     sample_handle,
                     int_array,
                     if (real_index == 0 && (0 until this.buffer_size).contains(item.first_frame - first_frame)) {
                         (item.first_frame - first_frame) - (this.buffer_size * sample_index / this.core_count)
                     } else {
                         0
-                    }
+                    },
+                    sample_count_map
                 )
             }
         }
@@ -118,6 +133,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         } else {
             (Short.MAX_VALUE / 2).toDouble() / (max_frame_value - mid).toDouble()
         }
+        Log.d("AAA", "CR: $compression_ratio | ${max_frame_value.toDouble() / Short.MAX_VALUE.toDouble()}")
 
         val array = ShortArray(int_array.size) { i: Int ->
             val v = int_array[i]
@@ -133,7 +149,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         return array
     }
 
-    private fun populate_half_int_array(sample_handle: SampleHandle, working_int_array: IntArray, offset: Int) {
+    private fun populate_partial_int_array(sample_handle: SampleHandle, working_int_array: IntArray, offset: Int, sample_count_map: List<Triple<Int, Int, Boolean>>) {
         // Assume working_int_array.size % 2 == 0
         val first_frame = sample_handle.working_frame
 
@@ -142,10 +158,28 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         } else {
             offset until working_int_array.size / 2
         }
-
+        val working_sample_set = mutableSetOf<Int>()
+        var s_index = 0
+        var working_sample_count_changed = false
+        var working_attenuation = 1.0
         for (f in range) {
-            val frame_value = sample_handle.get_next_frame() ?: break
+            for (i in s_index until sample_count_map.size) {
+                val (working_frame, uuid, is_attached) = sample_count_map[i]
+                if (working_frame < f) {
+                } else if (working_frame == f) {
+                    if (is_attached) {
+                        working_sample_set.add(uuid)
+                    } else {
+                        working_sample_set.remove(uuid)
+                    }
+                    working_sample_count_changed = true
+                } else {
+                    break
+                }
+                s_index = i
+            }
 
+            val frame_value = sample_handle.get_next_frame() ?: break
             var left_frame: Int = 0
             var right_frame: Int = 0
 
@@ -183,8 +217,14 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
 
                 else -> {}
             }
-            working_int_array[(f * 2)] += right_frame
-            working_int_array[(f * 2) + 1] += left_frame
+
+            if (working_sample_count_changed) {
+                working_sample_count_changed = false
+                working_attenuation = 1.0 / working_sample_set.size.toDouble()
+            }
+
+            working_int_array[(f * 2)] += (right_frame * working_attenuation).toInt()
+            working_int_array[(f * 2) + 1] += (left_frame * working_attenuation).toInt()
         }
         sample_handle.set_working_frame(sample_handle.working_frame + (this.buffer_size * (this.core_count - 1) / this.core_count))
     }

@@ -262,5 +262,12 @@ class SampleHandle(
     fun is_pressed(): Boolean {
         return this.release_frame == null || this.release_frame!! < this.working_frame
     }
+    fun get_duration(): Int? {
+        return if (this.release_frame == null) {
+            null
+        } else {
+            this.release_frame!! + this.get_release_duration()
+        }
+    }
 }
 

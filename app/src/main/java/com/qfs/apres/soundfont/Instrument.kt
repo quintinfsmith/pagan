@@ -19,9 +19,6 @@ class Instrument(var name: String) {
                 (sample.velocity_range == null || (sample.velocity_range!!.first <= velocity && sample.velocity_range!!.second >= velocity))
             ) {
                 output.add(sample)
-                if (sample.sample!!.sampleType == 1) {
-                    return output
-                }
             }
         }
         return output

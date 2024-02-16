@@ -70,7 +70,6 @@ class SampleHandleManager(
         val output = mutableSetOf<SampleHandle>()
         val velocity = event.velocity shr 8
         val potential_instruments = preset.get_instruments(event.note, velocity)
-
         for (p_instrument in potential_instruments) {
             val samples = p_instrument.instrument!!.get_samples(
                 event.note,

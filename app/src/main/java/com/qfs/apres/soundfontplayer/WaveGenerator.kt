@@ -116,12 +116,12 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         val compression_ratio = if (max_frame_value <= Short.MAX_VALUE) {
             1.0
         } else {
-            (Short.MAX_VALUE - mid).toDouble() / (max_frame_value - mid).toDouble()
+            (Short.MAX_VALUE / 2).toDouble() / (max_frame_value - mid).toDouble()
         }
 
         val array = ShortArray(int_array.size) { i: Int ->
             val v = int_array[i]
-            if (compression_ratio >= 1.0 || (0 - mid <= v && v <= mid)) {
+            if (compression_ratio >= 1.0 || (0 - mid .. mid).contains(v)) {
                 v.toShort()
             } else if (v > mid) {
                 (mid + ((v - mid).toFloat() * compression_ratio).toInt()).toShort()

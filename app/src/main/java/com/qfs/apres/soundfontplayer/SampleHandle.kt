@@ -117,6 +117,7 @@ class SampleHandle(
         stereo_mode = original.stereo_mode,
         volume_envelope = original.volume_envelope,
         modulation_envelope = original.modulation_envelope,
+        modulation_lfo = original.modulation_lfo,
         max_values = original.max_values,
         pitch_shift = original.pitch_shift,
         filter_cutoff = original.filter_cutoff,
@@ -207,11 +208,11 @@ class SampleHandle(
             } else if (this.working_frame - this.volume_envelope.frames_attack < this.volume_envelope.frames_hold) {
                 // pass
             } else if (this.volume_envelope.sustain_attenuation < 1.0) {
-                if (this.working_frame - this.volume_envelope.frames_attack - this.volume_envelope.frames_hold < this.volume_envelope.frames_decay) {
-                    val r = 1.0 - (((this.working_frame - this.volume_envelope.frames_hold - this.volume_envelope.frames_attack).toDouble()  / this.volume_envelope.frames_decay.toDouble()))
-                    frame_factor *= this.volume_envelope.sustain_attenuation * r
+                frame_factor *= if (this.working_frame - this.volume_envelope.frames_attack - this.volume_envelope.frames_hold < this.volume_envelope.frames_decay) {
+                    val r = 1.0 - ((this.working_frame - this.volume_envelope.frames_hold - this.volume_envelope.frames_attack).toDouble() / this.volume_envelope.frames_decay.toDouble())
+                    this.volume_envelope.sustain_attenuation + (r * (1.0 - this.volume_envelope.sustain_attenuation))
                 } else {
-                    frame_factor *= this.volume_envelope.sustain_attenuation
+                    this.volume_envelope.sustain_attenuation
                 }
             }
         }
@@ -232,7 +233,11 @@ class SampleHandle(
         }
 
         if (this.modulation_lfo.delay <= this.working_frame) {
-            //frame_factor *= (2.0).pow(this.modulation_lfo.get_frame(this.working_frame) * this.modulation_lfo.volume)
+            if (this.modulation_lfo.volume != 0.0) {
+                frame_factor *= this.modulation_lfo.volume.pow(
+                    this.modulation_lfo.get_frame(this.working_frame)
+                )
+            }
         }
 
         // TODO: low pass filter. I can't get this to work atm

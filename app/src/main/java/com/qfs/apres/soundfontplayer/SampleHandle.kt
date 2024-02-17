@@ -20,6 +20,7 @@ class SampleHandle(
     var pitch_shift: Double = 1.0,
     var filter_cutoff: Double = 13500.0,
     var pan: Double = 0.0,
+    var volume: Double = 0.5
 ) {
     data class VolumeEnvelope(
         var sample_rate: Int,
@@ -120,7 +121,8 @@ class SampleHandle(
         max_values = original.max_values,
         pitch_shift = original.pitch_shift,
         filter_cutoff = original.filter_cutoff,
-        pan = original.pan
+        pan = original.pan,
+        volume = original.volume
     )
 
     private val lpf_factor: Double
@@ -128,7 +130,6 @@ class SampleHandle(
     var working_frame: Int = 0
     var release_frame: Int? = null
     var is_dead = false
-    var current_volume: Double = 0.5
     var data_buffer: PitchedBuffer
 
     // TODO: Unimplimented
@@ -197,7 +198,7 @@ class SampleHandle(
             return null
         }
 
-        var frame_factor = this.attenuation * this.current_volume
+        var frame_factor = this.attenuation
         val is_pressed = this.release_frame == null || this.working_frame < this.release_frame!!
 
         if (is_pressed) {
@@ -250,8 +251,7 @@ class SampleHandle(
         //}
 
         this.working_frame += 1
-
-        return (this.data_buffer.get().toDouble() * frame_factor).toInt()
+        return (this.data_buffer.get().toDouble() * frame_factor * this.volume).toInt()
     }
 
     fun release_note() {

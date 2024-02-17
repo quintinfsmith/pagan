@@ -167,7 +167,6 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
 
     private fun populate_partial_int_array(sample_handle: SampleHandle, working_int_array: IntArray, offset: Int, sample_count_map: List<Triple<Int, Pair<Int, Int>, Boolean>>) {
         // Assume working_int_array.size % 2 == 0
-        val first_frame = sample_handle.working_frame
 
         val range = if (offset < 0) {
             0 until (working_int_array.size / 2)
@@ -270,11 +269,19 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
 
             if (working_sample_count_changed) {
                 working_sample_count_changed = false
-                var size = 1 + working_sample_set_left.size
+                var size = if (working_sample_set_left.size > 1) {
+                    working_sample_set_left.size + 1
+                } else {
+                    1
+                }
                 working_attenuation_left = 1.0 / size.toDouble()
                 working_threshold_left = (Short.MAX_VALUE / size).toShort()
 
-                size = working_sample_set_right.size + 1
+                size = if (working_sample_set_right.size > 1) {
+                    working_sample_set_right.size + 1
+                } else {
+                    1
+                }
                 working_attenuation_right = 1.0 / size.toDouble()
                 working_threshold_right = (Short.MAX_VALUE / size).toShort()
             }

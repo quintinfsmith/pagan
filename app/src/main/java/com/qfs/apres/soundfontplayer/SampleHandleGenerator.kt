@@ -50,9 +50,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
 
         // TODO: Why did I do this check? I vaguely remember needing it but I need a note
         val target_pitch = if (original_note != 255) {
-            val tuning_cent: Int = (sample.tuning_cent ?: instrument.instrument?.global_sample?.tuning_cent ?: 0 )
-                + (instrument.tuning_cent ?: 0)
-                + (preset.global_zone?.tuning_cent ?: 0)
+            val tuning_cent: Int = (sample.tuning_cent ?: instrument.instrument?.global_sample?.tuning_cent ?: 0 ) + (instrument.tuning_cent ?: 0) + (preset.global_zone?.tuning_cent ?: 0)
 
             // Kludge: modulators arent implemented yet, so this is still needed for tuning
             val mod_env_pitch: Double = ((sample.mod_env_pitch ?: instrument.instrument?.global_sample?.mod_env_pitch ?: 0 )

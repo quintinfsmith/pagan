@@ -1,6 +1,5 @@
 package com.qfs.apres.soundfontplayer
 
-import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
@@ -77,15 +76,33 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
 
     private fun gen_partial_short_array(first_frame: Int, sample_index: Int): ShortArray {
         val int_array = IntArray(this.buffer_size * 2 / this.core_count)
-        var sample_count_map = mutableListOf<Triple<Int, Int, Boolean>>()
+        val sample_count_map = mutableListOf<Triple<Int, Pair<Int, Int>, Boolean>>()
         for ((_, item) in this._active_sample_handles) {
             if (item.first_frame >= first_frame + this.buffer_size) {
                 continue
             }
+            val real_index = if (item.first_section > 0) {
+                if ((this.core_count - item.sample_handles.size) > sample_index) {
+                    continue
+                }
+                sample_index - item.first_section
+            } else {
+                if (item.sample_handles.size <= sample_index) {
+                    continue
+                }
+                sample_index
+            }
 
-            for (handle in item.sample_handles) {
-                sample_count_map.add(Triple(item.first_frame - first_frame, handle.uuid, true))
-                sample_count_map.add(Triple(item.first_frame - first_frame + handle.get_duration()!!, handle.uuid, false))
+            item.sample_handles.forEachIndexed { h: Int, handle: SampleHandle ->
+                if (h != real_index) {
+                    return@forEachIndexed
+                }
+
+                val offset = item.first_frame - handle.working_frame
+                if (offset + handle.release_frame!! > 0) {
+                    sample_count_map.add(Triple(offset, Pair(handle.uuid, handle.stereo_mode), true))
+                    sample_count_map.add(Triple(offset + handle.release_frame!!, Pair(handle.uuid, handle.stereo_mode), false))
+                }
             }
         }
         sample_count_map.sortBy { it.first }
@@ -133,7 +150,6 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         } else {
             (Short.MAX_VALUE / 2).toDouble() / (max_frame_value - mid).toDouble()
         }
-        Log.d("AAA", "CR: $compression_ratio | ${max_frame_value.toDouble() / Short.MAX_VALUE.toDouble()}")
 
         val array = ShortArray(int_array.size) { i: Int ->
             val v = int_array[i]
@@ -149,7 +165,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         return array
     }
 
-    private fun populate_partial_int_array(sample_handle: SampleHandle, working_int_array: IntArray, offset: Int, sample_count_map: List<Triple<Int, Int, Boolean>>) {
+    private fun populate_partial_int_array(sample_handle: SampleHandle, working_int_array: IntArray, offset: Int, sample_count_map: List<Triple<Int, Pair<Int, Int>, Boolean>>) {
         // Assume working_int_array.size % 2 == 0
         val first_frame = sample_handle.working_frame
 
@@ -158,19 +174,53 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         } else {
             offset until working_int_array.size / 2
         }
-        val working_sample_set = mutableSetOf<Int>()
+        val working_sample_set_left = mutableSetOf<Int>()
+        val working_sample_set_right = mutableSetOf<Int>()
+
+        var working_attenuation_left = 1.0
+        var working_attenuation_right = 1.0
+        var working_threshold_left: Short = Short.MAX_VALUE
+        var working_threshold_right: Short = Short.MAX_VALUE
+
         var s_index = 0
         var working_sample_count_changed = false
-        var working_attenuation = 1.0
+
         for (f in range) {
             for (i in s_index until sample_count_map.size) {
-                val (working_frame, uuid, is_attached) = sample_count_map[i]
-                if (working_frame < f) {
+                val (working_frame, pair, is_attached) = sample_count_map[i]
+                val (uuid, stereo_type) = pair
+
+                if (working_frame < f * 2) {
                 } else if (working_frame == f) {
                     if (is_attached) {
-                        working_sample_set.add(uuid)
+                        when (stereo_type and 7) {
+                            1 -> {
+                                working_sample_set_left.add(uuid)
+                                working_sample_set_right.add(uuid)
+                            }
+                            2 -> {
+                                working_sample_set_right.add(uuid)
+                            }
+                            4 -> {
+                                working_sample_set_left.add(uuid)
+                            }
+                            else -> { }
+
+                        }
                     } else {
-                        working_sample_set.remove(uuid)
+                        when (stereo_type and 7) {
+                            1 -> {
+                                working_sample_set_left.remove(uuid)
+                                working_sample_set_right.remove(uuid)
+                            }
+                            2 -> {
+                                working_sample_set_right.remove(uuid)
+                            }
+                            4 -> {
+                                working_sample_set_left.remove(uuid)
+                            }
+                            else -> { }
+                        }
                     }
                     working_sample_count_changed = true
                 } else {
@@ -220,12 +270,38 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
 
             if (working_sample_count_changed) {
                 working_sample_count_changed = false
-                working_attenuation = 1.0 / working_sample_set.size.toDouble()
+                var size = 1 + working_sample_set_left.size
+                working_attenuation_left = 1.0 / size.toDouble()
+                working_threshold_left = (Short.MAX_VALUE / size).toShort()
+
+                size = working_sample_set_right.size + 1
+                working_attenuation_right = 1.0 / size.toDouble()
+                working_threshold_right = (Short.MAX_VALUE / size).toShort()
             }
 
-            working_int_array[(f * 2)] += (right_frame * working_attenuation).toInt()
-            working_int_array[(f * 2) + 1] += (left_frame * working_attenuation).toInt()
+            working_int_array[(f * 2)] += when (sample_handle.stereo_mode and 7) {
+                1, 2 -> {
+                    if (abs(right_frame) > working_threshold_right) {
+                        (right_frame * working_attenuation_right).toInt()
+                    } else {
+                        right_frame
+                    }
+                }
+                else -> { 0 }
+            }
+
+            working_int_array[(f * 2) + 1] += when (sample_handle.stereo_mode and 7) {
+                1, 4 -> {
+                    if (abs(left_frame) > working_threshold_left) {
+                        (left_frame * working_attenuation_left).toInt()
+                    } else {
+                        left_frame
+                    }
+                }
+                else -> { 0 }
+            }
         }
+
         sample_handle.set_working_frame(sample_handle.working_frame + (this.buffer_size * (this.core_count - 1) / this.core_count))
     }
 

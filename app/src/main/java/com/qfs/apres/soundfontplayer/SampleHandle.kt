@@ -2,7 +2,6 @@ package com.qfs.apres.soundfontplayer
 
 import kotlin.math.PI
 import kotlin.math.abs
-import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.tan
 
@@ -164,16 +163,16 @@ class SampleHandle(
                 val loop_remainder = (frame - this.loop_points.first) % loop_size
                 this.loop_points.first + (loops * loop_size) + loop_remainder
             }
-        } else {
-            if (this.loop_points == null || this.release_frame!! < this.loop_points.second) {
-                min(frame, this.release_frame!! + this.volume_envelope.frames_release)
+        } else if (this.loop_points != null) {
+            if (frame < this.loop_points.second) {
+                frame
             } else {
                 val loop_size = (this.loop_points.second - this.loop_points.first)
-                val loops = ((frame - this.loop_points.first) / loop_size)
                 val loop_remainder = (frame - this.loop_points.first) % loop_size
-
-               min(this.loop_points.first + (loops * loop_size) + loop_remainder, this.loop_points.second + this.volume_envelope.frames_release)
+                this.loop_points.first + loop_remainder
             }
+        } else {
+            frame
         }
 
         if (adj_frame < this.data_buffer.size) {

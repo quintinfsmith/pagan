@@ -1,5 +1,6 @@
 package com.qfs.apres.soundfontplayer
 
+import android.util.Log
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.pow
@@ -20,7 +21,7 @@ class SampleHandle(
     var pitch_shift: Double = 1.0,
     var filter_cutoff: Double = 13500.0,
     var pan: Double = 0.0,
-    var volume: Double = 0.5
+    var volume: Double = 1.0
 ) {
     data class VolumeEnvelope(
         var sample_rate: Int,
@@ -39,6 +40,7 @@ class SampleHandle(
 
         init {
             this.set_sample_rate(this.sample_rate)
+            Log.d("AAA", "SUAT: ${this.sustain_attenuation}")
         }
 
         fun set_sample_rate(sample_rate: Int) {
@@ -104,7 +106,6 @@ class SampleHandle(
 
     companion object {
         var uuid_gen = 0
-        val MAXIMUM_VOLUME = .8F
     }
 
     var uuid: Int = SampleHandle.uuid_gen++
@@ -251,6 +252,7 @@ class SampleHandle(
         //}
 
         this.working_frame += 1
+
         return (this.data_buffer.get().toDouble() * frame_factor * this.volume).toInt()
     }
 

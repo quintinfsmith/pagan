@@ -2,7 +2,6 @@ package com.qfs.apres.soundfontplayer
 
 import android.media.AudioFormat
 import android.media.AudioTrack
-import android.util.Log
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event2.NoteOn79
 import com.qfs.apres.soundfont.Preset
@@ -62,7 +61,6 @@ class SampleHandleManager(
         }
 
         this.preset_channel_map[channel] = key
-
         this.decache_unused_presets()
     }
 
@@ -70,7 +68,6 @@ class SampleHandleManager(
         val preset = this.get_preset(event.channel) ?: return setOf()
         val output = mutableSetOf<SampleHandle>()
         val velocity = event.velocity shr 8
-        Log.d("AAA", "${event.velocity}, ${velocity}")
         val potential_instruments = preset.get_instruments(event.note, velocity)
         for (p_instrument in potential_instruments) {
             val samples = p_instrument.instrument!!.get_samples(
@@ -80,7 +77,7 @@ class SampleHandleManager(
 
             for (sample in samples) {
                 val new_handle = this.sample_handle_generator.get(event, sample, p_instrument, preset)
-                new_handle.volume = (velocity.toDouble()  / 128.toDouble()) * SampleHandle.MAXIMUM_VOLUME
+                new_handle.volume = (velocity.toDouble()  / 96.toDouble())
                 output.add( new_handle )
             }
         }
@@ -101,8 +98,8 @@ class SampleHandleManager(
 
             for (sample in samples) {
                 val new_handle = this.sample_handle_generator.get(event, sample, p_instrument, preset)
-                new_handle.volume = (event.get_velocity().toDouble() / 128.toDouble()) * SampleHandle.MAXIMUM_VOLUME
-                output.add( new_handle )
+                new_handle.volume = (event.get_velocity().toDouble() / 96.toDouble())
+                output.add(new_handle)
             }
         }
 

@@ -173,6 +173,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         } else {
             offset until working_int_array.size / 2
         }
+
         val working_sample_set_left = mutableSetOf<Int>()
         val working_sample_set_right = mutableSetOf<Int>()
 
@@ -189,22 +190,15 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                 val (working_frame, pair, is_attached) = sample_count_map[i]
                 val (uuid, stereo_type) = pair
 
-                if (working_frame < f * 2) {
-                } else if (working_frame == f) {
+                if (working_frame == f) {
                     if (is_attached) {
                         when (stereo_type and 7) {
                             1 -> {
                                 working_sample_set_left.add(uuid)
                                 working_sample_set_right.add(uuid)
                             }
-                            2 -> {
-                                working_sample_set_right.add(uuid)
-                            }
-                            4 -> {
-                                working_sample_set_left.add(uuid)
-                            }
-                            else -> { }
-
+                            2 -> working_sample_set_right.add(uuid)
+                            4 -> working_sample_set_left.add(uuid)
                         }
                     } else {
                         when (stereo_type and 7) {
@@ -212,16 +206,13 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                                 working_sample_set_left.remove(uuid)
                                 working_sample_set_right.remove(uuid)
                             }
-                            2 -> {
-                                working_sample_set_right.remove(uuid)
-                            }
-                            4 -> {
-                                working_sample_set_left.remove(uuid)
-                            }
-                            else -> { }
+                            2 -> working_sample_set_right.remove(uuid)
+                            4 -> working_sample_set_left.remove(uuid)
                         }
                     }
                     working_sample_count_changed = true
+                } else if (working_frame < f) {
+                    // pass
                 } else {
                     break
                 }
@@ -288,7 +279,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
 
             working_int_array[(f * 2)] += when (sample_handle.stereo_mode and 7) {
                 1, 2 -> {
-                    if (abs(right_frame) > working_threshold_right) {
+                    if (false && abs(right_frame) > working_threshold_right) {
                         (right_frame * working_attenuation_right).toInt()
                     } else {
                         right_frame
@@ -299,7 +290,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
 
             working_int_array[(f * 2) + 1] += when (sample_handle.stereo_mode and 7) {
                 1, 4 -> {
-                    if (abs(left_frame) > working_threshold_left) {
+                    if (false && abs(left_frame) > working_threshold_left) {
                         (left_frame * working_attenuation_left).toInt()
                     } else {
                         left_frame

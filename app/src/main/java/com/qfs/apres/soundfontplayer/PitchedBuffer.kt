@@ -1,12 +1,15 @@
 package com.qfs.apres.soundfontplayer
 
+import java.lang.Math.abs
 import java.nio.ShortBuffer
+import kotlin.math.max
 
 class PitchedBuffer(data: ShortArray, var pitch: Double) {
     private val buffer: ShortBuffer = ShortBuffer.wrap(data)
     val data_size = data.size
     private var cached_value: Short? = null
     private var cached_position = 0
+    val max = max(abs(data.min().toInt()), data.max().toInt())
 
     var size = (data.size.toDouble() / this.pitch).toInt()
     private var virtual_position: Int = 0

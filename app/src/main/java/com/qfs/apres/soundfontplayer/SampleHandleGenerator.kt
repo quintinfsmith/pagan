@@ -1,4 +1,5 @@
 package com.qfs.apres.soundfontplayer
+import android.util.Log
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event2.NoteOn79
 import com.qfs.apres.soundfont.InstrumentSample
@@ -51,17 +52,11 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
         // TODO: Why did I do this check? I vaguely remember needing it but I need a note
         val target_pitch = if (original_note != 255) {
             val tuning_cent: Int = (sample.tuning_cent ?: instrument.instrument?.global_sample?.tuning_cent ?: 0 ) + (instrument.tuning_cent ?: 0) + (preset.global_zone?.tuning_cent ?: 0)
-
-            // Kludge: modulators arent implemented yet, so this is still needed for tuning
-            val mod_env_pitch: Double = ((sample.mod_env_pitch ?: instrument.instrument?.global_sample?.mod_env_pitch ?: 0 )
-                + (instrument.mod_env_pitch ?: 0)
-                + (preset.global_zone?.mod_env_pitch ?: 0)).toDouble()
-
             var tuning_semi: Double = ((sample.tuning_semi ?: instrument.instrument?.global_sample?.tuning_semi ?: 0 )
                 + (instrument.tuning_semi ?: 0)
                 + (preset.global_zone?.tuning_semi ?: 0)).toDouble()
 
-            tuning_semi += (tuning_cent + mod_env_pitch) / 100.0
+            tuning_semi += tuning_cent / 100.0
 
             val original_pitch = (2.0).pow(original_note.toFloat() / 12.0)
             val required_pitch = (2.0).pow((note.toFloat() + tuning_semi + (bend.toFloat() / 512.0)) / 12.0)
@@ -76,11 +71,9 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
         }
 
         val data = sample.sample!!.data!!
-
         val attenuation: Double = (sample.attenuation ?: instrument.instrument?.global_sample?.attenuation ?: 0.0) + (instrument.attenuation ?: 0.0) + (preset.global_zone?.attenuation ?: 0.0)
-
         val vol_env_sustain: Double = (sample.vol_env_sustain ?: instrument.instrument?.global_sample?.vol_env_sustain ?: 0.0) + (instrument.vol_env_sustain ?: 0.0) + (preset.global_zone?.vol_env_sustain ?: 0.0)
-
+        Log.d("AAA", "VEA: $vol_env_sustain")
         val volume_envelope = SampleHandle.VolumeEnvelope(
             sample_rate = this.sample_rate,
             delay = (sample.vol_env_delay ?: instrument.instrument?.global_sample?.vol_env_delay ?: 0.0 )
@@ -98,7 +91,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
             release = (sample.vol_env_release ?: instrument.instrument?.global_sample?.vol_env_release ?: 0.0 )
                 * (instrument.vol_env_release ?: 1.0)
                 * (preset.global_zone?.vol_env_release ?: 1.0),
-            sustain_attenuation = max(0.0, min(vol_env_sustain, 1000.0)) / 1000.0
+            sustain_attenuation = (10.0).pow(max(0.0, min(vol_env_sustain, 1000.0)) / -20.0)
         )
 
 

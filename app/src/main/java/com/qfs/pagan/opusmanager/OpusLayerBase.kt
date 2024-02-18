@@ -1144,7 +1144,6 @@ open class OpusLayerBase {
         }
         this.load_json(json_data)
         this.path = path
-        this.on_project_changed()
     }
 
     private fun parse_line_data(json_data: LoadedJSONData): List<List<List<OpusTree<OpusEvent>>>> {

@@ -1,6 +1,5 @@
 package com.qfs.apres.soundfontplayer
 
-import android.util.Log
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.pow
@@ -21,7 +20,8 @@ class SampleHandle(
     var pitch_shift: Double = 1.0,
     var filter_cutoff: Double = 13500.0,
     var pan: Double = 0.0,
-    var volume: Double = 1.0
+    var volume: Double = 1.0,
+    var linked_handle_count: Int = 1
 ) {
     data class VolumeEnvelope(
         var sample_rate: Int,
@@ -40,7 +40,6 @@ class SampleHandle(
 
         init {
             this.set_sample_rate(this.sample_rate)
-            Log.d("AAA", "SUAT: ${this.sustain_attenuation}")
         }
 
         fun set_sample_rate(sample_rate: Int) {
@@ -123,7 +122,8 @@ class SampleHandle(
         pitch_shift = original.pitch_shift,
         filter_cutoff = original.filter_cutoff,
         pan = original.pan,
-        volume = original.volume
+        volume = original.volume,
+        linked_handle_count = original.linked_handle_count
     )
 
     private val lpf_factor: Double
@@ -132,6 +132,7 @@ class SampleHandle(
     var release_frame: Int? = null
     var is_dead = false
     var data_buffer: PitchedBuffer
+    val implicit_volume_ratio: Double = 1.0 / this.linked_handle_count.toDouble()
 
     // TODO: Unimplimented
     // var release_delay: Int? = null
@@ -199,7 +200,7 @@ class SampleHandle(
             return null
         }
 
-        var frame_factor = this.attenuation
+        var frame_factor = this.attenuation * this.implicit_volume_ratio
         val is_pressed = this.release_frame == null || this.working_frame < this.release_frame!!
 
         if (is_pressed) {

@@ -1,5 +1,4 @@
 package com.qfs.apres.soundfontplayer
-import android.util.Log
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event2.NoteOn79
 import com.qfs.apres.soundfont.InstrumentSample
@@ -26,26 +25,26 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
         this.sample_data_map.clear()
     }
 
-    fun get(event: NoteOn, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset): SampleHandle {
+    fun get(event: NoteOn, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset, linked_handle_count: Int): SampleHandle {
         // set the key index to some hash of the note to allow for indexing byte note AS WELL as indexing by index
-        val map_key = this.cache_new(event.get_note(), 0, sample, instrument, preset)
+        val map_key = this.cache_new(event.get_note(), 0, sample, instrument, preset, linked_handle_count)
         return SampleHandle(this.sample_data_map[map_key]!!)
     }
 
-    fun get(event: NoteOn79, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset): SampleHandle {
-        val map_key = this.cache_new(event.note, event.bend, sample, instrument, preset)
+    fun get(event: NoteOn79, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset, linked_handle_count: Int): SampleHandle {
+        val map_key = this.cache_new(event.note, event.bend, sample, instrument, preset, linked_handle_count)
         return SampleHandle(this.sample_data_map[map_key]!!)
     }
 
-    fun cache_new(note: Int, bend: Int, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset): MapKey {
+    fun cache_new(note: Int, bend: Int, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset, linked_handle_count: Int): MapKey {
         val map_key = MapKey(note, bend, sample.hashCode(), instrument.hashCode(), preset.hashCode())
         if (!sample_data_map.contains(map_key)) {
-            this.sample_data_map[map_key] = this.generate_new(note, bend, sample, instrument, preset)
+            this.sample_data_map[map_key] = this.generate_new(note, bend, sample, instrument, preset, linked_handle_count)
         }
         return map_key
     }
 
-    fun generate_new(note: Int, bend: Int, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset): SampleHandle {
+    fun generate_new(note: Int, bend: Int, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset, linked_handle_count: Int): SampleHandle {
         var pitch_shift = 1.0
         val original_note = sample.root_key ?: sample.sample!!.originalPitch
 
@@ -73,7 +72,6 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
         val data = sample.sample!!.data!!
         val attenuation: Double = (sample.attenuation ?: instrument.instrument?.global_sample?.attenuation ?: 0.0) + (instrument.attenuation ?: 0.0) + (preset.global_zone?.attenuation ?: 0.0)
         val vol_env_sustain: Double = (sample.vol_env_sustain ?: instrument.instrument?.global_sample?.vol_env_sustain ?: 0.0) + (instrument.vol_env_sustain ?: 0.0) + (preset.global_zone?.vol_env_sustain ?: 0.0)
-        Log.d("AAA", "VEA: $vol_env_sustain")
         val volume_envelope = SampleHandle.VolumeEnvelope(
             sample_rate = this.sample_rate,
             delay = (sample.vol_env_delay ?: instrument.instrument?.global_sample?.vol_env_delay ?: 0.0 )
@@ -168,7 +166,8 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
             volume_envelope =  volume_envelope,
             modulation_envelope = modulation_envelope,
             max_values = max_values_floats,
-            filter_cutoff = filter_cutoff
+            filter_cutoff = filter_cutoff,
+            linked_handle_count=linked_handle_count
         )
     }
 

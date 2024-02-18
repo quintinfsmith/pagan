@@ -4,7 +4,9 @@ import android.media.AudioFormat
 import android.media.AudioTrack
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event2.NoteOn79
+import com.qfs.apres.soundfont.InstrumentSample
 import com.qfs.apres.soundfont.Preset
+import com.qfs.apres.soundfont.PresetInstrument
 import com.qfs.apres.soundfont.SoundFont
 
 class SampleHandleManager(
@@ -69,6 +71,8 @@ class SampleHandleManager(
         val output = mutableSetOf<SampleHandle>()
         val velocity = event.velocity shr 8
         val potential_instruments = preset.get_instruments(event.note, velocity)
+        val sample_counts = arrayOf(0, 0, 0)
+        val sample_pairs = mutableListOf<Pair<InstrumentSample, PresetInstrument>>()
         for (p_instrument in potential_instruments) {
             val samples = p_instrument.instrument!!.get_samples(
                 event.note,
@@ -76,10 +80,40 @@ class SampleHandleManager(
             ).toList()
 
             for (sample in samples) {
-                val new_handle = this.sample_handle_generator.get(event, sample, p_instrument, preset)
-                new_handle.volume = (velocity.toDouble()  / 96.toDouble())
-                output.add( new_handle )
+                sample_pairs.add(Pair(sample, p_instrument))
+                when (sample.sample!!.sampleType and 7) {
+                    1 -> {
+                        sample_counts[1] += 1
+                        sample_counts[0] += 1
+                        sample_counts[2] += 1
+                    }
+                    2 -> {
+                        sample_counts[2] += 1
+                        sample_counts[1] += 1
+                    }
+                    4 -> {
+                        sample_counts[0] += 1
+                        sample_counts[1] += 1
+                    }
+                }
             }
+        }
+
+        for ((sample,p_instrument) in sample_pairs) {
+            val new_handle = this.sample_handle_generator.get(
+                event,
+                sample,
+                p_instrument,
+                preset,
+                when (sample.sample!!.sampleType and 7) {
+                    1 -> sample_counts[1]
+                    2 -> sample_counts[0]
+                    4 -> sample_counts[2]
+                    else -> continue
+                }
+            )
+            new_handle.volume = (velocity.toDouble()  / 96.toDouble())
+            output.add(new_handle)
         }
 
         return output
@@ -97,7 +131,7 @@ class SampleHandleManager(
             ).toList()
 
             for (sample in samples) {
-                val new_handle = this.sample_handle_generator.get(event, sample, p_instrument, preset)
+                val new_handle = this.sample_handle_generator.get(event, sample, p_instrument, preset, samples.size)
                 new_handle.volume = (event.get_velocity().toDouble() / 96.toDouble())
                 output.add(new_handle)
             }

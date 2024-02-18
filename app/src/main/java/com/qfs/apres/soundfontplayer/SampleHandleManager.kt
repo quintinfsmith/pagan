@@ -20,6 +20,7 @@ class SampleHandleManager(
     private val loaded_presets = HashMap<Pair<Int, Int>, Preset>()
     private val preset_channel_map = HashMap<Int, Pair<Int, Int>>()
     private val sample_handle_generator = SampleHandleGenerator(sample_rate, buffer_size)
+    var handles_got = 0
 
     fun select_bank(channel: Int, bank: Int) {
         // NOTE: Changing the bank doesn't trigger a preset change
@@ -98,7 +99,6 @@ class SampleHandleManager(
                 }
             }
         }
-
         for ((sample,p_instrument) in sample_pairs) {
             val new_handle = this.sample_handle_generator.get(
                 event,
@@ -112,6 +112,7 @@ class SampleHandleManager(
                     else -> continue
                 }
             )
+            this.handles_got += 1
             new_handle.volume = (velocity.toDouble()  / 96.toDouble())
             output.add(new_handle)
         }
@@ -124,6 +125,9 @@ class SampleHandleManager(
         val output = mutableSetOf<SampleHandle>()
         val potential_instruments = preset.get_instruments(event.get_note(), event.get_velocity())
 
+        val sample_counts = arrayOf(0, 0, 0)
+        val sample_pairs = mutableListOf<Pair<InstrumentSample, PresetInstrument>>()
+
         for (p_instrument in potential_instruments) {
             val samples = p_instrument.instrument!!.get_samples(
                 event.get_note(),
@@ -131,8 +135,39 @@ class SampleHandleManager(
             ).toList()
 
             for (sample in samples) {
-                val new_handle = this.sample_handle_generator.get(event, sample, p_instrument, preset, samples.size)
+                sample_pairs.add(Pair(sample, p_instrument))
+                when (sample.sample!!.sampleType and 7) {
+                    1 -> {
+                        sample_counts[1] += 1
+                        sample_counts[0] += 1
+                        sample_counts[2] += 1
+                    }
+                    2 -> {
+                        sample_counts[2] += 1
+                        sample_counts[1] += 1
+                    }
+                    4 -> {
+                        sample_counts[0] += 1
+                        sample_counts[1] += 1
+                    }
+                }
+            }
+
+            for (sample in samples) {
+                val new_handle = this.sample_handle_generator.get(
+                    event,
+                    sample,
+                    p_instrument,
+                    preset,
+                    when (sample.sample!!.sampleType and 7) {
+                        1 -> sample_counts[1]
+                        2 -> sample_counts[0]
+                        4 -> sample_counts[2]
+                        else -> continue
+                    }
+                )
                 new_handle.volume = (event.get_velocity().toDouble() / 96.toDouble())
+                this.handles_got += 1
                 output.add(new_handle)
             }
         }
@@ -172,5 +207,9 @@ class SampleHandleManager(
     fun clear() {
         this.loaded_presets.clear()
         this.sample_handle_generator.clear()
+    }
+
+    fun get_samples_generated(): Int {
+        return this.sample_handle_generator.generated
     }
 }

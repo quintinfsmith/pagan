@@ -20,6 +20,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
     )
 
     var sample_data_map = HashMap<MapKey, SampleHandle>()
+    var generated = 0
 
     fun clear() {
         this.sample_data_map.clear()
@@ -137,6 +138,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
         }
 
         val filter_cutoff: Double = (sample.filter_cutoff ?: instrument.instrument?.global_sample?.filter_cutoff ?: 13500.0 ) + (instrument.filter_cutoff ?: 0.0) + (preset.global_zone?.filter_cutoff ?: 0.0)
+        this.generated += 1
 
         return SampleHandle(
             data = data,

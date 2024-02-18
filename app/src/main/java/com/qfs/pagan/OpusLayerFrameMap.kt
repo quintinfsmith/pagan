@@ -1,5 +1,6 @@
 package com.qfs.pagan
 
+import android.util.Log
 import com.qfs.apres.event.MIDIEvent
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event2.NoteOn79
@@ -928,6 +929,7 @@ open class OpusLayerFrameMap: OpusLayerCursor() {
             this.setup_sample_handle_manager()
             this.setup_frame_map()
         }
+        Log.d("AAA", "samples generated: ${this.sample_handle_manager!!.get_samples_generated()} | ${this.sample_handle_manager!!.handles_got}")
     }
 
     override fun clear() {
@@ -1030,4 +1032,5 @@ open class OpusLayerFrameMap: OpusLayerCursor() {
             super.set_duration(beat_key, position, duration)
         }
     }
+
 }

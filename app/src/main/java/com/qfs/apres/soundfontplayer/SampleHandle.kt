@@ -8,7 +8,7 @@ import kotlin.math.tan
 class SampleHandle(
     var data: ShortArray,
     var sample_rate: Int,
-    var attenuation: Double = 0.0,
+    var initial_attenuation: Double = 0.0,
     val loop_points: Pair<Int, Int>?,
     var stereo_mode: Int,
 
@@ -108,24 +108,6 @@ class SampleHandle(
     }
 
     var uuid: Int = SampleHandle.uuid_gen++
-
-    constructor(original: SampleHandle): this(
-        data = original.data,
-        sample_rate = original.sample_rate,
-        attenuation = original.attenuation,
-        loop_points = original.loop_points,
-        stereo_mode = original.stereo_mode,
-        volume_envelope = original.volume_envelope,
-        modulation_envelope = original.modulation_envelope,
-        modulation_lfo = original.modulation_lfo,
-        max_values = original.max_values,
-        pitch_shift = original.pitch_shift,
-        filter_cutoff = original.filter_cutoff,
-        pan = original.pan,
-        volume = original.volume,
-        linked_handle_count = original.linked_handle_count
-    )
-
     private val lpf_factor: Double
 
     var working_frame: Int = 0
@@ -139,6 +121,22 @@ class SampleHandle(
     // var remove_delay: Int? = null
     //var lpf_previous: Double = 0.0
 
+    constructor(original: SampleHandle): this(
+        data = original.data,
+        sample_rate = original.sample_rate,
+        initial_attenuation = original.initial_attenuation,
+        loop_points = original.loop_points,
+        stereo_mode = original.stereo_mode,
+        volume_envelope = original.volume_envelope,
+        modulation_envelope = original.modulation_envelope,
+        modulation_lfo = original.modulation_lfo,
+        max_values = original.max_values,
+        pitch_shift = original.pitch_shift,
+        filter_cutoff = original.filter_cutoff,
+        pan = original.pan,
+        volume = original.volume,
+        linked_handle_count = original.linked_handle_count
+    )
 
     init {
         val tmp_tan = tan(PI * this.filter_cutoff / this.sample_rate.toDouble())
@@ -200,26 +198,27 @@ class SampleHandle(
             return null
         }
 
-        var frame_factor = this.attenuation * this.implicit_volume_ratio
+        var frame_factor = this.implicit_volume_ratio
         val is_pressed = this.release_frame == null || this.working_frame < this.release_frame!!
 
-        if (is_pressed) {
-            if (this.working_frame < this.volume_envelope.frames_attack) {
-                val r = (this.working_frame).toDouble() / this.volume_envelope.frames_attack.toDouble()
-                frame_factor *= r
-            } else if (this.working_frame - this.volume_envelope.frames_attack < this.volume_envelope.frames_hold) {
-                // pass
-            } else if (this.volume_envelope.sustain_attenuation < 1.0) {
-                frame_factor *= if (this.working_frame - this.volume_envelope.frames_attack - this.volume_envelope.frames_hold < this.volume_envelope.frames_decay) {
-                    val r = 1.0 - ((this.working_frame - this.volume_envelope.frames_hold - this.volume_envelope.frames_attack).toDouble() / this.volume_envelope.frames_decay.toDouble())
-                    1.0 - (r * this.volume_envelope.sustain_attenuation)
-                } else {
-                    1.0 - this.volume_envelope.sustain_attenuation
-                }
+        if (this.working_frame < this.volume_envelope.frames_attack) {
+            val r =
+                (this.working_frame).toDouble() / this.volume_envelope.frames_attack.toDouble()
+            frame_factor *= r * this.initial_attenuation
+        } else if (this.working_frame - this.volume_envelope.frames_attack < this.volume_envelope.frames_hold) {
+            frame_factor *= this.initial_attenuation
+        } else if (this.volume_envelope.sustain_attenuation < 1.0) {
+            frame_factor *= this.initial_attenuation
+            frame_factor *= if (this.working_frame - this.volume_envelope.frames_attack - this.volume_envelope.frames_hold < this.volume_envelope.frames_decay) {
+                val r =
+                    1.0 - ((this.working_frame - this.volume_envelope.frames_hold - this.volume_envelope.frames_attack).toDouble() / this.volume_envelope.frames_decay.toDouble())
+                (r * (this.initial_attenuation - this.volume_envelope.sustain_attenuation)) + this.volume_envelope.sustain_attenuation
+            } else {
+                this.volume_envelope.sustain_attenuation
             }
         }
 
-        if (! is_pressed) {
+        if (!is_pressed) {
             val current_position_release = (this.working_frame - this.release_frame!!)
             if (current_position_release < this.volume_envelope.frames_release) {
                 frame_factor *= 1.0 - (current_position_release.toDouble() / this.volume_envelope.frames_release.toDouble())
@@ -227,7 +226,9 @@ class SampleHandle(
                 this.is_dead = true
                 return null
             }
-        } else if (this.loop_points != null) {
+        }
+
+        if (this.loop_points != null) {
             val offset = this.data_buffer.position() - this.loop_points.second
             if (offset >= 0) {
                 this.data_buffer.position(this.loop_points.first + offset)

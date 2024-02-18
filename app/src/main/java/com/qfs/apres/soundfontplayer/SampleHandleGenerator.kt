@@ -70,7 +70,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
         }
 
         val data = sample.sample!!.data!!
-        val attenuation: Double = (sample.attenuation ?: instrument.instrument?.global_sample?.attenuation ?: 0.0) + (instrument.attenuation ?: 0.0) + (preset.global_zone?.attenuation ?: 0.0)
+        val initial_attenuation: Double = (sample.attenuation ?: instrument.instrument?.global_sample?.attenuation ?: 0.0) + (instrument.attenuation ?: 0.0) + (preset.global_zone?.attenuation ?: 0.0)
         val vol_env_sustain: Double = (sample.vol_env_sustain ?: instrument.instrument?.global_sample?.vol_env_sustain ?: 0.0) + (instrument.vol_env_sustain ?: 0.0) + (preset.global_zone?.vol_env_sustain ?: 0.0)
         val volume_envelope = SampleHandle.VolumeEnvelope(
             sample_rate = this.sample_rate,
@@ -89,10 +89,10 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
             release = (sample.vol_env_release ?: instrument.instrument?.global_sample?.vol_env_release ?: 0.0 )
                 * (instrument.vol_env_release ?: 1.0)
                 * (preset.global_zone?.vol_env_release ?: 1.0),
-            sustain_attenuation = (10.0).pow(max(0.0, min(vol_env_sustain, 1000.0)) / -20.0)
+            sustain_attenuation = 1.0 - (max(0.0, min(vol_env_sustain, 1000.0)) / 100.0)
         )
 
-
+        val mod_env_sustain = (sample.mod_env_sustain ?: instrument.instrument?.global_sample?.mod_env_sustain ?: 0.0) * (instrument.mod_env_sustain ?: 0.0) * (preset.global_zone?.mod_env_sustain ?: 0.0)
         val modulation_envelope = SampleHandle.ModulationEnvelope(
             sample_rate = this.sample_rate,
             delay = (sample.mod_env_delay ?: instrument.instrument?.global_sample?.mod_env_delay ?: 0.0 )
@@ -110,9 +110,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
             release = (sample.mod_env_release ?: instrument.instrument?.global_sample?.mod_env_release ?: 0.0)
                 * (instrument.mod_env_release ?: 1.0)
                 * (preset.global_zone?.mod_env_release ?: 1.0),
-            sustain_attenuation = (sample.mod_env_sustain ?: instrument.instrument?.global_sample?.mod_env_sustain ?: 0.0)
-                * (instrument.mod_env_sustain ?: 0.0)
-                * (preset.global_zone?.mod_env_sustain ?: 0.0)
+            sustain_attenuation = 1.0 - (max(0.0, min(mod_env_sustain, 1000.0)) / 100.0)
         )
 
         val mod_lfo_freq: Double = (sample.mod_lfo_freq ?: instrument.instrument?.global_sample?.mod_lfo_freq ?: 0.0) * (instrument.mod_lfo_freq ?: 1.0) * (preset.global_zone?.mod_lfo_freq ?: 1.0)
@@ -145,7 +143,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
             sample_rate = sample_rate,
             pan = (sample.pan ?: instrument.pan ?: preset.global_zone?.pan ?: 0.0) * 100.0 / 500.0,
             pitch_shift = pitch_shift,
-            attenuation = (10.0).pow(attenuation / -20.0),
+            initial_attenuation = 1.0 - (initial_attenuation / 100.0),
             stereo_mode = sample.sample!!.sampleType,
             loop_points = if (sample.sampleMode != null && sample.sampleMode!! and 1 == 1) {
                 val start = (sample.sample!!.loopStart.toFloat() / pitch_shift)
@@ -167,7 +165,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
             modulation_envelope = modulation_envelope,
             max_values = max_values_floats,
             filter_cutoff = filter_cutoff,
-            linked_handle_count=linked_handle_count
+            linked_handle_count = linked_handle_count
         )
     }
 

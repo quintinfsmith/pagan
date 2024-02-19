@@ -6,7 +6,7 @@ import kotlin.math.max
 class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activity.configuration.sample_rate): MappedPlaybackDevice(
     activity.get_opus_manager().get_frame_map(),
     sample_rate,
-    activity.get_opus_manager().sample_handle_manager!!.buffer_size
+    activity.get_opus_manager().get_frame_map().sample_handle_manager!!.buffer_size
 ) {
     /*
         All of this notification stuff is used with the understanding that the PaganPlaybackDevice

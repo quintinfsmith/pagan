@@ -8,6 +8,7 @@ import com.qfs.apres.soundfontplayer.FrameMap
 import com.qfs.apres.soundfontplayer.SampleHandle
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.pagan.opusmanager.BeatKey
+import com.qfs.pagan.opusmanager.LoadedJSONData
 import com.qfs.pagan.opusmanager.OpusChannel
 import com.qfs.pagan.opusmanager.OpusEvent
 import com.qfs.pagan.opusmanager.OpusLayerCursor
@@ -338,7 +339,6 @@ open class OpusLayerFrameMap: OpusLayerCursor() {
     private var unmap_flags = HashMap<List<Int>, Boolean>()
     private var flux_indicator: Int = 0
     private var flag_cleared_in_flux: Boolean = false
-    private var clear_and_set_lock: Int = 0 // if a function clears and reset the map, don't bother with anything in between
     private var frame_map = PlaybackFrameMap()
 
     fun get_frame_map(): FrameMap {
@@ -355,35 +355,30 @@ open class OpusLayerFrameMap: OpusLayerCursor() {
         this.setup_frame_map()
     }
 
-
     fun <T> clear_and_set_frames(callback: () -> T): T {
         if (this.sample_handle_manager == null) {
             return callback()
         }
 
-        if (this.flux_indicator > 0) {
+        return this.flux_wrapper {
             this.flag_cleared_in_flux = true
+
+            if (this.flux_indicator == 1) {
+                this.clear_frame_map_data()
+            }
+
+            val output = try {
+                callback()
+            } catch (e: Exception) {
+                throw e
+            }
+
+            if (this.flux_indicator == 1) {
+                this.setup_frame_map()
+            }
+
+            output
         }
-
-        if (this.clear_and_set_lock == 0) {
-            this.clear_frame_map_data()
-        }
-
-        this.clear_and_set_lock += 1
-
-        val output = try {
-            callback()
-        } catch (e: Exception) {
-            this.clear_and_set_lock -= 1
-            throw e
-        }
-
-        this.clear_and_set_lock -= 1
-        if (this.clear_and_set_lock == 0) {
-            this.setup_frame_map()
-        }
-
-        return output
     }
 
     fun <T> flux_wrapper(callback: () -> T): T {
@@ -410,6 +405,8 @@ open class OpusLayerFrameMap: OpusLayerCursor() {
     }
 
     fun setup_frame_map() {
+        val start_ts = System.currentTimeMillis()
+        Log.d("AAA", "SETTING FRAME MAP")
         if (this.sample_handle_manager == null) {
             return
         }
@@ -426,6 +423,7 @@ open class OpusLayerFrameMap: OpusLayerCursor() {
                 }
             }
         }
+        Log.d("AAA", "sfm ${System.currentTimeMillis() - start_ts}")
     }
 
     fun setup_sample_handle_manager() {
@@ -511,7 +509,7 @@ open class OpusLayerFrameMap: OpusLayerCursor() {
             return
         }
 
-        if (this.flux_indicator > 0 && this.flag_cleared_in_flux) {
+        if (this.flag_cleared_in_flux) {
             return
         }
 
@@ -546,7 +544,7 @@ open class OpusLayerFrameMap: OpusLayerCursor() {
             return
         }
 
-        if (this.flux_indicator > 0 && this.flag_cleared_in_flux) {
+        if (this.flag_cleared_in_flux) {
             return
         }
 
@@ -619,7 +617,7 @@ open class OpusLayerFrameMap: OpusLayerCursor() {
             return
         }
 
-        if (this.flux_indicator > 0 && this.flag_cleared_in_flux) {
+        if (this.flag_cleared_in_flux) {
             return
         }
 
@@ -633,7 +631,7 @@ open class OpusLayerFrameMap: OpusLayerCursor() {
             return
         }
 
-        if (this.flux_indicator > 0 && this.flag_cleared_in_flux) {
+        if (this.flag_cleared_in_flux) {
             return
         }
 
@@ -647,7 +645,7 @@ open class OpusLayerFrameMap: OpusLayerCursor() {
             return
         }
 
-        if (this.flux_indicator > 0 && this.flag_cleared_in_flux) {
+        if (this.flag_cleared_in_flux) {
             return
         }
 
@@ -663,7 +661,7 @@ open class OpusLayerFrameMap: OpusLayerCursor() {
             return
         }
 
-        if (this.flux_indicator > 0 && this.flag_cleared_in_flux) {
+        if (this.flag_cleared_in_flux) {
             return
         }
 
@@ -723,9 +721,7 @@ open class OpusLayerFrameMap: OpusLayerCursor() {
 
     override fun set_channel_bank(channel: Int, bank: Int) {
         if (this.sample_handle_manager != null) {
-            if (this.flux_indicator == 0 || !this.flag_cleared_in_flux) {
-                this.sample_handle_manager!!.select_bank(this.channels[channel].midi_channel, bank)
-            }
+            this.sample_handle_manager!!.select_bank(this.channels[channel].midi_channel, bank)
         }
         super.set_channel_bank(channel, bank)
     }
@@ -894,7 +890,6 @@ open class OpusLayerFrameMap: OpusLayerCursor() {
         this.flux_wrapper {
             super.on_project_changed()
             this.setup_sample_handle_manager()
-            this.setup_frame_map()
         }
         Log.d("AAA", "samples generated: ${this.sample_handle_manager!!.get_samples_generated()} | ${this.sample_handle_manager!!.handles_got}")
     }
@@ -997,6 +992,12 @@ open class OpusLayerFrameMap: OpusLayerCursor() {
 
         this.unmap_wrapper(beat_key, position) {
             super.set_duration(beat_key, position, duration)
+        }
+    }
+
+    override fun load_json(json_data: LoadedJSONData) {
+        this.clear_and_set_frames {
+            super.load_json(json_data)
         }
     }
 

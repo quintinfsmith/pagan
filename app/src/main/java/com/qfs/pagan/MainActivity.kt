@@ -680,8 +680,9 @@ class MainActivity : AppCompatActivity() {
                     PlaybackState.Playing -> {
                         this.playback_stop()
                     }
-                    else -> { /* pass  */ }
-               }
+
+                    else -> {}
+                }
             }
 
             R.id.itmPlayMidiOutput -> {

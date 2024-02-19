@@ -206,7 +206,7 @@ open class OpusLayerFrameMap: OpusLayerCursor() {
         )
         unmap_key.addAll(position)
 
-        this.frame_map.remove_handle(unmap_key)
+        this.frame_map.remove_handle_by_quick_key(unmap_key)
     }
 
     private fun map_frames(beat_key: BeatKey, position: List<Int>) {

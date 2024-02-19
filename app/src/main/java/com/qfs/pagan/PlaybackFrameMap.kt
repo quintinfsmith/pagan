@@ -13,6 +13,8 @@ class PlaybackFrameMap: FrameMap {
     var beat_count: Int = 0
     var tempo: Float = 0f
 
+    var handle_id_gen = 0
+
     var sample_handle_manager: SampleHandleManager? = null
     private var handle_map = HashMap<Int, SampleHandle>()
     private var frame_map = HashMap<Int, MutableSet<Int>>()
@@ -109,7 +111,7 @@ class PlaybackFrameMap: FrameMap {
         }
     }
 
-    fun remove_handle(key: List<Int>) {
+    fun remove_handle_by_quick_key(key: List<Int>) {
         if (this.unmap_flags.getOrDefault(key, false)) {
             return
         }
@@ -146,18 +148,18 @@ class PlaybackFrameMap: FrameMap {
             min_start_frame = min(min_start_frame, sample_start_frame)
 
             handle.release_frame = end_frame - start_frame
-
-            uuids.add(handle.uuid)
+            var handle_id = this.handle_id_gen++
+            uuids.add(handle_id)
 
             if (!this.frame_map.containsKey(sample_start_frame)) {
                 this.frame_map[sample_start_frame] = mutableSetOf()
             }
-            this.frame_map[sample_start_frame]!!.add(handle.uuid)
+            this.frame_map[sample_start_frame]!!.add(handle_id)
 
-            this.handle_range_map[handle.uuid] = sample_start_frame .. sample_end_frame
-            this.handle_map[handle.uuid] = handle
+            this.handle_range_map[handle_id] = sample_start_frame .. sample_end_frame
+            this.handle_map[handle_id] = handle
             if (sample_start_frame < 0) {
-                this.initial_delay_handles[handle.uuid] = sample_start_frame
+                this.initial_delay_handles[handle_id] = sample_start_frame
             }
         }
 

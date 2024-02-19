@@ -31,7 +31,6 @@ open class OpusLayerFrameMap: OpusLayerCursor() {
         */
         private var quick_map_sample_handles =  HashMap<List<Int>, Set<Int>>()
 
-        internal var changed_frames = mutableSetOf<IntRange>()
         internal var cached_frame_count: Int? = null
         private var initial_delay_handles = HashMap<Int, Int>()
 
@@ -98,7 +97,6 @@ open class OpusLayerFrameMap: OpusLayerCursor() {
         fun clear() {
             this.frame_map.clear()
             this.handle_map.clear()
-            this.changed_frames.clear()
             this.handle_range_map.clear()
             this.quick_map_sample_handles.clear()
             this.cached_frame_count = null
@@ -110,7 +108,6 @@ open class OpusLayerFrameMap: OpusLayerCursor() {
 
             // reminder: 'end_frame' here is the last active frame in the sample, including decay
             val frame_range = this.handle_range_map.remove(uuid) ?: return
-            this.changed_frames.add(frame_range)
             if (this.frame_map.containsKey(frame_range.first)) {
                 this.frame_map[frame_range.first]!!.remove(uuid)
                 if (this.frame_map[frame_range.first]!!.isEmpty()) {
@@ -157,7 +154,6 @@ open class OpusLayerFrameMap: OpusLayerCursor() {
             }
 
             this.quick_map_sample_handles[quick_key] = uuids
-            this.changed_frames.add(min_start_frame .. max_end_frame)
         }
 
         fun insert_beat(beat_index: Int) {
@@ -195,7 +191,6 @@ open class OpusLayerFrameMap: OpusLayerCursor() {
                 }
                 this.frame_map[frame + frames_per_beat.toInt()] = this.frame_map.remove(frame)!!
             }
-            this.changed_frames.add((beat_index * frames_per_beat).toInt() .. (frames_per_beat * this.beat_count + 1).toInt())
         }
 
         fun has_quick_key(key: List<Int>): Boolean {
@@ -284,7 +279,6 @@ open class OpusLayerFrameMap: OpusLayerCursor() {
                 this.frame_map[f - frames_per_beat.toInt()] = this.frame_map.remove(f)!!
             }
 
-            this.changed_frames.add((beat_index * frames_per_beat).toInt() .. (frames_per_beat * this.beat_count + 1).toInt())
             this.beat_count -= 1
         }
 
@@ -361,7 +355,6 @@ open class OpusLayerFrameMap: OpusLayerCursor() {
         this.setup_frame_map()
     }
 
-    open fun on_frames_changed(frames: List<IntRange>) { }
 
     fun <T> clear_and_set_frames(callback: () -> T): T {
         if (this.sample_handle_manager == null) {
@@ -411,32 +404,6 @@ open class OpusLayerFrameMap: OpusLayerCursor() {
         if (flux_indicator == 0 && this.flag_cleared_in_flux) {
             this.flag_cleared_in_flux = false
             this.setup_frame_map()
-        }
-
-        if (flux_indicator == 0 && this.frame_map.changed_frames.isNotEmpty()) {
-            val sorted_list = this.frame_map.changed_frames.sortedBy { it.start }
-            val merged_list = mutableListOf<IntRange>()
-
-            var pivot_range: IntRange? = null
-            sorted_list.forEachIndexed { i: Int, range: IntRange ->
-                if (pivot_range == null) {
-                    pivot_range = range
-                }
-
-                pivot_range = if (pivot_range!!.first in range || pivot_range!!.last in range || range.first in pivot_range!! || range.last in pivot_range!!) {
-                    min(range.first, pivot_range!!.first) .. max(range.last, pivot_range!!.last)
-                } else {
-                    merged_list.add(pivot_range!!)
-                    null
-                }
-            }
-            if (pivot_range != null) {
-                merged_list.add(pivot_range!!)
-                pivot_range = null
-            }
-
-            this.frame_map.changed_frames.clear()
-            this.on_frames_changed(merged_list)
         }
 
         return output

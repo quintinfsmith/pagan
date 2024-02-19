@@ -942,12 +942,4 @@ class OpusLayerInterface(): OpusLayerFrameMap() {
         val editor_table = main.findViewById<EditorTable>(R.id.etEditorTable)
         editor_table.update_percussion_visibility()
     }
-
-    override fun on_frames_changed(frames: List<IntRange>) {
-        super.on_frames_changed(frames)
-        val activity = this.get_activity() ?: return
-        for (range in frames) {
-            activity.cache_playback_frames(range)
-        }
-    }
 }

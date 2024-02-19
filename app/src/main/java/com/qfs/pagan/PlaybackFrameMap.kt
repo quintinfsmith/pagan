@@ -6,27 +6,59 @@ import com.qfs.apres.event2.NoteOn79
 import com.qfs.apres.soundfontplayer.FrameMap
 import com.qfs.apres.soundfontplayer.SampleHandle
 import com.qfs.apres.soundfontplayer.SampleHandleManager
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlin.math.max
 import kotlin.math.min
 
 class PlaybackFrameMap: FrameMap {
+    class QueuedNewHandle(
+        val quick_key: List<Int>,
+        val first_frame: Int,
+        val last_frame: Int,
+        val midi_event: MIDIEvent
+    )
+    enum class QueuedAction {
+        NewHandle,
+        RemoveHandle,
+        RemoveBeat,
+        RemoveChannel,
+        RemoveLine,
+        NewLine,
+        NewChannel,
+        InsertBeat,
+        ClearAll
+    }
+
+
     var beat_count: Int = 0
     var tempo: Float = 0f
-
     var handle_id_gen = 0
 
     var sample_handle_manager: SampleHandleManager? = null
     private var handle_map = HashMap<Int, SampleHandle>()
     private var frame_map = HashMap<Int, MutableSet<Int>>()
     private val handle_range_map = HashMap<Int, IntRange>()
-    var unmap_flags = HashMap<List<Int>, Boolean>()
+    var unmapped_flags = HashMap<List<Int>, Boolean>()
     /*
-     NOTE: key List where the first three entries are a BeatKey and the rest is the position since a Pair() would
+     NOTE: key is List where the first three entries are a BeatKey and the rest is the position since a Pair() would
      be matched by instance rather than content
     */
     private var quick_map_sample_handles =  HashMap<List<Int>, Set<Int>>()
     internal var cached_frame_count: Int? = null
     private var initial_delay_handles = HashMap<Int, Int>()
+
+    val process_mutex = Mutex()
+    val event_queue_mutex = Mutex()
+    val new_handle_queue = mutableListOf<QueuedNewHandle>()
+    val event_queue = mutableListOf<Pair<QueuedAction, Int>>()
+    val arg_queue = mutableListOf<Int>()
+    /*
+        NOTE the clear event doesn't work the same as Other QueuedEvents. clear() will be immediately called
+        and all preceding events will be ignored until the ClearAll event is reached in the process queue
+     */
+    var clear_flagged = false
 
     // FrameMap Interface -------------------
     override fun get_new_handles(frame: Int): Set<SampleHandle>? {
@@ -36,14 +68,7 @@ class PlaybackFrameMap: FrameMap {
 
         val output = mutableSetOf<SampleHandle>()
         for (uuid in this.frame_map[frame]!!) {
-            // Kludge? TODO: figure out a better place for these resets
-            val use_handle = SampleHandle(this.handle_map[uuid]!!)
-
-            use_handle.release_frame = this.handle_map[uuid]!!.release_frame!!
-            use_handle.set_working_frame(0)
-            use_handle.is_dead = false
-
-            output.add(use_handle)
+            output.add(this.handle_map[uuid]!!)
         }
 
         return output
@@ -87,47 +112,128 @@ class PlaybackFrameMap: FrameMap {
         return this.cached_frame_count!!
     }
     // End FrameMap Interface --------------------------
-
-    fun clear() {
-        this.frame_map.clear()
-        this.unmap_flags.clear()
-        this.handle_map.clear()
-        this.handle_range_map.clear()
-        this.quick_map_sample_handles.clear()
-        this.cached_frame_count = null
+    fun has_quick_key(key: List<Int>): Boolean {
+        return this.quick_map_sample_handles.contains(key)
     }
 
-    fun remove_handle(uuid: Int) {
-        this.handle_map.remove(uuid)
-        this.initial_delay_handles.remove(uuid)
+    fun process_event_queue() {
+        var working_new_handle: QueuedNewHandle? = null
+        var working_args: Array<Int> = arrayOf()
+        while (this.event_queue.isNotEmpty()) {
+            val (action, value) = this.event_queue.removeFirst()
+            if (action == QueuedAction.ClearAll) {
+                this.clear_flagged = false
+                continue
+            } else if (this.clear_flagged) {
+                continue
+            } else if (action == QueuedAction.NewHandle) {
+                working_new_handle = this@PlaybackFrameMap.new_handle_queue.removeFirst()
+            } else {
+                working_args = Array(value) {
+                    this.arg_queue.removeFirst()
+                }
+            }
 
-        // reminder: 'end_frame' here is the last active frame in the sample, including decay
-        val frame_range = this.handle_range_map.remove(uuid) ?: return
-        if (this.frame_map.containsKey(frame_range.first)) {
-            this.frame_map[frame_range.first]!!.remove(uuid)
-            if (this.frame_map[frame_range.first]!!.isEmpty()) {
-                this.frame_map.remove(frame_range.first)
+            runBlocking {
+                this@PlaybackFrameMap.process_mutex.withLock {
+                    when (action) {
+                        QueuedAction.NewHandle -> {
+                            this@PlaybackFrameMap._process_new_handle(
+                                working_new_handle!!.quick_key,
+                                working_new_handle!!.first_frame,
+                                working_new_handle!!.last_frame,
+                                working_new_handle!!.midi_event
+                            )
+                        }
+
+                        QueuedAction.RemoveHandle -> {
+                            this@PlaybackFrameMap._process_remove_handle(working_args.toList())
+                        }
+
+                        QueuedAction.InsertBeat -> {
+                            this@PlaybackFrameMap._process_insert_beat(working_args[0])
+                        }
+
+                        QueuedAction.RemoveBeat -> {
+                            this@PlaybackFrameMap._process_remove_beat(working_args[0])
+                        }
+
+                        QueuedAction.RemoveChannel -> {
+                            this@PlaybackFrameMap._process_remove_channel(working_args[0])
+                        }
+
+                        QueuedAction.NewChannel -> {
+                            this@PlaybackFrameMap._process_insert_channel(working_args[0])
+                        }
+
+                        QueuedAction.RemoveLine -> {
+                            this@PlaybackFrameMap._process_remove_line(working_args[0], working_args[1])
+                        }
+
+                        QueuedAction.NewLine -> {
+                            this@PlaybackFrameMap._process_insert_line(working_args[0], working_args[1])
+                        }
+
+                        QueuedAction.ClearAll -> {
+                            // Handled before the runBlocking block
+                        }
+                    }
+                }
             }
         }
     }
 
+    // Interface Function
+    fun add_handles(quick_key: List<Int>, start_frame: Int, end_frame: Int, start_event: MIDIEvent) {
+        runBlocking {
+            this@PlaybackFrameMap.event_queue_mutex.withLock {
+                this@PlaybackFrameMap.new_handle_queue.add(
+                    QueuedNewHandle(
+                        quick_key,
+                        start_frame,
+                        end_frame,
+                        start_event
+                    )
+                )
+                this@PlaybackFrameMap.event_queue.add(Pair(QueuedAction.NewHandle, 0))
+            }
+        }
+    }
+
+    // Interface Function
     fun remove_handle_by_quick_key(key: List<Int>) {
-        if (this.unmap_flags.getOrDefault(key, false)) {
+        if (this.unmapped_flags.getOrDefault(key, false)) {
             return
         }
 
-        this.unmap_flags[key] = true
-
-        val sample_handles = this.quick_map_sample_handles.remove(key) ?: return
-
-        for (uuid in sample_handles) {
-            this.remove_handle(uuid)
+        runBlocking {
+            this@PlaybackFrameMap.event_queue_mutex.withLock {
+                this@PlaybackFrameMap.arg_queue.addAll(key)
+                this@PlaybackFrameMap.event_queue.add(Pair(QueuedAction.RemoveHandle, 0))
+            }
         }
 
-        this.cached_frame_count = null
     }
 
-    fun add_handles(quick_key: List<Int>, start_frame: Int, end_frame: Int, start_event: MIDIEvent) {
+    fun clear() {
+        runBlocking {
+            this@PlaybackFrameMap.process_mutex.withLock {
+                this@PlaybackFrameMap.frame_map.clear()
+                this@PlaybackFrameMap.unmapped_flags.clear()
+                this@PlaybackFrameMap.handle_map.clear()
+                this@PlaybackFrameMap.handle_range_map.clear()
+                this@PlaybackFrameMap.quick_map_sample_handles.clear()
+                this@PlaybackFrameMap.cached_frame_count = null
+            }
+
+            this@PlaybackFrameMap.event_queue_mutex.withLock {
+                this@PlaybackFrameMap.clear_flagged = true
+                this@PlaybackFrameMap.event_queue.add(Pair(QueuedAction.ClearAll, 0))
+            }
+        }
+    }
+
+    private fun _process_new_handle(quick_key: List<Int>, start_frame: Int, end_frame: Int, start_event: MIDIEvent) {
         val handles = when (start_event) {
             is NoteOn -> {
                 this.sample_handle_manager!!.gen_sample_handles(start_event)
@@ -148,7 +254,7 @@ class PlaybackFrameMap: FrameMap {
             min_start_frame = min(min_start_frame, sample_start_frame)
 
             handle.release_frame = end_frame - start_frame
-            var handle_id = this.handle_id_gen++
+            val handle_id = this.handle_id_gen++
             uuids.add(handle_id)
 
             if (!this.frame_map.containsKey(sample_start_frame)) {
@@ -165,11 +271,42 @@ class PlaybackFrameMap: FrameMap {
 
         this.quick_map_sample_handles[quick_key] = uuids
 
-        this.unmap_flags[quick_key] = false
+        this.unmapped_flags[quick_key] = false
         this.cached_frame_count = null
     }
 
+    private fun _process_remove_handle(key: List<Int>) {
+        this.unmapped_flags[key] = true
+
+        val sample_handles = this.quick_map_sample_handles.remove(key) ?: return
+
+        for (uuid in sample_handles) {
+            this.handle_map.remove(uuid)
+            this.initial_delay_handles.remove(uuid)
+
+            // reminder: 'end_frame' here is the last active frame in the sample, including decay
+            val frame_range = this.handle_range_map.remove(uuid) ?: return
+            if (this.frame_map.containsKey(frame_range.first)) {
+                this.frame_map[frame_range.first]!!.remove(uuid)
+                if (this.frame_map[frame_range.first]!!.isEmpty()) {
+                    this.frame_map.remove(frame_range.first)
+                }
+            }
+        }
+
+        this.cached_frame_count = null
+    }
+
+    // Interface Function
     fun insert_beat(beat_index: Int) {
+        runBlocking {
+            this@PlaybackFrameMap.event_queue_mutex.withLock {
+                this@PlaybackFrameMap.event_queue.add(Pair(QueuedAction.InsertBeat, beat_index))
+            }
+        }
+    }
+
+    fun _process_insert_beat(beat_index: Int) {
         this.beat_count += 1
         this.cached_frame_count = null
 
@@ -206,11 +343,15 @@ class PlaybackFrameMap: FrameMap {
         }
     }
 
-    fun has_quick_key(key: List<Int>): Boolean {
-        return this.quick_map_sample_handles.contains(key)
+    fun insert_channel(channel: Int) {
+        runBlocking {
+            this@PlaybackFrameMap.event_queue_mutex.withLock {
+                this@PlaybackFrameMap.event_queue.add(Pair(QueuedAction.NewChannel, channel))
+            }
+        }
     }
 
-    fun insert_channel(channel: Int) {
+    fun _process_insert_channel(channel: Int) {
         val sorted_keys = this.quick_map_sample_handles.keys.sortedByDescending { it[0] }
         for (original_key in sorted_keys) {
             if (original_key[0] < channel) {
@@ -224,6 +365,14 @@ class PlaybackFrameMap: FrameMap {
     }
 
     fun remove_channel(channel: Int) {
+        runBlocking {
+            this@PlaybackFrameMap.event_queue_mutex.withLock {
+                this@PlaybackFrameMap.event_queue.add(Pair(QueuedAction.RemoveChannel, channel))
+            }
+        }
+    }
+
+    fun _process_remove_channel(channel: Int) {
         val sorted_keys = this.quick_map_sample_handles.keys.sortedBy { it[0] }
         for (original_key in sorted_keys) {
             if (original_key[0] < channel) {
@@ -237,6 +386,14 @@ class PlaybackFrameMap: FrameMap {
     }
 
     fun remove_beat(beat_index: Int) {
+        runBlocking {
+            this@PlaybackFrameMap.event_queue_mutex.withLock {
+                this@PlaybackFrameMap.event_queue.add(Pair(QueuedAction.RemoveBeat, beat_index))
+            }
+        }
+    }
+
+    fun _process_remove_beat(beat_index: Int) {
         this.cached_frame_count = null
 
         val frames_per_beat = 60.0 * this.sample_handle_manager!!.sample_rate / this.tempo
@@ -294,8 +451,16 @@ class PlaybackFrameMap: FrameMap {
 
         this.beat_count -= 1
     }
-
     fun remove_line(channel: Int, line_offset: Int) {
+        runBlocking {
+            this@PlaybackFrameMap.event_queue_mutex.withLock {
+                this@PlaybackFrameMap.arg_queue.add(channel)
+                this@PlaybackFrameMap.arg_queue.add(line_offset)
+                this@PlaybackFrameMap.event_queue.add(Pair(QueuedAction.RemoveLine, channel))
+            }
+        }
+    }
+    fun _process_remove_line(channel: Int, line_offset: Int) {
         val sorted_keys = this.quick_map_sample_handles.keys.sortedBy { (it[0] * 1000) + it[1] }
         for (original_key in sorted_keys) {
             if (original_key[0] != channel || original_key[1] < line_offset) {
@@ -309,6 +474,15 @@ class PlaybackFrameMap: FrameMap {
     }
 
     fun insert_line(channel: Int, line_offset: Int) {
+        runBlocking {
+            this@PlaybackFrameMap.event_queue_mutex.withLock {
+                this@PlaybackFrameMap.arg_queue.add(channel)
+                this@PlaybackFrameMap.arg_queue.add(line_offset)
+                this@PlaybackFrameMap.event_queue.add(Pair(QueuedAction.NewLine, channel))
+            }
+        }
+    }
+    fun _process_insert_line(channel: Int, line_offset: Int) {
         val sorted_keys = this.quick_map_sample_handles.keys.sortedByDescending { (it[0] * 1000) + it[1] }
         for (original_key in sorted_keys) {
             if (original_key[0] != channel || original_key[1] < line_offset) {
@@ -321,28 +495,4 @@ class PlaybackFrameMap: FrameMap {
             this.quick_map_sample_handles[new_key] = this.quick_map_sample_handles.remove(new_key)!!
         }
     }
-
-    //fun clone(): PlaybackFrameMap {
-    //    val new_map = PlaybackFrameMap()
-    //    new_map.sample_rate = this.sample_handle_manager.sample_rate
-    //    new_map.beat_count = this.beat_count
-    //    new_map.tempo = this.tempo
-
-    //    for ((k, v) in this.handle_map) {
-    //        new_map.handle_map[k] = v
-    //    }
-    //    for ((k, v) in this.frame_map) {
-    //        new_map.frame_map[k] = v.toMutableSet()
-    //    }
-    //    for ((k, v) in this.handle_range_map) {
-    //        new_map.handle_range_map[k] = v
-    //    }
-    //    for ((k, v) in this.quick_map_sample_handles) {
-    //        new_map.quick_map_sample_handles[k.copy()] = v.toSet()
-    //    }
-
-    //    new_map.cached_frame_count = this.cached_frame_count
-
-    //    return new_map
-    //}
 }

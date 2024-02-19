@@ -19,17 +19,17 @@ open class OpusLayerFrameMap: OpusLayerCursor() {
     private var _flag_cleared_in_flux: Boolean = false
     private var _frame_map = PlaybackFrameMap()
 
+    //-----Layer Functions-------//
     fun get_frame_map(): PlaybackFrameMap {
         return this._frame_map
     }
 
-    //-----Layer Functions-------//
     fun set_sample_handle_manager(new_manager: SampleHandleManager) {
         this._frame_map.clear()
 
         this._frame_map.sample_handle_manager = new_manager
-        this.setup_sample_handle_manager()
-        this.setup_frame_map()
+        this._setup_sample_handle_manager()
+        this._setup_frame_map()
     }
 
     private fun <T> _clear_and_set_frames(callback: () -> T): T {
@@ -51,7 +51,7 @@ open class OpusLayerFrameMap: OpusLayerCursor() {
             }
 
             if (this._flux_indicator == 1) {
-                this.setup_frame_map()
+                this._setup_frame_map()
             }
 
             output
@@ -75,13 +75,13 @@ open class OpusLayerFrameMap: OpusLayerCursor() {
 
         if (_flux_indicator == 0 && this._flag_cleared_in_flux) {
             this._flag_cleared_in_flux = false
-            this.setup_frame_map()
+            this._setup_frame_map()
         }
 
         return output
     }
 
-    fun setup_frame_map() {
+    private fun _setup_frame_map() {
         if (this._frame_map.sample_handle_manager == null) {
             return
         }
@@ -89,7 +89,7 @@ open class OpusLayerFrameMap: OpusLayerCursor() {
         this._flux_wrapper {
             this._frame_map.tempo = this.tempo
             this._frame_map.beat_count = this.beat_count
-            this._frame_map.unmap_flags.clear()
+            this._frame_map.unmapped_flags.clear()
             this.channels.forEachIndexed { c: Int, channel: OpusChannel ->
                 channel.lines.forEachIndexed { l: Int, line: OpusChannel.OpusLine ->
                     for (b in 0 until this.beat_count) {
@@ -100,7 +100,7 @@ open class OpusLayerFrameMap: OpusLayerCursor() {
         }
     }
 
-    fun setup_sample_handle_manager() {
+    private fun _setup_sample_handle_manager() {
         if (this._frame_map.sample_handle_manager == null) {
             return
         }
@@ -511,7 +511,7 @@ open class OpusLayerFrameMap: OpusLayerCursor() {
     override fun on_project_changed() {
         this._flux_wrapper {
             super.on_project_changed()
-            this.setup_sample_handle_manager()
+            this._setup_sample_handle_manager()
         }
         Log.d("AAA", "samples generated: ${this._frame_map.sample_handle_manager!!.get_samples_generated()} | ${this._frame_map.sample_handle_manager!!.handles_got}")
     }
@@ -613,6 +613,7 @@ open class OpusLayerFrameMap: OpusLayerCursor() {
             super.load_json(json_data)
         }
     }
+
     //------------------------------------------
 
     override fun set_channel_bank(channel: Int, bank: Int) {
@@ -621,6 +622,4 @@ open class OpusLayerFrameMap: OpusLayerCursor() {
         }
         super.set_channel_bank(channel, bank)
     }
-
-
 }

@@ -1841,7 +1841,7 @@ class MainActivity : AppCompatActivity() {
             this.sample_handle_manager = SampleHandleManager(
                 this._soundfont!!,
                 this.configuration.sample_rate,
-                44100
+                this.configuration.sample_rate
             )
 
             this._midi_playback_device = PaganPlaybackDevice(this, this.sample_handle_manager!!)

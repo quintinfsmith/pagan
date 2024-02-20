@@ -11,16 +11,14 @@ import com.qfs.pagan.opusmanager.OpusChannel
 import com.qfs.pagan.opusmanager.OpusEvent
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.structure.OpusTree
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import kotlin.math.floor
 import kotlin.math.max
 
 class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manager: SampleHandleManager): FrameMap {
-    var handle_id_gen = 0
+    var handle_set_id_gen = 0
 
-    private var handle_set_map = HashMap<Int, Deferred<Set<SampleHandle>>>()
+    private var handle_set_map = HashMap<Int,() -> Set<SampleHandle>>()
     private var frame_map = HashMap<Int, MutableSet<Int>>()
     private val handle_range_map = HashMap<Int, IntRange>()
     var unmapped_flags = HashMap<List<Int>, Boolean>()
@@ -38,10 +36,8 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
         }
 
         val output = mutableSetOf<SampleHandle>()
-        runBlocking {
-            for (uuid in this@PlaybackFrameMap.frame_map[frame]!!) {
-                output.addAll(this@PlaybackFrameMap.handle_set_map[uuid]!!.await())
-            }
+        for (uuid in this@PlaybackFrameMap.frame_map[frame]!!) {
+            output.addAll(this@PlaybackFrameMap.handle_set_map[uuid]!!())
         }
 
         return output
@@ -62,13 +58,8 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
         runBlocking {
             for ((uuid, range) in this@PlaybackFrameMap.handle_range_map) {
                 if (range.contains(frame)) {
-                    for (handle in this@PlaybackFrameMap.handle_set_map[uuid]!!.await()) {
-                        output.add(
-                            Pair(
-                                range.first,
-                                handle
-                            )
-                        )
+                    for (handle in this@PlaybackFrameMap.handle_set_map[uuid]!!()) {
+                        output.add(Pair(max(0, range.first - handle.volume_envelope.frames_delay), handle))
                     }
                 }
             }
@@ -104,7 +95,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
     }
 
     fun add_handles(quick_key: List<Int>, start_frame: Int, end_frame: Int, start_event: MIDIEvent) {
-        val handle_id = this.handle_id_gen++
+        val handle_id = this.handle_set_id_gen++
 
         // TODO: Reimplement release_duration and frames_delay comepensation
         //var max_end_frame = 0
@@ -142,21 +133,24 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
 
         this.unmapped_flags[quick_key] = false
         this.cached_frame_count = null
+        this@PlaybackFrameMap.handle_set_map[handle_id] =  {
+            val handles = when (start_event) {
+                is NoteOn -> this@PlaybackFrameMap.sample_handle_manager.gen_sample_handles(
+                    start_event
+                )
 
-        runBlocking {
-            this@PlaybackFrameMap.handle_set_map[handle_id] = async {
-                val handles = when (start_event) {
-                    is NoteOn -> this@PlaybackFrameMap.sample_handle_manager.gen_sample_handles(start_event)
-                    is NoteOn79 -> this@PlaybackFrameMap.sample_handle_manager.gen_sample_handles(start_event)
-                    else -> setOf()
-                }
+                is NoteOn79 -> this@PlaybackFrameMap.sample_handle_manager.gen_sample_handles(
+                    start_event
+                )
 
-                for (handle in handles) {
-                    handle.release_frame = end_frame - start_frame
-                }
-
-                handles
+                else -> setOf()
             }
+
+            for (handle in handles) {
+                handle.release_frame = end_frame - start_frame
+            }
+
+            handles
         }
     }
 
@@ -182,35 +176,38 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
 
     fun parse_opus() {
         this.clear()
-
         this.opus_manager.channels.forEach { channel: OpusChannel ->
             val instrument = channel.get_instrument()
             this.sample_handle_manager.select_bank(channel.midi_channel, instrument.first)
             this.sample_handle_manager.change_program(channel.midi_channel, instrument.second)
         }
+
         this.unmapped_flags.clear()
 
         this.opus_manager.channels.forEachIndexed { c: Int, channel: OpusChannel ->
             channel.lines.forEachIndexed { l: Int, line: OpusChannel.OpusLine ->
+                var prev_abs_note = 0
                 for (b in 0 until this.opus_manager.beat_count) {
                     val beat_key = BeatKey(c,l,b)
                     val working_tree = this.opus_manager.get_tree(beat_key)
-                    this.map_tree(beat_key, listOf(), working_tree)
+                    prev_abs_note = this.map_tree(beat_key, listOf(), working_tree, 1.0, 0.0, prev_abs_note)
                 }
             }
         }
     }
 
-    private fun map_tree(beat_key: BeatKey, position: List<Int>, working_tree: OpusTree<OpusEvent>) {
+    private fun map_tree(beat_key: BeatKey, position: List<Int>, working_tree: OpusTree<OpusEvent>, relative_width: Double, relative_offset: Double, prev_note_value: Int): Int {
         if (!working_tree.is_leaf()) {
+            val new_width = relative_width / working_tree.size.toDouble()
+            var new_working_value = prev_note_value
             for (i in 0 until working_tree.size) {
                 val new_position = position.toMutableList()
                 new_position.add(i)
-                this.map_tree(beat_key, new_position, working_tree[i])
+                new_working_value = this.map_tree(beat_key, new_position, working_tree[i], new_width, relative_offset + (new_width * i), new_working_value)
             }
-            return
+            return new_working_value
         } else if (!working_tree.is_event()) {
-            return
+            return prev_note_value
         }
 
         val quick_key = mutableListOf(
@@ -220,12 +217,26 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
         )
         quick_key.addAll(position)
 
-        val (start_frame, end_frame) = this._get_frame_range(beat_key, position)
-        val start_event = this._gen_midi_event(beat_key, position)!!
+        val event = working_tree.get_event()!!.copy()
+        if (event.relative) {
+            event.note = event.note + prev_note_value
+            event.relative = false
+        }
+
+        val duration = event.duration
+
+        val ratio = (60.0 * this.sample_handle_manager.sample_rate.toDouble() / this.opus_manager.tempo)
+        val initial = relative_offset + beat_key.beat.toDouble()
+        val start_frame = (initial * ratio).toInt()
+        val end_frame = ((initial + (relative_width * duration)) * ratio).toInt()
+
+        val start_event = this._gen_midi_event(event, beat_key)!!
         this.add_handles(quick_key, start_frame, end_frame, start_event)
+
+        return event.note
     }
 
-    private fun _gen_midi_event(beat_key: BeatKey, position: List<Int>): MIDIEvent? {
+    private fun _gen_midi_event(event: OpusEvent, beat_key: BeatKey): MIDIEvent? {
         if (this.opus_manager.is_percussion(beat_key.channel)) {
             return NoteOn(
                 channel=9,
@@ -233,8 +244,8 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
                 note=this.opus_manager.get_percussion_instrument(beat_key.line_offset) + 27
             )
         }
-
-        val value = this.opus_manager.get_absolute_value(beat_key, position) ?: return null
+        // Assume event is *not* relative as it is modified in map_tree() before _gen_midi_event is called
+        val value = event.note
         val radix = this.opus_manager.tuning_map.size
         val octave = value / radix
         val offset = this.opus_manager.tuning_map[value % radix]
@@ -264,27 +275,4 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
         }
     }
 
-    private fun _get_frame_range(beat_key: BeatKey, position: List<Int>): Pair<Int, Int> {
-        var working_tree = this.opus_manager.get_tree(beat_key)
-        var offset = 0.0
-        var w = 1.0
-
-        for (p in position) {
-            w /= working_tree.size
-            offset += (w * p)
-            working_tree = working_tree[p]
-        }
-
-        val duration = if (working_tree.is_event()) {
-            working_tree.get_event()!!.duration
-        } else {
-            1
-        }
-        val ratio = (60.0 * this.sample_handle_manager.sample_rate.toDouble() / this.opus_manager.tempo)
-        val initial = offset + beat_key.beat.toDouble()
-        return Pair(
-            (initial * ratio).toInt(),
-            ((initial + (w * duration)) * ratio).toInt()
-        )
-    }
 }

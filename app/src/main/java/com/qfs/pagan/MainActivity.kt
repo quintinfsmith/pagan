@@ -537,10 +537,7 @@ class MainActivity : AppCompatActivity() {
                     this.configuration.sample_rate,
                     this.configuration.sample_rate // Use Large buffer
                 )
-                this.get_opus_manager().set_sample_handle_manager(
-                    this.sample_handle_manager!!
-                )
-                this._midi_playback_device = PaganPlaybackDevice(this)
+                this._midi_playback_device = PaganPlaybackDevice(this, this.sample_handle_manager!!)
 
                 if (!this._midi_interface.output_devices_connected()) {
                     this._midi_feedback_device = PaganFeedbackDevice(
@@ -1427,11 +1424,7 @@ class MainActivity : AppCompatActivity() {
             this.configuration.sample_rate
         )
 
-        this.get_opus_manager().set_sample_handle_manager(
-            this.sample_handle_manager!!
-        )
-
-        this._midi_playback_device = PaganPlaybackDevice(this)
+        this._midi_playback_device = PaganPlaybackDevice(this, this.sample_handle_manager!!)
 
         this._midi_feedback_device = PaganFeedbackDevice(
             SampleHandleManager(
@@ -1527,8 +1520,6 @@ class MainActivity : AppCompatActivity() {
         this.configuration.soundfont = null
         this._midi_playback_device = null
         this._midi_feedback_device = null
-
-        this.get_opus_manager().unset_sample_handle_manager()
 
         this.populate_active_percussion_names()
     }
@@ -1853,8 +1844,7 @@ class MainActivity : AppCompatActivity() {
                 44100
             )
 
-            this.get_opus_manager().set_sample_handle_manager(this.sample_handle_manager!!)
-            this._midi_playback_device = PaganPlaybackDevice(this)
+            this._midi_playback_device = PaganPlaybackDevice(this, this.sample_handle_manager!!)
             this._midi_feedback_device = PaganFeedbackDevice(
                 SampleHandleManager(
                     this._soundfont!!,

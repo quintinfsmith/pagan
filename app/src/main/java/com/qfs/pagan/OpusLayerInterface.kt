@@ -7,11 +7,12 @@ import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.LoadedJSONData
 import com.qfs.pagan.opusmanager.OpusChannel
 import com.qfs.pagan.opusmanager.OpusEvent
+import com.qfs.pagan.opusmanager.OpusLayerCursor
 import com.qfs.pagan.structure.OpusTree
 import java.lang.Integer.max
 import java.lang.Integer.min
 
-class OpusLayerInterface(): OpusLayerFrameMap() {
+class OpusLayerInterface(): OpusLayerCursor() {
     companion object {
         const val UI_LOCK_FULL = 0
         const val UI_LOCK_PARTIAL = 1

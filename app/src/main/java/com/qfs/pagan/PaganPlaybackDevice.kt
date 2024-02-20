@@ -1,12 +1,13 @@
 package com.qfs.pagan
 
 import com.qfs.apres.soundfontplayer.MappedPlaybackDevice
+import com.qfs.apres.soundfontplayer.SampleHandleManager
 import kotlin.math.max
 
-class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activity.configuration.sample_rate): MappedPlaybackDevice(
-    activity.get_opus_manager().get_frame_map(),
-    sample_rate,
-    activity.get_opus_manager().get_frame_map().sample_handle_manager!!.buffer_size
+class PaganPlaybackDevice(var activity: MainActivity, sample_handle_manager: SampleHandleManager): MappedPlaybackDevice(
+    PlaybackFrameMap(activity.get_opus_manager(), sample_handle_manager),
+    sample_handle_manager.sample_rate,
+    sample_handle_manager.buffer_size
 ) {
     /*
         All of this notification stuff is used with the understanding that the PaganPlaybackDevice
@@ -63,8 +64,7 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_rate: Int = activit
     }
 
     fun play_opus(start_beat: Int) {
-        val opus_manager = this.activity.get_opus_manager()
-        this.sample_frame_map = opus_manager.get_frame_map()
+        (this.sample_frame_map as PlaybackFrameMap).parse_opus()
         val start_frame = this.sample_frame_map.get_beat_frames()[start_beat]?.first ?: 0
         this.play(start_frame)
     }

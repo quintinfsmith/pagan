@@ -229,7 +229,6 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
 
     /* Add handles that would be active but aren't because of a jump in position */
     private fun activate_active_handles(frame: Int) {
-        val start_ts = System.currentTimeMillis()
         val handles = this.midi_frame_map.get_active_handles(frame)
         for ((first_frame, handle) in handles) {
             if (first_frame == frame) {

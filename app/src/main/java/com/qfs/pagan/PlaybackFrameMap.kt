@@ -11,33 +11,38 @@ import com.qfs.pagan.opusmanager.OpusChannel
 import com.qfs.pagan.opusmanager.OpusEvent
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.structure.OpusTree
-import kotlinx.coroutines.runBlocking
 import kotlin.math.floor
 import kotlin.math.max
 
 class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manager: SampleHandleManager): FrameMap {
-    var handle_set_id_gen = 0
 
-    private var handle_set_map = HashMap<Int,() -> Set<SampleHandle>>()
-    private var frame_map = HashMap<Int, MutableSet<Int>>()
-    private val handle_range_map = HashMap<Int, IntRange>()
-    var unmapped_flags = HashMap<List<Int>, Boolean>()
-    /*
-     NOTE: key is List where the first three entries are a BeatKey and the rest is the position since a Pair() would
-     be matched by instance rather than content
-    */
-    private var quick_map_sample_handles =  HashMap<List<Int>, Int>()
+    private val handle_map = HashMap<Int, SampleHandle>() // Handle UUID::Handle
+    private val handle_range_map = HashMap<Int, IntRange>() // Handle UUID::Frame Range
+    private val frame_map = HashMap<Int, MutableSet<Int>>() // Frame::Handle UUIDs
+
+
+    private var setter_id_gen = 0
+    private var setter_map = HashMap<Int,() -> Set<SampleHandle>>()
+    private var setter_frame_map = HashMap<Int, MutableSet<Int>>()
+    private val setter_range_map = HashMap<Int, IntRange>()
+
     internal var cached_frame_count: Int? = null
     private var initial_delay_handles = HashMap<Int, Int>()
 
     override fun get_new_handles(frame: Int): Set<SampleHandle>? {
+        // Check frame a buffer ahead to make sure frames are added as accurately as possible
+        this.check_frame(frame + this.sample_handle_manager.buffer_size)
+
         if (!this.frame_map.containsKey(frame)) {
             return null
         }
 
         val output = mutableSetOf<SampleHandle>()
-        for (uuid in this@PlaybackFrameMap.frame_map[frame]!!) {
-            output.addAll(this@PlaybackFrameMap.handle_set_map[uuid]!!())
+
+        if (this.frame_map.containsKey(frame)) {
+            for (uuid in this.frame_map[frame]!!) {
+                output.add(this.handle_map[uuid] ?: continue)
+            }
         }
 
         return output
@@ -55,22 +60,47 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
 
     override fun get_active_handles(frame: Int): Set<Pair<Int, SampleHandle>> {
         val output = mutableSetOf<Pair<Int, SampleHandle>>()
-        runBlocking {
-            for ((uuid, range) in this@PlaybackFrameMap.handle_range_map) {
-                if (range.contains(frame)) {
-                    for (handle in this@PlaybackFrameMap.handle_set_map[uuid]!!()) {
-                        output.add(Pair(max(0, range.first - handle.volume_envelope.frames_delay), handle))
-                    }
+
+        for ((uuid, range) in this.handle_range_map) {
+            if (!range.contains(frame)) {
+                continue
+            }
+
+            val handle = this.handle_map[uuid]!!
+            output.add(
+                Pair(
+                    range.first,
+                    handle
+                )
+            )
+        }
+
+        // NOTE: May miss tail samples with long decays, but for now, for my purposes, will be fine
+        for ((setter_id, range) in this.setter_range_map) {
+            if (range.contains(frame)) {
+                for (i in range) {
+                    this.setter_frame_map.remove(i)
+                }
+                for (handle in this.setter_map.remove(setter_id)!!()) {
+                    this.map_real_handle(handle, range.first, range.last)
+                    output.add(
+                        Pair(
+                            this.handle_range_map[handle.uuid]!!.first,
+                            handle
+                        )
+                    )
                 }
             }
         }
+        this.setter_range_map.clear()
+
         return output
     }
 
     override fun get_size(): Int {
         if (this.cached_frame_count == null) {
             this.cached_frame_count = -1
-            for (range in this.handle_range_map.values) {
+            for (range in this.setter_range_map.values) {
                 this.cached_frame_count = max(range.last, this.cached_frame_count!!)
             }
 
@@ -81,108 +111,82 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
     }
 
     // End FrameMap Interface --------------------------
-    fun has_quick_key(key: List<Int>): Boolean {
-        return this.quick_map_sample_handles.contains(key)
+
+    fun check_frame(frame: Int) {
+        if (!this.setter_frame_map.containsKey(frame)) {
+            return
+        }
+        for (setter_id in this.setter_frame_map.remove(frame)!!) {
+            val handles = this.setter_map.remove(setter_id)?.let { it() } ?: continue
+            val range = this.setter_range_map.remove(setter_id) ?: continue
+            for (handle in handles) {
+                this.map_real_handle(handle, range.first, range.last)
+            }
+        }
+    }
+
+    fun map_real_handle(handle: SampleHandle, start_frame: Int, end_frame: Int) {
+        var sample_end_frame = (end_frame + handle.get_release_duration()) - handle.volume_envelope.frames_delay
+        var sample_start_frame = start_frame - handle.volume_envelope.frames_delay
+        if (sample_start_frame < 0) {
+            sample_end_frame -= sample_start_frame
+            sample_start_frame = 0
+        }
+        this.handle_range_map[handle.uuid] = sample_start_frame .. sample_end_frame
+        this.handle_map[handle.uuid] = handle
+        if (!this.frame_map.containsKey(sample_start_frame)) {
+            this.frame_map[sample_start_frame] = mutableSetOf()
+        }
+        this.frame_map[sample_start_frame]!!.add(handle.uuid)
     }
 
     fun clear() {
-        this.frame_map.clear()
-        this.unmapped_flags.clear()
-        this.handle_set_map.clear()
-        this.handle_range_map.clear()
-        this.quick_map_sample_handles.clear()
+        this.setter_frame_map.clear()
+        this.setter_map.clear()
+        this.setter_range_map.clear()
         this.cached_frame_count = null
     }
 
-    fun add_handles(quick_key: List<Int>, start_frame: Int, end_frame: Int, start_event: MIDIEvent) {
-        val handle_id = this.handle_set_id_gen++
+    fun add_handles(start_frame: Int, end_frame: Int, start_event: MIDIEvent) {
+        val handle_id = this.setter_id_gen++
 
-        // TODO: Reimplement release_duration and frames_delay comepensation
-        //var max_end_frame = 0
-        //var min_start_frame = Int.MAX_VALUE
-        //val uuids = mutableSetOf<Int>()
-        //for (handle in handles) {
-        //    val sample_end_frame = (end_frame + handle.get_release_duration()) - handle.volume_envelope.frames_delay
-        //    val sample_start_frame = start_frame - handle.volume_envelope.frames_delay
-
-        //    max_end_frame = max(max_end_frame, sample_end_frame)
-        //    min_start_frame = min(min_start_frame, sample_start_frame)
-
-        //    handle.release_frame = end_frame - start_frame
-        //    uuids.add(handle_id)
-
-        //    if (!this.frame_map.containsKey(sample_start_frame)) {
-        //        this.frame_map[sample_start_frame] = mutableSetOf()
-        //    }
-        //    this.frame_map[sample_start_frame]!!.add(handle_id)
-
-        //    this.handle_range_map[handle_id] = sample_start_frame..sample_end_frame
-        //    if (sample_start_frame < 0) {
-        //        this.initial_delay_handles[handle_id] = sample_start_frame
-        //    }
-        // }
-
-        if (!this.frame_map.containsKey(start_frame)) {
-            this.frame_map[start_frame] = mutableSetOf()
+        if (!this.setter_frame_map.containsKey(start_frame)) {
+            this.setter_frame_map[start_frame] = mutableSetOf()
         }
-        this.frame_map[start_frame]!!.add(handle_id)
+        this.setter_frame_map[start_frame]!!.add(handle_id)
+        this.setter_range_map[handle_id] = start_frame..end_frame
 
-        this.handle_range_map[handle_id] = start_frame..end_frame
 
-        this.quick_map_sample_handles[quick_key] = handle_id
-
-        this.unmapped_flags[quick_key] = false
         this.cached_frame_count = null
-        this@PlaybackFrameMap.handle_set_map[handle_id] =  {
+
+        this.setter_map[handle_id] = {
             val handles = when (start_event) {
-                is NoteOn -> this@PlaybackFrameMap.sample_handle_manager.gen_sample_handles(
-                    start_event
-                )
-
-                is NoteOn79 -> this@PlaybackFrameMap.sample_handle_manager.gen_sample_handles(
-                    start_event
-                )
-
+                is NoteOn -> this.sample_handle_manager.gen_sample_handles(start_event)
+                is NoteOn79 -> this.sample_handle_manager.gen_sample_handles(start_event)
                 else -> setOf()
             }
 
+            val handle_uuid_set = mutableSetOf<Int>()
             for (handle in handles) {
                 handle.release_frame = end_frame - start_frame
+                handle_uuid_set.add(handle.uuid)
+
             }
+
 
             handles
         }
     }
 
-    fun remove_handle_set(key: List<Int>) {
-        this.unmapped_flags[key] = true
-
-        val uuid = this.quick_map_sample_handles.remove(key) ?: return
-
-        this.handle_set_map.remove(uuid)
-        this.initial_delay_handles.remove(uuid)
-
-        // reminder: 'end_frame' here is the last active frame in the sample, including decay
-        val frame_range = this.handle_range_map.remove(uuid) ?: return
-        if (this.frame_map.containsKey(frame_range.first)) {
-            this.frame_map[frame_range.first]!!.remove(uuid)
-            if (this.frame_map[frame_range.first]!!.isEmpty()) {
-                this.frame_map.remove(frame_range.first)
-            }
-        }
-
-        this.cached_frame_count = null
-    }
-
     fun parse_opus() {
         this.clear()
+
         this.opus_manager.channels.forEach { channel: OpusChannel ->
             val instrument = channel.get_instrument()
             this.sample_handle_manager.select_bank(channel.midi_channel, instrument.first)
             this.sample_handle_manager.change_program(channel.midi_channel, instrument.second)
         }
 
-        this.unmapped_flags.clear()
 
         this.opus_manager.channels.forEachIndexed { c: Int, channel: OpusChannel ->
             channel.lines.forEachIndexed { l: Int, line: OpusChannel.OpusLine ->
@@ -210,13 +214,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
             return prev_note_value
         }
 
-        val quick_key = mutableListOf(
-            beat_key.channel,
-            beat_key.line_offset,
-            beat_key.beat
-        )
-        quick_key.addAll(position)
-
         val event = working_tree.get_event()!!.copy()
         if (event.relative) {
             event.note = event.note + prev_note_value
@@ -231,7 +228,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
         val end_frame = ((initial + (relative_width * duration)) * ratio).toInt()
 
         val start_event = this._gen_midi_event(event, beat_key)!!
-        this.add_handles(quick_key, start_frame, end_frame, start_event)
+        this.add_handles(start_frame, end_frame, start_event)
 
         return event.note
     }

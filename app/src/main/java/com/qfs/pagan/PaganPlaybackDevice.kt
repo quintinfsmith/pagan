@@ -66,6 +66,12 @@ class PaganPlaybackDevice(var activity: MainActivity, sample_handle_manager: Sam
     fun play_opus(start_beat: Int) {
         (this.sample_frame_map as PlaybackFrameMap).parse_opus()
         val start_frame = this.sample_frame_map.get_beat_frames()[start_beat]?.first ?: 0
+
+        // Prebuild the first buffer's worth of sample handles, the rest happen in the get_new_handles()
+        for (i in start_frame .. start_frame + buffer_size) {
+            (this.sample_frame_map as PlaybackFrameMap).check_frame(i)
+        }
+
         this.play(start_frame)
     }
 }

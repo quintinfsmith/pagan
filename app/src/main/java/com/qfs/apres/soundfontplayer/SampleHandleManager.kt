@@ -12,15 +12,24 @@ import com.qfs.apres.soundfont.SoundFont
 class SampleHandleManager(
     var soundfont: SoundFont,
     var sample_rate: Int,
-    val buffer_size: Int = AudioTrack.getMinBufferSize(
+    target_buffer_size: Int = AudioTrack.getMinBufferSize(
         sample_rate,
         AudioFormat.ENCODING_PCM_16BIT,
         AudioFormat.CHANNEL_OUT_STEREO
     )) {
     private val loaded_presets = HashMap<Pair<Int, Int>, Preset>()
     private val preset_channel_map = HashMap<Int, Pair<Int, Int>>()
-    private val sample_handle_generator = SampleHandleGenerator(sample_rate, buffer_size)
+    private val sample_handle_generator: SampleHandleGenerator
+    val buffer_size: Int
     var handles_got = 0
+    init {
+        val core_count = Runtime.getRuntime().availableProcessors()
+        this.buffer_size = target_buffer_size - (target_buffer_size % core_count)
+        this.sample_handle_generator = SampleHandleGenerator(
+            this.sample_rate,
+            this.buffer_size
+        )
+    }
 
     fun select_bank(channel: Int, bank: Int) {
         // NOTE: Changing the bank doesn't trigger a preset change
@@ -113,7 +122,7 @@ class SampleHandleManager(
                 }
             )
             this.handles_got += 1
-            new_handle.volume = (velocity.toDouble()  / 96.toDouble())
+            new_handle.volume = velocity.toDouble()  / 128.toDouble()
             output.add(new_handle)
         }
 
@@ -166,7 +175,7 @@ class SampleHandleManager(
                         else -> continue
                     }
                 )
-                new_handle.volume = (event.get_velocity().toDouble() / 96.toDouble())
+                new_handle.volume = (event.get_velocity().toDouble() / 128.toDouble())
                 this.handles_got += 1
                 output.add(new_handle)
             }

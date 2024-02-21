@@ -12,7 +12,7 @@ import com.qfs.pagan.structure.OpusTree
 import java.lang.Integer.max
 import java.lang.Integer.min
 
-class OpusLayerInterface(): OpusLayerCursor() {
+class OpusLayerInterface : OpusLayerCursor() {
     companion object {
         const val UI_LOCK_FULL = 0
         const val UI_LOCK_PARTIAL = 1

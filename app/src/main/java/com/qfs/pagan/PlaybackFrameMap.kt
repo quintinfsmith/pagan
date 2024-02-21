@@ -15,19 +15,16 @@ import kotlin.math.floor
 import kotlin.math.max
 
 class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manager: SampleHandleManager): FrameMap {
-
     private val handle_map = HashMap<Int, SampleHandle>() // Handle UUID::Handle
     private val handle_range_map = HashMap<Int, IntRange>() // Handle UUID::Frame Range
     private val frame_map = HashMap<Int, MutableSet<Int>>() // Frame::Handle UUIDs
-
 
     private var setter_id_gen = 0
     private var setter_map = HashMap<Int,() -> Set<SampleHandle>>()
     private var setter_frame_map = HashMap<Int, MutableSet<Int>>()
     private val setter_range_map = HashMap<Int, IntRange>()
 
-    internal var cached_frame_count: Int? = null
-    private var initial_delay_handles = HashMap<Int, Int>()
+    private var cached_frame_count: Int? = null
 
     override fun get_new_handles(frame: Int): Set<SampleHandle>? {
         // Check frame a buffer ahead to make sure frames are added as accurately as possible
@@ -67,32 +64,27 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
             }
 
             val handle = this.handle_map[uuid]!!
-            output.add(
-                Pair(
-                    range.first,
-                    handle
-                )
-            )
+            output.add(Pair(range.first, handle))
         }
 
         // NOTE: May miss tail samples with long decays, but for now, for my purposes, will be fine
+        val setter_ids_to_remove = mutableSetOf<Int>()
         for ((setter_id, range) in this.setter_range_map) {
             if (range.contains(frame)) {
+                setter_ids_to_remove.add(setter_id)
                 for (i in range) {
                     this.setter_frame_map.remove(i)
                 }
                 for (handle in this.setter_map.remove(setter_id)!!()) {
-                    this.map_real_handle(handle, range.first, range.last)
-                    output.add(
-                        Pair(
-                            this.handle_range_map[handle.uuid]!!.first,
-                            handle
-                        )
-                    )
+                    this.map_real_handle(handle, range.first)
+                    output.add(Pair(this.handle_range_map[handle.uuid]!!.first, handle))
                 }
             }
         }
-        this.setter_range_map.clear()
+
+        for (setter_id in setter_ids_to_remove) {
+            this.setter_range_map.remove(setter_id)
+        }
 
         return output
     }
@@ -109,23 +101,25 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
         }
         return this.cached_frame_count!!
     }
-
     // End FrameMap Interface --------------------------
 
     fun check_frame(frame: Int) {
         if (!this.setter_frame_map.containsKey(frame)) {
             return
         }
+
+
         for (setter_id in this.setter_frame_map.remove(frame)!!) {
             val handles = this.setter_map.remove(setter_id)?.let { it() } ?: continue
-            val range = this.setter_range_map.remove(setter_id) ?: continue
+            this.setter_range_map.remove(setter_id)
             for (handle in handles) {
-                this.map_real_handle(handle, range.first, range.last)
+                this.map_real_handle(handle, frame)
             }
         }
     }
 
-    fun map_real_handle(handle: SampleHandle, start_frame: Int, end_frame: Int) {
+    fun map_real_handle(handle: SampleHandle, start_frame: Int) {
+        val end_frame = handle.release_frame!! + start_frame
         var sample_end_frame = (end_frame + handle.get_release_duration()) - handle.volume_envelope.frames_delay
         var sample_start_frame = start_frame - handle.volume_envelope.frames_delay
         if (sample_start_frame < 0) {
@@ -141,6 +135,11 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
     }
 
     fun clear() {
+        this.frame_map.clear()
+        this.handle_map.clear()
+        this.handle_range_map.clear()
+
+        this.setter_id_gen = 0
         this.setter_frame_map.clear()
         this.setter_map.clear()
         this.setter_range_map.clear()
@@ -148,18 +147,17 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
     }
 
     fun add_handles(start_frame: Int, end_frame: Int, start_event: MIDIEvent) {
-        val handle_id = this.setter_id_gen++
+        val setter_id = this.setter_id_gen++
 
         if (!this.setter_frame_map.containsKey(start_frame)) {
             this.setter_frame_map[start_frame] = mutableSetOf()
         }
-        this.setter_frame_map[start_frame]!!.add(handle_id)
-        this.setter_range_map[handle_id] = start_frame..end_frame
-
+        this.setter_frame_map[start_frame]!!.add(setter_id)
+        this.setter_range_map[setter_id] = start_frame..end_frame
 
         this.cached_frame_count = null
 
-        this.setter_map[handle_id] = {
+        this.setter_map[setter_id] = {
             val handles = when (start_event) {
                 is NoteOn -> this.sample_handle_manager.gen_sample_handles(start_event)
                 is NoteOn79 -> this.sample_handle_manager.gen_sample_handles(start_event)

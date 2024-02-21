@@ -67,7 +67,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
             output.add(Pair(range.first, handle))
         }
 
-        // NOTE: May miss tail samples with long decays, but for now, for my purposes, will be fine
+        // NOTE: May miss tail end of samples with long decays, but for now, for my purposes, will be fine
         val setter_ids_to_remove = mutableSetOf<Int>()
         for ((setter_id, range) in this.setter_range_map) {
             if (range.contains(frame)) {
@@ -102,7 +102,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
         return this.cached_frame_count!!
     }
     // End FrameMap Interface --------------------------
-
     fun check_frame(frame: Int) {
         if (!this.setter_frame_map.containsKey(frame)) {
             return

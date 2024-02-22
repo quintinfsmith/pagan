@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/EditorFragment"
-        android:name="com.qfs.pagan.EditorFragment"
+        android:name="com.qfs.pagan.FragmentEditor"
         android:label="@string/main_fragment_label"
         tools:layout="@layout/fragment_main" >
 
@@ -19,7 +19,7 @@
 
     <fragment
         android:id="@+id/FrontFragment"
-        android:name="com.qfs.pagan.LandingPageFragment"
+        android:name="com.qfs.pagan.FragmentLandingPage"
         android:label="@string/front_fragment_label"
         tools:layout="@layout/fragment_landing">
 
@@ -39,14 +39,14 @@
 
     <fragment
         android:id="@+id/LicenseFragment"
-        android:name="com.qfs.pagan.LicenseFragment"
+        android:name="com.qfs.pagan.FragmentLicense"
         android:label="@string/license_fragment_label"
         tools:layout="@layout/fragment_license">
     </fragment>
 
     <fragment
         android:id="@+id/SettingsFragment"
-        android:name="com.qfs.pagan.GlobalSettingsFragment"
+        android:name="com.qfs.pagan.FragmentGlobalSettings"
         android:label="@string/settings_fragment_label"
         tools:layout="@layout/fragment_global_settings">
     </fragment>

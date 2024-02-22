@@ -23,7 +23,7 @@ import java.io.FileInputStream
 import java.lang.Integer.max
 import java.lang.Integer.min
 import kotlin.concurrent.thread
-class EditorFragment : PaganFragment<FragmentMainBinding>() {
+class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     val view_model: EditorViewModel by viewModels()
     private var _active_context_menu_index: ContextMenu? = null
     var project_change_flagged = false
@@ -223,7 +223,7 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
             main.loading_reticle_show(getString(R.string.reticle_msg_import_midi))
             main.runOnUiThread {
                 editor_table?.visibility = View.INVISIBLE
-                this@EditorFragment.clearContextMenu()
+                this@FragmentEditor.clearContextMenu()
             }
             thread {
                 val path = bundle?.getString("URI")

@@ -27,7 +27,7 @@
             android:layout_height="wrap_content" />
     </LinearLayout>
 
-    <com.qfs.pagan.StdButton
+    <com.qfs.pagan.ButtonStd
         android:theme="@style/button"
         android:id="@+id/btnChoosePercussion"
         android:textSize="18sp"
@@ -48,7 +48,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"/>
 
-            <com.qfs.pagan.IconButton
+            <com.qfs.pagan.ButtonIcon
                 android:id="@+id/btnRemoveLine"
                 android:theme="@style/icon_button"
                 app:srcCompat="@drawable/remove_line"
@@ -57,7 +57,7 @@
                 android:layout_marginStart="@dimen/number_selector_spacing"
                 android:contentDescription="Remove Line"/>
 
-            <com.qfs.pagan.IconButton
+            <com.qfs.pagan.ButtonIcon
                 android:theme="@style/icon_button"
                 android:id="@+id/btnInsertLine"
                 app:srcCompat="@drawable/insert_line"
@@ -66,7 +66,7 @@
                 android:layout_marginStart="@dimen/number_selector_spacing"
                 android:contentDescription="Insert Line"/>
 
-            <com.qfs.pagan.IconButton
+            <com.qfs.pagan.ButtonIcon
                 android:visibility="gone"
                 android:theme="@style/icon_button"
                 android:id="@+id/btnLineVolumePopup"

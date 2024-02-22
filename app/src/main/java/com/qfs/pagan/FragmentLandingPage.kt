@@ -13,7 +13,7 @@ import androidx.fragment.app.setFragmentResult
 import com.qfs.pagan.databinding.FragmentLandingBinding
 import kotlin.concurrent.thread
 
-class LandingPageFragment : PaganFragment<FragmentLandingBinding>() {
+class FragmentLandingPage : FragmentPagan<FragmentLandingBinding>() {
     override fun inflate( inflater: LayoutInflater, container: ViewGroup?): FragmentLandingBinding {
         return FragmentLandingBinding.inflate(inflater, container, false)
     }

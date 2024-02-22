@@ -682,9 +682,9 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
-    private fun <T> withFragment(callback: (EditorFragment) -> T): T? {
+    private fun <T> withFragment(callback: (FragmentEditor) -> T): T? {
         val fragment = this.activity?.get_active_fragment()
-        return if (fragment is EditorFragment) {
+        return if (fragment is FragmentEditor) {
             callback(fragment)
         } else {
             null

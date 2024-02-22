@@ -25,7 +25,7 @@
                     android:paddingTop="@dimen/normal_padding"
                     android:paddingEnd="15dp" />
 
-                <com.qfs.pagan.StdButton
+                <com.qfs.pagan.ButtonStd
                     android:theme="@style/song_config_button"
                     android:id="@+id/btnChooseSoundFont"
                     android:text="@string/btn_settings_sfmute"
@@ -121,7 +121,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="48dp"/>
         </LinearLayout>
-        <com.qfs.pagan.StdButton
+        <com.qfs.pagan.ButtonStd
             android:id="@+id/btnClearPalette"
             android:visibility="gone"
             android:text="Reset Custom Colors"

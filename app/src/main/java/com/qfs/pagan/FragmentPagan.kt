@@ -8,7 +8,7 @@ import androidx.fragment.app.Fragment
 import androidx.viewbinding.ViewBinding
 import com.qfs.pagan.ColorMap.Palette
 
-abstract class PaganFragment<T: ViewBinding>: Fragment() {
+abstract class FragmentPagan<T: ViewBinding>: Fragment() {
     // Boiler Plate //
     internal var _binding: T? = null
     internal val binding get() = _binding!!

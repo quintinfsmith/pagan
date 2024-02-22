@@ -7,7 +7,7 @@ import android.util.AttributeSet
 import android.view.ContextThemeWrapper
 import com.qfs.pagan.ColorMap.Palette
 
-class StdButton(context: Context, attrs: AttributeSet?): androidx.appcompat.widget.AppCompatTextView(context, attrs) {
+class ButtonStd(context: Context, attrs: AttributeSet?): androidx.appcompat.widget.AppCompatTextView(context, attrs) {
     // NOTE: this logic exists in drawableStateChanged() rather than init since palette isn't guaranteed
     // to exist on init()
     override fun drawableStateChanged() {

@@ -11,7 +11,7 @@ import com.qfs.pagan.ColorMap.Palette
 import kotlin.math.roundToInt
 
 class InlineColorPicker(private val activity: MainActivity, label: String, key: Palette): LinearLayoutCompat(activity, null) {
-    private val color_button = ColorButton(activity, null, activity.view_model.color_map[key])
+    private val color_button = ButtonColor(activity, null, activity.view_model.color_map[key])
     private val hex_input = HexEditText(activity)
 
     init {

@@ -60,7 +60,7 @@ class CellLayout(val column_layout: ColumnLayout, val y: Int): LinearLayout(colu
 
    private fun buildTreeView(tree: OpusTree<OpusEvent>, position: List<Int>, divisions: List<Int>) {
        if (tree.is_leaf()) {
-           val tvLeaf = LeafButton(
+           val tvLeaf = ButtonLeaf(
                this.context,
                this.get_opus_manager().tuning_map.size,
                tree.get_event(),

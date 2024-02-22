@@ -10,7 +10,7 @@ import com.qfs.pagan.ColorMap.Palette
 
 
 
-class IconButton(context: Context, attrs: AttributeSet?): androidx.appcompat.widget.AppCompatImageView(context, attrs) {
+class ButtonIcon(context: Context, attrs: AttributeSet?): androidx.appcompat.widget.AppCompatImageView(context, attrs) {
     init {
         this.background = AppCompatResources.getDrawable(context, R.drawable.button_icon)
     }

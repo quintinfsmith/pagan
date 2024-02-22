@@ -28,7 +28,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-            <com.qfs.pagan.StdButton
+            <com.qfs.pagan.ButtonStd
                 android:id="@+id/btnChangeProjectName"
                 android:theme="@style/song_config_button"
                 android:text="@string/btn_cfg_change_name"
@@ -44,7 +44,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-            <com.qfs.pagan.StdButton
+            <com.qfs.pagan.ButtonStd
                 android:id="@+id/btnRadix"
                 android:theme="@style/song_config_button"
                 android:layout_width="wrap_content"
@@ -57,7 +57,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1" />
 
-            <com.qfs.pagan.StdButton
+            <com.qfs.pagan.ButtonStd
                 android:id="@+id/tvTempo"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -71,7 +71,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-            <com.qfs.pagan.StdButton
+            <com.qfs.pagan.ButtonStd
                 android:id="@+id/btnAddChannel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -101,7 +101,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content" >
 
-        <com.qfs.pagan.IconButton
+        <com.qfs.pagan.ButtonIcon
             android:layout_margin="-3dp"
             android:id="@+id/btnSaveProject"
             android:maxLines="1"
@@ -115,7 +115,7 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"/>
 
-        <com.qfs.pagan.IconButton
+        <com.qfs.pagan.ButtonIcon
             android:id="@+id/btnCopyProject"
             android:maxLines="1"
             android:layout_height="@dimen/config_button_width"
@@ -129,7 +129,7 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"/>
 
-        <com.qfs.pagan.IconButton
+        <com.qfs.pagan.ButtonIcon
             android:id="@+id/btnDeleteProject"
             android:maxLines="1"
             android:layout_height="@dimen/config_button_width"
@@ -143,7 +143,7 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"/>
 
-        <com.qfs.pagan.IconButton
+        <com.qfs.pagan.ButtonIcon
             android:id="@+id/btnExportProject"
             android:maxLines="1"
             android:layout_height="@dimen/config_button_width"

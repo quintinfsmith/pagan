@@ -13,7 +13,7 @@ class LeafText(context: Context, attrs: AttributeSet? = null): androidx.appcompa
     override fun onCreateDrawableState(extraSpace: Int): IntArray? {
         val drawableState = super.onCreateDrawableState(extraSpace + 5)
         var parent = this.parent ?: return drawableState
-        while (parent !is LeafButton) {
+        while (parent !is ButtonLeaf) {
             parent = parent.parent
         }
         return parent.drawableState

@@ -303,7 +303,7 @@ class MainActivity : AppCompatActivity() {
                         IntentFragmentToken.ImportProject.name,
                         bundleOf(Pair("URI", uri.toString()))
                     )
-                    if (fragment !is EditorFragment) {
+                    if (fragment !is FragmentEditor) {
                         this.navigate(R.id.EditorFragment)
                     }
                 }
@@ -326,7 +326,7 @@ class MainActivity : AppCompatActivity() {
         if (result.resultCode == Activity.RESULT_OK) {
             result?.data?.data?.also { uri ->
                 val fragment = this.get_active_fragment()
-                if (fragment is EditorFragment) {
+                if (fragment is FragmentEditor) {
                     fragment.project_change_flagged = true
                 }
                 fragment?.setFragmentResult(
@@ -334,7 +334,7 @@ class MainActivity : AppCompatActivity() {
                     bundleOf(Pair("URI", uri.toString()))
                 )
 
-                if (fragment !is EditorFragment) {
+                if (fragment !is FragmentEditor) {
                     this.navigate(R.id.EditorFragment)
                 }
             }
@@ -632,9 +632,9 @@ class MainActivity : AppCompatActivity() {
         when (item.itemId) {
             android.R.id.home -> {
                 val fragment = this.get_active_fragment()
-                if (fragment is EditorFragment && this._binding.root.getDrawerLockMode(this.findViewById(R.id.config_drawer)) != DrawerLayout.LOCK_MODE_LOCKED_CLOSED) {
+                if (fragment is FragmentEditor && this._binding.root.getDrawerLockMode(this.findViewById(R.id.config_drawer)) != DrawerLayout.LOCK_MODE_LOCKED_CLOSED) {
                     this.drawer_open()
-                }  else if (fragment !is EditorFragment) {
+                }  else if (fragment !is FragmentEditor) {
                     val navController = findNavController(R.id.nav_host_fragment_content_main)
                     navController.popBackStack()
                 }
@@ -645,7 +645,7 @@ class MainActivity : AppCompatActivity() {
                     val fragment = this.get_active_fragment()
                     fragment?.clearFragmentResult(IntentFragmentToken.Resume.name)
                     fragment?.setFragmentResult(IntentFragmentToken.New.name, bundleOf())
-                    if (fragment !is EditorFragment) {
+                    if (fragment !is FragmentEditor) {
                         this.navigate(R.id.EditorFragment)
                     }
                 }
@@ -948,10 +948,10 @@ class MainActivity : AppCompatActivity() {
                 this._forced_title_text!!
             } else {
                 when (this.get_active_fragment()) {
-                    is GlobalSettingsFragment -> {
+                    is FragmentGlobalSettings -> {
                         resources.getString(R.string.settings_fragment_label)
                     }
-                    is LandingPageFragment -> {
+                    is FragmentLandingPage -> {
                         "${getString(R.string.app_name)} ${getString(R.string.app_version)}"
                     }
                     else -> {
@@ -984,7 +984,7 @@ class MainActivity : AppCompatActivity() {
         val text_color = this.view_model.color_map[Palette.TitleBarText]
 
         when (navHost?.childFragmentManager?.fragments?.get(0)) {
-            is EditorFragment -> {
+            is FragmentEditor -> {
                 val play_midi_visible = (this._midi_interface.output_devices_connected() && this.get_opus_manager().is_tuning_standard())
                 options_menu.findItem(R.id.itmLoadProject).isVisible = this.has_projects_saved()
                 options_menu.findItem(R.id.itmUndo).isVisible = true
@@ -1657,7 +1657,7 @@ class MainActivity : AppCompatActivity() {
                 bundleOf(Pair("PATH", path))
             )
 
-            if (fragment !is EditorFragment) {
+            if (fragment !is FragmentEditor) {
                 this.navigate(R.id.EditorFragment)
             }
         }
@@ -2102,11 +2102,11 @@ class MainActivity : AppCompatActivity() {
 
 
         when (this.get_active_fragment()) {
-            is EditorFragment -> {
+            is FragmentEditor -> {
                 toolbar.setNavigationIcon(R.drawable.hamburger_32)
                 toolbar.navigationIcon?.setTint(text_color)
             }
-            is LandingPageFragment -> {
+            is FragmentLandingPage -> {
                 toolbar.navigationIcon = null
             }
             else -> {

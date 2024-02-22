@@ -7,7 +7,7 @@ import android.widget.TextView
 import androidx.fragment.app.setFragmentResultListener
 import com.qfs.pagan.databinding.FragmentLicenseBinding
 
-class LicenseFragment: PaganFragment<FragmentLicenseBinding>() {
+class FragmentLicense: FragmentPagan<FragmentLicenseBinding>() {
     override fun inflate(inflater: LayoutInflater, container: ViewGroup?): FragmentLicenseBinding {
         return FragmentLicenseBinding.inflate(inflater, container, false)
     }

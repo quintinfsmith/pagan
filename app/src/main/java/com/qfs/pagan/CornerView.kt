@@ -11,7 +11,7 @@ import com.qfs.pagan.ColorMap.Palette
 
 class CornerView(context: Context, attrs: AttributeSet? = null): LinearLayout(ContextThemeWrapper(context, R.style.corner_view), attrs) {
     init {
-        val inner_view = IconButton(context, null)
+        val inner_view = ButtonIcon(context, null)
 
         this.addView(inner_view)
         inner_view.layoutParams.width = MATCH_PARENT

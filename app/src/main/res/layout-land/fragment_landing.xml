@@ -85,7 +85,7 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
 
-                <com.qfs.pagan.StdButton
+                <com.qfs.pagan.ButtonStd
                     android:id="@+id/btnFrontNew"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -96,7 +96,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="@dimen/normal_padding" />
 
-                <com.qfs.pagan.StdButton
+                <com.qfs.pagan.ButtonStd
                     android:id="@+id/btnFrontLoad"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -107,7 +107,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="@dimen/normal_padding" />
 
-                <com.qfs.pagan.StdButton
+                <com.qfs.pagan.ButtonStd
                     android:id="@+id/btnFrontImport"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -118,7 +118,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="@dimen/normal_padding" />
 
-                <com.qfs.pagan.StdButton
+                <com.qfs.pagan.ButtonStd
                     android:id="@+id/btnFrontSettings"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

@@ -67,7 +67,7 @@
             android:layout_height="match_parent"
             android:layout_weight="1"/>
 
-        <com.qfs.pagan.IconButton
+        <com.qfs.pagan.ButtonIcon
             android:theme="@style/icon_button"
             android:layout_width="@dimen/icon_button_size"
             android:layout_height="@dimen/icon_button_size"
@@ -75,7 +75,7 @@
             android:src="@drawable/unlink"
             android:contentDescription="Remove Link" />
 
-        <com.qfs.pagan.IconButton
+        <com.qfs.pagan.ButtonIcon
             android:theme="@style/icon_button"
             android:layout_width="@dimen/icon_button_size"
             android:layout_height="@dimen/icon_button_size"
@@ -84,7 +84,7 @@
             android:id="@+id/btnUnLinkAll"
             android:contentDescription="Remove All Links"/>
 
-        <com.qfs.pagan.IconButton
+        <com.qfs.pagan.ButtonIcon
             android:theme="@style/icon_button"
             android:layout_width="@dimen/icon_button_size"
             android:layout_height="@dimen/icon_button_size"

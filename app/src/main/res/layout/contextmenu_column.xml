@@ -12,7 +12,7 @@
         android:layout_weight="1"
         android:layout_height="wrap_content"/>
 
-    <com.qfs.pagan.IconButton
+    <com.qfs.pagan.ButtonIcon
         android:theme="@style/icon_button"
         android:id="@+id/btnRemoveBeat"
         android:layout_width="@dimen/icon_button_size"
@@ -21,7 +21,7 @@
         android:layout_marginEnd="@dimen/number_selector_spacing"
         android:contentDescription="Remove Beat" />
 
-    <com.qfs.pagan.IconButton
+    <com.qfs.pagan.ButtonIcon
         android:theme="@style/icon_button"
         android:id="@+id/btnInsertBeat"
         android:layout_gravity="center"

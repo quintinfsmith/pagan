@@ -8,7 +8,7 @@ import android.util.AttributeSet
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.appcompat.view.ContextThemeWrapper
 
-class ColorButton(context: Context, attrs: AttributeSet? = null, private var color: Int = 0): androidx.appcompat.widget.AppCompatTextView(context, attrs) {
+class ButtonColor(context: Context, attrs: AttributeSet? = null, private var color: Int = 0): androidx.appcompat.widget.AppCompatTextView(context, attrs) {
     private var on_change: ((Int) -> Unit)? = null
     init {
         this.background = AppCompatResources.getDrawable(context, R.drawable.button)

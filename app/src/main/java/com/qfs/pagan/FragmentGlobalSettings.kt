@@ -4,7 +4,6 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -21,7 +20,7 @@ import java.io.FileInputStream
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
 
-class GlobalSettingsFragment : PaganFragment<FragmentGlobalSettingsBinding>() {
+class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
     private var _import_soundfont_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             result?.data?.data?.also { uri ->
@@ -135,7 +134,7 @@ class GlobalSettingsFragment : PaganFragment<FragmentGlobalSettingsBinding>() {
         main.loading_reticle_show()
         val color_map = main.view_model.color_map
         val sCustomPalette = view.findViewById<PaganSwitch>(R.id.sCustomPalette)
-        val btnClearPalette = view.findViewById<StdButton>(R.id.btnClearPalette)
+        val btnClearPalette = view.findViewById<ButtonStd>(R.id.btnClearPalette)
         btnClearPalette.setOnClickListener {
             main.dialog_confirm(getString(R.string.dialog_reset_colors)) {
                 main.view_model.color_map.unpopulate()

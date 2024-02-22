@@ -60,7 +60,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
         this.spacer.setOnClickListener {
             val fragment = this.get_activity().get_active_fragment()
-            if (fragment is EditorFragment) {
+            if (fragment is FragmentEditor) {
                 fragment.shortcut_dialog()
             }
         }

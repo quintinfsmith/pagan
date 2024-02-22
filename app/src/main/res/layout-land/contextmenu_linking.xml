@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     xmlns:app="http://schemas.android.com/apk/res-auto">
-    <com.qfs.pagan.IconButton
+    <com.qfs.pagan.ButtonIcon
         android:layout_width="@dimen/icon_button_size"
         android:layout_height="@dimen/icon_button_size"
         android:layout_gravity="end"
@@ -22,7 +22,7 @@
         android:id="@+id/textView2"
         android:text="Tap a beat to link it"/>
 
-    <com.qfs.pagan.IconButton
+    <com.qfs.pagan.ButtonIcon
         android:theme="@style/icon_button"
         android:id="@+id/btnUnLink"
         android:layout_width="@dimen/icon_button_size"
@@ -32,7 +32,7 @@
         android:layout_marginTop="@dimen/number_selector_spacing"
         android:contentDescription="Remove Link" />
 
-    <com.qfs.pagan.IconButton
+    <com.qfs.pagan.ButtonIcon
         android:theme="@style/icon_button"
         android:id="@+id/btnUnLinkAll"
         android:src="@drawable/unlinkall"

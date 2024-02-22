@@ -21,8 +21,8 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
     var kill_frame: Int? = null
     private var _empty_chunks_count = 0
     private var _active_sample_handles = HashMap<Int, ActiveHandleMapItem>()
-    var timeout: Int? = null
-    val core_count = Runtime.getRuntime().availableProcessors()
+    private var timeout: Int? = null
+    private val core_count = Runtime.getRuntime().availableProcessors()
 
     fun generate(): ShortArray {
         val output_array = ShortArray(this.buffer_size * 2)
@@ -136,7 +136,6 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
 
     private fun populate_partial_int_array(sample_handle: SampleHandle, working_int_array: IntArray, offset: Int) {
         // Assume working_int_array.size % 2 == 0
-
         val range = if (offset < 0) {
             0 until (working_int_array.size / 2)
         } else {

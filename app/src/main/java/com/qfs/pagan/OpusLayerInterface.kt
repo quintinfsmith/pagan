@@ -545,7 +545,6 @@ class OpusLayerInterface : OpusLayerCursor() {
             editor_table?.clear()
             editor_table?.precise_scroll(0, 0, 0, 0)
 
-            main.clear_cached_playback_frames()
             main.setup_project_config_drawer()
             main.validate_percussion_visibility()
             main.update_menu_options()

@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -118,15 +119,13 @@ class GlobalSettingsFragment : PaganFragment<FragmentGlobalSettingsBinding>() {
         val slider_playback_quality = view.findViewById<SeekBar>(R.id.sbPlaybackQuality)
         val min_sample_rate = 11025
         val max_sample_rate = 44100
-        slider_playback_quality.progress =
-            (main.configuration.sample_rate - min_sample_rate) * slider_playback_quality.max / (max_sample_rate - min_sample_rate)
+        slider_playback_quality.progress = (main.configuration.sample_rate - min_sample_rate) * slider_playback_quality.max / (max_sample_rate - min_sample_rate)
         slider_playback_quality.setOnSeekBarChangeListener(object :
             SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {}
             override fun onStartTrackingTouch(p0: SeekBar?) {}
             override fun onStopTrackingTouch(seekbar: SeekBar?) {
-                main.configuration.sample_rate =
-                    (seekbar!!.progress * (max_sample_rate - min_sample_rate) / seekbar.max) + min_sample_rate
+                main.configuration.sample_rate = (seekbar!!.progress * (max_sample_rate - min_sample_rate) / seekbar.max) + min_sample_rate
                 main.set_sample_rate(main.configuration.sample_rate)
                 main.save_configuration()
             }

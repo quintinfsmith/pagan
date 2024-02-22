@@ -2189,19 +2189,4 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-    fun cache_playback_frames(range: IntRange) {
-        return
-        if (this._midi_playback_device == null) {
-            return
-        }
-        val buffer_size = this._midi_playback_device!!.buffer_size
-        var working_frame = range.first - (range.first % buffer_size)
-        while (range.contains(working_frame)) {
-            this._midi_playback_device!!.cache_chunk(working_frame)
-            working_frame += buffer_size
-        }
-    }
-    fun clear_cached_playback_frames() {
-        this._midi_playback_device?.purge_wave_generator()
-    }
 }

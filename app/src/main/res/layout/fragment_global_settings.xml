@@ -83,7 +83,7 @@
                 <com.qfs.pagan.PaganSeekBar
                     android:id="@+id/sbPlaybackQuality"
                     android:text="@string/label_settings_playback_quality"
-                    android:max="12"
+                    android:max="5"
                     android:min="0"
                     android:layout_weight="1"
                     android:layout_width="0dp"

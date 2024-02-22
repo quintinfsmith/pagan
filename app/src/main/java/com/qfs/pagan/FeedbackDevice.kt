@@ -66,7 +66,6 @@ class FeedbackDevice(var sample_handle_manager: SampleHandleManager): MappedPlay
     }
 
     fun queue_kill(millis: Int) {
-        Log.d("AAA", "QUEUED: $millis")
         val working_kill_time = millis + System.currentTimeMillis()
         this.set_kill_time(working_kill_time)
 

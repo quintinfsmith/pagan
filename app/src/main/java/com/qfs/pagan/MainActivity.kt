@@ -139,8 +139,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var _midi_interface: MidiController
     private var _soundfont: SoundFont? = null
     private var sample_handle_manager: SampleHandleManager? = null
-    private var _midi_playback_device: PaganPlaybackDevice? = null
-    private var _midi_feedback_device: PaganFeedbackDevice? = null
+    private var _midi_playback_device: PlaybackDevice? = null
+    private var _midi_feedback_device: FeedbackDevice? = null
     private var _midi_feedback_dispatcher = MidiFeedbackDispatcher()
 
     private lateinit var _app_bar_configuration: AppBarConfiguration
@@ -537,10 +537,10 @@ class MainActivity : AppCompatActivity() {
                     this.configuration.sample_rate,
                     this.configuration.sample_rate // Use Large buffer
                 )
-                this._midi_playback_device = PaganPlaybackDevice(this, this.sample_handle_manager!!)
+                this._midi_playback_device = PlaybackDevice(this, this.sample_handle_manager!!)
 
                 if (!this._midi_interface.output_devices_connected()) {
-                    this._midi_feedback_device = PaganFeedbackDevice(
+                    this._midi_feedback_device = FeedbackDevice(
                         SampleHandleManager(
                             this._soundfont!!,
                             this.configuration.sample_rate,
@@ -1423,9 +1423,9 @@ class MainActivity : AppCompatActivity() {
             this.configuration.sample_rate
         )
 
-        this._midi_playback_device = PaganPlaybackDevice(this, this.sample_handle_manager!!)
+        this._midi_playback_device = PlaybackDevice(this, this.sample_handle_manager!!)
 
-        this._midi_feedback_device = PaganFeedbackDevice(
+        this._midi_feedback_device = FeedbackDevice(
             SampleHandleManager(
                 this._soundfont!!,
                 this.configuration.sample_rate,
@@ -1843,8 +1843,8 @@ class MainActivity : AppCompatActivity() {
                 this.configuration.sample_rate
             )
 
-            this._midi_playback_device = PaganPlaybackDevice(this, this.sample_handle_manager!!)
-            this._midi_feedback_device = PaganFeedbackDevice(
+            this._midi_playback_device = PlaybackDevice(this, this.sample_handle_manager!!)
+            this._midi_feedback_device = FeedbackDevice(
                 SampleHandleManager(
                     this._soundfont!!,
                     this.configuration.sample_rate,

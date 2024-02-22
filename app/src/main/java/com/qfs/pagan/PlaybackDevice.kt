@@ -4,7 +4,7 @@ import com.qfs.apres.soundfontplayer.MappedPlaybackDevice
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import kotlin.math.max
 
-class PaganPlaybackDevice(var activity: MainActivity, sample_handle_manager: SampleHandleManager): MappedPlaybackDevice(
+class PlaybackDevice(var activity: MainActivity, sample_handle_manager: SampleHandleManager): MappedPlaybackDevice(
     PlaybackFrameMap(activity.get_opus_manager(), sample_handle_manager),
     sample_handle_manager.sample_rate,
     sample_handle_manager.buffer_size

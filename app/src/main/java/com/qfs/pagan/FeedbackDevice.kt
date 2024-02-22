@@ -1,5 +1,6 @@
 package com.qfs.pagan
 
+import android.util.Log
 import com.qfs.apres.VirtualMidiOutputDevice
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event2.NoteOn79
@@ -10,13 +11,17 @@ import com.qfs.apres.soundfontplayer.SampleHandleManager
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlin.concurrent.thread
 import kotlin.math.max
 
-class PaganFeedbackDevice(var sample_handle_manager: SampleHandleManager): MappedPlaybackDevice(ImmediateFrameMap(), sample_handle_manager.sample_rate, sample_handle_manager.buffer_size), VirtualMidiOutputDevice {
+class FeedbackDevice(var sample_handle_manager: SampleHandleManager): MappedPlaybackDevice(ImmediateFrameMap(), sample_handle_manager.sample_rate, sample_handle_manager.buffer_size), VirtualMidiOutputDevice {
+    var queued_kill_time: Long? = null
+    val kill_mutex = Mutex()
     class ImmediateFrameMap: FrameMap {
         val handles = mutableSetOf<SampleHandle>()
         val mutex = Mutex()
         var max_frame = -1
+
         override fun get_new_handles(frame: Int): Set<SampleHandle> {
             val output = this.handles.toSet()
             runBlocking {
@@ -52,6 +57,26 @@ class PaganFeedbackDevice(var sample_handle_manager: SampleHandleManager): Mappe
         }
     }
 
+    fun set_kill_time(kill_time: Long?) {
+        runBlocking {
+            this@FeedbackDevice.kill_mutex.withLock {
+                this@FeedbackDevice.queued_kill_time = kill_time
+            }
+        }
+    }
+
+    fun queue_kill(millis: Int) {
+        Log.d("AAA", "QUEUED: $millis")
+        val working_kill_time = millis + System.currentTimeMillis()
+        this.set_kill_time(working_kill_time)
+
+        Thread.sleep(millis.toLong())
+
+        if (working_kill_time == this@FeedbackDevice.queued_kill_time) {
+            this.kill()
+            this.set_kill_time(null)
+        }
+    }
     override fun on_stop() {
         (this.sample_frame_map as ImmediateFrameMap).max_frame = 0
     }
@@ -68,17 +93,20 @@ class PaganFeedbackDevice(var sample_handle_manager: SampleHandleManager): Mappe
     fun new_event(event: NoteOn79, duration_millis: Int) {
         val handles = this.sample_handle_manager.gen_sample_handles(event)
 
-        var kill_frame = 0
         for (handle in handles) {
             handle.release_frame = duration_millis * this.sample_rate / 1000
-            kill_frame = max(kill_frame, handle.release_frame!! + handle.get_release_duration())
             (this.sample_frame_map as ImmediateFrameMap).add(handle)
         }
 
         if (this.is_playing) {
-            this.set_kill_frame(kill_frame + this.wave_generator.frame)
+            thread {
+                this.queue_kill(duration_millis * 4)
+            }
         } else {
-            this.play(0, kill_frame)
+            this.play(0)
+            thread {
+                this.queue_kill(duration_millis * 4)
+            }
         }
     }
 

@@ -1,6 +1,5 @@
 package com.qfs.pagan
 
-import android.util.Log
 import com.qfs.apres.VirtualMidiOutputDevice
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event2.NoteOn79
@@ -11,7 +10,6 @@ import com.qfs.apres.soundfontplayer.SampleHandleManager
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlin.concurrent.thread
 import kotlin.math.max
 
 class FeedbackDevice(var sample_handle_manager: SampleHandleManager): MappedPlaybackDevice(ImmediateFrameMap(), sample_handle_manager.sample_rate, sample_handle_manager.buffer_size), VirtualMidiOutputDevice {
@@ -30,8 +28,7 @@ class FeedbackDevice(var sample_handle_manager: SampleHandleManager): MappedPlay
                 }
             }
             for (handle in output) {
-                this.max_frame =
-                    max(frame + handle.release_frame!! + handle.get_release_duration(), this.max_frame)
+                this.max_frame = max(frame + handle.release_frame!! + handle.get_release_duration(), this.max_frame)
             }
             return output
         }
@@ -97,15 +94,8 @@ class FeedbackDevice(var sample_handle_manager: SampleHandleManager): MappedPlay
             (this.sample_frame_map as ImmediateFrameMap).add(handle)
         }
 
-        if (this.is_playing) {
-            thread {
-                this.queue_kill(duration_millis * 4)
-            }
-        } else {
+        if (!this.is_playing) {
             this.play(0)
-            thread {
-                this.queue_kill(duration_millis * 4)
-            }
         }
     }
 

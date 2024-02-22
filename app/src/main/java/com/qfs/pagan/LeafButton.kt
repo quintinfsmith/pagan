@@ -19,7 +19,7 @@ import kotlin.concurrent.thread
 import kotlin.math.abs
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
-class ButtonLeaf(
+class LeafButton(
     context: Context,
     initial_radix: Int,
     private var _event: OpusEvent?,

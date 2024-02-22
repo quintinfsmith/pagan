@@ -139,8 +139,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var _midi_interface: MidiController
     private var _soundfont: SoundFont? = null
     private var sample_handle_manager: SampleHandleManager? = null
+    private var _feedback_sample_manager: SampleHandleManager? = null
     private var _midi_playback_device: PlaybackDevice? = null
-    private var _midi_feedback_device: FeedbackDevice? = null
     private var _midi_feedback_dispatcher = MidiFeedbackDispatcher()
 
     private lateinit var _app_bar_configuration: AppBarConfiguration
@@ -150,6 +150,10 @@ class MainActivity : AppCompatActivity() {
     var playback_state_soundfont: PlaybackState = PlaybackState.NotReady
     var playback_state_midi: PlaybackState = PlaybackState.NotReady
     private var _forced_title_text: String? = null
+    val temporary_feedback_devices = Array<FeedbackDevice?>(4) {
+        null
+    }
+    var current_feedback_device: Int = 0
 
     // Notification shiz -------------------------------------------------
     var NOTIFICATION_ID = 0
@@ -540,12 +544,10 @@ class MainActivity : AppCompatActivity() {
                 this._midi_playback_device = PlaybackDevice(this, this.sample_handle_manager!!)
 
                 if (!this._midi_interface.output_devices_connected()) {
-                    this._midi_feedback_device = FeedbackDevice(
-                        SampleHandleManager(
-                            this._soundfont!!,
-                            this.configuration.sample_rate,
-                            this.configuration.sample_rate / 4,
-                        )
+                    this._feedback_sample_manager = SampleHandleManager(
+                        this._soundfont!!,
+                        this.configuration.sample_rate,
+                        this.configuration.sample_rate / 4,
                     )
                 }
             }
@@ -1275,12 +1277,12 @@ class MainActivity : AppCompatActivity() {
                 this._midi_interface.broadcast_event(ProgramChange(channel.midi_channel, channel.midi_program))
 
 
-                if (this._midi_feedback_device != null) {
-                    this._midi_feedback_device!!.sample_handle_manager.select_bank(
+                if (this._feedback_sample_manager != null) {
+                    this._feedback_sample_manager!!.select_bank(
                         channel.midi_channel,
                         channel.midi_bank,
                     )
-                    this._midi_feedback_device!!.sample_handle_manager.change_program(
+                    this._feedback_sample_manager!!.change_program(
                         channel.midi_channel,
                         channel.midi_program,
                     )
@@ -1290,12 +1292,12 @@ class MainActivity : AppCompatActivity() {
             val opus_channel = this.get_opus_manager().channels[index]
             this._midi_interface.broadcast_event(BankSelect(opus_channel.midi_channel, opus_channel.midi_bank))
             this._midi_interface.broadcast_event(ProgramChange(opus_channel.midi_channel, opus_channel.midi_program))
-            if (this._midi_feedback_device != null) {
-                this._midi_feedback_device!!.sample_handle_manager.select_bank(
+            if (this._feedback_sample_manager != null) {
+                this._feedback_sample_manager!!.select_bank(
                     opus_channel.midi_channel,
                     opus_channel.midi_bank,
                 )
-                this._midi_feedback_device!!.sample_handle_manager.change_program(
+                this._feedback_sample_manager!!.change_program(
                     opus_channel.midi_channel,
                     opus_channel.midi_program,
                 )
@@ -1334,8 +1336,15 @@ class MainActivity : AppCompatActivity() {
             Pair(new_note, bend)
         }
 
-        if (this._midi_playback_device != null) {
-            this._midi_feedback_device!!.new_event(
+        if (this._feedback_sample_manager != null) {
+            if (this.temporary_feedback_devices[this.current_feedback_device] != null) {
+                this.temporary_feedback_devices[this.current_feedback_device]!!.kill()
+            }
+            this.temporary_feedback_devices[this.current_feedback_device] = FeedbackDevice(
+                this._feedback_sample_manager!!
+            )
+
+            this.temporary_feedback_devices[this.current_feedback_device]!!.new_event(
                 NoteOn79(
                     index=0,
                     channel=midi_channel,
@@ -1345,6 +1354,7 @@ class MainActivity : AppCompatActivity() {
                 ),
                 250
             )
+            this.current_feedback_device = (this.current_feedback_device + 1) % this.temporary_feedback_devices.size
         } else {
             this._midi_feedback_dispatcher.play_note(
                 midi_channel,
@@ -1410,7 +1420,7 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        if (this._midi_feedback_device != null) {
+        if (this._feedback_sample_manager != null) {
             this.disconnect_feedback_device()
         }
 
@@ -1425,12 +1435,10 @@ class MainActivity : AppCompatActivity() {
 
         this._midi_playback_device = PlaybackDevice(this, this.sample_handle_manager!!)
 
-        this._midi_feedback_device = FeedbackDevice(
-            SampleHandleManager(
-                this._soundfont!!,
-                this.configuration.sample_rate,
-                this.configuration.sample_rate / 4,
-            )
+        this._feedback_sample_manager = SampleHandleManager(
+            this._soundfont!!,
+            this.configuration.sample_rate,
+            this.configuration.sample_rate / 4,
         )
 
 
@@ -1510,7 +1518,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         this.update_channel_instruments()
-        if (this._midi_feedback_device != null) {
+        if (this._feedback_sample_manager != null) {
             this.disconnect_feedback_device()
         }
 
@@ -1518,7 +1526,7 @@ class MainActivity : AppCompatActivity() {
         this.sample_handle_manager = null
         this.configuration.soundfont = null
         this._midi_playback_device = null
-        this._midi_feedback_device = null
+        this._feedback_sample_manager = null
 
         this.populate_active_percussion_names()
     }
@@ -1844,12 +1852,10 @@ class MainActivity : AppCompatActivity() {
             )
 
             this._midi_playback_device = PlaybackDevice(this, this.sample_handle_manager!!)
-            this._midi_feedback_device = FeedbackDevice(
-                SampleHandleManager(
-                    this._soundfont!!,
-                    this.configuration.sample_rate,
-                    this.configuration.sample_rate / 4
-                )
+            this._feedback_sample_manager = SampleHandleManager(
+                this._soundfont!!,
+                this.configuration.sample_rate,
+                this.configuration.sample_rate / 4
             )
         } else {
            this._midi_playback_device = null
@@ -1911,8 +1917,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun disconnect_feedback_device() {
-        this._midi_feedback_device?.kill()
-        this._midi_feedback_device = null
+        this._feedback_sample_manager = null
     }
 
     fun connect_feedback_device() {

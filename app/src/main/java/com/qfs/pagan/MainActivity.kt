@@ -545,7 +545,6 @@ class MainActivity : AppCompatActivity() {
                             this._soundfont!!,
                             this.configuration.sample_rate,
                             this.configuration.sample_rate / 4,
-
                         )
                     )
                 }

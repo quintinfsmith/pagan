@@ -10,12 +10,7 @@ class PitchedBuffer(val data: ShortArray, var pitch: Double) {
     var size = (data.size.toDouble() / this.pitch).toInt()
 
     private var virtual_position: Int = 0
-
     private val original_pitch: Double = this.pitch
-
-    init {
-        this.virtual_position = 0
-    }
 
     fun repitch(new_pitch: Double) {
         this.pitch = this.original_pitch * new_pitch

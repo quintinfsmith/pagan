@@ -11,7 +11,7 @@ enum class HistoryToken {
     MOVE_LINE,
     NEW_CHANNEL,
     REMOVE,
-    REMOVE_BEAT,
+    REMOVE_BEATS,
     REMOVE_CHANNEL,
     REMOVE_LINE,
     REPLACE_TREE,

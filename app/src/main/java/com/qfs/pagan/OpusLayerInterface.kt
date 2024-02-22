@@ -471,7 +471,6 @@ class OpusLayerInterface : OpusLayerCursor() {
     override fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<OpusEvent>>?) {
         val bkp_cursor = this.cursor.copy()
         super.insert_beat(beat_index, beats_in_column)
-
         val editor_table = this.get_editor_table() ?: return
 
         when (this.get_ui_lock_level()) {
@@ -485,6 +484,35 @@ class OpusLayerInterface : OpusLayerCursor() {
                 this.runOnUiThread {
                     editor_table.update_cursor(bkp_cursor)
                     editor_table.new_column(beat_index)
+                    editor_table.update_cursor(this.cursor)
+                }
+            }
+        }
+    }
+
+    override fun insert_beats(beat_index: Int, count: Int) {
+        val bkp_cursor = this.cursor.copy()
+        this.surpress_ui {
+            super.insert_beats(beat_index, count)
+        }
+
+        val editor_table = this.get_editor_table() ?: return
+
+        when (this.get_ui_lock_level()) {
+            UI_LOCK_FULL -> { }
+            UI_LOCK_PARTIAL -> {
+                editor_table.update_cursor(bkp_cursor)
+                for (i in 0 until count) {
+                    editor_table.new_column(beat_index + i, true)
+                }
+                editor_table.update_cursor(this.cursor)
+            }
+            else -> {
+                this.runOnUiThread {
+                    editor_table.update_cursor(bkp_cursor)
+                    for (i in 0 until count) {
+                        editor_table.new_column(beat_index + i)
+                    }
                     editor_table.update_cursor(this.cursor)
                 }
             }

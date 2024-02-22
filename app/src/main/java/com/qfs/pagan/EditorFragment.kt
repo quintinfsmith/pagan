@@ -475,10 +475,10 @@ class EditorFragment : PaganFragment<FragmentMainBinding>() {
         }
 
         btnInsertBeat.setOnLongClickListener {
-            main.dialog_number_input( getString(R.string.dlg_insert_beats), 1, 99) { count: Int ->
+            main.dialog_number_input( getString(R.string.dlg_insert_beats), 1, 4096) { count: Int ->
                 val beat = opus_manager.cursor.beat
                 opus_manager.insert_beat_after_cursor(count)
-                opus_manager.cursor_select_column(beat + count)
+                opus_manager.cursor_select_column(beat + 1)
             }
             true
         }

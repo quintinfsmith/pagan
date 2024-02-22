@@ -277,11 +277,11 @@ open class OpusLayerCursor(): OpusLayerHistory() {
         }
     }
 
-    override fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<OpusEvent>>?) {
+    override fun insert_beats(beat_index: Int, count: Int) {
         val bkp_cursor = this.cursor.copy()
         this.cursor_clear()
 
-        super.insert_beat(beat_index, beats_in_column)
+        super.insert_beats(beat_index, count)
 
         when (bkp_cursor.mode) {
             OpusManagerCursor.CursorMode.Column -> {
@@ -540,8 +540,8 @@ open class OpusLayerCursor(): OpusLayerHistory() {
                         listOf(args[0] as Int)
                     )
                 }
-                HistoryToken.REMOVE_BEAT -> {
-                    val x = max(0, min(args[0] as Int, this.beat_count - 2))
+                HistoryToken.REMOVE_BEATS -> {
+                    val x = max(0, min(args[0] as Int, this.beat_count - (1 + (args[1] as Int))))
                     this.push_to_history_stack(
                         HistoryToken.CURSOR_SELECT_COLUMN,
                         listOf(x)
@@ -767,7 +767,7 @@ open class OpusLayerCursor(): OpusLayerHistory() {
     }
 
     fun insert_beat_after_cursor(count: Int) {
-        this.insert_beat(this.cursor.beat + 1, count)
+        this.insert_beats(this.cursor.beat + 1, count)
     }
 
     fun link_beat(beat_key: BeatKey) {

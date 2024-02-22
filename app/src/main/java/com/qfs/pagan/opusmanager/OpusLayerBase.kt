@@ -1,4 +1,5 @@
 package com.qfs.pagan.opusmanager
+import android.util.Log
 import com.qfs.apres.Midi
 import com.qfs.apres.event.BankSelect
 import com.qfs.apres.event.NoteOff
@@ -712,9 +713,9 @@ open class OpusLayerBase {
         }
     }
 
-    open fun insert_beat(beat_index: Int, count: Int) {
+    open fun insert_beats(beat_index: Int, count: Int) {
         for (i in 0 until count) {
-            this.insert_beat(beat_index + i)
+            this.insert_beat(beat_index)
         }
     }
 
@@ -1126,7 +1127,7 @@ open class OpusLayerBase {
         this.clear()
         this.new_channel()
         this.new_channel()
-        this.insert_beat(0, 4)
+        this.insert_beats(0, 4)
         this.set_project_name(this.project_name)
         this.on_project_changed()
     }
@@ -1218,7 +1219,7 @@ open class OpusLayerBase {
             }
         }
 
-        this.insert_beat(0, beat_count)
+        this.insert_beats(0, beat_count)
         y = 0
         json_data.channels.forEachIndexed { i, channel_data ->
             // Separate out percussion channel, just in case it isn't at the end of the channels
@@ -1556,7 +1557,7 @@ open class OpusLayerBase {
             this.new_channel(lines = channel_sizes[channel])
         }
 
-        this.insert_beat(0, settree.size)
+        this.insert_beats(0, settree.size)
 
         val events_to_set = mutableSetOf<Triple<BeatKey, List<Int>, OpusEvent>>()
         for ((position, event_set) in mapped_events) {

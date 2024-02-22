@@ -340,6 +340,20 @@ open class OpusLayerLinks : OpusLayerBase() {
         super.insert_beat(beat_index, beats_in_column)
     }
 
+    override fun insert_beats(beat_index: Int, count: Int) {
+        this.remap_links { beat_key: BeatKey ->
+            if (beat_key.beat >= beat_index) {
+                BeatKey(beat_key.channel, beat_key.line_offset, beat_key.beat + count)
+            } else {
+                beat_key
+            }
+        }
+
+        this.lock_links {
+            super.insert_beats(beat_index, count)
+        }
+    }
+
     override fun remove_beat(beat_index: Int) {
         this.remap_links { beat_key: BeatKey ->
             if (beat_key.beat > beat_index) {

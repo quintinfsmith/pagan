@@ -193,11 +193,6 @@ class SampleHandle(
             return null
         }
 
-        if (this.data_buffer.position() >= this.data_buffer.size) {
-            this.is_dead = true
-            return null
-        }
-
         var frame_factor = this.implicit_volume_ratio
         val is_pressed = this.release_frame == null || this.working_frame < this.release_frame!!
 
@@ -255,7 +250,13 @@ class SampleHandle(
 
         this.working_frame += 1
 
-        return (this.data_buffer.get().toDouble() * frame_factor * this.volume).toInt()
+
+        return try {
+            (this.data_buffer.get().toDouble() * frame_factor * this.volume).toInt()
+        } catch (e: ArrayIndexOutOfBoundsException) {
+            this.is_dead = true
+            null
+        }
     }
 
     fun release_note() {

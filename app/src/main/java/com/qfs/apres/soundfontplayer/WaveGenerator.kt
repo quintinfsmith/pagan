@@ -48,10 +48,10 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             throw EmptyException()
         }
 
-        val arrays: Array<ShortArray> = runBlocking {
+        val arrays: Array<IntArray> = runBlocking {
             val tmp = Array(this@WaveGenerator.core_count) { i: Int ->
                 async(Dispatchers.Default) {
-                    this@WaveGenerator.gen_partial_short_array(first_frame, i)
+                    this@WaveGenerator.gen_partial_int_array(first_frame, i)
                 }
             }
 
@@ -60,10 +60,26 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             }
         }
 
+        // Volume Attenuation----
         var offset = 0
-        arrays.forEachIndexed { i: Int, input_array: ShortArray ->
-            input_array.forEachIndexed { x: Int, v: Short ->
-                array[offset++] = v
+        var max_frame_value = 0
+        arrays.forEachIndexed { i: Int, input_array: IntArray ->
+            input_array.forEachIndexed { x: Int, v: Int ->
+                max_frame_value = max(abs(v), max_frame_value)
+            }
+        }
+
+        val mid = (Short.MAX_VALUE.toDouble() / 2.0)
+        val compression_ratio = if (max_frame_value > Short.MAX_VALUE) {
+            mid / (max_frame_value.toDouble() - mid)
+        } else {
+            1.0
+        }
+        // -------------------
+
+        arrays.forEachIndexed { i: Int, input_array: IntArray ->
+            input_array.forEachIndexed { x: Int, v: Int ->
+                array[offset++] = (v * compression_ratio).toInt().toShort()
             }
         }
 
@@ -74,7 +90,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         }
     }
 
-    private fun gen_partial_short_array(first_frame: Int, sample_index: Int): ShortArray {
+    private fun gen_partial_int_array(first_frame: Int, sample_index: Int): IntArray {
         val int_array = IntArray(this.buffer_size * 2 / this.core_count)
 
         for ((_, item) in this._active_sample_handles) {
@@ -108,30 +124,8 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             }
         }
 
-        var max_frame_value = 0
-        for (v in int_array) {
-            max_frame_value = max(max_frame_value, abs(v))
-        }
+        return int_array
 
-        val mid = Short.MAX_VALUE / 2
-        val compression_ratio = if (max_frame_value <= Short.MAX_VALUE) {
-            1.0
-        } else {
-            mid.toDouble() / (max_frame_value).toDouble()
-        }
-
-        val array = ShortArray(int_array.size) { i: Int ->
-            val v = int_array[i]
-            if (compression_ratio >= 1.0 || (0 - mid .. mid).contains(v)) {
-                v.toShort()
-            } else if (v > mid) {
-                (mid + ((v - mid).toFloat() * compression_ratio).toInt()).toShort()
-            } else {
-                (((v + mid).toFloat() * compression_ratio).toInt() - mid).toShort()
-            }
-        }
-
-        return array
     }
 
     private fun populate_partial_int_array(sample_handle: SampleHandle, working_int_array: IntArray, offset: Int) {

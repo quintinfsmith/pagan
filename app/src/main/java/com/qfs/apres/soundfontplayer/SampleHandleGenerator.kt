@@ -4,7 +4,6 @@ import com.qfs.apres.event2.NoteOn79
 import com.qfs.apres.soundfont.InstrumentSample
 import com.qfs.apres.soundfont.Preset
 import com.qfs.apres.soundfont.PresetInstrument
-import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
@@ -120,23 +119,6 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
         val mod_lfo_pitch: Int = (sample.mod_lfo_pitch ?: instrument.instrument?.global_sample?.mod_lfo_pitch ?: 0 ) + (instrument.mod_lfo_pitch ?: 0) + (preset.global_zone?.mod_lfo_pitch ?: 0)
         val mod_lfo_filter: Int = (sample.mod_lfo_filter ?: instrument.instrument?.global_sample?.mod_lfo_filter ?: 0 ) + (instrument.mod_lfo_filter ?: 0) + (preset.global_zone?.mod_lfo_filter ?: 0)
 
-        val max_values = mutableListOf<Short>()
-        data.forEachIndexed { i: Int, frame: Short ->
-            val d = i / (this@SampleHandleGenerator.buffer_size / 3)
-            while (max_values.size <= d) {
-                max_values.add(0)
-            }
-
-            val abs_frame = abs(frame.toInt())
-            if (abs_frame > max_values[d]) {
-                max_values[d] = abs_frame.toShort()
-            }
-        }
-
-        val max_values_floats = Array(max_values.size) {
-            max_values[it].toFloat() / Short.MAX_VALUE.toFloat()
-        }
-
         val filter_cutoff: Double = (sample.filter_cutoff ?: instrument.instrument?.global_sample?.filter_cutoff ?: 13500.0 ) + (instrument.filter_cutoff ?: 0.0) + (preset.global_zone?.filter_cutoff ?: 0.0)
         this.generated += 1
 
@@ -165,7 +147,6 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
             ),
             volume_envelope =  volume_envelope,
             modulation_envelope = modulation_envelope,
-            max_values = max_values_floats,
             filter_cutoff = filter_cutoff,
             linked_handle_count = linked_handle_count
         )

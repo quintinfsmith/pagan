@@ -16,7 +16,6 @@ class SampleHandle(
     var modulation_envelope: ModulationEnvelope,
     var modulation_lfo: LFO,
 
-    var max_values: Array<Float> = Array<Float>(0) { 0F },
     var pitch_shift: Double = 1.0,
     var filter_cutoff: Double = 13500.0,
     var pan: Double = 0.0,
@@ -130,7 +129,6 @@ class SampleHandle(
         volume_envelope = original.volume_envelope,
         modulation_envelope = original.modulation_envelope,
         modulation_lfo = original.modulation_lfo,
-        max_values = original.max_values,
         pitch_shift = original.pitch_shift,
         filter_cutoff = original.filter_cutoff,
         pan = original.pan,
@@ -142,6 +140,10 @@ class SampleHandle(
         val tmp_tan = tan(PI * this.filter_cutoff / this.sample_rate.toDouble())
         this.lpf_factor = (tmp_tan - 1) / (tmp_tan + 1)
         this.data_buffer = PitchedBuffer(this.data, this.pitch_shift)
+    }
+
+    fun max_frame_value(): Int {
+        return this.data_buffer.max
     }
 
     fun set_release_frame(frame: Int) {
@@ -273,5 +275,6 @@ class SampleHandle(
             this.release_frame!! + this.get_release_duration()
         }
     }
+
 }
 

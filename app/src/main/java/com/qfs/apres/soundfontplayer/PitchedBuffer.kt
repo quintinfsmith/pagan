@@ -1,6 +1,6 @@
 package com.qfs.apres.soundfontplayer
 
-import java.lang.Math.abs
+import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 

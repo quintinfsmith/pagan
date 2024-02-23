@@ -61,7 +61,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         }
 
         // Volume Attenuation----
-        var offset = 0
+        val elbow = (Short.MAX_VALUE.toDouble() * .75)
         var max_frame_value = 0
         arrays.forEachIndexed { i: Int, input_array: IntArray ->
             input_array.forEachIndexed { x: Int, v: Int ->
@@ -69,17 +69,25 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             }
         }
 
-        val mid = (Short.MAX_VALUE.toDouble() / 2.0)
-        val compression_ratio = if (max_frame_value > Short.MAX_VALUE) {
-            mid / (max_frame_value.toDouble() - mid)
+        val factor = if (max_frame_value >= Short.MAX_VALUE) {
+            (max_frame_value.toDouble() - elbow) / (Short.MAX_VALUE - elbow)
         } else {
             1.0
         }
         // -------------------
 
+        var offset = 0
         arrays.forEachIndexed { i: Int, input_array: IntArray ->
             input_array.forEachIndexed { x: Int, v: Int ->
-                array[offset++] = (v * compression_ratio).toInt().toShort()
+                array[offset++] = if (factor <= 1.0) {
+                    v.toShort()
+                } else if (v > elbow) {
+                    (elbow + ((v - elbow) / factor)).toInt().toShort()
+                } else if (v < 0 - elbow) {
+                    (0 - elbow - ((v + elbow) / factor)).toInt().toShort()
+                } else {
+                    v.toShort()
+                }
             }
         }
 

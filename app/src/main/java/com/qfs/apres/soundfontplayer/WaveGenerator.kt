@@ -5,6 +5,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import kotlin.math.abs
 import kotlin.math.max
+import kotlin.math.roundToInt
 
 class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buffer_size: Int) {
     class EmptyException: Exception()
@@ -61,16 +62,23 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         }
 
         // Volume Attenuation----
-        val elbow = (Short.MAX_VALUE.toDouble() * .75)
+        val MAX = Short.MAX_VALUE * .9
+        val elbow = (MAX * 0.50)
+        val neg_elbow = (elbow * -1.0)
         var max_frame_value = 0
         arrays.forEachIndexed { i: Int, input_array: IntArray ->
-            input_array.forEachIndexed { x: Int, v: Int ->
-                max_frame_value = max(abs(v), max_frame_value)
-            }
+            max_frame_value = max(
+                max(
+                    abs(input_array.min()),
+                    input_array.max()
+                ),
+                max_frame_value
+            )
         }
 
-        val factor = if (max_frame_value >= Short.MAX_VALUE) {
-            (max_frame_value.toDouble() - elbow) / (Short.MAX_VALUE - elbow)
+        // Note: |MIN_VALUE| is one greater than MAX_VALUE, so use the smaller MAX_VALUE
+        val factor = if (max_frame_value >= MAX) {
+            (max_frame_value.toDouble() - elbow) / (MAX - elbow)
         } else {
             1.0
         }
@@ -79,15 +87,17 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         var offset = 0
         arrays.forEachIndexed { i: Int, input_array: IntArray ->
             input_array.forEachIndexed { x: Int, v: Int ->
-                array[offset++] = if (factor <= 1.0) {
-                    v.toShort()
-                } else if (v > elbow) {
-                    (elbow + ((v - elbow) / factor)).toInt().toShort()
-                } else if (v < 0 - elbow) {
-                    (0 - elbow - ((v + elbow) / factor)).toInt().toShort()
+                array[offset++] = (if (factor > 1.0) {
+                    if (v > elbow) {
+                        (elbow + ((v.toDouble() - elbow) / factor)).roundToInt()
+                    } else if (v < neg_elbow) {
+                        (neg_elbow + ((v.toDouble() - neg_elbow) / factor)).roundToInt()
+                    } else {
+                        v
+                    }
                 } else {
-                    v.toShort()
-                }
+                    v
+                }).toShort()
             }
         }
 

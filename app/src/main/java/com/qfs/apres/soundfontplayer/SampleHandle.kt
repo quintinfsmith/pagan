@@ -103,6 +103,7 @@ class SampleHandle(
 
 
     companion object {
+        val HANDLE_VOLUME = .2
         var uuid_gen = 0
     }
 
@@ -199,16 +200,14 @@ class SampleHandle(
         val is_pressed = this.release_frame == null || this.working_frame < this.release_frame!!
 
         if (this.working_frame < this.volume_envelope.frames_attack) {
-            val r =
-                (this.working_frame).toDouble() / this.volume_envelope.frames_attack.toDouble()
+            val r = (this.working_frame).toDouble() / this.volume_envelope.frames_attack.toDouble()
             frame_factor *= r * this.initial_attenuation
         } else if (this.working_frame - this.volume_envelope.frames_attack < this.volume_envelope.frames_hold) {
             frame_factor *= this.initial_attenuation
         } else if (this.volume_envelope.sustain_attenuation < 1.0) {
             frame_factor *= this.initial_attenuation
             frame_factor *= if (this.working_frame - this.volume_envelope.frames_attack - this.volume_envelope.frames_hold < this.volume_envelope.frames_decay) {
-                val r =
-                    1.0 - ((this.working_frame - this.volume_envelope.frames_hold - this.volume_envelope.frames_attack).toDouble() / this.volume_envelope.frames_decay.toDouble())
+                val r = 1.0 - ((this.working_frame - this.volume_envelope.frames_hold - this.volume_envelope.frames_attack).toDouble() / this.volume_envelope.frames_decay.toDouble())
                 (r * (this.initial_attenuation - this.volume_envelope.sustain_attenuation)) + this.volume_envelope.sustain_attenuation
             } else {
                 this.volume_envelope.sustain_attenuation
@@ -254,7 +253,7 @@ class SampleHandle(
 
 
         return try {
-            (this.data_buffer.get().toDouble() * frame_factor * this.volume).toInt()
+            (this.data_buffer.get().toDouble() * frame_factor * (this.volume * SampleHandle.HANDLE_VOLUME)).toInt()
         } catch (e: ArrayIndexOutOfBoundsException) {
             this.is_dead = true
             null

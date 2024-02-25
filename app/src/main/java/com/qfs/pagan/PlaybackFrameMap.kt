@@ -167,7 +167,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
             for (handle in handles) {
                 handle.release_frame = end_frame - start_frame
                 handle_uuid_set.add(handle.uuid)
-
             }
 
 

@@ -97,7 +97,8 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
 
     private fun gen_partial_int_array(first_frame: Int, sample_index: Int): IntArray {
         val int_array = IntArray(this.buffer_size * 2 / this.core_count)
-
+        val working_arrays = mutableListOf<IntArray>()
+        val avgs = mutableListOf<Pair<Double, Double>>()
         for ((_, item) in this._active_sample_handles) {
             if (item.first_frame >= first_frame + this.buffer_size) {
                 continue
@@ -117,82 +118,116 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
 
             val sample_handle = item.sample_handles[real_index]
             if (!sample_handle.is_dead) {
-                this.populate_partial_int_array(
-                    sample_handle,
-                    int_array,
-                    if (real_index == 0 && (0 until this.buffer_size).contains(item.first_frame - first_frame)) {
-                        (item.first_frame - first_frame) - (this.buffer_size * sample_index / this.core_count)
-                    } else {
-                        0
-                    }
+                working_arrays.add(IntArray(int_array.size))
+                avgs.add(
+                    this.populate_partial_int_array(
+                        sample_handle,
+                        working_arrays.last()!!,
+                        if (real_index == 0 && (0 until this.buffer_size).contains(item.first_frame - first_frame)) {
+                            (item.first_frame - first_frame) - (this.buffer_size * sample_index / this.core_count)
+                        } else {
+                            0
+                        }
+                    )
                 )
             }
         }
 
-        return int_array
+        // Right
+        for (i in 0 until int_array.size / 2) {
+            working_arrays.forEachIndexed { j: Int, array: IntArray ->
+                int_array[i * 2] += array[i * 2]
+            }
+        }
 
+        // Left
+        for (i in 0 until int_array.size / 2) {
+            working_arrays.forEachIndexed { j: Int, array: IntArray ->
+                int_array[(i * 2) + 1] += array[(i * 2) + 1]
+            }
+        }
+
+        return int_array
     }
 
-    private fun populate_partial_int_array(sample_handle: SampleHandle, working_int_array: IntArray, offset: Int) {
+    private fun populate_partial_int_array(sample_handle: SampleHandle, working_int_array: IntArray, offset: Int): Pair<Double, Double> {
         // Assume working_int_array.size % 2 == 0
         val range = if (offset < 0) {
             0 until (working_int_array.size / 2)
         } else {
             offset until working_int_array.size / 2
         }
-
+        val left_running_vals = mutableListOf<Int>()
+        val right_running_vals = mutableListOf<Int>()
         for (f in range) {
             val frame_value = sample_handle.get_next_frame() ?: break
-            var left_frame: Int = 0
-            var right_frame: Int = 0
 
             // TODO: Implement ROM stereo modes
             val pan = sample_handle.pan
-            when (sample_handle.stereo_mode and 7) {
+            val (left_frame, right_frame) = when (sample_handle.stereo_mode and 7) {
                 1 -> { // mono
                     if (pan > 0) {
-                        left_frame += frame_value
-                        right_frame += (frame_value * (100 - pan.toInt()) / 100)
+                        Pair(
+                            frame_value,
+                            (frame_value * (100 - pan.toInt()) / 100)
+                        )
                     } else if (pan < 0) {
-                        left_frame += frame_value * (100 + pan.toInt()) / 100
-                        right_frame += frame_value
+                        Pair(
+                            frame_value * (100 + pan.toInt()) / 100,
+                            frame_value
+                        )
                     } else {
-                        left_frame += frame_value
-                        right_frame += frame_value
+                        Pair(
+                            frame_value,
+                            frame_value
+                        )
                     }
                 }
 
                 2 -> { // right
-                    right_frame += if (pan > 0.0) {
-                        (frame_value * (100 - pan.toInt())) / 100
-                    } else {
-                        frame_value
-                    }
+                    Pair(
+                        0,
+                        if (pan > 0.0) {
+                            (frame_value * (100 - pan.toInt())) / 100
+                        } else {
+                            frame_value
+                        }
+                    )
                 }
 
                 4 -> { // left
-                    left_frame += if (pan < 0.0) {
-                        (frame_value * (100 + pan.toInt())) / 100
-                    } else {
-                        frame_value
-                    }
+                    Pair(
+                        if (pan < 0.0) {
+                            (frame_value * (100 + pan.toInt())) / 100
+                        } else {
+                            frame_value
+                        },
+                        0
+                    )
                 }
 
-                else -> {}
+                else -> Pair(0,0)
             }
 
-            working_int_array[(f * 2)] += when (sample_handle.stereo_mode and 7) {
+            working_int_array[(f * 2)] = when (sample_handle.stereo_mode and 7) {
                 1, 2 -> right_frame
                 else -> 0
             }
 
-            working_int_array[(f * 2) + 1] += when (sample_handle.stereo_mode and 7) {
+            working_int_array[(f * 2) + 1] = when (sample_handle.stereo_mode and 7) {
                 1, 4 -> left_frame
                 else -> 0
             }
+            right_running_vals.add(abs(working_int_array[(f * 2)]))
+            left_running_vals.add(abs(working_int_array[(f * 2) + 1]))
         }
 
         sample_handle.set_working_frame(sample_handle.working_frame + (this.buffer_size * (this.core_count - 1) / this.core_count))
+
+        return Pair(
+            left_running_vals.average(),
+            right_running_vals.average()
+        )
     }
 
     private fun update_active_sample_handles(initial_frame: Int) {

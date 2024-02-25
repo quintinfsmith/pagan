@@ -12,6 +12,7 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
     var BUFFER_NANO = this.buffer_size.toLong() * 1_000_000_000.toLong() / this.sample_rate.toLong()
     var play_queued = false
     var is_playing = false
+    var is_buffering = false
     var play_cancelled = false // need a away to cancel between parsing and playing
     val beat_frames = HashMap<Int, IntRange>()
 
@@ -78,6 +79,10 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
             while (this.is_playing) {
                 ts = System.currentTimeMillis()
                 if (chunk != null) {
+                    if (this.is_buffering) {
+                        this.is_buffering = false
+                        this.on_buffer_done()
+                    }
                     audio_track_handle.write(chunk)
                 }
 
@@ -95,6 +100,9 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
 
                 if (real_delay > 0) {
                     Thread.sleep(real_delay)
+                } else {
+                    this.is_buffering = true
+                    this.on_buffer()
                 }
             }
 

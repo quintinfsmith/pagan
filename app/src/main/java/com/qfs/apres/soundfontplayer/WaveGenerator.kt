@@ -5,7 +5,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import kotlin.math.abs
 import kotlin.math.max
-import kotlin.math.roundToInt
 
 class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buffer_size: Int) {
     class EmptyException: Exception()
@@ -38,7 +37,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         }
 
         val first_frame = this.frame
-        this.update_active_frames(this.frame)
+        this.update_active_sample_handles(this.frame)
 
         if (this.frame >= this.midi_frame_map.get_size()) {
             throw DeadException()
@@ -62,23 +61,17 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         }
 
         // Volume Attenuation----
-        val MAX = Short.MAX_VALUE * .9
-        val elbow = (MAX * 0.50)
-        val neg_elbow = (elbow * -1.0)
-        var max_frame_value = 0
+        val MAX = Short.MAX_VALUE / 2
+        var max_frame_value = MAX
         arrays.forEachIndexed { i: Int, input_array: IntArray ->
-            max_frame_value = max(
-                max(
-                    abs(input_array.min()),
-                    input_array.max()
-                ),
-                max_frame_value
-            )
+            input_array.forEachIndexed { j: Int, v: Int ->
+                max_frame_value = max(abs(v), max_frame_value)
+            }
         }
 
         // Note: |MIN_VALUE| is one greater than MAX_VALUE, so use the smaller MAX_VALUE
-        val factor = if (max_frame_value >= MAX) {
-            (max_frame_value.toDouble() - elbow) / (MAX - elbow)
+        val factor = if (max_frame_value > MAX) {
+            max_frame_value.toDouble() / MAX.toDouble()
         } else {
             1.0
         }
@@ -88,13 +81,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         arrays.forEachIndexed { i: Int, input_array: IntArray ->
             input_array.forEachIndexed { x: Int, v: Int ->
                 array[offset++] = (if (factor > 1.0) {
-                    if (v > elbow) {
-                        (elbow + ((v.toDouble() - elbow) / factor)).roundToInt()
-                    } else if (v < neg_elbow) {
-                        (neg_elbow + ((v.toDouble() - neg_elbow) / factor)).roundToInt()
-                    } else {
-                        v
-                    }
+                    v / factor
                 } else {
                     v
                 }).toShort()
@@ -208,7 +195,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         sample_handle.set_working_frame(sample_handle.working_frame + (this.buffer_size * (this.core_count - 1) / this.core_count))
     }
 
-    private fun update_active_frames(initial_frame: Int) {
+    private fun update_active_sample_handles(initial_frame: Int) {
         // First check for, and remove dead sample handles
         val remove_set = mutableSetOf<Int>()
         for ((uuid, item) in this._active_sample_handles) {

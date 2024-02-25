@@ -243,12 +243,12 @@ class SampleHandle(
         }
 
         // TODO: low pass filter. I can't get this to work atm
-        //if (this.filter_cutoff <= this.sample_rate / 2.0) {
+        // if (this.filter_cutoff <= this.sample_rate / 2.0) {
         //    var input = frame / Double.MAX_VALUE
         //    val allpass_value = (this.lpf_factor * input) + this.lpf_previous
         //    this.lpf_previous = input - (this.lpf_factor * allpass_value)
         //    frame *= (input + allpass_value) / 2.0
-        //}
+        // }
 
         this.working_frame += 1
 

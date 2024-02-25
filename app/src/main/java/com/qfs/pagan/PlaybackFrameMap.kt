@@ -23,7 +23,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
     private var setter_map = HashMap<Int,() -> Set<SampleHandle>>()
     private var setter_frame_map = HashMap<Int, MutableSet<Int>>()
     private val setter_range_map = HashMap<Int, IntRange>()
-
     private var cached_frame_count: Int? = null
 
     override fun get_new_handles(frame: Int): Set<SampleHandle>? {
@@ -101,6 +100,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
         }
         return this.cached_frame_count!!
     }
+
     // End FrameMap Interface --------------------------
     fun check_frame(frame: Int) {
         if (!this.setter_frame_map.containsKey(frame)) {

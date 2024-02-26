@@ -7,16 +7,20 @@ import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event.ProgramChange
 import com.qfs.apres.event.SetTempo
 import kotlin.math.max
+import kotlin.math.min
 
 class MidiFrameMap(val sample_handle_manager: SampleHandleManager): FrameMap {
     private val frames = HashMap<Int, MutableSet<SampleHandle>>()
     private val beat_frames = mutableListOf<Int>()
     private var final_frame: Int = -1
+    private var max_overlap = 0
+    private val percussion_handles = mutableSetOf<Int>()
 
     fun clear() {
         this.beat_frames.clear()
         this.frames.clear()
         this.final_frame = 0
+        this.percussion_handles.clear()
     }
 
     fun parse_midi(midi: Midi) {
@@ -61,6 +65,11 @@ class MidiFrameMap(val sample_handle_manager: SampleHandleManager): FrameMap {
                                 handles,
                                 tick_frame
                             )
+                            if (event.channel == 9) {
+                                for (handle in handles) {
+                                    this.percussion_handles.add(handle.uuid)
+                                }
+                            }
                         }
                     }
                     is ProgramChange -> {
@@ -82,6 +91,7 @@ class MidiFrameMap(val sample_handle_manager: SampleHandleManager): FrameMap {
             last_frame = tick_frame
             last_tick = tick
         }
+        this.max_overlap = this.calculate_max_overlap()
     }
 
     override fun get_size(): Int {
@@ -89,7 +99,20 @@ class MidiFrameMap(val sample_handle_manager: SampleHandleManager): FrameMap {
     }
 
     override fun get_new_handles(frame: Int): Set<SampleHandle>? {
-        return this.frames[frame]
+        val output = mutableSetOf<SampleHandle>()
+
+        for (handle in this.frames[frame] ?: setOf()) {
+            val max_volume = (handle.max_frame_value().toDouble() / Short.MAX_VALUE.toDouble())
+
+            if (this.percussion_handles.contains(handle.uuid)) {
+                // Do not equalize the percussion channel
+            } else {
+                handle.volume *= min((1.0 / this.max_overlap.toDouble()) / max_volume, 1.0)
+            }
+            output.add(handle)
+        }
+
+        return output
     }
 
     override fun get_beat_frames(): HashMap<Int, IntRange> {
@@ -100,5 +123,28 @@ class MidiFrameMap(val sample_handle_manager: SampleHandleManager): FrameMap {
     override fun get_active_handles(frame: Int): Set<Pair<Int, SampleHandle>> {
         // TODO: implement
         return setOf()
+    }
+
+    private fun calculate_max_overlap(): Int {
+        val event_list = mutableListOf<Pair<Int, Boolean>>()
+        for ((frame, handles) in this.frames) {
+            for (handle in handles) {
+                event_list.add(Pair(frame, true))
+                event_list.add(Pair(frame + (handle.release_frame ?: 0), false))
+            }
+        }
+
+        event_list.sortBy { it.first }
+        var max_overlap = 0
+        var count = 0
+        for ((_, sample_on) in event_list) {
+            if (sample_on) {
+                count += 1
+                max_overlap = max(max_overlap, count)
+            } else {
+                count -= 1
+            }
+        }
+        return max_overlap
     }
 }

@@ -13,7 +13,6 @@ import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.structure.OpusTree
 import kotlin.math.floor
 import kotlin.math.max
-import kotlin.math.min
 
 class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manager: SampleHandleManager): FrameMap {
     private val handle_map = HashMap<Int, SampleHandle>() // Handle UUID::Handle
@@ -25,7 +24,9 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
     private var setter_frame_map = HashMap<Int, MutableSet<Int>>()
     private val setter_range_map = HashMap<Int, IntRange>()
     private var cached_frame_count: Int? = null
-    private var max_overlap: Int = 0
+    private val setter_overlaps = HashMap<Int, Int>()
+
+    private val percussion_handles = HashMap<Int, Boolean>()
 
     override fun get_new_handles(frame: Int): Set<SampleHandle>? {
         // Check frame a buffer ahead to make sure frames are added as accurately as possible
@@ -41,11 +42,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
             for (uuid in this.frame_map[frame]!!) {
                 output.add(this.handle_map[uuid] ?: continue)
             }
-        }
-
-        for (handle in output) {
-            val max_volume = (handle.max_frame_value().toDouble() / Short.MAX_VALUE.toDouble())
-            handle.volume *= min((1.0 / this.max_overlap.toDouble()) / max_volume, 1.0)
         }
 
         return output
@@ -147,6 +143,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
         this.setter_frame_map.clear()
         this.setter_map.clear()
         this.setter_range_map.clear()
+        this.setter_overlaps.clear()
         this.cached_frame_count = null
     }
 
@@ -161,6 +158,12 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
 
         this.cached_frame_count = null
 
+        val is_percussion = when (start_event) {
+            is NoteOn -> start_event.channel == 9
+            is NoteOn79 -> start_event.channel == 9
+            else -> return
+        }
+
         this.setter_map[setter_id] = {
             val handles = when (start_event) {
                 is NoteOn -> this.sample_handle_manager.gen_sample_handles(start_event)
@@ -172,8 +175,13 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
             for (handle in handles) {
                 handle.release_frame = end_frame - start_frame
                 handle_uuid_set.add(handle.uuid)
+                this.percussion_handles[handle.uuid] = is_percussion
+                if (!is_percussion) {
+                    handle.volume *= 1.0 / (this.setter_overlaps[setter_id] ?: 1).toDouble()
+                } else {
+                    handle.volume *= 3.0 / (this.setter_overlaps[setter_id] ?: 1).toDouble()
+                }
             }
-
 
             handles
         }
@@ -199,28 +207,30 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
                 }
             }
         }
-
-        this.max_overlap = this.calculate_max_overlap()
+        this.calculate_overlaps()
     }
 
-    private fun calculate_max_overlap(): Int {
-        val event_list = mutableListOf<Pair<Int, Boolean>>()
-        for (range in this.setter_range_map.values) {
-            event_list.add(Pair(range.first, true))
-            event_list.add(Pair(range.last, false))
+    private fun calculate_overlaps() {
+        val event_list = mutableListOf<Triple<Int, Int, Boolean>>()
+        for ((handle_id,range) in this.setter_range_map) {
+            event_list.add(Triple(range.first, handle_id, true))
+            event_list.add(Triple(range.last, handle_id, false))
         }
         event_list.sortBy { it.first }
-        var max_overlap = 0
-        var count = 0
-        for ((_, sample_on) in event_list) {
-            if (sample_on) {
-                count += 1
-                max_overlap = max(max_overlap, count)
+
+        val working_set = mutableSetOf<Int>()
+        this.setter_overlaps.clear()
+        for ((_, handle_id, handle_on) in event_list) {
+            if (handle_on) {
+                for (id in working_set) {
+                    this.setter_overlaps[id] = this.setter_overlaps[id]!! + 1
+                }
+                working_set.add(handle_id)
+                this.setter_overlaps[handle_id] = working_set.size - 1
             } else {
-                count -= 1
+                working_set.remove(handle_id)
             }
         }
-        return max_overlap
     }
 
     private fun map_tree(beat_key: BeatKey, position: List<Int>, working_tree: OpusTree<OpusEvent>, relative_width: Double, relative_offset: Double, prev_note_value: Int): Int {

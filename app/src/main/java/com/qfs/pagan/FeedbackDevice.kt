@@ -73,6 +73,7 @@ class FeedbackDevice(var sample_handle_manager: SampleHandleManager): MappedPlay
             this.set_kill_time(null)
         }
     }
+
     override fun on_stop() {
         (this.sample_frame_map as ImmediateFrameMap).max_frame = 0
     }

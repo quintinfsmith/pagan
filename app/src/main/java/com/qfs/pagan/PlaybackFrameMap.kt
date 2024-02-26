@@ -13,6 +13,7 @@ import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.structure.OpusTree
 import kotlin.math.floor
 import kotlin.math.max
+import kotlin.math.min
 
 class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manager: SampleHandleManager): FrameMap {
     private val handle_map = HashMap<Int, SampleHandle>() // Handle UUID::Handle
@@ -44,7 +45,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
 
         for (handle in output) {
             val max_volume = (handle.max_frame_value().toDouble() / Short.MAX_VALUE.toDouble())
-            handle.volume *= (1.0 / this.max_overlap.toDouble()) / max_volume
+            handle.volume *= min((1.0 / this.max_overlap.toDouble()) / max_volume, 1.0)
         }
 
         return output

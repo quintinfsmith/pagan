@@ -24,9 +24,9 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
     private var setter_frame_map = HashMap<Int, MutableSet<Int>>()
     private val setter_range_map = HashMap<Int, IntRange>()
     private var cached_frame_count: Int? = null
-    private val setter_overlaps = HashMap<Int, Int>()
+    private val setter_overlaps = HashMap<Int, Double>()
 
-    private val percussion_handles = HashMap<Int, Boolean>()
+    private val percussion_setter_ids = mutableSetOf<Int>()
 
     override fun get_new_handles(frame: Int): Set<SampleHandle>? {
         // Check frame a buffer ahead to make sure frames are added as accurately as possible
@@ -164,6 +164,10 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
             else -> return
         }
 
+        if (is_percussion) {
+            this.percussion_setter_ids.add(setter_id)
+        }
+
         this.setter_map[setter_id] = {
             val handles = when (start_event) {
                 is NoteOn -> this.sample_handle_manager.gen_sample_handles(start_event)
@@ -175,7 +179,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
             for (handle in handles) {
                 handle.release_frame = end_frame - start_frame
                 handle_uuid_set.add(handle.uuid)
-                this.percussion_handles[handle.uuid] = is_percussion
                 if (!is_percussion) {
                     handle.volume *= 1.0 / (this.setter_overlaps[setter_id] ?: 1).toDouble()
                 } else {
@@ -211,6 +214,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
     }
 
     private fun calculate_overlaps() {
+        // TODO: Disregard non-parallel overlapping, ie a long note with short notes pressed over time
         val event_list = mutableListOf<Triple<Int, Int, Boolean>>()
         for ((handle_id,range) in this.setter_range_map) {
             event_list.add(Triple(range.first, handle_id, true))
@@ -218,17 +222,41 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
         }
         event_list.sortBy { it.first }
 
-        val working_set = mutableSetOf<Int>()
+        val working_std_set = mutableSetOf<Int>()
+        val working_perc_set = mutableSetOf<Int>()
         this.setter_overlaps.clear()
-        for ((_, handle_id, handle_on) in event_list) {
-            if (handle_on) {
-                for (id in working_set) {
-                    this.setter_overlaps[id] = this.setter_overlaps[id]!! + 1
+        for ((_, setter_id, setter_on) in event_list) {
+            val is_perc = this.percussion_setter_ids.contains(setter_id)
+            if (setter_on) {
+                if (is_perc) {
+                    for (id in working_std_set) {
+                        this.setter_overlaps[id] = this.setter_overlaps[id]!! + .5
+                    }
+                    for (id in working_perc_set) {
+                      //  this.setter_overlaps[id] = this.setter_overlaps[id]!! + .25
+                    }
+
+                    //this.setter_overlaps[setter_id] = (working_perc_set.size.toDouble() * .25) + (working_std_set.size
+                    this.setter_overlaps[setter_id] = 1.0
+                    working_perc_set.add(setter_id)
+                } else {
+                    for (id in working_std_set) {
+                        this.setter_overlaps[id] = this.setter_overlaps[id]!! + .5
+                    }
+                    for (id in working_perc_set) {
+                       // this.setter_overlaps[id] = this.setter_overlaps[id]!! + 1
+                    }
+
+                    working_std_set.add(setter_id)
+                    this.setter_overlaps[setter_id] = max(1.0, (working_std_set.size + working_perc_set.size).toDouble() * .5)
                 }
-                working_set.add(handle_id)
-                this.setter_overlaps[handle_id] = working_set.size - 1
             } else {
-                working_set.remove(handle_id)
+                if (is_perc) {
+                    working_perc_set.remove(setter_id)
+                } else {
+                    working_std_set.remove(setter_id)
+                }
+
             }
         }
     }

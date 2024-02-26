@@ -25,18 +25,18 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
         this.sample_data_map.clear()
     }
 
-    fun get(event: NoteOn, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset, linked_handle_count: Int): SampleHandle {
+    fun get(event: NoteOn, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset, linked_handle_count: Int = 1): SampleHandle {
         // set the key index to some hash of the note to allow for indexing byte note AS WELL as indexing by index
         val map_key = this.cache_new(event.get_note(), 0, sample, instrument, preset, linked_handle_count)
         return SampleHandle(this.sample_data_map[map_key]!!)
     }
 
-    fun get(event: NoteOn79, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset, linked_handle_count: Int): SampleHandle {
+    fun get(event: NoteOn79, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset, linked_handle_count: Int = 1): SampleHandle {
         val map_key = this.cache_new(event.note, event.bend, sample, instrument, preset, linked_handle_count)
         return SampleHandle(this.sample_data_map[map_key]!!)
     }
 
-    fun cache_new(note: Int, bend: Int, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset, linked_handle_count: Int): MapKey {
+    fun cache_new(note: Int, bend: Int, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset, linked_handle_count: Int = 1): MapKey {
         val map_key = MapKey(note, bend, sample.hashCode(), instrument.hashCode(), preset.hashCode())
         if (!sample_data_map.contains(map_key)) {
             this.sample_data_map[map_key] = this.generate_new(note, bend, sample, instrument, preset, linked_handle_count)
@@ -44,7 +44,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
         return map_key
     }
 
-    fun generate_new(note: Int, bend: Int, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset, linked_handle_count: Int): SampleHandle {
+    fun generate_new(note: Int, bend: Int, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset, linked_handle_count: Int = 1): SampleHandle {
         var pitch_shift = 1.0
         val original_note = sample.root_key ?: sample.sample!!.originalPitch
 

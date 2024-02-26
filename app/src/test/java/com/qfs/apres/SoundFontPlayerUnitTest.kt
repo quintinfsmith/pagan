@@ -2,7 +2,7 @@ package com.qfs.apres
 
 import android.media.AudioFormat
 import android.media.AudioTrack
-import com.qfs.apres.event.NoteOn
+import com.qfs.apres.event2.NoteOn79
 import com.qfs.apres.soundfont.SoundFont
 import com.qfs.apres.soundfontplayer.SampleHandleGenerator
 import io.mockk.every
@@ -23,16 +23,21 @@ class SoundFontPlayerUnitTest {
             every { AudioTrack.getMinBufferSize(22050, AudioFormat.ENCODING_PCM_16BIT, AudioFormat.CHANNEL_OUT_STEREO) } returns 1
 
             val soundfont = this.get_soundfont()
-            val test_on = NoteOn(0, 64,64)
+            val test_on = NoteOn79(
+                channel = 0,
+                note = 64,
+                velocity = 64 shr 8
+            )
             val preset = soundfont.get_preset(0,0)
-            val preset_instrument = preset.get_instruments(test_on.get_note(), test_on.get_velocity()).first()
-            val samples = preset_instrument.instrument!!.get_samples(test_on.get_note(), test_on.get_velocity()).toList()
+            val preset_instrument = preset.get_instruments(test_on.note, test_on.velocity shl 8).first()
+            val samples = preset_instrument.instrument!!.get_samples(test_on.note, test_on.velocity shl 8).toList()
             var sample_handle_generator = SampleHandleGenerator(44100, 44100)
             sample_handle_generator.get(
                 test_on,
                 samples.first(),
                 preset_instrument,
-                preset
+                preset,
+                1
             )
 
             assertEquals(

@@ -1,13 +1,12 @@
 package com.qfs.apres.soundfontplayer
 
-import com.qfs.apres.Midi
 import java.io.BufferedOutputStream
 import java.io.DataOutputStream
 import java.io.File
 import java.io.FileOutputStream
 
 // Ended up needing to split the active and cache Midi Players due to different fundemental requirements
-open class MidiConverter(val sample_handle_manager: SampleHandleManager) {
+open class WavConverter(val sample_handle_manager: SampleHandleManager) {
     interface ExporterEventHandler {
         abstract fun on_start()
         abstract fun on_complete()
@@ -16,30 +15,25 @@ open class MidiConverter(val sample_handle_manager: SampleHandleManager) {
     }
     var cancel_flagged = false
     var generating = false
-    var approximate_frame_count: Int = 0
 
 
     // Tmp_file is a Kludge until I can figure out how to quickly precalculate file sizes
-    fun export_wav(midi: Midi, target_file: File, handler: ExporterEventHandler) {
+    fun export_wav(frame_map: FrameMap, target_file: File, handler: ExporterEventHandler) {
         handler.on_start()
         this.generating = true
         this.cancel_flagged = false
 
-        val midi_frame_map = MidiFrameMap(this.sample_handle_manager)
-        midi_frame_map.parse_midi(midi)
-
         val wave_generator = WaveGenerator(
-            midi_frame_map,
+            frame_map,
             this.sample_handle_manager.sample_rate,
             this.sample_handle_manager.buffer_size
         )
 
-        val total_chunk_count = midi_frame_map.get_size().toDouble() / this.sample_handle_manager.buffer_size
-
+        val total_chunk_count = frame_map.get_size().toDouble() / this.sample_handle_manager.buffer_size
         val output_stream = FileOutputStream(target_file)
         val buffered_output_stream = BufferedOutputStream(output_stream)
         val data_output_stream = DataOutputStream(buffered_output_stream)
-        val data_byte_count = midi_frame_map.get_size() * 4
+        val data_byte_count = frame_map.get_size() * 4
 
         if (!this.cancel_flagged) {
             // 00 Riff

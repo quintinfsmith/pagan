@@ -76,8 +76,8 @@ import com.qfs.apres.event.ProgramChange
 import com.qfs.apres.event.SongPositionPointer
 import com.qfs.apres.event2.NoteOn79
 import com.qfs.apres.soundfont.SoundFont
-import com.qfs.apres.soundfontplayer.MidiConverter
 import com.qfs.apres.soundfontplayer.SampleHandleManager
+import com.qfs.apres.soundfontplayer.WavConverter
 import com.qfs.pagan.ColorMap.Palette
 import com.qfs.pagan.databinding.ActivityMainBinding
 import com.qfs.pagan.opusmanager.OpusLayerLinks
@@ -104,15 +104,24 @@ class MainActivity : AppCompatActivity() {
     }
 
     class MainViewModel: ViewModel() {
-        var export_handle: MidiConverter? = null
+        var export_handle: WavConverter? = null
         var color_map = ColorMap()
         var opus_manager = OpusManager()
         var show_percussion = false
 
-        fun export_wav(sample_handle_manager: SampleHandleManager, midi: Midi, target_file: File, handler: MidiConverter.ExporterEventHandler) {
+        fun export_wav(sample_handle_manager: SampleHandleManager, target_file: File, handler: WavConverter.ExporterEventHandler) {
+            val frame_map = PlaybackFrameMap(this.opus_manager, sample_handle_manager)
+            frame_map.parse_opus()
 
-            this.export_handle = MidiConverter(sample_handle_manager) // Not accessing Cache *YET*, don't need to match buffer sizes
-            this.export_handle?.export_wav(midi, target_file, handler)
+            val start_frame = 0
+
+            // Prebuild the first buffer's worth of sample handles, the rest happen in the get_new_handles()
+            for (i in start_frame .. start_frame + sample_handle_manager.buffer_size) {
+                frame_map.check_frame(i)
+            }
+            this.export_handle = WavConverter(sample_handle_manager) // Not accessing Cache *YET*, don't need to match buffer sizes
+
+            this.export_handle?.export_wav(frame_map, target_file, handler)
             this.export_handle = null
         }
 
@@ -192,7 +201,7 @@ class MainActivity : AppCompatActivity() {
                         44100,
                         44100
                     )
-                    this.view_model.export_wav(exporter_sample_handle_manager, opus_manager.get_midi(), tmp_file, object : MidiConverter.ExporterEventHandler {
+                    this.view_model.export_wav(exporter_sample_handle_manager, tmp_file, object : WavConverter.ExporterEventHandler {
                         val notification_manager = NotificationManagerCompat.from(this@MainActivity)
 
                         override fun on_start() {

@@ -21,7 +21,6 @@ class SampleHandleManager(
     private val preset_channel_map = HashMap<Int, Pair<Int, Int>>()
     private val sample_handle_generator: SampleHandleGenerator
     val buffer_size: Int
-    var handles_got = 0
     init {
         val core_count = Runtime.getRuntime().availableProcessors()
         this.buffer_size = target_buffer_size - (target_buffer_size % core_count)
@@ -121,7 +120,6 @@ class SampleHandleManager(
                     else -> continue
                 }
             )
-            this.handles_got += 1
             new_handle.volume = velocity.toDouble()  / 128.toDouble()
             output.add(new_handle)
         }
@@ -176,7 +174,6 @@ class SampleHandleManager(
                     }
                 )
                 new_handle.volume = (event.get_velocity().toDouble() / 128.toDouble())
-                this.handles_got += 1
                 output.add(new_handle)
             }
         }

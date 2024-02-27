@@ -103,7 +103,7 @@ class SampleHandle(
 
 
     companion object {
-        val HANDLE_VOLUME = .2
+        val HANDLE_VOLUME = 1.0
         var uuid_gen = 0
     }
 

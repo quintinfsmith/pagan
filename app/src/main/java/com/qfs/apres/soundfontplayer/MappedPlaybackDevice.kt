@@ -43,11 +43,11 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
         this.wave_generator.clear()
     }
 
-    fun start_playback(start_frame: Int = 0, kill_frame: Int? = null) {
+    fun start_playback(start_frame: Int = 0) {
         if (!this.is_playing && this.active_audio_track_handle == null) {
             this.active_audio_track_handle = AudioTrackHandle(this.sample_rate, this.buffer_size)
             //this._start_play_loop(start_frame, kill_frame)
-            this.new_play_loop(start_frame, kill_frame)
+            this.play_loop(start_frame)
         }
     }
 
@@ -55,7 +55,7 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
         return !this.is_playing && this.active_audio_track_handle == null && !this.play_queued
     }
 
-    private fun new_play_loop(start_frame: Int = 0, kill_frame: Int? = null) {
+    private fun play_loop(start_frame: Int = 0) {
         /*
             This loop will attempt to play a chunk, and while it's playing, generate the next chunk.
             Any time the generate() call takes longer than the buffer takes to play and empties the queue,
@@ -100,7 +100,7 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
 
                 if (real_delay > 0) {
                     Thread.sleep(real_delay)
-                } else {
+                } else if (this.is_playing) {
                     this.is_buffering = true
                     this.on_buffer()
                 }
@@ -229,10 +229,10 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
         this.play_cancelled = true
     }
 
-    fun play(start_frame: Int = 0, kill_frame: Int? = null) {
+    fun play(start_frame: Int = 0) {
         this.play_cancelled = false
         this.play_queued = true
-        this.start_playback(start_frame, kill_frame)
+        this.start_playback(start_frame)
     }
 
     fun set_kill_frame(frame: Int) {

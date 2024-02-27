@@ -1249,25 +1249,23 @@ class MainActivity : AppCompatActivity() {
     // Ui Wrappers End ////////////////////////////////////////
 
     private fun get_drum_options(): List<Pair<String, Int>> {
-        if (this._soundfont == null) {
+        if (this.sample_handle_manager == null) {
             return listOf()
         }
-        val opus_manager = this.get_opus_manager()
 
-        val (bank, program) = opus_manager.get_channel_instrument(opus_manager.channels.size - 1)
         val preset = try {
-            this._soundfont!!.get_preset(program, bank)
+            this.sample_handle_manager!!.get_preset(9) ?: return listOf()
         } catch (e: SoundFont.InvalidPresetIndex) {
             return listOf()
         }
         val available_drum_keys = mutableSetOf<Pair<String, Int>>()
 
-        for (preset_instrument in preset.instruments) {
+        for ((_, preset_instrument) in preset.instruments) {
             if (preset_instrument.instrument == null) {
                 continue
             }
 
-            for (sample in preset_instrument.instrument!!.samples) {
+            for (sample in preset_instrument.instrument!!.samples.values) {
                 if (sample.key_range != null) {
                     var name = sample.sample!!.name
                     if (name.contains("(")) {

@@ -1,5 +1,6 @@
 package com.qfs.apres.soundfont
 
+import android.util.Log
 import com.qfs.apres.toUInt
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -7,7 +8,6 @@ import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 
-//class SoundFont(input_stream: InputStream) {
 class SoundFont(file_path: String) {
     class InvalidPresetIndex(index: Int, bank: Int): Exception("Preset Not Found $index:$bank")
     class InvalidSampleIdPosition : Exception("SampleId Generator is not at end of ibag")
@@ -262,10 +262,10 @@ class SoundFont(file_path: String) {
         // NOW we can load all the sample data
         if (output != null) {
             var ordered_samples = mutableListOf<Sample>()
-            for (preset_instrument in output.instruments) {
+            for ((_, preset_instrument) in output.instruments) {
                 val instrument = preset_instrument.instrument ?: continue
 
-                for (instrument_sample in instrument.samples) {
+                for (instrument_sample in instrument.samples.values) {
                     val sample = instrument_sample.sample ?: continue
                     ordered_samples.add(sample)
                 }
@@ -282,6 +282,7 @@ class SoundFont(file_path: String) {
                         sample.data_placeholder.second
                     )
                 }
+                Log.d("SoundFont", "Loaded ${ordered_samples.size} Samples For Preset: ${output.name}")
             }
         }
 

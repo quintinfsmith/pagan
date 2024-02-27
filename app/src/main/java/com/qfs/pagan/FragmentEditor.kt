@@ -633,7 +633,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         }
 
         sbLineVolume.progress = opus_manager.get_line_volume(channel, line_offset)
-        sbLineVolume.contentDescription = resources.getString(R.string.label_volume_scrollbar, sbLineVolume.progress  * 100 / 96)
+        sbLineVolume.contentDescription = resources.getString(R.string.label_volume_scrollbar, sbLineVolume.progress * 100 / 128)
         sbLineVolume.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(p0: SeekBar, p1: Int, p2: Boolean) {
                 p0.contentDescription = resources.getString(R.string.label_volume_scrollbar, (p1 * 100 / 96))

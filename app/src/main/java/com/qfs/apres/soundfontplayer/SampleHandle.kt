@@ -1,5 +1,6 @@
 package com.qfs.apres.soundfontplayer
 
+import com.google.common.primitives.Ints.min
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.pow
@@ -207,7 +208,8 @@ class SampleHandle(
         } else if (this.volume_envelope.sustain_attenuation < 1.0) {
             frame_factor *= this.initial_attenuation
             frame_factor *= if (this.working_frame - this.volume_envelope.frames_attack - this.volume_envelope.frames_hold < this.volume_envelope.frames_decay) {
-                val r = 1.0 - ((this.working_frame - this.volume_envelope.frames_hold - this.volume_envelope.frames_attack).toDouble() / this.volume_envelope.frames_decay.toDouble())
+                val r =
+                    1.0 - ((this.working_frame - this.volume_envelope.frames_hold - this.volume_envelope.frames_attack).toDouble() / this.volume_envelope.frames_decay.toDouble())
                 (r * (this.initial_attenuation - this.volume_envelope.sustain_attenuation)) + this.volume_envelope.sustain_attenuation
             } else {
                 this.volume_envelope.sustain_attenuation
@@ -215,16 +217,20 @@ class SampleHandle(
         }
 
         if (!is_pressed) {
-            val current_position_release = (this.working_frame - this.release_frame!!)
-            if (current_position_release < this.volume_envelope.frames_release) {
-                frame_factor *= 1.0 - (current_position_release.toDouble() / this.volume_envelope.frames_release.toDouble())
+            val offset = this.data_buffer.position()
+            if (this.data_buffer.size == offset + 1) {
+                this.is_dead = true
+                return null
+            }
+            val release_frame_count = min(this.volume_envelope.frames_release, this.data_buffer.size - this.release_frame!!)
+            val current_position_release = this.working_frame - this.release_frame!!
+            if (current_position_release < release_frame_count) {
+                frame_factor *= 1.0 - (current_position_release.toDouble() / release_frame_count.toDouble())
             } else {
                 this.is_dead = true
                 return null
             }
-        }
-
-        if (this.loop_points != null) {
+        } else if (this.loop_points != null) {
             val offset = this.data_buffer.position() - this.loop_points.second
             if (offset >= 0) {
                 this.data_buffer.position(this.loop_points.first + offset)

@@ -171,6 +171,7 @@
     <string name="dialog_select_soundfont">Select Soundfont</string>
     <string name="dialog_remove_soundfont_text">Really Delete %1$s?</string>
     <string name="dialog_reset_colors">Really Reset Custom Colors?</string>
+    <string name="loading_new_soundfont">Loading New Soundfont...</string>
     <string-array name="relative">
         <item>@string/pfx_add</item>
         <item>@string/pfx_subtract</item>

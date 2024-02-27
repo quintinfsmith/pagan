@@ -19,6 +19,7 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
+import kotlin.concurrent.thread
 
 class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
     private var _import_soundfont_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -277,10 +278,18 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
 
     private fun _set_soundfont(filename: String) {
         val btnChooseSoundFont = this.get_main().findViewById<TextView>(R.id.btnChooseSoundFont)
-        this.get_main().set_soundfont(filename)
+        val main = this.get_main()
+        thread {
+            main.loading_reticle_show(getString(R.string.loading_new_soundfont))
+            this.get_main().set_soundfont(filename)
 
-        btnChooseSoundFont.text = filename
-        this.get_main().save_configuration()
+            // Check that it set
+            if (filename == main.configuration.soundfont) {
+                btnChooseSoundFont.text = filename
+                this.get_main().save_configuration()
+            }
+            main.loading_reticle_hide()
+        }
     }
 
     private fun _import_soundfont() {

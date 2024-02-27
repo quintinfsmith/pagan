@@ -75,6 +75,7 @@ import com.qfs.apres.event.BankSelect
 import com.qfs.apres.event.ProgramChange
 import com.qfs.apres.event.SongPositionPointer
 import com.qfs.apres.event2.NoteOn79
+import com.qfs.apres.soundfont.Riff
 import com.qfs.apres.soundfont.SoundFont
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.apres.soundfontplayer.WavConverter
@@ -544,20 +545,25 @@ class MainActivity : AppCompatActivity() {
             val path = "${this.getExternalFilesDir(null)}/SoundFonts/${this.configuration.soundfont}"
             val sf_file = File(path)
             if (sf_file.exists()) {
-                this._soundfont = SoundFont(path)
-                this.sample_handle_manager = SampleHandleManager(
-                    this._soundfont!!,
-                    this.configuration.sample_rate,
-                    this.configuration.sample_rate // Use Large buffer
-                )
-                this._midi_playback_device = PlaybackDevice(this, this.sample_handle_manager!!)
-
-                if (!this._midi_interface.output_devices_connected()) {
-                    this._feedback_sample_manager = SampleHandleManager(
+                try {
+                    this._soundfont = SoundFont(path)
+                    this.sample_handle_manager = SampleHandleManager(
                         this._soundfont!!,
                         this.configuration.sample_rate,
-                        this.configuration.sample_rate / 4,
+                        this.configuration.sample_rate // Use Large buffer
                     )
+                    this._midi_playback_device = PlaybackDevice(this, this.sample_handle_manager!!)
+
+                    if (!this._midi_interface.output_devices_connected()) {
+                        this._feedback_sample_manager = SampleHandleManager(
+                            this._soundfont!!,
+                            this.configuration.sample_rate,
+                            this.configuration.sample_rate / 4,
+                        )
+                    }
+                } catch (e: Riff.InvalidRiff) {
+                    this.configuration.soundfont = null
+                    // Invalid soundfont somehow set
                 }
             }
             this.update_channel_instruments()
@@ -900,23 +906,23 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun loading_reticle_show(title_msg: String? = null) {
-        if (title_msg != null) {
-            this.force_title_text(title_msg)
-        }
         this.runOnUiThread {
-            if (this@MainActivity._progress_bar == null) {
-                this@MainActivity._progress_bar = PaganProgressBar(this@MainActivity)
+            if (title_msg != null) {
+                this.force_title_text(title_msg)
             }
-            this@MainActivity._progress_bar!!.isClickable = true
+            if (this._progress_bar == null) {
+                this._progress_bar = PaganProgressBar(this)
+            }
+            this._progress_bar!!.isClickable = true
             val params: RelativeLayout.LayoutParams = RelativeLayout.LayoutParams(100, 100)
             params.addRule(RelativeLayout.CENTER_IN_PARENT)
-            val parent = this@MainActivity._progress_bar!!.parent
+            val parent = this._progress_bar!!.parent
             if (parent != null) {
-                (parent as ViewGroup).removeView(this@MainActivity._progress_bar)
+                (parent as ViewGroup).removeView(this._progress_bar)
             }
 
             try {
-                this@MainActivity._binding.root.addView(this@MainActivity._progress_bar, params)
+                this._binding.root.addView(this._progress_bar, params)
             } catch (e: UninitializedPropertyAccessException) {
                 // pass
             }
@@ -1434,8 +1440,15 @@ class MainActivity : AppCompatActivity() {
         }
 
         val path = "${this.getExternalFilesDir(null)}/SoundFonts/$filename"
+        try {
+            this._soundfont = SoundFont(path)
+        } catch (e: Riff.InvalidRiff) {
+            // Possible if user puts the sf2 in their files manually
+            this.feedback_msg("Invalid Soundfont")
+            return
+        }
         this.configuration.soundfont = filename
-        this._soundfont = SoundFont(path)
+
         this.sample_handle_manager = SampleHandleManager(
             this._soundfont!!,
             this.configuration.sample_rate,

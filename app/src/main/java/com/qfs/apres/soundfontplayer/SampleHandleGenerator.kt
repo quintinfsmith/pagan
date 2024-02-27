@@ -1,9 +1,9 @@
 package com.qfs.apres.soundfontplayer
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event2.NoteOn79
-import com.qfs.apres.soundfont.InstrumentSample
+import com.qfs.apres.soundfont.SampleDirective
 import com.qfs.apres.soundfont.Preset
-import com.qfs.apres.soundfont.PresetInstrument
+import com.qfs.apres.soundfont.InstrumentDirective
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
@@ -25,18 +25,18 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
         this.sample_data_map.clear()
     }
 
-    fun get(event: NoteOn, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset, linked_handle_count: Int = 1): SampleHandle {
+    fun get(event: NoteOn, sample: SampleDirective, instrument: InstrumentDirective, preset: Preset, linked_handle_count: Int = 1): SampleHandle {
         // set the key index to some hash of the note to allow for indexing byte note AS WELL as indexing by index
         val map_key = this.cache_new(event.get_note(), 0, sample, instrument, preset, linked_handle_count)
         return SampleHandle(this.sample_data_map[map_key]!!)
     }
 
-    fun get(event: NoteOn79, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset, linked_handle_count: Int = 1): SampleHandle {
+    fun get(event: NoteOn79, sample: SampleDirective, instrument: InstrumentDirective, preset: Preset, linked_handle_count: Int = 1): SampleHandle {
         val map_key = this.cache_new(event.note, event.bend, sample, instrument, preset, linked_handle_count)
         return SampleHandle(this.sample_data_map[map_key]!!)
     }
 
-    fun cache_new(note: Int, bend: Int, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset, linked_handle_count: Int = 1): MapKey {
+    fun cache_new(note: Int, bend: Int, sample: SampleDirective, instrument: InstrumentDirective, preset: Preset, linked_handle_count: Int = 1): MapKey {
         val map_key = MapKey(note, bend, sample.hashCode(), instrument.hashCode(), preset.hashCode())
         if (!sample_data_map.contains(map_key)) {
             this.sample_data_map[map_key] = this.generate_new(note, bend, sample, instrument, preset, linked_handle_count)
@@ -44,14 +44,14 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
         return map_key
     }
 
-    fun generate_new(note: Int, bend: Int, sample: InstrumentSample, instrument: PresetInstrument, preset: Preset, linked_handle_count: Int = 1): SampleHandle {
+    fun generate_new(note: Int, bend: Int, sample: SampleDirective, instrument: InstrumentDirective, preset: Preset, linked_handle_count: Int = 1): SampleHandle {
         var pitch_shift = 1.0
         val original_note = sample.root_key ?: sample.sample!!.originalPitch
 
         // TODO: Why did I do this check? I vaguely remember needing it but I need a note
         val target_pitch = if (original_note != 255) {
-            val tuning_cent: Int = (sample.tuning_cent ?: instrument.instrument?.global_sample?.tuning_cent ?: 0 ) + (instrument.tuning_cent ?: 0) + (preset.global_zone?.tuning_cent ?: 0)
-            var tuning_semi: Double = ((sample.tuning_semi ?: instrument.instrument?.global_sample?.tuning_semi ?: 0 )
+            val tuning_cent: Int = (sample.tuning_cent ?: instrument.instrument?.global_zone?.tuning_cent ?: 0 ) + (instrument.tuning_cent ?: 0) + (preset.global_zone?.tuning_cent ?: 0)
+            var tuning_semi: Double = ((sample.tuning_semi ?: instrument.instrument?.global_zone?.tuning_semi ?: 0 )
                 + (instrument.tuning_semi ?: 0)
                 + (preset.global_zone?.tuning_semi ?: 0)).toDouble()
 
@@ -70,56 +70,56 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
         }
 
         val data = sample.sample!!.data!!
-        val initial_attenuation: Double = (sample.attenuation ?: instrument.instrument?.global_sample?.attenuation ?: 0.0) + (instrument.attenuation ?: 0.0) + (preset.global_zone?.attenuation ?: 0.0)
-        val vol_env_sustain: Double = (sample.vol_env_sustain ?: instrument.instrument?.global_sample?.vol_env_sustain ?: 0.0) + (instrument.vol_env_sustain ?: 0.0) + (preset.global_zone?.vol_env_sustain ?: 0.0)
+        val initial_attenuation: Double = (sample.attenuation ?: instrument.instrument?.global_zone?.attenuation ?: 0.0) + (instrument.attenuation ?: 0.0) + (preset.global_zone?.attenuation ?: 0.0)
+        val vol_env_sustain: Double = (sample.vol_env_sustain ?: instrument.instrument?.global_zone?.vol_env_sustain ?: 0.0) + (instrument.vol_env_sustain ?: 0.0) + (preset.global_zone?.vol_env_sustain ?: 0.0)
         val volume_envelope = SampleHandle.VolumeEnvelope(
             sample_rate = this.sample_rate,
-            delay = (sample.vol_env_delay ?: instrument.instrument?.global_sample?.vol_env_delay ?: 0.0 )
+            delay = (sample.vol_env_delay ?: instrument.instrument?.global_zone?.vol_env_delay ?: 0.0 )
                 * (instrument.vol_env_delay ?: 1.0)
                 * (preset.global_zone?.vol_env_delay ?: 1.0),
-            attack = (sample.vol_env_attack ?: instrument.instrument?.global_sample?.vol_env_attack ?: 0.0 )
+            attack = (sample.vol_env_attack ?: instrument.instrument?.global_zone?.vol_env_attack ?: 0.0 )
                 * (instrument.vol_env_attack ?: 1.0)
                 * (preset.global_zone?.vol_env_attack ?: 1.0),
-            hold = (sample.vol_env_hold ?: instrument.instrument?.global_sample?.vol_env_hold ?: 0.0 )
+            hold = (sample.vol_env_hold ?: instrument.instrument?.global_zone?.vol_env_hold ?: 0.0 )
                 * (instrument.vol_env_hold ?: 1.0)
                 * (preset.global_zone?.vol_env_hold ?: 1.0),
-            decay = (sample.vol_env_decay ?: instrument.instrument?.global_sample?.vol_env_decay ?: 0.0 )
+            decay = (sample.vol_env_decay ?: instrument.instrument?.global_zone?.vol_env_decay ?: 0.0 )
                 * (instrument.vol_env_decay ?: 1.0)
                 * (preset.global_zone?.vol_env_decay ?: 1.0),
-            release = (sample.vol_env_release ?: instrument.instrument?.global_sample?.vol_env_release ?: 0.0 )
+            release = (sample.vol_env_release ?: instrument.instrument?.global_zone?.vol_env_release ?: 0.0 )
                 * (instrument.vol_env_release ?: 1.0)
                 * (preset.global_zone?.vol_env_release ?: 1.0),
             sustain_attenuation = 1.0 - (max(0.0, min(vol_env_sustain, 1000.0)) / 100.0)
         )
 
-        val mod_env_sustain = (sample.mod_env_sustain ?: instrument.instrument?.global_sample?.mod_env_sustain ?: 0.0) * (instrument.mod_env_sustain ?: 0.0) * (preset.global_zone?.mod_env_sustain ?: 0.0)
+        val mod_env_sustain = (sample.mod_env_sustain ?: instrument.instrument?.global_zone?.mod_env_sustain ?: 0.0) * (instrument.mod_env_sustain ?: 0.0) * (preset.global_zone?.mod_env_sustain ?: 0.0)
         val modulation_envelope = SampleHandle.ModulationEnvelope(
             sample_rate = this.sample_rate,
-            delay = (sample.mod_env_delay ?: instrument.instrument?.global_sample?.mod_env_delay ?: 0.0 )
+            delay = (sample.mod_env_delay ?: instrument.instrument?.global_zone?.mod_env_delay ?: 0.0 )
                 * (instrument.mod_env_delay ?: 1.0)
                 * (preset.global_zone?.mod_env_delay ?: 1.0),
-            attack = (sample.mod_env_attack ?: instrument.instrument?.global_sample?.mod_env_attack ?: 0.0 )
+            attack = (sample.mod_env_attack ?: instrument.instrument?.global_zone?.mod_env_attack ?: 0.0 )
                 * (instrument.mod_env_attack ?: 1.0)
                 * (preset.global_zone?.mod_env_attack ?: 1.0),
-            hold = (sample.mod_env_hold ?: instrument.instrument?.global_sample?.mod_env_hold ?: 0.0)
+            hold = (sample.mod_env_hold ?: instrument.instrument?.global_zone?.mod_env_hold ?: 0.0)
                 * (instrument.mod_env_hold ?: 1.0)
                 * (preset.global_zone?.mod_env_hold ?: 1.0),
-            decay = (sample.mod_env_decay ?: instrument.instrument?.global_sample?.mod_env_decay ?: 0.0)
+            decay = (sample.mod_env_decay ?: instrument.instrument?.global_zone?.mod_env_decay ?: 0.0)
                 * (instrument.mod_env_decay ?: 1.0)
                 * (preset.global_zone?.mod_env_decay ?: 1.0),
-            release = (sample.mod_env_release ?: instrument.instrument?.global_sample?.mod_env_release ?: 0.0)
+            release = (sample.mod_env_release ?: instrument.instrument?.global_zone?.mod_env_release ?: 0.0)
                 * (instrument.mod_env_release ?: 1.0)
                 * (preset.global_zone?.mod_env_release ?: 1.0),
             sustain_attenuation = 1.0 - (max(0.0, min(mod_env_sustain, 1000.0)) / 100.0)
         )
 
-        val mod_lfo_freq: Double = (sample.mod_lfo_freq ?: instrument.instrument?.global_sample?.mod_lfo_freq ?: 0.0) * (instrument.mod_lfo_freq ?: 1.0) * (preset.global_zone?.mod_lfo_freq ?: 1.0)
-        val mod_lfo_delay: Double = (sample.mod_lfo_delay ?: instrument.instrument?.global_sample?.mod_lfo_delay ?: 0.0) * (instrument.mod_lfo_delay ?: 1.0) * (preset.global_zone?.mod_lfo_delay ?: 1.0)
-        val mod_lfo_to_volume: Double = (sample.mod_lfo_to_volume ?: instrument.instrument?.global_sample?.mod_lfo_to_volume ?: 0.0 ) + (instrument.mod_lfo_to_volume ?: 0.0) + (preset.global_zone?.mod_lfo_to_volume ?: 0.0)
-        val mod_lfo_pitch: Int = (sample.mod_lfo_pitch ?: instrument.instrument?.global_sample?.mod_lfo_pitch ?: 0 ) + (instrument.mod_lfo_pitch ?: 0) + (preset.global_zone?.mod_lfo_pitch ?: 0)
-        val mod_lfo_filter: Int = (sample.mod_lfo_filter ?: instrument.instrument?.global_sample?.mod_lfo_filter ?: 0 ) + (instrument.mod_lfo_filter ?: 0) + (preset.global_zone?.mod_lfo_filter ?: 0)
+        val mod_lfo_freq: Double = (sample.mod_lfo_freq ?: instrument.instrument?.global_zone?.mod_lfo_freq ?: 0.0) * (instrument.mod_lfo_freq ?: 1.0) * (preset.global_zone?.mod_lfo_freq ?: 1.0)
+        val mod_lfo_delay: Double = (sample.mod_lfo_delay ?: instrument.instrument?.global_zone?.mod_lfo_delay ?: 0.0) * (instrument.mod_lfo_delay ?: 1.0) * (preset.global_zone?.mod_lfo_delay ?: 1.0)
+        val mod_lfo_to_volume: Double = (sample.mod_lfo_to_volume ?: instrument.instrument?.global_zone?.mod_lfo_to_volume ?: 0.0 ) + (instrument.mod_lfo_to_volume ?: 0.0) + (preset.global_zone?.mod_lfo_to_volume ?: 0.0)
+        val mod_lfo_pitch: Int = (sample.mod_lfo_pitch ?: instrument.instrument?.global_zone?.mod_lfo_pitch ?: 0 ) + (instrument.mod_lfo_pitch ?: 0) + (preset.global_zone?.mod_lfo_pitch ?: 0)
+        val mod_lfo_filter: Int = (sample.mod_lfo_filter ?: instrument.instrument?.global_zone?.mod_lfo_filter ?: 0 ) + (instrument.mod_lfo_filter ?: 0) + (preset.global_zone?.mod_lfo_filter ?: 0)
 
-        val filter_cutoff: Double = (sample.filter_cutoff ?: instrument.instrument?.global_sample?.filter_cutoff ?: 13500.0 ) + (instrument.filter_cutoff ?: 0.0) + (preset.global_zone?.filter_cutoff ?: 0.0)
+        val filter_cutoff: Double = (sample.filter_cutoff ?: instrument.instrument?.global_zone?.filter_cutoff ?: 13500.0 ) + (instrument.filter_cutoff ?: 0.0) + (preset.global_zone?.filter_cutoff ?: 0.0)
         this.generated += 1
 
         return SampleHandle(

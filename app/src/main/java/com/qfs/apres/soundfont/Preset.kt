@@ -6,14 +6,14 @@ class Preset(
     var bank: Int = 0, // MIDI Bank Number
     // dwLibrary, dwGenre, dwMorphology don't do anything yet
 ) {
-    var instruments = HashMap<Int, PresetInstrument>()
-    var global_zone: PresetInstrument? = null
+    var instruments = HashMap<Int, InstrumentDirective>()
+    var global_zone: InstrumentDirective? = null
     private val quick_instrument_ref_vel = Array<MutableSet<Int>>(128) { mutableSetOf() }
     private val quick_instrument_ref_key = Array<MutableSet<Int>>(128) { mutableSetOf() }
 
 
-    fun add_instrument(pinstrument: PresetInstrument) {
-        if (pinstrument.instrument == null && global_zone == null) {
+    fun add_instrument(pinstrument: InstrumentDirective) {
+        if (pinstrument.instrument == null && this.global_zone == null) {
             this.global_zone = pinstrument
         } else {
             val hash_code = pinstrument.hashCode()
@@ -38,9 +38,9 @@ class Preset(
         }
     }
 
-    fun get_instruments(key: Int, velocity: Int): Set<PresetInstrument> {
+    fun get_instruments(key: Int, velocity: Int): Set<InstrumentDirective> {
         val ids = this.quick_instrument_ref_vel[velocity].intersect(this.quick_instrument_ref_key[key])
-        val output = mutableSetOf<PresetInstrument>()
+        val output = mutableSetOf<InstrumentDirective>()
         for (id in ids) {
             output.add(this.instruments[id]!!)
         }

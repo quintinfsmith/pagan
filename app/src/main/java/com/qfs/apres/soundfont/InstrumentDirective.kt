@@ -1,5 +1,5 @@
 package com.qfs.apres.soundfont
 
-class PresetInstrument: Generated() {
+class InstrumentDirective: Generated() {
     var instrument: Instrument? = null
 }

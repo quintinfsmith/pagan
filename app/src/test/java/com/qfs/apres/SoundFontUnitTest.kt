@@ -1,7 +1,7 @@
 package com.qfs.apres
 
 import com.qfs.apres.soundfont.Instrument
-import com.qfs.apres.soundfont.InstrumentSample
+import com.qfs.apres.soundfont.SampleDirective
 import com.qfs.apres.soundfont.Preset
 import com.qfs.apres.soundfont.SoundFont
 import org.junit.Assert.assertEquals
@@ -24,7 +24,7 @@ class SoundFontUnitTest {
         return this.get_preset().get_instruments(64, 64).first().instrument!!
     }
 
-    fun get_instrument_sample(): InstrumentSample {
+    fun get_instrument_sample(): SampleDirective {
         val samples = this.get_instrument().get_samples(20, 64).toList()
         return if (samples[0].sample!!.name == "P200 Piano D2(L)") {
             samples[0]
@@ -87,7 +87,7 @@ class SoundFontUnitTest {
             "Yamaha Grand Piano"
         )
 
-        val global_settings = yamaha.global_sample
+        val global_settings = yamaha.global_zone
         assertNotEquals(
             "Didn't load global sample on instrument",
             null,
@@ -99,7 +99,7 @@ class SoundFontUnitTest {
     @Test
     fun test_vol_env_attack() {
         val instrument = this.get_instrument()
-        val glob = instrument.global_sample!!
+        val glob = instrument.global_zone!!
         assertEquals(
             "vol_env attack is wrong",
             8,
@@ -110,7 +110,7 @@ class SoundFontUnitTest {
     @Test
     fun test_vol_env_sustain() {
         val instrument = this.get_instrument()
-        val glob = instrument.global_sample!!
+        val glob = instrument.global_zone!!
         assertEquals(
             "vol_env_sustain is wrong",
             100.0,
@@ -121,7 +121,7 @@ class SoundFontUnitTest {
     @Test
     fun test_vol_env_release() {
         val instrument = this.get_instrument()
-        val glob = instrument.global_sample!!
+        val glob = instrument.global_zone!!
         assertEquals(
             "vol_env_release is wrong",
             1.0,
@@ -132,7 +132,7 @@ class SoundFontUnitTest {
     @Test
     fun test_mod_env_release() {
         val instrument = this.get_instrument()
-        val glob = instrument.global_sample!!
+        val glob = instrument.global_zone!!
         assertEquals(
             "mod_env_release is wrong",
             100021,
@@ -143,7 +143,7 @@ class SoundFontUnitTest {
     @Test
     fun test_mod_env_filter() {
         val instrument = this.get_instrument()
-        val glob = instrument.global_sample!!
+        val glob = instrument.global_zone!!
         assertEquals(
             "mod_env_filter is wrong",
             -1000,
@@ -154,7 +154,7 @@ class SoundFontUnitTest {
     @Test
     fun test_filter_cutoff() {
         val instrument = this.get_instrument()
-        val glob = instrument.global_sample!!
+        val glob = instrument.global_zone!!
         assertEquals(
             "Filter cutoff is wrong",
             11998,

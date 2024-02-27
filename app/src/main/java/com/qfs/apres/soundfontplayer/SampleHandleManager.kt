@@ -4,9 +4,9 @@ import android.media.AudioFormat
 import android.media.AudioTrack
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event2.NoteOn79
-import com.qfs.apres.soundfont.InstrumentSample
+import com.qfs.apres.soundfont.SampleDirective
 import com.qfs.apres.soundfont.Preset
-import com.qfs.apres.soundfont.PresetInstrument
+import com.qfs.apres.soundfont.InstrumentDirective
 import com.qfs.apres.soundfont.SoundFont
 
 class SampleHandleManager(
@@ -81,7 +81,7 @@ class SampleHandleManager(
         val velocity = event.velocity shr 8
         val potential_instruments = preset.get_instruments(event.note, velocity)
         val sample_counts = arrayOf(0, 0, 0)
-        val sample_pairs = mutableListOf<Pair<InstrumentSample, PresetInstrument>>()
+        val sample_pairs = mutableListOf<Pair<SampleDirective, InstrumentDirective>>()
         for (p_instrument in potential_instruments) {
             val samples = p_instrument.instrument!!.get_samples(
                 event.note,
@@ -133,7 +133,7 @@ class SampleHandleManager(
         val potential_instruments = preset.get_instruments(event.get_note(), event.get_velocity())
 
         val sample_counts = arrayOf(0, 0, 0)
-        val sample_pairs = mutableListOf<Pair<InstrumentSample, PresetInstrument>>()
+        val sample_pairs = mutableListOf<Pair<SampleDirective, InstrumentDirective>>()
 
         for (p_instrument in potential_instruments) {
             val samples = p_instrument.instrument!!.get_samples(

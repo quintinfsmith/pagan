@@ -558,7 +558,7 @@ class SoundFont(file_path: String) {
     }
 
     private fun generate_instrument(instrument: Instrument, generators: List<Generator>) {
-        val working_sample = InstrumentSample()
+        val working_sample = SampleDirective()
         generators.forEachIndexed { i, generator ->
             when (generator.sfGenOper) {
                 0x35 -> {
@@ -635,7 +635,7 @@ class SoundFont(file_path: String) {
     }
 
     private fun generate_preset(preset: Preset, generators: List<Generator>, default_instrument: Int = 0) {
-        val working_instrument = PresetInstrument()
+        val working_instrument = InstrumentDirective()
         var instrument_set = false
 
         for (generator in generators) {

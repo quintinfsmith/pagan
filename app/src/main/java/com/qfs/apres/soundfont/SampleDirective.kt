@@ -1,6 +1,6 @@
 package com.qfs.apres.soundfont
 
-class InstrumentSample: Generated() {
+class SampleDirective: Generated() {
     var sample: Sample? = null
     var sampleStartOffset: Int? = null
     var sampleEndOffset: Int? = null

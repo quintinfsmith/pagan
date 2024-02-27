@@ -88,6 +88,15 @@
                     android:layout_weight="1"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content" />
+
+                <com.qfs.pagan.PaganTextView
+                    android:id="@+id/tvSampleRate"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=""
+                    android:paddingStart="15dp"
+                    android:paddingEnd="15dp" />
+
         </LinearLayout>
         <LinearLayout
             android:id="@+id/llRelativeEnabled"

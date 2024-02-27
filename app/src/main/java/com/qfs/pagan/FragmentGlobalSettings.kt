@@ -115,16 +115,34 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
             main.save_configuration()
         }
 
+        val sample_rate_value_text = view.findViewById<PaganTextView>(R.id.tvSampleRate)
+        sample_rate_value_text.text = "${main.configuration.sample_rate}Hz"
         val slider_playback_quality = view.findViewById<SeekBar>(R.id.sbPlaybackQuality)
-        val min_sample_rate = 11025
-        val max_sample_rate = 44100
-        slider_playback_quality.progress = (main.configuration.sample_rate - min_sample_rate) * slider_playback_quality.max / (max_sample_rate - min_sample_rate)
+        val options = listOf(
+            8000,
+            11025,
+            22050,
+            44100,
+            48000
+        )
+        var index = 0
+        for (i in options.indices) {
+            if (options[i] >= main.configuration.sample_rate) {
+                index = i
+                break
+            }
+        }
+        slider_playback_quality.max = options.size - 1
+        slider_playback_quality.progress = index
         slider_playback_quality.setOnSeekBarChangeListener(object :
             SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {}
+            override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
+                val v = options[p1]
+                sample_rate_value_text.text = "${v}Hz"
+            }
             override fun onStartTrackingTouch(p0: SeekBar?) {}
             override fun onStopTrackingTouch(seekbar: SeekBar?) {
-                main.configuration.sample_rate = (seekbar!!.progress * (max_sample_rate - min_sample_rate) / seekbar.max) + min_sample_rate
+                main.configuration.sample_rate = options[seekbar!!.progress]
                 main.set_sample_rate(main.configuration.sample_rate)
                 main.save_configuration()
             }

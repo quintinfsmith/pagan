@@ -15,6 +15,7 @@ import kotlin.math.floor
 import kotlin.math.max
 
 class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manager: SampleHandleManager): FrameMap {
+    private var simple_mode: Boolean = false // Simple mode ignores delays, and decays. Reduces Lode on cpu
     private val handle_map = HashMap<Int, SampleHandle>() // Handle UUID::Handle
     private val handle_range_map = HashMap<Int, IntRange>() // Handle UUID::Frame Range
     private val frame_map = HashMap<Int, MutableSet<Int>>() // Frame::Handle UUIDs
@@ -127,12 +128,13 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
 
     fun map_real_handle(handle: SampleHandle, start_frame: Int) {
         val end_frame = handle.release_frame!! + start_frame
-        var sample_end_frame = (end_frame + handle.get_release_duration()) - handle.volume_envelope.frames_delay
         var sample_start_frame = start_frame - handle.volume_envelope.frames_delay
+        var sample_end_frame = (end_frame + handle.get_release_duration()) - handle.volume_envelope.frames_delay
         if (sample_start_frame < 0) {
             sample_end_frame -= sample_start_frame
             sample_start_frame = 0
         }
+
         this.handle_range_map[handle.uuid] = sample_start_frame .. sample_end_frame
         this.handle_map[handle.uuid] = handle
         if (!this.frame_map.containsKey(sample_start_frame)) {
@@ -193,6 +195,11 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
             val overlap = max(this.avg_overlap, (this.setter_overlaps[setter_id] ?: 1).toDouble())
             for (handle in handles) {
                 handle.release_frame = end_frame - start_frame
+                if (this.simple_mode) {
+                    handle.volume_envelope.frames_release = 0
+                    handle.volume_envelope.frames_delay = 0
+                }
+
                 handle_uuid_set.add(handle.uuid)
 
                 handle.volume = if (is_percussion) {
@@ -206,10 +213,11 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
         }
     }
 
-    fun parse_opus() {
+    fun parse_opus(force_simple_mode: Boolean = false) {
         this.clear()
         this.tempo = this.opus_manager.tempo.toDouble()
         this.beat_count = this.opus_manager.beat_count
+        this.simple_mode = force_simple_mode
 
         this.opus_manager.channels.forEach { channel: OpusChannel ->
             val instrument = channel.get_instrument()

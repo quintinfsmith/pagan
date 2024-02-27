@@ -97,7 +97,6 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
 
     private fun gen_partial_int_array(first_frame: Int, sample_index: Int): IntArray {
         val int_array = IntArray(this.buffer_size * 2 / this.core_count)
-        val working_arrays = mutableListOf<IntArray>()
         for ((_, item) in this._active_sample_handles) {
             if (item.first_frame >= first_frame + this.buffer_size) {
                 continue
@@ -117,30 +116,15 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
 
             val sample_handle = item.sample_handles[real_index]
             if (!sample_handle.is_dead) {
-                working_arrays.add(IntArray(int_array.size))
                 this.populate_partial_int_array(
                     sample_handle,
-                    working_arrays.last(),
+                    int_array,
                     if (real_index == 0 && (0 until this.buffer_size).contains(item.first_frame - first_frame)) {
                         (item.first_frame - first_frame) - (this.buffer_size * sample_index / this.core_count)
                     } else {
                         0
                     }
                 )
-            }
-        }
-
-        // Right
-        for (i in 0 until int_array.size / 2) {
-            working_arrays.forEachIndexed { j: Int, array: IntArray ->
-                int_array[i * 2] += array[i * 2]
-            }
-        }
-
-        // Left
-        for (i in 0 until int_array.size / 2) {
-            working_arrays.forEachIndexed { j: Int, array: IntArray ->
-                int_array[(i * 2) + 1] += array[(i * 2) + 1]
             }
         }
 
@@ -205,12 +189,12 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                 else -> Pair(0,0)
             }
 
-            working_int_array[(f * 2)] = when (sample_handle.stereo_mode and 7) {
+            working_int_array[(f * 2)] += when (sample_handle.stereo_mode and 7) {
                 1, 2 -> right_frame
                 else -> 0
             }
 
-            working_int_array[(f * 2) + 1] = when (sample_handle.stereo_mode and 7) {
+            working_int_array[(f * 2) + 1] += when (sample_handle.stereo_mode and 7) {
                 1, 4 -> left_frame
                 else -> 0
             }

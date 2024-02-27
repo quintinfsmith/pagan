@@ -179,8 +179,8 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
         }
         // Note: faux_line_volume_factor is an arbitrary factor since sample aren't usually taking up the full bandwith, we can
         // pretend that each nth is large than it really is, (eg: 1/12 will actually have a max volume of 1/8)
-        val faux_line_volume_factor = 1.7
-        val perc_extra_space = 2.0
+        val faux_line_volume_factor = 1.0
+        val perc_extra_space = 3.0
 
         this.setter_map[setter_id] = {
             val handles = when (start_event) {
@@ -190,14 +190,15 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
             }
 
             val handle_uuid_set = mutableSetOf<Int>()
+            val overlap = max(this.avg_overlap, (this.setter_overlaps[setter_id] ?: 1).toDouble())
             for (handle in handles) {
                 handle.release_frame = end_frame - start_frame
                 handle_uuid_set.add(handle.uuid)
 
                 handle.volume = if (is_percussion) {
-                    (handle.volume / this.max_volume) * (faux_line_volume_factor * perc_extra_space) / max(this.avg_overlap, (this.setter_overlaps[setter_id] ?: 1).toDouble())
+                    handle.volume * (faux_line_volume_factor * perc_extra_space) / overlap
                 } else {
-                    (handle.volume / this.max_volume) * faux_line_volume_factor / max(this.avg_overlap, (this.setter_overlaps[setter_id] ?: 1).toDouble())
+                    handle.volume * faux_line_volume_factor / overlap
                 }
             }
 
@@ -321,9 +322,9 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
     private fun _gen_midi_event(event: OpusEvent, beat_key: BeatKey): MIDIEvent? {
         if (this.opus_manager.is_percussion(beat_key.channel)) {
             return NoteOn(
-                channel=9,
-                velocity=this.opus_manager.get_line_volume(beat_key.channel, beat_key.line_offset),
-                note=this.opus_manager.get_percussion_instrument(beat_key.line_offset) + 27
+                channel = 9,
+                velocity = this.opus_manager.get_line_volume(beat_key.channel, beat_key.line_offset),
+                note = this.opus_manager.get_percussion_instrument(beat_key.line_offset) + 27
             )
         }
         // Assume event is *not* relative as it is modified in map_tree() before _gen_midi_event is called

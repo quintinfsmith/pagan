@@ -253,7 +253,7 @@ class SampleHandle(
 
 
         return try {
-            (this.data_buffer.get().toDouble() * frame_factor * (this.volume * SampleHandle.HANDLE_VOLUME)).toInt()
+            (this.data_buffer.get().toDouble() * frame_factor * this.volume).toInt()
         } catch (e: ArrayIndexOutOfBoundsException) {
             this.is_dead = true
             null

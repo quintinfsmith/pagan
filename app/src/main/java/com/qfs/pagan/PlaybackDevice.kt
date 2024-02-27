@@ -9,6 +9,7 @@ class PlaybackDevice(var activity: MainActivity, sample_handle_manager: SampleHa
     sample_handle_manager.sample_rate,
     sample_handle_manager.buffer_size
 ) {
+    private var first_beat_passed = false
     /*
         All of this notification stuff is used with the understanding that the PaganPlaybackDevice
         used to export wavs will be discarded after a single use. It'll need to be cleaned up to
@@ -34,15 +35,20 @@ class PlaybackDevice(var activity: MainActivity, sample_handle_manager: SampleHa
 
     override fun on_start() {
         this.activity.update_playback_state_soundfont(MainActivity.PlaybackState.Playing)
-        this.activity.runOnUiThread {
-            this.activity.loading_reticle_hide()
-            this.activity.set_playback_button(R.drawable.ic_baseline_pause_24)
-        }
     }
 
     override fun on_beat(i: Int) {
         if (!this.is_playing || this.play_cancelled) {
             return
+        }
+        // used to hide the loading reticle at on_start, but first beat prevents
+        // hiding it, then [potentially] waiting to buffer
+        if (! this.first_beat_passed ) {
+            this.activity.runOnUiThread {
+                this.activity.loading_reticle_hide()
+                this.activity.set_playback_button(R.drawable.ic_baseline_pause_24)
+            }
+            this.first_beat_passed = true
         }
 
         val opus_manager = this.activity.get_opus_manager()
@@ -64,6 +70,7 @@ class PlaybackDevice(var activity: MainActivity, sample_handle_manager: SampleHa
     }
 
     fun play_opus(start_beat: Int) {
+        this.first_beat_passed = false
         (this.sample_frame_map as PlaybackFrameMap).parse_opus(true)
         val start_frame = this.sample_frame_map.get_beat_frames()[start_beat]?.first ?: 0
 

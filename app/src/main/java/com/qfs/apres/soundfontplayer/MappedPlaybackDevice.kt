@@ -149,7 +149,7 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
                             }
                         }
 
-                        that.on_beat(this.current_beat)
+                        //that.on_beat(this.current_beat)
 
                         that.active_audio_track_handle?.set_next_notification_position(
                             that.beat_frames[this.current_beat]!!.last - start_frame

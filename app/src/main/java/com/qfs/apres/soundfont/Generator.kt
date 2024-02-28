@@ -21,9 +21,9 @@ class Generator(
         }
     }
 
-    fun asTimecent(): Double {
-        val p = this.asIntSigned().toDouble() / 1200.toDouble()
-        return (2.0).pow(p)
+    fun asTimecent(): Float {
+        val p = this.asIntSigned().toFloat() / 1200F
+        return (2F).pow(p)
     }
 
     fun asPair(): Pair<Int, Int> {

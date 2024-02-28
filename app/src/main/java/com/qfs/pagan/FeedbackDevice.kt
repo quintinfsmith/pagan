@@ -82,7 +82,7 @@ class FeedbackDevice(var sample_handle_manager: SampleHandleManager): MappedPlay
         val handles = this.sample_handle_manager.gen_sample_handles(event)
         for (handle in handles) {
             handle.release_frame = duration_millis * this.sample_rate / 1000
-            handle.volume = event.get_velocity().toDouble() * 0.3 / 128.0
+            handle.volume = event.get_velocity().toFloat() * 0.3F / 128F
             (this.sample_frame_map as ImmediateFrameMap).add(handle)
         }
         this.play()
@@ -93,7 +93,7 @@ class FeedbackDevice(var sample_handle_manager: SampleHandleManager): MappedPlay
 
         for (handle in handles) {
             handle.release_frame = duration_millis * this.sample_rate / 1000
-            handle.volume = (event.velocity shr 8).toDouble() * 0.3 / 128.0
+            handle.volume = (event.velocity shr 8).toFloat() * 0.3F / 128F
             (this.sample_frame_map as ImmediateFrameMap).add(handle)
         }
 

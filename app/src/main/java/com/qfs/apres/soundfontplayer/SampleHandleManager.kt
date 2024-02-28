@@ -4,9 +4,9 @@ import android.media.AudioFormat
 import android.media.AudioTrack
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event2.NoteOn79
-import com.qfs.apres.soundfont.SampleDirective
-import com.qfs.apres.soundfont.Preset
 import com.qfs.apres.soundfont.InstrumentDirective
+import com.qfs.apres.soundfont.Preset
+import com.qfs.apres.soundfont.SampleDirective
 import com.qfs.apres.soundfont.SoundFont
 
 class SampleHandleManager(
@@ -111,8 +111,9 @@ class SampleHandleManager(
             val new_handle = this.sample_handle_generator.get(
                 event,
                 sample,
+                p_instrument.instrument!!.global_zone!!,
                 p_instrument,
-                preset,
+                preset.global_zone!!,
                 when (sample.sample!!.sampleType and 7) {
                     1 -> sample_counts[1]
                     2 -> sample_counts[0]
@@ -120,7 +121,7 @@ class SampleHandleManager(
                     else -> continue
                 }
             )
-            new_handle.volume = velocity.toDouble()  / 128.toDouble()
+            new_handle.volume = velocity.toFloat()  / 128.toFloat()
             output.add(new_handle)
         }
 
@@ -164,8 +165,9 @@ class SampleHandleManager(
                 val new_handle = this.sample_handle_generator.get(
                     event,
                     sample,
+                    p_instrument.instrument!!.global_zone!!,
                     p_instrument,
-                    preset,
+                    preset.global_zone!!,
                     when (sample.sample!!.sampleType and 7) {
                         1 -> sample_counts[1]
                         2 -> sample_counts[0]
@@ -173,7 +175,7 @@ class SampleHandleManager(
                         else -> continue
                     }
                 )
-                new_handle.volume = (event.get_velocity().toDouble() / 128.toDouble())
+                new_handle.volume = (event.get_velocity().toFloat() / 128F)
                 output.add(new_handle)
             }
         }

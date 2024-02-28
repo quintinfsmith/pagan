@@ -440,29 +440,29 @@ class SoundFont(file_path: String) {
                 working_generated.mod_env_pitch = generator.asIntSigned()
             }
             0x08 -> {
-                working_generated.filter_cutoff = generator.asInt().toDouble()
+                working_generated.filter_cutoff = generator.asInt().toFloat()
             }
             0x09 -> {
-                working_generated.filter_resonance = generator.asInt().toDouble()
+                working_generated.filter_resonance = generator.asInt().toFloat()
             }
             0x0A -> {
                 working_generated.mod_lfo_filter = generator.asInt()
             }
             0x0B -> {
-                working_generated.mod_env_filter = generator.asIntSigned()
+                working_generated.mod_env_filter = generator.asInt()
             }
             0x0D -> {
-                working_generated.mod_lfo_to_volume = min(1000, max(generator.asIntSigned(), 0)).toDouble() / 10.0
+                working_generated.mod_lfo_to_volume = min(1000, max(generator.asIntSigned(), 0)).toFloat() / 10F
             }
             0x0E -> { } // Unused
             0x0F -> {
-                working_generated.chorus = generator.asInt().toDouble() / 10.0
+                working_generated.chorus = generator.asInt().toFloat() / 10F
             }
             0x10 -> {
-                working_generated.reverb = (generator.asInt().toDouble()) / 10.0
+                working_generated.reverb = (generator.asInt().toFloat()) / 10F
             }
             0x11 -> {
-                working_generated.pan = (generator.asIntSigned().toDouble()) / 10
+                working_generated.pan = (generator.asIntSigned().toFloat()) / 10F
             }
             0x12 -> {}
             0x13 -> {}
@@ -471,13 +471,13 @@ class SoundFont(file_path: String) {
                 working_generated.mod_lfo_delay = generator.asTimecent()
             }
             0x16 -> {
-                working_generated.mod_lfo_freq = generator.asTimecent() * 8.176
+                working_generated.mod_lfo_freq = generator.asTimecent() * 8.176F
             }
             0x17 -> {
                 working_generated.vib_lfo_delay = generator.asTimecent()
             }
             0x18 -> {
-                working_generated.vib_lfo_freq = generator.asTimecent() * 8.176
+                working_generated.vib_lfo_freq = generator.asTimecent() * 8.176F
             }
             0x19 -> {
                 working_generated.mod_env_delay = generator.asTimecent()
@@ -492,7 +492,7 @@ class SoundFont(file_path: String) {
                 working_generated.mod_env_decay = generator.asTimecent()
             }
             0x1D -> {
-                working_generated.mod_env_sustain = min(1000, max(generator.asIntSigned(), 0)).toDouble() / 10.0
+                working_generated.mod_env_sustain = min(1000, max(generator.asIntSigned(), 0)).toFloat() / 10F
             }
             0x1E -> {
                 working_generated.mod_env_release = generator.asTimecent()
@@ -516,7 +516,7 @@ class SoundFont(file_path: String) {
                 working_generated.vol_env_decay = generator.asTimecent()
             }
             0x25 -> {
-                working_generated.vol_env_sustain = min(1000, max(generator.asIntSigned(), 0)).toDouble() / 10.0
+                working_generated.vol_env_sustain = min(1000, max(generator.asIntSigned(), 0)).toFloat() / 10F
             }
             0x26 -> {
                 working_generated.vol_env_release = generator.asTimecent()
@@ -539,7 +539,7 @@ class SoundFont(file_path: String) {
                 // but looking at the fluid font, it has some samples with negative attenuation
                 // I'll treat the data type as signed, but still use the absolute value since that sounds right
                 // when I listen to the samples
-                working_generated.attenuation = abs(generator.asIntSigned().toDouble() / 10)
+                working_generated.attenuation = abs(generator.asIntSigned().toFloat() / 10)
             }
             0x31 -> {} //reserved 2
             0x33 -> {

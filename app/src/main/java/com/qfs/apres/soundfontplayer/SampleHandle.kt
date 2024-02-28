@@ -9,7 +9,7 @@ import kotlin.math.tan
 class SampleHandle(
     var data: ShortArray,
     var sample_rate: Int,
-    var initial_attenuation: Double = 0.0,
+    var initial_attenuation: Float = 0F,
     val loop_points: Pair<Int, Int>?,
     var stereo_mode: Int,
 
@@ -17,20 +17,20 @@ class SampleHandle(
     var modulation_envelope: ModulationEnvelope,
     var modulation_lfo: LFO,
 
-    var pitch_shift: Double = 1.0,
-    var filter_cutoff: Double = 13500.0,
-    var pan: Double = 0.0,
-    var volume: Double = 1.0,
+    var pitch_shift: Float = 1F,
+    var filter_cutoff: Float = 13500F,
+    var pan: Float = 0F,
+    var volume: Float = 1F,
     var linked_handle_count: Int = 1
 ) {
     data class VolumeEnvelope(
         var sample_rate: Int,
-        var delay: Double = 0.0,
-        var attack: Double = 0.0,
-        var hold: Double = 0.0,
-        var decay: Double = 0.0,
-        var release: Double = 0.0,
-        var sustain_attenuation: Double = 1.0
+        var delay: Float = 0F,
+        var attack: Float = 0F,
+        var hold: Float = 0F,
+        var decay: Float = 0F,
+        var release: Float = 0F,
+        var sustain_attenuation: Float = 1F
     ) {
         var frames_delay: Int = 0
         var frames_attack: Int = 0
@@ -44,22 +44,22 @@ class SampleHandle(
 
         fun set_sample_rate(sample_rate: Int) {
             this.sample_rate = sample_rate
-            this.frames_delay = (this.sample_rate.toDouble() * this.delay).toInt()
-            this.frames_attack = (this.sample_rate.toDouble() * this.attack).toInt()
-            this.frames_hold = (this.sample_rate.toDouble() * this.hold).toInt()
-            this.frames_decay = (this.sample_rate.toDouble() * this.decay).toInt()
-            this.frames_release = (this.sample_rate.toDouble() * this.release).toInt()
+            this.frames_delay = (this.sample_rate.toFloat() * this.delay).toInt()
+            this.frames_attack = (this.sample_rate.toFloat() * this.attack).toInt()
+            this.frames_hold = (this.sample_rate.toFloat() * this.hold).toInt()
+            this.frames_decay = (this.sample_rate.toFloat() * this.decay).toInt()
+            this.frames_release = (this.sample_rate.toFloat() * this.release).toInt()
         }
     }
 
     class ModulationEnvelope(
         var sample_rate: Int,
-        var delay: Double = 0.0,
-        var attack: Double = 0.0,
-        var hold: Double = 0.0,
-        var decay: Double = 0.0,
-        var release: Double = 0.0,
-        var sustain_attenuation: Double = 0.0
+        var delay: Float = 0F,
+        var attack: Float = 0F,
+        var hold: Float = 0F,
+        var decay: Float = 0F,
+        var release: Float = 0F,
+        var sustain_attenuation: Float = 0F
     ) {
         var frames_delay: Int = 0
         var frames_attack: Int = 0
@@ -73,28 +73,28 @@ class SampleHandle(
 
         fun set_sample_rate(sample_rate: Int) {
             this.sample_rate = sample_rate
-            this.frames_delay = (this.sample_rate.toDouble() * this.delay).toInt()
-            this.frames_attack = (this.sample_rate.toDouble() * this.attack).toInt()
-            this.frames_hold = (this.sample_rate.toDouble() * this.hold).toInt()
-            this.frames_decay = (this.sample_rate.toDouble() * this.decay).toInt()
-            this.frames_release = (this.sample_rate.toDouble() * this.release).toInt()
+            this.frames_delay = (this.sample_rate.toFloat() * this.delay).toInt()
+            this.frames_attack = (this.sample_rate.toFloat() * this.attack).toInt()
+            this.frames_hold = (this.sample_rate.toFloat() * this.hold).toInt()
+            this.frames_decay = (this.sample_rate.toFloat() * this.decay).toInt()
+            this.frames_release = (this.sample_rate.toFloat() * this.release).toInt()
         }
     }
 
     class LFO(
         var sample_rate: Int,
-        val frequency: Double,
-        val delay: Double,
-        val pitch: Double,
+        val frequency: Float,
+        val delay: Float,
+        val pitch: Float,
         val filter: Int,
-        val volume: Double
+        val volume: Float
     ) {
-        val wave_length = sample_rate.toDouble() / this.frequency
-        val frames_delay = (this.sample_rate.toDouble() * this.delay)
+        val wave_length = sample_rate.toFloat() / this.frequency
+        val frames_delay = (this.sample_rate.toFloat() * this.delay)
 
-        fun get_frame(i: Int): Double {
+        fun get_frame(i: Int): Float {
             return if (i < this.frames_delay) {
-                0.0
+                0F
             } else {
                 val x = (i - this.frames_delay)
                 (abs((x % this.wave_length) - this.wave_length) - (this.wave_length / 2)) / this.wave_length
@@ -107,18 +107,18 @@ class SampleHandle(
     }
 
     var uuid: Int = SampleHandle.uuid_gen++
-    private val lpf_factor: Double
+    private val lpf_factor: Float
 
     var working_frame: Int = 0
     var release_frame: Int? = null
     var is_dead = false
     var data_buffer: PitchedBuffer
-    val implicit_volume_ratio: Double = 1.0 / this.linked_handle_count.toDouble()
+    val implicit_volume_ratio: Float = 1F / this.linked_handle_count.toFloat()
 
     // TODO: Unimplimented
     // var release_delay: Int? = null
     // var remove_delay: Int? = null
-    //var lpf_previous: Double = 0.0
+    //var lpf_previous: Float = 0.0
 
     constructor(original: SampleHandle): this(
         data = original.data,
@@ -137,7 +137,7 @@ class SampleHandle(
     )
 
     init {
-        val tmp_tan = tan(PI * this.filter_cutoff / this.sample_rate.toDouble())
+        val tmp_tan = tan(PI.toFloat() * this.filter_cutoff / this.sample_rate.toFloat())
         this.lpf_factor = (tmp_tan - 1) / (tmp_tan + 1)
         this.data_buffer = PitchedBuffer(this.data, this.pitch_shift)
     }
@@ -199,15 +199,15 @@ class SampleHandle(
         val is_pressed = this.release_frame == null || this.working_frame < this.release_frame!!
 
         if (this.working_frame < this.volume_envelope.frames_attack) {
-            val r = (this.working_frame).toDouble() / this.volume_envelope.frames_attack.toDouble()
+            val r = (this.working_frame).toFloat() / this.volume_envelope.frames_attack.toFloat()
             frame_factor *= r * this.initial_attenuation
         } else if (this.working_frame - this.volume_envelope.frames_attack < this.volume_envelope.frames_hold) {
             frame_factor *= this.initial_attenuation
-        } else if (this.volume_envelope.sustain_attenuation < 1.0) {
+        } else if (this.volume_envelope.sustain_attenuation < 1F) {
             frame_factor *= this.initial_attenuation
-            frame_factor *= if (this.working_frame - this.volume_envelope.frames_attack - this.volume_envelope.frames_hold < this.volume_envelope.frames_decay) {
-                val r =
-                    1.0 - ((this.working_frame - this.volume_envelope.frames_hold - this.volume_envelope.frames_attack).toDouble() / this.volume_envelope.frames_decay.toDouble())
+            val relative_frame = this.working_frame - this.volume_envelope.frames_attack - this.volume_envelope.frames_hold
+            frame_factor *= if (relative_frame < this.volume_envelope.frames_decay) {
+                val r = 1F - ((relative_frame).toFloat() / this.volume_envelope.frames_decay.toFloat())
                 (r * (this.initial_attenuation - this.volume_envelope.sustain_attenuation)) + this.volume_envelope.sustain_attenuation
             } else {
                 this.volume_envelope.sustain_attenuation
@@ -223,7 +223,7 @@ class SampleHandle(
             val release_frame_count = min(this.volume_envelope.frames_release, this.data_buffer.size - this.release_frame!!)
             val current_position_release = this.working_frame - this.release_frame!!
             if (current_position_release < release_frame_count) {
-                frame_factor *= 1.0 - (current_position_release.toDouble() / release_frame_count.toDouble())
+                frame_factor *= 1F - (current_position_release.toFloat() / release_frame_count.toFloat())
             } else {
                 this.is_dead = true
                 return null
@@ -237,17 +237,17 @@ class SampleHandle(
 
         if (this.modulation_lfo.delay <= this.working_frame) {
             val lfo_frame = this.modulation_lfo.get_frame(this.working_frame)
-            if (this.modulation_lfo.volume != 0.0) {
+            if (this.modulation_lfo.volume != 0F) {
                 frame_factor *= this.modulation_lfo.volume.pow(lfo_frame)
             }
-            if (this.modulation_lfo.pitch != 1.0) {
+            if (this.modulation_lfo.pitch != 1F) {
                 this.data_buffer.repitch(this.modulation_lfo.pitch.pow(lfo_frame))
             }
         }
 
         // TODO: low pass filter. I can't get this to work atm
         // if (this.filter_cutoff <= this.sample_rate / 2.0) {
-        //    var input = frame / Double.MAX_VALUE
+        //    var input = frame / Float.MAX_VALUE
         //    val allpass_value = (this.lpf_factor * input) + this.lpf_previous
         //    this.lpf_previous = input - (this.lpf_factor * allpass_value)
         //    frame *= (input + allpass_value) / 2.0
@@ -255,9 +255,8 @@ class SampleHandle(
 
         this.working_frame += 1
 
-
         return try {
-            (this.data_buffer.get().toDouble() * frame_factor * this.volume).toInt()
+            (this.data_buffer.get().toFloat() * frame_factor * this.volume).toInt()
         } catch (e: ArrayIndexOutOfBoundsException) {
             this.is_dead = true
             null

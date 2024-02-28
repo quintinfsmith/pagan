@@ -98,9 +98,7 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
                 val duration = System.currentTimeMillis() - ts
                 val real_delay = buffer_millis - duration
 
-                if (real_delay > 0) {
-                    Thread.sleep(real_delay)
-                } else if (this.is_playing) {
+                if (real_delay < 0 && this.is_playing) {
                     this.is_buffering = true
                     this.on_buffer()
                 }

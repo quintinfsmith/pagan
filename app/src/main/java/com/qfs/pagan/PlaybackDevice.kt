@@ -18,7 +18,7 @@ class PlaybackDevice(var activity: MainActivity, sample_handle_manager: SampleHa
     override fun on_buffer() {
         super.on_buffer()
         this.activity.runOnUiThread {
-            this.activity.loading_reticle_show("BUFFERING...")
+            this.activity.loading_reticle_show(activity.getString(R.string.title_msg_buffering))
         }
     }
 
@@ -41,9 +41,10 @@ class PlaybackDevice(var activity: MainActivity, sample_handle_manager: SampleHa
         if (!this.is_playing || this.play_cancelled) {
             return
         }
+
         // used to hide the loading reticle at on_start, but first beat prevents
         // hiding it, then [potentially] waiting to buffer
-        if (! this.first_beat_passed ) {
+        if (! this.first_beat_passed) {
             this.activity.runOnUiThread {
                 this.activity.loading_reticle_hide()
                 this.activity.set_playback_button(R.drawable.ic_baseline_pause_24)

@@ -1747,9 +1747,14 @@ class MainActivity : AppCompatActivity() {
 
     private fun needs_save(): Boolean {
         val opus_manager = this.get_opus_manager()
-        if (opus_manager.path == null || !File(opus_manager.path!!).exists()) {
+        if (opus_manager.path == null) {
             return true
         }
+
+        if (!File(opus_manager.path!!).exists()) {
+            return !opus_manager.history_cache.isEmpty()
+        }
+
         val other = OpusLayerLinks()
         other.load(opus_manager.path!!)
 

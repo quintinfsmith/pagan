@@ -71,16 +71,16 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
 
         // Note: |MIN_VALUE| is one greater than MAX_VALUE, so use the smaller MAX_VALUE
         val factor = if (max_frame_value > MAX) {
-            max_frame_value.toDouble() / MAX.toDouble()
+            max_frame_value.toFloat() / MAX.toFloat()
         } else {
-            1.0
+            1F
         }
         // -------------------
 
         var offset = 0
         arrays.forEachIndexed { i: Int, input_array: IntArray ->
             input_array.forEachIndexed { x: Int, v: Int ->
-                array[offset++] = (if (factor > 1.0) {
+                array[offset++] = (if (factor > 1F) {
                     v / factor
                 } else {
                     v
@@ -167,7 +167,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                 2 -> { // right
                     Pair(
                         0,
-                        if (pan > 0.0) {
+                        if (pan > 0F) {
                             (frame_value * (100 - pan.toInt())) / 100
                         } else {
                             frame_value
@@ -177,7 +177,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
 
                 4 -> { // left
                     Pair(
-                        if (pan < 0.0) {
+                        if (pan < 0F) {
                             (frame_value * (100 + pan.toInt())) / 100
                         } else {
                             frame_value

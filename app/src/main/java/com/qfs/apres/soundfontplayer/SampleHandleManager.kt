@@ -121,7 +121,7 @@ class SampleHandleManager(
                     else -> continue
                 }
             )
-            new_handle.volume = velocity.toDouble()  / 128.toDouble()
+            new_handle.volume = velocity.toFloat()  / 128.toFloat()
             output.add(new_handle)
         }
 
@@ -175,7 +175,7 @@ class SampleHandleManager(
                         else -> continue
                     }
                 )
-                new_handle.volume = (event.get_velocity().toDouble() / 128.toDouble())
+                new_handle.volume = (event.get_velocity().toFloat() / 128F)
                 output.add(new_handle)
             }
         }

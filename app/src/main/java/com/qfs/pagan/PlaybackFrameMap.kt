@@ -13,6 +13,7 @@ import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.structure.OpusTree
 import kotlin.math.floor
 import kotlin.math.max
+import kotlin.math.min
 
 class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manager: SampleHandleManager): FrameMap {
     private var simple_mode: Boolean = false // Simple mode ignores delays, and decays. Reduces Lode on cpu
@@ -179,10 +180,8 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
         if (is_percussion) {
             this.percussion_setter_ids.add(setter_id)
         }
-        // Note: faux_line_volume_factor is an arbitrary factor since sample aren't usually taking up the full bandwith, we can
-        // pretend that each nth is large than it really is, (eg: 1/12 will actually have a max volume of 1/8)
-        val faux_line_volume_factor = 1.0
-        val perc_extra_space = 3.0
+
+        val std_perc_ratio = .4
 
         this.setter_map[setter_id] = {
             val handles = when (start_event) {
@@ -191,22 +190,33 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
                 else -> setOf()
             }
 
+
+            val overlap: Double
+            val max_working_volume: Double
+            if (is_percussion) {
+                overlap = 1.0 / (this.setter_overlaps[setter_id] ?: 1).toDouble()
+                max_working_volume = this.max_volume * (1.0 - std_perc_ratio)
+            } else {
+                overlap = 1.0 // Don't consider overlap when attenuating percussion
+                max_working_volume = this.max_volume * std_perc_ratio
+            }
+
+
             val handle_uuid_set = mutableSetOf<Int>()
-            val overlap = max(this.avg_overlap, (this.setter_overlaps[setter_id] ?: 1).toDouble())
             for (handle in handles) {
                 handle.release_frame = end_frame - start_frame
+
                 if (this.simple_mode) {
                     handle.volume_envelope.frames_release = 0
                     handle.volume_envelope.frames_delay = 0
                 }
 
                 handle_uuid_set.add(handle.uuid)
+                val handle_volume_factor = handle.max_frame_value().toDouble() / Short.MAX_VALUE.toDouble()
+                // won't increase sample's volume, but will use sample's actual volume if it is less than the available volume
+                val sample_volume_adjustment = min(1.0, overlap / handle_volume_factor)
 
-                handle.volume = if (is_percussion) {
-                    handle.volume * (faux_line_volume_factor * perc_extra_space) / overlap
-                } else {
-                    handle.volume * faux_line_volume_factor / overlap
-                }
+                handle.volume = (handle.volume / max_working_volume) * sample_volume_adjustment
             }
 
             handles

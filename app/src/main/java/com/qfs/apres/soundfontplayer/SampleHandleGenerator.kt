@@ -124,7 +124,6 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
         val mod_lfo_to_volume: Float = (sample.mod_lfo_to_volume ?: global_sample_directive.mod_lfo_to_volume ?: 0F ) + (instrument.mod_lfo_to_volume ?: 0F) + (global_instrument_directive.mod_lfo_to_volume ?: 0F)
         val mod_lfo_pitch: Int = (sample.mod_lfo_pitch ?: global_sample_directive.mod_lfo_pitch ?: 0 ) + (instrument.mod_lfo_pitch ?: 0) + (global_instrument_directive.mod_lfo_pitch ?: 0)
         val mod_lfo_filter: Int = (sample.mod_lfo_filter ?: global_sample_directive.mod_lfo_filter ?: 0 ) + (instrument.mod_lfo_filter ?: 0) + (global_instrument_directive.mod_lfo_filter ?: 0)
-
         val filter_cutoff: Float = (sample.filter_cutoff ?: global_sample_directive.filter_cutoff ?: 13500F ) + (instrument.filter_cutoff ?: 0F) + (global_instrument_directive.filter_cutoff ?: 0F)
         this.generated += 1
 
@@ -138,7 +137,6 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
             loop_points = if (sample.sampleMode != null && sample.sampleMode!! and 1 == 1) {
                 val start = (sample.sample!!.loopStart.toFloat() / pitch_shift)
                 val size = (sample.sample!!.loopEnd - sample.sample!!.loopStart).toFloat() / pitch_shift
-
                 Pair(start.toInt(), (start + size).toInt())
             } else {
                 null

@@ -205,9 +205,9 @@ class SampleHandle(
             frame_factor *= this.initial_attenuation
         } else if (this.volume_envelope.sustain_attenuation < 1F) {
             frame_factor *= this.initial_attenuation
-            frame_factor *= if (this.working_frame - this.volume_envelope.frames_attack - this.volume_envelope.frames_hold < this.volume_envelope.frames_decay) {
-                val r =
-                    1F - ((this.working_frame - this.volume_envelope.frames_hold - this.volume_envelope.frames_attack).toFloat() / this.volume_envelope.frames_decay.toFloat())
+            val relative_frame = this.working_frame - this.volume_envelope.frames_attack - this.volume_envelope.frames_hold
+            frame_factor *= if (relative_frame < this.volume_envelope.frames_decay) {
+                val r = 1F - ((relative_frame).toFloat() / this.volume_envelope.frames_decay.toFloat())
                 (r * (this.initial_attenuation - this.volume_envelope.sustain_attenuation)) + this.volume_envelope.sustain_attenuation
             } else {
                 this.volume_envelope.sustain_attenuation
@@ -254,7 +254,6 @@ class SampleHandle(
         // }
 
         this.working_frame += 1
-
 
         return try {
             (this.data_buffer.get().toFloat() * frame_factor * this.volume).toInt()

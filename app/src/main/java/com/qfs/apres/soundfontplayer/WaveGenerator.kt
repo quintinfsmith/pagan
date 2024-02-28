@@ -6,7 +6,11 @@ import kotlinx.coroutines.runBlocking
 import kotlin.math.abs
 import kotlin.math.max
 
-class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buffer_size: Int) {
+class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buffer_size: Int, var stereo_mode: StereoMode = StereoMode.Stereo) {
+    enum class StereoMode {
+        Mono,
+        Stereo
+    }
     class EmptyException: Exception()
     class DeadException: Exception()
     class InvalidArraySize: Exception()
@@ -116,6 +120,11 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
 
             val sample_handle = item.sample_handles[real_index]
             if (!sample_handle.is_dead) {
+                // Ignore Samples in Right for mono mode
+                if (this.stereo_mode == StereoMode.Mono && sample_handle.stereo_mode and 7 == 4 && item.sample_handles.size > 1) {
+                    continue
+                }
+
                 this.populate_partial_int_array(
                     sample_handle,
                     int_array,
@@ -146,16 +155,18 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             val pan = sample_handle.pan
             val (left_frame, right_frame) = when (sample_handle.stereo_mode and 7) {
                 1 -> { // mono
-                    if (pan > 0) {
-                        Pair(
-                            frame_value,
-                            (frame_value * (100 - pan.toInt()) / 100)
-                        )
-                    } else if (pan < 0) {
-                        Pair(
-                            frame_value * (100 + pan.toInt()) / 100,
-                            frame_value
-                        )
+                    if (this.stereo_mode == StereoMode.Stereo && pan != 0F) {
+                        if (pan > 0) {
+                            Pair(
+                                frame_value,
+                                (frame_value * (100 - pan.toInt()) / 100)
+                            )
+                        } else {
+                            Pair(
+                                frame_value * (100 + pan.toInt()) / 100,
+                                frame_value
+                            )
+                        }
                     } else {
                         Pair(
                             frame_value,
@@ -165,25 +176,39 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                 }
 
                 2 -> { // right
-                    Pair(
-                        0,
-                        if (pan > 0F) {
-                            (frame_value * (100 - pan.toInt())) / 100
-                        } else {
+                    if (this.stereo_mode == StereoMode.Stereo) {
+                        Pair(
+                            0,
+                            if (pan > 0F) {
+                                (frame_value * (100 - pan.toInt())) / 100
+                            } else {
+                                frame_value
+                            }
+                        )
+                    } else { // MONO
+                        Pair(
+                            frame_value,
                             frame_value
-                        }
-                    )
+                        )
+                    }
                 }
 
                 4 -> { // left
-                    Pair(
-                        if (pan < 0F) {
-                            (frame_value * (100 + pan.toInt())) / 100
-                        } else {
+                    if (this.stereo_mode == StereoMode.Stereo) {
+                        Pair(
+                            if (pan < 0F) {
+                                (frame_value * (100 + pan.toInt())) / 100
+                            } else {
+                                frame_value
+                            },
+                            0
+                        )
+                    } else { // MONO (allowed if there is ONLY a left sample for an instrument
+                        Pair(
+                            frame_value,
                             frame_value
-                        },
-                        0
-                    )
+                        )
+                    }
                 }
 
                 else -> Pair(0,0)

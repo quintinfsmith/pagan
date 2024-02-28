@@ -5,8 +5,8 @@ import kotlin.concurrent.thread
 import kotlin.math.min
 
 // Ended up needing to split the active and cache Midi Players due to different fundemental requirements
-open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate: Int, val buffer_size: Int) {
-    internal var wave_generator = WaveGenerator(this.sample_frame_map, sample_rate, buffer_size)
+open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate: Int, val buffer_size: Int, stereo_mode: WaveGenerator.StereoMode = WaveGenerator.StereoMode.Stereo) {
+    internal var wave_generator = WaveGenerator(this.sample_frame_map, sample_rate, buffer_size, stereo_mode)
     internal var active_audio_track_handle: AudioTrackHandle? = null
 
     var BUFFER_NANO = this.buffer_size.toLong() * 1_000_000_000.toLong() / this.sample_rate.toLong()

@@ -16,24 +16,45 @@ open class WavConverter(val sample_handle_manager: SampleHandleManager) {
     var cancel_flagged = false
     var generating = false
 
-
     // Tmp_file is a Kludge until I can figure out how to quickly precalculate file sizes
-    fun export_wav(frame_map: FrameMap, target_file: File, handler: ExporterEventHandler) {
+    fun export_wav(midi_frame_map: FrameMap, target_file: File, handler: ExporterEventHandler) {
         handler.on_start()
         this.generating = true
         this.cancel_flagged = false
+        val sample_rate = this.sample_handle_manager.sample_rate
+        val buffer_size = this.sample_handle_manager.buffer_size
+        val wave_generator = WaveGenerator(midi_frame_map, sample_rate, buffer_size)
+        val data_chunks = mutableListOf<ShortArray>()
+        val total_chunk_count = midi_frame_map.get_size().toDouble() / buffer_size
+        var chunk_count = 0.0
+        val min_delta = 500
 
-        val wave_generator = WaveGenerator(
-            frame_map,
-            this.sample_handle_manager.sample_rate,
-            this.sample_handle_manager.buffer_size
-        )
+        var current_ts = System.currentTimeMillis()
+        while (!this.cancel_flagged) {
+            try {
+                val chunk = try {
+                    wave_generator.generate()
+                } catch (e: WaveGenerator.EmptyException) {
+                    ShortArray(buffer_size * 2)
+                }
+                data_chunks.add(chunk)
+                val now = System.currentTimeMillis()
+                if (now - current_ts > min_delta) {
+                    handler.on_progress_update(chunk_count / total_chunk_count)
+                    current_ts = now
+                }
+                chunk_count += 1.0
+            } catch (e: Exception) {
+                break
+            }
+        }
 
-        val total_chunk_count = frame_map.get_size().toDouble() / this.sample_handle_manager.buffer_size
+        wave_generator.frame = 0
+
         val output_stream = FileOutputStream(target_file)
         val buffered_output_stream = BufferedOutputStream(output_stream)
         val data_output_stream = DataOutputStream(buffered_output_stream)
-        val data_byte_count = frame_map.get_size() * 4
+        val data_byte_count = data_chunks.size * buffer_size * 4
 
         if (!this.cancel_flagged) {
             // 00 Riff
@@ -52,9 +73,9 @@ open class WavConverter(val sample_handle_manager: SampleHandleManager) {
             // 22 Channel Count
             data_output_stream.writeShort(0x0200)
             // 24 Sample rate
-            data_output_stream.writeInt(Integer.reverseBytes(this.sample_handle_manager.sample_rate))
+            data_output_stream.writeInt(Integer.reverseBytes(sample_rate))
             // 28 byte rate
-            data_output_stream.writeInt(Integer.reverseBytes(this.sample_handle_manager.sample_rate * 2))
+            data_output_stream.writeInt(Integer.reverseBytes(sample_rate * 2))
             // 32 Block Alignment
             data_output_stream.writeByte(0x04)
             data_output_stream.writeByte(0x00)
@@ -67,31 +88,13 @@ open class WavConverter(val sample_handle_manager: SampleHandleManager) {
             data_output_stream.writeInt(Integer.reverseBytes(data_byte_count))
         }
 
-        var chunk_count = 0.0
-        val min_delta = 500
-
-        var current_ts = System.currentTimeMillis()
-        while (!this.cancel_flagged) {
-            try {
-                val chunk = try {
-                    wave_generator.generate()
-                } catch (e: WaveGenerator.EmptyException) {
-                    ShortArray(this.sample_handle_manager.buffer_size * 2)
-                }
-
-                for (b in chunk) {
-                    data_output_stream.writeByte((b.toInt() and 0xFF))
-                    data_output_stream.writeByte((b.toInt() shr 8))
-                }
-
-                val now = System.currentTimeMillis()
-                if (now - current_ts > min_delta) {
-                    handler.on_progress_update(chunk_count / total_chunk_count)
-                    current_ts = now
-                }
-                chunk_count += 1.0
-            } catch (e: Exception) {
+        for (chunk in data_chunks) {
+            if (this.cancel_flagged) {
                 break
+            }
+            for (b in chunk) {
+                data_output_stream.writeByte((b.toInt() and 0xFF))
+                data_output_stream.writeByte((b.toInt() shr 8))
             }
         }
 

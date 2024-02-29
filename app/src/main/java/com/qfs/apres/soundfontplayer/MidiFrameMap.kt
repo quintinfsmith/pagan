@@ -98,8 +98,12 @@ class MidiFrameMap(val sample_handle_manager: SampleHandleManager): FrameMap {
        return this.final_frame + 1
     }
 
-    override fun get_new_handles(frame: Int): Set<SampleHandle>? {
-        val output = mutableSetOf<SampleHandle>()
+    override fun get_new_handles(frame: Int): List<Set<SampleHandle>>? {
+        if (!this.frames.containsKey(frame)) {
+            return null
+        }
+
+        val output = mutableListOf<MutableSet<SampleHandle>>(mutableSetOf())
 
         for (handle in this.frames[frame] ?: setOf()) {
             val max_volume = (handle.max_frame_value().toFloat() / Short.MAX_VALUE.toFloat())
@@ -109,10 +113,14 @@ class MidiFrameMap(val sample_handle_manager: SampleHandleManager): FrameMap {
             } else {
                 handle.volume *= min((1F / this.max_overlap.toFloat()) / max_volume, 1F)
             }
-            output.add(handle)
+            output[0].add(handle)
         }
 
         return output
+    }
+
+    override fun get_track_priority(track: Int): Float {
+        return 1F
     }
 
     override fun get_beat_frames(): HashMap<Int, IntRange> {

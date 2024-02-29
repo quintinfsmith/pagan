@@ -258,9 +258,10 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         for (i in 0 until this.core_count) {
             for (j in 0 until this.buffer_size / this.core_count) {
                 val working_frame = j + initial_frame + (i * this.buffer_size / this.core_count)
-                val handles = this.midi_frame_map.get_new_handles(working_frame) ?: continue
-
-                this.activate_sample_handles(handles, i, j, initial_frame)
+                val handle_tracks = this.midi_frame_map.get_new_handles(working_frame) ?: continue
+                for (handles in handle_tracks) {
+                    this.activate_sample_handles(handles, i, j, initial_frame)
+                }
             }
         }
     }

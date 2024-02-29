@@ -18,8 +18,9 @@ import kotlin.math.min
 class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manager: SampleHandleManager): FrameMap {
     private var simple_mode: Boolean = false // Simple mode ignores delays, and decays. Reduces Lode on cpu
     private val handle_map = HashMap<Int, SampleHandle>() // Handle UUID::Handle
+    private val handle_tracks = HashMap<Int, Int>() // Handle UUID::Track
     private val handle_range_map = HashMap<Int, IntRange>() // Handle UUID::Frame Range
-    private val frame_map = HashMap<Int, MutableSet<Int>>() // Frame::Handle UUIDs
+    private val frame_map = HashMap<Int, MutableSet<Int>>() // Frame::Handle UUID
 
     private var setter_id_gen = 0
     private var setter_map = HashMap<Int,() -> Set<SampleHandle>>()
@@ -36,7 +37,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
     private var tempo = 0F
     private var beat_count = 0
 
-    override fun get_new_handles(frame: Int): Set<SampleHandle>? {
+    override fun get_new_handles(frame: Int): List<Set<SampleHandle>>? {
         // Check frame a buffer ahead to make sure frames are added as accurately as possible
         this.check_frame(frame + this.sample_handle_manager.buffer_size)
 
@@ -44,15 +45,24 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
             return null
         }
 
-        val output = mutableSetOf<SampleHandle>()
+        val output = mutableListOf<MutableSet<SampleHandle>>()
 
         if (this.frame_map.containsKey(frame)) {
             for (uuid in this.frame_map[frame]!!) {
-                output.add(this.handle_map[uuid] ?: continue)
+                val track_index = this.handle_tracks[uuid] ?: 0
+                while (track_index >= output.size) {
+                    output.add(mutableSetOf())
+                }
+
+                output[track_index].add(this.handle_map[uuid] ?: continue)
             }
         }
 
         return output
+    }
+
+    override fun get_track_priority(track: Int): Float {
+        return 1F
     }
 
     override fun get_beat_frames(): HashMap<Int, IntRange> {
@@ -205,6 +215,11 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
 
             val handle_uuid_set = mutableSetOf<Int>()
             for (handle in handles) {
+                this.handle_tracks[handle.uuid] = when (start_event) {
+                    is NoteOn -> start_event.channel
+                    is NoteOn79 -> start_event.channel
+                    else -> 0
+                }
                 handle.release_frame = end_frame - start_frame
 
                 if (this.simple_mode) {

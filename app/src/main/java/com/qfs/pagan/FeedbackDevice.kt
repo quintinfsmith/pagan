@@ -20,17 +20,27 @@ class FeedbackDevice(var sample_handle_manager: SampleHandleManager): MappedPlay
         val mutex = Mutex()
         var max_frame = -1
 
-        override fun get_new_handles(frame: Int): Set<SampleHandle> {
-            val output = this.handles.toSet()
+        override fun get_new_handles(frame: Int): List<Set<SampleHandle>>? {
+            if (this.handles.isEmpty()) {
+                return null
+            }
+
+
+            val output = mutableListOf(this.handles.toSet())
             runBlocking {
                 this@ImmediateFrameMap.mutex.withLock {
                     this@ImmediateFrameMap.handles.clear()
                 }
             }
-            for (handle in output) {
+
+            for (handle in output[0]) {
                 this.max_frame = max(frame + handle.release_frame!! + handle.get_release_duration(), this.max_frame)
             }
             return output
+        }
+
+        override fun get_track_priority(track: Int): Float {
+            return 1F
         }
 
         override fun get_size(): Int {

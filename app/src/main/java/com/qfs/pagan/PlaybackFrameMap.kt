@@ -75,8 +75,13 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
         return output
     }
 
-    override fun get_active_handles(frame: Int): Set<Pair<Int, SampleHandle>> {
-        val output = mutableSetOf<Pair<Int, SampleHandle>>()
+    override fun get_active_handles(frame: Int): List<Set<Pair<Int, SampleHandle>>> {
+        val output = mutableListOf<MutableSet<Pair<Int, SampleHandle>>>()
+        for (i in 0 until this.opus_manager.channels.size) {
+            for (j in 0 until this.opus_manager.channels[i].lines.size) {
+                output.add(mutableSetOf())
+            }
+        }
 
         for ((uuid, range) in this.handle_range_map) {
             if (!range.contains(frame)) {
@@ -84,7 +89,8 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
             }
 
             val handle = this.handle_map[uuid]!!
-            output.add(Pair(range.first, handle))
+            val track = this.handle_tracks[uuid]!!
+            output[track]!!.add(Pair(range.first, handle))
         }
 
         // NOTE: May miss tail end of samples with long decays, but for now, for my purposes, will be fine
@@ -97,7 +103,8 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
                 }
                 for (handle in this.setter_map.remove(setter_id)!!()) {
                     this.map_real_handle(handle, range.first)
-                    output.add(Pair(this.handle_range_map[handle.uuid]!!.first, handle))
+                    val track_index = this.handle_tracks[handle.uuid]!!
+                    output[track_index].add(Pair(this.handle_range_map[handle.uuid]!!.first, handle))
                 }
             }
         }
@@ -170,7 +177,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
         this.cached_frame_count = null
     }
 
-    fun add_handles(start_frame: Int, end_frame: Int, start_event: MIDIEvent) {
+    fun add_handles(start_frame: Int, end_frame: Int, start_event: MIDIEvent, track: Int = 0) {
         val setter_id = this.setter_id_gen++
 
         if (!this.setter_frame_map.containsKey(start_frame)) {
@@ -215,11 +222,8 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
 
             val handle_uuid_set = mutableSetOf<Int>()
             for (handle in handles) {
-                this.handle_tracks[handle.uuid] = when (start_event) {
-                    is NoteOn -> start_event.channel
-                    is NoteOn79 -> start_event.channel
-                    else -> 0
-                }
+                this.handle_tracks[handle.uuid] = track
+
                 handle.release_frame = end_frame - start_frame
 
                 if (this.simple_mode) {
@@ -352,7 +356,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
         val end_frame = ((initial + (relative_width * duration)) * ratio).toInt()
 
         val start_event = this._gen_midi_event(event, beat_key)!!
-        this.add_handles(start_frame, end_frame, start_event)
+        this.add_handles(start_frame, end_frame, start_event, this.opus_manager.get_abs_offset(beat_key.channel, beat_key.line_offset))
 
         return event.note
     }

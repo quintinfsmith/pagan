@@ -14,7 +14,7 @@ class AudioTrackHandle(sample_rate: Int, buffer_size: Int) {
         )
         .setAudioFormat(
             AudioFormat.Builder()
-                .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                .setEncoding(AudioFormat.ENCODING_PCM_FLOAT)
                 .setSampleRate(sample_rate)
                 .setChannelMask(AudioFormat.CHANNEL_OUT_STEREO)
                 .build()
@@ -45,7 +45,7 @@ class AudioTrackHandle(sample_rate: Int, buffer_size: Int) {
         this.audio_track.play()
     }
 
-    fun write(shorts: ShortArray) {
+    fun write(shorts: FloatArray) {
         try {
             this.audio_track.write(
                 shorts,

@@ -14,7 +14,7 @@ class SampleHandleManager(
     var sample_rate: Int,
     target_buffer_size: Int = AudioTrack.getMinBufferSize(
         sample_rate,
-        AudioFormat.ENCODING_PCM_16BIT,
+        AudioFormat.ENCODING_PCM_FLOAT,
         AudioFormat.CHANNEL_OUT_STEREO
     )) {
     private val loaded_presets = HashMap<Pair<Int, Int>, Preset>()

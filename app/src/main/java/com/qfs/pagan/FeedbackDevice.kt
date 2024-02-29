@@ -51,8 +51,8 @@ class FeedbackDevice(var sample_handle_manager: SampleHandleManager): MappedPlay
             return HashMap()
         }
 
-        override fun get_active_handles(frame: Int): Set<Pair<Int, SampleHandle>> {
-            return setOf()
+        override fun get_active_handles(frame: Int): List<Set<Pair<Int, SampleHandle>>> {
+            return listOf()
         }
 
         fun add(handle: SampleHandle) {

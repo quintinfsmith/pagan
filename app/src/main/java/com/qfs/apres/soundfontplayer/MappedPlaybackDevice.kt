@@ -16,7 +16,6 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
     var play_cancelled = false // need a away to cancel between parsing and playing
     val beat_frames = HashMap<Int, IntRange>()
 
-    var cached_chunks = HashMap<Int, ShortArray>()
 
     open fun on_buffer() { }
     open fun on_buffer_done() { }
@@ -25,19 +24,6 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
     open fun on_cancelled() { }
     open fun on_beat(i :Int) { }
 
-    fun cache_chunk(start_frame: Int) {
-        this.cached_chunks[start_frame] = try {
-            this.wave_generator.generate()
-        } catch (e: WaveGenerator.EmptyException) {
-            ShortArray(this.buffer_size * 2) { 0 }
-        }
-    }
-
-    fun decache_range(range: IntRange) {
-        for (key in range.intersect(this.cached_chunks.keys)) {
-            this.cached_chunks.remove(key)
-        }
-    }
 
     fun purge_wave_generator() {
         this.wave_generator.clear()
@@ -73,8 +59,8 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
             val buffer_millis = this.BUFFER_NANO / 1_000_000
             var ts: Long = System.currentTimeMillis()
             var flag_dead = false
-            val empty_chunk = ShortArray(this.buffer_size * 2) { 0 }
-            var chunk: ShortArray? = null
+            val empty_chunk = FloatArray(this.buffer_size * 2) { 0f }
+            var chunk: FloatArray? = null
 
             while (this.is_playing) {
                 ts = System.currentTimeMillis()

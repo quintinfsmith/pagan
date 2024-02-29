@@ -128,9 +128,9 @@ class MidiFrameMap(val sample_handle_manager: SampleHandleManager): FrameMap {
         return HashMap()
     }
 
-    override fun get_active_handles(frame: Int): Set<Pair<Int, SampleHandle>> {
+    override fun get_active_handles(frame: Int): List<Set<Pair<Int, SampleHandle>>> {
         // TODO: implement
-        return setOf()
+        return listOf()
     }
 
     private fun calculate_max_overlap(): Int {

@@ -1,10 +1,8 @@
 package com.qfs.apres.soundfontplayer
 
 import com.google.common.primitives.Ints.min
-import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.pow
-import kotlin.math.tan
 
 class SampleHandle(
     var data: ShortArray,
@@ -21,7 +19,8 @@ class SampleHandle(
     var filter_cutoff: Float = 13500F,
     var pan: Float = 0F,
     var volume: Float = 1F,
-    var linked_handle_count: Int = 1
+    var linked_handle_count: Int = 1,
+    var data_buffer: PitchedBuffer = PitchedBuffer(data, pitch_shift)
 ) {
     data class VolumeEnvelope(
         var sample_rate: Int,
@@ -104,42 +103,50 @@ class SampleHandle(
 
     companion object {
         var uuid_gen = 0
+        fun copy(original: SampleHandle): SampleHandle {
+            val output = SampleHandle(
+                data = original.data,
+                sample_rate = original.sample_rate,
+                initial_attenuation = original.initial_attenuation,
+                loop_points = original.loop_points,
+                stereo_mode = original.stereo_mode,
+                volume_envelope = original.volume_envelope,
+                modulation_envelope = original.modulation_envelope,
+                modulation_lfo = original.modulation_lfo,
+                pitch_shift = original.pitch_shift,
+                filter_cutoff = original.filter_cutoff,
+                pan = original.pan,
+                volume = original.volume,
+                linked_handle_count = original.linked_handle_count,
+                data_buffer = PitchedBuffer(
+                    original.data,
+                    original.pitch_shift,
+                    original.data_buffer.max,
+                    original.data_buffer.size
+                ) // constructing this way allows us to skip calculating max
+            )
+            output.release_frame = original.release_frame
+
+            return output
+        }
     }
 
     var uuid: Int = SampleHandle.uuid_gen++
-    private val lpf_factor: Float
+    //private val lpf_factor: Float
 
     var working_frame: Int = 0
     var release_frame: Int? = null
     var is_dead = false
-    var data_buffer: PitchedBuffer
-    val implicit_volume_ratio: Float = 1F / this.linked_handle_count.toFloat()
 
     // TODO: Unimplimented
     // var release_delay: Int? = null
     // var remove_delay: Int? = null
     //var lpf_previous: Float = 0.0
 
-    constructor(original: SampleHandle): this(
-        data = original.data,
-        sample_rate = original.sample_rate,
-        initial_attenuation = original.initial_attenuation,
-        loop_points = original.loop_points,
-        stereo_mode = original.stereo_mode,
-        volume_envelope = original.volume_envelope,
-        modulation_envelope = original.modulation_envelope,
-        modulation_lfo = original.modulation_lfo,
-        pitch_shift = original.pitch_shift,
-        filter_cutoff = original.filter_cutoff,
-        pan = original.pan,
-        volume = original.volume,
-        linked_handle_count = original.linked_handle_count
-    )
 
     init {
-        val tmp_tan = tan(PI.toFloat() * this.filter_cutoff / this.sample_rate.toFloat())
-        this.lpf_factor = (tmp_tan - 1) / (tmp_tan + 1)
-        this.data_buffer = PitchedBuffer(this.data, this.pitch_shift)
+        //val tmp_tan = tan(PI.toFloat() * this.filter_cutoff / this.sample_rate.toFloat())
+        //this.lpf_factor = (tmp_tan - 1) / (tmp_tan + 1)
     }
 
     fun max_frame_value(): Int {
@@ -195,7 +202,7 @@ class SampleHandle(
             return null
         }
 
-        var frame_factor = this.implicit_volume_ratio
+        var frame_factor = 1F / this.linked_handle_count
         val is_pressed = this.release_frame == null || this.working_frame < this.release_frame!!
 
         if (this.working_frame < this.volume_envelope.frames_attack) {

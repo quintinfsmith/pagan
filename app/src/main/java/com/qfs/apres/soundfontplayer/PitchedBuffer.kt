@@ -4,13 +4,18 @@ import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 
-class PitchedBuffer(val data: ShortArray, var pitch: Float) {
+class PitchedBuffer(val data: ShortArray, var pitch: Float, known_max: Int? = null, known_size: Int? = null) {
     val data_size = data.size
-    val max = max(abs(data.min().toInt()), data.max().toInt())
-    var size = (data.size.toFloat() / this.pitch).toInt()
+    val max: Int
+    var size: Int
 
     private var virtual_position: Int = 0
     private val original_pitch: Float = this.pitch
+
+    init {
+        this.max = known_max ?: max(abs(data.min().toInt()), data.max().toInt())
+        this.size = known_size ?: (this.data.size.toFloat() / this.pitch).toInt()
+    }
 
     fun repitch(new_pitch: Float) {
         this.pitch = this.original_pitch * new_pitch

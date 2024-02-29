@@ -2,6 +2,9 @@ package com.qfs.pagan
 
 import com.qfs.apres.soundfontplayer.MappedPlaybackDevice
 import com.qfs.apres.soundfontplayer.SampleHandleManager
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlin.math.max
 
 class PlaybackDevice(var activity: MainActivity, sample_handle_manager: SampleHandleManager): MappedPlaybackDevice(
@@ -10,6 +13,8 @@ class PlaybackDevice(var activity: MainActivity, sample_handle_manager: SampleHa
     sample_handle_manager.buffer_size
 ) {
     private var first_beat_passed = false
+    private var buffering_cancelled = false
+    private var buffering_mutex = Mutex()
     /*
         All of this notification stuff is used with the understanding that the PaganPlaybackDevice
         used to export wavs will be discarded after a single use. It'll need to be cleaned up to
@@ -18,11 +23,30 @@ class PlaybackDevice(var activity: MainActivity, sample_handle_manager: SampleHa
     override fun on_buffer() {
         super.on_buffer()
         this.activity.runOnUiThread {
-            this.activity.loading_reticle_show(activity.getString(R.string.title_msg_buffering))
+            Thread.sleep(200)
+            val cancelled = runBlocking {
+                this@PlaybackDevice.buffering_mutex.withLock {
+                    this@PlaybackDevice.buffering_cancelled
+                }
+            }
+            if (!cancelled) {
+                this.activity.loading_reticle_show(activity.getString(R.string.title_msg_buffering))
+            } else {
+                runBlocking {
+                    this@PlaybackDevice.buffering_mutex.withLock {
+                        this@PlaybackDevice.buffering_cancelled = false
+                    }
+                }
+            }
         }
     }
 
     override fun on_buffer_done() {
+        runBlocking {
+            this@PlaybackDevice.buffering_mutex.withLock {
+                this@PlaybackDevice.buffering_cancelled = true
+            }
+        }
         super.on_buffer_done()
         this.activity.runOnUiThread {
             this.activity.loading_reticle_hide()

@@ -132,16 +132,14 @@ class SampleHandle(
     }
 
     var uuid: Int = SampleHandle.uuid_gen++
-    //private val lpf_factor: Float
 
     var working_frame: Int = 0
     var release_frame: Int? = null
     var is_dead = false
 
     // TODO: Unimplimented
-    // var release_delay: Int? = null
-    // var remove_delay: Int? = null
-    //var lpf_previous: Float = 0.0
+    //private val lpf_factor: Float
+    //var lpf_previous: Float = 0F
 
 
     init {
@@ -252,22 +250,26 @@ class SampleHandle(
             }
         }
 
-        // TODO: low pass filter. I can't get this to work atm
-        // if (this.filter_cutoff <= this.sample_rate / 2.0) {
-        //    var input = frame / Float.MAX_VALUE
-        //    val allpass_value = (this.lpf_factor * input) + this.lpf_previous
-        //    this.lpf_previous = input - (this.lpf_factor * allpass_value)
-        //    frame *= (input + allpass_value) / 2.0
-        // }
 
         this.working_frame += 1
 
-        return try {
-            (this.data_buffer.get().toFloat() * frame_factor * this.volume).toInt()
+        var frame_value = try {
+            this.data_buffer.get().toFloat()
         } catch (e: ArrayIndexOutOfBoundsException) {
             this.is_dead = true
-            null
+            return null
         }
+
+        // //TODO: low pass filter. I can't get this to work atm
+        // if (this.filter_cutoff <= this.sample_rate) {
+        //    var input = frame_value
+        //    val allpass_value = (this.lpf_factor * input) + this.lpf_previous
+        //    this.lpf_previous = input - (this.lpf_factor * allpass_value)
+        //    frame_value *= (input + allpass_value) / 2F
+        // }
+
+
+        return (frame_value * frame_factor * this.volume).toInt()
     }
 
     fun release_note() {

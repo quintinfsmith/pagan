@@ -123,6 +123,7 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
             8000,
             11025,
             22050,
+            32000,
             44100,
             48000
         )

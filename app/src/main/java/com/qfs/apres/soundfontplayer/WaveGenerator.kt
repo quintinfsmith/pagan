@@ -17,7 +17,8 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
 
     data class ActiveHandleMapItem(
         var first_frame: Int,
-        val sample_handles: Array<SampleHandle>,
+        val handle: SampleHandle,
+        val sample_handles: Array<Pair<SampleHandle?, Int>>,
         val first_section: Int
     )
 
@@ -118,7 +119,14 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                 sample_index
             }
 
-            val sample_handle = item.sample_handles[real_index]
+            var (sample_handle, start_frame) = item.sample_handles[real_index]
+            if (sample_handle == null) {
+                sample_handle = SampleHandle(item.handle)
+                sample_handle.release_frame = item.handle.release_frame
+                sample_handle!!.set_working_frame(start_frame)
+                item.sample_handles[real_index] = Pair(sample_handle, 0)
+            }
+
             if (!sample_handle.is_dead) {
                 // Ignore Samples in Right for mono mode
                 if (this.stereo_mode == StereoMode.Mono && sample_handle.stereo_mode and 7 == 4 && item.sample_handles.size > 1) {
@@ -231,14 +239,14 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
     private fun update_active_sample_handles(initial_frame: Int) {
         // First check for, and remove dead sample handles
         val remove_set = mutableSetOf<Int>()
-        for ((uuid, item) in this._active_sample_handles) {
+        for ((key, item) in this._active_sample_handles) {
             if (item.first_frame >= initial_frame) {
                 continue
             }
 
-            for (handle in item.sample_handles) {
-                if (handle.is_dead) {
-                    remove_set.add(uuid)
+            for ((handle, _) in item.sample_handles) {
+                if (handle != null && handle.is_dead) {
+                    remove_set.add(key)
                     break
                 }
             }
@@ -277,37 +285,39 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         // then populate the next active frames with upcoming sample handles
         val working_frame = frame_in_core_chunk + initial_frame + (core * this.buffer_size / this.core_count)
         for (handle in handles) {
-            val split_handles = Array(this.core_count - core) { k: Int ->
-                val new_handle = SampleHandle(handle)
-                new_handle.release_frame = handle.release_frame
-                if (k > 0) {
-                   new_handle.set_working_frame(
+            val split_handles = Array<Pair<SampleHandle?, Int>>(this.core_count - core) { k: Int ->
+                //val new_handle = SampleHandle(handle)
+                //new_handle.release_frame = handle.release_frame
+                Pair(
+                    null,
+                    if (k > 0) {
                        handle.working_frame + base_butt_offset + (this.buffer_size * (k - 1) / this.core_count)
-                   )
-                } else {
-                    new_handle.set_working_frame(handle.working_frame)
-                }
-                new_handle
+                    } else {
+                       handle.working_frame
+                    }
+                )
             }
 
-            this._active_sample_handles[split_handles.first().uuid] = ActiveHandleMapItem(
+            this._active_sample_handles[2 * handle.uuid] = ActiveHandleMapItem(
                 working_frame,
+                handle,
                 split_handles,
                 core
             )
 
             if (core > 0) {
-                val split_handles_b = Array(core) { k: Int ->
-                    val new_handle = SampleHandle(handle)
-                    new_handle.release_frame = handle.release_frame
-                    new_handle.set_working_frame(
+                val split_handles_b = Array<Pair<SampleHandle?, Int>>(core) { k: Int ->
+                    //val new_handle = SampleHandle(handle)
+                    //new_handle.release_frame = handle.release_frame
+                    Pair(
+                        null,
                         handle.working_frame + base_butt_offset + (this.buffer_size * ((k - 1) + (this.core_count - core)) / this.core_count)
                     )
-                    new_handle
                 }
 
-                this._active_sample_handles[split_handles_b.first().uuid] = ActiveHandleMapItem(
+                this._active_sample_handles[(2 * handle.uuid) + 1] = ActiveHandleMapItem(
                     initial_frame + buffer_size,
+                    handle,
                     split_handles_b,
                     0
                 )

@@ -195,13 +195,13 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
             val overlap: Float
             val max_working_volume: Float
             if (is_percussion) {
-                overlap = 1F / (this.setter_overlaps[setter_id] ?: 1).toFloat()
+                overlap = 1F // Don't consider overlap when attenuating percussion
                 max_working_volume = this.max_volume * (1F - std_perc_ratio)
             } else {
-                overlap = 1F // Don't consider overlap when attenuating percussion
+                //overlap = 1F / (this.setter_overlaps[setter_id] ?: 1).toFloat()
+                overlap = 2F / this.max_overlap
                 max_working_volume = this.max_volume * std_perc_ratio
             }
-
 
             val handle_uuid_set = mutableSetOf<Int>()
             for (handle in handles) {
@@ -216,8 +216,12 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
                 val handle_volume_factor = handle.max_frame_value().toFloat() / Short.MAX_VALUE.toFloat()
                 // won't increase sample's volume, but will use sample's actual volume if it is less than the available volume
                 val sample_volume_adjustment = min(1F, overlap / handle_volume_factor)
+                if (is_percussion) {
+                    handle.volume = handle.volume * sample_volume_adjustment
+                } else {
+                    handle.volume = (handle.volume * 2F / max_working_volume) * sample_volume_adjustment
 
-                handle.volume = (handle.volume / max_working_volume) * sample_volume_adjustment
+                }
             }
 
             handles

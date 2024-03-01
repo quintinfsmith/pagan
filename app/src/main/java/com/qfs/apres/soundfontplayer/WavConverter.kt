@@ -93,9 +93,10 @@ open class WavConverter(val sample_handle_manager: SampleHandleManager) {
             if (this.cancel_flagged) {
                 break
             }
-            for (b in chunk) {
-                data_output_stream.writeByte((b.toInt() and 0xFF))
-                data_output_stream.writeByte((b.toInt() shr 8))
+            for (float_value in chunk) {
+                val b = (float_value * (Short.MAX_VALUE + 1).toFloat()).toInt()
+                data_output_stream.writeByte((b and 0xFF))
+                data_output_stream.writeByte((b shr 8))
             }
         }
 

@@ -13,20 +13,21 @@ import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.structure.OpusTree
 import kotlin.math.floor
 import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.pow
 
 class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manager: SampleHandleManager): FrameMap {
     private var simple_mode: Boolean = false // Simple mode ignores delays, and decays. Reduces Lode on cpu
     private val handle_map = HashMap<Int, SampleHandle>() // Handle UUID::Handle
-    private val handle_tracks = HashMap<Int, Int>() // Handle UUID::Track
-    private val track_priorities = HashMap<Int, Int>()
     private val handle_range_map = HashMap<Int, IntRange>() // Handle UUID::Frame Range
-    private val frame_map = HashMap<Int, MutableSet<Int>>() // Frame::Handle UUID
+    private val frame_map = HashMap<Int, MutableSet<Int>>() // Frame::Handle UUIDs
 
     private var setter_id_gen = 0
     private var setter_map = HashMap<Int,() -> Set<SampleHandle>>()
     private var setter_frame_map = HashMap<Int, MutableSet<Int>>()
     private val setter_range_map = HashMap<Int, IntRange>()
     private var cached_frame_count: Int? = null
+    private val setter_overlaps = HashMap<Int, Array<Int>>()
     private var max_volume: Float = 0F
 
     private val percussion_setter_ids = mutableSetOf<Int>()
@@ -34,7 +35,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
     private var tempo = 0F
     private var beat_count = 0
 
-    override fun get_new_handles(frame: Int): List<Set<SampleHandle>>? {
+    override fun get_new_handles(frame: Int): Set<SampleHandle>? {
         // Check frame a buffer ahead to make sure frames are added as accurately as possible
         this.check_frame(frame + this.sample_handle_manager.buffer_size)
 
@@ -42,24 +43,15 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
             return null
         }
 
-        val output = mutableListOf<MutableSet<SampleHandle>>()
+        val output = mutableSetOf<SampleHandle>()
 
         if (this.frame_map.containsKey(frame)) {
             for (uuid in this.frame_map[frame]!!) {
-                val track_index = this.handle_tracks[uuid] ?: 0
-                while (track_index >= output.size) {
-                    output.add(mutableSetOf())
-                }
-
-                output[track_index].add(this.handle_map[uuid] ?: continue)
+                output.add(this.handle_map[uuid] ?: continue)
             }
         }
 
         return output
-    }
-
-    override fun get_track_priority(track: Int): Int {
-        return this.track_priorities.getOrDefault(track, 1)
     }
 
     override fun get_beat_frames(): HashMap<Int, IntRange> {
@@ -72,13 +64,8 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
         return output
     }
 
-    override fun get_active_handles(frame: Int): List<Set<Pair<Int, SampleHandle>>> {
-        val output = mutableListOf<MutableSet<Pair<Int, SampleHandle>>>()
-        for (i in 0 until this.opus_manager.channels.size) {
-            for (j in 0 until this.opus_manager.channels[i].lines.size) {
-                output.add(mutableSetOf())
-            }
-        }
+    override fun get_active_handles(frame: Int): Set<Pair<Int, SampleHandle>> {
+        val output = mutableSetOf<Pair<Int, SampleHandle>>()
 
         for ((uuid, range) in this.handle_range_map) {
             if (!range.contains(frame)) {
@@ -86,8 +73,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
             }
 
             val handle = this.handle_map[uuid]!!
-            val track = this.handle_tracks[uuid]!!
-            output[track].add(Pair(range.first, handle))
+            output.add(Pair(range.first, handle))
         }
 
         // NOTE: May miss tail end of samples with long decays, but for now, for my purposes, will be fine
@@ -100,8 +86,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
                 }
                 for (handle in this.setter_map.remove(setter_id)!!()) {
                     this.map_real_handle(handle, range.first)
-                    val track_index = this.handle_tracks[handle.uuid]!!
-                    output[track_index].add(Pair(this.handle_range_map[handle.uuid]!!.first, handle))
+                    output.add(Pair(this.handle_range_map[handle.uuid]!!.first, handle))
                 }
             }
         }
@@ -162,8 +147,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
         this.frame_map.clear()
         this.handle_map.clear()
         this.handle_range_map.clear()
-        this.handle_tracks.clear()
-        this.track_priorities.clear()
         this.max_volume = 0F
         this.tempo = 0F
         this.beat_count = 0
@@ -172,10 +155,11 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
         this.setter_frame_map.clear()
         this.setter_map.clear()
         this.setter_range_map.clear()
+        this.setter_overlaps.clear()
         this.cached_frame_count = null
     }
 
-    fun add_handles(start_frame: Int, end_frame: Int, start_event: MIDIEvent, track: Int = 0) {
+    fun add_handles(start_frame: Int, end_frame: Int, start_event: MIDIEvent) {
         val setter_id = this.setter_id_gen++
 
         if (!this.setter_frame_map.containsKey(start_frame)) {
@@ -196,12 +180,30 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
             this.percussion_setter_ids.add(setter_id)
         }
 
+        // So percussion will be allow to be 6:4 louder than the other sections combined
+        val std_perc_ratio = .4F
+
         this.setter_map[setter_id] = {
             val handles = when (start_event) {
                 is NoteOn -> this.sample_handle_manager.gen_sample_handles(start_event)
                 is NoteOn79 -> this.sample_handle_manager.gen_sample_handles(start_event)
                 else -> setOf()
             }
+
+
+            val overlap = this.setter_overlaps[setter_id]!![0] + this.setter_overlaps[setter_id]!![1]
+            var limit = 0f
+            for (i in 1 .. overlap) {
+                limit += 1f / 4f.pow(i)
+            }
+
+            val max_working_volume: Float
+            if (is_percussion) {
+                max_working_volume = this.max_volume * (1F - std_perc_ratio)
+            } else {
+                max_working_volume = this.max_volume * std_perc_ratio
+            }
+
 
             val handle_uuid_set = mutableSetOf<Int>()
             for (handle in handles) {
@@ -213,7 +215,11 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
                 }
 
                 handle_uuid_set.add(handle.uuid)
-                this.handle_tracks[handle.uuid] = track
+                val handle_volume_factor = handle.max_frame_value().toFloat() / Short.MAX_VALUE.toFloat()
+                // won't increase sample's volume, but will use sample's actual volume if it is less than the available volume
+                val sample_volume_adjustment = min(1F, limit / handle_volume_factor)
+
+                handle.volume = handle.volume * sample_volume_adjustment
             }
 
             handles
@@ -222,7 +228,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
 
     fun parse_opus(force_simple_mode: Boolean = false) {
         this.clear()
-        this.tempo = this.opus_manager.tempo
+        this.tempo = this.opus_manager.tempo.toFloat()
         this.beat_count = this.opus_manager.beat_count
         this.simple_mode = force_simple_mode
 
@@ -232,29 +238,66 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
             this.sample_handle_manager.change_program(channel.midi_channel, instrument.second)
         }
 
-        var i = 0
         this.opus_manager.channels.forEachIndexed { c: Int, channel: OpusChannel ->
             channel.lines.forEachIndexed { l: Int, line: OpusChannel.OpusLine ->
-                this.track_priorities[i++] = if (channel.midi_channel == 9) {
-                    1
-                } else {
-                    2
-                }
-
                 this.max_volume += line.volume.toFloat() / 128F
                 var prev_abs_note = 0
                 for (b in 0 until this.opus_manager.beat_count) {
                     val beat_key = BeatKey(c,l,b)
                     val working_tree = this.opus_manager.get_tree(beat_key)
-                    prev_abs_note = this.map_tree(
-                        beat_key,
-                        listOf(),
-                        working_tree,
-                        1F,
-                        0F,
-                        prev_abs_note
-                    )
+                    prev_abs_note = this.map_tree(beat_key, listOf(), working_tree, 1F, 0F, prev_abs_note)
                 }
+            }
+        }
+
+        this.calculate_overlaps()
+    }
+
+    private fun calculate_overlaps() {
+        // TODO: Disregard non-parallel overlapping, ie a long note with short notes pressed over time
+        val event_list = mutableListOf<Triple<Int, Int, Boolean>>()
+        for ((handle_id,range) in this.setter_range_map) {
+            event_list.add(Triple(range.first, handle_id, true))
+            event_list.add(Triple(range.last, handle_id, false))
+        }
+        event_list.sortBy { it.first }
+
+        val working_std_set = mutableSetOf<Int>()
+        val working_perc_set = mutableSetOf<Int>()
+        this.setter_overlaps.clear()
+        // NOTE: Excluding percussion from overlap count, since they sort of exist in their own space
+        // Percussion will still be attenuated to fit with the song, but a snare hit shouldn't make
+        // Any notes played simultaneously play quieter
+        for ((_, setter_id, setter_on) in event_list) {
+            val is_perc = this.percussion_setter_ids.contains(setter_id)
+            if (setter_on) {
+                if (is_perc) {
+                    for (id in working_std_set) {
+                        this.setter_overlaps[id]!![1] += 1
+                    }
+                    for (id in working_perc_set) {
+                        this.setter_overlaps[id]!![1] += 1
+                    }
+
+                    working_perc_set.add(setter_id)
+                } else {
+                    for (id in working_std_set) {
+                        this.setter_overlaps[id]!![0] += 1
+                    }
+                    for (id in working_perc_set) {
+                        this.setter_overlaps[id]!![0] += 1
+                    }
+                    working_std_set.add(setter_id)
+                }
+                this.setter_overlaps[setter_id] = arrayOf(working_std_set.size, working_perc_set.size)
+
+            } else {
+                if (is_perc) {
+                    working_perc_set.remove(setter_id)
+                } else {
+                    working_std_set.remove(setter_id)
+                }
+
             }
         }
     }
@@ -287,7 +330,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
         val end_frame = ((initial + (relative_width * duration)) * ratio).toInt()
 
         val start_event = this._gen_midi_event(event, beat_key)!!
-        this.add_handles(start_frame, end_frame, start_event, this.opus_manager.get_abs_offset(beat_key.channel, beat_key.line_offset))
+        this.add_handles(start_frame, end_frame, start_event)
 
         return event.note
     }

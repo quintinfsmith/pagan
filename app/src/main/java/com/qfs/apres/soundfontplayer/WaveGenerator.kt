@@ -3,8 +3,6 @@ package com.qfs.apres.soundfontplayer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
-import kotlin.math.abs
-import kotlin.math.max
 
 class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buffer_size: Int, var stereo_mode: StereoMode = StereoMode.Stereo) {
     enum class StereoMode {
@@ -19,7 +17,6 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         var first_frame: Int,
         val handle: SampleHandle,
         val sample_handles: Array<Pair<SampleHandle?, Int>>,
-        var track: Int,
         val first_section: Int
     )
 
@@ -66,21 +63,6 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             }
         }
 
-        // Volume Attenuation----
-        var max_frame_value = 1F
-        arrays.forEachIndexed { i: Int, input_array: FloatArray ->
-            input_array.forEachIndexed inner@{ j: Int, v: Float ->
-                max_frame_value = max(abs(v), max_frame_value)
-            }
-        }
-
-        // Note: |MIN_VALUE| is one greater than MAX_VALUE, so use the smaller MAX_VALUE
-        val factor = if (max_frame_value > 1F) {
-            max_frame_value.toFloat()
-        } else {
-            1F
-        }
-        // -------------------
         var offset = 0
         arrays.forEachIndexed { i: Int, input_array: FloatArray ->
             input_array.forEachIndexed inner@{ j: Int, v: Float ->
@@ -96,19 +78,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
     }
 
     private fun gen_partial_int_array(first_frame: Int, sample_index: Int): FloatArray {
-        val separated_arrays = HashMap<Int, FloatArray>()
-        val counts = HashMap<Int, Int>()
-        for ((_, item) in this._active_sample_handles) {
-            if (item.first_frame >= first_frame + this.buffer_size) {
-                continue
-            }
-            val priority = this.midi_frame_map.get_track_priority(item.track)
-            if (!counts.containsKey(priority)) {
-                counts[priority] = 0
-            }
-
-            counts[priority] = counts[priority]!! + 1
-        }
+        val output = FloatArray(this.buffer_size * 2 / this.core_count) { 0f }
 
         for ((_, item) in this._active_sample_handles) {
             if (item.first_frame >= first_frame + this.buffer_size) {
@@ -140,28 +110,15 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                     continue
                 }
 
-                val priority = this.midi_frame_map.get_track_priority(item.track)
-                if (!separated_arrays.containsKey(priority)) {
-                    separated_arrays[priority] = FloatArray(this.buffer_size * 2 / this.core_count) { 0f }
-                }
-
                 this.populate_partial_int_array(
                     sample_handle,
-                    separated_arrays[priority]!!,
+                    output,
                     if (real_index == 0 && (0 until this.buffer_size).contains(item.first_frame - first_frame)) {
                         (item.first_frame - first_frame) - (this.buffer_size * sample_index / this.core_count)
                     } else {
                         0
                     }
                 )
-            }
-        }
-
-        val output = FloatArray(this.buffer_size * 2 / this.core_count) { 0f }
-        for (priority in separated_arrays.keys.sortedBy { it }) {
-            val track = separated_arrays[priority]!!
-            track.forEachIndexed { i: Int, value: Float ->
-                output[i] += value / (counts[priority]!!.toFloat() * .6f)
             }
         }
 
@@ -279,32 +236,26 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         for (i in 0 until this.core_count) {
             for (j in 0 until this.buffer_size / this.core_count) {
                 val working_frame = j + initial_frame + (i * this.buffer_size / this.core_count)
-                val handle_tracks = this.midi_frame_map.get_new_handles(working_frame) ?: continue
-                handle_tracks.forEachIndexed { track_index: Int, handles: Set<SampleHandle>? ->
-                    if (handles != null) {
-                        this.activate_sample_handles(handles, i, j, initial_frame, track_index)
-                    }
-                }
+                val handles = this.midi_frame_map.get_new_handles(working_frame) ?: continue
+                this.activate_sample_handles(handles, i, j, initial_frame)
             }
         }
     }
 
     /* Add handles that would be active but aren't because of a jump in position */
     private fun activate_active_handles(frame: Int) {
-        val handles_by_track = this.midi_frame_map.get_active_handles(frame)
-        handles_by_track.forEachIndexed { i: Int, handles ->
-            for ((first_frame, handle) in handles) {
-                if (first_frame == frame) {
-                    continue
-                }
-
-                handle.set_working_frame(frame - first_frame)
-                this.activate_sample_handles(mutableSetOf(handle), 0, 0, frame, i)
+        val handles = this.midi_frame_map.get_active_handles(frame)
+        for ((first_frame, handle) in handles) {
+            if (first_frame == frame) {
+                continue
             }
+
+            handle.set_working_frame(frame - first_frame)
+            this.activate_sample_handles(mutableSetOf(handle), 0, 0, frame)
         }
     }
 
-    fun activate_sample_handles(handles: Set<SampleHandle>, core: Int, frame_in_core_chunk: Int, initial_frame: Int, track: Int) {
+    fun activate_sample_handles(handles: Set<SampleHandle>, core: Int, frame_in_core_chunk: Int, initial_frame: Int) {
         val base_butt_offset = (this.buffer_size / this.core_count) - frame_in_core_chunk
 
         // then populate the next active frames with upcoming sample handles
@@ -328,7 +279,6 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                 working_frame,
                 handle,
                 split_handles,
-                track,
                 core
             )
 
@@ -344,7 +294,6 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                     initial_frame + this.buffer_size,
                     handle,
                     split_handles_b,
-                    track,
                     0
                 )
             }

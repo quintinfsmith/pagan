@@ -39,8 +39,8 @@ class FeedbackDevice(var sample_handle_manager: SampleHandleManager): MappedPlay
             return output
         }
 
-        override fun get_track_priority(track: Int): Float {
-            return 1F
+        override fun get_track_priority(track: Int): Int {
+            return 1
         }
 
         override fun get_size(): Int {

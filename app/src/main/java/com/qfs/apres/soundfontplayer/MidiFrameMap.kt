@@ -119,8 +119,8 @@ class MidiFrameMap(val sample_handle_manager: SampleHandleManager): FrameMap {
         return output
     }
 
-    override fun get_track_priority(track: Int): Float {
-        return 1F
+    override fun get_track_priority(track: Int): Int {
+        return 1
     }
 
     override fun get_beat_frames(): HashMap<Int, IntRange> {

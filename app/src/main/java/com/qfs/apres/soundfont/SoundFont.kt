@@ -569,39 +569,39 @@ class SoundFont(file_path: String) {
                 }
                 0x00 -> {
                     working_sample.sampleStartOffset = if (working_sample.sampleStartOffset == null) {
-                        generator.asInt()
+                        generator.asIntSigned()
                     } else {
-                        working_sample.sampleStartOffset!! + generator.asInt()
+                        working_sample.sampleStartOffset!! + generator.asIntSigned()
                     }
                 }
                 0x01 -> {
-                    working_sample.sampleEndOffset = generator.asInt()
+                    working_sample.sampleEndOffset = generator.asIntSigned()
                 }
                 0x02 -> {
-                    working_sample.loopStartOffset = generator.asInt()
+                    working_sample.loopStartOffset = generator.asIntSigned()
                 }
                 0x03 -> {
-                    working_sample.loopEndOffset = generator.asInt()
+                    working_sample.loopEndOffset = generator.asIntSigned()
                 }
                 0x04 -> {
                     working_sample.sampleStartOffset = if (working_sample.sampleStartOffset == null) {
-                        generator.asInt() * 32768
+                        generator.asIntSigned() * 32768
                     } else {
-                        working_sample.sampleStartOffset!! + (generator.asInt() * 32768)
+                        working_sample.sampleStartOffset!! + (generator.asIntSigned() * 32768)
                     }
                 }
                 0x0C -> {
                     working_sample.sampleEndOffset = if (working_sample.sampleEndOffset == null) {
-                        generator.asInt() * 32768
+                        generator.asIntSigned() * 32768
                     } else {
-                        working_sample.sampleEndOffset!! + (generator.asInt() * 32768)
+                        working_sample.sampleEndOffset!! + (generator.asIntSigned() * 32768)
                     }
                 }
                 0x2D -> {
                     working_sample.loopStartOffset = if (working_sample.loopStartOffset == null) {
-                        generator.asInt() * 32768
+                        generator.asIntSigned() * 32768
                     } else {
-                        working_sample.loopStartOffset!! + (generator.asInt() * 32768)
+                        working_sample.loopStartOffset!! + (generator.asIntSigned() * 32768)
                     }
                 }
                 0x2E -> { // Instrument Specific  (keynum)
@@ -612,9 +612,9 @@ class SoundFont(file_path: String) {
                 }
                 0x32 -> {
                     working_sample.loopEndOffset = if (working_sample.loopEndOffset == null) {
-                        generator.asInt() * 32768
+                        generator.asIntSigned() * 32768
                     } else {
-                        working_sample.loopEndOffset!! + (generator.asInt() * 32768)
+                        working_sample.loopEndOffset!! + (generator.asIntSigned() * 32768)
                     }
                 }
                 0x36 -> {

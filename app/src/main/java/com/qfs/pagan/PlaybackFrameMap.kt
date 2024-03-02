@@ -1,5 +1,6 @@
 package com.qfs.pagan
 
+import android.util.Log
 import com.qfs.apres.event.MIDIEvent
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event2.NoteOn79
@@ -28,7 +29,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
     private val setter_range_map = HashMap<Int, IntRange>()
     private var cached_frame_count: Int? = null
     private val setter_overlaps = HashMap<Int, Array<Int>>()
-    private var max_volume: Float = 0F
 
     private val percussion_setter_ids = mutableSetOf<Int>()
 
@@ -147,7 +147,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
         this.frame_map.clear()
         this.handle_map.clear()
         this.handle_range_map.clear()
-        this.max_volume = 0F
         this.tempo = 0F
         this.beat_count = 0
 
@@ -190,20 +189,20 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
                 else -> setOf()
             }
 
-
-            val overlap = this.setter_overlaps[setter_id]!![0] + this.setter_overlaps[setter_id]!![1]
-            var limit = 0f
-            for (i in 1 .. overlap) {
-                limit += 1f / 4f.pow(i)
-            }
-
-            val max_working_volume: Float
-            if (is_percussion) {
-                max_working_volume = this.max_volume * (1F - std_perc_ratio)
+            val overlap = if (is_percussion) {
+                this.setter_overlaps[setter_id]!![1]
             } else {
-                max_working_volume = this.max_volume * std_perc_ratio
+                this.setter_overlaps[setter_id]!![0]
             }
 
+            val maximum = 1f / 3f
+            val minimum = 1f / 5f
+            val delta = maximum - minimum
+
+            var limit = maximum
+            for (i in 1 until overlap - 1) {
+                limit -= 2f.pow(0 - i) * delta
+            }
 
             val handle_uuid_set = mutableSetOf<Int>()
             for (handle in handles) {
@@ -219,7 +218,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
                 // won't increase sample's volume, but will use sample's actual volume if it is less than the available volume
                 val sample_volume_adjustment = min(1F, limit / handle_volume_factor)
 
-                handle.volume = handle.volume * sample_volume_adjustment
+                handle.volume = handle.volume * sample_volume_adjustment * .7f // Not 100% sure about using this .7f factor here, but it seems to do the trick
             }
 
             handles
@@ -240,7 +239,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
 
         this.opus_manager.channels.forEachIndexed { c: Int, channel: OpusChannel ->
             channel.lines.forEachIndexed { l: Int, line: OpusChannel.OpusLine ->
-                this.max_volume += line.volume.toFloat() / 128F
                 var prev_abs_note = 0
                 for (b in 0 until this.opus_manager.beat_count) {
                     val beat_key = BeatKey(c,l,b)

@@ -224,12 +224,12 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
         val file_list = soundfont_dir.listFiles()?.toList() ?: listOf<File>()
 
         val soundfonts = mutableListOf<Pair<Pair<Int, String?>, String>>( Pair(Pair(0, null), this.resources.getString(R.string.no_soundfont)) )
+        soundfonts.add(Pair(Pair(2, null), getString(R.string.option_import_soundfont)))
 
         file_list.forEachIndexed { i: Int, file: File ->
             soundfonts.add(Pair(Pair(1, file.name), file.name))
         }
 
-        soundfonts.add(Pair(Pair(2, null), getString(R.string.option_import_soundfont)))
 
         this.get_main().dialog_popup_menu(getString(R.string.dialog_select_soundfont), soundfonts) { index: Int, pair: Pair<Int, String?> ->
             val (mode, path) = pair

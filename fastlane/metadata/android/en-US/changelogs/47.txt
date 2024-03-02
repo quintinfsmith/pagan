@@ -1,3 +1,4 @@
 Improved Soundfont Support
 Improved Auto Mixing
 Playback now takes uses multiple cores
+Bugfix - Setting tuning map would unset linked notes

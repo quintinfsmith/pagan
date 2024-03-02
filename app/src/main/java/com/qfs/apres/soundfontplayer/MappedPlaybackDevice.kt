@@ -65,10 +65,10 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
             while (this.is_playing) {
                 ts = System.currentTimeMillis()
                 if (chunk != null) {
-                    if (this.is_buffering) {
-                        this.is_buffering = false
-                        this.on_buffer_done()
-                    }
+                    //if (this.is_buffering) {
+                    //    this.is_buffering = false
+                    //    this.on_buffer_done()
+                    //}
                     audio_track_handle.write(chunk)
                 }
 
@@ -81,13 +81,8 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
                     break
                 }
 
-                val duration = System.currentTimeMillis() - ts
-                val real_delay = buffer_millis - duration
-
-                if (real_delay < 0 && this.is_playing) {
-                    this.is_buffering = true
-                    this.on_buffer()
-                }
+               // val duration = System.currentTimeMillis() - ts
+               // val real_delay = buffer_millis - duration
             }
 
             // Delay while write finishes

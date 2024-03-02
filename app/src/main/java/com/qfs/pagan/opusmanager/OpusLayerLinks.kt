@@ -214,6 +214,12 @@ open class OpusLayerLinks : OpusLayerBase() {
         return this.link_pools[pool_index]
     }
 
+    override fun set_tuning_map(new_map: Array<Pair<Int, Int>>, mod_events: Boolean) {
+        this.lock_links {
+            super.set_tuning_map(new_map, mod_events)
+        }
+    }
+
     override fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<OpusEvent>) {
         this.lock_links {
             this.apply_to_linked(beat_key) { linked_key: BeatKey ->

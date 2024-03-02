@@ -191,7 +191,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
                 1
                 //this.setter_overlaps[setter_id]!![1]
             } else {
-                this.setter_overlaps[setter_id]!![0] + (this.setter_overlaps[setter_id]!![1] * 2)
+                this.setter_overlaps[setter_id]!![0] + this.setter_overlaps[setter_id]!![1]
             }
 
             val maximum = 1f / 3f

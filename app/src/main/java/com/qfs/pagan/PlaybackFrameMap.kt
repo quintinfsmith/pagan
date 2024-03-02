@@ -1,6 +1,5 @@
 package com.qfs.pagan
 
-import android.util.Log
 import com.qfs.apres.event.MIDIEvent
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event2.NoteOn79
@@ -14,7 +13,6 @@ import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.structure.OpusTree
 import kotlin.math.floor
 import kotlin.math.max
-import kotlin.math.min
 import kotlin.math.pow
 
 class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manager: SampleHandleManager): FrameMap {
@@ -190,9 +188,10 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
             }
 
             val overlap = if (is_percussion) {
-                this.setter_overlaps[setter_id]!![1]
+                1
+                //this.setter_overlaps[setter_id]!![1]
             } else {
-                this.setter_overlaps[setter_id]!![0]
+                this.setter_overlaps[setter_id]!![0] + (this.setter_overlaps[setter_id]!![1] * 2)
             }
 
             val maximum = 1f / 3f
@@ -216,9 +215,13 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, val sample_handle_manage
                 handle_uuid_set.add(handle.uuid)
                 val handle_volume_factor = handle.max_frame_value().toFloat() / Short.MAX_VALUE.toFloat()
                 // won't increase sample's volume, but will use sample's actual volume if it is less than the available volume
-                val sample_volume_adjustment = min(1F, limit / handle_volume_factor)
+                val sample_volume_adjustment = limit // min(1F, limit / handle_volume_factor)
 
-                handle.volume = handle.volume * sample_volume_adjustment * .7f // Not 100% sure about using this .7f factor here, but it seems to do the trick
+                handle.volume = if (is_percussion) {
+                    handle.volume * sample_volume_adjustment
+                } else {
+                    handle.volume * sample_volume_adjustment * .6f // Not 100% sure about using this factor here, but it seems to do the trick
+                }
             }
 
             handles

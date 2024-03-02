@@ -35,8 +35,9 @@ class SoundFontPlayerUnitTest {
             sample_handle_generator.get(
                 test_on,
                 samples.first(),
+                preset_instrument.instrument!!.global_zone!!,
                 preset_instrument,
-                preset,
+                preset.global_zone!!,
                 1
             )
 
@@ -50,8 +51,9 @@ class SoundFontPlayerUnitTest {
             sample_handle_generator.get(
                 test_on,
                 samples.first(),
+                preset_instrument.instrument!!.global_zone!!,
                 preset_instrument,
-                preset
+                preset.global_zone!!,
             )
 
             assertEquals(

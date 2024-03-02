@@ -1,6 +1,5 @@
 package com.qfs.apres.soundfont
 
-import android.util.Log
 import com.qfs.apres.toUInt
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -282,7 +281,6 @@ class SoundFont(file_path: String) {
                         sample.data_placeholder.second
                     )
                 }
-                Log.d("SoundFont", "Loaded ${ordered_samples.size} Samples For Preset: ${output.name}")
             }
         }
 
@@ -449,7 +447,7 @@ class SoundFont(file_path: String) {
                 working_generated.mod_lfo_filter = generator.asInt()
             }
             0x0B -> {
-                working_generated.mod_env_filter = generator.asInt()
+                working_generated.mod_env_filter = generator.asIntSigned()
             }
             0x0D -> {
                 working_generated.mod_lfo_to_volume = min(1000, max(generator.asIntSigned(), 0)).toFloat() / 10F

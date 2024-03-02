@@ -1,8 +1,8 @@
 package com.qfs.apres
 
 import com.qfs.apres.soundfont.Instrument
-import com.qfs.apres.soundfont.SampleDirective
 import com.qfs.apres.soundfont.Preset
+import com.qfs.apres.soundfont.SampleDirective
 import com.qfs.apres.soundfont.SoundFont
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
@@ -113,7 +113,7 @@ class SoundFontUnitTest {
         val glob = instrument.global_zone!!
         assertEquals(
             "vol_env_sustain is wrong",
-            100.0,
+            100f,
             glob.vol_env_sustain
         )
     }
@@ -124,7 +124,7 @@ class SoundFontUnitTest {
         val glob = instrument.global_zone!!
         assertEquals(
             "vol_env_release is wrong",
-            1.0,
+            1f,
             glob.vol_env_release
         )
     }
@@ -169,7 +169,7 @@ class SoundFontUnitTest {
 
         assertEquals(
             "Attenuation is Wrong",
-            14.0,
+            14f,
             glob.attenuation
         )
     }
@@ -179,7 +179,7 @@ class SoundFontUnitTest {
         val sample = this.get_instrument_sample()
         assertEquals(
             "Pan is wrong",
-            -50.0,
+            -50f,
             sample.pan
         )
     }

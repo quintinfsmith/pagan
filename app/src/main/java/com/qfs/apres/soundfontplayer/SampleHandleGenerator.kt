@@ -25,9 +25,9 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
         this.sample_data_map.clear()
     }
 
-    fun get(event: NoteOn, sample_direcctive: SampleDirective, global_sample_directive: SampleDirective, instrument_directive: InstrumentDirective, global_instrument_directive: InstrumentDirective, linked_handle_count: Int = 1): SampleHandle {
+    fun get(event: NoteOn, sample_directive: SampleDirective, global_sample_directive: SampleDirective, instrument_directive: InstrumentDirective, global_instrument_directive: InstrumentDirective, linked_handle_count: Int = 1): SampleHandle {
         // set the key index to some hash of the note to allow for indexing byte note AS WELL as indexing by index
-        val map_key = this.cache_or_create_new(event.get_note(), 0, sample_direcctive, global_sample_directive, instrument_directive, global_instrument_directive, linked_handle_count)
+        val map_key = this.cache_or_create_new(event.get_note(), 0, sample_directive, global_sample_directive, instrument_directive, global_instrument_directive, linked_handle_count)
         return SampleHandle.copy(this.sample_data_map[map_key]!!)
     }
 

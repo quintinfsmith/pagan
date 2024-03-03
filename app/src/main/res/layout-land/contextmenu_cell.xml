@@ -26,8 +26,8 @@
                 <com.qfs.pagan.ButtonIcon
                     android:theme="@style/icon_button"
                     android:id="@+id/btnSplit"
-                    android:layout_width="@dimen/icon_button_size"
-                    android:layout_height="@dimen/icon_button_size"
+                    android:layout_width="@dimen/icon_button_width"
+                    android:layout_height="@dimen/icon_button_height"
                     android:text="Split"
                     android:contentDescription="@string/cd_split"
                     app:srcCompat="@drawable/split"/>
@@ -35,8 +35,8 @@
                 <com.qfs.pagan.ButtonIcon
                     android:theme="@style/icon_button"
                     android:id="@+id/btnInsert"
-                    android:layout_width="@dimen/icon_button_size"
-                    android:layout_height="@dimen/icon_button_size"
+                    android:layout_width="@dimen/icon_button_width"
+                    android:layout_height="@dimen/icon_button_height"
                     android:layout_marginTop="@dimen/number_selector_spacing"
                     android:contentDescription="@string/cd_insert"
                     android:text="Insert"
@@ -45,8 +45,8 @@
                 <com.qfs.pagan.ButtonIcon
                     android:theme="@style/icon_button"
                     android:id="@+id/btnRemove"
-                    android:layout_width="@dimen/icon_button_size"
-                    android:layout_height="@dimen/icon_button_size"
+                    android:layout_width="@dimen/icon_button_width"
+                    android:layout_height="@dimen/icon_button_height"
                     android:contentDescription="@string/cd_remove"
                     android:layout_marginTop="@dimen/number_selector_spacing"
                     android:text="Remove"
@@ -55,8 +55,8 @@
                 <com.qfs.pagan.ButtonIcon
                     android:theme="@style/icon_button"
                     android:id="@+id/btnUnset"
-                    android:layout_width="@dimen/icon_button_size"
-                    android:layout_height="@dimen/icon_button_size"
+                    android:layout_width="@dimen/icon_button_width"
+                    android:layout_height="@dimen/icon_button_height"
                     android:contentDescription="@string/cd_unset"
                     android:layout_marginTop="@dimen/number_selector_spacing"
                     android:text="Unset"
@@ -65,10 +65,10 @@
                 <com.qfs.pagan.ButtonStd
                     android:theme="@style/icon_button"
                     android:id="@+id/btnDuration"
-                    android:minHeight="@dimen/icon_button_size"
+                    android:minHeight="@dimen/icon_button_height"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center_vertical"
-                    android:layout_width="@dimen/icon_button_size"
+                    android:layout_width="@dimen/icon_button_width"
                     android:layout_marginTop="@dimen/number_selector_spacing"/>
             </LinearLayout>
 

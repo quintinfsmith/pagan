@@ -6,8 +6,6 @@
     <dimen name="stroke_corner">.5dp</dimen>
     <dimen name="anti_margin_editor">-0.5dp</dimen>
     <dimen name="context_menu_border">2dp</dimen>
-    <dimen name="icon_size">42dp</dimen>
-    <dimen name="icon_button_size">58dp</dimen>
     <dimen name="relative_option_width">35dp</dimen>
     <dimen name="line_height">41dp</dimen>
     <dimen name="base_leaf_width">41dp</dimen>
@@ -32,5 +30,10 @@
     <dimen name="color_picker_display_height">82dp</dimen>
     <dimen name="color_picker_display_padding">8dp</dimen>
     <dimen name="color_picker_popup_width">400dp</dimen>
+    <dimen name="icon_size">36dp</dimen>
+    <dimen name="icon_button_height">50dp</dimen>
+    <dimen name="icon_button_width">58dp</dimen>
+    <dimen name="icon_button_padding_a">1dp</dimen>
+    <dimen name="icon_button_padding_b">4dp</dimen>
 
 </resources>

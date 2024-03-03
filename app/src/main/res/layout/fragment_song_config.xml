@@ -10,12 +10,6 @@
     android:padding="@dimen/config_padding_outer"
     android:clickable="true">
 
-    <com.qfs.pagan.ConfigImage
-        android:id="@+id/imageView"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:srcCompat="@drawable/settings_50" />
-
     <LinearLayout
         android:id="@+id/llB"
         android:layout_height="0dp"

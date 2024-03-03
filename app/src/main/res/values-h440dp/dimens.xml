@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="icon_size">42dp</dimen>
+    <dimen name="icon_button_height">58dp</dimen>
+    <dimen name="icon_button_width">58dp</dimen>
+    <dimen name="icon_button_padding_a">5dp</dimen>
+    <dimen name="icon_button_padding_b">8dp</dimen>
+</resources>

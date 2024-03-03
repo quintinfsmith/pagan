@@ -42,10 +42,10 @@
     </style>
 
     <style name="icon_button" parent="button">
-        <item name="android:paddingTop">5dp</item>
-        <item name="android:paddingLeft">5dp</item>
-        <item name="android:paddingRight">8dp</item>
-        <item name="android:paddingBottom">8dp</item>
+        <item name="android:paddingTop">@dimen/icon_button_padding_a</item>
+        <item name="android:paddingLeft">@dimen/icon_button_padding_a</item>
+        <item name="android:paddingRight">@dimen/icon_button_padding_b</item>
+        <item name="android:paddingBottom">@dimen/icon_button_padding_b</item>
         <item name="android:textSize">18sp</item>
     </style>
 

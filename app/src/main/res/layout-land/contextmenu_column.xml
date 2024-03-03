@@ -12,16 +12,16 @@
         android:id="@+id/btnInsertBeat"
         android:theme="@style/icon_button"
         app:srcCompat="@drawable/insert_beat"
-        android:layout_width="@dimen/icon_button_size"
-        android:layout_height="@dimen/icon_button_size"
+        android:layout_width="@dimen/icon_button_width"
+        android:layout_height="@dimen/icon_button_height"
         android:contentDescription="Insert Beat" />
 
     <com.qfs.pagan.ButtonIcon
         android:id="@+id/btnRemoveBeat"
         android:theme="@style/icon_button"
         app:srcCompat="@drawable/remove_beat"
-        android:layout_width="@dimen/icon_button_size"
-        android:layout_height="@dimen/icon_button_size"
+        android:layout_width="@dimen/icon_button_width"
+        android:layout_height="@dimen/icon_button_height"
         android:layout_marginTop="@dimen/number_selector_spacing"
         android:contentDescription="Remove Beat" />
 

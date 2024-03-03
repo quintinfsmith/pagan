@@ -24,6 +24,8 @@ import android.os.Bundle
 import android.provider.OpenableColumns
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.DisplayMetrics
+import android.util.Log
 import android.view.ContextThemeWrapper
 import android.view.LayoutInflater
 import android.view.Menu
@@ -94,6 +96,7 @@ import kotlin.concurrent.thread
 import kotlin.math.floor
 import kotlin.math.roundToInt
 import com.qfs.pagan.OpusLayerInterface as OpusManager
+
 
 class MainActivity : AppCompatActivity() {
     enum class PlaybackState {
@@ -408,6 +411,12 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // DEBUG
+        val displayMetrics = DisplayMetrics()
+        windowManager.defaultDisplay.getMetrics(displayMetrics)
+        Log.d("DEBUG", "${displayMetrics.heightPixels / displayMetrics.density}")
+        //-------
 
         this.registerReceiver(
             object : BroadcastReceiver() {

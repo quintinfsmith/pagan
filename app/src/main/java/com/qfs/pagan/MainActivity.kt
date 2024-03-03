@@ -1476,14 +1476,15 @@ class MainActivity : AppCompatActivity() {
         if (this.get_opus_manager().channels.size > 0) {
             this.populate_active_percussion_names()
         }
+        this.runOnUiThread {
+            this.setup_project_config_drawer_export_button()
 
-        this.setup_project_config_drawer_export_button()
-
-        val channel_recycler = this.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
-        // Should always be null since this can only be changed from a different menu
-        if (channel_recycler.adapter != null) {
-            val channel_adapter = channel_recycler.adapter as ChannelOptionAdapter
-            channel_adapter.set_soundfont(this._soundfont!!)
+            val channel_recycler = this.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
+            // Should always be null since this can only be changed from a different menu
+            if (channel_recycler.adapter != null) {
+                val channel_adapter = channel_recycler.adapter as ChannelOptionAdapter
+                channel_adapter.set_soundfont(this._soundfont!!)
+            }
         }
     }
 

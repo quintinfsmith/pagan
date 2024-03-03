@@ -291,7 +291,11 @@ open class OpusLayerLinks : OpusLayerBase() {
     // This puts it in the correct order on the history stack
     // Since remap_links is only needed on line/channel/beat operations, there's no need to
     // consider links in the base layer operations so it's ok to remap before
+    // ALSO: remap_links should always be called outside of the lock_links wrapper
     open fun remap_links(remap_hook: (beat_key: BeatKey) -> BeatKey?) {
+        if (this.link_lock > 0) {
+            return
+        }
         val new_pool_map = HashMap<BeatKey, Int>()
         val new_pools = mutableListOf<MutableSet<BeatKey>>()
         for (pool in this.link_pools) {

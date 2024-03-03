@@ -425,174 +425,195 @@ open class OpusLayerCursor(): OpusLayerHistory() {
         }
 
         var has_cursor_action = true
-        this.history_cache.remember {
-            when (token) {
-                HistoryToken.MOVE_LINE -> {
-                    val from_channel = args[0] as Int
-                    val from_line = args[1] as Int
-                    val to_channel = args[2] as Int
-                    val to_line = args[3] as Int
-                    this.push_to_history_stack(
-                        HistoryToken.CURSOR_SELECT_ROW,
-                        listOf(
-                            to_channel,
-                            if (from_channel == to_channel && to_line >= from_line) {
-                                to_line - 1
-                            } else {
-                                to_line
-                            }
+        if (this.link_lock < 1) { // Don't move cursor to links
+            this.history_cache.remember {
+                when (token) {
+                    HistoryToken.MOVE_LINE -> {
+                        val from_channel = args[0] as Int
+                        val from_line = args[1] as Int
+                        val to_channel = args[2] as Int
+                        val to_line = args[3] as Int
+                        this.push_to_history_stack(
+                            HistoryToken.CURSOR_SELECT_ROW,
+                            listOf(
+                                to_channel,
+                                if (from_channel == to_channel && to_line >= from_line) {
+                                    to_line - 1
+                                } else {
+                                    to_line
+                                }
+                            )
                         )
-                    )
-                }
-                HistoryToken.INSERT_LINE -> {
-                    this.push_to_history_stack(
-                        HistoryToken.CURSOR_SELECT_ROW,
-                        listOf(
-                            args[0] as Int,
-                            args[1] as Int
-                        )
-                    )
-                }
-                HistoryToken.REMOVE_LINE -> {
-                    val channel = args[0] as Int
-                    val line_offset = min(
-                        args[1] as Int,
-                        this.channels[channel].size - 1
-                    )
-                    this.push_to_history_stack(
-                        HistoryToken.CURSOR_SELECT_ROW,
-                        listOf(
-                            channel,
-                            max(0, line_offset - 1)
-                        )
-                    )
-                }
-                HistoryToken.REPLACE_TREE -> {
-                    val new_position = this.checked_cast<List<Int>>(args[1]).toMutableList()
-                    var tree = this.checked_cast<OpusTree<OpusEvent>>(args[2])
-                    while (! tree.is_leaf()) {
-                        new_position.add(0)
-                        tree = tree[0]
                     }
 
-                    this.push_to_history_stack(
-                        HistoryToken.CURSOR_SELECT,
-                        listOf(
-                            args[0] as BeatKey,
-                            new_position
+                    HistoryToken.INSERT_LINE -> {
+                        this.push_to_history_stack(
+                            HistoryToken.CURSOR_SELECT_ROW,
+                            listOf(
+                                args[0] as Int,
+                                args[1] as Int
+                            )
                         )
-                    )
-                }
-                HistoryToken.SET_PERCUSSION_INSTRUMENT ->{
-                    this.push_to_history_stack(
-                        HistoryToken.CURSOR_SELECT_ROW,
-                        listOf(
-                            this.channels.size - 1,
-                            args[0] as Int
-                        )
-                    )
-                }
-                HistoryToken.SET_CHANNEL_INSTRUMENT -> {
-                    this.push_to_history_stack(
-                        HistoryToken.CURSOR_SELECT_ROW,
-                        listOf(args[0], 0)
-                    )
-                }
-                HistoryToken.UNSET -> {
-                    this.push_to_history_stack(
-                        HistoryToken.CURSOR_SELECT,
-                        listOf(
-                            args[0] as BeatKey,
-                            this.checked_cast<List<Int>>(args[1])
-                        )
-                    )
-                }
-                HistoryToken.SET_EVENT -> {
-                    this.push_to_history_stack(
-                        HistoryToken.CURSOR_SELECT,
-                        listOf(
-                            args[0] as BeatKey,
-                            this.checked_cast<List<Int>>(args[1])
-                        )
-                    )
-                }
-                HistoryToken.SET_EVENT_DURATION -> {
-                    this.push_to_history_stack(
-                        HistoryToken.CURSOR_SELECT,
-                        listOf(
-                            args[0] as BeatKey,
-                            this.checked_cast<List<Int>>(args[1])
-                        )
-                    )
-                }
-                HistoryToken.SET_PERCUSSION_EVENT -> {
-                    this.push_to_history_stack(
-                        HistoryToken.CURSOR_SELECT,
-                        listOf(
-                            args[0] as BeatKey,
-                            this.checked_cast<List<Int>>(args[1])
-                        )
-                    )
-                }
-                HistoryToken.INSERT_BEAT -> {
-                    this.push_to_history_stack(
-                        HistoryToken.CURSOR_SELECT_COLUMN,
-                        listOf(args[0] as Int)
-                    )
-                }
-                HistoryToken.REMOVE_BEATS -> {
-                    val x = max(0, min(args[0] as Int, this.beat_count - (1 + (args[1] as Int))))
-                    this.push_to_history_stack(
-                        HistoryToken.CURSOR_SELECT_COLUMN,
-                        listOf(x)
-                    )
-                }
-                HistoryToken.LINK_BEATS -> {
-                    val beat_key = args[0] as BeatKey
-                    val position = mutableListOf<Int>()
-                    var tree = this.get_tree(beat_key,position)
-                    while (! tree.is_leaf()) {
-                        tree = tree[0]
-                        position.add(0)
-                    }
-                    this.push_to_history_stack(
-                        HistoryToken.CURSOR_SELECT,
-                        listOf( beat_key, position )
-                    )
-                }
-                HistoryToken.REMOVE -> {
-                    val beat_key = args[0] as BeatKey
-                    val position = this.checked_cast<List<Int>>(args[1])
-
-                    val tree = this.get_tree(beat_key, position)
-                    val cursor_position = position.toMutableList()
-                    if (tree.parent!!.size <= 2) { // Will be pruned
-                        cursor_position.removeLast()
-                    } else if (position.last() == tree.parent!!.size - 1) {
-                        cursor_position[cursor_position.size - 1] -= 1
                     }
 
-                    this.push_to_history_stack(
-                        HistoryToken.CURSOR_SELECT,
-                        listOf(beat_key, cursor_position)
-                    )
+                    HistoryToken.REMOVE_LINE -> {
+                        val channel = args[0] as Int
+                        val line_offset = min(
+                            args[1] as Int,
+                            this.channels[channel].size - 1
+                        )
+                        this.push_to_history_stack(
+                            HistoryToken.CURSOR_SELECT_ROW,
+                            listOf(
+                                channel,
+                                max(0, line_offset - 1)
+                            )
+                        )
+                    }
+
+                    HistoryToken.REPLACE_TREE -> {
+                        val new_position = this.checked_cast<List<Int>>(args[1]).toMutableList()
+                        var tree = this.checked_cast<OpusTree<OpusEvent>>(args[2])
+                        while (!tree.is_leaf()) {
+                            new_position.add(0)
+                            tree = tree[0]
+                        }
+
+                        this.push_to_history_stack(
+                            HistoryToken.CURSOR_SELECT,
+                            listOf(
+                                args[0] as BeatKey,
+                                new_position
+                            )
+                        )
+                    }
+
+                    HistoryToken.SET_PERCUSSION_INSTRUMENT -> {
+                        this.push_to_history_stack(
+                            HistoryToken.CURSOR_SELECT_ROW,
+                            listOf(
+                                this.channels.size - 1,
+                                args[0] as Int
+                            )
+                        )
+                    }
+
+                    HistoryToken.SET_CHANNEL_INSTRUMENT -> {
+                        this.push_to_history_stack(
+                            HistoryToken.CURSOR_SELECT_ROW,
+                            listOf(args[0], 0)
+                        )
+                    }
+
+                    HistoryToken.UNSET -> {
+                        this.push_to_history_stack(
+                            HistoryToken.CURSOR_SELECT,
+                            listOf(
+                                args[0] as BeatKey,
+                                this.checked_cast<List<Int>>(args[1])
+                            )
+                        )
+                    }
+
+                    HistoryToken.SET_EVENT -> {
+                        this.push_to_history_stack(
+                            HistoryToken.CURSOR_SELECT,
+                            listOf(
+                                args[0] as BeatKey,
+                                this.checked_cast<List<Int>>(args[1])
+                            )
+                        )
+                    }
+
+                    HistoryToken.SET_EVENT_DURATION -> {
+                        this.push_to_history_stack(
+                            HistoryToken.CURSOR_SELECT,
+                            listOf(
+                                args[0] as BeatKey,
+                                this.checked_cast<List<Int>>(args[1])
+                            )
+                        )
+                    }
+
+                    HistoryToken.SET_PERCUSSION_EVENT -> {
+                        this.push_to_history_stack(
+                            HistoryToken.CURSOR_SELECT,
+                            listOf(
+                                args[0] as BeatKey,
+                                this.checked_cast<List<Int>>(args[1])
+                            )
+                        )
+                    }
+
+                    HistoryToken.INSERT_BEAT -> {
+                        this.push_to_history_stack(
+                            HistoryToken.CURSOR_SELECT_COLUMN,
+                            listOf(args[0] as Int)
+                        )
+                    }
+
+                    HistoryToken.REMOVE_BEATS -> {
+                        val x =
+                            max(0, min(args[0] as Int, this.beat_count - (1 + (args[1] as Int))))
+                        this.push_to_history_stack(
+                            HistoryToken.CURSOR_SELECT_COLUMN,
+                            listOf(x)
+                        )
+                    }
+
+                    HistoryToken.LINK_BEATS -> {
+                        val beat_key = args[0] as BeatKey
+                        val position = mutableListOf<Int>()
+                        var tree = this.get_tree(beat_key, position)
+                        while (!tree.is_leaf()) {
+                            tree = tree[0]
+                            position.add(0)
+                        }
+                        this.push_to_history_stack(
+                            HistoryToken.CURSOR_SELECT,
+                            listOf(beat_key, position)
+                        )
+                    }
+
+                    HistoryToken.REMOVE -> {
+                        val beat_key = args[0] as BeatKey
+                        val position = this.checked_cast<List<Int>>(args[1])
+
+                        val tree = this.get_tree(beat_key, position)
+                        val cursor_position = position.toMutableList()
+                        if (tree.parent!!.size <= 2) { // Will be pruned
+                            cursor_position.removeLast()
+                        } else if (position.last() == tree.parent!!.size - 1) {
+                            cursor_position[cursor_position.size - 1] -= 1
+                        }
+
+                        this.push_to_history_stack(
+                            HistoryToken.CURSOR_SELECT,
+                            listOf(beat_key, cursor_position)
+                        )
+                    }
+
+                    HistoryToken.INSERT_TREE -> {
+                        val beat_key = args[0] as BeatKey
+                        val position = this.checked_cast<List<Int>>(args[1])
+                        this.push_to_history_stack(
+                            HistoryToken.CURSOR_SELECT,
+                            listOf(beat_key, position)
+                        )
+                    }
+
+                    else -> {
+                        has_cursor_action = false
+                    }
                 }
-                HistoryToken.INSERT_TREE -> {
-                    val beat_key = args[0] as BeatKey
-                    val position = this.checked_cast<List<Int>>(args[1])
-                    this.push_to_history_stack(
-                        HistoryToken.CURSOR_SELECT,
-                        listOf(beat_key, position)
-                    )
-                }
-                else -> {
-                    has_cursor_action = false
+                if (has_cursor_action) {
+                    super.push_to_history_stack(token, args)
                 }
             }
-            if (has_cursor_action) {
-                super.push_to_history_stack(token, args)
-            }
+        } else {
+            has_cursor_action = false
         }
+
         if (! has_cursor_action) {
             //this.history_cache.pop()
             super.push_to_history_stack(token, args)

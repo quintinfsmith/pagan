@@ -65,10 +65,6 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
             while (this.is_playing) {
                 ts = System.currentTimeMillis()
                 if (chunk != null) {
-                    //if (this.is_buffering) {
-                    //    this.is_buffering = false
-                    //    this.on_buffer_done()
-                    //}
                     audio_track_handle.write(chunk)
                 }
 

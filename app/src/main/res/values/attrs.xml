@@ -6,6 +6,7 @@
     <declare-styleable name="NumberSelector">
         <attr name="button_theme" format="integer" />
         <attr name="radix" format="integer" />
+        <attr name="entries_per_line" format="integer" />
     </declare-styleable>
 
 

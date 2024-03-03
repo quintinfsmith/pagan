@@ -36,4 +36,5 @@
     <dimen name="icon_button_padding_a">1dp</dimen>
     <dimen name="icon_button_padding_b">4dp</dimen>
 
+    <dimen name="notes_per_line">6</dimen>
 </resources>

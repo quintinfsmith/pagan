@@ -22,6 +22,7 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
     var max: Int = 1
     var button_theme: Int = 0
     var radix: Int = 10
+    var entries_per_line: Int
     private var _button_map = HashMap<NumberSelectorButton, Int>()
     private var _active_button: NumberSelectorButton? = null
     private var _on_change_hook: ((NumberSelector) -> Unit)? = null
@@ -124,6 +125,7 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
         var styled_attributes = context.theme.obtainStyledAttributes(attrs, R.styleable.NumberSelector, 0, 0)
         try {
             this.button_theme = styled_attributes.getInteger(R.styleable.NumberSelector_button_theme, 0)
+            this.entries_per_line = styled_attributes.getInteger(R.styleable.NumberSelector_entries_per_line, resources.getInteger(R.integer.entries_per_line))
         } finally {
             styled_attributes.recycle()
         }
@@ -202,7 +204,7 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
     private fun populate() {
         val orientation = this.orientation
         val margin = resources.getDimension(R.dimen.number_selector_spacing).roundToInt()
-        for (i in 0 .. ((this.max - this.min) / 12)) {
+        for (i in 0 .. ((this.max - this.min) / this.entries_per_line)) {
             val new_linear_layout = LinearLayout(this.context)
             this.addView(new_linear_layout)
 
@@ -224,10 +226,9 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
         }
 
         for (i in this.min .. this.max) {
-            val j = if (this.orientation == VERTICAL) {
-                this.childCount - 1 - ((i - this.min) % this.childCount)
-            } else {
-                ((i - this.min) % this.childCount)
+            var j = ((i - this.min) % this.childCount)
+            if (this.orientation == VERTICAL) {
+                j = this.childCount - 1 - j
             }
 
             val currentView = NumberSelectorButton(this, i, this.button_theme == 1)

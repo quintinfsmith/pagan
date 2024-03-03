@@ -103,6 +103,7 @@
                 android:orientation="vertical"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                custom:entries_per_line="8"
                 custom:button_theme="1"
                 custom:min="0"
                 custom:max="7"/>

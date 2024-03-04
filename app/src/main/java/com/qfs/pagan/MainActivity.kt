@@ -412,12 +412,6 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // DEBUG
-        val displayMetrics = DisplayMetrics()
-        windowManager.defaultDisplay.getMetrics(displayMetrics)
-        Log.d("DEBUG", "${displayMetrics.heightPixels / displayMetrics.density}")
-        //-------
-
         this.registerReceiver(
             object : BroadcastReceiver() {
                 override fun onReceive(context: Context?, intent: Intent?) {
@@ -1612,7 +1606,6 @@ class MainActivity : AppCompatActivity() {
     fun populate_active_percussion_names() {
         this.active_percussion_names.clear()
         val drums = this.get_drum_options()
-        Log.d("AAA", "POP! ${drums.size}")
         for ((name, note) in drums) {
             // TODO: *Maybe* Allow drum instruments below 27? not sure what the standard is.
             //  I thought 27 was the lowest, but i'll come up with something later

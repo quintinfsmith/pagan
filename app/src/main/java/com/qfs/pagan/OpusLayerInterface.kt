@@ -636,6 +636,23 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
+    override fun create_link_pool(beat_keys: List<BeatKey>) {
+        super.create_link_pool(beat_keys)
+        val editor_table = this.get_editor_table() ?: return
+        when (this.get_ui_lock_level()) {
+            null -> {
+                this.runOnUiThread {
+                    // Need to run update on both the beat_key and *any* of its former link pool
+                    editor_table.notify_cell_changes(beat_keys)
+                }
+            }
+            UI_LOCK_PARTIAL -> {
+                editor_table.notify_cell_changes(beat_keys, true)
+            }
+            UI_LOCK_FULL -> {}
+        }
+    }
+
     override fun unlink_beat(beat_key: BeatKey) {
         val update_keys = this.get_all_linked(beat_key).toMutableList()
         update_keys.remove(beat_key)

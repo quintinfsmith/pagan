@@ -89,10 +89,8 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
                 Thread.sleep(real_delay)
             }
 
-            if (this.beat_frames.isEmpty() && flag_dead) {
-                this.kill()
-                this.on_stop()
-            }
+            this.kill()
+            this.on_stop()
             this.wave_generator.clear()
         }
 
@@ -183,7 +181,6 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
                     }
                     that.active_audio_track_handle = null
                     that.is_playing = false
-                    that.on_stop()
                 }
 
             })
@@ -199,7 +196,6 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
     fun kill() {
         this.is_playing = false
         this.active_audio_track_handle?.stop()
-        this.on_stop()
         this.active_audio_track_handle = null
         this.play_cancelled = true
     }

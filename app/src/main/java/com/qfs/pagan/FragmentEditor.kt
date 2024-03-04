@@ -469,16 +469,12 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         val btnRemoveBeat = llContextCol.findViewById<ImageView>(R.id.btnRemoveBeat)
 
         btnInsertBeat.setOnClickListener {
-            val beat = opus_manager.cursor.beat
             opus_manager.insert_beat_after_cursor(1)
-            opus_manager.cursor_select_column(beat + 1)
         }
 
         btnInsertBeat.setOnLongClickListener {
             main.dialog_number_input( getString(R.string.dlg_insert_beats), 1, 4096) { count: Int ->
-                val beat = opus_manager.cursor.beat
                 opus_manager.insert_beat_after_cursor(count)
-                opus_manager.cursor_select_column(beat + 1)
             }
             true
         }
@@ -487,9 +483,6 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
             val beat = opus_manager.cursor.beat
             try {
                 opus_manager.remove_beat_at_cursor(1)
-                if (beat >= opus_manager.beat_count) {
-                    opus_manager.cursor_select_column(opus_manager.beat_count - 1)
-                }
             } catch (e: OpusLayerBase.RemovingLastBeatException) {
                 this.get_main().feedback_msg(getString(R.string.feedback_rm_lastbeat))
             }
@@ -501,11 +494,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
 
         btnRemoveBeat.setOnLongClickListener {
             main.dialog_number_input(getString(R.string.dlg_remove_beats), 1, opus_manager.beat_count - 1) { count: Int ->
-                val beat = opus_manager.cursor.beat
                 opus_manager.remove_beat_at_cursor(count)
-                if (beat >= opus_manager.beat_count) {
-                    opus_manager.cursor_select_column(opus_manager.beat_count - 1)
-                }
 
                 if (opus_manager.beat_count == 1) {
                     btnRemoveBeat.visibility = View.GONE
@@ -617,7 +606,6 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
 
         btnInsertLine.setOnClickListener {
             opus_manager.insert_line(1)
-            opus_manager.cursor_select_row(channel, line_offset + 1)
         }
 
         btnInsertLine.setOnLongClickListener {
@@ -627,7 +615,6 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                 9,
             ) { count: Int ->
                 opus_manager.insert_line(count)
-                opus_manager.cursor_select_row(channel, line_offset + count)
             }
             true
         }
@@ -735,24 +722,12 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         rosRelativeOption.setState(opus_manager.relative_mode, true)
 
         btnSplit.setOnClickListener {
-            val beatkey = opus_manager.cursor.get_beatkey()
-            val position = opus_manager.cursor.get_position().toMutableList()
-
             opus_manager.split_tree(2)
-
-            position.add(0)
-            opus_manager.cursor_select(beatkey, position)
         }
 
         btnSplit.setOnLongClickListener {
             main.dialog_number_input(getString(R.string.dlg_split), 2, 32) { splits: Int ->
-                val beatkey = opus_manager.cursor.get_beatkey()
-                val position = opus_manager.cursor.get_position().toMutableList()
-
                 opus_manager.split_tree(splits)
-
-                position.add(0)
-                opus_manager.cursor_select(beatkey, position)
             }
             true
         }
@@ -792,30 +767,22 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         }
 
         btnInsert.setOnClickListener {
-            val beat_key = opus_manager.cursor.get_beatkey()
             val position = opus_manager.cursor.get_position().toMutableList()
             if (position.isEmpty()) {
                 opus_manager.split_tree(2)
-                position.add(0)
             } else {
                 opus_manager.insert_after(1)
-                position[position.size - 1] += 1
             }
-            opus_manager.cursor_select(beat_key, position)
         }
 
         btnInsert.setOnLongClickListener {
             main.dialog_number_input(getString(R.string.dlg_insert), 1, 29) { count: Int ->
-                val beat_key = opus_manager.cursor.get_beatkey()
                 val position = opus_manager.cursor.get_position().toMutableList()
                 if (position.isEmpty()) {
-                    position.add(0)
                     opus_manager.split_tree(count + 1)
                 } else {
                     opus_manager.insert_after(count)
-                    position[position.size - 1] += count
                 }
-                opus_manager.cursor_select(beat_key, position)
             }
             true
         }
@@ -953,36 +920,12 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
         opus_manager.unlink_beat()
-        opus_manager.cursor.is_linking = false
-        when (opus_manager.cursor.mode) {
-            OpusManagerCursor.CursorMode.Single -> {
-                val beat_key = opus_manager.cursor.get_beatkey()
-                opus_manager.cursor_select(beat_key, opus_manager.get_first_position(beat_key))
-            }
-            OpusManagerCursor.CursorMode.Range -> {
-                val (first, _) = opus_manager.cursor.range!!
-                opus_manager.cursor_select(first, opus_manager.get_first_position(first))
-            }
-            else -> {}
-        }
     }
 
     private fun interact_btnUnlinkAll() {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
         opus_manager.clear_link_pool()
-        opus_manager.cursor.is_linking = false
-        when (opus_manager.cursor.mode) {
-            OpusManagerCursor.CursorMode.Single -> {
-                val beat_key = opus_manager.cursor.get_beatkey()
-                opus_manager.cursor_select(beat_key, opus_manager.get_first_position(beat_key))
-            }
-            OpusManagerCursor.CursorMode.Range -> {
-                val (first, _) = opus_manager.cursor.range!!
-                opus_manager.cursor_select(first, opus_manager.get_first_position(first))
-            }
-            else -> {}
-        }
 
     }
 

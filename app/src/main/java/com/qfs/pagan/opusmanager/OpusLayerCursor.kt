@@ -7,7 +7,6 @@ open class OpusLayerCursor(): OpusLayerHistory() {
     var cursor = OpusManagerCursor()
     private var _queued_cursor_selection: Pair<HistoryToken, List<Int>>? = null
 
-
     override fun insert_line(channel: Int, line_offset: Int, line: OpusChannel.OpusLine) {
         // Need to clear cursor before change since the way the editor_table updates
         // Cursors doesn't take into account changes to row count
@@ -705,8 +704,15 @@ open class OpusLayerCursor(): OpusLayerHistory() {
     fun unlink_beat() {
         if (this.cursor.mode == OpusManagerCursor.CursorMode.Single) {
             this.unlink_beat(this.cursor.get_beatkey())
+            val beat_key = this.cursor.get_beatkey()
+            this.cursor.is_linking = false
+            this.cursor_select(beat_key, this.get_first_position(beat_key))
         } else if (this.cursor.mode == OpusManagerCursor.CursorMode.Range) {
-            this.unlink_range(cursor.range!!.first, cursor.range!!.second)
+            val (first, second) = this.cursor.range!!
+            this.unlink_range(first, second)
+
+            this.cursor.is_linking = false
+            this.cursor_select(first, this.get_first_position(first))
         }
     }
 
@@ -720,6 +726,19 @@ open class OpusLayerCursor(): OpusLayerHistory() {
                 beat_key,
                 this.cursor.range!!.second
             )
+        }
+
+        this.cursor.is_linking = false
+        when (this.cursor.mode) {
+            OpusManagerCursor.CursorMode.Single -> {
+                val beat_key = this.cursor.get_beatkey()
+                this.cursor_select(beat_key, this.get_first_position(beat_key))
+            }
+            OpusManagerCursor.CursorMode.Range -> {
+                val (first, _) = this.cursor.range!!
+                this.cursor_select(first, this.get_first_position(first))
+            }
+            else -> {}
         }
     }
 
@@ -736,6 +755,23 @@ open class OpusLayerCursor(): OpusLayerHistory() {
             this.cursor.get_position(),
             splits
         )
+    }
+
+    override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
+        super.split_tree(beat_key, position, splits)
+        val new_position = position.toMutableList()
+        new_position.add(0)
+        this.cursor_select(beat_key, new_position)
+    }
+
+    override fun insert(beat_key: BeatKey, position: List<Int>) {
+        super.insert(beat_key, position)
+        this.cursor_select(beat_key, position)
+    }
+
+    override fun insert_after(beat_key: BeatKey, position: List<Int>) {
+        super.insert_after(beat_key, position)
+        this.cursor_select(beat_key, position)
     }
 
     fun insert_after(count: Int) {

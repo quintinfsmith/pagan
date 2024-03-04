@@ -577,6 +577,8 @@ class MainActivity : AppCompatActivity() {
             }
             this.update_channel_instruments()
 
+            this.populate_active_percussion_names()
+
             val channel_recycler = this@MainActivity.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
             val soundfont = this@MainActivity.get_soundfont()
             if (channel_recycler != null && channel_recycler.adapter != null && soundfont != null) {
@@ -1309,6 +1311,16 @@ class MainActivity : AppCompatActivity() {
                         channel.midi_program,
                     )
                 }
+                if (this.sample_handle_manager != null) {
+                    this.sample_handle_manager!!.select_bank(
+                        channel.midi_channel,
+                        channel.midi_bank,
+                    )
+                    this.sample_handle_manager!!.change_program(
+                        channel.midi_channel,
+                        channel.midi_program,
+                    )
+                }
             }
         } else {
             val opus_channel = this.get_opus_manager().channels[index]
@@ -1320,6 +1332,16 @@ class MainActivity : AppCompatActivity() {
                     opus_channel.midi_bank,
                 )
                 this._feedback_sample_manager!!.change_program(
+                    opus_channel.midi_channel,
+                    opus_channel.midi_program,
+                )
+            }
+            if (this.sample_handle_manager != null) {
+                this.sample_handle_manager!!.select_bank(
+                    opus_channel.midi_channel,
+                    opus_channel.midi_bank,
+                )
+                this.sample_handle_manager!!.change_program(
                     opus_channel.midi_channel,
                     opus_channel.midi_program,
                 )
@@ -1589,7 +1611,9 @@ class MainActivity : AppCompatActivity() {
 
     fun populate_active_percussion_names() {
         this.active_percussion_names.clear()
-        for ((name, note) in this.get_drum_options()) {
+        val drums = this.get_drum_options()
+        Log.d("AAA", "POP! ${drums.size}")
+        for ((name, note) in drums) {
             // TODO: *Maybe* Allow drum instruments below 27? not sure what the standard is.
             //  I thought 27 was the lowest, but i'll come up with something later
             if (note >= 27) {

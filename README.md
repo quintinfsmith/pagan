@@ -23,7 +23,7 @@ Pagan requires Android version >= 11
 <div style="text-align: center; display: block;">
     <div style="display: inline-block; height: 4em;">
         <a href="https://f-droid.org/en/packages/com.qfs.pagan/">
-            <img alt="Get it on FDroid" src="https://f-droid.org/badge/get-it-on.png" style="display: inline-block; height: 100%;" />
+            <img alt="Get it on FDroid" src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" style="display: inline-block; height: 100%;" />
         </a>
     </div>
     <div style="display: inline-block; height: 4em;">

@@ -619,6 +619,11 @@ open class OpusLayerCursor(): OpusLayerHistory() {
         }
     }
 
+    override fun on_project_changed() {
+        super.on_project_changed()
+        this.cursor_clear()
+    }
+
     // Cursor Functions ////////////////////////////////////////////////////////////////////////////
     open fun cursor_clear() {
         this.cursor.clear()
@@ -868,6 +873,7 @@ open class OpusLayerCursor(): OpusLayerHistory() {
     }
     // End Cursor Functions ////////////////////////////////////////////////////////////////////////
 
+
     fun is_selected(beat_key: BeatKey, position: List<Int>): Boolean {
         return when (this.cursor.mode) {
             OpusManagerCursor.CursorMode.Column -> {
@@ -895,4 +901,6 @@ open class OpusLayerCursor(): OpusLayerHistory() {
             this.link_alike(this.cursor.range!!.first, this.cursor.range!!.second)
         }
     }
+
+
 }

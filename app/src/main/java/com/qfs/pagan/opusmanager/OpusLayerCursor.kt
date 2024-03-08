@@ -3,7 +3,7 @@ import com.qfs.pagan.structure.OpusTree
 import java.lang.Integer.max
 import java.lang.Integer.min
 
-open class OpusLayerCursor(): OpusLayerHistory() {
+open class OpusLayerCursor: OpusLayerHistory() {
     var cursor = OpusManagerCursor()
     private var _queued_cursor_selection: Pair<HistoryToken, List<Int>>? = null
 
@@ -896,11 +896,11 @@ open class OpusLayerCursor(): OpusLayerHistory() {
     }
 
     /* Not Currently In Use. */
-    fun link_alike() {
-        if (this.cursor.mode == OpusManagerCursor.CursorMode.Range) {
-            this.link_alike(this.cursor.range!!.first, this.cursor.range!!.second)
-        }
-    }
+    //fun link_alike() {
+    //    if (this.cursor.mode == OpusManagerCursor.CursorMode.Range) {
+    //        this.link_alike(this.cursor.range!!.first, this.cursor.range!!.second)
+    //    }
+    //}
 
 
 }

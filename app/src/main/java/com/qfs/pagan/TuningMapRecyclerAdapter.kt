@@ -8,7 +8,7 @@ import android.widget.LinearLayout
 import androidx.recyclerview.widget.RecyclerView
 import kotlin.math.roundToInt
 
-class TuningMapRecyclerAdapter(val recycler: TuningMapRecycler, var tuning_map: Array<Pair<Int, Int>>): RecyclerView.Adapter<TuningMapRecycler.TuningMapViewHolder>() {
+class TuningMapRecyclerAdapter(var tuning_map: Array<Pair<Int, Int>>): RecyclerView.Adapter<TuningMapRecycler.TuningMapViewHolder>() {
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TuningMapRecycler.TuningMapViewHolder {
         val item_view = LinearLayout(ContextThemeWrapper(parent.context, R.style.tuning_map_item))
         item_view.orientation = LinearLayout.HORIZONTAL
@@ -29,7 +29,7 @@ class TuningMapRecyclerAdapter(val recycler: TuningMapRecycler, var tuning_map: 
 
         val pair = this.tuning_map[position]
         val number_label_view = PaganTextView(use_context)
-        number_label_view.text = "$position:"
+        number_label_view.text = use_context.getString(R.string.label_tuning_index, position)
 
         val numerator_view = RangedNumberInput(use_context)
         numerator_view.set_range(0, 99999)
@@ -55,24 +55,24 @@ class TuningMapRecyclerAdapter(val recycler: TuningMapRecycler, var tuning_map: 
         wrapper.addView(denominator_view)
 
         numerator_view.value_set_callback = {
-            var real_position = holder.bindingAdapterPosition
+            val real_position = holder.bindingAdapterPosition
             val value = it.get_value()
             if (value != null && real_position > -1) {
-                val pair = this@TuningMapRecyclerAdapter.tuning_map[real_position]
+                val working_pair = this@TuningMapRecyclerAdapter.tuning_map[real_position]
                 this@TuningMapRecyclerAdapter.tuning_map[real_position] = Pair(
                     value,
-                    pair.second
+                    working_pair.second
                 )
             }
         }
 
         denominator_view.value_set_callback = {
-            var real_position = holder.bindingAdapterPosition
+            val real_position = holder.bindingAdapterPosition
             val value = it.get_value()
             if (value != null && real_position > -1) {
-                val pair = this@TuningMapRecyclerAdapter.tuning_map[real_position]
+                val working_pair = this@TuningMapRecyclerAdapter.tuning_map[real_position]
                 this@TuningMapRecyclerAdapter.tuning_map[real_position] = Pair(
-                    pair.first,
+                    working_pair.first,
                     value
                 )
             }

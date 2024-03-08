@@ -5,6 +5,5 @@ enum class IntentFragmentToken {
     ImportMidi,
     ImportProject,
     New,
-    Resume,
-    EditorResume
+    Resume
 }

@@ -12,8 +12,7 @@ import com.qfs.pagan.structure.OpusTree
 import kotlin.math.roundToInt
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
-class CellLayout(val column_layout: ColumnLayout, val y: Int): LinearLayout(column_layout.context) {
-    class BeatKeyNotSet: Exception()
+class CellLayout(private val _column_layout: ColumnLayout, private val _y: Int): LinearLayout(_column_layout.context) {
     init {
         this.isClickable = false
     }
@@ -22,7 +21,7 @@ class CellLayout(val column_layout: ColumnLayout, val y: Int): LinearLayout(colu
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
         this.layoutParams.height = resources.getDimension(R.dimen.line_height).toInt()
-        val width = (this.column_layout.column_width_factor * resources.getDimension(R.dimen.base_leaf_width).roundToInt())
+        val width = (this._column_layout.column_width_factor * resources.getDimension(R.dimen.base_leaf_width).roundToInt())
         this.layoutParams.width = width
 
         val beat_key = this.get_beat_key()
@@ -72,7 +71,7 @@ class CellLayout(val column_layout: ColumnLayout, val y: Int): LinearLayout(colu
 
            (tvLeaf.layoutParams as LayoutParams).gravity = Gravity.CENTER
            (tvLeaf.layoutParams as LayoutParams).height = MATCH_PARENT
-           var new_width_factor = this.column_layout.column_width_factor.toFloat()
+           var new_width_factor = this._column_layout.column_width_factor.toFloat()
            for (d in divisions) {
                new_width_factor /= d.toFloat()
            }
@@ -96,14 +95,14 @@ class CellLayout(val column_layout: ColumnLayout, val y: Int): LinearLayout(colu
        }
    }
 
-    fun get_beat(): Int {
+    private fun _get_beat(): Int {
         return (this.parent as ColumnLayout).get_beat()
     }
 
     fun get_beat_key(): BeatKey {
         val opus_manager = this.get_opus_manager()
-        val (channel, line_offset) = opus_manager.get_std_offset(this.y)
-        return BeatKey(channel, line_offset, this.get_beat())
+        val (channel, line_offset) = opus_manager.get_std_offset(this._y)
+        return BeatKey(channel, line_offset, this._get_beat())
     }
 
     fun get_beat_tree(beat_key: BeatKey? = null): OpusTree<OpusEvent> {

@@ -140,7 +140,7 @@ class MainActivity : AppCompatActivity() {
     val view_model: MainViewModel by viewModels()
     // flag to indicate that the landing page has been navigated away from for navigation management
     private var _has_seen_front_page = false
-    lateinit var project_manager: ProjectManager
+    private lateinit var _project_manager: ProjectManager
     lateinit var configuration: PaganConfiguration
     private lateinit var _config_path: String
     private var _number_selector_defaults = HashMap<String, Int>()
@@ -155,22 +155,22 @@ class MainActivity : AppCompatActivity() {
     private var _midi_feedback_dispatcher = MidiFeedbackDispatcher()
 
     private lateinit var _app_bar_configuration: AppBarConfiguration
-    lateinit var _binding: ActivityMainBinding
+    private lateinit var _binding: ActivityMainBinding
     private var _options_menu: Menu? = null
     private var _progress_bar: ProgressBar? = null
     var playback_state_soundfont: PlaybackState = PlaybackState.NotReady
     var playback_state_midi: PlaybackState = PlaybackState.NotReady
     private var _forced_title_text: String? = null
-    val temporary_feedback_devices = Array<FeedbackDevice?>(4) {
+    private val _temporary_feedback_devices = Array<FeedbackDevice?>(4) {
         null
     }
-    var current_feedback_device: Int = 0
+    private var _current_feedback_device: Int = 0
 
     // Notification shiz -------------------------------------------------
     var NOTIFICATION_ID = 0
     val CHANNEL_ID = "com.qfs.pagan"
-    var notification_channel: NotificationChannel? = null
-    var active_notification: NotificationCompat.Builder? = null
+    private var _notification_channel: NotificationChannel? = null
+    private var _active_notification: NotificationCompat.Builder? = null
     // -------------------------------------------------------------------
 
     private var _export_wav_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -182,7 +182,6 @@ class MainActivity : AppCompatActivity() {
         this.getNotificationPermission()
         thread {
             if (result.resultCode == Activity.RESULT_OK) {
-                val opus_manager = this.get_opus_manager()
                 result?.data?.data?.also { uri ->
                     if (this.view_model.export_handle != null) {
                         return@thread
@@ -282,7 +281,7 @@ class MainActivity : AppCompatActivity() {
                             val progress_rounded = (progress * 100.0).roundToInt()
                             this@MainActivity.runOnUiThread {
                                 val tvExportProgress = this@MainActivity.findViewById<TextView>(R.id.tvExportProgress) ?: return@runOnUiThread
-                                tvExportProgress.text = "$progress_rounded%"
+                                tvExportProgress.text = getString(R.string.label_export_progress, progress_rounded)
                             }
 
                             val builder = this@MainActivity.get_notification() ?: return
@@ -484,12 +483,12 @@ class MainActivity : AppCompatActivity() {
 
         this._midi_interface.connect_virtual_input_device(this._midi_feedback_dispatcher)
 
-        this.project_manager = ProjectManager(this.getExternalFilesDir(null).toString())
+        this._project_manager = ProjectManager(this.getExternalFilesDir(null).toString())
         // Move files from applicationInfo.data to externalfilesdir (pre v1.1.2 location)
         val old_projects_dir = File("${applicationInfo.dataDir}/projects")
         if (old_projects_dir.isDirectory) {
             for (f in old_projects_dir.listFiles()!!) {
-                val new_file_name = this.project_manager.get_new_path()
+                val new_file_name = this._project_manager.get_new_path()
                 f.copyTo(File(new_file_name))
             }
             old_projects_dir.deleteRecursively()
@@ -728,13 +727,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun project_save() {
-        this.project_manager.save(this.get_opus_manager())
+        this._project_manager.save(this.get_opus_manager())
         this.feedback_msg(getString(R.string.feedback_project_saved))
         this.update_menu_options()
     }
 
     private fun project_delete() {
-        this.project_manager.delete(this.get_opus_manager())
+        this._project_manager.delete(this.get_opus_manager())
 
         val fragment = this.get_active_fragment()
         fragment?.setFragmentResult(IntentFragmentToken.New.name, bundleOf())
@@ -744,7 +743,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun project_move_to_copy() {
-        this.project_manager.move_to_copy(this.get_opus_manager())
+        this._project_manager.move_to_copy(this.get_opus_manager())
         this.feedback_msg(getString(R.string.feedback_on_copy))
     }
 
@@ -877,7 +876,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun get_new_project_path(): String {
-        return this.project_manager.get_new_path()
+        return this._project_manager.get_new_path()
     }
 
     // Ui Wrappers ////////////////////////////////////////////
@@ -1080,7 +1079,7 @@ class MainActivity : AppCompatActivity() {
             etTranspose.set_value(opus_manager.transpose)
 
             val rvTuningMap = viewInflated.findViewById<TuningMapRecycler>(R.id.rvTuningMap)
-            rvTuningMap.adapter = TuningMapRecyclerAdapter(rvTuningMap, opus_manager.tuning_map.clone())
+            rvTuningMap.adapter = TuningMapRecyclerAdapter(opus_manager.tuning_map.clone())
 
 
             val dialog = AlertDialog.Builder(main_fragment.context, R.style.AlertDialog)
@@ -1342,7 +1341,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun get_opus_manager(): OpusManager {
-        return this.view_model.opus_manager!!
+        return this.view_model.opus_manager
     }
 
     fun play_event(channel: Int, event_value: Int, velocity: Int) {
@@ -1373,14 +1372,14 @@ class MainActivity : AppCompatActivity() {
         }
 
         if (this._feedback_sample_manager != null) {
-            if (this.temporary_feedback_devices[this.current_feedback_device] != null) {
-                this.temporary_feedback_devices[this.current_feedback_device]!!.kill()
+            if (this._temporary_feedback_devices[this._current_feedback_device] != null) {
+                this._temporary_feedback_devices[this._current_feedback_device]!!.kill()
             }
-            this.temporary_feedback_devices[this.current_feedback_device] = FeedbackDevice(
+            this._temporary_feedback_devices[this._current_feedback_device] = FeedbackDevice(
                 this._feedback_sample_manager!!
             )
 
-            this.temporary_feedback_devices[this.current_feedback_device]!!.new_event(
+            this._temporary_feedback_devices[this._current_feedback_device]!!.new_event(
                 NoteOn79(
                     index=0,
                     channel=midi_channel,
@@ -1390,7 +1389,7 @@ class MainActivity : AppCompatActivity() {
                 ),
                 250
             )
-            this.current_feedback_device = (this.current_feedback_device + 1) % this.temporary_feedback_devices.size
+            this._current_feedback_device = (this._current_feedback_device + 1) % this._temporary_feedback_devices.size
         } else {
             this._midi_feedback_dispatcher.play_note(
                 midi_channel,
@@ -1405,7 +1404,7 @@ class MainActivity : AppCompatActivity() {
     fun import_project(path: String) {
         this.applicationContext.contentResolver.openFileDescriptor(Uri.parse(path), "r")?.use {
             val bytes = FileInputStream(it.fileDescriptor).readBytes()
-            this.get_opus_manager().load(bytes, this.project_manager.get_new_path())
+            this.get_opus_manager().load(bytes, this._project_manager.get_new_path())
         }
     }
 
@@ -1422,7 +1421,7 @@ class MainActivity : AppCompatActivity() {
         val opus_manager = this.get_opus_manager()
         opus_manager.import_midi(midi)
         val filename = this.parse_file_name(Uri.parse(path))
-        val new_path = this.project_manager.get_new_path()
+        val new_path = this._project_manager.get_new_path()
 
         opus_manager.path = new_path
         opus_manager.set_project_name(filename?.substring(0, filename.lastIndexOf(".")) ?: getString(R.string.default_imported_midi_title))
@@ -1430,14 +1429,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun has_projects_saved(): Boolean {
-        return this.project_manager.has_projects_saved()
-    }
-
-    fun is_fluid_soundfont_available(): Boolean {
-        val filename = getString(R.string.fluid_font_filename)
-        val soundfont_dir = this.get_soundfont_directory()
-        val fluid_file = File("${soundfont_dir.path}/$filename")
-        return fluid_file.exists()
+        return this._project_manager.has_projects_saved()
     }
 
     fun is_soundfont_available(): Boolean {
@@ -1699,9 +1691,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     internal fun dialog_load_project() {
-        val project_list = this.project_manager.get_project_list()
+        val project_list = this._project_manager.get_project_list()
 
-        this.dialog_popup_menu("Load Project", project_list) { index: Int, path: String ->
+        this.dialog_popup_menu("Load Project", project_list) { _: Int, path: String ->
             val fragment = this.get_active_fragment() ?: return@dialog_popup_menu
             this.loading_reticle_show(getString(R.string.reticle_msg_load_project))
 
@@ -1885,10 +1877,6 @@ class MainActivity : AppCompatActivity() {
         this._export_project_intent_launcher.launch(intent)
     }
 
-    fun get_project_directory(): File {
-        return this.project_manager.get_directory()
-    }
-
     fun set_sample_rate(new_sample_rate: Int) {
         this.configuration.sample_rate = new_sample_rate
 
@@ -1989,7 +1977,7 @@ class MainActivity : AppCompatActivity() {
             return null
         }
 
-        if (this.active_notification == null) {
+        if (this._active_notification == null) {
             this.get_notification_channel()
             val cancel_export_flag = "com.qfs.pagan.CANCEL_EXPORT_WAV"
             val pending_cancel_intent = PendingIntent.getBroadcast(
@@ -2006,16 +1994,16 @@ class MainActivity : AppCompatActivity() {
                 .setSilent(true)
                 .addAction(R.drawable.baseline_cancel_24, this.getString(android.R.string.cancel), pending_cancel_intent)
 
-            this.active_notification = builder
+            this._active_notification = builder
         }
 
-        return this.active_notification!!
+        return this._active_notification!!
     }
 
     fun get_notification_channel(): NotificationChannel? {
         return if (this.has_notification_permission()) {
             null
-        } else if (this.notification_channel == null) {
+        } else if (this._notification_channel == null) {
             val notification_manager = NotificationManagerCompat.from(this)
             // Create the NotificationChannel.
             val name = this.getString(R.string.export_wav_file_progress)
@@ -2028,7 +2016,7 @@ class MainActivity : AppCompatActivity() {
             notification_manager.createNotificationChannel(mChannel)
             mChannel
         } else {
-            this.notification_channel!!
+            this._notification_channel!!
         }
     }
 

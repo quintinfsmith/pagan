@@ -9,11 +9,11 @@ import com.qfs.pagan.ColorMap.Palette
 
 open class PaganEditText(context: Context, attrs: AttributeSet? = null): androidx.appcompat.widget.AppCompatEditText(context, attrs) {
     init {
-        var context = this.context
-        while (context !is MainActivity) {
-            context = (context as ContextThemeWrapper).baseContext
+        var working_context = this.context
+        while (working_context !is MainActivity) {
+            working_context = (working_context as ContextThemeWrapper).baseContext
         }
-        val color_map = context.view_model.color_map
+        val color_map = working_context.view_model.color_map
 
         val states = arrayOf<IntArray>(
             intArrayOf(android.R.attr.state_focused),

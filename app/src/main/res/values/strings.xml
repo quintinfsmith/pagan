@@ -173,6 +173,12 @@
     <string name="dialog_reset_colors">Really Reset Custom Colors?</string>
     <string name="loading_new_soundfont">Loading New Soundfont...</string>
     <string name="title_msg_buffering">BUFFERING...</string>
+    <string name="label_default_duration">x1</string>
+    <string name="label_duration">x%1$d</string>
+    <string name="label_short_percussion">!%1$02d</string>
+    <string name="config_label_sample_rate">%1$dHz</string>
+    <string name="label_export_progress">%1$d%%</string>
+    <string name="label_tuning_index">%1$02d:</string>
     <string-array name="relative">
         <item>@string/pfx_add</item>
         <item>@string/pfx_subtract</item>

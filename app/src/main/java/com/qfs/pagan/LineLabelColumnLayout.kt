@@ -12,13 +12,13 @@ import com.qfs.pagan.OpusLayerInterface as OpusManager
 class LineLabelColumnLayout(editor_table: EditorTable): ScrollView(editor_table.context) {
     // BackLink so I can get the x offset from a view in the view holder
     var dragging_position: Pair<Int, Int>? = null
-    var inner_wrapper = LinearLayout(editor_table.context)
+    private var _inner_wrapper = LinearLayout(editor_table.context)
 
     init {
-        this.inner_wrapper.orientation = LinearLayout.VERTICAL
-        this.addView(this.inner_wrapper)
-        this.inner_wrapper.layoutParams.width = WRAP_CONTENT
-        this.inner_wrapper.layoutParams.height = WRAP_CONTENT
+        this._inner_wrapper.orientation = LinearLayout.VERTICAL
+        this.addView(this._inner_wrapper)
+        this._inner_wrapper.layoutParams.width = WRAP_CONTENT
+        this._inner_wrapper.layoutParams.height = WRAP_CONTENT
         this.isVerticalScrollBarEnabled = false
         this.isHorizontalScrollBarEnabled = false
     }
@@ -27,9 +27,9 @@ class LineLabelColumnLayout(editor_table: EditorTable): ScrollView(editor_table.
         val (channel, line_offset) = this.get_opus_manager().get_std_offset(y)
         val label_view = LineLabelView(this.context, channel, line_offset)
 
-        this.inner_wrapper.addView(label_view, y)
+        this._inner_wrapper.addView(label_view, y)
 
-        this.notify_item_range_changed(y + 1, this.inner_wrapper.childCount - (y + 1))
+        this._notify_item_range_changed(y + 1, this._inner_wrapper.childCount - (y + 1))
     }
 
     fun insert_labels(y: Int, count: Int) {
@@ -37,7 +37,7 @@ class LineLabelColumnLayout(editor_table: EditorTable): ScrollView(editor_table.
         var (channel, line_offset) = opus_manager.get_std_offset(y)
         for (i in 0 until count) {
             val label_view = LineLabelView(this.context, channel, line_offset)
-            this.inner_wrapper.addView(label_view, y + i)
+            this._inner_wrapper.addView(label_view, y + i)
             if (line_offset < opus_manager.channels[channel].size - 1) {
                 line_offset += 1
             } else {
@@ -46,17 +46,17 @@ class LineLabelColumnLayout(editor_table: EditorTable): ScrollView(editor_table.
             }
         }
 
-        this.notify_item_range_changed(y + count , this.inner_wrapper.childCount - y)
+        this._notify_item_range_changed(y + count , this._inner_wrapper.childCount - y)
 
     }
     fun remove_label(y: Int) {
-        this.inner_wrapper.removeViewAt(y)
-        this.notify_item_range_changed(y, this.inner_wrapper.childCount - y)
+        this._inner_wrapper.removeViewAt(y)
+        this._notify_item_range_changed(y, this._inner_wrapper.childCount - y)
     }
 
     fun remove_labels(y: Int, count: Int) {
-        this.inner_wrapper.removeViews(y, count)
-        this.notify_item_range_changed(y, this.inner_wrapper.childCount - y)
+        this._inner_wrapper.removeViews(y, count)
+        this._notify_item_range_changed(y, this._inner_wrapper.childCount - y)
     }
 
     fun set_dragging_line(channel: Int, line_offset:Int) {
@@ -78,7 +78,7 @@ class LineLabelColumnLayout(editor_table: EditorTable): ScrollView(editor_table.
     }
 
     fun clear() {
-        this.inner_wrapper.removeAllViews()
+        this._inner_wrapper.removeAllViews()
     }
 
     // Prevents this from intercepting linelabel touch events (disables manual scrolling)
@@ -87,16 +87,16 @@ class LineLabelColumnLayout(editor_table: EditorTable): ScrollView(editor_table.
     }
 
     fun get_count(): Int {
-        return this.inner_wrapper.childCount
+        return this._inner_wrapper.childCount
     }
 
     fun notify_item_changed(y: Int) {
-        this.notify_item_range_changed(y, 1)
+        this._notify_item_range_changed(y, 1)
     }
 
     // TODO: THis feels like it could be much tighter
-    fun notify_item_range_changed(y: Int, count: Int) {
-        if (y > this.inner_wrapper.childCount) {
+    private fun _notify_item_range_changed(y: Int, count: Int) {
+        if (y > this._inner_wrapper.childCount) {
             // Nothing to change
             return
         }
@@ -106,7 +106,7 @@ class LineLabelColumnLayout(editor_table: EditorTable): ScrollView(editor_table.
 
         // calculate the new channel/line_offset by it's previous neighbour
         var (channel, line_offset) = if (y > 0) {
-            val prev_label = this.inner_wrapper.getChildAt(y - 1) as LineLabelView
+            val prev_label = this._inner_wrapper.getChildAt(y - 1) as LineLabelView
             val prev = prev_label.get_row()
             if (prev.second < opus_manager.channels[prev.first].size - 1) {
                 Pair(prev.first, prev.second + 1)
@@ -118,8 +118,8 @@ class LineLabelColumnLayout(editor_table: EditorTable): ScrollView(editor_table.
         }
 
         for (i in 0 until count) {
-            if (i + y < this.inner_wrapper.childCount) {
-                val label = this.inner_wrapper.getChildAt(i + y) as LineLabelView
+            if (i + y < this._inner_wrapper.childCount) {
+                val label = this._inner_wrapper.getChildAt(i + y) as LineLabelView
                 label.channel = channel
                 label.line_offset = line_offset
 

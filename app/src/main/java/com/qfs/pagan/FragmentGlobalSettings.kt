@@ -84,7 +84,7 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
 
         val btnChooseSoundFont = view.findViewById<TextView>(R.id.btnChooseSoundFont)
         btnChooseSoundFont.setOnClickListener {
-            this.interact_btnChooseSoundFont(it)
+            this.interact_btnChooseSoundFont()
         }
         btnChooseSoundFont.setOnLongClickListener {
             this.dialog_remove_soundfont()
@@ -117,7 +117,7 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
         }
 
         val sample_rate_value_text = view.findViewById<PaganTextView>(R.id.tvSampleRate)
-        sample_rate_value_text.text = "${main.configuration.sample_rate}Hz"
+        sample_rate_value_text.text = getString(R.string.config_label_sample_rate, main.configuration.sample_rate)
         val slider_playback_quality = view.findViewById<SeekBar>(R.id.sbPlaybackQuality)
         val options = listOf(
             8000,
@@ -140,7 +140,7 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
             SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
                 val v = options[p1]
-                sample_rate_value_text.text = "${v}Hz"
+                sample_rate_value_text.text = getString(R.string.config_label_sample_rate, v)
             }
             override fun onStartTrackingTouch(p0: SeekBar?) {}
             override fun onStopTrackingTouch(seekbar: SeekBar?) {
@@ -166,7 +166,7 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
 
         val llColorPalette = view.findViewById<LinearLayout>(R.id.llColorPalette)
 
-        sCustomPalette.setOnCheckedChangeListener { button: CompoundButton, is_checked: Boolean ->
+        sCustomPalette.setOnCheckedChangeListener { _: CompoundButton, is_checked: Boolean ->
             if (is_checked) {
                 btnClearPalette.visibility = View.VISIBLE
                 color_map.use_palette = true
@@ -219,19 +219,19 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
         main.loading_reticle_hide()
     }
 
-    private fun interact_btnChooseSoundFont(view: View) {
+    private fun interact_btnChooseSoundFont() {
         val soundfont_dir = this.get_main().get_soundfont_directory()
         val file_list = soundfont_dir.listFiles()?.toList() ?: listOf<File>()
 
         val soundfonts = mutableListOf<Pair<Pair<Int, String?>, String>>( Pair(Pair(0, null), this.resources.getString(R.string.no_soundfont)) )
         soundfonts.add(Pair(Pair(2, null), getString(R.string.option_import_soundfont)))
 
-        file_list.forEachIndexed { i: Int, file: File ->
+        for (file in file_list) {
             soundfonts.add(Pair(Pair(1, file.name), file.name))
         }
 
 
-        this.get_main().dialog_popup_menu(getString(R.string.dialog_select_soundfont), soundfonts) { index: Int, pair: Pair<Int, String?> ->
+        this.get_main().dialog_popup_menu(getString(R.string.dialog_select_soundfont), soundfonts) { _: Int, pair: Pair<Int, String?> ->
             val (mode, path) = pair
             when (mode) {
                 0 -> this._disable_soundfont()
@@ -248,10 +248,10 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
 
         val soundfonts = mutableListOf<Pair<String, String>>( )
 
-        file_list.forEachIndexed { i: Int, file: File ->
+        for (file in file_list) {
             soundfonts.add(Pair(file.name, file.name))
         }
-        main.dialog_popup_menu(getString(R.string.dialog_remove_soundfont_title), soundfonts) { i: Int, filename: String ->
+        main.dialog_popup_menu(getString(R.string.dialog_remove_soundfont_title), soundfonts) { _: Int, filename: String ->
             main.dialog_confirm(getString(R.string.dialog_remove_soundfont_text, filename)) {
                 this._delete_soundfont(filename)
             }

@@ -6,13 +6,13 @@ import androidx.recyclerview.widget.RecyclerView
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 class ColumnLabelAdapter(editor_table: EditorTable) : RecyclerView.Adapter<ColumnLabelViewHolder>() {
-    var recycler: ColumnLabelRecycler
-    var column_count = 0
+    private var _recycler: ColumnLabelRecycler
+    private var _column_count = 0
     init {
-        this.recycler = editor_table.column_label_recycler
-        this.recycler.adapter = this
+        this._recycler = editor_table.column_label_recycler
+        this._recycler.adapter = this
 
-        this.recycler.itemAnimator = null
+        this._recycler.itemAnimator = null
         this.registerAdapterDataObserver(
             object: RecyclerView.AdapterDataObserver() {
                 override fun onItemRangeRemoved(start: Int, count: Int) {
@@ -38,21 +38,21 @@ class ColumnLabelAdapter(editor_table: EditorTable) : RecyclerView.Adapter<Colum
     }
 
     override fun getItemCount(): Int {
-        return this.column_count
+        return this._column_count
     }
 
     fun add_column(index: Int) {
-        this.column_count += 1
+        this._column_count += 1
         this.notifyItemInserted(index)
     }
 
     fun remove_column(index: Int) {
-        this.column_count -= 1
+        this._column_count -= 1
         this.notifyItemRemoved(index)
     }
 
     fun get_editor_table(): EditorTable? {
-        var view = this.recycler as View
+        var view = this._recycler as View
         while (view !is EditorTable && view.parent != null) {
             view = view.parent as View
         }
@@ -64,7 +64,7 @@ class ColumnLabelAdapter(editor_table: EditorTable) : RecyclerView.Adapter<Colum
     }
 
     fun get_activity(): MainActivity {
-        return this.recycler.context as MainActivity
+        return this._recycler.context as MainActivity
     }
 
     fun get_opus_manager(): OpusManager {
@@ -72,8 +72,8 @@ class ColumnLabelAdapter(editor_table: EditorTable) : RecyclerView.Adapter<Colum
     }
 
     fun clear() {
-        val count = this.column_count
-        this.column_count = 0
+        val count = this._column_count
+        this._column_count = 0
         this.notifyItemRangeRemoved(0, count)
     }
 }

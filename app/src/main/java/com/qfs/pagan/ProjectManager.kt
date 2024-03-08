@@ -10,7 +10,7 @@ import com.qfs.pagan.opusmanager.OpusLayerBase as OpusManager
 class ProjectManager(data_dir: String) {
     class MKDirFailedException(dir: String): Exception("Failed to create directory $dir")
     val path = "$data_dir/projects/"
-    val cache_path = "$data_dir/project_list.json"
+    private val _cache_path = "$data_dir/project_list.json"
 
     fun get_directory(): File {
         val directory = File(this.path)
@@ -29,7 +29,7 @@ class ProjectManager(data_dir: String) {
         if (file.isFile) {
             file.delete()
         }
-        this.untrack_path(opus_manager.path!!)
+        this._untrack_path(opus_manager.path!!)
     }
 
     fun move_to_copy(opus_manager: OpusManager) {
@@ -46,8 +46,8 @@ class ProjectManager(data_dir: String) {
         this.get_directory()
         opus_manager.save()
         // Untrack then track in order to update the project title in the cache
-        this.untrack_path(opus_manager.path!!)
-        this.track_path(opus_manager.path!!)
+        this._untrack_path(opus_manager.path!!)
+        this._track_path(opus_manager.path!!)
     }
 
     fun get_new_path(): String {
@@ -66,7 +66,7 @@ class ProjectManager(data_dir: String) {
         return directory.listFiles()?.isNotEmpty() ?: false
     }
 
-    fun cache_project_list() {
+    private fun _cache_project_list() {
         if (!has_projects_saved()) {
             return
         }
@@ -85,7 +85,7 @@ class ProjectManager(data_dir: String) {
         project_list.sortBy { it.second }
 
         val json_string = json.encodeToString(project_list)
-        val file = File(this.cache_path)
+        val file = File(this._cache_path)
         file.writeText(json_string)
     }
 
@@ -113,31 +113,31 @@ class ProjectManager(data_dir: String) {
             ignoreUnknownKeys = true
         }
 
-        if (!File(this.cache_path).exists()) {
-            this.cache_project_list()
+        if (!File(this._cache_path).exists()) {
+            this._cache_project_list()
         }
 
-        var string_content = File(this.cache_path).readText(Charsets.UTF_8)
+        var string_content = File(this._cache_path).readText(Charsets.UTF_8)
 
         return try {
             json.decodeFromString(string_content)
         } catch (e: Exception) {// TODO: Figure out how to precisely catch json error (JsonDecodingException not found)
             // Corruption Protection: if the cache file is bad json, delete and rebuild
-            File(this.cache_path).delete()
-            this.cache_project_list()
-            string_content = File(this.cache_path).readText(Charsets.UTF_8)
+            File(this._cache_path).delete()
+            this._cache_project_list()
+            string_content = File(this._cache_path).readText(Charsets.UTF_8)
 
             json.decodeFromString(string_content)
         }
     }
 
-    fun track_path(path: String) {
-        var project_list = this.get_project_list().toMutableList()
+    private fun _track_path(path: String) {
+        val project_list = this.get_project_list().toMutableList()
         var is_tracking = false
 
         // use File object to clean up path
-        var project_file = File(path)
-        for ((check_path, _name) in project_list) {
+        val project_file = File(path)
+        for ((check_path, _) in project_list) {
             if (check_path == project_file.path) {
                 is_tracking = true
                 break
@@ -157,14 +157,14 @@ class ProjectManager(data_dir: String) {
         }
 
         val json_string = json.encodeToString(project_list)
-        val file = File(this.cache_path)
+        val file = File(this._cache_path)
         file.writeText(json_string)
     }
 
-    fun untrack_path(path: String) {
+    private fun _untrack_path(path: String) {
         val project_list = this.get_project_list().toMutableList()
         var index_to_pop = 0
-        for ((check_path, _name) in project_list) {
+        for ((check_path, _) in project_list) {
             if (check_path == path) {
                 break
             }
@@ -183,7 +183,7 @@ class ProjectManager(data_dir: String) {
         }
 
         val json_string = json.encodeToString(project_list)
-        val file = File(this.cache_path)
+        val file = File(this._cache_path)
         file.writeText(json_string)
     }
 

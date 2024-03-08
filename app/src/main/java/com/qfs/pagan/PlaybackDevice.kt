@@ -12,9 +12,9 @@ class PlaybackDevice(var activity: MainActivity, sample_handle_manager: SampleHa
     sample_handle_manager.sample_rate,
     sample_handle_manager.buffer_size
 ) {
-    private var first_beat_passed = false
-    private var buffering_cancelled = false
-    private var buffering_mutex = Mutex()
+    private var _first_beat_passed = false
+    private var _buffering_cancelled = false
+    private var _buffering_mutex = Mutex()
     /*
         All of this notification stuff is used with the understanding that the PaganPlaybackDevice
         used to export wavs will be discarded after a single use. It'll need to be cleaned up to
@@ -25,16 +25,16 @@ class PlaybackDevice(var activity: MainActivity, sample_handle_manager: SampleHa
         this.activity.runOnUiThread {
             Thread.sleep(200)
             val cancelled = runBlocking {
-                this@PlaybackDevice.buffering_mutex.withLock {
-                    this@PlaybackDevice.buffering_cancelled
+                this@PlaybackDevice._buffering_mutex.withLock {
+                    this@PlaybackDevice._buffering_cancelled
                 }
             }
             if (!cancelled) {
                 this.activity.loading_reticle_show(activity.getString(R.string.title_msg_buffering))
             } else {
                 runBlocking {
-                    this@PlaybackDevice.buffering_mutex.withLock {
-                        this@PlaybackDevice.buffering_cancelled = false
+                    this@PlaybackDevice._buffering_mutex.withLock {
+                        this@PlaybackDevice._buffering_cancelled = false
                     }
                 }
             }
@@ -43,8 +43,8 @@ class PlaybackDevice(var activity: MainActivity, sample_handle_manager: SampleHa
 
     override fun on_buffer_done() {
         runBlocking {
-            this@PlaybackDevice.buffering_mutex.withLock {
-                this@PlaybackDevice.buffering_cancelled = true
+            this@PlaybackDevice._buffering_mutex.withLock {
+                this@PlaybackDevice._buffering_cancelled = true
             }
         }
         super.on_buffer_done()
@@ -68,12 +68,12 @@ class PlaybackDevice(var activity: MainActivity, sample_handle_manager: SampleHa
 
         // used to hide the loading reticle at on_start, but first beat prevents
         // hiding it, then [potentially] waiting to buffer
-        if (! this.first_beat_passed) {
+        if (! this._first_beat_passed) {
             this.activity.runOnUiThread {
                 this.activity.loading_reticle_hide()
                 this.activity.set_playback_button(R.drawable.ic_baseline_pause_24)
             }
-            this.first_beat_passed = true
+            this._first_beat_passed = true
         }
 
         val opus_manager = this.activity.get_opus_manager()
@@ -95,7 +95,7 @@ class PlaybackDevice(var activity: MainActivity, sample_handle_manager: SampleHa
     }
 
     fun play_opus(start_beat: Int) {
-        this.first_beat_passed = false
+        this._first_beat_passed = false
         (this.sample_frame_map as PlaybackFrameMap).parse_opus()
         val start_frame = this.sample_frame_map.get_beat_frames()[start_beat]?.first ?: 0
 

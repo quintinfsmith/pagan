@@ -37,10 +37,10 @@ open class OpusLayerLinks : OpusLayerBase() {
         }
     }
 
-    fun apply_to_linked(beat_key: BeatKey, callback: (BeatKey) -> Unit) {
+    private fun _apply_to_linked(beat_key: BeatKey, callback: (BeatKey) -> Unit) {
         this._link_deviation_count += 1
         try {
-            for (linked_key in this.get_all_others_linked(beat_key)) {
+            for (linked_key in this._get_all_others_linked(beat_key)) {
                 callback(linked_key)
             }
             this._link_deviation_count -= 1
@@ -199,7 +199,7 @@ open class OpusLayerLinks : OpusLayerBase() {
         }
     }
 
-    fun get_all_others_linked(beat_key: BeatKey): Set<BeatKey> {
+    private fun _get_all_others_linked(beat_key: BeatKey): Set<BeatKey> {
         val output = this.get_all_linked(beat_key).toMutableSet()
         output.remove(beat_key)
         return output
@@ -222,7 +222,7 @@ open class OpusLayerLinks : OpusLayerBase() {
 
     override fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<OpusEvent>) {
         this.lock_links {
-            this.apply_to_linked(beat_key) { linked_key: BeatKey ->
+            this._apply_to_linked(beat_key) { linked_key: BeatKey ->
                 this.replace_tree(linked_key, position, tree)
             }
             super.replace_tree(beat_key, position, tree)
@@ -232,7 +232,7 @@ open class OpusLayerLinks : OpusLayerBase() {
     override fun insert(beat_key: BeatKey, position: List<Int>) {
         this.lock_links {
             super.insert(beat_key, position)
-            this.apply_to_linked(beat_key) { linked_key: BeatKey ->
+            this._apply_to_linked(beat_key) { linked_key: BeatKey ->
                 this.insert(linked_key, position)
             }
         }
@@ -240,7 +240,7 @@ open class OpusLayerLinks : OpusLayerBase() {
     override fun insert_after(beat_key: BeatKey, position: List<Int>) {
         this.lock_links {
             super.insert_after(beat_key, position)
-            this.apply_to_linked(beat_key) { linked_key: BeatKey ->
+            this._apply_to_linked(beat_key) { linked_key: BeatKey ->
                 this.insert_after(linked_key, position)
             }
         }
@@ -248,14 +248,14 @@ open class OpusLayerLinks : OpusLayerBase() {
     override fun remove(beat_key: BeatKey, position: List<Int>) {
         this.lock_links {
             super.remove(beat_key, position)
-            this.apply_to_linked(beat_key) { linked_key: BeatKey ->
+            this._apply_to_linked(beat_key) { linked_key: BeatKey ->
                 this.remove(linked_key, position)
             }
         }
     }
     override fun set_percussion_event(beat_key: BeatKey, position: List<Int>) {
         this.lock_links {
-            this.apply_to_linked(beat_key) { linked_key: BeatKey ->
+            this._apply_to_linked(beat_key) { linked_key: BeatKey ->
                 this.set_percussion_event(linked_key, position)
             }
             super.set_percussion_event(beat_key, position)
@@ -263,7 +263,7 @@ open class OpusLayerLinks : OpusLayerBase() {
     }
     override fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEvent) {
         this.lock_links {
-            this.apply_to_linked(beat_key) { linked_key: BeatKey ->
+            this._apply_to_linked(beat_key) { linked_key: BeatKey ->
                 this.set_event(linked_key, position, event.copy())
             }
             super.set_event(beat_key, position, event.copy())
@@ -271,7 +271,7 @@ open class OpusLayerLinks : OpusLayerBase() {
     }
     override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
         this.lock_links {
-            this.apply_to_linked(beat_key) { linked_key: BeatKey ->
+            this._apply_to_linked(beat_key) { linked_key: BeatKey ->
                 this.split_tree(linked_key, position, splits)
             }
             super.split_tree(beat_key, position, splits)
@@ -279,7 +279,7 @@ open class OpusLayerLinks : OpusLayerBase() {
     }
     override fun unset(beat_key: BeatKey, position: List<Int>) {
         this.lock_links {
-            this.apply_to_linked(beat_key) { linked_key: BeatKey ->
+            this._apply_to_linked(beat_key) { linked_key: BeatKey ->
                 this.unset(linked_key, position)
             }
             super.unset(beat_key, position)
@@ -657,7 +657,7 @@ open class OpusLayerLinks : OpusLayerBase() {
 
     override fun set_duration(beat_key: BeatKey, position: List<Int>, duration: Int) {
         this.lock_links {
-            for (linked_key in this.get_all_others_linked(beat_key)) {
+            for (linked_key in this._get_all_others_linked(beat_key)) {
                 this.set_duration(linked_key, position, duration)
             }
             super.set_duration(beat_key, position, duration)

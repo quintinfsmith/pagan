@@ -31,8 +31,8 @@ class MidiFeedbackDispatcher: VirtualMidiInputDevice() {
     fun close() {
         runBlocking {
             this@MidiFeedbackDispatcher._handle_mutex.withLock {
-                for ((handle, stamp) in this@MidiFeedbackDispatcher._active_handles) {
-                    this@MidiFeedbackDispatcher.note_off(handle)
+                for (handle in this@MidiFeedbackDispatcher._active_handles.keys) {
+                    this@MidiFeedbackDispatcher._note_off(handle)
                 }
                 this@MidiFeedbackDispatcher._active_handles.clear()
             }
@@ -115,11 +115,11 @@ class MidiFeedbackDispatcher: VirtualMidiInputDevice() {
                 return@thread
             }
 
-            this.note_off(handle)
+            this._note_off(handle)
         }
     }
 
-    fun note_off(handle: Triple<Int, Int, Boolean>) {
+    private fun _note_off(handle: Triple<Int, Int, Boolean>) {
         val (channel, note, midi2) = handle
         if (midi2) {
             this@MidiFeedbackDispatcher.send_event(

@@ -40,7 +40,7 @@ class LeafButton(
         this.setOnLongClickListener {
             val opus_manager = this.get_opus_manager()
             val cursor = opus_manager.cursor
-            val beat_key = this.get_beat_key()
+            val beat_key = this._get_beat_key()
             if (cursor.is_linking_range()) {
                 opus_manager.cursor_select_range_to_link(
                     opus_manager.cursor.range!!.first,
@@ -158,11 +158,11 @@ class LeafButton(
     }
 
     private fun callback_click() {
-        val beat_key = this.get_beat_key()
+        val beat_key = this._get_beat_key()
         val position = this.position
         val opus_manager = this.get_opus_manager()
 
-        val editor_table = this.get_editor_table() // Will need if overflow exception is passed
+        val editor_table = this._get_editor_table() // Will need if overflow exception is passed
         if (opus_manager.cursor.is_linking) {
             try {
                 when (this.get_activity().configuration.link_mode) {
@@ -232,7 +232,10 @@ class LeafButton(
         this.removeAllViews()
 
         if (event == null) {
-        } else if (is_percussion) {
+            return
+        }
+
+        if (is_percussion) {
             val label_percussion = LeafText(ContextThemeWrapper(base_context, R.style.leaf_value))
             this.addView(label_percussion)
             label_percussion.gravity = Gravity.CENTER
@@ -295,14 +298,14 @@ class LeafButton(
         }
     }
 
-    fun build_drawable_state(drawableState: IntArray?): IntArray? {
-        if (this.parent == null || this.get_editor_table().needs_setup) {
+    private fun _build_drawable_state(drawableState: IntArray?): IntArray? {
+        if (this.parent == null || this._get_editor_table().needs_setup) {
             return drawableState
         }
 
         val opus_manager = this.get_opus_manager()
         val beat_key = try {
-            this.get_beat_key()
+            this._get_beat_key()
         } catch (e: IndexOutOfBoundsException) {
             return drawableState
         }
@@ -344,7 +347,7 @@ class LeafButton(
 
     override fun onCreateDrawableState(extraSpace: Int): IntArray? {
         val drawableState = super.onCreateDrawableState(extraSpace + 5)
-        return this.build_drawable_state(drawableState)
+        return this._build_drawable_state(drawableState)
     }
 
     // ------------------------------------------------------//
@@ -355,13 +358,12 @@ class LeafButton(
     fun get_opus_manager(): OpusManager {
         return (this.parent as CellLayout).get_opus_manager()
     }
-    fun get_beat_key(): BeatKey {
+
+    private fun _get_beat_key(): BeatKey {
         return (this.parent as CellLayout).get_beat_key()
     }
-    fun get_beat_tree(): OpusTree<OpusEvent> {
-        return (this.parent as CellLayout).get_beat_tree()
-    }
-    fun get_editor_table(): EditorTable {
+
+    private fun _get_editor_table(): EditorTable {
         return (this.parent as CellLayout).get_editor_table()
     }
 }

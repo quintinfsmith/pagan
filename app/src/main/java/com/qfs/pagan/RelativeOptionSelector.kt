@@ -6,7 +6,6 @@ import android.graphics.drawable.LayerDrawable
 import android.graphics.drawable.StateListDrawable
 import android.util.AttributeSet
 import android.view.Gravity.CENTER
-import android.view.View
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.LinearLayout
 import androidx.appcompat.view.ContextThemeWrapper
@@ -22,7 +21,6 @@ class RelativeOptionSelector(context: Context, attrs: AttributeSet) : LinearLayo
         R.string.pfx_add,
         R.string.pfx_subtract
     )
-    private var _hidden_options: MutableSet<Int> = mutableSetOf()
     private var _on_change_hook: ((RelativeOptionSelector) -> Unit)? = null
 
     class RelativeOptionSelectorButton (
@@ -197,25 +195,6 @@ class RelativeOptionSelector(context: Context, attrs: AttributeSet) : LinearLayo
         }
         this._active_button!!.setActive(false)
         this._active_button = null
-    }
-
-
-    fun hide_option(index: Int) {
-        this._hidden_options.add(index)
-        for ((view, i) in this._button_map) {
-            if (i == index) {
-                view.visibility = View.GONE
-            }
-        }
-    }
-    fun unhide_option(index: Int) {
-        this._hidden_options.remove(index)
-        for ((view, i) in this._button_map) {
-            if (i == index) {
-                view.visibility = View.VISIBLE
-            }
-        }
-
     }
 }
 

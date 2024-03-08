@@ -21,19 +21,19 @@ class OpusLayerInterface : OpusLayerCursor() {
     private var _ui_lock_stack = mutableListOf<Int>()
     var relative_mode: Int = 0
     var first_load_done = false
-    var in_reload = false
-    private var activity: MainActivity? = null
+    private var _in_reload = false
+    private var _activity: MainActivity? = null
 
     fun attach_activity(activity: MainActivity) {
-        this.activity = activity
+        this._activity = activity
     }
 
     fun get_activity(): MainActivity? {
-        return this.activity
+        return this._activity
     }
 
     private fun get_editor_table(): EditorTable? {
-        return this.activity?.findViewById<EditorTable>(R.id.etEditorTable)
+        return this._activity?.findViewById<EditorTable>(R.id.etEditorTable)
     }
 
     private fun get_ui_lock_level(): Int? {
@@ -47,7 +47,7 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     private fun runOnUiThread(callback: (MainActivity) -> Unit) {
-        val main = this.activity ?: return
+        val main = this._activity ?: return
         main.runOnUiThread {
             callback(main)
         }
@@ -191,18 +191,14 @@ class OpusLayerInterface : OpusLayerCursor() {
             return
         }
 
+        // TODO: Fix Code duplication with FragmentEditor
         this.runOnUiThread { main: MainActivity ->
             val btnChoosePercussion: TextView? = main.findViewById(R.id.btnChoosePercussion)
             if (btnChoosePercussion != null) {
                 if (main.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
                     // Need to call get_drum name to repopulate instrument list if needed
                     main.get_drum_name(instrument)
-
-                    if (instrument < 10) {
-                        btnChoosePercussion.text = "!0$instrument"
-                    } else {
-                        btnChoosePercussion.text = "!$instrument"
-                    }
+                    btnChoosePercussion.text = main.getString(R.string.label_short_percussion, instrument)
                 } else {
                     btnChoosePercussion.text = main.getString(
                         R.string.label_choose_percussion,
@@ -222,7 +218,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             return
         }
 
-        if (this.is_percussion(beat_key.channel) && !this.activity!!.view_model.show_percussion) {
+        if (this.is_percussion(beat_key.channel) && !this._activity!!.view_model.show_percussion) {
             return
         }
 
@@ -437,7 +433,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
         when (this.get_ui_lock_level()) {
             null -> {
-                this.runOnUiThread { main ->
+                this.runOnUiThread {
                     editor_table?.new_channel_rows(y, line_list)
                 }
             }
@@ -522,7 +518,7 @@ class OpusLayerInterface : OpusLayerCursor() {
     override fun new() {
         val activity = this.get_activity() ?: return super.new()
 
-        this.ui_clear()
+        this._ui_clear()
         this.surpress_ui {
             super.new()
         }
@@ -537,7 +533,7 @@ class OpusLayerInterface : OpusLayerCursor() {
     override fun import_midi(midi: Midi) {
         val activity = this.get_activity() ?: return super.import_midi(midi)
 
-        this.ui_clear()
+        this._ui_clear()
         this.surpress_ui {
             super.import_midi(midi)
         }
@@ -547,21 +543,21 @@ class OpusLayerInterface : OpusLayerCursor() {
     override fun load_json(json_data: LoadedJSONData) {
         val activity = this.get_activity() ?: return super.load_json(json_data)
 
-        this.ui_clear()
+        this._ui_clear()
         this.surpress_ui {
             super.load_json(json_data)
         }
 
-        if (! this.in_reload) {
+        if (! this._in_reload) {
             activity.view_model.show_percussion = !(!this.has_percussion() && this.channels.size > 1)
         }
 
     }
 
     fun reload(bytes: ByteArray, path: String) {
-        this.in_reload = true
+        this._in_reload = true
         this.load(bytes, path)
-        this.in_reload = false
+        this._in_reload = false
     }
 
     override fun on_project_changed() {
@@ -618,14 +614,14 @@ class OpusLayerInterface : OpusLayerCursor() {
                 editor_table.remove_channel_rows(y, lines, true)
             }
             null -> {
-                this.runOnUiThread { main ->
+                this.runOnUiThread {
                     editor_table.remove_channel_rows(y, lines)
                 }
             }
         }
     }
 
-    fun ui_clear() {
+    private fun _ui_clear() {
         this.get_editor_table()?.clear()
         this.runOnUiThread { main ->
             val channel_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
@@ -700,7 +696,7 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     private fun <T> withFragment(callback: (FragmentEditor) -> T): T? {
-        val fragment = this.activity?.get_active_fragment()
+        val fragment = this._activity?.get_active_fragment()
         return if (fragment is FragmentEditor) {
             callback(fragment)
         } else {
@@ -714,7 +710,7 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     fun set_relative_mode(event: OpusEvent) {
-        if (this.activity != null && this.activity!!.configuration.relative_mode) {
+        if (this._activity != null && this._activity!!.configuration.relative_mode) {
             this.relative_mode = if (!event.relative) {
                 0
             } else if (event.note >= 0) {
@@ -975,7 +971,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             return
         }
 
-        val main = this.activity ?: return
+        val main = this._activity ?: return
         main.view_model.show_percussion = true
 
         val channel_option_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)

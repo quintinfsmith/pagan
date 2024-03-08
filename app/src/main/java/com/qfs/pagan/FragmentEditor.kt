@@ -122,10 +122,10 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         // SavedInstanceState may be created when the fragment isn't active, and save an empty state.
         // *NEED* to make sure it isn't empty before traversing this branch
         if (savedInstanceState != null) {
-            this.view_model.coarse_x = savedInstanceState.getInt("coarse_x") ?: 0
-            this.view_model.fine_x = savedInstanceState.getInt("fine_x") ?: 0
-            this.view_model.coarse_y = savedInstanceState.getInt("coarse_y") ?: 0
-            this.view_model.fine_y = savedInstanceState.getInt("fine_y") ?: 0
+            this.view_model.coarse_x = savedInstanceState.getInt("coarse_x")
+            this.view_model.fine_x = savedInstanceState.getInt("fine_x")
+            this.view_model.coarse_y = savedInstanceState.getInt("coarse_y")
+            this.view_model.fine_y = savedInstanceState.getInt("fine_y")
         } else if (!opus_manager.first_load_done) {
             // Navigate to (import / load/new)
             editor_table.visibility = View.VISIBLE
@@ -480,7 +480,6 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         }
 
         btnRemoveBeat.setOnClickListener {
-            val beat = opus_manager.cursor.beat
             try {
                 opus_manager.remove_beat_at_cursor(1)
             } catch (e: OpusLayerBase.RemovingLastBeatException) {
@@ -568,11 +567,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
             if (this.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
                 // Need to call get_drum name to repopulate instrument list if needed
                 main.get_drum_name(instrument)
-                if (instrument < 10) {
-                    btnChoosePercussion.text = "!0$instrument"
-                } else {
-                    btnChoosePercussion.text = "!$instrument"
-                }
+                btnChoosePercussion.text = getString(R.string.label_short_percussion, instrument)
             } else {
                 btnChoosePercussion.text = main.getString(
                     R.string.label_choose_percussion,
@@ -632,7 +627,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         })
 
         btnLineVolumePopup.setOnClickListener {
-            line_volume_dialog(channel, line_offset)
+            _line_volume_dialog(channel, line_offset)
         }
     }
 
@@ -796,7 +791,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                     val beat_key = cursor.get_beatkey()
                     val position = cursor.get_position()
                     opus_manager.set_duration(beat_key, position, adj_value)
-                    (it as TextView).text = "x$adj_value"
+                    (it as TextView).text = getString(R.string.label_duration, adj_value)
                 }
             }
             btnDuration.setOnLongClickListener {
@@ -804,10 +799,10 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                 val beat_key = cursor.get_beatkey()
                 val position = cursor.get_position()
                 opus_manager.set_duration(beat_key, position, 1)
-                (it as TextView).text = "x1"
+                (it as TextView).text = getString(R.string.label_default_duration)
                 true
             }
-            btnDuration.text = "x${event.duration}"
+            btnDuration.text = getString(R.string.label_duration, event.duration)
             btnDuration.visibility = View.VISIBLE
         } else {
             btnDuration.visibility = View.GONE
@@ -1091,7 +1086,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         }
     }
 
-    fun line_volume_dialog(channel: Int, line_offset: Int) {
+    private fun _line_volume_dialog(channel: Int, line_offset: Int) {
         val view = LayoutInflater.from(this.context)
             .inflate(
                 R.layout.dialog_line_volume,

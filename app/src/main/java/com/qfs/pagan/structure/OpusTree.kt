@@ -300,7 +300,7 @@ class OpusTree<T> {
 
     fun get_path(): List<Int> {
         var tree = this
-        var output = mutableListOf<Int>()
+        val output = mutableListOf<Int>()
         while (tree.parent != null) {
             output.add(tree.getIndex()!!)
             tree = tree.parent!!

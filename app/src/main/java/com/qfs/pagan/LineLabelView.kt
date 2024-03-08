@@ -9,11 +9,11 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import androidx.appcompat.widget.AppCompatTextView
+import com.qfs.pagan.ColorMap.Palette
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusLayerLinks
-import com.qfs.pagan.OpusLayerInterface as OpusManager
-import com.qfs.pagan.ColorMap.Palette
 import com.qfs.pagan.opusmanager.OpusManagerCursor
+import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 class LineLabelView(context: Context, var channel: Int, var line_offset: Int): AppCompatTextView(ContextThemeWrapper(context, R.style.line_label)),
     View.OnTouchListener {
@@ -96,10 +96,10 @@ class LineLabelView(context: Context, var channel: Int, var line_offset: Int): A
 
     override fun onCreateDrawableState(extraSpace: Int): IntArray? {
         val drawableState = super.onCreateDrawableState(extraSpace + 2)
-        return this.build_drawable_state(drawableState)
+        return this._build_drawable_state(drawableState)
     }
 
-    fun build_drawable_state(drawableState: IntArray?): IntArray? {
+    private fun _build_drawable_state(drawableState: IntArray?): IntArray? {
         if (this.parent == null) {
             return drawableState
         }

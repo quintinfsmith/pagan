@@ -36,8 +36,8 @@ class ColorMap(initial_palette: HashMap<Palette, Int>? = null) {
         TitleBar,
         TitleBarText
     }
-    private val default = Color.parseColor("#FF00FF")
-    private val palette = HashMap<Palette, Int>()
+    private val _default = Color.parseColor("#FF00FF")
+    private val _palette = HashMap<Palette, Int>()
     private var _palette_fallback = HashMap<Palette, Int>()
     var use_palette = false
 
@@ -48,22 +48,22 @@ class ColorMap(initial_palette: HashMap<Palette, Int>? = null) {
     }
 
     fun is_set():Boolean {
-        return this.palette.isNotEmpty()
+        return this._palette.isNotEmpty()
     }
     fun populate() {
         for ((k, v) in this._palette_fallback) {
-            this.palette[k] = v
+            this._palette[k] = v
         }
     }
     fun unpopulate() {
-        this.palette.clear()
+        this._palette.clear()
     }
     fun get_palette(): HashMap<Palette, Int> {
-        return this.palette
+        return this._palette
     }
     fun set_palette(palette: HashMap<Palette, Int>) {
         for ((k, v) in palette) {
-            this.palette[k] = v
+            this._palette[k] = v
         }
     }
 
@@ -72,18 +72,18 @@ class ColorMap(initial_palette: HashMap<Palette, Int>? = null) {
     }
 
     operator fun get(key: Palette): Int {
-        return if (this.use_palette && this.palette.containsKey(key)) {
-            this.palette[key]!!
+        return if (this.use_palette && this._palette.containsKey(key)) {
+            this._palette[key]!!
         } else {
-            this._palette_fallback.getOrDefault(key, this.default)
+            this._palette_fallback.getOrDefault(key, this._default)
         }
     }
 
     operator fun set(key: Palette, value: Int) {
-        this.palette[key] = value
+        this._palette[key] = value
     }
 
     fun unset(key: Palette) {
-        this.palette.remove(key)
+        this._palette.remove(key)
     }
 }

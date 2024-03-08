@@ -9,11 +9,11 @@ import kotlin.math.max
 import kotlin.math.min
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
-class ColumnRecyclerAdapter(val recycler: ColumnRecycler, editor_table: EditorTable): RecyclerView.Adapter<ColumnRecyclerViewHolder>() {
-    val column_label_recycler: ColumnLabelRecycler
+class ColumnRecyclerAdapter(private val _recycler: ColumnRecycler, editor_table: EditorTable): RecyclerView.Adapter<ColumnRecyclerViewHolder>() {
+    private val _column_label_recycler: ColumnLabelRecycler
     private var _column_count = 0
     init {
-        this.column_label_recycler = editor_table.column_label_recycler
+        this._column_label_recycler = editor_table.column_label_recycler
 
         this.registerAdapterDataObserver(
             object: RecyclerView.AdapterDataObserver() {
@@ -81,7 +81,7 @@ class ColumnRecyclerAdapter(val recycler: ColumnRecycler, editor_table: EditorTa
     //-------------------------------------------------------//
     private fun _apply_to_visible_columns(callback: (Int, ColumnLayout) -> Unit) {
         for (i in 0 until this.itemCount) {
-            val viewHolder = this.recycler.findViewHolderForAdapterPosition(i) ?: continue
+            val viewHolder = this._recycler.findViewHolderForAdapterPosition(i) ?: continue
             if ((viewHolder.itemView as ViewGroup).childCount == 0) {
                 continue
             }
@@ -109,7 +109,7 @@ class ColumnRecyclerAdapter(val recycler: ColumnRecycler, editor_table: EditorTa
 
     //-------------------------------------------------------//
     private fun _get_activity(): MainActivity {
-        return this.recycler.context as MainActivity
+        return this._recycler.context as MainActivity
     }
 
     fun get_opus_manager(): OpusManager {
@@ -117,7 +117,7 @@ class ColumnRecyclerAdapter(val recycler: ColumnRecycler, editor_table: EditorTa
     }
 
     fun get_editor_table(): EditorTable? {
-        var view = this.recycler as View
+        var view = this._recycler as View
         while (view !is EditorTable) {
             if (view.parent == null) {
                 break
@@ -134,7 +134,7 @@ class ColumnRecyclerAdapter(val recycler: ColumnRecycler, editor_table: EditorTa
     }
 
     private fun _get_column_layout(beat: Int): ColumnLayout? {
-        val view_holder = this.recycler.findViewHolderForAdapterPosition(beat) ?: return null
+        val view_holder = this._recycler.findViewHolderForAdapterPosition(beat) ?: return null
         return (view_holder as ColumnRecyclerViewHolder).get_column_layout()
     }
 

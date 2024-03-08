@@ -1,7 +1,6 @@
 package com.qfs.pagan
 
 import com.qfs.apres.VirtualMidiOutputDevice
-import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event2.NoteOn79
 import com.qfs.apres.soundfontplayer.FrameMap
 import com.qfs.apres.soundfontplayer.MappedPlaybackDevice
@@ -12,24 +11,22 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.math.max
 
-class FeedbackDevice(var sample_handle_manager: SampleHandleManager): MappedPlaybackDevice(ImmediateFrameMap(), sample_handle_manager.sample_rate, sample_handle_manager.buffer_size), VirtualMidiOutputDevice {
-    var queued_kill_time: Long? = null
-    val kill_mutex = Mutex()
+class FeedbackDevice(private var _sample_handle_manager: SampleHandleManager): MappedPlaybackDevice(ImmediateFrameMap(), _sample_handle_manager.sample_rate, _sample_handle_manager.buffer_size), VirtualMidiOutputDevice {
     class ImmediateFrameMap: FrameMap {
-        val handles = mutableSetOf<SampleHandle>()
-        val mutex = Mutex()
+        private val _handles = mutableSetOf<SampleHandle>()
+        private val _mutex = Mutex()
         var max_frame = -1
 
         override fun get_new_handles(frame: Int): Set<SampleHandle>? {
-            if (this.handles.isEmpty()) {
+            if (this._handles.isEmpty()) {
                 return null
             }
 
 
-            val output = this.handles.toSet()
+            val output = this._handles.toSet()
             runBlocking {
-                this@ImmediateFrameMap.mutex.withLock {
-                    this@ImmediateFrameMap.handles.clear()
+                this@ImmediateFrameMap._mutex.withLock {
+                    this@ImmediateFrameMap._handles.clear()
                 }
             }
 
@@ -53,30 +50,10 @@ class FeedbackDevice(var sample_handle_manager: SampleHandleManager): MappedPlay
 
         fun add(handle: SampleHandle) {
             runBlocking {
-                this@ImmediateFrameMap.mutex.withLock {
-                    this@ImmediateFrameMap.handles.add(handle)
+                this@ImmediateFrameMap._mutex.withLock {
+                    this@ImmediateFrameMap._handles.add(handle)
                 }
             }
-        }
-    }
-
-    fun set_kill_time(kill_time: Long?) {
-        runBlocking {
-            this@FeedbackDevice.kill_mutex.withLock {
-                this@FeedbackDevice.queued_kill_time = kill_time
-            }
-        }
-    }
-
-    fun queue_kill(millis: Int) {
-        val working_kill_time = millis + System.currentTimeMillis()
-        this.set_kill_time(working_kill_time)
-
-        Thread.sleep(millis.toLong())
-
-        if (working_kill_time == this@FeedbackDevice.queued_kill_time) {
-            this.kill()
-            this.set_kill_time(null)
         }
     }
 
@@ -84,18 +61,18 @@ class FeedbackDevice(var sample_handle_manager: SampleHandleManager): MappedPlay
         (this.sample_frame_map as ImmediateFrameMap).max_frame = 0
     }
 
-    fun new_event(event: NoteOn, duration_millis: Int) {
-        val handles = this.sample_handle_manager.gen_sample_handles(event)
-        for (handle in handles) {
-            handle.release_frame = duration_millis * this.sample_rate / 1000
-            handle.volume = event.get_velocity().toFloat() * 0.2F / 128F
-            (this.sample_frame_map as ImmediateFrameMap).add(handle)
-        }
-        this.play()
-    }
+    //fun new_event(event: NoteOn, duration_millis: Int) {
+    //    val handles = this.sample_handle_manager.gen_sample_handles(event)
+    //    for (handle in handles) {
+    //        handle.release_frame = duration_millis * this.sample_rate / 1000
+    //        handle.volume = event.get_velocity().toFloat() * 0.2F / 128F
+    //        (this.sample_frame_map as ImmediateFrameMap).add(handle)
+    //    }
+    //    this.play()
+    //}
 
     fun new_event(event: NoteOn79, duration_millis: Int) {
-        val handles = this.sample_handle_manager.gen_sample_handles(event)
+        val handles = this._sample_handle_manager.gen_sample_handles(event)
 
         for (handle in handles) {
             handle.release_frame = duration_millis * this.sample_rate / 1000

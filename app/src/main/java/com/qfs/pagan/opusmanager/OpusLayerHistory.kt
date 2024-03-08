@@ -249,7 +249,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
 
 
     fun new_line(channel: Int, line_offset: Int, count: Int): List<OpusChannel.OpusLine> {
-        return this.remember {
+        return this._remember {
             val output: MutableList<OpusChannel.OpusLine> = mutableListOf()
             for (i in 0 until count) {
                 output.add(this.new_line(channel, line_offset))
@@ -259,7 +259,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
     }
 
     override fun new_line(channel: Int, line_offset: Int?): OpusChannel.OpusLine {
-        return this.remember {
+        return this._remember {
             val output = super.new_line(channel, line_offset)
             this.push_remove_line(channel, line_offset ?: (this.channels[channel].size))
             output
@@ -267,7 +267,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
     }
 
     override fun insert_line(channel: Int, line_offset: Int, line: OpusChannel.OpusLine) {
-        this.remember {
+        this._remember {
             this.push_remove_line(channel, line_offset)
             super.insert_line(channel, line_offset, line)
         }
@@ -275,7 +275,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
 
     override fun swap_lines(channel_a: Int, line_a: Int, channel_b: Int, line_b: Int) {
 
-        this.remember {
+        this._remember {
             super.swap_lines(channel_a, line_a, channel_b, line_b)
             this.push_to_history_stack(
                 HistoryToken.SWAP_LINES,
@@ -285,7 +285,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
     }
 
     open fun remove_line(channel: Int, line_offset: Int, count: Int) {
-        this.remember {
+        this._remember {
             for (i in 0 until count) {
                 if (this.channels[channel].size == 0) {
                     break
@@ -303,7 +303,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
     }
 
     override fun remove_line(channel: Int, line_offset: Int): OpusChannel.OpusLine {
-        return this.remember {
+        return this._remember {
             val line = super.remove_line(channel, line_offset)
 
             this.push_to_history_stack(
@@ -316,7 +316,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
     }
 
     fun insert_after(beat_key: BeatKey, position: List<Int>, repeat: Int) {
-        this.remember {
+        this._remember {
             for (i in 0 until repeat) {
                 this.insert_after(beat_key, position)
             }
@@ -324,7 +324,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
     }
 
     override fun insert_after(beat_key: BeatKey, position: List<Int>) {
-        this.remember {
+        this._remember {
             val remove_position = position.toMutableList()
             remove_position[remove_position.size - 1] += 1
             super.insert_after(beat_key, position)
@@ -333,14 +333,14 @@ open class OpusLayerHistory : OpusLayerLinks() {
     }
 
     override fun insert(beat_key: BeatKey, position: List<Int>) {
-        this.remember {
+        this._remember {
             super.insert(beat_key, position)
             this.push_remove(beat_key, position)
         }
     }
 
     override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
-        this.remember {
+        this._remember {
             this.push_replace_tree(beat_key, position) {
                 super.split_tree(beat_key, position, splits)
             }
@@ -348,7 +348,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
     }
 
     fun remove(beat_key: BeatKey, position: List<Int>, count: Int) {
-        this.remember {
+        this._remember {
             for (i in 0 until count) {
                 this.remove(beat_key, position)
             }
@@ -358,32 +358,32 @@ open class OpusLayerHistory : OpusLayerLinks() {
     override fun remove(beat_key: BeatKey, position: List<Int>) {
         val old_tree = this.get_tree(beat_key, position.subList(0, position.size - 1)).copy()
         this.push_replace_tree(beat_key, position.subList(0, position.size - 1), old_tree) {
-            this.remember {
+            this._remember {
                 super.remove(beat_key, position)
             }
         }
     }
 
     override fun remove_one_of_two(beat_key: BeatKey, position: List<Int>) {
-        this.forget {
+        this._forget {
             super.remove_one_of_two(beat_key, position)
         }
     }
 
     override fun remove_only(beat_key: BeatKey, position: List<Int>) {
-        this.forget {
+        this._forget {
             super.remove_only(beat_key, position)
         }
     }
 
     override fun remove_standard(beat_key: BeatKey, position: List<Int>) {
-        this.forget {
+        this._forget {
             super.remove_standard(beat_key, position)
         }
     }
 
     override fun insert_beats(beat_index: Int, count: Int) {
-        this.remember {
+        this._remember {
             super.insert_beats(beat_index, count)
         }
     }
@@ -394,7 +394,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
     }
 
     fun remove_beat(beat_index: Int, count: Int) {
-        this.remember {
+        this._remember {
             for (i in 0 until count) {
                 if (this.beat_count > 1) {
                     this.remove_beat(min(beat_index, this.beat_count - 1))
@@ -406,7 +406,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
     }
 
     override fun remove_beat(beat_index: Int) {
-        this.remember {
+        this._remember {
             val beat_cells = mutableListOf<OpusTree<OpusEvent>>()
             for (channel in 0 until this.channels.size) {
                 val line_count = this.channels[channel].size
@@ -428,7 +428,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
 
     override fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<OpusEvent>) {
         try {
-            this.remember {
+            this._remember {
                 this.push_replace_tree(beat_key, position) {
                     super.replace_tree(beat_key, position, tree)
                 }
@@ -439,25 +439,25 @@ open class OpusLayerHistory : OpusLayerLinks() {
     }
 
     override fun move_leaf(beatkey_from: BeatKey, position_from: List<Int>, beatkey_to: BeatKey, position_to: List<Int>) {
-        this.remember {
+        this._remember {
             super.move_leaf(beatkey_from, position_from, beatkey_to, position_to)
         }
     }
 
     override fun move_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
-        this.remember {
+        this._remember {
             super.move_beat_range(beat_key, first_corner, second_corner)
         }
     }
 
     override fun unset_range(first_corner: BeatKey, second_corner: BeatKey) {
-        this.remember {
+        this._remember {
             super.unset_range(first_corner, second_corner)
         }
     }
 
     override fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEvent) {
-        this.remember {
+        this._remember {
             val tree = this.get_tree(beat_key, position).copy()
             this.push_replace_tree(beat_key, position, tree) {
                 super.set_event(beat_key, position, event)
@@ -466,7 +466,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
     }
 
     override fun set_percussion_event(beat_key: BeatKey, position: List<Int>) {
-        this.remember {
+        this._remember {
             super.set_percussion_event(beat_key, position)
 
             val tree = this.get_tree(beat_key, position)
@@ -479,7 +479,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
     }
 
     override fun unset(beat_key: BeatKey, position: List<Int>) {
-        this.remember {
+        this._remember {
             val tree = this.get_tree(beat_key, position)
             if (tree.is_event()) {
                 val original_event = tree.get_event()!!
@@ -524,7 +524,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
 
     override fun clear() {
         this.clear_history()
-        this.forget {
+        this._forget {
             super.clear()
         }
     }
@@ -550,7 +550,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
     }
 
     private fun <T> push_rebuild_channel(channel: Int, callback: () -> T): T {
-        return this.remember {
+        return this._remember {
             val tmp_history_nodes = mutableListOf<Pair<HistoryToken, List<Any>>>()
             val line_count = this.channels[channel].lines.size
             // Will be an extra empty line that needs to be removed
@@ -618,13 +618,13 @@ open class OpusLayerHistory : OpusLayerLinks() {
     }
 
     override fun link_beats(beat_key: BeatKey, target: BeatKey) {
-        this.remember {
+        this._remember {
             super.link_beats(beat_key, target)
         }
     }
 
     override fun merge_link_pools(index_first: Int, index_second: Int) {
-        this.remember {
+        this._remember {
 
             val old_link_pool = mutableSetOf<BeatKey>()
             for (beat_key in this.link_pools[index_first]) {
@@ -640,14 +640,14 @@ open class OpusLayerHistory : OpusLayerLinks() {
     }
 
     override fun link_beat_into_pool(beat_key: BeatKey, index: Int, overwrite_pool: Boolean) {
-        this.remember {
+        this._remember {
             super.link_beat_into_pool(beat_key, index, overwrite_pool)
             this.push_to_history_stack(HistoryToken.UNLINK_BEAT, listOf(beat_key))
         }
     }
 
     override fun create_link_pool(beat_keys: List<BeatKey>) {
-        this.remember {
+        this._remember {
             // Do not unlink last. it is automatically unlinked by the penultimate
             beat_keys.forEachIndexed { i: Int, beat_key ->
                 if (i == beat_keys.size - 1) {
@@ -660,13 +660,13 @@ open class OpusLayerHistory : OpusLayerLinks() {
     }
 
     override fun batch_link_beats(beat_key_pairs: List<Pair<BeatKey, BeatKey>>) {
-        this.remember {
+        this._remember {
             super.batch_link_beats(beat_key_pairs)
         }
     }
 
     override fun remove_channel(channel: Int) {
-        this.remember {
+        this._remember {
             this.push_rebuild_channel(channel) {
                 this.history_cache.lock()
                 super.remove_channel(channel)
@@ -676,7 +676,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
     }
 
     override fun new_channel(channel: Int?, lines: Int, uuid: Int?) {
-        this.remember {
+        this._remember {
             val channel_to_remove = channel ?: if (this.channels.isNotEmpty()) {
                 this.channels.size - 1
             } else {
@@ -714,7 +714,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
     }
 
     override fun set_channel_instrument(channel: Int, instrument: Pair<Int, Int>) {
-        this.remember {
+        this._remember {
             this.push_to_history_stack(
                 HistoryToken.SET_CHANNEL_INSTRUMENT,
                 listOf(channel, this.channels[channel].get_instrument())
@@ -724,7 +724,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
     }
 
     override fun set_percussion_instrument(line_offset: Int, instrument: Int) {
-        this.remember {
+        this._remember {
             val current = this.get_percussion_instrument(line_offset)
             this.push_to_history_stack(HistoryToken.SET_PERCUSSION_INSTRUMENT, listOf(line_offset, current))
             super.set_percussion_instrument(line_offset, instrument)
@@ -742,19 +742,19 @@ open class OpusLayerHistory : OpusLayerLinks() {
         super.unlink_beat(beat_key)
     }
     override fun unlink_range(first_key: BeatKey, second_key: BeatKey) {
-        this.remember {
+        this._remember {
             super.unlink_range(first_key, second_key)
         }
     }
 
     override fun link_column(column: Int, beat_key: BeatKey) {
-        this.remember {
+        this._remember {
             super.link_column(column, beat_key)
         }
     }
 
     override fun link_row(channel: Int, line_offset: Int, beat_key: BeatKey) {
-        this.remember {
+        this._remember {
             this.clear_link_pools_by_range(
                 BeatKey(channel, line_offset, 0),
                 BeatKey(channel, line_offset, this.beat_count - 1)
@@ -764,14 +764,14 @@ open class OpusLayerHistory : OpusLayerLinks() {
     }
 
     override fun remove_link_pool(index: Int) {
-        this.remember {
+        this._remember {
             this.push_to_history_stack(HistoryToken.CREATE_LINK_POOL, listOf(this.link_pools[index]))
             super.remove_link_pool(index)
         }
     }
 
     override fun link_beat_range_horizontally(channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey) {
-        this.remember {
+        this._remember {
             val (from_key, _) = this.get_ordered_beat_key_pair(first_key, second_key)
             if (from_key.channel != channel || from_key.line_offset != line_offset || from_key.beat != 0) {
                 throw BadRowLink(from_key, channel, line_offset)
@@ -801,14 +801,14 @@ open class OpusLayerHistory : OpusLayerLinks() {
     }
 
     override fun overwrite_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
-        this.remember {
+        this._remember {
             super.overwrite_beat_range(beat_key, first_corner, second_corner)
         }
 
     }
 
     override fun clear_link_pools_by_range(first_key: BeatKey, second_key: BeatKey) {
-        this.remember {
+        this._remember {
             super.clear_link_pools_by_range(first_key, second_key)
         }
     }
@@ -820,7 +820,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
     }
 
     override fun set_duration(beat_key: BeatKey, position: List<Int>, duration: Int) {
-        this.remember {
+        this._remember {
             val tree = this.get_tree(beat_key, position)
             if (tree.is_event()) {
                 val event = tree.get_event()
@@ -832,7 +832,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
 
     }
 
-    fun <T> remember(callback: () -> T): T {
+    private fun <T> _remember(callback: () -> T): T {
         return try {
             this.history_cache.remember {
                 callback()
@@ -854,14 +854,14 @@ open class OpusLayerHistory : OpusLayerLinks() {
             throw real_exception
         }
     }
-    private fun <T> forget(callback: () -> T): T {
+    private fun <T> _forget(callback: () -> T): T {
         return this.history_cache.forget {
             callback()
         }
     }
 
     override fun overwrite_row(channel: Int, line_offset: Int, beat_key: BeatKey) {
-        this.remember {
+        this._remember {
             super.overwrite_row(channel, line_offset, beat_key)
         }
     }
@@ -872,13 +872,13 @@ open class OpusLayerHistory : OpusLayerLinks() {
         first_key: BeatKey,
         second_key: BeatKey
     ) {
-        this.remember {
+        this._remember {
             super.overwrite_beat_range_horizontally(channel, line_offset, first_key, second_key)
         }
     }
 
     override fun set_tuning_map(new_map: Array<Pair<Int, Int>>, mod_events: Boolean) {
-        this.remember {
+        this._remember {
             val original_map = this.tuning_map.clone()
             super.set_tuning_map(new_map, mod_events)
             this.push_to_history_stack(HistoryToken.SET_TUNING_MAP, listOf(original_map))
@@ -887,9 +887,9 @@ open class OpusLayerHistory : OpusLayerLinks() {
 
     // Need a compound function so history can manage both at the same time
     open fun set_tuning_map_and_transpose(tuning_map: Array<Pair<Int, Int>>, transpose: Int) {
-            this.remember {
-                this.set_tuning_map(tuning_map)
-                this.set_transpose(transpose)
-            }
+        this._remember {
+            this.set_tuning_map(tuning_map)
+            this.set_transpose(transpose)
+        }
     }
 }

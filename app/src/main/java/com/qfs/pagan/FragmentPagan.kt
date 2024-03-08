@@ -10,8 +10,8 @@ import com.qfs.pagan.ColorMap.Palette
 
 abstract class FragmentPagan<T: ViewBinding>: Fragment() {
     // Boiler Plate //
-    internal var _binding: T? = null
-    internal val binding get() = _binding!!
+    private var _binding: T? = null
+    val binding get() = _binding!!
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -31,12 +31,12 @@ abstract class FragmentPagan<T: ViewBinding>: Fragment() {
 
     override fun onResume() {
         super.onResume()
-        this.refresh_background()
+        this._refresh_background()
         this.get_main().update_menu_options()
         this.get_main().update_title_text()
     }
 
-    fun refresh_background() {
+    private fun _refresh_background() {
         val color_map = this.get_main().view_model.color_map
         this.view?.setBackgroundColor(color_map[Palette.Background])
     }

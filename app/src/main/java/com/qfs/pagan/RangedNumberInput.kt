@@ -12,7 +12,7 @@ class RangedNumberInput(context: Context, attrs: AttributeSet? = null): PaganEdi
     var max: Int
     var min: Int
     var value_set_callback: ((RangedNumberInput) -> Unit)? = null
-    var watcher: RangedTextWatcher
+    private var _watcher: RangedTextWatcher
     var confirm_required = true
     init {
         /*
@@ -35,7 +35,7 @@ class RangedNumberInput(context: Context, attrs: AttributeSet? = null): PaganEdi
             styled_attributes.recycle()
         }
 
-        this.watcher = RangedTextWatcher(this, this.min, this.max) {
+        this._watcher = RangedTextWatcher(this, this.min, this.max) {
             if (this.value_set_callback != null) {
                 this.value_set_callback!!(this)
             }
@@ -56,8 +56,8 @@ class RangedNumberInput(context: Context, attrs: AttributeSet? = null): PaganEdi
     fun set_range(new_min: Int, new_max: Int) {
         this.min = new_min
         this.max = new_max
-        this.watcher.min_value = new_min
-        this.watcher.max_value = new_max
+        this._watcher.min_value = new_min
+        this._watcher.max_value = new_max
     }
 
     fun get_value(): Int? {
@@ -69,8 +69,8 @@ class RangedNumberInput(context: Context, attrs: AttributeSet? = null): PaganEdi
     }
 
     fun set_value(new_value: Int) {
-        this.watcher.lockout = true
+        this._watcher.lockout = true
         this.setText(new_value.toString())
-        this.watcher.lockout = false
+        this._watcher.lockout = false
     }
 }

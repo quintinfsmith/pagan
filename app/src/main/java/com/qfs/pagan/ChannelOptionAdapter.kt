@@ -19,17 +19,16 @@ class ChannelOptionAdapter(
     private val _opus_manager: OpusLayerInterface,
     private val _recycler: RecyclerView
 ) : RecyclerView.Adapter<ChannelOptionAdapter.ChannelOptionViewHolder>() {
-    class OutOfSyncException : Exception("Channel Option list out of sync with OpusManager")
     class ChannelOptionViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
     class BackLinkView(context: Context): LinearLayout(ContextThemeWrapper(context, R.style.song_config_button)) {
         var view_holder: ChannelOptionViewHolder? = null
         init {
-            var context = this.context
-            while (context !is MainActivity) {
-                context = (context as ContextThemeWrapper).baseContext
+            var working_context = this.context
+            while (working_context !is MainActivity) {
+                working_context = (working_context as ContextThemeWrapper).baseContext
             }
 
-            val color_map = context.view_model.color_map
+            val color_map = working_context.view_model.color_map
             for (i in 0 until (this.background as StateListDrawable).stateCount) {
                 val background = ((this.background as StateListDrawable).getStateDrawable(i) as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)
                 background?.setTint(color_map[Palette.Button])
@@ -37,7 +36,7 @@ class ChannelOptionAdapter(
         }
     }
 
-    private var channel_count = 0
+    private var _channel_count = 0
     private var _supported_instruments = HashMap<Pair<Int, Int>, String>()
     init {
         this._recycler.adapter = this
@@ -212,7 +211,7 @@ class ChannelOptionAdapter(
     }
 
     override fun getItemCount(): Int {
-        return this.channel_count
+        return this._channel_count
     }
 
     fun set_soundfont(soundfont: SoundFont) {
@@ -223,27 +222,22 @@ class ChannelOptionAdapter(
         this.notifyItemRangeChanged(0, this._opus_manager.channels.size)
     }
 
-    fun unset_soundfont() {
-        this._supported_instruments.clear()
-        this.notifyItemRangeChanged(0, this._opus_manager.channels.size)
-    }
-
     fun add_channel() {
-        this.channel_count += 1
+        this._channel_count += 1
         this.notifyDataSetChanged()
     }
 
     fun remove_channel(channel: Int) {
-        this.channel_count -= 1
+        this._channel_count -= 1
         this.notifyItemRemoved(channel)
     }
 
     fun clear() {
-        this.channel_count = 0
+        this._channel_count = 0
         this.notifyDataSetChanged()
     }
     fun setup() {
-        this.channel_count = this._opus_manager.channels.size
+        this._channel_count = this._opus_manager.channels.size
         this.notifyDataSetChanged()
     }
 }

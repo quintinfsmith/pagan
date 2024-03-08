@@ -8,29 +8,29 @@ import android.util.AttributeSet
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.appcompat.view.ContextThemeWrapper
 
-class ButtonColor(context: Context, attrs: AttributeSet? = null, private var color: Int = 0): androidx.appcompat.widget.AppCompatTextView(context, attrs) {
-    private var on_change: ((Int) -> Unit)? = null
+class ButtonColor(context: Context, attrs: AttributeSet? = null, private var _color: Int = 0): androidx.appcompat.widget.AppCompatTextView(context, attrs) {
+    private var _on_change: ((Int) -> Unit)? = null
     init {
         this.background = AppCompatResources.getDrawable(context, R.drawable.button)
         this.isClickable = true
         this._setup_colors()
-        this.set_color(this.color)
+        this.set_color(this._color)
     }
 
     fun get_string(): String {
-        return Integer.toHexString(this.color).substring(2)
+        return Integer.toHexString(this._color).substring(2)
     }
 
     fun get_color(): Int {
-        return this.color
+        return this._color
     }
 
     fun set_color(color: Int, skip_callback: Boolean = false) {
-        this.color = color
+        this._color = color
         this._setup_colors()
         this.refreshDrawableState()
-        if (this.on_change != null && ! skip_callback) {
-            this.on_change!!(color)
+        if (this._on_change != null && ! skip_callback) {
+            this._on_change!!(color)
         }
     }
 
@@ -39,7 +39,7 @@ class ButtonColor(context: Context, attrs: AttributeSet? = null, private var col
     }
 
     fun set_on_change(listener: (Int) -> Unit) {
-        this.on_change = listener
+        this._on_change = listener
     }
 
     private fun _setup_colors() {
@@ -50,7 +50,7 @@ class ButtonColor(context: Context, attrs: AttributeSet? = null, private var col
 
         for (i in 0 until (this.background as StateListDrawable).stateCount) {
             val background = ((this.background as StateListDrawable).getStateDrawable(i) as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)
-            background?.setTint(this.color)
+            background?.setTint(this._color)
         }
     }
 }

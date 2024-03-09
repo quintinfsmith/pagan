@@ -32,7 +32,6 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
     fun start_playback(start_frame: Int = 0) {
         if (!this.is_playing && this.active_audio_track_handle == null) {
             this.active_audio_track_handle = AudioTrackHandle(this.sample_rate, this.buffer_size)
-            //this._start_play_loop(start_frame, kill_frame)
             this.play_loop(start_frame)
         }
     }
@@ -58,7 +57,6 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
         thread {
             val buffer_millis = this.BUFFER_NANO / 1_000_000
             var ts: Long = System.currentTimeMillis()
-            var flag_dead = false
             val empty_chunk = FloatArray(this.buffer_size * 2) { 0f }
             var chunk: FloatArray? = null
 
@@ -73,12 +71,8 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
                 } catch (e: WaveGenerator.EmptyException) {
                     empty_chunk
                 } catch (e: WaveGenerator.DeadException) {
-                    flag_dead = true
                     break
                 }
-
-               // val duration = System.currentTimeMillis() - ts
-               // val real_delay = buffer_millis - duration
             }
 
             // Delay while write finishes
@@ -121,8 +115,6 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
                                 break
                             }
                         }
-
-                        //that.on_beat(this.current_beat)
 
                         that.active_audio_track_handle?.set_next_notification_position(
                             that.beat_frames[this.current_beat]!!.last - start_frame
@@ -204,10 +196,6 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
         this.play_cancelled = false
         this.play_queued = true
         this.start_playback(start_frame)
-    }
-
-    fun set_kill_frame(frame: Int) {
-        this.wave_generator.kill_frame = frame
     }
 
     fun setup_beat_frames() {

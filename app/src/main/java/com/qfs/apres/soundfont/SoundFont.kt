@@ -36,7 +36,7 @@ class SoundFont(file_path: String) {
             val info_chunk = riff.get_chunk_data(riff.list_chunks[0])
             val pdta_chunk = riff.get_chunk_data(riff.list_chunks[2])
             val info_offset = riff.list_chunks[0].index
-            riff.sub_chunks[0].forEach { header: Riff.SubChunkHeader ->
+            for (header in riff.sub_chunks[0]) {
                 // '-12' since the sub chunk index is relative to the list chunk, but the list chunk index is absolute
                 val header_offset = header.index + 8 - info_offset - 12
                 when (header.tag) {
@@ -122,7 +122,7 @@ class SoundFont(file_path: String) {
             }
 
             val pdta_offset = riff.list_chunks[2].index
-            riff.sub_chunks[2].forEach { header: Riff.SubChunkHeader ->
+            for (header in riff.sub_chunks[2]) {
                 // '-12' since the sub chunk index is relative to the list chunk, but the list chunk index is absolute
                 val offset = header.index + 8 - pdta_offset - 12
                 this.pdta_chunks[header.tag] = ByteArray(header.size) { j ->

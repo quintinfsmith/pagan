@@ -217,7 +217,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
         }
 
         if (current_node.children.isNotEmpty()) {
-            current_node.children.asReversed().forEach { child: HistoryCache.HistoryNode ->
+            for (child in current_node.children.asReversed()) {
                 this.apply_history_node(child, depth + 1)
             }
         }

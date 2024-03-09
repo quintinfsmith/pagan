@@ -1493,7 +1493,7 @@ open class OpusLayerBase {
         // Calculate the number of lines needed per channel
         for ((_, event_set) in mapped_events) {
             val tmp_channel_counts = HashMap<Int, Int>()
-            event_set.forEachIndexed { _: Int, event: OpusEvent ->
+            for (event in event_set) {
                 if (!midi_channel_map.contains(event.channel)) {
                     midi_channel_map[event.channel] = midi_channel_map.size
                 }

@@ -244,17 +244,17 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
 
     fun close_device(device_info: MidiDeviceInfo) {
         if (this.mapped_input_ports.containsKey(device_info.id)) {
-            this.mapped_input_ports[device_info.id]!!.forEach {
-                if (this.connected_input_ports.contains(it)) {
-                    this.connected_input_ports.remove(it)
+            for (input_port in this.mapped_input_ports[device_info.id]!!) {
+                if (this.connected_input_ports.contains(input_port)) {
+                    this.connected_input_ports.remove(input_port)
                 }
-                it.close()
+                input_port.close()
             }
             this.mapped_input_ports.remove(device_info.id)
         }
         if (this.mapped_output_ports.containsKey(device_info.id)) {
-            this.mapped_output_ports[device_info.id]!!.forEach {
-                it.close()
+            for (output_port in this.mapped_output_ports[device_info.id]!!) {
+                output_port.close()
             }
             this.mapped_output_ports.remove(device_info.id)
         }

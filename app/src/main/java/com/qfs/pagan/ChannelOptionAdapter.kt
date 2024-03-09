@@ -190,7 +190,7 @@ class ChannelOptionAdapter(
         }
 
         val options = mutableListOf<Pair<Pair<Int, Int>, String>>()
-        sorted_keys.forEach { key: Pair<Int, Int> ->
+        for (key in sorted_keys) {
             val name = this._supported_instruments[key]
             if ((this._opus_manager.is_percussion(channel) && key.first == 128)) {
                 options.add(Pair(key, "[${key.second}] $name"))

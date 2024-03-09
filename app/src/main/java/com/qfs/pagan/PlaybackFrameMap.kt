@@ -229,7 +229,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         this._beat_count = this.opus_manager.beat_count
         this._simple_mode = force_simple_mode
 
-        this.opus_manager.channels.forEach { channel: OpusChannel ->
+        for (channel in this.opus_manager.channels) {
             val instrument = channel.get_instrument()
             this._sample_handle_manager.select_bank(channel.midi_channel, instrument.first)
             this._sample_handle_manager.change_program(channel.midi_channel, instrument.second)

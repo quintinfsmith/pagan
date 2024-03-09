@@ -41,12 +41,12 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     private val _queued_cell_notifications = mutableListOf<BeatKey>()
 
     companion object {
-        // TODO: Why Not enum?
-        val SECTION_OUT_OF_VIEW = 0
-        val SECTION_VIEW_PARTIAL_LEFT = 1
-        val SECTION_VIEW_PARTIAL_RIGHT = 2
-        val SECTION_VIEW_PARTIAL_OVERSIZED = 3
-        val SECTION_VIEW_COMPLETE = 4
+        // Intentionally Not Enums, So we can use gt/lt comparisons instead of multiple checks
+        const val SECTION_OUT_OF_VIEW = 0
+        const val SECTION_VIEW_PARTIAL_LEFT = 1
+        const val SECTION_VIEW_PARTIAL_RIGHT = 2
+        const val SECTION_VIEW_PARTIAL_OVERSIZED = 3
+        const val SECTION_VIEW_COMPLETE = 4
     }
 
     init {

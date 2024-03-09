@@ -207,7 +207,7 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
             return
         }
 
-        var port_number = port ?: (device_info.ports.filter { it.type == TYPE_INPUT }).first().portNumber
+        val port_number = port ?: (device_info.ports.filter { it.type == TYPE_INPUT }).first().portNumber
 
         this.midi_manager!!.openDevice(device_info, {
             val input_port = it.openInputPort(port_number) ?: return@openDevice // TODO: check open ports?
@@ -225,7 +225,7 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
             return
         }
 
-        var port_number = port ?: (device_info.ports.filter { it.type == TYPE_OUTPUT }).first().portNumber
+        val port_number = port ?: (device_info.ports.filter { it.type == TYPE_OUTPUT }).first().portNumber
 
         this.midi_manager!!.openDevice(device_info, {
             val output_port = it.openOutputPort(port_number)

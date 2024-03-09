@@ -253,7 +253,7 @@ class SampleHandle(
 
         this.working_frame += 1
 
-        var frame_value = try {
+        val frame_value = try {
             this.data_buffer.get().toFloat()
         } catch (e: ArrayIndexOutOfBoundsException) {
             this.is_dead = true

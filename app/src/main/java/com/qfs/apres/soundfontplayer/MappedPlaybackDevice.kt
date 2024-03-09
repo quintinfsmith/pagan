@@ -9,10 +9,9 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
     internal var wave_generator = WaveGenerator(this.sample_frame_map, sample_rate, buffer_size, stereo_mode)
     internal var active_audio_track_handle: AudioTrackHandle? = null
 
-    var BUFFER_NANO = this.buffer_size.toLong() * 1_000_000_000.toLong() / this.sample_rate.toLong()
+    private var BUFFER_NANO = this.buffer_size.toLong() * 1_000_000_000.toLong() / this.sample_rate.toLong()
     var play_queued = false
     var is_playing = false
-    var is_buffering = false
     var play_cancelled = false // need a away to cancel between parsing and playing
     val beat_frames = HashMap<Int, IntRange>()
 

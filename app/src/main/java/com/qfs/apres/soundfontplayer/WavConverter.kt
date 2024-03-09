@@ -8,18 +8,18 @@ import java.io.FileOutputStream
 // Ended up needing to split the active and cache Midi Players due to different fundemental requirements
 open class WavConverter(val sample_handle_manager: SampleHandleManager) {
     interface ExporterEventHandler {
-        abstract fun on_start()
-        abstract fun on_complete()
-        abstract fun on_cancel()
-        abstract fun on_progress_update(progress: Double)
+        fun on_start()
+        fun on_complete()
+        fun on_cancel()
+        fun on_progress_update(progress: Double)
     }
     var cancel_flagged = false
-    var generating = false
+    private var _generating = false
 
     // Tmp_file is a Kludge until I can figure out how to quickly precalculate file sizes
     fun export_wav(midi_frame_map: FrameMap, target_file: File, handler: ExporterEventHandler) {
         handler.on_start()
-        this.generating = true
+        this._generating = true
         this.cancel_flagged = false
         val sample_rate = this.sample_handle_manager.sample_rate
         val buffer_size = this.sample_handle_manager.buffer_size
@@ -104,7 +104,7 @@ open class WavConverter(val sample_handle_manager: SampleHandleManager) {
         buffered_output_stream.close()
         output_stream.close()
 
-        this.generating = false
+        this._generating = false
         if (this.cancel_flagged) {
             handler.on_cancel()
         } else {

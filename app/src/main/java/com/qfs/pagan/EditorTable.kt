@@ -355,8 +355,6 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         val column_recycler_adapter = (this.get_column_recycler().adapter!! as ColumnRecyclerAdapter)
         val percussion_visible = this.get_activity().view_model.show_percussion
 
-        // Only one tree needs to be checked, since links are all the same
-
         val changed_beats = mutableSetOf<Int>()
         val changed_beat_keys = mutableSetOf<BeatKey>()
         val done_keys = mutableSetOf<BeatKey>()

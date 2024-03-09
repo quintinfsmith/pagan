@@ -23,13 +23,15 @@ class LineLabelColumnLayout(editor_table: EditorTable): ScrollView(editor_table.
         this.isHorizontalScrollBarEnabled = false
     }
 
-    fun insert_label(y: Int) {
-        val (channel, line_offset) = this.get_opus_manager().get_std_offset(y)
+    fun insert_label(y: Int? = null) {
+        val adj_y = y ?: this._inner_wrapper.childCount
+        val (channel, line_offset) = this.get_opus_manager().get_std_offset(adj_y)
+
         val label_view = LineLabelView(this.context, channel, line_offset)
 
-        this._inner_wrapper.addView(label_view, y)
+        this._inner_wrapper.addView(label_view, adj_y)
 
-        this._notify_item_range_changed(y + 1, this._inner_wrapper.childCount - (y + 1))
+        this._notify_item_range_changed(adj_y + 1, this._inner_wrapper.childCount - (adj_y + 1))
     }
 
     fun insert_labels(y: Int, count: Int) {

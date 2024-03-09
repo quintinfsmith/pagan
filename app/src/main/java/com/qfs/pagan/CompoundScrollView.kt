@@ -12,13 +12,9 @@ class CompoundScrollView(editor_table: EditorTable): ScrollView(editor_table.con
     private var _last_x_position: Float? = null
 
     init {
-        this.addView(
-            this.column_recycler,
-            ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            )
-        )
+        this.addView(this.column_recycler)
+        this.column_recycler.layoutParams.width = ViewGroup.LayoutParams.WRAP_CONTENT
+        this.column_recycler.layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT
 
         this.overScrollMode = OVER_SCROLL_NEVER
         this.isVerticalScrollBarEnabled = false

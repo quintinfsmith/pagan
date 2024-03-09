@@ -2053,6 +2053,26 @@ open class OpusLayerBase {
         }
     }
 
+    override fun equals(other: Any?): Boolean {
+        if (other !is OpusLayerBase
+            || this.beat_count != other.beat_count
+            || this.path != other.path
+            || this.project_name != other.project_name
+            || this.tempo != other.tempo
+            || this.transpose != other.transpose
+            || !this.tuning_map.contentEquals(other.tuning_map)
+            || this.channels.size != other.channels.size) {
+            return false
+        }
+
+        for (i in 0 until this.channels.size) {
+            if (this.channels[i] != other.channels[i]) {
+                return false
+            }
+        }
+
+        return true
+    }
 
     // Experimental/ not in use -yet ----------vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
     /*
@@ -2091,7 +2111,6 @@ open class OpusLayerBase {
         return Pair(mode_press_count, mode_percentage)
     }
 
-    /* Not Currently In Use. */
     fun find_like_range(top_left: BeatKey, bottom_right: BeatKey): List<Pair<BeatKey, BeatKey>> {
         val match_box = this.get_abs_difference(top_left, bottom_right)
 
@@ -2157,25 +2176,4 @@ open class OpusLayerBase {
         return output
     }
 
-    override fun equals(other: Any?): Boolean {
-
-        if (other !is OpusLayerBase
-        || this.beat_count != other.beat_count
-        || this.path != other.path
-        || this.project_name != other.project_name
-        || this.tempo != other.tempo
-        || this.transpose != other.transpose
-        || !this.tuning_map.contentEquals(other.tuning_map)
-        || this.channels.size != other.channels.size) {
-            return false
-        }
-
-        for (i in 0 until this.channels.size) {
-            if (this.channels[i] != other.channels[i]) {
-                return false
-            }
-        }
-
-        return true
-    }
 }

@@ -59,6 +59,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                 fragment.shortcut_dialog()
             }
         }
+
         this._spacer.setOnLongClickListener {
             this.get_opus_manager().cursor_select_column(0)
             true
@@ -95,7 +96,6 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         this.column_label_recycler.layoutParams.width = 0
 
         ColumnLabelAdapter(this)
-
     }
 
     fun clear() {

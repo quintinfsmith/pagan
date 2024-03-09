@@ -250,7 +250,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     }
 
     private fun calculate_overlaps() {
-        // TODO: Disregard non-parallel overlapping, ie a long note with short notes pressed over time
         val event_list = mutableListOf<Triple<Int, Int, Boolean>>()
         for ((handle_id,range) in this._setter_range_map) {
             event_list.add(Triple(range.first, handle_id, true))
@@ -261,39 +260,54 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         val working_std_set = mutableSetOf<Int>()
         val working_perc_set = mutableSetOf<Int>()
         this._setter_overlaps.clear()
+
         // NOTE: Excluding percussion from overlap count, since they sort of exist in their own space
         // Percussion will still be attenuated to fit with the song, but a snare hit shouldn't make
         // Any notes played simultaneously play quieter
+        val working_overlaps = HashMap<Int, Array<Int>>() // Keep track of overlaps here, use _setter_overlaps to track the maximums
         for ((_, setter_id, setter_on) in event_list) {
             val is_perc = this._percussion_setter_ids.contains(setter_id)
             if (setter_on) {
                 if (is_perc) {
                     for (id in working_std_set) {
-                        this._setter_overlaps[id]!![1] += 1
+                        working_overlaps[id]!![1] += 1
                     }
                     for (id in working_perc_set) {
-                        this._setter_overlaps[id]!![1] += 1
+                        working_overlaps[id]!![1] += 1
                     }
 
                     working_perc_set.add(setter_id)
                 } else {
                     for (id in working_std_set) {
-                        this._setter_overlaps[id]!![0] += 1
+                        working_overlaps[id]!![0] += 1
                     }
                     for (id in working_perc_set) {
-                        this._setter_overlaps[id]!![0] += 1
+                        working_overlaps[id]!![0] += 1
                     }
                     working_std_set.add(setter_id)
                 }
+                working_overlaps[setter_id] = arrayOf(working_std_set.size, working_perc_set.size)
                 this._setter_overlaps[setter_id] = arrayOf(working_std_set.size, working_perc_set.size)
-
-            } else {
-                if (is_perc) {
-                    working_perc_set.remove(setter_id)
-                } else {
-                    working_std_set.remove(setter_id)
+            } else if (is_perc) {
+                working_perc_set.remove(setter_id)
+                for (id in working_std_set) {
+                    this._setter_overlaps[id]!![1] = max(working_overlaps[id]!![1], this._setter_overlaps[id]!![1])
+                    working_overlaps[id]!![1] -= 1
                 }
-
+                for (id in working_perc_set) {
+                    this._setter_overlaps[id]!![1] = max(working_overlaps[id]!![1], this._setter_overlaps[id]!![1])
+                    working_overlaps[id]!![1] -= 1
+                }
+            } else {
+                working_std_set.remove(setter_id)
+                for (id in working_std_set) {
+                    this._setter_overlaps[id]!![0] = max(working_overlaps[id]!![0], this._setter_overlaps[id]!![0])
+                    working_overlaps[id]!![0] -= 1
+                }
+                for (id in working_perc_set) {
+                    this._setter_overlaps[id]!![0] = max(working_overlaps[id]!![0], this._setter_overlaps[id]!![0])
+                    working_overlaps[id]!![0] -= 1
+                }
             }
         }
     }

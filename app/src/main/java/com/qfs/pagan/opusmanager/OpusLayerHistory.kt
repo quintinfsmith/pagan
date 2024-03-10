@@ -829,7 +829,6 @@ open class OpusLayerHistory : OpusLayerLinks() {
 
             super.set_duration(beat_key, position, duration)
         }
-
     }
 
     private fun <T> _remember(callback: () -> T): T {

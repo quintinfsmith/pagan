@@ -1587,20 +1587,21 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun get_drum_name(index: Int): String? {
-        if (this.active_percussion_names.isEmpty()) {
-            this.populate_active_percussion_names()
-        }
+        // TODO: Remove/Separate populate_active_percussion_names.
+        this.populate_active_percussion_names(false)
         return this.active_percussion_names[index + 27]
     }
 
-    fun populate_active_percussion_names() {
-        this.active_percussion_names.clear()
-        val drums = this.get_drum_options()
-        for ((name, note) in drums) {
-            // TODO: *Maybe* Allow drum instruments below 27? not sure what the standard is.
-            //  I thought 27 was the lowest, but i'll come up with something later
-            if (note >= 27) {
-                this.active_percussion_names[note] = name
+    fun populate_active_percussion_names(force: Boolean = true) {
+        if (force || this.active_percussion_names.isEmpty()) {
+            this.active_percussion_names.clear()
+            val drums = this.get_drum_options()
+            for ((name, note) in drums) {
+                // TODO: *Maybe* Allow drum instruments below 27? not sure what the standard is.
+                //  I thought 27 was the lowest, but i'll come up with something later
+                if (note >= 27) {
+                    this.active_percussion_names[note] = name
+                }
             }
         }
     }

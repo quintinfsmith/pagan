@@ -278,10 +278,10 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         }
     }
 
-    fun update_cursor(opusManagerCursor: OpusManagerCursor) {
+    fun update_cursor(opusManagerCursor: OpusManagerCursor, deep_update: Boolean = true) {
         if (opusManagerCursor != this._active_cursor) {
             try {
-                this.update_cursor(this._active_cursor)
+                this.update_cursor(this._active_cursor, deep_update)
             } catch (e: OpusTree.InvalidGetCall) {
                 // Pass
             }
@@ -293,7 +293,12 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         when (opusManagerCursor.mode) {
             OpusManagerCursor.CursorMode.Single -> {
                 val beat_key = opusManagerCursor.get_beatkey()
-                for (linked_key in opus_manager.get_all_linked(beat_key)) {
+                val beat_keys = if (deep_update) {
+                    opus_manager.get_all_linked(beat_key)
+                } else {
+                    listOf(beat_key)
+                }
+                for (linked_key in beat_keys) {
                     val y = try {
                         opus_manager.get_abs_offset(linked_key.channel, linked_key.line_offset)
                     } catch (e: IndexOutOfBoundsException) {
@@ -305,6 +310,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                     (this.get_column_recycler().adapter as ColumnRecyclerAdapter).notify_cell_changed(y, linked_key.beat, true)
                 }
             }
+
             OpusManagerCursor.CursorMode.Range -> {
                 val (top_left, bottom_right) = opusManagerCursor.range!!
                 for (beat_key in opus_manager.get_beatkeys_in_range(top_left, bottom_right)) {

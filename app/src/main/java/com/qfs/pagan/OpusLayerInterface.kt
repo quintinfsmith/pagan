@@ -1,6 +1,7 @@
 package com.qfs.pagan
 import android.content.res.Configuration
 import android.view.View
+import android.widget.ImageView
 import android.widget.TextView
 import com.qfs.apres.Midi
 import com.qfs.pagan.opusmanager.BeatKey
@@ -134,12 +135,12 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
-
     override fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEvent) {
         val activity = this.get_activity() ?: return super.set_event(beat_key, position, event)
         if (!activity.view_model.show_percussion && this.is_percussion(beat_key.channel)) {
             this.make_percussion_visible()
         }
+
         super.set_event(beat_key, position, event)
 
         // If the OM is applying history, change the relative mode, otherwise leave it.
@@ -456,7 +457,10 @@ class OpusLayerInterface : OpusLayerCursor() {
                 editor_table.update_cursor(this.cursor)
             }
             else -> {
-                this.runOnUiThread {
+                this.runOnUiThread { main ->
+                    if (this.beat_count == 1) {
+                        main.findViewById<ImageView>(R.id.btnRemoveBeat).visibility = View.GONE
+                    }
                     editor_table.remove_column(beat_index)
                     editor_table.update_cursor(this.cursor)
                 }
@@ -722,6 +726,22 @@ class OpusLayerInterface : OpusLayerCursor() {
             this.relative_mode = 0
         }
     }
+
+    override fun set_duration(beat_key: BeatKey, position: List<Int>, duration: Int) {
+        super.set_duration(beat_key, position, duration)
+
+        when (this.get_ui_lock_level()) {
+            UI_LOCK_FULL -> { }
+            else -> {
+                this.runOnUiThread { main ->
+                    val btnDuration: TextView = main.findViewById(R.id.btnDuration) ?: return@runOnUiThread
+                    btnDuration.text = main.getString(R.string.label_duration, duration)
+                }
+            }
+        }
+    }
+
+
     // Cursor Functions ////////////////////////////////////////////////////////////////////////////
     override fun cursor_clear() {
         super.cursor_clear()
@@ -753,8 +773,8 @@ class OpusLayerInterface : OpusLayerCursor() {
             val editor_table = this.get_editor_table()
             editor_table?.update_cursor(this.cursor)
 
-            this.withFragment {
-                it.setContextMenu_line()
+            this.withFragment { main ->
+                main.set_context_menu_line()
             }
             editor_table?.scroll_to_position(y = this.get_abs_offset(channel, line_offset))
         }
@@ -763,12 +783,14 @@ class OpusLayerInterface : OpusLayerCursor() {
     override fun cursor_select_column(beat: Int) {
         super.cursor_select_column(beat)
         this.runOnUiThread {
-            this.withFragment {
-                it.setContextMenu_column()
+            this.withFragment { main ->
+                main.set_context_menu_column()
             }
+
             val editor_table = this.get_editor_table() ?: return@runOnUiThread
             editor_table.update_cursor(this.cursor)
             editor_table.scroll_to_position(x = beat, force = false)
+
         }
     }
 
@@ -780,17 +802,26 @@ class OpusLayerInterface : OpusLayerCursor() {
 
         super.cursor_select(beat_key, position)
 
+        val current_tree = this.get_tree()
+        if (current_tree.is_event()) {
+            this.set_relative_mode(current_tree.get_event()!!)
+        }
+
         if (this.get_ui_lock_level() != null) {
             return
         }
 
         this.runOnUiThread {
             this.withFragment {
-                it.setContextMenu_leaf()
+                if (this.is_percussion(beat_key.channel)) {
+                    it.set_context_menu_leaf_percussion()
+                } else {
+                    it.set_context_menu_leaf()
+                }
             }
 
             val editor_table = this.get_editor_table() ?: return@runOnUiThread
-            editor_table.update_cursor(this.cursor)
+            editor_table.update_cursor(this.cursor, false)
             editor_table.scroll_to_position(beat_key, position)
         }
     }

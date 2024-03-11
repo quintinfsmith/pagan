@@ -455,9 +455,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         if (x != null) {
             if (x >= this.get_opus_manager().beat_count) {
                 return
-            }
-            val position_visibility = this.get_position_visibility(x)
-            if (force || position_visibility < SECTION_VIEW_PARTIAL_OVERSIZED) {
+            } else if (force || this.get_position_visibility(x) < SECTION_VIEW_PARTIAL_OVERSIZED) {
                 this.scroll_to_x(x)
             }
         }
@@ -550,24 +548,29 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             val section_end = ((section.first + section.second) * beat_width).roundToInt()
 
             if (first_visible == last_visible) {
-                val first_column = column_lm.findViewByPosition(first_visible)
-                val fine_x = (first_column?.x ?: 0f).roundToInt()
-
-                val beat_start_proceeds_view_start = section_start + fine_x > 0
-                val beat_end_precedes_view_end = section_end + fine_x < visible_width
-                val start_visible = beat_start_proceeds_view_start && (section_start + fine_x < visible_width)
-                val end_visible = (section_end + fine_x > 0) && beat_end_precedes_view_end
-
-                if (!beat_start_proceeds_view_start && !beat_end_precedes_view_end) {
-                    SECTION_VIEW_PARTIAL_OVERSIZED
-                } else if (start_visible && end_visible) {
-                    SECTION_VIEW_COMPLETE
-                } else if (start_visible) {
-                    SECTION_VIEW_PARTIAL_LEFT
-                } else if (end_visible) {
-                    SECTION_VIEW_PARTIAL_RIGHT
-                } else {
+                if (beat != first_visible) {
                     SECTION_OUT_OF_VIEW
+                } else {
+                    val first_column = column_lm.findViewByPosition(first_visible)
+                    val fine_x = (first_column?.x ?: 0f).roundToInt()
+
+                    val beat_start_proceeds_view_start = section_start + fine_x > 0
+                    val beat_end_precedes_view_end = section_end + fine_x < visible_width
+                    val start_visible =
+                        beat_start_proceeds_view_start && (section_start + fine_x < visible_width)
+                    val end_visible = (section_end + fine_x > 0) && beat_end_precedes_view_end
+
+                    if (!beat_start_proceeds_view_start && !beat_end_precedes_view_end) {
+                        SECTION_VIEW_PARTIAL_OVERSIZED
+                    } else if (start_visible && end_visible) {
+                        SECTION_VIEW_COMPLETE
+                    } else if (start_visible) {
+                        SECTION_VIEW_PARTIAL_LEFT
+                    } else if (end_visible) {
+                        SECTION_VIEW_PARTIAL_RIGHT
+                    } else {
+                        SECTION_OUT_OF_VIEW
+                    }
                 }
             } else {
                 val column = column_lm.findViewByPosition(beat)

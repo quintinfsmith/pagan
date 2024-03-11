@@ -731,7 +731,6 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         // If event exists, change relative mode, other wise use active relative mode
         if (current_tree.is_event()) {
             val event = current_tree.get_event()!!
-
             btnUnset.setImageResource(R.drawable.unset)
 
             btnDuration.text = getString(R.string.label_duration, event.duration)
@@ -740,6 +739,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
             btnUnset.setImageResource(R.drawable.set_percussion)
             btnDuration.visibility = View.GONE
         }
+
 
         val btnRemove = llContextCell.findViewById<View>(R.id.btnRemove)
         if (opus_manager.cursor.get_position().isEmpty()) {
@@ -1038,14 +1038,8 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                     nsOctave.unset_active_button()
                     nsOffset.unset_active_button()
                 } else {
-                    nsOctave.setState(event.note / radix,
-                        manual = true,
-                        surpress_callback = true
-                    )
-                    nsOffset.setState(event.note % radix,
-                        manual = true,
-                        surpress_callback = true
-                    )
+                    nsOctave.setState(event.note / radix, manual = true, surpress_callback = true)
+                    nsOffset.setState(event.note % radix, manual = true, surpress_callback = true)
                 }
             }
             2 -> {
@@ -1058,16 +1052,8 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                     nsOctave.unset_active_button()
                     nsOffset.unset_active_button()
                 } else {
-                    nsOctave.setState(
-                        (0 - event.note) / radix,
-                        manual = true,
-                        surpress_callback = true
-                    )
-                    nsOffset.setState(
-                        (0 - event.note) % radix,
-                        manual = true,
-                        surpress_callback = true
-                    )
+                    nsOctave.setState(abs(event.note) / radix, manual = true, surpress_callback = true)
+                    nsOffset.setState(abs(event.note) % radix, manual = true, surpress_callback = true)
                 }
             }
         }
@@ -1355,5 +1341,4 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
             }
         }
     }
-
 }

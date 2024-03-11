@@ -788,9 +788,8 @@ class OpusLayerInterface : OpusLayerCursor() {
             }
 
             val editor_table = this.get_editor_table() ?: return@runOnUiThread
-            editor_table.update_cursor(this.cursor)
             editor_table.scroll_to_position(x = beat, force = false)
-
+            editor_table.update_cursor(this.cursor)
         }
     }
 

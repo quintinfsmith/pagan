@@ -870,7 +870,6 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
-
    override fun clear_link_pool(beat_key: BeatKey) {
        val update_keys = this.get_all_linked(beat_key).toMutableList()
        super.clear_link_pool(beat_key)
@@ -891,7 +890,6 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     // End Cursor Functions ////////////////////////////////////////////////////////////////////////
-
     override fun save(path: String?) {
         super.save(path)
         val activity = this.get_activity() ?: return

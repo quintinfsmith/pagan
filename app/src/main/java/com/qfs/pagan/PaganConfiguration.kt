@@ -11,7 +11,7 @@ import java.io.File
 data class PaganConfiguration(
     var soundfont: String? = null,
     var relative_mode: Boolean = false,
-    var sample_rate: Int = 22100,
+    var sample_rate: Int = 44100,
     var show_percussion: Boolean = true, // Deprecated, use variable in view_model
     var link_mode: LinkMode = LinkMode.COPY,
     var palette: HashMap<Palette, Int>? = null,

@@ -1,15 +1,23 @@
 package com.qfs.apres.soundfontplayer
 
 class ReverbBuffer(var sample_rate: Int, var reverb: ReverbDynamics) {
-    private val reverb_cache = HashMap<Int, MutableSet<Pair<Int, Float>>>()
+    private val reverb_cache_right = HashMap<Int, MutableSet<Pair<Int, Float>>>()
+    private val reverb_cache_left = HashMap<Int, MutableSet<Pair<Int, Float>>>()
     private val frame_delay = this.sample_rate * this.reverb.delay
 
-    fun add_reverb_point(value: Float, start_frame: Int) {
+    fun add_reverb_point(value: Float, start_frame: Int, right_side: Boolean = false) {
         val next_frame = (start_frame.toFloat() + this.frame_delay).toInt()
-        if (!this.reverb_cache.contains(next_frame)) {
-            this.reverb_cache[next_frame] = mutableSetOf()
+        val reverb_cache = if (right_side) {
+            this.reverb_cache_right
+        } else {
+            this.reverb_cache_left
         }
-        this.reverb_cache[next_frame]!!.add(
+
+        if (!reverb_cache.containsKey(next_frame)) {
+            reverb_cache[next_frame] = mutableSetOf()
+        }
+
+        reverb_cache[next_frame]!!.add(
             Pair(
                 this.reverb.bounces,
                 value * reverb.factor
@@ -17,22 +25,28 @@ class ReverbBuffer(var sample_rate: Int, var reverb: ReverbDynamics) {
         )
     }
 
-    fun get_frame(frame: Int): Float {
+    fun clear() {
+        this.reverb_cache_left.clear()
+        this.reverb_cache_right.clear()
+    }
+
+    fun get_frame(frame: Int): Pair<Float, Float> {
         val next_frame = (frame.toFloat() + this.frame_delay).toInt()
-        if (!this.reverb_cache.contains(next_frame)) {
-            this.reverb_cache[next_frame] = mutableSetOf()
+
+        var output_left = 0f
+        var output_right = 0f
+
+        if (!this.reverb_cache_left.contains(next_frame)) {
+            this.reverb_cache_left[next_frame] = mutableSetOf()
         }
 
-        val values = this.reverb_cache.remove(frame) ?: setOf()
-
-        var output = 0f
-        for ((bounces_remaining, value) in values) {
-            output += value
+        for ((bounces_remaining, value) in this.reverb_cache_left.remove(frame) ?: setOf()) {
+            output_left += value
             if (bounces_remaining == 0) {
                 continue
             }
 
-            this.reverb_cache[next_frame]!!.add(
+            this.reverb_cache_left[next_frame]!!.add(
                 Pair(
                     bounces_remaining - 1,
                     value * this.reverb.factor
@@ -40,10 +54,25 @@ class ReverbBuffer(var sample_rate: Int, var reverb: ReverbDynamics) {
             )
         }
 
-        if (this.reverb_cache[next_frame]!!.isEmpty()) {
-            this.reverb_cache.remove(next_frame)
+        if (!this.reverb_cache_right.contains(next_frame)) {
+            this.reverb_cache_right[next_frame] = mutableSetOf()
         }
 
-        return output
+        for ((bounces_remaining, value) in this.reverb_cache_right.remove(frame) ?: setOf()) {
+            output_right += value
+            if (bounces_remaining == 0) {
+                continue
+            }
+
+            this.reverb_cache_right[next_frame]!!.add(
+                Pair(
+                    bounces_remaining - 1,
+                    value * this.reverb.factor
+                )
+            )
+        }
+
+
+        return Pair(output_left, output_right)
     }
 }

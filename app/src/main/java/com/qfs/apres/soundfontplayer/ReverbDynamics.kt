@@ -7,10 +7,8 @@ data class ReverbDynamics(
     companion object {
         const val SPEED_OF_SOUND: Float = 343f
     }
-    fun get_travel_duration(): Float {
-        return (this.room_size * 2f) / ReverbDynamics.SPEED_OF_SOUND
-    }
-    fun get_reduction_factor(): Float {
-        return this.get_travel_duration() / this.decay
-    }
+
+    var delay = (this.room_size * 2f) / ReverbDynamics.SPEED_OF_SOUND
+    var bounces = (this.decay / this.delay).toInt()
+    var factor = this.delay  / this.decay
 }

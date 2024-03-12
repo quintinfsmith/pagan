@@ -27,6 +27,10 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
     private var timeout: Int? = null
     private val core_count = Runtime.getRuntime().availableProcessors()
 
+    private val reverb = ReverbDynamics()
+    private val reverb_buffer = ReverbBuffer(this.sample_rate, ReverbDynamics())
+
+
     fun generate(): FloatArray {
         val output_array = FloatArray(this.buffer_size * 2)
         this.generate(output_array)

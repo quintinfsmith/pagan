@@ -1,0 +1,4 @@
+Increased Default Sample Rate to 44100Hz
+Bugfixes:
+    1. Crashes if soundfont doesn't have global zones defined
+    2. 'Jump to Beat' doesn't always scroll to the beat

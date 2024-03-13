@@ -27,8 +27,9 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
     private var timeout: Int? = null
     private val core_count = Runtime.getRuntime().availableProcessors()
 
-    private val reverb = ReverbDynamics()
-    private var reverb_remainder: FloatArray? = null
+    // BACKBURNER
+    //private val reverb = ReverbDynamics()
+    //private var reverb_remainder: FloatArray? = null
 
 
     fun generate(): FloatArray {
@@ -98,6 +99,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         //val reverb_array = FloatArray(output.size + (2 * this.sample_rate * this.reverb.delay * this.reverb.bounces).toInt()) {
         //    0f
         //}
+
         val reverb_array = floatArrayOf()
 
         for ((_, item) in this._active_sample_handles) {
@@ -336,7 +338,8 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         this._active_sample_handles.clear()
         this.frame = 0
         this._empty_chunks_count = 0
-        this.reverb_remainder = null
+        // BACKBURNER
+        // this.reverb_remainder = null
     }
 
     fun set_position(frame: Int, look_back: Boolean = false) {

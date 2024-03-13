@@ -7,14 +7,16 @@ class Preset(
     // dwLibrary, dwGenre, dwMorphology don't do anything yet
 ) {
     var instruments = HashMap<Int, InstrumentDirective>()
-    var global_zone: InstrumentDirective? = null
+    var global_zone = InstrumentDirective()
     private val quick_instrument_ref_vel = Array<MutableSet<Int>>(128) { mutableSetOf() }
     private val quick_instrument_ref_key = Array<MutableSet<Int>>(128) { mutableSetOf() }
 
+    var global_zone_set = false
 
     fun add_instrument(pinstrument: InstrumentDirective) {
-        if (pinstrument.instrument == null && this.global_zone == null) {
+        if (pinstrument.instrument == null && !this.global_zone_set) {
             this.global_zone = pinstrument
+            this.global_zone_set = true
         } else {
             val hash_code = pinstrument.hashCode()
             this.instruments[hash_code] = pinstrument

@@ -3,6 +3,7 @@ package com.qfs.apres
 import android.media.AudioFormat
 import android.media.AudioTrack
 import com.qfs.apres.event2.NoteOn79
+import com.qfs.apres.soundfont.SampleDirective
 import com.qfs.apres.soundfont.SoundFont
 import com.qfs.apres.soundfontplayer.SampleHandleGenerator
 import io.mockk.every
@@ -35,9 +36,9 @@ class SoundFontPlayerUnitTest {
             sample_handle_generator.get(
                 test_on,
                 samples.first(),
-                preset_instrument.instrument!!.global_zone!!,
+                preset_instrument.instrument?.global_zone ?: SampleDirective(),
                 preset_instrument,
-                preset.global_zone!!,
+                preset.global_zone,
                 1
             )
 
@@ -51,9 +52,9 @@ class SoundFontPlayerUnitTest {
             sample_handle_generator.get(
                 test_on,
                 samples.first(),
-                preset_instrument.instrument!!.global_zone!!,
+                preset_instrument.instrument?.global_zone ?: SampleDirective(),
                 preset_instrument,
-                preset.global_zone!!,
+                preset.global_zone,
             )
 
             assertEquals(

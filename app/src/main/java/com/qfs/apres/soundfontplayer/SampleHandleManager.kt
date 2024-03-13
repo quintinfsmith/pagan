@@ -83,10 +83,10 @@ class SampleHandleManager(
         val sample_counts = arrayOf(0, 0, 0)
         val sample_pairs = mutableListOf<Pair<SampleDirective, InstrumentDirective>>()
         for (p_instrument in potential_instruments) {
-            val samples = p_instrument.instrument!!.get_samples(
+            val samples = p_instrument.instrument?.get_samples(
                 event.note,
                 velocity
-            ).toList()
+            )?.toList() ?: listOf()
 
             for (sample in samples) {
                 sample_pairs.add(Pair(sample, p_instrument))
@@ -111,9 +111,9 @@ class SampleHandleManager(
             val new_handle = this.sample_handle_generator.get(
                 event,
                 sample,
-                p_instrument.instrument!!.global_zone!!,
+                p_instrument.instrument?.global_zone ?: SampleDirective(),
                 p_instrument,
-                preset.global_zone!!,
+                preset.global_zone,
                 when (sample.sample!!.sampleType and 7) {
                     1 -> sample_counts[1]
                     2 -> sample_counts[0]
@@ -165,9 +165,9 @@ class SampleHandleManager(
                 val new_handle = this.sample_handle_generator.get(
                     event,
                     sample,
-                    p_instrument.instrument!!.global_zone!!,
+                    p_instrument.instrument?.global_zone ?: SampleDirective(),
                     p_instrument,
-                    preset.global_zone!!,
+                    preset.global_zone,
                     when (sample.sample!!.sampleType and 7) {
                         1 -> sample_counts[1]
                         2 -> sample_counts[0]

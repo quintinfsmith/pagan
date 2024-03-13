@@ -2,14 +2,16 @@ package com.qfs.apres.soundfont
 
 class Instrument(var name: String) {
     var samples = HashMap<Int, SampleDirective>()
-    var global_zone: SampleDirective? = null
+    var global_zone: SampleDirective = SampleDirective()
 
     private val quick_ref_vel = Array<MutableSet<Int>>(128) { mutableSetOf() }
     private val quick_ref_key = Array<MutableSet<Int>>(128) { mutableSetOf() }
+    var global_zone_set = false
 
     fun add_sample(isample: SampleDirective) {
-        if (this.global_zone == null) {
+        if (!this.global_zone_set) {
             this.global_zone = isample
+            this.global_zone_set = true
         } else {
             val hash_code = isample.hashCode()
             this.samples[hash_code] = isample

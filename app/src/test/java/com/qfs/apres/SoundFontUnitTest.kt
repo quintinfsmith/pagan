@@ -99,7 +99,7 @@ class SoundFontUnitTest {
     @Test
     fun test_vol_env_attack() {
         val instrument = this.get_instrument()
-        val glob = instrument.global_zone!!
+        val glob = instrument.global_zone
         assertEquals(
             "vol_env attack is wrong",
             8,
@@ -110,7 +110,7 @@ class SoundFontUnitTest {
     @Test
     fun test_vol_env_sustain() {
         val instrument = this.get_instrument()
-        val glob = instrument.global_zone!!
+        val glob = instrument.global_zone
         assertEquals(
             "vol_env_sustain is wrong",
             100f,
@@ -121,7 +121,7 @@ class SoundFontUnitTest {
     @Test
     fun test_vol_env_release() {
         val instrument = this.get_instrument()
-        val glob = instrument.global_zone!!
+        val glob = instrument.global_zone
         assertEquals(
             "vol_env_release is wrong",
             1f,
@@ -132,7 +132,7 @@ class SoundFontUnitTest {
     @Test
     fun test_mod_env_release() {
         val instrument = this.get_instrument()
-        val glob = instrument.global_zone!!
+        val glob = instrument.global_zone
         assertEquals(
             "mod_env_release is wrong",
             100021,
@@ -143,7 +143,7 @@ class SoundFontUnitTest {
     @Test
     fun test_mod_env_filter() {
         val instrument = this.get_instrument()
-        val glob = instrument.global_zone!!
+        val glob = instrument.global_zone
         assertEquals(
             "mod_env_filter is wrong",
             -1000,
@@ -154,18 +154,18 @@ class SoundFontUnitTest {
     @Test
     fun test_filter_cutoff() {
         val instrument = this.get_instrument()
-        val glob = instrument.global_zone!!
+        val glob = instrument.global_zone
         assertEquals(
             "Filter cutoff is wrong",
             11998,
-            (2F.pow(glob.filter_cutoff!!.toFloat()  / 1200F) * 8.176).toInt()
+            (2F.pow(glob.filter_cutoff!!.toFloat() / 1200F) * 8.176).toInt()
         )
     }
 
     @Test
     fun test_attenuation() {
         val preset = this.get_preset()
-        val glob = preset.global_zone!!
+        val glob = preset.global_zone
 
         assertEquals(
             "Attenuation is Wrong",

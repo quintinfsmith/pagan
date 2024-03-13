@@ -8,26 +8,26 @@ class Instrument(var name: String) {
     private val quick_ref_key = Array<MutableSet<Int>>(128) { mutableSetOf() }
     var global_zone_set = false
 
-    fun add_sample(isample: SampleDirective) {
+    fun add_sample(sample_directive: SampleDirective) {
         if (!this.global_zone_set) {
-            this.global_zone = isample
+            this.global_zone = sample_directive
             this.global_zone_set = true
         } else {
-            val hash_code = isample.hashCode()
-            this.samples[hash_code] = isample
+            val hash_code = sample_directive.hashCode()
+            this.samples[hash_code] = sample_directive
 
-            val key_range = if (isample.key_range == null) {
+            val key_range = if (sample_directive.key_range == null) {
                 0..127
             } else {
-                isample.key_range!!.first ..isample.key_range!!.second
+                sample_directive.key_range!!.first ..sample_directive.key_range!!.second
             }
             for (i in key_range) {
                 this.quick_ref_key[i].add(hash_code)
             }
-            val vel_range = if (isample.velocity_range == null) {
+            val vel_range = if (sample_directive.velocity_range == null) {
                 0..127
             } else {
-                isample.velocity_range!!.first ..isample.velocity_range!!.second
+                sample_directive.velocity_range!!.first ..sample_directive.velocity_range!!.second
             }
 
             for (i in vel_range) {

@@ -648,7 +648,7 @@ class SoundFont(file_path: String) {
             }
         }
 
-        if (! instrument_set && preset.global_zone != null) {
+        if (! instrument_set && preset.global_zone_set) {
             working_instrument.instrument = this.get_instrument(default_instrument)
         }
 

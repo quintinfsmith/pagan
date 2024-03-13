@@ -73,13 +73,14 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             for (v in input_array) {
                 array[offset++] += v
             }
-            try {
-                for (v in reverb_array) {
-                    array[reverb_offset++] += v
-                }
-            } catch (e: ArrayIndexOutOfBoundsException) {
-                // TODO: DEFINED reverb_remainder here
-            }
+            // BACKBURNER
+            //try {
+            //    for (v in reverb_array) {
+            //        array[reverb_offset++] += v
+            //    }
+            //} catch (e: ArrayIndexOutOfBoundsException) {
+            //    // TODO: DEFINED reverb_remainder here
+            //}
         }
 
         this.frame += this.buffer_size
@@ -93,10 +94,11 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         val output = FloatArray(this.buffer_size * 2 / this.core_count) {
             0f
         }
-
-        val reverb_array = FloatArray(output.size + (2 * this.sample_rate * this.reverb.delay * this.reverb.bounces).toInt()) {
-            0f
-        }
+        // BACKBURNER
+        //val reverb_array = FloatArray(output.size + (2 * this.sample_rate * this.reverb.delay * this.reverb.bounces).toInt()) {
+        //    0f
+        //}
+        val reverb_array = floatArrayOf()
 
         for ((_, item) in this._active_sample_handles) {
             if (item.first_frame >= first_frame + this.buffer_size) {
@@ -231,11 +233,12 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             working_int_array[(f * 2) + 1] += left_value
 
             // TODO: Double check this math
-            for (bounce in 1 until this.reverb.bounces) {
-                val working_frame = (f + (bounce * this.sample_rate * this.reverb.delay)).toInt() * 2
-                reverb_array[working_frame] = (1f - (bounce * this.reverb.factor)) * right_value
-                reverb_array[working_frame + 1] = (1f - (bounce * this.reverb.factor)) * right_value
-            }
+            // BACKBURNER
+           // for (bounce in 1 until this.reverb.bounces) {
+           //     val working_frame = (f + (bounce * this.sample_rate * this.reverb.delay)).toInt() * 2
+           //     reverb_array[working_frame] = (1f - (bounce * this.reverb.factor)) * right_value
+           //     reverb_array[working_frame + 1] = (1f - (bounce * this.reverb.factor)) * right_value
+           // }
         }
 
         sample_handle.set_working_frame(sample_handle.working_frame + (this.buffer_size * (this.core_count - 1) / this.core_count))

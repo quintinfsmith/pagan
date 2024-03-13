@@ -101,7 +101,7 @@ class ChannelOptionAdapter(
             activity.getString(R.string.label_choose_instrument, position, label)
         } else {
             activity.getString(R.string.label_choose_instrument_percussion, label)
-        }
+        }.trim()
     }
 
     override fun onViewAttachedToWindow(holder: ChannelOptionViewHolder) {

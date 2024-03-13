@@ -30,7 +30,7 @@ class PopupMenuRecyclerAdapter<T>(
     override fun onViewAttachedToWindow(holder: ViewHolder) { }
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val text_view = holder.itemView.findViewById<TextView>(R.id.tvTextView)
-        text_view.text = this._options[position].second
+        text_view.text = this._options[position].second.trim()
 
         if (this._options[position].first == this._default) {
             text_view.setTypeface(text_view.typeface, Typeface.BOLD)

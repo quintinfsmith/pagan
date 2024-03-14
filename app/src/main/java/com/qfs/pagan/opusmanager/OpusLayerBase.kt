@@ -1323,7 +1323,7 @@ open class OpusLayerBase {
                     },
                     channel,
                     false,
-                    tick
+                    tick // Not actually duration, storing the tick here until i can use the tick to set the duration further down
                 )
                 eventset.add(opus_event)
 

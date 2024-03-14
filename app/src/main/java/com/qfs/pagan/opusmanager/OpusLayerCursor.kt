@@ -20,6 +20,19 @@ open class OpusLayerCursor: OpusLayerHistory() {
         }
     }
 
+    override fun new_line(channel: Int, line_offset: Int?): OpusChannel.OpusLine {
+        val bkp_cursor = this.cursor.copy()
+        this.cursor_clear()
+
+        val output = super.new_line(channel, line_offset)
+
+        if (bkp_cursor.mode == OpusManagerCursor.CursorMode.Row) {
+            this.cursor_select_row(bkp_cursor.channel, bkp_cursor.line_offset)
+        }
+
+        return output
+    }
+
     override fun swap_lines(channel_a: Int, line_a: Int, channel_b: Int, line_b: Int) {
         super.swap_lines(channel_a, line_a, channel_b, line_b)
         this.cursor_select_row(channel_b, line_b)

@@ -1,6 +1,7 @@
 package com.qfs.apres.soundfontplayer
 
 import com.google.common.primitives.Ints.min
+import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.pow
 
@@ -22,6 +23,11 @@ class SampleHandle(
     var linked_handle_count: Int = 1,
     var data_buffer: PitchedBuffer = PitchedBuffer(data, pitch_shift)
 ) {
+    var RC = 1F / (this.filter_cutoff * 2f * PI.toFloat())
+    val smoothing_factor = (1f / this.sample_rate.toFloat()) / (this.RC + (1f / this.sample_rate.toFloat()))
+
+    var previous_frame = 0f
+
     data class VolumeEnvelope(
         var sample_rate: Int,
         var delay: Float = 0F,
@@ -137,16 +143,6 @@ class SampleHandle(
     var release_frame: Int? = null
     var is_dead = false
 
-    // TODO: Unimplimented
-    //private val lpf_factor: Float
-    //var lpf_previous: Float = 0F
-
-
-    init {
-        //val tmp_tan = tan(PI.toFloat() * this.filter_cutoff / this.sample_rate.toFloat())
-        //this.lpf_factor = (tmp_tan - 1) / (tmp_tan + 1)
-    }
-
     fun max_frame_value(): Int {
         return this.data_buffer.max
     }
@@ -253,22 +249,17 @@ class SampleHandle(
 
         this.working_frame += 1
 
-        val frame_value = try {
+        var frame_value = try {
             this.data_buffer.get().toFloat()
         } catch (e: ArrayIndexOutOfBoundsException) {
             this.is_dead = true
             return null
         }
 
-        // //TODO: low pass filter. I can't get this to work atm
-        // if (this.filter_cutoff <= this.sample_rate) {
-        //    var input = frame_value
-        //    val allpass_value = (this.lpf_factor * input) + this.lpf_previous
-        //    this.lpf_previous = input - (this.lpf_factor * allpass_value)
-        //    frame_value *= (input + allpass_value) / 2F
-        // }
+        // Low Pass Filtering
+        frame_value = this.previous_frame + (this.smoothing_factor * (frame_value - this.previous_frame))
 
-
+        this.previous_frame = frame_value
         return (frame_value * frame_factor * this.volume).toInt()
     }
 

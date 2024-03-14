@@ -157,7 +157,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         }
 
         for (f in range) {
-            val frame_value = sample_handle.get_next_frame() ?: break
+            var frame_value = sample_handle.get_next_frame() ?: break
 
             // TODO: Implement ROM stereo modes
             val pan = sample_handle.pan

@@ -306,12 +306,18 @@ class OpusLayerInterface : OpusLayerCursor() {
             )
             when (this.get_ui_lock_level()) {
                 null -> {
+                    this.withFragment {
+                        it.set_context_menu_line()
+                    }
                     this.runOnUiThread { _: MainActivity ->
                         this.get_editor_table()?.new_row(abs_offset, output)
                     }
                 }
 
                 UI_LOCK_PARTIAL -> {
+                    this.withFragment {
+                        it.set_context_menu_line()
+                    }
                     this.get_editor_table()?.new_row(abs_offset, output, true)
                 }
 
@@ -337,11 +343,17 @@ class OpusLayerInterface : OpusLayerCursor() {
         val abs_offset = this.get_abs_offset( channel, line_offset )
         when (this.get_ui_lock_level()) {
             null -> {
+                this.withFragment {
+                    it.set_context_menu_line()
+                }
                 this.runOnUiThread { _: MainActivity ->
                     this.get_editor_table()?.new_row(abs_offset, line)
                 }
             }
             UI_LOCK_PARTIAL -> {
+                this.withFragment {
+                    it.set_context_menu_line()
+                }
                 this.get_editor_table()?.new_row(abs_offset, line, true)
             }
             UI_LOCK_FULL -> { }
@@ -370,12 +382,18 @@ class OpusLayerInterface : OpusLayerCursor() {
         if (activity != null) {
             when (this.get_ui_lock_level()) {
                 null -> {
+                    this.withFragment {
+                        it.set_context_menu_line()
+                    }
                     this.runOnUiThread { _: MainActivity ->
                         this.get_editor_table()?.remove_row(abs_line)
                     }
                 }
 
                 UI_LOCK_PARTIAL -> {
+                    this.withFragment {
+                        it.set_context_menu_line()
+                    }
                     this.get_editor_table()?.remove_row(abs_line, true)
                 }
 

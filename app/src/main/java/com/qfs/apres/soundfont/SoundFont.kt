@@ -438,7 +438,7 @@ class SoundFont(file_path: String) {
                 working_generated.mod_env_pitch = generator.asIntSigned()
             }
             0x08 -> {
-                working_generated.filter_cutoff = generator.asInt().toFloat()
+                working_generated.filter_cutoff = generator.asTimecent() * 8.176f
             }
             0x09 -> {
                 working_generated.filter_resonance = generator.asInt().toFloat()

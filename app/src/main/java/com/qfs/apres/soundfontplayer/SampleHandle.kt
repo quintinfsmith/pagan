@@ -23,10 +23,14 @@ class SampleHandle(
     var linked_handle_count: Int = 1,
     var data_buffer: PitchedBuffer = PitchedBuffer(data, pitch_shift)
 ) {
-    var RC = 1F / (this.filter_cutoff * 2f * PI.toFloat())
-    val smoothing_factor = (1f / this.sample_rate.toFloat()) / (this.RC + (1f / this.sample_rate.toFloat()))
+    var RC = 1f / (this.filter_cutoff * 2f * PI.toFloat())
+    val smoothing_factor: Float
 
     var previous_frame = 0f
+    init {
+        val dt =  (1f / this.sample_rate.toFloat())
+        this.smoothing_factor = dt / (this.RC + dt)
+    }
 
     data class VolumeEnvelope(
         var sample_rate: Int,

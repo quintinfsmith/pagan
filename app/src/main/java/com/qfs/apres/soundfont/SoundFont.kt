@@ -252,6 +252,13 @@ class SoundFont(file_path: String) {
                     next_pbag.first
                 )
 
+                preset.modulators.addAll(
+                    this.get_preset_modulators(
+                        pbag.second,
+                        next_pbag.second
+                    )
+                )
+
                 this.generate_preset(preset, generators_to_use, current_index)
             }
             output = preset
@@ -328,10 +335,13 @@ class SoundFont(file_path: String) {
                 ibag.first,
                 next_ibag.first
             )
-            //val modulators_to_use: List<Modulator> = this.get_instrument_modulators(
-            //    ibag.second,
-            //    next_ibag.second
-            //)
+
+            instrument.modulators.addAll(
+                this.get_instrument_modulators(
+                    ibag.second,
+                    next_ibag.second
+                )
+            )
 
             this.generate_instrument(instrument, generators_to_use)
         }
@@ -346,17 +356,24 @@ class SoundFont(file_path: String) {
             this.pdta_chunks["imod"]!![(from_index * 10) + i]
         }
 
+        // TODO: CHECK sfModDestOper if (offset + 2/3) & 0x80, then pointing to another modulator
         for (i in 0 until bytes.size / 10) {
             val offset = i * 10
-            output.add(
-                Modulator(
-                    toUInt(bytes[offset + 0]) + (toUInt(bytes[offset + 1]) * 256),
-                    toUInt(bytes[offset + 2]) + (toUInt(bytes[offset + 3]) * 256),
-                    toUInt(bytes[offset + 4]) + (toUInt(bytes[offset + 5]) * 256),
-                    toUInt(bytes[offset + 6]) + (toUInt(bytes[offset + 7]) * 256),
-                    toUInt(bytes[offset + 8]) + (toUInt(bytes[offset + 9]) * 256)
+            try {
+                output.add(
+                    Modulator(
+                        toUInt(bytes[offset + 0]) + (toUInt(bytes[offset + 1]) * 256),
+                        toUInt(bytes[offset + 2]) + (toUInt(bytes[offset + 3]) * 256),
+                        (toUInt(bytes[offset + 4]) + (toUInt(bytes[offset + 5]) * 256)).toShort(),
+                        toUInt(bytes[offset + 6]) + (toUInt(bytes[offset + 7]) * 256),
+                        toUInt(bytes[offset + 8]) + (toUInt(bytes[offset + 9]) * 256)
+                    )
                 )
-            )
+            } catch (e: Modulator.InvalidModulatorException) {
+                // ignore
+            } catch (e: Modulator.InvalidTransformOperation) {
+                // ignore
+            }
         }
 
         return output
@@ -370,15 +387,21 @@ class SoundFont(file_path: String) {
 
         for (i in 0 until bytes.size / 10) {
             val offset = i * 10
-            output.add(
-                Modulator(
-                    toUInt(bytes[offset + 0]) + (toUInt(bytes[offset + 1]) * 256),
-                    toUInt(bytes[offset + 2]) + (toUInt(bytes[offset + 3]) * 256),
-                    toUInt(bytes[offset + 4]) + (toUInt(bytes[offset + 5]) * 256),
-                    toUInt(bytes[offset + 6]) + (toUInt(bytes[offset + 7]) * 256),
-                    toUInt(bytes[offset + 8]) + (toUInt(bytes[offset + 9]) * 256)
+            try {
+                output.add(
+                    Modulator(
+                        toUInt(bytes[offset + 0]) + (toUInt(bytes[offset + 1]) * 256),
+                        toUInt(bytes[offset + 2]) + (toUInt(bytes[offset + 3]) * 256),
+                        (toUInt(bytes[offset + 4]) + (toUInt(bytes[offset + 5]) * 256)).toShort(),
+                        toUInt(bytes[offset + 6]) + (toUInt(bytes[offset + 7]) * 256),
+                        toUInt(bytes[offset + 8]) + (toUInt(bytes[offset + 9]) * 256)
+                    )
                 )
-            )
+            } catch (e: Modulator.InvalidModulatorException) {
+                // ignore
+            } catch (e: Modulator.InvalidTransformOperation) {
+                // ignore
+            }
         }
 
         return output

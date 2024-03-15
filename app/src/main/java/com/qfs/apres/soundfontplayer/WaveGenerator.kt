@@ -27,10 +27,6 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
     private var timeout: Int? = null
     private val core_count = Runtime.getRuntime().availableProcessors()
 
-    // BACKBURNER
-    //private val reverb = ReverbDynamics()
-    //private var reverb_remainder: FloatArray? = null
-
 
     fun generate(): FloatArray {
         val output_array = FloatArray(this.buffer_size * 2)
@@ -56,7 +52,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             throw EmptyException()
         }
 
-        val arrays: Array<Pair<FloatArray, FloatArray>> = runBlocking {
+        val arrays: Array<FloatArray> = runBlocking {
             val tmp = Array(this@WaveGenerator.core_count) { i: Int ->
                 async(Dispatchers.Default) {
                     this@WaveGenerator.gen_partial_int_array(first_frame, i)
@@ -69,19 +65,10 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         }
 
         var offset = 0
-        for ((input_array, reverb_array) in arrays) {
-            var reverb_offset = offset
+        for (input_array in arrays) {
             for (v in input_array) {
                 array[offset++] += v
             }
-            // BACKBURNER
-            //try {
-            //    for (v in reverb_array) {
-            //        array[reverb_offset++] += v
-            //    }
-            //} catch (e: ArrayIndexOutOfBoundsException) {
-            //    // TODO: DEFINED reverb_remainder here
-            //}
         }
 
         this.frame += this.buffer_size
@@ -91,16 +78,10 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         }
     }
 
-    private fun gen_partial_int_array(first_frame: Int, sample_index: Int): Pair<FloatArray, FloatArray> {
+    private fun gen_partial_int_array(first_frame: Int, sample_index: Int): FloatArray {
         val output = FloatArray(this.buffer_size * 2 / this.core_count) {
             0f
         }
-        // BACKBURNER
-        //val reverb_array = FloatArray(output.size + (2 * this.sample_rate * this.reverb.delay * this.reverb.bounces).toInt()) {
-        //    0f
-        //}
-
-        val reverb_array = floatArrayOf()
 
         for ((_, item) in this._active_sample_handles) {
             if (item.first_frame >= first_frame + this.buffer_size) {
@@ -139,16 +120,15 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                         (item.first_frame - first_frame) - (this.buffer_size * sample_index / this.core_count)
                     } else {
                         0
-                    },
-                    reverb_array
+                    }
                 )
             }
         }
 
-        return Pair(output, reverb_array)
+        return output
     }
 
-    private fun populate_partial_int_array(sample_handle: SampleHandle, working_int_array: FloatArray, offset: Int, reverb_array: FloatArray) {
+    private fun populate_partial_int_array(sample_handle: SampleHandle, working_int_array: FloatArray, offset: Int) {
         // Assume working_int_array.size % 2 == 0
         val range = if (offset < 0) {
             0 until (working_int_array.size / 2)
@@ -233,14 +213,6 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                 else -> 0f
             }
             working_int_array[(f * 2) + 1] += left_value
-
-            // TODO: Double check this math
-            // BACKBURNER
-           // for (bounce in 1 until this.reverb.bounces) {
-           //     val working_frame = (f + (bounce * this.sample_rate * this.reverb.delay)).toInt() * 2
-           //     reverb_array[working_frame] = (1f - (bounce * this.reverb.factor)) * right_value
-           //     reverb_array[working_frame + 1] = (1f - (bounce * this.reverb.factor)) * right_value
-           // }
         }
 
         sample_handle.set_working_frame(sample_handle.working_frame + (this.buffer_size * (this.core_count - 1) / this.core_count))
@@ -338,8 +310,6 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         this._active_sample_handles.clear()
         this.frame = 0
         this._empty_chunks_count = 0
-        // BACKBURNER
-        // this.reverb_remainder = null
     }
 
     fun set_position(frame: Int, look_back: Boolean = false) {

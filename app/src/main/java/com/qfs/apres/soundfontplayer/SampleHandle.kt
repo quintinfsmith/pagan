@@ -1,6 +1,7 @@
 package com.qfs.apres.soundfontplayer
 
 import com.google.common.primitives.Ints.min
+import com.qfs.apres.soundfont.Modulator
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.pow
@@ -21,7 +22,8 @@ class SampleHandle(
     var pan: Float = 0F,
     var volume: Float = 1F,
     var linked_handle_count: Int = 1,
-    var data_buffer: PitchedBuffer = PitchedBuffer(data, pitch_shift)
+    var data_buffer: PitchedBuffer = PitchedBuffer(data, pitch_shift),
+    var modulators: Set<Modulator> = setOf()
 ) {
     var RC = 1f / (this.filter_cutoff * 2f * PI.toFloat())
     val smoothing_factor: Float
@@ -133,7 +135,8 @@ class SampleHandle(
                     original.pitch_shift,
                     original.data_buffer.max,
                     original.data_buffer.size
-                ) // constructing this way allows us to skip calculating max
+                ), // constructing this way allows us to skip calculating max
+                modulators = original.modulators
             )
             output.release_frame = original.release_frame
 

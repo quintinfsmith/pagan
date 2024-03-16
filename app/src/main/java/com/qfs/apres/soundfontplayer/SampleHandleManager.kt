@@ -114,6 +114,7 @@ class SampleHandleManager(
                 p_instrument.instrument?.global_zone ?: SampleDirective(),
                 p_instrument,
                 preset.global_zone,
+                preset.modulators.union(p_instrument.instrument?.modulators ?: setOf()),
                 when (sample.sample!!.sampleType and 7) {
                     1 -> sample_counts[1]
                     2 -> sample_counts[0]
@@ -168,6 +169,7 @@ class SampleHandleManager(
                     p_instrument.instrument?.global_zone ?: SampleDirective(),
                     p_instrument,
                     preset.global_zone,
+                    preset.modulators.union(p_instrument.instrument?.modulators ?: setOf()),
                     when (sample.sample!!.sampleType and 7) {
                         1 -> sample_counts[1]
                         2 -> sample_counts[0]

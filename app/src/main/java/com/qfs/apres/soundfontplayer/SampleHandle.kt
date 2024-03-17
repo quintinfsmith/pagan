@@ -174,7 +174,7 @@ class SampleHandle(
                 val loop_remainder = (frame - this.loop_points.first) % loop_size
                 this.loop_points.first + (loops * loop_size) + loop_remainder
             }
-        } else if (this.loop_points != null) {
+        } else if (this.loop_points != null && this.loop_points.first < this.loop_points.second) {
             if (frame < this.loop_points.second) {
                 frame
             } else {

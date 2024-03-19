@@ -7,7 +7,7 @@ import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.LinearLayout
 import androidx.core.view.children
 import com.qfs.pagan.opusmanager.BeatKey
-import com.qfs.pagan.opusmanager.OpusEvent
+import com.qfs.pagan.opusmanager.OpusEventSTD
 import com.qfs.pagan.structure.OpusTree
 import kotlin.math.roundToInt
 import com.qfs.pagan.OpusLayerInterface as OpusManager
@@ -57,7 +57,7 @@ class CellLayout(private val _column_layout: ColumnLayout, private val _y: Int):
         return this.get_activity().findViewById(R.id.etEditorTable)
     }
 
-   private fun buildTreeView(tree: OpusTree<OpusEvent>, position: List<Int>, divisions: List<Int>) {
+   private fun buildTreeView(tree: OpusTree<OpusEventSTD>, position: List<Int>, divisions: List<Int>) {
        if (tree.is_leaf()) {
            val tvLeaf = LeafButton(
                this.context,
@@ -105,7 +105,7 @@ class CellLayout(private val _column_layout: ColumnLayout, private val _y: Int):
         return BeatKey(channel, line_offset, this._get_beat())
     }
 
-    fun get_beat_tree(beat_key: BeatKey? = null): OpusTree<OpusEvent> {
+    fun get_beat_tree(beat_key: BeatKey? = null): OpusTree<OpusEventSTD> {
         val opus_manager = this.get_opus_manager()
         return opus_manager.get_tree(beat_key ?: this.get_beat_key())
     }

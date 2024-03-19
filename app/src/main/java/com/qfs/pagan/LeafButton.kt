@@ -11,7 +11,7 @@ import android.widget.LinearLayout
 import androidx.appcompat.view.ContextThemeWrapper
 import com.qfs.pagan.ColorMap.Palette
 import com.qfs.pagan.opusmanager.BeatKey
-import com.qfs.pagan.opusmanager.OpusEvent
+import com.qfs.pagan.opusmanager.OpusEventSTD
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusLayerLinks
 import com.qfs.pagan.structure.OpusTree
@@ -22,7 +22,7 @@ import com.qfs.pagan.OpusLayerInterface as OpusManager
 class LeafButton(
     context: Context,
     initial_radix: Int,
-    private var _event: OpusEvent?,
+    private var _event: OpusEventSTD?,
     var position: List<Int>,
     is_percussion: Boolean
 ) : LinearLayout(ContextThemeWrapper(context, R.style.leaf)) {

@@ -10,15 +10,15 @@ class OpusChannel(var uuid: Int) {
     class InvalidChannelUUID(uuid: Int): Exception("No such channel uuid: $uuid")
     class LineSizeMismatch(incoming_size: Int, required_size: Int): Exception("Line is $incoming_size beats but OpusManager is $required_size beats")
 
-    class OpusLine(var beats: MutableList<OpusTree<OpusEvent>>) {
-        constructor(beat_count: Int) : this(Array<OpusTree<OpusEvent>>(beat_count) { OpusTree() }.toMutableList())
+    class OpusLine(var beats: MutableList<OpusTree<OpusEventSTD>>) {
+        constructor(beat_count: Int) : this(Array<OpusTree<OpusEventSTD>>(beat_count) { OpusTree() }.toMutableList())
         var volume = 64
         var static_value: Int? = null
         fun squish(factor: Int) {
-            val new_beats = mutableListOf<OpusTree<OpusEvent>>()
+            val new_beats = mutableListOf<OpusTree<OpusEventSTD>>()
             for (b in 0 until this.beats.size) {
                 if (b % factor == 0) {
-                    new_beats.add(OpusTree<OpusEvent>())
+                    new_beats.add(OpusTree<OpusEventSTD>())
                 }
                 val working_beat = new_beats.last()
                 working_beat.insert(b % factor, this.beats[b])
@@ -128,7 +128,7 @@ class OpusChannel(var uuid: Int) {
         }
     }
 
-    fun replace_tree(line: Int, beat: Int, position: List<Int>?, tree: OpusTree<OpusEvent>) {
+    fun replace_tree(line: Int, beat: Int, position: List<Int>?, tree: OpusTree<OpusEventSTD>) {
         val old_tree = this.get_tree(line, beat, position)
         if (old_tree == tree) {
             return // Don't waste the cycles
@@ -145,7 +145,7 @@ class OpusChannel(var uuid: Int) {
         }
     }
 
-    fun get_tree(line: Int, beat: Int, position: List<Int>? = null): OpusTree<OpusEvent> {
+    fun get_tree(line: Int, beat: Int, position: List<Int>? = null): OpusTree<OpusEventSTD> {
         var tree = this.lines[line].beats[beat]
         if (position != null) {
             for (i in position) {

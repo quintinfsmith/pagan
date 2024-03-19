@@ -220,7 +220,7 @@ open class OpusLayerLinks : OpusLayerBase() {
         }
     }
 
-    override fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<OpusEvent>) {
+    override fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<OpusEventSTD>) {
         this.lock_links {
             this._apply_to_linked(beat_key) { linked_key: BeatKey ->
                 this.replace_tree(linked_key, position, tree)
@@ -261,7 +261,7 @@ open class OpusLayerLinks : OpusLayerBase() {
             super.set_percussion_event(beat_key, position)
         }
     }
-    override fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEvent) {
+    override fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEventSTD) {
         this.lock_links {
             this._apply_to_linked(beat_key) { linked_key: BeatKey ->
                 this.set_event(linked_key, position, event.copy())
@@ -338,7 +338,7 @@ open class OpusLayerLinks : OpusLayerBase() {
         return this.link_pool_map.contains(beat_key)
     }
 
-    override fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<OpusEvent>>?) {
+    override fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<OpusEventSTD>>?) {
         this.remap_links { beat_key: BeatKey ->
              if (beat_key.beat >= beat_index) {
                 BeatKey(beat_key.channel, beat_key.line_offset, beat_key.beat + 1)

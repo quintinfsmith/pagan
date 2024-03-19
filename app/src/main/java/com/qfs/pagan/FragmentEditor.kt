@@ -15,7 +15,7 @@ import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
 import com.qfs.pagan.databinding.FragmentMainBinding
 import com.qfs.pagan.opusmanager.BeatKey
-import com.qfs.pagan.opusmanager.OpusEvent
+import com.qfs.pagan.opusmanager.OpusEventSTD
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import java.io.File
@@ -1159,7 +1159,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
             }
         }
 
-        val event = OpusEvent(
+        val event = OpusEventSTD(
             value,
             opus_manager.cursor.channel,
             opus_manager.relative_mode != 0,
@@ -1228,7 +1228,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
             }
         }
 
-        val event = OpusEvent(
+        val event = OpusEventSTD(
             value,
             opus_manager.cursor.channel,
             opus_manager.relative_mode != 0,

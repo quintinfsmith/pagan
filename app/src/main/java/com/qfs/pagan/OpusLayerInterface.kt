@@ -7,7 +7,7 @@ import com.qfs.apres.Midi
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.LoadedJSONData
 import com.qfs.pagan.opusmanager.OpusChannel
-import com.qfs.pagan.opusmanager.OpusEvent
+import com.qfs.pagan.opusmanager.OpusEventSTD
 import com.qfs.pagan.opusmanager.OpusLayerCursor
 import com.qfs.pagan.structure.OpusTree
 import java.lang.Integer.max
@@ -113,7 +113,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
-    override fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<OpusEvent>) {
+    override fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<OpusEventSTD>) {
 
         val activity = this.get_activity() ?: return super.replace_tree(beat_key, position, tree)
         if (!activity.view_model.show_percussion && this.is_percussion(beat_key.channel)) {
@@ -135,7 +135,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
-    override fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEvent) {
+    override fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEventSTD) {
         val activity = this.get_activity() ?: return super.set_event(beat_key, position, event)
         if (!activity.view_model.show_percussion && this.is_percussion(beat_key.channel)) {
             this.make_percussion_visible()
@@ -468,7 +468,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
-    override fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<OpusEvent>>?) {
+    override fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<OpusEventSTD>>?) {
         val bkp_cursor = this.cursor.copy()
         super.insert_beat(beat_index, beats_in_column)
         val editor_table = this.get_editor_table() ?: return
@@ -713,7 +713,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         this.get_editor_table()?.apply_queued_cell_changes()
     }
 
-    fun set_relative_mode(event: OpusEvent) {
+    fun set_relative_mode(event: OpusEventSTD) {
         if (this._activity != null && this._activity!!.configuration.relative_mode) {
             this.relative_mode = if (!event.relative) {
                 0

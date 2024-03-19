@@ -25,7 +25,7 @@ data class LoadedJSONData(
 
 @Serializable
 data class OpusTreeJSON(
-    var event: OpusEvent?,
+    var event: OpusEventSTD?,
     var children: List<OpusTreeJSON?>?
 )
 

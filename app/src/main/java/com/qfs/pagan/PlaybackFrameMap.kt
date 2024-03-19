@@ -8,7 +8,7 @@ import com.qfs.apres.soundfontplayer.SampleHandle
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.OpusChannel
-import com.qfs.pagan.opusmanager.OpusEvent
+import com.qfs.pagan.opusmanager.OpusEventSTD
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.structure.OpusTree
 import kotlin.math.floor
@@ -312,7 +312,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         }
     }
 
-    private fun map_tree(beat_key: BeatKey, position: List<Int>, working_tree: OpusTree<OpusEvent>, relative_width: Float, relative_offset: Float, prev_note_value: Int): Int {
+    private fun map_tree(beat_key: BeatKey, position: List<Int>, working_tree: OpusTree<OpusEventSTD>, relative_width: Float, relative_offset: Float, prev_note_value: Int): Int {
         if (!working_tree.is_leaf()) {
             val new_width = relative_width / working_tree.size.toFloat()
             var new_working_value = prev_note_value
@@ -345,7 +345,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         return event.note
     }
 
-    private fun _gen_midi_event(event: OpusEvent, beat_key: BeatKey): MIDIEvent? {
+    private fun _gen_midi_event(event: OpusEventSTD, beat_key: BeatKey): MIDIEvent? {
         if (this.opus_manager.is_percussion(beat_key.channel)) {
             return NoteOn(
                 channel = 9,

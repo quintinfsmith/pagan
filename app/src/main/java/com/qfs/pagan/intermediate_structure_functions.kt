@@ -5,7 +5,7 @@ import com.qfs.apres.Midi
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event.SetTempo
 import com.qfs.apres.event.TimeSignature
-import com.qfs.pagan.opusmanager.OpusEvent
+import com.qfs.pagan.opusmanager.OpusEventSTD
 import com.qfs.pagan.structure.OpusTree
 import kotlin.math.abs
 import kotlin.math.max
@@ -23,7 +23,7 @@ const val CH_HOLD = '~'
 val REL_CHARS = listOf(CH_ADD, CH_SUBTRACT, CH_UP, CH_DOWN, CH_HOLD)
 val SPECIAL_CHARS = listOf(CH_OPEN, CH_CLOSE, CH_NEXT, CH_ADD, CH_SUBTRACT, CH_UP, CH_DOWN, CH_HOLD)
 
-fun to_string(radix: Int, node: OpusTree<OpusEvent>, depth: Int = 0): String {
+fun to_string(radix: Int, node: OpusTree<OpusEventSTD>, depth: Int = 0): String {
     var output: String
     if (node.is_event()) {
         val opus_event = node.get_event()!!
@@ -68,7 +68,7 @@ fun to_string(radix: Int, node: OpusTree<OpusEvent>, depth: Int = 0): String {
     return output
 }
 
-fun from_string(input_string: String, radix: Int, channel: Int): OpusTree<OpusEvent> {
+fun from_string(input_string: String, radix: Int, channel: Int): OpusTree<OpusEventSTD> {
     val repstring = input_string
         .trim()
         .replace(" ", "")
@@ -76,7 +76,7 @@ fun from_string(input_string: String, radix: Int, channel: Int): OpusTree<OpusEv
         .replace("\t", "")
         .replace("_", "")
 
-    val output = OpusTree<OpusEvent>()
+    val output = OpusTree<OpusEventSTD>()
 
     val tree_stack = mutableListOf(output)
     var register: Int? = null
@@ -134,7 +134,7 @@ fun from_string(input_string: String, radix: Int, channel: Int): OpusTree<OpusEv
             val leaf = tree_stack.last()[tree_stack.last().size - 1]
             if (relative_flag != CH_HOLD) {
                 leaf.set_event(
-                    OpusEvent(
+                    OpusEventSTD(
                         odd_note,
                         channel,
                         true
@@ -154,7 +154,7 @@ fun from_string(input_string: String, radix: Int, channel: Int): OpusTree<OpusEv
                 }
                 val leaf = tree_stack.last()[tree_stack.last().size - 1]
                 leaf.set_event(
-                    OpusEvent(
+                    OpusEventSTD(
                         odd_note,
                         channel,
                         false
@@ -204,11 +204,11 @@ fun str_to_int(number: String, radix: Int): Int {
     return output
 }
 
-fun tree_from_midi(midi: Midi): OpusTree<Set<OpusEvent>> {
+fun tree_from_midi(midi: Midi): OpusTree<Set<OpusEventSTD>> {
     var beat_size = midi.get_ppqn()
     var total_beat_offset = 0
     var last_ts_change = 0
-    val beat_values: MutableList<OpusTree<Set<OpusEvent>>> = mutableListOf()
+    val beat_values: MutableList<OpusTree<Set<OpusEventSTD>>> = mutableListOf()
     var max_tick = 0
     val press_map = HashMap<Int, Pair<Int, Int>>()
 
@@ -221,7 +221,7 @@ fun tree_from_midi(midi: Midi): OpusTree<Set<OpusEvent>> {
         val inner_beat_offset = (tick - last_ts_change) % beat_size
         if (event is NoteOn && event.get_velocity() > 0) {
             while (beat_values.size <= beat_index) {
-                val new_tree = OpusTree<Set<OpusEvent>>()
+                val new_tree = OpusTree<Set<OpusEventSTD>>()
                 new_tree.set_size(beat_size)
                 beat_values.add(new_tree)
             }
@@ -234,7 +234,7 @@ fun tree_from_midi(midi: Midi): OpusTree<Set<OpusEvent>> {
             }
 
             eventset.add(
-                OpusEvent(
+                OpusEventSTD(
                     if (event.channel == 9) {
                         event.get_note() - 27
                     } else {
@@ -260,7 +260,7 @@ fun tree_from_midi(midi: Midi): OpusTree<Set<OpusEvent>> {
     total_beat_offset += (max_tick - last_ts_change) / beat_size
     total_beat_offset += 1
 
-    val opus = OpusTree<Set<OpusEvent>>()
+    val opus = OpusTree<Set<OpusEventSTD>>()
     opus.set_size(total_beat_offset)
 
     beat_values.forEachIndexed { i, beat_tree ->

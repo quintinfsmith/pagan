@@ -1,7 +1,7 @@
 package com.qfs.pagan
 
 import com.qfs.pagan.opusmanager.BeatKey
-import com.qfs.pagan.opusmanager.OpusEvent
+import com.qfs.pagan.opusmanager.OpusEventSTD
 import com.qfs.pagan.structure.OpusTree
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -22,7 +22,7 @@ class HistoryCacheUnitTest {
    @Test
    fun test_remove() {
        var key = BeatKey(0,0,0)
-       var test_event = OpusEvent(12,0,false)
+       var test_event = OpusEventSTD(12,0,false)
 
        var manager = OpusManager()
        manager.new()
@@ -87,8 +87,8 @@ class HistoryCacheUnitTest {
 
     @Test
     fun test_set_event() {
-        var event = OpusEvent(12,  0, false)
-        var event_b = OpusEvent(5, 0, false)
+        var event = OpusEventSTD(12,  0, false)
+        var event_b = OpusEventSTD(5, 0, false)
         var manager = OpusManager()
         manager.new()
 
@@ -115,7 +115,7 @@ class HistoryCacheUnitTest {
 
     @Test
     fun test_unset() {
-        var event = OpusEvent(12, 0, false)
+        var event = OpusEventSTD(12, 0, false)
         var manager = OpusManager()
         manager.new()
         manager.set_event(BeatKey(0,0,0), listOf(), event)
@@ -292,7 +292,7 @@ class HistoryCacheUnitTest {
         var manager = OpusManager()
         manager.new()
         var original = manager.to_json()
-        var new_tree = OpusTree<OpusEvent>()
+        var new_tree = OpusTree<OpusEventSTD>()
         new_tree.set_size(5)
 
         manager.replace_tree(BeatKey(0,0,0), listOf(), new_tree)

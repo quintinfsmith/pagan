@@ -1,11 +1,11 @@
 package com.qfs.pagan.opusmanager
 
-import kotlinx.serialization.Serializable
+interface OpusEvent {
+}
 
-@Serializable
-data class OpusEvent(
+data class OpusEventSTD(
     var note: Int,
     var channel: Int,
     var relative: Boolean,
     var duration: Int = 1
-)
+): OpusEvent

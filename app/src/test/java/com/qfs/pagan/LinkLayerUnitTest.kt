@@ -1,7 +1,7 @@
 package com.qfs.pagan
 
 import com.qfs.pagan.opusmanager.BeatKey
-import com.qfs.pagan.opusmanager.OpusEvent
+import com.qfs.pagan.opusmanager.OpusEventSTD
 import com.qfs.pagan.structure.OpusTree
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertTrue
@@ -14,7 +14,7 @@ import com.qfs.pagan.opusmanager.OpusLayerLinks as OpusManager
  * See [testing documentation](http://d.android.com/tools/testing).
  */
 class LinkLayerUnitTest {
-    private fun batch_link_test(manager: OpusManager, main_key: BeatKey, callback: (OpusTree<OpusEvent>) -> Unit) {
+    private fun batch_link_test(manager: OpusManager, main_key: BeatKey, callback: (OpusTree<OpusEventSTD>) -> Unit) {
         for (linked_key in manager.get_all_linked(main_key)) {
             if (linked_key == main_key) {
                 continue
@@ -160,7 +160,7 @@ class LinkLayerUnitTest {
     @Test
     fun test_replace_beat() {
         val (manager, main_key) = this.setup_linked_manager()
-        val test_tree = OpusTree<OpusEvent>()
+        val test_tree = OpusTree<OpusEventSTD>()
         test_tree.set_size(12)
         manager.replace_tree(main_key, null, test_tree)
 
@@ -176,7 +176,7 @@ class LinkLayerUnitTest {
     @Test
     fun test_replace_tree() {
         val (manager, main_key) = this.setup_linked_manager()
-        val test_tree = OpusTree<OpusEvent>()
+        val test_tree = OpusTree<OpusEventSTD>()
         test_tree.set_size(12)
         manager.replace_tree(main_key, listOf(), test_tree)
 
@@ -243,7 +243,7 @@ class LinkLayerUnitTest {
         val (manager, main_key) = this.setup_linked_manager()
 
         val new_duration = 12
-        manager.set_event(main_key, listOf(), OpusEvent(20,  0, false, 1))
+        manager.set_event(main_key, listOf(), OpusEventSTD(20,  0, false, 1))
         manager.set_duration(main_key, listOf(), new_duration)
 
         this.batch_link_test(manager, main_key) {
@@ -272,7 +272,7 @@ class LinkLayerUnitTest {
     @Test
     fun test_set_event() {
         val (manager, main_key) = this.setup_linked_manager()
-        val event = OpusEvent(20, 0, false, 1)
+        val event = OpusEventSTD(20, 0, false, 1)
         manager.set_event(main_key, listOf(), event)
 
         this.batch_link_test(manager, main_key) {
@@ -286,7 +286,7 @@ class LinkLayerUnitTest {
     @Test
     fun test_unset() {
         val (manager, main_key) = this.setup_linked_manager()
-        val event = OpusEvent(20, 0, false, 1)
+        val event = OpusEventSTD(20, 0, false, 1)
         manager.set_event(main_key, listOf(), event)
         manager.unset(main_key, listOf())
 

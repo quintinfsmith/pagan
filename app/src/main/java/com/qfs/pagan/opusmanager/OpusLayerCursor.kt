@@ -485,7 +485,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
 
                     HistoryToken.REPLACE_TREE -> {
                         val new_position = this.checked_cast<List<Int>>(args[1]).toMutableList()
-                        var tree = this.checked_cast<OpusTree<OpusEvent>>(args[2])
+                        var tree = this.checked_cast<OpusTree<OpusEventSTD>>(args[2])
                         while (!tree.is_leaf()) {
                             new_position.add(0)
                             tree = tree[0]
@@ -670,7 +670,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
         this.cursor.select_range(beat_key_a, beat_key_b)
     }
 
-    fun get_tree(): OpusTree<OpusEvent> {
+    fun get_tree(): OpusTree<OpusEventSTD> {
         return this.get_tree(
             this.cursor.get_beatkey(),
             this.cursor.get_position()
@@ -704,7 +704,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
         )
     }
 
-    open fun set_event_at_cursor(event: OpusEvent) {
+    open fun set_event_at_cursor(event: OpusEventSTD) {
         this.set_event(
             this.cursor.get_beatkey(),
             this.cursor.get_position(),

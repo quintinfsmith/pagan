@@ -3,24 +3,19 @@ import kotlinx.serialization.Serializable
 
 interface OpusEvent {}
 
-open class OpusControlEvent(var transition: Transition): OpusEvent { }
-
 enum class Transition {
     Instantaneous,
     Linear,
     Exponential
 }
+enum class ControlEventType {
+    Tempo,
+    Volume,
+    Reverb,
+}
 
-class VolumeEvent(
-    val new_value: Int,
-    transition: Transition = Transition.Instantaneous
-): OpusControlEvent(transition)
-
-class ReverbEvent(
-    val new_value: Float,
-    transition: Transition = Transition.Instantaneous
-): OpusControlEvent(transition)
-
+@Serializable
+data class OpusControlEvent(var value: Float, var transition: Transition): OpusEvent
 
 @Serializable
 data class OpusEventSTD(

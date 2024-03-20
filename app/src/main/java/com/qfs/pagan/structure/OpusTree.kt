@@ -1,11 +1,29 @@
 package com.qfs.pagan.structure
 
+import com.qfs.pagan.opusmanager.OpusTreeJSON
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.round
 
 class OpusTree<T> {
     class InvalidGetCall : Exception("Can't call get() on leaf")
+    companion object {
+        fun <T> from_json(json_tree: OpusTreeJSON<T>): OpusTree<T>  {
+            var new_tree = OpusTree<T>()
+            if (json_tree.event !=null ) {
+                new_tree.set_event(json_tree.event!!)
+            } else if (json_tree.children != null) {
+                new_tree.set_size(json_tree.children!!.size)
+                json_tree.children!!.forEachIndexed { i: Int, child_json: OpusTreeJSON<T>? ->
+                    if (child_json == null) {
+                        return@forEachIndexed
+                    }
+                    new_tree.set(i, OpusTree.from_json(child_json!!))
+                }
+            }
+            return new_tree
+        }
+    }
     data class ReducerTuple<T>(
         var denominator: Int,
         var indices: MutableList<Pair<Int, OpusTree<T>>>,
@@ -733,5 +751,27 @@ class OpusTree<T> {
         } else {
             super.equals(other)
         }
+    }
+
+    fun to_json(): OpusTreeJSON<T>? {
+        if (this.is_leaf() && !this.is_event()) {
+            return null
+        }
+
+        val children = mutableListOf<OpusTreeJSON<T>?>()
+        if (!this.is_leaf()) {
+            for (i in 0 until this.size) {
+                children.add(this[i].to_json())
+            }
+        }
+
+        return OpusTreeJSON<T>(
+            this.event,
+            if (children.isEmpty()) {
+                null
+            } else {
+                children
+            }
+        )
     }
 }

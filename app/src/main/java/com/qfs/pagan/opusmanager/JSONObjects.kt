@@ -8,8 +8,8 @@ data class ChannelJSONData(
     var midi_program: Int,
     var lines: List<OpusTreeJSON<OpusEventSTD>>,
     var line_static_values: List<Int?> = listOf(),
-    var line_controllers: List<List<ActiveControllerJSON>> = listOf(),
-    var channel_controllers: List<ActiveControllerJSON> = listOf()
+    var line_controllers: List<List<ActiveControllerJSON>>,
+    var channel_controllers: List<ActiveControllerJSON>,
 )
 
 @Serializable
@@ -26,7 +26,7 @@ data class LoadedJSONData(
 
 @Serializable
 data class ActiveControllerJSON(
-    var type: Int,
+    var type: ControlEventType,
     var children: List<Pair<Int, OpusTreeJSON<OpusControlEvent>>>
 )
 

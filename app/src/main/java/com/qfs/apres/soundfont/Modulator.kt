@@ -1,7 +1,5 @@
 package com.qfs.apres.soundfont
 
-import android.util.Log
-
 class Modulator(
     sfModSrcOper: Int,
     sfModDestOper: Int,
@@ -47,11 +45,11 @@ class Modulator(
         else -> throw InvalidTransformOperation(sfModTransOper)
     }
 
-    init {
-        Log.d("AAA", "Mod Amount: ${Integer.toHexString(amount.toInt())}")
-        Log.d("AAA", "Source Mod: ${Integer.toHexString(sfModAmtSrcOper)}")
-        Log.d("AAA", "Source Trans Oper: ${transform_operation}")
-        Log.d("AAA", " ------")
+    //init {
+    //    Log.d("AAA", "Mod Amount: ${Integer.toHexString(amount.toInt())}")
+    //    Log.d("AAA", "Source Mod: ${Integer.toHexString(sfModAmtSrcOper)}")
+    //    Log.d("AAA", "Source Trans Oper: ${transform_operation}")
+    //    Log.d("AAA", " ------")
 
-    }
+    //}
 }

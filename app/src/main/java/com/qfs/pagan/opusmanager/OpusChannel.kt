@@ -14,7 +14,7 @@ class OpusChannel(var uuid: Int) {
         constructor(beat_count: Int) : this(Array<OpusTree<OpusEventSTD>>(beat_count) { OpusTree() }.toMutableList())
         var volume = 64
         var static_value: Int? = null
-        val controllers = ActiveControlSet(this.beats.size)
+        var controllers = ActiveControlSet(this.beats.size)
 
         fun squish(factor: Int) {
             val new_beats = mutableListOf<OpusTree<OpusEventSTD>>()
@@ -78,7 +78,7 @@ class OpusChannel(var uuid: Int) {
     class LastLineException: Exception("Can't remove final line in channel")
 
     var lines: MutableList<OpusLine> = mutableListOf()
-    val controllers = ActiveControlSet()
+    var controllers = ActiveControlSet(0)
     var midi_bank = 0
     var midi_program = 0
     var midi_channel: Int = 0

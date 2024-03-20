@@ -48,6 +48,7 @@ open class OpusLayerBase {
     private var _channel_uuid_map = HashMap<Int, OpusChannel>()
 
     var beat_count: Int = 1
+    var controllers = ActiveControlSet(beat_count)
     var channels: MutableList<OpusChannel> = mutableListOf()
     var path: String? = null
     var project_name: String = DEFAULT_NAME
@@ -981,12 +982,13 @@ open class OpusLayerBase {
     open fun to_json(): LoadedJSONData {
         val channels: MutableList<ChannelJSONData> = mutableListOf()
         for (channel in this.channels) {
-            val lines: MutableList<OpusTreeJSON> = mutableListOf()
+            val lines: MutableList<OpusTreeJSON<OpusEventSTD>> = mutableListOf()
+            val line_controllers = mutableListOf<ActiveControlSet>()
             val line_volumes: MutableList<Int> = mutableListOf()
             val line_static_values: MutableList<Int?> = mutableListOf()
             for (i in 0 until channel.size) {
                 val line = channel.get_line(i)
-                val tree_children = mutableListOf<OpusTreeJSON?>()
+                val tree_children = mutableListOf<OpusTreeJSON<OpusEventSTD>?>()
                 for (beat in line.beats) {
                     if (channel.midi_channel == 9) {
                         beat.traverse { _: OpusTree<OpusEventSTD>, event: OpusEventSTD? ->
@@ -998,7 +1000,10 @@ open class OpusLayerBase {
                     tree_children.add(this.tree_to_json(beat))
                 }
                 lines.add(
-                    OpusTreeJSON( null, tree_children )
+                    OpusTreeJSON<OpusEventSTD>( null, tree_children )
+                )
+                line_controllers.add(
+                    line.controllers
                 )
                 line_volumes.add(line.volume)
                 line_static_values.add(line.static_value)
@@ -1010,8 +1015,10 @@ open class OpusLayerBase {
                     midi_bank = channel.midi_bank,
                     midi_program = channel.midi_program,
                     lines = lines,
+                    line_controllers = line_controllers,
                     line_volumes = line_volumes,
-                    line_static_values = line_static_values
+                    line_static_values = line_static_values,
+                    channel_controllers = channel.controllers
                 )
             )
         }
@@ -1021,7 +1028,8 @@ open class OpusLayerBase {
             tempo = this.tempo,
             tuning_map = this.tuning_map,
             channels = channels,
-            transpose = this.transpose
+            transpose = this.transpose,
+            opus_controllers = this.controllers
         )
     }
 
@@ -1072,30 +1080,40 @@ open class OpusLayerBase {
         val json_data: LoadedJSONData = try {
             json.decodeFromString<LoadedJSONData>(json_content)
         } catch (e: Exception) {
-            val old_data = json.decodeFromString<LoadedJSONData0>(json_content)
-            this._convert_old_fmt(old_data)
+            try {
+                this._convert_old_fmt(
+                    this._convert_old_fmt(
+                        json.decodeFromString<LoadedJSONData0>(json_content)
+                    )
+                )
+            } catch (e: Exception) {
+                this._convert_old_fmt(
+                    json.decodeFromString<LoadedJSONData1>(json_content)
+                )
+            }
         }
 
         this.load_json(json_data)
         this.path = new_path
     }
 
-    private fun _convert_old_fmt(old_data: LoadedJSONData0): LoadedJSONData {
-        val new_channels = mutableListOf<ChannelJSONData>()
+    private fun _convert_old_fmt(old_data: LoadedJSONData0): LoadedJSONData1 {
+        val new_channels = mutableListOf<ChannelJSONData1>()
         for (channel in old_data.channels) {
-            val new_lines = mutableListOf<OpusTreeJSON>()
+            val new_lines = mutableListOf<OpusTreeJSON<OpusEventSTD>>()
             for (line_string in channel.lines) {
-                val line_children = mutableListOf<OpusTreeJSON?>()
+                val line_children = mutableListOf<OpusTreeJSON<OpusEventSTD>?>()
                 for (beat_string in line_string.split("|")) {
                     val beat_tree = from_string(beat_string, old_data.radix, channel.midi_channel)
                     beat_tree.clear_singles()
 
                     line_children.add(this.tree_to_json(beat_tree))
                 }
-                new_lines.add(OpusTreeJSON(null, line_children))
+                new_lines.add(OpusTreeJSON<OpusEventSTD>(null, line_children))
             }
+
             new_channels.add(
-                ChannelJSONData(
+                ChannelJSONData1(
                     midi_channel = channel.midi_channel,
                     midi_bank = channel.midi_bank,
                     midi_program = channel.midi_program,
@@ -1105,7 +1123,8 @@ open class OpusLayerBase {
                 )
             )
         }
-        return LoadedJSONData(
+
+        return LoadedJSONData1(
             tempo = old_data.tempo,
             tuning_map = Array(old_data.radix) { i: Int ->
                 Pair(i, old_data.radix)
@@ -1114,6 +1133,52 @@ open class OpusLayerBase {
             reflections = old_data.reflections,
             transpose = old_data.transpose,
             name = old_data.name
+        )
+    }
+
+    private fun _convert_old_fmt(old_data: LoadedJSONData1): LoadedJSONData {
+        val new_channels = mutableListOf<ChannelJSONData>()
+        var beat_count = 0
+        for (channel in old_data.channels) {
+            for (line in channel.lines) {
+                beat_count = if (line.children != null) {
+                    max(line.children!!.size, beat_count)
+                }  else {
+                    max(1, beat_count)
+                }
+            }
+
+            val line_controllers = mutableListOf<List<ActiveControllerJSON>>()
+            for (line in channel.lines) {
+                val new_controller = ActiveControllerJSON(
+                    0,
+                    listOf(Pair(0, VolumeEvent(64, Instant)))
+                )
+
+                line_controllers.add(listOf(new_controller))
+            }
+
+            new_channels.add(
+                ChannelJSONData(
+                    midi_channel = channel.midi_channel,
+                    midi_bank = channel.midi_bank,
+                    midi_program = channel.midi_program,
+                    lines = channel.lines,
+                    line_static_values = List(channel.line_volumes.size) { null },
+                    line_controllers = listOf()
+                    channel_controllers = listOf()
+                )
+            )
+        }
+    
+        return LoadedJSONData(
+            tempo = old_data.tempo,
+            tuning_map = old_data.tuning_map,
+            reflections = old_data.reflections,
+            transpose = old_data.transpose,
+            name = old_data.name,
+            channels = new_channels,
+            controllers = ActiveControlSet(beat_count)
         )
     }
 
@@ -1142,7 +1207,7 @@ open class OpusLayerBase {
     }
 
     private fun parse_line_data(json_data: LoadedJSONData): List<List<List<OpusTree<OpusEventSTD>>>> {
-        fun tree_from_json(input_tree: OpusTreeJSON?): OpusTree<OpusEventSTD> {
+        fun tree_from_json(input_tree: OpusTreeJSON<OpusEventSTD>?): OpusTree<OpusEventSTD> {
             val new_tree = OpusTree<OpusEventSTD>()
             if (input_tree == null) {
                 return new_tree
@@ -1155,7 +1220,7 @@ open class OpusLayerBase {
 
             if (input_tree.children != null) {
                 new_tree.set_size(input_tree.children!!.size)
-                input_tree.children!!.forEachIndexed { i: Int, child: OpusTreeJSON? ->
+                input_tree.children!!.forEachIndexed { i: Int, child: OpusTreeJSON<OpusEventSTD>? ->
                     new_tree.set(i, tree_from_json(child))
                 }
             }
@@ -1839,19 +1904,19 @@ open class OpusLayerBase {
         tree.event!!.duration = duration
     }
 
-    private fun tree_to_json(tree: OpusTree<OpusEventSTD>): OpusTreeJSON? {
+    private fun tree_to_json(tree: OpusTree<OpusEventSTD>): OpusTreeJSON<OpusEventSTD>? {
         if (tree.is_leaf() && !tree.is_event()) {
             return null
         }
 
-        val children = mutableListOf<OpusTreeJSON?>()
+        val children = mutableListOf<OpusTreeJSON<OpusEventSTD>?>()
         if (!tree.is_leaf()) {
             for (i in 0 until tree.size) {
                 children.add(this.tree_to_json(tree[i]))
             }
         }
 
-        return OpusTreeJSON(
+        return OpusTreeJSON<OpusEventSTD>(
             tree.event,
             if (children.isEmpty()) {
                 null

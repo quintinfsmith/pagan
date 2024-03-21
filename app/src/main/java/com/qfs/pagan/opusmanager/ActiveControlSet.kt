@@ -46,7 +46,16 @@ class ActiveControlSet(var size: Int) {
                 children
             )
         }
+
+        fun get_beat(beat: Int): OpusTree<OpusControlEvent> {
+            if (this.events[beat] == null) {
+                this.events[beat] = OpusTree()
+            }
+
+            return this.events[beat]!!
+        }
     }
+
     companion object {
         fun from_json(json_obj: List<ActiveControllerJSON>, size: Int): ActiveControlSet {
             val control_set = ActiveControlSet(size)
@@ -62,7 +71,7 @@ class ActiveControlSet(var size: Int) {
 
     val controllers = HashMap<ControlEventType, ActiveController>()
 
-    fun new_controller(type: ControlEventType, controller: ActiveController?) {
+    fun new_controller(type: ControlEventType, controller: ActiveController? = null) {
         if (controller == null) {
             this.controllers[type] = ActiveController(type, this.size)
         } else {
@@ -89,5 +98,14 @@ class ActiveControlSet(var size: Int) {
         }
         return output
     }
+
+    fun get_controller(type: ControlEventType): ActiveController {
+        if (!this.controllers.containsKey(type)) {
+            this.new_controller(type)
+        }
+
+        return this.controllers[type]!!
+    }
+
 
 }

@@ -159,6 +159,18 @@ class OpusChannel(var uuid: Int) {
         return tree
     }
 
+    fun get_ctl_tree(line: Int, type: ControlEventType, beat: Int, position: List<Int>? = null): OpusTree<OpusControlEvent> {
+        var tree = this.lines[line].controllers.get_controller(type).get_beat(beat)
+
+        if (position != null) {
+            for (i in position) {
+                tree = tree[i]
+            }
+        }
+
+        return tree
+    }
+
     fun set_beat_count(new_beat_count: Int) {
         if (new_beat_count > this._beat_count) {
             for (line in this.lines) {
@@ -166,10 +178,20 @@ class OpusChannel(var uuid: Int) {
                     line.beats.add(OpusTree())
                 }
             }
+            for (controller in this.controllers.controllers.values) {
+                for (i in this._beat_count until new_beat_count) {
+                    controller.insert_beat(i)
+                }
+            }
         } else {
             for (line in this.lines) {
                 while (line.beats.size > new_beat_count) {
                     line.beats.removeLast()
+                }
+            }
+            for (controller in this.controllers.controllers.values) {
+                for (i in new_beat_count until this._beat_count) {
+                    controller.remove_beat(new_beat_count)
                 }
             }
         }

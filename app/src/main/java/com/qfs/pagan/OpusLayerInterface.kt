@@ -304,6 +304,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                 channel,
                 line_offset ?: (this.channels[channel].lines.size - 1)
             )
+
             when (this.get_ui_lock_level()) {
                 null -> {
                     this.runOnUiThread { _: MainActivity ->

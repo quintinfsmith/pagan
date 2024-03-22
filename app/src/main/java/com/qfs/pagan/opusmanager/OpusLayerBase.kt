@@ -58,8 +58,12 @@ open class OpusLayerBase {
     var transpose: Int = 0
     var tuning_map: Array<Pair<Int, Int>> = Array(12) { i: Int -> Pair(i, 12) }
 
-    private var _cached_abs_line_map = Array(2) { mutableListOf<Pair<Int, Int>>() }
-    private var _cached_std_line_map = Array(2) { HashMap<Pair<Int, Int>, Int>() }
+    private var _cached_abs_line_map = mutableListOf<Pair<Int, Int>>()
+    private var _cached_std_line_map = HashMap<Pair<Int, Int>, Int>()
+
+    // key: absolute line
+    // Value: first is always a pointer to cached_abs_line_map, second and third are pointers to the relative ctl lines
+    private var _cached_abs_line_map_map = HashMap<Int, Triple<Int, CtlLineLevel?, ControlEventType?>>()
 
     //// RO Functions ////
     /**
@@ -92,14 +96,8 @@ open class OpusLayerBase {
     /**
      * Calculates how many lines down a given row is.
      */
-    fun get_abs_offset(channel_index: Int, line_offset: Int, include_control_lines: Boolean = false): Int {
-        return if (include_control_lines) {
-            this._cached_std_line_map[1][Pair(channel_index, line_offset)]
-                ?: throw IndexOutOfBoundsException()
-        } else {
-            this._cached_std_line_map[0][Pair(channel_index, line_offset)]
-                ?: throw IndexOutOfBoundsException()
-        }
+    fun get_abs_offset(channel_index: Int, line_offset: Int): Int {
+        return this._cached_std_line_map[Pair(channel_index, line_offset)] ?: throw IndexOutOfBoundsException()
     }
 
     /**
@@ -140,9 +138,9 @@ open class OpusLayerBase {
     /**
      * Calculate the x & y difference between two BeatKeys [beata] & [beatb]
      */
-    open fun get_abs_difference(beata: BeatKey, beatb: BeatKey, include_control_lines: Boolean = false): Pair<Int, Int> {
-        val beata_y = this.get_abs_offset(beata.channel, beata.line_offset, include_control_lines)
-        val beatb_y = this.get_abs_offset(beatb.channel, beatb.line_offset, include_control_lines)
+    open fun get_abs_difference(beata: BeatKey, beatb: BeatKey): Pair<Int, Int> {
+        val beata_y = this.get_abs_offset(beata.channel, beata.line_offset)
+        val beatb_y = this.get_abs_offset(beatb.channel, beatb.line_offset)
 
         return Pair(beatb_y - beata_y, beatb.beat - beata.beat)
     }
@@ -150,17 +148,12 @@ open class OpusLayerBase {
     /**
      * Calculate which channel and line offset is denoted by the [absolute]th line
      */
-    fun get_std_offset(absolute: Int, include_control_lines: Boolean = false): Pair<Int, Int> {
-        var map_select = if (include_control_lines) {
-            1
-        } else {
-            0
-        }
-        if (absolute >= this._cached_abs_line_map[map_select].size) {
+    fun get_std_offset(absolute: Int): Pair<Int, Int> {
+        if (absolute >= this._cached_abs_line_map.size) {
             throw IndexOutOfBoundsException()
         }
 
-        return this._cached_abs_line_map[map_select][absolute]
+        return this._cached_abs_line_map[absolute]
     }
 
     /**
@@ -251,10 +244,7 @@ open class OpusLayerBase {
 
     fun get_global_ctl_tree(type: ControlEventType, beat: Int, position: List<Int>? = null): OpusTree<OpusControlEvent> {
         try {
-            return this.controllers.get_controller(type).get_beat(
-                beat,
-                position ?: listOf()
-            )
+            return this.controllers.get_controller(type).get_tree(beat, position)
         } catch (e: OpusTree.InvalidGetCall) {
             throw e
         }
@@ -552,6 +542,43 @@ open class OpusLayerBase {
         tree.insert(index, OpusTree())
     }
 
+    open fun insert_line_ctl(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
+        if (position.isEmpty()) {
+            throw BadInsertPosition()
+        }
+
+        val parent_position = position.subList(0, position.size - 1)
+        val tree = this.get_line_ctl_tree(type, beat_key, parent_position)
+
+        val index = position.last()
+        tree.insert(index, OpusTree())
+    }
+
+    open fun insert_channel_ctl(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
+        if (position.isEmpty()) {
+            throw BadInsertPosition()
+        }
+
+        val parent_position = position.subList(0, position.size - 1)
+        val tree = this.get_channel_ctl_tree(type, channel, beat, parent_position)
+
+        val index = position.last()
+        tree.insert(index, OpusTree())
+    }
+
+    open fun insert_global_ctl(type: ControlEventType, beat: Int, position: List<Int>) {
+        if (position.isEmpty()) {
+            throw BadInsertPosition()
+        }
+
+        val parent_position = position.subList(0, position.size - 1)
+        val tree = this.get_global_ctl_tree(type, beat, parent_position)
+
+        val index = position.last()
+        tree.insert(index, OpusTree())
+    }
+
+
     /**
      * Insert a new tree after [beat_key]/[position]
      *
@@ -567,6 +594,42 @@ open class OpusLayerBase {
 
         val index = position.last()
         parent.insert(index + 1, OpusTree())
+    }
+
+    open fun insert_after_line_ctl(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
+        if (position.isEmpty()) {
+            throw BadInsertPosition()
+        }
+
+        val parent_position = position.subList(0, position.size - 1)
+        val tree = this.get_line_ctl_tree(type, beat_key, parent_position)
+
+        val index = position.last()
+        tree.insert(index + 1, OpusTree())
+    }
+
+    open fun insert_after_channel_ctl(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
+        if (position.isEmpty()) {
+            throw BadInsertPosition()
+        }
+
+        val parent_position = position.subList(0, position.size - 1)
+        val tree = this.get_channel_ctl_tree(type, channel, beat, parent_position)
+
+        val index = position.last()
+        tree.insert(index + 1, OpusTree())
+    }
+
+    open fun insert_after_global_ctl(type: ControlEventType, beat: Int, position: List<Int>) {
+        if (position.isEmpty()) {
+            throw BadInsertPosition()
+        }
+
+        val parent_position = position.subList(0, position.size - 1)
+        val tree = this.get_global_ctl_tree(type, beat, parent_position)
+
+        val index = position.last()
+        tree.insert(index + 1, OpusTree())
     }
 
     /**
@@ -617,9 +680,9 @@ open class OpusLayerBase {
         val parent_tree = tree.parent!!
 
         when (parent_tree.size) {
-            1 -> this.remove_channel_ctl_only(beat_key, position)
-            2 -> this.remove_channel_ctl_one_of_two(beat_key, position)
-            else -> this.remove_channel_ctl_standard(beat_key, position)
+            1 -> this.remove_channel_ctl_only(type, channel, beat, position)
+            2 -> this.remove_channel_ctl_one_of_two(type, channel, beat, position)
+            else -> this.remove_channel_ctl_standard(type, channel, beat, position)
         }
     }
 
@@ -700,7 +763,7 @@ open class OpusLayerBase {
     }
 
     open fun remove_line_ctl_one_of_two(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
-        val tree = this.get_line_ctl_tree(beat_key, position)
+        val tree = this.get_line_ctl_tree(type, beat_key, position)
         val parent_tree = tree.parent!!
         tree.detach()
         val prev_position = position.toMutableList()
@@ -990,6 +1053,10 @@ open class OpusLayerBase {
                 y += 1
             }
         }
+
+        for (controller in this.controllers.controllers.values) {
+            controller.insert_beat(beat_index)
+        }
     }
 
     open fun insert_line(channel: Int, line_offset: Int, line: OpusLine) {
@@ -1010,7 +1077,12 @@ open class OpusLayerBase {
         for (channel in this.channels) {
             channel.remove_beat(beat_index)
         }
-        this.set_beat_count(this.beat_count - 1)
+
+        for (controller in this.controllers.controllers.values) {
+            controller.remove_beat(beat_index)
+        }
+
+        this.beat_count -= 1
     }
 
     fun remove_channel_by_uuid(uuid: Int) {
@@ -1039,7 +1111,7 @@ open class OpusLayerBase {
         this.replace_tree(beatkey_to, position_to, from_tree)
     }
 
-    open fun remove_line(channel: Int, line_offset: Int): OpusChannel.OpusLine {
+    open fun remove_line(channel: Int, line_offset: Int): OpusLine {
         val output = this.channels[channel].remove_line(line_offset)
         this.recache_line_maps()
         return output
@@ -1053,16 +1125,45 @@ open class OpusLayerBase {
         }
     }
 
+    private fun copy_ctl_func(tree: OpusTree<OpusControlEvent>): OpusControlEvent? {
+        return if (tree.event == null) {
+            null
+        } else {
+            tree.event!!.copy()
+        }
+    }
+
     open fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<OpusEventSTD>) {
         val tree_copy = tree.copy(this::copy_func)
         this.channels[beat_key.channel].replace_tree(beat_key.line_offset, beat_key.beat, position, tree_copy)
     }
 
-    open fun replace_line_ctl_tree(type: ControlEventType, beat_key: BeatKey, position: List<Int>?, tree: OpusTree<OpusEventSTD>) {
-        val tree_copy = tree.copy(this::copy_func)
+    open fun replace_line_ctl_tree(type: ControlEventType, beat_key: BeatKey, position: List<Int>?, tree: OpusTree<OpusControlEvent>) {
+        val tree_copy = tree.copy(this::copy_ctl_func)
         val controller = this.channels[beat_key.channel].lines[beat_key.line_offset].get_controller(type)
         controller.replace_tree(
-            position,
+            beat_key.beat,
+            position ?: listOf(),
+            tree_copy
+        )
+    }
+
+    open fun replace_channel_ctl_tree(type: ControlEventType, channel: Int, beat: Int, position: List<Int>?, tree: OpusTree<OpusControlEvent>) {
+        val tree_copy = tree.copy(this::copy_ctl_func)
+        val controller = this.channels[channel].controllers.get_controller(type)
+        controller.replace_tree(
+            beat,
+            position ?: listOf(),
+            tree_copy
+        )
+    }
+
+    open fun replace_global_ctl_tree(type: ControlEventType, beat: Int, position: List<Int>?, tree: OpusTree<OpusControlEvent>) {
+        val tree_copy = tree.copy(this::copy_ctl_func)
+        val controller = this.controllers.get_controller(type)
+        controller.replace_tree(
+            beat,
+            position ?: listOf(),
             tree_copy
         )
     }
@@ -2321,24 +2422,48 @@ open class OpusLayerBase {
     // Calling this function every time a channel/line is modified should still be more efficient
     // than calculating offsets as needed
     private fun recache_line_maps() {
-        this._cached_abs_line_map[0].clear()
-        this._cached_abs_line_map[1].clear()
-        this._cached_std_line_map[0].clear()
-        this._cached_std_line_map[1].clear()
+        this._cached_abs_line_map.clear()
+        this._cached_std_line_map.clear()
         var y = 0
         this.channels.forEachIndexed { channel_index: Int, channel: OpusChannel ->
-            var x = 0
             for (line_offset in channel.lines.indices) {
                 val keypair = Pair(channel_index, line_offset)
-                this._cached_abs_line_map[0].add(keypair)
-                this._cached_std_line_map[0][keypair] = y++
-                x += 1
-                for (controller in channel.lines[line_offset].controllers.controllers) {
-                    val ctl_keypair = Pair(channel_index, x++)
-                    this._cached_abs_line_map[1].add(ctl_keypair)
-                    this._cached_std_line_map[1][ctl_keypair] = y++
+                this._cached_abs_line_map.add(keypair)
+                this._cached_std_line_map[keypair] = y
+                y += 1
+            }
+        }
+
+        // TODO: Need to guarantee an order when iterating controllers
+        var actual_y = 0
+        this.channels.forEachIndexed { channel_index: Int, channel: OpusChannel ->
+            for (line_offset in channel.lines.indices) {
+                val keypair = Pair(channel_index, line_offset)
+                actual_y += 1 // Increment for non-ctl line
+
+                for ((type, controller) in channel.lines[line_offset].controllers.controllers) {
+                    this._cached_abs_line_map_map[actual_y++] = Triple(
+                        this._cached_std_line_map[keypair]!!,
+                        CtlLineLevel.Line,
+                        type
+                    )
                 }
             }
+            for (type in channel.controllers.controllers.keys) {
+                this._cached_abs_line_map_map[actual_y++] = Triple(
+                    channel_index,
+                    CtlLineLevel.Channel,
+                    type
+                )
+            }
+        }
+
+        for (type in this.controllers.controllers.keys) {
+            this._cached_abs_line_map_map[actual_y++] = Triple(
+                -1,
+                CtlLineLevel.Global,
+                type
+            )
         }
     }
 
@@ -2447,6 +2572,41 @@ open class OpusLayerBase {
         return true
     }
 
+    fun add_global_ctl_line(type: ControlEventType) {
+        this.controllers.new_controller(type)
+        this.recache_line_maps()
+    }
+
+    fun remove_global_ctl_line(type: ControlEventType) {
+        this.controllers.remove_controller(type)
+        this.recache_line_maps()
+    }
+
+    fun add_channel_ctl_line(type: ControlEventType, channel: Int) {
+        this.channels[channel].controllers.new_controller(type)
+        this.recache_line_maps()
+    }
+
+    fun remove_channel_ctl_line(type: ControlEventType, channel: Int) {
+        this.channels[channel].controllers.remove_controller(type)
+        this.recache_line_maps()
+    }
+
+    fun add_line_ctl_line(type: ControlEventType, channel: Int, line_offset: Int) {
+        this.channels[channel].lines[line_offset].controllers.new_controller(type)
+        this.recache_line_maps()
+    }
+
+    fun remove_line_ctl_line(type: ControlEventType, channel: Int, line_offset: Int) {
+        this.channels[channel].lines[line_offset].controllers.remove_controller(type)
+        this.recache_line_maps()
+    }
+
+    fun ctl_line_level(y: Int): CtlLineLevel? {
+        return this._cached_abs_line_map_map[y]!!.second
+    }
+
+
     // Experimental/ not in use -yet ----------vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
     /*
         Reduce the number of beats in a project without losing any information.
@@ -2548,4 +2708,5 @@ open class OpusLayerBase {
 
         return output
     }
+
 }

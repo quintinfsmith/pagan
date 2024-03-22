@@ -47,6 +47,17 @@ class ActiveControlSet(var size: Int) {
             )
         }
 
+        fun get_tree(beat: Int, position: List<Int>? = null): OpusTree<OpusControlEvent> {
+            var tree = this.get_beat(beat)
+            if (position != null) {
+                for (i in position) {
+                    tree = tree[i]
+                }
+            }
+
+            return tree
+        }
+
         fun get_beat(beat: Int): OpusTree<OpusControlEvent> {
             if (this.events[beat] == null) {
                 this.events[beat] = OpusTree()
@@ -89,6 +100,10 @@ class ActiveControlSet(var size: Int) {
         } else {
             this.controllers[type] = controller
         }
+    }
+
+    fun remove_controller(type: ControlEventType) {
+        this.controllers.remove(type)
     }
 
     fun insert_beat(n: Int) {

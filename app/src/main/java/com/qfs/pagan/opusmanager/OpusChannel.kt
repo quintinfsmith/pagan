@@ -9,72 +9,6 @@ data class BeatKey(var channel: Int, var line_offset: Int, var beat: Int)
 class OpusChannel(var uuid: Int) {
     class InvalidChannelUUID(uuid: Int): Exception("No such channel uuid: $uuid")
     class LineSizeMismatch(incoming_size: Int, required_size: Int): Exception("Line is $incoming_size beats but OpusManager is $required_size beats")
-
-    class OpusLine(var beats: MutableList<OpusTree<OpusEventSTD>>) {
-        constructor(beat_count: Int) : this(Array<OpusTree<OpusEventSTD>>(beat_count) { OpusTree() }.toMutableList())
-        var volume = 64
-        var static_value: Int? = null
-        var controllers = ActiveControlSet(this.beats.size)
-
-        fun squish(factor: Int) {
-            val new_beats = mutableListOf<OpusTree<OpusEventSTD>>()
-            for (b in 0 until this.beats.size) {
-                if (b % factor == 0) {
-                    new_beats.add(OpusTree<OpusEventSTD>())
-                }
-                val working_beat = new_beats.last()
-                working_beat.insert(b % factor, this.beats[b])
-            }
-
-            if (this.beats.size % factor != 0) {
-                while (new_beats.last().size < factor) {
-                    new_beats.last().insert(
-                        new_beats.last().size,
-                        OpusTree()
-                    )
-                }
-            }
-
-            for (beat in new_beats) {
-                var is_empty = true
-
-                for (i in 0 until beat.size) {
-                    if (!(beat[i].is_leaf() && beat[i].is_eventless())) {
-                        is_empty = false
-                        break
-                    }
-                }
-
-                if (is_empty) {
-                    beat.set_size(0)
-                }
-            }
-            this.beats = new_beats
-        }
-
-        override fun equals(other: Any?): Boolean {
-            if (other !is OpusLine) {
-                return false
-            }
-
-            if (this.volume != other.volume) {
-                return false
-            }
-
-            if (this.static_value != other.static_value) {
-                return false
-            }
-
-            for (i in 0 until this.beats.size) {
-                if (this.beats[i] != other.beats[i]) {
-                    return false
-                }
-            }
-
-            return true
-        }
-    }
-
     class LastLineException: Exception("Can't remove final line in channel")
 
     var lines: MutableList<OpusLine> = mutableListOf()
@@ -102,6 +36,7 @@ class OpusChannel(var uuid: Int) {
         } else {
             throw IndexOutOfBoundsException()
         }
+
         this.size += 1
 
         return new_line
@@ -171,12 +106,22 @@ class OpusChannel(var uuid: Int) {
         return tree
     }
 
+    fun get_ctl_tree(type: ControlEventType, beat: Int, position: List<Int>? = null): OpusTree<OpusControlEvent> {
+        var tree = this.controllers.get_controller(type).get_beat(beat)
+
+        if (position != null) {
+            for (i in position) {
+                tree = tree[i]
+            }
+        }
+
+        return tree
+    }
+
     fun set_beat_count(new_beat_count: Int) {
         if (new_beat_count > this._beat_count) {
             for (line in this.lines) {
-                while (line.beats.size < new_beat_count) {
-                    line.beats.add(OpusTree())
-                }
+                line.set_beat_count(new_beat_count)
             }
             for (controller in this.controllers.controllers.values) {
                 for (i in this._beat_count until new_beat_count) {

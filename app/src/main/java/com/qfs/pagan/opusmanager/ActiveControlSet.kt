@@ -54,6 +54,18 @@ class ActiveControlSet(var size: Int) {
 
             return this.events[beat]!!
         }
+
+        fun replace_tree(beat: Int, position: List<Int>, new_tree: OpusTree<OpusControlEvent>) {
+            if (position.isEmpty()) {
+                this.events[beat] = new_tree
+            } else {
+                var tree = this.get_beat(beat)   
+                for (i in position) {
+                    tree = tree[i]
+                }
+                tree.replace_with(new_tree)
+            }
+        }
     }
 
     companion object {
@@ -80,20 +92,20 @@ class ActiveControlSet(var size: Int) {
     }
 
     fun insert_beat(n: Int) {
-        for ((type, controller) in this.controllers) {
+        for (controller in this.controllers.values) {
             controller.insert_beat(n)
         }
     }
 
     fun remove_beat(n: Int) {
-        for ((type, controller) in this.controllers) {
+        for (controller in this.controllers.values) {
             controller.remove_beat(n)
         }
     }
 
     fun to_json(): List<ActiveControllerJSON> {
         var output = mutableListOf<ActiveControllerJSON>()
-        for ((type, controller) in this.controllers) {
+        for (controller in this.controllers.values) {
             output.add(controller.to_json())
         }
         return output
@@ -106,6 +118,5 @@ class ActiveControlSet(var size: Int) {
 
         return this.controllers[type]!!
     }
-
 
 }

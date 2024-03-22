@@ -15,7 +15,11 @@ enum class ControlEventType {
 }
 
 @Serializable
-data class OpusControlEvent(var value: Float, var transition: Transition): OpusEvent
+data class OpusControlEvent(
+    var value: Float,
+    var transition: Transition = Transition.Instantaneous,
+    var duration: Int = 1
+): OpusEvent
 
 @Serializable
 data class OpusEventSTD(

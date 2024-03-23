@@ -12,6 +12,7 @@ import androidx.appcompat.view.ContextThemeWrapper
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.OpusChannel
+import com.qfs.pagan.opusmanager.OpusLine
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import com.qfs.pagan.structure.OpusTree
 import kotlin.math.max
@@ -156,7 +157,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         this._initializing_column_width_map = false
     }
 
-    fun new_row(y: Int, opus_line: OpusChannel.OpusLine, ignore_ui: Boolean = false) {
+    fun new_row(y: Int, opus_line: OpusLine, ignore_ui: Boolean = false) {
         for (i in 0 until this.get_opus_manager().beat_count) {
             val tree = opus_line.beats[i]
             this._column_width_map[i].add(
@@ -179,8 +180,8 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         }
     }
 
-    fun new_channel_rows(y: Int, opus_lines: List<OpusChannel.OpusLine>, ignore_ui: Boolean = false) {
-        opus_lines.forEachIndexed { i: Int, opus_line: OpusChannel.OpusLine ->
+    fun new_channel_rows(y: Int, opus_lines: List<OpusLine>, ignore_ui: Boolean = false) {
+        opus_lines.forEachIndexed { i: Int, opus_line: OpusLine ->
             for (j in 0 until opus_line.beats.size) {
                 val tree = opus_line.beats[j]
                 if (this._column_width_map.size <= j) {
@@ -246,7 +247,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         val opus_manager = this.get_opus_manager()
         val column = mutableListOf<Int>()
         opus_manager.get_visible_channels().forEachIndexed { i: Int, channel: OpusChannel ->
-            channel.lines.forEachIndexed { j: Int, line: OpusChannel.OpusLine ->
+            channel.lines.forEachIndexed { j: Int, line: OpusLine ->
                 val tree = opus_manager.get_tree(BeatKey(i, j, index))
                 if (tree.is_leaf()) {
                     column.add(1)

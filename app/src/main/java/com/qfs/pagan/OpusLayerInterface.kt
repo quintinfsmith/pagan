@@ -9,6 +9,7 @@ import com.qfs.pagan.opusmanager.LoadedJSONData
 import com.qfs.pagan.opusmanager.OpusChannel
 import com.qfs.pagan.opusmanager.OpusEventSTD
 import com.qfs.pagan.opusmanager.OpusLayerCursor
+import com.qfs.pagan.opusmanager.OpusLine
 import com.qfs.pagan.structure.OpusTree
 import java.lang.Integer.max
 import java.lang.Integer.min
@@ -296,7 +297,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
-    override fun new_line(channel: Int, line_offset: Int?): OpusChannel.OpusLine {
+    override fun new_line(channel: Int, line_offset: Int?): OpusLine {
         val output = super.new_line(channel, line_offset)
 
         if (this.get_activity() != null) {
@@ -323,7 +324,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         return output
     }
 
-    override fun insert_line(channel: Int, line_offset: Int, line: OpusChannel.OpusLine) {
+    override fun insert_line(channel: Int, line_offset: Int, line: OpusLine) {
         val activity = this.get_activity()
         if (activity != null && !activity.view_model.show_percussion && this.is_percussion(channel)) {
             this.make_percussion_visible()
@@ -358,7 +359,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         )
     }
 
-    override fun remove_line(channel: Int, line_offset: Int): OpusChannel.OpusLine {
+    override fun remove_line(channel: Int, line_offset: Int): OpusLine {
         val activity = this.get_activity()
         if (activity != null && !activity.view_model.show_percussion && this.is_percussion(channel)) {
             this.make_percussion_visible()
@@ -406,7 +407,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         super.new_channel(channel, lines, uuid)
 
         val editor_table = this.get_editor_table()
-        val line_list = mutableListOf<OpusChannel.OpusLine>()
+        val line_list = mutableListOf<OpusLine>()
         for (i in 0 until lines) {
             line_list.add(this.channels[notify_index].lines[i])
         }
@@ -956,11 +957,12 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     fun get_visible_line_count(): Int {
-        var total = 0
+        var total = this.controllers.controllers.size // 1 implicit for global controls
         for (channel in this.get_visible_channels()) {
             for (line in channel.lines) {
-                total += 1
+                total += 1 + line.controllers.controllers.size
             }
+            total += channel.controllers.controllers.size
         }
         return total
     }

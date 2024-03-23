@@ -148,8 +148,19 @@ open class OpusLayerBase {
     /**
      * Calculate which channel and line offset is denoted by the [absolute]th line
      */
-    fun get_std_offset(absolute: Int): Pair<Int, Int> {
-        if (absolute >= this._cached_abs_line_map.size) {
+    fun get_std_offset(absolute: Int, check_line_map_map: Boolean = false): Pair<Int, Int> {
+        var adj_absolute = if (check_line_map_map) {
+            if (absolute >= this._cached_abs_line_map_map.size) {
+                throw IndexOutOfBoundsException()
+            }
+            var item = this._cached_abs_line_map_map[absolute]
+            // TODO: Error Check
+            item!!.first
+        } else {
+            absolute
+        }
+
+        if (adj_absolute >= this._cached_abs_line_map.size) {
             throw IndexOutOfBoundsException()
         }
 
@@ -238,8 +249,6 @@ open class OpusLayerBase {
         } catch (e: OpusTree.InvalidGetCall) {
             throw e
         }
-
-
     }
 
     fun get_global_ctl_tree(type: ControlEventType, beat: Int, position: List<Int>? = null): OpusTree<OpusControlEvent> {
@@ -2439,7 +2448,7 @@ open class OpusLayerBase {
         this.channels.forEachIndexed { channel_index: Int, channel: OpusChannel ->
             for (line_offset in channel.lines.indices) {
                 val keypair = Pair(channel_index, line_offset)
-                actual_y += 1 // Increment for non-ctl line
+                this._cached_abs_line_map_map[actual_y++] = Triple(this._cached_std_line_map[keypair]!!, null, null)
 
                 for ((type, controller) in channel.lines[line_offset].controllers.controllers) {
                     this._cached_abs_line_map_map[actual_y++] = Triple(
@@ -2606,6 +2615,13 @@ open class OpusLayerBase {
         return this._cached_abs_line_map_map[y]!!.second
     }
 
+    fun get_ctl_line_type(y: Int): ControlEventType? {
+        return this._cached_abs_line_map_map[y]!!.third
+    }
+
+    fun get_ctl_line_info(y: Int): Triple<Int, CtlLineLevel?, ControlEventType?> {
+        return this._cached_abs_line_map_map[y]!!
+    }
 
     // Experimental/ not in use -yet ----------vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
     /*

@@ -7,7 +7,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
     var cursor = OpusManagerCursor()
     private var _queued_cursor_selection: Pair<HistoryToken, List<Int>>? = null
 
-    override fun insert_line(channel: Int, line_offset: Int, line: OpusChannel.OpusLine) {
+    override fun insert_line(channel: Int, line_offset: Int, line: OpusLine) {
         // Need to clear cursor before change since the way the editor_table updates
         // Cursors doesn't take into account changes to row count
         val bkp_cursor = this.cursor.copy()
@@ -20,7 +20,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
         }
     }
 
-    override fun new_line(channel: Int, line_offset: Int?): OpusChannel.OpusLine {
+    override fun new_line(channel: Int, line_offset: Int?): OpusLine {
         val bkp_cursor = this.cursor.copy()
         this.cursor_clear()
 
@@ -38,7 +38,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
         this.cursor_select_row(channel_b, line_b)
     }
 
-    override fun remove_line(channel: Int, line_offset: Int): OpusChannel.OpusLine {
+    override fun remove_line(channel: Int, line_offset: Int): OpusLine {
         // Need to clear cursor before change since the way the editor_table updates
         // Cursors doesn't take into account changes to row count
         val bkp_cursor = this.cursor.copy()

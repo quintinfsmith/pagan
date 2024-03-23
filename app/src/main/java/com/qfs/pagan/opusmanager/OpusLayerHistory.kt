@@ -124,7 +124,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
                     this.insert_line(
                         current_node.args[0] as Int,
                         current_node.args[1] as Int,
-                        this.checked_cast<OpusChannel.OpusLine>(current_node.args[2])
+                        this.checked_cast<OpusLine>(current_node.args[2])
                     )
                 }
 
@@ -248,9 +248,9 @@ open class OpusLayerHistory : OpusLayerLinks() {
     }
 
 
-    fun new_line(channel: Int, line_offset: Int, count: Int): List<OpusChannel.OpusLine> {
+    fun new_line(channel: Int, line_offset: Int, count: Int): List<OpusLine> {
         return this._remember {
-            val output: MutableList<OpusChannel.OpusLine> = mutableListOf()
+            val output: MutableList<OpusLine> = mutableListOf()
             for (i in 0 until count) {
                 output.add(this.new_line(channel, line_offset))
             }
@@ -258,7 +258,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
         }
     }
 
-    override fun new_line(channel: Int, line_offset: Int?): OpusChannel.OpusLine {
+    override fun new_line(channel: Int, line_offset: Int?): OpusLine {
         return this._remember {
             val output = super.new_line(channel, line_offset)
             this.push_remove_line(channel, line_offset ?: (this.channels[channel].size))
@@ -266,7 +266,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
         }
     }
 
-    override fun insert_line(channel: Int, line_offset: Int, line: OpusChannel.OpusLine) {
+    override fun insert_line(channel: Int, line_offset: Int, line: OpusLine) {
         this._remember {
             this.push_remove_line(channel, line_offset)
             super.insert_line(channel, line_offset, line)
@@ -302,7 +302,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
         }
     }
 
-    override fun remove_line(channel: Int, line_offset: Int): OpusChannel.OpusLine {
+    override fun remove_line(channel: Int, line_offset: Int): OpusLine {
         return this._remember {
             val line = super.remove_line(channel, line_offset)
 

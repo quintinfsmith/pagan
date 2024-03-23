@@ -1,5 +1,6 @@
 package com.qfs.pagan
 import android.content.res.Configuration
+import android.util.Log
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
@@ -958,6 +959,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     fun get_visible_line_count(): Int {
         var total = this.controllers.controllers.size // 1 implicit for global controls
+        Log.d("AAA", "GLOBSIZE: ${total}")
         for (channel in this.get_visible_channels()) {
             for (line in channel.lines) {
                 total += 1 + line.controllers.controllers.size

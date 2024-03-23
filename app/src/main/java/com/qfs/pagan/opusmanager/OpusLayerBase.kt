@@ -63,7 +63,7 @@ open class OpusLayerBase {
 
     // key: absolute line
     // Value: first is always a pointer to cached_abs_line_map, second and third are pointers to the relative ctl lines
-    private var _cached_abs_line_map_map = HashMap<Int, Triple<Int, CtlLineLevel?, ControlEventType?>>()
+    private var _cached_abs_line_map_map = mutableListOf<Triple<Int, CtlLineLevel?, ControlEventType?>>()
 
     //// RO Functions ////
     /**
@@ -1399,7 +1399,6 @@ open class OpusLayerBase {
 
         return LoadedJSONData(
             name = this.project_name,
-            tempo = this.tempo,
             tuning_map = this.tuning_map,
             channels = channels,
             transpose = this.transpose,
@@ -1468,6 +1467,7 @@ open class OpusLayerBase {
         }
 
         this.load_json(json_data)
+
         this.path = new_path
     }
 
@@ -1555,13 +1555,29 @@ open class OpusLayerBase {
         }
     
         return LoadedJSONData(
-            tempo = old_data.tempo,
             tuning_map = old_data.tuning_map,
             reflections = old_data.reflections,
             transpose = old_data.transpose,
             name = old_data.name,
             channels = new_channels,
-            controllers = listOf()
+            controllers = listOf(
+                ActiveControllerJSON(
+                    ControlEventType.Tempo,
+                    listOf(
+                        Pair(
+                            0,
+                            OpusTreeJSON<OpusControlEvent>(
+                                OpusControlEvent(
+                                    120F,
+                                    Transition.Instantaneous,
+                                    1
+                                ),
+                                null
+                            )
+                        )
+                    )
+                )
+            )
         )
     }
 
@@ -1642,8 +1658,8 @@ open class OpusLayerBase {
         val parsed = this.parse_line_data(json_data)
         this.clear()
 
+
         this.tuning_map = json_data.tuning_map.clone()
-        this.tempo = json_data.tempo
         this.transpose = json_data.transpose
         this.set_project_name(json_data.name)
 
@@ -1737,6 +1753,9 @@ open class OpusLayerBase {
                 }
             }
         }
+
+        this.controllers = ActiveControlSet.from_json(json_data.controllers, beat_count)
+
         this.on_project_changed()
     }
 
@@ -2444,36 +2463,43 @@ open class OpusLayerBase {
         }
 
         // TODO: Need to guarantee an order when iterating controllers
-        var actual_y = 0
+        this._cached_abs_line_map_map.clear()
         this.channels.forEachIndexed { channel_index: Int, channel: OpusChannel ->
             for (line_offset in channel.lines.indices) {
                 val keypair = Pair(channel_index, line_offset)
-                this._cached_abs_line_map_map[actual_y++] = Triple(this._cached_std_line_map[keypair]!!, null, null)
+                this._cached_abs_line_map_map.add(Triple(this._cached_std_line_map[keypair]!!, null, null))
 
                 for ((type, controller) in channel.lines[line_offset].controllers.controllers) {
-                    this._cached_abs_line_map_map[actual_y++] = Triple(
-                        this._cached_std_line_map[keypair]!!,
-                        CtlLineLevel.Line,
-                        type
+                    this._cached_abs_line_map_map.add(
+                        Triple(
+                            this._cached_std_line_map[keypair]!!,
+                            CtlLineLevel.Line,
+                            type
+                        )
                     )
                 }
             }
             for (type in channel.controllers.controllers.keys) {
-                this._cached_abs_line_map_map[actual_y++] = Triple(
-                    channel_index,
-                    CtlLineLevel.Channel,
-                    type
+                this._cached_abs_line_map_map.add(
+                    Triple(
+                        channel_index,
+                        CtlLineLevel.Channel,
+                        type
+                    )
                 )
             }
         }
 
         for (type in this.controllers.controllers.keys) {
-            this._cached_abs_line_map_map[actual_y++] = Triple(
-                -1,
-                CtlLineLevel.Global,
-                type
+            this._cached_abs_line_map_map.add(
+                Triple(
+                    -1,
+                    CtlLineLevel.Global,
+                    type
+                )
             )
         }
+        Log.d("AAA", "~~~~ ${this._cached_abs_line_map_map.size}")
     }
 
     open fun overwrite_beat_range_horizontally(channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey) {
@@ -2620,6 +2646,7 @@ open class OpusLayerBase {
     }
 
     fun get_ctl_line_info(y: Int): Triple<Int, CtlLineLevel?, ControlEventType?> {
+        Log.d("AAA", "$y ? ${this._cached_abs_line_map_map.size}")
         return this._cached_abs_line_map_map[y]!!
     }
 
@@ -2633,7 +2660,6 @@ open class OpusLayerBase {
         }
 
         this.beat_count = ceil(this.beat_count.toDouble() / factor.toDouble()).toInt()
-
         this.tempo /= factor
     }
 

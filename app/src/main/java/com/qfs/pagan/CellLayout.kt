@@ -31,10 +31,9 @@ class CellLayout(private val _column_layout: ColumnLayout, private val _y: Int):
         val opus_manager = this.get_opus_manager()
         val (pointer, control_level, control_type) = opus_manager.get_ctl_line_info(this._y)
         val beat = this._get_beat()
-        Log.d("AAA", "---- $_y, $control_level, $control_type")
+        Log.d("AAA", "$control_level")
         val tree = when (control_level) {
             CtlLineLevel.Line -> {
-                Log.d("AAA", "LINE")
                 val (channel, line_offset) = opus_manager.get_std_offset(pointer)
                 opus_manager.get_line_ctl_tree(
                     control_type!!,

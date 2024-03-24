@@ -64,6 +64,7 @@ open class OpusLayerBase {
     // key: absolute line
     // Value: first is always a pointer to cached_abs_line_map, second and third are pointers to the relative ctl lines
     private var _cached_abs_line_map_map = mutableListOf<Triple<Int, CtlLineLevel?, ControlEventType?>>()
+    private var _cached_inv_abs_line_map_map = HashMap<Int, Int>()
 
     //// RO Functions ////
     /**
@@ -2464,9 +2465,11 @@ open class OpusLayerBase {
 
         // TODO: Need to guarantee an order when iterating controllers
         this._cached_abs_line_map_map.clear()
+        this._cached_inv_abs_line_map_map.clear()
         this.channels.forEachIndexed { channel_index: Int, channel: OpusChannel ->
             for (line_offset in channel.lines.indices) {
                 val keypair = Pair(channel_index, line_offset)
+                this._cached_inv_abs_line_map_map[this._cached_std_line_map[keypair]!!] = this._cached_abs_line_map_map.size
                 this._cached_abs_line_map_map.add(Triple(this._cached_std_line_map[keypair]!!, null, null))
 
                 for ((type, controller) in channel.lines[line_offset].controllers.controllers) {
@@ -2499,7 +2502,6 @@ open class OpusLayerBase {
                 )
             )
         }
-        Log.d("AAA", "~~~~ ${this._cached_abs_line_map_map.size}")
     }
 
     open fun overwrite_beat_range_horizontally(channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey) {
@@ -2646,8 +2648,11 @@ open class OpusLayerBase {
     }
 
     fun get_ctl_line_info(y: Int): Triple<Int, CtlLineLevel?, ControlEventType?> {
-        Log.d("AAA", "$y ? ${this._cached_abs_line_map_map.size}")
         return this._cached_abs_line_map_map[y]!!
+    }
+
+    fun get_ctl_line_index(abs: Int): Int? {
+        return this._cached_inv_abs_line_map_map[abs]
     }
 
     // Experimental/ not in use -yet ----------vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv

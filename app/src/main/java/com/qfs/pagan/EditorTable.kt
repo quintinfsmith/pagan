@@ -10,6 +10,7 @@ import android.widget.TableLayout
 import android.widget.TableRow
 import androidx.appcompat.view.ContextThemeWrapper
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.qfs.pagan.opusmanager.ActiveControlSet
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.OpusChannel
 import com.qfs.pagan.opusmanager.OpusLine
@@ -157,6 +158,30 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         this._initializing_column_width_map = false
     }
 
+    fun new_row(y: Int, controller: ActiveControlSet.ActiveController, ignore_ui: Boolean = false) {
+        for (i in 0 until this.get_opus_manager().beat_count) {
+            val tree = controller.events[i] ?: OpusTree()
+            this._column_width_map[i].add(
+                y,
+                if (tree.is_leaf()) {
+                    1
+                } else {
+                    tree.get_max_child_weight() * tree.size
+                }
+            )
+            this._column_width_maxes[i] = this._column_width_map[i].max()
+        }
+        // TODO: handle control line
+
+        if (!ignore_ui) {
+            val adapter = (this.get_column_recycler().adapter as ColumnRecyclerAdapter)
+            adapter.insert_row(y)
+            (this.column_label_recycler.adapter as ColumnLabelAdapter).notifyDataSetChanged()
+
+            this._line_label_layout.insert_label(y)
+        }
+    }
+
     fun new_row(y: Int, opus_line: OpusLine, ignore_ui: Boolean = false) {
         for (i in 0 until this.get_opus_manager().beat_count) {
             val tree = opus_line.beats[i]
@@ -230,7 +255,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         }
     }
 
-    fun remove_channel_rows(y: Int, count: Int, ignore_ui: Boolean = false) {
+    fun remove_rows(y: Int, count: Int, ignore_ui: Boolean = false) {
         for (i in 0 until this._column_width_map.size) {
             for (j in 0 until count) {
                 this._column_width_map[i].removeAt(y)
@@ -694,16 +719,44 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         val percussion_channel = opus_manager.channels.last()
         if (main.view_model.show_percussion) {
             if (this._column_width_map.isNotEmpty()) {
+                var newly_visible_rows = 0
                 for (i in 0 until percussion_channel.size) {
-                    this.new_row(this._line_label_layout.get_count(), percussion_channel.lines[i])
+                    val row = opus_manager.get_ctl_line_index(
+                        opus_manager.get_abs_offset(
+                            opus_manager.channels.size - 1,
+                            i
+                        )
+                    )
+
+                    val controllers = percussion_channel.lines[i].controllers.get_all()
+                    for (j in controllers.indices) {
+                        this.new_row(row + j, controllers[j].second)
+                    }
+                    this.new_row(row, percussion_channel.lines[i])
+                    newly_visible_rows += 1 + controllers.size
                 }
+
+                // Make visible the channel-specific control lines
+                val row = opus_manager.get_ctl_line_index(
+                    opus_manager.get_abs_offset(opus_manager.channels.size - 1, 0)
+                )
+                val controllers = percussion_channel.controllers.get_all()
+                for (i in controllers.indices) {
+                    this.new_row(row + newly_visible_rows + i, controllers[i].second)
+                }
+
             }
         } else {
-            val target_line_count = opus_manager.get_visible_line_count()
-            val current_line_count = opus_manager.get_total_line_count()
-            for (i in target_line_count until current_line_count) {
-                this.remove_row(target_line_count)
+            val row = opus_manager.get_ctl_line_index(
+                opus_manager.get_abs_offset(opus_manager.channels.size - 1, 0)
+            )
+            var remove_count = 0
+            for (line in percussion_channel.lines) {
+                remove_count += line.controllers.size() + 1
             }
+            remove_count += percussion_channel.controllers.size()
+
+            this.remove_rows(row, remove_count)
         }
     }
 

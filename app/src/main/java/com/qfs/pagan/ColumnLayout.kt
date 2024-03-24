@@ -33,7 +33,7 @@ class ColumnLayout(private var _view_holder: ColumnRecyclerViewHolder): LinearLa
         val opus_manager = this.get_opus_manager()
 
         (this.context as MainActivity).runOnUiThread {
-            for (y in 0 until opus_manager.get_visible_line_count()) {
+            for (y in 0 until opus_manager.get_visible_master_line_count()) {
                 this.addView(CellLayout(this, y), y)
             }
         }

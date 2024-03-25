@@ -6,8 +6,11 @@ data class OpusManagerCursor(
     var line_offset: Int = 0,
     var beat: Int = 0,
     var position: List<Int> = listOf(),
-    var range: Pair<BeatKey, BeatKey>? = null
+    var range: Pair<BeatKey, BeatKey>? = null,
+    var ctl_level: CtlLineLevel? = null,
+    var ctl_type: ControlEventType? = null
 ) {
+
     enum class CursorMode {
         Row,
         Column,
@@ -15,6 +18,7 @@ data class OpusManagerCursor(
         Range,
         Unset
     }
+
     class InvalidModeException(actual: CursorMode, expected: CursorMode): Exception("Incorrect Cursor Mode. expected $expected but got $actual")
 
     var is_linking = false
@@ -37,13 +41,29 @@ data class OpusManagerCursor(
                 true
             }
             CursorMode.Single -> {
-                this.get_beatkey() == other.get_beatkey()
+                if (this.ctl_level != other.ctl_level || this.ctl_type != other.ctl_type) {
+                    false
+                } else {
+                    when (this.ctl_level) {
+                        null,
+                        CtlLineLevel.Line -> {
+                            this.get_beatkey() == other.get_beatkey()
+                        }
+                        CtlLineLevel.Channel -> {
+                            this.channel == other.channel && other.beat == this.beat
+                        }
+                        CtlLineLevel.Global -> {
+                            other.beat == this.beat
+                        }
+                    }
+                }
             }
             CursorMode.Range -> {
                 this.range == other.range
             }
         }
     }
+
     fun is_linking_range(): Boolean {
         return this.mode == CursorMode.Range && this.is_linking
     }
@@ -53,6 +73,8 @@ data class OpusManagerCursor(
         this.channel = 0
         this.line_offset = 0
         this.beat = 0
+        this.ctl_level = null
+        this.ctl_type = null
         this.position = listOf()
         this.range = null
         this.is_linking = false
@@ -85,6 +107,8 @@ data class OpusManagerCursor(
         this.beat = beat_key.beat
         this.position = position
         this.is_linking = false
+        this.ctl_type = null
+        this.ctl_level = null
     }
 
     fun select_row(channel: Int, line_offset: Int) {
@@ -92,12 +116,76 @@ data class OpusManagerCursor(
         this.channel = channel
         this.line_offset = line_offset
         this.is_linking = false
+        this.ctl_type = null
+        this.ctl_level = null
     }
 
     fun select_column(beat: Int) {
         this.mode = CursorMode.Column
         this.beat = beat
         this.is_linking = false
+        this.ctl_type = null
+        this.ctl_level = null
+    }
+
+    fun select_ctl_at_line(beat_key: BeatKey, position: List<Int>, type: ControlEventType) {
+        this.mode = CursorMode.Single
+        this.channel = beat_key.channel
+        this.line_offset = beat_key.line_offset
+        this.beat = beat_key.beat
+        this.position = position
+        this.is_linking = false
+        this.ctl_type = type
+        this.ctl_level = CtlLineLevel.Line
+    }
+
+    fun select_ctl_at_channel(channel: Int, beat: Int, position: List<Int>, type: ControlEventType) {
+        this.mode = CursorMode.Single
+        this.channel = channel
+        this.line_offset = 0
+        this.beat = beat
+        this.position = position
+        this.is_linking = false
+        this.ctl_type = type
+        this.ctl_level = CtlLineLevel.Channel
+    }
+
+    fun select_ctl_at_global(beat: Int, position: List<Int>, type: ControlEventType) {
+        this.mode = CursorMode.Single
+        this.channel = 0
+        this.line_offset = 0
+        this.beat = beat
+        this.position = position
+        this.is_linking = false
+        this.ctl_type = type
+        this.ctl_level = CtlLineLevel.Global
+    }
+
+    fun select_ctl_row_at_line(channel: Int, line_offset: Int, type: ControlEventType) {
+        this.mode = CursorMode.Row
+        this.channel = channel
+        this.line_offset = line_offset
+        this.is_linking = false
+        this.ctl_type = type
+        this.ctl_level = CtlLineLevel.Line
+    }
+
+    fun select_ctl_row_at_channel(channel: Int, type: ControlEventType) {
+        this.mode = CursorMode.Row
+        this.channel = channel
+        this.line_offset = 0
+        this.is_linking = false
+        this.ctl_type = type
+        this.ctl_level = CtlLineLevel.Channel
+    }
+
+    fun select_ctl_row_at_global(type: ControlEventType) {
+        this.mode = CursorMode.Row
+        this.channel = 0
+        this.line_offset = 0
+        this.is_linking = false
+        this.ctl_type = type
+        this.ctl_level = CtlLineLevel.Global
     }
 
     fun select_range(beat_key_a: BeatKey, beat_key_b: BeatKey) {
@@ -130,11 +218,16 @@ data class OpusManagerCursor(
         from_key.beat = Integer.min(beat_key_a.beat, beat_key_b.beat)
         to_key.beat = Integer.max(beat_key_a.beat, beat_key_b.beat)
         this.range = Pair(from_key, to_key)
+
+        this.ctl_type = null
+        this.ctl_level = null
     }
 
     fun select_to_link(beat_key: BeatKey) {
         this.select(beat_key, listOf())
         this.is_linking = true
+        this.ctl_type = null
+        this.ctl_level = null
     }
 
     //fun move_left() {

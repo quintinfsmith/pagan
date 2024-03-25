@@ -165,7 +165,7 @@ open class OpusLayerBase {
             throw IndexOutOfBoundsException()
         }
 
-        return this._cached_abs_line_map[absolute]
+        return this._cached_abs_line_map[adj_absolute]
     }
 
     /**
@@ -1047,9 +1047,9 @@ open class OpusLayerBase {
     open fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<OpusEventSTD>>? = null) {
         this.beat_count += 1
         for (channel in this.channels) {
-            // TODO: Why are both of these being called?
+            // TODO: Why are both of these being called? (commenting incase it turns out its needed)
             channel.insert_beat(beat_index)
-            channel.set_beat_count(this.beat_count)
+            //channel.set_beat_count(this.beat_count)
         }
 
         if (beats_in_column == null) {
@@ -2640,19 +2640,19 @@ open class OpusLayerBase {
     }
 
     fun ctl_line_level(y: Int): CtlLineLevel? {
-        return this._cached_abs_line_map_map[y]!!.second
+        return this._cached_abs_line_map_map[y].second
     }
 
     fun get_ctl_line_type(y: Int): ControlEventType? {
-        return this._cached_abs_line_map_map[y]!!.third
+        return this._cached_abs_line_map_map[y].third
     }
 
     fun get_ctl_line_info(y: Int): Triple<Int, CtlLineLevel?, ControlEventType?> {
-        return this._cached_abs_line_map_map[y]!!
+        return this._cached_abs_line_map_map[y]
     }
 
-    fun get_ctl_line_index(abs: Int): Int? {
-        return this._cached_inv_abs_line_map_map[abs]
+    fun get_ctl_line_index(abs: Int): Int {
+        return this._cached_inv_abs_line_map_map[abs]!!
     }
 
     // Experimental/ not in use -yet ----------vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv

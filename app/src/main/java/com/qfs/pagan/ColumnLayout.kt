@@ -22,9 +22,6 @@ class ColumnLayout(private var _view_holder: ColumnRecyclerViewHolder): LinearLa
         this.overScrollMode = View.OVER_SCROLL_NEVER
         this.column_width_factor = this._get_editor_table().get_column_width(this._view_holder.bindingAdapterPosition)
 
-        // first, populate with placeholders that have minimal overhead...
-        // this.placeholder_populate()
-        // ...Then populate with real cells after checking that the layout is still attached (ie quick scrolling)
         this._populate()
     }
 

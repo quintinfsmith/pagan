@@ -18,6 +18,9 @@ class OpusChannel(var uuid: Int) {
     var midi_channel: Int = 0
     private var _beat_count: Int = 0
     var size: Int = 0
+    init {
+        this.controllers.new_controller(ControlEventType.Volume)
+    }
 
     fun map_line(line: Int, offset: Int) {
         this.lines[line].static_value = offset
@@ -189,8 +192,9 @@ class OpusChannel(var uuid: Int) {
 
         this._beat_count += 1
         for (line in this.lines) {
-            line.beats.add(index, OpusTree())
+            line.insert_beat(index)
         }
+        this.controllers.insert_beat(index)
     }
 
     fun line_is_empty(line_offset: Int): Boolean {

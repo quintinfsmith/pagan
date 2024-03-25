@@ -18,6 +18,7 @@ import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 class CellLayout(private val _column_layout: ColumnLayout, private val _y: Int): LinearLayout(_column_layout.context) {
     init {
+        Log.d("AAA", "INIT: $_y")
         this.isClickable = false
     }
 
@@ -31,7 +32,6 @@ class CellLayout(private val _column_layout: ColumnLayout, private val _y: Int):
         val opus_manager = this.get_opus_manager()
         val (pointer, control_level, control_type) = opus_manager.get_ctl_line_info(this._y)
         val beat = this._get_beat()
-        Log.d("AAA", "$control_level")
         val tree = when (control_level) {
             CtlLineLevel.Line -> {
                 val (channel, line_offset) = opus_manager.get_std_offset(pointer)

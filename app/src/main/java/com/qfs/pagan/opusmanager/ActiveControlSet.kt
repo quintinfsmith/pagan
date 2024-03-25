@@ -7,7 +7,7 @@ class ActiveControlSet(var beat_count: Int) {
     class ActiveController(var type: ControlEventType, var beat_count: Int) {
         companion object {
             fun from_json(obj: ActiveControllerJSON, size: Int): ActiveController {
-                var new_controller = ActiveController(obj.type, size)
+                val new_controller = ActiveController(obj.type, size)
                 for ((index, json_tree) in obj.children) {
                     new_controller.events[index] = OpusTree.from_json(json_tree)
                 }
@@ -77,6 +77,19 @@ class ActiveControlSet(var beat_count: Int) {
                 tree.replace_with(new_tree)
             }
         }
+
+        fun set_beat_count(beat_count: Int) {
+            val current_beat_count = this.events.size
+            if (beat_count > current_beat_count) {
+                for (i in current_beat_count until beat_count) {
+                    this.insert_beat(current_beat_count)
+                }
+            } else {
+                for (i in beat_count until current_beat_count) {
+                    this.remove_beat(current_beat_count - 1)
+                }
+            }
+        }
     }
 
     companion object {
@@ -95,7 +108,7 @@ class ActiveControlSet(var beat_count: Int) {
     val controllers = HashMap<ControlEventType, ActiveController>()
 
     fun size(): Int {
-        return controllers.size
+        return this.controllers.size
     }
 
     fun get_all(): Array<Pair<ControlEventType, ActiveController>> {
@@ -111,6 +124,7 @@ class ActiveControlSet(var beat_count: Int) {
             this.controllers[type] = ActiveController(type, this.beat_count)
         } else {
             this.controllers[type] = controller
+            controller.set_beat_count(this.beat_count)
         }
     }
 

@@ -1,7 +1,6 @@
 package com.qfs.pagan.opusmanager
 
 import com.qfs.pagan.structure.OpusTree
-import kotlinx.serialization.Serializable
 
 class OpusLine(var beats: MutableList<OpusTree<OpusEventSTD>>) {
     constructor(beat_count: Int) : this(Array<OpusTree<OpusEventSTD>>(beat_count) { OpusTree() }.toMutableList())
@@ -65,6 +64,13 @@ class OpusLine(var beats: MutableList<OpusTree<OpusEventSTD>>) {
         }
 
         return true
+    }
+
+    fun insert_beat(index: Int) {
+        this.beats.add(index, OpusTree())
+        for ((_, controller) in this.controllers.get_all()) {
+            controller.insert_beat(index)
+        }
     }
 
     fun set_beat_count(new_beat_count: Int) {

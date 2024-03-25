@@ -144,6 +144,35 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                         val new_weight = tree.get_max_child_weight() * tree.size
                         this._column_width_map[beat].add(new_weight)
                     }
+                    for ((type, controller) in channel.lines[j].controllers.get_all()) {
+                        val ctl_tree = controller.get_beat(beat)
+                        if (ctl_tree.is_leaf()) {
+                            this._column_width_map[beat].add(1)
+                        } else {
+                            val new_weight = ctl_tree.get_max_child_weight() * ctl_tree.size
+                            this._column_width_map[beat].add(new_weight)
+                        }
+                    }
+                }
+
+                for ((type, controller) in channel.controllers.get_all()) {
+                    val ctl_tree = controller.get_beat(beat)
+                    if (ctl_tree.is_leaf()) {
+                        this._column_width_map[beat].add(1)
+                    } else {
+                        val new_weight = ctl_tree.get_max_child_weight() * ctl_tree.size
+                        this._column_width_map[beat].add(new_weight)
+                    }
+                }
+            }
+
+            for ((type, controller) in opus_manager.controllers.get_all()) {
+                val ctl_tree = controller.get_beat(beat)
+                if (ctl_tree.is_leaf()) {
+                    this._column_width_map[beat].add(1)
+                } else {
+                    val new_weight = ctl_tree.get_max_child_weight() * ctl_tree.size
+                    this._column_width_map[beat].add(new_weight)
                 }
             }
 
@@ -280,6 +309,33 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                 } else {
                     column.add(tree.get_max_child_weight() * tree.size)
                 }
+                for ((type, controller) in channel.lines[j].controllers.get_all()) {
+                    val ctl_tree = controller.get_beat(index)
+                    if (ctl_tree.is_leaf()) {
+                        column.add(1)
+                    } else {
+                        val new_weight = ctl_tree.get_max_child_weight() * ctl_tree.size
+                        column.add(new_weight)
+                    }
+                }
+            }
+            for ((type, controller) in channel.controllers.get_all()) {
+                val ctl_tree = controller.get_beat(index)
+                if (ctl_tree.is_leaf()) {
+                    column.add(1)
+                } else {
+                    val new_weight = ctl_tree.get_max_child_weight() * ctl_tree.size
+                    column.add(new_weight)
+                }
+            }
+        }
+        for ((type, controller) in opus_manager.controllers.get_all()) {
+            val ctl_tree = controller.get_beat(index)
+            if (ctl_tree.is_leaf()) {
+                column.add(1)
+            } else {
+                val new_weight = ctl_tree.get_max_child_weight() * ctl_tree.size
+                column.add(new_weight)
             }
         }
 

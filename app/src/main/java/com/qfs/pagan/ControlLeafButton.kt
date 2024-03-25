@@ -10,7 +10,6 @@ import com.qfs.pagan.ColorMap.Palette
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.OpusControlEvent
-import com.qfs.pagan.structure.OpusTree
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 class ControlLeafButton(
@@ -217,46 +216,48 @@ class ControlLeafButton(
             return drawableState
         }
 
-        val opus_manager = this.get_opus_manager()
-        val beat_key = try {
-            this._get_beat_key()
-        } catch (e: IndexOutOfBoundsException) {
-            return drawableState
-        }
-        if (beat_key.beat == -1) {
-            return drawableState
-        }
-        val position = this.position
-
-        val tree = try {
-            opus_manager.get_tree(beat_key, position)
-        } catch (e: OpusTree.InvalidGetCall) {
-            return drawableState
-        } catch (e: IndexOutOfBoundsException) {
-            return drawableState
-        }
-
-        val new_state = mutableListOf<Int>()
-        if (tree.is_event()) {
-            new_state.add(R.attr.state_active)
-            val abs_value = opus_manager.get_absolute_value(beat_key, position)
-            if (abs_value == null || abs_value < 0) {
-                new_state.add(R.attr.state_invalid)
-            }
-        }
-
-        if (opus_manager.is_networked(beat_key)) {
-            new_state.add(R.attr.state_linked)
-        }
-        if (opus_manager.is_selected(beat_key, position)) {
-            new_state.add(R.attr.state_focused)
-        }
-        if (beat_key.channel % 2 == 0) {
-            new_state.add(R.attr.state_alternate)
-        }
-
-        mergeDrawableStates(drawableState, new_state.toIntArray())
         return drawableState
+
+        //val opus_manager = this.get_opus_manager()
+        //val beat_key = try {
+        //    this._get_beat_key()
+        //} catch (e: IndexOutOfBoundsException) {
+        //    return drawableState
+        //}
+        //if (beat_key.beat == -1) {
+        //    return drawableState
+        //}
+        //val position = this.position
+
+        //val tree = try {
+        //    opus_manager.get_tree(beat_key, position)
+        //} catch (e: OpusTree.InvalidGetCall) {
+        //    return drawableState
+        //} catch (e: IndexOutOfBoundsException) {
+        //    return drawableState
+        //}
+
+        //val new_state = mutableListOf<Int>()
+        //if (tree.is_event()) {
+        //    new_state.add(R.attr.state_active)
+        //    val abs_value = opus_manager.get_absolute_value(beat_key, position)
+        //    if (abs_value == null || abs_value < 0) {
+        //        new_state.add(R.attr.state_invalid)
+        //    }
+        //}
+
+        //if (opus_manager.is_networked(beat_key)) {
+        //    new_state.add(R.attr.state_linked)
+        //}
+        //if (opus_manager.is_selected(beat_key, position)) {
+        //    new_state.add(R.attr.state_focused)
+        //}
+        //if (beat_key.channel % 2 == 0) {
+        //    new_state.add(R.attr.state_alternate)
+        //}
+
+        //mergeDrawableStates(drawableState, new_state.toIntArray())
+        //return drawableState
     }
 
     override fun onCreateDrawableState(extraSpace: Int): IntArray? {

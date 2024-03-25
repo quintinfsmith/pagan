@@ -1,5 +1,6 @@
 package com.qfs.pagan
 import android.content.res.Configuration
+import android.util.Log
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
@@ -1001,6 +1002,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             }
             total += channel.controllers.size()
         }
+        Log.d("AAA", "V: $total")
         return total
     }
 

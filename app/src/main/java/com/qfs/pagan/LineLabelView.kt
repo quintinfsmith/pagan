@@ -178,7 +178,7 @@ class LineLabelView(context: Context, var row: Int): AppCompatTextView(ContextTh
 
         // TODO; not sure what i'm going to do with this, might not be draggable
         if (ctl_level != null) {
-            return true
+            return false
         }
 
         return if (touchEvent == null) {

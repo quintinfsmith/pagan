@@ -1,6 +1,5 @@
 package com.qfs.pagan
 
-import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -18,7 +17,6 @@ import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 class CellLayout(private val _column_layout: ColumnLayout, private val _y: Int): LinearLayout(_column_layout.context) {
     init {
-        Log.d("AAA", "INIT: $_y")
         this.isClickable = false
     }
 

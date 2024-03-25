@@ -15,7 +15,7 @@ import com.qfs.pagan.opusmanager.OpusLayerLinks
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
-class LineLabelView(context: Context, var channel: Int, var line_offset: Int): AppCompatTextView(ContextThemeWrapper(context, R.style.line_label)),
+class LineLabelView(context: Context, var row: Int): AppCompatTextView(ContextThemeWrapper(context, R.style.line_label)),
     View.OnTouchListener {
 
     /*
@@ -34,12 +34,17 @@ class LineLabelView(context: Context, var channel: Int, var line_offset: Int): A
 
         this.setOnDragListener { view: View, dragEvent: DragEvent ->
             val adapter = (view.parent.parent as LineLabelColumnLayout)
+            val opus_manager = this.get_opus_manager()
+            val (pointer, ctl_level, ctl_type) = opus_manager.get_ctl_line_info(this.row)
+            if (ctl_level != null) {
+                return@setOnDragListener true
+            }
+
             when (dragEvent.action) {
                 DragEvent.ACTION_DROP -> {
                     if (adapter.is_dragging()) {
                         val (from_channel, from_line) = adapter.dragging_position!!
-                        val (to_channel, to_line) = (view as LineLabelView).get_row()
-                        val opus_manager = this.get_opus_manager()
+                        val (to_channel, to_line) = opus_manager.get_std_offset(pointer)
                         if (from_channel != to_channel || from_line != to_line) {
                             try {
                                 opus_manager.swap_lines(
@@ -81,11 +86,28 @@ class LineLabelView(context: Context, var channel: Int, var line_offset: Int): A
 
     private fun get_label_text(): String {
         val opus_manager = this.get_opus_manager()
-        return if (!opus_manager.is_percussion(this.channel)) {
-            "${this.channel}::${this.line_offset}"
-        } else {
-            val instrument = opus_manager.get_percussion_instrument(this.line_offset)
-            "!$instrument"
+
+        val (pointer, ctl_level, ctl_type) = opus_manager.get_ctl_line_info(
+            this.row
+        )
+
+        return when (ctl_level) {
+            null -> {
+                var (channel, line_offset) = opus_manager.get_std_offset(pointer)
+                if (!opus_manager.is_percussion(channel)) {
+                    "${channel}::${line_offset}"
+                } else {
+                    val instrument = opus_manager.get_percussion_instrument(line_offset)
+                    "!$instrument"
+                }
+            }
+            else -> {
+                "TODO"
+            }
+            //CtlLineLevel.Line -> {
+            //}
+            //CtlLineLevel.Channel -> TODO()
+            //CtlLineLevel.Global -> TODO()
         }
     }
 
@@ -104,26 +126,36 @@ class LineLabelView(context: Context, var channel: Int, var line_offset: Int): A
             return drawableState
         }
         val opus_manager = this.get_opus_manager()
+        val (pointer, ctl_level, ctl_type) = opus_manager.get_ctl_line_info(this.row)
+
         val new_state = mutableListOf<Int>()
-        if (this.channel % 2 == 0) {
-            new_state.add(R.attr.state_channel_even)
+        when (ctl_level) {
+            null -> {
+                var (channel, line_offset) = opus_manager.get_std_offset(pointer)
+                if (channel % 2 == 0) {
+                    new_state.add(R.attr.state_channel_even)
+                }
+
+                when (opus_manager.cursor.mode) {
+                    OpusManagerCursor.CursorMode.Single,
+                    OpusManagerCursor.CursorMode.Row -> {
+                        if (opus_manager.cursor.channel == channel && opus_manager.cursor.line_offset == line_offset) {
+                            new_state.add(R.attr.state_focused)
+                        }
+                    }
+                    OpusManagerCursor.CursorMode.Range -> {
+                        val (first, second) = opus_manager.cursor.range!!
+                        if ((channel > first.channel && channel < second.channel) || (channel == first.channel && line_offset >= first.line_offset) || (channel == second.channel && line_offset <= second.line_offset)) {
+                            new_state.add(R.attr.state_focused)
+                        }
+                    }
+                    else -> { }
+                }
+            }
+            else -> {
+            }
         }
 
-        when (opus_manager.cursor.mode) {
-            OpusManagerCursor.CursorMode.Single,
-            OpusManagerCursor.CursorMode.Row -> {
-                if (opus_manager.cursor.channel == this.channel && opus_manager.cursor.line_offset == this.line_offset) {
-                    new_state.add(R.attr.state_focused)
-                }
-            }
-            OpusManagerCursor.CursorMode.Range -> {
-                val (first, second) = opus_manager.cursor.range!!
-                if ((this.channel > first.channel && this.channel < second.channel) || (this.channel == first.channel && this.line_offset >= first.line_offset) || (this.channel == second.channel && this.line_offset <= second.line_offset)) {
-                    new_state.add(R.attr.state_focused)
-                }
-            }
-            else -> { }
-        }
         mergeDrawableStates(drawableState, new_state.toIntArray())
         return drawableState
     }
@@ -138,20 +170,24 @@ class LineLabelView(context: Context, var channel: Int, var line_offset: Int): A
         return (this.parent.parent as LineLabelColumnLayout).get_opus_manager()
     }
 
-    fun get_row(): Pair<Int, Int> {
-        return Pair(this.channel, this.line_offset)
-    }
-
     override fun onTouch(view: View?, touchEvent: MotionEvent?): Boolean {
         val column_layout = this.parent.parent as LineLabelColumnLayout
+
+        val opus_manager = this.get_opus_manager()
+        val (pointer, ctl_level, ctl_type) = opus_manager.get_ctl_line_info(this.row)
+
+        // TODO; not sure what i'm going to do with this, might not be draggable
+        if (ctl_level != null) {
+            return true
+        }
 
         return if (touchEvent == null) {
             true
         } else if (touchEvent.action == MotionEvent.ACTION_MOVE) {
-            val (channel, line_offset) = (view as LineLabelView).get_row()
+            val (channel, line_offset) = opus_manager.get_std_offset(pointer)
             if (!column_layout.is_dragging()) {
                 column_layout.set_dragging_line(channel, line_offset)
-                view.startDragAndDrop(
+                (view as LineLabelView).startDragAndDrop(
                     null,
                     DragShadowBuilder(view),
                     null,
@@ -174,7 +210,15 @@ class LineLabelView(context: Context, var channel: Int, var line_offset: Int): A
 
     private fun on_click() {
         val opus_manager = this.get_opus_manager()
-        val (channel, line_offset) = this.get_row()
+
+        val (pointer, ctl_level, ctl_type) = opus_manager.get_ctl_line_info(this.row)
+
+        // TODO
+        if (ctl_level != null) {
+            return
+        }
+
+        val (channel, line_offset) = opus_manager.get_std_offset(pointer)
 
         val cursor = opus_manager.cursor
         if (cursor.is_linking_range()) {

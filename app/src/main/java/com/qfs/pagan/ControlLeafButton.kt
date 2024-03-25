@@ -3,7 +3,6 @@ package com.qfs.pagan
 import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.drawable.LayerDrawable
-import android.util.Log
 import android.view.MotionEvent
 import android.widget.LinearLayout
 import androidx.appcompat.view.ContextThemeWrapper
@@ -22,7 +21,6 @@ class ControlLeafButton(
 ) : LinearLayout(ContextThemeWrapper(context, R.style.leaf)) {
 
     init {
-        Log.d("AAA", "LEF")
         this.isClickable = false
         this.minimumHeight = resources.getDimension(R.dimen.line_height).toInt()
         this.minimumWidth = resources.getDimension(R.dimen.base_leaf_width).toInt()

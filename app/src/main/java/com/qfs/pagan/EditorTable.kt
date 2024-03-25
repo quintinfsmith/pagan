@@ -122,11 +122,10 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             column_label_adapter.add_column(beat)
         }
 
-        for (channel in opus_manager.get_visible_channels()) {
-            for (i in 0 until channel.lines.size) {
-                this._line_label_layout.insert_label()
-            }
+        for (i in 0 until opus_manager.get_visible_master_line_count()) {
+            this._line_label_layout.insert_label()
         }
+
         main_adapter.add_columns(0, opus_manager.beat_count)
         this.needs_setup = false
     }
@@ -147,6 +146,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                     }
                 }
             }
+
             this._column_width_maxes.add(
                 if (this._column_width_map.size > beat && this._column_width_map[beat].isNotEmpty()) {
                     this._column_width_map[beat].max()

@@ -25,27 +25,16 @@ class LineLabelColumnLayout(editor_table: EditorTable): ScrollView(editor_table.
 
     fun insert_label(y: Int? = null) {
         val adj_y = y ?: this._inner_wrapper.childCount
-        val (channel, line_offset) = this.get_opus_manager().get_std_offset(adj_y)
-
-        val label_view = LineLabelView(this.context, channel, line_offset)
-
+        val label_view = LineLabelView(this.context, adj_y)
         this._inner_wrapper.addView(label_view, adj_y)
 
         this._notify_item_range_changed(adj_y + 1, this._inner_wrapper.childCount - (adj_y + 1))
     }
 
     fun insert_labels(y: Int, count: Int) {
-        val opus_manager = this.get_opus_manager()
-        var (channel, line_offset) = opus_manager.get_std_offset(y)
         for (i in 0 until count) {
-            val label_view = LineLabelView(this.context, channel, line_offset)
+            val label_view = LineLabelView(this.context, y)
             this._inner_wrapper.addView(label_view, y + i)
-            if (line_offset < opus_manager.channels[channel].size - 1) {
-                line_offset += 1
-            } else {
-                channel += 1
-                line_offset = 0
-            }
         }
 
         this._notify_item_range_changed(y + count , this._inner_wrapper.childCount - y)
@@ -96,7 +85,6 @@ class LineLabelColumnLayout(editor_table: EditorTable): ScrollView(editor_table.
         this._notify_item_range_changed(y, 1)
     }
 
-    // TODO: THis feels like it could be much tighter
     private fun _notify_item_range_changed(y: Int, count: Int) {
         if (y > this._inner_wrapper.childCount) {
             // Nothing to change
@@ -104,38 +92,13 @@ class LineLabelColumnLayout(editor_table: EditorTable): ScrollView(editor_table.
         }
 
         val view_stack = mutableListOf<View>()
-        val opus_manager = this.get_opus_manager()
-
-        // calculate the new channel/line_offset by it's previous neighbour
-        var (channel, line_offset) = if (y > 0) {
-            val prev_label = this._inner_wrapper.getChildAt(y - 1) as LineLabelView
-            val prev = prev_label.get_row()
-            if (prev.second < opus_manager.channels[prev.first].size - 1) {
-                Pair(prev.first, prev.second + 1)
-            } else {
-                Pair(prev.first + 1, 0)
-            }
-        } else {
-            Pair(0,0)
-        }
 
         for (i in 0 until count) {
             if (i + y < this._inner_wrapper.childCount) {
                 val label = this._inner_wrapper.getChildAt(i + y) as LineLabelView
-                label.channel = channel
-                label.line_offset = line_offset
-
-                if (channel >= opus_manager.channels.size) {
-                    break
-                } else if (line_offset + 1 >= opus_manager.channels[channel].size) {
-                    line_offset = 0
-                    channel += 1
-                } else {
-                    line_offset += 1
-                }
-
+                label.row = i + y
                 label.set_text()
-                view_stack.add( label )
+                view_stack.add(label)
             } else {
                 break
             }

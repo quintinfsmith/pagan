@@ -4,7 +4,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import androidx.recyclerview.widget.RecyclerView
-import com.qfs.pagan.opusmanager.BeatKey
 import kotlin.math.max
 import kotlin.math.min
 import com.qfs.pagan.OpusLayerInterface as OpusManager
@@ -146,18 +145,6 @@ class ColumnRecyclerAdapter(private val _recycler: ColumnRecycler, editor_table:
         }
         this._column_count = 0
         this.notifyItemRangeRemoved(0, count)
-    }
-
-    fun notify_cell_changed(beat_key: BeatKey, state_only: Boolean = false) {
-        val x = beat_key.beat
-        val y = this.get_opus_manager().get_abs_offset(beat_key.channel, beat_key.line_offset)
-        val column_layout = this._get_column_layout(x)
-        //this.notifyItemChanged(x)
-        if (column_layout == null) {
-            this.notifyItemChanged(x)
-        } else {
-            column_layout.notifyItemChanged(y, state_only)
-        }
     }
 
     fun notify_cell_changed(y: Int, x: Int, state_only: Boolean = false) {

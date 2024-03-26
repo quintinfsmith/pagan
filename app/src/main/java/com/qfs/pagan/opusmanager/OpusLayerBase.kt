@@ -50,7 +50,7 @@ open class OpusLayerBase {
     private var _channel_uuid_map = HashMap<Int, OpusChannel>()
 
     var beat_count: Int = 1
-    var controllers = ActiveControlSet(beat_count)
+    var controllers = ActiveControlSet(beat_count, setOf(ControlEventType.Tempo))
     var channels: MutableList<OpusChannel> = mutableListOf()
     var path: String? = null
     var project_name: String = DEFAULT_NAME

@@ -6,7 +6,7 @@ class OpusLine(var beats: MutableList<OpusTree<OpusEventSTD>>) {
     constructor(beat_count: Int) : this(Array<OpusTree<OpusEventSTD>>(beat_count) { OpusTree() }.toMutableList())
     var volume = 64
     var static_value: Int? = null
-    var controllers = ActiveControlSet(this.beats.size)
+    var controllers = ActiveControlSet(this.beats.size, setOf(ControlEventType.Volume))
 
     fun squish(factor: Int) {
         val new_beats = mutableListOf<OpusTree<OpusEventSTD>>()

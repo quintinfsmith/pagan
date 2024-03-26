@@ -3,7 +3,7 @@ package com.qfs.pagan.opusmanager
 import com.qfs.pagan.structure.OpusTree
 
 
-class ActiveControlSet(var beat_count: Int) {
+class ActiveControlSet(var beat_count: Int, default_enabled: Set<ControlEventType>? = null) {
     class ActiveController(var type: ControlEventType, beat_count: Int) {
         companion object {
             fun from_json(obj: ActiveControllerJSON, size: Int): ActiveController {
@@ -14,6 +14,7 @@ class ActiveControlSet(var beat_count: Int) {
                 return new_controller
             }
         }
+
         var events = mutableListOf<OpusTree<OpusControlEvent>?>()
 
         init {
@@ -74,7 +75,7 @@ class ActiveControlSet(var beat_count: Int) {
             if (position.isEmpty()) {
                 this.events[beat] = new_tree
             } else {
-                var tree = this.get_beat(beat)   
+                var tree = this.get_beat(beat)
                 for (i in position) {
                     tree = tree[i]
                 }
@@ -110,6 +111,12 @@ class ActiveControlSet(var beat_count: Int) {
     }
 
     val controllers = HashMap<ControlEventType, ActiveController>()
+
+    init {
+        for (type in default_enabled ?: setOf()) {
+            this.new_controller(type)
+        }
+    }
 
     fun size(): Int {
         return this.controllers.size

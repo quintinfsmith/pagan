@@ -97,53 +97,60 @@ class CellLayout(private val _column_layout: ColumnLayout, private val _y: Int):
     }
 
     private fun buildTreeView(tree: OpusTree<OpusEvent>, position: List<Int>, divisions: List<Int>) {
-       if (tree.is_leaf()) {
-           val opus_manager = this.get_opus_manager()
-           val control_type = opus_manager.get_ctl_line_type(this._y)
-           val tvLeaf: View = if (control_type == null) {
-               LeafButton(
-                   this.context,
-                   opus_manager.tuning_map.size,
-                   tree.get_event() as OpusEventSTD?,
-                   position,
-                   this.is_percussion()
-               )
-           } else {
-               ControlLeafButton(
-                   this.context,
-                   tree.get_event() as OpusControlEvent?,
-                   position,
-                   control_type
-               )
-           }
+        if (tree.is_leaf()) {
+            val opus_manager = this.get_opus_manager()
+            val control_type = opus_manager.get_ctl_line_type(this._y)
+            val tvLeaf: View = if (control_type == null) {
+                LeafButton(
+                    this.context,
+                    opus_manager.tuning_map.size,
+                    tree.get_event() as OpusEventSTD?,
+                    position,
+                    this.is_percussion()
+                )
+            } else {
+                ControlLeafButton(
+                    this.context,
+                    tree.get_event() as OpusControlEvent?,
+                    position,
+                    control_type
+                )
+            }
 
-           this.addView(tvLeaf)
+            this.addView(tvLeaf)
 
-           (tvLeaf.layoutParams as LayoutParams).gravity = Gravity.CENTER
-           (tvLeaf.layoutParams as LayoutParams).height = MATCH_PARENT
-           var new_width_factor = this._column_layout.column_width_factor.toFloat()
-           for (d in divisions) {
-               new_width_factor /= d.toFloat()
-           }
+            (tvLeaf.layoutParams as LayoutParams).gravity = Gravity.CENTER
+            (tvLeaf.layoutParams as LayoutParams).height = MATCH_PARENT
+            var new_width_factor = this._column_layout.column_width_factor.toFloat()
+            for (d in divisions) {
+                new_width_factor /= d.toFloat()
+            }
 
-           (tvLeaf.layoutParams as LayoutParams).weight = new_width_factor
-           (tvLeaf.layoutParams as LayoutParams).width = 0
-           val base_leaf_width = resources.getDimension(R.dimen.base_leaf_width)
-           tvLeaf.minimumWidth = base_leaf_width.roundToInt()
-       } else {
-           val new_divisions = divisions.toMutableList()
-           new_divisions.add(tree.size)
-           for (i in 0 until tree.size) {
-               val new_position = position.toMutableList()
-               new_position.add(i)
-               this.buildTreeView(
-                   tree[i],
-                   new_position,
-                   new_divisions
-               )
-           }
-       }
-   }
+            (tvLeaf.layoutParams as LayoutParams).weight = new_width_factor
+            (tvLeaf.layoutParams as LayoutParams).width = 0
+            val base_leaf_width = resources.getDimension(R.dimen.base_leaf_width)
+            tvLeaf.minimumWidth = base_leaf_width.roundToInt()
+        } else {
+            val new_divisions = divisions.toMutableList()
+            new_divisions.add(tree.size)
+            for (i in 0 until tree.size) {
+                val new_position = position.toMutableList()
+                new_position.add(i)
+                this.buildTreeView(
+                    tree[i],
+                    new_position,
+                    new_divisions
+                )
+            }
+        }
+    }
+
+    fun get_coord(): EditorTable.Coordinate {
+        return EditorTable.Coordinate(
+            this._y,
+            this._get_beat()
+        )
+    }
 
     private fun _get_beat(): Int {
         return (this.parent as ColumnLayout).get_beat()
@@ -166,4 +173,5 @@ class CellLayout(private val _column_layout: ColumnLayout, private val _y: Int):
         val opus_manager = this.get_opus_manager()
         return opus_manager.is_percussion(this.get_beat_key().channel)
     }
+
 }

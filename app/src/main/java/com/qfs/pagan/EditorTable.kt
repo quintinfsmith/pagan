@@ -22,6 +22,7 @@ import kotlin.math.roundToInt
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, attrs) {
+    data class Coordinate(val y: Int, val x: Int)
     val column_label_recycler = ColumnLabelRecycler(context)
     private val _line_label_layout = LineLabelColumnLayout(this)
     private var _scroll_view = CompoundScrollView(this)
@@ -41,7 +42,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
     var needs_setup = true
 
-    private val _queued_cell_notifications = mutableListOf<BeatKey>()
+    private val _queued_cell_notifications = mutableListOf<Coordinate>()
 
     companion object {
         // Intentionally Not Enums, So we can use gt/lt comparisons instead of multiple checks
@@ -237,18 +238,6 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         }
     }
 
-    fun remove_row(y: Int, ignore_ui: Boolean = false) {
-        for (i in 0 until this._column_width_map.size) {
-            this._column_width_map[i].removeAt(y)
-            this._column_width_maxes[i] = this._column_width_map[i].max()
-        }
-        if (! ignore_ui) {
-            (this.get_column_recycler().adapter as ColumnRecyclerAdapter).remove_row(y)
-            this._line_label_layout.remove_label(y)
-            (this.column_label_recycler.adapter as ColumnLabelAdapter).notifyDataSetChanged()
-        }
-    }
-
     fun remove_rows(y: Int, count: Int, ignore_ui: Boolean = false) {
         for (i in 0 until this._column_width_map.size) {
             for (j in 0 until count) {
@@ -440,56 +429,70 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         this.notify_cell_changes(queued)
     }
 
-    fun notify_cell_changes(beat_keys: List<BeatKey>, ignore_ui: Boolean = false) {
-        val opus_manager = this.get_opus_manager()
-        if (opus_manager.history_cache.isLocked()) {
-            this._queued_cell_notifications.addAll(beat_keys)
-            return
-        }
-
+    fun notify_cell_changes(cell_coords: List<Coordinate>, ignore_ui: Boolean = false) {
         val column_recycler_adapter = (this.get_column_recycler().adapter!! as ColumnRecyclerAdapter)
         val percussion_visible = this.get_activity().view_model.show_percussion
 
         val changed_beats = mutableSetOf<Int>()
-        val changed_beat_keys = mutableSetOf<BeatKey>()
-        val done_keys = mutableSetOf<BeatKey>()
-        for (beat_key in beat_keys) {
-            if (done_keys.contains(beat_key)) {
-                continue
-            }
-            done_keys.add(beat_key)
+        val changed_beat_keys = mutableSetOf<Coordinate>()
+        val done_keys = mutableSetOf<Coordinate>()
+        val opus_manager = this.get_opus_manager()
+        val percussion_first_row = opus_manager.get_ctl_line_index(
+            opus_manager.get_abs_offset(opus_manager.channels.size - 1, 0)
+        )
+        var percussion_row_count = opus_manager.channels.last().controllers.size()
+        for (line in opus_manager.channels.last().lines) {
+            percussion_row_count += 1 + line.controllers.size()
+        }
+        val percussion_range = percussion_first_row .. percussion_first_row + percussion_row_count
 
-            if (!percussion_visible && opus_manager.is_percussion(beat_key.channel)) {
+        for (coord in cell_coords) {
+            if (done_keys.contains(coord)) {
                 continue
             }
-            val y = try {
-                opus_manager.get_ctl_line_index(
-                    opus_manager.get_abs_offset(beat_key.channel, beat_key.line_offset)
-                )
-            } catch (e: IndexOutOfBoundsException) {
+            done_keys.add(coord)
+
+            if (!percussion_visible && percussion_range.contains(coord.y)) {
                 continue
             }
 
             val original_width = try {
-                this._column_width_maxes[beat_key.beat]
+                this._column_width_maxes[coord.x]
             } catch (e: java.lang.IndexOutOfBoundsException) {
                 continue
             }
 
-            val new_tree = opus_manager.get_tree(beat_key)
-            val new_cell_width = if (new_tree.is_leaf()) {
-                1
-            } else {
-                new_tree.get_max_child_weight() * new_tree.size
-            }
+            val (pointer, ctl_level, ctl_type) = opus_manager.get_ctl_line_info(coord.y)
+            when (ctl_level) {
+                null -> {
+                    val (channel, line_offset) = opus_manager.get_std_offset(pointer)
+                    val new_tree = opus_manager.get_tree(
+                        BeatKey(
+                            channel,
+                            line_offset,
+                            coord.x
+                        )
+                    )
 
-            this._column_width_map[beat_key.beat][y] = new_cell_width
-            this._column_width_maxes[beat_key.beat] = this._column_width_map[beat_key.beat].max()
+                    val new_cell_width = if (new_tree.is_leaf()) {
+                        1
+                    } else {
+                        new_tree.get_max_child_weight() * new_tree.size
+                    }
 
-            if (original_width != this._column_width_maxes[beat_key.beat]) {
-                changed_beats.add(beat_key.beat)
-            } else {
-                changed_beat_keys.add(beat_key)
+                    this._column_width_map[coord.x][coord.y] = new_cell_width
+                    this._column_width_maxes[coord.x] = this._column_width_map[coord.x].max()
+
+                    if (original_width != this._column_width_maxes[coord.x]) {
+                        changed_beats.add(coord.x)
+                    } else {
+                        changed_beat_keys.add(coord)
+                    }
+                }
+
+                CtlLineLevel.Line -> TODO()
+                CtlLineLevel.Channel -> TODO()
+                CtlLineLevel.Global -> TODO()
             }
         }
 
@@ -499,12 +502,12 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                 this.column_label_recycler.adapter!!.notifyItemChanged(beat)
                 column_recycler_adapter.notifyItemChanged(beat)
             }
-            for (changed_key in changed_beat_keys) {
+            for (coord in changed_beat_keys) {
                 // Don't bother notifying beat changed, was handled in column notification
-                if (changed_key.beat in changed_beats) {
+                if (coord.x in changed_beats) {
                     continue
                 }
-                column_recycler_adapter.notify_cell_changed(changed_key)
+                column_recycler_adapter.notify_cell_changed(coord.y, coord.x)
             }
         }
         if (this._queued_cell_notifications.isNotEmpty()) {
@@ -512,17 +515,8 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         }
     }
 
-    fun queue_cell_changes(beat_keys: List<BeatKey>) {
-        this._queued_cell_notifications.addAll(beat_keys)
-    }
-    fun notify_cell_change(beat_key: BeatKey, ignore_ui: Boolean = false) {
-        val opus_manager = this.get_opus_manager()
-        val all_keys = opus_manager.get_all_linked(beat_key).toList()
-        if (opus_manager.history_cache.isLocked()) {
-            this.queue_cell_changes(all_keys)
-        } else {
-            this.notify_cell_changes(all_keys, ignore_ui)
-        }
+    fun queue_cell_changes(cell_coords: List<Coordinate>) {
+        this._queued_cell_notifications.addAll(cell_coords)
     }
 
     fun get_column_width(column: Int): Int {

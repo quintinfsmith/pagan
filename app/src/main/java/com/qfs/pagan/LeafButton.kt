@@ -181,13 +181,13 @@ class LeafButton(
                 when (e) {
                     is OpusLayerLinks.SelfLinkError -> { }
                     is OpusLayerLinks.MixedLinkException -> {
-                        editor_table.notify_cell_change(beat_key)
+                        editor_table.notify_cell_changes(listOf(this.get_coord()))
                         (this.get_activity()).feedback_msg(context.getString(R.string.feedback_mixed_link))
                     }
                     is OpusLayerLinks.LinkRangeOverlap,
                     is OpusLayerBase.RangeOverflow,
                     is OpusLayerLinks.LinkRangeOverflow -> {
-                        editor_table.notify_cell_change(beat_key)
+                        editor_table.notify_cell_changes(listOf(this.get_coord()))
                         opus_manager.cursor.is_linking = false
                         opus_manager.cursor_select(beat_key, this.position)
                         this.get_activity().feedback_msg(context.getString(R.string.feedback_bad_range))
@@ -357,6 +357,10 @@ class LeafButton(
 
     fun get_opus_manager(): OpusManager {
         return (this.parent as CellLayout).get_opus_manager()
+    }
+
+    private fun get_coord(): EditorTable.Coordinate {
+        return (this.parent as CellLayout).get_coord()
     }
 
     private fun _get_beat_key(): BeatKey {

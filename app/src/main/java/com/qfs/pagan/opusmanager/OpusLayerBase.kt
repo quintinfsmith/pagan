@@ -1047,10 +1047,9 @@ open class OpusLayerBase {
     open fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<OpusEventSTD>>? = null) {
         this.beat_count += 1
         for (channel in this.channels) {
-            // TODO: Why are both of these being called? (commenting incase it turns out its needed)
             channel.insert_beat(beat_index)
-            //channel.set_beat_count(this.beat_count)
         }
+        this.controllers.insert_beat(beat_index)
 
         if (beats_in_column == null) {
             return
@@ -1064,9 +1063,6 @@ open class OpusLayerBase {
             }
         }
 
-        for (controller in this.controllers.controllers.values) {
-            controller.insert_beat(beat_index)
-        }
     }
 
     open fun insert_line(channel: Int, line_offset: Int, line: OpusLine) {
@@ -1588,7 +1584,13 @@ open class OpusLayerBase {
         this.new_channel()
         this.insert_beats(0, 4)
         this.set_project_name(this.project_name)
+        this.new_global_controller(ControlEventType.Tempo)
         this.on_project_changed()
+    }
+
+    open fun new_global_controller(type: ControlEventType) {
+        this.controllers.new_controller(type)
+        this.recache_line_maps()
     }
 
     open fun load_json_file(path: String) {
@@ -2463,7 +2465,6 @@ open class OpusLayerBase {
             }
         }
 
-        // TODO: Need to guarantee an order when iterating controllers
         this._cached_abs_line_map_map.clear()
         this._cached_inv_abs_line_map_map.clear()
         this.channels.forEachIndexed { channel_index: Int, channel: OpusChannel ->

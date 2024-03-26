@@ -4,7 +4,7 @@ import com.qfs.pagan.structure.OpusTree
 
 
 class ActiveControlSet(var beat_count: Int) {
-    class ActiveController(var type: ControlEventType, var beat_count: Int) {
+    class ActiveController(var type: ControlEventType, beat_count: Int) {
         companion object {
             fun from_json(obj: ActiveControllerJSON, size: Int): ActiveController {
                 val new_controller = ActiveController(obj.type, size)
@@ -17,9 +17,13 @@ class ActiveControlSet(var beat_count: Int) {
         var events = mutableListOf<OpusTree<OpusControlEvent>?>()
 
         init {
-            for (i in 0 until this.beat_count) {
+            for (i in 0 until beat_count) {
                 this.insert_beat(i)
             }
+        }
+
+        fun beat_count(): Int {
+            return this.events.size
         }
 
         fun insert_beat(n: Int) {
@@ -133,12 +137,14 @@ class ActiveControlSet(var beat_count: Int) {
     }
 
     fun insert_beat(n: Int) {
+        this.beat_count += 1
         for (controller in this.controllers.values) {
             controller.insert_beat(n)
         }
     }
 
     fun remove_beat(n: Int) {
+        this.beat_count -= 1
         for (controller in this.controllers.values) {
             controller.remove_beat(n)
         }

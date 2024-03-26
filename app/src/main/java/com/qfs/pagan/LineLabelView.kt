@@ -3,6 +3,7 @@ package com.qfs.pagan
 import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.drawable.LayerDrawable
+import android.util.Log
 import android.view.ContextThemeWrapper
 import android.view.DragEvent
 import android.view.MotionEvent
@@ -27,6 +28,7 @@ class LineLabelView(context: Context, var row: Int): AppCompatTextView(ContextTh
         this._set_colors()
 
         this.setOnClickListener {
+            Log.d("AAA", "================================")
             this.on_click()
         }
 
@@ -127,7 +129,7 @@ class LineLabelView(context: Context, var row: Int): AppCompatTextView(ContextTh
         }
         val opus_manager = this.get_opus_manager()
         val (pointer, ctl_level, ctl_type) = opus_manager.get_ctl_line_info(this.row)
-
+        Log.d("AAA", "$pointer, $ctl_level, $ctl_type ${this.row}")
         val new_state = mutableListOf<Int>()
         when (ctl_level) {
             null -> {

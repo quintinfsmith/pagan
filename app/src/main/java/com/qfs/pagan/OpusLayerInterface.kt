@@ -1,6 +1,5 @@
 package com.qfs.pagan
 import android.content.res.Configuration
-import android.util.Log
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
@@ -450,18 +449,46 @@ class OpusLayerInterface : OpusLayerCursor() {
             UI_LOCK_FULL -> {}
         }
 
-        if (this.is_percussion(notify_index) && activity.view_model.show_percussion) {
+        if (this.is_percussion(notify_index) && !activity.view_model.show_percussion) {
             return
         }
 
         when (this.get_ui_lock_level()) {
             null -> {
                 this.runOnUiThread {
-                    editor_table?.new_channel_rows(y, line_list)
+                    if (editor_table == null) {
+                        return@runOnUiThread
+                    }
+                    var ctl_row = this.get_ctl_line_index(y)
+                    for (line in line_list) {
+                        editor_table.new_row(ctl_row++, line)
+                        for ((type, controller) in line.controllers.get_all()) {
+                            editor_table.new_row(ctl_row++, controller)
+                        }
+                    }
+
+                    val controllers = this.channels[notify_index].controllers.get_all()
+                    for ((type, controller) in controllers) {
+                        editor_table.new_row(ctl_row++, controller)
+                    }
                 }
             }
             UI_LOCK_PARTIAL -> {
-                editor_table?.new_channel_rows(y, line_list, true)
+                if (editor_table == null) {
+                    return
+                }
+
+                var ctl_row = this.get_ctl_line_index(y)
+                for (line in line_list) {
+                    editor_table.new_row(ctl_row++, line, true)
+                    for ((type, controller) in line.controllers.get_all()) {
+                        editor_table.new_row(ctl_row++, controller, true)
+                    }
+                }
+                val controllers = this.channels[notify_index].controllers.get_all()
+                for ((type, controller) in controllers) {
+                    editor_table.new_row(ctl_row++, controller, true)
+                }
             }
             UI_LOCK_FULL -> {}
         }
@@ -1002,7 +1029,6 @@ class OpusLayerInterface : OpusLayerCursor() {
             }
             total += channel.controllers.size()
         }
-        Log.d("AAA", "V: $total")
         return total
     }
 

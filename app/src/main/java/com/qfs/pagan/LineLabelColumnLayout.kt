@@ -33,11 +33,11 @@ class LineLabelColumnLayout(editor_table: EditorTable): ScrollView(editor_table.
 
     fun insert_labels(y: Int, count: Int) {
         for (i in 0 until count) {
-            val label_view = LineLabelView(this.context, y)
+            val label_view = LineLabelView(this.context, y + i)
             this._inner_wrapper.addView(label_view, y + i)
         }
 
-        this._notify_item_range_changed(y + count , this._inner_wrapper.childCount - y)
+        this._notify_item_range_changed(y + count , this._inner_wrapper.childCount - (y + count))
 
     }
     fun remove_label(y: Int) {
@@ -86,7 +86,7 @@ class LineLabelColumnLayout(editor_table: EditorTable): ScrollView(editor_table.
     }
 
     private fun _notify_item_range_changed(y: Int, count: Int) {
-        if (y > this._inner_wrapper.childCount) {
+        if (y >= this._inner_wrapper.childCount) {
             // Nothing to change
             return
         }

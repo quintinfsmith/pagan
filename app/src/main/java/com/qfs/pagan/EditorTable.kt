@@ -12,6 +12,7 @@ import androidx.appcompat.view.ContextThemeWrapper
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.qfs.pagan.opusmanager.ActiveControlSet
 import com.qfs.pagan.opusmanager.BeatKey
+import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusChannel
 import com.qfs.pagan.opusmanager.OpusLine
 import com.qfs.pagan.opusmanager.OpusManagerCursor
@@ -122,9 +123,10 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             column_label_adapter.add_column(beat)
         }
 
-        for (i in 0 until opus_manager.get_visible_master_line_count()) {
-            this._line_label_layout.insert_label()
-        }
+        this._line_label_layout.insert_labels(
+            0,
+            opus_manager.get_visible_master_line_count()
+        )
 
         main_adapter.add_columns(0, opus_manager.beat_count)
         this.needs_setup = false
@@ -235,43 +237,6 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         }
     }
 
-    fun new_channel_rows(y: Int, opus_lines: List<OpusLine>, ignore_ui: Boolean = false) {
-        opus_lines.forEachIndexed { i: Int, opus_line: OpusLine ->
-            for (j in 0 until opus_line.beats.size) {
-                val tree = opus_line.beats[j]
-                if (this._column_width_map.size <= j) {
-                    continue
-                }
-                this._column_width_map[j].add(
-                    y + i,
-                    if (tree.is_leaf()) {
-                        1
-                    } else {
-                        tree.get_max_child_weight() * tree.size
-                    }
-                )
-            }
-        }
-
-        for (j in 0 until this.get_opus_manager().beat_count) {
-            if (this._column_width_map.size <= j) {
-                while (this._column_width_maxes.size <= j) {
-                    this._column_width_maxes.add(1)
-                }
-                this._column_width_maxes[j] = 1
-            } else {
-                this._column_width_maxes[j] = this._column_width_map[j].max()
-            }
-        }
-
-        if (! ignore_ui) {
-            this._line_label_layout.insert_labels(y, opus_lines.size)
-            val adapter = (this.get_column_recycler().adapter as ColumnRecyclerAdapter)
-            adapter.insert_rows(y, opus_lines.size)
-            (this.column_label_recycler.adapter as ColumnLabelAdapter).notifyDataSetChanged()
-        }
-    }
-
     fun remove_row(y: Int, ignore_ui: Boolean = false) {
         for (i in 0 until this._column_width_map.size) {
             this._column_width_map[i].removeAt(y)
@@ -361,45 +326,67 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         }
     }
 
-    fun update_cursor(opusManagerCursor: OpusManagerCursor, deep_update: Boolean = true) {
-        if (opusManagerCursor != this._active_cursor) {
+    fun update_cursor(cursor: OpusManagerCursor, deep_update: Boolean = true) {
+        if (cursor != this._active_cursor) {
             try {
                 this.update_cursor(this._active_cursor, deep_update)
             } catch (e: OpusTree.InvalidGetCall) {
                 // Pass
             }
-            this._active_cursor = opusManagerCursor.copy()
+            this._active_cursor = cursor.copy()
         }
 
         val opus_manager = this.get_opus_manager()
         val column_label_adapter = (this.column_label_recycler.adapter!! as ColumnLabelAdapter)
-        when (opusManagerCursor.mode) {
+        when (cursor.mode) {
             OpusManagerCursor.CursorMode.Single -> {
-                val beat_key = opusManagerCursor.get_beatkey()
-                val beat_keys = if (deep_update) {
-                    opus_manager.get_all_linked(beat_key)
-                } else {
-                    listOf(beat_key)
-                }
-                for (linked_key in beat_keys) {
-                    val y = try {
-                        opus_manager.get_abs_offset(linked_key.channel, linked_key.line_offset)
-                    } catch (e: IndexOutOfBoundsException) {
-                        return
-                    }
+                when (cursor.ctl_level) {
+                    null -> {
+                        val beat_key = cursor.get_beatkey()
+                        val beat_keys = if (deep_update) {
+                            opus_manager.get_all_linked(beat_key)
+                        } else {
+                            listOf(beat_key)
+                        }
 
-                    this._line_label_layout.notify_item_changed(y)
-                    column_label_adapter.notifyItemChanged(linked_key.beat)
-                    (this.get_column_recycler().adapter as ColumnRecyclerAdapter).notify_cell_changed(y, linked_key.beat, true)
+                        for (linked_key in beat_keys) {
+                            val y = try {
+                                opus_manager.get_ctl_line_index(
+                                    opus_manager.get_abs_offset(
+                                        linked_key.channel,
+                                        linked_key.line_offset
+                                    )
+                                )
+                            } catch (e: IndexOutOfBoundsException) {
+                                return
+                            }
+
+                            this._line_label_layout.notify_item_changed(y)
+                            column_label_adapter.notifyItemChanged(linked_key.beat)
+                            (this.get_column_recycler().adapter as ColumnRecyclerAdapter).notify_cell_changed(y, linked_key.beat, true)
+                        }
+                    }
+                    CtlLineLevel.Line -> {
+
+                    }
+                    CtlLineLevel.Channel -> {
+
+                    }
+                    CtlLineLevel.Global -> {
+
+                    }
                 }
             }
 
             OpusManagerCursor.CursorMode.Range -> {
-                val (top_left, bottom_right) = opusManagerCursor.range!!
+                val (top_left, bottom_right) = cursor.range!!
                 for (beat_key in opus_manager.get_beatkeys_in_range(top_left, bottom_right)) {
-
                     val y = try {
-                        opus_manager.get_abs_offset(beat_key.channel, beat_key.line_offset)
+                        opus_manager.get_ctl_line_index(
+                            opus_manager.get_abs_offset(
+                                beat_key.channel, beat_key.line_offset
+                            )
+                        )
                     } catch (e: IndexOutOfBoundsException) {
                         continue
                     }
@@ -409,20 +396,39 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                     column_label_adapter.notifyItemChanged(beat_key.beat)
                     (this.get_column_recycler().adapter as ColumnRecyclerAdapter).notify_cell_changed(y, beat_key.beat, true)
                 }
+
             }
             OpusManagerCursor.CursorMode.Row -> {
-                val y = try {
-                    opus_manager.get_abs_offset(opusManagerCursor.channel, opusManagerCursor.line_offset)
-                } catch (e: IndexOutOfBoundsException) {
-                    return
-                }
+                when (cursor.ctl_level) {
+                    null -> {
+                        val y = try {
+                            opus_manager.get_ctl_line_index(
+                                opus_manager.get_abs_offset(
+                                    cursor.channel,
+                                    cursor.line_offset
+                                )
+                            )
+                        } catch (e: IndexOutOfBoundsException) {
+                            return
+                        }
 
-                (this.get_column_recycler().adapter as ColumnRecyclerAdapter).notify_row_changed(y, true)
-                this._line_label_layout.notify_item_changed(y)
+                        (this.get_column_recycler().adapter as ColumnRecyclerAdapter).notify_row_changed(y, true)
+                        this._line_label_layout.notify_item_changed(y)
+                    }
+                    CtlLineLevel.Line -> {
+
+                    }
+                    CtlLineLevel.Channel -> {
+
+                    }
+                    CtlLineLevel.Global -> {
+
+                    }
+                }
             }
             OpusManagerCursor.CursorMode.Column -> {
-                (this.get_column_recycler().adapter as ColumnRecyclerAdapter).notify_column_state_changed(opusManagerCursor.beat)
-                column_label_adapter.notifyItemChanged(opusManagerCursor.beat)
+                (this.get_column_recycler().adapter as ColumnRecyclerAdapter).notify_column_state_changed(cursor.beat)
+                column_label_adapter.notifyItemChanged(cursor.beat)
             }
             OpusManagerCursor.CursorMode.Unset -> { }
         }
@@ -457,7 +463,9 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                 continue
             }
             val y = try {
-                opus_manager.get_abs_offset(beat_key.channel, beat_key.line_offset)
+                opus_manager.get_ctl_line_index(
+                    opus_manager.get_abs_offset(beat_key.channel, beat_key.line_offset)
+                )
             } catch (e: IndexOutOfBoundsException) {
                 continue
             }
@@ -785,10 +793,10 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                     )
 
                     val controllers = percussion_channel.lines[i].controllers.get_all()
+                    this.new_row(row, percussion_channel.lines[i])
                     for (j in controllers.indices) {
                         this.new_row(row + j, controllers[j].second)
                     }
-                    this.new_row(row, percussion_channel.lines[i])
                     newly_visible_rows += 1 + controllers.size
                 }
 

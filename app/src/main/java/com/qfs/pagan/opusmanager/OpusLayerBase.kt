@@ -2473,7 +2473,7 @@ open class OpusLayerBase {
 
     // Calling this function every time a channel/line is modified should still be more efficient
     // than calculating offsets as needed
-    private fun recache_line_maps() {
+    open fun recache_line_maps() {
         this._cached_abs_line_map.clear()
         this._cached_std_line_map.clear()
         var y = 0

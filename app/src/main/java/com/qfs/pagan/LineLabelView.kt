@@ -3,6 +3,7 @@ package com.qfs.pagan
 import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.drawable.LayerDrawable
+import android.util.Log
 import android.view.ContextThemeWrapper
 import android.view.DragEvent
 import android.view.MotionEvent
@@ -35,7 +36,9 @@ class LineLabelView(context: Context, var row: Int): AppCompatTextView(ContextTh
         this.setOnDragListener { view: View, dragEvent: DragEvent ->
             val adapter = (view.parent.parent as LineLabelColumnLayout)
             val opus_manager = this.get_opus_manager()
-            val (pointer, ctl_level, ctl_type) = opus_manager.get_ctl_line_info(this.row)
+            val (pointer, ctl_level, ctl_type) = opus_manager.get_ctl_line_info(
+                opus_manager.get_ctl_line_from_visible_row( this.row )
+            )
             if (ctl_level != null) {
                 return@setOnDragListener true
             }
@@ -88,7 +91,7 @@ class LineLabelView(context: Context, var row: Int): AppCompatTextView(ContextTh
         val opus_manager = this.get_opus_manager()
 
         val (pointer, ctl_level, ctl_type) = opus_manager.get_ctl_line_info(
-            this.row
+            opus_manager.get_ctl_line_from_visible_row( this.row )
         )
 
         return when (ctl_level) {
@@ -125,7 +128,9 @@ class LineLabelView(context: Context, var row: Int): AppCompatTextView(ContextTh
             return drawableState
         }
         val opus_manager = this.get_opus_manager()
-        val (pointer, ctl_level, ctl_type) = opus_manager.get_ctl_line_info(this.row)
+        val (pointer, ctl_level, ctl_type) = opus_manager.get_ctl_line_info(
+            opus_manager.get_ctl_line_from_visible_row( this.row )
+        )
 
         val new_state = mutableListOf<Int>()
         when (ctl_level) {
@@ -149,6 +154,7 @@ class LineLabelView(context: Context, var row: Int): AppCompatTextView(ContextTh
                         }
                     }
                     else -> { }
+
                 }
             }
             else -> {
@@ -173,7 +179,9 @@ class LineLabelView(context: Context, var row: Int): AppCompatTextView(ContextTh
         val column_layout = this.parent.parent as LineLabelColumnLayout
 
         val opus_manager = this.get_opus_manager()
-        val (pointer, ctl_level, ctl_type) = opus_manager.get_ctl_line_info(this.row)
+        val (pointer, ctl_level, ctl_type) = opus_manager.get_ctl_line_info(
+            opus_manager.get_ctl_line_from_visible_row( this.row )
+        )
 
         // TODO; not sure what i'm going to do with this, might not be draggable
         if (ctl_level != null) {
@@ -210,7 +218,9 @@ class LineLabelView(context: Context, var row: Int): AppCompatTextView(ContextTh
     private fun on_click() {
         val opus_manager = this.get_opus_manager()
 
-        val (pointer, ctl_level, ctl_type) = opus_manager.get_ctl_line_info(this.row)
+        val ctl_line = opus_manager.get_ctl_line_from_visible_row( this.row )
+        val (pointer, ctl_level, ctl_type) = opus_manager.get_ctl_line_info( ctl_line )
+        Log.d("AAA", "${this.row} -> $ctl_line -> $pointer")
 
         // TODO
         if (ctl_level != null) {

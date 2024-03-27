@@ -7,6 +7,7 @@ import com.qfs.apres.Midi
 import com.qfs.pagan.opusmanager.ActiveControlSet
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.ControlEventType
+import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.LoadedJSONData
 import com.qfs.pagan.opusmanager.OpusChannel
 import com.qfs.pagan.opusmanager.OpusEventSTD
@@ -27,6 +28,10 @@ class OpusLayerInterface : OpusLayerCursor() {
     var first_load_done = false
     private var _in_reload = false
     private var _activity: MainActivity? = null
+
+    private val _cached_visible_line_map = HashMap<Int, Int>() // Key: visible line, Value: control_line
+    private val _cached_inv_visible_line_map = HashMap<Int, Int>()
+
 
     fun attach_activity(activity: MainActivity) {
         this._activity = activity
@@ -101,12 +106,14 @@ class OpusLayerInterface : OpusLayerCursor() {
         return List(all_keys.size) { i: Int ->
             val key = all_keys[i]
             EditorTable.Coordinate(
-                this.get_ctl_line_index(
-                    this.get_abs_offset(
-                        key.channel,
-                        key.line_offset
+                this.get_visible_row_from_ctl_line(
+                    this.get_ctl_line_index(
+                        this.get_abs_offset(
+                            key.channel,
+                            key.line_offset
+                        )
                     )
-                ),
+                )!!,
                 key.beat
             )
         }
@@ -122,12 +129,14 @@ class OpusLayerInterface : OpusLayerCursor() {
 
         val coord_list = List(beat_keys.size) { i: Int ->
             EditorTable.Coordinate(
-                this.get_ctl_line_index(
-                    this.get_abs_offset(
-                        beat_keys[i].channel,
-                        beat_keys[i].line_offset
+                this.get_visible_row_from_ctl_line(
+                    this.get_ctl_line_index(
+                        this.get_abs_offset(
+                            beat_keys[i].channel,
+                            beat_keys[i].line_offset
+                        )
                     )
-                ),
+                )!!,
                 beat_keys[i].beat
             )
         }
@@ -306,24 +315,25 @@ class OpusLayerInterface : OpusLayerCursor() {
             val adj_line_offset = line_offset ?: (this.channels[channel].lines.size - 1)
             val abs_offset = this.get_abs_offset(channel, adj_line_offset)
             val row_index = this.get_ctl_line_index(abs_offset)
+            val visible_row = this.get_visible_row_from_ctl_line(row_index) ?: return output
 
             when (this.get_ui_lock_level()) {
                 null -> {
                     this.runOnUiThread { _: MainActivity ->
                         val controllers = this.channels[channel].lines[adj_line_offset].controllers.get_all()
                         controllers.forEachIndexed { i: Int, (_, controller): Pair<ControlEventType, ActiveControlSet.ActiveController> ->
-                            this.get_editor_table()?.new_row(row_index + i, controller)
+                            this.get_editor_table()?.new_row(visible_row + i, controller)
                         }
-                        this.get_editor_table()?.new_row(row_index, output)
+                        this.get_editor_table()?.new_row(visible_row, output)
                     }
                 }
 
                 UI_LOCK_PARTIAL -> {
                     val controllers = this.channels[channel].lines[adj_line_offset].controllers.get_all()
                     controllers.forEachIndexed { i: Int, (_, controller): Pair<ControlEventType, ActiveControlSet.ActiveController> ->
-                        this.get_editor_table()?.new_row(row_index + i, controller, true)
+                        this.get_editor_table()?.new_row(visible_row + i, controller, true)
                     }
-                    this.get_editor_table()?.new_row(row_index, output, true)
+                    this.get_editor_table()?.new_row(visible_row, output, true)
                 }
 
                 UI_LOCK_FULL -> {}
@@ -346,7 +356,9 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
 
         val abs_offset = this.get_abs_offset(channel, line_offset)
-        val row_index = this.get_ctl_line_index(abs_offset)
+        val row_index = this.get_visible_row_from_ctl_line(
+            this.get_ctl_line_index(abs_offset)
+        ) ?: return
 
         when (this.get_ui_lock_level()) {
             null -> {
@@ -384,9 +396,11 @@ class OpusLayerInterface : OpusLayerCursor() {
             this.make_percussion_visible()
         }
 
-        val abs_line = this.get_ctl_line_index(
-            this.get_abs_offset(channel, line_offset)
-        )
+        val abs_line = this.get_visible_row_from_ctl_line(
+            this.get_ctl_line_index(
+                this.get_abs_offset(channel, line_offset)
+            )
+        )!!
 
         val output = super.remove_line(channel, line_offset)
 
@@ -463,7 +477,10 @@ class OpusLayerInterface : OpusLayerCursor() {
                     if (editor_table == null) {
                         return@runOnUiThread
                     }
-                    var ctl_row = this.get_ctl_line_index(y)
+                    var ctl_row = this.get_visible_row_from_ctl_line(
+                        this.get_ctl_line_index(y)
+                    )!!
+
                     for (line in line_list) {
                         editor_table.new_row(ctl_row++, line)
                         for ((type, controller) in line.controllers.get_all()) {
@@ -482,7 +499,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                     return
                 }
 
-                var ctl_row = this.get_ctl_line_index(y)
+                var ctl_row = this.get_visible_row_from_ctl_line(this.get_ctl_line_index(y)) ?: return
                 for (line in line_list) {
                     editor_table.new_row(ctl_row++, line, true)
                     for ((type, controller) in line.controllers.get_all()) {
@@ -646,7 +663,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             this.get_total_line_count()
         }
 
-        val ctl_row = this.get_ctl_line_index(y)
+        val ctl_row = this.get_visible_row_from_ctl_line(this.get_ctl_line_index(y))!!
         var removed_row_count = this.controllers.size()
         for (line in this.channels[channel].lines) {
             removed_row_count += line.controllers.size() + 1
@@ -960,6 +977,65 @@ class OpusLayerInterface : OpusLayerCursor() {
             total += channel.controllers.size()
         }
         return total
+    }
+
+    /*
+        Given the row, get the line number in the Opus
+     */
+    fun get_ctl_line_from_visible_row(row: Int): Int {
+        return this._cached_visible_line_map[row]!!
+    }
+
+    fun get_visible_row_from_ctl_line(line: Int): Int? {
+        return this._cached_inv_visible_line_map[line]
+    }
+
+    override fun recache_line_maps() {
+        super.recache_line_maps()
+        this._cached_visible_line_map.clear()
+        this._cached_inv_visible_line_map.clear()
+
+        var ctl_line = 0
+        var visible_line = 0
+        this.channels.forEachIndexed { channel_index: Int, channel: OpusChannel ->
+            for (line_offset in channel.lines.indices) {
+                this._cached_inv_visible_line_map[ctl_line] = visible_line
+                this._cached_visible_line_map[visible_line++] = ctl_line++
+
+                for ((type, controller) in channel.lines[line_offset].controllers.controllers) {
+                    if (this.is_ctl_level_visible(CtlLineLevel.Line)) {
+                        this._cached_inv_visible_line_map[ctl_line] = visible_line
+                        this._cached_visible_line_map[visible_line] = ctl_line
+                        visible_line += 1
+                    }
+                    ctl_line += 1
+                }
+            }
+
+            for (type in channel.controllers.controllers.keys) {
+                if (this.is_ctl_level_visible(CtlLineLevel.Channel)) {
+                    this._cached_inv_visible_line_map[ctl_line] = visible_line
+                    this._cached_visible_line_map[visible_line] = ctl_line
+                    visible_line += 1
+                }
+                ctl_line += 1
+            }
+        }
+
+        for (type in this.controllers.controllers.keys) {
+            if (this.is_ctl_level_visible(CtlLineLevel.Global)) {
+                this._cached_inv_visible_line_map[ctl_line] = visible_line
+                this._cached_visible_line_map[visible_line] = ctl_line
+                visible_line += 1
+            }
+            ctl_line += 1
+        }
+    }
+
+
+    fun is_ctl_level_visible(level: CtlLineLevel): Boolean {
+        // TODO
+        return true
     }
 
     override fun set_tuning_map(new_map: Array<Pair<Int, Int>>, mod_events: Boolean) {

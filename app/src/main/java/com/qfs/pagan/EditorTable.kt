@@ -335,12 +335,14 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
                         for (linked_key in beat_keys) {
                             val y = try {
-                                opus_manager.get_ctl_line_index(
-                                    opus_manager.get_abs_offset(
-                                        linked_key.channel,
-                                        linked_key.line_offset
+                                opus_manager.get_visible_row_from_ctl_line(
+                                    opus_manager.get_ctl_line_index(
+                                        opus_manager.get_abs_offset(
+                                            linked_key.channel,
+                                            linked_key.line_offset
+                                        )
                                     )
-                                )
+                                ) ?: continue
                             } catch (e: IndexOutOfBoundsException) {
                                 return
                             }
@@ -360,11 +362,13 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                 val (top_left, bottom_right) = cursor.range!!
                 for (beat_key in opus_manager.get_beatkeys_in_range(top_left, bottom_right)) {
                     val y = try {
-                        opus_manager.get_ctl_line_index(
-                            opus_manager.get_abs_offset(
-                                beat_key.channel, beat_key.line_offset
+                        opus_manager.get_visible_row_from_ctl_line(
+                            opus_manager.get_ctl_line_index(
+                                opus_manager.get_abs_offset(
+                                    beat_key.channel, beat_key.line_offset
+                                )
                             )
-                        )
+                        ) ?: continue
                     } catch (e: IndexOutOfBoundsException) {
                         continue
                     }
@@ -380,12 +384,14 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                 when (cursor.ctl_level) {
                     null -> {
                         val y = try {
-                            opus_manager.get_ctl_line_index(
-                                opus_manager.get_abs_offset(
-                                    cursor.channel,
-                                    cursor.line_offset
+                            opus_manager.get_visible_row_from_ctl_line(
+                                opus_manager.get_ctl_line_index(
+                                    opus_manager.get_abs_offset(
+                                        cursor.channel,
+                                        cursor.line_offset
+                                    )
                                 )
-                            )
+                            ) ?: return
                         } catch (e: IndexOutOfBoundsException) {
                             return
                         }
@@ -420,30 +426,17 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
     fun notify_cell_changes(cell_coords: List<Coordinate>, ignore_ui: Boolean = false) {
         val column_recycler_adapter = (this.get_column_recycler().adapter!! as ColumnRecyclerAdapter)
-        val percussion_visible = this.get_activity().view_model.show_percussion
 
         val changed_beats = mutableSetOf<Int>()
         val changed_beat_keys = mutableSetOf<Coordinate>()
         val done_keys = mutableSetOf<Coordinate>()
         val opus_manager = this.get_opus_manager()
-        val percussion_first_row = opus_manager.get_ctl_line_index(
-            opus_manager.get_abs_offset(opus_manager.channels.size - 1, 0)
-        )
-        var percussion_row_count = opus_manager.channels.last().controllers.size()
-        for (line in opus_manager.channels.last().lines) {
-            percussion_row_count += 1 + line.controllers.size()
-        }
-        val percussion_range = percussion_first_row .. percussion_first_row + percussion_row_count
 
         for (coord in cell_coords) {
             if (done_keys.contains(coord)) {
                 continue
             }
             done_keys.add(coord)
-
-            if (!percussion_visible && percussion_range.contains(coord.y)) {
-                continue
-            }
 
             val original_width = try {
                 this._column_width_maxes[coord.x]

@@ -28,7 +28,7 @@ class LineLabelColumnLayout(editor_table: EditorTable): ScrollView(editor_table.
         val label_view = LineLabelView(this.context, adj_y)
         this._inner_wrapper.addView(label_view, adj_y)
 
-        this._notify_item_range_changed(adj_y + 1, this._inner_wrapper.childCount - (adj_y + 1))
+        this._notify_item_range_changed(adj_y, this._inner_wrapper.childCount - adj_y)
     }
 
     fun insert_labels(y: Int, count: Int) {
@@ -37,7 +37,7 @@ class LineLabelColumnLayout(editor_table: EditorTable): ScrollView(editor_table.
             this._inner_wrapper.addView(label_view, y + i)
         }
 
-        this._notify_item_range_changed(y + count , this._inner_wrapper.childCount - (y + count))
+        this._notify_item_range_changed(y , this._inner_wrapper.childCount - y)
 
     }
 
@@ -99,6 +99,7 @@ class LineLabelColumnLayout(editor_table: EditorTable): ScrollView(editor_table.
                 val label = this._inner_wrapper.getChildAt(i + y) as LineLabelView
                 label.row = i + y
                 label.set_text()
+                label.set_height()
                 view_stack.add(label)
             } else {
                 break

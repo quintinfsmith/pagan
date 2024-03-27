@@ -1,5 +1,6 @@
 package com.qfs.pagan
 
+import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -22,13 +23,23 @@ class CellLayout(private val _column_layout: ColumnLayout, private val _y: Int):
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
-        this.layoutParams.height = resources.getDimension(R.dimen.line_height).toInt()
-        val width = (this._column_layout.column_width_factor * resources.getDimension(R.dimen.base_leaf_width).roundToInt())
-        this.layoutParams.width = width
 
         this.removeAllViews()
         val opus_manager = this.get_opus_manager()
-        val (pointer, control_level, control_type) = opus_manager.get_ctl_line_info(this._y)
+        val (pointer, control_level, control_type) = opus_manager.get_ctl_line_info(
+            opus_manager.get_ctl_line_from_visible_row(this._y)
+        )
+        Log.d("AAA", "$_y -> $control_level")
+
+        this.layoutParams.height = if (control_level != null) {
+            resources.getDimension(R.dimen.ctl_line_height).toInt()
+        } else {
+            resources.getDimension(R.dimen.line_height).toInt()
+        }
+
+        val width = (this._column_layout.column_width_factor * resources.getDimension(R.dimen.base_leaf_width).roundToInt())
+        this.layoutParams.width = width
+
         val beat = this._get_beat()
         val tree = when (control_level) {
             CtlLineLevel.Line -> {
@@ -89,7 +100,10 @@ class CellLayout(private val _column_layout: ColumnLayout, private val _y: Int):
     }
 
     fun is_control_line(): Boolean {
-        return this.get_opus_manager().ctl_line_level(this._y) != null
+        val opus_manager = this.get_opus_manager()
+        return this.get_opus_manager().ctl_line_level(
+            opus_manager.get_ctl_line_from_visible_row(this._y)
+        ) != null
     }
 
     fun get_editor_table(): EditorTable {
@@ -99,7 +113,9 @@ class CellLayout(private val _column_layout: ColumnLayout, private val _y: Int):
     private fun buildTreeView(tree: OpusTree<OpusEvent>, position: List<Int>, divisions: List<Int>) {
         if (tree.is_leaf()) {
             val opus_manager = this.get_opus_manager()
-            val control_type = opus_manager.get_ctl_line_type(this._y)
+            val control_type = opus_manager.get_ctl_line_type(
+                opus_manager.get_ctl_line_from_visible_row(this._y)
+            )
             val tvLeaf: View = if (control_type == null) {
                 LeafButton(
                     this.context,

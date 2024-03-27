@@ -31,8 +31,6 @@ class LineLabelView(context: Context, var row: Int): AppCompatTextView(ContextTh
             this.on_click()
         }
 
-        this.setOnTouchListener(this)
-
         this.setOnDragListener { view: View, dragEvent: DragEvent ->
             val adapter = (view.parent.parent as LineLabelColumnLayout)
             val opus_manager = this.get_opus_manager()
@@ -81,9 +79,8 @@ class LineLabelView(context: Context, var row: Int): AppCompatTextView(ContextTh
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
-        val line_height = resources.getDimension(R.dimen.line_height)
-        this.layoutParams.height = line_height.toInt()
         this.layoutParams.width = WRAP_CONTENT
+        this.set_height()
         this.set_text()
     }
 
@@ -91,7 +88,7 @@ class LineLabelView(context: Context, var row: Int): AppCompatTextView(ContextTh
         val opus_manager = this.get_opus_manager()
 
         val (pointer, ctl_level, ctl_type) = opus_manager.get_ctl_line_info(
-            opus_manager.get_ctl_line_from_visible_row( this.row )
+            opus_manager.get_ctl_line_from_visible_row(this.row)
         )
 
         return when (ctl_level) {
@@ -163,6 +160,21 @@ class LineLabelView(context: Context, var row: Int): AppCompatTextView(ContextTh
 
         mergeDrawableStates(drawableState, new_state.toIntArray())
         return drawableState
+    }
+
+    fun set_height() {
+        val opus_manager = this.get_opus_manager()
+        val (pointer, ctl_level, ctl_type) = opus_manager.get_ctl_line_info(
+            opus_manager.get_ctl_line_from_visible_row(this.row)
+        )
+        val line_height = if (ctl_level != null) {
+            resources.getDimension(R.dimen.ctl_line_height)
+        } else {
+            resources.getDimension(R.dimen.line_height)
+        }
+
+
+        this.layoutParams.height = line_height.toInt()
     }
 
     fun set_text() {

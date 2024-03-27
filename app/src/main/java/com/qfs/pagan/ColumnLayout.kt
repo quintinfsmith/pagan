@@ -1,5 +1,6 @@
 package com.qfs.pagan
 
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
@@ -26,6 +27,7 @@ class ColumnLayout(private var _view_holder: ColumnRecyclerViewHolder): LinearLa
     }
 
     private fun _populate() {
+        Log.d("AAA", "populating")
         this._populated = true
         val opus_manager = this.get_opus_manager()
 
@@ -47,7 +49,7 @@ class ColumnLayout(private var _view_holder: ColumnRecyclerViewHolder): LinearLa
     fun remove_cells(y: Int, count: Int) {
         this.removeViews(y, count)
         this.notifyItemRangeChanged(0, y)
-        this.notifyItemRangeChanged(y, this.childCount - (y + count - 1))
+        this.notifyItemRangeChanged(y, this.childCount - y)
     }
 
     fun notifyItemChanged(y: Int, state_only: Boolean = false) {
@@ -58,7 +60,7 @@ class ColumnLayout(private var _view_holder: ColumnRecyclerViewHolder): LinearLa
         for (i in 0 until count) {
             if (state_only && this.childCount > y + i) {
                 (this.getChildAt(y + i) as CellLayout).invalidate_all()
-            } else {
+            } else if (this.childCount > y + i) {
                 this.rebind(i + y)
             }
         }
@@ -70,6 +72,7 @@ class ColumnLayout(private var _view_holder: ColumnRecyclerViewHolder): LinearLa
         }
 
         this.removeViewAt(index)
+
         this.addView(CellLayout(this, index), index)
     }
 

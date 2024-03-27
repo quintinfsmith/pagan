@@ -150,6 +150,7 @@ class ChannelOptionAdapter(
     private fun interact_btnTogglePercussionVisibility(view: BackLinkView) {
         val main = this.get_activity()
         val opus_manager = main.get_opus_manager()
+
         if (main.view_model.show_percussion) {
             if (!opus_manager.has_percussion() && opus_manager.channels.size > 1) {
                 main.view_model.show_percussion = false
@@ -161,10 +162,12 @@ class ChannelOptionAdapter(
             main.view_model.show_percussion = true
         }
 
+
         val remove_button = (view as ViewGroup).getChildAt(1) as TextView
         remove_button.text = this.get_percussion_visibility_button_text()
         val editor_table = main.findViewById<EditorTable>(R.id.etEditorTable)
         editor_table.update_percussion_visibility()
+
     }
 
     private fun interact_btnRemoveChannel(view: BackLinkView) {

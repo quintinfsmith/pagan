@@ -1982,6 +1982,7 @@ open class OpusLayerBase {
         this.transpose = other.transpose
         this._cached_abs_line_map = other._cached_abs_line_map
         this._cached_std_line_map = other._cached_std_line_map
+        this.controllers = other.controllers
     }
 
     open fun import_midi(midi: Midi) {

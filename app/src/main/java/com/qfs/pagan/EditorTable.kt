@@ -2,6 +2,7 @@ package com.qfs.pagan
 
 import android.content.Context
 import android.util.AttributeSet
+import android.util.Log
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
@@ -131,7 +132,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     }
 
     private fun _init_column_width_map() {
-        this._initializing_column_width_map = true
+       this._initializing_column_width_map = true
         val opus_manager = this.get_opus_manager()
         for (beat in 0 until opus_manager.beat_count) {
             this._column_width_map.add(mutableListOf<Int>())
@@ -144,6 +145,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                         val new_weight = tree.get_max_child_weight() * tree.size
                         this._column_width_map[beat].add(new_weight)
                     }
+
                     for ((type, controller) in channel.lines[j].controllers.get_all()) {
                         val ctl_tree = controller.get_beat(beat)
                         if (ctl_tree.is_leaf()) {
@@ -758,6 +760,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         val opus_manager = this.get_opus_manager()
         val percussion_channel = opus_manager.channels.last()
         if (main.view_model.show_percussion) {
+            opus_manager.recache_line_maps()
             if (this._column_width_map.isNotEmpty()) {
                 var newly_visible_rows = 0
                 for (i in 0 until percussion_channel.size) {
@@ -787,15 +790,25 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
             }
         } else {
-            val row = opus_manager.get_ctl_line_index(
-                opus_manager.get_abs_offset(opus_manager.channels.size - 1, 0)
-            )
+            val row = opus_manager.get_visible_row_from_ctl_line(
+                opus_manager.get_ctl_line_index(
+                    opus_manager.get_abs_offset(opus_manager.channels.size - 1, 0)
+                )
+            )!!
             var remove_count = 0
             for (line in percussion_channel.lines) {
-                remove_count += line.controllers.size() + 1
+                remove_count += 1
+                if (opus_manager.is_ctl_level_visible(CtlLineLevel.Line)) {
+                    remove_count += line.controllers.size()
+                }
             }
-            remove_count += percussion_channel.controllers.size()
 
+            if (opus_manager.is_ctl_level_visible(CtlLineLevel.Channel)) {
+                remove_count += percussion_channel.controllers.size()
+            }
+
+            opus_manager.recache_line_maps()
+            Log.d("ZZZ", "${opus_manager.get_visible_master_line_count()}")
             this.remove_rows(row, remove_count)
         }
     }

@@ -8,6 +8,7 @@
     <dimen name="context_menu_border">2dp</dimen>
     <dimen name="relative_option_width">35dp</dimen>
     <dimen name="line_height">41dp</dimen>
+    <dimen name="ctl_line_height">30dp</dimen>
     <dimen name="base_leaf_width">41dp</dimen>
     <dimen name="dropdown_item_padding_top">8dp</dimen>
     <dimen name="dropdown_item_padding_sides">16dp</dimen>

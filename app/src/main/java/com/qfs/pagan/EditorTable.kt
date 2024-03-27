@@ -124,10 +124,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             column_label_adapter.add_column(beat)
         }
 
-        this._line_label_layout.insert_labels(
-            0,
-            opus_manager.get_visible_master_line_count()
-        )
+        this._line_label_layout.insert_labels(0, opus_manager.get_visible_master_line_count())
 
         main_adapter.add_columns(0, opus_manager.beat_count)
         this.needs_setup = false
@@ -208,9 +205,8 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         if (!ignore_ui) {
             val adapter = (this.get_column_recycler().adapter as ColumnRecyclerAdapter)
             adapter.insert_row(y)
-            (this.column_label_recycler.adapter as ColumnLabelAdapter).notifyDataSetChanged()
-
             this._line_label_layout.insert_label(y)
+            (this.column_label_recycler.adapter as ColumnLabelAdapter).notifyDataSetChanged()
         }
     }
 
@@ -232,9 +228,8 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         if (!ignore_ui) {
             val adapter = (this.get_column_recycler().adapter as ColumnRecyclerAdapter)
             adapter.insert_row(y)
-            (this.column_label_recycler.adapter as ColumnLabelAdapter).notifyDataSetChanged()
-
             this._line_label_layout.insert_label(y)
+            (this.column_label_recycler.adapter as ColumnLabelAdapter).notifyDataSetChanged()
         }
     }
 
@@ -355,15 +350,9 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                             (this.get_column_recycler().adapter as ColumnRecyclerAdapter).notify_cell_changed(y, linked_key.beat, true)
                         }
                     }
-                    CtlLineLevel.Line -> {
-
-                    }
-                    CtlLineLevel.Channel -> {
-
-                    }
-                    CtlLineLevel.Global -> {
-
-                    }
+                    CtlLineLevel.Line -> { }
+                    CtlLineLevel.Channel -> { }
+                    CtlLineLevel.Global -> { }
                 }
             }
 
@@ -829,5 +818,4 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     fun get_line_label_layout(): LineLabelColumnLayout {
         return this._line_label_layout
     }
-
 }

@@ -118,6 +118,10 @@ class ActiveControlSet(var beat_count: Int, default_enabled: Set<ControlEventTyp
         }
     }
 
+    fun clear() {
+        this.controllers.clear()
+    }
+
     fun size(): Int {
         return this.controllers.size
     }

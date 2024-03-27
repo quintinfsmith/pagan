@@ -1433,6 +1433,7 @@ open class OpusLayerBase {
             i: Int -> Pair(i, 12)
         }
         this.transpose = 0
+        this.controllers.clear()
     }
 
     open fun on_project_changed() {
@@ -1758,8 +1759,25 @@ open class OpusLayerBase {
         }
 
         this.controllers = ActiveControlSet.from_json(json_data.controllers, beat_count)
+        this._setup_default_controllers()
 
         this.on_project_changed()
+    }
+    private fun _setup_default_controllers() {
+        for (channel in this.channels) {
+            for (line in channel.lines) {
+                if (line.controllers.size() == 0) {
+                    line.controllers.new_controller(ControlEventType.Volume)
+                }
+            }
+            if (channel.controllers.size() == 0) {
+                channel.controllers.new_controller(ControlEventType.Volume)
+            }
+        }
+        if (this.controllers.size() == 0) {
+            this.controllers.new_controller(ControlEventType.Tempo)
+        }
+        this.recache_line_maps()
     }
 
     open fun import_midi(path: String) {
@@ -2140,6 +2158,9 @@ open class OpusLayerBase {
                 this.set_channel_program(opus_channel, program)
             }
         }
+
+        this._setup_default_controllers()
+
         this.on_project_changed()
     }
 

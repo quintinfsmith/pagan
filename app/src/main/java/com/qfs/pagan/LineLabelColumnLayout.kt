@@ -40,6 +40,7 @@ class LineLabelColumnLayout(editor_table: EditorTable): ScrollView(editor_table.
         this._notify_item_range_changed(y + count , this._inner_wrapper.childCount - (y + count))
 
     }
+
     fun remove_label(y: Int) {
         this._inner_wrapper.removeViewAt(y)
         this._notify_item_range_changed(y, this._inner_wrapper.childCount - y)

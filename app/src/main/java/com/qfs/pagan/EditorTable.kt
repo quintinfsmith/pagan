@@ -446,7 +446,9 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                 continue
             }
 
-            val (pointer, ctl_level, ctl_type) = opus_manager.get_ctl_line_info(coord.y)
+            val (pointer, ctl_level, ctl_type) = opus_manager.get_ctl_line_info(
+                opus_manager.get_ctl_line_from_visible_row(coord.y)
+            )
             when (ctl_level) {
                 null -> {
                     val (channel, line_offset) = opus_manager.get_std_offset(pointer)
@@ -764,12 +766,14 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             if (this._column_width_map.isNotEmpty()) {
                 var newly_visible_rows = 0
                 for (i in 0 until percussion_channel.size) {
-                    val row = opus_manager.get_ctl_line_index(
-                        opus_manager.get_abs_offset(
-                            opus_manager.channels.size - 1,
-                            i
+                    val row = opus_manager.get_visible_row_from_ctl_line(
+                        opus_manager.get_ctl_line_index(
+                            opus_manager.get_abs_offset(
+                                opus_manager.channels.size - 1,
+                                i
+                            )
                         )
-                    )
+                    )!!
 
                     val controllers = percussion_channel.lines[i].controllers.get_all()
                     this.new_row(row, percussion_channel.lines[i])
@@ -779,14 +783,17 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                     newly_visible_rows += 1 + controllers.size
                 }
 
+                // Not using channel controls ATM
                 // Make visible the channel-specific control lines
-                val row = opus_manager.get_ctl_line_index(
-                    opus_manager.get_abs_offset(opus_manager.channels.size - 1, 0)
-                )
-                val controllers = percussion_channel.controllers.get_all()
-                for (i in controllers.indices) {
-                    this.new_row(row + newly_visible_rows + i, controllers[i].second)
-                }
+                //val row = opus_manager.get_visible_row_from_ctl_line(
+                //    opus_manager.get_ctl_line_index(
+                //        opus_manager.get_abs_offset(opus_manager.channels.size - 1, 0)
+                //    )
+                //)!!
+                //val controllers = percussion_channel.controllers.get_all()
+                //for (i in controllers.indices) {
+                //    this.new_row(row + newly_visible_rows + i, controllers[i].second)
+                //}
 
             }
         } else {

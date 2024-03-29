@@ -215,19 +215,10 @@ class ControlLeafButton(
         if (this.parent == null || this._get_editor_table().needs_setup) {
             return drawableState
         }
+        val new_state = mutableListOf<Int>()
 
-        return drawableState
-
-        //val opus_manager = this.get_opus_manager()
-        //val beat_key = try {
-        //    this._get_beat_key()
-        //} catch (e: IndexOutOfBoundsException) {
-        //    return drawableState
-        //}
-        //if (beat_key.beat == -1) {
-        //    return drawableState
-        //}
-        //val position = this.position
+        val opus_manager = this.get_opus_manager()
+        val position = this.position
 
         //val tree = try {
         //    opus_manager.get_tree(beat_key, position)
@@ -237,7 +228,6 @@ class ControlLeafButton(
         //    return drawableState
         //}
 
-        //val new_state = mutableListOf<Int>()
         //if (tree.is_event()) {
         //    new_state.add(R.attr.state_active)
         //    val abs_value = opus_manager.get_absolute_value(beat_key, position)
@@ -246,18 +236,14 @@ class ControlLeafButton(
         //    }
         //}
 
-        //if (opus_manager.is_networked(beat_key)) {
-        //    new_state.add(R.attr.state_linked)
-        //}
         //if (opus_manager.is_selected(beat_key, position)) {
         //    new_state.add(R.attr.state_focused)
         //}
-        //if (beat_key.channel % 2 == 0) {
-        //    new_state.add(R.attr.state_alternate)
-        //}
 
-        //mergeDrawableStates(drawableState, new_state.toIntArray())
-        //return drawableState
+        new_state.add(R.attr.state_channel_even)
+        new_state.add(R.attr.state_alternate)
+        mergeDrawableStates(drawableState, new_state.toIntArray())
+        return drawableState
     }
 
     override fun onCreateDrawableState(extraSpace: Int): IntArray? {
@@ -274,7 +260,7 @@ class ControlLeafButton(
         return (this.parent as CellLayout).get_opus_manager()
     }
 
-    private fun _get_beat_key(): BeatKey {
+    private fun _get_beat_key(): BeatKey? {
         return (this.parent as CellLayout).get_beat_key()
     }
 

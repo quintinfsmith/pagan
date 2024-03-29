@@ -321,19 +321,23 @@ class OpusLayerInterface : OpusLayerCursor() {
             when (this.get_ui_lock_level()) {
                 null -> {
                     this.runOnUiThread { _: MainActivity ->
-                        val controllers = this.channels[channel].lines[adj_line_offset].controllers.get_all()
                         this.get_editor_table()?.new_row(visible_row, output)
-                        controllers.forEachIndexed { i: Int, (_, controller): Pair<ControlEventType, ActiveControlSet.ActiveController> ->
-                            this.get_editor_table()?.new_row(visible_row + i, controller)
+                        if (this.is_ctl_level_visible(CtlLineLevel.Line)) {
+                            val controllers = this.channels[channel].lines[adj_line_offset].controllers.get_all()
+                            controllers.forEachIndexed { i: Int, (_, controller): Pair<ControlEventType, ActiveControlSet.ActiveController> ->
+                                this.get_editor_table()?.new_row(visible_row + i, controller)
+                            }
                         }
                     }
                 }
 
                 UI_LOCK_PARTIAL -> {
-                    val controllers = this.channels[channel].lines[adj_line_offset].controllers.get_all()
                     this.get_editor_table()?.new_row(visible_row, output, true)
-                    controllers.forEachIndexed { i: Int, (_, controller): Pair<ControlEventType, ActiveControlSet.ActiveController> ->
-                        this.get_editor_table()?.new_row(visible_row + i, controller, true)
+                    if (this.is_ctl_level_visible(CtlLineLevel.Line)) {
+                        val controllers = this.channels[channel].lines[adj_line_offset].controllers.get_all()
+                        controllers.forEachIndexed { i: Int, (_, controller): Pair<ControlEventType, ActiveControlSet.ActiveController> ->
+                            this.get_editor_table()?.new_row(visible_row + i, controller, true)
+                        }
                     }
                 }
 
@@ -364,18 +368,22 @@ class OpusLayerInterface : OpusLayerCursor() {
         when (this.get_ui_lock_level()) {
             null -> {
                 this.runOnUiThread { _: MainActivity ->
-                    val controllers = line.controllers.get_all()
                     this.get_editor_table()?.new_row(row_index, line)
-                    controllers.forEachIndexed { i: Int, (_, controller): Pair<ControlEventType, ActiveControlSet.ActiveController> ->
-                        this.get_editor_table()?.new_row(row_index + i, controller)
+                    if (this.is_ctl_level_visible(CtlLineLevel.Line)) {
+                        val controllers = line.controllers.get_all()
+                        controllers.forEachIndexed { i: Int, (_, controller): Pair<ControlEventType, ActiveControlSet.ActiveController> ->
+                            this.get_editor_table()?.new_row(row_index + i, controller)
+                        }
                     }
                 }
             }
             UI_LOCK_PARTIAL -> {
-                val controllers = line.controllers.get_all()
                 this.get_editor_table()?.new_row(row_index, line, true)
-                controllers.forEachIndexed { i: Int, (_, controller): Pair<ControlEventType, ActiveControlSet.ActiveController> ->
-                    this.get_editor_table()?.new_row(row_index + i, controller)
+                if (this.is_ctl_level_visible(CtlLineLevel.Line)) {
+                    val controllers = line.controllers.get_all()
+                    controllers.forEachIndexed { i: Int, (_, controller): Pair<ControlEventType, ActiveControlSet.ActiveController> ->
+                        this.get_editor_table()?.new_row(row_index + i, controller)
+                    }
                 }
             }
             UI_LOCK_FULL -> { }
@@ -409,13 +417,21 @@ class OpusLayerInterface : OpusLayerCursor() {
             when (this.get_ui_lock_level()) {
                 null -> {
                     this.runOnUiThread { _: MainActivity ->
-                        val control_lines = output.controllers.get_all().size
+                        val control_lines = if (this.is_ctl_level_visible(CtlLineLevel.Line)) {
+                            output.controllers.get_all().size
+                        } else {
+                            0
+                        }
                         this.get_editor_table()?.remove_rows(abs_line, control_lines + 1)
                     }
                 }
 
                 UI_LOCK_PARTIAL -> {
-                    val control_lines = output.controllers.get_all().size
+                    val control_lines = if (this.is_ctl_level_visible(CtlLineLevel.Line)) {
+                        output.controllers.get_all().size
+                    } else {
+                        0
+                    }
                     this.get_editor_table()?.remove_rows(abs_line, control_lines + 1, true)
                 }
 
@@ -484,14 +500,19 @@ class OpusLayerInterface : OpusLayerCursor() {
 
                     for (line in line_list) {
                         editor_table.new_row(ctl_row++, line)
-                        for ((type, controller) in line.controllers.get_all()) {
-                            editor_table.new_row(ctl_row++, controller)
+
+                        if (this.is_ctl_level_visible(CtlLineLevel.Line)) {
+                            for ((type, controller) in line.controllers.get_all()) {
+                                editor_table.new_row(ctl_row++, controller)
+                            }
                         }
                     }
 
-                    val controllers = this.channels[notify_index].controllers.get_all()
-                    for ((type, controller) in controllers) {
-                        editor_table.new_row(ctl_row++, controller)
+                    if (this.is_ctl_level_visible(CtlLineLevel.Channel)) {
+                        val controllers = this.channels[notify_index].controllers.get_all()
+                        for ((type, controller) in controllers) {
+                            editor_table.new_row(ctl_row++, controller)
+                        }
                     }
                 }
             }
@@ -503,13 +524,17 @@ class OpusLayerInterface : OpusLayerCursor() {
                 var ctl_row = this.get_visible_row_from_ctl_line(this.get_ctl_line_index(y)) ?: return
                 for (line in line_list) {
                     editor_table.new_row(ctl_row++, line, true)
-                    for ((type, controller) in line.controllers.get_all()) {
-                        editor_table.new_row(ctl_row++, controller, true)
+                    if (this.is_ctl_level_visible(CtlLineLevel.Line)) {
+                        for ((type, controller) in line.controllers.get_all()) {
+                            editor_table.new_row(ctl_row++, controller, true)
+                        }
                     }
                 }
-                val controllers = this.channels[notify_index].controllers.get_all()
-                for ((type, controller) in controllers) {
-                    editor_table.new_row(ctl_row++, controller, true)
+                if (this.is_ctl_level_visible(CtlLineLevel.Channel)) {
+                    val controllers = this.channels[notify_index].controllers.get_all()
+                    for ((type, controller) in controllers) {
+                        editor_table.new_row(ctl_row++, controller, true)
+                    }
                 }
             }
             UI_LOCK_FULL -> {}
@@ -664,9 +689,17 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
 
         val ctl_row = this.get_visible_row_from_ctl_line(this.get_ctl_line_index(y))!!
-        var removed_row_count = this.controllers.size()
-        for (line in this.channels[channel].lines) {
-            removed_row_count += line.controllers.size() + 1
+        var removed_row_count = 0
+
+        if (this.is_ctl_level_visible(CtlLineLevel.Channel)) {
+            removed_row_count += this.controllers.size()
+        }
+
+        removed_row_count += this.channels[channel].size
+        if (this.is_ctl_level_visible(CtlLineLevel.Line)) {
+            for (line in this.channels[channel].lines) {
+                removed_row_count += line.controllers.size()
+            }
         }
 
         super.remove_channel(channel)
@@ -1034,8 +1067,8 @@ class OpusLayerInterface : OpusLayerCursor() {
 
 
     fun is_ctl_level_visible(level: CtlLineLevel): Boolean {
-        // TODO
-        return true
+        // For now, we have nothing to control at the channel level
+        return level != CtlLineLevel.Channel
     }
 
     override fun set_tuning_map(new_map: Array<Pair<Int, Int>>, mod_events: Boolean) {

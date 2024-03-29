@@ -1,6 +1,5 @@
 package com.qfs.pagan
 
-import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -16,7 +15,7 @@ import com.qfs.pagan.structure.OpusTree
 import kotlin.math.roundToInt
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
-class CellLayout(private val _column_layout: ColumnLayout, private val _y: Int): LinearLayout(_column_layout.context) {
+class CellLayout(private val _column_layout: ColumnLayout, val row: Int): LinearLayout(_column_layout.context) {
     init {
         this.isClickable = false
     }
@@ -27,9 +26,8 @@ class CellLayout(private val _column_layout: ColumnLayout, private val _y: Int):
         this.removeAllViews()
         val opus_manager = this.get_opus_manager()
         val (pointer, control_level, control_type) = opus_manager.get_ctl_line_info(
-            opus_manager.get_ctl_line_from_visible_row(this._y)
+            opus_manager.get_ctl_line_from_visible_row(this.row)
         )
-        Log.d("AAA", "$_y -> $control_level")
 
         this.layoutParams.height = if (control_level != null) {
             resources.getDimension(R.dimen.ctl_line_height).toInt()
@@ -102,7 +100,7 @@ class CellLayout(private val _column_layout: ColumnLayout, private val _y: Int):
     fun is_control_line(): Boolean {
         val opus_manager = this.get_opus_manager()
         return this.get_opus_manager().ctl_line_level(
-            opus_manager.get_ctl_line_from_visible_row(this._y)
+            opus_manager.get_ctl_line_from_visible_row(this.row)
         ) != null
     }
 
@@ -114,7 +112,7 @@ class CellLayout(private val _column_layout: ColumnLayout, private val _y: Int):
         if (tree.is_leaf()) {
             val opus_manager = this.get_opus_manager()
             val control_type = opus_manager.get_ctl_line_type(
-                opus_manager.get_ctl_line_from_visible_row(this._y)
+                opus_manager.get_ctl_line_from_visible_row(this.row)
             )
             val tvLeaf: View = if (control_type == null) {
                 LeafButton(
@@ -163,7 +161,7 @@ class CellLayout(private val _column_layout: ColumnLayout, private val _y: Int):
 
     fun get_coord(): EditorTable.Coordinate {
         return EditorTable.Coordinate(
-            this._y,
+            this.row,
             this._get_beat()
         )
     }
@@ -172,22 +170,35 @@ class CellLayout(private val _column_layout: ColumnLayout, private val _y: Int):
         return (this.parent as ColumnLayout).get_beat()
     }
 
-    fun get_beat_key(): BeatKey {
+    fun get_beat_key(): BeatKey? {
         val opus_manager = this.get_opus_manager()
-        val (channel, line_offset) = opus_manager.get_std_offset(this._y, true)
+        val (pointer, ctl_level, ctl_type) = opus_manager.get_ctl_line_info(
+            opus_manager.get_ctl_line_from_visible_row(this.row)
+        )
+        if (ctl_level != null) {
+            return null
+        }
+
+        val (channel, line_offset) = opus_manager.get_std_offset(pointer)
         return BeatKey(channel, line_offset, this._get_beat())
     }
 
 
-    fun get_beat_tree(beat_key: BeatKey? = null): OpusTree<OpusEventSTD> {
+    private fun get_beat_tree(beat_key: BeatKey? = null): OpusTree<OpusEventSTD> {
         val opus_manager = this.get_opus_manager()
-        return opus_manager.get_tree(beat_key ?: this.get_beat_key())
+        val checked_beat_key = beat_key ?: this.get_beat_key()
+        return if (checked_beat_key == null) {
+            OpusTree<OpusEventSTD>() // TODO: Maybe throw error?
+        } else {
+            opus_manager.get_tree(checked_beat_key)
+        }
     }
 
 
     fun is_percussion(): Boolean {
         val opus_manager = this.get_opus_manager()
-        return opus_manager.is_percussion(this.get_beat_key().channel)
+        val beat_key = this.get_beat_key() ?: return false
+        return opus_manager.is_percussion(beat_key.channel)
     }
 
 }

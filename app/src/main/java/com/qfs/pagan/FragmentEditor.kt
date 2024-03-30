@@ -34,7 +34,13 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         LeafPercussion,
         Line,
         Column,
-        Linking
+        Linking,
+        ControlLeafLine,
+        ControlLeafChannel,
+        ControlLeafGlobal,
+        ControlLineLine,
+        ControlLineChannel,
+        ControlLineGlobal
     }
 
     override fun inflate(inflater: LayoutInflater, container: ViewGroup?): FragmentMainBinding {

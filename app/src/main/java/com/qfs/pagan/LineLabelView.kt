@@ -72,7 +72,7 @@ class LineLabelView(context: Context, var row: Int): LinearLayoutCompat(context)
         }
 
         fun get_activity(): MainActivity {
-            return (this.parent as LineLabelView).get_activity()
+            return (this.context as ContextThemeWrapper).baseContext as MainActivity
         }
     }
 
@@ -375,11 +375,19 @@ class LineLabelView(context: Context, var row: Int): LinearLayoutCompat(context)
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
+        this.set_inner_label()
+        this.layoutParams.width = WRAP_CONTENT
+        this.layoutParams.height = WRAP_CONTENT
+    }
+
+    fun set_inner_label() {
         this.removeAllViews()
         val opus_manager = this.get_opus_manager()
+
         val (pointer, ctl_level, ctl_type) = opus_manager.get_ctl_line_info(
             opus_manager.get_ctl_line_from_visible_row(this.row)
         )
+
         this.addView(
             when (ctl_level) {
                 null -> {
@@ -398,9 +406,6 @@ class LineLabelView(context: Context, var row: Int): LinearLayoutCompat(context)
                 }
             }
         )
-
-        this.layoutParams.width = WRAP_CONTENT
-        this.layoutParams.height = WRAP_CONTENT
     }
 
     fun get_opus_manager(): OpusManager {
@@ -441,6 +446,11 @@ class LineLabelView(context: Context, var row: Int): LinearLayoutCompat(context)
     //        performClick()
     //    }
     //}
+
+    fun reset_row(new_row: Int) {
+        this.row = new_row
+        this.set_inner_label()
+    }
 
     fun get_activity(): MainActivity {
         return (this.context as ContextThemeWrapper).baseContext as MainActivity

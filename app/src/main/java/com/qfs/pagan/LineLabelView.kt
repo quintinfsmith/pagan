@@ -231,7 +231,7 @@ class LineLabelView(context: Context, var row: Int): LinearLayoutCompat(context)
         }
 
         override fun on_click() {
-            TODO("Not yet implemented")
+            TODO("Define Lower")
         }
 
         override fun _set_colors() {
@@ -275,9 +275,22 @@ class LineLabelView(context: Context, var row: Int): LinearLayoutCompat(context)
         }
     }
 
-    class LineLabelCtlLine(context: Context, ctl_type: ControlEventType, val channel: Int, val line_offset: Int): LineLabelCtl(context, CtlLineLevel.Line, ctl_type) { }
-    class LineLabelCtlChannel(context: Context, ctl_type: ControlEventType, val channel: Int): LineLabelCtl(context, CtlLineLevel.Channel, ctl_type) { }
-    class LineLabelCtlGlobal(context: Context, ctl_type: ControlEventType): LineLabelCtl(context, CtlLineLevel.Global, ctl_type) { }
+    class LineLabelCtlLine(context: Context, ctl_type: ControlEventType, val channel: Int, val line_offset: Int): LineLabelCtl(context, CtlLineLevel.Line, ctl_type) {
+        override fun on_click() {
+            this.get_opus_manager().cursor_select_ctl_row_at_line(this.ctl_type, this.channel, this.line_offset)
+        }
+    }
+    class LineLabelCtlChannel(context: Context, ctl_type: ControlEventType, val channel: Int): LineLabelCtl(context, CtlLineLevel.Channel, ctl_type) {
+        override fun on_click() {
+            this.get_opus_manager().cursor_select_ctl_row_at_channel(this.ctl_type, this.channel)
+
+        }
+    }
+    class LineLabelCtlGlobal(context: Context, ctl_type: ControlEventType): LineLabelCtl(context, CtlLineLevel.Global, ctl_type) {
+        override fun on_click() {
+            this.get_opus_manager().cursor_select_ctl_row_at_global(this.ctl_type)
+        }
+    }
 
     init {
         this.setOnDragListener { view: View, dragEvent: DragEvent ->
@@ -398,4 +411,5 @@ class LineLabelView(context: Context, var row: Int): LinearLayoutCompat(context)
     fun get_activity(): MainActivity {
         return (this.context as ContextThemeWrapper).baseContext as MainActivity
     }
+
 }

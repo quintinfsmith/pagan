@@ -908,17 +908,17 @@ open class OpusLayerBase {
     }
 
     open fun split_line_ctl_tree(type: ControlEventType, beat_key: BeatKey, position: List<Int>, splits: Int) {
-        var tree: OpusTree<OpusControlEvent> = this.get_line_ctl_tree(type, beat_key, position)
+        val tree: OpusTree<OpusControlEvent> = this.get_line_ctl_tree(type, beat_key, position)
         this._split_opus_tree<OpusControlEvent>(tree, splits)
     }
 
     open fun split_channel_ctl_tree(type: ControlEventType, channel: Int, beat: Int, position: List<Int>, splits: Int) {
-        var tree: OpusTree<OpusControlEvent> = this.get_channel_ctl_tree(type, channel, beat, position)
+        val tree: OpusTree<OpusControlEvent> = this.get_channel_ctl_tree(type, channel, beat, position)
         this._split_opus_tree<OpusControlEvent>(tree, splits)
     }
 
     open fun split_global_ctl_tree(type: ControlEventType, beat: Int, position: List<Int>, splits: Int) {
-        var tree: OpusTree<OpusControlEvent> = this.get_global_ctl_tree(type, beat, position)
+        val tree: OpusTree<OpusControlEvent> = this.get_global_ctl_tree(type, beat, position)
         this._split_opus_tree<OpusControlEvent>(tree, splits)
     }
 

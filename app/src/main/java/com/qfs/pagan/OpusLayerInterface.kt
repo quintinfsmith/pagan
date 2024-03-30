@@ -1,6 +1,5 @@
 package com.qfs.pagan
 import android.content.res.Configuration
-import android.util.Log
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
@@ -32,6 +31,9 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     private val _cached_visible_line_map = HashMap<Int, Int>() // Key: visible line, Value: control_line
     private val _cached_inv_visible_line_map = HashMap<Int, Int>()
+    private val _cached_ctl_map_line = HashMap<Triple<Int, Int, ControlEventType>, Int>()
+    private val _cached_ctl_map_channel = HashMap<Pair<Int, ControlEventType>, Int>()
+    private val _cached_ctl_map_global = HashMap<ControlEventType, Int>()
 
 
     fun attach_activity(activity: MainActivity) {
@@ -849,6 +851,78 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
+    override fun cursor_select_ctl_row_at_channel(ctl_type: ControlEventType, channel: Int) {
+        super.cursor_select_ctl_row_at_channel(ctl_type, channel)
+
+        val activity = this.get_activity() ?: return
+        if (!activity.view_model.show_percussion && this.is_percussion(channel)) {
+            this.make_percussion_visible()
+        }
+
+        if (this.get_ui_lock_level() != null) {
+            return
+        }
+
+        this.runOnUiThread {
+            val editor_table = this.get_editor_table()
+            editor_table?.update_cursor(this.cursor)
+
+            this.withFragment { main ->
+                main.set_context_menu_line()
+            }
+
+            val scroll_to_row = this._cached_ctl_map_channel[Pair(channel, ctl_type)] ?: return@runOnUiThread
+            editor_table?.scroll_to_position(y = scroll_to_row)
+        }
+    }
+
+    override fun cursor_select_ctl_row_at_line(ctl_type: ControlEventType, channel: Int, line_offset: Int) {
+        super.cursor_select_ctl_row_at_line(ctl_type, channel, line_offset)
+
+        val activity = this.get_activity() ?: return
+        if (!activity.view_model.show_percussion && this.is_percussion(channel)) {
+            this.make_percussion_visible()
+        }
+
+        if (this.get_ui_lock_level() != null) {
+            return
+        }
+
+        this.runOnUiThread {
+            val editor_table = this.get_editor_table()
+            editor_table?.update_cursor(this.cursor)
+
+            this.withFragment { main ->
+                main.set_context_menu_line()
+            }
+
+            val scroll_to_row = this._cached_ctl_map_line[Triple(channel, line_offset, ctl_type)] ?: return@runOnUiThread
+
+            editor_table?.scroll_to_position(y = scroll_to_row)
+        }
+    }
+
+    override fun cursor_select_ctl_row_at_global(ctl_type: ControlEventType) {
+        super.cursor_select_ctl_row_at_global(ctl_type)
+
+        if (this.get_ui_lock_level() != null) {
+            return
+        }
+
+        this.runOnUiThread {
+            val editor_table = this.get_editor_table()
+            editor_table?.update_cursor(this.cursor)
+
+            this.withFragment { main ->
+                main.set_context_menu_line()
+            }
+
+            val scroll_to_row = this._cached_ctl_map_global[ctl_type] ?: return@runOnUiThread
+
+            editor_table?.scroll_to_position(y = scroll_to_row)
+        }
+    }
+
     override fun cursor_select_column(beat: Int) {
         super.cursor_select_column(beat)
         this.runOnUiThread {
@@ -1002,7 +1076,6 @@ class OpusLayerInterface : OpusLayerCursor() {
         get the number of visible lines, control lines included
      */
     fun get_visible_master_line_count(): Int {
-        Log.d("MLC", "${this._cached_visible_line_map}")
         return this._cached_visible_line_map.size
     }
 
@@ -1021,6 +1094,9 @@ class OpusLayerInterface : OpusLayerCursor() {
         super.recache_line_maps()
         this._cached_visible_line_map.clear()
         this._cached_inv_visible_line_map.clear()
+        this._cached_ctl_map_line.clear()
+        this._cached_ctl_map_channel.clear()
+        this._cached_ctl_map_global.clear()
 
         val percussion_visible = this.get_activity()!!.view_model.show_percussion
         var ctl_line = 0
@@ -1039,6 +1115,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                     if (this.is_ctl_level_visible(CtlLineLevel.Line) && !hide_channel) {
                         this._cached_inv_visible_line_map[ctl_line] = visible_line
                         this._cached_visible_line_map[visible_line] = ctl_line
+                        this._cached_ctl_map_line[Triple(channel_index, line_offset, type)] = visible_line
                         visible_line += 1
                     }
                     ctl_line += 1
@@ -1049,6 +1126,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                 if (this.is_ctl_level_visible(CtlLineLevel.Channel) && !hide_channel) {
                     this._cached_inv_visible_line_map[ctl_line] = visible_line
                     this._cached_visible_line_map[visible_line] = ctl_line
+                    this._cached_ctl_map_channel[Pair(channel_index, type)] = visible_line
                     visible_line += 1
                 }
                 ctl_line += 1
@@ -1059,6 +1137,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             if (this.is_ctl_level_visible(CtlLineLevel.Global)) {
                 this._cached_inv_visible_line_map[ctl_line] = visible_line
                 this._cached_visible_line_map[visible_line] = ctl_line
+                this._cached_ctl_map_global[type] = visible_line
                 visible_line += 1
             }
             ctl_line += 1

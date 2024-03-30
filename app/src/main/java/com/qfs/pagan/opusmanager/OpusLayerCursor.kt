@@ -646,6 +646,18 @@ open class OpusLayerCursor: OpusLayerHistory() {
         this.cursor.select_row(channel, line_offset)
     }
 
+    open fun cursor_select_ctl_row_at_line(ctl_type: ControlEventType, channel: Int, line_offset: Int) {
+        this.cursor.select_ctl_row_at_line(channel, line_offset, ctl_type)
+    }
+
+    open fun cursor_select_ctl_row_at_channel(ctl_type: ControlEventType, channel: Int) {
+        this.cursor.select_ctl_row_at_channel(channel, ctl_type)
+    }
+
+    open fun cursor_select_ctl_row_at_global(ctl_type: ControlEventType) {
+        this.cursor.select_ctl_row_at_global(ctl_type)
+    }
+
     open fun cursor_select_column(beat: Int) {
         if (beat >= this.beat_count) {
             return
@@ -656,6 +668,18 @@ open class OpusLayerCursor: OpusLayerHistory() {
 
     open fun cursor_select(beat_key: BeatKey, position: List<Int>) {
         this.cursor.select(beat_key, position)
+    }
+
+    open fun cursor_select_ctl_at_line(ctl_type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
+        this.cursor.select_ctl_at_line(beat_key, position, ctl_type)
+    }
+
+    open fun cursor_select_ctl_at_channel(ctl_type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
+        this.cursor.select_ctl_at_channel(channel, beat, position, ctl_type)
+    }
+
+    open fun cursor_select_ctl_at_global(ctl_type: ControlEventType, beat: Int, position: List<Int>) {
+        this.cursor.select_ctl_at_global(beat, position, ctl_type)
     }
 
     // TODO: Change Name? select_first_corner?

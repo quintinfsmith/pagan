@@ -109,7 +109,7 @@ class MainActivity : AppCompatActivity() {
         var export_handle: WavConverter? = null
         var color_map = ColorMap()
         var opus_manager = OpusManager()
-        var show_percussion = false
+        var show_percussion = true
 
         fun export_wav(sample_handle_manager: SampleHandleManager, target_file: File, handler: WavConverter.ExporterEventHandler) {
             val frame_map = PlaybackFrameMap(this.opus_manager, sample_handle_manager)

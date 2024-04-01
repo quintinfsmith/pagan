@@ -2,7 +2,6 @@ package com.qfs.pagan
 
 import android.content.Context
 import android.util.AttributeSet
-import android.util.Log
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
@@ -759,6 +758,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
     fun update_percussion_visibility() {
         val main = this.get_activity()
+
         val opus_manager = this.get_opus_manager()
         val percussion_channel = opus_manager.channels.last()
         if (main.view_model.show_percussion) {
@@ -815,7 +815,6 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             }
 
             opus_manager.recache_line_maps()
-            Log.d("ZZZ", "${opus_manager.get_visible_master_line_count()}")
             this.remove_rows(row, remove_count)
         }
     }

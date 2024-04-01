@@ -108,6 +108,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         val all_keys = this.get_all_linked(beat_key).toList()
         return List(all_keys.size) { i: Int ->
             val key = all_keys[i]
+
             EditorTable.Coordinate(
                 this.get_visible_row_from_ctl_line(
                     this.get_ctl_line_index(
@@ -639,6 +640,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             super.import_midi(midi)
         }
         activity.view_model.show_percussion = !(!this.has_percussion() && this.channels.size > 1)
+        this.recache_line_maps()
     }
 
     override fun load_json(json_data: LoadedJSONData) {
@@ -651,6 +653,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
         if (! this._in_reload) {
             activity.view_model.show_percussion = !(!this.has_percussion() && this.channels.size > 1)
+            this.recache_line_maps()
         }
 
     }
@@ -667,8 +670,6 @@ class OpusLayerInterface : OpusLayerCursor() {
 
         this.runOnUiThread { main: MainActivity ->
             val editor_table = this.get_editor_table()
-            editor_table?.clear()
-            editor_table?.precise_scroll(0, 0, 0, 0)
 
             main.setup_project_config_drawer()
             main.validate_percussion_visibility()
@@ -681,6 +682,22 @@ class OpusLayerInterface : OpusLayerCursor() {
                 it.clearContextMenu()
             }
         }
+
+    }
+
+    override fun clear() {
+        this._cached_visible_line_map.clear()
+        this._cached_inv_visible_line_map.clear()
+        this._cached_ctl_map_line.clear()
+        this._cached_ctl_map_channel.clear()
+        this._cached_ctl_map_global.clear()
+
+        val editor_table = this.get_editor_table()
+        editor_table?.clear()
+        this.runOnUiThread { main: MainActivity ->
+            editor_table?.precise_scroll(0, 0, 0, 0)
+        }
+        super.clear()
     }
 
     override fun remove_channel(channel: Int) {
@@ -1199,4 +1216,5 @@ class OpusLayerInterface : OpusLayerCursor() {
         val editor_table = main.findViewById<EditorTable>(R.id.etEditorTable)
         editor_table.update_percussion_visibility()
     }
+
 }

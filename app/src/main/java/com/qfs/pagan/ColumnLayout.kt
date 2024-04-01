@@ -1,6 +1,5 @@
 package com.qfs.pagan
 
-import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
@@ -27,7 +26,6 @@ class ColumnLayout(private var _view_holder: ColumnRecyclerViewHolder): LinearLa
     }
 
     private fun _populate() {
-        Log.d("AAA", "populating")
         this._populated = true
         val opus_manager = this.get_opus_manager()
 

@@ -1,5 +1,4 @@
 package com.qfs.pagan.opusmanager
-import android.util.Log
 import com.qfs.apres.Midi
 import com.qfs.apres.event.BankSelect
 import com.qfs.apres.event.NoteOff
@@ -1423,9 +1422,7 @@ open class OpusLayerBase {
     // Clear function is used for new projects
     open fun clear() {
         this.beat_count = 0
-        for (i in this.channels.size - 1 downTo 0) {
-            this.remove_channel(i)
-        }
+        this.channels.clear()
         this.path = null
         this.project_name = OpusLayerBase.DEFAULT_NAME
         this.tempo = 120F
@@ -1537,7 +1534,6 @@ open class OpusLayerBase {
 
                 line_controllers.add(listOf(new_controller))
             }
-            Log.d("AAA", "${line_controllers.size}!!!!!!!!!!!!!")
 
             new_channels.add(
                 ChannelJSONData(
@@ -1763,6 +1759,7 @@ open class OpusLayerBase {
 
         this.on_project_changed()
     }
+
     private fun _setup_default_controllers() {
         for (channel in this.channels) {
             for (line in channel.lines) {
@@ -2369,6 +2366,7 @@ open class OpusLayerBase {
 
         tree.event!!.duration = duration
     }
+
     open fun set_global_ctl_duration(type: ControlEventType, channel: Int, beat: Int, position: List<Int>, duration: Int) {
         val tree = this.get_global_ctl_tree(type, beat, position)
         if (!tree.is_event()) {

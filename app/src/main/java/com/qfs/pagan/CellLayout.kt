@@ -38,7 +38,7 @@ class CellLayout(private val _column_layout: ColumnLayout, val row: Int): Linear
         val width = (this._column_layout.column_width_factor * resources.getDimension(R.dimen.base_leaf_width).roundToInt())
         this.layoutParams.width = width
 
-        val beat = this._get_beat()
+        val beat = this.get_beat()
         val tree = when (control_level) {
             CtlLineLevel.Line -> {
                 val (channel, line_offset) = opus_manager.get_std_offset(pointer)
@@ -111,24 +111,48 @@ class CellLayout(private val _column_layout: ColumnLayout, val row: Int): Linear
     private fun buildTreeView(tree: OpusTree<OpusEvent>, position: List<Int>, divisions: List<Int>) {
         if (tree.is_leaf()) {
             val opus_manager = this.get_opus_manager()
-            val control_type = opus_manager.get_ctl_line_type(
+            val (pointer, control_level, control_type) = opus_manager.get_ctl_line_info(
                 opus_manager.get_ctl_line_from_visible_row(this.row)
             )
-            val tvLeaf: View = if (control_type == null) {
-                LeafButton(
-                    this.context,
-                    opus_manager.tuning_map.size,
-                    tree.get_event() as OpusEventSTD?,
-                    position,
-                    this.is_percussion()
-                )
-            } else {
-                ControlLeafButton(
-                    this.context,
-                    tree.get_event() as OpusControlEvent?,
-                    position,
-                    control_type
-                )
+
+            val tvLeaf = when (control_level) {
+                null -> {
+                    LeafButton(
+                        this.context,
+                        opus_manager.tuning_map.size,
+                        tree.get_event() as OpusEventSTD?,
+                        position,
+                        this.is_percussion()
+                    )
+                }
+                CtlLineLevel.Global -> {
+                    ControlLeafButtonGlobal(
+                        this.context,
+                        tree.get_event() as OpusControlEvent?,
+                        position,
+                        control_type!!
+                    )
+                }
+                CtlLineLevel.Channel -> {
+                    ControlLeafButtonChannel(
+                        this.context,
+                        tree.get_event() as OpusControlEvent?,
+                        pointer,
+                        position,
+                        control_type!!
+                    )
+                }
+                CtlLineLevel.Line -> {
+                    val (channel, line_offset) = opus_manager.get_std_offset(pointer)
+                    ControlLeafButtonLine(
+                        this.context,
+                        tree.get_event() as OpusControlEvent?,
+                        channel,
+                        line_offset,
+                        position,
+                        control_type!!
+                    )
+                }
             }
 
             this.addView(tvLeaf)
@@ -162,11 +186,11 @@ class CellLayout(private val _column_layout: ColumnLayout, val row: Int): Linear
     fun get_coord(): EditorTable.Coordinate {
         return EditorTable.Coordinate(
             this.row,
-            this._get_beat()
+            this.get_beat()
         )
     }
 
-    private fun _get_beat(): Int {
+    fun get_beat(): Int {
         return (this.parent as ColumnLayout).get_beat()
     }
 
@@ -180,7 +204,7 @@ class CellLayout(private val _column_layout: ColumnLayout, val row: Int): Linear
         }
 
         val (channel, line_offset) = opus_manager.get_std_offset(pointer)
-        return BeatKey(channel, line_offset, this._get_beat())
+        return BeatKey(channel, line_offset, this.get_beat())
     }
 
 

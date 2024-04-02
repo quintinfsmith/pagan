@@ -41,6 +41,8 @@ open class LineLabelCtl(context: Context, var ctl_level: CtlLineLevel, var ctl_t
             else -> { }
 
         }
+        new_state.add(R.attr.state_channel_even)
+        new_state.add(R.attr.state_alternate)
 
         mergeDrawableStates(drawableState, new_state.toIntArray())
         return drawableState

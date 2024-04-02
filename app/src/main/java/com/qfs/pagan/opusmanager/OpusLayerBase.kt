@@ -1582,6 +1582,15 @@ open class OpusLayerBase {
         this.insert_beats(0, 4)
         this.set_project_name(this.project_name)
         this.new_global_controller(ControlEventType.Tempo)
+        this.set_line_ctl_event(
+            ControlEventType.Volume,
+            BeatKey(0, 0, 1),
+            listOf(),
+            OpusControlEvent(
+                .5f,
+                Transition.Instantaneous
+            )
+        )
         this.on_project_changed()
     }
 

@@ -7,18 +7,19 @@ import android.view.MotionEvent
 import android.widget.LinearLayout
 import androidx.appcompat.view.ContextThemeWrapper
 import com.qfs.pagan.ColorMap.Palette
-import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.ControlEventType
+import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusControlEvent
+import com.qfs.pagan.structure.OpusTree
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
-class ControlLeafButton(
+open class ControlLeafButton(
     context: Context,
     private var _event: OpusControlEvent?,
     var position: List<Int>,
+    var control_level: CtlLineLevel,
     var control_type: ControlEventType
 ) : LinearLayout(ContextThemeWrapper(context, R.style.leaf)) {
-
     init {
         this.isClickable = false
         this.minimumHeight = resources.getDimension(R.dimen.line_height).toInt()
@@ -154,28 +155,21 @@ class ControlLeafButton(
         }
         val new_state = mutableListOf<Int>()
 
-        val opus_manager = this.get_opus_manager()
-        val position = this.position
+        val tree = try {
+            this.get_tree()
+        } catch (e: OpusTree.InvalidGetCall) {
+            return drawableState
+        } catch (e: IndexOutOfBoundsException) {
+            return drawableState
+        }
 
-        //val tree = try {
-        //    opus_manager.get_tree(beat_key, position)
-        //} catch (e: OpusTree.InvalidGetCall) {
-        //    return drawableState
-        //} catch (e: IndexOutOfBoundsException) {
-        //    return drawableState
-        //}
+        if (tree.is_event()) {
+            new_state.add(R.attr.state_active)
+        }
 
-        //if (tree.is_event()) {
-        //    new_state.add(R.attr.state_active)
-        //    val abs_value = opus_manager.get_absolute_value(beat_key, position)
-        //    if (abs_value == null || abs_value < 0) {
-        //        new_state.add(R.attr.state_invalid)
-        //    }
-        //}
-
-        //if (opus_manager.is_selected(beat_key, position)) {
-        //    new_state.add(R.attr.state_focused)
-        //}
+        if (this.is_selected()) {
+            new_state.add(R.attr.state_focused)
+        }
 
         new_state.add(R.attr.state_channel_even)
         new_state.add(R.attr.state_alternate)
@@ -189,6 +183,9 @@ class ControlLeafButton(
     }
 
     // ------------------------------------------------------//
+    open fun is_selected(): Boolean {
+        TODO("Implement In Children")
+    }
     fun get_activity(): MainActivity {
         return (this.context as ContextThemeWrapper).baseContext as MainActivity
     }
@@ -197,11 +194,15 @@ class ControlLeafButton(
         return (this.parent as CellLayout).get_opus_manager()
     }
 
-    private fun _get_beat_key(): BeatKey? {
-        return (this.parent as CellLayout).get_beat_key()
+    fun get_beat(): Int {
+        return (this.parent as CellLayout).get_beat()
     }
 
     private fun _get_editor_table(): EditorTable {
         return (this.parent as CellLayout).get_editor_table()
+    }
+
+    open fun get_tree(): OpusTree<OpusControlEvent> {
+        TODO("Implement In Children")
     }
 }

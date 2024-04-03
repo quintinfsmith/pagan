@@ -18,6 +18,7 @@ import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.OpusEventSTD
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusManagerCursor
+import com.qfs.pagan.opusmanager.Transition
 import java.io.File
 import java.io.FileInputStream
 import java.lang.Integer.max
@@ -324,6 +325,9 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
             ContextMenu.Linking -> {
                 this.setContextMenu_linking()
             }
+            ContextMenu.ControlLeafLine -> {
+                this.set_context_menu_line_control_leaf()
+            }
             else -> { }
         }
     }
@@ -334,10 +338,83 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         val llContextRow = this.activity!!.findViewById<LinearLayout?>(R.id.llContextRow)
         val llContextCol = this.activity!!.findViewById<LinearLayout?>(R.id.llContextCol)
         val llContextLink = this.activity!!.findViewById<View?>(R.id.llContextLink)
+        val llContextLineCtlLeaf = this.activity!!.findViewById<View?>(R.id.llContextLineCtlLeaf)
+
         llContextCell?.visibility = View.GONE
         llContextRow?.visibility = View.GONE
         llContextCol?.visibility = View.GONE
         llContextLink?.visibility = View.GONE
+        llContextLineCtlLeaf?.visibility = View.GONE
+    }
+
+    internal fun set_context_menu_line_control_leaf() {
+        this._active_context_menu_index = ContextMenu.ControlLeafLine
+        val llContextCell = this.activity!!.findViewById<LinearLayout>(R.id.llContextCell)
+        val llContextRow = this.activity!!.findViewById<LinearLayout>(R.id.llContextRow)
+        val llContextCol = this.activity!!.findViewById<LinearLayout>(R.id.llContextCol)
+        val llContextLink = this.activity!!.findViewById<View>(R.id.llContextLink)
+        val llContextLineCtlLeaf = this.activity!!.findViewById<View>(R.id.llContextLineCtlLeaf)
+
+        llContextCell.visibility = View.GONE
+        llContextRow.visibility = View.GONE
+        llContextCol.visibility = View.GONE
+        llContextLink.visibility = View.GONE
+        llContextLineCtlLeaf.visibility = View.VISIBLE
+        //////////////////////////////////////////////
+        val opus_manager = this.get_main().get_opus_manager()
+        val cursor = opus_manager.cursor
+        val ctl_tree = opus_manager.get_line_ctl_tree(
+            cursor.ctl_type!!,
+            BeatKey(
+                cursor.channel,
+                cursor.line_offset,
+                cursor.beat
+            ),
+            cursor.position
+        )
+
+        val btn_transition = llContextLineCtlLeaf.findViewById<ButtonStd>(R.id.btnChooseTransition)
+        val btn_duration = llContextLineCtlLeaf.findViewById<ButtonStd>(R.id.btnDuration)
+        val btn_value = llContextLineCtlLeaf.findViewById<ButtonStd>(R.id.btnCtlAmount)
+
+        if (!ctl_tree.is_event()) {
+            btn_value.text = opus_manager.get_current_ctl_line_value(
+                cursor.ctl_type!!,
+                BeatKey(
+                    cursor.channel,
+                    cursor.line_offset,
+                    cursor.beat
+                ),
+                cursor.position
+            ).toString()
+        } else {
+            // TODO: Formatting
+            btn_value.text = ctl_tree.event!!.value.toString()
+        }
+
+        if (!ctl_tree.is_event() || ctl_tree.event!!.transition == Transition.Instantaneous) {
+            btn_duration.visibility = View.GONE
+        } else {
+            btn_duration.visibility = View.VISIBLE
+        }
+
+        btn_transition.setOnClickListener {
+            this.click_button_ctl_transition()
+        }
+
+        btn_transition.text = if (!ctl_tree.is_event()) {
+            ""
+        } else {
+            when (ctl_tree.event!!.transition) {
+                Transition.Instantaneous -> "Immediate"
+                Transition.Linear -> "Linear"
+            }
+        }
+
+
+    }
+
+    fun click_button_ctl_transition() {
     }
 
     internal fun setContextMenu_linking() {
@@ -346,11 +423,13 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         val llContextRow = this.activity!!.findViewById<LinearLayout>(R.id.llContextRow)
         val llContextCol = this.activity!!.findViewById<LinearLayout>(R.id.llContextCol)
         val llContextLink = this.activity!!.findViewById<View>(R.id.llContextLink)
+        val llContextLineCtlLeaf = this.activity!!.findViewById<View>(R.id.llContextLineCtlLeaf)
 
         llContextCell.visibility = View.GONE
         llContextRow.visibility = View.GONE
         llContextCol.visibility = View.GONE
         llContextLink.visibility = View.VISIBLE
+        llContextLineCtlLeaf.visibility = View.GONE
         //////////////////////////////////////////////
 
         val main = this.get_main()
@@ -466,9 +545,11 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         val llContextRow = this.activity!!.findViewById<LinearLayout>(R.id.llContextRow)
         val llContextCol = this.activity!!.findViewById<LinearLayout>(R.id.llContextCol)
         val llContextLink = this.activity!!.findViewById<View>(R.id.llContextLink)
+        val llContextLineCtlLeaf = this.activity!!.findViewById<View>(R.id.llContextLineCtlLeaf)
         llContextCell.visibility = View.GONE
         llContextRow.visibility = View.GONE
         llContextLink.visibility = View.GONE
+        llContextLineCtlLeaf.visibility = View.GONE
 
         val main = this.get_main()
         if (main.in_playback()) {
@@ -498,10 +579,12 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         val llContextRow = this.activity!!.findViewById<LinearLayout>(R.id.llContextRow)
         val llContextCol = this.activity!!.findViewById<LinearLayout>(R.id.llContextCol)
         val llContextLink = this.activity!!.findViewById<View>(R.id.llContextLink)
+        val llContextLineCtlLeaf = this.activity!!.findViewById<View>(R.id.llContextLineCtlLeaf)
         llContextCell.visibility = View.GONE
         llContextRow.visibility = View.VISIBLE
         llContextCol.visibility = View.GONE
         llContextLink.visibility = View.GONE
+        llContextLineCtlLeaf.visibility = View.GONE
         ///////////////////////////////////////////
 
         val main = this.get_main()
@@ -634,7 +717,6 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                 opus_manager.set_line_volume(channel, line_offset, seekbar.progress)
             }
         })
-
     }
 
     private fun _setup_interactors_leaf() {
@@ -703,11 +785,13 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         val llContextRow = this.activity!!.findViewById<LinearLayout>(R.id.llContextRow)
         val llContextCol = this.activity!!.findViewById<LinearLayout>(R.id.llContextCol)
         val llContextLink = this.activity!!.findViewById<View>(R.id.llContextLink)
+        val llContextLineCtlLeaf = this.activity!!.findViewById<View>(R.id.llContextLineCtlLeaf)
 
         llContextCell.visibility = View.VISIBLE
         llContextRow.visibility = View.GONE
         llContextCol.visibility = View.GONE
         llContextLink.visibility = View.GONE
+        llContextLineCtlLeaf.visibility = View.GONE
         //////////////////////////////////////////////
 
         val main = this.get_main()
@@ -931,10 +1015,12 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         val llContextRow = this.activity!!.findViewById<LinearLayout>(R.id.llContextRow)
         val llContextCol = this.activity!!.findViewById<LinearLayout>(R.id.llContextCol)
         val llContextLink = this.activity!!.findViewById<View>(R.id.llContextLink)
+        val llContextLineCtlLeaf = this.activity!!.findViewById<View?>(R.id.llContextLineCtlLeaf)
         llContextCell.visibility = View.VISIBLE
         llContextRow.visibility = View.GONE
         llContextCol.visibility = View.GONE
         llContextLink.visibility = View.GONE
+        llContextLineCtlLeaf.visibility = View.GONE
         //////////////////////////////////////////////
 
         val main = this.get_main()

@@ -5,8 +5,8 @@ interface OpusEvent {}
 
 enum class Transition {
     Instantaneous,
-    Linear,
-    Exponential
+    Linear
+    //Exponential
 }
 enum class ControlEventType {
     Tempo,

@@ -330,6 +330,38 @@ open class OpusLayerBase {
         return Pair(working_beat_key, working_position)
     }
 
+    fun get_preceding_ctl_line_leaf_position(ctl_type: ControlEventType, beat_key: BeatKey, position: List<Int>): Pair<BeatKey, List<Int>>? {
+        val working_position = position.toMutableList()
+        val working_beat_key = BeatKey(beat_key.channel, beat_key.line_offset, beat_key.beat)
+
+        // Move left/up
+        while (true) {
+            if (working_position.isNotEmpty()) {
+                if (working_position.last() > 0) {
+                    working_position[working_position.size - 1] -= 1
+                    break
+                } else {
+                    working_position.removeLast()
+                }
+            } else if (working_beat_key.beat > 0) {
+                working_beat_key.beat -= 1
+                break
+            } else {
+                return null
+            }
+        }
+
+        var working_tree = this.get_line_ctl_tree(ctl_type, working_beat_key, working_position)
+
+        // Move right/down to leaf
+        while (!working_tree.is_leaf()) {
+            working_position.add(working_tree.size - 1)
+            working_tree = working_tree[working_tree.size - 1]
+        }
+
+        return Pair(working_beat_key, working_position)
+    }
+
     /**
      * Get the location of the leaf immediately after the tree found at [beat_key]/[position].
      * *it may not be an immediate sibling, rather an aunt, niece, etc*
@@ -2783,6 +2815,32 @@ open class OpusLayerBase {
             }
         }
 
+        return output
+    }
+
+    fun get_current_ctl_line_value(type: ControlEventType, beat_key: BeatKey, position: List<Int>): Float {
+        val current_tree = this.get_line_ctl_tree(type, beat_key, position)
+        if (current_tree.is_event()) {
+            return current_tree.get_event()!!.value
+        }
+
+        var working_beat_key = beat_key
+        var working_position = position.toList()
+        var output = 0F // TODO: Ctl Type Defaults
+
+        while (true) {
+            val pair = this.get_preceding_ctl_line_leaf_position(type, working_beat_key, working_position) ?: return output
+            working_beat_key = pair.first
+            working_position = pair.second
+
+            val working_tree = this.get_line_ctl_tree(type, working_beat_key, working_position)
+
+            if (working_tree.is_event()) {
+                val working_event = working_tree.get_event()!!
+                output = working_event.value
+                break
+            }
+        }
         return output
     }
 

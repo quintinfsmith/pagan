@@ -1002,7 +1002,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
         this.runOnUiThread {
             this.withFragment {
-                // TODO: SET CONTEXT MENU
+                 it.set_context_menu_line_control_leaf()
             }
 
             val editor_table = this.get_editor_table() ?: return@runOnUiThread
@@ -1047,11 +1047,6 @@ class OpusLayerInterface : OpusLayerCursor() {
         beat: Int,
         position: List<Int>
     ) {
-        val activity = this.get_activity()
-        if (activity != null && !activity.view_model.show_percussion) {
-            this.make_percussion_visible()
-        }
-
         super.cursor_select_ctl_at_global(ctl_type, beat, position)
 
         if (this.get_ui_lock_level() != null) {

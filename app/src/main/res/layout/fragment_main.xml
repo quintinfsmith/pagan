@@ -36,5 +36,10 @@
             android:id="@+id/llContextLink"
             android:visibility="gone"
             layout="@layout/contextmenu_linking"/>
+        <include
+            android:id="@+id/llContextLineCtlLeaf"
+            android:visibility="gone"
+            layout="@layout/contextmenu_line_ctl_leaf"/>
     </LinearLayout>
+
 </LinearLayout>

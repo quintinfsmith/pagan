@@ -27,5 +27,9 @@ class ControlLeafButtonGlobal(
             this.position
         )
     }
+    override fun callback_click() {
+        val opus_manager = this.get_opus_manager()
+        opus_manager.cursor_select_ctl_at_global(this.control_type, this.get_beat(), this.position)
+    }
 }
 

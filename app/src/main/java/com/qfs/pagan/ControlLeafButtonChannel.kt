@@ -31,5 +31,10 @@ class ControlLeafButtonChannel(
             this.position
         )
     }
+
+    override fun callback_click() {
+        val opus_manager = this.get_opus_manager()
+        opus_manager.cursor_select_ctl_at_channel(this.control_type, this.channel, this.get_beat(), this.position)
+    }
 }
 

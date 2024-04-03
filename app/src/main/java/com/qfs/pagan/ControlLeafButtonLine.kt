@@ -15,6 +15,7 @@ class ControlLeafButtonLine(
     position: List<Int>,
     control_type: ControlEventType
 ): ControlLeafButton(context, event, position, CtlLineLevel.Line, control_type) {
+
     override fun get_tree(): OpusTree<OpusControlEvent> {
         return this.get_opus_manager().get_line_ctl_tree(
             this.control_type,
@@ -30,6 +31,19 @@ class ControlLeafButtonLine(
     override fun is_selected(): Boolean {
         val opus_manager = this.get_opus_manager()
         return opus_manager.is_line_control_selected(
+            this.control_type,
+            BeatKey(
+                this.channel,
+                this.line_offset,
+                this.get_beat()
+            ),
+            this.position
+        )
+    }
+
+    override fun callback_click() {
+        val opus_manager = this.get_opus_manager()
+        opus_manager.cursor_select_ctl_at_line(
             this.control_type,
             BeatKey(
                 this.channel,

@@ -984,6 +984,93 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
+    override fun cursor_select_ctl_at_line(
+        ctl_type: ControlEventType,
+        beat_key: BeatKey,
+        position: List<Int>
+    ) {
+        val activity = this.get_activity()
+        if (activity != null && !activity.view_model.show_percussion && this.is_percussion(beat_key.channel)) {
+            this.make_percussion_visible()
+        }
+
+        super.cursor_select_ctl_at_line(ctl_type, beat_key, position)
+
+        if (this.get_ui_lock_level() != null) {
+            return
+        }
+
+        this.runOnUiThread {
+            this.withFragment {
+                // TODO: SET CONTEXT MENU
+            }
+
+            val editor_table = this.get_editor_table() ?: return@runOnUiThread
+            editor_table.update_cursor(this.cursor, false)
+
+            editor_table.scroll_to_position(beat_key, position)
+        }
+    }
+
+    override fun cursor_select_ctl_at_channel(
+        ctl_type: ControlEventType,
+        channel: Int,
+        beat: Int,
+        position: List<Int>
+    ) {
+        val activity = this.get_activity()
+        if (activity != null && !activity.view_model.show_percussion && this.is_percussion(channel)) {
+            this.make_percussion_visible()
+        }
+
+        super.cursor_select_ctl_at_channel(ctl_type, channel, beat, position)
+
+        if (this.get_ui_lock_level() != null) {
+            return
+        }
+
+        this.runOnUiThread {
+            this.withFragment {
+                // TODO: SET CONTEXT MENU
+            }
+
+            val editor_table = this.get_editor_table() ?: return@runOnUiThread
+            editor_table.update_cursor(this.cursor, false)
+
+            // TODO
+            //editor_table.scroll_to_position(, position)
+        }
+    }
+
+    override fun cursor_select_ctl_at_global(
+        ctl_type: ControlEventType,
+        beat: Int,
+        position: List<Int>
+    ) {
+        val activity = this.get_activity()
+        if (activity != null && !activity.view_model.show_percussion) {
+            this.make_percussion_visible()
+        }
+
+        super.cursor_select_ctl_at_global(ctl_type, beat, position)
+
+        if (this.get_ui_lock_level() != null) {
+            return
+        }
+
+        this.runOnUiThread {
+            this.withFragment {
+                // TODO: SET CONTEXT MENU
+            }
+
+            val editor_table = this.get_editor_table() ?: return@runOnUiThread
+            editor_table.update_cursor(this.cursor, false)
+
+            // TODO
+            //editor_table.scroll_to_position(, position)
+        }
+    }
+
     override fun cursor_select_to_link(beat_key: BeatKey) {
         super.cursor_select_to_link(beat_key)
 

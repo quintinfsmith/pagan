@@ -131,8 +131,7 @@ open class ControlLeafButton(
         )
     }
 
-    private fun callback_click() {
-    }
+    open fun callback_click() { }
 
     // Prevents the child labels from blocking the parent onTouchListener events
     override fun onInterceptTouchEvent(touchEvent: MotionEvent): Boolean {

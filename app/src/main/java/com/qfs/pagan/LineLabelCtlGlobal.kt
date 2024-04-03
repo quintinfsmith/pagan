@@ -8,4 +8,8 @@ class LineLabelCtlGlobal(context: Context, ctl_type: ControlEventType): LineLabe
     override fun on_click() {
         this.get_opus_manager().cursor_select_ctl_row_at_global(this.ctl_type)
     }
+    override fun is_selected(): Boolean {
+        val opus_manager = this.get_opus_manager()
+        return opus_manager.is_global_control_line_selected(this.ctl_type)
+    }
 }

@@ -30,16 +30,31 @@ data class OpusManagerCursor(
         if (other.mode != this.mode) {
             return false
         }
+
         return when (this.mode) {
             CursorMode.Row -> {
-                other.channel == this.channel && other.line_offset == this.line_offset
+                if (this.ctl_level != other.ctl_level || this.ctl_type != other.ctl_type) {
+                    false
+                } else {
+                    when (this.ctl_level) {
+                        null,
+                        CtlLineLevel.Line -> {
+                            other.channel == this.channel && other.line_offset == this.line_offset
+                        }
+                        CtlLineLevel.Channel -> other.channel == this.channel
+                        CtlLineLevel.Global -> true
+                    }
+                }
             }
+
             CursorMode.Column -> {
                 other.beat == this.beat
             }
+
             CursorMode.Unset -> {
                 true
             }
+
             CursorMode.Single -> {
                 if (this.ctl_level != other.ctl_level || this.ctl_type != other.ctl_type) {
                     false
@@ -58,6 +73,7 @@ data class OpusManagerCursor(
                     }
                 }
             }
+
             CursorMode.Range -> {
                 this.range == other.range
             }

@@ -6,7 +6,6 @@ import android.graphics.drawable.LayerDrawable
 import android.view.ContextThemeWrapper
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
-import com.qfs.pagan.opusmanager.OpusManagerCursor
 
 open class LineLabelCtl(context: Context, var ctl_level: CtlLineLevel, var ctl_type: ControlEventType): LineLabelInner(
     ContextThemeWrapper(context, R.style.line_label)
@@ -16,36 +15,20 @@ open class LineLabelCtl(context: Context, var ctl_level: CtlLineLevel, var ctl_t
             return drawableState
         }
 
-        val opus_manager = this.get_opus_manager()
-
         val new_state = mutableListOf<Int>()
-        when (opus_manager.cursor.mode) {
-            OpusManagerCursor.CursorMode.Range -> {
-                val (first, second) = opus_manager.cursor.range!!
-                val visible_line_index = opus_manager.get_ctl_line_from_visible_row((this.parent as LineLabelView).row)
-                val first_line = opus_manager.get_visible_row_from_ctl_line(
-                    opus_manager.get_ctl_line_index(
-                        opus_manager.get_abs_offset(first.channel, first.line_offset)
-                    )
-                )!!
-                val second_line = opus_manager.get_visible_row_from_ctl_line(
-                    opus_manager.get_ctl_line_index(
-                        opus_manager.get_abs_offset(second.channel, second.line_offset)
-                    )
-                )!!
 
-                if ((first_line .. second_line).contains(visible_line_index)) {
-                    new_state.add(R.attr.state_focused)
-                }
-            }
-            else -> { }
-
+        if (this.is_selected()) {
+            new_state.add(R.attr.state_focused)
         }
+
         new_state.add(R.attr.state_channel_even)
-        new_state.add(R.attr.state_alternate)
 
         mergeDrawableStates(drawableState, new_state.toIntArray())
         return drawableState
+    }
+
+    open fun is_selected(): Boolean {
+        TODO()
     }
 
     override fun get_label_text(): String {

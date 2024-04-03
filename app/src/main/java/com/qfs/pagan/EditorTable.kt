@@ -323,6 +323,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
         val opus_manager = this.get_opus_manager()
         val column_label_adapter = (this.column_label_recycler.adapter!! as ColumnLabelAdapter)
+
         when (cursor.mode) {
             OpusManagerCursor.CursorMode.Single -> {
                 when (cursor.ctl_level) {
@@ -353,9 +354,36 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                             (this.get_column_recycler().adapter as ColumnRecyclerAdapter).notify_cell_changed(y, linked_key.beat, true)
                         }
                     }
-                    CtlLineLevel.Line -> { }
-                    CtlLineLevel.Channel -> { }
-                    CtlLineLevel.Global -> { }
+
+                    CtlLineLevel.Line -> {
+                        val y = opus_manager.get_visible_row_from_ctl_line_line(
+                            cursor.ctl_type!!,
+                            cursor.channel,
+                            cursor.line_offset
+                        )
+                        this._line_label_layout.notify_item_changed(y)
+                        column_label_adapter.notifyItemChanged(cursor.beat)
+                        (this.get_column_recycler().adapter as ColumnRecyclerAdapter).notify_cell_changed(y, cursor.beat, true)
+                    }
+                    CtlLineLevel.Channel -> {
+                        val y = opus_manager.get_visible_row_from_ctl_line_channel(
+                            cursor.ctl_type!!,
+                            cursor.channel
+                        )
+                        this._line_label_layout.notify_item_changed(y)
+                        column_label_adapter.notifyItemChanged(cursor.beat)
+                        (this.get_column_recycler().adapter as ColumnRecyclerAdapter).notify_cell_changed(y, cursor.beat, true)
+                    }
+
+                    CtlLineLevel.Global -> {
+                        val y = opus_manager.get_visible_row_from_ctl_line_global(
+                            cursor.ctl_type!!
+                        )
+
+                        this._line_label_layout.notify_item_changed(y)
+                        column_label_adapter.notifyItemChanged(cursor.beat)
+                        (this.get_column_recycler().adapter as ColumnRecyclerAdapter).notify_cell_changed(y, cursor.beat, true)
+                    }
                 }
             }
 
@@ -382,9 +410,9 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
             }
             OpusManagerCursor.CursorMode.Row -> {
-                when (cursor.ctl_level) {
+                val y = when (cursor.ctl_level) {
                     null -> {
-                        val y = try {
+                        try {
                             opus_manager.get_visible_row_from_ctl_line(
                                 opus_manager.get_ctl_line_index(
                                     opus_manager.get_abs_offset(
@@ -396,21 +424,29 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                         } catch (e: IndexOutOfBoundsException) {
                             return
                         }
-
-                        (this.get_column_recycler().adapter as ColumnRecyclerAdapter).notify_row_changed(y, true)
-                        this._line_label_layout.notify_item_changed(y)
                     }
                     CtlLineLevel.Line -> {
-
+                        opus_manager.get_visible_row_from_ctl_line_line(
+                            cursor.ctl_type!!,
+                            cursor.channel,
+                            cursor.line_offset
+                        )
                     }
                     CtlLineLevel.Channel -> {
-
+                        opus_manager.get_visible_row_from_ctl_line_channel(
+                            cursor.ctl_type!!,
+                            cursor.channel
+                        )
                     }
                     CtlLineLevel.Global -> {
-
+                        opus_manager.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
                     }
                 }
+
+                this._line_label_layout.notify_item_changed(y)
+                (this.get_column_recycler().adapter as ColumnRecyclerAdapter).notify_row_changed(y, true)
             }
+
             OpusManagerCursor.CursorMode.Column -> {
                 (this.get_column_recycler().adapter as ColumnRecyclerAdapter).notify_column_state_changed(cursor.beat)
                 column_label_adapter.notifyItemChanged(cursor.beat)

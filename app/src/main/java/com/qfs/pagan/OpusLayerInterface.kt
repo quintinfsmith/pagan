@@ -914,7 +914,6 @@ class OpusLayerInterface : OpusLayerCursor() {
             }
 
             val scroll_to_row = this._cached_ctl_map_line[Triple(channel, line_offset, ctl_type)] ?: return@runOnUiThread
-
             editor_table?.scroll_to_position(y = scroll_to_row)
         }
     }
@@ -1090,7 +1089,7 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     /*
-        get the number of visible lines, control lines included
+        Get the number of visible lines, control lines included
      */
     fun get_visible_master_line_count(): Int {
         return this._cached_visible_line_map.size
@@ -1105,6 +1104,18 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     fun get_visible_row_from_ctl_line(line: Int): Int? {
         return this._cached_inv_visible_line_map[line]
+    }
+
+    fun get_visible_row_from_ctl_line_line(type: ControlEventType, channel: Int, line_offset: Int): Int {
+        return this._cached_ctl_map_line[Triple(channel, line_offset, type)]!!
+    }
+
+    fun get_visible_row_from_ctl_line_channel(type: ControlEventType, channel: Int): Int {
+        return this._cached_ctl_map_channel[Pair(channel, type)]!!
+    }
+
+    fun get_visible_row_from_ctl_line_global(type: ControlEventType): Int {
+        return this._cached_ctl_map_global[type]!!
     }
 
     override fun recache_line_maps() {

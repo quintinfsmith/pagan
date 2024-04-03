@@ -28,7 +28,7 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Li
         when (opus_manager.cursor.mode) {
             OpusManagerCursor.CursorMode.Single,
             OpusManagerCursor.CursorMode.Row -> {
-                if (opus_manager.cursor.channel == this.channel && opus_manager.cursor.line_offset == this.line_offset) {
+                if (opus_manager.cursor.ctl_level == null && opus_manager.cursor.channel == this.channel && opus_manager.cursor.line_offset == this.line_offset) {
                     new_state.add(R.attr.state_focused)
                 }
             }

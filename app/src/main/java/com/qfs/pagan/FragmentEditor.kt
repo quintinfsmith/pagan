@@ -1,46 +1,27 @@
 package com.qfs.pagan
 import android.app.AlertDialog
-import android.content.res.Configuration
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
 import android.widget.LinearLayout
-import android.widget.RadioGroup
 import android.widget.SeekBar
 import android.widget.TextView
 import androidx.core.view.GravityCompat
+import androidx.core.view.isEmpty
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.setFragmentResult
 import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
 import com.qfs.pagan.databinding.FragmentMainBinding
-import com.qfs.pagan.opusmanager.BeatKey
-import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusManagerCursor
-import com.qfs.pagan.opusmanager.Transition
 import java.io.File
 import java.io.FileInputStream
 import kotlin.concurrent.thread
 
 class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     val view_model: EditorViewModel by viewModels()
-    private var _active_context_menu_index: ContextMenuFlag? = null
     var project_change_flagged = false
-    enum class ContextMenuFlag {
-        Leaf,
-        LeafPercussion,
-        Line,
-        Column,
-        Linking,
-        ControlLeafLine,
-        ControlLeafChannel,
-        ControlLeafGlobal,
-        ControlLineLine,
-        ControlLineChannel,
-        ControlLineGlobal
-    }
 
     override fun inflate(inflater: LayoutInflater, container: ViewGroup?): FragmentMainBinding {
         return FragmentMainBinding.inflate(inflater, container, false)
@@ -69,9 +50,6 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     override fun onStart() {
         super.onStart()
         this._set_result_listeners()
-        this._setup_interactors_leaf()
-        this._setup_interactors_column()
-        this._setup_interactors_line()
     }
 
     override fun onStop() {
@@ -179,7 +157,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        this.clearContextMenu()
+        this.clear_context_menu()
 
         val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
         editor_table.visibility = View.INVISIBLE
@@ -234,7 +212,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
             main.loading_reticle_show(getString(R.string.reticle_msg_import_midi))
             main.runOnUiThread {
                 editor_table?.visibility = View.INVISIBLE
-                this@FragmentEditor.clearContextMenu()
+                this@FragmentEditor.clear_context_menu()
             }
             thread {
                 val path = bundle?.getString("URI")
@@ -306,363 +284,81 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         }
     }
 
-    fun reset_context_menu() {
-        when (this._active_context_menu_index) {
-            ContextMenuFlag.Leaf -> {
-                this.set_context_menu_leaf()
-            }
-            ContextMenuFlag.LeafPercussion -> {
-                this.set_context_menu_leaf_percussion()
-            }
-            ContextMenuFlag.Line -> {
-                this.set_context_menu_line()
-            }
-            ContextMenuFlag.Column -> {
-                this.set_context_menu_column()
-            }
-            ContextMenuFlag.Linking -> {
-                this.setContextMenu_linking()
-            }
-            ContextMenuFlag.ControlLeafLine -> {
-                this.set_context_menu_line_control_leaf()
-            }
-            else -> { }
+    fun refresh_context_menu() {
+        val llContextMenu = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenu)
+        if (llContextMenu.isEmpty()) {
+            return
         }
+
+        (llContextMenu.getChildAt(0) as ContextMenuView).refresh()
     }
 
-    fun clearContextMenu() {
-        this._active_context_menu_index = null
-        val llContextCell = this.activity!!.findViewById<LinearLayout?>(R.id.llContextCell)
-        val llContextRow = this.activity!!.findViewById<LinearLayout?>(R.id.llContextRow)
-        val llContextCol = this.activity!!.findViewById<LinearLayout?>(R.id.llContextCol)
-        val llContextLink = this.activity!!.findViewById<View?>(R.id.llContextLink)
-        val llContextLineCtlLeaf = this.activity!!.findViewById<View?>(R.id.llContextLineCtlLeaf)
+    private inline fun <reified T: ContextMenuView?> refresh_or_clear_context_menu(): Boolean {
+        val llContextMenu = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenu)
+        if (llContextMenu.isEmpty()) {
+            return false
+        }
 
-        llContextCell?.visibility = View.GONE
-        llContextRow?.visibility = View.GONE
-        llContextCol?.visibility = View.GONE
-        llContextLink?.visibility = View.GONE
-        llContextLineCtlLeaf?.visibility = View.GONE
+        if (llContextMenu.getChildAt(0) !is T) {
+            llContextMenu.removeAllViews()
+            return false
+        }
+
+        (llContextMenu.getChildAt(0) as ContextMenuView).refresh()
+        return true
     }
+
+    fun clear_context_menu() {
+        val llContextMenu = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenu)
+        llContextMenu.removeAllViews()
+    }
+
 
     internal fun set_context_menu_line_control_leaf() {
-        this._active_context_menu_index = ContextMenuFlag.ControlLeafLine
-        val llContextCell = this.activity!!.findViewById<LinearLayout>(R.id.llContextCell)
-        val llContextRow = this.activity!!.findViewById<LinearLayout>(R.id.llContextRow)
-        val llContextCol = this.activity!!.findViewById<LinearLayout>(R.id.llContextCol)
-        val llContextLink = this.activity!!.findViewById<View>(R.id.llContextLink)
-        val llContextLineCtlLeaf = this.activity!!.findViewById<View>(R.id.llContextLineCtlLeaf)
-
-        llContextCell.visibility = View.GONE
-        llContextRow.visibility = View.GONE
-        llContextCol.visibility = View.GONE
-        llContextLink.visibility = View.GONE
-        llContextLineCtlLeaf.visibility = View.VISIBLE
-        //////////////////////////////////////////////
-        val opus_manager = this.get_main().get_opus_manager()
-        val cursor = opus_manager.cursor
-        val ctl_tree = opus_manager.get_line_ctl_tree(
-            cursor.ctl_type!!,
-            BeatKey(
-                cursor.channel,
-                cursor.line_offset,
-                cursor.beat
-            ),
-            cursor.position
-        )
-
-        val btn_transition = llContextLineCtlLeaf.findViewById<ButtonStd>(R.id.btnChooseTransition)
-        val btn_duration = llContextLineCtlLeaf.findViewById<ButtonStd>(R.id.btnDuration)
-        val btn_value = llContextLineCtlLeaf.findViewById<ButtonStd>(R.id.btnCtlAmount)
-
-        if (!ctl_tree.is_event()) {
-            btn_value.text = opus_manager.get_current_ctl_line_value(
-                cursor.ctl_type!!,
-                BeatKey(
-                    cursor.channel,
-                    cursor.line_offset,
-                    cursor.beat
-                ),
-                cursor.position
-            ).toString()
-        } else {
-            // TODO: Formatting
-            btn_value.text = ctl_tree.event!!.value.toString()
-        }
-
-        if (!ctl_tree.is_event() || ctl_tree.event!!.transition == Transition.Instantaneous) {
-            btn_duration.visibility = View.GONE
-        } else {
-            btn_duration.visibility = View.VISIBLE
-        }
-
-        btn_value.setOnClickListener {
-            this.click_button_ctl_value()
-        }
-
-        btn_transition.setOnClickListener {
-            this.click_button_ctl_transition()
-        }
-
-        btn_transition.text = if (!ctl_tree.is_event()) {
-            ""
-        } else {
-            when (ctl_tree.event!!.transition) {
-                Transition.Instantaneous -> "Immediate"
-                Transition.Linear -> "Linear"
-            }
-        }
-    }
-
-    fun click_button_ctl_transition() {
-    }
-
-    fun click_button_ctl_value() {
-        this.get_main().dialog_number_input("Value", 0, 1, 0) {
-
+        if (!this.refresh_or_clear_context_menu<ContextMenuControlLeaf>()) {
+            val llContextMenu = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenu)
+            llContextMenu.addView(ContextMenuControlLeaf(this.activity!!))
         }
     }
 
     internal fun setContextMenu_linking() {
-        this._active_context_menu_index = ContextMenuFlag.Linking
-        val llContextCell = this.activity!!.findViewById<LinearLayout>(R.id.llContextCell)
-        val llContextRow = this.activity!!.findViewById<LinearLayout>(R.id.llContextRow)
-        val llContextCol = this.activity!!.findViewById<LinearLayout>(R.id.llContextCol)
-        val llContextLink = this.activity!!.findViewById<View>(R.id.llContextLink)
-        val llContextLineCtlLeaf = this.activity!!.findViewById<View>(R.id.llContextLineCtlLeaf)
-
-        llContextCell.visibility = View.GONE
-        llContextRow.visibility = View.GONE
-        llContextCol.visibility = View.GONE
-        llContextLink.visibility = View.VISIBLE
-        llContextLineCtlLeaf.visibility = View.GONE
-        //////////////////////////////////////////////
-
-        val main = this.get_main()
-        val opus_manager = main.get_opus_manager()
-
-        val btnUnLink = llContextLink.findViewById<ImageView>(R.id.btnUnLink)
-        val btnUnLinkAll = llContextLink.findViewById<ImageView>(R.id.btnUnLinkAll)
-        val btnEraseSelection = llContextLink.findViewById<ImageView>(R.id.btnEraseSelection)
-
-        val label = llContextLink.findViewById<TextView>(R.id.tvLinkLabel)
-        val rgLinkMode = llContextLink.findViewById<RadioGroup?>(R.id.rgLinkMode)
-        rgLinkMode.check(when (main.configuration.link_mode) {
-            PaganConfiguration.LinkMode.LINK -> R.id.rbLinkModeLink
-            PaganConfiguration.LinkMode.MOVE -> R.id.rbLinkModeMove
-            PaganConfiguration.LinkMode.COPY -> R.id.rbLinkModeCopy
-        })
-        rgLinkMode?.setOnCheckedChangeListener { _: RadioGroup, button_id: Int ->
-            main.configuration.link_mode = when (button_id) {
-                R.id.rbLinkModeLink -> PaganConfiguration.LinkMode.LINK
-                R.id.rbLinkModeMove -> PaganConfiguration.LinkMode.MOVE
-                R.id.rbLinkModeCopy -> PaganConfiguration.LinkMode.COPY
-                else -> PaganConfiguration.LinkMode.COPY
-            }
-            main.save_configuration()
-
-            label?.text = when (button_id) {
-                R.id.rbLinkModeLink -> {
-                    if (opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Range) {
-                        resources.getString(R.string.label_link_range)
-                    } else {
-                        resources.getString(R.string.label_link_beat)
-                    }
-                }
-                R.id.rbLinkModeMove -> {
-                    if (opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Range) {
-                        resources.getString(R.string.label_move_range)
-                    } else {
-                        resources.getString(R.string.label_move_beat)
-                    }
-                }
-                // R.id.rbLinkModeCopy,
-                else -> {
-                    if (opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Range) {
-                        resources.getString(R.string.label_copy_range)
-                    } else {
-                        resources.getString(R.string.label_copy_beat)
-                    }
-                }
-            }
-        }
-
-        val (is_networked, many_links) = if (opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Range) {
-            label?.text = when (main.configuration.link_mode) {
-                PaganConfiguration.LinkMode.LINK -> resources.getString(R.string.label_link_range)
-                PaganConfiguration.LinkMode.MOVE -> resources.getString(R.string.label_move_range)
-                PaganConfiguration.LinkMode.COPY ->  resources.getString(R.string.label_copy_range)
-            }
-
-            var output = false
-            for (beat_key in opus_manager.get_beatkeys_in_range(opus_manager.cursor.range!!.first, opus_manager.cursor.range!!.second)) {
-                if (opus_manager.is_networked(beat_key)) {
-                    output = true
-                    break
-                }
-            }
-
-            Pair(
-                output,
-                true
-            )
-        } else if (opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Single) {
-            label?.text = when (main.configuration.link_mode) {
-                PaganConfiguration.LinkMode.LINK -> resources.getString(R.string.label_link_beat)
-                PaganConfiguration.LinkMode.MOVE -> resources.getString(R.string.label_move_beat)
-                PaganConfiguration.LinkMode.COPY ->  resources.getString(R.string.label_copy_beat)
-            }
-
-            val cursor_key = opus_manager.cursor.get_beatkey()
-            Pair(
-                opus_manager.is_networked(cursor_key),
-                opus_manager.get_all_linked(cursor_key).size > 2
-            )
-        } else {
-            return
-        }
-
-        if (is_networked) {
-            btnUnLink.visibility = View.VISIBLE
-            btnUnLink.setOnClickListener {
-                this.click_button_unlink()
-            }
-            if (!many_links) {
-                btnUnLinkAll.visibility = View.GONE
-            } else {
-                btnUnLinkAll.visibility = View.VISIBLE
-                btnUnLinkAll.setOnClickListener {
-                    this.click_button_unlink_all()
-                }
-            }
-        } else {
-            btnUnLink.visibility = View.GONE
-            btnUnLinkAll.visibility = View.GONE
-        }
-
-        btnEraseSelection.setOnClickListener {
-            this.get_main().get_opus_manager().unset()
+        if (!this.refresh_or_clear_context_menu<ContextMenuLink>()) {
+            val llContextMenu = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenu)
+            val new_menu = ContextMenuLink(this.activity!!)
+            llContextMenu.addView(new_menu)
         }
     }
 
     fun set_context_menu_column() {
-        this._active_context_menu_index = ContextMenuFlag.Column
-        // TODO: Implement
+        if (!this.refresh_or_clear_context_menu<ContextMenuColumn>()) {
+            val llContextMenu = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenu)
+            val new_menu = ContextMenuColumn(this.activity!!)
+            llContextMenu.addView(new_menu)
+        }
     }
 
     fun set_context_menu_line() {
-        this._active_context_menu_index = ContextMenuFlag.Line
-        // TODO: Implement
-    }
-
-    private fun _setup_interactors_column() {
-        val llContextCol = this.activity!!.findViewById<LinearLayout>(R.id.llContextCol)
-
-        val btnInsertBeat = llContextCol.findViewById<ImageView>(R.id.btnInsertBeat)
-        val btnRemoveBeat = llContextCol.findViewById<ImageView>(R.id.btnRemoveBeat)
-
-        btnInsertBeat.setOnClickListener {
-            this.click_button_insert_beat()
+        if (!this.refresh_or_clear_context_menu<ContextMenuLine>()) {
+            val llContextMenu = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenu)
+            val new_menu = ContextMenuLine(this.activity!!)
+            llContextMenu.addView(new_menu)
         }
-
-        btnInsertBeat.setOnLongClickListener {
-            this.long_click_button_insert_beat()
-        }
-
-        btnRemoveBeat.setOnClickListener {
-            this.click_button_remove_beat()
-        }
-
-        btnRemoveBeat.setOnLongClickListener {
-            this.long_click_button_remove_beat()
-        }
-    }
-
-    private fun _setup_interactors_line() {
-        // TODO: Implement
-    }
-
-    private fun _setup_interactors_leaf() {
-        // TODO: Implement
     }
 
     internal fun set_context_menu_leaf() {
-        this._active_context_menu_index = ContextMenuFlag.Leaf
-        // TODO: Implement
+        if (!this.refresh_or_clear_context_menu<ContextMenuLeaf>()) {
+            val llContextMenu = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenu)
+            val new_menu = ContextMenuLeaf(this.activity!!)
+            llContextMenu.addView(new_menu)
+        }
     }
-
 
     internal fun set_context_menu_leaf_percussion() {
-        this._active_context_menu_index = ContextMenuFlag.LeafPercussion
-        val llContextCell = this.activity!!.findViewById<LinearLayout>(R.id.llContextCell)
-        val llContextRow = this.activity!!.findViewById<LinearLayout>(R.id.llContextRow)
-        val llContextCol = this.activity!!.findViewById<LinearLayout>(R.id.llContextCol)
-        val llContextLink = this.activity!!.findViewById<View>(R.id.llContextLink)
-        val llContextLineCtlLeaf = this.activity!!.findViewById<View>(R.id.llContextLineCtlLeaf)
-
-        llContextCell.visibility = View.VISIBLE
-        llContextRow.visibility = View.GONE
-        llContextCol.visibility = View.GONE
-        llContextLink.visibility = View.GONE
-        llContextLineCtlLeaf.visibility = View.GONE
-        //////////////////////////////////////////////
-
-        val main = this.get_main()
-        val opus_manager = main.get_opus_manager()
-
-        val btnSplit = llContextCell.findViewById<View>(R.id.btnSplit)
-        btnSplit.visibility = View.VISIBLE
-
-        val btnInsert = llContextCell.findViewById<View>(R.id.btnInsert)
-        btnInsert.visibility = View.VISIBLE
-
-        val btnUnset = llContextCell.findViewById<ImageView>(R.id.btnUnset)
-        btnUnset.visibility = View.VISIBLE
-
-        val rosRelativeOption = llContextCell.findViewById<RelativeOptionSelector>(R.id.rosRelativeOption)
-        rosRelativeOption.visibility = View.GONE
-
-        val nsOctave: NumberSelector = llContextCell.findViewById(R.id.nsOctave)
-        nsOctave.visibility = View.GONE
-
-        val nsOffset: NumberSelector = llContextCell.findViewById(R.id.nsOffset)
-        nsOffset.visibility = View.GONE
-
-        val btnDuration = llContextCell.findViewById<TextView>(R.id.btnDuration)
-        val current_tree = opus_manager.get_tree()
-
-        // If event exists, change relative mode, other wise use active relative mode
-        if (current_tree.is_event()) {
-            val event = current_tree.get_event()!!
-            btnUnset.setImageResource(R.drawable.unset)
-
-            btnDuration.text = getString(R.string.label_duration, event.duration)
-            btnDuration.visibility = View.VISIBLE
-        } else {
-            btnUnset.setImageResource(R.drawable.set_percussion)
-            btnDuration.visibility = View.GONE
+        if (!this.refresh_or_clear_context_menu<ContextMenuLeafPercussion>()) {
+            val llContextMenu = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenu)
+            val new_menu = ContextMenuLeafPercussion(this.activity!!)
+            llContextMenu.addView(new_menu)
         }
-
-
-        val btnRemove = llContextCell.findViewById<View>(R.id.btnRemove)
-        if (opus_manager.cursor.get_position().isEmpty()) {
-            btnRemove.visibility = View.GONE
-        } else {
-            btnRemove.visibility = View.VISIBLE
-        }
-
-    }
-
-    private fun click_button_unlink() {
-        val main = this.get_main()
-        val opus_manager = main.get_opus_manager()
-        opus_manager.unlink_beat()
-    }
-
-    private fun click_button_unlink_all() {
-        val main = this.get_main()
-        val opus_manager = main.get_opus_manager()
-        opus_manager.clear_link_pool()
     }
 
     fun shortcut_dialog() {

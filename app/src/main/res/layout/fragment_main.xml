@@ -20,26 +20,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
-        <include
-            android:id="@+id/llContextCell"
-            android:visibility="gone"
-            layout="@layout/contextmenu_cell"/>
-        <include
-            android:id="@+id/llContextCol"
-            android:visibility="gone"
-            layout="@layout/contextmenu_column"/>
-        <include
-            android:id="@+id/llContextRow"
-            android:visibility="gone"
-            layout="@layout/contextmenu_row"/>
-        <include
-            android:id="@+id/llContextLink"
-            android:visibility="gone"
-            layout="@layout/contextmenu_linking"/>
-        <include
-            android:id="@+id/llContextLineCtlLeaf"
-            android:visibility="gone"
-            layout="@layout/contextmenu_line_ctl_leaf"/>
     </LinearLayout>
 
 </LinearLayout>

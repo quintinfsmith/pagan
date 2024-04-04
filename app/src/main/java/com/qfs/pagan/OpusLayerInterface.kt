@@ -679,7 +679,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
             main.update_channel_instruments()
             this.withFragment {
-                it.clearContextMenu()
+                it.clear_context_menu()
             }
         }
 
@@ -839,7 +839,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                 val editor_table = this.get_editor_table()
                 editor_table?.update_cursor(this.cursor)
                 this.withFragment {
-                    it.clearContextMenu()
+                    it.clear_context_menu()
                 }
             }
         }
@@ -1286,7 +1286,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
 
         this.withFragment { fragment ->
-            fragment.reset_context_menu()
+            fragment.refresh_context_menu()
         }
     }
 

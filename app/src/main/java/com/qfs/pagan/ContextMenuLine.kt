@@ -20,7 +20,7 @@ class ContextMenuLine(context: Context, attrs: AttributeSet? = null): ContextMen
     init {
         val view = LayoutInflater.from(this.context)
             .inflate(
-                R.layout.contextmenu_cell,
+                R.layout.contextmenu_row,
                 this as ViewGroup,
                 false
             )
@@ -162,7 +162,7 @@ class ContextMenuLine(context: Context, attrs: AttributeSet? = null): ContextMen
         dialog.show()
     }
 
-    fun setup_interactors() {
+    fun setup_interactions() {
         this.button_choose_percussion.setOnClickListener {
             this.interact_btnChoosePercussion()
         }
@@ -196,7 +196,7 @@ class ContextMenuLine(context: Context, attrs: AttributeSet? = null): ContextMen
             }
             override fun onStartTrackingTouch(p0: SeekBar?) { }
             override fun onStopTrackingTouch(seekbar: SeekBar) {
-                val opus_manager = this@ContextMenuLine.get_main().get_opus_manager()
+                val opus_manager = this@ContextMenuLine.get_opus_manager()
                 val channel = opus_manager.cursor.channel
                 val line_offset = opus_manager.cursor.line_offset
                 opus_manager.set_line_volume(channel, line_offset, seekbar.progress)
@@ -206,7 +206,7 @@ class ContextMenuLine(context: Context, attrs: AttributeSet? = null): ContextMen
 
     private fun interact_btnChoosePercussion() {
         val main = this.get_main()
-        val opus_manager = main.get_opus_manager()
+        val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
         val default_instrument = opus_manager.get_percussion_instrument(cursor.line_offset)
 

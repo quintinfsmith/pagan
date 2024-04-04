@@ -37,6 +37,8 @@ class ContextMenuLeaf(context: Context, attrs: AttributeSet? = null): ContextMen
         this.ns_octave = view.findViewById(R.id.nsOctave)
         this.ns_offset = view.findViewById(R.id.nsOffset)
         this.ros_relative_option = view.findViewById(R.id.rosRelativeOption)
+
+        this.setup_interactions()
         this.refresh()
     }
 
@@ -132,16 +134,10 @@ class ContextMenuLeaf(context: Context, attrs: AttributeSet? = null): ContextMen
 
         return true
     }
-    private fun click_button_unset() {
-        val main = this.get_main()
-        val opus_manager = main.get_opus_manager()
 
-        val channel = opus_manager.cursor.channel
-        if (!opus_manager.is_percussion(channel) || opus_manager.get_tree().is_event()) {
-            opus_manager.unset()
-        } else {
-            opus_manager.set_percussion_event()
-        }
+    private fun click_button_unset() {
+        val opus_manager = this.get_opus_manager()
+        opus_manager.unset()
     }
 
     private fun on_offset_change(view: NumberSelector) {
@@ -214,7 +210,7 @@ class ContextMenuLeaf(context: Context, attrs: AttributeSet? = null): ContextMen
 
         opus_manager.set_event_at_cursor(event)
         this._play_event(opus_manager.cursor.get_beatkey(), opus_manager.cursor.get_position())
-        this.reset_context_menu()
+        this.refresh()
     }
 
     private fun on_octave_change(view: NumberSelector) {
@@ -283,7 +279,7 @@ class ContextMenuLeaf(context: Context, attrs: AttributeSet? = null): ContextMen
 
         opus_manager.set_event_at_cursor(event)
         this._play_event(opus_manager.cursor.get_beatkey(), opus_manager.cursor.get_position())
-        this.reset_context_menu()
+        this.refresh()
     }
 
     private fun interact_rosRelativeOption(view: RelativeOptionSelector) {
@@ -345,12 +341,10 @@ class ContextMenuLeaf(context: Context, attrs: AttributeSet? = null): ContextMen
         }
     }
 
-    fun setup_interactors() {
+    fun setup_interactions() {
         this.ns_octave.setOnChange(this::on_octave_change)
         this.ns_offset.setOnChange(this::on_offset_change)
 
-        val radix = this.get_main().get_opus_manager().tuning_map.size
-        this.ns_offset.set_max(radix - 1)
 
         this.ros_relative_option.setOnChange(this::interact_rosRelativeOption)
 
@@ -398,6 +392,9 @@ class ContextMenuLeaf(context: Context, attrs: AttributeSet? = null): ContextMen
         val main = this.get_main()
         val opus_manager = this.get_opus_manager()
 
+        val radix = opus_manager.tuning_map.size
+        this.ns_offset.set_max(radix - 1)
+
         if (main.configuration.relative_mode) {
             this.ros_relative_option.visibility = View.VISIBLE
             this.ros_relative_option.setState(opus_manager.relative_mode, true)
@@ -419,7 +416,6 @@ class ContextMenuLeaf(context: Context, attrs: AttributeSet? = null): ContextMen
             }
 
             if (value >= 0) {
-                val radix = this.get_main().get_opus_manager().tuning_map.size
                 this.ns_offset.setState(value % radix, manual = true, surpress_callback = true)
                 this.ns_octave.setState(value / radix, manual = true, surpress_callback = true)
             }

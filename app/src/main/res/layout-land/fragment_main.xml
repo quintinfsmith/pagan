@@ -20,17 +20,5 @@ tools:context=".FragmentEditor">
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:orientation="horizontal">
-        <include
-            android:id="@+id/llContextCell"
-            layout="@layout/contextmenu_cell"/>
-        <include
-            android:id="@+id/llContextCol"
-            layout="@layout/contextmenu_column"/>
-        <include
-            android:id="@+id/llContextRow"
-            layout="@layout/contextmenu_row"/>
-        <include
-            android:id="@+id/llContextLink"
-            layout="@layout/contextmenu_linking"/>
     </LinearLayout>
 </LinearLayout>

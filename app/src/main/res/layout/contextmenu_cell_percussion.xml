@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/llContextCell"
+    android:padding="@dimen/number_selector_spacing"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <com.qfs.pagan.ButtonIcon
+        android:id="@+id/btnSplit"
+        android:layout_gravity="center"
+        android:layout_width="@dimen/icon_button_width"
+        android:layout_height="@dimen/icon_button_height"
+        android:text="Split"
+        android:contentDescription="@string/cd_split"
+        app:srcCompat="@drawable/split"/>
+
+    <Space
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:layout_width="0dp"/>
+
+    <com.qfs.pagan.ButtonIcon
+        android:id="@+id/btnInsert"
+        android:layout_width="@dimen/icon_button_width"
+        android:layout_height="@dimen/icon_button_height"
+        android:contentDescription="@string/cd_insert"
+        android:text="Insert"
+        app:srcCompat="@drawable/insert" />
+
+    <Space
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:layout_width="0dp"/>
+
+    <com.qfs.pagan.ButtonIcon
+        android:theme="@style/icon_button"
+        android:id="@+id/btnRemove"
+        android:layout_width="@dimen/icon_button_width"
+        android:layout_height="@dimen/icon_button_height"
+        android:contentDescription="@string/cd_remove"
+        android:text="Remove"
+        app:srcCompat="@drawable/remove" />
+
+    <Space
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:layout_width="0dp"/>
+
+    <com.qfs.pagan.ButtonIcon
+        android:theme="@style/icon_button"
+        android:id="@+id/btnUnset"
+        android:layout_width="@dimen/icon_button_width"
+        android:layout_height="@dimen/icon_button_height"
+        android:contentDescription="@string/cd_unset"
+        android:text="Unset"
+        app:srcCompat="@drawable/unset" />
+
+    <Space
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:layout_width="0dp"/>
+
+    <com.qfs.pagan.ButtonStd
+        android:theme="@style/icon_button"
+        android:id="@+id/btnDuration"
+        android:layout_width="@dimen/icon_button_width"
+        android:layout_height="@dimen/icon_button_height"
+        android:text="T" />
+
+</LinearLayout>

@@ -13,7 +13,7 @@ class ContextMenuColumn(context: Context, attrs: AttributeSet? = null): ContextM
     init {
         val view = LayoutInflater.from(this.context)
             .inflate(
-                R.layout.contextmenu_cell,
+                R.layout.contextmenu_column,
                 this as ViewGroup,
                 false
             )
@@ -55,8 +55,7 @@ class ContextMenuColumn(context: Context, attrs: AttributeSet? = null): ContextM
     }
 
     fun click_button_insert_beat() {
-        val main = this.get_main()
-        val opus_manager = main.get_opus_manager()
+        val opus_manager = this.get_opus_manager()
         opus_manager.insert_beat_after_cursor(1)
     }
 
@@ -70,7 +69,7 @@ class ContextMenuColumn(context: Context, attrs: AttributeSet? = null): ContextM
         return true
     }
 
-    fun setup_interactors() {
+    fun setup_interactions() {
         this.button_insert.setOnClickListener {
             this.click_button_insert_beat()
         }

@@ -105,6 +105,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
                     this.replace_tree(beatkey, position, tree)
                 }
 
+
                 HistoryToken.REMOVE_LINE -> {
                     this.remove_line(
                         current_node.args[0] as Int,
@@ -149,6 +150,30 @@ open class OpusLayerHistory : OpusLayerLinks() {
                         this.checked_cast<List<Int>>(current_node.args[1])
                     )
                 }
+
+                HistoryToken.REMOVE_CTL_GLOBAL -> {
+                    this.remove_global_ctl(
+                        current_node.args[0] as ControlEventType,
+                        current_node.args[1] as Int,
+                        this.checked_cast<List<Int>>(current_node.args[2])
+                    )
+                }
+                HistoryToken.REMOVE_CTL_CHANNEL -> {
+                    this.remove_channel_ctl(
+                        current_node.args[0] as ControlEventType,
+                        current_node.args[1] as Int,
+                        current_node.args[2] as Int,
+                        this.checked_cast<List<Int>>(current_node.args[3])
+                    )
+                }
+                HistoryToken.REMOVE_CTL_LINE -> {
+                    this.remove_line_ctl(
+                        current_node.args[0] as ControlEventType,
+                        current_node.args[1] as BeatKey,
+                        this.checked_cast<List<Int>>(current_node.args[2])
+                    )
+                }
+
 
                 HistoryToken.REMOVE_BEATS -> {
                     this.remove_beat(
@@ -336,6 +361,57 @@ open class OpusLayerHistory : OpusLayerLinks() {
         this._remember {
             super.insert(beat_key, position)
             this.push_remove(beat_key, position)
+        }
+    }
+
+    fun insert_after_global_ctl(type: ControlEventType, beat: Int, position: List<Int>, repeat: Int) {
+        this._remember {
+            for (i in 0 until repeat) {
+                this.insert_after_global_ctl(type, beat, position)
+            }
+        }
+    }
+
+    override fun insert_after_global_ctl(type: ControlEventType, beat: Int, position: List<Int>) {
+        this._remember {
+            val remove_position = position.toMutableList()
+            remove_position[remove_position.size - 1] += 1
+            super.insert_after_global_ctl(type, beat, position)
+            this.push_remove_global_ctl(type, beat, remove_position)
+        }
+    }
+
+    fun insert_after_channel_ctl(type: ControlEventType, channel: Int, beat: Int, position: List<Int>, repeat: Int) {
+        this._remember {
+            for (i in 0 until repeat) {
+                this.insert_after_channel_ctl(type, channel, beat, position)
+            }
+        }
+    }
+
+    override fun insert_after_channel_ctl(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
+        this._remember {
+            val remove_position = position.toMutableList()
+            remove_position[remove_position.size - 1] += 1
+            super.insert_after_channel_ctl(type, channel, beat, position)
+            this.push_remove_channel_ctl(type, channel, beat, remove_position)
+        }
+    }
+
+    fun insert_after_line_ctl(type: ControlEventType, beat_key: BeatKey, position: List<Int>, repeat: Int) {
+        this._remember {
+            for (i in 0 until repeat) {
+                this.insert_after_line_ctl(type, beat_key, position)
+            }
+        }
+    }
+
+    override fun insert_after_line_ctl(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
+        this._remember {
+            val remove_position = position.toMutableList()
+            remove_position[remove_position.size - 1] += 1
+            super.insert_after_line_ctl(type, beat_key, position)
+            this.push_remove_line_ctl(type, beat_key, remove_position)
         }
     }
 
@@ -582,6 +658,42 @@ open class OpusLayerHistory : OpusLayerLinks() {
             }
 
             output
+        }
+    }
+
+    private fun push_remove_global_ctl(type: ControlEventType, beat: Int, position: List<Int>) {
+        if (position.isNotEmpty()) {
+            val stamp_position = position.toMutableList()
+            val parent_position = position.subList(0, position.size - 1)
+            val parent = this.get_global_ctl_tree(type, beat, parent_position)
+            if (stamp_position.last() >= parent.size - 1 && parent.size > 1) {
+                stamp_position[stamp_position.size - 1] = parent.size - 2
+            }
+            this.push_to_history_stack(HistoryToken.REMOVE_CTL_GLOBAL, listOf(type, beat, position))
+        }
+    }
+
+    private fun push_remove_channel_ctl(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
+        if (position.isNotEmpty()) {
+            val stamp_position = position.toMutableList()
+            val parent_position = position.subList(0, position.size - 1)
+            val parent = this.get_channel_ctl_tree(type, channel, beat, parent_position)
+            if (stamp_position.last() >= parent.size - 1 && parent.size > 1) {
+                stamp_position[stamp_position.size - 1] = parent.size - 2
+            }
+            this.push_to_history_stack(HistoryToken.REMOVE_CTL_CHANNEL, listOf(type, channel, beat, position))
+        }
+    }
+
+    private fun push_remove_line_ctl(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
+        if (position.isNotEmpty()) {
+            val stamp_position = position.toMutableList()
+            val parent_position = position.subList(0, position.size - 1)
+            val parent = this.get_line_ctl_tree(type, beat_key, parent_position)
+            if (stamp_position.last() >= parent.size - 1 && parent.size > 1) {
+                stamp_position[stamp_position.size - 1] = parent.size - 2
+            }
+            this.push_to_history_stack(HistoryToken.REMOVE_CTL_LINE, listOf(type, beat_key, position))
         }
     }
 

@@ -1557,7 +1557,7 @@ open class OpusLayerBase {
                         Pair(
                             0,
                             OpusTreeJSON(
-                                OpusControlEvent(.5F, Transition.Linear, 1),
+                                OpusControlEvent(.5F),
                                 null
                             )
                         )
@@ -1593,11 +1593,7 @@ open class OpusLayerBase {
                         Pair(
                             0,
                             OpusTreeJSON<OpusControlEvent>(
-                                OpusControlEvent(
-                                    120F,
-                                    Transition.Instantaneous,
-                                    1
-                                ),
+                                OpusControlEvent(120F),
                                 null
                             )
                         )
@@ -1618,10 +1614,7 @@ open class OpusLayerBase {
             ControlEventType.Volume,
             BeatKey(0, 0, 1),
             listOf(),
-            OpusControlEvent(
-                .5f,
-                Transition.Instantaneous
-            )
+            OpusControlEvent(.5f)
         )
         this.on_project_changed()
     }
@@ -2408,7 +2401,7 @@ open class OpusLayerBase {
         tree.event!!.duration = duration
     }
 
-    open fun set_global_ctl_duration(type: ControlEventType, channel: Int, beat: Int, position: List<Int>, duration: Int) {
+    open fun set_global_ctl_duration(type: ControlEventType, beat: Int, position: List<Int>, duration: Int) {
         val tree = this.get_global_ctl_tree(type, beat, position)
         if (!tree.is_event()) {
             // TODO: Throw error?

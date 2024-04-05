@@ -806,6 +806,25 @@ open class OpusLayerCursor: OpusLayerHistory() {
         this.cursor_select(beat_key, new_position)
     }
 
+    override fun split_global_ctl_tree(type: ControlEventType, beat: Int, position: List<Int>, splits: Int) {
+        super.split_global_ctl_tree(type, beat, position, splits)
+        val new_position = position.toMutableList()
+        new_position.add(0)
+        this.cursor_select_ctl_at_global(type, beat, new_position)
+    }
+    override fun split_channel_ctl_tree(type: ControlEventType, channel: Int, beat: Int, position: List<Int>, splits: Int) {
+        super.split_channel_ctl_tree(type, channel, beat, position, splits)
+        val new_position = position.toMutableList()
+        new_position.add(0)
+        this.cursor_select_ctl_at_channel(type, channel, beat, new_position)
+    }
+    override fun split_line_ctl_tree(type: ControlEventType, beat_key: BeatKey, position: List<Int>, splits: Int) {
+        super.split_line_ctl_tree(type, beat_key, position, splits)
+        val new_position = position.toMutableList()
+        new_position.add(0)
+        this.cursor_select_ctl_at_line(type, beat_key, new_position)
+    }
+
     override fun insert(beat_key: BeatKey, position: List<Int>) {
         super.insert(beat_key, position)
         this.cursor_select(beat_key, position)

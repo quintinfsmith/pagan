@@ -4,9 +4,7 @@ import kotlinx.serialization.Serializable
 interface OpusEvent {}
 
 enum class Transition {
-    Instantaneous,
     Linear
-    //Exponential
 }
 enum class ControlEventType {
     Tempo,
@@ -17,8 +15,8 @@ enum class ControlEventType {
 @Serializable
 data class OpusControlEvent(
     var value: Float,
-    var transition: Transition = Transition.Instantaneous,
-    var duration: Int = 1
+    var duration: Int = 0,
+    var transition: Transition = Transition.Linear
 ): OpusEvent
 
 @Serializable

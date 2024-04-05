@@ -89,19 +89,6 @@
             android:layout_weight="1"
             android:layout_height="wrap_content"
             android:text="Value" />
-
-        <com.qfs.pagan.ButtonStd
-            android:theme="@style/button"
-            android:id="@+id/btnChooseTransition"
-            android:textSize="18sp"
-            android:paddingTop="5dp"
-            android:paddingBottom="8dp"
-            android:layout_marginTop="@dimen/number_selector_spacing"
-            android:layout_marginBottom="@dimen/number_selector_spacing"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:text="Transition Type" />
     </LinearLayout>
 
 </LinearLayout>

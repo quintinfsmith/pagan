@@ -197,6 +197,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             UI_LOCK_FULL -> {}
         }
     }
+
     private fun _notify_cell_change(coordinate: EditorTable.Coordinate) {
         this._notify_cell_change(listOf(coordinate))
     }
@@ -209,6 +210,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             )
         )
     }
+
     private fun _notify_channel_ctl_cell_change(type: ControlEventType, channel: Int, beat: Int) {
         this._notify_cell_change(
             EditorTable.Coordinate(
@@ -217,6 +219,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             )
         )
     }
+
     private fun _notify_line_ctl_cell_change(type: ControlEventType, beat_key: BeatKey) {
         this._notify_cell_change(
             EditorTable.Coordinate(
@@ -226,11 +229,24 @@ class OpusLayerInterface : OpusLayerCursor() {
         )
     }
 
-
-
     override fun unset(beat_key: BeatKey, position: List<Int>) {
         super.unset(beat_key, position)
         this._notify_cell_change(beat_key)
+    }
+
+    override fun unset_global_ctl(type: ControlEventType, beat: Int, position: List<Int>) {
+        super.unset_global_ctl(type, beat, position)
+        this._notify_global_ctl_cell_change(type, beat)
+    }
+
+    override fun unset_channel_ctl(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
+        super.unset_channel_ctl(type, channel, beat, position)
+        this._notify_channel_ctl_cell_change(type, channel, beat)
+    }
+
+    override fun unset_line_ctl(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
+        super.unset_line_ctl(type, beat_key, position)
+        this._notify_line_ctl_cell_change(type, beat_key)
     }
 
     override fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<OpusEventSTD>) {
@@ -314,6 +330,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
         this._notify_cell_change(beat_key)
     }
+
     override fun split_global_ctl_tree(
         type: ControlEventType,
         beat: Int,
@@ -378,6 +395,21 @@ class OpusLayerInterface : OpusLayerCursor() {
         this._notify_cell_change(beat_key)
     }
 
+    override fun insert_after_global_ctl(type: ControlEventType, beat: Int, position: List<Int>) {
+        super.insert_after_global_ctl(type, beat, position)
+        this._notify_global_ctl_cell_change(type, beat)
+    }
+
+    override fun insert_after_channel_ctl(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
+        super.insert_after_channel_ctl(type, channel, beat, position)
+        this._notify_channel_ctl_cell_change(type, channel, beat)
+    }
+
+    override fun insert_after_line_ctl(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
+        super.insert_after_line_ctl(type, beat_key, position)
+        this._notify_line_ctl_cell_change(type, beat_key)
+    }
+
     override fun insert(beat_key: BeatKey, position: List<Int>) {
         super.insert(beat_key, position)
 
@@ -386,6 +418,20 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
 
         this._notify_cell_change(beat_key)
+    }
+    override fun insert_global_ctl(type: ControlEventType, beat: Int, position: List<Int>) {
+        super.insert_global_ctl(type, beat, position)
+        this._notify_global_ctl_cell_change(type, beat)
+    }
+
+    override fun insert_channel_ctl(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
+        super.insert_channel_ctl(type, channel, beat, position)
+        this._notify_channel_ctl_cell_change(type, channel, beat)
+    }
+
+    override fun insert_line_ctl(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
+        super.insert_line_ctl(type, beat_key, position)
+        this._notify_line_ctl_cell_change(type, beat_key)
     }
 
     override fun remove(beat_key: BeatKey, position: List<Int>) {
@@ -396,6 +442,21 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
 
         this._notify_cell_change(beat_key)
+    }
+
+    override fun remove_global_ctl(type: ControlEventType, beat: Int, position: List<Int>) {
+        super.remove_global_ctl(type, beat, position)
+        this._notify_global_ctl_cell_change(type, beat)
+    }
+
+    override fun remove_channel_ctl(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
+        super.remove_channel_ctl(type, channel, beat, position)
+        this._notify_channel_ctl_cell_change(type, channel, beat)
+    }
+
+    override fun remove_line_ctl(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
+        super.remove_line_ctl(type, beat_key, position)
+        this._notify_line_ctl_cell_change(type, beat_key)
     }
 
     override fun new_line(channel: Int, line_offset: Int?): OpusLine {
@@ -1094,7 +1155,8 @@ class OpusLayerInterface : OpusLayerCursor() {
             val editor_table = this.get_editor_table() ?: return@runOnUiThread
             editor_table.update_cursor(this.cursor, false)
 
-            editor_table.scroll_to_position(beat_key, position)
+            // TODO
+            //editor_table.scroll_to_position(beat_key, position)
         }
     }
 

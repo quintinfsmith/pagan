@@ -2,26 +2,17 @@ package com.qfs.pagan
 
 import android.content.Context
 import android.util.AttributeSet
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import com.qfs.pagan.opusmanager.OpusLayerBase
 
-class ContextMenuColumn(context: Context, attrs: AttributeSet? = null): ContextMenuView(context, attrs) {
-    val button_insert: ButtonIcon
-    val button_remove: ButtonIcon
-    init {
-        val view = LayoutInflater.from(this.context)
-            .inflate(
-                R.layout.contextmenu_column,
-                this as ViewGroup,
-                false
-            )
-        this.addView(view)
+class ContextMenuColumn(context: Context, attrs: AttributeSet? = null): ContextMenuView(R.layout.contextmenu_column, context, attrs) {
+    lateinit var button_insert: ButtonIcon
+    lateinit var button_remove: ButtonIcon
 
+    override fun init_properties() {
+        super.init_properties()
         this.button_insert = this.findViewById(R.id.btnInsertBeat)
         this.button_remove = this.findViewById(R.id.btnRemoveBeat)
-        this.refresh()
     }
 
     override fun refresh() {
@@ -32,6 +23,24 @@ class ContextMenuColumn(context: Context, attrs: AttributeSet? = null): ContextM
             View.GONE
         } else {
             View.VISIBLE
+        }
+    }
+
+    override fun setup_interactions() {
+        this.button_insert.setOnClickListener {
+            this.click_button_insert_beat()
+        }
+
+        this.button_insert.setOnLongClickListener {
+            this.long_click_button_insert_beat()
+        }
+
+        this.button_remove.setOnClickListener {
+            this.click_button_remove_beat()
+        }
+
+        this.button_remove.setOnLongClickListener {
+            this.long_click_button_remove_beat()
         }
     }
 
@@ -67,23 +76,5 @@ class ContextMenuColumn(context: Context, attrs: AttributeSet? = null): ContextM
             opus_manager.insert_beat_after_cursor(count)
         }
         return true
-    }
-
-    fun setup_interactions() {
-        this.button_insert.setOnClickListener {
-            this.click_button_insert_beat()
-        }
-
-        this.button_insert.setOnLongClickListener {
-            this.long_click_button_insert_beat()
-        }
-
-        this.button_remove.setOnClickListener {
-            this.click_button_remove_beat()
-        }
-
-        this.button_remove.setOnLongClickListener {
-            this.long_click_button_remove_beat()
-        }
     }
 }

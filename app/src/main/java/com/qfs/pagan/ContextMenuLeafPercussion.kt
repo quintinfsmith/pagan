@@ -2,35 +2,88 @@ package com.qfs.pagan
 
 import android.content.Context
 import android.util.AttributeSet
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import com.qfs.pagan.opusmanager.BeatKey
 
-class ContextMenuLeafPercussion(context: Context, attrs: AttributeSet? = null): ContextMenuView(context, attrs) {
-    val button_split: ButtonIcon
-    val button_insert: ButtonIcon
-    val button_unset: ButtonIcon
-    val button_remove: ButtonIcon
-    val button_duration: ButtonStd
+class ContextMenuLeafPercussion(context: Context, attrs: AttributeSet? = null): ContextMenuView(R.layout.contextmenu_cell_percussion, context, attrs) {
+    lateinit var button_split: ButtonIcon
+    lateinit var button_insert: ButtonIcon
+    lateinit var button_unset: ButtonIcon
+    lateinit var button_remove: ButtonIcon
+    lateinit var button_duration: ButtonStd
 
-    init {
-        val view = LayoutInflater.from(this.context)
-            .inflate(
-                R.layout.contextmenu_cell_percussion,
-                this as ViewGroup,
-                false
-            )
+    override fun init_properties() {
+        this.button_split = this.findViewById(R.id.btnSplit)
+        this.button_insert = this.findViewById(R.id.btnInsert)
+        this.button_unset = this.findViewById(R.id.btnUnset)
+        this.button_remove = this.findViewById(R.id.btnRemove)
+        this.button_duration = this.findViewById(R.id.btnDuration)
+    }
 
-        this.addView(view)
+    override fun refresh() {
+        this.button_split.visibility = View.VISIBLE
+        this.button_insert.visibility = View.VISIBLE
 
-        this.button_split = view.findViewById(R.id.btnSplit)
-        this.button_insert = view.findViewById(R.id.btnInsert)
-        this.button_unset = view.findViewById(R.id.btnUnset)
-        this.button_remove = view.findViewById(R.id.btnRemove)
-        this.button_duration = view.findViewById(R.id.btnDuration)
+        val opus_manager = this.get_opus_manager()
 
-        this.refresh()
+        val current_tree = opus_manager.get_tree()
+        if (current_tree.is_event()) {
+            val event = current_tree.get_event()!!
+            this.button_unset.setImageResource(R.drawable.unset)
+            this.button_duration.text = this.context.getString(R.string.label_duration, event.duration)
+            this.button_duration.visibility = View.VISIBLE
+        } else {
+            this.button_duration.visibility = View.GONE
+        }
+
+
+        if (current_tree.is_leaf() && !current_tree.is_event()) {
+            this.button_unset.visibility = View.GONE
+        } else {
+            this.button_unset.visibility = View.VISIBLE
+        }
+
+        if (opus_manager.cursor.get_position().isEmpty()) {
+            this.button_remove.visibility = View.GONE
+        } else {
+            this.button_remove.visibility = View.VISIBLE
+        }
+    }
+
+    override fun setup_interactions() {
+        this.button_duration.setOnClickListener {
+            this.click_button_duration()
+        }
+        this.button_duration.setOnLongClickListener {
+            this.long_click_button_duration()
+        }
+        this.button_remove.setOnClickListener {
+            this.click_button_remove()
+        }
+
+        this.button_remove.setOnLongClickListener {
+            this.long_click_button_remove()
+        }
+
+        this.button_unset.setOnClickListener {
+            this.click_button_unset()
+        }
+
+        this.button_split.setOnClickListener {
+            this.click_button_split()
+        }
+
+        this.button_split.setOnLongClickListener {
+            this.long_click_button_split()
+        }
+
+        this.button_insert.setOnClickListener {
+            this.click_button_insert()
+        }
+
+        this.button_insert.setOnLongClickListener {
+            this.long_click_button_insert()
+        }
     }
 
     fun click_button_duration() {
@@ -132,72 +185,6 @@ class ContextMenuLeafPercussion(context: Context, attrs: AttributeSet? = null): 
             opus_manager.unset()
         } else {
             opus_manager.set_percussion_event()
-        }
-    }
-
-    fun setup_interactions() {
-        this.button_duration.setOnClickListener {
-            this.click_button_duration()
-        }
-        this.button_duration.setOnLongClickListener {
-            this.long_click_button_duration()
-        }
-        this.button_remove.setOnClickListener {
-            this.click_button_remove()
-        }
-
-        this.button_remove.setOnLongClickListener {
-            this.long_click_button_remove()
-        }
-
-        this.button_unset.setOnClickListener {
-            this.click_button_unset()
-        }
-
-        this.button_split.setOnClickListener {
-            this.click_button_split()
-        }
-
-        this.button_split.setOnLongClickListener {
-            this.long_click_button_split()
-        }
-
-        this.button_insert.setOnClickListener {
-            this.click_button_insert()
-        }
-
-        this.button_insert.setOnLongClickListener {
-            this.long_click_button_insert()
-        }
-    }
-
-    override fun refresh() {
-        this.button_split.visibility = View.VISIBLE
-        this.button_insert.visibility = View.VISIBLE
-
-        val opus_manager = this.get_opus_manager()
-
-        val current_tree = opus_manager.get_tree()
-        if (current_tree.is_event()) {
-            val event = current_tree.get_event()!!
-            this.button_unset.setImageResource(R.drawable.unset)
-            this.button_duration.text = this.context.getString(R.string.label_duration, event.duration)
-            this.button_duration.visibility = View.VISIBLE
-        } else {
-            this.button_duration.visibility = View.GONE
-        }
-
-
-        if (current_tree.is_leaf() && !current_tree.is_event()) {
-            this.button_unset.visibility = View.GONE
-        } else {
-            this.button_unset.visibility = View.VISIBLE
-        }
-
-        if (opus_manager.cursor.get_position().isEmpty()) {
-            this.button_remove.visibility = View.GONE
-        } else {
-            this.button_remove.visibility = View.VISIBLE
         }
     }
 

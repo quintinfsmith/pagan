@@ -11,28 +11,22 @@ import android.widget.SeekBar
 import android.widget.TextView
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 
-class ContextMenuLine(context: Context, attrs: AttributeSet? = null): ContextMenuView(context, attrs) {
-    val button_insert: ButtonIcon
-    val button_remove: ButtonIcon
-    val button_choose_percussion: ButtonStd
-    val button_line_volume_popup: ButtonIcon
-    val seekbar_line_volume: PaganSeekBar
-    init {
-        val view = LayoutInflater.from(this.context)
-            .inflate(
-                R.layout.contextmenu_row,
-                this as ViewGroup,
-                false
-            )
+class ContextMenuLine(context: Context, attrs: AttributeSet? = null): ContextMenuView(R.layout.contextmenu_row, context, attrs) {
+    lateinit var button_insert: ButtonIcon
+    lateinit var button_remove: ButtonIcon
+    lateinit var button_choose_percussion: ButtonStd
+    lateinit var button_line_volume_popup: ButtonIcon
+    lateinit var seekbar_line_volume: PaganSeekBar
 
-        this.addView(view)
-
+    override fun init_properties() {
         this.button_insert = this.findViewById(R.id.btnInsertLine)
         this.button_remove = this.findViewById(R.id.btnRemoveLine)
         this.button_choose_percussion = this.findViewById(R.id.btnChoosePercussion)
         this.button_line_volume_popup = this.findViewById(R.id.btnLineVolumePopup)
         this.seekbar_line_volume = this.findViewById(R.id.sbLineVolume)
+    }
 
+    override fun refresh() {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
         if (opus_manager.cursor.mode != OpusManagerCursor.CursorMode.Row) {
@@ -90,6 +84,49 @@ class ContextMenuLine(context: Context, attrs: AttributeSet? = null): ContextMen
         this.seekbar_line_volume.progress = opus_manager.get_line_volume(channel, line_offset)
         this.seekbar_line_volume.contentDescription = resources.getString(R.string.label_volume_scrollbar, this.seekbar_line_volume.progress * 100 / 128)
     }
+
+    override fun setup_interactions() {
+        this.button_choose_percussion.setOnClickListener {
+            this.interact_btnChoosePercussion()
+        }
+
+        this.button_line_volume_popup.setOnClickListener {
+            val opus_manager = this.get_main().get_opus_manager()
+            val channel = opus_manager.cursor.channel
+            val line_offset = opus_manager.cursor.line_offset
+            this._line_volume_dialog(channel, line_offset)
+        }
+
+        this.button_insert.setOnLongClickListener {
+            this.long_click_button_insert_line()
+        }
+
+        this.button_insert.setOnClickListener {
+            this.click_button_insert_line()
+        }
+
+        this.button_remove.setOnClickListener {
+            this.click_button_remove_line()
+        }
+
+        this.button_remove.setOnLongClickListener {
+            this.long_click_button_remove_line()
+        }
+
+        this.seekbar_line_volume.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(p0: SeekBar, p1: Int, p2: Boolean) {
+                p0.contentDescription = resources.getString(R.string.label_volume_scrollbar, (p1 * 100 / 96))
+            }
+            override fun onStartTrackingTouch(p0: SeekBar?) { }
+            override fun onStopTrackingTouch(seekbar: SeekBar) {
+                val opus_manager = this@ContextMenuLine.get_opus_manager()
+                val channel = opus_manager.cursor.channel
+                val line_offset = opus_manager.cursor.line_offset
+                opus_manager.set_line_volume(channel, line_offset, seekbar.progress)
+            }
+        })
+    }
+
     fun click_button_insert_line() {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
@@ -160,48 +197,6 @@ class ContextMenuLine(context: Context, attrs: AttributeSet? = null): ContextMen
         val dialog = AlertDialog.Builder(this.get_main())
         dialog.setView(view)
         dialog.show()
-    }
-
-    fun setup_interactions() {
-        this.button_choose_percussion.setOnClickListener {
-            this.interact_btnChoosePercussion()
-        }
-
-        this.button_line_volume_popup.setOnClickListener {
-            val opus_manager = this.get_main().get_opus_manager()
-            val channel = opus_manager.cursor.channel
-            val line_offset = opus_manager.cursor.line_offset
-            this._line_volume_dialog(channel, line_offset)
-        }
-
-        this.button_insert.setOnLongClickListener {
-            this.long_click_button_insert_line()
-        }
-
-        this.button_insert.setOnClickListener {
-            this.click_button_insert_line()
-        }
-
-        this.button_remove.setOnClickListener {
-            this.click_button_remove_line()
-        }
-
-        this.button_remove.setOnLongClickListener {
-            this.long_click_button_remove_line()
-        }
-
-        this.seekbar_line_volume.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(p0: SeekBar, p1: Int, p2: Boolean) {
-                p0.contentDescription = resources.getString(R.string.label_volume_scrollbar, (p1 * 100 / 96))
-            }
-            override fun onStartTrackingTouch(p0: SeekBar?) { }
-            override fun onStopTrackingTouch(seekbar: SeekBar) {
-                val opus_manager = this@ContextMenuLine.get_opus_manager()
-                val channel = opus_manager.cursor.channel
-                val line_offset = opus_manager.cursor.line_offset
-                opus_manager.set_line_volume(channel, line_offset, seekbar.progress)
-            }
-        })
     }
 
     private fun interact_btnChoosePercussion() {

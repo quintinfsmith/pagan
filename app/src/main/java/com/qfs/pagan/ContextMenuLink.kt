@@ -2,38 +2,26 @@ package com.qfs.pagan
 
 import android.content.Context
 import android.util.AttributeSet
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.widget.RadioGroup
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 
-class ContextMenuLink(context: Context, attrs: AttributeSet? = null): ContextMenuView(context, attrs) {
-    val button_unlink: ButtonIcon
-    val button_unlink_all: ButtonIcon
-    val button_erase: ButtonIcon
-    val radio_mode: RadioGroup
-    val label: PaganTextView
-    init {
-        val view = LayoutInflater.from(this.context)
-            .inflate(
-                R.layout.contextmenu_linking,
-                this as ViewGroup,
-                false
-            )
-
-        this.addView(view)
-
+class ContextMenuLink(context: Context, attrs: AttributeSet? = null): ContextMenuView(R.layout.contextmenu_linking, context, attrs) {
+    lateinit var button_unlink: ButtonIcon
+    lateinit var button_unlink_all: ButtonIcon
+    lateinit var button_erase: ButtonIcon
+    lateinit var radio_mode: RadioGroup
+    lateinit var label: PaganTextView
+    override fun init_properties() {
+        super.init_properties()
         this.button_unlink = this.findViewById(R.id.btnUnLink)
         this.button_unlink_all = this.findViewById(R.id.btnUnLinkAll)
         this.button_erase = this.findViewById(R.id.btnEraseSelection)
         this.label = this.findViewById(R.id.tvLinkLabel)
         this.radio_mode = this.findViewById<RadioGroup?>(R.id.rgLinkMode)
-
-        this.refresh()
     }
 
-    fun setup_interactions() {
+    override fun setup_interactions() {
         this.button_erase.setOnClickListener {
             this.get_opus_manager().unset()
         }

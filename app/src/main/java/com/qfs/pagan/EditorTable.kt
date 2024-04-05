@@ -14,6 +14,7 @@ import com.qfs.pagan.opusmanager.ActiveControlSet
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusChannel
+import com.qfs.pagan.opusmanager.OpusEvent
 import com.qfs.pagan.opusmanager.OpusLine
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import com.qfs.pagan.structure.OpusTree
@@ -484,36 +485,42 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             val (pointer, ctl_level, ctl_type) = opus_manager.get_ctl_line_info(
                 opus_manager.get_ctl_line_from_visible_row(coord.y)
             )
-            when (ctl_level) {
+            val new_tree: OpusTree<out OpusEvent> = when (ctl_level) {
                 null -> {
                     val (channel, line_offset) = opus_manager.get_std_offset(pointer)
-                    val new_tree = opus_manager.get_tree(
+                    opus_manager.get_tree(
                         BeatKey(
                             channel,
                             line_offset,
                             coord.x
                         )
                     )
-
-                    val new_cell_width = if (new_tree.is_leaf()) {
-                        1
-                    } else {
-                        new_tree.get_max_child_weight() * new_tree.size
-                    }
-
-                    this._column_width_map[coord.x][coord.y] = new_cell_width
-                    this._column_width_maxes[coord.x] = this._column_width_map[coord.x].max()
-
-                    if (original_width != this._column_width_maxes[coord.x]) {
-                        changed_beats.add(coord.x)
-                    } else {
-                        changed_beat_keys.add(coord)
-                    }
                 }
+                CtlLineLevel.Line -> {
+                    val (channel, line_offset) = opus_manager.get_std_offset(pointer)
+                    opus_manager.get_line_ctl_tree(ctl_type!!, BeatKey(channel, line_offset, coord.x))
+                }
+                CtlLineLevel.Channel -> {
+                    opus_manager.get_channel_ctl_tree(ctl_type!!, pointer, coord.x)
+                }
+                CtlLineLevel.Global -> {
+                    opus_manager.get_global_ctl_tree(ctl_type!!, coord.x)
+                }
+            }
 
-                CtlLineLevel.Line -> TODO()
-                CtlLineLevel.Channel -> TODO()
-                CtlLineLevel.Global -> TODO()
+            val new_cell_width = if (new_tree.is_leaf()) {
+                1
+            } else {
+                new_tree.get_max_child_weight() * new_tree.size
+            }
+
+            this._column_width_map[coord.x][coord.y] = new_cell_width
+            this._column_width_maxes[coord.x] = this._column_width_map[coord.x].max()
+
+            if (original_width != this._column_width_maxes[coord.x]) {
+                changed_beats.add(coord.x)
+            } else {
+                changed_beat_keys.add(coord)
             }
         }
 

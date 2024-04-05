@@ -313,7 +313,6 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         llContextMenu.removeAllViews()
     }
 
-
     internal fun set_context_menu_line_control_leaf() {
         if (!this.refresh_or_clear_context_menu<ContextMenuControlLeaf>()) {
             val llContextMenu = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenu)
@@ -321,7 +320,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         }
     }
 
-    internal fun setContextMenu_linking() {
+    internal fun set_context_menu_linking() {
         if (!this.refresh_or_clear_context_menu<ContextMenuLink>()) {
             val llContextMenu = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenu)
             val new_menu = ContextMenuLink(this.activity!!)
@@ -329,7 +328,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         }
     }
 
-    fun set_context_menu_column() {
+    internal fun set_context_menu_column() {
         if (!this.refresh_or_clear_context_menu<ContextMenuColumn>()) {
             val llContextMenu = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenu)
             val new_menu = ContextMenuColumn(this.activity!!)
@@ -337,7 +336,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         }
     }
 
-    fun set_context_menu_line() {
+    internal fun set_context_menu_line() {
         if (!this.refresh_or_clear_context_menu<ContextMenuLine>()) {
             val llContextMenu = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenu)
             val new_menu = ContextMenuLine(this.activity!!)

@@ -179,7 +179,10 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
 
         val coord_list = this._get_all_linked_as_coords(beat_key)
+        this._notify_cell_change(coord_list)
+    }
 
+    private fun _notify_cell_change(coord_list: List<EditorTable.Coordinate>) {
         when (this.get_ui_lock_level()) {
             null -> {
                 this.runOnUiThread { _: MainActivity ->
@@ -194,6 +197,36 @@ class OpusLayerInterface : OpusLayerCursor() {
             UI_LOCK_FULL -> {}
         }
     }
+    private fun _notify_cell_change(coordinate: EditorTable.Coordinate) {
+        this._notify_cell_change(listOf(coordinate))
+    }
+
+    private fun _notify_global_ctl_cell_change(type: ControlEventType, beat: Int) {
+        this._notify_cell_change(
+            EditorTable.Coordinate(
+                y = this._cached_ctl_map_global[type]!!,
+                x = beat
+            )
+        )
+    }
+    private fun _notify_channel_ctl_cell_change(type: ControlEventType, channel: Int, beat: Int) {
+        this._notify_cell_change(
+            EditorTable.Coordinate(
+                y = this._cached_ctl_map_channel[Pair(channel, type)]!!,
+                x = beat
+            )
+        )
+    }
+    private fun _notify_line_ctl_cell_change(type: ControlEventType, beat_key: BeatKey) {
+        this._notify_cell_change(
+            EditorTable.Coordinate(
+                y = this._cached_ctl_map_line[Triple(beat_key.channel, beat_key.line_offset, type)]!!,
+                x = beat_key.beat
+            )
+        )
+    }
+
+
 
     override fun unset(beat_key: BeatKey, position: List<Int>) {
         super.unset(beat_key, position)
@@ -280,6 +313,59 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
 
         this._notify_cell_change(beat_key)
+    }
+    override fun split_global_ctl_tree(
+        type: ControlEventType,
+        beat: Int,
+        position: List<Int>,
+        splits: Int
+    ) {
+        super.split_global_ctl_tree(type, beat, position, splits)
+
+        if (this.get_activity() == null) {
+            return
+        }
+
+        this._notify_global_ctl_cell_change(type, beat)
+    }
+
+    override fun split_channel_ctl_tree(
+        type: ControlEventType,
+        channel: Int,
+        beat: Int,
+        position: List<Int>,
+        splits: Int
+    ) {
+        super.split_channel_ctl_tree(type, channel, beat, position, splits)
+
+        if (this.get_activity() == null) {
+            return
+        }
+
+        if (this.is_percussion(channel) && !this._activity!!.view_model.show_percussion) {
+            return
+        }
+
+        this._notify_channel_ctl_cell_change(type, channel, beat)
+    }
+
+    override fun split_line_ctl_tree(
+        type: ControlEventType,
+        beat_key: BeatKey,
+        position: List<Int>,
+        splits: Int
+    ) {
+        super.split_line_ctl_tree(type, beat_key, position, splits)
+
+        if (this.get_activity() == null) {
+            return
+        }
+
+        if (this.is_percussion(beat_key.channel) && !this._activity!!.view_model.show_percussion) {
+            return
+        }
+
+        this._notify_line_ctl_cell_change(type, beat_key)
     }
 
     override fun insert_after(beat_key: BeatKey, position: List<Int>) {
@@ -1075,7 +1161,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
         this.runOnUiThread {
             this.withFragment {
-                it.setContextMenu_linking()
+                it.set_context_menu_linking()
             }
             val editor_table = this.get_editor_table() ?: return@runOnUiThread
             editor_table.update_cursor(this.cursor)
@@ -1091,7 +1177,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
         this.runOnUiThread {
             this.withFragment {
-                it.setContextMenu_linking()
+                it.set_context_menu_linking()
             }
             val editor_table = this.get_editor_table() ?: return@runOnUiThread
             editor_table.update_cursor(this.cursor)

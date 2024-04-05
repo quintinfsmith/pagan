@@ -2,44 +2,131 @@ package com.qfs.pagan
 
 import android.content.Context
 import android.util.AttributeSet
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.OpusEventSTD
 import kotlin.math.abs
 
-class ContextMenuLeaf(context: Context, attrs: AttributeSet? = null): ContextMenuView(context, attrs) {
-    val button_split: ButtonIcon
-    val button_insert: ButtonIcon
-    val button_unset: ButtonIcon
-    val button_remove: ButtonIcon
-    val button_duration: ButtonStd
-    val ns_octave: NumberSelector
-    val ns_offset: NumberSelector
-    val ros_relative_option: RelativeOptionSelector
+class ContextMenuLeaf(context: Context, attrs: AttributeSet? = null): ContextMenuView(R.layout.contextmenu_cell, context, attrs) {
+    lateinit var button_split: ButtonIcon
+    lateinit var button_insert: ButtonIcon
+    lateinit var button_unset: ButtonIcon
+    lateinit var button_remove: ButtonIcon
+    lateinit var button_duration: ButtonStd
+    lateinit var ns_octave: NumberSelector
+    lateinit var ns_offset: NumberSelector
+    lateinit var ros_relative_option: RelativeOptionSelector
 
-    init {
-        val view = LayoutInflater.from(this.context)
-            .inflate(
-                R.layout.contextmenu_cell,
-                this as ViewGroup,
-                false
-            )
+    override fun init_properties() {
+        this.button_split = this.findViewById(R.id.btnSplit)
+        this.button_insert = this.findViewById(R.id.btnInsert)
+        this.button_unset = this.findViewById(R.id.btnUnset)
+        this.button_remove = this.findViewById(R.id.btnRemove)
+        this.button_duration = this.findViewById(R.id.btnDuration)
+        this.ns_octave = this.findViewById(R.id.nsOctave)
+        this.ns_offset = this.findViewById(R.id.nsOffset)
+        this.ros_relative_option = this.findViewById(R.id.rosRelativeOption)
+    }
 
-        this.addView(view)
+    override fun setup_interactions() {
+        this.ns_octave.setOnChange(this::on_octave_change)
+        this.ns_offset.setOnChange(this::on_offset_change)
 
-        this.button_split = view.findViewById(R.id.btnSplit)
-        this.button_insert = view.findViewById(R.id.btnInsert)
-        this.button_unset = view.findViewById(R.id.btnUnset)
-        this.button_remove = view.findViewById(R.id.btnRemove)
-        this.button_duration = view.findViewById(R.id.btnDuration)
-        this.ns_octave = view.findViewById(R.id.nsOctave)
-        this.ns_offset = view.findViewById(R.id.nsOffset)
-        this.ros_relative_option = view.findViewById(R.id.rosRelativeOption)
+        this.ros_relative_option.setOnChange(this::interact_rosRelativeOption)
 
-        this.setup_interactions()
-        this.refresh()
+        this.button_duration.setOnClickListener {
+            this.click_button_duration()
+        }
+        this.button_duration.setOnLongClickListener {
+            this.long_click_button_duration()
+        }
+        this.button_remove.setOnClickListener {
+            this.click_button_remove()
+        }
+
+        this.button_remove.setOnLongClickListener {
+            this.long_click_button_remove()
+        }
+
+        this.button_unset.setOnClickListener {
+            this.click_button_unset()
+        }
+
+        this.button_split.setOnClickListener {
+            this.click_button_split()
+        }
+
+        this.button_split.setOnLongClickListener {
+            this.long_click_button_split()
+        }
+
+        this.button_insert.setOnClickListener {
+            this.click_button_insert()
+        }
+
+        this.button_insert.setOnLongClickListener {
+            this.long_click_button_insert()
+        }
+    }
+
+    override fun refresh() {
+        this.button_split.visibility = View.VISIBLE
+        this.button_insert.visibility = View.VISIBLE
+        this.ns_octave.visibility = View.VISIBLE
+        this.ns_offset.visibility = View.VISIBLE
+
+        val main = this.get_main()
+        val opus_manager = this.get_opus_manager()
+
+        val radix = opus_manager.tuning_map.size
+        this.ns_offset.set_max(radix - 1)
+
+        if (main.configuration.relative_mode) {
+            this.ros_relative_option.visibility = View.VISIBLE
+            this.ros_relative_option.setState(opus_manager.relative_mode, true)
+        } else {
+            this.ros_relative_option.visibility = View.GONE
+        }
+
+        val current_tree = opus_manager.get_tree()
+        if (current_tree.is_event()) {
+            val event = current_tree.get_event()!!
+
+            val value = if (event.relative && ! main.configuration.relative_mode) {
+                opus_manager.get_absolute_value(
+                    opus_manager.cursor.get_beatkey(),
+                    opus_manager.cursor.get_position()
+                )!!
+            } else {
+                abs(event.note)
+            }
+
+            if (value >= 0) {
+                this.ns_offset.setState(value % radix, manual = true, surpress_callback = true)
+                this.ns_octave.setState(value / radix, manual = true, surpress_callback = true)
+            }
+
+            this.button_unset.setImageResource(R.drawable.unset)
+            this.button_duration.text = this.context.getString(R.string.label_duration, event.duration)
+            this.button_duration.visibility = View.VISIBLE
+        } else {
+            this.ns_octave.unset_active_button()
+            this.ns_offset.unset_active_button()
+            this.button_duration.visibility = View.GONE
+        }
+
+
+        if (current_tree.is_leaf() && !current_tree.is_event()) {
+            this.button_unset.visibility = View.GONE
+        } else {
+            this.button_unset.visibility = View.VISIBLE
+        }
+
+        if (opus_manager.cursor.get_position().isEmpty()) {
+            this.button_remove.visibility = View.GONE
+        } else {
+            this.button_remove.visibility = View.VISIBLE
+        }
     }
 
     fun click_button_duration() {
@@ -338,108 +425,6 @@ class ContextMenuLeaf(context: Context, attrs: AttributeSet? = null): ContextMen
                     nsOffset.setState(abs(event.note) % radix, manual = true, surpress_callback = true)
                 }
             }
-        }
-    }
-
-    fun setup_interactions() {
-        this.ns_octave.setOnChange(this::on_octave_change)
-        this.ns_offset.setOnChange(this::on_offset_change)
-
-
-        this.ros_relative_option.setOnChange(this::interact_rosRelativeOption)
-
-        this.button_duration.setOnClickListener {
-            this.click_button_duration()
-        }
-        this.button_duration.setOnLongClickListener {
-            this.long_click_button_duration()
-        }
-        this.button_remove.setOnClickListener {
-            this.click_button_remove()
-        }
-
-        this.button_remove.setOnLongClickListener {
-            this.long_click_button_remove()
-        }
-
-        this.button_unset.setOnClickListener {
-            this.click_button_unset()
-        }
-
-        this.button_split.setOnClickListener {
-            this.click_button_split()
-        }
-
-        this.button_split.setOnLongClickListener {
-            this.long_click_button_split()
-        }
-
-        this.button_insert.setOnClickListener {
-            this.click_button_insert()
-        }
-
-        this.button_insert.setOnLongClickListener {
-            this.long_click_button_insert()
-        }
-    }
-
-    override fun refresh() {
-        this.button_split.visibility = View.VISIBLE
-        this.button_insert.visibility = View.VISIBLE
-        this.ns_octave.visibility = View.VISIBLE
-        this.ns_offset.visibility = View.VISIBLE
-
-        val main = this.get_main()
-        val opus_manager = this.get_opus_manager()
-
-        val radix = opus_manager.tuning_map.size
-        this.ns_offset.set_max(radix - 1)
-
-        if (main.configuration.relative_mode) {
-            this.ros_relative_option.visibility = View.VISIBLE
-            this.ros_relative_option.setState(opus_manager.relative_mode, true)
-        } else {
-            this.ros_relative_option.visibility = View.GONE
-        }
-
-        val current_tree = opus_manager.get_tree()
-        if (current_tree.is_event()) {
-            val event = current_tree.get_event()!!
-
-            val value = if (event.relative && ! main.configuration.relative_mode) {
-                opus_manager.get_absolute_value(
-                    opus_manager.cursor.get_beatkey(),
-                    opus_manager.cursor.get_position()
-                )!!
-            } else {
-                abs(event.note)
-            }
-
-            if (value >= 0) {
-                this.ns_offset.setState(value % radix, manual = true, surpress_callback = true)
-                this.ns_octave.setState(value / radix, manual = true, surpress_callback = true)
-            }
-
-            this.button_unset.setImageResource(R.drawable.unset)
-            this.button_duration.text = this.context.getString(R.string.label_duration, event.duration)
-            this.button_duration.visibility = View.VISIBLE
-        } else {
-            this.ns_octave.unset_active_button()
-            this.ns_offset.unset_active_button()
-            this.button_duration.visibility = View.GONE
-        }
-
-
-        if (current_tree.is_leaf() && !current_tree.is_event()) {
-            this.button_unset.visibility = View.GONE
-        } else {
-            this.button_unset.visibility = View.VISIBLE
-        }
-
-        if (opus_manager.cursor.get_position().isEmpty()) {
-            this.button_remove.visibility = View.GONE
-        } else {
-            this.button_remove.visibility = View.VISIBLE
         }
     }
 

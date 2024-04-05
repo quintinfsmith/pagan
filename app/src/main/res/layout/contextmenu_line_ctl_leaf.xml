@@ -7,35 +7,6 @@
     android:orientation="vertical"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-        <com.qfs.pagan.ButtonStd
-            android:theme="@style/button"
-            android:id="@+id/btnCtlAmount"
-            android:textSize="18sp"
-            android:paddingTop="5dp"
-            android:paddingBottom="8dp"
-            android:layout_marginTop="@dimen/number_selector_spacing"
-            android:layout_marginBottom="@dimen/number_selector_spacing"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:text="Value" />
-
-        <com.qfs.pagan.ButtonStd
-            android:theme="@style/button"
-            android:id="@+id/btnChooseTransition"
-            android:textSize="18sp"
-            android:paddingTop="5dp"
-            android:paddingBottom="8dp"
-            android:layout_marginTop="@dimen/number_selector_spacing"
-            android:layout_marginBottom="@dimen/number_selector_spacing"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:text="Transition Type" />
-    </LinearLayout>
-    <LinearLayout
         android:id="@+id/clTextViews"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -102,6 +73,35 @@
             android:layout_width="@dimen/icon_button_width"
             android:layout_height="@dimen/icon_button_height"
             android:text="T" />
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <com.qfs.pagan.ButtonStd
+            android:theme="@style/button"
+            android:id="@+id/btnCtlAmount"
+            android:textSize="18sp"
+            android:paddingTop="5dp"
+            android:paddingBottom="8dp"
+            android:layout_marginTop="@dimen/number_selector_spacing"
+            android:layout_marginBottom="@dimen/number_selector_spacing"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="Value" />
+
+        <com.qfs.pagan.ButtonStd
+            android:theme="@style/button"
+            android:id="@+id/btnChooseTransition"
+            android:textSize="18sp"
+            android:paddingTop="5dp"
+            android:paddingBottom="8dp"
+            android:layout_marginTop="@dimen/number_selector_spacing"
+            android:layout_marginBottom="@dimen/number_selector_spacing"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="Transition Type" />
     </LinearLayout>
 
 </LinearLayout>

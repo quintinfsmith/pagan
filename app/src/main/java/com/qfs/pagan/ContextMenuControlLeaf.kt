@@ -2,6 +2,7 @@ package com.qfs.pagan
 
 import android.content.Context
 import android.util.AttributeSet
+import android.view.View
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusControlEvent
@@ -53,11 +54,9 @@ class ContextMenuControlLeaf(context: Context, attrs: AttributeSet? = null): Con
             true
         }
 
-
         this.button_unset.setOnClickListener {
             this.click_button_unset()
         }
-
     }
 
     fun click_button_unset() {
@@ -72,13 +71,7 @@ class ContextMenuControlLeaf(context: Context, attrs: AttributeSet? = null): Con
     }
     fun click_button_remove() {
         val opus_manager = this.get_opus_manager()
-        val cursor = opus_manager.cursor
-        when (cursor.ctl_level) {
-            CtlLineLevel.Global -> opus_manager.remove_global_ctl(cursor.ctl_type!!, cursor.beat, cursor.position)
-            CtlLineLevel.Channel -> opus_manager.remove_channel_ctl(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.position)
-            CtlLineLevel.Line -> opus_manager.remove_line_ctl(cursor.ctl_type!!, cursor.get_beatkey(), cursor.position)
-            null -> { }
-        }
+        opus_manager.remove(1)
     }
 
     fun long_click_button_remove() {
@@ -93,43 +86,17 @@ class ContextMenuControlLeaf(context: Context, attrs: AttributeSet? = null): Con
 
         when (cursor.ctl_level) {
             CtlLineLevel.Global -> {
-                opus_manager.cursor_select_ctl_at_global(
-                    cursor.ctl_type!!,
-                    cursor.beat,
-                    position
-                )
-                opus_manager.unset_global_ctl(
-                    cursor.ctl_type!!,
-                    cursor.beat,
-                    position
-                )
+                opus_manager.cursor_select_ctl_at_global(cursor.ctl_type!!, cursor.beat, position)
+                opus_manager.unset_global_ctl(cursor.ctl_type!!, cursor.beat, position)
             }
             CtlLineLevel.Channel -> {
-                opus_manager.cursor_select_ctl_at_channel(
-                    cursor.ctl_type!!,
-                    cursor.channel,
-                    cursor.beat,
-                    position
-                )
-                opus_manager.unset_channel_ctl(
-                    cursor.ctl_type!!,
-                    cursor.beat,
-                    cursor.channel,
-                    position
-                )
+                opus_manager.cursor_select_ctl_at_channel(cursor.ctl_type!!, cursor.channel, cursor.beat, position)
+                opus_manager.unset_channel_ctl(cursor.ctl_type!!, cursor.beat, cursor.channel, position)
             }
             CtlLineLevel.Line -> {
                 val beat_key = cursor.get_beatkey()
-                opus_manager.cursor_select_ctl_at_line(
-                    cursor.ctl_type!!,
-                    beat_key,
-                    position
-                )
-                opus_manager.unset_line_ctl(
-                    cursor.ctl_type!!,
-                    beat_key,
-                    position
-                )
+                opus_manager.cursor_select_ctl_at_line(cursor.ctl_type!!, beat_key, position)
+                opus_manager.unset_line_ctl(cursor.ctl_type!!, beat_key, position)
             }
             null -> { }
         }
@@ -220,6 +187,18 @@ class ContextMenuControlLeaf(context: Context, attrs: AttributeSet? = null): Con
             beat_key,
             cursor.position
         )
+
+        this.button_remove.visibility = if (cursor.position.isNotEmpty()) {
+            View.VISIBLE
+        } else {
+            View.GONE
+        }
+
+        this.button_unset.visibility = if (ctl_tree.is_event()) {
+            View.VISIBLE
+        } else {
+            View.GONE
+        }
 
         this.button_value.text = if (!ctl_tree.is_event()) {
             opus_manager.get_current_ctl_line_value(

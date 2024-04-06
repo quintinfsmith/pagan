@@ -86,6 +86,35 @@ open class OpusLayerBase {
         return output
     }
 
+    fun get_first_position_global_ctl(type: ControlEventType, beat: Int, start_position: List<Int>? = null): List<Int> {
+        val output = start_position?.toMutableList() ?: mutableListOf()
+        var tree = this.get_global_ctl_tree(type, beat, output)
+        while (! tree.is_leaf()) {
+            output.add(0)
+            tree = tree[0]
+        }
+        return output
+    }
+
+    fun get_first_position_channel_ctl(type: ControlEventType, channel: Int, beat: Int, start_position: List<Int>? = null): List<Int> {
+        val output = start_position?.toMutableList() ?: mutableListOf()
+        var tree = this.get_channel_ctl_tree(type, channel, beat, output)
+        while (! tree.is_leaf()) {
+            output.add(0)
+            tree = tree[0]
+        }
+        return output
+    }
+    fun get_first_position_line_ctl(type: ControlEventType, beat_key: BeatKey, start_position: List<Int>? = null): List<Int> {
+        val output = start_position?.toMutableList() ?: mutableListOf()
+        var tree = this.get_line_ctl_tree(type, beat_key, output)
+        while (! tree.is_leaf()) {
+            output.add(0)
+            tree = tree[0]
+        }
+        return output
+    }
+
     /**
      * Calculates how many lines are in use.
      */

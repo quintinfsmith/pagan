@@ -275,7 +275,6 @@ class OpusLayerInterface : OpusLayerCursor() {
         this._notify_line_ctl_cell_change(type, beat_key)
     }
 
-
     override fun set_global_ctl_event(type: ControlEventType, beat: Int, position: List<Int>, event: OpusControlEvent) {
         super.set_global_ctl_event(type, beat, position, event)
         this._notify_global_ctl_cell_change(type, beat)
@@ -290,7 +289,6 @@ class OpusLayerInterface : OpusLayerCursor() {
         super.set_line_ctl_event(type, beat_key, position, event)
         this._notify_line_ctl_cell_change(type, beat_key)
     }
-
 
     override fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEventSTD) {
         val activity = this.get_activity() ?: return super.set_event(beat_key, position, event)
@@ -1187,7 +1185,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
         this.runOnUiThread {
             this.withFragment {
-                // TODO: SET CONTEXT MENU
+                it.set_context_menu_line_control_leaf()
             }
 
             val editor_table = this.get_editor_table() ?: return@runOnUiThread
@@ -1211,7 +1209,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
         this.runOnUiThread {
             this.withFragment {
-                // TODO: SET CONTEXT MENU
+                it.set_context_menu_line_control_leaf()
             }
 
             val editor_table = this.get_editor_table() ?: return@runOnUiThread

@@ -702,17 +702,49 @@ open class OpusLayerCursor: OpusLayerHistory() {
     }
 
     fun unset() {
-        if (this.cursor.mode == OpusManagerCursor.CursorMode.Range) {
-            val beat_key = this.cursor.range!!.first
-            this.unset_range(beat_key, this.cursor.range!!.second)
-            this.cursor_select(beat_key, listOf())
-        } else {
-            val beat_key = this.cursor.get_beatkey()
-            val position = this.cursor.get_position()
-            this.unset(beat_key, position)
-            this.cursor_select(beat_key, position)
+        when (cursor.ctl_level) {
+            null -> {
+                if (this.cursor.mode == OpusManagerCursor.CursorMode.Range) {
+                    val beat_key = this.cursor.range!!.first
+
+                    this.unset_range(beat_key, this.cursor.range!!.second)
+                    this.cursor_select(beat_key, listOf())
+                } else {
+                    val beat_key = this.cursor.get_beatkey()
+                    val position = this.cursor.get_position()
+
+                    this.unset(beat_key, position)
+                    this.cursor_select(beat_key, position)
+                }
+            }
+            CtlLineLevel.Global -> {
+                val ctl_type = this.cursor.ctl_type!!
+                val beat = this.cursor.beat
+                val position = this.cursor.get_position()
+
+                this.unset_global_ctl(ctl_type, beat, position)
+                this.cursor_select_ctl_at_global(ctl_type, beat, position)
+            }
+            CtlLineLevel.Channel -> {
+                val ctl_type = this.cursor.ctl_type!!
+                val channel = this.cursor.channel
+                val beat = this.cursor.beat
+                val position = this.cursor.get_position()
+
+                this.unset_channel_ctl(ctl_type, channel, beat, position)
+                this.cursor_select_ctl_at_channel(ctl_type, channel, beat, position)
+            }
+            CtlLineLevel.Line -> {
+                val ctl_type = this.cursor.ctl_type!!
+                val beat_key = this.cursor.get_beatkey()
+                val position = this.cursor.get_position()
+
+                this.unset_line_ctl(ctl_type, beat_key, position)
+                this.cursor_select_ctl_at_line(ctl_type, beat_key, position)
+            }
         }
     }
+
 
     fun convert_event_to_absolute() {
         this.convert_event_to_absolute(
@@ -845,6 +877,89 @@ open class OpusLayerCursor: OpusLayerHistory() {
 
     fun remove(count: Int) {
         val cursor = this.cursor
+        when (cursor.ctl_level) {
+            null -> {
+                val beat_key = cursor.get_beatkey()
+                val position = cursor.get_position().toMutableList()
+
+                val tree = this.get_tree()
+                val cursor_position = position.toMutableList()
+                if (tree.parent!!.size <= 2) { // Will be pruned
+                    cursor_position.removeLast()
+                } else if (position.last() == tree.parent!!.size - 1) {
+                    cursor_position[cursor_position.size - 1] -= 1
+                }
+
+                this.remove(beat_key, position, count)
+
+                this.cursor_select(
+                    beat_key,
+                    this.get_first_position(beat_key, cursor_position)
+                )
+            }
+
+            CtlLineLevel.Global -> {
+                val tree = this.get_global_ctl_tree(cursor.ctl_type!!, cursor.beat, cursor.position)
+                val cursor_position = cursor.position.toMutableList()
+                if (tree.parent!!.size <= 2) { // Will be pruned
+                    cursor_position.removeLast()
+                } else if (cursor.position.last() == tree.parent!!.size - 1) {
+                    cursor_position[cursor_position.size - 1] -= 1
+                }
+
+                this.remove_global_ctl(cursor.ctl_type!!, cursor.beat, cursor.position, count)
+
+                this.cursor_select_ctl_at_global(
+                    cursor.ctl_type!!,
+                    cursor.beat,
+                    this.get_first_position_global_ctl(cursor.ctl_type!!, cursor.beat, cursor_position)
+                )
+            }
+
+            CtlLineLevel.Channel -> {
+                val tree = this.get_channel_ctl_tree(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.position)
+                val cursor_position = cursor.position.toMutableList()
+                if (tree.parent!!.size <= 2) { // Will be pruned
+                    cursor_position.removeLast()
+                } else if (cursor.position.last() == tree.parent!!.size - 1) {
+                    cursor_position[cursor_position.size - 1] -= 1
+                }
+
+                this.remove_channel_ctl(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.position, count)
+
+                this.cursor_select_ctl_at_channel(
+                    cursor.ctl_type!!,
+                    cursor.channel,
+                    cursor.beat,
+                    this.get_first_position_channel_ctl(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor_position)
+                )
+            }
+
+            CtlLineLevel.Line -> {
+                val beat_key = cursor.get_beatkey()
+                val position = cursor.get_position().toMutableList()
+
+                val tree = this.get_line_ctl_tree(cursor.ctl_type!!, beat_key, position)
+                val cursor_position = position.toMutableList()
+                if (tree.parent!!.size <= 2) { // Will be pruned
+                    cursor_position.removeLast()
+                } else if (position.last() == tree.parent!!.size - 1) {
+                    cursor_position[cursor_position.size - 1] -= 1
+                }
+
+                this.remove_line_ctl(cursor.ctl_type!!, beat_key, position, count)
+
+                this.cursor_select_ctl_at_line(
+                    cursor.ctl_type!!,
+                    beat_key,
+                    this.get_first_position_line_ctl(cursor.ctl_type!!, beat_key, cursor_position)
+                )
+            }
+        }
+    }
+
+    fun remove_global_ctl(count: Int) {
+        val cursor = this.cursor
         val beat_key = cursor.get_beatkey()
         val position = cursor.get_position().toMutableList()
 
@@ -858,11 +973,10 @@ open class OpusLayerCursor: OpusLayerHistory() {
 
         this.remove(beat_key, position, count)
 
-        this.cursor_select(
-            beat_key,
-            this.get_first_position(beat_key, cursor_position)
-        )
+        this.cursor_select(beat_key, this.get_first_position(beat_key, cursor_position))
     }
+
+
 
     fun insert_line(count: Int) {
         this.new_line(

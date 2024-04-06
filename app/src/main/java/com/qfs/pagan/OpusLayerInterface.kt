@@ -10,6 +10,7 @@ import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.LoadedJSONData
 import com.qfs.pagan.opusmanager.OpusChannel
+import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.OpusEventSTD
 import com.qfs.pagan.opusmanager.OpusLayerCursor
 import com.qfs.pagan.opusmanager.OpusLine
@@ -250,7 +251,6 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     override fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<OpusEventSTD>) {
-
         val activity = this.get_activity() ?: return super.replace_tree(beat_key, position, tree)
         if (!activity.view_model.show_percussion && this.is_percussion(beat_key.channel)) {
             this.make_percussion_visible()
@@ -259,6 +259,38 @@ class OpusLayerInterface : OpusLayerCursor() {
         super.replace_tree(beat_key, position, tree)
         this._notify_cell_change(beat_key)
     }
+
+    override fun replace_global_ctl_tree(type: ControlEventType, beat: Int, position: List<Int>?, tree: OpusTree<OpusControlEvent>) {
+        super.replace_global_ctl_tree(type, beat, position, tree)
+        this._notify_global_ctl_cell_change(type, beat)
+    }
+
+    override fun replace_channel_ctl_tree(type: ControlEventType, channel: Int, beat: Int, position: List<Int>?, tree: OpusTree<OpusControlEvent>) {
+        super.replace_channel_ctl_tree(type, channel, beat, position, tree)
+        this._notify_channel_ctl_cell_change(type, channel, beat)
+    }
+
+    override fun replace_line_ctl_tree(type: ControlEventType, beat_key: BeatKey, position: List<Int>?, tree: OpusTree<OpusControlEvent>) {
+        super.replace_line_ctl_tree(type, beat_key, position, tree)
+        this._notify_line_ctl_cell_change(type, beat_key)
+    }
+
+
+    override fun set_global_ctl_event(type: ControlEventType, beat: Int, position: List<Int>, event: OpusControlEvent) {
+        super.set_global_ctl_event(type, beat, position, event)
+        this._notify_global_ctl_cell_change(type, beat)
+    }
+
+    override fun set_channel_ctl_event(type: ControlEventType, channel: Int, beat: Int, position: List<Int>, event: OpusControlEvent) {
+        super.set_channel_ctl_event(type, channel, beat, position, event)
+        this._notify_channel_ctl_cell_change(type, channel, beat)
+    }
+
+    override fun set_line_ctl_event(type: ControlEventType, beat_key: BeatKey, position: List<Int>, event: OpusControlEvent) {
+        super.set_line_ctl_event(type, beat_key, position, event)
+        this._notify_line_ctl_cell_change(type, beat_key)
+    }
+
 
     override fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEventSTD) {
         val activity = this.get_activity() ?: return super.set_event(beat_key, position, event)
@@ -331,28 +363,12 @@ class OpusLayerInterface : OpusLayerCursor() {
         this._notify_cell_change(beat_key)
     }
 
-    override fun split_global_ctl_tree(
-        type: ControlEventType,
-        beat: Int,
-        position: List<Int>,
-        splits: Int
-    ) {
+    override fun split_global_ctl_tree(type: ControlEventType, beat: Int, position: List<Int>, splits: Int) {
         super.split_global_ctl_tree(type, beat, position, splits)
-
-        if (this.get_activity() == null) {
-            return
-        }
-
         this._notify_global_ctl_cell_change(type, beat)
     }
 
-    override fun split_channel_ctl_tree(
-        type: ControlEventType,
-        channel: Int,
-        beat: Int,
-        position: List<Int>,
-        splits: Int
-    ) {
+    override fun split_channel_ctl_tree(type: ControlEventType, channel: Int, beat: Int, position: List<Int>, splits: Int) {
         super.split_channel_ctl_tree(type, channel, beat, position, splits)
 
         if (this.get_activity() == null) {
@@ -366,12 +382,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         this._notify_channel_ctl_cell_change(type, channel, beat)
     }
 
-    override fun split_line_ctl_tree(
-        type: ControlEventType,
-        beat_key: BeatKey,
-        position: List<Int>,
-        splits: Int
-    ) {
+    override fun split_line_ctl_tree(type: ControlEventType, beat_key: BeatKey, position: List<Int>, splits: Int) {
         super.split_line_ctl_tree(type, beat_key, position, splits)
 
         if (this.get_activity() == null) {
@@ -419,6 +430,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
         this._notify_cell_change(beat_key)
     }
+
     override fun insert_global_ctl(type: ControlEventType, beat: Int, position: List<Int>) {
         super.insert_global_ctl(type, beat, position)
         this._notify_global_ctl_cell_change(type, beat)
@@ -1131,11 +1143,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
-    override fun cursor_select_ctl_at_line(
-        ctl_type: ControlEventType,
-        beat_key: BeatKey,
-        position: List<Int>
-    ) {
+    override fun cursor_select_ctl_at_line(ctl_type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
         val activity = this.get_activity()
         if (activity != null && !activity.view_model.show_percussion && this.is_percussion(beat_key.channel)) {
             this.make_percussion_visible()

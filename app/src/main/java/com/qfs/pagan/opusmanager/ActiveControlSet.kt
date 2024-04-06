@@ -23,6 +23,63 @@ class ActiveControlSet(var beat_count: Int, default_enabled: Set<ControlEventTyp
             }
         }
 
+        fun get_current_value(beat: Int, position: List<Int>): Float {
+            val current_tree = this.get_tree(beat, position)
+            if (current_tree.is_event()) {
+                return current_tree.get_event()!!.value
+            }
+
+            var working_beat = beat
+            var working_position = position.toList()
+            var output = 0F // TODO: Ctl Type Defaults
+
+            while (true) {
+                val pair = this.get_preceding_leaf_position(working_beat, working_position) ?: return output
+                working_beat = pair.first
+                working_position = pair.second
+
+                val working_tree = this.get_tree(working_beat, working_position)
+                if (working_tree.is_event()) {
+                    val working_event = working_tree.get_event()!!
+                    output = working_event.value
+                    break
+                }
+            }
+            return output
+        }
+
+        fun get_preceding_leaf_position(beat: Int, position: List<Int>): Pair<Int, List<Int>>? {
+            val working_position = position.toMutableList()
+            var working_beat = beat
+
+            // Move left/up
+            while (true) {
+                if (working_position.isNotEmpty()) {
+                    if (working_position.last() > 0) {
+                        working_position[working_position.size - 1] -= 1
+                        break
+                    } else {
+                        working_position.removeLast()
+                    }
+                } else if (working_beat > 0) {
+                    working_beat -= 1
+                    break
+                } else {
+                    return null
+                }
+            }
+
+            var working_tree = this.get_tree(working_beat, working_position)
+
+            // Move right/down to leaf
+            while (!working_tree.is_leaf()) {
+                working_position.add(working_tree.size - 1)
+                working_tree = working_tree[working_tree.size - 1]
+            }
+
+            return Pair(working_beat, working_position)
+        }
+
         fun beat_count(): Int {
             return this.events.size
         }

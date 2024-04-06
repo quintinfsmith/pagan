@@ -316,7 +316,8 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     internal fun set_context_menu_line_control_leaf() {
         if (!this.refresh_or_clear_context_menu<ContextMenuControlLeaf>()) {
             val llContextMenu = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenu)
-            llContextMenu.addView(ContextMenuControlLeaf(this.activity!!))
+            val new_menu = ContextMenuControlLeaf(this.activity!!)
+            llContextMenu.addView(new_menu)
         }
     }
 

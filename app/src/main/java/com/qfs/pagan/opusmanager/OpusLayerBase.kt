@@ -359,38 +359,6 @@ open class OpusLayerBase {
         return Pair(working_beat_key, working_position)
     }
 
-    fun get_preceding_ctl_line_leaf_position(ctl_type: ControlEventType, beat_key: BeatKey, position: List<Int>): Pair<BeatKey, List<Int>>? {
-        val working_position = position.toMutableList()
-        val working_beat_key = BeatKey(beat_key.channel, beat_key.line_offset, beat_key.beat)
-
-        // Move left/up
-        while (true) {
-            if (working_position.isNotEmpty()) {
-                if (working_position.last() > 0) {
-                    working_position[working_position.size - 1] -= 1
-                    break
-                } else {
-                    working_position.removeLast()
-                }
-            } else if (working_beat_key.beat > 0) {
-                working_beat_key.beat -= 1
-                break
-            } else {
-                return null
-            }
-        }
-
-        var working_tree = this.get_line_ctl_tree(ctl_type, working_beat_key, working_position)
-
-        // Move right/down to leaf
-        while (!working_tree.is_leaf()) {
-            working_position.add(working_tree.size - 1)
-            working_tree = working_tree[working_tree.size - 1]
-        }
-
-        return Pair(working_beat_key, working_position)
-    }
-
     /**
      * Get the location of the leaf immediately after the tree found at [beat_key]/[position].
      * *it may not be an immediate sibling, rather an aunt, niece, etc*
@@ -1639,12 +1607,6 @@ open class OpusLayerBase {
         this.insert_beats(0, 4)
         this.set_project_name(this.project_name)
         this.new_global_controller(ControlEventType.Tempo)
-        this.set_line_ctl_event(
-            ControlEventType.Volume,
-            BeatKey(0, 0, 1),
-            listOf(),
-            OpusControlEvent(.5f)
-        )
         this.on_project_changed()
     }
 
@@ -2840,30 +2802,20 @@ open class OpusLayerBase {
         return output
     }
 
-    fun get_current_ctl_line_value(type: ControlEventType, beat_key: BeatKey, position: List<Int>): Float {
-        val current_tree = this.get_line_ctl_tree(type, beat_key, position)
-        if (current_tree.is_event()) {
-            return current_tree.get_event()!!.value
-        }
 
-        var working_beat_key = beat_key
-        var working_position = position.toList()
-        var output = 0F // TODO: Ctl Type Defaults
+    fun get_current_line_controller_value(type: ControlEventType, beat_key: BeatKey, position: List<Int>): Float {
+        val controller = this.channels[beat_key.channel].lines[beat_key.line_offset].controllers.get_controller(type)
+        return controller.get_current_value(beat_key.beat, position)
+    }
 
-        while (true) {
-            val pair = this.get_preceding_ctl_line_leaf_position(type, working_beat_key, working_position) ?: return output
-            working_beat_key = pair.first
-            working_position = pair.second
+    fun get_current_channel_controller_value(type: ControlEventType, channel: Int, beat: Int, position: List<Int>): Float {
+        val controller = this.channels[channel].controllers.get_controller(type)
+        return controller.get_current_value(beat, position)
+    }
 
-            val working_tree = this.get_line_ctl_tree(type, working_beat_key, working_position)
-
-            if (working_tree.is_event()) {
-                val working_event = working_tree.get_event()!!
-                output = working_event.value
-                break
-            }
-        }
-        return output
+    fun get_current_global_controller_value(type: ControlEventType, beat: Int, position: List<Int>): Float {
+        val controller = this.controllers.get_controller(type)
+        return controller.get_current_value(beat, position)
     }
 
 }

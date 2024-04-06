@@ -760,12 +760,41 @@ open class OpusLayerCursor: OpusLayerHistory() {
         )
     }
 
-    open fun set_event_at_cursor(event: OpusEventSTD) {
-        this.set_event(
-            this.cursor.get_beatkey(),
-            this.cursor.get_position(),
-            event
-        )
+    open fun set_event_at_cursor(event: OpusEvent) {
+        when (this.cursor.ctl_level) {
+            null -> {
+                this.set_event(
+                    this.cursor.get_beatkey(),
+                    this.cursor.get_position(),
+                    event as OpusEventSTD
+                )
+            }
+            CtlLineLevel.Global -> {
+                this.set_global_ctl_event(
+                    this.cursor.ctl_type!!,
+                    this.cursor.beat,
+                    this.cursor.position,
+                    event as OpusControlEvent
+                )
+            }
+            CtlLineLevel.Channel -> {
+                this.set_channel_ctl_event(
+                    this.cursor.ctl_type!!,
+                    this.cursor.channel,
+                    this.cursor.beat,
+                    this.cursor.position,
+                    event as OpusControlEvent
+                )
+            }
+            CtlLineLevel.Line -> {
+                this.set_line_ctl_event(
+                    this.cursor.ctl_type!!,
+                    this.cursor.get_beatkey(),
+                    this.cursor.position,
+                    event as OpusControlEvent
+                )
+            }
+        }
     }
 
     fun set_percussion_event() {

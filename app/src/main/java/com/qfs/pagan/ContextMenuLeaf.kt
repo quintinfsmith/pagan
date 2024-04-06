@@ -297,7 +297,6 @@ class ContextMenuLeaf(context: Context, attrs: AttributeSet? = null): ContextMen
 
         opus_manager.set_event_at_cursor(event)
         this._play_event(opus_manager.cursor.get_beatkey(), opus_manager.cursor.get_position())
-        this.refresh()
     }
 
     private fun on_octave_change(view: NumberSelector) {
@@ -366,7 +365,6 @@ class ContextMenuLeaf(context: Context, attrs: AttributeSet? = null): ContextMen
 
         opus_manager.set_event_at_cursor(event)
         this._play_event(opus_manager.cursor.get_beatkey(), opus_manager.cursor.get_position())
-        this.refresh()
     }
 
     private fun interact_rosRelativeOption(view: RelativeOptionSelector) {

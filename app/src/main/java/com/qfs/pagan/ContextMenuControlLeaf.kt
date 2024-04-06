@@ -61,13 +61,7 @@ class ContextMenuControlLeaf(context: Context, attrs: AttributeSet? = null): Con
 
     fun click_button_unset() {
         val opus_manager = this.get_opus_manager()
-        val cursor = opus_manager.cursor
-        when (cursor.ctl_level) {
-            CtlLineLevel.Global -> opus_manager.unset_global_ctl(cursor.ctl_type!!, cursor.beat, cursor.position)
-            CtlLineLevel.Channel -> opus_manager.unset_channel_ctl(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.position)
-            CtlLineLevel.Line -> opus_manager.unset_line_ctl(cursor.ctl_type!!, cursor.get_beatkey(), cursor.position)
-            null -> { }
-        }
+        opus_manager.unset()
     }
     fun click_button_remove() {
         val opus_manager = this.get_opus_manager()
@@ -87,19 +81,17 @@ class ContextMenuControlLeaf(context: Context, attrs: AttributeSet? = null): Con
         when (cursor.ctl_level) {
             CtlLineLevel.Global -> {
                 opus_manager.cursor_select_ctl_at_global(cursor.ctl_type!!, cursor.beat, position)
-                opus_manager.unset_global_ctl(cursor.ctl_type!!, cursor.beat, position)
             }
             CtlLineLevel.Channel -> {
                 opus_manager.cursor_select_ctl_at_channel(cursor.ctl_type!!, cursor.channel, cursor.beat, position)
-                opus_manager.unset_channel_ctl(cursor.ctl_type!!, cursor.beat, cursor.channel, position)
             }
             CtlLineLevel.Line -> {
                 val beat_key = cursor.get_beatkey()
                 opus_manager.cursor_select_ctl_at_line(cursor.ctl_type!!, beat_key, position)
-                opus_manager.unset_line_ctl(cursor.ctl_type!!, beat_key, position)
             }
             null -> { }
         }
+        opus_manager.unset()
     }
 
     fun click_button_insert() {
@@ -176,17 +168,36 @@ class ContextMenuControlLeaf(context: Context, attrs: AttributeSet? = null): Con
     override fun refresh() {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
-        val beat_key = BeatKey(
-            cursor.channel,
-            cursor.line_offset,
-            cursor.beat
-        )
+        val ctl_tree = when (cursor.ctl_level!!) {
+            CtlLineLevel.Global -> {
+                opus_manager.get_global_ctl_tree(
+                    cursor.ctl_type!!,
+                    cursor.beat,
+                    cursor.position
+                )
+            }
+            CtlLineLevel.Channel -> {
+                opus_manager.get_channel_ctl_tree(
+                    cursor.ctl_type!!,
+                    cursor.channel,
+                    cursor.beat,
+                    cursor.position
+                )
+            }
+            CtlLineLevel.Line -> {
+                val beat_key = BeatKey(
+                    cursor.channel,
+                    cursor.line_offset,
+                    cursor.beat
+                )
 
-        val ctl_tree = opus_manager.get_line_ctl_tree(
-            cursor.ctl_type!!,
-            beat_key,
-            cursor.position
-        )
+                opus_manager.get_line_ctl_tree(
+                    cursor.ctl_type!!,
+                    beat_key,
+                    cursor.position
+                )
+            }
+        }
 
         this.button_remove.visibility = if (cursor.position.isNotEmpty()) {
             View.VISIBLE
@@ -201,11 +212,28 @@ class ContextMenuControlLeaf(context: Context, attrs: AttributeSet? = null): Con
         }
 
         this.button_value.text = if (!ctl_tree.is_event()) {
-            opus_manager.get_current_ctl_line_value(
-                cursor.ctl_type!!,
-                beat_key,
-                cursor.position
-            ).toString()
+            when (cursor.ctl_level!!) {
+                CtlLineLevel.Global -> opus_manager.get_current_global_controller_value(
+                    cursor.ctl_type!!,
+                    cursor.beat,
+                    cursor.position
+                )
+                CtlLineLevel.Channel ->
+                    opus_manager.get_current_channel_controller_value(
+                        cursor.ctl_type!!,
+                        cursor.channel,
+                        cursor.beat,
+                        cursor.position
+                    )
+                CtlLineLevel.Line -> {
+                    val beat_key = cursor.get_beatkey()
+                    opus_manager.get_current_line_controller_value(
+                        cursor.ctl_type!!,
+                        beat_key,
+                        cursor.position
+                    )
+                }
+            }.toString()
         } else {
             // TODO: Formatting
             ctl_tree.event!!.value.toString()
@@ -227,29 +255,16 @@ class ContextMenuControlLeaf(context: Context, attrs: AttributeSet? = null): Con
         main.dialog_number_input("Value", 0, 128, 0) { new_value: Int ->
             val opus_manager = this.get_opus_manager()
             val cursor = opus_manager.cursor
-
-            when (cursor.ctl_level) {
-                null -> {}
-                CtlLineLevel.Global -> {
-                    val tree = opus_manager.get_global_ctl_tree(cursor.ctl_type!!, cursor.beat, cursor.position)
-                    val event = (tree.get_event() ?: OpusControlEvent(1f)).copy()
-                    event.value = new_value.toFloat()
-                    opus_manager.set_global_ctl_event(cursor.ctl_type!!, cursor.beat, cursor.position, event)
-                }
-                CtlLineLevel.Channel -> {
-                    val tree = opus_manager.get_channel_ctl_tree(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.position)
-                    val event = (tree.get_event() ?: OpusControlEvent(1f)).copy()
-                    event.value = new_value.toFloat()
-                    opus_manager.set_channel_ctl_event(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.position, event)
-                }
-                CtlLineLevel.Line -> {
-                    val tree = opus_manager.get_line_ctl_tree(cursor.ctl_type!!, cursor.get_beatkey(), cursor.position)
-                    val event = (tree.get_event() ?: OpusControlEvent(1f)).copy()
-                    event.value = new_value.toFloat()
-                    opus_manager.set_line_ctl_event(cursor.ctl_type!!, cursor.get_beatkey(), cursor.position, event)
-                }
-
+            val tree = when (cursor.ctl_level!!) {
+                CtlLineLevel.Global -> opus_manager.get_global_ctl_tree(cursor.ctl_type!!, cursor.beat, cursor.position)
+                CtlLineLevel.Channel -> opus_manager.get_channel_ctl_tree(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.position)
+                CtlLineLevel.Line -> opus_manager.get_line_ctl_tree(cursor.ctl_type!!, cursor.get_beatkey(), cursor.position)
             }
+
+            val event = tree.get_event()?.copy() ?: OpusControlEvent(1F)
+
+            event.value = new_value.toFloat()
+            opus_manager.set_event_at_cursor(event)
         }
     }
 

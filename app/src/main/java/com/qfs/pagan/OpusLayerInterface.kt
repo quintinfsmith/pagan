@@ -11,6 +11,7 @@ import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.LoadedJSONData
 import com.qfs.pagan.opusmanager.OpusChannel
 import com.qfs.pagan.opusmanager.OpusControlEvent
+import com.qfs.pagan.opusmanager.OpusEvent
 import com.qfs.pagan.opusmanager.OpusEventSTD
 import com.qfs.pagan.opusmanager.OpusLayerCursor
 import com.qfs.pagan.opusmanager.OpusLine
@@ -289,6 +290,14 @@ class OpusLayerInterface : OpusLayerCursor() {
         super.set_line_ctl_event(type, beat_key, position, event)
         this._notify_line_ctl_cell_change(type, beat_key)
     }
+
+    override fun set_event_at_cursor(event: OpusEvent) {
+        super.set_event_at_cursor(event)
+        this.withFragment {
+            it.refresh_context_menu()
+        }
+    }
+
 
     override fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEventSTD) {
         val activity = this.get_activity() ?: return super.set_event(beat_key, position, event)
@@ -1463,5 +1472,4 @@ class OpusLayerInterface : OpusLayerCursor() {
         val editor_table = main.findViewById<EditorTable>(R.id.etEditorTable)
         editor_table.update_percussion_visibility()
     }
-
 }

@@ -95,5 +95,6 @@ class OpusLine(var beats: MutableList<OpusTree<OpusEventSTD>>) {
     fun get_controller(type: ControlEventType): ActiveControlSet.ActiveController {
         return this.controllers.get_controller(type)
     }
+
 }
 

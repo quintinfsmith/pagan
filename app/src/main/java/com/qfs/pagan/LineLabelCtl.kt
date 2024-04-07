@@ -32,7 +32,11 @@ open class LineLabelCtl(context: Context, var ctl_level: CtlLineLevel, var ctl_t
     }
 
     override fun get_label_text(): String {
-        return "${this.ctl_level}".substring(0..2)
+        return when (this.ctl_type) {
+            ControlEventType.Tempo -> "BPM"
+            ControlEventType.Volume -> "VOL"
+            ControlEventType.Reverb -> "RVB"
+        }
     }
 
     override fun get_height(): Float {

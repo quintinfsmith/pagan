@@ -1,5 +1,4 @@
 package com.qfs.pagan.opusmanager
-import android.util.Log
 import com.qfs.apres.Midi
 import com.qfs.apres.event.BankSelect
 import com.qfs.apres.event.NoteOff
@@ -1990,7 +1989,7 @@ open class OpusLayerBase {
         }
 
         // TODO: Should probably figure out why i can get more tempo beats than note beats, but for just clip
-        return Triple(opus, tempo_line.subList(0, opus.size), instrument_map)
+        return Triple(opus, tempo_line.subList(0, min(tempo_line.size, opus.size)), instrument_map)
     }
 
     open fun import_from_other(other: OpusLayerBase) {
@@ -2184,16 +2183,29 @@ open class OpusLayerBase {
         this._setup_default_controllers()
 
         val tempo_controller = this.controllers.get_controller(ControlEventType.Tempo)
-        tempo_controller.set_initial_value(
-            ActiveControlSet.ActiveController.default_value(ControlEventType.Tempo)
-        )
-        Log.d("AAA", "${tempo_line.size} | ${this.beat_count} | ${tempo_controller.events.size}")
         tempo_line.forEachIndexed { i: Int, tree: OpusTree<OpusControlEvent> ->
             if (!tree.is_leaf() || tree.is_event()) {
                 tempo_controller.events[i] = tree
             }
         }
 
+        /*
+            If the first leaf sets the tempo, use that as initial value instead of as a control event.
+            NOTE: This depends on the control being IMMEDIATE, so if that's no longer a guarantee this
+            needs to change.
+         */
+        val first_tempo_tree = tempo_controller.get_tree(0)
+        val position = first_tempo_tree.get_first_event_tree_position()
+        val first_tempo_leaf = first_tempo_tree.get(position ?: listOf())
+        if (first_tempo_leaf.is_event()) {
+            tempo_controller.set_initial_value(first_tempo_leaf.event!!.value)
+            first_tempo_leaf.unset_event()
+            first_tempo_tree.reduce()
+        } else {
+            tempo_controller.set_initial_value(
+                ActiveControlSet.ActiveController.default_value(ControlEventType.Tempo)
+            )
+        }
 
         this.on_project_changed()
     }

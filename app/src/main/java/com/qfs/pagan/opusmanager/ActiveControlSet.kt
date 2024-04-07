@@ -1,5 +1,6 @@
 package com.qfs.pagan.opusmanager
 
+import android.util.Log
 import com.qfs.pagan.structure.OpusTree
 
 
@@ -8,19 +9,33 @@ class ActiveControlSet(var beat_count: Int, default_enabled: Set<ControlEventTyp
         companion object {
             fun from_json(obj: ActiveControllerJSON, size: Int): ActiveController {
                 val new_controller = ActiveController(obj.type, size)
+                new_controller.set_initial_value(obj.initial_value)
                 for ((index, json_tree) in obj.children) {
                     new_controller.events[index] = OpusTree.from_json(json_tree)
                 }
                 return new_controller
             }
+
+            fun default_value(type: ControlEventType): Float {
+                return when (type) {
+                    ControlEventType.Tempo -> 120F
+                    ControlEventType.Volume -> 64F
+                    ControlEventType.Reverb -> 0F
+                }
+            }
         }
 
         var events = mutableListOf<OpusTree<OpusControlEvent>?>()
+        var initial_value = default_value(this.type)
 
         init {
             for (i in 0 until beat_count) {
                 this.insert_beat(i)
             }
+        }
+
+        fun set_initial_value(value: Float) {
+            this.initial_value = value
         }
 
         fun get_current_value(beat: Int, position: List<Int>): Float {
@@ -31,7 +46,7 @@ class ActiveControlSet(var beat_count: Int, default_enabled: Set<ControlEventTyp
 
             var working_beat = beat
             var working_position = position.toList()
-            var output = 0F // TODO: Ctl Type Defaults
+            var output = this.initial_value
 
             while (true) {
                 val pair = this.get_preceding_leaf_position(working_beat, working_position) ?: return output
@@ -105,6 +120,7 @@ class ActiveControlSet(var beat_count: Int, default_enabled: Set<ControlEventTyp
             }
             return ActiveControllerJSON(
                 this.type,
+                this.initial_value,
                 children
             )
         }
@@ -143,6 +159,7 @@ class ActiveControlSet(var beat_count: Int, default_enabled: Set<ControlEventTyp
         fun set_beat_count(beat_count: Int) {
             val current_beat_count = this.events.size
             if (beat_count > current_beat_count) {
+                Log.d("AAA", "$beat_count | $current_beat_count")
                 for (i in current_beat_count until beat_count) {
                     this.insert_beat(current_beat_count)
                 }

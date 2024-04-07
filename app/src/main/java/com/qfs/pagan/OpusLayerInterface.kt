@@ -179,6 +179,9 @@ class OpusLayerInterface : OpusLayerCursor() {
         if (this.get_activity() == null) {
             return
         }
+        if (this.get_ui_lock_level() == UI_LOCK_FULL) {
+            return
+        }
 
         val coord_list = this._get_all_linked_as_coords(beat_key)
         this._notify_cell_change(coord_list)

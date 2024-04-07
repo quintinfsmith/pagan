@@ -220,6 +220,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                     try {
                         main.import_midi(path)
                     } catch (e: Exception) {
+                        throw e
                         val opus_manager = main.get_opus_manager()
                         if (!opus_manager.first_load_done) {
                             main.get_opus_manager().new()

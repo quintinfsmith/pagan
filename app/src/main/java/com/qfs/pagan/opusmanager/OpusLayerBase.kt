@@ -1,4 +1,5 @@
 package com.qfs.pagan.opusmanager
+import android.util.Log
 import com.qfs.apres.Midi
 import com.qfs.apres.event.BankSelect
 import com.qfs.apres.event.NoteOff
@@ -1223,7 +1224,6 @@ open class OpusLayerBase {
         }
 
         val midi = Midi()
-        midi.insert_event(0,0, SetTempo.from_bpm(this.tempo))
 
         val pseudo_midi_map = mutableListOf<Triple<Int, PseudoMidiEvent, Boolean>>()
         val max_tick = midi.get_ppqn() * (this.beat_count + 1)
@@ -1547,18 +1547,11 @@ open class OpusLayerBase {
             }
 
             val line_controllers = mutableListOf<List<ActiveControllerJSON>>()
-            for (line in channel.lines) {
+            channel.lines.forEachIndexed { i: Int, line: OpusTreeJSON<OpusEventSTD> ->
                 val new_controller = ActiveControllerJSON(
                     ControlEventType.Volume,
-                    listOf(
-                        Pair(
-                            0,
-                            OpusTreeJSON(
-                                OpusControlEvent(.5F),
-                                null
-                            )
-                        )
-                    )
+                    channel.line_volumes[i].toFloat(),
+                    listOf()
                 )
 
                 line_controllers.add(listOf(new_controller))
@@ -1586,15 +1579,8 @@ open class OpusLayerBase {
             controllers = listOf(
                 ActiveControllerJSON(
                     ControlEventType.Tempo,
-                    listOf(
-                        Pair(
-                            0,
-                            OpusTreeJSON<OpusControlEvent>(
-                                OpusControlEvent(120F),
-                                null
-                            )
-                        )
-                    )
+                    ActiveControlSet.ActiveController.default_value(ControlEventType.Tempo),
+                    listOf( )
                 )
             )
         )
@@ -1807,13 +1793,14 @@ open class OpusLayerBase {
         this.import_midi(midi)
     }
 
-    private fun tree_from_midi(midi: Midi): Triple<OpusTree<Set<OpusEventSTD>>, Float, List<Triple<Int, Int?, Int?>>> {
+    private fun tree_from_midi(midi: Midi): Triple<OpusTree<Set<OpusEventSTD>>, List<OpusTree<OpusControlEvent>>, List<Triple<Int, Int?, Int?>>> {
         var beat_size = midi.get_ppqn()
         var total_beat_offset = 0
         var last_ts_change = 0
         val beat_values: MutableList<OpusTree<Set<OpusEventSTD>>> = mutableListOf()
+        val tempo_line = mutableListOf<OpusTree<OpusControlEvent>>()
         var max_tick = 0
-        var tempo = 120F
+        var working_tempo = 120F
         val instrument_map = mutableListOf<Triple<Int, Int?, Int?>>()
 
         val active_event_map = HashMap<Pair<Int,Int>, OpusEventSTD>()
@@ -1867,6 +1854,7 @@ open class OpusLayerBase {
                 val opus_event = active_event_map[Pair(channel, note)] ?: continue
                 opus_event_duration_map[opus_event] = (tick - opus_event.duration).toFloat() / beat_size.toFloat()
             } else if (event is TimeSignature) {
+
                 total_beat_offset += (tick - last_ts_change) / beat_size
 
                 denominator = 2F.pow(event.get_denominator())
@@ -1900,9 +1888,17 @@ open class OpusLayerBase {
                 last_ts_change = tick
                 beat_size = new_beat_size
             } else if (event is SetTempo) {
-                if (tick == 0) {
-                    tempo = event.get_bpm() * (denominator / 4)
+                working_tempo = event.get_bpm() * (denominator / 4)
+
+                while (tempo_line.size <= beat_index) {
+                    val new_tree = OpusTree<OpusControlEvent>()
+                    new_tree.set_size(beat_size)
+                    tempo_line.add(new_tree)
                 }
+
+                val tree = tempo_line[beat_index]
+                tree.event = OpusControlEvent(working_tempo)
+
             } else if (event is ProgramChange) {
                 instrument_map.add(Triple(event.channel, null, event.get_program()))
             } else if (event is BankSelect) {
@@ -1988,9 +1984,13 @@ open class OpusLayerBase {
             opus.set(i, quantized_tree)
         }
 
+        tempo_line.forEachIndexed { i: Int, tree: OpusTree<OpusControlEvent> ->
+            tree.reduce()
+            tree.clear_singles()
+        }
 
-
-        return Triple(opus, tempo, instrument_map)
+        // TODO: Should probably figure out why i can get more tempo beats than note beats, but for just clip
+        return Triple(opus, tempo_line.subList(0, opus.size), instrument_map)
     }
 
     open fun import_from_other(other: OpusLayerBase) {
@@ -2010,8 +2010,7 @@ open class OpusLayerBase {
     open fun import_midi(midi: Midi) {
         this.clear()
 
-        val (settree, tempo, instrument_map) = this.tree_from_midi(midi)
-        this.tempo = tempo
+        val (settree, tempo_line, instrument_map) = this.tree_from_midi(midi)
 
         val mapped_events = settree.get_events_mapped()
         val midi_channel_map = HashMap<Int, Int>()
@@ -2183,6 +2182,18 @@ open class OpusLayerBase {
         }
 
         this._setup_default_controllers()
+
+        val tempo_controller = this.controllers.get_controller(ControlEventType.Tempo)
+        tempo_controller.set_initial_value(
+            ActiveControlSet.ActiveController.default_value(ControlEventType.Tempo)
+        )
+        Log.d("AAA", "${tempo_line.size} | ${this.beat_count} | ${tempo_controller.events.size}")
+        tempo_line.forEachIndexed { i: Int, tree: OpusTree<OpusControlEvent> ->
+            if (!tree.is_leaf() || tree.is_event()) {
+                tempo_controller.events[i] = tree
+            }
+        }
+
 
         this.on_project_changed()
     }

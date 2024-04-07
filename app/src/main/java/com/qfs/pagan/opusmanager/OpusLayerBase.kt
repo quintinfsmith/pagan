@@ -1210,7 +1210,7 @@ open class OpusLayerBase {
     }
 
     open fun get_midi(start_beat: Int = 0, end_beat_rel: Int? = null): Midi {
-        data class StackItem(var tree: OpusTree<OpusEventSTD>, var divisions: Int, var offset: Int, var size: Int)
+        data class StackItem<T>(var tree: OpusTree<T>, var divisions: Int, var offset: Int, var size: Int)
         data class PseudoMidiEvent(var channel: Int, var note: Int, var bend: Int, var velocity: Int, var uuid: Int)
         var event_uuid_gen = 0
 
@@ -1227,6 +1227,42 @@ open class OpusLayerBase {
         val pseudo_midi_map = mutableListOf<Triple<Int, PseudoMidiEvent, Boolean>>()
         val max_tick = midi.get_ppqn() * (this.beat_count + 1)
         val radix = this.tuning_map.size
+
+        val tempo_controller = this.controllers.get_controller(ControlEventType.Tempo)
+
+        midi.insert_event(
+            0,
+            0,
+            SetTempo.from_bpm(tempo_controller.initial_value)
+        )
+
+        for (i in 0 until this.beat_count) {
+            val tempo_tree = tempo_controller.get_tree(i)
+            val stack: MutableList<StackItem<OpusControlEvent>> = mutableListOf(StackItem(tempo_tree, 1, i * midi.ppqn, midi.ppqn))
+            while (stack.isNotEmpty()) {
+                val current = stack.removeFirst()
+                if (current.tree.is_event()) {
+                    val event = current.tree.get_event()!!
+                    midi.insert_event(
+                        0,
+                        current.offset,
+                        SetTempo.from_bpm(event.value)
+                    )
+                } else if (!current.tree.is_leaf()) {
+                    val working_subdiv_size = current.size / current.tree.size
+                    for ((i, subtree) in current.tree.divisions) {
+                        stack.add(
+                            StackItem(
+                                subtree,
+                                current.tree.size,
+                                current.offset + (working_subdiv_size * i),
+                                working_subdiv_size
+                            )
+                        )
+                    }
+                }
+            }
+        }
 
         this.channels.forEachIndexed outer@{ c: Int, channel: OpusChannel ->
             midi.insert_event(
@@ -1246,7 +1282,7 @@ open class OpusLayerBase {
                 var current_tick = 0
                 var prev_note = 0
                 line.beats.forEachIndexed { b: Int, beat: OpusTree<OpusEventSTD> ->
-                    val stack: MutableList<StackItem> = mutableListOf(StackItem(beat, 1, current_tick, midi.ppqn))
+                    val stack: MutableList<StackItem<OpusEventSTD>> = mutableListOf(StackItem(beat, 1, current_tick, midi.ppqn))
                     while (stack.isNotEmpty()) {
                         val current = stack.removeFirst()
                         if (current.tree.is_event()) {

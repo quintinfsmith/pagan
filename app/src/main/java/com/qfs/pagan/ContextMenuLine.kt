@@ -15,15 +15,11 @@ class ContextMenuLine(context: Context, attrs: AttributeSet? = null): ContextMen
     lateinit var button_insert: ButtonIcon
     lateinit var button_remove: ButtonIcon
     lateinit var button_choose_percussion: ButtonStd
-    lateinit var button_line_volume_popup: ButtonIcon
-    lateinit var seekbar_line_volume: PaganSeekBar
 
     override fun init_properties() {
         this.button_insert = this.findViewById(R.id.btnInsertLine)
         this.button_remove = this.findViewById(R.id.btnRemoveLine)
         this.button_choose_percussion = this.findViewById(R.id.btnChoosePercussion)
-        this.button_line_volume_popup = this.findViewById(R.id.btnLineVolumePopup)
-        this.seekbar_line_volume = this.findViewById(R.id.sbLineVolume)
     }
 
     override fun refresh() {
@@ -35,18 +31,18 @@ class ContextMenuLine(context: Context, attrs: AttributeSet? = null): ContextMen
 
         this.button_remove.isEnabled = opus_manager.get_visible_line_count() > 1
 
-        if (main.get_soundfont() == null) {
-            this.button_line_volume_popup.visibility = View.GONE
-            this.seekbar_line_volume.visibility = View.GONE
-        } else {
-            if (this.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                this.seekbar_line_volume.visibility = View.GONE
-                this.button_line_volume_popup.visibility = View.VISIBLE
-            } else {
-                this.seekbar_line_volume.visibility = View.VISIBLE
-                this.button_line_volume_popup.visibility = View.GONE
-            }
-        }
+      //  if (main.get_soundfont() == null) {
+      //      this.button_line_volume_popup.visibility = View.GONE
+      //      this.seekbar_line_volume.visibility = View.GONE
+      //  } else {
+      //      if (this.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+      //          this.seekbar_line_volume.visibility = View.GONE
+      //          this.button_line_volume_popup.visibility = View.VISIBLE
+      //      } else {
+      //          this.seekbar_line_volume.visibility = View.VISIBLE
+      //          this.button_line_volume_popup.visibility = View.GONE
+      //      }
+      //  }
 
 
         val channel = opus_manager.cursor.channel
@@ -75,20 +71,11 @@ class ContextMenuLine(context: Context, attrs: AttributeSet? = null): ContextMen
             View.VISIBLE
         }
 
-        this.seekbar_line_volume.progress = opus_manager.get_line_volume(channel, line_offset)
-        this.seekbar_line_volume.contentDescription = resources.getString(R.string.label_volume_scrollbar, this.seekbar_line_volume.progress * 100 / 128)
     }
 
     override fun setup_interactions() {
         this.button_choose_percussion.setOnClickListener {
             this.interact_btnChoosePercussion()
-        }
-
-        this.button_line_volume_popup.setOnClickListener {
-            val opus_manager = this.get_main().get_opus_manager()
-            val channel = opus_manager.cursor.channel
-            val line_offset = opus_manager.cursor.line_offset
-            this._line_volume_dialog(channel, line_offset)
         }
 
         this.button_insert.setOnLongClickListener {
@@ -106,19 +93,6 @@ class ContextMenuLine(context: Context, attrs: AttributeSet? = null): ContextMen
         this.button_remove.setOnLongClickListener {
             this.long_click_button_remove_line()
         }
-
-        this.seekbar_line_volume.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(p0: SeekBar, p1: Int, p2: Boolean) {
-                p0.contentDescription = resources.getString(R.string.label_volume_scrollbar, (p1 * 100 / 96))
-            }
-            override fun onStartTrackingTouch(p0: SeekBar?) { }
-            override fun onStopTrackingTouch(seekbar: SeekBar) {
-                val opus_manager = this@ContextMenuLine.get_opus_manager()
-                val channel = opus_manager.cursor.channel
-                val line_offset = opus_manager.cursor.line_offset
-                opus_manager.set_line_volume(channel, line_offset, seekbar.progress)
-            }
-        })
     }
 
     fun click_button_insert_line() {

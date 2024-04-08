@@ -8,25 +8,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <LinearLayout
-        android:layout_height="wrap_content"
-        android:layout_width="match_parent"
-        android:padding="8dp"
-        android:orientation="horizontal">
-        <com.qfs.pagan.PaganTextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:text="@string/line_volume"/>
-        <com.qfs.pagan.PaganSeekBar
-            android:id="@+id/sbLineVolume"
-            android:layout_weight="1"
-            android:max="127"
-            android:min="0"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content" />
-    </LinearLayout>
-
     <com.qfs.pagan.ButtonStd
         android:theme="@style/button"
         android:id="@+id/btnChoosePercussion"

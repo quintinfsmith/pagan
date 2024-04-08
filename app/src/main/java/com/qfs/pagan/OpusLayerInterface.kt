@@ -1289,8 +1289,8 @@ class OpusLayerInterface : OpusLayerCursor() {
     override fun save(path: String?) {
         super.save(path)
         val activity = this.get_activity() ?: return
-        activity.findViewById<View>(R.id.btnDeleteProject).visibility = View.VISIBLE
-        activity.findViewById<View>(R.id.btnCopyProject).visibility = View.VISIBLE
+        activity.findViewById<View>(R.id.btnDeleteProject).isEnabled = true
+        activity.findViewById<View>(R.id.btnCopyProject).isEnabled = true
     }
 
 

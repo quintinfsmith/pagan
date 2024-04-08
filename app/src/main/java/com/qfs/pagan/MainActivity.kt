@@ -737,7 +737,9 @@ class MainActivity : AppCompatActivity() {
 
         val fragment = this.get_active_fragment()
         fragment?.setFragmentResult(IntentFragmentToken.New.name, bundleOf())
-        this.navigate(R.id.EditorFragment)
+        if (fragment !is FragmentEditor) {
+            this.navigate(R.id.EditorFragment)
+        }
 
         this.feedback_msg(resources.getString(R.string.feedback_delete, this.title))
     }
@@ -1120,28 +1122,38 @@ class MainActivity : AppCompatActivity() {
 
         this.setup_project_config_drawer_export_button()
         this.findViewById<View>(R.id.btnSaveProject).setOnClickListener {
+            if (!it.isEnabled) {
+                return@setOnClickListener
+            }
+
             this.project_save()
         }
         this.findViewById<View>(R.id.btnSaveProject).setOnLongClickListener {
+            if (!it.isEnabled) {
+                return@setOnLongClickListener false
+            }
+
             this.export_project()
             true
         }
 
         val btnDeleteProject = this.findViewById<View>(R.id.btnDeleteProject)
         val btnCopyProject = this.findViewById<View>(R.id.btnCopyProject)
-        if (opus_manager.path != null && File(opus_manager.path!!).isFile) {
-            btnDeleteProject.visibility = View.VISIBLE
-            btnCopyProject.visibility = View.VISIBLE
-        } else {
-            btnDeleteProject.visibility = View.GONE
-            btnCopyProject.visibility = View.GONE
-        }
+        val file_exists = (opus_manager.path != null && File(opus_manager.path!!).isFile)
+        btnDeleteProject.isEnabled = file_exists
+        btnCopyProject.isEnabled = file_exists
+
         btnDeleteProject.setOnClickListener {
-            this.dialog_delete_project()
+            if (it.isEnabled) {
+                this.dialog_delete_project()
+            }
         }
+
         btnCopyProject.setOnClickListener {
-            this.project_move_to_copy()
-            this.drawer_close()
+            if (it.isEnabled) {
+                this.project_move_to_copy()
+                this.drawer_close()
+            }
         }
     }
 

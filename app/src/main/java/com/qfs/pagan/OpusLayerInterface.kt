@@ -1,7 +1,6 @@
 package com.qfs.pagan
 import android.content.res.Configuration
 import android.view.View
-import android.widget.ImageView
 import android.widget.TextView
 import com.qfs.apres.Midi
 import com.qfs.pagan.opusmanager.ActiveControlSet
@@ -732,9 +731,6 @@ class OpusLayerInterface : OpusLayerCursor() {
             }
             else -> {
                 this.runOnUiThread { main ->
-                    if (this.beat_count == 1) {
-                        main.findViewById<ImageView>(R.id.btnRemoveBeat).visibility = View.GONE
-                    }
                     editor_table.remove_column(beat_index)
                     editor_table.update_cursor(this.cursor)
                 }

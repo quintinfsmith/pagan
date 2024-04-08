@@ -2,7 +2,6 @@ package com.qfs.pagan
 
 import android.content.Context
 import android.util.AttributeSet
-import android.view.View
 import com.qfs.pagan.opusmanager.OpusLayerBase
 
 class ContextMenuColumn(context: Context, attrs: AttributeSet? = null): ContextMenuView(R.layout.contextmenu_column, context, attrs) {
@@ -17,29 +16,35 @@ class ContextMenuColumn(context: Context, attrs: AttributeSet? = null): ContextM
 
     override fun refresh() {
         val opus_manager = this.get_opus_manager()
-
-        this.button_insert.visibility = View.VISIBLE
-        this.button_remove.visibility = if (opus_manager.beat_count == 1) {
-            View.GONE
-        } else {
-            View.VISIBLE
-        }
+        this.button_remove.isEnabled = opus_manager.beat_count > 1
     }
 
     override fun setup_interactions() {
         this.button_insert.setOnClickListener {
+            if (!it.isEnabled) {
+                return@setOnClickListener
+            }
             this.click_button_insert_beat()
         }
 
         this.button_insert.setOnLongClickListener {
+            if (!it.isEnabled) {
+                return@setOnLongClickListener false
+            }
             this.long_click_button_insert_beat()
         }
 
         this.button_remove.setOnClickListener {
+            if (!it.isEnabled) {
+                return@setOnClickListener
+            }
             this.click_button_remove_beat()
         }
 
         this.button_remove.setOnLongClickListener {
+            if (!it.isEnabled) {
+                return@setOnLongClickListener false
+            }
             this.long_click_button_remove_beat()
         }
     }

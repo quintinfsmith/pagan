@@ -1005,8 +1005,6 @@ open class OpusLayerCursor: OpusLayerHistory() {
         this.cursor_select(beat_key, this.get_first_position(beat_key, cursor_position))
     }
 
-
-
     fun insert_line(count: Int) {
         this.new_line(
             this.cursor.channel,

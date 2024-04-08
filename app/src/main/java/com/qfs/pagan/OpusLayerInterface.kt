@@ -37,7 +37,6 @@ class OpusLayerInterface : OpusLayerCursor() {
     private val _cached_ctl_map_channel = HashMap<Pair<Int, ControlEventType>, Int>()
     private val _cached_ctl_map_global = HashMap<ControlEventType, Int>()
 
-
     fun attach_activity(activity: MainActivity) {
         this._activity = activity
     }
@@ -47,7 +46,7 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     private fun get_editor_table(): EditorTable? {
-        return this._activity?.findViewById<EditorTable>(R.id.etEditorTable)
+        return this._activity?.findViewById(R.id.etEditorTable)
     }
 
     private fun get_ui_lock_level(): Int? {
@@ -326,6 +325,13 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
 
         this._notify_cell_change(beat_key)
+    }
+
+    override fun set_percussion_event_at_cursor() {
+        super.set_percussion_event_at_cursor()
+        this.withFragment {
+            it.refresh_context_menu()
+        }
     }
 
     override fun set_percussion_instrument(line_offset: Int, instrument: Int) {
@@ -1054,7 +1060,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             editor_table?.update_cursor(this.cursor)
 
             this.withFragment { main ->
-                main.set_context_menu_line()
+                main.set_context_menu_control_line()
             }
 
             val scroll_to_row = this._cached_ctl_map_channel[Pair(channel, ctl_type)] ?: return@runOnUiThread
@@ -1079,7 +1085,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             editor_table?.update_cursor(this.cursor)
 
             this.withFragment { main ->
-                main.set_context_menu_line()
+                main.set_context_menu_control_line()
             }
 
             val scroll_to_row = this._cached_ctl_map_line[Triple(channel, line_offset, ctl_type)] ?: return@runOnUiThread
@@ -1099,7 +1105,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             editor_table?.update_cursor(this.cursor)
 
             this.withFragment { main ->
-                main.set_context_menu_line()
+                main.set_context_menu_control_line()
             }
 
             val scroll_to_row = this._cached_ctl_map_global[ctl_type] ?: return@runOnUiThread

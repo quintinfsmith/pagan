@@ -2,7 +2,6 @@ package com.qfs.pagan
 
 import android.content.Context
 import android.util.AttributeSet
-import android.view.View
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusControlEvent
@@ -27,34 +26,57 @@ class ContextMenuControlLeaf(context: Context, attrs: AttributeSet? = null): Con
 
     override fun setup_interactions() {
         this.button_value.setOnClickListener {
+            if (!it.isEnabled) {
+                return@setOnClickListener
+            }
             this.click_button_ctl_value()
         }
 
         this.button_split.setOnClickListener {
+            if (!it.isEnabled) {
+                return@setOnClickListener
+            }
             this.click_button_split()
         }
         this.button_split.setOnLongClickListener {
+            if (!it.isEnabled) {
+                return@setOnLongClickListener false
+            }
             this.long_click_button_split()
-            true
         }
 
         this.button_insert.setOnClickListener {
+            if (!it.isEnabled) {
+                return@setOnClickListener
+            }
             this.click_button_insert()
         }
         this.button_insert.setOnLongClickListener {
+            if (!it.isEnabled) {
+                return@setOnLongClickListener false
+            }
             this.long_click_button_insert()
-            true
         }
 
         this.button_remove.setOnClickListener {
+            if (!it.isEnabled) {
+                return@setOnClickListener
+            }
             this.click_button_remove()
         }
         this.button_remove.setOnLongClickListener {
+            if (!it.isEnabled) {
+                return@setOnLongClickListener false
+            }
+
             this.long_click_button_remove()
-            true
         }
 
         this.button_unset.setOnClickListener {
+            if (!it.isEnabled) {
+                return@setOnClickListener
+            }
+
             this.click_button_unset()
         }
     }
@@ -68,7 +90,7 @@ class ContextMenuControlLeaf(context: Context, attrs: AttributeSet? = null): Con
         opus_manager.remove(1)
     }
 
-    fun long_click_button_remove() {
+    fun long_click_button_remove(): Boolean {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
 
@@ -92,6 +114,7 @@ class ContextMenuControlLeaf(context: Context, attrs: AttributeSet? = null): Con
             null -> { }
         }
         opus_manager.unset()
+        return false
     }
 
     fun click_button_insert() {
@@ -116,7 +139,7 @@ class ContextMenuControlLeaf(context: Context, attrs: AttributeSet? = null): Con
         }
     }
 
-    fun long_click_button_insert() {
+    fun long_click_button_insert(): Boolean {
         val main = this.get_main()
         main.dialog_number_input(main.getString(R.string.dlg_insert), 2, 32, 2) { insert_count: Int ->
             val opus_manager = this.get_opus_manager()
@@ -138,6 +161,8 @@ class ContextMenuControlLeaf(context: Context, attrs: AttributeSet? = null): Con
                 }
             }
         }
+
+        return false
     }
 
     fun click_button_split() {
@@ -151,7 +176,7 @@ class ContextMenuControlLeaf(context: Context, attrs: AttributeSet? = null): Con
         }
     }
 
-    fun long_click_button_split() {
+    fun long_click_button_split(): Boolean {
         val main = this.get_main()
         main.dialog_number_input(main.getString(R.string.dlg_split), 2, 32, 2) { split_count: Int ->
             val opus_manager = this.get_opus_manager()
@@ -163,6 +188,7 @@ class ContextMenuControlLeaf(context: Context, attrs: AttributeSet? = null): Con
                 null -> { }
             }
         }
+        return false
     }
 
     override fun refresh() {
@@ -199,17 +225,8 @@ class ContextMenuControlLeaf(context: Context, attrs: AttributeSet? = null): Con
             }
         }
 
-        this.button_remove.visibility = if (cursor.position.isNotEmpty()) {
-            View.VISIBLE
-        } else {
-            View.GONE
-        }
-
-        this.button_unset.visibility = if (ctl_tree.is_event()) {
-            View.VISIBLE
-        } else {
-            View.GONE
-        }
+        this.button_remove.isEnabled = cursor.position.isNotEmpty()
+        this.button_unset.isEnabled = ctl_tree.is_event()
 
         this.button_value.text = if (!ctl_tree.is_event()) {
             when (cursor.ctl_level!!) {
@@ -281,7 +298,7 @@ class ContextMenuControlLeaf(context: Context, attrs: AttributeSet? = null): Con
             }
         }
     }
-    fun long_click_button_duration() {
+    fun long_click_button_duration(): Boolean {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
         when (cursor.ctl_level) {
@@ -290,5 +307,6 @@ class ContextMenuControlLeaf(context: Context, attrs: AttributeSet? = null): Con
             CtlLineLevel.Line -> opus_manager.set_line_ctl_duration(cursor.ctl_type!!, cursor.get_beatkey(), cursor.position, 0)
             null -> { }
         }
+        return false
     }
 }

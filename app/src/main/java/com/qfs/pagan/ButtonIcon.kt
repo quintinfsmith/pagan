@@ -28,5 +28,10 @@ class ButtonIcon(context: Context, attrs: AttributeSet?): androidx.appcompat.wid
         val background = ((this.background as StateListDrawable).getStateDrawable(index) as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)
         background?.setTint(color_map[Palette.Button])
         this.setColorFilter(color_map[Palette.ButtonText])
+        this.alpha = if (this.isEnabled) {
+            1f
+        } else {
+            .5f
+        }
     }
 }

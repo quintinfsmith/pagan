@@ -57,11 +57,9 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
         override fun onAttachedToWindow() {
             super.onAttachedToWindow()
             this._setup_colors()
-            // alt_style doesn't automatically refreshDrawableState like focus or active,
-            // So we need to manually call it here
-            if (this._alt_style) {
-                this.refreshDrawableState()
-            }
+
+            // Need to Manually call this refresh otherwise colors don't show up correctly
+            this.refreshDrawableState()
         }
 
         private fun _setup_colors() {

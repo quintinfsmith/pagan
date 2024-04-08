@@ -35,46 +35,74 @@ class ContextMenuLeaf(context: Context, attrs: AttributeSet? = null): ContextMen
         this.ros_relative_option.setOnChange(this::interact_rosRelativeOption)
 
         this.button_duration.setOnClickListener {
+            if (!it.isEnabled) {
+                return@setOnClickListener
+            }
+
             this.click_button_duration()
         }
         this.button_duration.setOnLongClickListener {
+            if (!it.isEnabled) {
+                return@setOnLongClickListener false
+            }
             this.long_click_button_duration()
         }
         this.button_remove.setOnClickListener {
+            if (!it.isEnabled) {
+                return@setOnClickListener
+            }
+
             this.click_button_remove()
         }
 
         this.button_remove.setOnLongClickListener {
+            if (!it.isEnabled) {
+                return@setOnLongClickListener false
+            }
             this.long_click_button_remove()
         }
 
         this.button_unset.setOnClickListener {
+            if (!it.isEnabled) {
+                return@setOnClickListener
+            }
             this.click_button_unset()
         }
 
         this.button_split.setOnClickListener {
+            if (!it.isEnabled) {
+                return@setOnClickListener
+            }
+
             this.click_button_split()
         }
 
         this.button_split.setOnLongClickListener {
+            if (!it.isEnabled) {
+                return@setOnLongClickListener false
+            }
+
             this.long_click_button_split()
         }
 
         this.button_insert.setOnClickListener {
+            if (!it.isEnabled) {
+                return@setOnClickListener
+            }
+
             this.click_button_insert()
         }
 
         this.button_insert.setOnLongClickListener {
+            if (!it.isEnabled) {
+                return@setOnLongClickListener false
+            }
+
             this.long_click_button_insert()
         }
     }
 
     override fun refresh() {
-        this.button_split.visibility = View.VISIBLE
-        this.button_insert.visibility = View.VISIBLE
-        this.ns_octave.visibility = View.VISIBLE
-        this.ns_offset.visibility = View.VISIBLE
-
         val main = this.get_main()
         val opus_manager = this.get_opus_manager()
 
@@ -108,25 +136,20 @@ class ContextMenuLeaf(context: Context, attrs: AttributeSet? = null): ContextMen
 
             this.button_unset.setImageResource(R.drawable.unset)
             this.button_duration.text = this.context.getString(R.string.label_duration, event.duration)
-            this.button_duration.visibility = View.VISIBLE
         } else {
             this.ns_octave.unset_active_button()
             this.ns_offset.unset_active_button()
-            this.button_duration.visibility = View.GONE
+            this.button_duration.text = ""
         }
 
+        this.button_duration.isEnabled = current_tree.is_event()
+        this.button_duration.isClickable = this.button_duration.isEnabled
 
-        if (current_tree.is_leaf() && !current_tree.is_event()) {
-            this.button_unset.visibility = View.GONE
-        } else {
-            this.button_unset.visibility = View.VISIBLE
-        }
+        this.button_unset.isEnabled = !(current_tree.is_leaf() && !current_tree.is_event())
+        this.button_unset.isClickable = this.button_unset.isEnabled
 
-        if (opus_manager.cursor.get_position().isEmpty()) {
-            this.button_remove.visibility = View.GONE
-        } else {
-            this.button_remove.visibility = View.VISIBLE
-        }
+        this.button_remove.isEnabled = opus_manager.cursor.get_position().isNotEmpty()
+        this.button_remove.isClickable = this.button_remove.isEnabled
     }
 
     fun click_button_duration() {

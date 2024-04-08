@@ -48,6 +48,18 @@
         android:layout_weight="1"
         android:layout_width="0dp"/>
 
+    <com.qfs.pagan.ButtonStd
+        android:theme="@style/icon_button"
+        android:id="@+id/btnDuration"
+        android:layout_width="@dimen/icon_button_width"
+        android:layout_height="@dimen/icon_button_height"
+        android:text="" />
+
+    <Space
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:layout_width="0dp"/>
+
     <com.qfs.pagan.ButtonIcon
         android:theme="@style/icon_button"
         android:id="@+id/btnUnset"
@@ -56,17 +68,5 @@
         android:contentDescription="@string/cd_unset"
         android:text="Unset"
         app:srcCompat="@drawable/unset" />
-
-    <Space
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:layout_width="0dp"/>
-
-    <com.qfs.pagan.ButtonStd
-        android:theme="@style/icon_button"
-        android:id="@+id/btnDuration"
-        android:layout_width="@dimen/icon_button_width"
-        android:layout_height="@dimen/icon_button_height"
-        android:text="T" />
 
 </LinearLayout>

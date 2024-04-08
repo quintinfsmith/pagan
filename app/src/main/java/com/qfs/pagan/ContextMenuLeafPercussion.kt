@@ -31,57 +31,80 @@ class ContextMenuLeafPercussion(context: Context, attrs: AttributeSet? = null): 
             val event = current_tree.get_event()!!
             this.button_unset.setImageResource(R.drawable.unset)
             this.button_duration.text = this.context.getString(R.string.label_duration, event.duration)
-            this.button_duration.visibility = View.VISIBLE
         } else {
-            this.button_duration.visibility = View.GONE
+            this.button_unset.setImageResource(R.drawable.set_percussion)
+            this.button_duration.text = ""
         }
 
-
-        if (current_tree.is_leaf() && !current_tree.is_event()) {
-            this.button_unset.visibility = View.GONE
-        } else {
-            this.button_unset.visibility = View.VISIBLE
-        }
-
-        if (opus_manager.cursor.get_position().isEmpty()) {
-            this.button_remove.visibility = View.GONE
-        } else {
-            this.button_remove.visibility = View.VISIBLE
-        }
+        this.button_duration.isEnabled = current_tree.is_event()
+        this.button_remove.isEnabled = opus_manager.cursor.get_position().isNotEmpty()
     }
 
     override fun setup_interactions() {
         this.button_duration.setOnClickListener {
+            if (!it.isEnabled) {
+                return@setOnClickListener
+            }
+
             this.click_button_duration()
         }
         this.button_duration.setOnLongClickListener {
+            if (!it.isEnabled) {
+                return@setOnLongClickListener false
+            }
             this.long_click_button_duration()
         }
         this.button_remove.setOnClickListener {
+            if (!it.isEnabled) {
+                return@setOnClickListener
+            }
+
             this.click_button_remove()
         }
 
         this.button_remove.setOnLongClickListener {
+            if (!it.isEnabled) {
+                return@setOnLongClickListener false
+            }
             this.long_click_button_remove()
         }
 
         this.button_unset.setOnClickListener {
+            if (!it.isEnabled) {
+                return@setOnClickListener
+            }
             this.click_button_unset()
         }
 
         this.button_split.setOnClickListener {
+            if (!it.isEnabled) {
+                return@setOnClickListener
+            }
+
             this.click_button_split()
         }
 
         this.button_split.setOnLongClickListener {
+            if (!it.isEnabled) {
+                return@setOnLongClickListener false
+            }
+
             this.long_click_button_split()
         }
 
         this.button_insert.setOnClickListener {
+            if (!it.isEnabled) {
+                return@setOnClickListener
+            }
+
             this.click_button_insert()
         }
 
         this.button_insert.setOnLongClickListener {
+            if (!it.isEnabled) {
+                return@setOnLongClickListener false
+            }
+
             this.long_click_button_insert()
         }
     }
@@ -184,7 +207,7 @@ class ContextMenuLeafPercussion(context: Context, attrs: AttributeSet? = null): 
         if (opus_manager.get_tree().is_event()) {
             opus_manager.unset()
         } else {
-            opus_manager.set_percussion_event()
+            opus_manager.set_percussion_event_at_cursor()
         }
     }
 

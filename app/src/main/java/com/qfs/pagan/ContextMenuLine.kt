@@ -33,13 +33,7 @@ class ContextMenuLine(context: Context, attrs: AttributeSet? = null): ContextMen
             throw OpusManagerCursor.InvalidModeException(opus_manager.cursor.mode, OpusManagerCursor.CursorMode.Row)
         }
 
-        this.button_insert.visibility = View.VISIBLE
-        this.button_remove.visibility = if (opus_manager.get_visible_line_count() == 1) {
-            View.GONE
-        } else {
-            View.VISIBLE
-        }
-
+        this.button_remove.isEnabled = opus_manager.get_visible_line_count() > 1
 
         if (main.get_soundfont() == null) {
             this.button_line_volume_popup.visibility = View.GONE

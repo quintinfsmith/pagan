@@ -314,6 +314,14 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         llContextMenu.removeAllViews()
     }
 
+    internal fun set_context_menu_control_line() {
+        if (!this.refresh_or_clear_context_menu<ContextMenuControlLine>()) {
+            val llContextMenu = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenu)
+            val new_menu = ContextMenuControlLine(this.activity!!)
+            llContextMenu.addView(new_menu)
+        }
+    }
+
     internal fun set_context_menu_line_control_leaf() {
         if (!this.refresh_or_clear_context_menu<ContextMenuControlLeaf>()) {
             val llContextMenu = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenu)
@@ -331,6 +339,11 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     }
 
     internal fun set_context_menu_column() {
+        if (this.get_main().in_playback()) {
+            this.clear_context_menu()
+            return
+        }
+
         if (!this.refresh_or_clear_context_menu<ContextMenuColumn>()) {
             val llContextMenu = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenu)
             val new_menu = ContextMenuColumn(this.activity!!)

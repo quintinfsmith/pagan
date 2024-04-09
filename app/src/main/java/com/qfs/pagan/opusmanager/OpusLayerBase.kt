@@ -2877,4 +2877,18 @@ open class OpusLayerBase {
         return controller.get_current_value(beat, position)
     }
 
+    open fun set_global_controller_initial_value(type: ControlEventType, value: Float) {
+        val controller = this.controllers.get_controller(type)
+        controller.initial_value = value
+    }
+
+    open fun set_channel_controller_initial_value(type: ControlEventType, channel: Int, value: Float) {
+        val controller = this.channels[channel].controllers.get_controller(type)
+        controller.initial_value = value
+    }
+
+    open fun set_line_controller_initial_value(type: ControlEventType, channel: Int, line_offset: Int, value: Float) {
+        val controller = this.channels[channel].lines[line_offset].controllers.get_controller(type)
+        controller.initial_value = value
+    }
 }

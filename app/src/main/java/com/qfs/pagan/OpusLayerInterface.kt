@@ -1477,4 +1477,25 @@ class OpusLayerInterface : OpusLayerCursor() {
         val editor_table = main.findViewById<EditorTable>(R.id.etEditorTable)
         editor_table.update_percussion_visibility()
     }
+
+    override fun set_global_controller_initial_value(type: ControlEventType, value: Float) {
+        super.set_global_controller_initial_value(type, value)
+        this.withFragment {
+            it.refresh_context_menu()
+        }
+    }
+
+    override fun set_channel_controller_initial_value(type: ControlEventType, channel: Int, value: Float) {
+        super.set_channel_controller_initial_value(type, channel, value)
+        this.withFragment {
+            it.refresh_context_menu()
+        }
+    }
+
+    override fun set_line_controller_initial_value(type: ControlEventType, channel: Int, line_offset: Int, value: Float) {
+        super.set_line_controller_initial_value(type, channel, line_offset, value)
+        this.withFragment {
+            it.refresh_context_menu()
+        }
+    }
 }

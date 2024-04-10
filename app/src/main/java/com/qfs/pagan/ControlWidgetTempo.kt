@@ -1,69 +1,38 @@
 package com.qfs.pagan
 
 import android.content.Context
-import android.text.Editable
-import android.text.TextWatcher
+import android.view.ContextThemeWrapper
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
-import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
-import android.widget.LinearLayout
-import android.widget.SeekBar
 
-class ControlWidgetTempo(context: Context, callback: (Float) -> Unit): ControlWidget(context, callback) {
-    private val slider = PaganSeekBar(context)
-    private val input = RangedNumberInput(context)
-    private val min = 0
-    private val max = 128
+class ControlWidgetTempo(default: Float, context: Context, callback: (Float) -> Unit): ControlWidget(context, callback) {
+    private val input = ButtonStd(ContextThemeWrapper(context, R.style.icon_button), null)
+    private val min = 1
+    private val max = 512
+    private var current_value = default
 
     init {
         this.orientation = HORIZONTAL
 
-        this.slider.max = this.max
-        this.slider.min = this.min
-
-        this.input.set_range(this.min, this.max)
-
-        var lockout = false
-        this.input.addTextChangedListener(object: TextWatcher {
-            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
-            override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
-            override fun afterTextChanged(p0: Editable?) {
-                if (lockout || p0.toString().isEmpty()) {
-                    return
-                }
-                lockout = true
-                this@ControlWidgetTempo.slider.progress = p0.toString().toInt()
-                lockout = false
+        this.input.text = "$default BPM"
+        this.input.setOnClickListener {
+            this.input.get_main().dialog_number_input(context.getString(R.string.dlg_set_tempo), this.min, this.max, this.get_value().toInt()) { value: Int ->
+                this.set_value(value.toFloat())
+                this.callback(value.toFloat())
             }
-        })
-
-        this.slider.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(p0: SeekBar, p1: Int, p2: Boolean) {
-                if (lockout) {
-                    return
-                }
-                lockout = true
-                this@ControlWidgetTempo.input.set_value(p1)
-                lockout = false
-            }
-            override fun onStartTrackingTouch(p0: SeekBar?) {}
-            override fun onStopTrackingTouch(seekbar: SeekBar) { }
-        })
-
+        }
 
         this.addView(this.input)
-        this.addView(this.slider)
 
-        this.input.layoutParams.width = WRAP_CONTENT
+        this.input.layoutParams.width = MATCH_PARENT
         this.input.layoutParams.height = MATCH_PARENT
-
-        this.slider.layoutParams.width = 0
-        this.slider.layoutParams.height = MATCH_PARENT
-        (this.slider.layoutParams as LinearLayout.LayoutParams).weight = 1f
     }
 
     override fun get_value(): Float {
-        return this.slider.progress.toFloat()
+        return this.current_value
     }
 
-    override fun set_value(new_value: Float) { }
+    override fun set_value(new_value: Float) {
+        this.current_value = new_value
+        this.input.text = "$new_value BPM"
+    }
 }

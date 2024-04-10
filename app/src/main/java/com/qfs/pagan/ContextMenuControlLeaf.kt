@@ -76,7 +76,7 @@ class ContextMenuControlLeaf(context: Context, attrs: AttributeSet? = null): Con
         val controller = this.get_controller()
 
         this.widget = when (cursor.ctl_type!!) {
-            ControlEventType.Tempo -> ControlWidgetTempo(this.context, this::_widget_callback)
+            ControlEventType.Tempo -> ControlWidgetTempo(controller.initial_value, this.context, this::_widget_callback)
             ControlEventType.Volume -> ControlWidgetVolume(controller.initial_value, this.context, this::_widget_callback)
             ControlEventType.Reverb -> ControlWidgetReverb(this.context, this::_widget_callback)
         }

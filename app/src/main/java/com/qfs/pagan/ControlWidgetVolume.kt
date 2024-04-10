@@ -25,7 +25,7 @@ class ControlWidgetVolume(default: Float, context: Context, callback: (Float) ->
 
         this.input.text = default.toInt().toString()
         this.input.setOnClickListener {
-            this.input.get_main().dialog_number_input(context.getString(R.string.ctl_volume), this.min, this.max, this.get_value().toInt()) { value: Int ->
+            this.input.get_main().dialog_number_input(context.getString(R.string.dlg_set_volume), this.min, this.max, this.get_value().toInt()) { value: Int ->
                 this.set_value(value.toFloat())
                 this.callback(value.toFloat())
             }

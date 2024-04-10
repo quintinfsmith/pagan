@@ -29,22 +29,6 @@ class ContextMenuLine(context: Context, attrs: AttributeSet? = null): ContextMen
             throw OpusManagerCursor.InvalidModeException(opus_manager.cursor.mode, OpusManagerCursor.CursorMode.Row)
         }
 
-        this.button_remove.isEnabled = opus_manager.get_visible_line_count() > 1
-
-      //  if (main.get_soundfont() == null) {
-      //      this.button_line_volume_popup.visibility = View.GONE
-      //      this.seekbar_line_volume.visibility = View.GONE
-      //  } else {
-      //      if (this.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-      //          this.seekbar_line_volume.visibility = View.GONE
-      //          this.button_line_volume_popup.visibility = View.VISIBLE
-      //      } else {
-      //          this.seekbar_line_volume.visibility = View.VISIBLE
-      //          this.button_line_volume_popup.visibility = View.GONE
-      //      }
-      //  }
-
-
         val channel = opus_manager.cursor.channel
         val line_offset = opus_manager.cursor.line_offset
 
@@ -65,32 +49,43 @@ class ContextMenuLine(context: Context, attrs: AttributeSet? = null): ContextMen
             }
         }
 
-        this.button_remove.visibility = if (opus_manager.channels[channel].size == 1) {
-            View.GONE
-        } else {
-            View.VISIBLE
-        }
-
+        this.button_remove.isEnabled = opus_manager.channels[channel].size > 1
     }
 
     override fun setup_interactions() {
         this.button_choose_percussion.setOnClickListener {
+            if (!it.isEnabled) {
+                return@setOnClickListener
+            }
             this.interact_btnChoosePercussion()
         }
 
         this.button_insert.setOnLongClickListener {
+            if (!it.isEnabled) {
+                return@setOnLongClickListener false
+            }
             this.long_click_button_insert_line()
         }
 
         this.button_insert.setOnClickListener {
+            if (!it.isEnabled) {
+                return@setOnClickListener
+            }
             this.click_button_insert_line()
         }
 
         this.button_remove.setOnClickListener {
+            if (!it.isEnabled) {
+                return@setOnClickListener
+            }
             this.click_button_remove_line()
         }
 
         this.button_remove.setOnLongClickListener {
+            if (!it.isEnabled) {
+                return@setOnLongClickListener false
+            }
+
             this.long_click_button_remove_line()
         }
     }

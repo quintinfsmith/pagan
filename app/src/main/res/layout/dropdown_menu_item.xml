@@ -12,6 +12,8 @@
         android:paddingStart="@dimen/dropdown_item_padding_sides"
         android:paddingEnd="@dimen/dropdown_item_padding_sides"
         android:minWidth="@dimen/dropdown_item_min_width"
+        android:ellipsize="end"
+        android:maxLines="1"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
 </LinearLayout>

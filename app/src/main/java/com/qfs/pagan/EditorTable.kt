@@ -560,7 +560,12 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     }
 
     fun update_line_label(channel: Int, line_offset: Int) {
-        val y = this.get_opus_manager().get_abs_offset(channel, line_offset)
+        val opus_manager = this.get_opus_manager()
+        val y = opus_manager.get_visible_row_from_ctl_line(
+            opus_manager.get_ctl_line_index(
+                opus_manager.get_abs_offset(channel, line_offset)
+            )
+        )?: return
         this._line_label_layout.notify_item_changed(y)
     }
 

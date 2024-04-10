@@ -9,23 +9,25 @@ import android.widget.SeekBar
 import kotlin.math.roundToInt
 
 class ControlWidgetVolume(default: Float, context: Context, callback: (Float) -> Unit): ControlWidget(context, callback) {
-    private val slider = PaganSeekBar(context)
-    private val input = ButtonStd(ContextThemeWrapper(context, R.style.icon_button), null)
-    private val min = 0
-    private val max = 128
-
+    private val _slider = PaganSeekBar(context)
+    private val _input = ButtonStd(ContextThemeWrapper(context, R.style.icon_button), null)
+    private val _min = 0
+    private val _max = 128
     private var _lockout_ui: Boolean = false
 
     init {
         this.orientation = HORIZONTAL
 
-        this.slider.max = this.max
-        this.slider.min = this.min
-        this.slider.progress = default.toInt()
+        this._slider.max = this._max
+        this._slider.min = this._min
+        this._slider.progress = default.toInt()
 
-        this.input.text = default.toInt().toString()
-        this.input.setOnClickListener {
-            this.input.get_main().dialog_number_input(context.getString(R.string.dlg_set_volume), this.min, this.max, this.get_value().toInt()) { value: Int ->
+        this._input.text = default.toInt().toString()
+        this._input.setOnClickListener {
+            val main = this._input.get_main()
+            val dlg_default = this.get_value().toInt()
+            val dlg_title = context.getString(R.string.dlg_set_volume)
+            main.dialog_number_input(dlg_title, this._min, this._max, dlg_default) { value: Int ->
                 val new_value = value.toFloat()
                 if (new_value != this.get_value()) {
                     this.set_value(new_value)
@@ -34,13 +36,13 @@ class ControlWidgetVolume(default: Float, context: Context, callback: (Float) ->
             }
         }
 
-        this.slider.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener {
+        this._slider.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(p0: SeekBar, p1: Int, p2: Boolean) {
                 if (this@ControlWidgetVolume._lockout_ui) {
                     return
                 }
                 this@ControlWidgetVolume._lockout_ui = true
-                this@ControlWidgetVolume.input.text = p1.toString()
+                this@ControlWidgetVolume._input.text = p1.toString()
                 this@ControlWidgetVolume._lockout_ui = false
             }
 
@@ -51,22 +53,22 @@ class ControlWidgetVolume(default: Float, context: Context, callback: (Float) ->
         })
 
 
-        this.addView(this.input)
-        this.addView(this.slider)
+        this.addView(this._input)
+        this.addView(this._slider)
 
-        this.input.layoutParams.width = resources.getDimension(R.dimen.volume_button_width).roundToInt()
-        this.input.layoutParams.height = WRAP_CONTENT
+        this._input.layoutParams.width = resources.getDimension(R.dimen.volume_button_width).roundToInt()
+        this._input.layoutParams.height = WRAP_CONTENT
 
-        this.slider.layoutParams.width = 0
-        this.slider.layoutParams.height = MATCH_PARENT
-        (this.slider.layoutParams as LinearLayout.LayoutParams).weight = 1f
+        this._slider.layoutParams.width = 0
+        this._slider.layoutParams.height = MATCH_PARENT
+        (this._slider.layoutParams as LinearLayout.LayoutParams).weight = 1f
     }
 
     override fun get_value(): Float {
-        return this.slider.progress.toFloat()
+        return this._slider.progress.toFloat()
     }
 
     override fun set_value(new_value: Float) {
-        this.slider.progress = new_value.toInt()
+        this._slider.progress = new_value.toInt()
     }
 }

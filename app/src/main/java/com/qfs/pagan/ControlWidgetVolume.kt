@@ -48,12 +48,13 @@ class ControlWidgetVolume(default: Float, context: Context, callback: (Float) ->
                 }
                 this@ControlWidgetVolume._lockout_ui = true
                 this@ControlWidgetVolume.input.set_value(p1)
-                this@ControlWidgetVolume.callback.invoke(p1.toFloat())
                 this@ControlWidgetVolume._lockout_ui = false
             }
 
             override fun onStartTrackingTouch(p0: SeekBar?) {}
-            override fun onStopTrackingTouch(seekbar: SeekBar) { }
+            override fun onStopTrackingTouch(seekbar: SeekBar) {
+                this@ControlWidgetVolume.callback(seekbar.progress.toFloat())
+            }
         })
 
 
@@ -74,4 +75,10 @@ class ControlWidgetVolume(default: Float, context: Context, callback: (Float) ->
         return this.slider.progress.toFloat()
     }
 
+    override fun set_value(new_value: Float) {
+        this._lockout_ui = true
+        this.slider.progress = new_value.toInt()
+        this.input.set_value(new_value.toInt())
+        this._lockout_ui = false
+    }
 }

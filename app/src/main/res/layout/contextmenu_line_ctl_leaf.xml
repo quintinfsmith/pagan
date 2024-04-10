@@ -78,20 +78,9 @@
     </LinearLayout>
 
     <LinearLayout
+        android:id="@+id/llCtlTarget"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
-        <com.qfs.pagan.ButtonStd
-            android:theme="@style/button"
-            android:id="@+id/btnCtlAmount"
-            android:textSize="18sp"
-            android:paddingTop="5dp"
-            android:paddingBottom="8dp"
-            android:layout_marginTop="@dimen/number_selector_spacing"
-            android:layout_marginBottom="@dimen/number_selector_spacing"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:text="Value" />
     </LinearLayout>
 
 </LinearLayout>

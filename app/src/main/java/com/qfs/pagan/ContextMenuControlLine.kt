@@ -11,11 +11,11 @@ import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import kotlin.math.roundToInt
 
-open class ContextMenuControlLine(context: Context, attrs: AttributeSet? = null): ContextMenuView(R.layout.contextmenu_control_line, context, attrs) {
+class ContextMenuControlLine(context: Context, attrs: AttributeSet? = null): ContextMenuView(R.layout.contextmenu_control_line, context, attrs) {
     lateinit var initial_widget_wrapper: LinearLayout
     lateinit var label: PaganTextView
     lateinit var widget: ControlWidget
-    var current_type: ControlEventType? = null
+    private var _current_type: ControlEventType? = null
 
     private fun _callback(value: Float) {
         val opus_manager = this.get_opus_manager()
@@ -49,7 +49,7 @@ open class ContextMenuControlLine(context: Context, attrs: AttributeSet? = null)
         }
     }
 
-    open fun init_widget() {
+    fun init_widget() {
         this.initial_widget_wrapper.removeAllViews()
 
         val opus_manager = this.get_opus_manager()
@@ -62,6 +62,7 @@ open class ContextMenuControlLine(context: Context, attrs: AttributeSet? = null)
             ControlEventType.Volume -> ControlWidgetVolume(controller.initial_value, this.context, this::_callback)
             ControlEventType.Reverb -> ControlWidgetReverb(this.context, this::_callback)
         }
+        this._current_type = cursor.ctl_type
 
         this.initial_widget_wrapper.addView(this.widget as View)
         (this.widget as View).layoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT
@@ -94,7 +95,7 @@ open class ContextMenuControlLine(context: Context, attrs: AttributeSet? = null)
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
 
-        if (this.initial_widget_wrapper.isEmpty() || cursor.ctl_type != this.current_type) {
+        if (this.initial_widget_wrapper.isEmpty() || cursor.ctl_type != this._current_type) {
             this.init_widget()
         }
 

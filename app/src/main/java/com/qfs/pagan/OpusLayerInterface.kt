@@ -299,7 +299,6 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
-
     override fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEventSTD) {
         val activity = this.get_activity() ?: return super.set_event(beat_key, position, event)
         if (!activity.view_model.show_percussion && this.is_percussion(beat_key.channel)) {

@@ -3,21 +3,20 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/llContextControlLine"
     android:padding="@dimen/number_selector_spacing"
-    android:orientation="horizontal"
+    android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
     <com.qfs.pagan.PaganTextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:padding="8dp"
+        android:padding="2dp"
         android:id="@+id/tvCtlLineLabel"/>
 
     <LinearLayout
         android:id="@+id/llTarget"
         android:layout_height="wrap_content"
-        android:layout_width="0dp"
-        android:layout_weight="1"
+        android:layout_width="match_parent"
         android:padding="8dp"
         android:orientation="horizontal"/>
 

@@ -183,7 +183,7 @@ open class ControlLeafButton(
 
     // ------------------------------------------------------//
     open fun is_selected(): Boolean {
-        TODO("Implement In Children")
+        throw UninitializedPropertyAccessException()
     }
     fun get_activity(): MainActivity {
         return (this.context as ContextThemeWrapper).baseContext as MainActivity
@@ -202,6 +202,6 @@ open class ControlLeafButton(
     }
 
     open fun get_tree(): OpusTree<OpusControlEvent> {
-        TODO("Implement In Children")
+        throw UninitializedPropertyAccessException()
     }
 }

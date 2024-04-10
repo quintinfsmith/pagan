@@ -1,16 +1,16 @@
 package com.qfs.pagan
 
 import android.content.Context
-import android.text.Editable
-import android.text.TextWatcher
+import android.view.ContextThemeWrapper
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import android.widget.SeekBar
+import kotlin.math.roundToInt
 
 class ControlWidgetVolume(default: Float, context: Context, callback: (Float) -> Unit): ControlWidget(context, callback) {
     private val slider = PaganSeekBar(context)
-    private val input = RangedNumberInput(context)
+    private val input = ButtonStd(ContextThemeWrapper(context, R.style.icon_button), null)
     private val min = 0
     private val max = 128
 
@@ -23,23 +23,13 @@ class ControlWidgetVolume(default: Float, context: Context, callback: (Float) ->
         this.slider.min = this.min
         this.slider.progress = default.toInt()
 
-        this.input.set_range(this.min, this.max)
-        this.input.set_value(default.toInt())
-
-        this.input.addTextChangedListener(object: TextWatcher {
-            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
-            override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
-            override fun afterTextChanged(p0: Editable?) {
-                if (this@ControlWidgetVolume._lockout_ui || p0.toString().isEmpty()) {
-                    return
-                }
-
-                this@ControlWidgetVolume._lockout_ui = true
-                this@ControlWidgetVolume.slider.progress = p0.toString().toInt()
-                this@ControlWidgetVolume._lockout_ui = false
-                this@ControlWidgetVolume.callback(p0.toString().toFloat())
+        this.input.text = default.toInt().toString()
+        this.input.setOnClickListener {
+            this.input.get_main().dialog_number_input(context.getString(R.string.ctl_volume), this.min, this.max, this.get_value().toInt()) { value: Int ->
+                this.set_value(value.toFloat())
+                this.callback(value.toFloat())
             }
-        })
+        }
 
         this.slider.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(p0: SeekBar, p1: Int, p2: Boolean) {
@@ -47,7 +37,7 @@ class ControlWidgetVolume(default: Float, context: Context, callback: (Float) ->
                     return
                 }
                 this@ControlWidgetVolume._lockout_ui = true
-                this@ControlWidgetVolume.input.set_value(p1)
+                this@ControlWidgetVolume.input.text = p1.toString()
                 this@ControlWidgetVolume._lockout_ui = false
             }
 
@@ -61,10 +51,8 @@ class ControlWidgetVolume(default: Float, context: Context, callback: (Float) ->
         this.addView(this.input)
         this.addView(this.slider)
 
-        this.input.layoutParams.width = WRAP_CONTENT
-        this.input.layoutParams.height = MATCH_PARENT
-        this.input.minEms = 2
-        this.input.maxEms = 2
+        this.input.layoutParams.width = resources.getDimension(R.dimen.volume_button_width).roundToInt()
+        this.input.layoutParams.height = WRAP_CONTENT
 
         this.slider.layoutParams.width = 0
         this.slider.layoutParams.height = MATCH_PARENT
@@ -76,9 +64,6 @@ class ControlWidgetVolume(default: Float, context: Context, callback: (Float) ->
     }
 
     override fun set_value(new_value: Float) {
-        this._lockout_ui = true
         this.slider.progress = new_value.toInt()
-        this.input.set_value(new_value.toInt())
-        this._lockout_ui = false
     }
 }

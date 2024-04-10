@@ -12,10 +12,7 @@ class ButtonStd(context: Context, attrs: AttributeSet?): androidx.appcompat.widg
     // to exist on init()
     override fun drawableStateChanged() {
         super.drawableStateChanged()
-        var context = this.context
-        while (context !is MainActivity) {
-            context = (context as ContextThemeWrapper).baseContext
-        }
+        var context = this.get_main()
 
         val color_map = context.view_model.color_map
         val index = (this.background as StateListDrawable).findStateDrawableIndex(this.drawableState)
@@ -27,5 +24,12 @@ class ButtonStd(context: Context, attrs: AttributeSet?): androidx.appcompat.widg
         } else {
             .5f
         }
+    }
+    fun get_main(): MainActivity {
+        var context = this.context
+        while (context !is MainActivity) {
+            context = (context as ContextThemeWrapper).baseContext
+        }
+        return context as MainActivity
     }
 }

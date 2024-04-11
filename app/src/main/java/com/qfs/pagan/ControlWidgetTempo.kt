@@ -6,8 +6,8 @@ import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 
 class ControlWidgetTempo(default: Float, context: Context, callback: (Float) -> Unit): ControlWidget(context, callback) {
     private val input = ButtonStd(ContextThemeWrapper(context, R.style.icon_button), null)
-    private val min = 1
-    private val max = 512
+    private val min = 0f
+    private val max = 512f
     private var current_value = default
 
     init {
@@ -15,8 +15,7 @@ class ControlWidgetTempo(default: Float, context: Context, callback: (Float) -> 
 
         this.input.text = "$default BPM"
         this.input.setOnClickListener {
-            this.input.get_main().dialog_number_input(context.getString(R.string.dlg_set_tempo), this.min, this.max, this.get_value().toInt()) { value: Int ->
-                val new_value = value.toFloat()
+            this.input.get_main().dialog_float_input(context.getString(R.string.dlg_set_tempo), this.min, this.max, this.get_value()) { new_value: Float ->
                 if (new_value != this.get_value()) {
                     this.set_value(new_value)
                     this.callback(new_value)

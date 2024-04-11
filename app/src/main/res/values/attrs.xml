@@ -2,6 +2,8 @@
     <declare-styleable name="Ranged">
         <attr name="min" format="integer" />
         <attr name="max" format="integer" />
+        <attr name="minf" format="float" />
+        <attr name="maxf" format="float" />
     </declare-styleable>
     <declare-styleable name="NumberSelector">
         <attr name="button_theme" format="integer" />

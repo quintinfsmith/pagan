@@ -31,7 +31,7 @@ class TuningMapRecyclerAdapter(var tuning_map: Array<Pair<Int, Int>>): RecyclerV
         val number_label_view = PaganTextView(use_context)
         number_label_view.text = use_context.getString(R.string.label_tuning_index, position)
 
-        val numerator_view = RangedNumberInput(use_context)
+        val numerator_view = RangedIntegerInput(use_context)
         numerator_view.set_range(0, 99999)
         numerator_view.set_value(pair.first)
         numerator_view.confirm_required = false
@@ -40,7 +40,7 @@ class TuningMapRecyclerAdapter(var tuning_map: Array<Pair<Int, Int>>): RecyclerV
         val slash_view = PaganTextView(use_context)
         slash_view.text = "/"
 
-        val denominator_view = RangedNumberInput(use_context)
+        val denominator_view = RangedIntegerInput(use_context)
         denominator_view.set_range(2, 99999)
         denominator_view.set_value(pair.second)
         denominator_view.confirm_required = false
@@ -54,9 +54,8 @@ class TuningMapRecyclerAdapter(var tuning_map: Array<Pair<Int, Int>>): RecyclerV
         wrapper.addView(slash_view)
         wrapper.addView(denominator_view)
 
-        numerator_view.value_set_callback = {
+        numerator_view.value_set_callback = { value: Int? ->
             val real_position = holder.bindingAdapterPosition
-            val value = it.get_value()
             if (value != null && real_position > -1) {
                 val working_pair = this@TuningMapRecyclerAdapter.tuning_map[real_position]
                 this@TuningMapRecyclerAdapter.tuning_map[real_position] = Pair(
@@ -66,9 +65,8 @@ class TuningMapRecyclerAdapter(var tuning_map: Array<Pair<Int, Int>>): RecyclerV
             }
         }
 
-        denominator_view.value_set_callback = {
+        denominator_view.value_set_callback = { value: Int? ->
             val real_position = holder.bindingAdapterPosition
-            val value = it.get_value()
             if (value != null && real_position > -1) {
                 val working_pair = this@TuningMapRecyclerAdapter.tuning_map[real_position]
                 this@TuningMapRecyclerAdapter.tuning_map[real_position] = Pair(

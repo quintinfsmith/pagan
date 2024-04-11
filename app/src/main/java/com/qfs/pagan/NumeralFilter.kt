@@ -13,7 +13,9 @@ class NumeralFilter: InputFilter {
         dend: Int
     ): CharSequence? {
         try {
-            "${dest.substring(0, dstart)}$source${dest.substring(dend)}".toInt()
+            // append '0' to account for "1." situations
+            val test_value = "${dest.substring(0, dstart)}$source${dest.substring(dend)}0"
+            test_value.toFloat()
             return null
         } catch (_: NumberFormatException) { }
         return ""

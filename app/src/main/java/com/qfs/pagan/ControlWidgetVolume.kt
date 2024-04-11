@@ -22,16 +22,15 @@ class ControlWidgetVolume(default: Float, context: Context, callback: (Float) ->
         this._slider.min = this._min
         this._slider.progress = default.toInt()
 
-        this._input.text = default.toInt().toString()
+        this._input.text = default.toString()
         this._input.setOnClickListener {
             val main = this._input.get_main()
             val dlg_default = this.get_value().toInt()
             val dlg_title = context.getString(R.string.dlg_set_volume)
-            main.dialog_number_input(dlg_title, this._min, this._max, dlg_default) { value: Int ->
-                val new_value = value.toFloat()
-                if (new_value != this.get_value()) {
-                    this.set_value(new_value)
-                    this.callback(new_value)
+            main.dialog_number_input(dlg_title, this._min, this._max, dlg_default) { new_value: Int ->
+                if (new_value != this.get_value().toInt()) {
+                    this.set_value(new_value.toFloat())
+                    this.callback(new_value.toFloat())
                 }
             }
         }

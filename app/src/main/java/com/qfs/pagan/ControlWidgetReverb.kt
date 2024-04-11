@@ -10,7 +10,7 @@ import android.widget.SeekBar
 
 class ControlWidgetReverb(context: Context, callback: (Float) -> Unit): ControlWidget(context, callback) {
     private val slider = PaganSeekBar(context)
-    private val input = RangedNumberInput(context)
+    private val input = RangedIntegerInput(context)
     private val min = 0
     private val max = 128
 

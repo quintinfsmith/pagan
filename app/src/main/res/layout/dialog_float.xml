@@ -10,15 +10,15 @@
         android:layout_width="wrap_content"
         android:layout_height="match_parent">
 
-        <com.qfs.pagan.RangedIntegerInput
+        <com.qfs.pagan.RangedFloatInput
             xmlns:custom="http://schemas.android.com/apk/res-auto"
             android:id="@+id/etNumber"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            custom:min="0"
-            custom:max="128"
-            android:ems="3"
+            custom:minf="0"
+            custom:maxf="128"
+            android:ems="8"
             android:textAlignment="textEnd" />
 
     </LinearLayout>

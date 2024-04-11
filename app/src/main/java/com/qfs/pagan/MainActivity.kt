@@ -143,7 +143,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var _project_manager: ProjectManager
     lateinit var configuration: PaganConfiguration
     private lateinit var _config_path: String
-    private var _number_selector_defaults = HashMap<String, Int>()
+    private var integer_dialog_defaults = HashMap<String, Int>()
+    private var float_dialog_defaults = HashMap<String, Float>()
     var active_percussion_names = HashMap<Int, String>()
 
     private var _virtual_input_device = MidiPlayer()
@@ -1075,8 +1076,8 @@ class MainActivity : AppCompatActivity() {
                     false
                 )
 
-            val etRadix = viewInflated.findViewById<RangedNumberInput>(R.id.etRadix)
-            val etTranspose = viewInflated.findViewById<RangedNumberInput>(R.id.etTranspose)
+            val etRadix = viewInflated.findViewById<RangedIntegerInput>(R.id.etRadix)
+            val etTranspose = viewInflated.findViewById<RangedIntegerInput>(R.id.etTranspose)
             etTranspose.set_range(0, radix - 1)
             etTranspose.set_value(opus_manager.transpose)
 
@@ -1108,8 +1109,7 @@ class MainActivity : AppCompatActivity() {
             val default_value = opus_manager.tuning_map.size
 
             etRadix.set_value(default_value)
-            etRadix.value_set_callback = {
-                val new_radix = it.get_value()
+            etRadix.value_set_callback = { new_radix: Int? ->
                 rvTuningMap.reset_tuning_map(new_radix)
                 etTranspose.set_value(0)
                 etTranspose.set_range(0, (new_radix ?: 12) - 1)
@@ -1720,24 +1720,24 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
-    internal fun dialog_number_input(title: String, min_value: Int, max_value: Int, default: Int? = null, callback: (value: Int) -> Unit ) {
-        val coerced_default_value = default ?: (this._number_selector_defaults[title] ?: min_value)
+    // TODO: fix code duplication in dialog_float/integer_input
+    internal fun dialog_float_input(title: String, min_value: Float, max_value: Float, default: Float? = null, callback: (value: Float) -> Unit ) {
+        val coerced_default_value = default ?: (this.float_dialog_defaults[title] ?: min_value)
         val viewInflated: View = LayoutInflater.from(this)
             .inflate(
-                R.layout.dialog_split,
+                R.layout.dialog_float,
                 window.decorView.rootView as ViewGroup,
                 false
             )
 
-        val number_input = viewInflated.findViewById<RangedNumberInput>(R.id.etNumber)
+        val number_input = viewInflated.findViewById<RangedFloatInput>(R.id.etNumber)
 
         val dialog = AlertDialog.Builder(this, R.style.AlertDialog)
             .setCustomTitle(this._build_dialog_title_view(title))
             .setView(viewInflated)
             .setPositiveButton(android.R.string.ok) { _, _ ->
                 val output_value = number_input.get_value() ?: coerced_default_value
-                this._number_selector_defaults[title] = output_value
+                this.float_dialog_defaults[title] = output_value
                 callback(output_value)
             }
             .setNeutralButton(android.R.string.cancel) { _, _ -> }
@@ -1750,8 +1750,46 @@ class MainActivity : AppCompatActivity() {
             number_input.selectAll()
         }
 
-        number_input.value_set_callback = {
-            callback(it.get_value() ?: coerced_default_value)
+        number_input.value_set_callback = { value: Float? ->
+            callback(value ?: coerced_default_value)
+            dialog.dismiss()
+        }
+
+        number_input.requestFocus()
+        number_input.selectAll()
+    }
+
+    internal fun dialog_number_input(title: String, min_value: Int, max_value: Int, default: Int? = null, callback: (value: Int) -> Unit ) {
+        val coerced_default_value = default ?: (this.integer_dialog_defaults[title] ?: min_value)
+        val viewInflated: View = LayoutInflater.from(this)
+            .inflate(
+                R.layout.dialog_split,
+                window.decorView.rootView as ViewGroup,
+                false
+            )
+
+        val number_input = viewInflated.findViewById<RangedIntegerInput>(R.id.etNumber)
+
+        val dialog = AlertDialog.Builder(this, R.style.AlertDialog)
+            .setCustomTitle(this._build_dialog_title_view(title))
+            .setView(viewInflated)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                val output_value = number_input.get_value() ?: coerced_default_value
+                this.integer_dialog_defaults[title] = output_value
+                callback(output_value)
+            }
+            .setNeutralButton(android.R.string.cancel) { _, _ -> }
+            .show()
+        this._adjust_dialog_colors(dialog)
+
+        number_input.set_range(min_value, max_value)
+        number_input.setText("$coerced_default_value")
+        number_input.setOnClickListener {
+            number_input.selectAll()
+        }
+
+        number_input.value_set_callback = { value: Int? ->
+            callback(value ?: coerced_default_value)
             dialog.dismiss()
         }
 
@@ -2047,9 +2085,9 @@ class MainActivity : AppCompatActivity() {
         val sbRed = viewInflated.findViewById<SeekBar>(R.id.sbRed)
         val sbGreen = viewInflated.findViewById<SeekBar>(R.id.sbGreen)
         val sbBlue = viewInflated.findViewById<SeekBar>(R.id.sbBlue)
-        val rniRed = viewInflated.findViewById<RangedNumberInput>(R.id.rniRed)
-        val rniGreen = viewInflated.findViewById<RangedNumberInput>(R.id.rniGreen)
-        val rniBlue = viewInflated.findViewById<RangedNumberInput>(R.id.rniBlue)
+        val rniRed = viewInflated.findViewById<RangedIntegerInput>(R.id.rniRed)
+        val rniGreen = viewInflated.findViewById<RangedIntegerInput>(R.id.rniGreen)
+        val rniBlue = viewInflated.findViewById<RangedIntegerInput>(R.id.rniBlue)
 
         rniRed.set_value(c.red)
         rniGreen.set_value(c.green)

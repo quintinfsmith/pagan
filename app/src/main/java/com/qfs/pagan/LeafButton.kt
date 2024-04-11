@@ -26,8 +26,6 @@ abstract class LeafButton(context: Context) : LinearLayout(ContextThemeWrapper(c
         }
     }
 
-
-
     private fun _setup_colors() {
         val activity = this.get_activity()
         val color_map = activity.view_model.color_map

@@ -65,5 +65,5 @@ class ControlWidgetReverb(context: Context, callback: (Float) -> Unit): ControlW
         return this.slider.progress.toFloat()
     }
 
-    override fun set_value(new_value: Float) { }
+    override fun set_value(value: Float) { }
 }

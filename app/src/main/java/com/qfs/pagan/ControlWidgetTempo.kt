@@ -33,8 +33,8 @@ class ControlWidgetTempo(default: Float, context: Context, callback: (Float) -> 
         return this.current_value
     }
 
-    override fun set_value(new_value: Float) {
-        this.current_value = new_value
-        this.input.text = "$new_value BPM"
+    override fun set_value(value: Float) {
+        this.current_value = value
+        this.input.text = "$value BPM"
     }
 }

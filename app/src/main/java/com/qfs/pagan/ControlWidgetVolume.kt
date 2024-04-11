@@ -22,7 +22,7 @@ class ControlWidgetVolume(default: Float, context: Context, callback: (Float) ->
         this._slider.min = this._min
         this._slider.progress = default.toInt()
 
-        this._input.text = default.toString()
+        this._input.text = default.toInt().toString()
         this._input.setOnClickListener {
             val main = this._input.get_main()
             val dlg_default = this.get_value().toInt()
@@ -67,7 +67,8 @@ class ControlWidgetVolume(default: Float, context: Context, callback: (Float) ->
         return this._slider.progress.toFloat()
     }
 
-    override fun set_value(new_value: Float) {
-        this._slider.progress = new_value.toInt()
+    override fun set_value(value: Float) {
+        this._slider.progress = value.toInt()
+        this._input.text = value.toInt().toString()
     }
 }

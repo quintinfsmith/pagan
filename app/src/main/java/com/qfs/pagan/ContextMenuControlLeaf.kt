@@ -251,9 +251,11 @@ class ContextMenuControlLeaf(context: Context, attrs: AttributeSet? = null): Con
     override fun refresh() {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
-
+        val current_value = this.get_value()
         if (this.widget_wrapper.isEmpty() || cursor.ctl_type != this._current_type) {
             this.init_widget()
+        } else {
+            this.widget.set_value(current_value)
         }
 
         val ctl_tree = when (cursor.ctl_level!!) {
@@ -289,34 +291,7 @@ class ContextMenuControlLeaf(context: Context, attrs: AttributeSet? = null): Con
 
         this.button_remove.isEnabled = cursor.position.isNotEmpty()
         this.button_unset.isEnabled = ctl_tree.is_event()
-        this.widget.set_value(
-            if (!ctl_tree.is_event()) {
-                when (cursor.ctl_level!!) {
-                    CtlLineLevel.Global -> opus_manager.get_current_global_controller_value(
-                        cursor.ctl_type!!,
-                        cursor.beat,
-                        cursor.position
-                    )
-                    CtlLineLevel.Channel ->
-                        opus_manager.get_current_channel_controller_value(
-                            cursor.ctl_type!!,
-                            cursor.channel,
-                            cursor.beat,
-                            cursor.position
-                        )
-                    CtlLineLevel.Line -> {
-                        val beat_key = cursor.get_beatkey()
-                        opus_manager.get_current_line_controller_value(
-                            cursor.ctl_type!!,
-                            beat_key,
-                            cursor.position
-                        )
-                    }
-                }
-            } else {
-                ctl_tree.event!!.value
-            }
-        )
+        this.widget.set_value(current_value)
 
         this.button_duration.text = this.get_main().getString(
             R.string.label_duration,
@@ -326,6 +301,34 @@ class ContextMenuControlLeaf(context: Context, attrs: AttributeSet? = null): Con
                 ctl_tree.get_event()!!.duration
             }
         )
+    }
+
+    fun get_value(): Float {
+        val opus_manager = this.get_opus_manager()
+        val cursor = opus_manager.cursor
+
+        return when (cursor.ctl_level!!) {
+            CtlLineLevel.Global -> opus_manager.get_current_global_controller_value(
+                cursor.ctl_type!!,
+                cursor.beat,
+                cursor.position
+            )
+            CtlLineLevel.Channel ->
+                opus_manager.get_current_channel_controller_value(
+                    cursor.ctl_type!!,
+                    cursor.channel,
+                    cursor.beat,
+                    cursor.position
+                )
+            CtlLineLevel.Line -> {
+                val beat_key = cursor.get_beatkey()
+                opus_manager.get_current_line_controller_value(
+                    cursor.ctl_type!!,
+                    beat_key,
+                    cursor.position
+                )
+            }
+        }
     }
 
     fun click_button_ctl_value() {

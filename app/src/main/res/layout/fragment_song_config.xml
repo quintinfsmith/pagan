@@ -52,7 +52,7 @@
                 android:layout_weight="1" />
 
             <com.qfs.pagan.ButtonStd
-                android:id="@+id/tvTempo"
+                android:id="@+id/tvCtlToggle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="end"

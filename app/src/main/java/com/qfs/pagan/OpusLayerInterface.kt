@@ -98,10 +98,10 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     override fun set_tempo(new_tempo: Float) {
-        super.set_tempo(new_tempo)
-        this.runOnUiThread { main ->
-            main.findViewById<TextView>(R.id.tvTempo).text = main.getString(R.string.label_bpm, new_tempo.toInt())
-        }
+        //super.set_tempo(new_tempo)
+        //this.runOnUiThread { main ->
+        //    main.findViewById<TextView>(R.id.tvTempo).text = main.getString(R.string.label_bpm, new_tempo.toInt())
+        //}
     }
 
     private fun _get_all_linked_as_coords(beat_key: BeatKey): List<EditorTable.Coordinate> {
@@ -1367,6 +1367,30 @@ class OpusLayerInterface : OpusLayerCursor() {
         return this._cached_ctl_map_global[type]!!
     }
 
+    fun toggle_control_lines() {
+        val activity = this.get_activity() ?: return
+        activity.view_model.show_control_lines = !activity.view_model.show_control_lines
+
+        val editor_table = this.get_editor_table() ?: return
+        this.withFragment {
+            it.backup_position()
+        }
+        editor_table.clear()
+
+        if (!activity.view_model.show_control_lines) {
+            val cursor = this.cursor
+            if (cursor.ctl_level != null) {
+                this.cursor_clear()
+            }
+        }
+
+        this.recache_line_maps()
+        editor_table.setup()
+        this.withFragment {
+            it.restore_view_model_position()
+        }
+    }
+
     override fun recache_line_maps() {
         super.recache_line_maps()
         this._cached_visible_line_map.clear()
@@ -1424,7 +1448,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     fun is_ctl_level_visible(level: CtlLineLevel): Boolean {
         // For now, we have nothing to control at the channel level
-        return level != CtlLineLevel.Channel
+        return level != CtlLineLevel.Channel && this.get_activity()!!.view_model.show_control_lines
     }
 
     override fun set_tuning_map(new_map: Array<Pair<Int, Int>>, mod_events: Boolean) {

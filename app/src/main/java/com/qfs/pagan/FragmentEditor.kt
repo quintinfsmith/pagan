@@ -55,17 +55,9 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     override fun onStop() {
         // Assign to view model on stop, will be destroyed onDestroy, so need to
         // essentially dup this in onSaveInstanceState
+        this.backup_position()
+
         val main = this.get_main()
-        val editor_table = main.findViewById<EditorTable>(R.id.etEditorTable)
-        val (scroll_x, scroll_y) = editor_table.get_scroll_offset()
-
-        val opus_manager = main.get_opus_manager()
-        this.view_model.backup_undo_stack = opus_manager.history_cache.copy()
-        this.view_model.coarse_x = scroll_x.first
-        this.view_model.fine_x = scroll_x.second
-        this.view_model.coarse_y = scroll_y.first
-        this.view_model.fine_y = scroll_y.second
-
         main.save_to_backup()
 
         val channel_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
@@ -76,6 +68,29 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
 
 
         super.onStop()
+    }
+    fun backup_position() {
+        val main = this.get_main()
+        val editor_table = main.findViewById<EditorTable>(R.id.etEditorTable)
+        val (scroll_x, scroll_y) = editor_table.get_scroll_offset()
+
+        val opus_manager = main.get_opus_manager()
+        this.view_model.backup_undo_stack = opus_manager.history_cache.copy()
+        this.view_model.coarse_x = scroll_x.first
+        this.view_model.fine_x = scroll_x.second
+        this.view_model.coarse_y = scroll_y.first
+        this.view_model.fine_y = scroll_y.second
+    }
+
+    fun restore_view_model_position() {
+        val main = this.get_main()
+        val editor_table = main.findViewById<EditorTable?>(R.id.etEditorTable)
+        editor_table.precise_scroll(
+            this.view_model.coarse_x,
+            this.view_model.fine_x,
+            this.view_model.coarse_y,
+            this.view_model.fine_y
+        )
     }
 
     override fun onDestroy() {
@@ -136,13 +151,9 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
             opus_manager.cursor_clear()
             editor_table.setup()
         }
+
         editor_table.visibility = View.VISIBLE
-        editor_table.precise_scroll(
-            this.view_model.coarse_x,
-            this.view_model.fine_x,
-            this.view_model.coarse_y,
-            this.view_model.fine_y
-        )
+        this.restore_view_model_position()
 
         // At the moment, can't save the history cache into a bundle, so restore it if
         // it exists, if not, too bad i guess

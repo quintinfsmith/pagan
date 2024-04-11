@@ -110,6 +110,7 @@ class MainActivity : AppCompatActivity() {
         var color_map = ColorMap()
         var opus_manager = OpusManager()
         var show_percussion = true
+        var show_control_lines = true
 
         fun export_wav(sample_handle_manager: SampleHandleManager, target_file: File, handler: WavConverter.ExporterEventHandler) {
             val frame_map = PlaybackFrameMap(this.opus_manager, sample_handle_manager)
@@ -1050,17 +1051,10 @@ class MainActivity : AppCompatActivity() {
             this.dialog_project_name()
         }
 
-        val tvTempo: TextView = this.findViewById(R.id.tvTempo)
-        tvTempo.text = this.getString(R.string.label_bpm, opus_manager.tempo.toInt())
-        tvTempo.setOnClickListener {
-            this.dialog_number_input(
-                getString(R.string.dlg_set_tempo),
-                1,
-                999,
-                opus_manager.tempo.toInt()
-            ) { tempo: Int ->
-                opus_manager.set_tempo(tempo.toFloat())
-            }
+        val tvCtlToggle: TextView = this.findViewById(R.id.tvCtlToggle)
+        tvCtlToggle.text = "TODO"
+        tvCtlToggle.setOnClickListener {
+            opus_manager.toggle_control_lines()
         }
 
         val radix = this.get_opus_manager().tuning_map.size

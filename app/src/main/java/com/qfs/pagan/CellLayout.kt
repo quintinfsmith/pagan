@@ -117,7 +117,7 @@ class CellLayout(private val _column_layout: ColumnLayout, val row: Int): Linear
 
             val tvLeaf = when (control_level) {
                 null -> {
-                    LeafButton(
+                    LeafButtonStd(
                         this.context,
                         opus_manager.tuning_map.size,
                         tree.get_event() as OpusEventSTD?,
@@ -126,7 +126,7 @@ class CellLayout(private val _column_layout: ColumnLayout, val row: Int): Linear
                     )
                 }
                 CtlLineLevel.Global -> {
-                    ControlLeafButtonGlobal(
+                    LeafButtonCtlGlobal(
                         this.context,
                         tree.get_event() as OpusControlEvent?,
                         position,
@@ -134,7 +134,7 @@ class CellLayout(private val _column_layout: ColumnLayout, val row: Int): Linear
                     )
                 }
                 CtlLineLevel.Channel -> {
-                    ControlLeafButtonChannel(
+                    LeafButtonCtlChannel(
                         this.context,
                         tree.get_event() as OpusControlEvent?,
                         pointer,
@@ -144,7 +144,7 @@ class CellLayout(private val _column_layout: ColumnLayout, val row: Int): Linear
                 }
                 CtlLineLevel.Line -> {
                     val (channel, line_offset) = opus_manager.get_std_offset(pointer)
-                    ControlLeafButtonLine(
+                    LeafButtonCtlLine(
                         this.context,
                         tree.get_event() as OpusControlEvent?,
                         channel,

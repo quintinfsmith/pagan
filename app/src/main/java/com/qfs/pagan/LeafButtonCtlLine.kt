@@ -7,14 +7,14 @@ import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.structure.OpusTree
 
-class ControlLeafButtonLine(
+class LeafButtonCtlLine(
     context: Context,
     event: OpusControlEvent?,
     var channel: Int,
     var line_offset: Int,
     position: List<Int>,
     control_type: ControlEventType
-): ControlLeafButton(context, event, position, CtlLineLevel.Line, control_type) {
+): LeafButtonCtl(context, event, position, CtlLineLevel.Line, control_type) {
 
     override fun get_tree(): OpusTree<OpusControlEvent> {
         return this.get_opus_manager().get_line_ctl_tree(

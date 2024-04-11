@@ -202,7 +202,6 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             )
             this._column_width_maxes[i] = this._column_width_map[i].max()
         }
-        // TODO: handle control line
 
         if (!ignore_ui) {
             val adapter = (this.get_column_recycler().adapter as ColumnRecyclerAdapter)
@@ -225,7 +224,6 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             )
             this._column_width_maxes[i] = this._column_width_map[i].max()
         }
-        // TODO: handle control line
 
         if (!ignore_ui) {
             val adapter = (this.get_column_recycler().adapter as ColumnRecyclerAdapter)

@@ -1391,6 +1391,30 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
+    fun toggle_percussion_visibility() {
+        val activity = this.get_activity() ?: return
+        activity.view_model.show_percussion = !activity.view_model.show_percussion
+
+        val editor_table = this.get_editor_table() ?: return
+        this.withFragment {
+            it.backup_position()
+        }
+        editor_table.clear()
+
+        if (!activity.view_model.show_percussion) {
+            val cursor = this.cursor
+            if (cursor.ctl_level != null) {
+                this.cursor_clear()
+            }
+        }
+
+        this.recache_line_maps()
+        editor_table.setup()
+        this.withFragment {
+            it.restore_view_model_position()
+        }
+    }
+
     override fun recache_line_maps() {
         super.recache_line_maps()
         this._cached_visible_line_map.clear()

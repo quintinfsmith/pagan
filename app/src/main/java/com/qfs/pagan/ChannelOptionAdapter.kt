@@ -151,22 +151,10 @@ class ChannelOptionAdapter(
         val main = this.get_activity()
         val opus_manager = main.get_opus_manager()
 
-        if (main.view_model.show_percussion) {
-            if (!opus_manager.has_percussion() && opus_manager.channels.size > 1) {
-                main.view_model.show_percussion = false
-                opus_manager.cursor_clear()
-            } else {
-                return
-            }
-        } else {
-            main.view_model.show_percussion = true
-        }
-
+        opus_manager.toggle_percussion_visibility()
 
         val remove_button = (view as ViewGroup).getChildAt(1) as TextView
         remove_button.text = this.get_percussion_visibility_button_text()
-        val editor_table = main.findViewById<EditorTable>(R.id.etEditorTable)
-        editor_table.update_percussion_visibility()
 
     }
 

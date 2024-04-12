@@ -179,7 +179,10 @@ class OpusChannel(var uuid: Int) {
 
     fun remove_beat(index: Int) {
         for (line in this.lines) {
-            line.beats.removeAt(index)
+            line.remove_beat(index)
+        }
+        for ((type, controller) in this.controllers.get_all()) {
+            controller.remove_beat(index)
         }
         this._beat_count -= 1
     }

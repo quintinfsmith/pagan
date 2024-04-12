@@ -96,5 +96,11 @@ class OpusLine(var beats: MutableList<OpusTree<OpusEventSTD>>) {
         return this.controllers.get_controller(type)
     }
 
+    fun remove_beat(index: Int) {
+        this.beats.removeAt(index)
+        for ((type, controller) in this.controllers.get_all()) {
+            controller.remove_beat(index)
+        }
+    }
 }
 

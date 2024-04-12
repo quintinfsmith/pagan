@@ -1,6 +1,7 @@
 package com.qfs.pagan
 
 import android.content.Context
+import android.view.Gravity
 import androidx.appcompat.view.ContextThemeWrapper
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
@@ -19,6 +20,32 @@ open class LeafButtonCtl(
         this.set_text()
     }
 
+    override fun get_tint_list(): IntArray {
+        val activity = this.get_activity()
+        val color_map = activity.view_model.color_map
+        return intArrayOf(
+            color_map[ColorMap.Palette.LeafInvalidSelected],
+            color_map[ColorMap.Palette.LeafInvalid],
+            color_map[ColorMap.Palette.CtlLine],
+            color_map[ColorMap.Palette.CtlLine],
+
+            color_map[ColorMap.Palette.CtlLeafSelected],
+            color_map[ColorMap.Palette.CtlLeaf],
+            color_map[ColorMap.Palette.CtlLineSelection],
+
+            color_map[ColorMap.Palette.LinkSelected],
+            color_map[ColorMap.Palette.Link],
+            color_map[ColorMap.Palette.LinkEmptySelected],
+            color_map[ColorMap.Palette.LinkEmpty]
+        )
+    }
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        (this.layoutParams as LayoutParams).gravity = Gravity.CENTER_VERTICAL
+        this.setPadding(0,0,0,0)
+    }
+
     override fun long_click(): Boolean {
         TODO("Not yet implemented")
     }
@@ -35,8 +62,14 @@ open class LeafButtonCtl(
         this.removeAllViews()
         val event = this._event ?: return
 
-        val value_text = LeafText(ContextThemeWrapper(this.context, R.style.leaf_value))
-        value_text.text = "${event.value}"
+        val value_text = LeafText(
+            ContextThemeWrapper(this.context, R.style.ctl_leaf_value)
+        )
+        value_text.text = when (this.control_type) {
+            ControlEventType.Tempo -> "${event.value.toInt()}"
+            ControlEventType.Volume -> "${event.value.toInt()}"
+            ControlEventType.Reverb -> TODO()
+        }
 
         this.addView(value_text)
     }
@@ -63,8 +96,6 @@ open class LeafButtonCtl(
             new_state.add(R.attr.state_focused)
         }
 
-        new_state.add(R.attr.state_channel_even)
-        new_state.add(R.attr.state_alternate)
         mergeDrawableStates(drawableState, new_state.toIntArray())
         return drawableState
     }

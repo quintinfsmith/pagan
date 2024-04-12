@@ -26,13 +26,8 @@ abstract class LeafButton(context: Context) : LinearLayout(ContextThemeWrapper(c
         }
     }
 
-
-
-    private fun _setup_colors() {
-        val activity = this.get_activity()
-        val color_map = activity.view_model.color_map
-
-        val states = arrayOf(
+    private fun get_states(): Array<IntArray> {
+        return arrayOf(
             //------------------------------
             intArrayOf(
                 R.attr.state_invalid,
@@ -102,26 +97,22 @@ abstract class LeafButton(context: Context) : LinearLayout(ContextThemeWrapper(c
                 -R.attr.state_focused
             ),
         )
+    }
 
-        (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_lines).setTint(color_map[Palette.Lines])
+    abstract fun get_tint_list(): IntArray
+
+    private fun _setup_colors() {
+        val activity = this.get_activity()
+        val color_map = activity.view_model.color_map
+
+        (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_lines).setTint(
+            color_map[Palette.Lines]
+        )
+
         (this.background as LayerDrawable).findDrawableByLayerId(R.id.leaf_background).setTintList(
             ColorStateList(
-                states,
-                intArrayOf(
-                    color_map[Palette.LeafInvalidSelected],
-                    color_map[Palette.LeafInvalid],
-                    color_map[Palette.ChannelEven],
-                    color_map[Palette.ChannelOdd],
-
-                    color_map[Palette.LeafSelected],
-                    color_map[Palette.Leaf],
-                    color_map[Palette.Selection],
-
-                    color_map[Palette.LinkSelected],
-                    color_map[Palette.Link],
-                    color_map[Palette.LinkEmptySelected],
-                    color_map[Palette.LinkEmpty]
-                )
+                this.get_states(),
+                this.get_tint_list()
             )
         )
     }

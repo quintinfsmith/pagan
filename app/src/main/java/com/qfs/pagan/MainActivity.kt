@@ -2236,7 +2236,13 @@ class MainActivity : AppCompatActivity() {
             Pair(Palette.ButtonAlt, this.getColor(R.color.dark_button_alt)),
             Pair(Palette.ButtonAltText, this.getColor(R.color.dark_button_alt_text)),
             Pair(Palette.TitleBar, this.getColor(R.color.dark_primary)),
-            Pair(Palette.TitleBarText, this.getColor(R.color.dark_primary_text))
+            Pair(Palette.TitleBarText, this.getColor(R.color.dark_primary_text)),
+            Pair(Palette.CtlLine, this.getColor(R.color.black)),
+            Pair(Palette.CtlLineSelection, this.getColor(R.color.empty_selected)),
+            Pair(Palette.CtlLeaf, this.getColor(R.color.leaf_text)),
+            Pair(Palette.CtlLeafText, this.getColor(R.color.leaf_text)),
+            Pair(Palette.CtlLeafSelected, this.getColor(R.color.leaf_selected)),
+            Pair(Palette.CtlLeafSelectedText, this.getColor(R.color.leaf_selected_text)),
         )
     }
 
@@ -2272,7 +2278,13 @@ class MainActivity : AppCompatActivity() {
             Pair(Palette.ButtonAlt, this.getColor(R.color.light_button_alt)),
             Pair(Palette.ButtonAltText, this.getColor(R.color.light_button_alt_text)),
             Pair(Palette.TitleBar, this.getColor(R.color.light_primary)),
-            Pair(Palette.TitleBarText, this.getColor(R.color.light_primary_text))
+            Pair(Palette.TitleBarText, this.getColor(R.color.light_primary_text)),
+            Pair(Palette.CtlLine, this.getColor(R.color.black)),
+            Pair(Palette.CtlLineSelection, this.getColor(R.color.empty_selected)),
+            Pair(Palette.CtlLeaf, this.getColor(R.color.leaf_text)),
+            Pair(Palette.CtlLeafText, this.getColor(R.color.leaf_text)),
+            Pair(Palette.CtlLeafSelected, this.getColor(R.color.leaf_selected)),
+            Pair(Palette.CtlLeafSelectedText, this.getColor(R.color.leaf_selected_text)),
         )
     }
 

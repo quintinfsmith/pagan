@@ -34,7 +34,13 @@ class ColorMap(initial_palette: HashMap<Palette, Int>? = null) {
         ButtonText,
         ButtonAltText,
         TitleBar,
-        TitleBarText
+        TitleBarText,
+        CtlLine,
+        CtlLineSelection,
+        CtlLeaf,
+        CtlLeafText,
+        CtlLeafSelected,
+        CtlLeafSelectedText
     }
     private val _default = Color.parseColor("#FF00FF")
     private val _palette = HashMap<Palette, Int>()

@@ -79,12 +79,16 @@
         <item name="android:gravity">center_vertical|center_horizontal</item>
         <item name="android:background">@drawable/leaf</item>
     </style>
+    <style name="ctl_leaf" parent="leaf">
+        <item name="android:background">@drawable/ctl_leaf</item>
+    </style>
 
     <style name="ctl_leaf_value" parent="@android:style/Widget.TextView">
         <item name="android:gravity">center_vertical|center_horizontal</item>
         <item name="android:background">@null</item>
         <item name="android:textStyle">normal</item>
         <item name="android:maxLines">1</item>
+        <item name="android:textSize">12sp</item>
     </style>
 
     <style name="leaf_value" parent="@android:style/Widget.TextView">

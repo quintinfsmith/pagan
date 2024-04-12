@@ -9,7 +9,6 @@ import androidx.core.view.isEmpty
 import com.qfs.pagan.opusmanager.ActiveControlSet
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
-import kotlin.math.roundToInt
 
 class ContextMenuControlLine(context: Context, attrs: AttributeSet? = null): ContextMenuView(R.layout.contextmenu_control_line, context, attrs) {
     lateinit var initial_widget_wrapper: LinearLayout
@@ -97,17 +96,10 @@ class ContextMenuControlLine(context: Context, attrs: AttributeSet? = null): Con
 
         if (this.initial_widget_wrapper.isEmpty() || cursor.ctl_type != this._current_type) {
             this.init_widget()
+        } else {
+            val controller = this.get_controller()
+            this.widget.set_value(controller.initial_value)
         }
-
-        val controller = this.get_controller()
-
-        val (label, value_fmt, unit) = when (cursor.ctl_type!!) {
-            ControlEventType.Tempo -> Triple("Tempo", "${controller.initial_value}", "bpm")
-            ControlEventType.Volume -> Triple("Volume", "${(controller.initial_value * 1000f / 128f).roundToInt().toFloat() / 1000F}", "")
-            ControlEventType.Reverb -> Triple("Reverb", "${controller.initial_value}", "%")
-        }
-
-        this.label.text = "Initial $label"
     }
 
     override fun setup_interactions() {

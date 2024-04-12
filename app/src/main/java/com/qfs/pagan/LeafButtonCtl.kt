@@ -2,13 +2,14 @@ package com.qfs.pagan
 
 import android.content.Context
 import android.view.Gravity
+import android.view.ViewGroup
 import androidx.appcompat.view.ContextThemeWrapper
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.structure.OpusTree
 
-open class LeafButtonCtl(
+abstract class LeafButtonCtl(
     context: Context,
     private var _event: OpusControlEvent?,
     var position: List<Int>,
@@ -39,7 +40,6 @@ open class LeafButtonCtl(
             color_map[ColorMap.Palette.LinkEmpty]
         )
     }
-
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
         (this.layoutParams as LayoutParams).gravity = Gravity.CENTER_VERTICAL
@@ -58,7 +58,7 @@ open class LeafButtonCtl(
         TODO("Not yet implemented")
     }
 
-    private fun set_text() {
+    fun set_text() {
         this.removeAllViews()
         val event = this._event ?: return
 
@@ -70,8 +70,10 @@ open class LeafButtonCtl(
             ControlEventType.Volume -> "${event.value.toInt()}"
             ControlEventType.Reverb -> TODO()
         }
-
         this.addView(value_text)
+
+        (value_text.layoutParams as LayoutParams).gravity = Gravity.CENTER
+        value_text.layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT
     }
 
     override fun _build_drawable_state(drawableState: IntArray?): IntArray? {

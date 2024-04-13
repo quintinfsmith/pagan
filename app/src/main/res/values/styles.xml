@@ -157,6 +157,13 @@
         <item name="android:layout_height">@dimen/line_height</item>
     </style>
 
+    <style name="ctl_line_label">
+        <item name="android:minWidth">41dp</item>
+        <item name="android:gravity">center_vertical|center_horizontal</item>
+        <item name="android:background">@drawable/editor_label_ctl_line</item>
+        <item name="android:layout_height">@dimen/ctl_line_height</item>
+    </style>
+
     <style name="column">
         <item name="android:paddingBottom">@dimen/stroke_leaf</item>
     </style>

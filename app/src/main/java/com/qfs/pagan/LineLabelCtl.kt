@@ -8,7 +8,7 @@ import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
 
 open class LineLabelCtl(context: Context, var ctl_level: CtlLineLevel, var ctl_type: ControlEventType): LineLabelInner(
-    ContextThemeWrapper(context, R.style.line_label)
+    ContextThemeWrapper(context, R.style.ctl_line_label)
 ) {
     override fun _build_drawable_state(drawableState: IntArray?): IntArray? {
         if (this.parent == null) {
@@ -52,26 +52,16 @@ open class LineLabelCtl(context: Context, var ctl_level: CtlLineLevel, var ctl_t
         val color_map = activity.view_model.color_map
         (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_lines).setTint(color_map[ColorMap.Palette.Lines])
         val states = arrayOf<IntArray>(
-            intArrayOf(
-                R.attr.state_focused,
-            ),
-            intArrayOf(
-                -R.attr.state_focused,
-                -R.attr.state_channel_even
-            ),
-            intArrayOf(
-                -R.attr.state_focused,
-                R.attr.state_channel_even
-            )
+            intArrayOf(R.attr.state_focused),
+            intArrayOf(-R.attr.state_focused)
         )
 
         (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_background).setTintList(
             ColorStateList(
                 states,
                 intArrayOf(
-                    color_map[ColorMap.Palette.Selection],
-                    color_map[ColorMap.Palette.ChannelOdd],
-                    color_map[ColorMap.Palette.ChannelEven]
+                    color_map[ColorMap.Palette.CtlLineSelection],
+                    color_map[ColorMap.Palette.CtlLine]
                 )
             )
         )
@@ -79,9 +69,8 @@ open class LineLabelCtl(context: Context, var ctl_level: CtlLineLevel, var ctl_t
             ColorStateList(
                 states,
                 intArrayOf(
-                    color_map[ColorMap.Palette.SelectionText],
-                    color_map[ColorMap.Palette.ChannelOddText],
-                    color_map[ColorMap.Palette.ChannelEvenText]
+                    color_map[ColorMap.Palette.CtlLineSelectionText],
+                    color_map[ColorMap.Palette.CtlLineText],
                 )
             )
         )

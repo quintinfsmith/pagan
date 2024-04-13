@@ -37,6 +37,8 @@ class ColorMap(initial_palette: HashMap<Palette, Int>? = null) {
         TitleBarText,
         CtlLine,
         CtlLineSelection,
+        CtlLineText,
+        CtlLineSelectionText,
         CtlLeaf,
         CtlLeafText,
         CtlLeafSelected,

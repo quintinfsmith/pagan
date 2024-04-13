@@ -10,7 +10,7 @@ import com.qfs.pagan.ColorMap.Palette
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
-abstract class LeafButton(context: Context) : LinearLayout(ContextThemeWrapper(context, R.style.leaf)) {
+abstract class LeafButton(context: Context) : LinearLayout(context) {
 
     init {
         this.isClickable = false
@@ -95,7 +95,7 @@ abstract class LeafButton(context: Context) : LinearLayout(ContextThemeWrapper(c
                 R.attr.state_linked,
                 -R.attr.state_active,
                 -R.attr.state_focused
-            ),
+            )
         )
     }
 

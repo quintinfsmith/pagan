@@ -15,7 +15,7 @@ abstract class LeafButtonCtl(
     var position: List<Int>,
     var control_level: CtlLineLevel,
     var control_type: ControlEventType
-) : LeafButton(context) {
+) : LeafButton(ContextThemeWrapper(context, R.style.ctl_leaf)) {
     init {
         this.minimumHeight = resources.getDimension(R.dimen.line_height).toInt()
         this.set_text()
@@ -80,6 +80,7 @@ abstract class LeafButtonCtl(
         if (this.parent == null || this._get_editor_table().needs_setup) {
             return drawableState
         }
+
         val new_state = mutableListOf<Int>()
 
         val tree = try {
@@ -100,11 +101,6 @@ abstract class LeafButtonCtl(
 
         mergeDrawableStates(drawableState, new_state.toIntArray())
         return drawableState
-    }
-
-    override fun onCreateDrawableState(extraSpace: Int): IntArray? {
-        val drawableState = super.onCreateDrawableState(extraSpace + 5)
-        return this._build_drawable_state(drawableState)
     }
 
     // ------------------------------------------------------//

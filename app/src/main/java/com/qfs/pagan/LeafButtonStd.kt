@@ -20,7 +20,7 @@ class LeafButtonStd(
     private var _event: OpusEventSTD?,
     var position: List<Int>,
     is_percussion: Boolean
-) : LeafButton(context) {
+) : LeafButton(ContextThemeWrapper(context, R.style.leaf)) {
 
     init {
         this.minimumHeight = resources.getDimension(R.dimen.line_height).toInt()

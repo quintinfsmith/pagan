@@ -52,20 +52,6 @@
                 android:layout_weight="1" />
 
             <com.qfs.pagan.ButtonStd
-                android:id="@+id/tvCtlToggle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="end"
-                android:theme="@style/song_config_button"/>
-        </LinearLayout>
-
-        <LinearLayout
-            android:orientation="horizontal"
-            android:paddingTop="@dimen/config_item_padding"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <com.qfs.pagan.ButtonStd
                 android:id="@+id/btnAddChannel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -73,7 +59,6 @@
                 android:layout_gravity="end"
                 android:theme="@style/song_config_button"/>
         </LinearLayout>
-
 
         <com.qfs.pagan.ChannelOptionRecycler
             android:id="@+id/rvActiveChannels"

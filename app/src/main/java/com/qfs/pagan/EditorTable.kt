@@ -851,13 +851,17 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             var remove_count = 0
             for (line in percussion_channel.lines) {
                 remove_count += 1
-                if (opus_manager.is_ctl_level_visible(CtlLineLevel.Line)) {
-                    remove_count += line.controllers.size()
+                for ((type, _) in line.controllers.get_all()) {
+                    if (opus_manager.is_ctl_line_visible(CtlLineLevel.Line, type)) {
+                        remove_count += 1
+                    }
                 }
             }
 
-            if (opus_manager.is_ctl_level_visible(CtlLineLevel.Channel)) {
-                remove_count += percussion_channel.controllers.size()
+            for ((type, _) in percussion_channel.controllers.get_all()) {
+                if (opus_manager.is_ctl_line_visible(CtlLineLevel.Channel, type)) {
+                    remove_count += percussion_channel.controllers.size()
+                }
             }
 
             opus_manager.recache_line_maps()

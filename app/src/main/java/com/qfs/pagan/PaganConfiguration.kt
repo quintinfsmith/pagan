@@ -1,6 +1,8 @@
 package com.qfs.pagan
 
 import com.qfs.pagan.ColorMap.Palette
+import com.qfs.pagan.opusmanager.ControlEventType
+import com.qfs.pagan.opusmanager.CtlLineLevel
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
@@ -15,7 +17,10 @@ data class PaganConfiguration(
     var show_percussion: Boolean = true, // Deprecated, use variable in view_model
     var link_mode: LinkMode = LinkMode.COPY,
     var palette: HashMap<Palette, Int>? = null,
-    var use_palette: Boolean = false
+    var use_palette: Boolean = false,
+    var visible_line_controls: MutableSet<Pair<CtlLineLevel, ControlEventType>> = mutableSetOf(
+        Pair(CtlLineLevel.Global, ControlEventType.Tempo)
+    )
 ) {
     enum class LinkMode {
         MOVE,

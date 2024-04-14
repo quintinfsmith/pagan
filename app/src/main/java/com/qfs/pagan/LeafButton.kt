@@ -117,7 +117,6 @@ abstract class LeafButton(context: Context) : LinearLayout(context) {
         )
     }
 
-
     // Prevents the child labels from blocking the parent onTouchListener events
     override fun onInterceptTouchEvent(touchEvent: MotionEvent): Boolean {
         return true

@@ -6,7 +6,6 @@ import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import androidx.appcompat.view.ContextThemeWrapper
-import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusEventSTD
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusLayerLinks
@@ -246,7 +245,7 @@ class LeafButtonStd(
         if (opus_manager.is_selected(beat_key, position)) {
             new_state.add(R.attr.state_focused)
         }
-        if (beat_key.channel % 2 == 0 && !opus_manager.is_ctl_level_visible(CtlLineLevel.Line)) {
+        if (beat_key.channel % 2 == 0) {
             new_state.add(R.attr.state_alternate)
         }
 

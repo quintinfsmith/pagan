@@ -6,7 +6,6 @@ import android.graphics.drawable.LayerDrawable
 import android.view.ContextThemeWrapper
 import android.view.MotionEvent
 import android.view.View
-import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusLayerLinks
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 
@@ -21,7 +20,7 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Li
         val opus_manager = this.get_opus_manager()
 
         val new_state = mutableListOf<Int>()
-        if (this.channel % 2 == 0 && !opus_manager.is_ctl_level_visible(CtlLineLevel.Line)) {
+        if (this.channel % 2 == 0) {
             new_state.add(R.attr.state_channel_even)
         }
 

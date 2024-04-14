@@ -321,8 +321,8 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     }
 
     fun clear_context_menu() {
-        val llContextMenu = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenu)
-        llContextMenu.removeAllViews()
+        val llContextMenu = this.activity!!.findViewById<LinearLayout?>(R.id.llContextMenu)
+        llContextMenu?.removeAllViews()
     }
 
     internal fun set_context_menu_control_line() {

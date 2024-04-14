@@ -157,6 +157,12 @@
     <string name="palette_leaf_text">Notes Text</string>
     <string name="palette_leaf_selected">Selected Notes</string>
     <string name="palette_leaf_selected_text">Selected Notes Text</string>
+    <string name="palette_ctl_line_selection">Control Line Selection</string>
+    <string name="palette_ctl_line_selection_text">ControlLine Selection Text</string>
+    <string name="palette_ctl_leaf">Control Nodes</string>
+    <string name="palette_ctl_leaf_text">Control Nodes Text</string>
+    <string name="palette_ctl_leaf_selected">Selected Control Node</string>
+    <string name="palette_ctl_leaf_selected_text">Selected Control Node Text</string>
     <string name="palette_link">Linked Notes</string>
     <string name="palette_link_text">Linked Notes Text</string>
     <string name="palette_link_empty">Linked Rests</string>
@@ -167,6 +173,7 @@
     <string name="palette_leaf_invalid_selected_text">Selected Invalid Notes Text</string>
     <string name="palette_leaf_invalid">Invalid Notes</string>
     <string name="palette_leaf_invalid_text">Invalid Notes Text</string>
+
     <string name="dialog_remove_soundfont_title">Choose Soundfont to Remove</string>
     <string name="dialog_select_soundfont">Select Soundfont</string>
     <string name="dialog_remove_soundfont_text">Really Delete %1$s?</string>

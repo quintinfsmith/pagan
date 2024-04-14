@@ -26,6 +26,8 @@
     <color name="light_button_selected_text">@color/leaf_text</color>
     <color name="light_empty_linked">#929E96</color>
     <color name="light_empty_linked_selected">#4884ae</color>
+    <color name="light_ctl_line">#FFFFFF</color>
+    <color name="light_ctl_line_text">#101010</color>
 
     <color name="dark_primary">#171717</color>
     <color name="dark_primary_text">#e1e1e1</color>
@@ -44,6 +46,8 @@
     <color name="dark_button_selected_text">@color/leaf_text</color>
     <color name="dark_empty_linked">#657169</color>
     <color name="dark_empty_linked_selected">#4a87b2</color>
+    <color name="dark_ctl_line">#000000</color>
+    <color name="dark_ctl_line_text">#e1e1e1</color>
 
     <color name="leaf">@color/purple</color>
     <color name="leaf_text">@color/black</color>
@@ -60,8 +64,16 @@
     <color name="leaf_invalid_selected">#890E21</color>
     <color name="leaf_invalid_selected_text">#A27E7E</color>
 
+    <color name="ctl_leaf">#DF5CAF</color>
+    <color name="ctl_leaf_text">@color/black</color>
+    <color name="ctl_leaf_selected">#ac45a7</color>
+    <color name="ctl_leaf_selected_text">@color/white</color>
+
     <color name="empty_selected">@color/blue_sky</color>
     <color name="empty_selected_text">#000000</color>
+    <color name="ctl_line_selected">#3e6e91</color>
+    <color name="ctl_line_selected_text">#e1e1e1</color>
+
 
 
     <color name="channel_button_bg">#BABABA</color>

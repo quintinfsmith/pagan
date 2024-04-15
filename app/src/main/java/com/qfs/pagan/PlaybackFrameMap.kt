@@ -7,7 +7,9 @@ import com.qfs.apres.soundfontplayer.FrameMap
 import com.qfs.apres.soundfontplayer.SampleHandle
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.pagan.opusmanager.BeatKey
+import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.OpusChannel
+import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.OpusEventSTD
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.structure.OpusTree
@@ -28,9 +30,10 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     private var _cached_frame_count: Int? = null
     private val _setter_overlaps = HashMap<Int, Array<Int>>()
 
+    private val _tempo_map = HashMap<Int, Float>() // Frame::Tempo
+
     private val _percussion_setter_ids = mutableSetOf<Int>()
 
-    private var _tempo = 0F
     private var _beat_count = 0
 
     override fun get_new_handles(frame: Int): Set<SampleHandle>? {
@@ -53,12 +56,40 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     }
 
     override fun get_beat_frames(): HashMap<Int, IntRange> {
-        val frames_per_beat = 60F * this._sample_handle_manager.sample_rate / this.opus_manager.tempo
+        val frames_per_minute = 60F * this._sample_handle_manager.sample_rate
         val output = HashMap<Int, IntRange>()
+        val tempos: MutableList<Pair<Int, Float>> = this._tempo_map.toList().toMutableList()
+        tempos.sortBy { it.first }
 
-        for (i in 0 until this.opus_manager.beat_count) {
-            output[i] = (frames_per_beat * i).toInt() until (frames_per_beat * (i + 1)).toInt()
+
+        var beats = 0
+        var carry_over = 0
+
+        var working_frame = 0
+        var working_tempo = 0f
+        var frames_per_beat = (frames_per_minute / 120).toInt()
+        var queued_beat_frame: Int? = null
+
+        while (beats < this.opus_manager.beat_count) {
+            var (next_change_frame, next_tempo) = tempos.first()
+            if (working_frame >= next_change_frame) {
+                var in_beat_position = (next_change_frame - max(0, (working_frame - frames_per_beat))).toFloat() / frames_per_beat.toFloat()
+
+                var frames_to_beat = (in_beat_position * frames_per_beat)
+                working_tempo = tempos.removeFirst().second
+                frames_per_beat = (frames_per_minute / working_tempo).toInt()
+            }
+
+            if (queued_beat_frame == null) {
+                queued_beat_frame = working_frame
+            } else {
+                queued_beat_frame = null
+            }
+
+            beats += 1
+            working_frame += frames_per_beat
         }
+
         return output
     }
 
@@ -145,7 +176,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         this._frame_map.clear()
         this._handle_map.clear()
         this._handle_range_map.clear()
-        this._tempo = 0F
+        this._tempo_map.clear()
         this._beat_count = 0
 
         this._setter_id_gen = 0
@@ -225,7 +256,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
     fun parse_opus(force_simple_mode: Boolean = false) {
         this.clear()
-        this._tempo = this.opus_manager.tempo
         this._beat_count = this.opus_manager.beat_count
         this._simple_mode = force_simple_mode
 
@@ -234,6 +264,8 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             this._sample_handle_manager.select_bank(channel.midi_channel, instrument.first)
             this._sample_handle_manager.change_program(channel.midi_channel, instrument.second)
         }
+
+        this.map_tempo_changes()
 
         this.opus_manager.channels.forEachIndexed { c: Int, channel: OpusChannel ->
             for (l  in channel.lines.indices) {
@@ -248,6 +280,51 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
         this.calculate_overlaps()
     }
+
+    fun map_tempo_changes() {
+        var working_frame = 0
+        val controller = this.opus_manager.controllers.get_controller(ControlEventType.Tempo)
+        var working_tempo = controller.initial_value
+
+        val frames_per_minute = 60F * this._sample_handle_manager.sample_rate
+        var frames_per_beat = (frames_per_minute / working_tempo).toInt()
+
+        this._tempo_map[working_frame] = working_tempo
+        for (tree in controller.events) {
+            if (tree == null) {
+                working_frame += frames_per_beat
+                continue
+            }
+
+            var running_ratio = 0F
+            var frame_offset = 0
+            val stack = mutableListOf<Triple<OpusTree<OpusControlEvent>, Float, Float>>(Triple(tree, 1F, 0F))
+            while (stack.isNotEmpty()) {
+                val (working_tree, working_ratio, working_offset) = stack.removeFirst()
+
+                if (working_tree.is_event()) {
+                    working_tempo = working_tree.get_event()!!.value
+                    frame_offset += (((1f - running_ratio) * frames_per_beat) * (working_offset - running_ratio)).toInt()
+                    running_ratio = working_offset
+                    frames_per_beat = (frames_per_minute / working_tempo).toInt()
+                    this._tempo_map[working_frame + frame_offset] = working_tempo
+                } else if (!working_tree.is_leaf()) {
+                    for ((i, child) in working_tree.divisions) {
+                        val child_width = working_ratio / working_tree.size.toFloat()
+                        stack.add(
+                            Triple(
+                                child,
+                                child_width,
+                                working_offset + (i * child_width)
+                            )
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+
 
     private fun calculate_overlaps() {
         val event_list = mutableListOf<Triple<Int, Int, Boolean>>()

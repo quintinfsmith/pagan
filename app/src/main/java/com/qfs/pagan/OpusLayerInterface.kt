@@ -1376,6 +1376,35 @@ class OpusLayerInterface : OpusLayerCursor() {
         return this._cached_ctl_map_global[type]!!
     }
 
+    fun toggle_control_line_visibility(level: CtlLineLevel, type: ControlEventType) {
+        val key = Pair(level, type)
+        val activity = this.get_activity() ?: return
+        if (this.is_ctl_line_visible(level, type)) {
+            activity.configuration.visible_line_controls.remove(key)
+        } else {
+            activity.configuration.visible_line_controls.add(key)
+        }
+        activity.save_configuration()
+
+        val editor_table = this.get_editor_table() ?: return
+        this.withFragment {
+            it.backup_position()
+        }
+        editor_table.clear()
+
+        val cursor = this.cursor
+        if (cursor.ctl_level != null) {
+            this.cursor_clear()
+        }
+
+        this.recache_line_maps()
+        editor_table.setup()
+        this.withFragment {
+            it.restore_view_model_position()
+            it.refresh_context_menu()
+        }
+    }
+
     // Deprecated function but i'll use it to build functions to toggle specific control lines
     //fun toggle_control_lines() {
     //    val activity = this.get_activity() ?: return

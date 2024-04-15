@@ -7,19 +7,46 @@ import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewGroup.LayoutParams.MATCH_PARENT
+import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+import android.widget.LinearLayout
 import android.widget.SeekBar
+import android.widget.Space
 import android.widget.TextView
+import com.qfs.pagan.opusmanager.ControlEventType
+import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 
 class ContextMenuLine(context: Context, attrs: AttributeSet? = null): ContextMenuView(R.layout.contextmenu_row, context, attrs) {
     lateinit var button_insert: ButtonIcon
     lateinit var button_remove: ButtonIcon
     lateinit var button_choose_percussion: ButtonStd
+    lateinit var button_toggle_volume_control: ButtonIcon
+    lateinit var widget_volume: ControlWidgetVolume
+    lateinit var spacer: Space
 
     override fun init_properties() {
+        this.button_toggle_volume_control = this.findViewById(R.id.btnToggleVolCtl)
         this.button_insert = this.findViewById(R.id.btnInsertLine)
         this.button_remove = this.findViewById(R.id.btnRemoveLine)
         this.button_choose_percussion = this.findViewById(R.id.btnChoosePercussion)
+        this.widget_volume = ControlWidgetVolume(0f, this.context) { value: Float ->
+            val opus_manager = this.get_opus_manager()
+            val cursor = opus_manager.cursor
+            opus_manager.set_line_controller_initial_value(
+                ControlEventType.Volume,
+                cursor.channel,
+                cursor.line_offset,
+                value
+            )
+        }
+
+        this.findViewById<LinearLayout?>(R.id.llContextRow).addView(this.widget_volume)
+        this.widget_volume.layoutParams.width = MATCH_PARENT
+        this.widget_volume.layoutParams.height = WRAP_CONTENT
+
+        this.spacer = this.findViewById<Space>(R.id.spacer)
+
     }
 
     override fun refresh() {
@@ -33,13 +60,18 @@ class ContextMenuLine(context: Context, attrs: AttributeSet? = null): ContextMen
         val line_offset = opus_manager.cursor.line_offset
 
         if (!opus_manager.is_percussion(channel) || main.get_soundfont() == null) {
+            this.spacer.visibility = View.VISIBLE
             this.button_choose_percussion.visibility = View.GONE
         } else {
+            this.spacer.visibility = View.GONE
             this.button_choose_percussion.visibility = View.VISIBLE
             val instrument = opus_manager.get_percussion_instrument(line_offset)
             main.populate_active_percussion_names(false)
             this.button_choose_percussion.text = if (this.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                this.context.getString(R.string.label_short_percussion, instrument)
+                this.context.getString(
+                    R.string.label_short_percussion,
+                    instrument
+                )
             } else {
                 this.context.getString(
                     R.string.label_choose_percussion,
@@ -50,6 +82,19 @@ class ContextMenuLine(context: Context, attrs: AttributeSet? = null): ContextMen
         }
 
         this.button_remove.isEnabled = opus_manager.channels[channel].size > 1
+
+        if (opus_manager.is_ctl_line_visible(CtlLineLevel.Line, ControlEventType.Volume)) {
+            this.button_toggle_volume_control.setImageResource(R.drawable.volume_minus)
+
+            this.widget_volume.visibility = View.GONE
+        } else {
+            this.button_toggle_volume_control.setImageResource(R.drawable.volume_plus)
+
+            this.widget_volume.visibility = View.VISIBLE
+            val controller = opus_manager.channels[channel].lines[line_offset].controllers.get_controller(ControlEventType.Volume)
+            this.widget_volume.set_value(controller.initial_value)
+        }
+
     }
 
     override fun setup_interactions() {
@@ -88,6 +133,19 @@ class ContextMenuLine(context: Context, attrs: AttributeSet? = null): ContextMen
 
             this.long_click_button_remove_line()
         }
+
+        this.button_toggle_volume_control.setOnClickListener {
+            if (!it.isEnabled) {
+                return@setOnClickListener
+            }
+
+            this.click_button_toggle_volume_control()
+        }
+    }
+
+    fun click_button_toggle_volume_control() {
+        val opus_manager = this.get_opus_manager()
+        opus_manager.toggle_control_line_visibility(CtlLineLevel.Line, ControlEventType.Volume)
     }
 
     fun click_button_insert_line() {

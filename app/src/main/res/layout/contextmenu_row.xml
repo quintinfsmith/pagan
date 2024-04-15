@@ -4,15 +4,31 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/llContextRow"
     android:padding="@dimen/number_selector_spacing"
-    android:orientation="horizontal"
+    android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="wrap_content">
+
 
     <LinearLayout
-        android:layout_weight="1"
-        android:layout_width="0dp"
         android:orientation="horizontal"
-        android:layout_height="match_parent">
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <com.qfs.pagan.ButtonIcon
+            android:id="@+id/btnToggleVolCtl"
+            android:theme="@style/icon_button"
+            app:srcCompat="@drawable/volume_plus"
+            android:layout_width="@dimen/icon_button_width"
+            android:layout_height="@dimen/icon_button_height"
+            android:layout_marginStart="@dimen/number_selector_spacing"
+            android:contentDescription="Toggle Volume Control"/>
+
+        <Space
+            android:id="@+id/spacer"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_width="0dp" />
+
 
         <com.qfs.pagan.ButtonStd
             android:layout_gravity="center"
@@ -27,16 +43,10 @@
             android:paddingEnd="8dp"
             android:layout_marginTop="@dimen/number_selector_spacing"
             android:layout_marginBottom="@dimen/number_selector_spacing"
-            android:layout_width="match_parent"
+            android:layout_weight="1"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:text="" />
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:orientation="horizontal"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent">
 
         <com.qfs.pagan.ButtonIcon
             android:id="@+id/btnRemoveLine"

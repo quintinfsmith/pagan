@@ -10,7 +10,7 @@ import kotlin.math.roundToInt
 
 abstract class LineLabelCtl(context: Context, var ctl_level: CtlLineLevel, var ctl_type: ControlEventType): androidx.appcompat.widget.AppCompatImageView(
     ContextThemeWrapper(context, R.style.ctl_line_label)
-), LineLabelInner {
+) {
     init {
         this._set_colors()
         this.setOnClickListener {
@@ -18,9 +18,12 @@ abstract class LineLabelCtl(context: Context, var ctl_level: CtlLineLevel, var c
         }
     }
 
+    abstract fun on_click()
+
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
         this.layoutParams.height = this.resources.getDimension(R.dimen.ctl_line_height).roundToInt()
+        this.layoutParams.width = this.resources.getDimension(R.dimen.base_leaf_width).roundToInt()
         this.setImageResource(this.get_label_icon())
     }
 
@@ -56,7 +59,7 @@ abstract class LineLabelCtl(context: Context, var ctl_level: CtlLineLevel, var c
         }
     }
 
-    override fun _set_colors() {
+    private fun _set_colors() {
         val activity = this.get_activity()
         val color_map = activity.view_model.color_map
         (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_lines).setTint(color_map[ColorMap.Palette.Lines])
@@ -82,8 +85,6 @@ abstract class LineLabelCtl(context: Context, var ctl_level: CtlLineLevel, var c
             )
         )
     }
-
-    override fun set_text() { }
 
     fun get_opus_manager(): OpusLayerInterface {
         return (this.parent as LineLabelView).get_opus_manager()

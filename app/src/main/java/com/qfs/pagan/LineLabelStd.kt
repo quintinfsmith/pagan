@@ -11,7 +11,7 @@ import com.qfs.pagan.opusmanager.OpusLayerLinks
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import kotlin.math.roundToInt
 
-class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): AppCompatTextView(ContextThemeWrapper(context, R.style.line_label)), LineLabelInner, View.OnTouchListener {
+class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): AppCompatTextView(ContextThemeWrapper(context, R.style.line_label)), View.OnTouchListener {
     init {
         this._set_colors()
         this.setOnClickListener {
@@ -21,6 +21,7 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
         this.layoutParams.height = this.resources.getDimension(R.dimen.line_height).roundToInt()
+        this.layoutParams.width = this.resources.getDimension(R.dimen.base_leaf_width).roundToInt()
         this.set_text()
     }
 
@@ -62,7 +63,7 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
         return drawableState
     }
 
-    override fun on_click() {
+    fun on_click() {
         val opus_manager = this.get_opus_manager()
 
         val cursor = opus_manager.cursor
@@ -116,7 +117,7 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
         }
     }
 
-    override fun _set_colors() {
+    private fun _set_colors() {
         val activity = this.get_activity()
         val color_map = activity.view_model.color_map
         (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_lines).setTint(color_map[ColorMap.Palette.Lines])
@@ -180,7 +181,7 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
         }
     }
 
-    override fun set_text() {
+    fun set_text() {
         val opus_manager = this.get_opus_manager()
 
         val text = if (!opus_manager.is_percussion(this.channel)) {

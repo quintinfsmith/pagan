@@ -2,16 +2,9 @@
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/llContextControlLine"
-    android:padding="@dimen/number_selector_spacing"
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-
-    <com.qfs.pagan.PaganTextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:padding="2dp"
-        android:id="@+id/tvCtlLineLabel"/>
 
     <LinearLayout
         android:id="@+id/llTarget"

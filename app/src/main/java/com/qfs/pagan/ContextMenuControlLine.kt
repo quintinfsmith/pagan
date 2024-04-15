@@ -12,7 +12,6 @@ import com.qfs.pagan.opusmanager.CtlLineLevel
 
 class ContextMenuControlLine(context: Context, attrs: AttributeSet? = null): ContextMenuView(R.layout.contextmenu_control_line, context, attrs) {
     lateinit var initial_widget_wrapper: LinearLayout
-    lateinit var label: PaganTextView
     lateinit var widget: ControlWidget
     private var _current_type: ControlEventType? = null
 
@@ -84,7 +83,6 @@ class ContextMenuControlLine(context: Context, attrs: AttributeSet? = null): Con
     override fun init_properties() {
         super.init_properties()
         this.initial_widget_wrapper = this.findViewById(R.id.llTarget)
-        this.label = this.findViewById(R.id.tvCtlLineLabel)
         this.init_widget()
     }
 

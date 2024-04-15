@@ -6,11 +6,30 @@ import android.graphics.drawable.LayerDrawable
 import android.view.ContextThemeWrapper
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
+import kotlin.math.roundToInt
 
-open class LineLabelCtl(context: Context, var ctl_level: CtlLineLevel, var ctl_type: ControlEventType): LineLabelInner(
+abstract class LineLabelCtl(context: Context, var ctl_level: CtlLineLevel, var ctl_type: ControlEventType): androidx.appcompat.widget.AppCompatImageView(
     ContextThemeWrapper(context, R.style.ctl_line_label)
-) {
-    override fun _build_drawable_state(drawableState: IntArray?): IntArray? {
+), LineLabelInner {
+    init {
+        this._set_colors()
+        this.setOnClickListener {
+            this.on_click()
+        }
+    }
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        this.layoutParams.height = this.resources.getDimension(R.dimen.ctl_line_height).roundToInt()
+        this.setImageResource(this.get_label_icon())
+    }
+
+    override fun onCreateDrawableState(extraSpace: Int): IntArray? {
+        val drawableState = super.onCreateDrawableState(extraSpace + 2)
+        return this._build_drawable_state(drawableState)
+    }
+
+    private fun _build_drawable_state(drawableState: IntArray?): IntArray? {
         if (this.parent == null) {
             return drawableState
         }
@@ -27,24 +46,14 @@ open class LineLabelCtl(context: Context, var ctl_level: CtlLineLevel, var ctl_t
         return drawableState
     }
 
-    open fun is_selected(): Boolean {
-        TODO()
-    }
+    abstract fun is_selected(): Boolean
 
-    override fun get_label_text(): String {
+    fun get_label_icon(): Int {
         return when (this.ctl_type) {
-            ControlEventType.Tempo -> "BPM"
-            ControlEventType.Volume -> "VOL"
-            ControlEventType.Reverb -> "RVB"
+            ControlEventType.Tempo -> R.drawable.tempo
+            ControlEventType.Volume -> R.drawable.volume
+            ControlEventType.Reverb -> R.drawable.volume // Placeholder
         }
-    }
-
-    override fun get_height(): Float {
-        return this.resources.getDimension(R.dimen.ctl_line_height)
-    }
-
-    override fun on_click() {
-        TODO("Define Lower")
     }
 
     override fun _set_colors() {
@@ -65,14 +74,22 @@ open class LineLabelCtl(context: Context, var ctl_level: CtlLineLevel, var ctl_t
                 )
             )
         )
-        this.setTextColor(
-            ColorStateList(
-                states,
-                intArrayOf(
-                    color_map[ColorMap.Palette.CtlLineSelectionText],
-                    color_map[ColorMap.Palette.CtlLineText],
-                )
+        this.imageTintList = ColorStateList(
+            states,
+            intArrayOf(
+                color_map[ColorMap.Palette.CtlLineSelectionText],
+                color_map[ColorMap.Palette.CtlLineText],
             )
         )
+    }
+
+    override fun set_text() { }
+
+    fun get_opus_manager(): OpusLayerInterface {
+        return (this.parent as LineLabelView).get_opus_manager()
+    }
+
+    fun get_activity(): MainActivity {
+        return (this.context as ContextThemeWrapper).baseContext as MainActivity
     }
 }

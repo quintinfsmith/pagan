@@ -4,6 +4,7 @@ import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
+import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import androidx.core.view.children
 import com.qfs.pagan.opusmanager.BeatKey
@@ -29,11 +30,12 @@ class CellLayout(private val _column_layout: ColumnLayout, val row: Int): Linear
             opus_manager.get_ctl_line_from_visible_row(this.row)
         )
 
-        this.layoutParams.height = if (control_level != null) {
-            resources.getDimension(R.dimen.ctl_line_height).toInt()
-        } else {
-            resources.getDimension(R.dimen.line_height).toInt()
-        }
+        //this.layoutParams.height = if (control_level != null) {
+        //    resources.getDimension(R.dimen.ctl_line_height).toInt()
+        //} else {
+        //    resources.getDimension(R.dimen.line_height).toInt()
+        //}
+        this.layoutParams.height = WRAP_CONTENT
 
         val width = (this._column_layout.column_width_factor * resources.getDimension(R.dimen.base_leaf_width).roundToInt())
         this.layoutParams.width = width

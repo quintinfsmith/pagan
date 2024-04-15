@@ -6,13 +6,30 @@ import android.graphics.drawable.LayerDrawable
 import android.view.ContextThemeWrapper
 import android.view.MotionEvent
 import android.view.View
+import androidx.appcompat.widget.AppCompatTextView
 import com.qfs.pagan.opusmanager.OpusLayerLinks
 import com.qfs.pagan.opusmanager.OpusManagerCursor
+import kotlin.math.roundToInt
 
-class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): LineLabelInner(
-    ContextThemeWrapper(context, R.style.line_label)
-) {
-    override fun _build_drawable_state(drawableState: IntArray?): IntArray? {
+class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): AppCompatTextView(ContextThemeWrapper(context, R.style.line_label)), LineLabelInner, View.OnTouchListener {
+    init {
+        this._set_colors()
+        this.setOnClickListener {
+            this.on_click()
+        }
+    }
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        this.layoutParams.height = this.resources.getDimension(R.dimen.line_height).roundToInt()
+        this.set_text()
+    }
+
+    override fun onCreateDrawableState(extraSpace: Int): IntArray? {
+        val drawableState = super.onCreateDrawableState(extraSpace + 2)
+        return this._build_drawable_state(drawableState)
+    }
+
+    private fun _build_drawable_state(drawableState: IntArray?): IntArray? {
         if (this.parent == null) {
             return drawableState
         }
@@ -139,21 +156,6 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Li
         )
     }
 
-    override fun get_label_text(): String {
-        val opus_manager = this.get_opus_manager()
-
-        return if (!opus_manager.is_percussion(this.channel)) {
-            "${this.channel}::${this.line_offset}"
-        } else {
-            val instrument = opus_manager.get_percussion_instrument(this.line_offset)
-            "!$instrument"
-        }
-    }
-
-    override fun get_height(): Float {
-        return this.resources.getDimension(R.dimen.line_height)
-    }
-
     override fun onTouch(view: View?, touchEvent: MotionEvent?): Boolean {
         val column_layout = this.parent.parent as LineLabelColumnLayout
 
@@ -176,5 +178,27 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Li
         } else {
             performClick()
         }
+    }
+
+    override fun set_text() {
+        val opus_manager = this.get_opus_manager()
+
+        val text = if (!opus_manager.is_percussion(this.channel)) {
+            "${this.channel}::${this.line_offset}"
+        } else {
+            val instrument = opus_manager.get_percussion_instrument(this.line_offset)
+            "!$instrument"
+        }
+
+        this.text = text
+        this.contentDescription = text
+    }
+
+    fun get_opus_manager(): OpusLayerInterface {
+        return (this.parent as LineLabelView).get_opus_manager()
+    }
+
+    fun get_activity(): MainActivity {
+        return (this.context as ContextThemeWrapper).baseContext as MainActivity
     }
 }

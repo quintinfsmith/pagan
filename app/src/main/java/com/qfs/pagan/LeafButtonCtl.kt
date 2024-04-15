@@ -8,6 +8,7 @@ import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.structure.OpusTree
+import kotlin.math.roundToInt
 
 abstract class LeafButtonCtl(
     context: Context,
@@ -17,7 +18,7 @@ abstract class LeafButtonCtl(
     var control_type: ControlEventType
 ) : LeafButton(ContextThemeWrapper(context, R.style.ctl_leaf)) {
     init {
-        this.minimumHeight = resources.getDimension(R.dimen.line_height).toInt()
+        this.minimumHeight = resources.getDimension(R.dimen.ctl_line_height).roundToInt()
         this.set_text()
     }
 

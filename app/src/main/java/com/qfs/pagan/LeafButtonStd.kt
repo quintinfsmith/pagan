@@ -12,6 +12,7 @@ import com.qfs.pagan.opusmanager.OpusLayerLinks
 import com.qfs.pagan.structure.OpusTree
 import kotlin.concurrent.thread
 import kotlin.math.abs
+import kotlin.math.roundToInt
 
 class LeafButtonStd(
     context: Context,
@@ -22,7 +23,7 @@ class LeafButtonStd(
 ) : LeafButton(ContextThemeWrapper(context, R.style.leaf)) {
 
     init {
-        this.minimumHeight = resources.getDimension(R.dimen.line_height).toInt()
+        this.minimumHeight = resources.getDimension(R.dimen.line_height).roundToInt()
         this.set_text(is_percussion, initial_radix)
     }
 

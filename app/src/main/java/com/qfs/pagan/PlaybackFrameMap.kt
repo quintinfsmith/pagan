@@ -56,6 +56,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         return output
     }
 
+
     override fun get_beat_frames(): HashMap<Int, IntRange> {
         if (this._cached_beat_frames.isNotEmpty()) {
             return this._cached_beat_frames
@@ -74,8 +75,15 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         var frames_per_beat = (frames_per_minute / 120).toInt()
 
         // First, just get the frame of each beat
-        while (beats.size < this.opus_manager.beat_count) {
-            val (next_change_frame, next_tempo) = tempos.first()
+        while (beats.size <= this.opus_manager.beat_count) {
+            val (next_change_frame, next_tempo) = if (tempos.isNotEmpty()) {
+                tempos.first()
+            } else {
+                // Keep next change frame out of reach
+                Pair(working_frame + frames_per_beat + 1, 0f)
+            }
+
+
             var next_frame = working_frame + frames_per_beat
             if (next_frame < next_change_frame) {
                 beats.add(next_frame)
@@ -145,11 +153,9 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             for (range in this._setter_range_map.values) {
                 this._cached_frame_count = max(range.last, this._cached_frame_count!!)
             }
+            var beat_frames = this.get_beat_frames()
+            this._cached_frame_count = beat_frames[beat_frames.keys.max()]!!.last
 
-
-            this._cached_frame_count = this._tempo_map.keys.max()
-
-                max(this._cached_frame_count!! + 1, (this._beat_count * frames_per_beat).toInt())
         }
         return this._cached_frame_count!!
     }
@@ -279,8 +285,8 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             this._sample_handle_manager.select_bank(channel.midi_channel, instrument.first)
             this._sample_handle_manager.change_program(channel.midi_channel, instrument.second)
         }
-
         this.map_tempo_changes()
+        this.get_beat_frames()
 
         this.opus_manager.channels.forEachIndexed { c: Int, channel: OpusChannel ->
             for (l  in channel.lines.indices) {
@@ -423,8 +429,71 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             event.note += prev_note_value
             event.relative = false
         }
-        // TODO: Handle variable Tempo here
+
         val start_event = this._gen_midi_event(event, beat_key)!!
+        // TODO: Handle variable Tempo here
+
+        // Shouldn't need to do this repeatedly, but use here for now
+        var tempos: MutableList<Pair<Int, Float>> = this._tempo_map.toList().toMutableList()
+        tempos.sortBy { it.first }
+
+        val frames_per_minute = 60F * this._sample_handle_manager.sample_rate
+        // Can assume first entry is @ 0
+        var working_tempo = tempos.removeFirst().second
+
+        val beat_frame = this._cached_beat_frames[beat_key.beat]
+        var frames_per_beat = (frames_per_minute / working_tempo).toInt()
+
+        var remaining_ratio = relative_offset
+
+        var start_frame = beat_frame!!.first
+        while (tempos.isNotEmpty()) {
+            if (start_frame >= tempos.first().first) {
+                working_tempo = tempos.removeFirst().second
+                frames_per_beat = (frames_per_minute / working_tempo).toInt()
+                continue
+            }
+
+            if (remaining_ratio > 0f) {
+                var add_frames = (frames_per_beat * remaining_ratio).toInt()
+                val next_frame = tempos.first().first
+                if (start_frame + add_frames < next_frame) {
+                    start_frame += add_frames
+                    break
+                } else {
+                    remaining_ratio -= (next_frame - start_frame).toFloat() / frames_per_beat.toFloat()
+                    start_frame = next_frame
+                }
+            } else {
+                break
+            }
+        }
+
+        //--------------------END FRAME
+        var end_frame = start_frame
+        remaining_ratio = relative_offset + (relative_width * event.duration)
+        while (tempos.isNotEmpty()) {
+            if (start_frame >= tempos.first().first) {
+                working_tempo = tempos.removeFirst().second
+                frames_per_beat = (frames_per_minute / working_tempo).toInt()
+                continue
+            }
+
+            if (remaining_ratio > 0f) {
+                var add_frames = (frames_per_beat * remaining_ratio).toInt()
+                val next_frame = tempos.first().first
+                if (start_frame + add_frames < next_frame) {
+                    start_frame += add_frames
+                    break
+                } else {
+                    remaining_ratio -= (next_frame - start_frame).toFloat() / frames_per_beat.toFloat()
+                    start_frame = next_frame
+                }
+            } else {
+                break
+            }
+        }
+
         this._add_handles(start_frame, end_frame, start_event)
 
         return event.note

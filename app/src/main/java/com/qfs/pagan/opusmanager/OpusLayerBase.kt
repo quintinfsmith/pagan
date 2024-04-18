@@ -20,6 +20,7 @@ import java.lang.Integer.min
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.pow
+import kotlin.math.roundToInt
 
 /**
  * The logic of the Opus Manager.
@@ -1246,7 +1247,7 @@ open class OpusLayerBase {
                     midi.insert_event(
                         0,
                         current.offset,
-                        SetTempo.from_bpm(event.value)
+                        SetTempo.from_bpm((event.value * 1000f).roundToInt() / 1000F)
                     )
                 } else if (!current.tree.is_leaf()) {
                     val working_subdiv_size = current.size / current.tree.size
@@ -1276,7 +1277,8 @@ open class OpusLayerBase {
                 ProgramChange(channel.midi_channel, channel.midi_program)
             )
             channel.lines.forEachIndexed inner@{ l: Int, line: OpusLine ->
-                if (line.volume == 0) {
+                // This only makes sense when volume controls aren't enabled (VOLCTLTMP)
+                if (line.get_controller(ControlEventType.Volume).initial_value.roundToInt() == 0) {
                     return@inner
                 }
                 var current_tick = 0
@@ -1319,7 +1321,7 @@ open class OpusLayerBase {
                                     channel.midi_channel,
                                     note,
                                     bend,
-                                    line.volume,
+                                    line.get_controller(ControlEventType.Volume).initial_value.roundToInt(),
                                     event_uuid_gen++
                                 )
                                 pseudo_midi_map.add(Triple(
@@ -1923,7 +1925,7 @@ open class OpusLayerBase {
                 last_ts_change = tick
                 beat_size = new_beat_size
             } else if (event is SetTempo) {
-                working_tempo = event.get_bpm() * (denominator / 4)
+                working_tempo = ((event.get_bpm() * (denominator / 4)) * 1000F).roundToInt().toFloat() / 1000F
 
                 while (tempo_line.size <= beat_index) {
                     val new_tree = OpusTree<OpusControlEvent>()
@@ -1937,7 +1939,7 @@ open class OpusLayerBase {
             } else if (event is ProgramChange) {
                 instrument_map.add(Triple(event.channel, null, event.get_program()))
             } else if (event is BankSelect) {
-                instrument_map.add(Triple(event.channel, event.value, null))
+                instrument_map.add(Triple(event.channel, event.value, null) )
             }
         }
 
@@ -2250,21 +2252,18 @@ open class OpusLayerBase {
         this.project_name = new_name
     }
 
-    // TODO: Convert these functions to use ActiveControlSet ---------
     open fun set_transpose(new_transpose: Int) {
         this.transpose = new_transpose
     }
 
-    open fun set_tempo(new_tempo: Float) {
-        this.tempo = new_tempo
-    }
+    // TODO: Convert these functions to use ActiveControlSet ---------
 
     open fun set_line_volume(channel: Int, line_offset: Int, volume: Int) {
         this.channels[channel].set_line_volume(line_offset, volume)
     }
 
     fun get_line_volume(channel: Int, line_offset: Int): Int {
-        return this.channels[channel].get_line_volume(line_offset)
+        return this.channels[channel].lines[line_offset].controllers.get_controller(ControlEventType.Volume).initial_value.roundToInt()
     }
     // ----------------------------------------------------------------
 

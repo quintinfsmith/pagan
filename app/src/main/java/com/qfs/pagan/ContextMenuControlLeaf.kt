@@ -12,6 +12,7 @@ import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.Transition
+import kotlin.math.roundToInt
 
 class ContextMenuControlLeaf(context: Context, attrs: AttributeSet? = null): ContextMenuView(R.layout.contextmenu_line_ctl_leaf, context, attrs) {
     lateinit var button_duration: ButtonStd
@@ -59,7 +60,7 @@ class ContextMenuControlLeaf(context: Context, attrs: AttributeSet? = null): Con
         val current_transition = current_tree.get_event()?.transition ?: Transition.Linear
         val current_duration = current_tree.get_event()?.duration ?: 0
         val new_event = OpusControlEvent(
-            value,
+            (value * 1000F).roundToInt().toFloat() / 1000F,
             transition = current_transition,
             duration = current_duration
         )

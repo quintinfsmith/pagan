@@ -218,10 +218,6 @@ open class OpusLayerHistory : OpusLayerLinks() {
                     this.set_transpose(current_node.args[0] as Int)
                 }
 
-                HistoryToken.SET_TEMPO -> {
-                    this.set_tempo(current_node.args[0] as Float)
-                }
-
                 HistoryToken.SET_TUNING_MAP -> {
                     this.set_tuning_map(
                         this.checked_cast<Array<Pair<Int, Int>>>(current_node.args[0]),
@@ -1043,10 +1039,6 @@ open class OpusLayerHistory : OpusLayerLinks() {
         super.set_transpose(new_transpose)
     }
 
-    override fun set_tempo(new_tempo: Float) {
-        this.push_to_history_stack(HistoryToken.SET_TEMPO, listOf(this.tempo))
-        super.set_tempo(new_tempo)
-    }
 
     override fun set_channel_instrument(channel: Int, instrument: Pair<Int, Int>) {
         this._remember {

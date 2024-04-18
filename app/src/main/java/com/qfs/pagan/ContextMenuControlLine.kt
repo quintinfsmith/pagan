@@ -9,6 +9,7 @@ import androidx.core.view.isEmpty
 import com.qfs.pagan.opusmanager.ActiveControlSet
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
+import kotlin.math.roundToInt
 
 class ContextMenuControlLine(context: Context, attrs: AttributeSet? = null): ContextMenuView(R.layout.contextmenu_control_line, context, attrs) {
     lateinit var initial_widget_wrapper: LinearLayout
@@ -39,7 +40,7 @@ class ContextMenuControlLine(context: Context, attrs: AttributeSet? = null): Con
             CtlLineLevel.Global -> {
                 opus_manager.set_global_controller_initial_value(
                     cursor.ctl_type!!,
-                    value
+                    (value * 1000F).roundToInt().toFloat() / 1000F
                 )
             }
 

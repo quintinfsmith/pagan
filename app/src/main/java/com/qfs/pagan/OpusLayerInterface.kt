@@ -97,13 +97,6 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
-    override fun set_tempo(new_tempo: Float) {
-        //super.set_tempo(new_tempo)
-        //this.runOnUiThread { main ->
-        //    main.findViewById<TextView>(R.id.tvTempo).text = main.getString(R.string.label_bpm, new_tempo.toInt())
-        //}
-    }
-
     private fun _get_all_linked_as_coords(beat_key: BeatKey): List<EditorTable.Coordinate> {
         val all_keys = this.get_all_linked(beat_key).toList()
         return List(all_keys.size) { i: Int ->

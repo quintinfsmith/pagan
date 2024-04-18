@@ -3,6 +3,7 @@ package com.qfs.pagan
 import android.content.Context
 import android.view.ContextThemeWrapper
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
+import kotlin.math.roundToInt
 
 class ControlWidgetTempo(default: Float, context: Context, callback: (Float) -> Unit): ControlWidget(context, callback) {
     private val input = ButtonStd(ContextThemeWrapper(context, R.style.icon_button), null)
@@ -35,6 +36,12 @@ class ControlWidgetTempo(default: Float, context: Context, callback: (Float) -> 
 
     override fun set_value(value: Float) {
         this.current_value = value
-        this.input.text = "$value BPM"
+
+        this.input.text = if (value.toInt().toFloat() == value) {
+            "${value.toInt()} BPM"
+        } else {
+            "${(value * 1000F).roundToInt().toFloat() / 1000F} BPM"
+        }
+
     }
 }

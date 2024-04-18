@@ -429,9 +429,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
         val start_event = this._gen_midi_event(event, beat_key)!!
 
-        // TODO: Handle variable Tempo here
-
-        // Shouldn't need to do this repeatedly, but use here for now
         val tempos: MutableList<Pair<Int, Float>> = this._tempo_map.toList().toMutableList()
         tempos.sortBy { it.first }
 
@@ -453,19 +450,19 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 frames_per_beat = (frames_per_minute / working_tempo).toInt()
             }
 
-            var add_frames = (frames_per_beat * remaining_ratio).toInt()
-            val next_frame = if (tempos.isNotEmpty()) {
-                tempos.first().first
-            } else {
-                add_frames + start_frame
-            }
-
-            if (start_frame + add_frames <= next_frame) {
+            val add_frames = (frames_per_beat * remaining_ratio).toInt()
+            if (tempos.isEmpty()) {
                 start_frame += add_frames
                 break
             } else {
-                remaining_ratio -= (next_frame - (start_frame + add_frames)).toFloat() / frames_per_beat.toFloat()
-                start_frame = next_frame
+                val next_tempo_frame = tempos.first().first
+                if (start_frame + add_frames <= next_tempo_frame) {
+                    start_frame += add_frames
+                    break
+                } else {
+                    remaining_ratio -= ((start_frame + add_frames) - next_tempo_frame).toFloat() / frames_per_beat.toFloat()
+                    start_frame = next_tempo_frame
+                }
             }
         }
 
@@ -479,23 +476,22 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 frames_per_beat = (frames_per_minute / working_tempo).toInt()
             }
 
-            var add_frames = (frames_per_beat * remaining_ratio).toInt()
-            val next_frame_change = if (tempos.isNotEmpty()) {
-                tempos.first().first
-            } else {
-                add_frames + end_frame
-            }
-
-            if (end_frame + add_frames <= next_frame_change) {
+            val add_frames = (frames_per_beat * remaining_ratio).toInt()
+            if (tempos.isEmpty()) {
                 end_frame += add_frames
                 break
             } else {
-                Log.d("AAA", "$next_frame_change, $end_frame, $frames_per_beat")
-                remaining_ratio -= (next_frame_change - (end_frame + add_frames)).toFloat() / frames_per_beat.toFloat()
-                end_frame = next_frame_change
+                val next_tempo_frame = tempos.first().first
+                if (end_frame + add_frames <= next_tempo_frame) {
+                    end_frame += add_frames
+                    break
+                } else {
+                    remaining_ratio -= ((end_frame + add_frames) - next_tempo_frame).toFloat() / frames_per_beat.toFloat()
+                    end_frame = next_tempo_frame
+                }
             }
         }
-        Log.d("AAA", "BBBBBBBk")
+        Log.d("AAA", "$start_frame | $end_frame")
 
         this._add_handles(start_frame, end_frame, start_event)
 

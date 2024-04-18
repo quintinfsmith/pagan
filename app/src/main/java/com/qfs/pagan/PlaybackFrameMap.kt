@@ -1,6 +1,5 @@
 package com.qfs.pagan
 
-import android.util.Log
 import com.qfs.apres.event.MIDIEvent
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event2.NoteOn79
@@ -466,8 +465,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             }
         }
 
-
-        //--------------------END FRAME
         var end_frame = start_frame
         remaining_ratio = relative_offset + (relative_width * event.duration)
         while (remaining_ratio > 0f) {
@@ -491,7 +488,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 }
             }
         }
-        Log.d("AAA", "$start_frame | $end_frame")
 
         this._add_handles(start_frame, end_frame, start_event)
 

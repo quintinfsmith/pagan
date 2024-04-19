@@ -1078,8 +1078,14 @@ class OpusLayerInterface : OpusLayerCursor() {
 
             this.withFragment { main ->
                 main.set_context_menu_line()
+                editor_table?.scroll_to_position(
+                    y = this.get_visible_row_from_ctl_line(
+                        this.get_ctl_line_index(
+                            this.get_abs_offset(channel, line_offset)
+                        )
+                    )
+                )
             }
-            editor_table?.scroll_to_position(y = this.get_abs_offset(channel, line_offset))
         }
     }
 

@@ -300,8 +300,8 @@ class OpusTree<T> {
         } else {
             rel_index
         }
-
         this.divisions[index] = tree
+        tree.parent = this
     }
 
     fun set_event(event: T) {

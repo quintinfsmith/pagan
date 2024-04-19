@@ -466,7 +466,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         }
 
         var end_frame = start_frame
-        remaining_ratio = relative_offset + (relative_width * event.duration)
+        remaining_ratio = (relative_width * event.duration)
         while (remaining_ratio > 0f) {
             while (tempos.isNotEmpty() && tempos.first().first < end_frame) {
                 working_tempo = tempos.removeFirst().second

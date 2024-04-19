@@ -1,6 +1,5 @@
 package com.qfs.pagan.opusmanager
 
-import android.util.Log
 import com.qfs.pagan.structure.OpusTree
 
 
@@ -159,7 +158,6 @@ class ActiveControlSet(var beat_count: Int, default_enabled: Set<ControlEventTyp
         fun set_beat_count(beat_count: Int) {
             val current_beat_count = this.events.size
             if (beat_count > current_beat_count) {
-                Log.d("AAA", "$beat_count | $current_beat_count")
                 for (i in current_beat_count until beat_count) {
                     this.insert_beat(current_beat_count)
                 }

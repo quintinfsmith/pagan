@@ -460,9 +460,10 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                     break
                 } else {
                     remaining_ratio -= ((start_frame + add_frames) - next_tempo_frame).toFloat() / frames_per_beat.toFloat()
-                    start_frame = next_tempo_frame
+                    start_frame += (start_frame + add_frames) - next_tempo_frame
                 }
             }
+
         }
 
         var end_frame = start_frame
@@ -484,7 +485,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                     break
                 } else {
                     remaining_ratio -= ((end_frame + add_frames) - next_tempo_frame).toFloat() / frames_per_beat.toFloat()
-                    end_frame = next_tempo_frame
+                    end_frame += (end_frame + add_frames) - next_tempo_frame
                 }
             }
         }

@@ -1292,7 +1292,6 @@ open class OpusLayerBase {
                             val (note, bend) = if (this.is_percussion(c)) { // Ignore the event data and use percussion map
                                 Pair(this.get_percussion_instrument(l) + 27, 0)
                             } else {
-
                                 val current_note = if (event.relative) {
                                     event.note + prev_note
                                 } else {

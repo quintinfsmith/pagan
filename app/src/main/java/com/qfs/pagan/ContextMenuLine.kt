@@ -242,6 +242,11 @@ class ContextMenuLine(context: Context, attrs: AttributeSet? = null): ContextMen
 
         main.dialog_popup_menu(this.context.getString(R.string.dropdown_choose_percussion), options, default_instrument) { _: Int, value: Int ->
             opus_manager.set_percussion_instrument(value)
+            main.play_event(
+                opus_manager.channels.size - 1,
+                value,
+                opus_manager.get_line_volume(opus_manager.channels.size - 1, cursor.line_offset)
+            )
         }
     }
 

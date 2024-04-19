@@ -5,7 +5,7 @@ import java.lang.Integer.min
 
 open class OpusLayerCursor: OpusLayerHistory() {
     var cursor = OpusManagerCursor()
-    private var _queued_cursor_selection: Pair<HistoryToken, List<Int>>? = null
+    private var _queued_cursor_selection: OpusManagerCursor? = null
 
     override fun insert_line(channel: Int, line_offset: Int, line: OpusLine) {
         // Need to clear cursor before change since the way the editor_table updates
@@ -358,37 +358,19 @@ open class OpusLayerCursor: OpusLayerHistory() {
     }
 
     // For history when we don't want to worry about the cursor
-    private fun queue_cursor_select(token: HistoryToken, args: List<Int>) {
-        this._queued_cursor_selection = Pair(token, args)
+    private fun queue_cursor_select(cursor: OpusManagerCursor) {
+        this._queued_cursor_selection = cursor
     }
 
     private fun apply_queued_cursor_select() {
         if (this._queued_cursor_selection == null) {
             return
         }
-        val (token, args) = this._queued_cursor_selection!!
+
+        val new_cursor = this._queued_cursor_selection!!
         this._queued_cursor_selection = null
-        when (token) {
-            HistoryToken.CURSOR_SELECT_ROW -> {
-                this.cursor_select_row(args[0], args[1])
-            }
 
-            HistoryToken.CURSOR_SELECT_COLUMN -> {
-                this.cursor_select_column(args[0])
-            }
-
-            HistoryToken.CURSOR_SELECT -> {
-                this.cursor_select(
-                    BeatKey(
-                        args[0],
-                        args[1],
-                        args[2]
-                    ),
-                    args.subList(3, args.size)
-                )
-            }
-            else -> {}
-        }
+        this.cursor_apply(new_cursor)
     }
 
     override fun apply_undo() {
@@ -402,9 +384,13 @@ open class OpusLayerCursor: OpusLayerHistory() {
     override fun apply_history_node(current_node: HistoryCache.HistoryNode, depth: Int) {
         when (current_node.token) {
             HistoryToken.CURSOR_SELECT_ROW -> {
+                var args = this.checked_cast<List<Int>>(current_node.args)
                 this.queue_cursor_select(
-                    current_node.token,
-                    this.checked_cast<List<Int>>(current_node.args)
+                    OpusManagerCursor(
+                        mode = OpusManagerCursor.CursorMode.Row,
+                        channel = args[0],
+                        line_offset =  args[1]
+                    )
                 )
             }
 
@@ -415,15 +401,60 @@ open class OpusLayerCursor: OpusLayerHistory() {
                 args.addAll(position)
 
                 this.queue_cursor_select(
-                    current_node.token,
-                    args
+                    OpusManagerCursor(
+                        mode = OpusManagerCursor.CursorMode.Single,
+                        channel = beat_key.channel,
+                        line_offset = beat_key.line_offset,
+                        beat = beat_key.beat,
+                        position = position
+                    )
                 )
             }
 
             HistoryToken.CURSOR_SELECT_COLUMN -> {
                 this.queue_cursor_select(
-                    current_node.token,
-                    this.checked_cast<List<Int>>(current_node.args)
+                    OpusManagerCursor(
+                        mode = OpusManagerCursor.CursorMode.Column,
+                        beat = current_node.args[0] as Int
+                    )
+                )
+            }
+
+            HistoryToken.CURSOR_SELECT_GLOBAL_CTL -> {
+                this.queue_cursor_select(
+                    OpusManagerCursor(
+                        mode = OpusManagerCursor.CursorMode.Single,
+                        beat = current_node.args[1] as Int,
+                        position = this.checked_cast<List<Int>>(current_node.args[2]),
+                        ctl_level = CtlLineLevel.Global,
+                        ctl_type = this.checked_cast<ControlEventType>(current_node.args[0])
+                    )
+                )
+            }
+            HistoryToken.CURSOR_SELECT_CHANNEL_CTL -> {
+                this.queue_cursor_select(
+                    OpusManagerCursor(
+                        mode = OpusManagerCursor.CursorMode.Single,
+                        channel = current_node.args[1] as Int,
+                        beat = current_node.args[2] as Int,
+                        position = this.checked_cast<List<Int>>(current_node.args[3]),
+                        ctl_level = CtlLineLevel.Channel,
+                        ctl_type = this.checked_cast<ControlEventType>(current_node.args[0])
+                    )
+                )
+            }
+            HistoryToken.CURSOR_SELECT_LINE_CTL -> {
+                val beat_key = this.checked_cast<BeatKey>(current_node.args[1])
+                this.queue_cursor_select(
+                    OpusManagerCursor(
+                        mode = OpusManagerCursor.CursorMode.Single,
+                        channel = beat_key.channel,
+                        line_offset = beat_key.line_offset,
+                        beat = beat_key.beat,
+                        position = this.checked_cast<List<Int>>(current_node.args[2]),
+                        ctl_level = CtlLineLevel.Line,
+                        ctl_type = this.checked_cast<ControlEventType>(current_node.args[0])
+                    )
                 )
             }
             else -> { }
@@ -496,6 +527,63 @@ open class OpusLayerCursor: OpusLayerHistory() {
                             listOf(
                                 args[0] as BeatKey,
                                 new_position
+                            )
+                        )
+                    }
+
+                    HistoryToken.REPLACE_GLOBAL_CTL_TREE -> {
+                        val new_position = this.checked_cast<List<Int>>(args[2]).toMutableList()
+                        var tree = this.checked_cast<OpusTree<ControlEventType>>(args[3])
+                        while (!tree.is_leaf()) {
+                            new_position.add(0)
+                            tree = tree[0]
+                        }
+
+                        this.push_to_history_stack(
+                            HistoryToken.CURSOR_SELECT_GLOBAL_CTL,
+                            listOf(
+                                args[0] as ControlEventType,
+                                args[1] as Int,
+                                new_position,
+                                tree
+                            )
+                        )
+                    }
+                    HistoryToken.REPLACE_CHANNEL_CTL_TREE -> {
+                        val new_position = this.checked_cast<List<Int>>(args[3]).toMutableList()
+                        var tree = this.checked_cast<OpusTree<ControlEventType>>(args[4])
+                        while (!tree.is_leaf()) {
+                            new_position.add(0)
+                            tree = tree[0]
+                        }
+
+                        this.push_to_history_stack(
+                            HistoryToken.CURSOR_SELECT_CHANNEL_CTL,
+                            listOf(
+                                args[0] as ControlEventType,
+                                args[1] as Int,
+                                args[1] as Int,
+                                new_position,
+                                tree
+                            )
+                        )
+                    }
+
+                    HistoryToken.REPLACE_LINE_CTL_TREE -> {
+                        val new_position = this.checked_cast<List<Int>>(args[2]).toMutableList()
+                        var tree = this.checked_cast<OpusTree<ControlEventType>>(args[3])
+                        while (!tree.is_leaf()) {
+                            new_position.add(0)
+                            tree = tree[0]
+                        }
+
+                        this.push_to_history_stack(
+                            HistoryToken.CURSOR_SELECT_LINE_CTL,
+                            listOf(
+                                args[0] as ControlEventType,
+                                args[1] as BeatKey,
+                                new_position,
+                                tree
                             )
                         )
                     }
@@ -638,6 +726,11 @@ open class OpusLayerCursor: OpusLayerHistory() {
     }
 
     // Cursor Functions ////////////////////////////////////////////////////////////////////////////
+    open fun cursor_apply(cursor: OpusManagerCursor) {
+        this.cursor.clear()
+        this.cursor = cursor
+    }
+
     open fun cursor_clear() {
         this.cursor.clear()
     }

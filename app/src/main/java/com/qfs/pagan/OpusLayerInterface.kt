@@ -14,6 +14,7 @@ import com.qfs.pagan.opusmanager.OpusEvent
 import com.qfs.pagan.opusmanager.OpusEventSTD
 import com.qfs.pagan.opusmanager.OpusLayerCursor
 import com.qfs.pagan.opusmanager.OpusLine
+import com.qfs.pagan.opusmanager.OpusManagerCursor
 import com.qfs.pagan.structure.OpusTree
 import java.lang.Integer.max
 import java.lang.Integer.min
@@ -1003,6 +1004,48 @@ class OpusLayerInterface : OpusLayerCursor() {
 
 
     // Cursor Functions ////////////////////////////////////////////////////////////////////////////
+    override fun cursor_apply(cursor: OpusManagerCursor) {
+        super.cursor_apply(cursor)
+
+        if (this.get_ui_lock_level() != UI_LOCK_FULL) {
+            this.runOnUiThread {
+                val editor_table = this.get_editor_table()
+                editor_table?.update_cursor(this.cursor)
+                this.withFragment {
+                    when (cursor.mode) {
+                        OpusManagerCursor.CursorMode.Row -> {
+                            if (cursor.ctl_level == null) {
+                                it.set_context_menu_line()
+                            } else {
+                                it.set_context_menu_control_line()
+                            }
+                        }
+                        OpusManagerCursor.CursorMode.Column -> {
+                            it.set_context_menu_column()
+                        }
+                        OpusManagerCursor.CursorMode.Single -> {
+                            if (cursor.ctl_level == null) {
+                                if (this.is_percussion(cursor.channel)) {
+                                    it.set_context_menu_leaf_percussion()
+                                } else {
+                                    it.set_context_menu_leaf()
+                                }
+                            } else {
+                                it.set_context_menu_line_control_leaf()
+                            }
+                        }
+                        OpusManagerCursor.CursorMode.Range -> {
+                            it.set_context_menu_linking()
+                        }
+                        OpusManagerCursor.CursorMode.Unset -> {
+                            it.clear_context_menu()
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     override fun cursor_clear() {
         super.cursor_clear()
 

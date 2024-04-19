@@ -3,6 +3,7 @@ package com.qfs.pagan
 import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.drawable.LayerDrawable
+import android.util.Log
 import android.view.ContextThemeWrapper
 import android.view.MotionEvent
 import android.view.View
@@ -11,11 +12,17 @@ import com.qfs.pagan.opusmanager.OpusLayerLinks
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import kotlin.math.roundToInt
 
-class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): AppCompatTextView(ContextThemeWrapper(context, R.style.line_label)), View.OnTouchListener {
+class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): AppCompatTextView(ContextThemeWrapper(context, R.style.line_label)) {
+    val click_threshold = 250
+    var press_timestamp: Long = 0
     init {
         this._set_colors()
         this.setOnClickListener {
             this.on_click()
+        }
+
+        this.setOnTouchListener { view: View?, touchEvent: MotionEvent? ->
+            this.touch_callback(view, touchEvent)
         }
     }
     override fun onAttachedToWindow() {
@@ -56,14 +63,13 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
                 }
             }
             else -> { }
-
         }
 
         mergeDrawableStates(drawableState, new_state.toIntArray())
         return drawableState
     }
 
-    fun on_click() {
+    private fun on_click() {
         val opus_manager = this.get_opus_manager()
 
         val cursor = opus_manager.cursor
@@ -157,15 +163,24 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
         )
     }
 
-    override fun onTouch(view: View?, touchEvent: MotionEvent?): Boolean {
-        val column_layout = this.parent.parent as LineLabelColumnLayout
+    fun touch_callback(view: View?, touchEvent: MotionEvent?): Boolean {
+        var parent = view?.parent ?: return false
+        while (parent != null && parent !is LineLabelColumnLayout) {
+            parent = parent.parent
+        }
+        if (parent == null) {
+            return false
+        }
+
+        val column_layout = parent as LineLabelColumnLayout
 
         return if (touchEvent == null) {
             true
         } else if (touchEvent.action == MotionEvent.ACTION_MOVE) {
+            Log.d("AAA", "DRAG?")
             if (!column_layout.is_dragging()) {
                 column_layout.set_dragging_line(this.channel, this.line_offset)
-                (view as LineLabelView).startDragAndDrop(
+                (view!!.parent as LineLabelView).startDragAndDrop(
                     null,
                     DragShadowBuilder(view),
                     null,
@@ -175,9 +190,17 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
             true
         } else if (touchEvent.action == MotionEvent.ACTION_DOWN) {
             column_layout.stop_dragging()
+            this.press_timestamp = System.currentTimeMillis()
             true
+        } else if (touchEvent.action == MotionEvent.ACTION_UP) {
+            if (System.currentTimeMillis() - this.press_timestamp < this.click_threshold && !column_layout.is_dragging()) {
+                performClick()
+                true
+            } else {
+                false
+            }
         } else {
-            performClick()
+            false
         }
     }
 

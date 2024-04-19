@@ -55,6 +55,7 @@ class LineLabelColumnLayout(editor_table: EditorTable): ScrollView(editor_table.
         this.dragging_position = Pair(channel, line_offset)
     }
     fun is_dragging(): Boolean {
+
         return this.dragging_position != null
     }
     fun stop_dragging() {

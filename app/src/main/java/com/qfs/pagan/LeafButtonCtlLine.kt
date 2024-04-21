@@ -28,6 +28,10 @@ class LeafButtonCtlLine(
         )
     }
 
+    override fun long_click(): Boolean {
+        TODO("Not yet implemented")
+    }
+
     override fun is_selected(): Boolean {
         val opus_manager = this.get_opus_manager()
         return opus_manager.is_line_control_selected(

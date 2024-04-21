@@ -47,17 +47,10 @@ abstract class LeafButtonCtl(
         this.setPadding(0,0,0,0)
     }
 
-    override fun long_click(): Boolean {
-        TODO("Not yet implemented")
-    }
-
     override fun callback_click() {
         TODO("Not Yet Implemented")
     }
 
-    override fun is_selected(): Boolean {
-        TODO("Not yet implemented")
-    }
 
     fun set_text() {
         this.removeAllViews()

@@ -246,6 +246,13 @@ data class OpusManagerCursor(
         this.ctl_level = null
     }
 
+    fun select_global_ctl_end_point(type: ControlEventType, beat: Int) {
+        this.select_ctl_at_global(beat, listOf(), type)
+        this.is_linking = true
+        this.ctl_type = type
+        this.ctl_level = CtlLineLevel.Global
+    }
+
     //fun move_left() {
     //    var working_tree = this.opus_manager.get_beat_tree(this.get_beatkey())
     //    for (i in this.position) {

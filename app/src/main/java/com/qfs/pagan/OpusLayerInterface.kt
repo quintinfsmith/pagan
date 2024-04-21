@@ -1300,6 +1300,21 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
+    override fun cursor_select_global_ctl_end_point(type: ControlEventType, beat: Int) {
+        super.cursor_select_global_ctl_end_point(type, beat)
+        if (this.get_ui_lock_level() != null) {
+            return
+        }
+
+        this.runOnUiThread {
+            this.withFragment {
+                it.set_context_menu_line_control_leaf_b()
+            }
+            val editor_table = this.get_editor_table() ?: return@runOnUiThread
+            editor_table.update_cursor(this.cursor)
+        }
+    }
+
     override fun cursor_select_range_to_link(beat_key_a: BeatKey, beat_key_b: BeatKey) {
         super.cursor_select_range(beat_key_a, beat_key_b)
 
@@ -1342,7 +1357,6 @@ class OpusLayerInterface : OpusLayerCursor() {
         activity.findViewById<View>(R.id.btnDeleteProject).isEnabled = true
         activity.findViewById<View>(R.id.btnCopyProject).isEnabled = true
     }
-
 
     override fun link_beats(beat_key: BeatKey, target: BeatKey) {
         super.link_beats(beat_key, target)

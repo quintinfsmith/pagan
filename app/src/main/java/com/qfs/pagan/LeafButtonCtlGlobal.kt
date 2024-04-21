@@ -19,6 +19,15 @@ class LeafButtonCtlGlobal(
             this.position
         )
     }
+
+    override fun long_click(): Boolean {
+        val opus_manager = this.get_opus_manager()
+        opus_manager.cursor_select_global_ctl_end_point(
+            this.control_type,
+            this.get_beat()
+        )
+        return true
+    }
     override fun is_selected(): Boolean {
         val opus_manager = this.get_opus_manager()
         return opus_manager.is_global_control_selected(

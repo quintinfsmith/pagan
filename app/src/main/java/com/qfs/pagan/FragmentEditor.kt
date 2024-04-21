@@ -341,6 +341,14 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         }
     }
 
+    internal fun set_context_menu_line_control_leaf_b() {
+        if (!this.refresh_or_clear_context_menu<ContextMenuControlLeafB>()) {
+            val llContextMenu = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenu)
+            val new_menu = ContextMenuControlLeafB(this.activity!!)
+            llContextMenu.addView(new_menu)
+        }
+    }
+
     internal fun set_context_menu_linking() {
         if (!this.refresh_or_clear_context_menu<ContextMenuLink>()) {
             val llContextMenu = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenu)

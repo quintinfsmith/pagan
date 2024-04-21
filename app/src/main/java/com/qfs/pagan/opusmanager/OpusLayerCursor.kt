@@ -787,6 +787,10 @@ open class OpusLayerCursor: OpusLayerHistory() {
         this.cursor.select_range(beat_key_a, beat_key_b)
     }
 
+    open fun cursor_select_global_ctl_end_point(type: ControlEventType, beat: Int) {
+        this.cursor.select_global_ctl_end_point(type, beat)
+    }
+
     fun get_tree(): OpusTree<OpusEventSTD> {
         return this.get_tree(
             this.cursor.get_beatkey(),

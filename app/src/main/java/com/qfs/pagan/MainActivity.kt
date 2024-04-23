@@ -915,9 +915,11 @@ class MainActivity : AppCompatActivity() {
             if (title_msg != null) {
                 this.force_title_text(title_msg)
             }
+
             if (this._progress_bar == null) {
                 this._progress_bar = PaganProgressBar(this)
             }
+
             this._progress_bar!!.isClickable = true
             val params: RelativeLayout.LayoutParams = RelativeLayout.LayoutParams(100, 100)
             params.addRule(RelativeLayout.CENTER_IN_PARENT)

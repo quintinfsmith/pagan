@@ -1041,6 +1041,70 @@ class OpusLayerInterface : OpusLayerCursor() {
                             it.clear_context_menu()
                         }
                     }
+
+                    when (cursor.mode) {
+                        OpusManagerCursor.CursorMode.Row -> {
+                            editor_table?.scroll_to_position(
+                                y = when (cursor.ctl_level) {
+                                    CtlLineLevel.Line -> this.get_visible_row_from_ctl_line_line(cursor.ctl_type!!, cursor.channel, cursor.line_offset)
+                                    CtlLineLevel.Channel -> this.get_visible_row_from_ctl_line_channel(cursor.ctl_type!!, cursor.channel)
+                                    CtlLineLevel.Global -> this.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
+                                    null -> this.get_visible_row_from_ctl_line(
+                                        this.get_ctl_line_index(
+                                            this.get_abs_offset(
+                                                cursor.channel,
+                                                cursor.line_offset
+                                            )
+                                        )
+                                    )
+                                }
+                            )
+                        }
+                        OpusManagerCursor.CursorMode.Column -> {
+                            editor_table?.scroll_to_position(
+                                x = cursor.beat,
+                                position = cursor.position
+                            )
+                        }
+                        OpusManagerCursor.CursorMode.Single -> {
+                            editor_table?.scroll_to_position(
+                                x = cursor.beat,
+                                position = cursor.position,
+                                y = when (cursor.ctl_level) {
+                                    CtlLineLevel.Line -> this.get_visible_row_from_ctl_line_line(cursor.ctl_type!!, cursor.channel, cursor.line_offset)
+                                    CtlLineLevel.Channel -> this.get_visible_row_from_ctl_line_channel(cursor.ctl_type!!, cursor.channel)
+                                    CtlLineLevel.Global -> this.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
+                                    null -> this.get_visible_row_from_ctl_line(
+                                        this.get_ctl_line_index(
+                                            this.get_abs_offset(
+                                                cursor.channel,
+                                                cursor.line_offset
+                                            )
+                                        )
+                                    )
+                                }
+                            )
+                        }
+                        OpusManagerCursor.CursorMode.Range -> {
+                            editor_table?.scroll_to_position(
+                                x = cursor.range!!.first.beat,
+                                y = when (cursor.ctl_level) {
+                                    CtlLineLevel.Line -> this.get_visible_row_from_ctl_line_line(cursor.ctl_type!!, cursor.range!!.first.channel, cursor.range!!.first.line_offset)
+                                    CtlLineLevel.Channel -> this.get_visible_row_from_ctl_line_channel(cursor.ctl_type!!, cursor.range!!.first.channel)
+                                    CtlLineLevel.Global -> this.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
+                                    null -> this.get_visible_row_from_ctl_line(
+                                        this.get_ctl_line_index(
+                                            this.get_abs_offset(
+                                                cursor.range!!.first.channel,
+                                                cursor.range!!.first.line_offset
+                                            )
+                                        )
+                                    )
+                                }
+                            )
+                        }
+                        OpusManagerCursor.CursorMode.Unset -> { }
+                    }
                 }
             }
         }
@@ -1155,7 +1219,6 @@ class OpusLayerInterface : OpusLayerCursor() {
             }
 
             val scroll_to_row = this._cached_ctl_map_global[ctl_type] ?: return@runOnUiThread
-
             editor_table?.scroll_to_position(y = scroll_to_row)
         }
     }
@@ -1274,13 +1337,13 @@ class OpusLayerInterface : OpusLayerCursor() {
         this.runOnUiThread {
             this.withFragment {
                 it.set_context_menu_line_control_leaf()
+                val editor_table = this.get_editor_table() ?: return@withFragment
+                editor_table.update_cursor(this.cursor, false)
+
+                val scroll_to_row = this._cached_ctl_map_global[ctl_type] ?: return@withFragment
+                editor_table.scroll_to_position(y = scroll_to_row)
+
             }
-
-            val editor_table = this.get_editor_table() ?: return@runOnUiThread
-            editor_table.update_cursor(this.cursor, false)
-
-            // TODO
-            //editor_table.scroll_to_position(, position)
         }
     }
 

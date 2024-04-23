@@ -12,6 +12,7 @@ import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.Transition
+import com.qfs.pagan.opusmanager.TrivialActionException
 import kotlin.math.roundToInt
 
 class ContextMenuControlLeaf(context: Context, attrs: AttributeSet? = null): ContextMenuView(R.layout.contextmenu_line_ctl_leaf, context, attrs) {
@@ -65,7 +66,11 @@ class ContextMenuControlLeaf(context: Context, attrs: AttributeSet? = null): Con
             duration = current_duration
         )
 
-        opus_manager.set_event_at_cursor(new_event)
+        try {
+            opus_manager.set_event_at_cursor(new_event)
+        } catch (e: TrivialActionException) {
+            // No Feedback Needed
+        }
     }
 
     fun init_widget() {

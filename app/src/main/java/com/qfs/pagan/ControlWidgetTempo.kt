@@ -17,10 +17,8 @@ class ControlWidgetTempo(default: Float, context: Context, callback: (Float) -> 
         this.input.text = "$default BPM"
         this.input.setOnClickListener {
             this.input.get_main().dialog_float_input(context.getString(R.string.dlg_set_tempo), this.min, this.max, this.get_value()) { new_value: Float ->
-                if (new_value != this.get_value()) {
-                    this.set_value(new_value)
-                    this.callback(new_value)
-                }
+                this.set_value(new_value)
+                this.callback(new_value)
             }
         }
 

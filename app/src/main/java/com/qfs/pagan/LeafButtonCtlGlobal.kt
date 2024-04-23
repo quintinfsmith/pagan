@@ -28,6 +28,7 @@ class LeafButtonCtlGlobal(
         )
         return true
     }
+
     override fun is_selected(): Boolean {
         val opus_manager = this.get_opus_manager()
         return opus_manager.is_global_control_selected(

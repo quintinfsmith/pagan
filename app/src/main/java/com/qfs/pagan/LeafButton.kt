@@ -131,6 +131,7 @@ abstract class LeafButton(context: Context) : LinearLayout(context) {
     abstract fun callback_click()
     abstract fun is_selected(): Boolean
     abstract fun _build_drawable_state(drawableState: IntArray?): IntArray?
+
     // ------------------------------------------------------//
     fun get_activity(): MainActivity {
         return (this.context as ContextThemeWrapper).baseContext as MainActivity

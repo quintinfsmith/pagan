@@ -918,16 +918,25 @@ open class OpusLayerBase {
 
     open fun set_line_ctl_event(type: ControlEventType, beat_key: BeatKey, position: List<Int>, event: OpusControlEvent) {
         val tree = this.get_line_ctl_tree(type, beat_key, position)
+        if (tree.get_event() == event) {
+            throw TrivialActionException()
+        }
         tree.set_event(event)
     }
 
     open fun set_channel_ctl_event(type: ControlEventType, channel: Int, beat: Int, position: List<Int>, event: OpusControlEvent) {
         val tree = this.get_channel_ctl_tree(type, channel, beat, position)
+        if (tree.get_event() == event) {
+            throw TrivialActionException()
+        }
         tree.set_event(event)
     }
 
     open fun set_global_ctl_event(type: ControlEventType, beat: Int, position: List<Int>, event: OpusControlEvent) {
         val tree = this.get_global_ctl_tree(type, beat, position)
+        if (tree.get_event() == event) {
+            throw TrivialActionException()
+        }
         tree.set_event(event)
     }
 

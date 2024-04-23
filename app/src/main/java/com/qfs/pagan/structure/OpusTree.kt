@@ -191,6 +191,7 @@ class OpusTree<T> {
         copied.event = this.get_event_copy(copy_func)
         return copied
     }
+
     fun get_event_copy(copy_func: ((tree: OpusTree<T>) -> T?)? = null): T? {
         return if (copy_func == null) {
             this.copy_event(this)
@@ -287,7 +288,7 @@ class OpusTree<T> {
     }
 
     fun is_leaf(): Boolean {
-        return this.event != null || this.size == 0
+        return this.event != null || this.divisions.size == 0
     }
 
     fun is_event(): Boolean {
@@ -306,10 +307,14 @@ class OpusTree<T> {
 
     fun set_event(event: T) {
         this.event = event
+        this.size = 1
+        this.divisions.clear()
     }
 
     fun unset_event() {
         this.event = null
+        this.size = 1
+        this.divisions.clear()
     }
 
     fun get_event(): T? {
@@ -341,6 +346,8 @@ class OpusTree<T> {
                 }
             } else {
                 this.event = child.get_event()
+                this.divisions.clear()
+                this.size = 1
                 return
             }
         }
@@ -389,16 +396,15 @@ class OpusTree<T> {
 
     fun pop(x: Int?=null): OpusTree<T> {
         val index = x ?: (this.size - 1)
-        val output = this.divisions[index]!!
-        val new_divisions = HashMap<Int, OpusTree<T>>()
-        for (i in this.divisions.keys) {
-            if (i < index) {
-                new_divisions[i] = this.divisions[i]!!
-            } else if (i > index) {
-                new_divisions[i - 1] = this.divisions[i]!!
+
+        val output = this.divisions.remove(index)!!
+
+        for (i in this.divisions.keys.sorted()) {
+            if (i > index) {
+                this.divisions[i - 1] = this.divisions.remove(i)!!
             }
         }
-        this.divisions = new_divisions
+
         this.size = max(this.size - 1, 1)
 
         return output
@@ -423,7 +429,7 @@ class OpusTree<T> {
 
     fun empty() {
         this.divisions = HashMap()
-        this.size = 0
+        this.size = 1
     }
 
     fun split(split_func: (event: T) -> Int): List<OpusTree<T>> {

@@ -726,6 +726,30 @@ open class OpusLayerHistory : OpusLayerLinks() {
         }
     }
 
+    override fun unset_channel_ctl(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
+        this._remember {
+            this.push_replace_channel_ctl(type, channel, beat, position) {
+                super.unset_channel_ctl(type, channel, beat, position)
+            }
+        }
+    }
+
+    override fun unset_global_ctl(type: ControlEventType, beat: Int, position: List<Int>) {
+        this._remember {
+            this.push_replace_global_ctl(type, beat, position) {
+                super.unset_global_ctl(type, beat, position)
+            }
+        }
+    }
+
+    override fun unset_line_ctl(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
+        this._remember {
+            this.push_replace_line_ctl(type, beat_key, position) {
+                super.unset_line_ctl(type, beat_key, position)
+            }
+        }
+    }
+
     override fun unset(beat_key: BeatKey, position: List<Int>) {
         this._remember {
             val tree = this.get_tree(beat_key, position)

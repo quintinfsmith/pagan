@@ -1,89 +1,98 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout android:id="@+id/llContextLink"
+<LinearLayout
+    android:id="@+id/llContextLink"
     android:padding="@dimen/number_selector_spacing"
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     xmlns:app="http://schemas.android.com/apk/res-auto">
-    <LinearLayout
-        android:id="@+id/clTextViews"
+
+    <com.qfs.pagan.PaganTextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#FF00FF"
-        android:layout_weight="1">
+        android:textAlignment="center"
+        android:id="@+id/tvLinkLabel"
+        android:text="@string/label_link_beat"
+        android:paddingTop="8dp"/>
 
-        <com.qfs.pagan.ButtonIcon
-            android:id="@+id/btnSplit"
-            android:layout_gravity="center"
-            android:layout_width="@dimen/icon_button_width"
-            android:layout_height="@dimen/icon_button_height"
-            android:text="Split"
-            android:contentDescription="@string/cd_split"
-            app:srcCompat="@drawable/split"/>
+    <RadioGroup
+        android:id="@+id/rgLinkMode"
+        android:orientation="horizontal"
+        android:checkedButton="@id/rbLinkModeLink"
+        android:layout_height="wrap_content"
+        android:minHeight="41dp"
+        android:layout_width="match_parent">
+        <com.qfs.pagan.PaganRadioButton
+            android:id="@+id/rbLinkModeCopy"
+            android:layout_margin="0dp"
+            android:theme="@style/link_mode_button"
+            android:text="Copy"
+            android:layout_gravity="center_vertical"
+            android:layout_height="match_parent"
+            android:layout_width="wrap_content"/>
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"/>
+        <com.qfs.pagan.PaganRadioButton
+            android:id="@+id/rbLinkModeMove"
+            android:layout_margin="0dp"
+            android:theme="@style/link_mode_button"
+            android:text="Move"
+            android:layout_gravity="center_vertical"
+            android:layout_height="match_parent"
+            android:layout_width="wrap_content"/>
 
         <Space
+            android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:layout_width="0dp"/>
-
-        <com.qfs.pagan.ButtonIcon
-            android:id="@+id/btnInsert"
-            android:layout_width="@dimen/icon_button_width"
-            android:layout_height="@dimen/icon_button_height"
-            android:contentDescription="@string/cd_insert"
-            android:text="Insert"
-            app:srcCompat="@drawable/insert" />
-
-        <Space
+            android:layout_weight="1"/>
+        <com.qfs.pagan.PaganRadioButton
+            android:id="@+id/rbLinkModeLink"
+            android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:layout_width="0dp"/>
-
-        <com.qfs.pagan.ButtonIcon
-            android:theme="@style/icon_button"
-            android:id="@+id/btnRemove"
-            android:layout_width="@dimen/icon_button_width"
-            android:layout_height="@dimen/icon_button_height"
-            android:contentDescription="@string/cd_remove"
-            android:text="Remove"
-            app:srcCompat="@drawable/remove" />
-
-        <Space
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:layout_width="0dp"/>
-
-        <com.qfs.pagan.ButtonIcon
-            android:theme="@style/icon_button"
-            android:id="@+id/btnUnset"
-            android:layout_width="@dimen/icon_button_width"
-            android:layout_height="@dimen/icon_button_height"
-            android:contentDescription="@string/cd_unset"
-            android:text="Unset"
-            app:srcCompat="@drawable/unset" />
-
-        <Space
-            android:visibility="gone"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:layout_width="0dp"/>
-
-        <com.qfs.pagan.ButtonStd
-            android:visibility="gone"
-            android:theme="@style/icon_button"
-            android:id="@+id/btnDuration"
-            android:layout_width="@dimen/icon_button_width"
-            android:layout_height="@dimen/icon_button_height"
-            android:text="T" />
-    </LinearLayout>
+            android:layout_margin="0dp"
+            android:text="Link"
+            android:theme="@style/link_mode_button" />
+    </RadioGroup>
 
     <LinearLayout
-        android:id="@+id/llCtlTarget"
-        android:padding="8dp"
+        android:orientation="horizontal"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
-    </LinearLayout>
+        android:layout_height="wrap_content">
 
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"/>
+
+        <com.qfs.pagan.ButtonIcon
+            android:theme="@style/icon_button"
+            android:layout_width="@dimen/icon_button_width"
+            android:layout_height="@dimen/icon_button_height"
+            android:id="@+id/btnUnLink"
+            android:src="@drawable/unlink"
+            android:contentDescription="Remove Link" />
+
+        <com.qfs.pagan.ButtonIcon
+            android:theme="@style/icon_button"
+            android:layout_width="@dimen/icon_button_width"
+            android:layout_height="@dimen/icon_button_height"
+            android:layout_marginStart="@dimen/number_selector_spacing"
+            android:src="@drawable/unlinkall"
+            android:id="@+id/btnUnLinkAll"
+            android:contentDescription="Remove All Links"/>
+
+        <com.qfs.pagan.ButtonIcon
+            android:theme="@style/icon_button"
+            android:layout_width="@dimen/icon_button_width"
+            android:layout_height="@dimen/icon_button_height"
+            android:layout_marginStart="@dimen/number_selector_spacing"
+            android:src="@drawable/unset"
+            android:id="@+id/btnEraseSelection"
+            android:contentDescription="Clear Selection"/>
+
+
+    </LinearLayout>
 </LinearLayout>

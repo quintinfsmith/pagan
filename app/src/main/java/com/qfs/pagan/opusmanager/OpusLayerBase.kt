@@ -1890,7 +1890,6 @@ open class OpusLayerBase {
                 val opus_event = active_event_map[Pair(channel, note)] ?: continue
                 opus_event_duration_map[opus_event] = (tick - opus_event.duration).toFloat() / beat_size.toFloat()
             } else if (event is TimeSignature) {
-
                 total_beat_offset += (tick - last_ts_change) / beat_size
 
                 denominator = 2F.pow(event.get_denominator())
@@ -1933,8 +1932,7 @@ open class OpusLayerBase {
                 }
 
                 val tree = tempo_line[beat_index]
-                tree.event = OpusControlEvent(working_tempo)
-
+                tree[inner_beat_offset].set_event(OpusControlEvent(working_tempo))
             } else if (event is ProgramChange) {
                 instrument_map.add(Triple(event.channel, null, event.get_program()))
             } else if (event is BankSelect) {
@@ -1952,7 +1950,6 @@ open class OpusLayerBase {
         }
 
         opus.set_size(beat_values.size)
-
 
         var overflow_events = mutableSetOf<OpusEventSTD>()
         beat_values.forEachIndexed { i, beat_tree ->
@@ -2136,8 +2133,6 @@ open class OpusLayerBase {
                 }
                 tmp_channel_counts[channel_index] = line_offset + 1
 
-
-
                 val working_position = mutableListOf<Int>()
                 var working_beatkey: BeatKey? = null
 
@@ -2221,7 +2216,7 @@ open class OpusLayerBase {
 
         val tempo_controller = this.controllers.get_controller(ControlEventType.Tempo)
         tempo_line.forEachIndexed { i: Int, tree: OpusTree<OpusControlEvent> ->
-            if (!tree.is_leaf() || tree.is_event()) {
+            if (!tree.is_eventless()) {
                 tempo_controller.events[i] = tree
             }
         }
@@ -2234,10 +2229,10 @@ open class OpusLayerBase {
         val first_tempo_tree = tempo_controller.get_tree(0)
         val position = first_tempo_tree.get_first_event_tree_position()
         val first_tempo_leaf = first_tempo_tree.get(position ?: listOf())
+
         if (first_tempo_leaf.is_event()) {
             tempo_controller.set_initial_value(first_tempo_leaf.event!!.value)
             first_tempo_leaf.unset_event()
-            first_tempo_tree.reduce()
         } else {
             tempo_controller.set_initial_value(
                 ActiveControlSet.ActiveController.default_value(ControlEventType.Tempo)

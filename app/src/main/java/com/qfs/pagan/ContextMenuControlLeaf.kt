@@ -289,7 +289,6 @@ class ContextMenuControlLeaf(context: Context, attrs: AttributeSet? = null): Con
                 )
             }
         }
-
         this.button_remove.isEnabled = cursor.position.isNotEmpty()
         this.button_unset.isEnabled = ctl_tree.is_event()
         this.widget.set_value(current_value)

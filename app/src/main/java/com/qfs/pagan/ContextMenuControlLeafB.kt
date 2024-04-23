@@ -3,14 +3,12 @@ package com.qfs.pagan
 import android.content.Context
 import android.util.AttributeSet
 import android.view.View
-import android.widget.RadioGroup
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 
-class ContextMenuControlLeafB(context: Context, attrs: AttributeSet? = null): ContextMenuView(R.layout.contextmenu_linking, context, attrs) {
+class ContextMenuControlLeafB(context: Context, attrs: AttributeSet? = null): ContextMenuView(R.layout.contextmenu_line_ctl_leaf_b, context, attrs) {
     lateinit var button_unlink: ButtonIcon
     lateinit var button_unlink_all: ButtonIcon
     lateinit var button_erase: ButtonIcon
-    lateinit var radio_mode: RadioGroup
     lateinit var label: PaganTextView
     override fun init_properties() {
         super.init_properties()
@@ -18,62 +16,17 @@ class ContextMenuControlLeafB(context: Context, attrs: AttributeSet? = null): Co
         this.button_unlink_all = this.findViewById(R.id.btnUnLinkAll)
         this.button_erase = this.findViewById(R.id.btnEraseSelection)
         this.label = this.findViewById(R.id.tvLinkLabel)
-        this.radio_mode = this.findViewById<RadioGroup?>(R.id.rgLinkMode)
     }
 
     override fun setup_interactions() {
         this.button_erase.setOnClickListener {
             this.get_opus_manager().unset()
         }
-
-        this.radio_mode?.setOnCheckedChangeListener { _: RadioGroup, button_id: Int ->
-            val main = this.get_main()
-            val opus_manager = this.get_opus_manager()
-
-            main.configuration.link_mode = when (button_id) {
-                R.id.rbLinkModeLink -> PaganConfiguration.LinkMode.LINK
-                R.id.rbLinkModeMove -> PaganConfiguration.LinkMode.MOVE
-                R.id.rbLinkModeCopy -> PaganConfiguration.LinkMode.COPY
-                else -> PaganConfiguration.LinkMode.COPY
-            }
-            main.save_configuration()
-
-            label.text = when (button_id) {
-                R.id.rbLinkModeLink -> {
-                    if (opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Range) {
-                        resources.getString(R.string.label_link_range)
-                    } else {
-                        resources.getString(R.string.label_link_beat)
-                    }
-                }
-                R.id.rbLinkModeMove -> {
-                    if (opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Range) {
-                        resources.getString(R.string.label_move_range)
-                    } else {
-                        resources.getString(R.string.label_move_beat)
-                    }
-                }
-                // R.id.rbLinkModeCopy,
-                else -> {
-                    if (opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Range) {
-                        resources.getString(R.string.label_copy_range)
-                    } else {
-                        resources.getString(R.string.label_copy_beat)
-                    }
-                }
-            }
-        }
     }
 
     override fun refresh() {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
-
-        this.radio_mode.check(when (main.configuration.link_mode) {
-            PaganConfiguration.LinkMode.LINK -> R.id.rbLinkModeLink
-            PaganConfiguration.LinkMode.MOVE -> R.id.rbLinkModeMove
-            PaganConfiguration.LinkMode.COPY -> R.id.rbLinkModeCopy
-        })
 
 
         val (is_networked, many_links) = if (opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Range) {

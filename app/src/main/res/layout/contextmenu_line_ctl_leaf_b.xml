@@ -16,46 +16,10 @@
         android:text="@string/label_link_beat"
         android:paddingTop="8dp"/>
 
-    <RadioGroup
-        android:id="@+id/rgLinkMode"
-        android:orientation="horizontal"
-        android:checkedButton="@id/rbLinkModeLink"
-        android:layout_height="wrap_content"
-        android:minHeight="41dp"
-        android:layout_width="match_parent">
-        <com.qfs.pagan.PaganRadioButton
-            android:id="@+id/rbLinkModeCopy"
-            android:layout_margin="0dp"
-            android:theme="@style/link_mode_button"
-            android:text="Copy"
-            android:layout_gravity="center_vertical"
-            android:layout_height="match_parent"
-            android:layout_width="wrap_content"/>
-        <Space
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"/>
-        <com.qfs.pagan.PaganRadioButton
-            android:id="@+id/rbLinkModeMove"
-            android:layout_margin="0dp"
-            android:theme="@style/link_mode_button"
-            android:text="Move"
-            android:layout_gravity="center_vertical"
-            android:layout_height="match_parent"
-            android:layout_width="wrap_content"/>
-
-        <Space
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"/>
-        <com.qfs.pagan.PaganRadioButton
-            android:id="@+id/rbLinkModeLink"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_margin="0dp"
-            android:text="Link"
-            android:theme="@style/link_mode_button" />
-    </RadioGroup>
+    <com.qfs.pagan.PaganSwitch
+        android:id="@+id/sCtlCopyMode"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
 
     <LinearLayout
         android:orientation="horizontal"

@@ -5,26 +5,26 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    android:orientation="horizontal">
 
-    <com.qfs.pagan.PaganTextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textAlignment="center"
-        android:id="@+id/tvLinkLabel"
-        android:text="@string/label_link_beat"
-        android:paddingTop="8dp"/>
+        <com.qfs.pagan.PaganTextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAlignment="center"
+            android:id="@+id/tvLinkLabel"
+            android:text="@string/label_link_beat"
+            android:paddingTop="8dp"/>
 
-    <com.qfs.pagan.PaganSwitch
-        android:id="@+id/sCtlCopyMode"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"/>
 
-    <LinearLayout
-        android:orientation="horizontal"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        <com.qfs.pagan.PaganSwitch
+            android:id="@+id/sCtlCopyMode"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
 
         <Space
             android:layout_width="0dp"
@@ -35,28 +35,8 @@
             android:theme="@style/icon_button"
             android:layout_width="@dimen/icon_button_width"
             android:layout_height="@dimen/icon_button_height"
-            android:id="@+id/btnUnLink"
-            android:src="@drawable/unlink"
-            android:contentDescription="Remove Link" />
-
-        <com.qfs.pagan.ButtonIcon
-            android:theme="@style/icon_button"
-            android:layout_width="@dimen/icon_button_width"
-            android:layout_height="@dimen/icon_button_height"
-            android:layout_marginStart="@dimen/number_selector_spacing"
-            android:src="@drawable/unlinkall"
-            android:id="@+id/btnUnLinkAll"
-            android:contentDescription="Remove All Links"/>
-
-        <com.qfs.pagan.ButtonIcon
-            android:theme="@style/icon_button"
-            android:layout_width="@dimen/icon_button_width"
-            android:layout_height="@dimen/icon_button_height"
             android:layout_marginStart="@dimen/number_selector_spacing"
             android:src="@drawable/unset"
             android:id="@+id/btnEraseSelection"
             android:contentDescription="Clear Selection"/>
-
-
-    </LinearLayout>
 </LinearLayout>

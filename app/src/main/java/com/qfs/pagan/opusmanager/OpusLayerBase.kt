@@ -2762,6 +2762,36 @@ open class OpusLayerBase {
         return this._cached_inv_abs_line_map_map[abs]!!
     }
 
+    fun get_current_line_controller_value(type: ControlEventType, beat_key: BeatKey, position: List<Int>): Float {
+        val controller = this.channels[beat_key.channel].lines[beat_key.line_offset].controllers.get_controller(type)
+        return controller.get_current_value(beat_key.beat, position)
+    }
+
+    fun get_current_channel_controller_value(type: ControlEventType, channel: Int, beat: Int, position: List<Int>): Float {
+        val controller = this.channels[channel].controllers.get_controller(type)
+        return controller.get_current_value(beat, position)
+    }
+
+    fun get_current_global_controller_value(type: ControlEventType, beat: Int, position: List<Int>): Float {
+        val controller = this.controllers.get_controller(type)
+        return controller.get_current_value(beat, position)
+    }
+
+    open fun set_global_controller_initial_value(type: ControlEventType, value: Float) {
+        val controller = this.controllers.get_controller(type)
+        controller.initial_value = value
+    }
+
+    open fun set_channel_controller_initial_value(type: ControlEventType, channel: Int, value: Float) {
+        val controller = this.channels[channel].controllers.get_controller(type)
+        controller.initial_value = value
+    }
+
+    open fun set_line_controller_initial_value(type: ControlEventType, channel: Int, line_offset: Int, value: Float) {
+        val controller = this.channels[channel].lines[line_offset].controllers.get_controller(type)
+        controller.initial_value = value
+    }
+
     // Experimental/ not in use -yet ----------vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
     /*
         Reduce the number of beats in a project without losing any information.
@@ -2863,34 +2893,4 @@ open class OpusLayerBase {
         return output
     }
 
-
-    fun get_current_line_controller_value(type: ControlEventType, beat_key: BeatKey, position: List<Int>): Float {
-        val controller = this.channels[beat_key.channel].lines[beat_key.line_offset].controllers.get_controller(type)
-        return controller.get_current_value(beat_key.beat, position)
-    }
-
-    fun get_current_channel_controller_value(type: ControlEventType, channel: Int, beat: Int, position: List<Int>): Float {
-        val controller = this.channels[channel].controllers.get_controller(type)
-        return controller.get_current_value(beat, position)
-    }
-
-    fun get_current_global_controller_value(type: ControlEventType, beat: Int, position: List<Int>): Float {
-        val controller = this.controllers.get_controller(type)
-        return controller.get_current_value(beat, position)
-    }
-
-    open fun set_global_controller_initial_value(type: ControlEventType, value: Float) {
-        val controller = this.controllers.get_controller(type)
-        controller.initial_value = value
-    }
-
-    open fun set_channel_controller_initial_value(type: ControlEventType, channel: Int, value: Float) {
-        val controller = this.channels[channel].controllers.get_controller(type)
-        controller.initial_value = value
-    }
-
-    open fun set_line_controller_initial_value(type: ControlEventType, channel: Int, line_offset: Int, value: Float) {
-        val controller = this.channels[channel].lines[line_offset].controllers.get_controller(type)
-        controller.initial_value = value
-    }
 }

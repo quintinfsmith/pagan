@@ -2,98 +2,28 @@ package com.qfs.pagan
 
 import android.content.Context
 import android.util.AttributeSet
-import android.view.View
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 
 class ContextMenuControlLeafB(context: Context, attrs: AttributeSet? = null): ContextMenuView(R.layout.contextmenu_line_ctl_leaf_b, context, attrs) {
-    lateinit var button_unlink: ButtonIcon
-    lateinit var button_unlink_all: ButtonIcon
     lateinit var button_erase: ButtonIcon
     lateinit var label: PaganTextView
     override fun init_properties() {
         super.init_properties()
-        this.button_unlink = this.findViewById(R.id.btnUnLink)
-        this.button_unlink_all = this.findViewById(R.id.btnUnLinkAll)
         this.button_erase = this.findViewById(R.id.btnEraseSelection)
         this.label = this.findViewById(R.id.tvLinkLabel)
     }
 
     override fun setup_interactions() {
         this.button_erase.setOnClickListener {
-            this.get_opus_manager().unset()
+            if (it.isEnabled) {
+                this.get_opus_manager().unset()
+            }
         }
     }
 
     override fun refresh() {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
-
-
-        val (is_networked, many_links) = if (opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Range) {
-            this.label.text = when (main.configuration.link_mode) {
-                PaganConfiguration.LinkMode.LINK -> resources.getString(R.string.label_link_range)
-                PaganConfiguration.LinkMode.MOVE -> resources.getString(R.string.label_move_range)
-                PaganConfiguration.LinkMode.COPY -> resources.getString(R.string.label_copy_range)
-            }
-
-            var output = false
-            for (beat_key in opus_manager.get_beatkeys_in_range(
-                opus_manager.cursor.range!!.first,
-                opus_manager.cursor.range!!.second
-            )) {
-                if (opus_manager.is_networked(beat_key)) {
-                    output = true
-                    break
-                }
-            }
-
-            Pair(
-                output,
-                true
-            )
-        } else if (opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Single) {
-            this.label.text = when (main.configuration.link_mode) {
-                PaganConfiguration.LinkMode.LINK -> resources.getString(R.string.label_link_beat)
-                PaganConfiguration.LinkMode.MOVE -> resources.getString(R.string.label_move_beat)
-                PaganConfiguration.LinkMode.COPY ->  resources.getString(R.string.label_copy_beat)
-            }
-
-            val cursor_key = opus_manager.cursor.get_beatkey()
-            Pair(
-                opus_manager.is_networked(cursor_key),
-                opus_manager.get_all_linked(cursor_key).size > 2
-            )
-        } else {
-            return
-        }
-
-        if (is_networked) {
-            this.button_unlink.visibility = View.VISIBLE
-            this.button_unlink.setOnClickListener {
-                this.click_button_unlink()
-            }
-            if (!many_links) {
-                this.button_unlink_all.visibility = View.GONE
-            } else {
-                this.button_unlink_all.visibility = View.VISIBLE
-                this.button_unlink_all.setOnClickListener {
-                    this.click_button_unlink_all()
-                }
-            }
-        } else {
-            this.button_unlink.visibility = View.GONE
-            this.button_unlink_all.visibility = View.GONE
-        }
+        this.button_erase.isEnabled = opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Range
     }
-
-    private fun click_button_unlink() {
-        val opus_manager = this.get_opus_manager()
-        opus_manager.unlink_beat()
-    }
-
-    private fun click_button_unlink_all() {
-        val opus_manager = this.get_opus_manager()
-        opus_manager.clear_link_pool()
-    }
-
 }

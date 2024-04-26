@@ -1155,6 +1155,22 @@ open class OpusLayerBase {
         this.replace_tree(beatkey_to, position_to, from_tree)
     }
 
+    open fun move_global_ctl_leaf(type: ControlEventType, beat_from: Int, position_from: List<Int>, beat_to: Int, position_to: List<Int>) {
+        val from_tree = this.get_global_ctl_tree(type, beat_from, position_from).copy()
+        this.unset_global_ctl(type, beat_from, position_from)
+        this.replace_global_ctl_tree(type, beat_to, position_to, from_tree)
+    }
+    open fun move_channel_ctl_leaf(type: ControlEventType, channel_from: Int, beat_from: Int, position_from: List<Int>, channel_to: Int, beat_to: Int, position_to: List<Int>) {
+        val from_tree = this.get_channel_ctl_tree(type, channel_from, beat_from, position_from).copy()
+        this.unset_channel_ctl(type, channel_from, beat_from, position_from)
+        this.replace_channel_ctl_tree(type, channel_to, beat_to, position_to, from_tree)
+    }
+    open fun move_line_ctl_leaf(type: ControlEventType, beatkey_from: BeatKey, position_from: List<Int>, beatkey_to: BeatKey, position_to: List<Int>) {
+        val from_tree = this.get_line_ctl_tree(type, beatkey_from, position_from).copy()
+        this.unset_line_ctl(type, beatkey_from, position_from)
+        this.replace_line_ctl_tree(type, beatkey_to, position_to, from_tree)
+    }
+
     open fun remove_line(channel: Int, line_offset: Int): OpusLine {
         val output = this.channels[channel].remove_line(line_offset)
         this.recache_line_maps()
@@ -2270,7 +2286,6 @@ open class OpusLayerBase {
     }
     // ----------------------------------------------------------------
 
-
     fun get_ordered_beat_key_pair(first: BeatKey, second: BeatKey): Pair<BeatKey, BeatKey> {
         val (from_key, to_key) = if (first.channel < second.channel) {
             Pair(
@@ -2415,6 +2430,171 @@ open class OpusLayerBase {
         for (clear_key in (from_keys - to_keys)) {
             this.unset(clear_key, listOf())
         }
+    }
+
+
+    private fun _copy_global_ctl_range(type: ControlEventType, target: Int, start: Int, end: Int, unset_original: Boolean = false) {
+        if (target + (end - start) >= this.beat_count) {
+            throw IndexOutOfBoundsException()
+        }
+
+        val overwrite_map = HashMap<Int, OpusTree<OpusControlEvent>>()
+        val controller = this.controllers.get_controller(type)
+
+        for (i in start .. end) {
+            overwrite_map[target + (end - start)] = controller.get_tree(i).copy()
+            if (unset_original) {
+                this.unset_global_ctl(type, i, listOf())
+            }
+        }
+
+        for ((beat, tree) in overwrite_map) {
+            this.replace_global_ctl_tree(type, beat, null, tree)
+        }
+    }
+
+    open fun overwrite_global_ctl_range(type: ControlEventType, target: Int, start: Int, end: Int) {
+        this._copy_global_ctl_range(type, target, start, end, false)
+    }
+
+    open fun move_global_ctl_range(type: ControlEventType, target: Int, start: Int, end: Int) {
+        this._copy_global_ctl_range(type, target, start, end, true)
+    }
+
+    private fun _copy_channel_ctl_range(type: ControlEventType, target_channel: Int, target_beat: Int, original_channel: Int, start: Int, end: Int, unset_original: Boolean) {
+        if (target_beat + (end - start) >= this.beat_count) {
+            throw IndexOutOfBoundsException()
+        }
+
+        val overwrite_map = HashMap<Int, OpusTree<OpusControlEvent>>()
+        val original_controller = this.channels[original_channel].controllers.get_controller(type)
+
+        for (i in start .. end) {
+            overwrite_map[target_beat + (end - start)] = original_controller.get_tree(i)
+            if (unset_original) {
+                this.unset_channel_ctl(type, original_channel, i, listOf())
+            }
+        }
+
+        for ((beat, tree) in overwrite_map) {
+            this.replace_channel_ctl_tree(type, target_channel, beat, null, tree)
+        }
+    }
+    open fun overwrite_channel_ctl_range(type: ControlEventType, target_channel: Int, target_beat: Int, original_channel: Int, start: Int, end: Int) {
+        this._copy_channel_ctl_range(
+            type,
+            target_channel,
+            target_beat,
+            original_channel,
+            start,
+            end,
+            false
+        )
+    }
+
+    open fun move_channel_ctl_range(type: ControlEventType, target_channel: Int, target_beat: Int, original_channel: Int, start: Int, end: Int) {
+        this._copy_channel_ctl_range(
+            type,
+            target_channel,
+            target_beat,
+            original_channel,
+            start,
+            end,
+            true
+        )
+    }
+
+    private fun _copy_line_ctl_range(type: ControlEventType, beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey, unset_original: Boolean) {
+        val (from_key, to_key) = this.get_ordered_beat_key_pair(first_corner, second_corner)
+        val overwrite_map = HashMap<BeatKey, OpusTree<OpusControlEvent>>()
+
+        // Start OverFlow Check ////
+        var lines_in_range = 0
+        var lines_available = 0
+        this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
+            if (i < from_key.channel || i > to_key.channel) {
+                return@forEachIndexed
+            }
+            for (j in 0 until channel.size) {
+                if (i == from_key.channel && j < from_key.line_offset) {
+                    continue
+                } else if (i == to_key.channel && j > to_key.line_offset) {
+                    continue
+                }
+                lines_in_range += 1
+            }
+        }
+        this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
+            if (i < beat_key.channel) {
+                return@forEachIndexed
+            }
+            for (j in 0 until channel.size) {
+                if (i == beat_key.channel && j < beat_key.line_offset) {
+                    continue
+                }
+                lines_available += 1
+            }
+        }
+
+        val unset_keys = mutableListOf<BeatKey>()
+
+        val working_beat = beat_key.copy()
+        while (from_key.channel != to_key.channel || from_key.line_offset != to_key.line_offset) {
+            // INCLUSIVE
+            for (b in 0 .. to_key.beat - from_key.beat) {
+                val tmp_key = BeatKey(from_key.channel, from_key.line_offset, from_key.beat + b)
+                overwrite_map[BeatKey(working_beat.channel, working_beat.line_offset, working_beat.beat + b)] = this.get_line_ctl_tree(type, tmp_key)
+                unset_keys.add(tmp_key)
+            }
+            if (this.channels[from_key.channel].size - 1 > from_key.line_offset) {
+                from_key.line_offset += 1
+            } else if (this.channels.size - 1 > from_key.channel) {
+                from_key.channel += 1
+                from_key.line_offset = 0
+            } else {
+                break
+            }
+
+            if (this.channels[working_beat.channel].size - 1 > working_beat.line_offset) {
+                working_beat.line_offset += 1
+            } else if (this.channels.size - 1 > working_beat.channel) {
+                working_beat.channel += 1
+                working_beat.line_offset = 0
+            } else {
+                break
+            }
+        }
+
+        for (b in 0 .. to_key.beat - from_key.beat) {
+            val tmp_key = BeatKey(from_key.channel, from_key.line_offset, from_key.beat + b)
+            overwrite_map[BeatKey(working_beat.channel, working_beat.line_offset, working_beat.beat + b)] = this.get_line_ctl_tree(type, tmp_key, listOf())
+            unset_keys.add(tmp_key)
+        }
+
+        // Before we start overwriting, check overflow
+        for ((target_key, _) in overwrite_map) {
+            if (target_key.beat >= this.beat_count || target_key.channel >= this.channels.size || target_key.line_offset >= this.channels[target_key.channel].size) {
+                throw RangeOverflow(from_key, to_key, target_key)
+            }
+        }
+
+        if (unset_original) {
+            for (key in unset_keys) {
+                this.unset_line_ctl(type, key, listOf())
+            }
+        }
+
+        for ((target_key, tree) in overwrite_map) {
+            this.replace_line_ctl_tree(type, target_key, null, tree)
+        }
+    }
+
+    open fun overwrite_line_ctl_range(type: ControlEventType, beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey, unset_original: Boolean) {
+        this._copy_line_ctl_range(type, beat_key, first_corner, second_corner, false)
+    }
+
+    open fun move_line_ctl_range(type: ControlEventType, beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey, unset_original: Boolean) {
+        this._copy_line_ctl_range(type, beat_key, first_corner, second_corner, true)
     }
 
     open fun unset_range(first_corner: BeatKey, second_corner: BeatKey) {

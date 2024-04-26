@@ -787,6 +787,9 @@ open class OpusLayerCursor: OpusLayerHistory() {
         this.cursor.select_range(beat_key_a, beat_key_b)
     }
 
+    open fun cursor_select_global_ctl_range(type:ControlEventType, first: Int, second: Int) {
+        this.cursor.select_global_ctl_range(type, first, second)
+    }
     open fun cursor_select_global_ctl_end_point(type: ControlEventType, beat: Int) {
         this.cursor.select_global_ctl_end_point(type, beat)
     }
@@ -1165,6 +1168,65 @@ open class OpusLayerCursor: OpusLayerHistory() {
             // TODO: Raise Error
         }
     }
+    fun copy_global_ctl_to_beat(beat: Int) {
+        if (this.cursor.ctl_level != CtlLineLevel.Global) {
+            // TODO: Raise Error
+            return
+        }
+
+        if (this.cursor.is_linking_range()) {
+            val (first, second) = this.cursor.range!!
+            this.overwrite_global_ctl_range(
+                this.cursor.ctl_type!!,
+                this.cursor.beat,
+                first.beat,
+                second.beat
+            )
+        } else if (this.cursor.is_linking) {
+            this.replace_global_ctl_tree(
+                this.cursor.ctl_type!!,
+                beat,
+                listOf(),
+                this.get_global_ctl_tree(
+                    this.cursor.ctl_type!!,
+                    this.cursor.beat,
+                    listOf()
+                )
+            )
+        } else {
+            // TODO: Raise Error
+        }
+    }
+
+    fun move_global_ctl_to_beat(beat: Int) {
+        if (this.cursor.ctl_level != CtlLineLevel.Global) {
+            // TODO: Raise Error
+            return
+        }
+
+        if (this.cursor.is_linking_range()) {
+            val (first, second) = this.cursor.range!!
+            this.move_global_ctl_range(
+                this.cursor.ctl_type!!,
+                this.cursor.beat,
+                first.beat,
+                second.beat
+            )
+        } else if (this.cursor.is_linking) {
+            this.replace_global_ctl_tree(
+                this.cursor.ctl_type!!,
+                beat,
+                listOf(),
+                this.get_global_ctl_tree(
+                    this.cursor.ctl_type!!,
+                    this.cursor.beat,
+                    listOf()
+                )
+            )
+        } else {
+            // TODO: Raise Error
+        }
+    }
     // End Cursor Functions ////////////////////////////////////////////////////////////////////////
     fun is_selected(beat_key: BeatKey, position: List<Int>): Boolean {
         if (this.cursor.ctl_level != null) {
@@ -1207,7 +1269,12 @@ open class OpusLayerCursor: OpusLayerHistory() {
                         && position.size >= cposition.size
                         && position.subList(0, cposition.size) == cposition
             }
-            OpusManagerCursor.CursorMode.Range,
+            OpusManagerCursor.CursorMode.Range -> {
+                val range = this.cursor.range!!.first.beat .. this.cursor.range!!.second.beat
+                control_type == this.cursor.ctl_type
+                        && this.cursor.ctl_level == CtlLineLevel.Global
+                        && range.contains(beat)
+            }
             OpusManagerCursor.CursorMode.Unset -> {
                 false
             }

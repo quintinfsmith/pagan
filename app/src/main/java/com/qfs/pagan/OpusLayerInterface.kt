@@ -1363,6 +1363,17 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
+    override fun cursor_select_global_ctl_range(type: ControlEventType, first: Int, second: Int) {
+        super.cursor_select_global_ctl_range(type, first, second)
+        this.runOnUiThread {
+            this.withFragment {
+                it.set_context_menu_line_control_leaf_b()
+            }
+            val editor_table = this.get_editor_table() ?: return@runOnUiThread
+            editor_table.update_cursor(this.cursor)
+        }
+    }
+
     override fun cursor_select_global_ctl_end_point(type: ControlEventType, beat: Int) {
         super.cursor_select_global_ctl_end_point(type, beat)
         if (this.get_ui_lock_level() != null) {

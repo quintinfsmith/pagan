@@ -387,26 +387,50 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             }
 
             OpusManagerCursor.CursorMode.Range -> {
-                val (top_left, bottom_right) = cursor.range!!
-                for (beat_key in opus_manager.get_beatkeys_in_range(top_left, bottom_right)) {
-                    val y = try {
-                        opus_manager.get_visible_row_from_ctl_line(
-                            opus_manager.get_ctl_line_index(
-                                opus_manager.get_abs_offset(
-                                    beat_key.channel, beat_key.line_offset
-                                )
-                            )
-                        ) ?: continue
-                    } catch (e: IndexOutOfBoundsException) {
-                        continue
+                val coords_to_update = mutableListOf<Pair<Int, Int>>()
+                when (cursor.ctl_level) {
+                    null -> {
+                        val (top_left, bottom_right) = cursor.range!!
+                        for (beat_key in opus_manager.get_beatkeys_in_range(top_left, bottom_right)) {
+                            val y = try {
+                                opus_manager.get_visible_row_from_ctl_line(
+                                    opus_manager.get_ctl_line_index(
+                                        opus_manager.get_abs_offset(
+                                            beat_key.channel, beat_key.line_offset
+                                        )
+                                    )
+                                ) ?: continue
+                            } catch (e: IndexOutOfBoundsException) {
+                                continue
+                            }
+
+                            coords_to_update.add(Pair(y, beat_key.beat))
+                        }
                     }
-
-
-                    this._line_label_layout.notify_item_changed(y)
-                    column_label_adapter.notifyItemChanged(beat_key.beat)
-                    (this.get_column_recycler().adapter as ColumnRecyclerAdapter).notify_cell_changed(y, beat_key.beat, true)
+                    else -> {
+                        val (top_left, bottom_right) = cursor.range!!
+                        val y = when (cursor.ctl_level!!) {
+                            // Can assume top_left.channel == bottom_right.channel and top_left.line_offset == bottom_right.line_offset
+                            CtlLineLevel.Line -> opus_manager.get_visible_row_from_ctl_line_line(
+                                cursor.ctl_type!!,
+                                top_left.channel,
+                                top_left.line_offset
+                            )
+                            // Can assume top_left.channel == bottom_right.channel
+                            CtlLineLevel.Channel -> opus_manager.get_visible_row_from_ctl_line_channel(cursor.ctl_type!!, top_left.channel)
+                            CtlLineLevel.Global -> opus_manager.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
+                        }
+                        for (x in top_left.beat..bottom_right.beat) {
+                            coords_to_update.add(Pair(y, x))
+                        }
+                    }
                 }
 
+                for ((y, x) in coords_to_update) {
+                    this._line_label_layout.notify_item_changed(y)
+                    column_label_adapter.notifyItemChanged(x)
+                    (this.get_column_recycler().adapter as ColumnRecyclerAdapter).notify_cell_changed(y, x, true)
+                }
             }
             OpusManagerCursor.CursorMode.Row -> {
                 val y = when (cursor.ctl_level) {

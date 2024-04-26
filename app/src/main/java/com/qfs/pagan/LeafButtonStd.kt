@@ -71,9 +71,10 @@ class LeafButtonStd(
         val beat_key = this._get_beat_key()
         val position = this.position
         val opus_manager = this.get_opus_manager()
+        val cursor = opus_manager.cursor
 
         val editor_table = this._get_editor_table() // Will need if overflow exception is passed
-        if (opus_manager.cursor.is_linking) {
+        if (cursor.is_linking && cursor.ctl_level == null) {
             try {
                 when (this.get_activity().configuration.link_mode) {
                     PaganConfiguration.LinkMode.LINK -> {
@@ -98,7 +99,7 @@ class LeafButtonStd(
                     is OpusLayerBase.RangeOverflow,
                     is OpusLayerLinks.LinkRangeOverflow -> {
                         editor_table.notify_cell_changes(listOf(this.get_coord()))
-                        opus_manager.cursor.is_linking = false
+                        cursor.is_linking = false
                         opus_manager.cursor_select(beat_key, this.position)
                         this.get_activity().feedback_msg(context.getString(R.string.feedback_bad_range))
                     }
@@ -128,10 +129,6 @@ class LeafButtonStd(
                 }
             }
         }
-    }
-
-    override fun is_selected(): Boolean {
-        TODO("Not yet implemented")
     }
 
     private fun set_text(is_percussion: Boolean, _radix: Int? = null) {

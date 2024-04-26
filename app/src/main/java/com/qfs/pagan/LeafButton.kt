@@ -129,7 +129,6 @@ abstract class LeafButton(context: Context) : LinearLayout(context) {
 
     abstract fun long_click(): Boolean
     abstract fun callback_click()
-    abstract fun is_selected(): Boolean
     abstract fun _build_drawable_state(drawableState: IntArray?): IntArray?
 
     // ------------------------------------------------------//

@@ -1,5 +1,8 @@
 package com.qfs.pagan.opusmanager
 
+import kotlin.math.max
+import kotlin.math.min
+
 data class OpusManagerCursor(
     var mode: CursorMode = CursorMode.Unset,
     var channel: Int = 0,
@@ -244,6 +247,14 @@ data class OpusManagerCursor(
         this.is_linking = true
         this.ctl_type = null
         this.ctl_level = null
+    }
+
+    fun select_global_ctl_range(type: ControlEventType, first_beat: Int, second_beat: Int) {
+        this.range = Pair(
+            BeatKey(0,0, min(first_beat, second_beat)),
+            BeatKey(0,0, max(first_beat, second_beat))
+        )
+        this.mode = CursorMode.Range
     }
 
     fun select_global_ctl_end_point(type: ControlEventType, beat: Int) {

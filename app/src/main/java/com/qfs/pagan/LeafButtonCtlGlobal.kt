@@ -22,10 +22,25 @@ class LeafButtonCtlGlobal(
 
     override fun long_click(): Boolean {
         val opus_manager = this.get_opus_manager()
-        opus_manager.cursor_select_global_ctl_end_point(
-            this.control_type,
-            this.get_beat()
-        )
+        val cursor = opus_manager.cursor
+        if (!cursor.is_linking || cursor.ctl_level != CtlLineLevel.Global || cursor.ctl_type != this.control_type) {
+            opus_manager.cursor_select_global_ctl_end_point(
+                this.control_type,
+                this.get_beat()
+            )
+        } else if (!cursor.is_linking_range()) {
+            opus_manager.cursor_select_global_ctl_range(
+                this.control_type,
+                cursor.beat,
+                this.get_beat()
+            )
+        } else {
+            opus_manager.cursor_select_global_ctl_range(
+                this.control_type,
+                cursor.range!!.first.beat,
+                this.get_beat()
+            )
+        }
         return true
     }
 
@@ -37,9 +52,25 @@ class LeafButtonCtlGlobal(
             this.position
         )
     }
+
     override fun callback_click() {
         val opus_manager = this.get_opus_manager()
-        opus_manager.cursor_select_ctl_at_global(this.control_type, this.get_beat(), this.position)
+        val cursor = opus_manager.cursor
+        val beat = this.get_beat()
+        if (!cursor.is_linking || cursor.ctl_level != this.control_level || cursor.ctl_type != this.control_type) {
+            // pass
+        } else {
+            when (this.get_activity().configuration.link_mode) {
+                PaganConfiguration.LinkMode.COPY -> {
+                    opus_manager.copy_global_ctl_to_beat(beat)
+                }
+                PaganConfiguration.LinkMode.MOVE -> {
+                    opus_manager.move_global_ctl_to_beat(beat)
+                }
+                PaganConfiguration.LinkMode.LINK -> {/* Unreachable */}
+            }
+        }
+        opus_manager.cursor_select_ctl_at_global(this.control_type, beat, this.position)
     }
 }
 

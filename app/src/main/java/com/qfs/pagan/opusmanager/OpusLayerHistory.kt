@@ -668,9 +668,39 @@ open class OpusLayerHistory : OpusLayerLinks() {
         }
     }
 
+    override fun move_channel_ctl_leaf(type: ControlEventType, channel_from: Int, beat_from: Int, position_from: List<Int>, channel_to: Int, beat_to: Int, position_to: List<Int>) {
+        this._remember {
+            super.move_channel_ctl_leaf(type, channel_from, beat_from, position_from, channel_to, beat_to, position_to)
+        }
+    }
+
+    override fun move_global_ctl_leaf(type: ControlEventType, beat_from: Int, position_from: List<Int>, beat_to: Int, position_to: List<Int>) {
+        this._remember {
+            super.move_global_ctl_leaf(type, beat_from, position_from, beat_to, position_to)
+        }
+    }
+
+    override fun move_line_ctl_leaf(type: ControlEventType, beatkey_from: BeatKey, position_from: List<Int>, beatkey_to: BeatKey, position_to: List<Int>) {
+        this._remember {
+            super.move_line_ctl_leaf(type, beatkey_from, position_from, beatkey_to, position_to)
+        }
+    }
+
     override fun move_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
         this._remember {
             super.move_beat_range(beat_key, first_corner, second_corner)
+        }
+    }
+
+    override fun move_global_ctl_range(type: ControlEventType, target: Int, start: Int, end: Int) {
+        this._remember {
+            super.move_global_ctl_range(type, target, start, end)
+        }
+    }
+
+    override fun move_channel_ctl_range(type: ControlEventType, target_channel: Int, target_beat: Int, original_channel: Int, start: Int, end: Int) {
+        this._remember {
+            super.move_channel_ctl_range(type, target_channel, target_beat, original_channel, start, end)
         }
     }
 

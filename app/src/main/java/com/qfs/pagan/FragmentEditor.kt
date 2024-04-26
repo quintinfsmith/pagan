@@ -325,6 +325,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         llContextMenu?.removeAllViews()
     }
 
+
     internal fun set_context_menu_control_line() {
         if (!this.refresh_or_clear_context_menu<ContextMenuControlLine>()) {
             val llContextMenu = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenu)

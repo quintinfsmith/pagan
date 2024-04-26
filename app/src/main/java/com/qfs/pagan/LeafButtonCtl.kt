@@ -21,6 +21,7 @@ abstract class LeafButtonCtl(
         this.minimumHeight = resources.getDimension(R.dimen.ctl_line_height).roundToInt()
         this.set_text()
     }
+    abstract fun is_selected(): Boolean
 
     override fun get_tint_list(): IntArray {
         val activity = this.get_activity()
@@ -46,11 +47,6 @@ abstract class LeafButtonCtl(
         (this.layoutParams as LayoutParams).gravity = Gravity.CENTER_VERTICAL
         this.setPadding(0,0,0,0)
     }
-
-    override fun callback_click() {
-        TODO("Not Yet Implemented")
-    }
-
 
     fun set_text() {
         this.removeAllViews()

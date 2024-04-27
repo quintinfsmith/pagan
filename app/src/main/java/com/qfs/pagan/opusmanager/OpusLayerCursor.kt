@@ -1178,9 +1178,9 @@ open class OpusLayerCursor: OpusLayerHistory() {
             val (first, second) = this.cursor.range!!
             this.overwrite_global_ctl_range(
                 this.cursor.ctl_type!!,
-                this.cursor.beat,
-                first.beat,
-                second.beat
+                beat,
+                min(first.beat, second.beat),
+                max(first.beat, second.beat)
             )
         } else if (this.cursor.is_linking) {
             this.replace_global_ctl_tree(
@@ -1196,6 +1196,18 @@ open class OpusLayerCursor: OpusLayerHistory() {
         } else {
             // TODO: Raise Error
         }
+
+        val tree = this.get_global_ctl_tree(
+            this.cursor.ctl_type!!,
+            beat,
+            listOf()
+        )
+
+        this.cursor_select_ctl_at_global(
+            this.cursor.ctl_type!!,
+            beat,
+            tree.get_first_event_tree_position() ?: listOf()
+        )
     }
 
     fun move_global_ctl_to_beat(beat: Int) {
@@ -1208,24 +1220,33 @@ open class OpusLayerCursor: OpusLayerHistory() {
             val (first, second) = this.cursor.range!!
             this.move_global_ctl_range(
                 this.cursor.ctl_type!!,
-                this.cursor.beat,
+                beat,
                 first.beat,
                 second.beat
             )
         } else if (this.cursor.is_linking) {
-            this.replace_global_ctl_tree(
+            this.move_global_ctl_leaf(
                 this.cursor.ctl_type!!,
-                beat,
+                this.cursor.beat,
                 listOf(),
-                this.get_global_ctl_tree(
-                    this.cursor.ctl_type!!,
-                    this.cursor.beat,
-                    listOf()
-                )
+                beat,
+                listOf()
             )
         } else {
             // TODO: Raise Error
         }
+
+        val tree = this.get_global_ctl_tree(
+            this.cursor.ctl_type!!,
+            beat,
+            listOf()
+        )
+
+        this.cursor_select_ctl_at_global(
+            this.cursor.ctl_type!!,
+            beat,
+            tree.get_first_event_tree_position() ?: listOf()
+        )
     }
     // End Cursor Functions ////////////////////////////////////////////////////////////////////////
     fun is_selected(beat_key: BeatKey, position: List<Int>): Boolean {

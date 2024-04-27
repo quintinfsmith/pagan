@@ -58,19 +58,25 @@ class LeafButtonCtlGlobal(
         val cursor = opus_manager.cursor
         val beat = this.get_beat()
         if (!cursor.is_linking || cursor.ctl_level != this.control_level || cursor.ctl_type != this.control_type) {
-            // pass
+            opus_manager.cursor_select_ctl_at_global(this.control_type, beat, this.position)
         } else {
-            when (this.get_activity().configuration.link_mode) {
-                PaganConfiguration.LinkMode.COPY -> {
-                    opus_manager.copy_global_ctl_to_beat(beat)
+            try {
+                when (this.get_activity().configuration.link_mode) {
+                    PaganConfiguration.LinkMode.COPY -> {
+                        opus_manager.copy_global_ctl_to_beat(beat)
+                    }
+
+                    PaganConfiguration.LinkMode.MOVE -> {
+                        opus_manager.move_global_ctl_to_beat(beat)
+                    }
+
+                    PaganConfiguration.LinkMode.LINK -> {/* Unreachable */
+                    }
                 }
-                PaganConfiguration.LinkMode.MOVE -> {
-                    opus_manager.move_global_ctl_to_beat(beat)
-                }
-                PaganConfiguration.LinkMode.LINK -> {/* Unreachable */}
+            } catch (e: IndexOutOfBoundsException) {
+                opus_manager.cursor_select_ctl_at_global(this.control_type, beat, this.position)
             }
         }
-        opus_manager.cursor_select_ctl_at_global(this.control_type, beat, this.position)
     }
 }
 

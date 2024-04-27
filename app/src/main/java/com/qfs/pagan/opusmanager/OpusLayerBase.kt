@@ -2434,6 +2434,7 @@ open class OpusLayerBase {
 
 
     private fun _copy_global_ctl_range(type: ControlEventType, target: Int, start: Int, end: Int, unset_original: Boolean = false) {
+
         if (target + (end - start) >= this.beat_count) {
             throw IndexOutOfBoundsException()
         }
@@ -2442,7 +2443,7 @@ open class OpusLayerBase {
         val controller = this.controllers.get_controller(type)
 
         for (i in start .. end) {
-            overwrite_map[target + (end - start)] = controller.get_tree(i).copy()
+            overwrite_map[target + (i - start)] = controller.get_tree(i).copy()
             if (unset_original) {
                 this.unset_global_ctl(type, i, listOf())
             }
@@ -3043,7 +3044,6 @@ open class OpusLayerBase {
         }
 
         val output = mutableListOf<Pair<BeatKey, BeatKey>>()
-
 
         for (working_top_corner in possible_corners) {
             val bottom_corner_pair = this.get_std_offset(this.get_abs_offset(working_top_corner.channel, working_top_corner.line_offset) + match_box.first)

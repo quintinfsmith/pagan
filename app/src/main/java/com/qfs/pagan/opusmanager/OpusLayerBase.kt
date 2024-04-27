@@ -251,7 +251,6 @@ open class OpusLayerBase {
             beat,
             position ?: listOf()
         )
-        
     }
 
     fun get_line_ctl_tree(type: ControlEventType, beat_key: BeatKey, position: List<Int>? = null): OpusTree<OpusControlEvent> {

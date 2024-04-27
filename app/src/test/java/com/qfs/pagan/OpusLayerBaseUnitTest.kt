@@ -559,4 +559,92 @@ class OpusLayerBaseUnitTest {
             manager.get_tree(beat_key).get_event()!!.duration
         )
     }
+    
+    @Test
+    fun test_get_global_ctl_tree() {
+        TODO()
+    }
+    @Test
+    fun test_get_channel_ctl_tree() {
+        TODO()
+    }
+    @Test
+    fun test_get_line_ctl_tree() {
+        TODO()
+    }
+    @Test
+    fun test_overwrite_global_ctl_row() {
+        TODO()
+    }
+    @Test
+    fun test_overwrite_channel_ctl_row() {
+        TODO()
+    }
+    @Test
+    fun test_overwrite_line_ctl_row() {
+        TODO()
+    }
+
+    @Test
+    fun test_overwrite_line_ctl_range_horizontally() {
+        TODO()
+    }
+    @Test
+    fun test_overwrite_channel_ctl_range_horizontally() {
+        TODO()
+    }
+    @Test
+    fun test_overwrite_global_ctl_range_horizontally() {
+        TODO()
+    }
+
+    @Test
+    fun test_remove_line_ctl_line() {
+        TODO()
+    }
+    @Test
+    fun test_remove_channel_ctl_line() {
+        TODO()
+    }
+    @Test
+    fun test_remove_global_ctl_line() {
+        TODO()
+    }
+    @Test
+    fun test_add_line_ctl_line() {
+        TODO()
+    }
+    @Test
+    fun test_add_channel_ctl_line() {
+        TODO()
+    }
+    @Test
+    fun test_add_global_ctl_line() {
+        TODO()
+    }
+
+    @Test
+    fun test_get_current_global_controller_value() {
+        TODO()
+    }
+    @Test
+    fun test_get_current_channel_controller_value() {
+        TODO()
+    }
+    @Test
+    fun test_get_current_line_controller_value() {
+        TODO()
+    }
+    @Test
+    fun test_set_global_controller_initial_value() {
+        TODO()
+    }
+    @Test
+    fun test_set_channel_controller_initial_value() {
+        TODO()
+    }
+    @Test
+    fun test_set_line_controller_initial_value() {
+        TODO()
+    }
 }

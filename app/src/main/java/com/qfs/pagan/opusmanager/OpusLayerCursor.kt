@@ -819,32 +819,47 @@ open class OpusLayerCursor: OpusLayerHistory() {
             }
             CtlLineLevel.Global -> {
                 val ctl_type = this.cursor.ctl_type!!
-                val beat = this.cursor.beat
-                val position = this.cursor.get_position()
+                if (this.cursor.mode == OpusManagerCursor.CursorMode.Range) {
+                    val (key_a, key_b) = this.cursor.range!!
+                    val start = min(key_a.beat, key_b.beat)
+                    val end = max(key_a.beat, key_b.beat)
+                    this.unset_global_ctl_range(ctl_type, start, end)
+                    this.cursor_select_ctl_at_global(ctl_type, start, listOf())
+                } else {
+                    val beat = this.cursor.beat
+                    val position = this.cursor.get_position()
 
-                this.unset_global_ctl(ctl_type, beat, position)
-                this.cursor_select_ctl_at_global(ctl_type, beat, position)
+                    this.unset_global_ctl(ctl_type, beat, position)
+                    this.cursor_select_ctl_at_global(ctl_type, beat, position)
+                }
             }
             CtlLineLevel.Channel -> {
-                val ctl_type = this.cursor.ctl_type!!
-                val channel = this.cursor.channel
-                val beat = this.cursor.beat
-                val position = this.cursor.get_position()
+                if (this.cursor.mode == OpusManagerCursor.CursorMode.Range) {
+                    TODO()
+                } else {
+                    val ctl_type = this.cursor.ctl_type!!
+                    val channel = this.cursor.channel
+                    val beat = this.cursor.beat
+                    val position = this.cursor.get_position()
 
-                this.unset_channel_ctl(ctl_type, channel, beat, position)
-                this.cursor_select_ctl_at_channel(ctl_type, channel, beat, position)
+                    this.unset_channel_ctl(ctl_type, channel, beat, position)
+                    this.cursor_select_ctl_at_channel(ctl_type, channel, beat, position)
+                }
             }
             CtlLineLevel.Line -> {
-                val ctl_type = this.cursor.ctl_type!!
-                val beat_key = this.cursor.get_beatkey()
-                val position = this.cursor.get_position()
+                if (this.cursor.mode == OpusManagerCursor.CursorMode.Range) {
+                    TODO()
+                } else {
+                    val ctl_type = this.cursor.ctl_type!!
+                    val beat_key = this.cursor.get_beatkey()
+                    val position = this.cursor.get_position()
 
-                this.unset_line_ctl(ctl_type, beat_key, position)
-                this.cursor_select_ctl_at_line(ctl_type, beat_key, position)
+                    this.unset_line_ctl(ctl_type, beat_key, position)
+                    this.cursor_select_ctl_at_line(ctl_type, beat_key, position)
+                }
             }
         }
     }
-
 
     fun convert_event_to_absolute() {
         this.convert_event_to_absolute(

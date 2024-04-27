@@ -744,6 +744,24 @@ open class OpusLayerHistory : OpusLayerLinks() {
         }
     }
 
+    override fun unset_channel_ctl_range(type: ControlEventType, channel: Int, first_beat: Int, second_beat: Int) {
+        this._remember {
+            super.unset_channel_ctl_range(type, channel, first_beat, second_beat)
+        }
+    }
+
+    override fun unset_global_ctl_range(type: ControlEventType, first_beat: Int, second_beat: Int) {
+        this._remember {
+            super.unset_global_ctl_range(type, first_beat, second_beat)
+        }
+    }
+
+    override fun unset_line_ctl_range(type: ControlEventType, first_corner: BeatKey, second_corner: BeatKey) {
+        this._remember {
+            super.unset_line_ctl_range(type, first_corner, second_corner)
+        }
+    }
+
     override fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEventSTD) {
         this._remember {
             this.push_replace_tree(beat_key, position) {

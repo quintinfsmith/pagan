@@ -13,9 +13,8 @@ class LineLabelCtlGlobal(context: Context, ctl_type: ControlEventType): LineLabe
             opus_manager.overwrite_global_ctl_range_horizontally(this.ctl_type, first.beat, second.beat)
         } else if (cursor.is_linking) {
             opus_manager.overwrite_global_ctl_row(this.ctl_type, cursor.beat)
-        } else {
-            opus_manager.cursor_select_ctl_row_at_global(this.ctl_type)
         }
+        opus_manager.cursor_select_ctl_row_at_global(this.ctl_type)
     }
     override fun is_selected(): Boolean {
         val opus_manager = this.get_opus_manager()

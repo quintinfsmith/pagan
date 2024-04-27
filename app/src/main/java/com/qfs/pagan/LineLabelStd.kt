@@ -100,7 +100,6 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
                 //(this.context as MainActivity).feedback_msg("Can only row-link from first beat")
             }
             cursor.is_linking = false
-            opus_manager.cursor_select(first_key, opus_manager.get_first_position(first_key))
         } else if (cursor.is_linking) {
             val beat_key = opus_manager.cursor.get_beatkey()
             try {
@@ -108,6 +107,7 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
                     PaganConfiguration.LinkMode.LINK -> {
                         opus_manager.link_row(this.channel, this.line_offset, beat_key)
                     }
+
                     else -> {
                         opus_manager.overwrite_row(this.channel, this.line_offset, beat_key)
                     }
@@ -117,10 +117,8 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
                 //(this.context as MainActivity).feedback_msg("Can only row-link from first beat")
             }
             cursor.is_linking = false
-            opus_manager.cursor_select(beat_key, opus_manager.get_first_position(beat_key))
-        } else {
-            opus_manager.cursor_select_row(this.channel, this.line_offset)
         }
+        opus_manager.cursor_select_row(this.channel, this.line_offset)
     }
 
     private fun _set_colors() {

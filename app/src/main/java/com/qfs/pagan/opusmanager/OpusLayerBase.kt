@@ -2603,6 +2603,23 @@ open class OpusLayerBase {
         }
     }
 
+    open fun unset_global_ctl_range(type: ControlEventType, first_beat: Int, second_beat: Int) {
+        for (i in first_beat .. second_beat) {
+            this.unset_global_ctl(type, i, listOf())
+        }
+    }
+
+    open fun unset_channel_ctl_range(type: ControlEventType, channel: Int, first_beat: Int, second_beat: Int) {
+        for (i in first_beat .. second_beat) {
+            this.unset_channel_ctl(type, channel, i, listOf())
+        }
+    }
+
+    open fun unset_line_ctl_range(type: ControlEventType, first_corner: BeatKey, second_corner: BeatKey) {
+        for (selected_key in this.get_beatkeys_in_range(first_corner, second_corner)) {
+            this.unset_line_ctl(type, selected_key, listOf())
+        }
+    }
 
     open fun set_duration(beat_key: BeatKey, position: List<Int>, duration: Int) {
         val tree = this.get_tree(beat_key, position)

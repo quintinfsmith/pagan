@@ -2,55 +2,45 @@ package com.qfs.pagan
 
 import android.content.Context
 import android.util.AttributeSet
-import android.widget.CompoundButton
-import com.qfs.pagan.opusmanager.OpusManagerCursor
+import android.widget.RadioGroup
 
 class ContextMenuControlLeafB(context: Context, attrs: AttributeSet? = null): ContextMenuView(R.layout.contextmenu_line_ctl_leaf_b, context, attrs) {
     lateinit var button_erase: ButtonIcon
-    lateinit var label: PaganTextView
-    lateinit var switch: PaganSwitch
+    lateinit var radio_mode: RadioGroup
     override fun init_properties() {
         super.init_properties()
         this.button_erase = this.findViewById(R.id.btnEraseSelection)
-        this.label = this.findViewById(R.id.tvLinkLabel)
-        this.switch = this.findViewById(R.id.sCtlCopyMode)
+        this.radio_mode = this.findViewById<RadioGroup?>(R.id.rgLinkMode)
     }
 
     override fun setup_interactions() {
         this.button_erase.setOnClickListener {
-            if (it.isEnabled) {
-                this.get_opus_manager().unset()
-            }
+            this.get_opus_manager().unset()
         }
-
-        this.switch.setOnCheckedChangeListener { switch: CompoundButton, value: Boolean ->
+        this.radio_mode?.setOnCheckedChangeListener { _: RadioGroup, button_id: Int ->
             val main = this.get_main()
-            main.configuration.link_mode = if (value) {
-                PaganConfiguration.LinkMode.MOVE
-            } else {
-                PaganConfiguration.LinkMode.COPY
+            main.configuration.link_mode = when (button_id) {
+                R.id.rbLinkModeMove -> PaganConfiguration.LinkMode.MOVE
+                R.id.rbLinkModeCopy -> PaganConfiguration.LinkMode.COPY
+                else -> PaganConfiguration.LinkMode.COPY
             }
             main.save_configuration()
             this.refresh()
         }
+
     }
 
     override fun refresh() {
         val main = this.get_main()
-        val opus_manager = main.get_opus_manager()
-        this.button_erase.isEnabled = opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Range
         if (main.configuration.link_mode == PaganConfiguration.LinkMode.LINK) {
             main.configuration.link_mode = PaganConfiguration.LinkMode.COPY
             main.save_configuration()
         }
-        this.switch.isChecked = main.configuration.link_mode == PaganConfiguration.LinkMode.MOVE
-        this.label.text = resources.getString(
-            if (this.switch.isChecked) {
-                R.string.label_move_ctl
-            } else {
-                R.string.label_copy_ctl
-            }
-        )
+        this.radio_mode.check(when (main.configuration.link_mode) {
+            PaganConfiguration.LinkMode.MOVE -> R.id.rbLinkModeMove
+            PaganConfiguration.LinkMode.COPY -> R.id.rbLinkModeCopy
+            else -> R.id.rbLinkModeCopy
+        })
     }
 
 }

@@ -2870,7 +2870,7 @@ open class OpusLayerBase {
     // TODO: overwrite_channel_ctl_range_horizontally
 
     open fun overwrite_row(channel: Int, line_offset: Int, beat_key: BeatKey) {
-        if (beat_key.channel != channel || beat_key.line_offset != line_offset) {
+        if (beat_key.channel != channel || beat_key.line_offset != line_offset || beat_key.beat != 0) {
             return // TODO Throw Error
         }
         val working_key = BeatKey(channel, line_offset, 0)
@@ -2911,7 +2911,7 @@ open class OpusLayerBase {
     }
 
     open fun overwrite_line_ctl_row(type: ControlEventType, channel: Int, line_offset: Int, beat_key: BeatKey) {
-        if (beat_key.channel != channel || beat_key.line_offset != line_offset) {
+        if (beat_key.channel != channel || beat_key.line_offset != line_offset || beat_key.beat != 0) {
             return // TODO Throw Error
         }
         val working_key = BeatKey(channel, line_offset, 0)

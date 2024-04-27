@@ -251,8 +251,8 @@ data class OpusManagerCursor(
 
     fun select_global_ctl_range(type: ControlEventType, first_beat: Int, second_beat: Int) {
         this.range = Pair(
-            BeatKey(0,0, min(first_beat, second_beat)),
-            BeatKey(0,0, max(first_beat, second_beat))
+            BeatKey(0,0, first_beat),
+            BeatKey(0,0, second_beat)
         )
         this.mode = CursorMode.Range
     }

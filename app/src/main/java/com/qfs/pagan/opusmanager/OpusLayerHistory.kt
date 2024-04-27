@@ -1280,6 +1280,24 @@ open class OpusLayerHistory : OpusLayerLinks() {
         }
     }
 
+    override fun overwrite_line_ctl_row(type: ControlEventType, channel: Int, line_offset: Int, beat_key: BeatKey) {
+        this._remember {
+            super.overwrite_line_ctl_row(type, channel, line_offset, beat_key)
+        }
+    }
+
+    override fun overwrite_channel_ctl_row(type: ControlEventType, target_channel: Int, original_channel: Int, original_beat: Int) {
+        this._remember {
+            super.overwrite_channel_ctl_row(type, target_channel, original_channel, original_beat)
+        }
+    }
+
+    override fun overwrite_global_ctl_row(type: ControlEventType, beat: Int) {
+        this._remember {
+            super.overwrite_global_ctl_row(type, beat)
+        }
+    }
+
     override fun overwrite_beat_range_horizontally(
         channel: Int,
         line_offset: Int,
@@ -1290,6 +1308,25 @@ open class OpusLayerHistory : OpusLayerLinks() {
             super.overwrite_beat_range_horizontally(channel, line_offset, first_key, second_key)
         }
     }
+
+    override fun overwrite_global_ctl_range_horizontally(type: ControlEventType, first_beat: Int, second_beat: Int) {
+        this._remember {
+            super.overwrite_global_ctl_range_horizontally(type, first_beat, second_beat)
+        }
+    }
+
+    override fun overwrite_channel_ctl_range(type: ControlEventType, target_channel: Int, target_beat: Int, original_channel: Int, start: Int, end: Int) {
+        this._remember {
+            super.overwrite_channel_ctl_range(type, target_channel, target_beat, original_channel, start, end)
+        }
+    }
+
+    override fun overwrite_line_ctl_range_horizontally(type: ControlEventType, channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey) {
+        this._remember {
+            super.overwrite_line_ctl_range_horizontally(type, channel, line_offset, first_key, second_key)
+        }
+    }
+
 
     override fun set_tuning_map(new_map: Array<Pair<Int, Int>>, mod_events: Boolean) {
         this._remember {

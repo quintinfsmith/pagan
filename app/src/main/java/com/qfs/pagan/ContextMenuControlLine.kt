@@ -10,10 +10,13 @@ import com.qfs.pagan.opusmanager.ActiveControlSet
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusControlEvent
+import com.qfs.pagan.opusmanager.OpusTempoEvent
+import com.qfs.pagan.opusmanager.OpusVolumeEvent
 
 class ContextMenuControlLine(context: Context, attrs: AttributeSet? = null): ContextMenuView(R.layout.contextmenu_control_line, context, attrs) {
     lateinit var initial_widget_wrapper: LinearLayout
-    lateinit var widget: ControlWidget
+    lateinit var widget: ControlWidget<OpusControlEvent>
+
     private var _current_type: ControlEventType? = null
 
     private fun _callback(value: OpusControlEvent) {
@@ -57,10 +60,12 @@ class ContextMenuControlLine(context: Context, attrs: AttributeSet? = null): Con
         val controller = this.get_controller()
 
         this.widget = when (cursor.ctl_type!!) {
-            ControlEventType.Tempo -> ControlWidgetTempo(controller.initial_event, this.context, this::_callback)
-            ControlEventType.Volume -> ControlWidgetVolume(controller.initial_event, this.context, this::_callback)
-            ControlEventType.Reverb -> ControlWidgetReverb(this.context, this::_callback)
-        }
+            ControlEventType.Tempo -> ControlWidgetTempo(controller.initial_event as OpusTempoEvent, this.context, this::_callback)
+            ControlEventType.Volume -> ControlWidgetVolume(controller.initial_event as OpusVolumeEvent, this.context, this::_callback)
+            else -> TODO()
+            //ControlEventType.Reverb -> ControlWidgetReverb(this.context, this::_callback)
+        } as ControlWidget<OpusControlEvent>
+
         this._current_type = cursor.ctl_type
 
         this.initial_widget_wrapper.addView(this.widget as View)
@@ -97,7 +102,14 @@ class ContextMenuControlLine(context: Context, attrs: AttributeSet? = null): Con
             this.init_widget()
         } else {
             val controller = this.get_controller()
-            this.widget.set_event(controller.initial_event)
+            this.widget.set_event(
+                when(this._current_type) {
+                    ControlEventType.Tempo -> controller.initial_event as OpusTempoEvent
+                    ControlEventType.Volume -> TODO()
+                    ControlEventType.Reverb -> TODO()
+                    null -> TODO()
+                }
+            )
         }
     }
 

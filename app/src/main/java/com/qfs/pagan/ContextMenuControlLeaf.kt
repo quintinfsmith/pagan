@@ -11,12 +11,13 @@ import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusControlEvent
+import com.qfs.pagan.opusmanager.OpusTempoEvent
+import com.qfs.pagan.opusmanager.OpusVolumeEvent
 import com.qfs.pagan.opusmanager.TrivialActionException
 
 class ContextMenuControlLeaf(context: Context, attrs: AttributeSet? = null): ContextMenuView(R.layout.contextmenu_line_ctl_leaf, context, attrs) {
-    lateinit var button_duration: ButtonStd
     lateinit var widget_wrapper: LinearLayout
-    lateinit var widget: ControlWidget
+    lateinit var widget: ControlWidget<OpusControlEvent>
     // --------------------------------
     lateinit var button_split: ButtonIcon
     lateinit var button_insert: ButtonIcon
@@ -26,7 +27,6 @@ class ContextMenuControlLeaf(context: Context, attrs: AttributeSet? = null): Con
     private var _current_type: ControlEventType? = null
 
     override fun init_properties() {
-        this.button_duration = this.findViewById(R.id.btnDuration)
         this.widget_wrapper = this.findViewById(R.id.llCtlTarget)
         this.button_split = this.findViewById(R.id.btnSplit)
         this.button_insert = this.findViewById(R.id.btnInsert)
@@ -66,10 +66,11 @@ class ContextMenuControlLeaf(context: Context, attrs: AttributeSet? = null): Con
         val controller = this.get_controller()
 
         this.widget = when (cursor.ctl_type!!) {
-            ControlEventType.Tempo -> ControlWidgetTempo(controller.initial_event, this.context, this::_widget_callback)
-            ControlEventType.Volume -> ControlWidgetVolume(controller.initial_event, this.context, this::_widget_callback)
-            ControlEventType.Reverb -> ControlWidgetReverb(this.context, this::_widget_callback)
-        }
+            ControlEventType.Tempo -> ControlWidgetTempo(controller.initial_event as OpusTempoEvent, this.context, this::_widget_callback)
+            ControlEventType.Volume -> ControlWidgetVolume(controller.initial_event as OpusVolumeEvent, this.context, this::_widget_callback)
+            else -> TODO()
+            //ControlEventType.Reverb -> ControlWidgetReverb(this.context, this::_widget_callback)
+        } as ControlWidget<OpusControlEvent>
 
         this._current_type = cursor.ctl_type
 
@@ -282,14 +283,6 @@ class ContextMenuControlLeaf(context: Context, attrs: AttributeSet? = null): Con
         this.button_unset.isEnabled = ctl_tree.is_event()
         this.widget.set_event(current_event)
 
-        this.button_duration.text = this.get_main().getString(
-            R.string.label_duration,
-            if (!ctl_tree.is_event() || ctl_tree.get_event()!!.duration == 0) {
-                0
-            } else {
-                ctl_tree.get_event()!!.duration
-            }
-        )
     }
 
     fun get_control_event(): OpusControlEvent {
@@ -319,48 +312,4 @@ class ContextMenuControlLeaf(context: Context, attrs: AttributeSet? = null): Con
         }
     }
 
-
-    fun click_button_ctl_value() {
-        // TODO: Allow floats in dialog_number_input
-        val main = this.get_main()
-        main.dialog_number_input("Value", 0, 128, 0) { new_value: Int ->
-            val opus_manager = this.get_opus_manager()
-            val cursor = opus_manager.cursor
-            val tree = when (cursor.ctl_level!!) {
-                CtlLineLevel.Global -> opus_manager.get_global_ctl_tree(cursor.ctl_type!!, cursor.beat, cursor.position)
-                CtlLineLevel.Channel -> opus_manager.get_channel_ctl_tree(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.position)
-                CtlLineLevel.Line -> opus_manager.get_line_ctl_tree(cursor.ctl_type!!, cursor.get_beatkey(), cursor.position)
-            }
-
-            val event = tree.get_event()?.copy() ?: OpusControlEvent(1F)
-
-            event.value = new_value.toFloat()
-            opus_manager.set_event_at_cursor(event)
-        }
-    }
-
-    fun click_button_duration() {
-        val main = this.get_main()
-        main.dialog_number_input(main.getString(R.string.dlg_duration), 0, 1024, 0) { duration: Int ->
-            val opus_manager = this.get_opus_manager()
-            val cursor = opus_manager.cursor
-            when (cursor.ctl_level) {
-                CtlLineLevel.Global -> opus_manager.set_global_ctl_duration(cursor.ctl_type!!, cursor.beat, cursor.position, duration)
-                CtlLineLevel.Channel -> opus_manager.set_channel_ctl_duration(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.position, duration)
-                CtlLineLevel.Line -> opus_manager.set_line_ctl_duration(cursor.ctl_type!!, cursor.get_beatkey(), cursor.position, duration)
-                null -> { }
-            }
-        }
-    }
-    fun long_click_button_duration(): Boolean {
-        val opus_manager = this.get_opus_manager()
-        val cursor = opus_manager.cursor
-        when (cursor.ctl_level) {
-            CtlLineLevel.Global -> opus_manager.set_global_ctl_duration(cursor.ctl_type!!, cursor.beat, cursor.position, 0)
-            CtlLineLevel.Channel -> opus_manager.set_channel_ctl_duration(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.position, 0)
-            CtlLineLevel.Line -> opus_manager.set_line_ctl_duration(cursor.ctl_type!!, cursor.get_beatkey(), cursor.position, 0)
-            null -> { }
-        }
-        return false
-    }
 }

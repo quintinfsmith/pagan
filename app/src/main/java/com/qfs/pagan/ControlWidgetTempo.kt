@@ -4,9 +4,10 @@ import android.content.Context
 import android.view.ContextThemeWrapper
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import com.qfs.pagan.opusmanager.OpusControlEvent
+import com.qfs.pagan.opusmanager.OpusTempoEvent
 import kotlin.math.roundToInt
 
-class ControlWidgetTempo(default: OpusControlEvent, context: Context, callback: (OpusControlEvent) -> Unit): ControlWidget(context, callback) {
+class ControlWidgetTempo(default: OpusTempoEvent, context: Context, callback: (OpusControlEvent) -> Unit): ControlWidget<OpusTempoEvent>(context, callback) {
     private val input = ButtonStd(ContextThemeWrapper(context, R.style.icon_button), null)
     private val min = 0f
     private val max = 512f
@@ -18,7 +19,7 @@ class ControlWidgetTempo(default: OpusControlEvent, context: Context, callback: 
         this.input.text = "$default BPM"
         this.input.setOnClickListener {
             this.input.get_main().dialog_float_input(context.getString(R.string.dlg_set_tempo), this.min, this.max, this.get_event().value) { new_value: Float ->
-                val new_event = OpusControlEvent((new_value * 1000F).roundToInt().toFloat() / 1000F)
+                val new_event = OpusTempoEvent((new_value * 1000F).roundToInt().toFloat() / 1000F)
                 this.set_event(new_event)
                 this.callback(new_event)
             }
@@ -30,11 +31,11 @@ class ControlWidgetTempo(default: OpusControlEvent, context: Context, callback: 
         this.input.layoutParams.height = MATCH_PARENT
     }
 
-    override fun get_event(): OpusControlEvent {
+    override fun get_event(): OpusTempoEvent {
         return this.current_event
     }
 
-    override fun set_event(event: OpusControlEvent) {
+    override fun set_event(event: OpusTempoEvent) {
         this.current_event = event
 
         val value = event.value

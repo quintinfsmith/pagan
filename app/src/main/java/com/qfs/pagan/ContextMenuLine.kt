@@ -17,6 +17,7 @@ import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.OpusManagerCursor
+import com.qfs.pagan.opusmanager.OpusVolumeEvent
 
 class ContextMenuLine(context: Context, attrs: AttributeSet? = null): ContextMenuView(R.layout.contextmenu_row, context, attrs) {
     lateinit var button_insert: ButtonIcon
@@ -31,7 +32,7 @@ class ContextMenuLine(context: Context, attrs: AttributeSet? = null): ContextMen
         this.button_insert = this.findViewById(R.id.btnInsertLine)
         this.button_remove = this.findViewById(R.id.btnRemoveLine)
         this.button_choose_percussion = this.findViewById(R.id.btnChoosePercussion)
-        this.widget_volume = ControlWidgetVolume(OpusControlEvent(0F), this.context) { event: OpusControlEvent ->
+        this.widget_volume = ControlWidgetVolume(OpusVolumeEvent(0F), this.context) { event: OpusControlEvent ->
             val opus_manager = this.get_opus_manager()
             val cursor = opus_manager.cursor
             opus_manager.set_line_controller_initial_event(
@@ -98,7 +99,7 @@ class ContextMenuLine(context: Context, attrs: AttributeSet? = null): ContextMen
 
             this.widget_volume.visibility = View.VISIBLE
             val controller = opus_manager.channels[channel].lines[line_offset].controllers.get_controller(ControlEventType.Volume)
-            this.widget_volume.set_event(controller.initial_event)
+            this.widget_volume.set_event(controller.initial_event as OpusVolumeEvent)
         }
 
     }

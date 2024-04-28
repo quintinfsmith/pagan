@@ -11,6 +11,7 @@ import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.OpusChannel
 import com.qfs.pagan.opusmanager.OpusEventSTD
 import com.qfs.pagan.opusmanager.OpusLayerBase
+import com.qfs.pagan.opusmanager.OpusTempoEvent
 import com.qfs.pagan.structure.OpusTree
 import kotlin.math.floor
 import kotlin.math.max
@@ -298,7 +299,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     fun map_tempo_changes() {
         var working_frame = 0
         val controller = this.opus_manager.controllers.get_controller(ControlEventType.Tempo)
-        var working_tempo = controller.initial_event.value
+        var working_tempo = (controller.initial_event as OpusTempoEvent).value
 
         val frames_per_minute = 60F * this._sample_handle_manager.sample_rate
         var frames_per_beat = (frames_per_minute / working_tempo).toInt()
@@ -317,7 +318,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 val (working_tree, working_ratio, working_offset) = stack.removeFirst()
 
                 if (working_tree.is_event()) {
-                    working_tempo = working_tree.get_event()!!.value
+                    working_tempo = (working_tree.get_event()!! as OpusTempoEvent).value
 
                     frame_offset += (((1f - running_ratio) * frames_per_beat) * (working_offset - running_ratio)).toInt()
                     running_ratio = working_offset

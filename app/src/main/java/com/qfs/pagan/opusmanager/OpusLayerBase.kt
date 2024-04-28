@@ -1188,7 +1188,7 @@ open class OpusLayerBase {
         return if (tree.event == null) {
             null
         } else {
-            tree.event!!.copy()
+            tree.event!!
         }
     }
 
@@ -1258,7 +1258,7 @@ open class OpusLayerBase {
         midi.insert_event(
             0,
             0,
-            SetTempo.from_bpm(tempo_controller.initial_event.value)
+            SetTempo.from_bpm((tempo_controller.initial_event as OpusTempoEvent).value)
         )
 
         for (i in 0 until this.beat_count) {
@@ -1271,7 +1271,7 @@ open class OpusLayerBase {
                     midi.insert_event(
                         0,
                         current.offset,
-                        SetTempo.from_bpm((event.value * 1000f).roundToInt() / 1000F)
+                        SetTempo.from_bpm(((event as OpusTempoEvent).value * 1000f).roundToInt() / 1000F)
                     )
                 } else if (!current.tree.is_leaf()) {
                     val working_subdiv_size = current.size / current.tree.size
@@ -1302,7 +1302,7 @@ open class OpusLayerBase {
             )
             channel.lines.forEachIndexed inner@{ l: Int, line: OpusLine ->
                 // This only makes sense when volume controls aren't enabled (VOLCTLTMP)
-                if (line.get_controller(ControlEventType.Volume).initial_event.value.roundToInt() == 0) {
+                if ((line.get_controller(ControlEventType.Volume).initial_event as OpusVolumeEvent).value.roundToInt() == 0) {
                     return@inner
                 }
                 var current_tick = 0
@@ -1344,7 +1344,7 @@ open class OpusLayerBase {
                                     channel.midi_channel,
                                     note,
                                     bend,
-                                    line.get_controller(ControlEventType.Volume).initial_event.value.roundToInt(),
+                                    (line.get_controller(ControlEventType.Volume).initial_event as OpusVolumeEvent).value.roundToInt(),
                                     event_uuid_gen++
                                 )
                                 pseudo_midi_map.add(Triple(
@@ -1610,7 +1610,7 @@ open class OpusLayerBase {
             channel.lines.forEachIndexed { i: Int, line: OpusTreeJSON<OpusEventSTD> ->
                 val new_controller = ActiveControllerJSON(
                     ControlEventType.Volume,
-                    OpusControlEvent(channel.line_volumes[i].toFloat()),
+                    OpusVolumeEvent(channel.line_volumes[i].toFloat()),
                     listOf()
                 )
 
@@ -1956,7 +1956,7 @@ open class OpusLayerBase {
                 }
 
                 val tree = tempo_line[beat_index]
-                tree[inner_beat_offset].set_event(OpusControlEvent(working_tempo))
+                tree[inner_beat_offset].set_event(OpusTempoEvent(working_tempo))
             } else if (event is ProgramChange) {
                 instrument_map.add(Triple(event.channel, null, event.get_program()))
             } else if (event is BankSelect) {
@@ -2281,7 +2281,7 @@ open class OpusLayerBase {
     }
 
     fun get_line_volume(channel: Int, line_offset: Int): Int {
-        return this.channels[channel].lines[line_offset].controllers.get_controller(ControlEventType.Volume).initial_event.value.roundToInt()
+        return (this.channels[channel].lines[line_offset].controllers.get_controller(ControlEventType.Volume).initial_event as OpusVolumeEvent).value.roundToInt()
     }
     // ----------------------------------------------------------------
 
@@ -2623,35 +2623,6 @@ open class OpusLayerBase {
 
     open fun set_duration(beat_key: BeatKey, position: List<Int>, duration: Int) {
         val tree = this.get_tree(beat_key, position)
-        if (!tree.is_event()) {
-            // TODO: Throw error?
-            return
-        }
-
-        tree.event!!.duration = duration
-    }
-
-    open fun set_line_ctl_duration(type: ControlEventType, beat_key: BeatKey, position: List<Int>, duration: Int) {
-        val tree = this.get_line_ctl_tree(type, beat_key, position)
-        if (!tree.is_event()) {
-            // TODO: Throw error?
-            return
-        }
-
-        tree.event!!.duration = duration
-    }
-    open fun set_channel_ctl_duration(type: ControlEventType, channel: Int, beat: Int, position: List<Int>, duration: Int) {
-        val tree = this.get_channel_ctl_tree(type, channel, beat, position)
-        if (!tree.is_event()) {
-            // TODO: Throw error?
-            return
-        }
-
-        tree.event!!.duration = duration
-    }
-
-    open fun set_global_ctl_duration(type: ControlEventType, beat: Int, position: List<Int>, duration: Int) {
-        val tree = this.get_global_ctl_tree(type, beat, position)
         if (!tree.is_event()) {
             // TODO: Throw error?
             return

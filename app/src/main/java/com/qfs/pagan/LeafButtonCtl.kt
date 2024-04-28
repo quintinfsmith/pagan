@@ -55,11 +55,7 @@ abstract class LeafButtonCtl(
         val value_text = LeafText(
             ContextThemeWrapper(this.context, R.style.ctl_leaf_value)
         )
-        value_text.text = when (this.control_type) {
-            ControlEventType.Tempo -> "${event.value.toInt()}"
-            ControlEventType.Volume -> "${event.value.toInt()}"
-            ControlEventType.Reverb -> TODO()
-        }
+        value_text.text = event.get_leaf_label()
         this.addView(value_text)
 
         (value_text.layoutParams as LayoutParams).gravity = Gravity.CENTER

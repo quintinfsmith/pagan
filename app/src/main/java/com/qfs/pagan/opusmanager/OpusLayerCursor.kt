@@ -1160,6 +1160,9 @@ open class OpusLayerCursor: OpusLayerHistory() {
             val (first, second) = this.cursor.range!!
             this.move_beat_range(beat_key, first, second)
         } else if (this.cursor.is_linking) {
+            if (this.is_percussion(this.cursor.get_beatkey().channel) != this.is_percussion(beat_key.channel)) {
+                throw MixedLinkException()
+            }
             this.move_leaf(this.cursor.get_beatkey(), listOf(), beat_key, listOf())
         } else {
             // TODO: Raise Error
@@ -1171,6 +1174,9 @@ open class OpusLayerCursor: OpusLayerHistory() {
             val (first, second) = this.cursor.range!!
             this.overwrite_beat_range(beat_key, first, second)
         } else if (this.cursor.is_linking) {
+            if (this.is_percussion(this.cursor.get_beatkey().channel) != this.is_percussion(beat_key.channel)) {
+                throw MixedLinkException()
+            }
             this.replace_tree(
                 beat_key,
                 listOf(),

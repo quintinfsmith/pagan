@@ -298,7 +298,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     fun map_tempo_changes() {
         var working_frame = 0
         val controller = this.opus_manager.controllers.get_controller(ControlEventType.Tempo)
-        var working_tempo = controller.initial_value
+        var working_tempo = controller.initial_event.value
 
         val frames_per_minute = 60F * this._sample_handle_manager.sample_rate
         var frames_per_beat = (frames_per_minute / working_tempo).toInt()

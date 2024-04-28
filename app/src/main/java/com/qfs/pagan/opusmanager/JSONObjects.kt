@@ -26,7 +26,7 @@ data class LoadedJSONData(
 @Serializable
 data class ActiveControllerJSON(
     var type: ControlEventType,
-    var initial_value: Float,
+    var initial_value: OpusControlEvent,
     var children: List<Pair<Int, OpusTreeJSON<OpusControlEvent>>>
 )
 

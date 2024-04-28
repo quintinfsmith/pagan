@@ -1258,7 +1258,7 @@ open class OpusLayerBase {
         midi.insert_event(
             0,
             0,
-            SetTempo.from_bpm(tempo_controller.initial_value)
+            SetTempo.from_bpm(tempo_controller.initial_event.value)
         )
 
         for (i in 0 until this.beat_count) {
@@ -1302,7 +1302,7 @@ open class OpusLayerBase {
             )
             channel.lines.forEachIndexed inner@{ l: Int, line: OpusLine ->
                 // This only makes sense when volume controls aren't enabled (VOLCTLTMP)
-                if (line.get_controller(ControlEventType.Volume).initial_value.roundToInt() == 0) {
+                if (line.get_controller(ControlEventType.Volume).initial_event.value.roundToInt() == 0) {
                     return@inner
                 }
                 var current_tick = 0
@@ -1344,7 +1344,7 @@ open class OpusLayerBase {
                                     channel.midi_channel,
                                     note,
                                     bend,
-                                    line.get_controller(ControlEventType.Volume).initial_value.roundToInt(),
+                                    line.get_controller(ControlEventType.Volume).initial_event.value.roundToInt(),
                                     event_uuid_gen++
                                 )
                                 pseudo_midi_map.add(Triple(
@@ -1610,7 +1610,7 @@ open class OpusLayerBase {
             channel.lines.forEachIndexed { i: Int, line: OpusTreeJSON<OpusEventSTD> ->
                 val new_controller = ActiveControllerJSON(
                     ControlEventType.Volume,
-                    channel.line_volumes[i].toFloat(),
+                    OpusControlEvent(channel.line_volumes[i].toFloat()),
                     listOf()
                 )
 
@@ -1639,7 +1639,7 @@ open class OpusLayerBase {
             controllers = listOf(
                 ActiveControllerJSON(
                     ControlEventType.Tempo,
-                    ActiveControlSet.ActiveController.default_value(ControlEventType.Tempo),
+                    ActiveControlSet.ActiveController.default_event(ControlEventType.Tempo),
                     listOf( )
                 )
             )
@@ -2255,11 +2255,11 @@ open class OpusLayerBase {
         val first_tempo_leaf = first_tempo_tree.get(position ?: listOf())
 
         if (first_tempo_leaf.is_event()) {
-            tempo_controller.set_initial_value(first_tempo_leaf.event!!.value)
+            tempo_controller.set_initial_event(first_tempo_leaf.event!!)
             first_tempo_leaf.unset_event()
         } else {
-            tempo_controller.set_initial_value(
-                ActiveControlSet.ActiveController.default_value(ControlEventType.Tempo)
+            tempo_controller.set_initial_event(
+                ActiveControlSet.ActiveController.default_event(ControlEventType.Tempo)
             )
         }
 
@@ -2281,7 +2281,7 @@ open class OpusLayerBase {
     }
 
     fun get_line_volume(channel: Int, line_offset: Int): Int {
-        return this.channels[channel].lines[line_offset].controllers.get_controller(ControlEventType.Volume).initial_value.roundToInt()
+        return this.channels[channel].lines[line_offset].controllers.get_controller(ControlEventType.Volume).initial_event.value.roundToInt()
     }
     // ----------------------------------------------------------------
 
@@ -3044,34 +3044,34 @@ open class OpusLayerBase {
         return this._cached_inv_abs_line_map_map[abs]!!
     }
 
-    fun get_current_line_controller_value(type: ControlEventType, beat_key: BeatKey, position: List<Int>): Float {
+    fun get_current_line_controller_event(type: ControlEventType, beat_key: BeatKey, position: List<Int>): OpusControlEvent {
         val controller = this.channels[beat_key.channel].lines[beat_key.line_offset].controllers.get_controller(type)
-        return controller.get_current_value(beat_key.beat, position)
+        return controller.get_latest_event(beat_key.beat, position)
     }
 
-    fun get_current_channel_controller_value(type: ControlEventType, channel: Int, beat: Int, position: List<Int>): Float {
+    fun get_current_channel_controller_event(type: ControlEventType, channel: Int, beat: Int, position: List<Int>): OpusControlEvent {
         val controller = this.channels[channel].controllers.get_controller(type)
-        return controller.get_current_value(beat, position)
+        return controller.get_latest_event(beat, position)
     }
 
-    fun get_current_global_controller_value(type: ControlEventType, beat: Int, position: List<Int>): Float {
+    fun get_current_global_controller_event(type: ControlEventType, beat: Int, position: List<Int>): OpusControlEvent {
         val controller = this.controllers.get_controller(type)
-        return controller.get_current_value(beat, position)
+        return controller.get_latest_event(beat, position)
     }
 
-    open fun set_global_controller_initial_value(type: ControlEventType, value: Float) {
+    open fun set_global_controller_initial_event(type: ControlEventType, event: OpusControlEvent) {
         val controller = this.controllers.get_controller(type)
-        controller.initial_value = value
+        controller.initial_event = event
     }
 
-    open fun set_channel_controller_initial_value(type: ControlEventType, channel: Int, value: Float) {
+    open fun set_channel_controller_initial_event(type: ControlEventType, channel: Int, event: OpusControlEvent) {
         val controller = this.channels[channel].controllers.get_controller(type)
-        controller.initial_value = value
+        controller.initial_event = event
     }
 
-    open fun set_line_controller_initial_value(type: ControlEventType, channel: Int, line_offset: Int, value: Float) {
+    open fun set_line_controller_initial_event(type: ControlEventType, channel: Int, line_offset: Int, event: OpusControlEvent) {
         val controller = this.channels[channel].lines[line_offset].controllers.get_controller(type)
-        controller.initial_value = value
+        controller.initial_event = event
     }
 
     // Experimental/ not in use -yet ----------vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv

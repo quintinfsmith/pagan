@@ -6,9 +6,10 @@ import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import android.widget.SeekBar
+import com.qfs.pagan.opusmanager.OpusControlEvent
 import kotlin.math.roundToInt
 
-class ControlWidgetVolume(default: Float, context: Context, callback: (Float) -> Unit): ControlWidget(context, callback) {
+class ControlWidgetVolume(default: OpusControlEvent, context: Context, callback: (OpusControlEvent) -> Unit): ControlWidget(context, callback) {
     private val _slider = PaganSeekBar(context)
     private val _input = ButtonStd(ContextThemeWrapper(context, R.style.icon_button), null)
     private val _min = 0
@@ -20,18 +21,17 @@ class ControlWidgetVolume(default: Float, context: Context, callback: (Float) ->
 
         this._slider.max = this._max
         this._slider.min = this._min
-        this._slider.progress = default.toInt()
+        this._slider.progress = default.value.toInt()
 
-        this._input.text = default.toInt().toString()
+        this._input.text = default.value.toInt().toString()
         this._input.setOnClickListener {
             val main = this._input.get_main()
-            val dlg_default = this.get_value().toInt()
+            val dlg_default = this.get_event().value.toInt()
             val dlg_title = context.getString(R.string.dlg_set_volume)
             main.dialog_number_input(dlg_title, this._min, this._max, dlg_default) { new_value: Int ->
-                if (new_value != this.get_value().toInt()) {
-                    this.set_value(new_value.toFloat())
-                    this.callback(new_value.toFloat())
-                }
+                val new_event = OpusControlEvent((new_value * 1000F).roundToInt().toFloat() / 1000F)
+                this.set_event(new_event)
+                this.callback(new_event)
             }
         }
 
@@ -47,7 +47,7 @@ class ControlWidgetVolume(default: Float, context: Context, callback: (Float) ->
 
             override fun onStartTrackingTouch(p0: SeekBar?) {}
             override fun onStopTrackingTouch(seekbar: SeekBar) {
-                this@ControlWidgetVolume.callback(seekbar.progress.toFloat())
+                this@ControlWidgetVolume.callback(OpusControlEvent(seekbar.progress.toFloat()))
             }
         })
 
@@ -63,11 +63,12 @@ class ControlWidgetVolume(default: Float, context: Context, callback: (Float) ->
         (this._slider.layoutParams as LinearLayout.LayoutParams).weight = 1f
     }
 
-    override fun get_value(): Float {
-        return this._slider.progress.toFloat()
+    override fun get_event(): OpusControlEvent {
+        return OpusControlEvent(this._slider.progress.toFloat())
     }
 
-    override fun set_value(value: Float) {
+    override fun set_event(event: OpusControlEvent) {
+        val value = event.value
         this._slider.progress = value.toInt()
         this._input.text = value.toInt().toString()
     }

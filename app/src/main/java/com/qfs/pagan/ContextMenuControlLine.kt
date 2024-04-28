@@ -9,19 +9,19 @@ import androidx.core.view.isEmpty
 import com.qfs.pagan.opusmanager.ActiveControlSet
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
-import kotlin.math.roundToInt
+import com.qfs.pagan.opusmanager.OpusControlEvent
 
 class ContextMenuControlLine(context: Context, attrs: AttributeSet? = null): ContextMenuView(R.layout.contextmenu_control_line, context, attrs) {
     lateinit var initial_widget_wrapper: LinearLayout
     lateinit var widget: ControlWidget
     private var _current_type: ControlEventType? = null
 
-    private fun _callback(value: Float) {
+    private fun _callback(value: OpusControlEvent) {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
         when (cursor.ctl_level) {
             CtlLineLevel.Line -> {
-                opus_manager.set_line_controller_initial_value(
+                opus_manager.set_line_controller_initial_event(
                     cursor.ctl_type!!,
                     cursor.channel,
                     cursor.line_offset,
@@ -30,7 +30,7 @@ class ContextMenuControlLine(context: Context, attrs: AttributeSet? = null): Con
             }
 
             CtlLineLevel.Channel -> {
-                opus_manager.set_channel_controller_initial_value(
+                opus_manager.set_channel_controller_initial_event(
                     cursor.ctl_type!!,
                     cursor.channel,
                     value
@@ -38,9 +38,9 @@ class ContextMenuControlLine(context: Context, attrs: AttributeSet? = null): Con
             }
 
             CtlLineLevel.Global -> {
-                opus_manager.set_global_controller_initial_value(
+                opus_manager.set_global_controller_initial_event(
                     cursor.ctl_type!!,
-                    (value * 1000F).roundToInt().toFloat() / 1000F
+                    value
                 )
             }
 
@@ -57,8 +57,8 @@ class ContextMenuControlLine(context: Context, attrs: AttributeSet? = null): Con
         val controller = this.get_controller()
 
         this.widget = when (cursor.ctl_type!!) {
-            ControlEventType.Tempo -> ControlWidgetTempo(controller.initial_value, this.context, this::_callback)
-            ControlEventType.Volume -> ControlWidgetVolume(controller.initial_value, this.context, this::_callback)
+            ControlEventType.Tempo -> ControlWidgetTempo(controller.initial_event, this.context, this::_callback)
+            ControlEventType.Volume -> ControlWidgetVolume(controller.initial_event, this.context, this::_callback)
             ControlEventType.Reverb -> ControlWidgetReverb(this.context, this::_callback)
         }
         this._current_type = cursor.ctl_type
@@ -97,7 +97,7 @@ class ContextMenuControlLine(context: Context, attrs: AttributeSet? = null): Con
             this.init_widget()
         } else {
             val controller = this.get_controller()
-            this.widget.set_value(controller.initial_value)
+            this.widget.set_event(controller.initial_event)
         }
     }
 

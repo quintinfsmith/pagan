@@ -1695,22 +1695,22 @@ class OpusLayerInterface : OpusLayerCursor() {
         editor_table.update_percussion_visibility()
     }
 
-    override fun set_global_controller_initial_value(type: ControlEventType, value: Float) {
-        super.set_global_controller_initial_value(type, value)
+    override fun set_global_controller_initial_event(type: ControlEventType, event: OpusControlEvent) {
+        super.set_global_controller_initial_event(type, event)
         this.withFragment {
             it.refresh_context_menu()
         }
     }
 
-    override fun set_channel_controller_initial_value(type: ControlEventType, channel: Int, value: Float) {
-        super.set_channel_controller_initial_value(type, channel, value)
+    override fun set_channel_controller_initial_event(type: ControlEventType, channel: Int, event: OpusControlEvent) {
+        super.set_channel_controller_initial_event(type, channel, event)
         this.withFragment {
             it.refresh_context_menu()
         }
     }
 
-    override fun set_line_controller_initial_value(type: ControlEventType, channel: Int, line_offset: Int, value: Float) {
-        super.set_line_controller_initial_value(type, channel, line_offset, value)
+    override fun set_line_controller_initial_event(type: ControlEventType, channel: Int, line_offset: Int, event: OpusControlEvent) {
+        super.set_line_controller_initial_event(type, channel, line_offset, event)
         this.withFragment {
             it.refresh_context_menu()
         }

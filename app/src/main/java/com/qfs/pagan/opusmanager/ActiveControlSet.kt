@@ -8,24 +8,24 @@ class ActiveControlSet(var beat_count: Int, default_enabled: Set<ControlEventTyp
         companion object {
             fun from_json(obj: ActiveControllerJSON, size: Int): ActiveController {
                 val new_controller = ActiveController(obj.type, size)
-                new_controller.set_initial_value(obj.initial_value)
+                new_controller.set_initial_event(obj.initial_value)
                 for ((index, json_tree) in obj.children) {
                     new_controller.events[index] = OpusTree.from_json(json_tree)
                 }
                 return new_controller
             }
 
-            fun default_value(type: ControlEventType): Float {
+            fun default_event(type: ControlEventType): OpusControlEvent {
                 return when (type) {
-                    ControlEventType.Tempo -> 120F
-                    ControlEventType.Volume -> 64F
-                    ControlEventType.Reverb -> 0F
+                    ControlEventType.Tempo -> OpusControlEvent(120F)
+                    ControlEventType.Volume -> OpusControlEvent(64F)
+                    ControlEventType.Reverb -> OpusControlEvent(0F)
                 }
             }
         }
 
         var events = mutableListOf<OpusTree<OpusControlEvent>?>()
-        var initial_value = default_value(this.type)
+        var initial_event: OpusControlEvent = ActiveController.default_event(this.type)
 
         init {
             for (i in 0 until beat_count) {
@@ -33,19 +33,19 @@ class ActiveControlSet(var beat_count: Int, default_enabled: Set<ControlEventTyp
             }
         }
 
-        fun set_initial_value(value: Float) {
-            this.initial_value = value
+        fun set_initial_event(value: OpusControlEvent) {
+            this.initial_event = value
         }
 
-        fun get_current_value(beat: Int, position: List<Int>): Float {
+        fun get_latest_event(beat: Int, position: List<Int>): OpusControlEvent {
             val current_tree = this.get_tree(beat, position)
             if (current_tree.is_event()) {
-                return current_tree.get_event()!!.value
+                return current_tree.get_event()!!
             }
 
             var working_beat = beat
             var working_position = position.toList()
-            var output = this.initial_value
+            var output = this.initial_event
 
             while (true) {
                 val pair = this.get_preceding_leaf_position(working_beat, working_position) ?: return output
@@ -55,7 +55,7 @@ class ActiveControlSet(var beat_count: Int, default_enabled: Set<ControlEventTyp
                 val working_tree = this.get_tree(working_beat, working_position)
                 if (working_tree.is_event()) {
                     val working_event = working_tree.get_event()!!
-                    output = working_event.value
+                    output = working_event
                     break
                 }
             }
@@ -119,7 +119,7 @@ class ActiveControlSet(var beat_count: Int, default_enabled: Set<ControlEventTyp
             }
             return ActiveControllerJSON(
                 this.type,
-                this.initial_value,
+                this.initial_event,
                 children
             )
         }

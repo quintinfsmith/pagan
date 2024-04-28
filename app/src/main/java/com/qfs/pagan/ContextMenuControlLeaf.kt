@@ -11,9 +11,7 @@ import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusControlEvent
-import com.qfs.pagan.opusmanager.Transition
 import com.qfs.pagan.opusmanager.TrivialActionException
-import kotlin.math.roundToInt
 
 class ContextMenuControlLeaf(context: Context, attrs: AttributeSet? = null): ContextMenuView(R.layout.contextmenu_line_ctl_leaf, context, attrs) {
     lateinit var button_duration: ButtonStd
@@ -49,25 +47,11 @@ class ContextMenuControlLeaf(context: Context, attrs: AttributeSet? = null): Con
         return control_set.get_controller(cursor.ctl_type!!)
     }
 
-    private fun _widget_callback(value: Float) {
+    private fun _widget_callback(event: OpusControlEvent) {
         val opus_manager = this.get_opus_manager()
-        val cursor = opus_manager.cursor
-        val current_tree = when (cursor.ctl_level!!) {
-            CtlLineLevel.Line -> opus_manager.get_line_ctl_tree(cursor.ctl_type!!, cursor.get_beatkey(), cursor.get_position())
-            CtlLineLevel.Channel -> opus_manager.get_channel_ctl_tree(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.get_position())
-            CtlLineLevel.Global -> opus_manager.get_global_ctl_tree(cursor.ctl_type!!, cursor.beat, cursor.get_position())
-        }
-
-        val current_transition = current_tree.get_event()?.transition ?: Transition.Linear
-        val current_duration = current_tree.get_event()?.duration ?: 0
-        val new_event = OpusControlEvent(
-            (value * 1000F).roundToInt().toFloat() / 1000F,
-            transition = current_transition,
-            duration = current_duration
-        )
 
         try {
-            opus_manager.set_event_at_cursor(new_event)
+            opus_manager.set_event_at_cursor(event)
         } catch (e: TrivialActionException) {
             // No Feedback Needed
         }
@@ -82,8 +66,8 @@ class ContextMenuControlLeaf(context: Context, attrs: AttributeSet? = null): Con
         val controller = this.get_controller()
 
         this.widget = when (cursor.ctl_type!!) {
-            ControlEventType.Tempo -> ControlWidgetTempo(controller.initial_value, this.context, this::_widget_callback)
-            ControlEventType.Volume -> ControlWidgetVolume(controller.initial_value, this.context, this::_widget_callback)
+            ControlEventType.Tempo -> ControlWidgetTempo(controller.initial_event, this.context, this::_widget_callback)
+            ControlEventType.Volume -> ControlWidgetVolume(controller.initial_event, this.context, this::_widget_callback)
             ControlEventType.Reverb -> ControlWidgetReverb(this.context, this::_widget_callback)
         }
 
@@ -257,11 +241,11 @@ class ContextMenuControlLeaf(context: Context, attrs: AttributeSet? = null): Con
     override fun refresh() {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
-        val current_value = this.get_value()
+        val current_event = this.get_control_event()
         if (this.widget_wrapper.isEmpty() || cursor.ctl_type != this._current_type) {
             this.init_widget()
         } else {
-            this.widget.set_value(current_value)
+            this.widget.set_event(current_event)
         }
 
         val ctl_tree = when (cursor.ctl_level!!) {
@@ -296,7 +280,7 @@ class ContextMenuControlLeaf(context: Context, attrs: AttributeSet? = null): Con
         }
         this.button_remove.isEnabled = cursor.position.isNotEmpty()
         this.button_unset.isEnabled = ctl_tree.is_event()
-        this.widget.set_value(current_value)
+        this.widget.set_event(current_event)
 
         this.button_duration.text = this.get_main().getString(
             R.string.label_duration,
@@ -308,18 +292,17 @@ class ContextMenuControlLeaf(context: Context, attrs: AttributeSet? = null): Con
         )
     }
 
-    fun get_value(): Float {
+    fun get_control_event(): OpusControlEvent {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
-
         return when (cursor.ctl_level!!) {
-            CtlLineLevel.Global -> opus_manager.get_current_global_controller_value(
+            CtlLineLevel.Global -> opus_manager.get_current_global_controller_event(
                 cursor.ctl_type!!,
                 cursor.beat,
                 cursor.position
             )
             CtlLineLevel.Channel ->
-                opus_manager.get_current_channel_controller_value(
+                opus_manager.get_current_channel_controller_event(
                     cursor.ctl_type!!,
                     cursor.channel,
                     cursor.beat,
@@ -327,7 +310,7 @@ class ContextMenuControlLeaf(context: Context, attrs: AttributeSet? = null): Con
                 )
             CtlLineLevel.Line -> {
                 val beat_key = cursor.get_beatkey()
-                opus_manager.get_current_line_controller_value(
+                opus_manager.get_current_line_controller_event(
                     cursor.ctl_type!!,
                     beat_key,
                     cursor.position
@@ -335,6 +318,7 @@ class ContextMenuControlLeaf(context: Context, attrs: AttributeSet? = null): Con
             }
         }
     }
+
 
     fun click_button_ctl_value() {
         // TODO: Allow floats in dialog_number_input

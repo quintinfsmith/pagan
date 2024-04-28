@@ -7,8 +7,9 @@ import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import android.widget.SeekBar
+import com.qfs.pagan.opusmanager.OpusControlEvent
 
-class ControlWidgetReverb(context: Context, callback: (Float) -> Unit): ControlWidget(context, callback) {
+class ControlWidgetReverb(context: Context, callback: (OpusControlEvent) -> Unit): ControlWidget(context, callback) {
     private val slider = PaganSeekBar(context)
     private val input = RangedIntegerInput(context)
     private val min = 0
@@ -61,9 +62,9 @@ class ControlWidgetReverb(context: Context, callback: (Float) -> Unit): ControlW
         (this.slider.layoutParams as LinearLayout.LayoutParams).weight = 1f
     }
 
-    override fun get_value(): Float {
-        return this.slider.progress.toFloat()
+    override fun get_event(): OpusControlEvent {
+        return OpusControlEvent(this.slider.progress.toFloat())
     }
 
-    override fun set_value(value: Float) { }
+    override fun set_event(event: OpusControlEvent) { }
 }

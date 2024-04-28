@@ -1,8 +1,5 @@
 package com.qfs.pagan.opusmanager
 
-import kotlin.math.max
-import kotlin.math.min
-
 data class OpusManagerCursor(
     var mode: CursorMode = CursorMode.Unset,
     var channel: Int = 0,
@@ -23,6 +20,7 @@ data class OpusManagerCursor(
     }
 
     class InvalidModeException(actual: CursorMode, expected: CursorMode): Exception("Incorrect Cursor Mode. expected $expected but got $actual")
+    class InvalidControlLevelException(actual: CtlLineLevel?, expected: CtlLineLevel?): Exception("Incorrect Control Level. Expected: $expected but got $actual")
 
     var is_linking = false
     override fun equals(other: Any?): Boolean {

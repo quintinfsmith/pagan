@@ -442,7 +442,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         var start_frame = this._cached_beat_frames[beat_key.beat]!!.first
         val target_start_position = (beat_key.beat.toFloat() + relative_offset) / this.opus_manager.beat_count.toFloat()
         while (tempo_index < this._tempo_ratio_map.size) {
-            val tempo_change_position = (this._tempo_ratio_map[tempo_index].first)
+            val tempo_change_position = this._tempo_ratio_map[tempo_index].first
             if (tempo_change_position < target_start_position) {
                 start_frame += (frames_per_beat * (tempo_change_position - working_position)).toInt() * this.opus_manager.beat_count
 
@@ -458,10 +458,11 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
         // Calculate End Position
         working_position = target_start_position
-        var end_frame = start_frame
-        val target_end_position = target_start_position + (event.duration * relative_width)
+        var end_frame = start_frame + (frames_per_beat * relative_width).toInt()
+        // Note: divide duration to keep in-line with 0-1 range
+        val target_end_position = target_start_position + ((event.duration * relative_width) / this.opus_manager.beat_count.toFloat())
         while (tempo_index < this._tempo_ratio_map.size) {
-            val tempo_change_position = (this._tempo_ratio_map[tempo_index].first)
+            val tempo_change_position = this._tempo_ratio_map[tempo_index].first
             if (tempo_change_position < target_end_position) {
                 end_frame += (frames_per_beat * (tempo_change_position - working_position)).toInt() * this.opus_manager.beat_count
 
@@ -473,6 +474,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 break
             }
         }
+
         end_frame += (frames_per_beat * (target_end_position - working_position)).toInt() * this.opus_manager.beat_count
 
         val start_event = this._gen_midi_event(event, beat_key)!!

@@ -1,4 +1,5 @@
 package com.qfs.pagan.opusmanager
+import android.util.Log
 import com.qfs.apres.Midi
 import com.qfs.apres.event.BankSelect
 import com.qfs.apres.event.NoteOff
@@ -2781,39 +2782,33 @@ open class OpusLayerBase {
 
     open fun overwrite_beat_range_horizontally(channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey) {
         val (from_key, to_key) = this.get_ordered_beat_key_pair(first_key, second_key)
-        if (from_key.beat != 0) {
-            return // TODO: throw error
-        }
-
         val width = (to_key.beat - from_key.beat) + 1
-        val count = this.beat_count / width
+        val count = ((this.beat_count - from_key.beat) / width) - 1
         val beat_keys = this.get_beatkeys_in_range(from_key, to_key)
+        Log.d("AAA", "$width, $count, $beat_keys")
         for (beat_key in beat_keys) {
             val working_tree = this.get_tree(beat_key)
-            for (i in 1 until count) {
+            for (i in 0 until count) {
                 val to_overwrite = beat_key.copy()
-                to_overwrite.beat += (i * width)
+                to_overwrite.beat = ((i + 1) * width) + beat_key.beat
                 this.replace_tree(to_overwrite, null, working_tree)
             }
         }
     }
 
     open fun overwrite_global_ctl_range_horizontally(type: ControlEventType, first_beat: Int, second_beat: Int) {
-        var start = min(first_beat, second_beat)
-        var end = max(first_beat, second_beat)
-        if (start != 0) {
-            return
-        }
+        val start = min(first_beat, second_beat)
+        val end = max(first_beat, second_beat)
 
         val width = (end - start) + 1
-        val count = this.beat_count / width
+        val count = ((this.beat_count - start) / width) - 1
         for (i in 0 until width) {
-            for (j in 1 until count) {
+            for (j in 0 until count) {
                 this.replace_global_ctl_tree(
                     type,
-                    (j * width) + i,
+                    ((j + 1) * width) + (i + start),
                     null,
-                    this.get_global_ctl_tree(type, i)
+                    this.get_global_ctl_tree(type, (i + start))
                 )
             }
         }
@@ -2821,18 +2816,15 @@ open class OpusLayerBase {
 
     open fun overwrite_line_ctl_range_horizontally(type: ControlEventType, channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey) {
         val (from_key, to_key) = this.get_ordered_beat_key_pair(first_key, second_key)
-        if (from_key.beat != 0) {
-            return // TODO: throw error
-        }
 
         val width = (to_key.beat - from_key.beat) + 1
-        val count = this.beat_count / width
+        val count = ((this.beat_count - from_key.beat) / width) - 1
         val beat_keys = this.get_beatkeys_in_range(from_key, to_key)
         for (beat_key in beat_keys) {
             val working_tree = this.get_line_ctl_tree(type, beat_key)
-            for (i in 1 until count) {
+            for (i in 0 until count) {
                 val to_overwrite = beat_key.copy()
-                to_overwrite.beat += (i * width)
+                to_overwrite.beat += ((i + 1) * width) + beat_key.beat
                 this.replace_line_ctl_tree(type, to_overwrite, null, working_tree)
             }
         }
@@ -2841,12 +2833,12 @@ open class OpusLayerBase {
     // TODO: overwrite_channel_ctl_range_horizontally
 
     open fun overwrite_row(channel: Int, line_offset: Int, beat_key: BeatKey) {
-        if (beat_key.channel != channel || beat_key.line_offset != line_offset || beat_key.beat != 0) {
+        if (beat_key.channel != channel || beat_key.line_offset != line_offset) {
             return // TODO Throw Error
         }
-        val working_key = BeatKey(channel, line_offset, 0)
+        val working_key = BeatKey(channel, line_offset, beat_key.beat + 1)
         val original_tree = this.get_tree(beat_key)
-        for (x in 0 until this.beat_count) {
+        for (x in beat_key.beat + 1 until this.beat_count) {
             working_key.beat = x
             if (working_key != beat_key) {
                 this.replace_tree(working_key, null, original_tree)
@@ -2855,39 +2847,30 @@ open class OpusLayerBase {
     }
 
     open fun overwrite_global_ctl_row(type: ControlEventType, beat: Int) {
-        if (beat != 0) {
-            return // TODO: Throw Error
-        }
         val original_tree = this.get_global_ctl_tree(type, beat)
-        for (i in 0 until this.beat_count) {
-            if (i == beat) {
-                continue
-            }
+        for (i in beat + 1 until this.beat_count) {
             this.replace_global_ctl_tree(type, i, null, original_tree)
         }
     }
 
     open fun overwrite_channel_ctl_row(type: ControlEventType, target_channel: Int, original_channel: Int, original_beat: Int) {
-        if (original_beat != 0 || target_channel != original_channel) {
+        if (target_channel != original_channel) {
             return // TODO: Throw Error
         }
 
         val original_tree = this.get_channel_ctl_tree(type, original_channel, original_beat)
-        for (i in 0 until this.beat_count) {
-            if (i == original_beat) {
-                continue
-            }
+        for (i in original_beat + 1 until this.beat_count) {
             this.replace_channel_ctl_tree(type, target_channel, i, null, original_tree)
         }
     }
 
     open fun overwrite_line_ctl_row(type: ControlEventType, channel: Int, line_offset: Int, beat_key: BeatKey) {
-        if (beat_key.channel != channel || beat_key.line_offset != line_offset || beat_key.beat != 0) {
+        if (beat_key.channel != channel || beat_key.line_offset != line_offset) {
             return // TODO Throw Error
         }
-        val working_key = BeatKey(channel, line_offset, 0)
+        val working_key = BeatKey(channel, line_offset, beat_key.beat + 1)
         val original_tree = this.get_line_ctl_tree(type, beat_key)
-        for (x in 0 until this.beat_count) {
+        for (x in beat_key.beat + 1 until this.beat_count) {
             working_key.beat = x
             if (working_key != beat_key) {
                 this.replace_line_ctl_tree(type, working_key, null, original_tree)

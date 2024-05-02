@@ -242,6 +242,7 @@ class SampleHandle(
             }
         }
 
+        // messed up notes held for too long.
         //if (this.modulation_lfo.delay <= this.working_frame) {
         //    val lfo_frame = this.modulation_lfo.get_frame(this.working_frame)
         //    if (this.modulation_lfo.volume != 0F) {

@@ -2,7 +2,6 @@ package com.qfs.pagan
 
 import android.annotation.SuppressLint
 import android.view.MotionEvent
-import android.view.View
 import androidx.recyclerview.widget.RecyclerView
 
 @SuppressLint("ViewConstructor")
@@ -13,7 +12,6 @@ class ColumnRecycler(editor_table: EditorTable): RecyclerView(editor_table.conte
     init {
         this.layoutManager = LeftAlignedLayoutManager(this, HORIZONTAL, false)
         this.itemAnimator = null
-        this.overScrollMode = View.OVER_SCROLL_NEVER
         this.adapter = ColumnRecyclerAdapter(this, editor_table)
     }
 

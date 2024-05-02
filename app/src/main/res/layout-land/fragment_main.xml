@@ -9,8 +9,6 @@ tools:context=".FragmentEditor">
 
     <com.qfs.pagan.EditorTable
         android:id="@+id/etEditorTable"
-        android:layout_marginStart="@dimen/anti_margin_editor"
-        android:layout_marginTop="@dimen/anti_margin_editor"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_weight="1"/>

@@ -672,9 +672,10 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             val position_visibility = this.get_position_visibility(beat_key.beat, Pair(position_offset, sibling_weight.toFloat() / max_cell_weight))
             if (position_visibility < SECTION_VIEW_PARTIAL_OVERSIZED) {
                 val leaf_width = resources.getDimension(R.dimen.base_leaf_width)
+                val precise_x = 0 - (leaf_width * (leaf_offset * max_column_weight / max_cell_weight)).toInt()
                 this.precise_scroll(
                     beat_key.beat,
-                    0 - (leaf_width * (leaf_offset * max_column_weight / max_cell_weight)).toInt()
+                    precise_x
                 )
             }
         }
@@ -815,16 +816,11 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     }
 
     fun precise_scroll(x_coarse: Int = 0, x_fine: Int = 0, y_coarse: Int? = null, y_fine: Int? = null) {
-        /*
-            KLUDGE ALERT
-            There's a wierd bug that returns the main lm to the first position if the x_fine == 0.
-            so we force it to be -1 if that's the case.
-         */
         val main_lm = (this.get_column_recycler().layoutManager!! as LinearLayoutManager)
-        main_lm.scrollToPositionWithOffset(x_coarse, if (x_fine == 0) { -1 } else { x_fine })
+        main_lm.scrollToPositionWithOffset(x_coarse, x_fine)
 
         val column_label_lm = (this.column_label_recycler.layoutManager!! as LinearLayoutManager)
-        column_label_lm.scrollToPositionWithOffset(x_coarse, if (x_fine == 0) { -1 } else { x_fine })
+        column_label_lm.scrollToPositionWithOffset(x_coarse, x_fine)
 
         if (y_coarse != null) {
             val line_height = (resources.getDimension(R.dimen.line_height)).toInt()

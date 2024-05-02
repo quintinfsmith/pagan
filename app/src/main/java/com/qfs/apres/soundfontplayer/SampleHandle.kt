@@ -4,7 +4,6 @@ import com.google.common.primitives.Ints.min
 import com.qfs.apres.soundfont.Modulator
 import kotlin.math.PI
 import kotlin.math.abs
-import kotlin.math.pow
 
 class SampleHandle(
     var data: ShortArray,
@@ -243,15 +242,15 @@ class SampleHandle(
             }
         }
 
-        if (this.modulation_lfo.delay <= this.working_frame) {
-            val lfo_frame = this.modulation_lfo.get_frame(this.working_frame)
-            if (this.modulation_lfo.volume != 0F) {
-                frame_factor *= this.modulation_lfo.volume.pow(lfo_frame)
-            }
-            if (this.modulation_lfo.pitch != 1F) {
-                this.data_buffer.repitch(this.modulation_lfo.pitch.pow(lfo_frame))
-            }
-        }
+        //if (this.modulation_lfo.delay <= this.working_frame) {
+        //    val lfo_frame = this.modulation_lfo.get_frame(this.working_frame)
+        //    if (this.modulation_lfo.volume != 0F) {
+        //        frame_factor *= this.modulation_lfo.volume.pow(lfo_frame)
+        //    }
+        //    if (this.modulation_lfo.pitch != 1F) {
+        //        this.data_buffer.repitch(this.modulation_lfo.pitch.pow(lfo_frame))
+        //    }
+        //}
 
 
         this.working_frame += 1

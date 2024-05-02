@@ -32,7 +32,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     private val _cached_beat_frames = HashMap<Int, IntRange>()
     private val _setter_overlaps = HashMap<Int, Array<Int>>()
 
-    private val _tempo_map = HashMap<Int, Float>() // Frame::Tempo
     private val _tempo_ratio_map = mutableListOf<Pair<Float, Float>>()// rational position:: tempo
 
     private val _percussion_setter_ids = mutableSetOf<Int>()
@@ -68,7 +67,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         val beats = mutableListOf<Int>(0)
 
         var working_frame = 0
-        var working_tempo = this._tempo_ratio_map[0].second
+        val working_tempo = this._tempo_ratio_map[0].second
         var frames_per_beat = (frames_per_minute / working_tempo).toInt()
         var tempo_index = 0
         val frames_to_add = mutableListOf<Int>()
@@ -82,7 +81,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
                 if (tempo_change_position < beat_position) {
                     frames_to_add.add((frames_per_beat * (tempo_change_position - working_position)).toInt())
-
 
                     working_position = tempo_change_position
                     frames_per_beat = (frames_per_minute / this._tempo_ratio_map[tempo_index].second).toInt()
@@ -192,7 +190,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         this._handle_map.clear()
         this._handle_range_map.clear()
         this._tempo_ratio_map.clear()
-        this._tempo_map.clear()
         this._beat_count = 0
         this._cached_beat_frames.clear()
 
@@ -285,7 +282,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         this.get_beat_frames()
 
         this.opus_manager.channels.forEachIndexed { c: Int, channel: OpusChannel ->
-            for (l  in channel.lines.indices) {
+            for (l in channel.lines.indices) {
                 var prev_abs_note = 0
                 for (b in 0 until this.opus_manager.beat_count) {
                     val beat_key = BeatKey(c,l,b)

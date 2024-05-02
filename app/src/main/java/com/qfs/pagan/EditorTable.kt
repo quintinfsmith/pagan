@@ -148,6 +148,9 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                     }
 
                     for ((type, controller) in channel.lines[j].controllers.get_all()) {
+                        if (! opus_manager.is_ctl_line_visible(CtlLineLevel.Line, type)) {
+                            continue
+                        }
                         val ctl_tree = controller.get_beat(beat)
                         if (ctl_tree.is_leaf()) {
                             this._column_width_map[beat].add(1)
@@ -159,6 +162,9 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                 }
 
                 for ((type, controller) in channel.controllers.get_all()) {
+                    if (! opus_manager.is_ctl_line_visible(CtlLineLevel.Channel, type)) {
+                        continue
+                    }
                     val ctl_tree = controller.get_beat(beat)
                     if (ctl_tree.is_leaf()) {
                         this._column_width_map[beat].add(1)
@@ -170,6 +176,9 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             }
 
             for ((type, controller) in opus_manager.controllers.get_all()) {
+                if (! opus_manager.is_ctl_line_visible(CtlLineLevel.Global, type)) {
+                    continue
+                }
                 val ctl_tree = controller.get_beat(beat)
                 if (ctl_tree.is_leaf()) {
                     this._column_width_map[beat].add(1)
@@ -541,6 +550,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
             this._column_width_map[coord.x][coord.y] = new_cell_width
             this._column_width_maxes[coord.x] = this._column_width_map[coord.x].max()
+
 
             if (original_width != this._column_width_maxes[coord.x]) {
                 changed_beats.add(coord.x)

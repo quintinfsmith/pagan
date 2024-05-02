@@ -21,6 +21,7 @@ class LineLabelColumnLayout(editor_table: EditorTable): ScrollView(editor_table.
         this._inner_wrapper.layoutParams.height = WRAP_CONTENT
         this.isVerticalScrollBarEnabled = false
         this.isHorizontalScrollBarEnabled = false
+        this.overScrollMode = OVER_SCROLL_NEVER
     }
 
     fun insert_label(y: Int? = null) {

@@ -7,7 +7,6 @@ import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.pagan.ColorMap.Palette
-import com.qfs.pagan.opusmanager.OpusManagerCursor
 import kotlin.math.roundToInt
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
@@ -84,24 +83,11 @@ class ColumnLabelView(private val _view_holder: RecyclerView.ViewHolder): AppCom
         } catch (e: NullPointerException) {
             return drawableState
         }
+        val new_state = mutableSetOf<Int>()
 
         val opus_manager = this.get_opus_manager()
-
-        val new_state = mutableSetOf<Int>()
-        when (opus_manager.cursor.mode) {
-            OpusManagerCursor.CursorMode.Single,
-            OpusManagerCursor.CursorMode.Column -> {
-                if (opus_manager.cursor.beat == beat) {
-                    new_state.add(R.attr.state_focused)
-                }
-            }
-            OpusManagerCursor.CursorMode.Range -> {
-                val (first, second) = opus_manager.cursor.range!!
-                if (first.beat <= beat && second.beat >= beat) {
-                    new_state.add(R.attr.state_focused)
-                }
-            }
-            else -> {}
+        if (opus_manager.is_beat_selected(beat)) {
+            new_state.add(R.attr.state_focused)
         }
 
         mergeDrawableStates(drawableState, new_state.toIntArray())

@@ -1416,14 +1416,29 @@ open class OpusLayerCursor: OpusLayerHistory() {
     fun is_global_control_line_selected(control_type: ControlEventType): Boolean {
         return when (this.cursor.mode) {
             OpusManagerCursor.CursorMode.Row,
-            OpusManagerCursor.CursorMode.Single -> {
-                control_type == this.cursor.ctl_type && this.cursor.ctl_level == CtlLineLevel.Global
+            OpusManagerCursor.CursorMode.Single,
+            OpusManagerCursor.CursorMode.Range -> {
+                control_type == this.cursor.ctl_type
+                        && this.cursor.ctl_level == CtlLineLevel.Global
             }
-            OpusManagerCursor.CursorMode.Range,
             OpusManagerCursor.CursorMode.Unset,
             OpusManagerCursor.CursorMode.Column -> false
         }
 
+    }
+
+    fun is_beat_selected(beat: Int): Boolean {
+        return when (this.cursor.mode) {
+            OpusManagerCursor.CursorMode.Single,
+            OpusManagerCursor.CursorMode.Column -> {
+                this.cursor.beat == beat
+            }
+            OpusManagerCursor.CursorMode.Range -> {
+                val (first, second) = this.cursor.range!!
+                first.beat <= beat && second.beat >= beat
+            }
+            else -> false
+        }
     }
 
     /* Not Currently In Use. */

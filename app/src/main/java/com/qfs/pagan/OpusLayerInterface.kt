@@ -1365,6 +1365,11 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     override fun cursor_select_global_ctl_range(type: ControlEventType, first: Int, second: Int) {
         super.cursor_select_global_ctl_range(type, first, second)
+
+        if (this.get_ui_lock_level() != null) {
+            return
+        }
+
         this.runOnUiThread {
             this.withFragment {
                 it.set_context_menu_line_control_leaf_b()
@@ -1389,6 +1394,19 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
+    override fun cursor_select_range(beat_key_a: BeatKey, beat_key_b: BeatKey) {
+        super.cursor_select_range(beat_key_a, beat_key_b)
+
+        if (this.get_ui_lock_level() != null) {
+            return
+        }
+
+        this.runOnUiThread {
+            this.get_editor_table()?.update_cursor(this.cursor)
+        }
+    }
+
+
     override fun cursor_select_range_to_link(beat_key_a: BeatKey, beat_key_b: BeatKey) {
         super.cursor_select_range(beat_key_a, beat_key_b)
 
@@ -1403,18 +1421,6 @@ class OpusLayerInterface : OpusLayerCursor() {
             val editor_table = this.get_editor_table() ?: return@runOnUiThread
             editor_table.update_cursor(this.cursor)
 
-        }
-    }
-
-    override fun cursor_select_range(beat_key_a: BeatKey, beat_key_b: BeatKey) {
-        super.cursor_select_range(beat_key_a, beat_key_b)
-
-        if (this.get_ui_lock_level() != null) {
-            return
-        }
-
-        this.runOnUiThread {
-            this.get_editor_table()?.update_cursor(this.cursor)
         }
     }
 

@@ -1312,7 +1312,10 @@ open class OpusLayerCursor: OpusLayerHistory() {
                         && position.subList(0, cposition.size) == cposition
             }
             OpusManagerCursor.CursorMode.Range -> {
-                val range = this.cursor.range!!.first.beat .. this.cursor.range!!.second.beat
+                val first_beat = min(this.cursor.range!!.first.beat, this.cursor.range!!.second.beat)
+                val second_beat = max(this.cursor.range!!.first.beat, this.cursor.range!!.second.beat)
+
+                val range = first_beat .. second_beat
                 control_type == this.cursor.ctl_type
                         && this.cursor.ctl_level == CtlLineLevel.Global
                         && range.contains(beat)
@@ -1435,7 +1438,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
             }
             OpusManagerCursor.CursorMode.Range -> {
                 val (first, second) = this.cursor.range!!
-                first.beat <= beat && second.beat >= beat
+                (min(first.beat, second.beat) .. max(first.beat, second.beat)).contains(beat)
             }
             else -> false
         }

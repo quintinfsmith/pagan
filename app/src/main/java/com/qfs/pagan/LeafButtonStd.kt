@@ -51,19 +51,20 @@ class LeafButtonStd(
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
         val beat_key = this._get_beat_key()
-        if (cursor.is_linking_range()) {
-            opus_manager.cursor_select_range_to_link(
-                opus_manager.cursor.range!!.first,
-                beat_key
-            )
-        } else if (cursor.is_linking) {
+        if (cursor.ctl_level != null || !cursor.is_linking) {
+            opus_manager.cursor_select_to_link(beat_key)
+        } else if (!cursor.is_linking_range()) {
             opus_manager.cursor_select_range_to_link(
                 opus_manager.cursor.get_beatkey(),
                 beat_key
             )
         } else {
-            opus_manager.cursor_select_to_link(beat_key)
+            opus_manager.cursor_select_range_to_link(
+                opus_manager.cursor.range!!.first,
+                beat_key
+            )
         }
+
         return true
     }
 

@@ -19,6 +19,7 @@ import com.qfs.pagan.opusmanager.OpusLine
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import com.qfs.pagan.structure.OpusTree
 import kotlin.math.max
+import kotlin.math.min
 import kotlin.math.roundToInt
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
@@ -420,7 +421,9 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                             CtlLineLevel.Channel -> opus_manager.get_visible_row_from_ctl_line_channel(cursor.ctl_type!!, top_left.channel)
                             CtlLineLevel.Global -> opus_manager.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
                         }
-                        for (x in top_left.beat..bottom_right.beat) {
+                        val first_beat = min(top_left.beat, bottom_right.beat)
+                        val last_beat = max(top_left.beat, bottom_right.beat)
+                        for (x in first_beat..last_beat) {
                             coords_to_update.add(Pair(y, x))
                         }
                     }

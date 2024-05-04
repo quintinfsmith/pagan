@@ -29,7 +29,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     private var _setter_frame_map = HashMap<Int, MutableSet<Int>>()
     private val _setter_range_map = HashMap<Int, IntRange>()
     private var _cached_frame_count: Int? = null
-    private val _cached_beat_frames = HashMap<Int, IntRange>()
+    private var _cached_beat_frames: Array<Int>? = null
     private val _setter_overlaps = HashMap<Int, Array<Int>>()
 
     private val _tempo_ratio_map = mutableListOf<Pair<Float, Float>>()// rational position:: tempo
@@ -58,13 +58,14 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     }
 
 
-    override fun get_beat_frames(): HashMap<Int, IntRange> {
-        if (this._cached_beat_frames.isNotEmpty()) {
-            return this._cached_beat_frames
+    override fun get_marked_frames(): Array<Int> {
+        if (!this._cached_beat_frames.isNullOrEmpty()) {
+            return this._cached_beat_frames!!
         }
+
         val frames_per_minute = 60F * this._sample_handle_manager.sample_rate
 
-        val beats = mutableListOf<Int>(0)
+        val beats = mutableListOf(0)
 
         var working_frame = 0
         val working_tempo = this._tempo_ratio_map[0].second
@@ -98,12 +99,13 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             beats.add(working_frame)
         }
 
-        // Convert beat frames to ranges
-        for (i in 1 until beats.size) {
-            this._cached_beat_frames[i - 1] = beats[i - 1] until beats[i]
-        }
+        this._cached_beat_frames = beats.toTypedArray()
 
-        return this._cached_beat_frames
+        return this._cached_beat_frames!!
+    }
+
+    override fun has_handles_remaining(frame: Int): Boolean {
+        return (this._frame_map.isNotEmpty() && this._frame_map.keys.maxOf { it } >= frame) || (this._setter_frame_map.isNotEmpty() && this._setter_map.keys.maxOf { it } >= frame)
     }
 
     override fun get_active_handles(frame: Int): Set<Pair<Int, SampleHandle>> {
@@ -138,19 +140,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         }
 
         return output
-    }
-
-    override fun get_size(): Int {
-        if (this._cached_frame_count == null) {
-            this._cached_frame_count = -1
-            for (range in this._setter_range_map.values) {
-                this._cached_frame_count = max(range.last, this._cached_frame_count!!)
-            }
-            var beat_frames = this.get_beat_frames()
-            this._cached_frame_count = beat_frames[beat_frames.keys.max()]!!.last
-
-        }
-        return this._cached_frame_count!!
     }
 
     // End FrameMap Interface --------------------------
@@ -191,7 +180,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         this._handle_range_map.clear()
         this._tempo_ratio_map.clear()
         this._beat_count = 0
-        this._cached_beat_frames.clear()
+        this._cached_beat_frames = null
 
         this._setter_id_gen = 0
         this._setter_frame_map.clear()
@@ -279,7 +268,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             this._sample_handle_manager.change_program(channel.midi_channel, instrument.second)
         }
         this.map_tempo_changes()
-        this.get_beat_frames()
+        this.get_marked_frames()
 
         this.opus_manager.channels.forEachIndexed { c: Int, channel: OpusChannel ->
             for (l in channel.lines.indices) {
@@ -436,7 +425,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         var frames_per_beat = (frames_per_minute / working_tempo).toInt()
 
         // Calculate Start Position
-        var start_frame = this._cached_beat_frames[beat_key.beat]!!.first
+        var start_frame = this._cached_beat_frames!![beat_key.beat]
         val target_start_position = (beat_key.beat.toFloat() + relative_offset) / this.opus_manager.beat_count.toFloat()
         while (tempo_index < this._tempo_ratio_map.size) {
             val tempo_change_position = this._tempo_ratio_map[tempo_index].first

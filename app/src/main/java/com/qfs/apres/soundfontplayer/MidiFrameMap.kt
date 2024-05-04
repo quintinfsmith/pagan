@@ -94,8 +94,12 @@ class MidiFrameMap(val sample_handle_manager: SampleHandleManager): FrameMap {
         this.max_overlap = this.calculate_max_overlap()
     }
 
-    override fun get_size(): Int {
-       return this.final_frame + 1
+    override fun get_marked_frames(): Array<Int> {
+        TODO("Not yet implemented")
+    }
+
+    override fun has_handles_remaining(frame: Int): Boolean {
+        TODO("Not yet implemented")
     }
 
     override fun get_new_handles(frame: Int): Set<SampleHandle>? {
@@ -117,11 +121,6 @@ class MidiFrameMap(val sample_handle_manager: SampleHandleManager): FrameMap {
         }
 
         return output
-    }
-
-    override fun get_beat_frames(): HashMap<Int, IntRange> {
-        // TODO: Track Beats
-        return HashMap()
     }
 
     override fun get_active_handles(frame: Int): Set<Pair<Int, SampleHandle>> {

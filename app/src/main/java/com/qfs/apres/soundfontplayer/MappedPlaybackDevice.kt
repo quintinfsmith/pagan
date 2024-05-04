@@ -5,7 +5,7 @@ import kotlin.concurrent.thread
 import kotlin.math.min
 
 // Ended up needing to split the active and cache Midi Players due to different fundemental requirements
-open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate: Int, val buffer_size: Int, stereo_mode: WaveGenerator.StereoMode = WaveGenerator.StereoMode.Stereo) {
+abstract class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate: Int, val buffer_size: Int, stereo_mode: WaveGenerator.StereoMode = WaveGenerator.StereoMode.Stereo) {
     internal var wave_generator = WaveGenerator(this.sample_frame_map, sample_rate, buffer_size, stereo_mode)
     internal var active_audio_track_handle: AudioTrackHandle? = null
 
@@ -13,15 +13,15 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
     var play_queued = false
     var is_playing = false
     var play_cancelled = false // need a away to cancel between parsing and playing
-    val beat_frames = HashMap<Int, IntRange>()
+    var marked_frames: Array<Int>? = null// MarkIndex::Frame
 
 
-    open fun on_buffer() { }
-    open fun on_buffer_done() { }
-    open fun on_start() { }
-    open fun on_stop() { }
-    open fun on_cancelled() { }
-    open fun on_beat(i :Int) { }
+    abstract fun on_buffer()
+    abstract fun on_buffer_done()
+    abstract fun on_start()
+    abstract fun on_stop()
+    abstract fun on_cancelled()
+    abstract fun on_mark(i :Int)
 
 
     fun purge_wave_generator() {
@@ -50,7 +50,7 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
         this.play_queued = false
         this.is_playing = true
 
-        this.setup_beat_frames()
+        this.setup_frame_markers()
         this.wave_generator.set_position(start_frame, true)
 
         thread {
@@ -92,34 +92,32 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
                 throw java.lang.IllegalStateException()
             }
 
+            this.on_start()
+
             audio_track_handle.play(object : AudioTrack.OnPlaybackPositionUpdateListener {
-                var current_beat = -1
-                var has_beats: Boolean
+                var current_mark_index = 0
                 init {
-                    val that = this@MappedPlaybackDevice
+                    val track_handle = this@MappedPlaybackDevice.active_audio_track_handle
+                    val marked_frames = this@MappedPlaybackDevice.marked_frames
+                    if (!marked_frames.isNullOrEmpty()) {
+                        for (i in 0 until marked_frames.size - 1) {
+                            val next_frame = marked_frames[i + 1]
+                            val previous_frame = marked_frames[i]
 
-                    if (that.play_cancelled) {
-                        throw java.lang.IllegalStateException()
-                    }
-
-                    that.on_start()
-
-                    this.has_beats = that.beat_frames.isNotEmpty()
-
-                    if (this.has_beats) {
-                        this.current_beat = that.beat_frames.keys.min()
-                        for ((k, range) in that.beat_frames) {
-                            if (range.contains(start_frame)) {
-                                this.current_beat = k
+                            if ((previous_frame until next_frame).contains(start_frame)) {
+                                this.current_mark_index = i
                                 break
                             }
                         }
 
-                        that.active_audio_track_handle?.set_next_notification_position(
-                            that.beat_frames[this.current_beat]!!.last - start_frame
-                        )
+                        if (marked_frames[this.current_mark_index] - start_frame == 0) {
+                            this@MappedPlaybackDevice.on_mark(this.current_mark_index)
+                        }
+
+                        track_handle?.set_next_notification_position(1)
                     }
                 }
+
                 override fun onMarkerReached(audio_track: AudioTrack?) {
                     if (audio_track == null) {
                         return
@@ -137,20 +135,25 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
                         return this._stop(audio_track)
                     }
 
-                    this.current_beat += 1
-
-                    if (this.current_beat > that.beat_frames.keys.max()) {
-                        return this._stop(audio_track)
+                    if (this.current_mark_index >= that.marked_frames!!.size) {
+                        return
                     }
 
-                    that.on_beat(this.current_beat)
+                    if (that.wave_generator.kill_frame == null) {
+                        while (that.marked_frames!![this.current_mark_index] - start_frame + frame_delay < 1) {
+                            this.current_mark_index += 1
+                        }
+                    }
 
+                    val frame = that.marked_frames!![this.current_mark_index]
+
+                    that.on_mark(this.current_mark_index++ - 1)
 
                     that.active_audio_track_handle?.set_next_notification_position(
                         if (that.wave_generator.kill_frame != null) {
-                            min(that.wave_generator.kill_frame!!, that.beat_frames[this.current_beat]!!.last) - start_frame
+                            min(that.wave_generator.kill_frame!!, frame) - start_frame
                         } else {
-                            that.beat_frames[this.current_beat]!!.last - start_frame + frame_delay
+                            frame - start_frame + frame_delay
                         }
                     )
                 }
@@ -197,10 +200,7 @@ open class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_rate:
         this.start_playback(start_frame)
     }
 
-    fun setup_beat_frames() {
-        this.beat_frames.clear()
-        for ((k, v) in this.sample_frame_map.get_beat_frames()) {
-            this.beat_frames[k] = v
-        }
+    private fun setup_frame_markers() {
+        this.marked_frames = this.sample_frame_map.get_marked_frames()
     }
 }

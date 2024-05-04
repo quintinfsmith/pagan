@@ -19,4 +19,28 @@ class MidiPlaybackDevice(sample_handle_manager: SampleHandleManager): MappedPlay
         frame_map.parse_midi(midi)
         this.play()
     }
+
+    override fun on_buffer() {
+        TODO("Not yet implemented")
+    }
+
+    override fun on_buffer_done() {
+        TODO("Not yet implemented")
+    }
+
+    override fun on_start() {
+        TODO("Not yet implemented")
+    }
+
+    override fun on_stop() {
+        TODO("Not yet implemented")
+    }
+
+    override fun on_cancelled() {
+        TODO("Not yet implemented")
+    }
+
+    override fun on_mark(i: Int) {
+        TODO("Not yet implemented")
+    }
 }

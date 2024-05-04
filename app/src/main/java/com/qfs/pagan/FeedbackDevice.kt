@@ -22,7 +22,6 @@ class FeedbackDevice(private var _sample_handle_manager: SampleHandleManager): M
                 return null
             }
 
-
             val output = this._handles.toSet()
             runBlocking {
                 this@ImmediateFrameMap._mutex.withLock {
@@ -36,12 +35,12 @@ class FeedbackDevice(private var _sample_handle_manager: SampleHandleManager): M
             return output
         }
 
-        override fun get_size(): Int {
-            return this.max_frame + 1
+        override fun get_marked_frames(): Array<Int> {
+            return arrayOf<Int>()
         }
 
-        override fun get_beat_frames(): HashMap<Int, IntRange> {
-            return HashMap()
+        override fun has_handles_remaining(frame: Int): Boolean {
+            return this._handles.isNotEmpty()
         }
 
         override fun get_active_handles(frame: Int): Set<Pair<Int, SampleHandle>> {
@@ -57,9 +56,16 @@ class FeedbackDevice(private var _sample_handle_manager: SampleHandleManager): M
         }
     }
 
+    override fun on_buffer() { }
+    override fun on_buffer_done() { }
+    override fun on_start() { }
+
     override fun on_stop() {
         (this.sample_frame_map as ImmediateFrameMap).max_frame = 0
     }
+
+    override fun on_cancelled() { }
+    override fun on_mark(i: Int) { }
 
     //fun new_event(event: NoteOn, duration_millis: Int) {
     //    val handles = this.sample_handle_manager.gen_sample_handles(event)

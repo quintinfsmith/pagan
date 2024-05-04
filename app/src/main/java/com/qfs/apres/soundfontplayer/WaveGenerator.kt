@@ -43,10 +43,6 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         val first_frame = this.frame
         this.update_active_sample_handles(this.frame)
 
-        if (this.frame >= this.midi_frame_map.get_size()) {
-            throw DeadException()
-        }
-
         if (this._active_sample_handles.isEmpty()) {
             this.frame += this.buffer_size
             throw EmptyException()
@@ -244,6 +240,10 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                 val handles = this.midi_frame_map.get_new_handles(working_frame) ?: continue
                 this.activate_sample_handles(handles, i, j, initial_frame)
             }
+        }
+
+        if (this._active_sample_handles.isEmpty() && !this.midi_frame_map.has_handles_remaining(initial_frame)) {
+            throw DeadException()
         }
     }
 

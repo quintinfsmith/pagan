@@ -42,6 +42,7 @@ class AudioTrackHandle(sample_rate: Int, buffer_size: Int) {
         if (update_listener != null) {
             this.audio_track.setPlaybackPositionUpdateListener(update_listener)
         }
+
         this.audio_track.play()
     }
 

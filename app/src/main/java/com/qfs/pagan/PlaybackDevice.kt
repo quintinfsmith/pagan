@@ -21,7 +21,6 @@ class PlaybackDevice(var activity: MainActivity, sample_handle_manager: SampleHa
         handle anything more.
      */
     override fun on_buffer() {
-        super.on_buffer()
         this.activity.runOnUiThread {
             Thread.sleep(200)
             val cancelled = runBlocking {
@@ -47,7 +46,6 @@ class PlaybackDevice(var activity: MainActivity, sample_handle_manager: SampleHa
                 this@PlaybackDevice._buffering_cancelled = true
             }
         }
-        super.on_buffer_done()
         this.activity.runOnUiThread {
             this.activity.loading_reticle_hide()
         }
@@ -61,7 +59,7 @@ class PlaybackDevice(var activity: MainActivity, sample_handle_manager: SampleHa
         this.activity.update_playback_state_soundfont(MainActivity.PlaybackState.Playing)
     }
 
-    override fun on_beat(i: Int) {
+    override fun on_mark(i: Int) {
         if (!this.is_playing || this.play_cancelled) {
             return
         }
@@ -97,7 +95,7 @@ class PlaybackDevice(var activity: MainActivity, sample_handle_manager: SampleHa
     fun play_opus(start_beat: Int) {
         this._first_beat_passed = false
         (this.sample_frame_map as PlaybackFrameMap).parse_opus()
-        val start_frame = this.sample_frame_map.get_beat_frames()[start_beat]?.first ?: 0
+        val start_frame = this.sample_frame_map.get_marked_frames()[start_beat]
 
         // Prebuild the first buffer's worth of sample handles, the rest happen in the get_new_handles()
         for (i in start_frame .. start_frame + buffer_size) {

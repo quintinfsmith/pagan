@@ -11,13 +11,15 @@ import kotlin.math.min
 
 class MidiFrameMap(val sample_handle_manager: SampleHandleManager): FrameMap {
     private val frames = HashMap<Int, MutableSet<SampleHandle>>()
-    private val beat_frames = mutableListOf<Int>()
     private var final_frame: Int = -1
     private var max_overlap = 0
     private val percussion_handles = mutableSetOf<Int>()
 
+    override fun get_size(): Int {
+        return this.final_frame
+    }
+
     fun clear() {
-        this.beat_frames.clear()
         this.frames.clear()
         this.final_frame = 0
         this.percussion_handles.clear()
@@ -99,7 +101,7 @@ class MidiFrameMap(val sample_handle_manager: SampleHandleManager): FrameMap {
     }
 
     override fun has_handles_remaining(frame: Int): Boolean {
-        TODO("Not yet implemented")
+        return frame < this.final_frame
     }
 
     override fun get_new_handles(frame: Int): Set<SampleHandle>? {

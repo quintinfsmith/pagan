@@ -77,6 +77,7 @@ import com.qfs.apres.event.SongPositionPointer
 import com.qfs.apres.event2.NoteOn79
 import com.qfs.apres.soundfont.Riff
 import com.qfs.apres.soundfont.SoundFont
+import com.qfs.apres.soundfontplayer.MidiFrameMap
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.apres.soundfontplayer.WavConverter
 import com.qfs.pagan.ColorMap.Palette
@@ -112,15 +113,9 @@ class MainActivity : AppCompatActivity() {
         var show_percussion = true
 
         fun export_wav(sample_handle_manager: SampleHandleManager, target_file: File, handler: WavConverter.ExporterEventHandler) {
-            val frame_map = PlaybackFrameMap(this.opus_manager, sample_handle_manager)
-            frame_map.parse_opus()
+            val frame_map = MidiFrameMap(sample_handle_manager)
+            frame_map.parse_midi(this.opus_manager.get_midi())
 
-            val start_frame = 0
-
-            // Prebuild the first buffer's worth of sample handles, the rest happen in the get_new_handles()
-            for (i in start_frame .. start_frame + sample_handle_manager.buffer_size) {
-                frame_map.check_frame(i)
-            }
             this.export_handle = WavConverter(sample_handle_manager) // Not accessing Cache *YET*, don't need to match buffer sizes
 
             this.export_handle?.export_wav(frame_map, target_file, handler)

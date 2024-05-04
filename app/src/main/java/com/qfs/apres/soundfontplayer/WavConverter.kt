@@ -25,8 +25,7 @@ open class WavConverter(val sample_handle_manager: SampleHandleManager) {
         val buffer_size = this.sample_handle_manager.buffer_size
         val wave_generator = WaveGenerator(midi_frame_map, sample_rate, buffer_size)
         val data_chunks = mutableListOf<FloatArray>()
-        TODO()
-        val total_chunk_count = 0 //midi_frame_map.get_size().toDouble() / buffer_size
+        val total_chunk_count = midi_frame_map.get_size().toDouble() / buffer_size
         var chunk_count = 0.0
         val min_delta = 500
         val empty_chunk = FloatArray(buffer_size * 2) { 0f }
@@ -39,6 +38,7 @@ open class WavConverter(val sample_handle_manager: SampleHandleManager) {
                 } catch (e: WaveGenerator.EmptyException) {
                     empty_chunk
                 }
+
                 data_chunks.add(chunk)
                 val now = System.currentTimeMillis()
                 if (now - current_ts > min_delta) {

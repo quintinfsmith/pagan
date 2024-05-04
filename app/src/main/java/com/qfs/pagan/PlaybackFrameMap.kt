@@ -36,8 +36,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
     private val _percussion_setter_ids = mutableSetOf<Int>()
 
-    private var _beat_count = 0
-
     override fun get_new_handles(frame: Int): Set<SampleHandle>? {
         // Check frame a buffer ahead to make sure frames are added as accurately as possible
         this.check_frame(frame + this._sample_handle_manager.buffer_size)
@@ -104,7 +102,9 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     }
 
     override fun has_frames_remaining(frame: Int): Boolean {
-        return (this._frame_map.isNotEmpty() && this._frame_map.keys.maxOf { it } >= frame) || (this._setter_frame_map.isNotEmpty() && this._setter_frame_map.keys.maxOf { it } >= frame)
+        return (this._frame_map.isNotEmpty() && this._frame_map.keys.maxOf { it } >= frame)
+                || (this._setter_frame_map.isNotEmpty() && this._setter_frame_map.keys.maxOf { it } >= frame)
+                || this.get_marked_frames().last() >= frame
     }
 
     override fun get_size(): Int {
@@ -183,7 +183,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         this._handle_map.clear()
         this._handle_range_map.clear()
         this._tempo_ratio_map.clear()
-        this._beat_count = 0
         this._cached_beat_frames = null
 
         this._setter_id_gen = 0
@@ -263,7 +262,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
     fun parse_opus(force_simple_mode: Boolean = false) {
         this.clear()
-        this._beat_count = this.opus_manager.beat_count
         this._simple_mode = force_simple_mode
 
         for (channel in this.opus_manager.channels) {

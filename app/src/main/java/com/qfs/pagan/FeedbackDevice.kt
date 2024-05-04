@@ -39,7 +39,7 @@ class FeedbackDevice(private var _sample_handle_manager: SampleHandleManager): M
             return arrayOf<Int>()
         }
 
-        override fun has_handles_remaining(frame: Int): Boolean {
+        override fun has_frames_remaining(frame: Int): Boolean {
             return this._handles.isNotEmpty()
         }
 

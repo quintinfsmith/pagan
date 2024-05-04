@@ -100,7 +100,7 @@ class MidiFrameMap(val sample_handle_manager: SampleHandleManager): FrameMap {
         TODO("Not yet implemented")
     }
 
-    override fun has_handles_remaining(frame: Int): Boolean {
+    override fun has_frames_remaining(frame: Int): Boolean {
         return frame < this.final_frame
     }
 

@@ -103,8 +103,8 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         return this._cached_beat_frames!!
     }
 
-    override fun has_handles_remaining(frame: Int): Boolean {
-        return (this._frame_map.isNotEmpty() && this._frame_map.keys.maxOf { it } >= frame) || (this._setter_frame_map.isNotEmpty() && this._setter_map.keys.maxOf { it } >= frame)
+    override fun has_frames_remaining(frame: Int): Boolean {
+        return (this._frame_map.isNotEmpty() && this._frame_map.keys.maxOf { it } >= frame) || (this._setter_frame_map.isNotEmpty() && this._setter_frame_map.keys.maxOf { it } >= frame)
     }
 
     override fun get_size(): Int {

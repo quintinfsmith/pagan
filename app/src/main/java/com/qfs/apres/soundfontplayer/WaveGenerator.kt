@@ -242,7 +242,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             }
         }
 
-        if (this._active_sample_handles.isEmpty() && !this.midi_frame_map.has_handles_remaining(initial_frame)) {
+        if (this._active_sample_handles.isEmpty() && !this.midi_frame_map.has_frames_remaining(initial_frame)) {
             throw DeadException()
         }
     }

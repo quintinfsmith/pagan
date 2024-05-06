@@ -69,6 +69,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
 
         super.onStop()
     }
+
     fun backup_position() {
         val main = this.get_main()
         val editor_table = main.findViewById<EditorTable>(R.id.etEditorTable)
@@ -80,6 +81,12 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         this.view_model.fine_x = scroll_x.second
         this.view_model.coarse_y = scroll_y.first
         this.view_model.fine_y = scroll_y.second
+
+        // KLUDGE ALERT: RecyclerView loses position if fine offset is 0, so i need to offset it slightly
+        if (scroll_x.second == 0) {
+            this.view_model.fine_x = -1
+            editor_table.precise_scroll(scroll_x.first, -1, scroll_y.first, scroll_y.second)
+        }
     }
 
     fun restore_view_model_position() {

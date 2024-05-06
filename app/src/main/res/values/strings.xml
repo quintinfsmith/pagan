@@ -9,7 +9,7 @@
     <string name="label_choose_instrument_percussion">Kit: %1$s</string>
     <string name="label_shortcut_scrollbar">Jump to beat %1$d</string>
     <string name="label_shortcut">Jump to beat</string>
-    <string name="label_volume_scrollbar">Line Volume: %1$d%%</string>
+    <string name="label_volume_scrollbar">Line Velocity: %1$d</string>
     <string name="dlg_tuning">Tuning</string>
     <string name="pfx_subtract">-</string>
     <string name="pfx_add">+</string>

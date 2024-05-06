@@ -45,7 +45,8 @@
             android:layout_marginBottom="@dimen/number_selector_spacing"
             android:layout_weight="1"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="@dimen/icon_button_height"
+            android:textAlignment="center"
             android:text="" />
 
         <com.qfs.pagan.ButtonIcon

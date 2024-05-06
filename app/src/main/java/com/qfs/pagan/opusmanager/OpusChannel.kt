@@ -220,7 +220,7 @@ class OpusChannel(var uuid: Int) {
     }
 
     fun set_line_volume(line_offset: Int, volume: Int) {
-        this.lines[line_offset].volume = volume
+        this.lines[line_offset].controllers.get_controller(ControlEventType.Volume).initial_event = OpusVolumeEvent(volume)
     }
 
     fun get_line_volume(line_offset: Int): Int {

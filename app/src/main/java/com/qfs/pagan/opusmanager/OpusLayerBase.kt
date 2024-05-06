@@ -1303,7 +1303,7 @@ open class OpusLayerBase {
             )
             channel.lines.forEachIndexed inner@{ l: Int, line: OpusLine ->
                 // This only makes sense when volume controls aren't enabled (VOLCTLTMP)
-                if ((line.get_controller(ControlEventType.Volume).initial_event as OpusVolumeEvent).value.roundToInt() == 0) {
+                if ((line.get_controller(ControlEventType.Volume).initial_event as OpusVolumeEvent).value == 0) {
                     return@inner
                 }
                 var current_tick = 0
@@ -1345,7 +1345,7 @@ open class OpusLayerBase {
                                     channel.midi_channel,
                                     note,
                                     bend,
-                                    (line.get_controller(ControlEventType.Volume).initial_event as OpusVolumeEvent).value.roundToInt(),
+                                    (line.get_controller(ControlEventType.Volume).initial_event as OpusVolumeEvent).value,
                                     event_uuid_gen++
                                 )
                                 pseudo_midi_map.add(Triple(
@@ -1611,7 +1611,7 @@ open class OpusLayerBase {
             channel.lines.forEachIndexed { i: Int, line: OpusTreeJSON<OpusEventSTD> ->
                 val new_controller = ActiveControllerJSON(
                     ControlEventType.Volume,
-                    OpusVolumeEvent(channel.line_volumes[i].toFloat()),
+                    OpusVolumeEvent(channel.line_volumes[i]),
                     listOf()
                 )
 
@@ -2282,7 +2282,7 @@ open class OpusLayerBase {
     }
 
     fun get_line_volume(channel: Int, line_offset: Int): Int {
-        return (this.channels[channel].lines[line_offset].controllers.get_controller(ControlEventType.Volume).initial_event as OpusVolumeEvent).value.roundToInt()
+        return (this.channels[channel].lines[line_offset].controllers.get_controller(ControlEventType.Volume).initial_event as OpusVolumeEvent).value
     }
     // ----------------------------------------------------------------
 

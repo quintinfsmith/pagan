@@ -24,6 +24,7 @@ class ContextMenuLine(context: Context, attrs: AttributeSet? = null): ContextMen
     lateinit var button_remove: ButtonIcon
     lateinit var button_choose_percussion: ButtonStd
     lateinit var button_toggle_volume_control: ButtonIcon
+    lateinit var button_volume_popup: ButtonIcon
     lateinit var widget_volume: ControlWidgetVolume
     lateinit var spacer: Space
 
@@ -32,7 +33,9 @@ class ContextMenuLine(context: Context, attrs: AttributeSet? = null): ContextMen
         this.button_insert = this.findViewById(R.id.btnInsertLine)
         this.button_remove = this.findViewById(R.id.btnRemoveLine)
         this.button_choose_percussion = this.findViewById(R.id.btnChoosePercussion)
-        this.widget_volume = ControlWidgetVolume(OpusVolumeEvent(0F), this.context) { event: OpusControlEvent ->
+        this.button_volume_popup = this.findViewById(R.id.btnLineVolumePopup)
+
+        this.widget_volume = ControlWidgetVolume(OpusVolumeEvent(0), this.context) { event: OpusControlEvent ->
             val opus_manager = this.get_opus_manager()
             val cursor = opus_manager.cursor
             opus_manager.set_line_controller_initial_event(
@@ -43,12 +46,13 @@ class ContextMenuLine(context: Context, attrs: AttributeSet? = null): ContextMen
             )
         }
 
-        this.findViewById<LinearLayout?>(R.id.llContextRow).addView(this.widget_volume)
-        this.widget_volume.layoutParams.width = MATCH_PARENT
-        this.widget_volume.layoutParams.height = WRAP_CONTENT
+        if (this.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
+            this.findViewById<LinearLayout?>(R.id.llContextRow).addView(this.widget_volume)
+            this.widget_volume.layoutParams.width = MATCH_PARENT
+            this.widget_volume.layoutParams.height = WRAP_CONTENT
+        }
 
         this.spacer = this.findViewById<Space>(R.id.spacer)
-
     }
 
     override fun refresh() {
@@ -93,13 +97,20 @@ class ContextMenuLine(context: Context, attrs: AttributeSet? = null): ContextMen
             //this.button_toggle_volume_control.setImageResource(R.drawable.volume_minus)
 
             this.widget_volume.visibility = View.GONE
+            this.button_volume_popup.visibility = View.GONE
         } else {
             // Hiding volume control line for now (VOLCTLTMP)
             //this.button_toggle_volume_control.setImageResource(R.drawable.volume_plus)
+            if (this.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                this.button_volume_popup.visibility = View.VISIBLE
+                this.widget_volume.visibility = View.GONE
+            } else {
+                this.button_volume_popup.visibility = View.GONE
+                this.widget_volume.visibility = View.VISIBLE
+                val controller = opus_manager.channels[channel].lines[line_offset].controllers.get_controller(ControlEventType.Volume)
+                this.widget_volume.set_event(controller.initial_event as OpusVolumeEvent)
 
-            this.widget_volume.visibility = View.VISIBLE
-            val controller = opus_manager.channels[channel].lines[line_offset].controllers.get_controller(ControlEventType.Volume)
-            this.widget_volume.set_event(controller.initial_event as OpusVolumeEvent)
+            }
         }
 
     }
@@ -139,6 +150,13 @@ class ContextMenuLine(context: Context, attrs: AttributeSet? = null): ContextMen
             }
 
             this.long_click_button_remove_line()
+        }
+
+        this.button_volume_popup.setOnClickListener {
+            val opus_manager = this.get_opus_manager()
+            val channel = opus_manager.cursor.channel
+            val line_offset = opus_manager.cursor.line_offset
+            this._line_volume_dialog(channel, line_offset)
         }
 
         // Hiding volume control line for now (VOLCTLTMP)
@@ -210,13 +228,13 @@ class ContextMenuLine(context: Context, attrs: AttributeSet? = null): ContextMen
         val scroll_bar = view.findViewById<SeekBar>(R.id.line_volume_scrollbar)!!
         scroll_bar.progress = line_volume
         val title_text = view.findViewById<TextView>(R.id.line_volume_title)!!
-        title_text.text = resources.getString(R.string.label_volume_scrollbar, line_volume * 100 / 96)
-        title_text.contentDescription = resources.getString(R.string.label_volume_scrollbar, line_volume * 100 / 96)
+        title_text.text = resources.getString(R.string.label_volume_scrollbar, line_volume)
+        title_text.contentDescription = resources.getString(R.string.label_volume_scrollbar, line_volume)
 
         scroll_bar.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
-                title_text.text = resources.getString(R.string.label_volume_scrollbar, p1 * 100 / 96)
-                title_text.contentDescription = resources.getString(R.string.label_volume_scrollbar, p1 * 100 / 96)
+                title_text.text = resources.getString(R.string.label_volume_scrollbar, p1)
+                title_text.contentDescription = resources.getString(R.string.label_volume_scrollbar, p1)
                 opus_manager.set_line_volume(channel, line_offset, p1)
             }
             override fun onStartTrackingTouch(p0: SeekBar?) { }

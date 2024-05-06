@@ -200,4 +200,10 @@
         <item name="android:layout_marginBottom">@dimen/config_item_padding</item>
     </style>
 
+    <style name="volume_widget_button">
+        <item name="android:textSize">20sp</item>
+        <item name="android:fontFamily">monospace</item>
+
+    </style>
+
 </resources>

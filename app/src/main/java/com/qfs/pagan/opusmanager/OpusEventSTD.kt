@@ -27,7 +27,7 @@ data class OpusTempoEvent(var value: Float): OpusControlEvent() {
 }
 
 @Serializable
-data class OpusVolumeEvent(var value: Float, var transition: Int = 0): OpusControlEvent() {
+data class OpusVolumeEvent(var value: Int, var transition: Int = 0): OpusControlEvent() {
     override fun get_leaf_label(): String {
         return this.value.toInt().toString()
     }

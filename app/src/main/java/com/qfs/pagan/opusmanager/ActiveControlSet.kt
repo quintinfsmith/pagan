@@ -18,7 +18,7 @@ class ActiveControlSet(var beat_count: Int, default_enabled: Set<ControlEventTyp
             fun default_event(type: ControlEventType): OpusControlEvent {
                 return when (type) {
                     ControlEventType.Tempo -> OpusTempoEvent(120F)
-                    ControlEventType.Volume -> OpusVolumeEvent(64F)
+                    ControlEventType.Volume -> OpusVolumeEvent(64)
                     ControlEventType.Reverb -> OpusReverbEvent(0F)
                 }
             }

@@ -42,17 +42,19 @@
         android:layout_marginTop="@dimen/number_selector_spacing"
         android:contentDescription="Line Volume"/>
 
-    <LinearLayout
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:visibility="gone">
-        <com.qfs.pagan.PaganSeekBar
-            android:id="@+id/sbLineVolume"
-            android:visibility="gone"
-            android:max="127"
-            android:min="0"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content" />
-    </LinearLayout>
+    <com.qfs.pagan.ButtonIcon
+        android:id="@+id/btnToggleVolCtl"
+        android:theme="@style/icon_button"
+        app:srcCompat="@drawable/volume_plus"
+        android:layout_width="@dimen/icon_button_width"
+        android:layout_height="@dimen/icon_button_height"
+        android:layout_marginStart="@dimen/number_selector_spacing"
+        android:contentDescription="Toggle Volume Control"/>
 
+    <Space
+        android:visibility="gone"
+        android:id="@+id/spacer"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:layout_width="0dp" />
 </LinearLayout>

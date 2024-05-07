@@ -111,7 +111,6 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         super.onDestroy()
     }
 
-
     override fun onSaveInstanceState(outState: Bundle) {
         outState.putInt("coarse_x", this.view_model.coarse_x)
         outState.putInt("fine_x", this.view_model.fine_x)

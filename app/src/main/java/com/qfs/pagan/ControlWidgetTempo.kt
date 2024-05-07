@@ -7,11 +7,11 @@ import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.OpusTempoEvent
 import kotlin.math.roundToInt
 
-class ControlWidgetTempo(default: OpusTempoEvent, context: Context, callback: (OpusControlEvent) -> Unit): ControlWidget<OpusTempoEvent>(context, callback) {
+class ControlWidgetTempo(default: OpusTempoEvent, context: Context, callback: (OpusControlEvent) -> Unit): ControlWidget(context, callback) {
     private val input = ButtonStd(ContextThemeWrapper(context, R.style.icon_button), null)
     private val min = 0f
     private val max = 512f
-    private var current_event = default
+    private var current_event: OpusTempoEvent = default
 
     init {
         this.orientation = HORIZONTAL
@@ -35,8 +35,8 @@ class ControlWidgetTempo(default: OpusTempoEvent, context: Context, callback: (O
         return this.current_event
     }
 
-    override fun set_event(event: OpusTempoEvent) {
-        this.current_event = event
+    override fun set_event(event: OpusControlEvent) {
+        this.current_event = event as OpusTempoEvent
 
         val value = event.value
 

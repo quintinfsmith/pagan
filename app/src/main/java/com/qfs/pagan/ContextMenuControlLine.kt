@@ -15,7 +15,7 @@ import com.qfs.pagan.opusmanager.OpusVolumeEvent
 
 class ContextMenuControlLine(context: Context, attrs: AttributeSet? = null): ContextMenuView(R.layout.contextmenu_control_line, context, attrs) {
     lateinit var initial_widget_wrapper: LinearLayout
-    lateinit var widget: ControlWidget<OpusControlEvent>
+    lateinit var widget: ControlWidget
 
     private var _current_type: ControlEventType? = null
 
@@ -64,7 +64,7 @@ class ContextMenuControlLine(context: Context, attrs: AttributeSet? = null): Con
             ControlEventType.Volume -> ControlWidgetVolume(controller.initial_event as OpusVolumeEvent, this.context, this::_callback)
             else -> TODO()
             //ControlEventType.Reverb -> ControlWidgetReverb(this.context, this::_callback)
-        } as ControlWidget<OpusControlEvent>
+        }
 
         this._current_type = cursor.ctl_type
 

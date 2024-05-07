@@ -17,7 +17,7 @@ import com.qfs.pagan.opusmanager.TrivialActionException
 
 class ContextMenuControlLeaf(context: Context, attrs: AttributeSet? = null): ContextMenuView(R.layout.contextmenu_line_ctl_leaf, context, attrs) {
     lateinit var widget_wrapper: LinearLayout
-    lateinit var widget: ControlWidget<OpusControlEvent>
+    lateinit var widget: ControlWidget
     // --------------------------------
     lateinit var button_split: ButtonIcon
     lateinit var button_insert: ButtonIcon
@@ -70,7 +70,7 @@ class ContextMenuControlLeaf(context: Context, attrs: AttributeSet? = null): Con
             ControlEventType.Volume -> ControlWidgetVolume(controller.initial_event as OpusVolumeEvent, this.context, this::_widget_callback)
             else -> TODO()
             //ControlEventType.Reverb -> ControlWidgetReverb(this.context, this::_widget_callback)
-        } as ControlWidget<OpusControlEvent>
+        } as ControlWidget
 
         this._current_type = cursor.ctl_type
 

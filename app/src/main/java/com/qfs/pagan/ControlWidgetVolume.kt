@@ -10,7 +10,7 @@ import android.widget.SeekBar
 import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
 
-class ControlWidgetVolume(default: OpusVolumeEvent, context: Context, callback: (OpusControlEvent) -> Unit): ControlWidget<OpusVolumeEvent>(context, callback) {
+class ControlWidgetVolume(default: OpusVolumeEvent, context: Context, callback: (OpusControlEvent) -> Unit): ControlWidget(context, callback) {
     private val _slider = PaganSeekBar(context)
     private val _button = ButtonLabelledIcon(ContextThemeWrapper(context, R.style.volume_widget_button))
     private val _min = 0
@@ -20,7 +20,7 @@ class ControlWidgetVolume(default: OpusVolumeEvent, context: Context, callback: 
     init {
         this.orientation = HORIZONTAL
 
-        this._button.set_text(default.value.toInt().toString())
+        this._button.set_text(default.value.toString())
         this._button.set_icon(R.drawable.volume)
         this._button.label.minEms = 2
 
@@ -76,9 +76,9 @@ class ControlWidgetVolume(default: OpusVolumeEvent, context: Context, callback: 
         return OpusVolumeEvent(this._slider.progress)
     }
 
-    override fun set_event(event: OpusVolumeEvent) {
-        val value = event.value
-        this._slider.progress = value.toInt()
-        this._button.set_text(value.toInt().toString())
+    override fun set_event(event: OpusControlEvent) {
+        val value = (event as OpusVolumeEvent).value
+        this._slider.progress = value
+        this._button.set_text(value.toString())
     }
 }

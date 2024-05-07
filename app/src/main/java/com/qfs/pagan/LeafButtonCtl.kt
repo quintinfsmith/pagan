@@ -7,6 +7,9 @@ import androidx.appcompat.view.ContextThemeWrapper
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusControlEvent
+import com.qfs.pagan.opusmanager.OpusReverbEvent
+import com.qfs.pagan.opusmanager.OpusTempoEvent
+import com.qfs.pagan.opusmanager.OpusVolumeEvent
 import com.qfs.pagan.structure.OpusTree
 import kotlin.math.roundToInt
 
@@ -55,11 +58,20 @@ abstract class LeafButtonCtl(
         val value_text = LeafText(
             ContextThemeWrapper(this.context, R.style.ctl_leaf_value)
         )
-        value_text.text = event.get_leaf_label()
+        value_text.text = this.get_label_text(event)
         this.addView(value_text)
 
         (value_text.layoutParams as LayoutParams).gravity = Gravity.CENTER
         value_text.layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT
+    }
+
+    private fun get_label_text(event: OpusControlEvent): String {
+        return when (event) {
+            is OpusVolumeEvent -> (event.value).toString()
+            is OpusTempoEvent -> event.value.roundToInt().toString()
+            is OpusReverbEvent -> "TODO"
+            else -> "???"
+        }
     }
 
     override fun _build_drawable_state(drawableState: IntArray?): IntArray? {

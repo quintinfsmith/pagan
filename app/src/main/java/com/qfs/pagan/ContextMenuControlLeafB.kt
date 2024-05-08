@@ -3,12 +3,12 @@ package com.qfs.pagan
 import android.view.ViewGroup
 import android.widget.RadioGroup
 
-class ContextMenuControlLeafB(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(R.layout.contextmenu_line_ctl_leaf_b, null, primary_container, secondary_container) {
+class ContextMenuControlLeafB(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(R.layout.contextmenu_line_ctl_leaf_b, R.layout.contextmenu_line_ctl_leaf_b_secondary, primary_container, secondary_container) {
     lateinit var button_erase: ButtonIcon
     lateinit var radio_mode: RadioGroup
     override fun init_properties() {
         this.button_erase = this.primary.findViewById(R.id.btnEraseSelection)
-        this.radio_mode = this.primary.findViewById<RadioGroup>(R.id.rgLinkMode)
+        this.radio_mode = this.secondary!!.findViewById<RadioGroup>(R.id.rgLinkMode)
     }
 
     override fun setup_interactions() {

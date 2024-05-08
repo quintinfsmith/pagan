@@ -3,11 +3,14 @@ import android.app.AlertDialog
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
+import android.view.View.GONE
+import android.view.View.VISIBLE
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.TextView
 import androidx.core.view.GravityCompat
+import androidx.core.view.isNotEmpty
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.setFragmentResult
 import androidx.fragment.app.setFragmentResultListener
@@ -237,7 +240,6 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                     try {
                         main.import_midi(path)
                     } catch (e: Exception) {
-                        throw e
                         val opus_manager = main.get_opus_manager()
                         if (!opus_manager.first_load_done) {
                             main.get_opus_manager().new()
@@ -303,7 +305,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     }
 
     fun refresh_context_menu() {
-        this.active_context_menu?.refresh()
+        this.active_context_menu?.refresh() ?: this.hide_context_menus()
     }
 
     private inline fun <reified T: ContextMenuView?> refresh_or_clear_context_menu(): Boolean {
@@ -312,7 +314,9 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
 
         if (this.active_context_menu !is T) {
             llContextMenu.removeAllViews()
+            llContextMenu.visibility = GONE
             llContextMenuSecondary.removeAllViews()
+            llContextMenuSecondary.visibility = GONE
             this.active_context_menu = null
             return false
         }
@@ -323,12 +327,15 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     }
 
     fun clear_context_menu() {
+        this.hide_context_menus()
         if (this.active_context_menu == null) {
             return
         }
+
         if (this.active_context_menu!!.primary.parent != null) {
             (this.active_context_menu!!.primary.parent as ViewGroup).removeAllViews()
         }
+
         if (this.active_context_menu!!.secondary != null) {
             if (this.active_context_menu!!.secondary!!.parent != null) {
                 (this.active_context_menu!!.secondary!!.parent as ViewGroup).removeAllViews()
@@ -338,6 +345,26 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         this.active_context_menu = null
     }
 
+    private fun hide_context_menus() {
+        this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary)?.visibility = GONE
+        this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)?.visibility = GONE
+    }
+
+    private fun show_context_menus() {
+        val primary = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary)
+        primary.visibility = if (primary.isNotEmpty()) {
+            VISIBLE
+        } else {
+            GONE
+        }
+        val secondary = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
+        secondary.visibility = if (secondary.isNotEmpty()) {
+            VISIBLE
+        } else {
+            GONE
+        }
+    }
+
 
     internal fun set_context_menu_control_line() {
         if (!this.refresh_or_clear_context_menu<ContextMenuControlLine>()) {
@@ -345,6 +372,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                 this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
                 this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
             )
+            this.show_context_menus()
         }
     }
 
@@ -354,6 +382,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                 this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
                 this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
             )
+            this.show_context_menus()
         }
     }
 
@@ -363,6 +392,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                 this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
                 this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
             )
+            this.show_context_menus()
         }
     }
 
@@ -372,6 +402,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                 this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
                 this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
             )
+            this.show_context_menus()
         }
     }
 
@@ -386,6 +417,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                 this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
                 this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
             )
+            this.show_context_menus()
         }
     }
 
@@ -395,6 +427,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                 this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
                 this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
             )
+            this.show_context_menus()
         }
     }
 
@@ -404,6 +437,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                 this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
                 this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
             )
+            this.show_context_menus()
         }
     }
 
@@ -413,6 +447,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                 this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
                 this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
             )
+            this.show_context_menus()
         }
     }
 

@@ -5,7 +5,7 @@ import android.view.ViewGroup
 import android.widget.RadioGroup
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 
-class ContextMenuLink(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(R.layout.contextmenu_linking, null, primary_container, secondary_container) {
+class ContextMenuLink(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(R.layout.contextmenu_linking, R.layout.contextmenu_linking_secondary, primary_container, secondary_container) {
     lateinit var button_unlink: ButtonIcon
     lateinit var button_unlink_all: ButtonIcon
     lateinit var button_erase: ButtonIcon
@@ -15,8 +15,8 @@ class ContextMenuLink(primary_container: ViewGroup, secondary_container: ViewGro
         this.button_unlink = this.primary.findViewById(R.id.btnUnLink)
         this.button_unlink_all = this.primary.findViewById(R.id.btnUnLinkAll)
         this.button_erase = this.primary.findViewById(R.id.btnEraseSelection)
-        this.label = this.primary.findViewById(R.id.tvLinkLabel)
-        this.radio_mode = this.primary.findViewById<RadioGroup?>(R.id.rgLinkMode)
+        this.label = this.secondary!!.findViewById(R.id.tvLinkLabel)
+        this.radio_mode = this.secondary!!.findViewById<RadioGroup?>(R.id.rgLinkMode)
     }
 
     override fun setup_interactions() {

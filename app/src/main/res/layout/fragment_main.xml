@@ -17,13 +17,21 @@
         android:id="@+id/llContextMenuPrimary"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
-    </LinearLayout>
+        android:paddingBottom="@dimen/primary_contextmenu_padding_bottom"
+        android:paddingTop="@dimen/primary_contextmenu_padding_top"
+        android:paddingStart="@dimen/primary_contextmenu_padding_start"
+        android:paddingEnd="@dimen/primary_contextmenu_padding_end"
+        android:visibility="gone"
+        android:orientation="vertical"/>
 
     <LinearLayout
         android:id="@+id/llContextMenuSecondary"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
-    </LinearLayout>
+        android:paddingBottom="@dimen/secondary_contextmenu_padding_bottom"
+        android:paddingTop="@dimen/secondary_contextmenu_padding_top"
+        android:paddingStart="@dimen/secondary_contextmenu_padding_start"
+        android:paddingEnd="@dimen/secondary_contextmenu_padding_end"
+        android:visibility="gone"
+        android:orientation="vertical"/>
 </LinearLayout>

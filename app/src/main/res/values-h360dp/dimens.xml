@@ -5,4 +5,5 @@
     <dimen name="icon_button_width">58dp</dimen>
     <dimen name="icon_button_padding_a">5dp</dimen>
     <dimen name="icon_button_padding_b">8dp</dimen>
+
 </resources>

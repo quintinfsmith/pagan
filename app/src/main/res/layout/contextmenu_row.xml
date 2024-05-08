@@ -3,16 +3,9 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/llContextRow"
-    android:padding="@dimen/number_selector_spacing"
-    android:orientation="vertical"
+    android:orientation="horizontal"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
-
-
-    <LinearLayout
-        android:orientation="horizontal"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
 
         <com.qfs.pagan.ButtonIcon
             android:id="@+id/btnToggleVolCtl"
@@ -66,7 +59,5 @@
             android:layout_height="@dimen/icon_button_height"
             android:layout_marginStart="@dimen/number_selector_spacing"
             android:contentDescription="Insert Line"/>
-
-    </LinearLayout>
 
 </LinearLayout>

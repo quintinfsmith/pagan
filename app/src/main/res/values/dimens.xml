@@ -38,4 +38,12 @@
     <dimen name="volume_button_width">64dp</dimen>
 
     <dimen name="notes_per_line">6</dimen>
+    <dimen name="primary_contextmenu_padding_top">4dp</dimen>
+    <dimen name="primary_contextmenu_padding_start">4dp</dimen>
+    <dimen name="primary_contextmenu_padding_end">2dp</dimen>
+    <dimen name="primary_contextmenu_padding_bottom">2dp</dimen>
+    <dimen name="secondary_contextmenu_padding_top">4dp</dimen>
+    <dimen name="secondary_contextmenu_padding_start">4dp</dimen>
+    <dimen name="secondary_contextmenu_padding_end">2dp</dimen>
+    <dimen name="secondary_contextmenu_padding_bottom">2dp</dimen>
 </resources>

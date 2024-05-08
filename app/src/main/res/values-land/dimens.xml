@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="primary_contextmenu_padding_top">2dp</dimen>
+    <dimen name="primary_contextmenu_padding_start">2dp</dimen>
+    <dimen name="primary_contextmenu_padding_end">0dp</dimen>
+    <dimen name="primary_contextmenu_padding_bottom">0dp</dimen>
+    <dimen name="secondary_contextmenu_padding_top">2dp</dimen>
+    <dimen name="secondary_contextmenu_padding_start">2dp</dimen>
+    <dimen name="secondary_contextmenu_padding_end">0dp</dimen>
+    <dimen name="secondary_contextmenu_padding_bottom">0dp</dimen>
+</resources>

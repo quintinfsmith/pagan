@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/llContextLink"
-    android:padding="@dimen/number_selector_spacing"
     android:layout_width="wrap_content"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    android:orientation="vertical">
+
     <com.qfs.pagan.ButtonIcon
         android:layout_width="@dimen/icon_button_width"
         android:layout_height="@dimen/icon_button_height"
@@ -41,30 +40,4 @@
         android:layout_gravity="end"
         android:layout_marginTop="@dimen/number_selector_spacing"
         android:contentDescription="Remove All Links"/>
-
-    <RadioGroup
-        android:id="@+id/rgLinkMode"
-        android:layoutDirection="rtl"
-        android:checkedButton="@id/rbLinkModeLink"
-        android:layout_height="wrap_content"
-        android:layout_width="wrap_content">
-        <com.qfs.pagan.PaganRadioButton
-            android:id="@+id/rbLinkModeLink"
-            android:text="Link"
-            android:theme="@style/link_mode_button"
-            android:layout_height="wrap_content"
-            android:layout_width="wrap_content"/>
-        <com.qfs.pagan.PaganRadioButton
-            android:id="@+id/rbLinkModeCopy"
-            android:text="Copy"
-            android:theme="@style/link_mode_button"
-            android:layout_height="wrap_content"
-            android:layout_width="wrap_content"/>
-        <com.qfs.pagan.PaganRadioButton
-            android:id="@+id/rbLinkModeMove"
-            android:text="Move"
-            android:theme="@style/link_mode_button"
-            android:layout_height="wrap_content"
-            android:layout_width="wrap_content"/>
-    </RadioGroup>
 </LinearLayout>
